@@ -10,7 +10,7 @@
   library(MCMCpack)
 
 # read in the data
-  data(wine); wine.true <- wine[,1]; wine <- wine[,-1]
+  data(wine); labels <- wine[,1]; wine <- wine[,-1]
   #subjectmarks <- read.csv(paste(dataDirectory,"/Data/","SubjectMarks.csv",sep=""))
   #cereal <- read.csv(paste(dataDirectory,"/Data/","Cereal.csv",sep=""))
 
@@ -19,24 +19,61 @@
   Q <- 10
   N <- 1500
   mu.true   <- mvrnorm(mu=rep(0,P), Sigma=diag(P));      names(mu.true)      <- c(1:P)
-  f.true    <- mvrnorm(n=N, mu=rep(0,Q), Sigma=diag(Q)); colnames(f.true)    <- paste("Factor",1:Q); rownames(f.true)   <- c(1:N)
-  load.true <- mvrnorm(n=P, mu=rep(0,Q), Sigma=diag(Q)); colnames(load.true) <- paste("Factor",1:Q); rownames(load.true) <- c(1:P)
+  f.true    <- mvrnorm(n=N, mu=rep(0,Q), Sigma=diag(Q)); colnames(f.true)    <- paste("Factor", 1:Q); rownames(f.true)    <- c(1:N)
+  load.true <- mvrnorm(n=P, mu=rep(0,Q), Sigma=diag(Q)); colnames(load.true) <- paste("Factor", 1:Q); rownames(load.true) <- c(1:P)
   psi.true  <- abs(rnorm(P)*P); names(psi.true) <- c(1:P)
   eps.true  <- mvrnorm(n=N, mu=rep(0,P), Sigma=diag(psi.true))
   data      <- matrix(0,nr=N,nc=P)
   for (i in 1:N) {  
     data[i, ]      <- mu.true + load.true%*%f.true[i,] + eps.true[i,]
-  };rownames(data) <- c(1:N);colnames(data)<-c(1:P)
+  }; rownames(data) <- c(1:N); colnames(data) <- c(1:P)
 
   save(mu.true, f.true, load.true, psi.true, eps.true, file="/home/kmurphy/Simulated Data.Rdata")
 
-# gibbs sampler function
-  gibbs  <- function(data, n.iters=10000, Q, sigma.mu=0.5, sigma.l=0.5, psi.alpha=5, psi.beta=5, scaling=T) {
+# define full conditional functions
+  # means
+    sample.omega.mu <- function(mu.sigma, N, psi, iter, ...) {
+      solve(solve(mu.sigma) + N * solve(diag(psi[,iter-1]))) }
+    sample.omega.mu <- cmpfun(sample.omega.mu)
     
-    # centre the data (optional)
+    sample.mu       <- function(mu.omega, P, psi, data, f, load, iter, ...) {
+      mvrnorm(mu=rep(0, P), Sigma=mu.omega[,,iter]) +
+        mu.omega[,,iter] %*% solve(diag(psi[,iter-1])) %*% t(t(apply(data, 2, sum)) - t(apply(f[,,iter-1], 2, sum)) %*% t(load[,,iter-1])) }
+    sample.mu       <- cmpfun(sample.mu)
+  
+  # scores
+    sample.omega.f  <- function(Q, load, psi, iter, ...) {
+      solve(diag(Q) + t(load[,,iter-1]) %*% solve(diag(psi[,iter-1])) %*% load[,,iter-1]) }
+    sample.omega.f  <- cmpfun(sample.omega.f)
+    
+    sample.scores   <- function(Q, f.omega, load, psi, data, mu, i, iter, ...) {
+      mvrnorm(mu=rep(0, Q), Sigma=f.omega[,,iter]) + 
+        (f.omega[,,iter] %*% t(load[,,iter-1]) %*% solve(diag(psi[,iter-1]))) %*% (data[i,] - mu[,iter]) }
+    sample.scores   <- cmpfun(sample.scores)
+  
+  # loadings
+    sample.omega.l  <- function(l.sigma, psi, f, j, iter, ...) {
+      solve(solve(l.sigma) + (1/psi[j,iter-1]) * t(f[,,iter]) %*% f[,,iter]) }
+    sample.omega.l  <- cmpfun(sample.omega.l)
+  
+    sample.load     <- function(Q, l.omega, f, psi, data, mu, j, iter, ...) {
+      t(mvrnorm(mu=rep(0, Q), Sigma=l.omega[,,j,iter]) + 
+        (l.omega[,,j,iter] %*% t(f[,,iter]) * (1/psi[j,iter-1])) %*% (data[,j] - mu[j,iter])) }
+    sample.load     <- cmpfum(sample.load)
+    
+  # uniquenesses
+    sample.psi      <- function(N, psi.alpha, psi.beta, data, mu, load, f, j, iter, ...) {
+      rinvgamma(1, shape=(N+psi.alpha)/2, 
+        scale=(sum(data[,j] - mu[j,iter] - load[j,,iter]%*%t(f[,,iter]))^2 + psi.beta)/2) }
+    sample.psi      <- cmpfun(sample.psi)
+  
+# gibbs sampler function
+  gibbs  <- function(data, n.iters=10000, Q, sigma.mu=0.5, sigma.l=0.5, psi.alpha=5, psi.beta=5, scaling=T, ...) {
+    
+  # centre the data (optional)
     if (scaling) {data <- scale(data, center=T, scale=F)} else  {data <- as.matrix(data)}
     
-    # define & initialise variables
+  # define & initialise variables
     N         <- nrow(data)
     P         <- ncol(data)
     if (Q>=P) stop ("Number of factors must be less than the number of variables")
@@ -49,30 +86,23 @@
     mu.omega  <- array(NA, dim=c(P, P, n.iters))
     f.omega   <- array(NA, dim=c(Q, Q, n.iters))
     l.omega   <- array(NA, dim=c(Q, Q, P, n.iters))
-    mu[,1]    <- mvrnorm(mu=rep(0,P), Sigma=mu.sigma)
-    f[,,1]    <- mvrnorm(n=N, mu=rep(0,Q), Sigma=diag(Q))
-    load[,,1] <- mvrnorm(n=P, mu=rep(0,Q), Sigma=l.sigma)
+    mu[,1]    <- mvrnorm(mu=rep(0, P), Sigma=mu.sigma)
+    f[,,1]    <- mvrnorm(n=N, mu=rep(0, Q), Sigma=diag(Q))
+    load[,,1] <- mvrnorm(n=P, mu=rep(0, Q), Sigma=l.sigma)
     psi[,1]   <- rinvgamma(P, shape=psi.alpha/2, scale=psi.beta/2)
     
-    # iterate
+  # iterate
     for(iter in 2:n.iters) { 
-      mu.omega[,,iter]    <- solve(solve(mu.sigma) + N*solve(diag(psi[,iter-1])))
-      f.omega[,,iter]     <- solve(diag(Q) + t(load[,,iter-1])%*%solve(diag(psi[,iter-1]))%*%load[,,iter-1])
-      mu[,iter]           <- (mvrnorm(mu=rep(0, P), 
-                                      Sigma=mu.omega[,,iter])
-                            + mu.omega[,,iter]%*%solve(diag(psi[,iter-1]))%*%t(t(apply(data, 2, sum)) - t(apply(f[,,iter-1], 2, sum))%*%t(load[,,iter-1])))
+      mu.omega[,,iter]    <- sample.omega.mu(mu.sigma, N, psi, iter)
+      mu[,iter]           <- sample.mu(mu.omega, P, psi, data, f, load, iter)
+      f.omega[,,iter]     <- sample.omega.f(Q, load, psi, iter)
       for (i in 1:N)    {
-        f[i,,iter]        <- (mvrnorm(mu=rep(0, Q), 
-                                      Sigma=f.omega[,,iter])
-                           + (f.omega[,,iter]%*%t(load[,,iter-1])%*%solve(diag(psi[,iter-1])))%*%(data[i,]-mu[,iter]))
+        f[i,,iter]        <- sample.scores(Q, f.omega, load, psi, data, mu, i, iter)
       }
       for (j in 1:P) {
-        l.omega[,,j,iter] <- solve(solve(l.sigma) + (1/psi[j,iter-1])*t(f[,,iter])%*%f[,,iter])
-        load[j,,iter]     <- t(mvrnorm(mu=rep(0, Q), 
-                                       Sigma=l.omega[,,j,iter])
-                            + (l.omega[,,j,iter]%*%t(f[,,iter])*(1/psi[j,iter-1]))%*%(data[,j]-mu[j,iter]))
-        psi[j,iter]       <- rinvgamma(1, shape=(N+psi.alpha)/2, 
-                                       scale=(sum(data[,j] - mu[j,iter] - load[j,,iter]%*%t(f[,,iter]))^2+psi.beta)/2)
+        l.omega[,,j,iter] <- sample.omega.l(l.sigma, psi, f, j, iter)
+        load[j,,iter]     <- sample.load(Q, l.omega, f, psi, data, mu, j, iter)
+        psi[j,iter]       <- sample.psi(N, psi.alpha, psi.beta, data, mu, load, f, j, iter)
       }
     }
     return(list(mu   = mu,
@@ -92,18 +122,18 @@
   load(file="Simulations/Wine Simulations.Rdata",envir=.GlobalEnv)
 
 # convergence diagnostics
-  burnin   <- 10000
-  thinning <- 3
-  mu       <- sim$mu[,seq(from=burnin+1, to=n.iters, by=thinning)]
-  f        <- sim$f[,,seq(from=burnin+1, to=n.iters, by=thinning)]
-  load     <- sim$load[,,seq(from=burnin+1, to=n.iters, by=thinning)]
-  psi      <- sim$psi[,seq(from=burnin+1, to=n.iters, by=thinning)]
+  burnin <- 10000
+  thin   <- 3
+  mu     <- sim$mu[,seq(from=burnin+1, to=n.iters, by=thin)]
+  f      <- sim$f[,,seq(from=burnin+1, to=n.iters, by=thin)]
+  load   <- sim$load[,,seq(from=burnin+1, to=n.iters, by=thin)]
+  psi    <- sim$psi[,seq(from=burnin+1, to=n.iters, by=thin)]
 
 # NB: You can check your answer by plotting
 #     the f of a 2-factor model to the
 #     wine dataset. Expect to see a horseshoe.
 
-# load matrix / identifiability / # etc.
+# loadings matrix / identifiability / # etc.
   l.temp <- sim$load[,,burnin]
   for(b in 1:dim(load)[3]){
     rot       <- procrustes(X=load[,,b], Xstar=l.temp)$R
@@ -111,38 +141,44 @@
     f[,,b]    <- t(t(rot)%*%t(f[,,b]))
   }
 
-plot(mu[1,], type="l")
-matplot(t(mu[,]), type="l")
-post.mu <- apply(mu, 1, mean)
-plot(post.mu, type="n")
-text(x=1:length(post.mu),y=post.mu, names(post.mu))
-acf(mu[1,])
-
-plot(f[1,1,], type="l")
-matplot(t(f[1,,]), type="l")
-post.f <- apply(f, c(1,2), mean)
-plot(post.f, type="n")
-text(post.f[,1],post.f[,2], 1:nrow(post.f),col=wine.true)
-plot(f[,,dim(f)[3]], type="n")
-text(f[,1,dim(f)[3]],f[,2,dim(f)[3]], 1:nrow(post.f),col=wine.true)
-acf(f[1,1,])
-
-plot(psi[1,], type="l")
-matplot(t(psi[,]), type="l")
-post.psi <- apply(psi, 1, mean)
-plot(post.psi, type="n")
-text(1:length(post.psi),post.psi, names(post.psi))
-acf(psi[1,])
-
-plot(load[1,1,], type="l")
-matplot(t(load[1,,]), type="l")
-post.load <- apply(load, c(1,2), mean)
-plot(post.load, type="n")
-text(post.load[,1], post.load[,2], rownames(post.load))
-acf(load[1,1,])
-
-P <- nrow(post.load)
-sum(post.psi)/P # % of variance which is unique
-communality <- P - sum(post.psi)
-communality/P # % of variance 
-#sum(post.load[,]^2)
+# plots & posterior summaries etc.
+  # means
+    plot(mu[1,], type="l")
+    matplot(t(mu[,]), type="l")
+    post.mu <- apply(mu, 1, mean)
+    plot(post.mu, type="n")
+    text(x=1:length(post.mu), y=post.mu, names(post.mu))
+    acf(mu[1,])
+  
+  # scores
+    plot(f[1,1,], type="l")
+    matplot(t(f[1,,]), type="l")
+    post.f <- apply(f, c(1,2), mean)
+    plot(post.f, type="n")
+    text(post.f[,1], post.f[,2], 1:nrow(post.f), col=labels)
+    plot(f[,,dim(f)[3]], type="n")
+    text(f[,1,dim(f)[3]], f[,2,dim(f)[3]], 1:nrow(post.f), col=labels)
+    acf(f[1,1,])
+  
+  # uniquenesses
+    plot(psi[1,], type="l")
+    matplot(t(psi[,]), type="l")
+    post.psi <- apply(psi, 1, mean)
+    plot(post.psi, type="n")
+    text(1:length(post.psi), post.psi, names(post.psi))
+    acf(psi[1,])
+  
+  # loadings
+    plot(load[1,1,], type="l")
+    matplot(t(load[1,,]), type="l")
+    post.load <- apply(load, c(1,2), mean)
+    plot(post.load, type="n")
+    text(post.load[,1], post.load[,2], rownames(post.load))
+    acf(load[1,1,])
+  
+  # summaries 
+    P <- nrow(post.load)
+    sum(post.psi)/P # % of variance which is unique
+    communality <- P - sum(post.psi)
+    communality/P   # % of variance 
+    #sum(post.load[,]^2)
