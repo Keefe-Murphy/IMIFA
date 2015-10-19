@@ -12,7 +12,7 @@
 # read in the data
   data(wine); labels <- wine[,1]; wine <- wine[,-1]
   #subjectmarks <- read.csv(paste(dataDirectory,"/Data/","SubjectMarks.csv",sep=""))
-  #cereal <- read.csv(paste(dataDirectory,"/Data/","Cereal.csv",sep=""))
+  #cereal       <- read.csv(paste(dataDirectory,"/Data/","Cereal.csv",sep=""))
 
 # simulate data
   P <- 50
@@ -32,43 +32,37 @@
 
 # define full conditional functions
   # means
-    sample.omega.mu <- function(mu.sigma, N, psi, iter, ...) {
-      solve(solve(mu.sigma) + N * solve(diag(psi[,iter-1]))) }
-    sample.omega.mu <- cmpfun(sample.omega.mu)
-    
-    sample.mu       <- function(mu.omega, P, psi, data, f, load, iter, ...) {
-      mvrnorm(mu=rep(0, P), Sigma=mu.omega[,,iter]) +
-        mu.omega[,,iter] %*% solve(diag(psi[,iter-1])) %*% t(t(apply(data, 2, sum)) - t(apply(f[,,iter-1], 2, sum)) %*% t(load[,,iter-1])) }
-    sample.mu       <- cmpfun(sample.mu)
+    sim.mu      <- function(mu.sigma, N, P, psi, data, f, load, iter, ...) {
+      mu.omega  <- solve(solve(mu.sigma) + N * solve(diag(psi[,iter-1])))
+      mvrnorm(mu=rep(0, P), Sigma=mu.omega) +
+        mu.omega %*% solve(diag(psi[,iter-1])) %*% t(t(apply(data, 2, sum)) - t(apply(f[,,iter-1], 2, sum)) %*% t(load[,,iter-1])) }
+    sim.mu      <- cmpfun(sim.mu)
   
   # scores
-    sample.omega.f  <- function(Q, load, psi, iter, ...) {
+    sim.omega.f <- function(Q, load, psi, iter, ...) {
       solve(diag(Q) + t(load[,,iter-1]) %*% solve(diag(psi[,iter-1])) %*% load[,,iter-1]) }
-    sample.omega.f  <- cmpfun(sample.omega.f)
+    sim.omega.f <- cmpfun(sim.omega.f)
     
-    sample.scores   <- function(Q, f.omega, load, psi, data, mu, i, iter, ...) {
-      mvrnorm(mu=rep(0, Q), Sigma=f.omega[,,iter]) + 
-        (f.omega[,,iter] %*% t(load[,,iter-1]) %*% solve(diag(psi[,iter-1]))) %*% (data[i,] - mu[,iter]) }
-    sample.scores   <- cmpfun(sample.scores)
+    sim.scores  <- function(Q, f.omega, load, psi, data, mu, i, iter, ...) {
+      mvrnorm(mu=rep(0, Q), Sigma=f.omega) + 
+        (f.omega %*% t(load[,,iter-1]) %*% solve(diag(psi[,iter-1]))) %*% (data[i,] - mu[,iter]) }
+    sim.scores  <- cmpfun(sim.scores)
   
   # loadings
-    sample.omega.l  <- function(l.sigma, psi, f, j, iter, ...) {
-      solve(solve(l.sigma) + (1/psi[j,iter-1]) * t(f[,,iter]) %*% f[,,iter]) }
-    sample.omega.l  <- cmpfun(sample.omega.l)
-  
-    sample.load     <- function(Q, l.omega, f, psi, data, mu, j, iter, ...) {
-      t(mvrnorm(mu=rep(0, Q), Sigma=l.omega[,,j,iter]) + 
-        (l.omega[,,j,iter] %*% t(f[,,iter]) * (1/psi[j,iter-1])) %*% (data[,j] - mu[j,iter])) }
-    sample.load     <- cmpfum(sample.load)
+    sim.load    <- function(l.sigma, Q, f, psi, data, mu, j, iter, ...) {
+      l.omega   <- solve(solve(l.sigma) + (1/psi[j,iter-1]) * t(f[,,iter]) %*% f[,,iter])
+      t(mvrnorm(mu=rep(0, Q), Sigma=l.omega) + 
+        (l.omega %*% t(f[,,iter]) * (1/psi[j,iter-1])) %*% (data[,j] - mu[j,iter])) }
+    sim.load    <- cmpfun(sim.load)
     
   # uniquenesses
-    sample.psi      <- function(N, psi.alpha, psi.beta, data, mu, load, f, j, iter, ...) {
+    sim.psi     <- function(N, psi.alpha, psi.beta, data, mu, load, f, j, iter, ...) {
       rinvgamma(1, shape=(N+psi.alpha)/2, 
         scale=(sum(data[,j] - mu[j,iter] - load[j,,iter]%*%t(f[,,iter]))^2 + psi.beta)/2) }
-    sample.psi      <- cmpfun(sample.psi)
+    sim.psi     <- cmpfun(sim.psi)
   
 # gibbs sampler function
-  gibbs  <- function(data, n.iters=10000, Q, sigma.mu=0.5, sigma.l=0.5, psi.alpha=5, psi.beta=5, scaling=T, ...) {
+  gibbs  <- function(data, n.iters=100000, Q, sigma.mu=0.5, sigma.l=0.5, psi.alpha=5, psi.beta=5, scaling=T, ...) {
     
   # centre the data (optional)
     if (scaling) {data <- scale(data, center=T, scale=F)} else  {data <- as.matrix(data)}
@@ -83,9 +77,9 @@
     psi       <- matrix(NA, nr=P, nc=n.iters);    rownames(psi)  <- colnames(data)
     mu.sigma  <- sigma.mu * diag(P)
     l.sigma   <- sigma.l  * diag(Q)
-    mu.omega  <- array(NA, dim=c(P, P, n.iters))
-    f.omega   <- array(NA, dim=c(Q, Q, n.iters))
-    l.omega   <- array(NA, dim=c(Q, Q, P, n.iters))
+    mu.omega  <- matrix(NA, P, P)
+    f.omega   <- matrix(NA, Q, Q)
+    l.omega   <- matrix(NA, Q, Q)
     mu[,1]    <- mvrnorm(mu=rep(0, P), Sigma=mu.sigma)
     f[,,1]    <- mvrnorm(n=N, mu=rep(0, Q), Sigma=diag(Q))
     load[,,1] <- mvrnorm(n=P, mu=rep(0, Q), Sigma=l.sigma)
@@ -93,16 +87,14 @@
     
   # iterate
     for(iter in 2:n.iters) { 
-      mu.omega[,,iter]    <- sample.omega.mu(mu.sigma, N, psi, iter)
-      mu[,iter]           <- sample.mu(mu.omega, P, psi, data, f, load, iter)
-      f.omega[,,iter]     <- sample.omega.f(Q, load, psi, iter)
+      mu[,iter]       <- sim.mu(mu.sigma, N, P, psi, data, f, load, iter, ...)
+      f.omega         <- sim.omega.f(Q, load, psi, iter)
       for (i in 1:N)    {
-        f[i,,iter]        <- sample.scores(Q, f.omega, load, psi, data, mu, i, iter)
+        f[i,,iter]    <- sim.scores(Q, f.omega, load, psi, data, mu, i, iter)
       }
       for (j in 1:P) {
-        l.omega[,,j,iter] <- sample.omega.l(l.sigma, psi, f, j, iter)
-        load[j,,iter]     <- sample.load(Q, l.omega, f, psi, data, mu, j, iter)
-        psi[j,iter]       <- sample.psi(N, psi.alpha, psi.beta, data, mu, load, f, j, iter)
+        load[j,,iter] <- sim.load(l.sigma, Q, f, psi, data, mu, j, iter, ...)
+        psi[j,iter]   <- sim.psi(N, psi.alpha, psi.beta, data, mu, load, f, j, iter)
       }
     }
     return(list(mu   = mu,
