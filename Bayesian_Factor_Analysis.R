@@ -53,13 +53,13 @@
     
     # Iterate
     for(iter in 2:n.iters) { 
-      mu[,iter]       <- sim.mu(mu.sigma, N, P, psi, data, f, load, iter, ...)
+      mu[,iter]       <- sim.mu(mu.sigma, N, P, psi, data, f, load, iter)
       f.omega         <- sim.omega.f(Q, load, psi, iter)
       for (i in 1:N) {
         f[i,,iter]    <- sim.scores(Q, f.omega, load, psi, data, mu, i, iter)
       }
       for (j in 1:P) {
-        load[j,,iter] <- sim.load(l.sigma, Q, f, psi, data, mu, j, iter, ...)
+        load[j,,iter] <- sim.load(l.sigma, Q, f, psi, data, mu, j, iter)
         psi[j,iter]   <- sim.psi(N, psi.alpha, psi.beta, data, mu, load, f, j, iter)
       }
     }
