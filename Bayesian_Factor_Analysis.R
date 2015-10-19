@@ -1,7 +1,9 @@
-# BAYESIAN FACTOR ANALYSIS
+############################
+# BAYESIAN FACTOR ANALYSIS #
+############################
 
-# preamble
-  dataDirectory <- "C:/Users/Windows/Documents/Claire IMIFA/IMIFA-GIT"
+# Preamble
+  dataDirectory <- "C:/Users/Windows/Documents/Claire IMIFA"
   setwd(dataDirectory)
   set.seed(21092015)
   library(MASS)
@@ -9,65 +11,29 @@
   library(pgmm)
   library(MCMCpack)
 
-# read in the data
+# Read in the data
   data(wine); labels <- wine[,1]; wine <- wine[,-1]
   #subjectmarks <- read.csv(paste(dataDirectory,"/Data/","SubjectMarks.csv",sep=""))
   #cereal       <- read.csv(paste(dataDirectory,"/Data/","Cereal.csv",sep=""))
 
-# simulate data
-  P <- 50
-  Q <- 10
-  N <- 1500
-  mu.true   <- mvrnorm(mu=rep(0,P), Sigma=diag(P));      names(mu.true)      <- c(1:P)
-  f.true    <- mvrnorm(n=N, mu=rep(0,Q), Sigma=diag(Q)); colnames(f.true)    <- paste("Factor", 1:Q); rownames(f.true)    <- c(1:N)
-  load.true <- mvrnorm(n=P, mu=rep(0,Q), Sigma=diag(Q)); colnames(load.true) <- paste("Factor", 1:Q); rownames(load.true) <- c(1:P)
-  psi.true  <- abs(rnorm(P)*P); names(psi.true) <- c(1:P)
-  eps.true  <- mvrnorm(n=N, mu=rep(0,P), Sigma=diag(psi.true))
-  data      <- matrix(0,nr=N,nc=P)
-  for (i in 1:N) {  
-    data[i, ]      <- mu.true + load.true%*%f.true[i,] + eps.true[i,]
-  }; rownames(data) <- c(1:N); colnames(data) <- c(1:P)
-
-  save(mu.true, f.true, load.true, psi.true, eps.true, file="/home/kmurphy/Simulated Data.Rdata")
-
-# define full conditional functions
-  # means
-    sim.mu      <- function(mu.sigma, N, P, psi, data, f, load, iter, ...) {
-      mu.omega  <- solve(solve(mu.sigma) + N * solve(diag(psi[,iter-1])))
-      mvrnorm(mu=rep(0, P), Sigma=mu.omega) +
-        mu.omega %*% solve(diag(psi[,iter-1])) %*% t(t(apply(data, 2, sum)) - t(apply(f[,,iter-1], 2, sum)) %*% t(load[,,iter-1])) }
-    sim.mu      <- cmpfun(sim.mu)
+# Simulate data
+  #source(paste(dataDirectory,"/IMIFA-GIT/Simulate_Data.R",sep=""))
+  #save(data, mu.true, f.true, load.true, psi.true, eps.true, file=paste(dataDirectory,"/Data/Simulated_Data.Rdata",sep=""))
+  load(file=paste(dataDirectory,"/Data/Simulated_Data.Rdata",sep=""),envir=.GlobalEnv)
   
-  # scores
-    sim.omega.f <- function(Q, load, psi, iter, ...) {
-      solve(diag(Q) + t(load[,,iter-1]) %*% solve(diag(psi[,iter-1])) %*% load[,,iter-1]) }
-    sim.omega.f <- cmpfun(sim.omega.f)
-    
-    sim.scores  <- function(Q, f.omega, load, psi, data, mu, i, iter, ...) {
-      mvrnorm(mu=rep(0, Q), Sigma=f.omega) + 
-        (f.omega %*% t(load[,,iter-1]) %*% solve(diag(psi[,iter-1]))) %*% (data[i,] - mu[,iter]) }
-    sim.scores  <- cmpfun(sim.scores)
+# Define full conditional functions
+  source(paste(dataDirectory,"/IMIFA-GIT/BFA_FullConditionals.R",sep=""))
   
-  # loadings
-    sim.load    <- function(l.sigma, Q, f, psi, data, mu, j, iter, ...) {
-      l.omega   <- solve(solve(l.sigma) + (1/psi[j,iter-1]) * t(f[,,iter]) %*% f[,,iter])
-      t(mvrnorm(mu=rep(0, Q), Sigma=l.omega) + 
-        (l.omega %*% t(f[,,iter]) * (1/psi[j,iter-1])) %*% (data[,j] - mu[j,iter])) }
-    sim.load    <- cmpfun(sim.load)
-    
-  # uniquenesses
-    sim.psi     <- function(N, psi.alpha, psi.beta, data, mu, load, f, j, iter, ...) {
-      rinvgamma(1, shape=(N+psi.alpha)/2, 
-        scale=(sum(data[,j] - mu[j,iter] - load[j,,iter]%*%t(f[,,iter]))^2 + psi.beta)/2) }
-    sim.psi     <- cmpfun(sim.psi)
-  
-# gibbs sampler function
+# Gibbs Sampler function
   gibbs  <- function(data, n.iters=100000, Q, sigma.mu=0.5, sigma.l=0.5, psi.alpha=5, psi.beta=5, scaling=T, ...) {
     
-  # centre the data (optional)
+  # Remove non-numeric columns
+    data      <- data[sapply(data,is.numeric)]
+        
+  # Centre the data (optional)
     if (scaling) {data <- scale(data, center=T, scale=F)} else  {data <- as.matrix(data)}
     
-  # define & initialise variables
+  # Define & initialise variables
     N         <- nrow(data)
     P         <- ncol(data)
     if (Q>=P) stop ("Number of factors must be less than the number of variables")
@@ -85,11 +51,11 @@
     load[,,1] <- mvrnorm(n=P, mu=rep(0, Q), Sigma=l.sigma)
     psi[,1]   <- rinvgamma(P, shape=psi.alpha/2, scale=psi.beta/2)
     
-  # iterate
+  # Iterate
     for(iter in 2:n.iters) { 
       mu[,iter]       <- sim.mu(mu.sigma, N, P, psi, data, f, load, iter, ...)
       f.omega         <- sim.omega.f(Q, load, psi, iter)
-      for (i in 1:N)    {
+      for (i in 1:N) {
         f[i,,iter]    <- sim.scores(Q, f.omega, load, psi, data, mu, i, iter)
       }
       for (j in 1:P) {
@@ -101,19 +67,21 @@
                 f    = f, 
                 load = load, 
                 psi  = psi))
-  }; gibbs.comp <- cmpfun(gibbs)
+  }; gibbs   <- cmpfun(gibbs)
 
-# run the gibbs sampler
+# Run the gibbs sampler
   n.iters <- 100000
-  sim     <- gibbs.comp(data=wine, n.iters, Q=3, sigma.mu=0.5, sigma.l=0.5, psi.alpha=5, psi.beta=5)
-  #system.time(gibbs(data=data, n.iters, Q=2, sigma.mu=0.5, sigma.l=0.5, psi.alpha=5, psi.beta=5)
-  #system.time(gibbs.comp(data=data, n.iters, Q=2, sigma.mu=0.5, sigma.l=0.5, psi.alpha=5, psi.beta=5)
+  sim     <- gibbs(data=wine, n.iters, Q=3, sigma.mu=0.5, sigma.l=0.5, psi.alpha=5, psi.beta=5)
 
-# save / load results
-  save(sim,file="/home/kmurphy/Wine Simulations.Rdata") # in server, tick box, export
-  load(file="Simulations/Wine Simulations.Rdata",envir=.GlobalEnv)
+# Save / Load results
+  save(sim,file=paste(dataDirectory,"/Simulations/Wine Simulations.Rdata",sep="")) # in server, tick box, export
+  load(file=paste(dataDirectory,"Simulations/Wine Simulations.Rdata",sep""),envir=.GlobalEnv)
 
-# convergence diagnostics
+# NB: You can check your answer by plotting
+#     the scores of a 2-factor model to the
+#     wine dataset. Expect to see a horseshoe.
+  
+# Convergence diagnostics
   burnin <- 10000
   thin   <- 3
   mu     <- sim$mu[,seq(from=burnin+1, to=n.iters, by=thin)]
@@ -121,16 +89,12 @@
   load   <- sim$load[,,seq(from=burnin+1, to=n.iters, by=thin)]
   psi    <- sim$psi[,seq(from=burnin+1, to=n.iters, by=thin)]
 
-# NB: You can check your answer by plotting
-#     the f of a 2-factor model to the
-#     wine dataset. Expect to see a horseshoe.
-
-# loadings matrix / identifiability / # etc.
+# Loadings matrix / identifiability / # etc.
   l.temp <- sim$load[,,burnin]
-  for(b in 1:dim(load)[3]){
+  for(b in 1:dim(load)[3]) {
     rot       <- procrustes(X=load[,,b], Xstar=l.temp)$R
-    load[,,b] <- load[,,b]%*%rot
-    f[,,b]    <- t(t(rot)%*%t(f[,,b]))
+    load[,,b] <- load[,,b] %*% rot
+    f[,,b]    <- t(t(rot) %*% t(f[,,b]))
   }
 
 # plots & posterior summaries etc.
