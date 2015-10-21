@@ -28,8 +28,10 @@
   source(paste(dataDirectory,"/IMIFA-GIT/Gibbs_BFA_Single.R",sep=""))
 
 # Run the gibbs sampler
+  data    <- data
   n.iters <- 100000
-  sim     <- gibbs.single(data=wine, n.iters, Q=3, sigma.mu=0.5, sigma.l=0.5, psi.alpha=5, psi.beta=5)
+  Q       <- 10
+  sim     <- gibbs.single(data, n.iters, Q, sigma.mu=0.5, sigma.l=0.5, psi.alpha=5, psi.beta=5)
 
 # Save / Load results
   save(sim,file=paste(dataDirectory,"/Simulations/Wine Simulations.Rdata",sep="")) # in server, tick box, export

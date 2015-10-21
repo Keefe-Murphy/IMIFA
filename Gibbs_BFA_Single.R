@@ -1,5 +1,5 @@
 # Bayesian Factor Analysis (Single Case)
-  gibbs.single  <- function(data, n.iters=100000, Q, sigma.mu=0.5, sigma.l=0.5, psi.alpha=5, psi.beta=5, scaling=T, ...) {
+  gibbs.single  <- function(data, n.iters=100000, Q=2, sigma.mu=0.5, sigma.l=0.5, psi.alpha=5, psi.beta=5, scaling=T, ...) {
     
   # Remove non-numeric columns
     data      <- data[sapply(data,is.numeric)]

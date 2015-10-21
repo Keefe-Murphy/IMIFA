@@ -9,5 +9,8 @@
   eps.true  <- mvrnorm(n=N, mu=rep(0, P), Sigma=diag(psi.true))
   data      <- matrix(0, nr=N, nc=P)
   for (i in 1:N) {  
-    data[i, ]       <- mu.true + load.true %*% f.true[i,] + eps.true[i,]
-  }; rownames(data) <- c(1:N); colnames(data) <- c(1:P)
+    data[i, ]    <- mu.true + load.true %*% f.true[i,] + eps.true[i,]
+  }
+  rownames(data) <- c(1:N)
+  colnames(data) <- c(1:P)
+  data           <- as.data.frame(data)
