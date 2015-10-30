@@ -22,7 +22,7 @@
     load(file=paste(dataDirectory,"/Data/Simulated_Data.Rdata",sep=""),envir=.GlobalEnv)
 
 # Define full conditional functions
-  source(paste(dataDirectory,"/IMIFA-GIT/IMIFA_FullConditionals.R",sep=""))
+  source(paste(dataDirectory,"/IMIFA-GIT/FullConditionals_BFA_Single.R",sep=""))
 
 # Gibbs Sampler function
   source(paste(dataDirectory,"/IMIFA-GIT/Gibbs_BFA_Single.R",sep=""))
@@ -31,12 +31,12 @@
   data    <- data
   n.iters <- 50000
   Q       <- 2
-  #sim    <- gibbs.single(data, n.iters, Q, sigma.mu=0.5, sigma.l=0.5, psi.alpha=5, psi.beta=5, burnin=n.iters/10, thin=2)
+  #sim    <- gibbs.single(data, n.iters, Q, sigma.mu=0.5, sigma.l=0.5, psi.alpha=5, psi.beta=5, burnin=(n.iters/5) - 1, thin=2)
   sim     <- gibbs.single(data, n.iters, Q)
 
 # Save / Load results
   save(sim,file=paste(dataDirectory,"/Simulations/Wine Simulations.Rdata",sep="")) # in server, tick box, export
-  load(file=paste(dataDirectory,"Simulations/Wine Simulations.Rdata",sep""),envir=.GlobalEnv)
+  load(file=paste(dataDirectory,"/Simulations/Wine Simulations.Rdata",sep=""),envir=.GlobalEnv)
 
 # NB: You can check your answer by plotting
 #     the scores of a 2-factor model to the
