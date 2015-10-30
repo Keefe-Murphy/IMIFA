@@ -61,41 +61,41 @@
 
 # Plots & posterior summaries etc.
   # Means
-  plot(mu[1,], type="l")
-  matplot(t(mu[,]), type="l")
-  post.mu <- apply(mu, 1, mean)
-  plot(post.mu, type="n")
-  text(x=1:length(post.mu), y=post.mu, names(post.mu))
-  acf(mu[1,])
+    plot(mu[1,], type="l")
+    matplot(t(mu[,]), type="l")
+    post.mu <- apply(mu, 1, mean)
+    plot(post.mu, type="n")
+    text(x=1:length(post.mu), y=post.mu, names(post.mu))
+    acf(mu[1,])
   
   # Scores
-  plot(f[1,1,], type="l")
-  matplot(t(f[1,,]), type="l")
-  post.f <- apply(f, c(1,2), mean)
-  plot(post.f, type="n")
-  text(post.f[,1], post.f[,2], 1:nrow(post.f), col=if(exists("Label", where=data)) data$Label else 1)
-  plot(f[,,tail(dim(f), n=1)], type="n")
-  text(f[,1,tail(dim(f), n=1)], f[,2,tail(dim(f), n=1)], 1:nrow(post.f), col=if(exists("Label"), where=data) data$Label else 1)
-  acf(f[1,1,])
-  
+    plot(f[1,1,], type="l")
+    matplot(t(f[1,,]), type="l")
+    post.f <- apply(f, c(1,2), mean)
+    plot(post.f, type="n")
+    text(post.f[,1], post.f[,2], 1:nrow(post.f), col=if(exists("Label", where=data)) data$Label else 1)
+    plot(f[,,tail(dim(f), n=1)], type="n")
+    text(f[,1,tail(dim(f), n=1)], f[,2,tail(dim(f), n=1)], 1:nrow(post.f), col=if(exists("Label"), where=data) data$Label else 1)
+    acf(f[1,1,])
+    
   # Uniquenesses
-  plot(psi[1,], type="l")
-  matplot(t(psi[,]), type="l")
-  post.psi <- apply(psi, 1, mean)
-  plot(post.psi, type="n")
-  text(1:length(post.psi), post.psi, names(post.psi))
-  acf(psi[1,])
+    plot(psi[1,], type="l")
+    matplot(t(psi[,]), type="l")
+    post.psi <- apply(psi, 1, mean)
+    plot(post.psi, type="n")
+    text(1:length(post.psi), post.psi, names(post.psi))
+    acf(psi[1,])
   
   # Loadings
-  plot(load[1,1,], type="l")
-  matplot(t(load[1,,]), type="l")
-  post.load <- apply(load, c(1,2), mean)
-  plot(post.load, type="n")
-  text(post.load[,1], post.load[,2], rownames(post.load))
-  acf(load[1,1,])
+    plot(load[1,1,], type="l")
+    matplot(t(load[1,,]), type="l")
+    post.load <- apply(load, c(1,2), mean)
+    plot(post.load, type="n")
+    text(post.load[,1], post.load[,2], rownames(post.load))
+    acf(load[1,1,])
   
   # Summaries 
-  P <- nrow(post.load)
-  sum(post.psi)/P # % of variance which is unique
-  communality <- P - sum(post.psi)
-  communality/P   # % of variance which is explained
+    P <- nrow(post.load)
+    sum(post.psi)/P # % of variance which is unique
+    communality <- P - sum(post.psi)
+    communality/P   # % of variance which is explained
