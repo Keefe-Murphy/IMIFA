@@ -1,44 +1,62 @@
-# Bayesian Factor Analysis (Single Case)
-  gibbs.single  <- function(data, n.iters=100000, Q=2, sigma.mu=0.5, sigma.l=0.5, psi.alpha=5, psi.beta=5, scaling=T, ...) {
-    
+################################################################
+### Gibbs Sampler for Bayesian Factor Analysis (Single Case) ###
+################################################################
+  
+gibbs.single   <- function(data=data, n.iters=50000, Q=2, 
+                         sigma.mu=0.5, sigma.l=0.5, psi.alpha=5, psi.beta=5, 
+                         burnin=(n.iters/5) - 1, thin=2, scaling=T, ...) {
+  
   # Remove non-numeric columns
-    data      <- data[sapply(data,is.numeric)]
-    
+    data       <- data[sapply(data,is.numeric)]
+  
   # Centre the data (optional)
     if (scaling) {data <- scale(data, center=T, scale=F)} else  {data <- as.matrix(data)}
-    
+  
   # Define & initialise variables
-    N         <- nrow(data)
-    P         <- ncol(data)
+    N          <- nrow(data)
+    P          <- ncol(data)
     if (Q>=P) stop ("Number of factors must be less than the number of variables")
-    mu        <- matrix(NA, nr=P, nc=n.iters);    rownames(mu)   <- colnames(data)
-    f         <- array(NA, dim=c(N, Q, n.iters)); colnames(f)    <- paste("Factor",1:Q)
-    load      <- array(NA, dim=c(P, Q, n.iters)); rownames(load) <- colnames(data); colnames(load) <- paste("Factor",1:Q)
-    psi       <- matrix(NA, nr=P, nc=n.iters);    rownames(psi)  <- colnames(data)
-    mu.sigma  <- sigma.mu * diag(P)
-    l.sigma   <- sigma.l  * diag(Q)
-    mu.omega  <- matrix(NA, P, P)
-    f.omega   <- matrix(NA, Q, Q)
-    l.omega   <- matrix(NA, Q, Q)
-    mu[,1]    <- mvrnorm(mu=rep(0, P), Sigma=mu.sigma)
-    f[,,1]    <- mvrnorm(n=N, mu=rep(0, Q), Sigma=diag(Q))
-    load[,,1] <- mvrnorm(n=P, mu=rep(0, Q), Sigma=l.sigma)
-    psi[,1]   <- rinvgamma(P, shape=psi.alpha/2, scale=psi.beta/2)
-    
+    store      <- ceiling((n.iters - burnin)/thin)
+    mu.store   <- matrix(NA, nr=P, nc=store);    rownames(mu.store)   <- colnames(data) 
+    f.store    <- array(NA, dim=c(N, Q, store)); colnames(f.store)    <- paste("Factor",1:Q)
+    load.store <- array(NA, dim=c(P, Q, store)); rownames(load.store) <- colnames(data); colnames(load.store) <- paste("Factor",1:Q)
+    psi.store  <- matrix(NA, nr=P, nc=store);    rownames(psi.store)  <- colnames(data)
+    mu.sigma   <- sigma.mu * diag(P)
+    l.sigma    <- sigma.l  * diag(Q)
+    mu         <- mu.store[,1]    <- mvrnorm(mu=rep(0, P), Sigma=mu.sigma)             
+    f          <- f.store[,,1]    <- mvrnorm(n=N, mu=rep(0, Q), Sigma=diag(Q))         
+    load       <- load.store[,,1] <- mvrnorm(n=P, mu=rep(0, Q), Sigma=l.sigma)         
+    psi        <- psi.store[,1]   <- rinvgamma(P, shape=psi.alpha/2, scale=psi.beta/2) 
+  
   # Iterate
     for(iter in 2:n.iters) { 
-      mu[,iter]       <- sim.mu(mu.sigma, N, P, psi, data, f, load, iter)
-      f.omega         <- sim.omega.f(Q, load, psi, iter)
+      if(iter %% (n.iters/100) == 0) cat(paste0("Iteration: ", iter, "\n"))
+      
+      mu         <- sim.mu(mu.sigma, N, P, psi, data, f, load)
+      f.omega    <- sim.omega.f(Q, load, psi)
+      
       for (i in 1:N) {
-        f[i,,iter]    <- sim.scores(Q, f.omega, load, psi, data, mu, i, iter)
+        data.i   <- data[i,]
+        f[i,]    <- sim.scores(f.omega, Q, data.i, mu)
       }
+      
       for (j in 1:P) {
-        load[j,,iter] <- sim.load(l.sigma, Q, f, psi, data, mu, j, iter)
-        psi[j,iter]   <- sim.psi(N, psi.alpha, psi.beta, data, mu, load, f, j, iter)
-      }
+        psi.j    <- psi[j]
+        data.j   <- data[,j]
+        mu.j     <- mu[j]
+        load[j,] <- load.j <- sim.load(l.sigma, Q, f, psi.j, data.j, mu.j)
+        psi[j]   <- sim.psi(N, psi.alpha, psi.beta, data.j, mu.j, load.j, f)
+      } 
+      if(iter > burnin && iter %% thin == 0) {
+        new.iter <- ceiling((iter-burnin)/thin)
+        mu.store[,new.iter]    <- mu  
+        f.store[,,new.iter]    <- f
+        load.store[,,new.iter] <- load
+        psi.store[,new.iter]   <- psi
+      }  
     }
-    return(list(mu   = mu,
-                f    = f, 
-                load = load, 
-                psi  = psi))
+    return(list(mu   = mu.store,
+                f    = f.store, 
+                load = load.store, 
+                psi  = psi.store))
   }; gibbs.single   <- cmpfun(gibbs.single)

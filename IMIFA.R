@@ -27,11 +27,12 @@
 # Gibbs Sampler function
   source(paste(dataDirectory,"/IMIFA-GIT/Gibbs_BFA_Single.R",sep=""))
 
-# Run the gibbs sampler
+# Run the Gibbs Sampler
   data    <- data
-  n.iters <- 100000
-  Q       <- 10
-  sim     <- gibbs.single(data, n.iters, Q, sigma.mu=0.5, sigma.l=0.5, psi.alpha=5, psi.beta=5)
+  n.iters <- 50000
+  Q       <- 2
+  #sim    <- gibbs.single(data, n.iters, Q, sigma.mu=0.5, sigma.l=0.5, psi.alpha=5, psi.beta=5, burnin=n.iters/10, thin=2)
+  sim     <- gibbs.single(data, n.iters, Q)
 
 # Save / Load results
   save(sim,file=paste(dataDirectory,"/Simulations/Wine Simulations.Rdata",sep="")) # in server, tick box, export
@@ -41,17 +42,18 @@
 #     the scores of a 2-factor model to the
 #     wine dataset. Expect to see a horseshoe.
 
-# Convergence diagnostics
-  burnin <- 10000
-  thin   <- 3
-  mu     <- sim$mu[,seq(from=burnin+1, to=n.iters, by=thin)]
-  f      <- sim$f[,,seq(from=burnin+1, to=n.iters, by=thin)]
-  load   <- sim$load[,,seq(from=burnin+1, to=n.iters, by=thin)]
-  psi    <- sim$psi[,seq(from=burnin+1, to=n.iters, by=thin)]
+# Convergence diagnostics (optional additional burnin & thinning)
+  burnin  <- 1
+  thin    <- 1
+  n.store <- seq(from=burnin + 1, to=tail(dim(sim$mu), n=1), by=thin)
+  mu      <- sim$mu[,n.store]
+  f       <- sim$f[,,n.store]
+  load    <- sim$load[,,n.store]
+  psi     <- sim$psi[,n.store]
 
 # Loadings matrix / identifiability / # etc.
-  l.temp <- sim$load[,,burnin]
-  for(b in 1:dim(load)[3]) {
+  l.temp  <- sim$load[,,burnin]
+  for(b in 1:tail(dim(load), n=1)) {
     rot       <- procrustes(X=load[,,b], Xstar=l.temp)$R
     load[,,b] <- load[,,b] %*% rot
     f[,,b]    <- t(t(rot) %*% t(f[,,b]))
@@ -71,9 +73,9 @@
   matplot(t(f[1,,]), type="l")
   post.f <- apply(f, c(1,2), mean)
   plot(post.f, type="n")
-  text(post.f[,1], post.f[,2], 1:nrow(post.f), col=labels)
-  plot(f[,,dim(f)[3]], type="n")
-  text(f[,1,dim(f)[3]], f[,2,dim(f)[3]], 1:nrow(post.f), col=labels)
+  text(post.f[,1], post.f[,2], 1:nrow(post.f), col=if(exists("labels")) labels else 1)
+  plot(f[,,tail(dim(f), n=1)], type="n")
+  text(f[,1,tail(dim(f), n=1)], f[,2,tail(dim(f), n=1)], 1:nrow(post.f), col=if(exists("labels")) labels else 1)
   acf(f[1,1,])
   
   # Uniquenesses
@@ -96,5 +98,4 @@
   P <- nrow(post.load)
   sum(post.psi)/P # % of variance which is unique
   communality <- P - sum(post.psi)
-  communality/P   # % of variance 
-  #sum(post.load[,]^2)
+  communality/P   # % of variance which is explained
