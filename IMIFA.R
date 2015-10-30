@@ -12,7 +12,7 @@
   library(MCMCpack)
 
 # Read in the data
-  data(wine); labels <- wine[,1]; wine <- wine[,-1]
+  data(wine); wine$Label <- wine[,1]; wine <- wine[,-1]
   #subjectmarks <- read.csv(paste(dataDirectory,"/Data/","SubjectMarks.csv",sep=""))
   #cereal       <- read.csv(paste(dataDirectory,"/Data/","Cereal.csv",sep=""))
 
@@ -73,9 +73,9 @@
   matplot(t(f[1,,]), type="l")
   post.f <- apply(f, c(1,2), mean)
   plot(post.f, type="n")
-  text(post.f[,1], post.f[,2], 1:nrow(post.f), col=if(exists("labels")) labels else 1)
+  text(post.f[,1], post.f[,2], 1:nrow(post.f), col=if(exists("Label", where=data)) data$Label else 1)
   plot(f[,,tail(dim(f), n=1)], type="n")
-  text(f[,1,tail(dim(f), n=1)], f[,2,tail(dim(f), n=1)], 1:nrow(post.f), col=if(exists("labels")) labels else 1)
+  text(f[,1,tail(dim(f), n=1)], f[,2,tail(dim(f), n=1)], 1:nrow(post.f), col=if(exists("Label"), where=data) data$Label else 1)
   acf(f[1,1,])
   
   # Uniquenesses

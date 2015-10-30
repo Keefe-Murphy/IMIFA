@@ -26,7 +26,7 @@ gibbs.single   <- function(data=data, n.iters=50000, Q=2,
     mu         <- mu.store[,1]    <- mvrnorm(mu=rep(0, P), Sigma=mu.sigma)             
     f          <- f.store[,,1]    <- mvrnorm(n=N, mu=rep(0, Q), Sigma=diag(Q))         
     load       <- load.store[,,1] <- mvrnorm(n=P, mu=rep(0, Q), Sigma=l.sigma)         
-    psi        <- psi.store[,1]   <- rinvgamma(P, shape=psi.alpha/2, scale=psi.beta/2) 
+    psi        <- psi.store[,1]   <- rinvgamma(n=P, shape=psi.alpha/2, scale=psi.beta/2) 
   
   # Iterate
     for(iter in 2:n.iters) { 
