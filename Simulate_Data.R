@@ -2,6 +2,10 @@
 ### Simulate Data (Single Case) ###
 ###################################
 
+# Preamble
+  sim.pkgs <- c("MCMCpack")
+  invisible(lapply(sim.pkgs, library, ch=T))
+
 P <- 50
 Q <- 10
 N <- 1500

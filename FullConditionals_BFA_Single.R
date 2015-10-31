@@ -1,21 +1,25 @@
 ####################################################################################
 ### Define full conditional functions for Bayesian Factor Analysis (Single Case) ###
 ####################################################################################
-  
+
+# Preamble 
+  fc.pkgs <- c("MCMCpack", "compiler")
+  invisible(lapply(fc.pkgs, library, ch=T))
+
 # Means
-  sim.mu      <- function(mu.sigma, N, P, psi, data, f, load, ...) {
-    mu.omega  <- solve(solve(mu.sigma) + N * solve(diag(psi)))
+  sim.mu      <- function(mu.sigma, N, P, psi.inv, data, f, load, ...) {
+    mu.omega  <- diag(1/(mu.sigma + N * psi.inv))
     mvrnorm(mu=rep(0, P), Sigma=mu.omega) +
-      crossprod(mu.omega, solve(diag(psi))) %*% t(t(colSums(data)) - t(colSums(f)) %*% t(load)) }
+      crossprod(mu.omega, diag(psi.inv)) %*% t(t(colSums(data)) - t(colSums(f)) %*% t(load)) }
   sim.mu      <- cmpfun(sim.mu)
 
 # Scores
-  sim.omega.f <- function(Q, load, psi, ...) {
-    f.omega.a <- solve(diag(Q) + crossprod(load, solve(diag(psi))) %*% load)
-    f.omega.b <- tcrossprod(f.omega.a, load) %*% solve(diag(psi))
+  sim.omega.f <- function(Q, load, psi.inv, ...) {
+    f.omega.a <- solve(diag(Q) + crossprod(load, diag(psi.inv)) %*% load)
+    f.omega.b <- tcrossprod(f.omega.a, load) %*% diag(psi.inv)
     return(list(A = f.omega.a, B = f.omega.b)) }
   sim.omega.f <- cmpfun(sim.omega.f)
-
+  
   sim.scores  <- function(f.omega, Q, data.i, mu, ...) { 
     mvrnorm(mu=rep(0, Q), Sigma=f.omega$A) + 
       f.omega$B %*% (data.i - mu) }
@@ -23,7 +27,7 @@
 
 # Loadings
   sim.load    <- function(l.sigma, Q, f, psi.j, data.j, mu.j, ...) {
-    l.omega   <- solve(solve(l.sigma) + (1/psi.j) * crossprod(f))
+    l.omega   <- solve(l.sigma + (1/psi.j) * crossprod(f))
     t(mvrnorm(mu=rep(0, Q), Sigma=l.omega) + 
         (1/psi.j * tcrossprod(l.omega, f)) %*% (data.j - mu.j)) }
   sim.load    <- cmpfun(sim.load)

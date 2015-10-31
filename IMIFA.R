@@ -6,11 +6,15 @@
   dataDirectory <- "C:/Users/Windows/Documents/Claire IMIFA"
   setwd(dataDirectory)
   set.seed(21092015)
-  library(MASS)
-  library(compiler)
-  library(pgmm)
-  library(MCMCpack)
-
+  pkgs <- c("pgmm")
+  invisible(lapply(pkgs, library, ch=T))
+  # WARNING: Remove everything
+    rm(list = ls(all = TRUE))
+  # WARNING: Remove loaded libraries
+    pkgs <- names(sessionInfo()$otherPkgs)
+    pkgs <- paste('package:', pkgs, sep = "")
+    invisible(lapply(pkgs, detach, ch = T, unload = T, force= T))
+    
 # Read in the data
   data(wine); wine$Label <- wine[,1]; wine <- wine[,-1]
   #subjectmarks <- read.csv(paste(dataDirectory,"/Data/","SubjectMarks.csv",sep=""))
@@ -19,7 +23,7 @@
   # Simulate data
     #source(paste(dataDirectory,"/IMIFA-GIT/Simulate_Data.R",sep=""))
     #save(data, mu.true, f.true, load.true, psi.true, eps.true, file=paste(dataDirectory,"/Data/Simulated_Data.Rdata",sep=""))
-    load(file=paste(dataDirectory,"/Data/Simulated_Data.Rdata",sep=""),envir=.GlobalEnv)
+    load(file=paste(dataDirectory,"/Simulations/Simulated_Data.Rdata",sep=""),envir=.GlobalEnv)
 
 # Define full conditional functions
   source(paste(dataDirectory,"/IMIFA-GIT/FullConditionals_BFA_Single.R",sep=""))
@@ -45,18 +49,18 @@
 # Convergence diagnostics (optional additional burnin & thinning)
   burnin  <- 1
   thin    <- 1
-  n.store <- seq(from=burnin + 1, to=tail(dim(sim$mu), n=1), by=thin)
-  mu      <- sim$mu[,n.store]
-  f       <- sim$f[,,n.store]
-  load    <- sim$load[,,n.store]
-  psi     <- sim$psi[,n.store]
+  store   <- seq(from=burnin + 1, to=sim$n.store, by=thin)
+  mu      <- sim$mu[,store]
+  f       <- sim$f[,,store]
+  load    <- sim$load[,,store]
+  psi     <- sim$psi[,store]
 
 # Loadings matrix / identifiability / # etc.
   l.temp  <- sim$load[,,burnin]
-  for(b in 1:tail(dim(load), n=1)) {
+  for(b in 1:length(store)) {
     rot       <- procrustes(X=load[,,b], Xstar=l.temp)$R
     load[,,b] <- load[,,b] %*% rot
-    f[,,b]    <- t(t(rot) %*% t(f[,,b]))
+    f[,,b]    <- t(f[,,b] %*% rot)
   }
 
 # Plots & posterior summaries etc.
@@ -74,8 +78,8 @@
     post.f <- apply(f, c(1,2), mean)
     plot(post.f, type="n")
     text(post.f[,1], post.f[,2], 1:nrow(post.f), col=if(exists("Label", where=data)) data$Label else 1)
-    plot(f[,,tail(dim(f), n=1)], type="n")
-    text(f[,1,tail(dim(f), n=1)], f[,2,tail(dim(f), n=1)], 1:nrow(post.f), col=if(exists("Label"), where=data) data$Label else 1)
+    plot(f[,,length(store)], type="n")
+    text(f[,1,length(store)], f[,2,length(store)], 1:nrow(post.f), col=if(exists("Label", where=data)) data$Label else 1)
     acf(f[1,1,])
     
   # Uniquenesses
