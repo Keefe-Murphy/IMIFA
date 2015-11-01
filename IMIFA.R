@@ -57,8 +57,8 @@
     sim$time     <- list(Total = total.time, Average = average.time); sim$time
 
 # Save / Load results
-  save(sim,file=paste(dataDirectory, "/Simulations/Wine Simulations.Rdata", sep="")) # in server, tick box, export
-  load(file=paste(dataDirectory, "/Simulations/Wine Simulations.Rdata", sep=""), envir=.GlobalEnv)
+  save(sim,file=paste(dataDirectory, "/Simulations/Wine_Simulations.Rdata", sep="")) # in server, tick box, export
+  load(file=paste(dataDirectory, "/Simulations/Wine_Simulations.Rdata", sep=""), envir=.GlobalEnv)
 
 # NB: You can check your answer by plotting
 #     the scores of a 2-factor model to the
@@ -70,8 +70,9 @@
   
   if(length(range.Q) == 1) {
     Q.ind <- 1 
+    Q     <- range.Q
     } else {
-    source(paste(dataDirectory, "/IMIFA-GIT/Tune_Parameters.R", sep=""))
+      source(paste(dataDirectory, "/IMIFA-GIT/Tune_Parameters.R", sep=""))
   }
   
   store   <- seq(from=burnin + 1, to=sim[[Q.ind]]$n.store, by=thin)
