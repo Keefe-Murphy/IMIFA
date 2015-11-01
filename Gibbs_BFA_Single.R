@@ -2,6 +2,9 @@
 ### Gibbs Sampler for Bayesian Factor Analysis (Single Case) ###
 ################################################################
   
+# Preamble
+  source(paste(dataDirectory, "/IMIFA-GIT/FullConditionals_BFA_Single.R", sep=""))
+
 gibbs.single   <- function(data=data, n.iters=50000, Q=2, 
                          sigma.mu=0.5, sigma.l=0.5, psi.alpha=5, psi.beta=5, 
                          burnin=(n.iters/5) - 1, thin=2, scaling=T, ...) {
