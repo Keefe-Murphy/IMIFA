@@ -7,9 +7,9 @@
   invisible(lapply(fc.pkgs, library, ch=T))
 
 # Means
-  sim.mu      <- function(mu.sigma, psi.inv, data, f, load, ...) {
+  sim.mu      <- function(mu.sigma, psi.inv, sum.data, sum.f, load, ...) {
     mu.omega  <- diag(1/(mu.sigma + N * psi.inv))
-    mu.mu     <- crossprod(crossprod(mu.omega, diag(psi.inv)), t(t(colSums(data)) - t(load %*% colSums(f))))
+    mu.mu     <- crossprod(crossprod(mu.omega, diag(psi.inv)), t(t(sum.data) - t(load %*% sum.f)))
       mvrnorm(mu=rep(0, P), Sigma=mu.omega) + mu.mu 
   }; sim.mu      <- cmpfun(sim.mu)
 
@@ -20,21 +20,21 @@
       return(list(A = f.omega.a, B = f.omega.b)) 
   }; sim.omega.f <- cmpfun(sim.omega.f)
   
-  sim.scores  <- function(f.omega, Q, data.i, mu, ...) { 
-    mu.f      <- f.omega$B %*% (data.i - mu)
+  sim.scores  <- function(f.omega, Q, c.data.i, ...) { 
+    mu.f      <- f.omega$B %*% c.data.i
       mvrnorm(mu=rep(0, Q), Sigma=f.omega$A) + mu.f 
   }; sim.scores  <- cmpfun(sim.scores)
 
 # Loadings
-  sim.load    <- function(l.sigma, Q, data.j, mu.j, f, psi.j, FtF, ...) {
+  sim.load    <- function(l.sigma, Q, c.data.j, f, psi.j, FtF, ...) {
     l.omega   <- solve(l.sigma + 1/psi.j * FtF)
-    mu.load   <- 1/psi.j * tcrossprod(l.omega, f) %*% (data.j - mu.j)
+    mu.load   <- 1/psi.j * tcrossprod(l.omega, f) %*% c.data.j
       t(mvrnorm(mu=rep(0, Q), Sigma=l.omega) + mu.load) 
   }; sim.load    <- cmpfun(sim.load)
 
 # Uniquenesses
-  sim.psi     <- function(data.j, mu.j, f, load.j, ...) { 
-    scale.tmp <- sum(data.j - mu.j - tcrossprod(load.j, f))
+  sim.psi     <- function(c.data.j, f, load.j, ...) { 
+    scale.tmp <- sum(c.data.j - tcrossprod(load.j, f))
       rinvgamma(1, shape=(N + psi.alpha)/2, 
                 scale=(scale.tmp * scale.tmp + psi.beta)/2) 
   }; sim.psi     <- cmpfun(sim.psi)

@@ -38,23 +38,25 @@
         cat(paste0("Iteration: ", iter, "\n"))
       }
       
-      mu         <- sim.mu(mu.sigma, psi.inv, data, f, load)
+      sum.data   <- colSums(data)
+      sum.f      <- colSums(f)
+      mu         <- sim.mu(mu.sigma, psi.inv, sum.data, sum.f, load)
       f.omega    <- sim.omega.f(Q, load, psi.inv)
-      
+            
       for (i in 1:N) {
-        data.i   <- data[i,]
-        f[i,]    <- sim.scores(f.omega, Q, data.i, mu)
+        c.data.i   <- data[i,] - mu
+        f[i,]    <- sim.scores(f.omega, Q, c.data.i)
       }
       FtF        <- crossprod(f)
         
       for (j in 1:P) {
         psi.j    <- psi[j]
-        data.j   <- data[,j]
-        mu.j     <- mu[j]
-        load[j,] <- load.j <- sim.load(l.sigma, Q, data.j, mu.j, f, psi.j, FtF)
-        psi[j]   <- sim.psi(data.j, mu.j, f, load.j)
+        c.data.j <- data[,j] - mu[j]
+        load[j,] <- load.j <- sim.load(l.sigma, Q, c.data.j, f, psi.j, FtF)
+        psi[j]   <- sim.psi(c.data.j, f, load.j)
       } 
         psi.inv  <- 1/psi
+      
       if(iter > burnin && iter %% thin == 0) {
         new.iter <- ceiling((iter-burnin)/thin)
         mu.store[,new.iter]    <- mu  
