@@ -29,12 +29,16 @@ gibbs.single   <- function(data=data, n.iters=50000, Q=2,
     load       <- load.store[,,1] <- mvrnorm(n=P, mu=rep(0, Q), Sigma=sigma.l * diag(Q))         
     psi        <- psi.store[,1]   <- rinvgamma(n=P, shape=psi.alpha/2, scale=psi.beta/2) 
     mu.sigma   <- 1/sigma.mu
-    l.sigma    <- 1/sigma.l
+    l.sigma    <- 1/sigma.l * diag(Q)
     psi.inv    <- 1/psi
   
   # Iterate
     for(iter in 2:n.iters) { 
-      if(iter %% (n.iters/100) == 0) cat(paste0("Iteration: ", iter, "\n"))
+      if(iter < n.iters/10 && iter %% (n.iters/100) == 0) {
+        cat(paste0("Iteration: ", iter, "\n"))
+        } else if (iter %% (n.iters/10) == 0) {
+        cat(paste0("Iteration: ", iter, "\n"))
+      }
       
       mu         <- sim.mu(mu.sigma, N, P, psi.inv, data, f, load)
       f.omega    <- sim.omega.f(Q, load, psi.inv)

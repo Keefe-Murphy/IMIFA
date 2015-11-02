@@ -10,7 +10,7 @@
   sim.mu      <- function(mu.sigma, N, P, psi.inv, data, f, load, ...) {
     mu.omega  <- diag(1/(mu.sigma + N * psi.inv))
     mvrnorm(mu=rep(0, P), Sigma=mu.omega) +
-      crossprod(mu.omega, diag(psi.inv)) %*% t(t(colSums(data)) - t(load %*% colSums(f))) }
+      crossprod(crossprod(mu.omega, diag(psi.inv)), t(t(colSums(data)) - t(load %*% colSums(f)))) }
   sim.mu      <- cmpfun(sim.mu)
 
 # Scores
@@ -27,9 +27,9 @@
 
 # Loadings
   sim.load    <- function(l.sigma, Q, f, psi.j, data.j, mu.j, ...) {
-    l.omega   <- solve(l.sigma + (1/psi.j) * crossprod(f))
+    l.omega   <- solve(l.sigma + 1/psi.j * crossprod(f))
     t(mvrnorm(mu=rep(0, Q), Sigma=l.omega) + 
-        (1/psi.j * tcrossprod(l.omega, f)) %*% (data.j - mu.j)) }
+        1/psi.j * tcrossprod(l.omega, f) %*% (data.j - mu.j)) }
   sim.load    <- cmpfun(sim.load)
 
 # Uniquenesses

@@ -22,7 +22,7 @@
 # Define full conditional & Gibbs Sampler functions for desired case
   if(case == 'single') {
     source(paste(dataDirectory, "/IMIFA-GIT/Gibbs_BFA_Single.R", sep=""))
-  } else {
+    } else {
     stop("Not yet implented for other cases.")
   }
 
