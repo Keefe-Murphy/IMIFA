@@ -19,6 +19,13 @@
     pkgs <- paste('package:', pkgs, sep = "")
     invisible(lapply(pkgs, detach, ch = T, unload = T, force= T))
     
+# Define full conditional & Gibbs Sampler functions for desired case
+  if(case == 'single') {
+    source(paste(dataDirectory, "/IMIFA-GIT/Gibbs_BFA_Single.R", sep=""))
+  } else {
+    stop("Not yet implented for other cases.")
+  }
+
 # Read in the data
   data(wine); wine$Label <- as.factor(wine[,1]); wine <- wine[,-1]
   #subjectmarks <- read.csv(paste(dataDirectory, "/Data/", "SubjectMarks.csv", sep=""))
@@ -28,18 +35,11 @@
     #source(paste(dataDirectory, "/IMIFA-GIT/Simulate_Data.R", sep=""))
     #save(data, mu.true, f.true, load.true, psi.true, eps.true, file=paste(dataDirectory,"/Data/Simulated_Data.Rdata", sep=""))
     load(file=paste(dataDirectory, "/Simulations/Simulated_Data.Rdata", sep=""), envir=.GlobalEnv)
-
-# Define full conditional & Gibbs Sampler functions for desired case
-  if(case == 'single') {
-    source(paste(dataDirectory, "/IMIFA-GIT/Gibbs_BFA_Single.R", sep=""))
-  } else {
-    stop("Not yet implented for other cases.")
-  }
     
 # Run the Gibbs Sampler
   data    <- data
   n.iters <- 50000
-  range.Q <- 2         # can be SCALAR or VECTOR; scalar preferred!
+  range.Q <- 2:2         # can be SCALAR or VECTOR; scalar preferred!
   # Monitor Time
     sim   <- vector("list", length(range.Q))
     start.time <- proc.time()

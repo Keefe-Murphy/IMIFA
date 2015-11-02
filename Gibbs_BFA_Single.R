@@ -18,7 +18,7 @@ gibbs.single   <- function(data=data, n.iters=50000, Q=2,
   # Define & initialise variables
     N          <- nrow(data)
     P          <- ncol(data)
-    if (Q>=P) stop ("Number of factors must be less than the number of variables")
+    if (Q >= P) stop ("Number of factors must be less than the number of variables")
     store      <- ceiling((n.iters - burnin)/thin)
     mu.store   <- matrix(NA, nr=P, nc=store);    rownames(mu.store)   <- colnames(data) 
     f.store    <- array(NA, dim=c(N, Q, store)); colnames(f.store)    <- paste("Factor",1:Q)

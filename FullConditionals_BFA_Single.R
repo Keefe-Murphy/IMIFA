@@ -10,7 +10,7 @@
   sim.mu      <- function(mu.sigma, N, P, psi.inv, data, f, load, ...) {
     mu.omega  <- diag(1/(mu.sigma + N * psi.inv))
     mvrnorm(mu=rep(0, P), Sigma=mu.omega) +
-      crossprod(mu.omega, diag(psi.inv)) %*% t(t(colSums(data)) - t(colSums(f)) %*% t(load)) }
+      crossprod(mu.omega, diag(psi.inv)) %*% t(t(colSums(data)) - t(load %*% colSums(f))) }
   sim.mu      <- cmpfun(sim.mu)
 
 # Scores
