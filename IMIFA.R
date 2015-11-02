@@ -19,42 +19,45 @@
     pkgs <- paste('package:', pkgs, sep = "")
     invisible(lapply(pkgs, detach, ch = T, unload = T, force= T))
     
-# Define full conditional & Gibbs Sampler functions for desired case
-  if(case == 'single') {
-    source(paste(dataDirectory, "/IMIFA-GIT/Gibbs_BFA_Single.R", sep=""))
-    } else {
-    stop("Not yet implented for other cases.")
-  }
-
-# Read in the data
-  data(wine); wine$Label <- as.factor(wine[,1]); wine <- wine[,-1]
-  #subjectmarks <- read.csv(paste(dataDirectory, "/Data/", "SubjectMarks.csv", sep=""))
-  #cereal       <- read.csv(paste(dataDirectory, "/Data/", "Cereal.csv", sep=""))
+# Read in the data (& call it data)
+  data(wine); wine$Label <- as.factor(wine[,1]); wine <- wine[,-1]; data <- wine; rm("wine")
+  #subjectmarks <- read.csv(paste(dataDirectory, "/Data/", "SubjectMarks.csv", sep="")); data <- subjectmarks; rm("subjectmarks")
+  #cereal       <- read.csv(paste(dataDirectory, "/Data/", "Cereal.csv", sep="")); data <- cereal; rm("cereal")
 
   # Simulate data
     #source(paste(dataDirectory, "/IMIFA-GIT/Simulate_Data.R", sep=""))
     #save(data, mu.true, f.true, load.true, psi.true, eps.true, file=paste(dataDirectory,"/Data/Simulated_Data.Rdata", sep=""))
     load(file=paste(dataDirectory, "/Simulations/Simulated_Data.Rdata", sep=""), envir=.GlobalEnv)
     
-# Run the Gibbs Sampler
-  data    <- data
+# Initialise the Gibbs Sampler & set hyperparameters
+  N       <- nrow(data)
+  P       <- sum(sapply(data, is.numeric))
+  sigma.mu=0.5; sigma.l=0.5; psi.alpha=5; psi.beta=5
   n.iters <- 50000
-  range.Q <- 2:2         # can be SCALAR or VECTOR; scalar preferred!
-  # Monitor Time
-    sim   <- vector("list", length(range.Q))
-    start.time <- proc.time()
-    if(length(range.Q) == 1) {
-      sim[[1]] <- gibbs.single(data, n.iters, Q=range.Q)
+  range.Q <- 2:2        # can be SCALAR or VECTOR; scalar preferred!
+  sim   <- vector("list", length(range.Q))
+      
+  # Define full conditional & Gibbs Sampler functions for desired case
+    if(case == 'single') {
+      source(paste(dataDirectory, "/IMIFA-GIT/Gibbs_BFA_Single.R", sep=""))
     } else {
-      for(q in range.Q) { 
-        q.ind <- q - min(range.Q) + 1
-        sim[[q.ind]] <- gibbs.single(data, n.iters, Q=q)
-        cat(paste0(q.ind/length(range.Q) * 100, "% Complete", "\n"))
-      }
+      stop("Not yet implented for other cases.")
     }
-    total.time   <- proc.time() - start.time
-    average.time <- total.time/length(range.Q)
-    sim$time     <- list(Total = total.time, Average = average.time); sim$time
+
+# Run the Gibbs Sampler
+  start.time <- proc.time()
+  if(length(range.Q) == 1) {
+    sim[[1]] <- gibbs.single(data, n.iters, Q=range.Q)
+  } else {
+    for(q in range.Q) { 
+      q.ind <- q - min(range.Q) + 1
+      sim[[q.ind]] <- gibbs.single(data, n.iters, Q=q)
+      cat(paste0(q.ind/length(range.Q) * 100, "% Complete", "\n"))
+    }
+  }
+  total.time   <- proc.time() - start.time
+  average.time <- total.time/length(range.Q)
+  sim$time     <- list(Total = total.time, Average = average.time); sim$time
 
 # Save / Load results
   save(sim,file=paste(dataDirectory, "/Simulations/Wine_Simulations.Rdata", sep="")) # in server, tick box, export

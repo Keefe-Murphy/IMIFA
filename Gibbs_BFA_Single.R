@@ -3,12 +3,13 @@
 ################################################################
   
 # Preamble
-  source(paste(dataDirectory, "/IMIFA-GIT/FullConditionals_BFA_Single.R", sep=""))
+  if(!exists('sim.mu')) source(paste(dataDirectory, "/IMIFA-GIT/FullConditionals_BFA_Single.R", sep=""))
+  if(any(range.Q) >= P) stop ("Number of factors must be less than the number of variables")
 
-gibbs.single   <- function(data=data, n.iters=50000, Q=2, 
-                         sigma.mu=0.5, sigma.l=0.5, psi.alpha=5, psi.beta=5, 
-                         burnin=(n.iters/5) - 1, thin=2, scaling=T, ...) {
-  
+# Gibbs Sampler Function
+  gibbs.single   <- function(data=data, n.iters=50000, Q=2, 
+                             burnin=(n.iters/5) - 1, thin=2, scaling=T, ...) {
+        
   # Remove non-numeric columns
     data       <- data[sapply(data,is.numeric)]
   
@@ -16,9 +17,6 @@ gibbs.single   <- function(data=data, n.iters=50000, Q=2,
     if (scaling) {data <- scale(data, center=T, scale=F)} else  {data <- as.matrix(data)}
   
   # Define & initialise variables
-    N          <- nrow(data)
-    P          <- ncol(data)
-    if (Q >= P) stop ("Number of factors must be less than the number of variables")
     store      <- ceiling((n.iters - burnin)/thin)
     mu.store   <- matrix(NA, nr=P, nc=store);    rownames(mu.store)   <- colnames(data) 
     f.store    <- array(NA, dim=c(N, Q, store)); colnames(f.store)    <- paste("Factor",1:Q)
@@ -34,26 +32,27 @@ gibbs.single   <- function(data=data, n.iters=50000, Q=2,
   
   # Iterate
     for(iter in 2:n.iters) { 
-      if(iter < n.iters/10 && iter %% (n.iters/100) == 0) {
+      if(iter < n.iters/5 && iter %% (n.iters/100) == 0) {
         cat(paste0("Iteration: ", iter, "\n"))
         } else if (iter %% (n.iters/10) == 0) {
         cat(paste0("Iteration: ", iter, "\n"))
       }
       
-      mu         <- sim.mu(mu.sigma, N, P, psi.inv, data, f, load)
+      mu         <- sim.mu(mu.sigma, psi.inv, data, f, load)
       f.omega    <- sim.omega.f(Q, load, psi.inv)
       
       for (i in 1:N) {
         data.i   <- data[i,]
         f[i,]    <- sim.scores(f.omega, Q, data.i, mu)
       }
-      
+      FtF        <- crossprod(f)
+        
       for (j in 1:P) {
         psi.j    <- psi[j]
         data.j   <- data[,j]
         mu.j     <- mu[j]
-        load[j,] <- load.j <- sim.load(l.sigma, Q, f, psi.j, data.j, mu.j)
-        psi[j]   <- sim.psi(N, psi.alpha, psi.beta, data.j, mu.j, load.j, f)
+        load[j,] <- load.j <- sim.load(l.sigma, Q, data.j, mu.j, f, psi.j, FtF)
+        psi[j]   <- sim.psi(data.j, mu.j, f, load.j)
       } 
         psi.inv  <- 1/psi
       if(iter > burnin && iter %% thin == 0) {
@@ -69,4 +68,4 @@ gibbs.single   <- function(data=data, n.iters=50000, Q=2,
               load    = load.store, 
               psi     = psi.store,
               n.store = store))
-}; gibbs.single   <- cmpfun(gibbs.single)
+  }; gibbs.single    <- cmpfun(gibbs.single)
