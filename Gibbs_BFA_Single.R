@@ -3,7 +3,7 @@
 ################################################################
   
 # Preamble
-  if(!exists('sim.mu')) source(paste(dataDirectory, "/IMIFA-GIT/FullConditionals_BFA_Single.R", sep=""))
+  source(paste(dataDirectory, "/IMIFA-GIT/FullConditionals_BFA_Single.R", sep=""))
   if(any(range.Q) >= P) stop ("Number of factors must be less than the number of variables")
 
 # Gibbs Sampler Function
@@ -44,7 +44,7 @@
       f.omega    <- sim.omega.f(Q, load, psi.inv)
             
       for (i in 1:N) {
-        c.data.i   <- data[i,] - mu
+        c.data.i <- data[i,] - mu
         f[i,]    <- sim.scores(f.omega, Q, c.data.i)
       }
       FtF        <- crossprod(f)

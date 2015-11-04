@@ -137,7 +137,7 @@
            at=seq(0, 1, 1/(Q-1)), labels=1:Q)
       axis(2, cex.axis=0.5, line=-0.5, tick=F, las=1,
            at=seq(0, 1, 1/(nrow(post.load)-1)), labels=rownames(post.load))
-      box(lwd=1)
+      box(lwd=2)
       mtext("Factors", side=1, line=2)
       abline(v=seq(1/(2*(Q-1)), 1-1/(2*(Q-1)), 1/(Q-1)), lty=2, lwd=1)
       invisible(par(def.par))
@@ -148,3 +148,4 @@
     plot(post.psi, type="n")
     text(1:length(post.psi), post.psi, names(post.psi))
     acf(psi[1,])
+####
