@@ -32,7 +32,7 @@
   
   # Iterate
     for(iter in 2:n.iters) { 
-      if(iter < n.iters/5 && iter %% (n.iters/100) == 0) {
+      if(iter < n.iters/10 && iter %% (n.iters/100) == 0) {
         cat(paste0("Iteration: ", iter, "\n"))
         } else if (iter %% (n.iters/10) == 0) {
         cat(paste0("Iteration: ", iter, "\n"))
