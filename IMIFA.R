@@ -7,9 +7,9 @@
   setwd(dataDirectory)
   set.seed(21092015)
   def.par       <- par()
-  cases         <- c("single", "shrinkage", "grouped", "imifa")
-  case          <- 'single'
-  if(!is.element(case, cases)) stop("'case' must be one of 'single', 'shrinkage', 'grouped', or 'imifa'.")
+  cases         <- c("Single", "Shrinkage", "Grouped", "Imifa")
+  case          <- 'Single'
+  if(!is.element(case, cases)) stop("'case' must be one of 'Single', 'Shrinkage', 'Grouped', or 'Imifa'.")
   pkgs          <- c("pgmm")
   invisible(lapply(pkgs, library, ch=T))
   # WARNING: Remove everything
@@ -25,9 +25,9 @@
   #cereal       <- read.csv(paste(dataDirectory, "/Data/", "Cereal.csv", sep="")); data <- cereal; rm("cereal")
 
   # Simulate data
-    #source(paste(dataDirectory, "/IMIFA-GIT/Simulate_Data.R", sep=""))
-    #save(data, mu.true, f.true, load.true, psi.true, eps.true, file=paste(dataDirectory,"/Data/Simulated_Data.Rdata", sep=""))
-    load(file=paste(dataDirectory, "/Simulations/Simulated_Data.Rdata", sep=""), envir=.GlobalEnv)
+    #source(paste(dataDirectory, "/IMIFA-GIT/Simulate_Data_", case, ".R", sep=""))
+    #save(data, mu.true, f.true, load.true, psi.true, eps.true, file=paste(dataDirectory,"/Data/Simulated_Data_", case, ".Rdata", sep=""))
+    load(file=paste(dataDirectory, "/Data/Simulated_Data_", case, ".Rdata", sep=""), envir=.GlobalEnv)
     
 # Initialise the Gibbs Sampler & set hyperparameters
   N        <- nrow(data)
@@ -37,7 +37,7 @@
   range.Q  <- 2:2   # can be SCALAR or VECTOR; scalar preferred!
 
   # Define full conditional & Gibbs Sampler functions for desired case
-    if(case == 'single') {
+    if(case == 'Single') {
       sim    <- vector("list", length(range.Q))
       source(paste(dataDirectory, "/IMIFA-GIT/Gibbs_BFA_Single.R", sep=""))
       } else {
@@ -63,8 +63,8 @@
   sim$time     <- list(Total = total.time, Average = average.time); sim$time
 
 # Save / Load results
-  save(sim,file=paste(dataDirectory, "/Simulations/Wine_Simulations.Rdata", sep="")) # in server, tick box, export
-  load(file=paste(dataDirectory, "/Simulations/Wine_Simulations.Rdata", sep=""), envir=.GlobalEnv)
+  save(sim,file=paste(dataDirectory, "/Simulations/Wine_Simulations_", case, ".Rdata", sep="")) # in server, tick box, export
+  load(file=paste(dataDirectory, "/Simulations/Wine_Simulations_", case, ".Rdata", sep=""), envir=.GlobalEnv)
 
 # NB: You can check your answer by plotting
 #     the scores of a 2-factor model to the
