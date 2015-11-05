@@ -42,16 +42,17 @@
       sum.f      <- colSums(f)
       mu         <- sim.mu(mu.sigma, psi.inv, sum.data, sum.f, load)
       f.omega    <- sim.omega.f(Q, load, psi.inv)
+      c.data     <- sweep(data, 2, mu)
             
       for (i in 1:N) {
-        c.data.i <- data[i,] - mu
+        c.data.i <- c.data[i,]
         f[i,]    <- sim.scores(f.omega, Q, c.data.i)
       }
       FtF        <- crossprod(f)
         
       for (j in 1:P) {
         psi.j    <- psi[j]
-        c.data.j <- data[,j] - mu[j]
+        c.data.j <- c.data[,j]
         load[j,] <- load.j <- sim.load(l.sigma, Q, c.data.j, f, psi.j, FtF)
         psi[j]   <- sim.psi(c.data.j, f, load.j)
       } 
