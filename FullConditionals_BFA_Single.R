@@ -18,58 +18,19 @@
 
 # Scores
   sim.omega.f <- function(Q, load, psi.inv, ...) {
-    f.omega.a <- solve(diag(Q) + crossprod(load, diag(psi.inv)) %*% load)
-    f.omega.b <- tcrossprod(f.omega.a, load) %*% diag(psi.inv)
+    f.omega.a <- diag(Q) + crossprod(load, diag(psi.inv)) %*% load
     U.f       <- chol(f.omega.a)
-      return(list(B = f.omega.b, U.f = U.f))
+    f.omega.b <- tcrossprod(chol2inv(U.f), load) %*% diag(psi.inv)
+    return(list(B = f.omega.b, U.f = U.f))
   }; sim.omega.f <- cmpfun(sim.omega.f)
   
   sim.scores  <- function(f.omega, Q, c.data.i, ...) { 
     z.f       <- rnorm(Q, 0, 1)
-    v.f       <- crossprod(f.omega$U.f, z.f)
+    v.f       <- backsolve(f.omega$U.f, z.f)
     mu.f      <- f.omega$B %*% c.data.i
     mu.f + v.f
   }; sim.scores  <- cmpfun(sim.scores)
-
-# sim.omega.f.old <- function(Q, load, psi.inv, ...) {
-#   f.omega.a <- solve(diag(Q) + crossprod(load, diag(psi.inv)) %*% load)
-#   f.omega.b <- tcrossprod(f.omega.a, load) %*% diag(psi.inv)
-#   return(list(A = f.omega.a, B = f.omega.b))
-# }; sim.omega.f.old <- cmpfun(sim.omega.f.old)
-# 
-# sim.scores.old  <- function(f.omega, Q, c.data.i, ...) { 
-#   mu.f      <- f.omega$B %*% c.data.i
-#   mvrnorm(mu=rep(0, Q), Sigma=f.omega$A) + mu.f 
-# }; sim.scores.old  <- cmpfun(sim.scores.old)
-# 
-# sim.omega.f.2.3 <- function(Q, load, psi.inv, ...) {
-#   f.omega.a <- solve(diag(Q) + crossprod(load, diag(psi.inv)) %*% load)
-#   f.omega.b <- tcrossprod(f.omega.a, load) %*% diag(psi.inv)
-#   U.f       <- chol(f.omega.a)
-#   return(list(B = f.omega.b, U.f = U.f))
-# }; sim.omega.f.2.3 <- cmpfun(sim.omega.f.2.3)
-# 
-# sim.scores.2.3  <- function(f.omega, Q, c.data.i, ...) { 
-#   z.f       <- rnorm(Q, 0, 1)
-#   v.f       <- crossprod(f.omega$U.f, z.f)
-#   mu.f      <- f.omega$B %*% c.data.i
-#   mu.f + v.f
-# }; sim.scores.2.3  <- cmpfun(sim.scores.2.3)
-# 
-# sim.omega.f.2.4 <- function(Q, load, psi.inv, ...) {
-#   f.omega.a <- diag(Q) + crossprod(load, diag(psi.inv)) %*% load
-#   U.f       <- chol(f.omega.a)
-#   f.omega.b <- tcrossprod(chol2inv(U.f), load) %*% diag(psi.inv)
-#   return(list(B = f.omega.b, U.f = U.f))
-# }; sim.omega.f.2.4 <- cmpfun(sim.omega.f.2.4)
-# 
-# sim.scores.2.4  <- function(f.omega, Q, c.data.i, ...) { 
-#   z.f       <- rnorm(Q, 0, 1)
-#   v.f       <- backsolve(f.omega$U.f, z.f)
-#   mu.f      <- f.omega$B %*% c.data.i
-#   mu.f + v.f
-# }; sim.scores.2.4  <- cmpfun(sim.scores.2.4)
-
+  
 #sim.scores.block2.3 <- function(Q, load, psi.inv, c.data, ...) {
 #f.omega.a <- solve(diag(Q) + crossprod(load, diag(psi.inv)) %*% load)
 #f.omega.b <- tcrossprod(f.omega.a, load) %*% diag(psi.inv)

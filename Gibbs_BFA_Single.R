@@ -42,7 +42,7 @@
       sum.f      <- colSums(f)
       mu         <- sim.mu(mu.sigma, psi.inv, sum.data, sum.f, load)
       f.omega    <- sim.omega.f(Q, load, psi.inv)
-      c.data     <- sweep(data, 2, mu)
+      c.data     <- sweep(data, 2, mu, FUN="-")
             
       for (i in 1:N) {
         c.data.i <- c.data[i,]
