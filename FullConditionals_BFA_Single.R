@@ -31,96 +31,74 @@
     mu.f + v.f
   }; sim.scores  <- cmpfun(sim.scores)
 
-# old method
-##system.time(for(i in 1:10000){ # 5 seconds
-#f.omega.a <- solve(diag(Q) + crossprod(load, diag(psi.inv)) %*% load)
-#f.omega.b <- tcrossprod(f.omega.a, load) %*% diag(psi.inv)
-#mu.f      <- f.omega.b %*% c.data[1,]
-#mvrnorm(mu=rep(0, Q), Sigma=f.omega.a) + mu.f 
-##})
+# sim.omega.f.old <- function(Q, load, psi.inv, ...) {
+#   f.omega.a <- solve(diag(Q) + crossprod(load, diag(psi.inv)) %*% load)
+#   f.omega.b <- tcrossprod(f.omega.a, load) %*% diag(psi.inv)
+#   return(list(A = f.omega.a, B = f.omega.b))
+# }; sim.omega.f.old <- cmpfun(sim.omega.f.old)
+# 
+# sim.scores.old  <- function(f.omega, Q, c.data.i, ...) { 
+#   mu.f      <- f.omega$B %*% c.data.i
+#   mvrnorm(mu=rep(0, Q), Sigma=f.omega$A) + mu.f 
+# }; sim.scores.old  <- cmpfun(sim.scores.old)
+# 
+# sim.omega.f.2.3 <- function(Q, load, psi.inv, ...) {
+#   f.omega.a <- solve(diag(Q) + crossprod(load, diag(psi.inv)) %*% load)
+#   f.omega.b <- tcrossprod(f.omega.a, load) %*% diag(psi.inv)
+#   U.f       <- chol(f.omega.a)
+#   return(list(B = f.omega.b, U.f = U.f))
+# }; sim.omega.f.2.3 <- cmpfun(sim.omega.f.2.3)
+# 
+# sim.scores.2.3  <- function(f.omega, Q, c.data.i, ...) { 
+#   z.f       <- rnorm(Q, 0, 1)
+#   v.f       <- crossprod(f.omega$U.f, z.f)
+#   mu.f      <- f.omega$B %*% c.data.i
+#   mu.f + v.f
+# }; sim.scores.2.3  <- cmpfun(sim.scores.2.3)
+# 
+# sim.omega.f.2.4 <- function(Q, load, psi.inv, ...) {
+#   f.omega.a <- diag(Q) + crossprod(load, diag(psi.inv)) %*% load
+#   U.f       <- chol(f.omega.a)
+#   f.omega.b <- tcrossprod(chol2inv(U.f), load) %*% diag(psi.inv)
+#   return(list(B = f.omega.b, U.f = U.f))
+# }; sim.omega.f.2.4 <- cmpfun(sim.omega.f.2.4)
+# 
+# sim.scores.2.4  <- function(f.omega, Q, c.data.i, ...) { 
+#   z.f       <- rnorm(Q, 0, 1)
+#   v.f       <- backsolve(f.omega$U.f, z.f)
+#   mu.f      <- f.omega$B %*% c.data.i
+#   mu.f + v.f
+# }; sim.scores.2.4  <- cmpfun(sim.scores.2.4)
 
-#algorithm 2.3
-##system.time(for(i in 1:10000){ # <3 seconds # gives slightly different answer to 2.4
+#sim.scores.block2.3 <- function(Q, load, psi.inv, c.data, ...) {
 #f.omega.a <- solve(diag(Q) + crossprod(load, diag(psi.inv)) %*% load)
 #f.omega.b <- tcrossprod(f.omega.a, load) %*% diag(psi.inv)
 #U.f       <- chol(f.omega.a)
-#z.f       <- rnorm(Q, 0, 1)
-#v.f       <- crossprod(U.f, z.f)
-#mu.f      <- f.omega.b %*% c.data[1,]
-#mu.f + v.f
-##})
-
-# algorithm 2.4 (fastest!)
-##system.time(for(i in 1:10000){ # > 2 seconds #gives slightly different answer to 2.3
-#f.omega.a <- diag(Q) + crossprod(load, diag(psi.inv)) %*% load
-#U.f       <- chol(f.omega.a)
-#f.omega.b <- tcrossprod(chol2inv(U.f), load) %*% diag(psi.inv)
-#z.f       <- rnorm(Q, 0, 1)
-#v.f       <- backsolve(U.f, z.f)
-#mu.f      <- f.omega.b %*% c.data[1,]
-#mu.f + v.f
-#})
-
-## block update (2.3) # gives same answer for first row as individual method
-##system.time(for(i in 1:(10000/N)){ # >8 seconds
-#f.omega.a <- solve(diag(Q) + crossprod(load, diag(psi.inv)) %*% load)
-#f.omega.b <- tcrossprod(f.omega.a, load) %*% diag(psi.inv)
-#U.f       <- chol(f.omega.a)
-#z.fb      <- mvrnorm(n=N, mu=rep(0, Q), Sigma=diag(Q))
-#z.fb[1,]  <- z.f
-#v.f       <- z.fb %*% U.f
+#z.f       <- mvrnorm(n=N, mu=rep(0, Q), Sigma=diag(Q))
+#v.f       <- z.f %*% U.f
 #mu.f      <- tcrossprod(c.data, f.omega.b)
 #mu.f + v.f
-#})
+#}; sim.scores.block2.3 <- cmpfun(sim.scores.block2.3)
 
-## block update (2.4) # (fastest!) # gives same answer for first row as individual method
-##system.time(for(i in 1:(10000/N)){ # <8 seconds 
+#sim.scores.block2.4 <- function(Q, load, psi.inv, c.data, ...) {
 #f.omega.a <- diag(Q) + crossprod(load, diag(psi.inv)) %*% load
 #U.f       <- chol(f.omega.a)
 #f.omega.b <- tcrossprod(chol2inv(U.f), load) %*% diag(psi.inv)
-#z.fb     <- mvrnorm(n=N, mu=rep(0, Q), Sigma=diag(Q))
-#z.fb[1,] <- z.f
+#z.f       <- mvrnorm(n=N, mu=rep(0, Q), Sigma=diag(Q))
 #v.f       <- backsolve(U.f, z.f)
 #mu.f      <- tcrossprod(c.data, f.omega.b)
 #t(t(mu.f) + v.f)
-#})
+#}; sim.scores.block2.4 <- cmpfun(sim.scores.block2.4)
 
 # Loadings
   sim.load    <- function(l.sigma, Q, c.data.j, f, psi.j, FtF, ...) {
-    l.omega   <- solve(l.sigma + 1/psi.j * FtF)
-    U.load    <- chol(l.omega)
-    z.load    <- rnorm(Q, 0, 1)
-    v.load    <- crossprod(U.load, z.load)
-    mu.load   <- 1/psi.j * tcrossprod(l.omega, f) %*% c.data.j
+    l.omega <- l.sigma + 1/psi.j * FtF
+    U.load  <- chol(l.omega)
+    z.load  <- rnorm(Q, 0, 1)
+    v.load  <- backsolve(U.load, z.load)
+    mu.load <- 1/psi.j * tcrossprod(chol2inv(U.load), f) %*% c.data.j
     t(mu.load + v.load)
   }; sim.load    <- cmpfun(sim.load)
-
-# old method
-##system.time(for(i in 1:10000){ # 5 seconds
-#l.omega   <- solve(l.sigma + 1/psi.j * FtF)
-#mu.load   <- 1/psi.j * tcrossprod(l.omega, f) %*% c.data[,j]
-#t(mvrnorm(mu=rep(0, Q), Sigma=l.omega) + mu.load)
-##})
-
-# algorithm 2.3
-##system.time(for(i in 1:10000){ # 3 seconds #gives slightly different answer than 2.4
-#l.omega   <- solve(l.sigma + 1/psi.j * FtF)
-#U.load    <- chol(l.omega)
-#z.load    <- rnorm(Q, 0, 1)
-#v.load    <- crossprod(U.load, z.load)
-#mu.load   <- 1/psi.j * tcrossprod(l.omega, f) %*% c.data[,j]
-#t(mu.load + v.load)
-##})
-
-# algorithm 2.4 (fastest!)
-##system.time(for(i in 1:10000){ # >2 seconds #gives slightly different answer than 2.3
-#l.omega <- l.sigma + 1/psi.j * FtF
-#U.load  <- chol(l.omega)
-#z.load  <- rnorm(Q, 0, 1)
-#v.load  <- backsolve(U.load, z.load)
-#mu.load <- 1/psi.j * tcrossprod(chol2inv(U.load), f) %*% c.data[,j]
-#t(mu.load + v.load)
-##})
 
 # Uniquenesses
   sim.psi     <- function(c.data.j, f, load.j, ...) { 
