@@ -22,6 +22,7 @@
     f.store    <- array(NA, dim=c(N, Q, store)); colnames(f.store)    <- paste("Factor",1:Q)
     load.store <- array(NA, dim=c(P, Q, store)); rownames(load.store) <- colnames(data); colnames(load.store) <- paste("Factor",1:Q)
     psi.store  <- matrix(NA, nr=P, nc=store);    rownames(psi.store)  <- colnames(data)
+    
     mu         <- mu.store[,1]    <- mvrnorm(mu=rep(0, P), Sigma=sigma.mu * diag(P))             
     f          <- f.store[,,1]    <- mvrnorm(n=N, mu=rep(0, Q), Sigma=diag(Q))         
     load       <- load.store[,,1] <- mvrnorm(n=P, mu=rep(0, Q), Sigma=sigma.l * diag(Q))         
@@ -41,19 +42,16 @@
       sum.data   <- colSums(data)
       sum.f      <- colSums(f)
       mu         <- sim.mu(mu.sigma, psi.inv, sum.data, sum.f, load)
-      f.omega    <- sim.omega.f(Q, load, psi.inv)
+      
       c.data     <- sweep(data, 2, mu, FUN="-")
-            
-      for (i in 1:N) {
-        c.data.i <- c.data[i,]
-        f[i,]    <- sim.scores(f.omega, Q, c.data.i)
-      }
+      f          <- sim.scores(Q, load, psi.inv, c.data)
       FtF        <- crossprod(f)
         
       for (j in 1:P) {
         psi.j    <- psi[j]
         c.data.j <- c.data[,j]
         load[j,] <- load.j <- sim.load(l.sigma, Q, c.data.j, f, psi.j, FtF)
+        
         psi[j]   <- sim.psi(c.data.j, f, load.j)
       } 
         psi.inv  <- 1/psi
