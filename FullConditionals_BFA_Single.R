@@ -16,33 +16,6 @@
     mu.mu + v.mu
   }; sim.mu      <- cmpfun(sim.mu)
 
-# old method
-##system.time(for(i in 1:10000){ #  ~6 seconds
-#mu.omega  <- diag(1/(mu.sigma + N * psi.inv))
-#mu.mu     <- crossprod(crossprod(mu.omega, diag(psi.inv)), t(t(sum.data) - t(load %*% sum.f)))
-#mvrnorm(mu=rep(0, P), Sigma=mu.omega) + mu.mu 
-##})
-
-# algorithm 2.3 (fastest!)
-##system.time(for(i in 1:10000){ # < 3 seconds # gives same answer as 2.4
-#mu.omega  <- diag(1/(mu.sigma + N * psi.inv))
-#U.mu      <- chol(mu.omega)
-#z.mu      <- rnorm(P, 0, 1)
-#v.mu      <- crossprod(U.mu, z.mu)
-#mu.mu     <- crossprod(crossprod(mu.omega, diag(psi.inv)), t(t(sum.data) - t(load %*% sum.f)))
-#mu.mu + v.mu
-##})
-
-# algorithm 2.4
-##system.time(for(i in 1:10000){ # >4 seconds # gives same answer as 2.3
-#mu.omega  <- diag(mu.sigma + N * psi.inv)
-#U.mu      <- chol(mu.omega)
-#z.mu      <- rnorm(P, 0, 1)
-#v.mu      <- backsolve(U.mu, z.mu)
-#mu.mu     <- crossprod(crossprod(chol2inv(U.mu), diag(psi.inv)), t(t(sum.data) - t(load %*% sum.f)))
-#mu.mu + v.mu
-#})
-
 # Scores
   sim.omega.f <- function(Q, load, psi.inv, ...) {
     f.omega.a <- solve(diag(Q) + crossprod(load, diag(psi.inv)) %*% load)
@@ -89,7 +62,7 @@
 #})
 
 ## block update (2.3) # gives same answer for first row as individual method
-##system.time(for(i in 1:10000){ # >8 seconds
+##system.time(for(i in 1:(10000/N)){ # >8 seconds
 #f.omega.a <- solve(diag(Q) + crossprod(load, diag(psi.inv)) %*% load)
 #f.omega.b <- tcrossprod(f.omega.a, load) %*% diag(psi.inv)
 #U.f       <- chol(f.omega.a)
@@ -101,7 +74,7 @@
 #})
 
 ## block update (2.4) # (fastest!) # gives same answer for first row as individual method
-##system.time(for(i in 1:10000){ # <8 seconds 
+##system.time(for(i in 1:(10000/N)){ # <8 seconds 
 #f.omega.a <- diag(Q) + crossprod(load, diag(psi.inv)) %*% load
 #U.f       <- chol(f.omega.a)
 #f.omega.b <- tcrossprod(chol2inv(U.f), load) %*% diag(psi.inv)

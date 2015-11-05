@@ -30,11 +30,11 @@
     load(file=paste(dataDirectory, "/Simulations/Simulated_Data.Rdata", sep=""), envir=.GlobalEnv)
     
 # Initialise the Gibbs Sampler & set hyperparameters
-  N       <- nrow(data)
-  P       <- sum(sapply(data, is.numeric))
-  sigma.mu=0.5; sigma.l=0.5; psi.alpha=5; psi.beta=5
-  n.iters <- 50000
-  range.Q <- 2:2        # can be SCALAR or VECTOR; scalar preferred!
+  N        <- nrow(data)
+  P        <- sum(sapply(data, is.numeric))
+  sigma.mu <- 0.5; sigma.l <- 0.5; psi.alpha <- 5; psi.beta <- 5
+  n.iters  <- 50000
+  range.Q  <- 2:2   # can be SCALAR or VECTOR; scalar preferred!
 
   # Define full conditional & Gibbs Sampler functions for desired case
     if(case == 'single') {
