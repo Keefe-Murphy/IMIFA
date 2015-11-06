@@ -19,4 +19,4 @@
   Q.ind <- which.max(prop.var)
   Q     <- range.Q[Q.ind]
   points(x=Q.ind, y=prop.var[Q.ind], col="red", cex=1.5, bg="red", pch=21)
-  print(list(Q=Q))
+  print(list(Q=Q, Warning="But the user should choose Q based on the attached plot!"))

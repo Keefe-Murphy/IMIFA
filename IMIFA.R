@@ -25,9 +25,9 @@
   #cereal       <- read.csv(paste(dataDirectory, "/Data/", "Cereal.csv", sep="")); data <- cereal; rm("cereal")
 
   # Simulate data
-    #source(paste(dataDirectory, "/IMIFA-GIT/Simulate_Data_", case, ".R", sep=""))
-    #save(data, mu.true, f.true, load.true, psi.true, eps.true, file=paste(dataDirectory,"/Data/Simulated_Data_", case, ".Rdata", sep=""))
-    load(file=paste(dataDirectory, "/Data/Simulated_Data_", case, ".Rdata", sep=""), envir=.GlobalEnv)
+    #source(paste(dataDirectory, "/IMIFA-GIT/Simulate_Data.R", sep=""))
+    #save(data, file=paste(dataDirectory,"/Data/Simulated_Data.Rdata", sep=""))
+    load(file=paste(dataDirectory, "/Data/Simulated_Data.Rdata", sep=""), envir=.GlobalEnv)
     
 # Initialise the Gibbs Sampler & set hyperparameters
   N        <- nrow(data)
@@ -81,6 +81,11 @@
       source(paste(dataDirectory, "/IMIFA-GIT/Tune_Parameters.R", sep=""))
   }
   
+    # For user defined Q based on scree plot 
+    # (rather than Q.ind <- which.max(prop.var); Q <- range.Q[Q.ind])
+      # Q = 
+      # Q.ind <- which(range.Q == Q)
+
   store   <- seq(from=burnin + 1, to=sim[[Q.ind]]$n.store, by=thin)
   mu      <- sim[[Q.ind]]$mu[,store]
   f       <- sim[[Q.ind]]$f[,,store]
