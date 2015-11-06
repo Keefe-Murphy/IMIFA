@@ -23,8 +23,8 @@
     f.omega.b <- tcrossprod(chol2inv(U.f), load) %*% diag(psi.inv)
     z.f       <- mvrnorm(n=N, mu=rep(0, Q), Sigma=diag(Q))
     v.f       <- solve(U.f, t(z.f))
-    mu.f      <- tcrossprod(c.data, f.omega.b)
-      t(v.f + t(mu.f))
+    mu.f      <- tcrossprod(f.omega.b, c.data)
+      t(mu.f + v.f)
 }; sim.scores <- cmpfun(sim.scores)
 
 # Loadings

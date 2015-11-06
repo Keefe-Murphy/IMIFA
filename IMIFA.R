@@ -4,6 +4,7 @@
 
 # Preamble
   dataDirectory <- "C:/Users/Windows/Documents/Claire IMIFA"
+# dataDirectory <- getwd() # if using R server
   setwd(dataDirectory)
   set.seed(21092015)
   def.par       <- par()
