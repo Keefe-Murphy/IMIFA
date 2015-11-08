@@ -7,14 +7,18 @@
   if(any(range.Q) >= P) stop ("Number of factors must be less than the number of variables")
 
 # Gibbs Sampler Function
-  gibbs.single   <- function(data=data, n.iters=50000, Q=2, 
-                             burnin=(n.iters/5) - 1, thin=2, scaling=T, ...) {
+  gibbs.single <- function(data=data, n.iters=50000, Q=2, 
+                           burnin=(n.iters/5) - 1, thin=2, scaling=T, ...) {
         
   # Remove non-numeric columns
     data       <- data[sapply(data,is.numeric)]
   
   # Centre the data (optional)
-    if (scaling) {data <- scale(data, center=T, scale=F)} else  {data <- as.matrix(data)}
+    if (scaling) {
+      data     <- scale(data, center=T, scale=F)
+      } else  {
+      data     <- as.matrix(data)
+    }
   
   # Define & initialise variables
     store      <- ceiling((n.iters - burnin)/thin)

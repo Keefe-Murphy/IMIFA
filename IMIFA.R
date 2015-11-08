@@ -9,7 +9,7 @@
   set.seed(21092015)
   def.par       <- par()
   cases         <- c("Single", "Shrinkage", "Grouped", "Imifa")
-  case          <- 'Single'
+  case          <- 'Shrinkage'
   if(!is.element(case, cases)) stop("'case' must be one of 'Single', 'Shrinkage', 'Grouped', or 'Imifa'.")
   pkgs          <- c("pgmm")
   invisible(lapply(pkgs, library, ch=T))
@@ -34,30 +34,38 @@
   N        <- nrow(data)
   P        <- sum(sapply(data, is.numeric))
   sigma.mu <- 0.5; sigma.l <- 0.5; psi.alpha <- 5; psi.beta <- 5
+  if(case != 'Single') { phi.nu <- 3; delta.a1 <- 2.1; delta.a2 <- 3.1 } 
   n.iters  <- 50000
-  range.Q  <- 2:2   # can be SCALAR or VECTOR; scalar preferred!
+  range.Q  <- 2:3   # can be SCALAR or VECTOR; scalar preferred!
 
   # Define full conditional & Gibbs Sampler functions for desired case
     if(case == 'Single') {
       sim    <- vector("list", length(range.Q))
-      source(paste(dataDirectory, "/IMIFA-GIT/Gibbs_BFA_Single.R", sep=""))
-      } else {
+      source(paste(dataDirectory, "/IMIFA-GIT/Gibbs_BFA_", case, ".R", sep=""))
+    } else if(case == 'Shrinkage'){
       rm('range.Q')
+      Q.ind  <- 1
       Q.init <- 5 * log(P, 2)
-      sim    <- vector("list", length(Q.init))
+      sim    <- vector("list", Q.ind)
+      source(paste(dataDirectory, "/IMIFA-GIT/Gibbs_BFA_", case, ".R", sep=""))
+      } else {
       stop("Not yet implented for other cases.")
     }
 
 # Run the Gibbs Sampler
-  start.time <- proc.time()
-  if(length(range.Q) == 1) {
-    sim[[1]] <- gibbs.single(data, n.iters, Q=range.Q)
-  } else {
-    for(q in range.Q) { 
-      q.ind <- q - min(range.Q) + 1
-      sim[[q.ind]] <- gibbs.single(data, n.iters, Q=q)
-      cat(paste0(q.ind/length(range.Q) * 100, "% Complete", "\n"))
+  start.time   <- proc.time()
+  if(case == 'Single') {
+    if(length(range.Q) == 1) {
+      sim[[1]] <- gibbs.single(data, n.iters, Q=range.Q)
+    } else {
+      for(q in range.Q) { 
+        q.ind  <- q - min(range.Q) + 1
+        sim[[q.ind]] <- gibbs.single(data, n.iters, Q=q)
+        cat(paste0(q.ind/length(range.Q) * 100, "% Complete", "\n"))
+      }
     }
+  } else if (case == 'Shrinkage') {
+      sim[[1]] <- gibbs.shrink(data, n.iters, Q.init)
   }
   total.time   <- proc.time() - start.time
   average.time <- total.time/length(range.Q)
@@ -75,16 +83,16 @@
   burnin      <- 1
   thin        <- 1
   
-  if(exists('range.Q') && length(range.Q) == 1) {
+  if(length(range.Q) == 1) {
     Q.ind <- 1 
     Q     <- range.Q
-    } else {
+    } else if (case == 'Single') {
       source(paste(dataDirectory, "/IMIFA-GIT/Tune_Parameters.R", sep=""))
   }
   
     # For user defined Q based on scree plot 
     # (rather than Q.ind <- which.max(prop.var); Q <- range.Q[Q.ind])
-      # Q = 
+      # Q <- 
       # Q.ind <- which(range.Q == Q)
 
   store   <- seq(from=burnin + 1, to=sim[[Q.ind]]$n.store, by=thin)
