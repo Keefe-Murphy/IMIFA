@@ -12,7 +12,7 @@
     U.mu      <- chol(mu.omega)
     z.mu      <- rnorm(P, 0, 1)
     v.mu      <- crossprod(U.mu, z.mu)
-    mu.mu     <- crossprod(crossprod(mu.omega, diag(psi.inv)), t(t(sum.data) - t(load %*% sum.f)))
+    mu.mu     <- crossprod(crossprod(mu.omega, diag(psi.inv)), sum.data - load %*% sum.f)
       mu.mu + v.mu
 }; sim.mu     <- cmpfun(sim.mu)
 
