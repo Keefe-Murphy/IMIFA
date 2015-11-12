@@ -47,7 +47,7 @@
       rm('range.Q')
       Q.ind  <- 1
       Q.star <- 5 * log(P, 2)
-      sim    <- vector("list", Q.ind)
+      sim    <- vector("list", length(Q.star))
       source(paste(dataDirectory, "/IMIFA-GIT/Gibbs_BFA_", case, ".R", sep=""))
       } else {
       stop("Not yet implented for other cases.")
@@ -62,7 +62,7 @@
       for(q in range.Q) { 
         q.ind  <- q - min(range.Q) + 1
         sim[[q.ind]] <- gibbs.single(data, n.iters, Q=q)
-        cat(paste0(q.ind/length(range.Q) * 100, "% Complete", "\n"))
+        cat(paste0(round(q.ind/length(range.Q) * 100, 2), "% Complete", "\n"))
       }
     }
   } else if (case == 'Shrinkage') {
@@ -93,7 +93,7 @@
   
     # For user defined Q based on scree plot 
     # (rather than Q.ind <- which.max(prop.var); Q <- range.Q[Q.ind])
-      # Q <- 
+      # Q <- 2
       # Q.ind <- which(range.Q == Q)
 
   store   <- seq(from=burnin + 1, to=sim[[Q.ind]]$n.store, by=thin)
