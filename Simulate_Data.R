@@ -7,7 +7,7 @@
   invisible(lapply(sim.pkgs, library, ch=T))
 
 # Set dimensions etc.
-  P     <- 10
+  P     <- 20
   Q     <- 2
   N     <- 1500
  #N.old <- 1500
