@@ -9,6 +9,7 @@
   set.seed(21092015)
   def.par       <- par()
   cases         <- c("Single", "Shrinkage", "Grouped", "Imifa")
+  #case         <- 'Single'
   case          <- 'Shrinkage'
   if(!is.element(case, cases)) stop("'case' must be one of 'Single', 'Shrinkage', 'Grouped', or 'Imifa'.")
   pkgs          <- c("pgmm")
@@ -27,7 +28,7 @@
 
   # Simulate data
     #source(paste(dataDirectory, "/IMIFA-GIT/Simulate_Data.R", sep=""))
-    #save(data, file=paste(dataDirectory,"/Data/Simulated_Data.Rdata", sep=""))
+    #save(data, mu.true, load.true, psi.true, file=paste(dataDirectory,"/Data/Simulated_Data.Rdata", sep=""))
     load(file=paste(dataDirectory, "/Data/Simulated_Data.Rdata", sep=""), envir=.GlobalEnv)
     
 # Initialise the Gibbs Sampler & set hyperparameters
@@ -36,7 +37,7 @@
   sigma.mu <- 0.5; sigma.l <- 0.5; psi.alpha <- 2; psi.beta <- 0.6
   if(case != 'Single') { phi.nu <- 3; delta.a1 <- 2.1; delta.a2 <- 3.1; rm('sigma.l') } 
   n.iters  <- 50000
-  range.Q  <- 2:3   # can be SCALAR or VECTOR; scalar preferred!
+  range.Q  <- 1:3   # can be SCALAR or VECTOR; scalar preferred!
 
   # Define full conditional & Gibbs Sampler functions for desired case
     if(case == 'Single') {
