@@ -33,8 +33,8 @@
 # Initialise the Gibbs Sampler & set hyperparameters
   N        <- nrow(data)
   P        <- sum(sapply(data, is.numeric))
-  sigma.mu <- 0.5; sigma.l <- 0.5; psi.alpha <- 5; psi.beta <- 5
-  if(case != 'Single') { phi.nu <- 3; delta.a1 <- 2.1; delta.a2 <- 3.1 } 
+  sigma.mu <- 0.5; sigma.l <- 0.5; psi.alpha <- 2; psi.beta <- 0.6
+  if(case != 'Single') { phi.nu <- 3; delta.a1 <- 2.1; delta.a2 <- 3.1; rm('sigma.l') } 
   n.iters  <- 50000
   range.Q  <- 2:3   # can be SCALAR or VECTOR; scalar preferred!
 
@@ -45,7 +45,7 @@
     } else if(case == 'Shrinkage'){
       rm('range.Q')
       Q.ind  <- 1
-      Q.init <- 5 * log(P, 2)
+      Q.star <- 5 * log(P, 2)
       sim    <- vector("list", Q.ind)
       source(paste(dataDirectory, "/IMIFA-GIT/Gibbs_BFA_", case, ".R", sep=""))
       } else {
@@ -110,10 +110,10 @@
   }
 
 # Posterior Summaries & Plots, etc.
-  post.mu   <- apply(mu, 1, mean)
-  post.f    <- apply(f, c(1,2), mean)
-  post.load <- apply(load, c(1,2), mean)
-  post.psi  <- apply(psi, 1, mean)
+  post.mu     <- apply(mu, 1, mean)
+  post.f      <- apply(f, c(1,2), mean)
+  post.load   <- apply(load, c(1,2), mean)
+  post.psi    <- apply(psi, 1, mean)
   
   P <- nrow(post.load)
   prop.uni    <- sum(post.psi)/P 

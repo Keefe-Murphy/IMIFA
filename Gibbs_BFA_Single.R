@@ -15,7 +15,7 @@
   
   # Centre the data (optional)
     if (scaling) {
-      data     <- scale(data, center=T, scale=F)
+      data     <- scale(data, center=T, scale=T)
       } else  {
       data     <- as.matrix(data)
     }
@@ -27,13 +27,12 @@
     load.store <- array(NA, dim=c(P, Q, store)); rownames(load.store) <- colnames(data); colnames(load.store) <- paste("Factor",1:Q)
     psi.store  <- matrix(NA, nr=P, nc=store);    rownames(psi.store)  <- colnames(data)
     
-    mu         <- mu.store[,1]    <- mvrnorm(mu=rep(0, P), Sigma=sigma.mu * diag(P))             
-    f          <- f.store[,,1]    <- mvrnorm(n=N, mu=rep(0, Q), Sigma=diag(Q))         
-    load       <- load.store[,,1] <- mvrnorm(n=P, mu=rep(0, Q), Sigma=sigma.l * diag(Q))         
-    psi        <- psi.store[,1]   <- rinvgamma(n=P, shape=psi.alpha/2, scale=psi.beta/2) 
+    mu         <- mvrnorm(mu=rep(0, P), Sigma=sigma.mu * diag(P))             
+    f          <- mvrnorm(n=N, mu=rep(0, Q), Sigma=diag(Q))         
+    load       <- mvrnorm(n=P, mu=rep(0, Q), Sigma=sigma.l * diag(Q))         
+    psi.inv    <- rgamma(n=P, shape=psi.alpha/2, rate=psi.beta/2) 
     mu.sigma   <- 1/sigma.mu
     l.sigma    <- 1/sigma.l * diag(Q)
-    psi.inv    <- 1/psi
   
   # Iterate
     for(iter in 2:n.iters) { 
@@ -43,29 +42,32 @@
         cat(paste0("Iteration: ", iter, "\n"))
       }
       
-      sum.data   <- colSums(data)
-      sum.f      <- colSums(f)
-      mu         <- sim.mu(mu.sigma, psi.inv, sum.data, sum.f, load)
+      # Means
+        sum.data    <- colSums(data)
+        sum.f       <- colSums(f)
+        mu          <- sim.mu(mu.sigma, psi.inv, sum.data, sum.f, load)
       
-      c.data     <- sweep(data, 2, mu, FUN="-")
-      f          <- sim.scores(Q, load, psi.inv, c.data)
-      FtF        <- crossprod(f)
+      # Scores
+        c.data      <- sweep(data, 2, mu, FUN="-")
+        f           <- sim.scores(Q, load, psi.inv, c.data)
+                
+      # Loadings
+        FtF         <- crossprod(f)
+        for (j in 1:P) {
+          psi.inv.j <- psi.inv[j]
+          c.data.j  <- c.data[,j]
+          load[j,]  <- sim.load(l.sigma, Q, c.data.j, f, psi.inv.j, FtF)
+        }
         
-      for (j in 1:P) {
-        psi.j    <- psi[j]
-        c.data.j <- c.data[,j]
-        load[j,] <- load.j <- sim.load(l.sigma, Q, c.data.j, f, psi.j, FtF)
-        
-        psi[j]   <- sim.psi(c.data.j, f, load.j)
-      } 
-        psi.inv  <- 1/psi
+      # Uniquenesses
+        psi.inv     <- sim.psi.inv(c.data, f, load)
       
       if(iter > burnin && iter %% thin == 0) {
-        new.iter <- ceiling((iter-burnin)/thin)
+        new.iter    <- ceiling((iter-burnin)/thin)
         mu.store[,new.iter]    <- mu  
         f.store[,,new.iter]    <- f
         load.store[,,new.iter] <- load
-        psi.store[,new.iter]   <- psi
+        psi.store[,new.iter]   <- 1/psi.inv
       }  
     }
   return(list(mu      = mu.store,
