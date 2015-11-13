@@ -35,18 +35,17 @@
   N        <- nrow(data)
   P        <- sum(sapply(data, is.numeric))
   sigma.mu <- 0.5; sigma.l <- 0.5; psi.alpha <- 2; psi.beta <- 0.6
-  if(case != 'Single') { phi.nu <- 3; delta.a1 <- 2.1; delta.a2 <- 3.1; rm('sigma.l') } 
   n.iters  <- 50000
   range.Q  <- 1:3   # can be SCALAR or VECTOR; scalar preferred!
+  if(case != 'Single') { phi.nu <- 3; delta.a1 <- 2.1; delta.a2 <- 3.1; rm('sigma.l', 'range.Q') }
 
   # Define full conditional & Gibbs Sampler functions for desired case
     if(case == 'Single') {
       sim    <- vector("list", length(range.Q))
       source(paste(dataDirectory, "/IMIFA-GIT/Gibbs_BFA_", case, ".R", sep=""))
     } else if(case == 'Shrinkage'){
-      rm('range.Q')
       Q.ind  <- 1
-      Q.star <- 5 * log(P, 2)
+      Q.star <- round(5 * log(P, 2))
       sim    <- vector("list", length(Q.star))
       source(paste(dataDirectory, "/IMIFA-GIT/Gibbs_BFA_", case, ".R", sep=""))
       } else {
@@ -66,10 +65,10 @@
       }
     }
   } else if (case == 'Shrinkage') {
-      sim[[1]] <- gibbs.shrink(data, n.iters, Q.init)
+      sim[[1]] <- gibbs.shrink(data, n.iters, Q=Q.star)
   }
   total.time   <- proc.time() - start.time
-  average.time <- total.time/length(range.Q)
+  average.time <- total.time/if(exists('range.Q')) length(range.Q) else length(Q.star)
   sim$time     <- list(Total = total.time, Average = average.time); sim$time
 
 # Save / Load results
@@ -84,11 +83,13 @@
   burnin      <- 1
   thin        <- 1
   
-  if(length(range.Q) == 1) {
+  if(case == 'Single') {
+    if(length(range.Q) == 1) {
     Q.ind <- 1 
     Q     <- range.Q
-    } else if (case == 'Single') {
+    } else {
       source(paste(dataDirectory, "/IMIFA-GIT/Tune_Parameters.R", sep=""))
+    }
   }
   
     # For user defined Q based on scree plot 
@@ -153,7 +154,7 @@
       axis(2, cex.axis=0.5, line=-0.5, tick=F, las=1,
            at=seq(0, 1, 1/(nrow(post.load)-1)), labels=rownames(post.load))
       box(lwd=2)
-      mtext("Factors", side=1, line=2)
+      mtext("Factors", side=1, line=2) # Q <- Q.star
       abline(v=seq(1/(2*(Q-1)), 1-1/(2*(Q-1)), 1/(Q-1)), lty=2, lwd=1)
       invisible(par(def.par))
 
