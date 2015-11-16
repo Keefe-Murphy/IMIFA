@@ -45,7 +45,7 @@
       source(paste(dataDirectory, "/IMIFA-GIT/Gibbs_BFA_", case, ".R", sep=""))
     } else if(case == 'Shrinkage'){
       Q.ind  <- 1
-      Q.star <- round(5 * log(P, 2))
+      Q.star <- min(round(5 * log(P, 2)), P)
       sim    <- vector("list", length(Q.star))
       source(paste(dataDirectory, "/IMIFA-GIT/Gibbs_BFA_", case, ".R", sep=""))
       } else {
@@ -97,10 +97,12 @@
       # Q <- 2
       # Q.ind <- which(range.Q == Q)
 
+  if(case == 'Shrinkage') Q <- Q.star
+
   store   <- seq(from=burnin + 1, to=sim[[Q.ind]]$n.store, by=thin)
   mu      <- sim[[Q.ind]]$mu[,store]
-  f       <- sim[[Q.ind]]$f[,,store]
-  load    <- sim[[Q.ind]]$load[,,store]
+  f       <- sim[[Q.ind]]$f[,1:Q,store]
+  load    <- sim[[Q.ind]]$load[1:Q,,store]
   psi     <- sim[[Q.ind]]$psi[,store]
   
 # Loadings matrix / identifiability / # etc.
@@ -154,7 +156,7 @@
       axis(2, cex.axis=0.5, line=-0.5, tick=F, las=1,
            at=seq(0, 1, 1/(nrow(post.load)-1)), labels=rownames(post.load))
       box(lwd=2)
-      mtext("Factors", side=1, line=2) # Q <- Q.star
+      mtext("Factors", side=1, line=2)
       abline(v=seq(1/(2*(Q-1)), 1-1/(2*(Q-1)), 1/(Q-1)), lty=2, lwd=1)
       invisible(par(def.par))
 
