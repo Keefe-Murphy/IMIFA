@@ -95,7 +95,7 @@
           prob   <- 1/exp(b0 + b1 * iter)
           unif   <- runif(1)
           lind   <- apply(load, 2, function(x) sum(abs(x) < epsilon)) / P
-          vec    <- l.ind >= prop
+          vec    <- lind >= prop
           numred <- sum(vec)
           ######################################
           ###insert more adaptation code here###

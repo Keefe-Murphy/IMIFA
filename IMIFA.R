@@ -102,7 +102,7 @@
   store   <- seq(from=burnin + 1, to=sim[[Q.ind]]$n.store, by=thin)
   mu      <- sim[[Q.ind]]$mu[,store]
   f       <- sim[[Q.ind]]$f[,1:Q,store]
-  load    <- sim[[Q.ind]]$load[1:Q,,store]
+  load    <- sim[[Q.ind]]$load[,1:Q,store]
   psi     <- sim[[Q.ind]]$psi[,store]
   
 # Loadings matrix / identifiability / # etc.
