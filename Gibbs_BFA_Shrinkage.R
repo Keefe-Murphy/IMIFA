@@ -8,32 +8,32 @@
 
 # Gibbs Sampler Function
   gibbs.shrink <- function(data=data, n.iters=50000, Q=5 * log(P, 2), 
-                           b0=-1, b1=-0.0005, epsilon=0.0001, 
-                           burnin=(n.iters/5) - 1, thin=2, scaling=T, ...) {
+                           b0=1, b1=0.0005, epsilon=0.0001, prop=0.9,
+                           burnin=n.iters/5 - 1, thin=2, scaling=T, ...) {
         
   # Remove non-numeric columns
     data       <- data[sapply(data,is.numeric)]
   
   # Centre the data (optional)
     if (scaling) {
-      data     <- scale(data, center=T, scale=T)
+      data     <- scale(data, center=F, scale=T)
       } else  {
       data     <- as.matrix(data)
     }
   
   # Define & initialise variables
     store      <- ceiling((n.iters - burnin)/thin)
-    mu.store   <- matrix(NA, nr=P, nc=store);    rownames(mu.store)   <- colnames(data) 
-    f.store    <- array(NA, dim=c(N, Q, store)); colnames(f.store)    <- paste("Factor",1:Q)
-    load.store <- array(NA, dim=c(P, Q, store)); rownames(load.store) <- colnames(data); colnames(load.store) <- paste("Factor",1:Q)
-    psi.store  <- matrix(NA, nr=P, nc=store);    rownames(psi.store)  <- colnames(data)
+    mu.store   <- matrix(0, nr=P, nc=store);    rownames(mu.store)   <- colnames(data) 
+    f.store    <- array(0, dim=c(N, Q, store)); colnames(f.store)    <- paste("Factor",1:Q)
+    load.store <- array(0, dim=c(P, Q, store)); rownames(load.store) <- colnames(data); colnames(load.store) <- paste("Factor",1:Q)
+    psi.store  <- matrix(0, nr=P, nc=store);    rownames(psi.store)  <- colnames(data)
     
     mu         <- mvrnorm(mu=rep(0, P), Sigma=sigma.mu * diag(P))             
     f          <- mvrnorm(n=N, mu=rep(0, Q), Sigma=diag(Q))         
     phi        <- matrix(rgamma(n=P * Q, shape=phi.nu/2, rate=phi.nu/2), nr=P)
     delta      <- c(rgamma(n=1, shape=delta.a1, rate=1), rgamma(n=Q-1, shape=delta.a2, rate=1))
     tau        <- cumprod(delta)
-    load       <- matrix(NA, nr=P, nc=Q)
+    load       <- matrix(0, nr=P, nc=Q)
     for(j in 1:P) {
       load[j,] <- mvrnorm(n=1, mu=rep(0, Q), Sigma=diag(1/(phi[j,] * tau)))         
     }
@@ -82,13 +82,32 @@
           tau      <- cumprod(delta)      
         }
       
-      if(iter > burnin && iter %% thin == 0) {
-        new.iter   <- ceiling((iter-burnin)/thin)
-        mu.store[,new.iter]    <- mu  
-        f.store[,,new.iter]    <- f
-        load.store[,,new.iter] <- load
-        psi.store[,new.iter]   <- 1/psi.inv
-      }  
+      # Adaptation  
+        if(P <= 100){      
+          if(iter > burnin && iter %% thin == 0) {
+            new.iter   <- ceiling((iter-burnin)/thin)
+            mu.store[,new.iter]    <- mu  
+            f.store[,,new.iter]    <- f
+            load.store[,,new.iter] <- load
+            psi.store[,new.iter]   <- 1/psi.inv
+          }
+        } else {
+          prob   <- 1/exp(b0 + b1 * iter)
+          unif   <- runif(1)
+          lind   <- apply(load, 2, function(x) sum(abs(x) < epsilon)) / P
+          vec    <- l.ind >= prop
+          numred <- sum(vec)
+          ######################################
+          ###insert more adaptation code here###
+          ######################################
+          if(iter > burnin && iter %% thin == 0) {
+            new.iter   <- ceiling((iter-burnin)/thin)
+            mu.store[,new.iter]                <- mu  
+            f.store[,1:ncol(f),new.iter]       <- f
+            load.store[,1:ncol(load),new.iter] <- load
+            psi.store[,new.iter]               <- 1/psi.inv  
+          }
+        }
     }
   return(list(mu      = mu.store,
               f       = f.store, 

@@ -15,7 +15,7 @@
   
   # Centre the data (optional)
     if (scaling) {
-      data     <- scale(data, center=T, scale=T)
+      data     <- scale(data, center=F, scale=T)
       } else  {
       data     <- as.matrix(data)
     }
