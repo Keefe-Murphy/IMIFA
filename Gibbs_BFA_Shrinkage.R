@@ -83,31 +83,24 @@
         }
       
       # Adaptation  
-        if(P <= 100){      
-          if(iter > burnin && iter %% thin == 0) {
-            new.iter   <- ceiling((iter-burnin)/thin)
-            mu.store[,new.iter]    <- mu  
-            f.store[,,new.iter]    <- f
-            load.store[,,new.iter] <- load
-            psi.store[,new.iter]   <- 1/psi.inv
-          }
-        } else {
-          prob   <- 1/exp(b0 + b1 * iter)
-          unif   <- runif(1)
-          lind   <- apply(load, 2, function(x) sum(abs(x) < epsilon)) / P
-          vec    <- lind >= prop
-          numred <- sum(vec)
+        if(P >= 100) {      
+          prob     <- 1/exp(b0 + b1 * iter)
+          unif     <- runif(1)
+          lind     <- apply(load, 2, function(x) sum(abs(x) < epsilon)) / P
+          vec      <- lind >= prop
+          numred   <- sum(vec)
           ######################################
           ###insert more adaptation code here###
           ######################################
-          if(iter > burnin && iter %% thin == 0) {
-            new.iter   <- ceiling((iter-burnin)/thin)
-            mu.store[,new.iter]                <- mu  
-            f.store[,1:ncol(f),new.iter]       <- f
-            load.store[,1:ncol(load),new.iter] <- load
-            psi.store[,new.iter]               <- 1/psi.inv  
-          }
-        }
+        } 
+      
+      if(iter > burnin && iter %% thin == 0) {
+        new.iter   <- ceiling((iter-burnin)/thin)
+        mu.store[,new.iter]                <- mu  
+        f.store[,1:ncol(f),new.iter]       <- f
+        load.store[,1:ncol(load),new.iter] <- load
+        psi.store[,new.iter]               <- 1/psi.inv  
+      }
     }
   return(list(mu      = mu.store,
               f       = f.store, 
