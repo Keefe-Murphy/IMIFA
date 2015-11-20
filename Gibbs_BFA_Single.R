@@ -8,7 +8,7 @@
 
 # Gibbs Sampler Function
   gibbs.single <- function(data=data, n.iters=50000, Q=2, 
-                           burnin=(n.iters/5) - 1, thin=2, scaling=T, ...) {
+                           burnin=n.iters/5 - 1, thin=2, scaling=T, ...) {
         
   # Remove non-numeric columns
     data       <- data[sapply(data,is.numeric)]
@@ -21,11 +21,11 @@
     }
   
   # Define & initialise variables
-    store      <- ceiling((n.iters - burnin)/thin)
-    mu.store   <- matrix(NA, nr=P, nc=store);    rownames(mu.store)   <- colnames(data) 
-    f.store    <- array(NA, dim=c(N, Q, store)); colnames(f.store)    <- paste("Factor",1:Q)
-    load.store <- array(NA, dim=c(P, Q, store)); rownames(load.store) <- colnames(data); colnames(load.store) <- paste("Factor",1:Q)
-    psi.store  <- matrix(NA, nr=P, nc=store);    rownames(psi.store)  <- colnames(data)
+    n.store    <- ceiling((n.iters - burnin)/thin)
+    mu.store   <- matrix(NA, nr=P, nc=n.store);    rownames(mu.store)   <- colnames(data) 
+    f.store    <- array(NA, dim=c(N, Q, n.store)); colnames(f.store)    <- paste("Factor",1:Q)
+    load.store <- array(NA, dim=c(P, Q, n.store)); rownames(load.store) <- colnames(data); colnames(load.store) <- paste("Factor",1:Q)
+    psi.store  <- matrix(NA, nr=P, nc=n.store);    rownames(psi.store)  <- colnames(data)
     
     mu         <- mvrnorm(mu=rep(0, P), Sigma=sigma.mu * diag(P))             
     f          <- mvrnorm(n=N, mu=rep(0, Q), Sigma=diag(Q))         
@@ -74,5 +74,5 @@
               f       = f.store, 
               load    = load.store, 
               psi     = psi.store,
-              n.store = store))
+              n.store = n.store))
   }; gibbs.single    <- cmpfun(gibbs.single)

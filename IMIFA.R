@@ -9,7 +9,6 @@
   set.seed(21092015)
   def.par       <- par()
   cases         <- c("Single", "Shrinkage", "Grouped", "Imifa")
-  #case         <- 'Single'
   case          <- 'Shrinkage'
   if(!is.element(case, cases)) stop("'case' must be one of 'Single', 'Shrinkage', 'Grouped', or 'Imifa'.")
   pkgs          <- c("pgmm")
@@ -83,13 +82,11 @@
   burnin      <- 1
   thin        <- 1
   
-  if(case == 'Single') {
-    if(length(range.Q) == 1) {
+  if(case == 'Single' && length(range.Q) == 1) {
     Q.ind <- 1 
     Q     <- range.Q
     } else {
       source(paste(dataDirectory, "/IMIFA-GIT/Tune_Parameters.R", sep=""))
-    }
   }
   
     # For user defined Q based on scree plot 
@@ -97,17 +94,17 @@
       # Q <- 2
       # Q.ind <- which(range.Q == Q)
 
-  if(case == 'Shrinkage') Q <- Q.star
+  if(case == 'Shrinkage') { Q <- Q.star; Q.store <- sim[[Q.ind]]$Q.store }
 
-  store   <- seq(from=burnin + 1, to=sim[[Q.ind]]$n.store, by=thin)
-  mu      <- sim[[Q.ind]]$mu[,store]
-  f       <- sim[[Q.ind]]$f[,1:Q,store]
-  load    <- sim[[Q.ind]]$load[,1:Q,store]
-  psi     <- sim[[Q.ind]]$psi[,store]
+  n.store <- seq(from=burnin + 1, to=sim[[Q.ind]]$n.store, by=thin)
+  mu      <- sim[[Q.ind]]$mu[,n.store]
+  f       <- sim[[Q.ind]]$f[,1:Q,n.store]
+  load    <- sim[[Q.ind]]$load[,1:Q,n.store]
+  psi     <- sim[[Q.ind]]$psi[,n.store]
   
 # Loadings matrix / identifiability / # etc.
   l.temp  <- sim[[Q.ind]]$load[,,burnin]
-  for(b in 1:length(store)) {
+  for(b in 1:length(n.store)) {
     rot       <- procrustes(X=load[,,b], Xstar=l.temp)$R
     load[,,b] <- load[,,b] %*% rot
     f[,,b]    <- t(f[,,b]  %*% rot)
@@ -136,8 +133,8 @@
     matplot(t(f[1,,]), type="l")
     plot(post.f, type="n")
     text(post.f[,1], post.f[,2], 1:nrow(post.f), col=if(exists("Label", where=data)) as.numeric(data$Label) else 1)
-    plot(f[,,length(store)], type="n")
-    text(f[,1,length(store)], f[,2,length(store)], 1:nrow(post.f), col=if(exists("Label", where=data)) as.numeric(data$Label) else 1)
+    plot(f[,,length(n.store)], type="n")
+    text(f[,1,length(n.store)], f[,2,length(n.store)], 1:nrow(post.f), col=if(exists("Label", where=data)) as.numeric(data$Label) else 1)
     acf(f[1,1,])
       
   # Loadings

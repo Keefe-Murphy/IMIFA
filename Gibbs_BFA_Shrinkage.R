@@ -4,11 +4,10 @@
   
 # Preamble
   source(paste(dataDirectory, "/IMIFA-GIT/FullConditionals_BFA_Shrinkage.R", sep=""))
-  #if(any(range.Q) >= P) stop ("Number of factors must be less than the number of variables")
 
 # Gibbs Sampler Function
-  gibbs.shrink <- function(data=data, n.iters=50000, Q=5 * log(P, 2), 
-                           b0=1, b1=0.0005, epsilon=0.0001, prop=0.9,
+  gibbs.shrink <- function(data=data, n.iters=50000, Q=min(round(5 * log(P, 2)), P), 
+                           b0=1, b1=0.0005, epsilon=0.001, prop=0.8,
                            burnin=n.iters/5 - 1, thin=2, scaling=T, ...) {
         
   # Remove non-numeric columns
@@ -22,11 +21,12 @@
     }
   
   # Define & initialise variables
-    store      <- ceiling((n.iters - burnin)/thin)
-    mu.store   <- matrix(0, nr=P, nc=store);    rownames(mu.store)   <- colnames(data) 
-    f.store    <- array(0, dim=c(N, Q, store)); colnames(f.store)    <- paste("Factor",1:Q)
-    load.store <- array(0, dim=c(P, Q, store)); rownames(load.store) <- colnames(data); colnames(load.store) <- paste("Factor",1:Q)
-    psi.store  <- matrix(0, nr=P, nc=store);    rownames(psi.store)  <- colnames(data)
+    n.store    <- ceiling((n.iters - burnin)/thin)
+    mu.store   <- matrix(0, nr=P, nc=n.store);    rownames(mu.store)   <- colnames(data) 
+    f.store    <- array(0, dim=c(N, Q, n.store)); colnames(f.store)    <- paste("Factor",1:Q)
+    load.store <- array(0, dim=c(P, Q, n.store)); rownames(load.store) <- colnames(data); colnames(load.store) <- paste("Factor",1:Q)
+    psi.store  <- matrix(0, nr=P, nc=n.store);    rownames(psi.store)  <- colnames(data)
+    Q.store    <- rep(0, n.iters);                Q.store[1]           <- Q 
     
     mu         <- mvrnorm(mu=rep(0, P), Sigma=sigma.mu * diag(P))             
     f          <- mvrnorm(n=N, mu=rep(0, Q), Sigma=diag(Q))         
@@ -67,35 +67,52 @@
         } 
       
       # Uniquenesses
-        psi.inv    <- sim.psi.inv(c.data, f, load)
+        psi.inv      <- sim.psi.inv(c.data, f, load)
       
       # Local Shrinkage
-        load.2     <- load * load
-        phi        <- sim.phi(phi.nu, Q, tau, load.2)
+        load.2       <- load * load
+        phi          <- sim.phi(phi.nu, Q, tau, load.2)
           
       # Global Shrinkage
-        sum.term   <- diag(t(phi) %*% (load * load))
-        delta[1]   <- sim.delta1(delta.a1, P, Q, delta, tau, sum.term)
-        tau        <- cumprod(delta)
+        sum.term     <- diag(t(phi) %*% (load * load))
+        delta[1]     <- sim.delta1(delta.a1, P, Q, delta, tau, sum.term)
+        tau          <- cumprod(delta)
         for(k in 2:Q) { 
-          delta[k] <- sim.deltak(delta.a2, P, Q, k, delta, tau, sum.term)
-          tau      <- cumprod(delta)      
+          delta[k]   <- sim.deltak(delta.a2, P, Q, k, delta, tau, sum.term)
+          tau        <- cumprod(delta)      
         }
       
       # Adaptation  
         if(P >= 100) {      
-          prob     <- 1/exp(b0 + b1 * iter)
-          unif     <- runif(1)
-          lind     <- apply(load, 2, function(x) sum(abs(x) < epsilon)) / P
-          vec      <- lind >= prop
-          numred   <- sum(vec)
-          ######################################
-          ###insert more adaptation code here###
-          ######################################
+          prob       <- 1/exp(b0 + b1 * iter)
+          unif       <- runif(n=1, min=0, max=1)
+          lind       <- apply(load, 2, function(x) sum(abs(x) < epsilon)) / P
+          vec        <- lind >= prop
+          numred     <- sum(vec)
+          
+          if(unif    <  prob) { # check whether to adapt or not
+            if(iter  >  n.iters/100 && numred == 0) { # simulate extra columns from priors
+              Q      <- Q + 1
+              f      <- cbind(f, rnorm(n=N, mean=0, sd=1))         
+              phi    <- cbind(phi, matrix(rgamma(n=P, shape=phi.nu/2, rate=phi.nu/2), nr=P))
+              delta  <- c(delta, rgamma(n=1, shape=delta.a2, rate=1))
+              tau    <- cumprod(delta)
+              load   <- cbind(load, mvrnorm(n=1, mu=rep(0, P), Sigma=diag(1/phi[,ncol(phi)] * tau[length(tau)])))
+            } else if(numred > 0) { # remove redundant columns
+              nonred <- which(vec == 0)
+              Q      <- max(Q - numred, 1)
+              f      <- f[,nonred]
+              phi    <- phi[,nonred]
+              delta  <- delta[nonred]
+              tau    <- cumprod(delta)
+              load   <- load[,nonred]
+            }
+          }
         } 
+      Q.store[iter]  <- Q
       
       if(iter > burnin && iter %% thin == 0) {
-        new.iter   <- ceiling((iter-burnin)/thin)
+        new.iter     <- ceiling((iter-burnin)/thin)
         mu.store[,new.iter]                <- mu  
         f.store[,1:ncol(f),new.iter]       <- f
         load.store[,1:ncol(load),new.iter] <- load
@@ -106,5 +123,6 @@
               f       = f.store, 
               load    = load.store, 
               psi     = psi.store,
-              n.store = store))
+              n.store = n.store,
+              Q.store = Q.store))
   }; gibbs.shrink    <- cmpfun(gibbs.shrink)

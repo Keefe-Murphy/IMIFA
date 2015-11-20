@@ -3,8 +3,8 @@
 #######################################################################################
 
 # Preamble 
-  fc.pkgs <- c("MCMCpack", "compiler")
-  invisible(lapply(fc.pkgs, library, ch=T))
+  pkgs <- c("MCMCpack", "compiler")
+  invisible(lapply(pkgs, library, ch=T))
 
 # Means
   sim.mu       <- function(mu.sigma, psi.inv, sum.data, sum.f, load, ...) {
