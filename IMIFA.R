@@ -74,14 +74,7 @@
   save(sim,file=paste(dataDirectory, "/Simulations/Wine_Simulations_", case, ".Rdata", sep="")) # in server, tick box, export
   load(file=paste(dataDirectory, "/Simulations/Wine_Simulations_", case, ".Rdata", sep=""), envir=.GlobalEnv)
 
-# NB: You can check your answer by plotting
-#     the scores of a 2-factor model to the
-#     wine dataset. Expect to see a horseshoe.
-
 # Convergence diagnostics (optional additional burnin & thinning)
-  burnin      <- 1
-  thin        <- 1
-  
   if(case == 'Single' && length(range.Q) == 1) {
     Q.ind <- 1 
     Q     <- range.Q
@@ -89,13 +82,14 @@
       source(paste(dataDirectory, "/IMIFA-GIT/Tune_Parameters.R", sep=""))
   }
   
-    # For user defined Q based on scree plot 
-    # (rather than Q.ind <- which.max(prop.var); Q <- range.Q[Q.ind])
+    # For user defined Q based on scree plot or bar plot
+    # Rather than Q.ind <- which.max(prop.var); Q <- range.Q[Q.ind] for 'Single' case
+    # Rather than Q     <- names(Q.store[Q.store == max(Q.store)]) for 'Shrinkage' case
       # Q <- 2
-      # Q.ind <- which(range.Q == Q)
+      # if(case == 'Single') { Q.ind <- which(range.Q == Q) } else Q.ind <- 1
 
-  if(case == 'Shrinkage') { Q <- Q.star; Q.store <- sim[[Q.ind]]$Q.store }
-
+  burnin      <- 1
+  thin        <- 1
   n.store <- seq(from=burnin + 1, to=sim[[Q.ind]]$n.store, by=thin)
   mu      <- sim[[Q.ind]]$mu[,n.store]
   f       <- sim[[Q.ind]]$f[,1:Q,n.store]
@@ -103,7 +97,7 @@
   psi     <- sim[[Q.ind]]$psi[,n.store]
   
 # Loadings matrix / identifiability / # etc.
-  l.temp  <- sim[[Q.ind]]$load[,,burnin]
+  l.temp  <- sim[[Q.ind]]$load[,1:Q,burnin]
   for(b in 1:length(n.store)) {
     rot       <- procrustes(X=load[,,b], Xstar=l.temp)$R
     load[,,b] <- load[,,b] %*% rot

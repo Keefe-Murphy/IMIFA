@@ -7,7 +7,7 @@
 
 # Gibbs Sampler Function
   gibbs.shrink <- function(data=data, n.iters=50000, Q=min(round(5 * log(P, 2)), P), 
-                           b0=1, b1=0.0005, epsilon=0.001, prop=0.8,
+                           b0=1, b1=0.0005, epsilon=0.001, prop=0.8, adapt=T,
                            burnin=n.iters/5 - 1, thin=2, scaling=T, ...) {
         
   # Remove non-numeric columns
@@ -83,7 +83,7 @@
         }
       
       # Adaptation  
-        if(P >= 100) {      
+        if(adapt) {      
           prob       <- 1/exp(b0 + b1 * iter)
           unif       <- runif(n=1, min=0, max=1)
           lind       <- apply(load, 2, function(x) sum(abs(x) < epsilon)) / P
