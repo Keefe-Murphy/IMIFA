@@ -7,8 +7,12 @@
 
 # Gibbs Sampler Function
   gibbs.shrink <- function(data=data, n.iters=50000, Q=min(round(5 * log(P, 2)), P), 
-                           b0=1, b1=0.0005, epsilon=0.001, prop=0.8, adapt=T,
+                           b0=1, b1=0.0005, epsilon=0.001, prop1=0.8, prop2=0.8, adapt=T,
                            burnin=n.iters/5 - 1, thin=2, scaling=T, ...) {
+    
+  # Warning(s)
+    if(Q >= P) stop("Number of factors must be less than number of variables")
+    if(prop1 > 1 || prop2 > 1) stop("prop1 & prop2 must be valid proportions")
         
   # Remove non-numeric columns
     data       <- data[sapply(data,is.numeric)]
@@ -16,7 +20,7 @@
   # Centre the data (optional)
     if (scaling) {
       data     <- scale(data, center=F, scale=T)
-      } else  {
+    } else  {
       data     <- as.matrix(data)
     }
   
@@ -86,20 +90,20 @@
         if(adapt) {      
           prob       <- 1/exp(b0 + b1 * iter)
           unif       <- runif(n=1, min=0, max=1)
-          lind       <- apply(load, 2, function(x) sum(abs(x) < epsilon)) / P
-          vec        <- lind >= prop
-          numred     <- sum(vec)
+          lind       <- colSums(abs(load) < epsilon) / P
+          colvec     <- lind >= prop1
+          numred     <- sum(colvec)
           
           if(unif    <  prob) { # check whether to adapt or not
-            if(iter  >  n.iters/100 && numred == 0) { # simulate extra columns from priors
+            if(iter  >  100 && numred == 0 && all(lind < prop2)) { # simulate extra columns from priors
               Q      <- Q + 1
               f      <- cbind(f, rnorm(n=N, mean=0, sd=1))         
-              phi    <- cbind(phi, matrix(rgamma(n=P, shape=phi.nu/2, rate=phi.nu/2), nr=P))
+              phi    <- cbind(phi, rgamma(n=P, shape=phi.nu/2, rate=phi.nu/2))
               delta  <- c(delta, rgamma(n=1, shape=delta.a2, rate=1))
               tau    <- cumprod(delta)
-              load   <- cbind(load, mvrnorm(n=1, mu=rep(0, P), Sigma=diag(1/phi[,ncol(phi)] * tau[length(tau)])))
+              load   <- cbind(load, rnorm(n=P, mean=0, sd=sqrt(1/phi[,Q] * 1/tau[Q])))
             } else if(numred > 0) { # remove redundant columns
-              nonred <- which(vec == 0)
+              nonred <- which(colvec == 0)
               Q      <- max(Q - numred, 1)
               f      <- f[,nonred]
               phi    <- phi[,nonred]
@@ -113,10 +117,10 @@
       
       if(iter > burnin && iter %% thin == 0) {
         new.iter     <- ceiling((iter-burnin)/thin)
-        mu.store[,new.iter]                <- mu  
-        f.store[,1:ncol(f),new.iter]       <- f
-        load.store[,1:ncol(load),new.iter] <- load
-        psi.store[,new.iter]               <- 1/psi.inv  
+        mu.store[,new.iter]       <- mu  
+        f.store[,1:Q,new.iter]    <- f
+        load.store[,1:Q,new.iter] <- load
+        psi.store[,new.iter]      <- 1/psi.inv  
       }
     }
   return(list(mu      = mu.store,
