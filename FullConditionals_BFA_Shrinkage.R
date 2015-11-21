@@ -3,7 +3,7 @@
 #######################################################################################
 
 # Preamble 
-  pkgs <- c("MCMCpack", "compiler")
+  pkgs <- c(if(exists("pkgs")) pkgs,"MCMCpack", "compiler")
   invisible(lapply(pkgs, library, ch=T))
 
 # Means
