@@ -1,3 +1,7 @@
+#################################################
+### Tune Parameters (Single & Shrinkage Case) ###
+#################################################
+
 if(case == 'Shrinkage') {
   # Retrieve distribution of Q, tabulate & plot
     Q.store    <- sim[[Q.ind]]$Q.store
@@ -8,9 +12,13 @@ if(case == 'Shrinkage') {
   
   # Set Q as the (lesser of) the distribution's mode(s) & compute credible interval
     Q.mode     <- as.numeric(names(Q.tab[Q.tab == max(Q.tab)]))
-    Q          <- min(Q.mode)
+    Q.median   <- median(Q.store)
+    if(post.Q == 'Mode') { 
+      Q        <- min(Q.mode)
+    } else { Q <- Q.median }
     Q.CI       <- quantile(Q.store,c(0.025,0.975))
-    print(list(Q=Q, Credible_Interval = Q.CI, Warning="But the user should choose Q based on the attached bar plot!"))
+    print(list(Q=Q, Mode = Q.mode, Median = Q.median, 
+               Credible_Interval = Q.CI, Warning="But the user should choose Q based on the attached bar plot!"))
   } else {
   
   # Initialise
