@@ -39,15 +39,14 @@
   if(case != 'Single') { phi.nu <- 3; delta.a1 <- 2.1; delta.a2 <- 3.1; rm('sigma.l', 'range.Q') }
 
   # Define full conditional & Gibbs Sampler functions for desired case
+    source(paste(dataDirectory, "/IMIFA-GIT/Gibbs_BFA_", case, ".R", sep=""))
     if(case == 'Single') {
       sim    <- vector("list", length(range.Q))
-      source(paste(dataDirectory, "/IMIFA-GIT/Gibbs_BFA_", case, ".R", sep=""))
-    } else if(case == 'Shrinkage'){
+    } else if(case == 'Shrinkage') {
       Q.ind  <- 1
       Q.star <- min(round(5 * log(P, 2)), P)
       sim    <- vector("list", length(Q.star))
-      source(paste(dataDirectory, "/IMIFA-GIT/Gibbs_BFA_", case, ".R", sep=""))
-      } else {
+    } else {
       stop("Not yet implented for other cases.")
     }
 
@@ -78,18 +77,19 @@
   if(case == 'Single' && length(range.Q) == 1) {
     Q.ind <- 1 
     Q     <- range.Q
-    } else {
-      source(paste(dataDirectory, "/IMIFA-GIT/Tune_Parameters.R", sep=""))
+  } else {
+    if(case == 'Shrinkage') post.Q <- 'Mode'
+    source(paste(dataDirectory, "/IMIFA-GIT/Tune_Parameters.R", sep=""))
   }
   
-    # For user defined Q based on scree plot or bar plot
-    # Rather than Q.ind <- which.max(prop.var); Q <- range.Q[Q.ind] for 'Single' case
-    # Rather than Q     <- names(Q.store[Q.store == max(Q.store)]) for 'Shrinkage' case
-      # Q <- 2
-      # if(case == 'Single') { Q.ind <- which(range.Q == Q) } else Q.ind <- 1
+  # For user defined Q based on scree plot or bar plot
+  # Rather than Q.ind <- which.max(prop.var); Q <- range.Q[Q.ind] for 'Single' case
+  # Rather than Q     <- names(Q.store[Q.store == max(Q.store)]) for 'Shrinkage' case
+    # Q   <- 2
+    # if(case == 'Single') { Q.ind <- which(range.Q == Q) } else Q.ind <- 1
 
-  burnin      <- 1
-  thin        <- 1
+  burnin  <- 1
+  thin    <- 1
   n.store <- seq(from=burnin + 1, to=sim[[Q.ind]]$n.store, by=thin)
   mu      <- sim[[Q.ind]]$mu[,n.store]
   f       <- sim[[Q.ind]]$f[,1:Q,n.store]
