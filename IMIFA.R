@@ -29,7 +29,12 @@
     #source(paste(dataDirectory, "/IMIFA-GIT/Simulate_Data.R", sep=""))
     #save(data, mu.true, load.true, psi.true, file=paste(dataDirectory,"/Data/Simulated_Data.Rdata", sep=""))
     load(file=paste(dataDirectory, "/Data/Simulated_Data.Rdata", sep=""), envir=.GlobalEnv)
-    
+
+# Vanilla 'factanal' for comparison purposes
+  res      <- factanal(data[,sapply(data, is.numeric)], 
+                       factors=round(sqrt(sum(sapply(data, is.numeric)))))
+  res
+
 # Initialise the Gibbs Sampler & set hyperparameters
   N        <- nrow(data)
   P        <- sum(sapply(data, is.numeric))
