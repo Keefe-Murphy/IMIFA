@@ -95,7 +95,7 @@
           numred     <- sum(colvec)
           
           if(unif    <  prob) { # check whether to adapt or not
-            if(iter  >  100 && numred == 0 && all(lind < prop2)) { # simulate extra columns from priors
+            if(iter  >  100 && numred == 0 && Q < P && all(lind < prop2)) { # simulate extra columns from priors
               Q      <- Q + 1
               f      <- cbind(f, rnorm(n=N, mean=0, sd=1))         
               phi    <- cbind(phi, rgamma(n=P, shape=phi.nu/2, rate=phi.nu/2))
