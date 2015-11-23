@@ -31,16 +31,16 @@
     load(file=paste(dataDirectory, "/Data/Simulated_Data.Rdata", sep=""), envir=.GlobalEnv)
 
 # Vanilla 'factanal' for comparison purposes
+  N        <- nrow(data)
+  P        <- sum(sapply(data, is.numeric))
   res      <- factanal(data[,sapply(data, is.numeric)], 
                        factors=round(sqrt(sum(sapply(data, is.numeric)))), control=list(nstart=50))
   res
 
 # Initialise the Gibbs Sampler & set hyperparameters
-  N        <- nrow(data)
-  P        <- sum(sapply(data, is.numeric))
-  sigma.mu <- 0.5; sigma.l <- 0.5; psi.alpha <- 2; psi.beta <- 0.6
   n.iters  <- 50000
   range.Q  <- 1:3   # can be SCALAR or VECTOR; scalar preferred!
+  sigma.mu <- 0.5; sigma.l <- 0.5; psi.alpha <- 2; psi.beta <- 0.6
   if(case != 'Single') { phi.nu <- 3; delta.a1 <- 2.1; delta.a2 <- 3.1; rm('sigma.l', 'range.Q') }
 
   # Define full conditional & Gibbs Sampler functions for desired case
