@@ -32,7 +32,7 @@
 
 # Vanilla 'factanal' for comparison purposes
   res      <- factanal(data[,sapply(data, is.numeric)], 
-                       factors=round(sqrt(sum(sapply(data, is.numeric)))))
+                       factors=round(sqrt(sum(sapply(data, is.numeric)))), control=list(nstart=50))
   res
 
 # Initialise the Gibbs Sampler & set hyperparameters

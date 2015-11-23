@@ -11,7 +11,7 @@
                            burnin=n.iters/5 - 1, thin=2, scaling=T, ...) {
     
   # Warning(s)
-    if(Q >= P) stop("Number of factors must be less than number of variables")
+    if(Q > P)  stop("Number of factors must be less than number of variables")
     if(prop1 > 1 || prop2 > 1) stop("prop1 & prop2 must be valid proportions")
         
   # Remove non-numeric columns
