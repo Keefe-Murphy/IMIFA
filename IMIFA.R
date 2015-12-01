@@ -79,6 +79,10 @@
   load(file=paste(dataDirectory, "/Simulations/Wine_Simulations_", case, ".Rdata", sep=""), envir=.GlobalEnv)
 
 # Convergence diagnostics (optional additional burnin & thinning)
+  burnin  <- 1
+  thin    <- 1
+  store   <- seq(from=burnin + 1, to=sim[[Q.ind]]$n.store, by=thin)
+  
   if(case == 'Single' && length(range.Q) == 1) {
     Q.ind <- 1 
     Q     <- range.Q
@@ -93,17 +97,14 @@
     # Q   <- 2
     # if(case == 'Single') { Q.ind <- which(range.Q == Q) } else Q.ind <- 1
 
-  burnin  <- 1
-  thin    <- 1
-  n.store <- seq(from=burnin + 1, to=sim[[Q.ind]]$n.store, by=thin)
-  mu      <- sim[[Q.ind]]$mu[,n.store]
-  f       <- sim[[Q.ind]]$f[,1:Q,n.store]
-  load    <- sim[[Q.ind]]$load[,1:Q,n.store]
-  psi     <- sim[[Q.ind]]$psi[,n.store]
+  mu      <- sim[[Q.ind]]$mu[,store]
+  f       <- sim[[Q.ind]]$f[,1:Q,store]
+  load    <- sim[[Q.ind]]$load[,1:Q,store]
+  psi     <- sim[[Q.ind]]$psi[,store]
   
 # Loadings matrix / identifiability / # etc.
   l.temp  <- sim[[Q.ind]]$load[,1:Q,burnin]
-  for(b in 1:length(n.store)) {
+  for(b in 1:length(store)) {
     rot       <- procrustes(X=load[,,b], Xstar=l.temp)$R
     load[,,b] <- load[,,b] %*% rot
     f[,,b]    <- t(f[,,b]  %*% rot)
@@ -132,8 +133,8 @@
     matplot(t(f[1,,]), type="l")
     plot(post.f, type="n")
     text(post.f[,1], post.f[,2], 1:nrow(post.f), col=if(exists("Label", where=data)) as.numeric(data$Label) else 1)
-    plot(f[,,length(n.store)], type="n")
-    text(f[,1,length(n.store)], f[,2,length(n.store)], 1:nrow(post.f), col=if(exists("Label", where=data)) as.numeric(data$Label) else 1)
+    plot(f[,,length(store)], type="n")
+    text(f[,1,length(store)], f[,2,length(store)], 1:nrow(post.f), col=if(exists("Label", where=data)) as.numeric(data$Label) else 1)
     acf(f[1,1,])
       
   # Loadings

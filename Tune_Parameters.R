@@ -4,7 +4,7 @@
 
 if(case == 'Shrinkage') {
   # Retrieve distribution of Q, tabulate & plot
-    Q.store    <- sim[[Q.ind]]$Q.store
+    Q.store    <- sim[[Q.ind]]$Q.store[store]
     Q.tab      <- table(Q.store)
     Q.plot     <- barplot(Q.tab, main="Posterior Distribution of Q", 
                           ylab="Frequency", xlab="Q", xaxt="n")
@@ -16,7 +16,7 @@ if(case == 'Shrinkage') {
     if(post.Q == 'Mode') { 
       Q        <- min(Q.mode)
     } else { Q <- Q.median }
-    Q.CI       <- quantile(Q.store,c(0.025,0.975))
+    Q.CI       <- quantile(Q.store, c(0.025, 0.975))
     print(list(Q=Q, Mode = Q.mode, Median = Q.median, 
                Credible_Interval = Q.CI, Warning="But the user should choose Q based on the attached bar plot!"))
   } else {

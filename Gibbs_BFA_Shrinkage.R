@@ -7,7 +7,7 @@
 
 # Gibbs Sampler Function
   gibbs.shrink <- function(data=data, n.iters=50000, Q=min(round(5 * log(P, 2)), P), 
-                           b0=1, b1=0.0005, epsilon=0.001, prop1=0.8, prop2=0.8, adapt=T,
+                           b0=0.1, b1=0.00005, epsilon=0.005, prop1=0.8, prop2=0.7, adapt=T,
                            burnin=n.iters/5 - 1, thin=2, scaling=T, ...) {
     
   # Warning(s)
@@ -30,7 +30,7 @@
     f.store    <- array(0, dim=c(N, Q, n.store)); colnames(f.store)    <- paste("Factor",1:Q)
     load.store <- array(0, dim=c(P, Q, n.store)); rownames(load.store) <- colnames(data); colnames(load.store) <- paste("Factor",1:Q)
     psi.store  <- matrix(0, nr=P, nc=n.store);    rownames(psi.store)  <- colnames(data)
-    Q.store    <- rep(0, n.iters);                Q.store[1]           <- Q 
+    Q.store    <- rep(0, n.store);                Q.store[1]           <- Q 
     
     mu         <- mvrnorm(mu=rep(0, P), Sigma=sigma.mu * diag(P))             
     f          <- mvrnorm(n=N, mu=rep(0, Q), Sigma=diag(Q))         
@@ -87,15 +87,16 @@
         }
       
       # Adaptation  
-        if(adapt) {      
-          prob       <- 1/exp(b0 + b1 * iter)
+        if(adapt && iter > burnin) {      
+          prob       <- 1/exp(b0 + b1 * pmax(iter - burnin, 0))
           unif       <- runif(n=1, min=0, max=1)
           lind       <- colSums(abs(load) < epsilon) / P
           colvec     <- lind >= prop1
           numred     <- sum(colvec)
           
           if(unif    <  prob) { # check whether to adapt or not
-            if(iter  >  100 && numred == 0 && Q < P && all(lind < prop2)) { # simulate extra columns from priors
+            if(Q < P && numred == 0 && all(lind < prop2)) { # simulate extra columns from priors
+              
               Q      <- Q + 1
               f      <- cbind(f, rnorm(n=N, mean=0, sd=1))         
               phi    <- cbind(phi, rgamma(n=P, shape=phi.nu/2, rate=phi.nu/2))
@@ -113,14 +114,14 @@
             }
           }
         } 
-      Q.store[iter]  <- Q
       
       if(iter > burnin && iter %% thin == 0) {
-        new.iter     <- ceiling((iter-burnin)/thin)
+        new.iter     <- ceiling((iter - burnin)/thin)
         mu.store[,new.iter]       <- mu  
         f.store[,1:Q,new.iter]    <- f
         load.store[,1:Q,new.iter] <- load
         psi.store[,new.iter]      <- 1/psi.inv  
+        Q.store[new.iter]         <- Q
       }
     }
   return(list(mu      = mu.store,
