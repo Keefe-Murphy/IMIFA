@@ -8,17 +8,11 @@
 
 # Gibbs Sampler Function
   gibbs.single <- function(data=data, n.iters=50000, Q=2, print=T,
-                           burnin=n.iters/5 - 1, thin=2, scaling=T, ...) {
+                           burnin=n.iters/5 - 1, thin=2, centering=T, scaling=T, ...) {
         
-  # Remove non-numeric columns
+  # Remove non-numeric columns & (optionally) Center/Scale the data
     data       <- data[sapply(data,is.numeric)]
-  
-  # Centre the data (optional)
-    if (scaling) {
-      data     <- scale(data, center=T, scale=T)
-    } else  {
-      data     <- as.matrix(data)
-    }
+    data       <- scale(data, center=centering, scale=scaling)
   
   # Define & initialise variables
     n.store    <- ceiling((n.iters - burnin)/thin)
