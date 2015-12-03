@@ -22,13 +22,12 @@ if(case == 'Shrinkage') {
   } else {
   
   # Initialise
-    Q.star   <- range.Q - min(range.Q) + 1
-    P        <- length(sim[[1]]$psi[,1])
-    prop.var <- rep(NA, length(range.Q))
+    Q.star     <- range.Q - min(range.Q) + 1
+    P          <- length(sim[[1]]$psi[,1])
+    prop.var   <- rep(NA, length(range.Q))
 
   # Calculate Proportion of Variation Explained
     for(Q in Q.star) {
-      store       <- seq(from=burnin + 1, to=sim[[1]]$n.store, by=thin)
       psi         <- sim[[Q]]$psi[,store]
       post.psi    <- apply(psi, 1, mean)
       prop.var[Q] <- (P - sum(post.psi))/P
