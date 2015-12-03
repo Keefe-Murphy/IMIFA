@@ -6,23 +6,19 @@
   source(paste(dataDirectory, "/IMIFA-GIT/FullConditionals_BFA_Shrinkage.R", sep=""))
 
 # Gibbs Sampler Function
-  gibbs.shrink <- function(data=data, n.iters=50000, Q=min(round(5 * log(P)), P), 
-                           b0=0.1, b1=0.00005, epsilon=0.01, prop1=0.75, prop2=0.65, adapt=T,
-                           burnin=n.iters/5 - 1, thin=2, scaling=T, print=T, ...) {
+  gibbs.shrink <- function(data=data, n.iters=50000, Q=min(round(5 * log(P)), P),
+                           burnin=n.iters/5 - 1, thin=2, 
+                           centering=T, scaling=T, print=T, 
+                           adapt=T, b0=0.1, b1=0.00005, prop1=0.75, prop2=0.7,
+                           epsilon=if(centering) 0.1 else 0.05, ...) {
     
   # Warning(s)
-    if(Q > P)  stop("Number of factors must be less than number of variables")
-    if(prop1 > 1 || prop2 > 1) stop("prop1 & prop2 must be valid proportions")
-        
-  # Remove non-numeric columns
+    if(Q > P)  stop("Number of factors must be less than the number of variables")
+    if(prop1   >  1 || prop2 > 1) stop("prop1 & prop2 must be valid proportions")
+    
+  # Remove non-numeric columns & (optionally) Center/Scale the data
     data       <- data[sapply(data,is.numeric)]
-  
-  # Centre the data (optional)
-    if (scaling) {
-      data     <- scale(data, center=T, scale=T)
-    } else  {
-      data     <- as.matrix(data)
-    }
+    data       <- scale(data, center=centering, scale=scaling)
   
   # Define & initialise variables
     n.store    <- ceiling((n.iters - burnin)/thin)
