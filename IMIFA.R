@@ -91,26 +91,28 @@
   
   if(case == 'Single' && length(range.Q) == 1) {
     Q     <- range.Q
+    rm("range.Q")
   } else {
     if(case == 'Shrinkage') { post.Q <- 'Mode' }
     source(paste(dataDirectory, "/IMIFA-GIT/Tune_Parameters.R", sep=""))
   }
   
   # For user defined Q based on scree plot or bar plot
-  # Rather than Q.ind <- which.max(prop.var); Q <- range.Q[Q.ind] for 'Single' case
+  # Rather than Q.ind <- which.max(prop.exp); Q <- range.Q[Q.ind] for 'Single' case
   # Rather than Q     <- names(Q.store[Q.store == max(Q.store)]) for 'Shrinkage' case
     # Q   <- 2
     # if(case == 'Single') { Q.ind <- which(range.Q == Q) } else Q.ind <- 1
 
-  mu      <- sim[[Q.ind]]$mu[,store]
-  f       <- sim[[Q.ind]]$f[,1:Q,store]
-  load    <- sim[[Q.ind]]$load[,1:Q,store]
+  mu      <- sim[[Q.ind]]$mu[,store]                            
+  f       <- array(sim[[Q.ind]]$f[,1:Q,store], dim=c(N, Q, length(store)))
+  load    <- array(sim[[Q.ind]]$load[,1:Q,store], dim=c(P, Q, length(store)))
   psi     <- sim[[Q.ind]]$psi[,store]
-  
+  colnames(f) <- paste("Factor", 1:Q); rownames(load) <- colnames(data); colnames(load) <- paste("Factor", 1:Q)
+
 # Loadings matrix / identifiability / # etc.
-  l.temp  <- sim[[Q.ind]]$load[,1:Q,burnin]
+  l.temp  <- matrix(sim[[Q.ind]]$load[,1:Q,burnin], nr=P, nc=Q)
   for(b in 1:length(store)) {
-    rot       <- procrustes(X=load[,,b], Xstar=l.temp)$R
+    rot       <- procrustes(X=as.matrix(load[,,b]), Xstar=as.matrix(l.temp))$R
     load[,,b] <- load[,,b] %*% rot
     f[,,b]    <- t(f[,,b]  %*% rot)
   }
@@ -121,10 +123,13 @@
   post.load   <- apply(load, c(1,2), mean)
   post.psi    <- apply(psi, 1, mean)
   
-  P <- nrow(post.load)
-  prop.uni    <- sum(post.psi)/P 
-  communality <- P - sum(post.psi)
+  P           <- nrow(post.load)
+  SS.load     <- colSums(post.load^2)
+  communality <- sum(SS.load)
+  prop.var    <- SS.load/P
+  cum.var     <- cumsum(prop.var)
   prop.exp    <- communality/P
+  prop.uni    <- 1 - prop.exp
     
   # Means
     plot(mu[1,], type="l")
@@ -154,12 +159,12 @@
       image(z=t(post.load), xlab="", ylab="", 
             main="Posterior Loadings", xaxt="n", yaxt="n")
       axis(1, cex.axis=0.8, line=-0.5, tick=F, 
-           at=seq(0, 1, 1/(Q-1)), labels=1:Q)
+           at=if(Q != 1) seq(0, 1, 1/(Q-1)) else 0, labels=1:Q)
       axis(2, cex.axis=0.5, line=-0.5, tick=F, las=1,
            at=seq(0, 1, 1/(nrow(post.load)-1)), labels=rownames(post.load))
       box(lwd=2)
       mtext("Factors", side=1, line=2)
-      abline(v=seq(1/(2*(Q-1)), 1-1/(2*(Q-1)), 1/(Q-1)), lty=2, lwd=1)
+      if(Q != 1) abline(v=seq(1/(2*(Q-1)), 1-1/(2*(Q-1)), 1/(Q-1)), lty=2, lwd=1)
       invisible(par(def.par))
 
   # Uniquenesses

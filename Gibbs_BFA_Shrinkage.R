@@ -27,8 +27,8 @@
   # Define & initialise variables
     n.store    <- ceiling((n.iters - burnin)/thin)
     mu.store   <- matrix(0, nr=P, nc=n.store);    rownames(mu.store)   <- colnames(data) 
-    f.store    <- array(0, dim=c(N, Q, n.store)); colnames(f.store)    <- paste("Factor",1:Q)
-    load.store <- array(0, dim=c(P, Q, n.store)); rownames(load.store) <- colnames(data); colnames(load.store) <- paste("Factor",1:Q)
+    f.store    <- array(0, dim=c(N, Q, n.store)); colnames(f.store)    <- paste("Factor", 1:Q)
+    load.store <- array(0, dim=c(P, Q, n.store)); rownames(load.store) <- colnames(data); colnames(load.store) <- paste("Factor", 1:Q)
     psi.store  <- matrix(0, nr=P, nc=n.store);    rownames(psi.store)  <- colnames(data)
     Q.store    <- rep(0, n.store);                Q.store[1]           <- Q 
     

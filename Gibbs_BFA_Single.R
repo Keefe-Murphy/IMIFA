@@ -17,8 +17,8 @@
   # Define & initialise variables
     n.store    <- ceiling((n.iters - burnin)/thin)
     mu.store   <- matrix(NA, nr=P, nc=n.store);    rownames(mu.store)   <- colnames(data) 
-    f.store    <- array(NA, dim=c(N, Q, n.store)); colnames(f.store)    <- paste("Factor",1:Q)
-    load.store <- array(NA, dim=c(P, Q, n.store)); rownames(load.store) <- colnames(data); colnames(load.store) <- paste("Factor",1:Q)
+    f.store    <- array(NA, dim=c(N, Q, n.store)); colnames(f.store)    <- paste("Factor", 1:Q)
+    load.store <- array(NA, dim=c(P, Q, n.store)); rownames(load.store) <- colnames(data); colnames(load.store) <- paste("Factor", 1:Q)
     psi.store  <- matrix(NA, nr=P, nc=n.store);    rownames(psi.store)  <- colnames(data)
     
     mu         <- mvrnorm(mu=rep(0, P), Sigma=sigma.mu * diag(P))             

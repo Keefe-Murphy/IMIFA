@@ -24,22 +24,27 @@ if(case == 'Shrinkage') {
   # Initialise
     Q.star     <- range.Q - min(range.Q) + 1
     P          <- length(sim[[1]]$psi[,1])
-    prop.var   <- rep(NA, length(range.Q))
+    prop.exp   <- rep(NA, length(range.Q))
 
   # Calculate Proportion of Variation Explained
     for(Q in Q.star) {
-      psi         <- sim[[Q]]$psi[,store]
-      post.psi    <- apply(psi, 1, mean)
-      prop.var[Q] <- (P - sum(post.psi))/P
+      load        <- array(sim[[Q]]$load[,1:range.Q[Q],store], dim=c(P, range.Q[Q],length(store)))
+      l.temp      <- matrix(sim[[Q]]$load[,1:range.Q[Q],burnin], nr=P, nc=Q)
+      for(b in 1:length(store)) {
+        rot       <- procrustes(X=as.matrix(load[,,b]), Xstar=as.matrix(l.temp))$R
+        load[,,b] <- load[,,b] %*% rot
+      }
+      post.load   <- apply(load, c(1,2), mean)
+      prop.exp[Q] <- sum(colSums(post.load^2))/P
     }
   
   # Produce Scree Plot & choose optimum Q
-    plot(prop.var, type="l", main="Scree Plot to Choose Q", xlab="# Factors", 
+    plot(prop.exp, type="l", main="Scree Plot to Choose Q", xlab="# Factors", 
          ylab="% Variation Explained", xaxt="n", yaxt="n", ylim=c(0,1))
-    axis(1, at=1:length(prop.var), labels=range.Q)
+    axis(1, at=1:length(prop.exp), labels=range.Q)
     axis(2, at=seq(0,1,0.1), labels=seq(0,100,10), cex.axis=0.8)
-    Q.ind <- which.max(prop.var)
+    Q.ind <- which.max(prop.exp)
     Q     <- range.Q[Q.ind]
-    points(x=Q.ind, y=prop.var[Q.ind], col="red", cex=1.5, bg="red", pch=21)
+    points(x=Q.ind, y=prop.exp[Q.ind], col="red", cex=1.5, bg="red", pch=21)
     print(list(Q=Q, Warning="But the user should choose Q based on the attached scree plot!"))
   }
