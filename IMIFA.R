@@ -3,27 +3,30 @@
 ######################################################
 
 # Preamble
-  dataDirectory <- "C:/Users/Windows/Documents/Claire IMIFA"
-# dataDirectory <- getwd() # if using R server
-  setwd(dataDirectory)
+  if(getwd() == "/home/kmurphy") {
+    dataDirectory <- getwd()
+  } else {
+    dataDirectory <- "C:/Users/Windows/Documents/Claire IMIFA"
+    setwd(dataDirectory)
+  }
   set.seed(21092015)
-  def.par       <- par()
-  cases         <- c("Single", "Shrinkage", "Grouped", "Imifa")
-  case          <- 'Shrinkage'
-  if(!is.element(case, cases)) stop("'case' must be one of 'Single', 'Shrinkage', 'Grouped', or 'Imifa'.")
-  pkgs          <- c("pgmm")
+  def.par         <- par()
+  cases           <- c("Single", "Shrinkage", "Grouped", "IMIFA")
+  case            <- 'Shrinkage'
+  if(!is.element(case, cases)) stop("'case' must be one of 'Single', 'Shrinkage', 'Grouped', or 'IMIFA'.")
+  pkgs            <- c("pgmm")
   invisible(lapply(pkgs, library, ch=T))
   # WARNING: Remove everything
-    rm(list = ls(all = TRUE))
+    # rm(list = ls(all = TRUE))
   # WARNING: Remove loaded libraries
-    pkgs <- names(sessionInfo()$otherPkgs)
-    pkgs <- paste('package:', pkgs, sep = "")
-    invisible(lapply(pkgs, detach, ch = T, unload = T, force= T))
+    # pkgs <- names(sessionInfo()$otherPkgs)
+    # pkgs <- paste('package:', pkgs, sep = "")
+    # invisible(lapply(pkgs, detach, ch = T, unload = T, force= T))
     
 # Read in the data (& call it data)
-  data(wine); wine$Label <- as.factor(wine[,1]); wine <- wine[,-1]; data <- wine; rm("wine")
-  #subjectmarks <- read.csv(paste(dataDirectory, "/Data/", "SubjectMarks.csv", sep="")); data <- subjectmarks; rm("subjectmarks")
-  #cereal       <- read.csv(paste(dataDirectory, "/Data/", "Cereal.csv", sep="")); data <- cereal; rm("cereal")
+  data(wine); Label <- as.factor(wine[,1]); wine <- wine[,-1]; data <- wine; rm("wine")
+  #subjectmarks   <- read.csv(paste(dataDirectory, "/Data/", "SubjectMarks.csv", sep="")); data <- subjectmarks; rm("subjectmarks")
+  #cereal         <- read.csv(paste(dataDirectory, "/Data/", "Cereal.csv", sep="")); data <- cereal; rm("cereal")
 
   # Simulate data
     #source(paste(dataDirectory, "/IMIFA-GIT/Simulate_Data.R", sep=""))
@@ -31,6 +34,7 @@
     load(file=paste(dataDirectory, "/Data/Simulated_Data.Rdata", sep=""), envir=.GlobalEnv)
 
 # Vanilla 'factanal' for comparison purposes
+  if(!exists("Label")) stop("Should the data be labelled?")
   N        <- nrow(data)
   P        <- sum(sapply(data, is.numeric))
   res      <- factanal(data[,sapply(data, is.numeric)], 
@@ -56,15 +60,16 @@
     }
 
 # Run the Gibbs Sampler
-  start.time   <- proc.time()
+{ start.time   <- proc.time()
   if(case == 'Single') {
     if(length(range.Q) == 1) {
+      Q.ind    <- 1
       sim[[1]] <- gibbs.single(data, n.iters, Q=range.Q)
     } else {
       for(q in range.Q) { 
-        q.ind  <- q - min(range.Q) + 1
-        sim[[q.ind]] <- gibbs.single(data, n.iters, Q=q)
-        cat(paste0(round(q.ind/length(range.Q) * 100, 2), "% Complete", "\n"))
+        Q.ind  <- q - min(range.Q) + 1
+        sim[[Q.ind]] <- gibbs.single(data, n.iters, Q=q)
+        cat(paste0(round(Q.ind/length(range.Q) * 100, 2), "% Complete", "\n"))
       }
     }
   } else if (case == 'Shrinkage') {
@@ -73,6 +78,7 @@
   total.time   <- proc.time() - start.time
   average.time <- total.time/if(exists('range.Q')) length(range.Q) else length(Q.star)
   sim$time     <- list(Total = total.time, Average = average.time); sim$time
+}
 
 # Save / Load results
   save(sim,file=paste(dataDirectory, "/Simulations/Wine_Simulations_", case, ".Rdata", sep="")) # in server, tick box, export
@@ -81,13 +87,12 @@
 # Convergence diagnostics (optional additional burnin & thinning)
   burnin  <- 1
   thin    <- 1
-  store   <- seq(from=burnin + 1, to=sim[[Q.ind]]$n.store, by=thin)
+  store   <- seq(from=burnin + 1, to=sim[[1]]$n.store, by=thin)
   
   if(case == 'Single' && length(range.Q) == 1) {
-    Q.ind <- 1 
     Q     <- range.Q
   } else {
-    if(case == 'Shrinkage') post.Q <- 'Mode'
+    if(case == 'Shrinkage') { post.Q <- 'Mode' }
     source(paste(dataDirectory, "/IMIFA-GIT/Tune_Parameters.R", sep=""))
   }
   
@@ -132,9 +137,9 @@
     plot(f[1,1,], type="l")
     matplot(t(f[1,,]), type="l")
     plot(post.f, type="n")
-    text(post.f[,1], post.f[,2], 1:nrow(post.f), col=if(exists("Label", where=data)) as.numeric(data$Label) else 1)
+    text(post.f[,1], post.f[,2], 1:nrow(post.f), col=if(exists("Label")) as.numeric(Label) else 1)
     plot(f[,,length(store)], type="n")
-    text(f[,1,length(store)], f[,2,length(store)], 1:nrow(post.f), col=if(exists("Label", where=data)) as.numeric(data$Label) else 1)
+    text(f[,1,length(store)], f[,2,length(store)], 1:nrow(post.f), col=if(exists("Label")) as.numeric(Label) else 1)
     acf(f[1,1,])
       
   # Loadings
