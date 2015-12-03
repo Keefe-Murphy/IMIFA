@@ -7,8 +7,8 @@
 
 # Gibbs Sampler Function
   gibbs.shrink <- function(data=data, n.iters=50000, Q=min(round(5 * log(P, 2)), P), 
-                           b0=0.1, b1=0.00005, epsilon=0.005, prop1=0.8, prop2=0.7, adapt=T,
-                           burnin=n.iters/5 - 1, thin=2, scaling=T, ...) {
+                           b0=0.1, b1=0.00005, epsilon=0.01, prop1=0.75, prop2=0.65, adapt=T,
+                           burnin=n.iters/5 - 1, thin=2, scaling=T, print=T, ...) {
     
   # Warning(s)
     if(Q > P)  stop("Number of factors must be less than number of variables")
@@ -19,7 +19,7 @@
   
   # Centre the data (optional)
     if (scaling) {
-      data     <- scale(data, center=F, scale=T)
+      data     <- scale(data, center=T, scale=T)
     } else  {
       data     <- as.matrix(data)
     }
@@ -46,10 +46,12 @@
   
   # Iterate
     for(iter in 2:n.iters) { 
-      if(iter < n.iters/10 && iter %% (n.iters/100) == 0) {
-        cat(paste0("Iteration: ", iter, "\n"))
+      if(print) {
+        if(iter < n.iters/10 && iter %% (n.iters/100) == 0) {
+          cat(paste0("Iteration: ", iter, "\n"))
         } else if (iter %% (n.iters/10) == 0) {
-        cat(paste0("Iteration: ", iter, "\n"))
+          cat(paste0("Iteration: ", iter, "\n"))
+        }
       }
       
       # Means
