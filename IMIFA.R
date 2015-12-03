@@ -124,12 +124,18 @@
   post.psi    <- apply(psi, 1, mean)
   
   P           <- nrow(post.load)
-  SS.load     <- colSums(post.load^2)
+  SS.load     <- colSums(post.load * post.load)
   communality <- sum(SS.load)
   prop.var    <- SS.load/P
   cum.var     <- cumsum(prop.var)
   prop.exp    <- communality/P
   prop.uni    <- 1 - prop.exp
+
+  plot(cum.var, type="l", main="Scree Plot to Choose Q", xlab="# Factors", 
+       ylab="% Variation Explained", xaxt="n", yaxt="n", ylim=c(0,1))
+  axis(1, at=1:length(cum.var), labels=1:Q)
+  axis(2, at=seq(0,1,0.1), labels=seq(0,100,10), cex.axis=0.8) 
+  points(x=Q, y=cum.var[Q], col="red", bg="red", pch=21)
     
   # Means
     plot(mu[1,], type="l")

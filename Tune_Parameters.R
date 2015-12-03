@@ -35,7 +35,7 @@ if(case == 'Shrinkage') {
         load[,,b] <- load[,,b] %*% rot
       }
       post.load   <- apply(load, c(1,2), mean)
-      prop.exp[Q] <- sum(colSums(post.load^2))/P
+      prop.exp[Q] <- sum(colSums(post.load * post.load))/P
     }
   
   # Produce Scree Plot & choose optimum Q
@@ -45,6 +45,6 @@ if(case == 'Shrinkage') {
     axis(2, at=seq(0,1,0.1), labels=seq(0,100,10), cex.axis=0.8)
     Q.ind <- which.max(prop.exp)
     Q     <- range.Q[Q.ind]
-    points(x=Q.ind, y=prop.exp[Q.ind], col="red", cex=1.5, bg="red", pch=21)
+    points(x=Q.ind, y=prop.exp[Q.ind], col="red", bg="red", pch=21)
     print(list(Q=Q, Warning="But the user should choose Q based on the attached scree plot!"))
   }
