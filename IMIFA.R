@@ -31,7 +31,7 @@
   # Simulate data
     #source(paste(dataDirectory, "/IMIFA-GIT/Simulate_Data.R", sep=""))
     #save(data, mu.true, load.true, psi.true, file=paste(dataDirectory,"/Data/Simulated_Data.Rdata", sep=""))
-    load(file=paste(dataDirectory, "/Data/Simulated_Data.Rdata", sep=""), envir=.GlobalEnv)
+    load(file=paste(dataDirectory, "/Data/Simulated_Data.Rdata", sep=""), envir=.GlobalEnv); if(exists("Label")) rm("Label")
 
 # Vanilla 'factanal' for comparison purposes
   if(!exists("Label")) stop("Should the data be labelled?")
@@ -53,7 +53,7 @@
       sim    <- vector("list", length(range.Q))
     } else if(case == 'Shrinkage') {
       Q.ind  <- 1
-      Q.star <- min(round(5 * log(P, 2)), P)
+      Q.star <- min(round(5 * log(P)), P)
       sim    <- vector("list", length(Q.star))
     } else {
       stop("Not yet implented for other cases.")

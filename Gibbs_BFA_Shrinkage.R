@@ -6,7 +6,7 @@
   source(paste(dataDirectory, "/IMIFA-GIT/FullConditionals_BFA_Shrinkage.R", sep=""))
 
 # Gibbs Sampler Function
-  gibbs.shrink <- function(data=data, n.iters=50000, Q=min(round(5 * log(P, 2)), P), 
+  gibbs.shrink <- function(data=data, n.iters=50000, Q=min(round(5 * log(P)), P), 
                            b0=0.1, b1=0.00005, epsilon=0.01, prop1=0.75, prop2=0.65, adapt=T,
                            burnin=n.iters/5 - 1, thin=2, scaling=T, print=T, ...) {
     
