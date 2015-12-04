@@ -22,16 +22,17 @@ if(case == 'Shrinkage') {
   } else {
   
   # Initialise
+    range.Q    <- as.numeric(unlist(lapply(sim, function(x) dim(x$f)[2])))
     Q.star     <- range.Q - min(range.Q) + 1
     P          <- length(sim[[1]]$psi[,1])
     prop.exp   <- rep(NA, length(range.Q))
 
   # Calculate Proportion of Variation Explained
     for(Q in Q.star) {
-      load        <- array(sim[[Q]]$load[,1:range.Q[Q],store], dim=c(P, range.Q[Q],length(store)))
-      l.temp      <- matrix(sim[[Q]]$load[,1:range.Q[Q],burnin], nr=P, nc=Q)
+      load        <- sim[[Q]]$load[,1:range.Q[Q],store, drop=F]
+      l.temp      <- as.matrix(sim[[Q]]$load[,1:range.Q[Q],burnin])
       for(b in 1:length(store)) {
-        rot       <- procrustes(X=as.matrix(load[,,b]), Xstar=as.matrix(l.temp))$R
+        rot       <- procrustes(X=as.matrix(load[,,b]), Xstar=l.temp)$R
         load[,,b] <- load[,,b] %*% rot
       }
       post.load   <- apply(load, c(1,2), mean)

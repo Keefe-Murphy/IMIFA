@@ -10,7 +10,7 @@
                            burnin=n.iters/5 - 1, thin=2, 
                            centering=T, scaling=T, print=T, 
                            adapt=T, b0=0.1, b1=0.00005, prop1=3/4, prop2=3/5,
-                           epsilon=if(centering) 0.1 else 0.01, ...) {
+                           epsilon=ifelse(centering, 0.1, 0.01), ...) {
     
   # Warning(s)
     if(Q > P)  stop("Number of factors must be less than the number of variables")

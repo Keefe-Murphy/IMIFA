@@ -14,9 +14,12 @@
   cases           <- c("Single", "Shrinkage", "Grouped", "IMIFA")
   case            <- 'Shrinkage'
   if(!is.element(case, cases)) stop("'case' must be one of 'Single', 'Shrinkage', 'Grouped', or 'IMIFA'.")
-  pkgs            <- c("pgmm")
+  pkgs            <- c("pgmm", "car")
   invisible(lapply(pkgs, library, ch=T))
   # WARNING: Remove everything
+    # update.packages()
+    # search()
+    # searchpaths()
     # rm(list = ls(all = TRUE))
   # WARNING: Remove loaded libraries
     # pkgs <- names(sessionInfo()$otherPkgs)
@@ -37,9 +40,8 @@
   if(!exists("Label")) stop("Should the data be labelled?")
   N        <- nrow(data)
   P        <- sum(sapply(data, is.numeric))
-  res      <- factanal(data[,sapply(data, is.numeric)], 
-                       factors=round(sqrt(sum(sapply(data, is.numeric)))), control=list(nstart=50))
-  res
+  (res     <- factanal(data[,sapply(data, is.numeric)], 
+                       factors=round(sqrt(sum(sapply(data, is.numeric)))), control=list(nstart=50)))
 
 # Initialise the Gibbs Sampler & set hyperparameters
   n.iters  <- 50000
@@ -52,7 +54,6 @@
     if(case == 'Single') {
       sim    <- vector("list", length(range.Q))
     } else if(case == 'Shrinkage') {
-      Q.ind  <- 1
       Q.star <- min(round(5 * log(P)), P)
       sim    <- vector("list", length(Q.star))
     } else {
@@ -76,7 +77,7 @@
       sim[[1]] <- gibbs.shrink(data, n.iters, Q=Q.star)
   }
   total.time   <- proc.time() - start.time
-  average.time <- total.time/if(exists('range.Q')) length(range.Q) else length(Q.star)
+  average.time <- total.time/ifelse(exists('range.Q'), length(range.Q), length(Q.star))
   sim$time     <- list(Total = total.time, Average = average.time); sim$time
 }
 
@@ -93,7 +94,7 @@
     Q     <- range.Q
     rm("range.Q")
   } else {
-    if(case == 'Shrinkage') { post.Q <- 'Mode' }
+    if(case == 'Shrinkage') { post.Q <- 'Mode'; Q.ind  <- 1 }
     source(paste(dataDirectory, "/IMIFA-GIT/Tune_Parameters.R", sep=""))
   }
   
@@ -104,15 +105,14 @@
     # if(case == 'Single') { Q.ind <- which(range.Q == Q) } else Q.ind <- 1
 
   mu      <- sim[[Q.ind]]$mu[,store]                            
-  f       <- array(sim[[Q.ind]]$f[,1:Q,store], dim=c(N, Q, length(store)))
-  load    <- array(sim[[Q.ind]]$load[,1:Q,store], dim=c(P, Q, length(store)))
+  f       <- sim[[Q.ind]]$f[,1:Q,store, drop=F]
+  load    <- sim[[Q.ind]]$load[,1:Q,store, drop=F]
   psi     <- sim[[Q.ind]]$psi[,store]
-  colnames(f) <- paste("Factor", 1:Q); rownames(load) <- colnames(data); colnames(load) <- paste("Factor", 1:Q)
 
 # Loadings matrix / identifiability / # etc.
-  l.temp  <- matrix(sim[[Q.ind]]$load[,1:Q,burnin], nr=P, nc=Q)
+  l.temp  <- as.matrix(sim[[Q.ind]]$load[,1:Q,burnin])
   for(b in 1:length(store)) {
-    rot       <- procrustes(X=as.matrix(load[,,b]), Xstar=as.matrix(l.temp))$R
+    rot       <- procrustes(X=as.matrix(load[,,b]), Xstar=l.temp)$R
     load[,,b] <- load[,,b] %*% rot
     f[,,b]    <- t(f[,,b]  %*% rot)
   }
@@ -128,7 +128,7 @@
   communality <- sum(SS.load)
   prop.var    <- SS.load/P
   cum.var     <- cumsum(prop.var)
-  prop.exp    <- communality/P
+  (prop.exp   <- communality/P)
   prop.uni    <- 1 - prop.exp
 
   plot(cum.var, type="l", main="Scree Plot to Choose Q", xlab="# Factors", 
@@ -138,26 +138,30 @@
   points(x=Q, y=prop.exp, col="red", bg="red", pch=21)
     
   # Means
-    plot(mu[1,], type="l")
+    scatterplot(x=store, y=mu[1,])
     matplot(t(mu[,]), type="l")
-    plot(post.mu, type="n")
-    text(x=1:length(post.mu), y=post.mu, names(post.mu))
+    plot(post.mu, type="n", main="Posterior Means")
+   #scatterplot(x=1:P, y=post.mu, main="Posterior Means", pch=NA, col=c("blue", "brown"))
+    text(x=1:P, y=post.mu, names(post.mu), cex=0.5)
     acf(mu[1,])
   
   # Scores
-    plot(f[1,1,], type="l")
+    scatterplot(x=store, y=f[1,1,])
     matplot(t(f[1,,]), type="l")
-    plot(post.f, type="n")
-    text(post.f[,1], post.f[,2], 1:nrow(post.f), col=if(exists("Label")) as.numeric(Label) else 1)
+    plot(post.f, type="n", main="Posterior Scores")
+   #scatterplot(x=post.f[,1], y=post.f[,2], main="Posterior Scores", pch=NA, col=c("blue", "brown"))
+    text(post.f[,1], post.f[,2], 1:nrow(post.f), col=if(exists("Label")) as.numeric(Label) else 1, cex=0.5)
     plot(f[,,length(store)], type="n")
-    text(f[,1,length(store)], f[,2,length(store)], 1:nrow(post.f), col=if(exists("Label")) as.numeric(Label) else 1)
+   #scatterplot(x=f[,1,length(store)], y=f[,2,length(store)], main="Posterior Scores", pch=NA, col=c("blue", "brown"))
+    text(f[,1,length(store)], f[,2,length(store)], 1:nrow(post.f), col=if(exists("Label")) as.numeric(Label) else 1, cex=0.5)
     acf(f[1,1,])
       
   # Loadings
-    plot(load[1,1,], type="l")
+    scatterplot(x=store, y=load[1,1,])
     matplot(t(load[1,,]), type="l")
     plot(post.load, type="n")
-    text(post.load[,1], post.load[,2], rownames(post.load))
+   #scatterplot(x=post.load[,1], y=post.load[,2], main="Posterior Loadings", pch=NA, col=c("blue", "brown"))
+    text(post.load[,1], post.load[,2], rownames(post.load), cex=0.5)
     acf(load[1,1,])
     
     # Heatmaps
@@ -174,9 +178,10 @@
       invisible(par(def.par))
 
   # Uniquenesses
-    plot(psi[1,], type="l")
+    scatterplot(x=store, y=psi[1,])
     matplot(t(psi[,]), type="l")
     plot(post.psi, type="n")
-    text(1:length(post.psi), post.psi, names(post.psi))
+   #scatterplot(x=1:P, y=post.psi, main="Posterior Uniquenesses", pch=NA, col=c("blue", "brown"))
+    text(1:length(post.psi), post.psi, names(post.psi), cex=0.5)
     acf(psi[1,])
 ####
