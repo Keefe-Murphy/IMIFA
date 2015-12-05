@@ -61,7 +61,8 @@
     }
 
 # Run the Gibbs Sampler
-{ start.time   <- proc.time()
+{ Rprof()
+  start.time   <- proc.time()
   if(case == 'Single') {
     if(length(range.Q) == 1) {
       Q.ind    <- 1
@@ -79,7 +80,9 @@
   total.time   <- proc.time() - start.time
   average.time <- total.time/ifelse(exists('range.Q'), length(range.Q), length(Q.star))
   sim$time     <- list(Total = total.time, Average = average.time); sim$time
+  Rprof(NULL)
 }
+  summaryRprof()
 
 # Save / Load results
   save(sim,file=paste(dataDirectory, "/Simulations/Wine_Simulations_", case, ".Rdata", sep="")) # in server, tick box, export
