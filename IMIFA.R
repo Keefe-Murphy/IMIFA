@@ -28,8 +28,8 @@
     
 # Read in the data (& call it data)
   data(wine); Label <- as.factor(wine[,1]); wine <- wine[,-1]; data <- wine; rm("wine")
-  #subjectmarks   <- read.csv(paste(dataDirectory, "/Data/", "SubjectMarks.csv", sep="")); data <- subjectmarks; rm("subjectmarks")
-  #cereal         <- read.csv(paste(dataDirectory, "/Data/", "Cereal.csv", sep="")); data <- cereal; rm("cereal")
+  #subjectmarks     <- read.csv(paste(dataDirectory, "/Data/", "SubjectMarks.csv", sep="")); data <- subjectmarks; rm("subjectmarks")
+  #cereal           <- read.csv(paste(dataDirectory, "/Data/", "Cereal.csv", sep="")); data <- cereal; rm("cereal")
 
   # Simulate data
     #source(paste(dataDirectory, "/IMIFA-GIT/Simulate_Data.R", sep=""))
@@ -79,10 +79,13 @@
   }
   total.time   <- proc.time() - start.time
   average.time <- total.time/ifelse(exists('range.Q'), length(range.Q), length(Q.star))
-  sim$time     <- list(Total = total.time, Average = average.time); sim$time
+  sim$time     <- list(Total = total.time, Average = average.time); sim$time  
+  attr(sim, "Factors") <- if(case == 'Single') range.Q else Q.star
+  attr(sim, "Date")    <- Sys.time()
   Rprof(NULL)
 }
   summaryRprof()
+  invisible(file.remove("Rprof.out"))
 
 # Save / Load results
   save(sim,file=paste(dataDirectory, "/Simulations/Wine_Simulations_", case, ".Rdata", sep="")) # in server, tick box, export
