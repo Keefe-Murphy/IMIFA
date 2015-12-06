@@ -79,7 +79,7 @@
   }
   total.time   <- proc.time() - start.time
   average.time <- total.time/ifelse(exists('range.Q'), length(range.Q), length(Q.star))
-  sim$time     <- list(Total = total.time, Average = average.time); sim$time  
+  sim$time     <- list(Total = total.time, Average = average.time); print(sim$time)  
   attr(sim, "Factors") <- if(case == 'Single') range.Q else Q.star
   attr(sim, "Date")    <- Sys.time()
   Rprof(NULL)
