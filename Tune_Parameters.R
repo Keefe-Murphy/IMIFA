@@ -5,7 +5,8 @@
 if(case == 'Shrinkage') {
   # Retrieve distribution of Q, tabulate & plot
     Q.store    <- sim[[Q.ind]]$Q.store[store]
-    Q.tab      <- table(Q.store)
+    Q.tab      <- table(Q.store, dnn=NULL)
+    Q.prob     <- prop.table(Q.tab)
     Q.plot     <- barplot(Q.tab, main="Posterior Distribution of Q", 
                           ylab="Frequency", xlab="Q", xaxt="n")
     axis(1, at=Q.plot, labels=names(Q.tab), tick=F)
@@ -18,11 +19,14 @@ if(case == 'Shrinkage') {
     } else { Q <- Q.median }
     Q.CI       <- quantile(Q.store, c(0.025, 0.975))
     print(list(Q=Q, Mode = Q.mode, Median = Q.median, 
-               Credible_Interval = Q.CI, Warning="But the user should choose Q based on the attached bar plot!"))
+               Credible_Interval = Q.CI, Probabilities = Q.prob, 
+               Warning="But the user should choose Q based on the attached bar plot!"))
   } else {
   
   # Initialise
-    range.Q    <- as.numeric(unlist(lapply(sim, function(x) dim(x$f)[2])))
+    if(!exists("range.Q")) {
+      range.Q  <- attr(sim, "Factors")
+    }
     Q.star     <- range.Q - min(range.Q) + 1
     P          <- length(sim[[1]]$psi[,1])
     prop.exp   <- rep(NA, length(range.Q))
