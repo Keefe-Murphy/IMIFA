@@ -29,12 +29,11 @@
     mu.sigma   <- 1/sigma.mu
     l.sigma    <- 1/sigma.l * diag(Q)
     sum.data   <- colSums(data)
-    c.data     <- sweep(data, 2, mu, FUN="-")
   
   # Iterate
     for(iter in 2:n.iters) { 
       if(print) {
-        if(iter < burnin && iter %% (burnin/10) == 0) {
+        if(iter < burnin && iter %% ((burnin + 1)/10) == 0) {
           cat(paste0("Iteration: ", iter, "\n"))
         } else if (iter %% (n.iters/10) == 0) {
           cat(paste0("Iteration: ", iter, "\n"))
@@ -46,6 +45,7 @@
         mu          <- sim.mu(mu.sigma, psi.inv, sum.data, sum.f, load)
       
       # Scores
+        c.data      <- sweep(data, 2, mu, FUN="-")
         f           <- sim.scores(Q, load, psi.inv, c.data)
                 
       # Loadings
