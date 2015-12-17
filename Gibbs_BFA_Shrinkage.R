@@ -39,11 +39,13 @@
     }
     psi.inv    <- rgamma(n=P, shape=psi.alpha/2, rate=psi.beta/2) 
     mu.sigma   <- 1/sigma.mu
+    sum.data   <- colSums(data)
+    c.data     <- sweep(data, 2, mu, FUN="-")
   
   # Iterate
     for(iter in 2:n.iters) { 
       if(print) {
-        if(iter < n.iters/10 && iter %% (n.iters/100) == 0) {
+        if(iter < burnin && iter %% (burnin/10) == 0) {
           cat(paste0("Iteration: ", iter, "\n"))
         } else if (iter %% (n.iters/10) == 0) {
           cat(paste0("Iteration: ", iter, "\n"))
@@ -51,12 +53,10 @@
       }
       
       # Means
-        sum.data     <- colSums(data)
         sum.f        <- colSums(f)
         mu           <- sim.mu(mu.sigma, psi.inv, sum.data, sum.f, load)
         
       # Scores
-        c.data       <- sweep(data, 2, mu, FUN="-")
         f            <- sim.scores(Q, load, psi.inv, c.data)
                         
       # Loadings
@@ -77,10 +77,10 @@
           
       # Global Shrinkage
         sum.term     <- diag(t(phi) %*% (load * load))
-        delta[1]     <- sim.delta1(delta.a1, P, Q, delta, tau, sum.term)
+        delta[1]     <- sim.delta1(delta.a1, Q, delta, tau, sum.term)
         tau          <- cumprod(delta)
         for(k in 2:Q) { 
-          delta[k]   <- sim.deltak(delta.a2, P, Q, k, delta, tau, sum.term)
+          delta[k]   <- sim.deltak(delta.a2, Q, k, delta, tau, sum.term)
           tau        <- cumprod(delta)      
         }
       
@@ -94,7 +94,6 @@
           
           if(unif    <  prob) { # check whether to adapt or not
             if(Q < P && numred == 0 && all(lind < prop2)) { # simulate extra columns from priors
-              
               Q      <- Q + 1
               f      <- cbind(f, rnorm(n=N, mean=0, sd=1))         
               phi    <- cbind(phi, rgamma(n=P, shape=phi.nu/2, rate=phi.nu/2))

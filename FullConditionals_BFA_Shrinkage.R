@@ -45,12 +45,12 @@
 }; sim.phi     <- cmpfun(sim.phi)    
     
 # Global Shrinkage
-  sim.delta1   <- function(delta.a1, P, Q, delta, tau, sum.term, ...) {
+  sim.delta1   <- function(delta.a1, Q, delta, tau, sum.term, ...) {
     rgamma(1, shape=delta.a1 + (P * Q)/2, 
               rate=1 + 0.5 * (1/delta[1]) * sum(tau %*% sum.term))
 }; sim.delta1  <- cmpfun(sim.delta1)
   
-  sim.deltak   <- function(delta.a2, P, Q, k, delta, tau, sum.term) {
+  sim.deltak   <- function(delta.a2, Q, k, delta, tau, sum.term) {
     rgamma(1, shape=delta.a2 + P/2 * (Q - k + 1), 
               rate=1 + 0.5 * (1/delta[k]) * sum(tau[k:Q] %*% sum.term[k:Q]))
 }; sim.deltak  <- cmpfun(sim.deltak)
