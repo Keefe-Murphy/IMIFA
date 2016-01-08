@@ -47,7 +47,7 @@
   n.iters  <- 50000
   range.Q  <- 1:3   # can be SCALAR or VECTOR; scalar preferred!
   sigma.mu <- 0.5; sigma.l <- 0.5; psi.alpha <- 2; psi.beta <- 0.6
-  if(case != 'Single') { phi.nu <- 3; delta.a1 <- 2.1; delta.a2 <- 10.1; rm('sigma.l', 'range.Q') }
+  if(case != 'Single') { phi.nu <- 3; delta.a1 <- 2.1; delta.a2 <- 12.1; rm('sigma.l', 'range.Q') }
 
   # Define full conditional & Gibbs Sampler functions for desired case
     source(paste(dataDirectory, "/IMIFA-GIT/Gibbs_BFA_", case, ".R", sep=""))

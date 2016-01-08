@@ -9,12 +9,11 @@
   gibbs.shrink <- function(data=data, n.iters=50000, Q=min(round(5 * log(P)), P),
                            burnin=n.iters/5 - 1, thin=2, 
                            centering=T, scaling=T, print=T, 
-                           adapt=T, b0=0.1, b1=0.00005, prop1=3/4, prop2=3/5,
+                           adapt=T, b0=0.1, b1=0.00005, prop=3/4,
                            epsilon=ifelse(centering, 0.1, 0.01), ...) {
     
   # Warning(s)
-    if(Q > P)  stop("Number of factors must be less than the number of variables")
-    if(prop1   >  1 || prop2 > 1) stop("prop1 & prop2 must be valid proportions")
+    if(Q > P)     stop("Number of factors must be less than the number of variables")
     
   # Remove non-numeric columns & (optionally) Center/Scale the data
     data       <- data[sapply(data,is.numeric)]
@@ -89,11 +88,11 @@
           prob       <- 1/exp(b0 + b1 * pmax(iter - burnin, 0))
           unif       <- runif(n=1, min=0, max=1)
           lind       <- colSums(abs(load) < epsilon) / P
-          colvec     <- lind >= prop1
+          colvec     <- lind >= prop
           numred     <- sum(colvec)
           
           if(unif    <  prob) { # check whether to adapt or not
-            if(Q < P && numred == 0 && all(lind < prop2)) { # simulate extra columns from priors
+            if(Q < P && numred == 0) { # simulate extra columns from priors
               Q      <- Q + 1
               f      <- cbind(f, rnorm(n=N, mean=0, sd=1))         
               phi    <- cbind(phi, rgamma(n=P, shape=phi.nu/2, rate=phi.nu/2))
