@@ -47,7 +47,7 @@
   n.iters  <- 50000
   range.Q  <- 1:3   # can be SCALAR or VECTOR; scalar preferred!
   sigma.mu <- 0.5; sigma.l <- 0.5; psi.alpha <- 2; psi.beta <- 0.6
-  if(case != 'Single') { phi.nu <- 3; delta.a1 <- 2.1; delta.a2 <- 3.1; rm('sigma.l', 'range.Q') }
+  if(case != 'Single') { phi.nu <- 3; delta.a1 <- 2.1; delta.a2 <- 10.1; rm('sigma.l', 'range.Q') }
 
   # Define full conditional & Gibbs Sampler functions for desired case
     source(paste(dataDirectory, "/IMIFA-GIT/Gibbs_BFA_", case, ".R", sep=""))
@@ -155,10 +155,8 @@
     scatterplot(x=store, y=f[1,1,])
     matplot(t(f[1,,]), type="l")
     plot(post.f, type="n", main="Posterior Scores")
-   #scatterplot(x=post.f[,1], y=post.f[,2], main="Posterior Scores", pch=NA, col=c("blue", "brown"))
     text(post.f[,1], post.f[,2], 1:nrow(post.f), col=if(exists("Label")) as.numeric(Label) else 1, cex=0.5)
     plot(f[,,length(store)], type="n")
-   #scatterplot(x=f[,1,length(store)], y=f[,2,length(store)], main="Posterior Scores", pch=NA, col=c("blue", "brown"))
     text(f[,1,length(store)], f[,2,length(store)], 1:nrow(post.f), col=if(exists("Label")) as.numeric(Label) else 1, cex=0.5)
     acf(f[1,1,])
       
@@ -166,7 +164,6 @@
     scatterplot(x=store, y=load[1,1,])
     matplot(t(load[1,,]), type="l")
     plot(post.load, type="n")
-   #scatterplot(x=post.load[,1], y=post.load[,2], main="Posterior Loadings", pch=NA, col=c("blue", "brown"))
     text(post.load[,1], post.load[,2], rownames(post.load), cex=0.5)
     acf(load[1,1,])
     
