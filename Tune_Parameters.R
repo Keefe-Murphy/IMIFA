@@ -19,7 +19,7 @@ if(case == 'Shrinkage') {
     } else { Q <- Q.median }
     Q.CI       <- quantile(Q.store, c(0.025, 0.975))
     print(list(Q=Q, Mode = Q.mode, Median = Q.median, 
-               Credible_Interval = Q.CI, Probabilities = Q.prob, 
+               Credible_Interval = Q.CI, Probabilities = Q.prob, Counts = Q.tab,
                Warning="But the user should choose Q based on the attached bar plot!"))
   } else {
   
