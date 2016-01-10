@@ -27,16 +27,17 @@
     psi.store  <- matrix(0, nr=P, nc=n.store);    rownames(psi.store)  <- colnames(data)
     Q.store    <- rep(0, n.store);                Q.store[1]           <- Q 
     
-    mu         <- mvrnorm(mu=rep(0, P), Sigma=sigma.mu * diag(P))             
-    f          <- mvrnorm(n=N, mu=rep(0, Q), Sigma=diag(Q))         
-    phi        <- matrix(rgamma(n=P * Q, shape=phi.nu/2, rate=phi.nu/2), nr=P)
-    delta      <- c(rgamma(n=1, shape=delta.a1, rate=1), rgamma(n=Q-1, shape=delta.a2, rate=1))
+    mu         <- sim.mu.p(sigma.mu, P)  
+    f          <- sim.f.p(N, Q)
+    phi        <- sim.p.p(P, Q, phi.nu)
+    delta      <- sim.d.p(Q, delta.a1, delta.a2)
     tau        <- cumprod(delta)
     load       <- matrix(0, nr=P, nc=Q)
     for(j in 1:P) {
-      load[j,] <- mvrnorm(n=1, mu=rep(0, Q), Sigma=diag(1/(phi[j,] * tau)))         
+      D.load   <- phi[j,] * tau
+      load[j,] <- sim.l.p(D.load, Q)
     }
-    psi.inv    <- rgamma(n=P, shape=psi.alpha/2, rate=psi.beta/2) 
+    psi.inv    <- sim.pi.p(P, psi.alpha, psi.beta)
     mu.sigma   <- 1/sigma.mu
     sum.data   <- colSums(data)
   

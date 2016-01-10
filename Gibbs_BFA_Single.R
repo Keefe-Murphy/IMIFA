@@ -22,10 +22,10 @@
     load.store <- array(NA, dim=c(P, Q, n.store)); rownames(load.store) <- colnames(data); colnames(load.store) <- paste("Factor", 1:Q)
     psi.store  <- matrix(NA, nr=P, nc=n.store);    rownames(psi.store)  <- colnames(data)
     
-    mu         <- mvrnorm(mu=rep(0, P), Sigma=sigma.mu * diag(P))             
-    f          <- mvrnorm(n=N, mu=rep(0, Q), Sigma=diag(Q))         
-    load       <- mvrnorm(n=P, mu=rep(0, Q), Sigma=sigma.l * diag(Q))         
-    psi.inv    <- rgamma(n=P, shape=psi.alpha/2, rate=psi.beta/2) 
+    mu         <- sim.mu.p(sigma.mu, P)  
+    f          <- sim.f.p(N, Q)
+    load       <- sim.l.p(sigma.l, Q, P)
+    psi.inv    <- sim.pi.p(P, psi.alpha, psi.beta)
     mu.sigma   <- 1/sigma.mu
     l.sigma    <- 1/sigma.l * diag(Q)
     sum.data   <- colSums(data)
