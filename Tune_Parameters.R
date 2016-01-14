@@ -2,7 +2,7 @@
 ### Tune Parameters (Single & Shrinkage Case) ###
 #################################################
 
-if(case == 'Shrinkage') {
+if(method == 'Shrinkage') {
   # Retrieve distribution of Q, tabulate & plot
     Q.store    <- sim[[Q.ind]]$Q.store[store]
     Q.tab      <- table(Q.store, dnn=NULL)

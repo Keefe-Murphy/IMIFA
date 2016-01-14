@@ -11,9 +11,9 @@
   }
   set.seed(21092015)
   def.par         <- par()
-  cases           <- c("Single", "Shrinkage", "Grouped", "IMIFA")
-  case            <- 'Shrinkage'
-  if(!is.element(case, cases)) stop("'case' must be one of 'Single', 'Shrinkage', 'Grouped', or 'IMIFA'.")
+  methods         <- c("Single", "Shrinkage", "Grouped", "IMIFA")
+  method          <- 'Shrinkage'
+  if(!is.element(method, methods)) stop("'method' must be one of 'Single', 'Shrinkage', 'Grouped', or 'IMIFA'.")
   pkgs            <- c("pgmm", "car")
   invisible(lapply(pkgs, library, ch=T))
   # WARNING: Remove everything
@@ -47,23 +47,23 @@
   n.iters  <- 50000
   range.Q  <- 1:3   # can be SCALAR or VECTOR; scalar preferred!
   sigma.mu <- 0.5; sigma.l <- 0.5; psi.alpha <- 2; psi.beta <- 0.6
-  if(case != 'Single') { phi.nu <- 3; delta.a1 <- 2.1; delta.a2 <- 12.1; rm('sigma.l', 'range.Q') }
+  if(method != 'Single') { phi.nu <- 3; delta.a1 <- 2.1; delta.a2 <- 12.1; rm('sigma.l', 'range.Q') }
 
-  # Define full conditional & Gibbs Sampler functions for desired case
-    source(paste(dataDirectory, "/IMIFA-GIT/Gibbs_BFA_", case, ".R", sep=""))
-    if(case == 'Single') {
+  # Define full conditional & Gibbs Sampler functions for desired method
+    source(paste(dataDirectory, "/IMIFA-GIT/Gibbs_BFA_", method, ".R", sep=""))
+    if(method == 'Single') {
       sim    <- vector("list", length(range.Q))
-    } else if(case == 'Shrinkage') {
+    } else if(method == 'Shrinkage') {
       Q.star <- min(round(5 * log(P)), P)
       sim    <- vector("list", length(Q.star))
     } else {
-      stop("Not yet implented for other cases.")
+      stop("Not yet implented for other methods.")
     }
 
 # Run the Gibbs Sampler
 { Rprof()
   start.time   <- proc.time()
-  if(case == 'Single') {
+  if(method == 'Single') {
     if(length(range.Q) == 1) {
       Q.ind    <- 1
       sim[[1]] <- gibbs.single(data, n.iters, Q=range.Q)
@@ -74,13 +74,13 @@
         cat(paste0(round(Q.ind/length(range.Q) * 100, 2), "% Complete", "\n"))
       }
     }
-  } else if (case == 'Shrinkage') {
+  } else if (method == 'Shrinkage') {
       sim[[1]] <- gibbs.shrink(data, n.iters, Q=Q.star)
   }
   total.time   <- proc.time() - start.time
   average.time <- total.time/ifelse(exists('range.Q'), length(range.Q), length(Q.star))
   sim$time     <- list(Total = total.time, Average = average.time); print(sim$time)  
-  attr(sim, "Factors") <- if(case == 'Single') range.Q else Q.star
+  attr(sim, "Factors") <- if(method == 'Single') range.Q else Q.star
   attr(sim, "Date")    <- Sys.time()
   Rprof(NULL)
 }
@@ -88,27 +88,27 @@
   invisible(file.remove("Rprof.out"))
 
 # Save / Load results
-  save(sim,file=paste(dataDirectory, "/Simulations/Wine_Simulations_", case, ".Rdata", sep="")) # in server, tick box, export
-  load(file=paste(dataDirectory, "/Simulations/Wine_Simulations_", case, ".Rdata", sep=""), envir=.GlobalEnv)
+  save(sim,file=paste(dataDirectory, "/Simulations/Wine_Simulations_", method, ".Rdata", sep="")) # in server, tick box, export
+  load(file=paste(dataDirectory, "/Simulations/Wine_Simulations_", method, ".Rdata", sep=""), envir=.GlobalEnv)
 
 # Convergence diagnostics (optional additional burnin & thinning)
   burnin  <- 1
   thin    <- 1
   store   <- seq(from=burnin + 1, to=sim[[1]]$n.store, by=thin)
   
-  if(case == 'Single' && length(range.Q) == 1) {
+  if(method == 'Single' && length(range.Q) == 1) {
     Q     <- range.Q
     rm("range.Q")
   } else {
-    if(case == 'Shrinkage') { post.Q <- 'Mode'; Q.ind  <- 1 }
+    if(method == 'Shrinkage') { post.Q <- 'Mode'; Q.ind  <- 1 }
     source(paste(dataDirectory, "/IMIFA-GIT/Tune_Parameters.R", sep=""))
   }
   
   # For user defined Q based on scree plot or bar plot
-  # Rather than Q.ind <- which.max(prop.exp); Q <- range.Q[Q.ind] for 'Single' case
-  # Rather than Q     <- names(Q.store[Q.store == max(Q.store)]) for 'Shrinkage' case
+  # Rather than Q.ind <- which.max(prop.exp); Q <- range.Q[Q.ind] for 'Single' method
+  # Rather than Q     <- names(Q.store[Q.store == max(Q.store)]) for 'Shrinkage' method
     # Q   <- 2
-    # if(case == 'Single') { Q.ind <- which(range.Q == Q) } else Q.ind <- 1
+    # if(method == 'Single') { Q.ind <- which(range.Q == Q) } else Q.ind <- 1
 
   mu      <- sim[[Q.ind]]$mu[,store]                            
   f       <- sim[[Q.ind]]$f[,1:Q,store, drop=F]
@@ -137,12 +137,14 @@
   (prop.exp   <- communality/P)
   prop.uni    <- 1 - prop.exp
 
+  if(Q > 1) {
   plot(cum.var, type="l", main="Scree Plot to Choose Q", xlab="# Factors", 
        ylab="% Variation Explained", xaxt="n", yaxt="n", ylim=c(0,1))
   axis(1, at=1:length(cum.var), labels=1:Q)
   axis(2, at=seq(0,1,0.1), labels=seq(0,100,10), cex.axis=0.8) 
   points(x=Q, y=prop.exp, col="red", bg="red", pch=21)
-    
+  }
+
   # Means
     scatterplot(x=store, y=mu[1,])
     matplot(t(mu[,]), type="l")
