@@ -23,7 +23,7 @@
 # Simulate true parameter values
   mu.true    <- mvrnorm(mu=rep(1, P), Sigma=diag(P));             names(mu.true)      <- c(1:P)
   load.true  <- mvrnorm(n=P, mu=rep(0, Q), Sigma=diag(Q));        colnames(load.true) <- paste("Factor", 1:Q); rownames(load.true) <- c(1:P)
-  psi.true   <- 1/rgamma(n=P, 1, 0.3);                              names(psi.true)     <- c(1:P)
+  psi.true   <- 1/rgamma(n=P, 1, 0.3);                            names(psi.true)     <- c(1:P)
  #f.true     <- mvrnorm(n=N, mu=rep(0, Q), Sigma=diag(Q)); colnames(f.true)    <- paste("Factor", 1:Q); rownames(f.true)    <- c(1:N.grp[1])
  #eps.true   <- mvrnorm(n=N, mu=rep(0, P), Sigma=diag(psi.true))
 

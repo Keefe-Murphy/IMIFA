@@ -9,11 +9,12 @@
     dataDirectory <- "C:/Users/Windows/Documents/Claire IMIFA"
     setwd(dataDirectory)
   }
-  set.seed(21092015)
+  seed <- 21092015
+  set.seed(seed)
   def.par         <- par()
-  methods         <- c("Single", "Shrinkage", "Grouped", "IMIFA")
-  method          <- 'Shrinkage'
-  if(!is.element(method, methods)) stop("'method' must be one of 'Single', 'Shrinkage', 'Grouped', or 'IMIFA'.")
+  methods         <- c("FA", "IFA", "MIFA", "IMIFA")
+  method          <- "IFA"
+  if(!is.element(method, methods)) stop("'method' must be one of 'FA', 'IFA', 'MIFA', or 'IMIFA'.")
   pkgs            <- c("pgmm", "car")
   invisible(lapply(pkgs, library, ch=T))
   # WARNING: Remove everything
@@ -44,43 +45,35 @@
                        factors=round(sqrt(sum(sapply(data, is.numeric)))), control=list(nstart=50)))
 
 # Initialise the Gibbs Sampler & set hyperparameters
-  n.iters  <- 50000
   range.Q  <- 1:3   # can be SCALAR or VECTOR; scalar preferred!
+  n.iters  <- 50000
   sigma.mu <- 0.5; sigma.l <- 0.5; psi.alpha <- 2; psi.beta <- 0.6
-  if(method != 'Single') { phi.nu <- 3; delta.a1 <- 2.1; delta.a2 <- 12.1; rm('sigma.l', 'range.Q') }
+  if(method != "FA") { phi.nu <- 3; delta.a1 <- 2.1; delta.a2 <- 12.1; rm('sigma.l', 'range.Q') }
 
-  # Define full conditional & Gibbs Sampler functions for desired method
-    source(paste(dataDirectory, "/IMIFA-GIT/Gibbs_BFA_", method, ".R", sep=""))
-    if(method == 'Single') {
-      sim    <- vector("list", length(range.Q))
-    } else if(method == 'Shrinkage') {
-      Q.star <- min(round(5 * log(P)), P)
-      sim    <- vector("list", length(Q.star))
-    } else {
-      stop("Not yet implented for other methods.")
-    }
+# Define full conditional & Gibbs Sampler functions for desired method
+  source(paste(dataDirectory, "/IMIFA-GIT/Gibbs_", method, ".R", sep=""))
 
 # Run the Gibbs Sampler
 { Rprof()
   start.time   <- proc.time()
-  if(method == 'Single') {
+  if(method == 'FA') {
     if(length(range.Q) == 1) {
       Q.ind    <- 1
-      sim[[1]] <- gibbs.single(data, n.iters, Q=range.Q)
+      sim[[1]] <- gibbs.single(data=data, n.iters=ifelse(exists("n.iters"), n.iters, 50000), Q=range.Q)
     } else {
       for(q in range.Q) { 
         Q.ind  <- q - min(range.Q) + 1
-        sim[[Q.ind]] <- gibbs.single(data, n.iters, Q=q)
+        sim[[Q.ind]] <- gibbs.single(data=data, n.iters=ifelse(exists("n.iters"), n.iters, 50000), Q=q)
         cat(paste0(round(Q.ind/length(range.Q) * 100, 2), "% Complete", "\n"))
       }
     }
-  } else if (method == 'Shrinkage') {
-      sim[[1]] <- gibbs.shrink(data, n.iters, Q=Q.star)
+  } else if (method == 'IFA') {
+      sim[[1]] <- gibbs.shrink(data=data, n.iters=ifelse(exists("n.iters"), n.iters, 50000), Q=Q.star)
   }
   total.time   <- proc.time() - start.time
   average.time <- total.time/ifelse(exists('range.Q'), length(range.Q), length(Q.star))
   sim$time     <- list(Total = total.time, Average = average.time); print(sim$time)  
-  attr(sim, "Factors") <- if(method == 'Single') range.Q else Q.star
+  attr(sim, "Factors") <- if(method == 'FA') range.Q else Q.star
   attr(sim, "Date")    <- Sys.time()
   Rprof(NULL)
 }
@@ -88,42 +81,21 @@
   invisible(file.remove("Rprof.out"))
 
 # Save / Load results
-  save(sim,file=paste(dataDirectory, "/Simulations/Wine_Simulations_", method, ".Rdata", sep="")) # in server, tick box, export
-  load(file=paste(dataDirectory, "/Simulations/Wine_Simulations_", method, ".Rdata", sep=""), envir=.GlobalEnv)
+  sim.name <- "Wine"
+  save(sim,file=paste(dataDirectory, "/Simulations/", sim.name, "_Simulations_", method, ".Rdata", sep="")) # in server, tick box, export
+  load(file=paste(dataDirectory, "/Simulations/", sim.name, "_Simulations_", method, ".Rdata", sep=""), envir=.GlobalEnv)
 
 # Convergence diagnostics (optional additional burnin & thinning)
-  burnin  <- 1
-  thin    <- 1
-  store   <- seq(from=burnin + 1, to=sim[[1]]$n.store, by=thin)
-  
-  if(method == 'Single' && length(range.Q) == 1) {
-    Q     <- range.Q
-    rm("range.Q")
-  } else {
-    if(method == 'Shrinkage') { post.Q <- 'Mode'; Q.ind  <- 1 }
-    source(paste(dataDirectory, "/IMIFA-GIT/Tune_Parameters.R", sep=""))
-  }
+  burnin   <- 1
+  thinning <- 1
+  source(paste(dataDirectory, "/IMIFA-GIT/Diagnostics.R", sep=""))
+  tune.parameters()
   
   # For user defined Q based on scree plot or bar plot
-  # Rather than Q.ind <- which.max(prop.exp); Q <- range.Q[Q.ind] for 'Single' method
-  # Rather than Q     <- names(Q.store[Q.store == max(Q.store)]) for 'Shrinkage' method
-    # Q   <- 2
-    # if(method == 'Single') { Q.ind <- which(range.Q == Q) } else Q.ind <- 1
-
-  mu      <- sim[[Q.ind]]$mu[,store]                            
-  f       <- sim[[Q.ind]]$f[,1:Q,store, drop=F]
-  load    <- sim[[Q.ind]]$load[,1:Q,store, drop=F]
-  psi     <- sim[[Q.ind]]$psi[,store]
-
-# Loadings matrix / identifiability / # etc.
-  l.temp  <- as.matrix(sim[[Q.ind]]$load[,1:Q,burnin])
-  for(b in 1:length(store)) {
-    rot       <- procrustes(X=as.matrix(load[,,b]), Xstar=l.temp)$R
-    load[,,b] <- load[,,b] %*% rot
-    f[,,b]    <- t(f[,,b]  %*% rot)
-  }
+    # new.q(2)
 
 # Posterior Summaries & Plots, etc.
+  extract.results(Q)
   post.mu     <- apply(mu, 1, mean)
   post.f      <- apply(f, c(1,2), mean)
   post.load   <- apply(load, c(1,2), mean)
@@ -134,7 +106,7 @@
   communality <- sum(SS.load)
   prop.var    <- SS.load/P
   cum.var     <- cumsum(prop.var)
-  (prop.exp   <- communality/P)
+  prop.exp    <- communality/P
   prop.uni    <- 1 - prop.exp
 
   if(Q > 1) {
@@ -143,7 +115,7 @@
   axis(1, at=1:length(cum.var), labels=1:Q)
   axis(2, at=seq(0,1,0.1), labels=seq(0,100,10), cex.axis=0.8) 
   points(x=Q, y=prop.exp, col="red", bg="red", pch=21)
-  }
+  }; print(prop.exp[length(prop.exp)])
 
   # Means
     scatterplot(x=store, y=mu[1,])

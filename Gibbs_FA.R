@@ -3,30 +3,30 @@
 ################################################################
   
 # Preamble
-  source(paste(dataDirectory, "/IMIFA-GIT/FullConditionals_BFA_Single.R", sep=""))
+  source(paste(dataDirectory, "/IMIFA-GIT/FullConditionals_FA.R", sep=""))
   if(any(range.Q) >= P) stop ("Number of factors must be less than the number of variables")
+  sim          <- vector("list", length(range.Q))
 
 # Gibbs Sampler Function
   gibbs.single <- function(data=data, n.iters=50000, Q=2,
-                           burnin=n.iters/5 - 1, thin=2, 
+                           burnin=n.iters/5 - 1, thinning=2, 
                            centering=T, scaling=T, print=T, ...) {
         
   # Remove non-numeric columns & (optionally) Center/Scale the data
     data       <- data[sapply(data,is.numeric)]
-    data       <- scale(data, center=centering, scale=scaling)
+    data       <- scale(data, center=centering, scale=scaling)    
   
   # Define & initialise variables
-    n.store    <- ceiling((n.iters - burnin)/thin)
+    n.store    <- ceiling((n.iters - burnin)/thinning)
     mu.store   <- matrix(NA, nr=P, nc=n.store);    rownames(mu.store)   <- colnames(data) 
     f.store    <- array(NA, dim=c(N, Q, n.store)); colnames(f.store)    <- paste("Factor", 1:Q)
     load.store <- array(NA, dim=c(P, Q, n.store)); rownames(load.store) <- colnames(data); colnames(load.store) <- paste("Factor", 1:Q)
     psi.store  <- matrix(NA, nr=P, nc=n.store);    rownames(psi.store)  <- colnames(data)
     
-    mu         <- sim.mu.p(sigma.mu, P)  
-    f          <- sim.f.p(N, Q)
-    load       <- sim.l.p(sigma.l, Q, P)
-    psi.inv    <- sim.pi.p(P, psi.alpha, psi.beta)
-    mu.sigma   <- 1/sigma.mu
+    mu         <- sim.mu.p()  
+    f          <- sim.f.p(Q)
+    load       <- sim.l.p(Q)
+    psi.inv    <- sim.pi.p()
     l.sigma    <- 1/sigma.l * diag(Q)
     sum.data   <- colSums(data)
   
@@ -42,7 +42,7 @@
       
       # Means
         sum.f       <- colSums(f)
-        mu          <- sim.mu(mu.sigma, psi.inv, sum.data, sum.f, load)
+        mu          <- sim.mu(psi.inv, sum.data, sum.f, load)
       
       # Scores
         c.data      <- sweep(data, 2, mu, FUN="-")
@@ -59,8 +59,8 @@
       # Uniquenesses
         psi.inv     <- sim.psi.inv(c.data, f, load)
       
-      if(iter > burnin && iter %% thin == 0) {
-        new.iter    <- ceiling((iter-burnin)/thin)
+      if(iter > burnin && iter %% thinning == 0) {
+        new.iter    <- ceiling((iter - burnin)/thinning)
         mu.store[,new.iter]    <- mu  
         f.store[,,new.iter]    <- f
         load.store[,,new.iter] <- load

@@ -6,8 +6,18 @@
   pkgs <- c(if(exists("pkgs")) pkgs,"MCMCpack", "compiler")
   invisible(lapply(pkgs, library, ch=T))
 
+# Set hyperparameter values
+  if(!exists("n.iters"))   assign("n.iters",   50000)
+  if(!exists("N"))         assign("N",         nrow(data))
+  if(!exists("P"))         assign("P",         sum(sapply(data, is.numeric)))
+  if(!exists("sigma.mu"))  assign("sigma.mu",  0.5)
+  if(!exists("sigma.l"))   assign("sigma.l",   0.5)
+  if(!exists("psi.alpha")) assign("psi.alpha", 2)
+  if(!exists("psi.beta"))  assign("psi.beta",  0.6)
+                           assign("mu.sigma",  1/sigma.mu)
+                           
 # Means
-  sim.mu        <- function(mu.sigma, psi.inv, sum.data, sum.f, load, ...) {
+  sim.mu        <- function(psi.inv, sum.data, sum.f, load, ...) {
     mu.omega    <- diag(1/(mu.sigma + N * psi.inv))
     U.mu        <- chol(mu.omega)
     z.mu        <- rnorm(P, 0, 1)
@@ -47,7 +57,7 @@
 
 # Priors
   # Means
-    sim.mu.p    <- function(sigma.mu, P, ...) {
+    sim.mu.p    <- function(...) {
       mu.omega  <- sigma.mu * diag(P)
       U.mu      <- sqrt(mu.omega)
       z.mu      <- rnorm(P, 0, 1)
@@ -55,12 +65,12 @@
     }; sim.mu.p <- cmpfun(sim.mu.p)
   
   # Scores
-    sim.f.p     <- function(N, Q, ...) {
+    sim.f.p     <- function(Q, ...) {
         matrix(rnorm(N * Q, 0, 1), nr=N, ncol=Q)
     }; sim.f.p  <- cmpfun(sim.f.p)
 
   # Loadings
-    sim.l.p     <- function(sigma.l, Q, P, ...) {
+    sim.l.p     <- function(Q, ...) {
       l.omega   <- sigma.l * diag(Q)
       U.l       <- sqrt(l.omega)
       z.l       <- matrix(rnorm(P * Q, 0, 1), nr=Q, ncol=P)
@@ -68,6 +78,6 @@
     }; sim.l.p  <- cmpfun(sim.l.p)
 
   # Uniquenesses
-    sim.pi.p    <- function(P, psi.alpha, psi.beta, ...) {
+    sim.pi.p    <- function(...) {
         rgamma(n=P, shape=psi.alpha/2, rate=psi.beta/2) 
     }; sim.pi.p <- cmpfun(sim.pi.p)

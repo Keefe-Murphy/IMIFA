@@ -3,11 +3,13 @@
 ###################################################################
   
 # Preamble
-  source(paste(dataDirectory, "/IMIFA-GIT/FullConditionals_BFA_Shrinkage.R", sep=""))
+  source(paste(dataDirectory, "/IMIFA-GIT/FullConditionals_IFA.R", sep=""))
+  Q.star       <- min(round(5 * log(P)), P)
+  sim          <- vector("list", length(Q.star))
 
 # Gibbs Sampler Function
   gibbs.shrink <- function(data=data, n.iters=50000, Q=min(round(5 * log(P)), P),
-                           burnin=n.iters/5 - 1, thin=2, 
+                           burnin=n.iters/5 - 1, thinning=2, 
                            centering=T, scaling=T, print=T, 
                            adapt=T, b0=0.1, b1=0.00005, prop=3/4,
                            epsilon=ifelse(centering, 0.1, 0.01), ...) {
@@ -20,25 +22,24 @@
     data       <- scale(data, center=centering, scale=scaling)
   
   # Define & initialise variables
-    n.store    <- ceiling((n.iters - burnin)/thin)
+    n.store    <- ceiling((n.iters - burnin)/thinning)
     mu.store   <- matrix(0, nr=P, nc=n.store);    rownames(mu.store)   <- colnames(data) 
     f.store    <- array(0, dim=c(N, Q, n.store)); colnames(f.store)    <- paste("Factor", 1:Q)
     load.store <- array(0, dim=c(P, Q, n.store)); rownames(load.store) <- colnames(data); colnames(load.store) <- paste("Factor", 1:Q)
     psi.store  <- matrix(0, nr=P, nc=n.store);    rownames(psi.store)  <- colnames(data)
     Q.store    <- rep(0, n.store);                Q.store[1]           <- Q 
     
-    mu         <- sim.mu.p(sigma.mu, P)  
-    f          <- sim.f.p(N, Q)
-    phi        <- sim.p.p(P, Q, phi.nu)
-    delta      <- sim.d.p(Q, delta.a1, delta.a2)
+    mu         <- sim.mu.p()  
+    f          <- sim.f.p(Q)
+    phi        <- sim.p.p(Q)
+    delta      <- sim.d.p(Q)
     tau        <- cumprod(delta)
     load       <- matrix(0, nr=P, nc=Q)
     for(j in 1:P) {
       D.load   <- phi[j,] * tau
       load[j,] <- sim.l.p(D.load, Q)
     }
-    psi.inv    <- sim.pi.p(P, psi.alpha, psi.beta)
-    mu.sigma   <- 1/sigma.mu
+    psi.inv    <- sim.pi.p()
     sum.data   <- colSums(data)
   
   # Iterate
@@ -53,7 +54,7 @@
       
       # Means
         sum.f        <- colSums(f)
-        mu           <- sim.mu(mu.sigma, psi.inv, sum.data, sum.f, load)
+        mu           <- sim.mu(psi.inv, sum.data, sum.f, load)
         
       # Scores
         c.data       <- sweep(data, 2, mu, FUN="-")
@@ -73,14 +74,14 @@
       
       # Local Shrinkage
         load.2       <- load * load
-        phi          <- sim.phi(phi.nu, Q, tau, load.2)
+        phi          <- sim.phi(Q, tau, load.2)
           
       # Global Shrinkage
         sum.term     <- diag(t(phi) %*% (load * load))
-        delta[1]     <- sim.delta1(delta.a1, Q, delta, tau, sum.term)
+        delta[1]     <- sim.delta1(Q, delta, tau, sum.term)
         tau          <- cumprod(delta)
         for(k in 2:Q) { 
-          delta[k]   <- sim.deltak(delta.a2, Q, k, delta, tau, sum.term)
+          delta[k]   <- sim.deltak(Q, k, delta, tau, sum.term)
           tau        <- cumprod(delta)      
         }
       
@@ -112,8 +113,8 @@
           }
         } 
       
-      if(iter > burnin && iter %% thin == 0) {
-        new.iter     <- ceiling((iter - burnin)/thin)
+      if(iter > burnin && iter %% thinning == 0) {
+        new.iter     <- ceiling((iter - burnin)/thinning)
         mu.store[,new.iter]       <- mu  
         f.store[,1:Q,new.iter]    <- f
         load.store[,1:Q,new.iter] <- load

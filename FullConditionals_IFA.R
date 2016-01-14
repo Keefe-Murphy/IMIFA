@@ -6,8 +6,20 @@
   pkgs <- c(if(exists("pkgs")) pkgs,"MCMCpack", "compiler")
   invisible(lapply(pkgs, library, ch=T))
 
+# Set hyperparameter values
+  if(!exists("N"))         assign("N",         nrow(data))
+  if(!exists("P"))         assign("P",         sum(sapply(data, is.numeric)))
+  if(!exists("sigma.mu"))  assign("sigma.mu",  0.5)
+  if(!exists("sigma.l"))   assign("sigma.l",   0.5)
+  if(!exists("psi.alpha")) assign("psi.alpha", 2)
+  if(!exists("psi.beta"))  assign("psi.beta",  0.6)
+  if(!exists("phi.nu"))    assign("phi.nu",    3)
+  if(!exists("delta.a1"))  assign("delta.a1",  2.1)
+  if(!exists("delta.a2"))  assign("delta.a2",  12.1)
+                           assign("mu.sigma",  1/sigma.mu)
+
 # Means
-  sim.mu        <- function(mu.sigma, psi.inv, sum.data, sum.f, load, ...) {
+  sim.mu        <- function(psi.inv, sum.data, sum.f, load, ...) {
     mu.omega    <- diag(1/(mu.sigma + N * psi.inv))
     U.mu        <- chol(mu.omega)
     z.mu        <- rnorm(P, 0, 1)
@@ -38,19 +50,19 @@
 };  sim.load    <- cmpfun(sim.load)
 
 # Local Shrinkage
-  sim.phi       <- function(phi.nu, Q, tau, load.2, ...) {
+  sim.phi       <- function(Q, tau, load.2, ...) {
     rate.t      <- (phi.nu + sweep(load.2, 2, tau, FUN="*"))/2
     matrix(rgamma(P * Q, shape=(phi.nu + 1)/2, 
                   rate= rate.t), nr=P, nc=Q)
 };  sim.phi     <- cmpfun(sim.phi)    
     
 # Global Shrinkage
-  sim.delta1    <- function(delta.a1, Q, delta, tau, sum.term, ...) {
+  sim.delta1    <- function(Q, delta, tau, sum.term, ...) {
     rgamma(1, shape=delta.a1 + (P * Q)/2, 
               rate=1 + 0.5 * (1/delta[1]) * sum(tau %*% sum.term))
 };  sim.delta1  <- cmpfun(sim.delta1)
   
-  sim.deltak    <- function(delta.a2, Q, k, delta, tau, sum.term) {
+  sim.deltak    <- function(Q, k, delta, tau, sum.term) {
     rgamma(1, shape=delta.a2 + P/2 * (Q - k + 1), 
               rate=1 + 0.5 * (1/delta[k]) * sum(tau[k:Q] %*% sum.term[k:Q]))
 };  sim.deltak  <- cmpfun(sim.deltak)
@@ -65,7 +77,7 @@
 
 # Priors
   # Means
-    sim.mu.p    <- function(sigma.mu, P, ...) {
+    sim.mu.p    <- function(...) {
       mu.omega  <- sigma.mu * diag(P)
       U.mu      <- sqrt(mu.omega)
       z.mu      <- rnorm(P, 0, 1)
@@ -73,7 +85,7 @@
     }; sim.mu.p <- cmpfun(sim.mu.p)
     
   # Scores
-    sim.f.p     <- function(N, Q, ...) {
+    sim.f.p     <- function(Q, ...) {
         matrix(rnorm(N * Q, 0, 1), nr=N, ncol=Q)
     }; sim.f.p  <- cmpfun(sim.f.p)
     
@@ -86,18 +98,18 @@
     }; sim.l.p  <- cmpfun(sim.l.p)
 
   # Local Shrinkage
-    sim.p.p     <- function(P, Q, phi.nu, ...) {
+    sim.p.p     <- function(Q, ...) {
         matrix(rgamma(n=P * Q, shape=phi.nu/2, rate=phi.nu/2), nr=P)
     }; sim.p.p  <- cmpfun(sim.p.p)
 
   # Global Shrinkage
-    sim.d.p     <- function(Q, delta.a1, delta.a2, ...) {
+    sim.d.p     <- function(Q, ...) {
         delta1  <- rgamma(n=1, shape=delta.a1, rate=1)
         deltak  <- rgamma(n=Q - 1, shape=delta.a2, rate=1)
           c(delta1, deltak)
     }; sim.d.p  <- cmpfun(sim.d.p)
 
   # Uniquenesses
-    sim.pi.p    <- function(P, psi.alpha, psi.beta, ...) {
+    sim.pi.p    <- function(...) {
         rgamma(n=P, shape=psi.alpha/2, rate=psi.beta/2) 
     }; sim.pi.p <- cmpfun(sim.pi.p)
