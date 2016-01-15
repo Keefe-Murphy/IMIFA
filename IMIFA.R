@@ -23,7 +23,6 @@
 
 # Initialise the Gibbs Sampler & override default hyperparameters if desired
   init     <- initialise(data, method="IFA")
-  init$fac
 
 # Run the Gibbs Sampler
 { Rprof()
@@ -44,7 +43,7 @@
   }
   total.time   <- proc.time() - start.time
   avg.time     <- total.time/ifelse(exists('range.Q'), length(range.Q), length(Q.star))
-  attr(sim, "Time")    <- list(Total = total.time, Average = avg.time); print(sim$time)  
+  attr(sim, "Time")    <- list(Total = total.time, Average = avg.time); print(attr(sim, "Time"))  
   attr(sim, "Factors") <- if(method == 'FA') range.Q else Q.star
   attr(sim, "Date")    <- Sys.time()
   Rprof(NULL)
@@ -61,27 +60,9 @@
   source(paste(dataDirectory, "/IMIFA-GIT/Diagnostics.R", sep=""))
   res          <- tune.params()
   
-# Posterior Summaries & Plots, etc.
-  post.mu     <- apply(mu, 1, mean)
-  post.f      <- apply(f, c(1,2), mean)
-  post.load   <- apply(load, c(1,2), mean)
-  post.psi    <- apply(psi, 1, mean)
+# Posterior Summaries & Plots, etc.  
+  plot.cum.var()
   
-  SS.load     <- colSums(post.load * post.load)
-  communality <- sum(SS.load)
-  prop.var    <- SS.load/P
-  cum.var     <- cumsum(prop.var)
-  prop.exp    <- communality/P
-  prop.uni    <- 1 - prop.exp
-
-  if(Q > 1) {
-  plot(cum.var, type="l", main="Scree Plot to Choose Q", xlab="# Factors", 
-       ylab="% Variation Explained", xaxt="n", yaxt="n", ylim=c(0,1))
-  axis(1, at=1:length(cum.var), labels=1:Q)
-  axis(2, at=seq(0,1,0.1), labels=seq(0,100,10), cex.axis=0.8) 
-  points(x=Q, y=prop.exp, col="red", bg="red", pch=21)
-  }; print(prop.exp[length(prop.exp)])
-
   # Means
     scatterplot(x=store, y=mu[1,])
     matplot(t(mu[,]), type="l")
@@ -107,6 +88,7 @@
     acf(load[1,1,])
     
     # Heatmaps
+      #Q <- res$Q
       par(mfrow=c(1, 1), mar=c(5.1, 7.1, 4.1, 2.1), xpd=F)
       image(z=t(post.load), xlab="", ylab="", 
             main="Posterior Loadings", xaxt="n", yaxt="n")

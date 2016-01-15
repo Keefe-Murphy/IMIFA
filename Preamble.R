@@ -26,7 +26,7 @@ preamble   <- function(seed=21092015, rem.lib=F, rem.all=F, ...) {
 preamble()
 
 initialise <- function(data, method=c("IMIFA", "MIFA", "IFA", "FA"), 
-                       factanal=T, Q=NULL, range.Q=NULL, Q.fac=NULL,
+                       factanal=F, Q=NULL, range.Q=NULL, Q.fac=NULL,
                        sigma.mu=NULL, sigma.l=NULL, psi.alpha=NULL, psi.beta=NULL,
                        phi.nu=NULL, delta.a1=NULL, delta.a2=NULL, ...) {
   
@@ -49,6 +49,15 @@ initialise <- function(data, method=c("IMIFA", "MIFA", "IFA", "FA"),
     if(!exists("Label")) stop("Should the data be labelled?")
     fac   <- factanal(data[,sapply(data, is.numeric)], 
                          factors=Q.fac, control=list(nstart=50))
+    return(list(fac=fac))
   }
-  return(list(fac=fac))
+}
+
+lappend    <- function(...) {
+  lists    <- list(...)
+  if(length(as.list(match.call())) < 1)                  stop("lappend needs at least one list as inputs")
+  if(all(lapply(lists, function(x) class(x)) != "list")) stop("At least one argument must be a list") 
+  n        <- unique(unlist(lapply(lists, names)))
+  names(n) <- n
+  lapply(n, function(ni) unlist(lapply(lists, `[[`, ni)))
 }
