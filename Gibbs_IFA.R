@@ -38,10 +38,10 @@
     phi        <- sim.p.p(Q)
     delta      <- sim.d.p(Q)
     tau        <- cumprod(delta)
-    load       <- matrix(0, nr=P, nc=Q)
+    lmat       <- matrix(0, nr=P, nc=Q)
     for(j in 1:P) {
       D.load   <- phi[j,] * tau
-      load[j,] <- sim.l.p(D.load, Q)
+      lmat[j,] <- sim.l.p(D.load, Q)
     }
     psi.inv    <- sim.pi.p()
     sum.data   <- colSums(data)
@@ -58,11 +58,11 @@
       
       # Means
         sum.f        <- colSums(f)
-        mu           <- sim.mu(psi.inv, sum.data, sum.f, load)
+        mu           <- sim.mu(psi.inv, sum.data, sum.f, lmat)
         
       # Scores
         c.data       <- sweep(data, 2, mu, FUN="-")
-        f            <- sim.scores(Q, load, psi.inv, c.data)
+        f            <- sim.scores(Q, lmat, psi.inv, c.data)
                         
       # Loadings
         FtF          <- crossprod(f)
@@ -70,18 +70,18 @@
           psi.inv.j  <- psi.inv[j]
           c.data.j   <- c.data[,j]
           D.load     <- phi[j,] * tau
-          load[j,]   <- sim.load(D.load, Q, c.data.j, f, psi.inv.j, FtF)
+          lmat[j,]   <- sim.load(D.load, Q, c.data.j, f, psi.inv.j, FtF)
         } 
       
       # Uniquenesses
-        psi.inv      <- sim.psi.inv(c.data, f, load)
+        psi.inv      <- sim.psi.inv(c.data, f, lmat)
       
       # Local Shrinkage
-        load.2       <- load * load
+        load.2       <- lmat * lmat
         phi          <- sim.phi(Q, tau, load.2)
           
       # Global Shrinkage
-        sum.term     <- diag(t(phi) %*% (load * load))
+        sum.term     <- diag(t(phi) %*% (lmat * lmat))
         delta[1]     <- sim.delta1(Q, delta, tau, sum.term)
         tau          <- cumprod(delta)
         for(k in 2:Q) { 
@@ -93,7 +93,7 @@
         if(adapt && iter > burnin) {      
           prob       <- 1/exp(b0 + b1 * pmax(iter - burnin, 0))
           unif       <- runif(n=1, min=0, max=1)
-          lind       <- colSums(abs(load) < epsilon) / P
+          lind       <- colSums(abs(lmat) < epsilon) / P
           colvec     <- lind >= prop
           numred     <- sum(colvec)
           
@@ -104,7 +104,7 @@
               phi    <- cbind(phi, rgamma(n=P, shape=phi.nu/2, rate=phi.nu/2))
               delta  <- c(delta, rgamma(n=1, shape=delta.a2, rate=1))
               tau    <- cumprod(delta)
-              load   <- cbind(load, rnorm(n=P, mean=0, sd=sqrt(1/phi[,Q] * 1/tau[Q])))
+              lmat   <- cbind(lmat, rnorm(n=P, mean=0, sd=sqrt(1/phi[,Q] * 1/tau[Q])))
             } else if(numred > 0) { # remove redundant columns
               nonred <- which(colvec == 0)
               Q      <- max(Q - numred, 1)
@@ -112,7 +112,7 @@
               phi    <- phi[,nonred]
               delta  <- delta[nonred]
               tau    <- cumprod(delta)
-              load   <- load[,nonred]
+              lmat   <- lmat[,nonred]
             }
           }
         } 
@@ -121,7 +121,7 @@
         new.iter     <- ceiling((iter - burnin)/thinning)
         mu.store[,new.iter]       <- mu  
         f.store[,1:Q,new.iter]    <- f
-        load.store[,1:Q,new.iter] <- load
+        load.store[,1:Q,new.iter] <- lmat
         psi.store[,new.iter]      <- 1/psi.inv  
         Q.store[new.iter]         <- Q
       }

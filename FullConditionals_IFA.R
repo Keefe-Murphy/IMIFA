@@ -13,20 +13,20 @@
                            assign("mu.sigma",  1/sigma.mu)
 
 # Means
-  sim.mu        <- function(psi.inv, sum.data, sum.f, load, ...) {
+  sim.mu        <- function(psi.inv, sum.data, sum.f, lmat, ...) {
     mu.omega    <- diag(1/(mu.sigma + N * psi.inv))
     U.mu        <- chol(mu.omega)
     z.mu        <- rnorm(P, 0, 1)
     v.mu        <- crossprod(U.mu, z.mu)
-    mu.mu       <- crossprod(crossprod(mu.omega, diag(psi.inv)), sum.data - load %*% sum.f)
+    mu.mu       <- crossprod(crossprod(mu.omega, diag(psi.inv)), sum.data - lmat %*% sum.f)
       mu.mu + v.mu
 };  sim.mu      <- cmpfun(sim.mu)
 
 # Scores
-  sim.scores    <- function(Q, load, psi.inv, c.data, ...) {
-    f.omega.a   <- diag(Q) + crossprod(load, diag(psi.inv)) %*% load
+  sim.scores    <- function(Q, lmat, psi.inv, c.data, ...) {
+    f.omega.a   <- diag(Q) + crossprod(lmat, diag(psi.inv)) %*% lmat
     U.f         <- chol(f.omega.a)
-    f.omega.b   <- tcrossprod(chol2inv(U.f), load) %*% diag(psi.inv)
+    f.omega.b   <- tcrossprod(chol2inv(U.f), lmat) %*% diag(psi.inv)
     z.f         <- mvrnorm(n=N, mu=rep(0, Q), Sigma=diag(Q))
     v.f         <- solve(U.f, t(z.f))
     mu.f        <- tcrossprod(f.omega.b, c.data)
@@ -62,8 +62,8 @@
 };  sim.deltak  <- cmpfun(sim.deltak)
 
 # Uniquenesses
-  sim.psi.inv   <- function(c.data, f, load, ...) { 
-    rate.t      <- c.data - tcrossprod(f, load)
+  sim.psi.inv   <- function(c.data, f, lmat, ...) { 
+    rate.t      <- c.data - tcrossprod(f, lmat)
     rate.t      <- colSums(rate.t * rate.t)
       rgamma(P, shape=(N + psi.alpha)/2, 
                 rate=(rate.t + psi.beta)/2) 

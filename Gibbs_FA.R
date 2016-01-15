@@ -32,7 +32,7 @@
     
     mu         <- sim.mu.p()  
     f          <- sim.f.p(Q)
-    load       <- sim.l.p(Q)
+    lmat       <- sim.l.p(Q)
     psi.inv    <- sim.pi.p()
     l.sigma    <- 1/sigma.l * diag(Q)
     sum.data   <- colSums(data)
@@ -49,28 +49,28 @@
       
       # Means
         sum.f       <- colSums(f)
-        mu          <- sim.mu(psi.inv, sum.data, sum.f, load)
+        mu          <- sim.mu(psi.inv, sum.data, sum.f, lmat)
       
       # Scores
         c.data      <- sweep(data, 2, mu, FUN="-")
-        f           <- sim.scores(Q, load, psi.inv, c.data)
+        f           <- sim.scores(Q, lmat, psi.inv, c.data)
                 
       # Loadings
         FtF         <- crossprod(f)
         for (j in 1:P) {
           psi.inv.j <- psi.inv[j]
           c.data.j  <- c.data[,j]
-          load[j,]  <- sim.load(l.sigma, Q, c.data.j, f, psi.inv.j, FtF)
+          lmat[j,]  <- sim.load(l.sigma, Q, c.data.j, f, psi.inv.j, FtF)
         }
         
       # Uniquenesses
-        psi.inv     <- sim.psi.inv(c.data, f, load)
+        psi.inv     <- sim.psi.inv(c.data, f, lmat)
       
       if(iter > burnin && iter %% thinning == 0) {
         new.iter    <- ceiling((iter - burnin)/thinning)
         mu.store[,new.iter]    <- mu  
         f.store[,,new.iter]    <- f
-        load.store[,,new.iter] <- load
+        load.store[,,new.iter] <- lmat
         psi.store[,new.iter]   <- 1/psi.inv
       }  
     }

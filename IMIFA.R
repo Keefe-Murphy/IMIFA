@@ -67,7 +67,6 @@
     scatterplot(x=store, y=mu[1,])
     matplot(t(mu[,]), type="l")
     plot(post.mu, type="n", main="Posterior Means")
-   #scatterplot(x=1:P, y=post.mu, main="Posterior Means", pch=NA, col=c("blue", "brown"))
     text(x=1:P, y=post.mu, names(post.mu), cex=0.5)
     acf(mu[1,])
   
@@ -81,11 +80,11 @@
     acf(f[1,1,])
       
   # Loadings
-    scatterplot(x=store, y=load[1,1,])
-    matplot(t(load[1,,]), type="l")
+    scatterplot(x=store, y=lmat[1,1,])
+    matplot(t(lmat[1,,]), type="l")
     plot(post.load, type="n")
     text(post.load[,1], post.load[,2], rownames(post.load), cex=0.5)
-    acf(load[1,1,])
+    acf(lmat[1,1,])
     
     # Heatmaps
       #Q <- res$Q
@@ -95,7 +94,7 @@
       axis(1, cex.axis=0.8, line=-0.5, tick=F, 
            at=if(Q != 1) seq(0, 1, 1/(Q-1)) else 0, labels=1:Q)
       axis(2, cex.axis=0.5, line=-0.5, tick=F, las=1,
-           at=seq(0, 1, 1/(nrow(post.load)-1)), labels=rownames(post.load))
+           at=seq(0, 1, 1/(P-1)), labels=rownames(post.load))
       box(lwd=2)
       mtext("Factors", side=1, line=2)
       if(Q != 1) abline(v=seq(1/(2*(Q-1)), 1-1/(2*(Q-1)), 1/(Q-1)), lty=2, lwd=1)
@@ -105,7 +104,6 @@
     scatterplot(x=store, y=psi[1,])
     matplot(t(psi[,]), type="l")
     plot(post.psi, type="n")
-   #scatterplot(x=1:P, y=post.psi, main="Posterior Uniquenesses", pch=NA, col=c("blue", "brown"))
     text(1:length(post.psi), post.psi, names(post.psi), cex=0.5)
     acf(psi[1,])
 ####

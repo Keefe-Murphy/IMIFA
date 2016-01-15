@@ -58,13 +58,13 @@ tune.params   <- function(burnin=1, thinning=1, Q=NULL, ...) {
   
   # Calculate Proportion of Variation Explained
     for(Q in Q.range) {
-      load    <- sim[[Q]]$load[,1:range.Q[Q],store, drop=F]
+      lmat    <- sim[[Q]]$load[,1:range.Q[Q],store, drop=F]
       l.temp  <- as.matrix(sim[[Q]]$load[,1:range.Q[Q],burnin])
       for(b in 1:length(store)) {
-        rot       <- procrustes(X=as.matrix(load[,,b]), Xstar=l.temp)$R
-        load[,,b] <- load[,,b] %*% rot
+        rot       <- procrustes(X=as.matrix(lmat[,,b]), Xstar=l.temp)$R
+        lmat[,,b] <- lmat[,,b] %*% rot
       }
-      post.load   <- apply(load, c(1,2), mean)
+      post.load   <- apply(lmat, c(1,2), mean)
       prop.exp[Q] <- sum(colSums(post.load * post.load))/P
     }
       
@@ -81,25 +81,26 @@ tune.params   <- function(burnin=1, thinning=1, Q=NULL, ...) {
   
   mu     <- sim[[Q.ind]]$mu[,store]                            
   f      <- sim[[Q.ind]]$f[,1:Q,store, drop=F]
-  load   <- sim[[Q.ind]]$load[,1:Q,store, drop=F]
+  lmat   <- sim[[Q.ind]]$load[,1:Q,store, drop=F]
   psi    <- sim[[Q.ind]]$psi[,store]
     
 # Loadings matrix / identifiability / # etc.
   l.temp <- as.matrix(sim[[Q.ind]]$load[,1:Q,burnin])
   for(b in 1:length(store)) {
-    rot       <- procrustes(X=as.matrix(load[,,b]), Xstar=l.temp)$R
-    load[,,b] <- load[,,b] %*% rot
+    rot       <- procrustes(X=as.matrix(lmat[,,b]), Xstar=l.temp)$R
+    lmat[,,b] <- lmat[,,b] %*% rot
     f[,,b]    <- t(f[,,b]  %*% rot)
   }
 
-  assign("mu",        mu,   envir=.GlobalEnv)
-  assign("f",         f,    envir=.GlobalEnv)
-  assign("load",      load, envir=.GlobalEnv)
-  assign("psi",       psi,  envir=.GlobalEnv)
+  assign("store",     store, envir=.GlobalEnv)
+  assign("mu",        mu,    envir=.GlobalEnv)
+  assign("f",         f,     envir=.GlobalEnv)
+  assign("lmat",      lmat,  envir=.GlobalEnv)
+  assign("psi",       psi,   envir=.GlobalEnv)
   
   assign("post.mu",   apply(mu, 1, mean),        envir=.GlobalEnv)
   assign("post.f",    apply(f, c(1,2), mean),    envir=.GlobalEnv)
-  assign("post.load", apply(load, c(1,2), mean), envir=.GlobalEnv)
+  assign("post.load", apply(lmat, c(1,2), mean), envir=.GlobalEnv)
   assign("post.psi",  apply(psi, 1, mean),       envir=.GlobalEnv)
         
   SS.load     <- colSums(post.load * post.load)
