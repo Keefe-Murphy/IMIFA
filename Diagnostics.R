@@ -21,6 +21,7 @@ tune.params   <- function(burnin=1, thinning=1, Q=NULL, ...) {
   } else if(method == 'FA' && length(range.Q) == 1) {
     
     Q         <- range.Q
+    Q.ind     <- 1
       
   } else if(method == 'IFA') {
     
@@ -119,15 +120,4 @@ tune.params   <- function(burnin=1, thinning=1, Q=NULL, ...) {
   return(results)
 };tune.params <- cmpfun(tune.params)
 
-plot.cum.var  <- function(n.fac=res$Q, cum.var=res$cum.var) {
-  prop.exp    <- cum.var[n.fac]
-  if(n.fac     > 1) {
-    plot(cum.var, type="l", main="Scree Plot to Choose Q", xlab="# Factors", 
-         ylab="% Variation Explained", xaxt="n", yaxt="n", ylim=c(0,1))
-    axis(1, at=1:length(cum.var), labels=1:n.fac)
-    axis(2, at=seq(0,1,0.1), labels=seq(0,100,10), cex.axis=0.8) 
-    points(x=n.fac, y=prop.exp, col="red", bg="red", pch=21)
-  }
- cat(paste0("Proportion of Variation Explained = ",
-            round(prop.exp[length(prop.exp)], 3), "\n"))
-}
+source(paste(dataDirectory, "/IMIFA-GIT/PlottingFunctions.R", sep=""))

@@ -3,12 +3,12 @@
 ###################################################################
   
 # Preamble
-  source(paste(dataDirectory, "/IMIFA-GIT/FullConditionals_IFA.R", sep=""))
+  source(paste(dataDirectory, "/IMIFA-GIT/FullConditionals_", method, ".R", sep=""))
   Q.star       <- min(round(5 * log(P)), P)
   sim          <- vector("list", length(Q.star))
 
 # Gibbs Sampler Function
-  gibbs.shrink <- function(data=data, n.iters=50000, Q=Q.star,
+  gibbs.IFA <- function(data=dat, n.iters=50000, Q=Q.star,
                            burnin=n.iters/5 - 1, thinning=2, 
                            centering=T, scaling=T, print=T, 
                            adapt=T, b0=0.1, b1=0.00005, prop=3/4,
@@ -132,4 +132,4 @@
               psi     = psi.store,
               n.store = n.store,
               Q.store = Q.store))
-  }; gibbs.shrink    <- cmpfun(gibbs.shrink)
+  }; gibbs.IFA    <- cmpfun(gibbs.IFA)

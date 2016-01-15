@@ -3,14 +3,14 @@
 ################################################################
   
 # Preamble
-  source(paste(dataDirectory, "/IMIFA-GIT/FullConditionals_FA.R", sep=""))
+  source(paste(dataDirectory, "/IMIFA-GIT/FullConditionals_", method, ".R", sep=""))
   if((length(range.Q) == 1 && range.Q >= P) || 
      (length(range.Q) > 1 && any(range.Q) >= P))  
       stop ("Number of factors must be less than the number of variables")
   sim          <- vector("list", length(range.Q))
 
 # Gibbs Sampler Function
-  gibbs.single <- function(data=data, n.iters=50000, Q=2,
+  gibbs.FA <- function(data=dat, n.iters=50000, Q=2,
                            burnin=n.iters/5 - 1, thinning=2, 
                            centering=T, scaling=T, print=T, ...) {
     
@@ -79,4 +79,4 @@
               load    = load.store, 
               psi     = psi.store,
               n.store = n.store))
-  }; gibbs.single    <- cmpfun(gibbs.single)
+  }; gibbs.FA    <- cmpfun(gibbs.FA)

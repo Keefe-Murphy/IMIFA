@@ -25,20 +25,21 @@ preamble   <- function(seed=21092015, rem.lib=F, rem.all=F, ...) {
 
 preamble()
 
-initialise <- function(data, method=c("IMIFA", "MIFA", "IFA", "FA"), 
-                       factanal=F, Q=NULL, range.Q=NULL, Q.fac=NULL,
+imifa.gibbs <- function(dat=NULL, method=c("IMIFA", "MIFA", "IFA", "FA"), 
+                       factanal=F, Q.star=NULL, range.Q=NULL, Q.fac=NULL,
                        sigma.mu=NULL, sigma.l=NULL, psi.alpha=NULL, psi.beta=NULL,
-                       phi.nu=NULL, delta.a1=NULL, delta.a2=NULL, ...) {
+                       phi.nu=NULL, delta.a1=NULL, delta.a2=NULL, profile=F, ...) {
   
   method   <- match.arg(method)
   assign("method", method, envir=.GlobalEnv)
+  if(missing(dat))                    stop("Dataset must be supplied")
   if(!is.element(factanal, c(T, F)))  stop("Arg. must be TRUE or FALSE")
   if(method == "FA") {
-    if(missing(range.Q)) stop("Arg. range.Q must be specified")
+    if(missing(range.Q))              stop("Arg. range.Q must be specified")
     assign("range.Q", range.Q, envir=.GlobalEnv)
   }
-  assign("N", nrow(data), envir=.GlobalEnv)
-  assign("P", sum(sapply(data, is.numeric)), envir=.GlobalEnv)
+  assign("N", nrow(dat), envir=.GlobalEnv)
+  assign("P", sum(sapply(dat, is.numeric)), envir=.GlobalEnv)
   
 # Define full conditional & Gibbs Sampler functions for desired method
   source(paste(dataDirectory, "/IMIFA-GIT/Gibbs_", method, ".R", sep=""))
@@ -47,7 +48,7 @@ initialise <- function(data, method=c("IMIFA", "MIFA", "IFA", "FA"),
   if(factanal) {
     if(missing(Q.fac)) assign("Q.fac", round(sqrt(P)))
     if(!exists("Label")) stop("Should the data be labelled?")
-    fac   <- factanal(data[,sapply(data, is.numeric)], 
+    fac   <- factanal(dat[,sapply(dat, is.numeric)], 
                          factors=Q.fac, control=list(nstart=50))
     return(list(fac=fac))
   }

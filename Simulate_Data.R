@@ -14,7 +14,7 @@
  # i in (N.grp[1] + 1):(N.grp[1] + N.grp[2])
  # i in (N.grp[1] + N.grp[2] + 1):N
   
-  data  <- matrix(0, nr=N, nc=P)
+  sim.data   <- matrix(0, nr=N, nc=P)
 
 # Simulate true parameter values
   mu.true    <- mvrnorm(mu=rep(1, P), Sigma=diag(P));             names(mu.true)      <- c(1:P)
@@ -24,11 +24,11 @@
  #eps.true   <- mvrnorm(n=N, mu=rep(0, P), Sigma=diag(psi.true))
 
 # Simulate data
-  data       <- mvrnorm(n=N, mu=mu.true, Sigma=tcrossprod(load.true, load.true) + diag(psi.true))
+  sim.data   <- mvrnorm(n=N, mu=mu.true, Sigma=tcrossprod(load.true, load.true) + diag(psi.true))
 
 # Post-process data
-  data <- data[sample(1:N, N, replace=F),]
-  rownames(data) <- c(1:N)
-  colnames(data) <- c(1:P)
-  data           <- as.data.frame(data)
+  sim.data   <- sim.data[sample(1:N, N, replace=F),]
+  rownames(sim.data) <- c(1:N)
+  colnames(sim.data) <- c(1:P)
+  sim.data   <- as.data.frame(sim.data)
 ###

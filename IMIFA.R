@@ -14,7 +14,7 @@
 # Read in the data (& call it data)
   data(wine); Label <- as.factor(wine[,1]); wine <- wine[,-1]; data <- wine; rm("wine")
   #subjectmarks     <- read.csv(paste(dataDirectory, "/Data/", "SubjectMarks.csv", sep="")); data <- subjectmarks; rm("subjectmarks")
-  #cereal           <- read.csv(paste(dataDirectory, "/Data/", "Cereal.csv", sep="")); data <- cereal; rm("cereal")
+  #cereal           <- read.csv(paste(dataDirectory, "/Data/", "Cereal.csv", sep=""));       data <- cereal; rm("cereal")
 
 # Simulate data
   #source(paste(dataDirectory, "/IMIFA-GIT/Simulate_Data.R", sep=""))
@@ -22,24 +22,26 @@
   load(file=paste(dataDirectory, "/Data/Simulated_Data.Rdata", sep=""), envir=.GlobalEnv); if(exists("Label")) rm("Label")
 
 # Initialise the Gibbs Sampler & override default hyperparameters if desired
-  init     <- initialise(data, method="IFA")
+  imifa     <- imifa.gibbs(data, method="FA", range.Q=1:2)
 
 # Run the Gibbs Sampler
 { Rprof()
   start.time   <- proc.time()
   if(method == 'FA') {
     if(length(range.Q) == 1) {
-      Q.ind    <- 1
-      sim[[1]] <- gibbs.single(data=data, n.iters=ifelse(exists("n.iters"), n.iters, 50000), Q=range.Q)
+      sim[[1]] <- do.call(paste0("gibbs.", method), 
+                          args=list(dat=data, n.iters=ifelse(exists("n.iters"), n.iters, 50000), Q=range.Q))
     } else {
       for(q in range.Q) { 
         Q.ind  <- q - min(range.Q) + 1
-        sim[[Q.ind]] <- gibbs.single(data=data, n.iters=ifelse(exists("n.iters"), n.iters, 50000), Q=q)
+        sim[[Q.ind]] <- do.call(paste0("gibbs.", method),
+                                args=list(dat=data, n.iters=ifelse(exists("n.iters"), n.iters, 50000), Q=q))
         cat(paste0(round(Q.ind/length(range.Q) * 100, 2), "% Complete", "\n"))
       }
     }
   } else if (method == 'IFA') {
-      sim[[1]] <- gibbs.shrink(data=data, n.iters=ifelse(exists("n.iters"), n.iters, 50000), Q=Q.star)
+      sim[[1]] <- do.call(paste0("gibbs.", method),
+                          args=list(dat=data, n.iters=ifelse(exists("n.iters"), n.iters, 50000), Q=Q.star))
   }
   total.time   <- proc.time() - start.time
   avg.time     <- total.time/ifelse(exists('range.Q'), length(range.Q), length(Q.star))
@@ -53,7 +55,7 @@
 
 # Save / Load results
   sim.name     <- "Wine"
-  save(sim,file=paste(dataDirectory, "/Simulations/", sim.name, "_Simulations_", method, ".Rdata", sep="")) # in server, tick box, export
+  save(sim, file=paste(dataDirectory, "/Simulations/", sim.name, "_Simulations_", method, ".Rdata", sep="")) # in server, tick box, export
   load(file=paste(dataDirectory, "/Simulations/", sim.name, "_Simulations_", method, ".Rdata", sep=""), envir=.GlobalEnv)
 
 # Convergence diagnostics (optional: additional 'burnin' & 'thinning' & user-defined Q)
