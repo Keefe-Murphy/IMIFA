@@ -69,16 +69,16 @@ if(method == 'FA' && length(range.Q) == 1) {
 };tune.parameters <- cmpfun(tune.parameters)
 
 if(method == 'FA') { 
-  new.q  <- function(Q, ...) {
+  new.Q  <- function(Q, ...) {
     assign("Q", Q)
     assign("Q.ind", which(range.Q == Q)) 
   }
 } else {
-  new.q  <- function(Q, ...) {
+  new.Q  <- function(Q, ...) {
     assign("Q", Q)
     assign("Q.ind", 1)
   }
-}; new.q <- cmpfun(new.q)
+}; new.Q <- cmpfun(new.Q)
 
 extract.results <- function(Q) {
   mu       <- sim[[Q.ind]]$mu[,store]                            

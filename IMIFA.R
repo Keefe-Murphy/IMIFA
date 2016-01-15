@@ -25,12 +25,6 @@
   init     <- initialise(data, method="IFA")
   init$fac
 
-  range.Q  <- 1:3   # can be SCALAR or VECTOR; scalar preferred!
-  n.iters  <- 50000
-  sigma.mu <- 0.5; sigma.l <- 0.5; psi.alpha <- 2; psi.beta <- 0.6
-  if(method != "FA") { phi.nu <- 3; delta.a1 <- 2.1; delta.a2 <- 12.1; rm('sigma.l', 'range.Q') }
-  #initialise()
-
 # Run the Gibbs Sampler
 { Rprof()
   start.time   <- proc.time()
@@ -50,7 +44,7 @@
   }
   total.time   <- proc.time() - start.time
   average.time <- total.time/ifelse(exists('range.Q'), length(range.Q), length(Q.star))
-  sim$time     <- list(Total = total.time, Average = average.time); print(sim$time)  
+  attr(sim, "Time")    <- list(Total = total.time, Average = average.time); print(sim$time)  
   attr(sim, "Factors") <- if(method == 'FA') range.Q else Q.star
   attr(sim, "Date")    <- Sys.time()
   Rprof(NULL)
@@ -63,23 +57,20 @@
   save(sim,file=paste(dataDirectory, "/Simulations/", sim.name, "_Simulations_", method, ".Rdata", sep="")) # in server, tick box, export
   load(file=paste(dataDirectory, "/Simulations/", sim.name, "_Simulations_", method, ".Rdata", sep=""), envir=.GlobalEnv)
 
-# Convergence diagnostics (optional additional burnin & thinning)
-  burnin   <- 1
-  thinning <- 1
+# Convergence diagnostics (optional additional 'burnin' & 'thinning')
   source(paste(dataDirectory, "/IMIFA-GIT/Diagnostics.R", sep=""))
   tune.parameters()
   
   # For user defined Q based on scree plot or bar plot
-    # new.q(2)
+    # new.Q(2)
 
 # Posterior Summaries & Plots, etc.
-  extract.results(Q)
+  res         <- extract.results(Q)
   post.mu     <- apply(mu, 1, mean)
   post.f      <- apply(f, c(1,2), mean)
   post.load   <- apply(load, c(1,2), mean)
   post.psi    <- apply(psi, 1, mean)
   
-  P           <- nrow(post.load)
   SS.load     <- colSums(post.load * post.load)
   communality <- sum(SS.load)
   prop.var    <- SS.load/P

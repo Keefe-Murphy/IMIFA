@@ -3,9 +3,6 @@
 ####################################################################################
 
 # Set hyperparameter values
-  if(!exists("n.iters"))   assign("n.iters",   50000)
-  if(!exists("N"))         assign("N",         nrow(data))
-  if(!exists("P"))         assign("P",         sum(sapply(data, is.numeric)))
   if(!exists("sigma.mu"))  assign("sigma.mu",  0.5)
   if(!exists("sigma.l"))   assign("sigma.l",   0.5)
   if(!exists("psi.alpha")) assign("psi.alpha", 2)
