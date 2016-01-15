@@ -2,10 +2,6 @@
 ### Define full conditional functions for Bayesian Factor Analysis (Shrinkage Case) ###
 #######################################################################################
 
-# Preamble 
-  pkgs <- c(if(exists("pkgs")) pkgs,"MCMCpack", "compiler")
-  invisible(lapply(pkgs, library, ch=T))
-
 # Set hyperparameter values
   if(!exists("N"))         assign("N",         nrow(data))
   if(!exists("P"))         assign("P",         sum(sapply(data, is.numeric)))

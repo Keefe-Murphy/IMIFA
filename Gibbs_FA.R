@@ -4,13 +4,20 @@
   
 # Preamble
   source(paste(dataDirectory, "/IMIFA-GIT/FullConditionals_FA.R", sep=""))
-  if(any(range.Q) >= P) stop ("Number of factors must be less than the number of variables")
+  if((length(range.Q) == 1 && range.Q >= P) || 
+     (length(range.Q) > 1 && any(range.Q) >= P))  
+      stop ("Number of factors must be less than the number of variables")
   sim          <- vector("list", length(range.Q))
 
 # Gibbs Sampler Function
   gibbs.single <- function(data=data, n.iters=50000, Q=2,
                            burnin=n.iters/5 - 1, thinning=2, 
                            centering=T, scaling=T, print=T, ...) {
+    
+  # Warning(s)
+    if(!is.element(centering, c(T, F)))  stop("Arg. must be TRUE or FALSE")
+    if(!is.element(scaling,   c(T, F)))  stop("Arg. must be TRUE or FALSE")
+    if(!is.element(print,     c(T, F)))  stop("Arg. must be TRUE or FALSE")
         
   # Remove non-numeric columns & (optionally) Center/Scale the data
     data       <- data[sapply(data,is.numeric)]

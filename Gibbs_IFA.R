@@ -8,7 +8,7 @@
   sim          <- vector("list", length(Q.star))
 
 # Gibbs Sampler Function
-  gibbs.shrink <- function(data=data, n.iters=50000, Q=min(round(5 * log(P)), P),
+  gibbs.shrink <- function(data=data, n.iters=50000, Q=Q.star,
                            burnin=n.iters/5 - 1, thinning=2, 
                            centering=T, scaling=T, print=T, 
                            adapt=T, b0=0.1, b1=0.00005, prop=3/4,
@@ -16,6 +16,10 @@
     
   # Warning(s)
     if(Q > P)     stop("Number of factors must be less than the number of variables")
+    if(!is.element(centering, c(T, F)))  stop("Arg. must be TRUE or FALSE")
+    if(!is.element(scaling,   c(T, F)))  stop("Arg. must be TRUE or FALSE")
+    if(!is.element(print,     c(T, F)))  stop("Arg. must be TRUE or FALSE")
+    if(!is.element(adapt,     c(T, F)))  stop("Arg. must be TRUE or FALSE")
     
   # Remove non-numeric columns & (optionally) Center/Scale the data
     data       <- data[sapply(data,is.numeric)]

@@ -2,10 +2,6 @@
 ### Simulate Data (Single & Shrinkage Case) ###
 ###############################################
 
-# Preamble
-  sim.pkgs <- c("MCMCpack")
-  invisible(lapply(sim.pkgs, library, ch=T))
-
 # Set dimensions etc.
   P     <- 20
   Q     <- 2

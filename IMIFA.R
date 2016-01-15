@@ -9,49 +9,27 @@
     dataDirectory <- "C:/Users/Windows/Documents/Claire IMIFA"
     setwd(dataDirectory)
   }
-  seed <- 21092015
-  set.seed(seed)
-  def.par         <- par()
-  methods         <- c("FA", "IFA", "MIFA", "IMIFA")
-  method          <- "IFA"
-  if(!is.element(method, methods)) stop("'method' must be one of 'FA', 'IFA', 'MIFA', or 'IMIFA'.")
-  pkgs            <- c("pgmm", "car")
-  invisible(lapply(pkgs, library, ch=T))
-  # WARNING: Remove everything
-    # update.packages()
-    # search()
-    # searchpaths()
-    # rm(list = ls(all = TRUE))
-  # WARNING: Remove loaded libraries
-    # pkgs <- names(sessionInfo()$otherPkgs)
-    # pkgs <- paste('package:', pkgs, sep = "")
-    # invisible(lapply(pkgs, detach, ch = T, unload = T, force= T))
+  source(paste(dataDirectory, "/IMIFA-GIT/Preamble.R", sep=""))
     
 # Read in the data (& call it data)
   data(wine); Label <- as.factor(wine[,1]); wine <- wine[,-1]; data <- wine; rm("wine")
   #subjectmarks     <- read.csv(paste(dataDirectory, "/Data/", "SubjectMarks.csv", sep="")); data <- subjectmarks; rm("subjectmarks")
   #cereal           <- read.csv(paste(dataDirectory, "/Data/", "Cereal.csv", sep="")); data <- cereal; rm("cereal")
 
-  # Simulate data
-    #source(paste(dataDirectory, "/IMIFA-GIT/Simulate_Data.R", sep=""))
-    #save(data, mu.true, load.true, psi.true, file=paste(dataDirectory,"/Data/Simulated_Data.Rdata", sep=""))
-    load(file=paste(dataDirectory, "/Data/Simulated_Data.Rdata", sep=""), envir=.GlobalEnv); if(exists("Label")) rm("Label")
+# Simulate data
+  #source(paste(dataDirectory, "/IMIFA-GIT/Simulate_Data.R", sep=""))
+  #save(data, mu.true, load.true, psi.true, file=paste(dataDirectory,"/Data/Simulated_Data.Rdata", sep=""))
+  load(file=paste(dataDirectory, "/Data/Simulated_Data.Rdata", sep=""), envir=.GlobalEnv); if(exists("Label")) rm("Label")
 
-# Vanilla 'factanal' for comparison purposes
-  if(!exists("Label")) stop("Should the data be labelled?")
-  N        <- nrow(data)
-  P        <- sum(sapply(data, is.numeric))
-  (res     <- factanal(data[,sapply(data, is.numeric)], 
-                       factors=round(sqrt(sum(sapply(data, is.numeric)))), control=list(nstart=50)))
+# Initialise the Gibbs Sampler & override default hyperparameters if desired
+  init     <- initialise(data, method="IFA")
+  init$fac
 
-# Initialise the Gibbs Sampler & set hyperparameters
   range.Q  <- 1:3   # can be SCALAR or VECTOR; scalar preferred!
   n.iters  <- 50000
   sigma.mu <- 0.5; sigma.l <- 0.5; psi.alpha <- 2; psi.beta <- 0.6
   if(method != "FA") { phi.nu <- 3; delta.a1 <- 2.1; delta.a2 <- 12.1; rm('sigma.l', 'range.Q') }
-
-# Define full conditional & Gibbs Sampler functions for desired method
-  source(paste(dataDirectory, "/IMIFA-GIT/Gibbs_", method, ".R", sep=""))
+  #initialise()
 
 # Run the Gibbs Sampler
 { Rprof()

@@ -2,10 +2,6 @@
 ### Define full conditional functions for Bayesian Factor Analysis (Single Case) ###
 ####################################################################################
 
-# Preamble 
-  pkgs <- c(if(exists("pkgs")) pkgs,"MCMCpack", "compiler")
-  invisible(lapply(pkgs, library, ch=T))
-
 # Set hyperparameter values
   if(!exists("n.iters"))   assign("n.iters",   50000)
   if(!exists("N"))         assign("N",         nrow(data))
