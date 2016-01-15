@@ -43,8 +43,8 @@
       sim[[1]] <- gibbs.shrink(data=data, n.iters=ifelse(exists("n.iters"), n.iters, 50000), Q=Q.star)
   }
   total.time   <- proc.time() - start.time
-  average.time <- total.time/ifelse(exists('range.Q'), length(range.Q), length(Q.star))
-  attr(sim, "Time")    <- list(Total = total.time, Average = average.time); print(sim$time)  
+  avg.time     <- total.time/ifelse(exists('range.Q'), length(range.Q), length(Q.star))
+  attr(sim, "Time")    <- list(Total = total.time, Average = avg.time); print(sim$time)  
   attr(sim, "Factors") <- if(method == 'FA') range.Q else Q.star
   attr(sim, "Date")    <- Sys.time()
   Rprof(NULL)
@@ -53,19 +53,15 @@
   invisible(file.remove("Rprof.out"))
 
 # Save / Load results
-  sim.name <- "Wine"
+  sim.name     <- "Wine"
   save(sim,file=paste(dataDirectory, "/Simulations/", sim.name, "_Simulations_", method, ".Rdata", sep="")) # in server, tick box, export
   load(file=paste(dataDirectory, "/Simulations/", sim.name, "_Simulations_", method, ".Rdata", sep=""), envir=.GlobalEnv)
 
-# Convergence diagnostics (optional additional 'burnin' & 'thinning')
+# Convergence diagnostics (optional: additional 'burnin' & 'thinning' & user-defined Q)
   source(paste(dataDirectory, "/IMIFA-GIT/Diagnostics.R", sep=""))
-  tune.parameters()
+  res          <- tune.params()
   
-  # For user defined Q based on scree plot or bar plot
-    # new.Q(2)
-
 # Posterior Summaries & Plots, etc.
-  res         <- extract.results(Q)
   post.mu     <- apply(mu, 1, mean)
   post.f      <- apply(f, c(1,2), mean)
   post.load   <- apply(load, c(1,2), mean)
