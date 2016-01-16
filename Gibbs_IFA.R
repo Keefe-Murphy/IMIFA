@@ -8,7 +8,7 @@
   sim          <- vector("list", length(Q.star))
 
 # Gibbs Sampler Function
-  gibbs.IFA <- function(data=dat, n.iters=50000, Q=Q.star,
+  gibbs.IFA    <- function(data=dat, n.iters=50000, Q=Q.star,
                            burnin=n.iters/5 - 1, thinning=2, 
                            centering=T, scaling=T, print=T, 
                            adapt=T, b0=0.1, b1=0.00005, prop=3/4,

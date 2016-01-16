@@ -1,14 +1,14 @@
 ####################################################################################
 ### Define full conditional functions for Bayesian Factor Analysis (Single Case) ###
 ####################################################################################
-
+                       
 # Set hyperparameter values
   if(!exists("sigma.mu"))  assign("sigma.mu",  0.5)
   if(!exists("sigma.l"))   assign("sigma.l",   0.5)
   if(!exists("psi.alpha")) assign("psi.alpha", 2)
   if(!exists("psi.beta"))  assign("psi.beta",  0.6)
                            assign("mu.sigma",  1/sigma.mu)
-                           
+
 # Means
   sim.mu        <- function(psi.inv, sum.data, sum.f, lmat, ...) {
     mu.omega    <- diag(1/(mu.sigma + N * psi.inv))

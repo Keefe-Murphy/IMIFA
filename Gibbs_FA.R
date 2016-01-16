@@ -10,7 +10,7 @@
   sim          <- vector("list", length(range.Q))
 
 # Gibbs Sampler Function
-  gibbs.FA <- function(data=dat, n.iters=50000, Q=2,
+  gibbs.FA     <- function(data=dat, n.iters=50000, Q=2,
                            burnin=n.iters/5 - 1, thinning=2, 
                            centering=T, scaling=T, print=T, ...) {
     

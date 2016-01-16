@@ -45,9 +45,11 @@
   }
   total.time   <- proc.time() - start.time
   avg.time     <- total.time/ifelse(exists('range.Q'), length(range.Q), length(Q.star))
-  attr(sim, "Time")    <- list(Total = total.time, Average = avg.time); print(attr(sim, "Time"))  
-  attr(sim, "Factors") <- if(method == 'FA') range.Q else Q.star
   attr(sim, "Date")    <- Sys.time()
+  attr(sim, "Factors") <- if(method == 'FA') range.Q else Q.star
+  #attr(sim, "Method") <- 
+  #attr(sim, "Name")   <- 
+  attr(sim, "Time")    <- list(Total = total.time, Average = avg.time); print(attr(sim, "Time"))  
   Rprof(NULL)
 }
   summaryRprof()
