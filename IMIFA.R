@@ -70,33 +70,25 @@
 # Means
   scatterplot(x=store, y=mu[1,])
   matplot(t(mu[,]), type="l")
-  plot(post.mu, type="n", main="Posterior Means")
-  text(x=1:P, y=post.mu, names(post.mu), cex=0.5)
+  plot.posterior("m")
   acf(mu[1,])
   
 # Scores
   scatterplot(x=store, y=f[1,1,])
   matplot(t(f[1,,]), type="l")
-  plot(post.f, type="n", main="Posterior Scores")
-  text(post.f[,1], post.f[,2], 1:nrow(post.f), col=if(exists("Label")) as.numeric(Label) else 1, cex=0.5)
-  plot(f[,,length(store)], type="n")
-  text(f[,1,length(store)], f[,2,length(store)], 1:nrow(post.f), col=if(exists("Label")) as.numeric(Label) else 1, cex=0.5)
+  plot.posterior("s")
   acf(f[1,1,])
       
 # Loadings
   scatterplot(x=store, y=lmat[1,1,])
   matplot(t(lmat[1,,]), type="l")
-  plot(post.load, type="n")
-  text(post.load[,1], post.load[,2], rownames(post.load), cex=0.5)
+  plot.posterior("l")
   acf(lmat[1,1,])
-  
-# Heatmaps
   load.heat()
 
 # Uniquenesses
   scatterplot(x=store, y=psi[1,])
   matplot(t(psi[,]), type="l")
-  plot(post.psi, type="n")
-  text(1:length(post.psi), post.psi, names(post.psi), cex=0.5)
+  plot.posterior("u")
   acf(psi[1,])
 ####
