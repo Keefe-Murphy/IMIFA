@@ -2,13 +2,16 @@
 ### Tune Parameters (Single & Shrinkage Case) ###
 #################################################
 
-tune.params   <- function(burnin=1, thinning=1, Q=NULL, ...) {
-  
-  if(!missing("burnin"))    burnin <- burnin + 1
-  store       <- seq(from=burnin + 1, to=sim[[1]]$n.store, by=thinning)
-  #method     <- "IFA"
+tune.sims     <- function(sims=NULL, burnin=1, thinning=1, Q=NULL, Q.meth=NULL, ...) {
+  if(missing(sims))               stop("Simulations must be supplied")
+  if(!exists(as.character(match.call()$sims),
+             envir=.GlobalEnv))   stop(paste0("Object ", match.call()$sims, " not found"))
+  if(!missing(burnin))    burnin <- burnin + 1
+  store       <- seq(from=burnin + 1, to=sims[[1]]$n.store, by=thinning)
+  method      <- attr(sim, "Method")
   
   if(!missing(Q)) {
+    if(Q > attr(sims, "Factors")) stop("Q cannot be greater than the number of factors in sim")
     if(method == 'FA' && length(range.Q) > 1) { 
       
       Q.ind   <- which(range.Q == Q) 
@@ -25,11 +28,16 @@ tune.params   <- function(burnin=1, thinning=1, Q=NULL, ...) {
       
   } else if(method == 'IFA') {
     
-    post.Q    <- "Mode"
+    if(missing(Q.meth)) {
+      Q.meth  <- "Mode"
+    } else {
+      if(!is.element(Q.meth, 
+       c("Mode", "Median")))      stop("Q.meth must be MODE or MEDIAN")
+    }
     Q.ind     <- 1 
     
   # Retrieve distribution of Q, tabulate & plot
-    Q.store   <- sim[[Q.ind]]$Q.store[store]
+    Q.store   <- sims[[Q.ind]]$Q.store[store]
     Q.tab     <- table(Q.store, dnn=NULL)
     Q.prob    <- prop.table(Q.tab)
     Q.plot    <- barplot(Q.tab, main="Posterior Distribution of Q", 
@@ -39,7 +47,7 @@ tune.params   <- function(burnin=1, thinning=1, Q=NULL, ...) {
   # Set Q as the (lesser of) the distribution's mode(s) & compute credible interval
     Q.mode    <- as.numeric(names(Q.tab[Q.tab == max(Q.tab)]))
     Q.median  <- ceiling(median(Q.store))
-    if(post.Q == 'Mode') { 
+    if(Q.meth == 'Mode') { 
        Q      <- min(Q.mode)
     } else Q  <- Q.median
       
@@ -51,16 +59,16 @@ tune.params   <- function(burnin=1, thinning=1, Q=NULL, ...) {
       
   # Initialise
     if(!exists("range.Q")) {
-      range.Q <- attr(sim, "Factors")
+      range.Q <- attr(sims, "Factors")
     }
     Q.range   <- range.Q - min(range.Q) + 1
-    P         <- length(sim[[1]]$psi[,1])
+    P         <- length(sims[[1]]$psi[,1])
     prop.exp  <- rep(NA, length(range.Q))
   
   # Calculate Proportion of Variation Explained
     for(Q in Q.range) {
-      lmat    <- sim[[Q]]$load[,1:range.Q[Q],store, drop=F]
-      l.temp  <- as.matrix(sim[[Q]]$load[,1:range.Q[Q],burnin])
+      lmat    <- sims[[Q]]$load[,1:range.Q[Q],store, drop=F]
+      l.temp  <- as.matrix(sims[[Q]]$load[,1:range.Q[Q],burnin])
       for(b in 1:length(store)) {
         rot       <- procrustes(X=as.matrix(lmat[,,b]), Xstar=l.temp)$R
         lmat[,,b] <- lmat[,,b] %*% rot
@@ -74,35 +82,29 @@ tune.params   <- function(burnin=1, thinning=1, Q=NULL, ...) {
          ylab="% Variation Explained", xaxt="n", yaxt="n", ylim=c(0,1))
     axis(1, at=1:length(prop.exp), labels=range.Q)
     axis(2, at=seq(0,1,0.1), labels=seq(0,100,10), cex.axis=0.8)
-    assign("Q.ind", which.max(prop.exp))
-    assign("Q", range.Q[Q.ind])
+    Q.ind <- which.max(prop.exp)
+    Q     <- range.Q[Q.ind]
     points(x=Q.ind, y=prop.exp[Q.ind], col="red", bg="red", pch=21)
     print(list(Q=Q, Warning="But the user should choose Q based on the attached scree plot!"))
   }
   
-  mu     <- sim[[Q.ind]]$mu[,store]                            
-  f      <- sim[[Q.ind]]$f[,1:Q,store, drop=F]
-  lmat   <- sim[[Q.ind]]$load[,1:Q,store, drop=F]
-  psi    <- sim[[Q.ind]]$psi[,store]
+  mu      <- sims[[Q.ind]]$mu[,store]                            
+  f       <- sims[[Q.ind]]$f[,1:Q,store, drop=F]
+  lmat    <- sims[[Q.ind]]$load[,1:Q,store, drop=F]
+  psi     <- sims[[Q.ind]]$psi[,store]
     
 # Loadings matrix / identifiability / # etc.
-  l.temp <- as.matrix(sim[[Q.ind]]$load[,1:Q,burnin])
+  l.temp  <- as.matrix(sims[[Q.ind]]$load[,1:Q,burnin])
   for(b in 1:length(store)) {
     rot       <- procrustes(X=as.matrix(lmat[,,b]), Xstar=l.temp)$R
     lmat[,,b] <- lmat[,,b] %*% rot
     f[,,b]    <- t(f[,,b]  %*% rot)
   }
 
-  assign("store",     store, envir=.GlobalEnv)
-  assign("mu",        mu,    envir=.GlobalEnv)
-  assign("f",         f,     envir=.GlobalEnv)
-  assign("lmat",      lmat,  envir=.GlobalEnv)
-  assign("psi",       psi,   envir=.GlobalEnv)
-  
-  assign("post.mu",   apply(mu, 1, mean),        envir=.GlobalEnv)
-  assign("post.f",    apply(f, c(1,2), mean),    envir=.GlobalEnv)
-  assign("post.load", apply(lmat, c(1,2), mean), envir=.GlobalEnv)
-  assign("post.psi",  apply(psi, 1, mean),       envir=.GlobalEnv)
+  post.mu     <- apply(mu, 1, mean)
+  post.f      <- apply(f, c(1,2), mean)
+  post.load   <- apply(lmat, c(1,2), mean)
+  post.psi    <- apply(psi, 1, mean)
         
   SS.load     <- colSums(post.load * post.load)
   communality <- sum(SS.load)
@@ -111,13 +113,15 @@ tune.params   <- function(burnin=1, thinning=1, Q=NULL, ...) {
   prop.exp    <- communality/P
   prop.uni    <- 1 - prop.exp
 
-  results     <- list(SS.load = SS.load, communality = communality, 
+  results     <- list(means = mu, scores = f, loadings = lmat, uniquenesses = psi,
+                      post.mu = post.mu, post.f = post.f, post.load = post.load, post.psi = post.psi,
+                      store = store, SS.load = SS.load, communality = communality, 
                       prop.var = prop.var, cum.var = cum.var, 
                       prop.exp = prop.exp, prop.uni = prop.uni, Q = Q)
   if(method   == "IFA") {
-    results   <- lappend(results, res.bar)
+    results   <- unlist(list(results, res.bar), recursive=FALSE)
   }
   return(results)
-};tune.params <- cmpfun(tune.params)
+};tune.sims   <- cmpfun(tune.sims)
 
 source(paste(dataDirectory, "/IMIFA-GIT/PlottingFunctions.R", sep=""))

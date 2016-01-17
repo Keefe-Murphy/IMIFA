@@ -19,10 +19,10 @@
 # Simulate data
   #source(paste(dataDirectory, "/IMIFA-GIT/Simulate_Data.R", sep=""))
   #save(data, mu.true, load.true, psi.true, file=paste(dataDirectory,"/Data/Simulated_Data.Rdata", sep=""))
-  load(file=paste(dataDirectory, "/Data/Simulated_Data.Rdata", sep=""), envir=.GlobalEnv); if(exists("Label")) rm("Label")
+  load(file=paste(dataDirectory, "/Data/Simulated_Data.Rdata", sep=""), envir=.GlobalEnv)
 
 # Initialise the Gibbs Sampler & override default hyperparameters if desired
-  imifa     <- imifa.gibbs(data, method="IFA")
+  sim          <- imifa.gibbs(data, method="IFA")
 
 # Run the Gibbs Sampler
 { Rprof()
@@ -45,9 +45,9 @@
   }
   total.time   <- proc.time() - start.time
   avg.time     <- total.time/ifelse(exists('range.Q'), length(range.Q), length(Q.star))
-  attr(sim, "Date")    <- Sys.time()
+  attr(sim, "Date")    <- format(Sys.Date(), "%d-%b-%Y")
   attr(sim, "Factors") <- if(method == 'FA') range.Q else Q.star
-  #attr(sim, "Method") <- 
+  attr(sim, "Method")  <- method
   #attr(sim, "Name")   <- 
   attr(sim, "Time")    <- list(Total = total.time, Average = avg.time); print(attr(sim, "Time"))  
   Rprof(NULL)
@@ -57,38 +57,42 @@
 
 # Save / Load results
   sim.name     <- "Wine"
-  save(sim, file=paste(dataDirectory, "/Simulations/", sim.name, "_Simulations_", method, ".Rdata", sep="")) # in server, tick box, export
-  load(file=paste(dataDirectory, "/Simulations/", sim.name, "_Simulations_", method, ".Rdata", sep=""), envir=.GlobalEnv)
+  save(sim, file=paste(dataDirectory, "/Simulations/", 
+                       sim.name, "_Simulations_", attr(sim, "Method"), "_", 
+                       attr(sim, "Date"), ".Rdata", sep=""))
+  load(file=paste(dataDirectory, "/Simulations/", 
+                  sim.name, "_Simulations_", attr(sim, "Method"), "_", 
+                  attr(sim, "Date"), ".Rdata", sep=""), envir=.GlobalEnv)
 
 # Convergence diagnostics (optional: additional 'burnin' & 'thinning' & user-defined Q)
   source(paste(dataDirectory, "/IMIFA-GIT/Diagnostics.R", sep=""))
-  res          <- tune.params()
+  res          <- tune.sims(sim)
   
 # Posterior Summaries & Plots, etc.  
-  plot.cum.var()
+  plot.cum.var(res)
   
 # Means
-  scatterplot(x=store, y=mu[1,])
-  matplot(t(mu[,]), type="l")
-  plot.posterior("m")
-  acf(mu[1,])
+  scatterplot(x=res$store, y=res$means[1,])
+  matplot(t(res$means[,]), type="l")
+  plot.posterior(res, "m")
+  plot.acf(res, "m")
   
 # Scores
-  scatterplot(x=store, y=f[1,1,])
-  matplot(t(f[1,,]), type="l")
-  plot.posterior("s")
-  acf(f[1,1,])
+  scatterplot(x=res$store, y=res$scores[1,1,])
+  matplot(t(res$scores[1,,]), type="l")
+  plot.posterior(res, "s", Label)
+  plot.acf(res, "s")
       
 # Loadings
-  scatterplot(x=store, y=lmat[1,1,])
-  matplot(t(lmat[1,,]), type="l")
-  plot.posterior("l")
-  acf(lmat[1,1,])
-  load.heat()
+  scatterplot(x=res$store, y=res$loadings[1,1,])
+  matplot(t(res$loadings[1,,]), type="l")
+  plot.posterior(res, "l")
+  plot.acf(res, "l")
+  load.heat(res)
 
 # Uniquenesses
-  scatterplot(x=store, y=psi[1,])
-  matplot(t(psi[,]), type="l")
-  plot.posterior("u")
-  acf(psi[1,])
+  scatterplot(x=res$store, y=res$uniquenesses[1,])
+  matplot(t(res$uniquenesses[,]), type="l")
+  plot.posterior(res, "u")
+  plot.acf(res, "u")
 ####
