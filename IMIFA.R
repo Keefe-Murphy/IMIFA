@@ -72,27 +72,27 @@
   plot.cum.var(res)
   
 # Means
-  scatterplot(x=res$store, y=res$means[1,])
-  matplot(t(res$means[,]), type="l")
+  plot.trace(res, "m", F)
+  plot.trace(res, "m")
   plot.posterior(res, "m")
   plot.acf(res, "m")
   
 # Scores
-  scatterplot(x=res$store, y=res$scores[1,1,])
-  matplot(t(res$scores[1,,]), type="l")
+  plot.trace(res, "s", F)
+  plot.trace(res, "s")
   plot.posterior(res, "s", Label)
   plot.acf(res, "s")
       
 # Loadings
-  scatterplot(x=res$store, y=res$loadings[1,1,])
-  matplot(t(res$loadings[1,,]), type="l")
+  plot.trace(res, "l", F)
+  plot.trace(res, "l")
   plot.posterior(res, "l")
   plot.acf(res, "l")
-  load.heat(res)
+  plot.load.heat(res)
 
 # Uniquenesses
-  scatterplot(x=res$store, y=res$uniquenesses[1,])
-  matplot(t(res$uniquenesses[,]), type="l")
+  plot.trace(res, "u", F)
+  plot.trace(res, "u")
   plot.posterior(res, "u")
   plot.acf(res, "u")
 ####

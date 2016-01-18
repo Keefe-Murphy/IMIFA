@@ -54,7 +54,8 @@ tune.sims     <- function(sims=NULL, burnin=1, thinning=1, Q=NULL, Q.meth=NULL, 
     Q.CI      <- quantile(Q.store, c(0.025, 0.975))
     res.bar   <- list(Mode = Q.mode, Median = Q.median, 
                       CI = Q.CI, Probs= Q.prob, Counts = Q.tab)
-    print(list(Q=Q, Warning="But the user should choose Q based on the attached scree plot!"))
+    print(unlist(list(Q=Q, res.bar, 
+                      Warning="But the user should choose Q based on the attached bar plot!"), recursive=F))
     } else {    
       
   # Initialise
@@ -119,7 +120,7 @@ tune.sims     <- function(sims=NULL, burnin=1, thinning=1, Q=NULL, Q.meth=NULL, 
                       prop.var = prop.var, cum.var = cum.var, 
                       prop.exp = prop.exp, prop.uni = prop.uni, Q = Q)
   if(method   == "IFA") {
-    results   <- unlist(list(results, res.bar), recursive=FALSE)
+    results   <- unlist(list(results, res.bar), recursive=F)
   }
   return(results)
 };tune.sims   <- cmpfun(tune.sims)
