@@ -7,7 +7,6 @@ preamble    <- function(seed=21092015, rem.lib=F, rem.all=F, ...) {
   if(!is.element(rem.lib, c(T, F)))   stop("Arg. must be TRUE or FALSE")
   if(!is.element(rem.all, c(T, F)))   stop("Arg. must be TRUE or FALSE")
   set.seed(seed)
-  assign("def.par", par(), envir=.GlobalEnv)
   packages  <- c("pgmm", "car", "MCMCpack", "compiler")
   if(length(setdiff(packages, rownames(installed.packages()))) > 0) {
     invisible(install.packages(setdiff(packages, rownames(installed.packages()))))
@@ -37,26 +36,43 @@ imifa.gibbs <- function(dat=NULL, n.iters=50000, method=c("IMIFA", "MIFA", "IFA"
                         phi.nu=NULL, delta.a1=NULL, delta.a2=NULL, profile=F, ...) {
   
   method    <- match.arg(method)
-  assign("method", method, envir=.GlobalEnv)
   if(missing(dat))                    stop("Dataset must be supplied")
   if(!exists(as.character(match.call()$dat),
              envir=.GlobalEnv))       stop(paste0("Object ", match.call()$dat, " not found"))
   if(!is.element(factanal, c(T, F)))  stop("Arg. must be TRUE or FALSE")
   if(method == "FA") {
     if(missing(range.Q))              stop("Arg. range.Q must be specified")
-    assign("range.Q", range.Q, envir=.GlobalEnv)
   }
   if(!is.element(centering, c(T, F))) stop("Arg. must be TRUE or FALSE")
-  if(!is.element(scaling, c(T, F)))   stop("Arg. must be TRUE or FALSE")
-  if(!is.element(print,   c(T, F)))   stop("Arg. must be TRUE or FALSE")
-  if(!is.element(profile, c(T, F)))   stop("Arg. must be TRUE or FALSE")
-  assign("N", nrow(dat), envir=.GlobalEnv)
-  assign("P", sum(sapply(dat, is.numeric)), envir=.GlobalEnv)
+  if(!is.element(scaling,   c(T, F))) stop("Arg. must be TRUE or FALSE")
+  if(!is.element(print,     c(T, F))) stop("Arg. must be TRUE or FALSE")
+  if(!is.element(profile,   c(T, F))) stop("Arg. must be TRUE or FALSE")
   
-  # Define full conditional & Gibbs Sampler functions for desired method
-  source(paste(getwd(), "/IMIFA-GIT/Gibbs_", method, ".R", sep=""))
-  gibbs.arg <- list(dat, n.iters, burnin, thinning, n.store, centering, scaling, print)
-  
+  # Define full conditionals, hyperparamters & Gibbs Sampler function for desired method
+  N         <- nrow(dat)
+  P         <- sum(sapply(dat, is.numeric))
+  if(missing("sigma.mu"))   sigma.mu  <- 0.5
+  if(missing("psi.alpha"))  psi.alpha <- 2
+  if(missing("psi.beta"))   psi.beta  <- 0.6
+  if(method == "FA") {
+    if(missing("sigma.l"))  sigma.l   <- 0.5
+  } else if(method == "IFA") {
+    if(missing("phi.nu"))   phi.nu    <- 3
+    if(missing("delta.a1")) delta.a1  <- 2.1
+    if(missing("delta.a2")) delta.a2  <- 12.1
+  }
+  source(paste(getwd(), "/IMIFA-GIT/FullConditionals_", method, ".R", sep=""), local=T)
+  source(paste(getwd(), "/IMIFA-GIT/Gibbs_", method, ".R", sep=""), local=T)
+  gibbs.arg <- list(dat, n.iters, N, P, sigma.mu, psi.alpha, psi.beta, 
+                    burnin, thinning, n.store, centering, scaling, print)
+  if(method == "IFA") {
+    gibbs.arg <- append(gibbs.arg, list(phi.nu, delta.a1, delta.a2, adapt, 
+                                        b0=0.1, b1=0.00005, prop=3/4, 
+                                        epsilon=ifelse(centering, 0.1, 0.01)))
+  } else if(method == "FA") {
+    gibbs.arg <- append(gibbs.arg, list(sigma.l))
+  }
+    
   if(profile) {
     Rprof()
   }
@@ -65,7 +81,6 @@ imifa.gibbs <- function(dat=NULL, n.iters=50000, method=c("IMIFA", "MIFA", "IFA"
       Q.star       <- min(round(5 * log(P)), P)
     } else if(Q.star > P)             stop("Number of factors must be less than the number of variables")
     if(!is.element(adapt,   c(T, F))) stop("Arg. must be TRUE or FALSE")
-    gibbs.arg      <- append(gibbs.arg, list(adapt))
     imifa          <- vector("list", length(Q.star))
     start.time     <- proc.time()
     imifa[[1]]     <- do.call(paste0("gibbs.", method),                          
@@ -103,6 +118,7 @@ imifa.gibbs <- function(dat=NULL, n.iters=50000, method=c("IMIFA", "MIFA", "IFA"
   attr(imifa, "Method")  <- method
   attr(imifa, "Name")    <- paste0(toupper(substr(dat.name, 1, 1)),
                                    substr(dat.name, 2, nchar(dat.name)))
+  attr(imifa, "Store")   <- n.store
   attr(imifa, "Time")    <- list(Total = tot.time, Average = avg.time) 
   if(print)    print(attr(imifa, "Time"))  
   attrs     <- attributes(imifa)
@@ -110,7 +126,7 @@ imifa.gibbs <- function(dat=NULL, n.iters=50000, method=c("IMIFA", "MIFA", "IFA"
 # Vanilla 'factanal' for comparison purposes
   if(!missing(Q.fac)) factanal  <- T
   if(factanal) {
-    if(missing(Q.fac)) assign("Q.fac", round(sqrt(P)))
+    if(missing(Q.fac)) Q.fac    <- round(sqrt(P))
     fac     <- factanal(dat[,sapply(dat, is.numeric)], 
                          factors=Q.fac, control=list(nstart=50))
     imifa   <- append(imifa, list(fac=fac))

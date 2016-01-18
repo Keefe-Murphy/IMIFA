@@ -1,17 +1,10 @@
-####################################################################################
-### Define full conditional functions for Bayesian Factor Analysis (Single Case) ###
-####################################################################################
-                       
-# Set hyperparameter values
-  if(!exists("sigma.mu"))  assign("sigma.mu",  0.5)
-  if(!exists("sigma.l"))   assign("sigma.l",   0.5)
-  if(!exists("psi.alpha")) assign("psi.alpha", 2)
-  if(!exists("psi.beta"))  assign("psi.beta",  0.6)
-                           assign("mu.sigma",  1/sigma.mu)
-
+#############################################
+### IMIFA Full Conditionals (Single Case) ###
+#############################################
+                         
 # Means
-  sim.mu        <- function(psi.inv, sum.data, sum.f, lmat, ...) {
-    mu.omega    <- diag(1/(mu.sigma + N * psi.inv))
+  sim.mu        <- function(N, P, sigma.mu, psi.inv, sum.data, sum.f, lmat, ...) {
+    mu.omega    <- diag(1/(1/sigma.mu + N * psi.inv))
     U.mu        <- chol(mu.omega)
     z.mu        <- rnorm(P, 0, 1)
     v.mu        <- crossprod(U.mu, z.mu)
@@ -20,7 +13,7 @@
 };  sim.mu      <- cmpfun(sim.mu)
 
 # Scores
-  sim.scores    <- function(Q, lmat, psi.inv, c.data, ...) {
+  sim.scores    <- function(N, Q, lmat, psi.inv, c.data, ...) {
     f.omega.a   <- diag(Q) + crossprod(lmat, diag(psi.inv)) %*% lmat
     U.f         <- chol(f.omega.a)
     f.omega.b   <- tcrossprod(chol2inv(U.f), lmat) %*% diag(psi.inv)
@@ -41,7 +34,7 @@
 };  sim.load    <- cmpfun(sim.load)
 
 # Uniquenesses
-  sim.psi.inv   <- function(c.data, f, lmat, ...) { 
+  sim.psi.inv   <- function(N, P, psi.alpha, psi.beta, c.data, f, lmat, ...) { 
     rate.t      <- c.data - tcrossprod(f, lmat)
     rate.t      <- colSums(rate.t * rate.t)
       rgamma(P, shape=(N + psi.alpha)/2, 
@@ -50,7 +43,7 @@
 
 # Priors
   # Means
-    sim.mu.p    <- function(...) {
+    sim.mu.p    <- function(P, sigma.mu, ...) {
       mu.omega  <- sigma.mu * diag(P)
       U.mu      <- sqrt(mu.omega)
       z.mu      <- rnorm(P, 0, 1)
@@ -58,12 +51,12 @@
     }; sim.mu.p <- cmpfun(sim.mu.p)
   
   # Scores
-    sim.f.p     <- function(Q, ...) {
+    sim.f.p     <- function(Q, N, ...) {
         matrix(rnorm(N * Q, 0, 1), nr=N, ncol=Q)
     }; sim.f.p  <- cmpfun(sim.f.p)
 
   # Loadings
-    sim.l.p     <- function(Q, ...) {
+    sim.l.p     <- function(Q, P, sigma.l, ...) {
       l.omega   <- sigma.l * diag(Q)
       U.l       <- sqrt(l.omega)
       z.l       <- matrix(rnorm(P * Q, 0, 1), nr=Q, ncol=P)
@@ -71,6 +64,6 @@
     }; sim.l.p  <- cmpfun(sim.l.p)
 
   # Uniquenesses
-    sim.pi.p    <- function(...) {
+    sim.pi.p    <- function(P, psi.alpha, psi.beta, ...) {
         rgamma(n=P, shape=psi.alpha/2, rate=psi.beta/2) 
     }; sim.pi.p <- cmpfun(sim.pi.p)

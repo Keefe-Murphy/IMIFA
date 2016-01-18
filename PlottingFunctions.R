@@ -4,9 +4,9 @@
 
 # Plot the cumulative proportion of variation explained 
   plot.cum.var    <- function(results=NULL, n.fac=results$Q, cum.var=results$cum.var, ...) {
-    if(missing(results))              stop("Results must be supplied")
+    if(missing(results))               stop("Results must be supplied")
     if(!exists(as.character(match.call()$results),
-               envir=.GlobalEnv))     stop(paste0("Object ", match.call()$results, " not found"))
+               envir=.GlobalEnv))      stop(paste0("Object ", match.call()$results, " not found"))
     prop.exp      <- cum.var[n.fac]
     if(n.fac       > 1) {
       plot(cum.var, type="l", main="Scree Plot to Choose Q", xlab="# Factors", 
@@ -21,10 +21,10 @@
 
 # Plot heatmap of Posterior Loadings
   plot.load.heat  <- function(results=NULL, n.fac=results$Q, ...) {
-    if(missing(results))              stop("Results must be supplied")
+    if(missing(results))               stop("Results must be supplied")
     if(!exists(as.character(match.call()$results),
-               envir=.GlobalEnv))     stop(paste0("Object ", match.call()$results, " not found"))
-    if(n.fac > results$Q)             stop("Cannot plot this many loadings columns")
+               envir=.GlobalEnv))      stop(paste0("Object ", match.call()$results, " not found"))
+    if(n.fac > results$Q)              stop("Cannot plot this many loadings columns")
     par(mfrow=c(1, 1), mar=c(5.1, 7.1, 4.1, 2.1))
     image(z=t(results$post.load[,1:n.fac]), xlab="", ylab="", 
           main="Posterior Loadings", xaxt="n", yaxt="n")
@@ -43,21 +43,21 @@
 
 # Plot trace plots of Markov Chains
   plot.trace      <- function(results=NULL, x=NULL, mat=T, ind=NULL, ...) {
-    if(missing(results))              stop("Results must be supplied")
+    if(missing(results))               stop("Results must be supplied")
     if(!exists(as.character(match.call()$results),
-               envir=.GlobalEnv))     stop(paste0("Object ", match.call()$results, " not found"))
+               envir=.GlobalEnv))      stop(paste0("Object ", match.call()$results, " not found"))
     x    <- match.arg(x, c("means", "scores", "loadings", "uniquenesses"))
-    if(!is.element(mat, c(T, F)))     stop("Arg. must be TRUE or FALSE")
+    if(!is.element(mat, c(T, F)))      stop("Arg. must be TRUE or FALSE")
     if(res$Q == 1) mat     <- F
     if(x == "scores" || x  == "loadings") {
       if(missing(ind)) ind <- c(1, 1)
-      if(length(ind) > 2)             stop("Length of indexes for plotting cannot be greater than 2")
-      if(ind[1]      > N)             stop(paste0("Length of first index cannot be greater than ", N))
-      if(ind[2]  > res$Q)             stop(paste0("Length of second index cannot be greater than ", res$Q))
+      if(length(ind) > 2)              stop("Length of indexes for plotting cannot be greater than 2")
+      if(ind[1] > nrow(res$post.load)) stop(paste0("Length of first index cannot be greater than ", nrow(res$post.load)))
+      if(ind[2] > res$Q)               stop(paste0("Length of second index cannot be greater than ", res$Q))
     } else {
       if(missing(ind)) ind <- 1
-      if(length(ind) > 1)             stop("Length of indexes for plotting cannot be greater than 1")
-      if(ind > P)                     stop(paste0("Length of second index cannot be greater than ", P))
+      if(length(ind) > 1)              stop("Length of indexes for plotting cannot be greater than 1")
+      if(ind    > nrow(res$post.load)) stop(paste0("Length of second index cannot be greater than ", nrow(res$post.load)))
     }
     if(!mat) iter <- results$store
     if(x == "means") {
@@ -93,9 +93,9 @@
 # Plot posteriors
   plot.posterior  <- function(results=NULL, x=NULL, Label=NULL, 
                              type=c("n", "p"), ind=NULL, ...) {
-    if(missing(results))              stop("Results must be supplied")
+    if(missing(results))               stop("Results must be supplied")
     if(!exists(as.character(match.call()$results),
-               envir=.GlobalEnv))     stop(paste0("Object ", match.call()$results, " not found"))
+               envir=.GlobalEnv))      stop(paste0("Object ", match.call()$results, " not found"))
     x    <- match.arg(x, c("means", "scores", "loadings", "uniquenesses"))
     type <- match.arg(type)
     if(x == "scores" || x  == "loadings") {
@@ -103,22 +103,23 @@
       if(res$Q == 1) {
         ind    <- 1
       } else if(length(ind) > 2 ||
-        ind[1]  == ind[2])            stop("Only two columns can be plotted")
-      if(max(ind)  > results$Q)       stop(paste0("Only the first ", res$Q, " columns can be plotted"))
+        ind[1] == ind[2])              stop("Only two columns can be plotted")
+      if(ind[2] > results$Q)           stop(paste0("Only the first ", res$Q, " columns can be plotted"))
     }
         
     if(x == "means") {
-      plot.x  <- results$post.mu
+      plot.x   <- results$post.mu
       plot(plot.x, type=type, main="Posterior Means", ylab="Means", xlab="Variable")
-      if(type == "n") text(x=1:length(plot.x), y=plot.x, names(plot.x), cex=0.5)
+      if(type  == "n") text(x=1:length(plot.x), y=plot.x, names(plot.x), cex=0.5)
     }
     if(x == "scores") {
-      plot.x  <- results$post.f
+      plot.x   <- results$post.f
+      if(ind[1] > nrow(plot.x))       stop(paste0("Only the first ", nrow(plot.x), " scores can be plotted"))
       if(!missing(Label)) {
         if(!exists(as.character(match.call()$Label),
-                   envir=.GlobalEnv)) stop(paste0("Object ", match.call()$Label, " not found"))
-        if((length(Label) != N) ||
-             !is.factor(Label))       stop("Labels must be a factor of length N")
+                   envir=.GlobalEnv))  stop(paste0("Object ", match.call()$Label, " not found"))
+        if((length(Label) != nrow(plot.x)) ||
+             !is.factor(Label))        stop("Labels must be a factor of length N")
       } else {
         Label <- 1
         print("Should the data be labelled?")
@@ -136,6 +137,7 @@
     }
     if(x == "loadings") {
       plot.x  <- results$post.load
+      if(ind[1] > nrow(plot.x))       stop(paste0("Only the first ", nrow(plot.x), " variables can be plotted"))
       if(res$Q != 1) {
         plot(plot.x[,ind[1]], plot.x[,ind[2]], type=type, main="Posterior Loadings", 
              xlab=paste0("Factor ", ind[1]), ylab=paste0("Factor ", ind[2]))
@@ -155,19 +157,20 @@
 
 # Autocorrelation Functions
   plot.acf    <- function(results=NULL, x=NULL, ind=NULL, ...) {
-    if(missing(results))              stop("Results must be supplied")
+    if(missing(results))               stop("Results must be supplied")
     if(!exists(as.character(match.call()$results),
-               envir=.GlobalEnv))     stop(paste0("Object ", match.call()$results, " not found"))
+               envir=.GlobalEnv))      stop(paste0("Object ", match.call()$results, " not found"))
     x    <- match.arg(x, c("means", "scores", "loadings", "uniquenesses"))
     if(x == "scores" || x  == "loadings") {
       if(missing(ind)) ind <- c(1, 1)
-      if(length(ind) > 2)             stop("Length of indexes for plotting cannot be greater than 2")
-      if(ind[1] > N)                  stop(paste0("Length of first index cannot be greater than ", N))
-      if(ind[2] > res$Q)              stop(paste0("Length of second index cannot be greater than ", res$Q))
+      if(length(ind) > 2)              stop("Length of indexes for plotting cannot be greater than 2")
+      if(ind[1] > nrow(res$post.f))    stop(paste0("Length of first index cannot be greater than ", nrow(res$post.f)))
+      if(ind[2] > res$Q)               stop(paste0("Length of second index cannot be greater than ", res$Q))
     } else {
       if(missing(ind)) ind <- 1
-      if(length(ind) > 1)             stop("Length of indexes for plotting cannot be greater than 1")
-      if(ind         > P)             stop(paste0("Length of second index cannot be greater than ", P))
+      if(length(ind) > 1)              stop("Length of indexes for plotting cannot be greater than 1")
+      if(ind    > nrow(res$post.load)) stop(paste0("Length of second index cannot be greater than ", nrow(res$post.load
+                                                                                                          )))
     }
     if(x == "means") {
       acf(results$means[ind,], main="Means")

@@ -2,15 +2,13 @@
 ### Gibbs Sampler for Bayesian Factor Analysis (Shrinkage Case) ###
 ###################################################################
   
-# Preamble
-  source(paste(getwd(), "/IMIFA-GIT/FullConditionals_", method, ".R", sep=""))
-
 # Gibbs Sampler Function
-  gibbs.IFA    <- function(Q=NULL, data=NULL, n.iters=NULL,
-                           burnin=NULL, thinning=NULL, n.store=NULL,
-                           centering=NULL, scaling=NULL, print=NULL, 
-                           adapt=NULL, b0=0.1, b1=0.00005, prop=3/4,
-                           epsilon=ifelse(centering, 0.1, 0.01), ...) {
+  gibbs.IFA    <- function(Q, data, n.iters, N, P, 
+                           sigma.mu, psi.alpha, psi.beta, 
+                           burnin, thinning, n.store,
+                           centering, scaling, print, 
+                           phi.nu, delta.a1, delta.a2, 
+                           adapt, b0, b1, prop, epsilon, ...) {
         
   # Remove non-numeric columns & (optionally) Center/Scale the data
     data       <- data[sapply(data,is.numeric)]
@@ -34,17 +32,18 @@
     dimnames(load.store)[[3]] <- paste0("Iteration", 1:n.store)
     dimnames(psi.store)[[2]]  <- paste0("Iteration", 1:n.store)
     
-    mu         <- sim.mu.p()  
-    f          <- sim.f.p(Q)
-    phi        <- sim.p.p(Q)
-    delta      <- sim.d.p(Q)
+    mu         <- sim.mu.p(sigma.mu, P)  
+    f          <- sim.f.p(Q, N)
+    psi.inv    <- sim.pi.p(P, psi.alpha, psi.beta)
+    phi        <- sim.p.p(Q, P, phi.nu)
+    delta      <- sim.d.p(Q, delta.a1, delta.a2)
     tau        <- cumprod(delta)
     lmat       <- matrix(0, nr=P, nc=Q)
     for(j in 1:P) {
       D.load   <- phi[j,] * tau
       lmat[j,] <- sim.l.p(D.load, Q)
     }
-    psi.inv    <- sim.pi.p()
+    
     sum.data   <- colSums(data)
   
   # Iterate
@@ -59,11 +58,11 @@
       
       # Means
         sum.f        <- colSums(f)
-        mu           <- sim.mu(psi.inv, sum.data, sum.f, lmat)
+        mu           <- sim.mu(N, P, sigma.mu, psi.inv, sum.data, sum.f, lmat)
         
       # Scores
         c.data       <- sweep(data, 2, mu, FUN="-")
-        f            <- sim.scores(Q, lmat, psi.inv, c.data)
+        f            <- sim.scores(N, Q, lmat, psi.inv, c.data)
                         
       # Loadings
         FtF          <- crossprod(f)
@@ -75,18 +74,18 @@
         } 
       
       # Uniquenesses
-        psi.inv      <- sim.psi.inv(c.data, f, lmat)
+        psi.inv      <- sim.psi.inv(N, P, psi.alpha, psi.beta, c.data, f, lmat)
       
       # Local Shrinkage
         load.2       <- lmat * lmat
-        phi          <- sim.phi(Q, tau, load.2)
+        phi          <- sim.phi(Q, P, phi.nu, tau, load.2)
           
       # Global Shrinkage
         sum.term     <- diag(t(phi) %*% (lmat * lmat))
-        delta[1]     <- sim.delta1(Q, delta, tau, sum.term)
+        delta[1]     <- sim.delta1(Q, P, delta.a1, delta, tau, sum.term)
         tau          <- cumprod(delta)
         for(k in 2:Q) { 
-          delta[k]   <- sim.deltak(Q, k, delta, tau, sum.term)
+          delta[k]   <- sim.deltak(Q, P, k, delta.a2, delta, tau, sum.term)
           tau        <- cumprod(delta)      
         }
       
@@ -98,7 +97,7 @@
           colvec     <- lind >= prop
           numred     <- sum(colvec)
           
-          if(unif    <  prob) { # check whether to adapt or not
+          if(unif    <  prob) {        # check whether to adapt or not
             if(Q < P && numred == 0) { # simulate extra columns from priors
               Q      <- Q + 1
               f      <- cbind(f, rnorm(n=N, mean=0, sd=1))         
@@ -106,7 +105,7 @@
               delta  <- c(delta, rgamma(n=1, shape=delta.a2, rate=1))
               tau    <- cumprod(delta)
               lmat   <- cbind(lmat, rnorm(n=P, mean=0, sd=sqrt(1/phi[,Q] * 1/tau[Q])))
-            } else if(numred > 0) { # remove redundant columns
+            } else if(numred > 0) {    # remove redundant columns
               nonred <- which(colvec == 0)
               Q      <- max(Q - numred, 1)
               f      <- f[,nonred]
@@ -131,6 +130,5 @@
               f       = f.store, 
               load    = load.store, 
               psi     = psi.store,
-              n.store = n.store,
               Q.store = Q.store))
   }; gibbs.IFA    <- cmpfun(gibbs.IFA)

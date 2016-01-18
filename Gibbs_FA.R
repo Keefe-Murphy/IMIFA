@@ -2,13 +2,11 @@
 ### Gibbs Sampler for Bayesian Factor Analysis (Single Case) ###
 ################################################################
   
-# Preamble
-  source(paste(getwd(), "/IMIFA-GIT/FullConditionals_", method, ".R", sep=""))
-
 # Gibbs Sampler Function
-  gibbs.FA     <- function(Q=NULL, data=NULL, n.iters=NULL, 
-                           burnin=NULL, thinning=NULL, n.store=NULL,
-                           centering=NULL, scaling=NULL, print=NULL, ...) {
+  gibbs.FA     <- function(Q, data, n.iters, N, P, 
+                           sigma.mu, psi.alpha, psi.beta,
+                           burnin, thinning, n.store,
+                           centering, scaling, print, sigma.l, ...) {
         
   # Remove non-numeric columns & (optionally) Center/Scale the data
     data       <- data[sapply(data,is.numeric)]
@@ -31,10 +29,10 @@
     dimnames(load.store)[[3]] <- paste0("Iteration", 1:n.store)
     dimnames(psi.store)[[2]]  <- paste0("Iteration", 1:n.store)
       
-    mu         <- sim.mu.p()  
-    f          <- sim.f.p(Q)
-    lmat       <- sim.l.p(Q)
-    psi.inv    <- sim.pi.p()
+    mu         <- sim.mu.p(P, sigma.mu)  
+    f          <- sim.f.p(Q, N)
+    lmat       <- sim.l.p(Q, P, sigma.l)
+    psi.inv    <- sim.pi.p(P, psi.alpha, psi.beta)
     l.sigma    <- 1/sigma.l * diag(Q)
     sum.data   <- colSums(data)
   
@@ -50,11 +48,11 @@
       
       # Means
         sum.f       <- colSums(f)
-        mu          <- sim.mu(psi.inv, sum.data, sum.f, lmat)
+        mu          <- sim.mu(N, P, sigma.mu, psi.inv, sum.data, sum.f, lmat)
       
       # Scores
         c.data      <- sweep(data, 2, mu, FUN="-")
-        f           <- sim.scores(Q, lmat, psi.inv, c.data)
+        f           <- sim.scores(N, Q, lmat, psi.inv, c.data)
                 
       # Loadings
         FtF         <- crossprod(f)
@@ -65,7 +63,7 @@
         }
         
       # Uniquenesses
-        psi.inv     <- sim.psi.inv(c.data, f, lmat)
+        psi.inv     <- sim.psi.inv(N, P, psi.alpha, psi.beta, c.data, f, lmat)
       
       if(iter > burnin && iter %% thinning == 0) {
         new.iter    <- ceiling((iter - burnin)/thinning)
@@ -78,6 +76,5 @@
   return(list(mu      = mu.store,
               f       = f.store, 
               load    = load.store, 
-              psi     = psi.store,
-              n.store = n.store))
+              psi     = psi.store)
   }; gibbs.FA    <- cmpfun(gibbs.FA)
