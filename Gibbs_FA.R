@@ -3,24 +3,18 @@
 ################################################################
   
 # Preamble
-  source(paste(dataDirectory, "/IMIFA-GIT/FullConditionals_", method, ".R", sep=""))
+  source(paste(getwd(), "/IMIFA-GIT/FullConditionals_", method, ".R", sep=""))
 
 # Gibbs Sampler Function
-  gibbs.FA     <- function(data=NULL, n.iters=NULL, Q=NULL,
-                           burnin=n.iters/5 - 1, thinning=2, 
-                           centering=T, scaling=T, print=T, ...) {
-    
-  # Warning(s)
-    if(!is.element(centering, c(T, F)))  stop("Arg. must be TRUE or FALSE")
-    if(!is.element(scaling,   c(T, F)))  stop("Arg. must be TRUE or FALSE")
-    if(!is.element(print,     c(T, F)))  stop("Arg. must be TRUE or FALSE")
+  gibbs.FA     <- function(Q=NULL, data=NULL, n.iters=NULL, 
+                           burnin=NULL, thinning=NULL, n.store=NULL,
+                           centering=NULL, scaling=NULL, print=NULL, ...) {
         
   # Remove non-numeric columns & (optionally) Center/Scale the data
     data       <- data[sapply(data,is.numeric)]
     data       <- scale(data, center=centering, scale=scaling)    
   
   # Define & initialise variables
-    n.store    <- ceiling((n.iters - burnin)/thinning)
     mu.store   <- matrix(NA, nr=P, nc=n.store)
     f.store    <- array(NA, dim=c(N, Q, n.store))
     load.store <- array(NA, dim=c(P, Q, n.store))
@@ -47,7 +41,7 @@
   # Iterate
     for(iter in 2:n.iters) { 
       if(print) {
-        if(iter < burnin && iter %% ((burnin + 1)/10) == 0) {
+        if(iter <= burnin && iter %% ((burnin + 1)/10) == 0) {
           cat(paste0("Iteration: ", iter, "\n"))
         } else if (iter %% (n.iters/10) == 0) {
           cat(paste0("Iteration: ", iter, "\n"))

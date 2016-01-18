@@ -124,5 +124,3 @@ tune.sims     <- function(sims=NULL, burnin=1, thinning=1, Q=NULL, Q.meth=NULL, 
   }
   return(results)
 };tune.sims   <- cmpfun(tune.sims)
-
-source(paste(dataDirectory, "/IMIFA-GIT/PlottingFunctions.R", sep=""))
