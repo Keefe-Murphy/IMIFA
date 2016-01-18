@@ -9,17 +9,18 @@
   source(paste(getwd(), "/IMIFA-GIT/PackageSetup.R", sep=""))
     
 # Read in the data
-  data(wine); Lab <- as.factor(wine[,1]); wine <- wine[,-1]
-  #subjectmarks   <- read.csv(paste(getwd(), "/Data/", "SubjectMarks.csv", sep=""))
-  #cereal         <- read.csv(paste(getwd(), "/Data/", "Cereal.csv", sep=""))
+  data(wine)
+  Lab <- as.factor(wine[,1])
+  #subjects  <- read.csv(paste(getwd(), "/Data/", "SubjectMarks.csv", sep=""))
+  #cereal    <- read.csv(paste(getwd(), "/Data/", "Cereal.csv", sep=""))
 
 # Simulate data
-  #source(paste(getwd(), "/IMIFA-GIT/Simulate_Data.R", sep=""))
-  #save(data, mu.true, load.true, psi.true, file=paste(getwd(),"/Data/Simulated_Data.Rdata", sep=""))
+  SimData    <- sim.data()
+  #save(SimData, file=paste(getwd(),"/Data/Simulated_Data.Rdata", sep=""))
   load(file=paste(getwd(), "/Data/Simulated_Data.Rdata", sep=""), envir=.GlobalEnv)
 
 # Run the Gibbs Sampler
-  sim          <- imifa.gibbs(wine, n.iters=50, method="IFA")
+  sim <- imifa.gibbs(wine, n.iters=50, method="IFA")
 
 # Save / Load results
   save(sim, file=paste(getwd(), "/Simulations/", 
@@ -30,7 +31,7 @@
                   attr(sim, "Date"), ".Rdata", sep=""), envir=.GlobalEnv)
 
 # Convergence diagnostics (optional: additional 'burnin' & 'thinning' & user-defined Q)
-  res          <- tune.sims(sim)
+  res <- tune.sims(sim)
   
 # Posterior Summaries & Plots, etc.  
   plot.cum.var(res)

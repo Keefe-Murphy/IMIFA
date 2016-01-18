@@ -141,3 +141,4 @@ imifa.gibbs <- function(dat=NULL, n.iters=50000, method=c("IMIFA", "MIFA", "IFA"
 
 source(paste(getwd(), "/IMIFA-GIT/Diagnostics.R", sep=""))
 source(paste(getwd(), "/IMIFA-GIT/PlottingFunctions.R", sep=""))
+source(paste(getwd(), "/IMIFA-GIT/Simulate_Data.R", sep=""))
