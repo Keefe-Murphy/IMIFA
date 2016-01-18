@@ -4,18 +4,15 @@
   
 # Preamble
   source(paste(dataDirectory, "/IMIFA-GIT/FullConditionals_", method, ".R", sep=""))
-  Q.star       <- min(round(5 * log(P)), P)
-  sim          <- vector("list", length(Q.star))
 
 # Gibbs Sampler Function
-  gibbs.IFA    <- function(data=dat, n.iters=50000, Q=Q.star,
+  gibbs.IFA    <- function(data=NULL, n.iters=NULL, Q=NULL,
                            burnin=n.iters/5 - 1, thinning=2, 
                            centering=T, scaling=T, print=T, 
                            adapt=T, b0=0.1, b1=0.00005, prop=3/4,
                            epsilon=ifelse(centering, 0.1, 0.01), ...) {
     
   # Warning(s)
-    if(Q > P)     stop("Number of factors must be less than the number of variables")
     if(!is.element(centering, c(T, F)))  stop("Arg. must be TRUE or FALSE")
     if(!is.element(scaling,   c(T, F)))  stop("Arg. must be TRUE or FALSE")
     if(!is.element(print,     c(T, F)))  stop("Arg. must be TRUE or FALSE")
@@ -27,11 +24,22 @@
   
   # Define & initialise variables
     n.store    <- ceiling((n.iters - burnin)/thinning)
-    mu.store   <- matrix(0, nr=P, nc=n.store);    rownames(mu.store)   <- colnames(data) 
-    f.store    <- array(0, dim=c(N, Q, n.store)); colnames(f.store)    <- paste("Factor", 1:Q)
-    load.store <- array(0, dim=c(P, Q, n.store)); rownames(load.store) <- colnames(data); colnames(load.store) <- paste("Factor", 1:Q)
-    psi.store  <- matrix(0, nr=P, nc=n.store);    rownames(psi.store)  <- colnames(data)
-    Q.store    <- rep(0, n.store);                Q.store[1]           <- Q 
+    mu.store   <- matrix(0, nr=P, nc=n.store)
+    f.store    <- array(0, dim=c(N, Q, n.store))
+    load.store <- array(0, dim=c(P, Q, n.store))
+    psi.store  <- matrix(0, nr=P, nc=n.store)
+    Q.store    <- c(Q, rep(0, n.store - 1))
+    
+    dimnames(mu.store)[[1]]   <- colnames(data)
+    dimnames(f.store)[[1]]    <- rownames(data)
+    dimnames(f.store)[[2]]    <- paste0("Factor", 1:Q)
+    dimnames(load.store)[[1]] <- colnames(data)
+    dimnames(load.store)[[2]] <- paste0("Factor", 1:Q)
+    dimnames(psi.store)[[1]]  <- colnames(data)
+    dimnames(mu.store)[[2]]   <- paste0("Iteration", 1:n.store)
+    dimnames(f.store)[[3]]    <- paste0("Iteration", 1:n.store)
+    dimnames(load.store)[[3]] <- paste0("Iteration", 1:n.store)
+    dimnames(psi.store)[[2]]  <- paste0("Iteration", 1:n.store)
     
     mu         <- sim.mu.p()  
     f          <- sim.f.p(Q)

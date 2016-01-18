@@ -8,7 +8,7 @@ tune.sims     <- function(sims=NULL, burnin=1, thinning=1, Q=NULL, Q.meth=NULL, 
              envir=.GlobalEnv))   stop(paste0("Object ", match.call()$sims, " not found"))
   if(!missing(burnin))    burnin <- burnin + 1
   store       <- seq(from=burnin + 1, to=sims[[1]]$n.store, by=thinning)
-  method      <- attr(sim, "Method")
+  method      <- attr(sims, "Method")
   
   if(!missing(Q)) {
     if(Q > attr(sims, "Factors")) stop("Q cannot be greater than the number of factors in sim")

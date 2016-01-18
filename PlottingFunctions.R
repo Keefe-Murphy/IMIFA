@@ -48,6 +48,7 @@
                envir=.GlobalEnv)) stop(paste0("Object ", match.call()$results, " not found"))
     x    <- match.arg(x, c("means", "scores", "loadings", "uniquenesses"))
     if(!is.element(mat, c(T, F))) stop("Arg. must be TRUE or FALSE")
+    if(res$Q == 1) mat     <- F
     if(x == "scores" || x  == "loadings") {
       if(missing(ind)) ind <- c(1, 1)
       if(length(ind) > 2)         stop("Length of indexes for plotting cannot be greater than 2")
@@ -90,7 +91,7 @@
   }
 
 # Plot posteriors
-  plot.posterior  <- function(results=NULL, x=NULL, Labels=NULL, 
+  plot.posterior  <- function(results=NULL, x=NULL, Label=NULL, 
                              type=c("n", "p"), ind=NULL, ...) {
     if(missing(results))          stop("Results must be supplied")
     if(!exists(as.character(match.call()$results),
@@ -99,8 +100,10 @@
     type <- match.arg(type)
     if(x == "scores" || x  == "loadings") {
       if(missing(ind)) ind <- c(1, 2)
-      if(length(ind) > 2 ||
-         ind[1]   == ind[2])      stop("Only two columns can be plotted")
+      if(res$Q == 1) {
+        ind    <- 1
+      } else if(length(ind) > 2 ||
+        ind[1]  == ind[2])        stop("Only two columns can be plotted")
       if(max(ind)  > results$Q)   stop(paste0("Only the first ", res$Q, " columns can be plotted"))
     }
     
@@ -111,20 +114,35 @@
     }
     if(x == "scores") {
       plot.x  <- results$post.f
-      if(!missing(Labels)) {
-        if((length(Labels) != N) ||
-             !is.factor(Labels))   stop("Labels must be a factor of length N")
-      } else Labels <- 1
-      plot(plot.x[,ind[1]], plot.x[,ind[2]], type=type, main="Posterior Scores", 
-           xlab=paste0("Factor ", ind[1]), ylab=paste0("Factor ", ind[2]), col=as.numeric(Labels))
-      if(type == "n") text(plot.x[,ind[1]], plot.x[,ind[2]], 1:nrow(plot.x), 
-                           col=as.numeric(Labels), cex=0.5)
+      if(!missing(Label)) {
+        if((length(Label) != N) ||
+             !is.factor(Label))   stop("Labels must be a factor of length N")
+      } else {
+        Label <- 1
+        print("Should the data be labelled?")
+      }
+      if(res$Q != 1) {
+        plot(plot.x[,ind[1]], plot.x[,ind[2]], type=type, main="Posterior Scores", 
+             xlab=paste0("Factor ", ind[1]), ylab=paste0("Factor ", ind[2]), col=as.numeric(Label))
+        if(type == "n") text(plot.x[,ind[1]], plot.x[,ind[2]], 1:nrow(plot.x), 
+                             col=as.numeric(Label), cex=0.5)
+      } else {
+        plot(plot.x[,ind], type=type, main="Posterior Scores", 
+             xlab="Observation", ylab=paste0("Factor ", ind), col=as.numeric(Label))
+        if(type == "n") text(plot.x[,ind], col=as.numeric(Label), cex=0.5)
+      }
     }
     if(x == "loadings") {
       plot.x  <- results$post.load
-      plot(plot.x[,ind[1]], plot.x[,ind[2]], type=type, main="Posterior Loadings", 
-           xlab=paste0("Factor ", ind[1]), ylab=paste0("Factor ", ind[2]))
-      if(type == "n") text(plot.x[,ind[1]], plot.x[,ind[2]], rownames(plot.x), cex=0.5)
+      if(res$Q != 1) {
+        plot(plot.x[,ind[1]], plot.x[,ind[2]], type=type, main="Posterior Loadings", 
+             xlab=paste0("Factor ", ind[1]), ylab=paste0("Factor ", ind[2]))
+        if(type == "n") text(plot.x[,ind[1]], plot.x[,ind[2]], rownames(plot.x), cex=0.5)
+      } else {
+        plot(plot.x[,ind], type=type, main="Posterior Loadings",
+             xlab="Variable", ylab=paste0("Factor ", ind))
+        if(type == "n") text(plot.x[,ind], rownames(plot.x), cex=0.5)
+      }
     }
     if(x == "uniquenesses") {
       plot.x  <- results$post.psi

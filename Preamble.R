@@ -6,7 +6,7 @@ preamble    <- function(seed=21092015, rem.lib=F, rem.all=F, ...) {
   
   if(!is.element(rem.lib, c(T, F)))  stop("Arg. must be TRUE or FALSE")
   if(!is.element(rem.all, c(T, F)))  stop("Arg. must be TRUE or FALSE")
-  if(!exists("dataDirectory"))       assign(dataDirectory, getwd(), envir=.GlobalEnv)
+  if(!exists("dataDirectory"))       assign("dataDirectory", getwd(), envir=.GlobalEnv)
   set.seed(seed)
   assign("def.par", par(), envir=.GlobalEnv)
   packages  <- c("pgmm", "car", "MCMCpack", "compiler")
@@ -30,7 +30,7 @@ preamble    <- function(seed=21092015, rem.lib=F, rem.all=F, ...) {
 
 preamble()
 
-imifa.gibbs <- function(dat=NULL, method=c("IMIFA", "MIFA", "IFA", "FA"), 
+imifa.gibbs <- function(dat=NULL, n.iters=50000, method=c("IMIFA", "MIFA", "IFA", "FA"), 
                        factanal=F, Q.star=NULL, range.Q=NULL, Q.fac=NULL,
                        sigma.mu=NULL, sigma.l=NULL, psi.alpha=NULL, psi.beta=NULL,
                        phi.nu=NULL, delta.a1=NULL, delta.a2=NULL, profile=F, ...) {
@@ -51,13 +51,51 @@ imifa.gibbs <- function(dat=NULL, method=c("IMIFA", "MIFA", "IFA", "FA"),
   # Define full conditional & Gibbs Sampler functions for desired method
   source(paste(dataDirectory, "/IMIFA-GIT/Gibbs_", method, ".R", sep=""))
   
-  # Vanilla 'factanal' for comparison purposes
-  if(!missing(Q.fac)) factanal <- T
+  if(method == 'IFA') {
+    if(missing(Q.star)) {
+      Q.star       <- min(round(5 * log(P)), P)
+    } else if(Q.star > P)            stop("Number of factors must be less than the number of variables")
+    imifa          <- vector("list", length(Q.star))
+    imifa[[1]]     <- do.call(paste0("gibbs.", method),                          
+                              args=list(dat, n.iters, Q.star))
+  } else if(method == 'FA') {
+    if((length(range.Q)  == 1 && range.Q >= P) || 
+       (length(range.Q)   > 1 && any(range.Q) >= P))  
+                                     stop ("Number of factors must be less than the number of variables")
+    imifa          <- vector("list", length(range.Q))
+    if(length(range.Q)   == 1) {
+      imifa[[1]]   <- do.call(paste0("gibbs.", method), 
+                              args=list(dat, n.iters, Q=range.Q))
+    } else {
+      for(q in range.Q) { 
+        Q.ind      <- q - min(range.Q) + 1
+        imifa[[Q.ind]]   <- do.call(paste0("gibbs.", method),
+                                   args=list(dat, n.iters, Q=q))
+        cat(paste0(round(Q.ind/length(range.Q) * 100, 2), "% Complete"))
+      }
+    }
+  }  
+    
+  dat.name  <- as.character(match.call()$dat)
+  attr(imifa, "Date")    <- format(Sys.Date(), "%d-%b-%Y")
+  attr(imifa, "Factors") <- if(method == 'FA') range.Q else Q.star
+  attr(imifa, "Method")  <- method
+  attr(imifa, "Name")    <- paste0(toupper(substr(dat.name, 1, 1)),
+                                   substr(dat.name, 2, nchar(dat.name)))
+  attrs     <- attributes(imifa)
+      
+# Vanilla 'factanal' for comparison purposes
+  if(!missing(Q.fac)) factanal  <- T
   if(factanal) {
     if(missing(Q.fac)) assign("Q.fac", round(sqrt(P)))
-    if(!exists("Label")) stop("Should the data be labelled?")
-    fac    <- factanal(dat[,sapply(dat, is.numeric)], 
+    fac     <- factanal(dat[,sapply(dat, is.numeric)], 
                          factors=Q.fac, control=list(nstart=50))
-    return(list(fac=fac))
+    imifa   <- append(imifa, list(fac=fac))
+    attributes(imifa)    <- attrs
+    names(imifa)         <- c(paste0("IMIFA", 1:(length(imifa) - 1)), "fac")
+    return(imifa)
+  } else {
+    attributes(imifa)    <- attrs
+    return(imifa)
   }
 }

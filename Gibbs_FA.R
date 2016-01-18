@@ -4,13 +4,9 @@
   
 # Preamble
   source(paste(dataDirectory, "/IMIFA-GIT/FullConditionals_", method, ".R", sep=""))
-  if((length(range.Q) == 1 && range.Q >= P) || 
-     (length(range.Q) > 1 && any(range.Q) >= P))  
-      stop ("Number of factors must be less than the number of variables")
-  sim          <- vector("list", length(range.Q))
 
 # Gibbs Sampler Function
-  gibbs.FA     <- function(data=dat, n.iters=50000, Q=2,
+  gibbs.FA     <- function(data=NULL, n.iters=NULL, Q=NULL,
                            burnin=n.iters/5 - 1, thinning=2, 
                            centering=T, scaling=T, print=T, ...) {
     
@@ -25,11 +21,22 @@
   
   # Define & initialise variables
     n.store    <- ceiling((n.iters - burnin)/thinning)
-    mu.store   <- matrix(NA, nr=P, nc=n.store);    rownames(mu.store)   <- colnames(data) 
-    f.store    <- array(NA, dim=c(N, Q, n.store)); colnames(f.store)    <- paste("Factor", 1:Q)
-    load.store <- array(NA, dim=c(P, Q, n.store)); rownames(load.store) <- colnames(data); colnames(load.store) <- paste("Factor", 1:Q)
-    psi.store  <- matrix(NA, nr=P, nc=n.store);    rownames(psi.store)  <- colnames(data)
-    
+    mu.store   <- matrix(NA, nr=P, nc=n.store)
+    f.store    <- array(NA, dim=c(N, Q, n.store))
+    load.store <- array(NA, dim=c(P, Q, n.store))
+    psi.store  <- matrix(NA, nr=P, nc=n.store)
+  
+    dimnames(mu.store)[[1]]   <- colnames(data)
+    dimnames(f.store)[[1]]    <- rownames(data)
+    dimnames(f.store)[[2]]    <- paste0("Factor", 1:Q)
+    dimnames(load.store)[[1]] <- colnames(data)
+    dimnames(load.store)[[2]] <- paste0("Factor", 1:Q)
+    dimnames(psi.store)[[1]]  <- colnames(data)
+    dimnames(mu.store)[[2]]   <- paste0("Iteration", 1:n.store)
+    dimnames(f.store)[[3]]    <- paste0("Iteration", 1:n.store)
+    dimnames(load.store)[[3]] <- paste0("Iteration", 1:n.store)
+    dimnames(psi.store)[[2]]  <- paste0("Iteration", 1:n.store)
+      
     mu         <- sim.mu.p()  
     f          <- sim.f.p(Q)
     lmat       <- sim.l.p(Q)
