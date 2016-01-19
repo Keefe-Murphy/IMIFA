@@ -71,5 +71,5 @@
   return(list(mu      = mu.store,
               f       = f.store, 
               load    = load.store, 
-              psi     = psi.store)
+              psi     = psi.store))
   }; gibbs.FA    <- cmpfun(gibbs.FA)

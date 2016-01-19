@@ -21,7 +21,7 @@
   load(file=paste(getwd(), "/Data/Simulated_Data.Rdata", sep=""), envir=.GlobalEnv)
 
 # Run the Gibbs Sampler
-  sim <- imifa.gibbs(wine, n.iters=50, method="IFA")
+  sim <- imifa.gibbs(wine, method="IFA")
 
 # Save / Load results
   save(sim, file=paste(getwd(), "/Simulations/", 

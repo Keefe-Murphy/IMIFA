@@ -28,7 +28,7 @@ preamble    <- function(seed=21092015, rem.lib=F, rem.all=F, ...) {
 
 preamble()
 
-imifa.gibbs <- function(dat=NULL, n.iters=50000, method=c("IMIFA", "MIFA", "MFA", "IFA", "FA"), 
+imifa.gibbs <- function(dat=NULL, method=c("IMIFA", "MIFA", "MFA", "IFA", "FA"), n.iters=50000,
                         factanal=F, Q.star=NULL, range.Q=NULL, Q.fac=NULL, thinning=2,
                         burnin=n.iters/5 - 1, n.store=ceiling((n.iters - burnin)/thinning),
                         centering=T, scaling=T, print=T, adapt=T,
@@ -55,15 +55,16 @@ imifa.gibbs <- function(dat=NULL, n.iters=50000, method=c("IMIFA", "MIFA", "MFA"
   # Define full conditionals, hyperparamters & Gibbs Sampler function for desired method
   N         <- nrow(dat)
   P         <- ncol(dat)
-  if(missing("sigma.mu"))   sigma.mu  <- 0.5
-  if(missing("psi.alpha"))  psi.alpha <- 2
-  if(missing("psi.beta"))   psi.beta  <- 0.6
+  if(is.null(rownames(dat))) rownames(dat) <- c(1:N)
+  if(missing("sigma.mu"))    sigma.mu      <- 0.5
+  if(missing("psi.alpha"))   psi.alpha     <- 2
+  if(missing("psi.beta"))    psi.beta      <- 0.6
   if(method == "FA") {
-    if(missing("sigma.l"))  sigma.l   <- 0.5
+    if(missing("sigma.l"))   sigma.l       <- 0.5
   } else if(method == "IFA") {
-    if(missing("phi.nu"))   phi.nu    <- 3
-    if(missing("delta.a1")) delta.a1  <- 2.1
-    if(missing("delta.a2")) delta.a2  <- 12.1
+    if(missing("phi.nu"))    phi.nu        <- 3
+    if(missing("delta.a1"))  delta.a1      <- 2.1
+    if(missing("delta.a2"))  delta.a2      <- 12.1
   }
   source(paste(getwd(), "/IMIFA-GIT/FullConditionals_", method, ".R", sep=""), local=T)
   source(paste(getwd(), "/IMIFA-GIT/Gibbs_", method, ".R", sep=""), local=T)
@@ -92,7 +93,7 @@ imifa.gibbs <- function(dat=NULL, n.iters=50000, method=c("IMIFA", "MIFA", "MFA"
   } else if(method == 'FA') {
     if((length(range.Q)  == 1 && range.Q >= P) || 
        (length(range.Q)   > 1 && any(range.Q) >= P))  
-                                      stop ("Number of factors must be less than the number of variables")
+                                       stop ("Number of factors must be less than the number of variables")
     imifa          <- vector("list", length(range.Q))
     if(length(range.Q)   == 1) {
       start.time   <- proc.time()
@@ -104,7 +105,7 @@ imifa.gibbs <- function(dat=NULL, n.iters=50000, method=c("IMIFA", "MIFA", "MFA"
         start.time <- proc.time()
         imifa[[Q.ind]]   <- do.call(paste0("gibbs.", method),
                                    args=append(list(q), gibbs.arg))
-        cat(paste0(round(Q.ind/length(range.Q) * 100, 2), "% Complete"))
+        cat(paste0(round(Q.ind/length(range.Q) * 100, 2), "% Complete\n"))
       }
     }
   }

@@ -54,7 +54,7 @@ plot.IMIFA  <- function(results=NULL, plot.meth=NULL, var=NULL, Label=NULL,
     plot.x     <- results$cum.var
     prop.exp   <- plot.x[n.fac]
     if(n.fac    > 1) {
-       plot(plot.x, type="l", main="Scree Plot to Choose Q", xlab="# Factors", 
+       plot(plot.x, type="l", main=paste0("Cumulative Variance:\n", n.fac, " Factors"), xlab="# Factors", 
             ylab="% Variation Explained", xaxt="n", yaxt="n", ylim=c(0,1))
        axis(1, at=1:length(plot.x), labels=1:n.fac)
        axis(2, at=seq(0,1,0.1), labels=seq(0,100,10), cex.axis=0.8) 
@@ -65,6 +65,7 @@ plot.IMIFA  <- function(results=NULL, plot.meth=NULL, var=NULL, Label=NULL,
   }
   
   if(plot.meth == "posterior") {
+    if(!missing(ind)) heat   <- F
     if(var == "scores" || 
        var == "loadings") {
       if(missing(ind))   ind   <- c(1, 2)
@@ -104,16 +105,15 @@ plot.IMIFA  <- function(results=NULL, plot.meth=NULL, var=NULL, Label=NULL,
     }
     if(var == "loadings") {
       plot.x   <- results$post.load
-      if(!missing(ind)) heat   <- F
       if(heat) {
         par(mfrow=c(1, 1), mar=c(5.1, 7.1, 4.1, 2.1))
-        image(z=t(plot.x[,1:n.fac]), xlab="", ylab="", 
+        image(z=t(plot.x[n.var:1,1:n.fac]), xlab="", ylab="", 
               main="Posterior Loadings", xaxt="n", yaxt="n")
         axis(1, cex.axis=0.8, line=-0.5, tick=F, 
              at=if(n.fac != 1) seq(0, 1, 1/(n.fac - 1)) else 0, labels=1:n.fac)
         axis(2, cex.axis=0.5, line=-0.5, tick=F, las=1,
              at=seq(0, 1, 1/(nrow(plot.x) - 1)), 
-             labels=rownames(plot.x))
+             labels=rownames(plot.x)[n.var:1])
         box(lwd=2)
         mtext("Factors", side=1, line=2)
         if(n.fac != 1) abline(v=seq(1/(2*(n.fac - 1)), 
