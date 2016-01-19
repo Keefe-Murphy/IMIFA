@@ -5,15 +5,10 @@
 # Gibbs Sampler Function
   gibbs.IFA    <- function(Q, data, n.iters, N, P, 
                            sigma.mu, psi.alpha, psi.beta, 
-                           burnin, thinning, n.store,
-                           centering, scaling, print, 
+                           burnin, thinning, n.store, print, 
                            phi.nu, delta.a1, delta.a2, 
-                           adapt, b0, b1, prop, epsilon, ...) {
-        
-  # Remove non-numeric columns & (optionally) Center/Scale the data
-    data       <- data[sapply(data,is.numeric)]
-    data       <- scale(data, center=centering, scale=scaling)
-  
+                           adapt, b0, b1, prop, epsilon, ...) {    
+    
   # Define & initialise variables
     mu.store   <- matrix(0, nr=P, nc=n.store)
     f.store    <- array(0, dim=c(N, Q, n.store))

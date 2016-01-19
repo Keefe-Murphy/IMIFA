@@ -102,23 +102,25 @@ tune.sims     <- function(sims=NULL, burnin=1, thinning=1, Q=NULL, Q.meth=NULL, 
 
   post.mu     <- apply(mu, 1, mean)
   post.f      <- apply(f, c(1,2), mean)
-  post.load   <- apply(lmat, c(1,2), mean)
-  post.psi    <- apply(psi, 1, mean)
+  post.load   <- apply(lmat, c(1,2), mean) 
+  post.psi    <- apply(psi, 1, mean)       
         
   SS.load     <- colSums(post.load * post.load)
   communality <- sum(SS.load)
   prop.var    <- SS.load/nrow(post.load)
-  cum.var     <- cumsum(prop.var)
+  cum.var     <- cumsum(prop.var)          
   prop.exp    <- communality/nrow(post.load)
   prop.uni    <- 1 - prop.exp
-
+  
   results     <- list(means = mu, scores = f, loadings = lmat, uniquenesses = psi,
                       post.mu = post.mu, post.f = post.f, post.load = post.load, post.psi = post.psi,
                       store = store, SS.load = SS.load, communality = communality, 
                       prop.var = prop.var, cum.var = cum.var, 
                       prop.exp = prop.exp, prop.uni = prop.uni, Q = Q)
+  class(results)   <- "IMIFA"
   if(method   == "IFA") {
     results   <- unlist(list(results, res.bar), recursive=F)
+    class(results) <- "IMIFA"
   }
   return(results)
 };tune.sims   <- cmpfun(tune.sims)

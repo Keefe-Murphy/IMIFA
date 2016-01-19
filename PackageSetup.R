@@ -28,7 +28,7 @@ preamble    <- function(seed=21092015, rem.lib=F, rem.all=F, ...) {
 
 preamble()
 
-imifa.gibbs <- function(dat=NULL, n.iters=50000, method=c("IMIFA", "MIFA", "IFA", "FA"), 
+imifa.gibbs <- function(dat=NULL, n.iters=50000, method=c("IMIFA", "MIFA", "MFA", "IFA", "FA"), 
                         factanal=F, Q.star=NULL, range.Q=NULL, Q.fac=NULL, thinning=2,
                         burnin=n.iters/5 - 1, n.store=ceiling((n.iters - burnin)/thinning),
                         centering=T, scaling=T, print=T, adapt=T,
@@ -48,9 +48,13 @@ imifa.gibbs <- function(dat=NULL, n.iters=50000, method=c("IMIFA", "MIFA", "IFA"
   if(!is.element(print,     c(T, F))) stop("Arg. must be TRUE or FALSE")
   if(!is.element(profile,   c(T, F))) stop("Arg. must be TRUE or FALSE")
   
+  # Remove non-numeric columns & apply centering & scaling if necessary 
+  dat       <- dat[sapply(dat, is.numeric)]
+  dat       <- scale(dat, center=centering, scale=scaling)
+  
   # Define full conditionals, hyperparamters & Gibbs Sampler function for desired method
   N         <- nrow(dat)
-  P         <- sum(sapply(dat, is.numeric))
+  P         <- ncol(dat)
   if(missing("sigma.mu"))   sigma.mu  <- 0.5
   if(missing("psi.alpha"))  psi.alpha <- 2
   if(missing("psi.beta"))   psi.beta  <- 0.6
@@ -64,7 +68,7 @@ imifa.gibbs <- function(dat=NULL, n.iters=50000, method=c("IMIFA", "MIFA", "IFA"
   source(paste(getwd(), "/IMIFA-GIT/FullConditionals_", method, ".R", sep=""), local=T)
   source(paste(getwd(), "/IMIFA-GIT/Gibbs_", method, ".R", sep=""), local=T)
   gibbs.arg <- list(dat, n.iters, N, P, sigma.mu, psi.alpha, psi.beta, 
-                    burnin, thinning, n.store, centering, scaling, print)
+                    burnin, thinning, n.store, print)
   if(method == "IFA") {
     gibbs.arg <- append(gibbs.arg, list(phi.nu, delta.a1, delta.a2, adapt, 
                                         b0=0.1, b1=0.00005, prop=3/4, 
