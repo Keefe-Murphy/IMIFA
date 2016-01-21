@@ -70,8 +70,8 @@
         psi.store[,new.iter]   <- 1/psi.inv
       }  
     }
-  return(list(mu      = mu.store,
-              f       = f.store, 
-              load    = load.store, 
-              psi     = psi.store))
-  }; gibbs.FA    <- cmpfun(gibbs.FA)
+  return(list(mu     = mu.store,
+              f      = f.store, 
+              load   = load.store, 
+              psi    = psi.store))
+  }

@@ -10,7 +10,7 @@
     v.mu        <- U.mu %*% z.mu
     mu.mu       <- mu.omega %*% (diag(psi.inv) %*% (sum.data - lmat %*% sum.f))
       mu.mu + v.mu
-};  sim.mu      <- cmpfun(sim.mu)
+  }
 
 # Scores
   sim.scores    <- function(N, Q, lmat, psi.inv, c.data, ...) {
@@ -21,7 +21,7 @@
     v.f         <- solve(U.f, z.f)
     mu.f        <- tcrossprod(f.omega.b, c.data)
       t(mu.f + v.f)
-};  sim.scores  <- cmpfun(sim.scores)
+  }
 
 # Loadings
   sim.load      <- function(l.sigma, Q, c.data.j, f, psi.inv.j, FtF, ...) {
@@ -31,7 +31,7 @@
     v.load      <- backsolve(U.load, z.load)
     mu.load     <- psi.inv.j * chol2inv(U.load) %*% crossprod(f, c.data.j)
       t(mu.load + v.load)
-};  sim.load    <- cmpfun(sim.load)
+  }
 
 # Uniquenesses
   sim.psi.inv   <- function(N, P, psi.alpha, psi.beta, c.data, f, lmat, ...) { 
@@ -39,7 +39,7 @@
     rate.t      <- colSums(rate.t * rate.t)
       rgamma(P, shape=(N + psi.alpha)/2, 
                 rate=(rate.t + psi.beta)/2) 
-};  sim.psi.inv <- cmpfun(sim.psi.inv)
+  }
 
 # Priors
   # Means
@@ -47,21 +47,21 @@
       U.mu      <- sqrt(1/sigma.mu * diag(P))
       z.mu      <- rnorm(P, 0, 1)
         U.mu %*% z.mu
-    }; sim.mu.p <- cmpfun(sim.mu.p)
+    }
   
   # Scores
     sim.f.p     <- function(Q, N, ...) {
         matrix(rnorm(N * Q, 0, 1), nr=N, ncol=Q)
-    }; sim.f.p  <- cmpfun(sim.f.p)
+    }
 
   # Loadings
     sim.l.p     <- function(Q, P, sigma.l, ...) {
       U.l       <- sqrt(1/sigma.l * diag(Q))
       z.l       <- matrix(rnorm(P * Q, 0, 1), nr=Q, ncol=P)
         t(U.l %*% z.l)
-    }; sim.l.p  <- cmpfun(sim.l.p)
+    }
 
   # Uniquenesses
     sim.pi.p    <- function(P, psi.alpha, psi.beta, ...) {
         rgamma(n=P, shape=psi.alpha/2, rate=psi.beta/2) 
-    }; sim.pi.p <- cmpfun(sim.pi.p)
+    }

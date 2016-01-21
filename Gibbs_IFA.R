@@ -127,4 +127,4 @@
               load    = load.store, 
               psi     = psi.store,
               Q.store = Q.store))
-  }; gibbs.IFA    <- cmpfun(gibbs.IFA)
+  }

@@ -6,30 +6,29 @@
   if(getwd() != "/home/kmurphy") {
     setwd("C:/Users/Windows/Documents/Claire IMIFA")
   }
-  source(paste(getwd(), "/IMIFA-GIT/PackageSetup.R", sep=""))
+  source(paste0(getwd(), "/IMIFA-GIT/PackageSetup.R", sep=""))
     
 # Read in the data
-  data(wine)
-  wine[,1]   <- as.factor(wine[,1])
+  load(file=paste0(getwd(), "/Data/Wine.Rdata", sep=""), envir=.GlobalEnv)
   Lab        <- wine[,1]
-  #subjects  <- read.csv(paste(getwd(), "/Data/", "SubjectMarks.csv", sep=""))
-  #cereal    <- read.csv(paste(getwd(), "/Data/", "Cereal.csv", sep=""))
+  #subjects  <- read.csv(paste0(getwd(), "/Data/", "SubjectMarks.csv", sep=""))
+  #cereal    <- read.csv(paste0(getwd(), "/Data/", "Cereal.csv", sep=""))
 
 # Simulate data
   SimData    <- sim.imifa()
-  #save(SimData, file=paste(getwd(),"/Data/Simulated_Data.Rdata", sep=""))
-  load(file=paste(getwd(), "/Data/Simulated_Data.Rdata", sep=""), envir=.GlobalEnv)
+  #save(SimData, file=paste0(getwd(),"/Data/Simulated_Data.Rdata", sep=""))
+  load(file=paste0(getwd(), "/Data/Simulated_Data.Rdata", sep=""), envir=.GlobalEnv)
 
 # Run the Gibbs Sampler
   sim <- imifa.gibbs(wine, method="IFA")
 
 # Save / Load results
-  save(sim, file=paste(getwd(), "/Simulations/", 
-                       attr(sim, "Name"), "__Simulations_", attr(sim, "Method"), "_", 
-                       attr(sim, "Date"), ".Rdata", sep=""))
-  load(file=paste(getwd(), "/Simulations/", 
-                  attr(sim, "Name"), "__Simulations_", attr(sim, "Method"), "_", 
-                  attr(sim, "Date"), ".Rdata", sep=""), envir=.GlobalEnv)
+  save(sim, file=paste0(getwd(), "/Simulations/", 
+                        attr(sim, "Name"), "__Simulations_", attr(sim, "Method"), "_", 
+                        attr(sim, "Date"), ".Rdata", sep=""))
+  load(file=paste0(getwd(), "/Simulations/", 
+                   attr(sim, "Name"), "__Simulations_", attr(sim, "Method"), "_", 
+                   attr(sim, "Date"), ".Rdata", sep=""), envir=.GlobalEnv)
 
 # Convergence diagnostics (optional: additional 'burnin' & 'thinning' & user-defined Q)
   res <- tune.sims(sim)

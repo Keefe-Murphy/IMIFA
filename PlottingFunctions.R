@@ -158,28 +158,28 @@ plot.IMIFA  <- function(results=NULL, plot.meth=NULL, var=NULL, Label=NULL,
       plot.x   <- results$means
       if(mat) {
         matplot(t(plot.x[,]), type="l", main="Trace Plot:\nMeans", ylab="Means", xlab="Iteration")
-      } else scatterplot(x=iter, y=plot.x[ind,], ylab="Mean", xlab="Iteration", 
+      } else plot(x=iter, y=plot.x[ind,], type="l", ylab="Mean", xlab="Iteration", 
                          main=paste0("Trace Plot:\nMean of ", rownames(plot.x)[ind]))
     }
     if(var == "scores") {
       plot.x   <- results$scores
       if(mat) {
         matplot(t(plot.x[ind[1],,]), type="l", main="Trace Plot:\nScores", ylab="Scores", xlab="Iteration")
-      } else scatterplot(x=iter, y=plot.x[ind[1],ind[2],], ylab="Scores", xlab="Iteration",
+      } else plot(x=iter, y=plot.x[ind[1],ind[2],], type="l", ylab="Scores", xlab="Iteration",
                          main=paste0("Trace Plot:\nScores - Observation ", ind[1], ", Factor", ind[2]))
     }
     if(var == "loadings") {
       plot.x   <- results$loadings
       if(mat) {
         matplot(t(plot.x[ind[1],,]), type="l", main="Trace Plot:\nLoadings", ylab="Loadings", xlab="Iteration")
-      } else scatterplot(x=iter, y=plot.x[ind[1],ind[2],], ylab="Loadings", xlab="Iteration",
+      } else plot(x=iter, y=plot.x[ind[1],ind[2],], type="l", ylab="Loadings", xlab="Iteration",
                          main=paste0("Trace Plot:\nLoadings - Variable ", ind[1], ", Factor", ind[2]))
     }
     if(var == "uniquenesses") {
       plot.x   <- results$uniquenesses
       if(mat) {
         matplot(t(plot.x[,]), type="l", main="Trace Plot\nUniquenesses", ylab="Uniquenesses", xlab="Iteration")
-      } else scatterplot(x=iter, y=plot.x[ind,], ylab="Uniquenesses", xlab="Iteration",
+      } else plot(x=iter, y=plot.x[ind,], ylab="Uniquenesses", type="l", xlab="Iteration",
                          main=paste0("Trace Plot:\nUniquenesses of ", rownames(plot.x)[ind]))
     }
   }

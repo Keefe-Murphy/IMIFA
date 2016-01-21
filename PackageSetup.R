@@ -2,31 +2,13 @@
 ### Set-up for Keefe Murphy's IMIFA R Package ###
 #################################################
 
-preamble    <- function(seed=21092015, rem.lib=F, rem.all=F, ...) {
-  
-  if(!is.element(rem.lib, c(T, F)))   stop("Arg. must be TRUE or FALSE")
-  if(!is.element(rem.all, c(T, F)))   stop("Arg. must be TRUE or FALSE")
-  set.seed(seed)
-  packages  <- c("pgmm", "car", "MCMCpack", "compiler")
-  if(length(setdiff(packages, rownames(installed.packages()))) > 0) {
-    invisible(install.packages(setdiff(packages, rownames(installed.packages()))))
-  }
-  if(length(setdiff(packages, (.packages()))) > 0) {
-    invisible(lapply(setdiff(packages, (.packages())), library, ch=T))
-  }
-  
-# WARNING: Remove loaded libraries
-  if(rem.lib) {
-    pkgs    <- names(sessionInfo()$otherPkgs)
-    pkgs    <- paste('package:', pkgs, sep = "")
-    invisible(lapply(pkgs, detach, ch = T, unload = T, force= T))
-  }
-
-# WARNING: Remove everything
-  if(rem.all) rm(list = ls(all = TRUE))
+packages  <- c("MCMCpack")
+if(length(setdiff(packages, rownames(installed.packages()))) > 0) {
+  invisible(install.packages(setdiff(packages, rownames(installed.packages()))))
 }
-
-preamble()
+if(length(setdiff(packages, (.packages()))) > 0) {
+  invisible(lapply(setdiff(packages, (.packages())), library, ch=T))
+}
 
 imifa.gibbs <- function(dat=NULL, method=c("IMIFA", "MIFA", "MFA", "IFA", "FA"), n.iters=50000,
                         factanal=F, Q.star=NULL, range.Q=NULL, Q.fac=NULL, thinning=2,
