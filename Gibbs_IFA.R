@@ -27,6 +27,7 @@
     dimnames(load.store)[[3]] <- paste0("Iteration", 1:n.store)
     dimnames(psi.store)[[2]]  <- paste0("Iteration", 1:n.store)
     
+    sigma.mu   <- 1/sigma.mu
     mu         <- sim.mu.p(sigma.mu, P)  
     f          <- sim.f.p(Q, N)
     psi.inv    <- sim.pi.p(P, psi.alpha, psi.beta)
@@ -76,7 +77,7 @@
         phi          <- sim.phi(Q, P, phi.nu, tau, load.2)
           
       # Global Shrinkage
-        sum.term     <- diag(t(phi) %*% (lmat * lmat))
+        sum.term     <- diag(crossprod(phi, load.2))
         delta[1]     <- sim.delta1(Q, P, delta.a1, delta, tau, sum.term)
         tau          <- cumprod(delta)
         for(k in 2:Q) { 

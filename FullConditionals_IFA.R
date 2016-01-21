@@ -4,11 +4,11 @@
 
 # Means
   sim.mu        <- function(N, P, sigma.mu, psi.inv, sum.data, sum.f, lmat, ...) {
-    mu.omega    <- diag(1/(1/sigma.mu + N * psi.inv))
-    U.mu        <- chol(mu.omega)
+    mu.omega    <- diag(1/(sigma.mu + N * psi.inv))
+    U.mu        <- sqrt(mu.omega)
     z.mu        <- rnorm(P, 0, 1)
-    v.mu        <- crossprod(U.mu, z.mu)
-    mu.mu       <- crossprod(crossprod(mu.omega, diag(psi.inv)), sum.data - lmat %*% sum.f)
+    v.mu        <- U.mu %*% z.mu
+    mu.mu       <- mu.omega %*% (diag(psi.inv) %*% (sum.data - lmat %*% sum.f))
       mu.mu + v.mu
 };  sim.mu      <- cmpfun(sim.mu)
 
@@ -16,9 +16,9 @@
   sim.scores    <- function(N, Q, lmat, psi.inv, c.data, ...) {
     f.omega.a   <- diag(Q) + crossprod(lmat, diag(psi.inv)) %*% lmat
     U.f         <- chol(f.omega.a)
-    f.omega.b   <- tcrossprod(chol2inv(U.f), lmat) %*% diag(psi.inv)
-    z.f         <- mvrnorm(n=N, mu=rep(0, Q), Sigma=diag(Q))
-    v.f         <- solve(U.f, t(z.f))
+    f.omega.b   <- chol2inv(U.f) %*% crossprod(lmat, diag(psi.inv))
+    z.f         <- matrix(rnorm(Q * N, 0, 1), nr=Q, ncol=N)
+    v.f         <- solve(U.f, z.f)
     mu.f        <- tcrossprod(f.omega.b, c.data)
       t(mu.f + v.f)
 };  sim.scores  <- cmpfun(sim.scores)
@@ -29,7 +29,7 @@
     U.load      <- chol(l.omega)
     z.load      <- rnorm(Q, 0, 1)
     v.load      <- backsolve(U.load, z.load)
-    mu.load     <- psi.inv.j * tcrossprod(chol2inv(U.load), f) %*% c.data.j
+    mu.load     <- psi.inv.j * chol2inv(U.load) %*% crossprod(f, c.data.j)
       t(mu.load + v.load)
 };  sim.load    <- cmpfun(sim.load)
 
@@ -51,21 +51,20 @@
 # Global Shrinkage
   sim.delta1    <- function(Q, P, delta.a1, delta, tau, sum.term, ...) {
     rgamma(1, shape=delta.a1 + (P * Q)/2, 
-              rate=1 + 0.5 * (1/delta[1]) * sum(tau %*% sum.term))
+              rate=1 + 0.5/delta[1] * tau %*% sum.term)
 };  sim.delta1  <- cmpfun(sim.delta1)
-  
+
   sim.deltak    <- function(Q, P, k, delta.a2, delta, tau, sum.term) {
     rgamma(1, shape=delta.a2 + P/2 * (Q - k + 1), 
-              rate=1 + 0.5 * (1/delta[k]) * sum(tau[k:Q] %*% sum.term[k:Q]))
+              rate=1 + 0.5/delta[k] * tau[k:Q] %*% sum.term[k:Q])
 };  sim.deltak  <- cmpfun(sim.deltak)
 
 # Priors
   # Means
     sim.mu.p    <- function(sigma.mu, P, ...) {
-      mu.omega  <- sigma.mu * diag(P)
-      U.mu      <- sqrt(mu.omega)
+      U.mu      <- sqrt(1/sigma.mu * diag(P))
       z.mu      <- rnorm(P, 0, 1)
-        as.vector(crossprod(U.mu, z.mu))
+        U.mu %*% z.mu
     }; sim.mu.p <- cmpfun(sim.mu.p)
     
   # Scores
@@ -75,10 +74,9 @@
     
   # Loadings
     sim.l.p     <- function(D.load, Q, ...) {
-      l.omega   <- diag(1/D.load)
-      U.l       <- sqrt(l.omega)
+      U.l       <- sqrt(diag(1/D.load))
       z.l       <- rnorm(Q, 0, 1)
-        crossprod(U.l, z.l)
+        U.l %*% z.l
     }; sim.l.p  <- cmpfun(sim.l.p)
 
   # Uniquenesses
@@ -93,7 +91,7 @@
 
   # Global Shrinkage
     sim.d.p     <- function(Q, delta.a1, delta.a2, ...) {
-        delta1  <- rgamma(n=1, shape=delta.a1, rate=1)
+        delta1  <- rgamma(n=1,     shape=delta.a1, rate=1)
         deltak  <- rgamma(n=Q - 1, shape=delta.a2, rate=1)
           c(delta1, deltak)
     }; sim.d.p  <- cmpfun(sim.d.p)

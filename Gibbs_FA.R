@@ -24,11 +24,13 @@
     dimnames(load.store)[[3]] <- paste0("Iteration", 1:n.store)
     dimnames(psi.store)[[2]]  <- paste0("Iteration", 1:n.store)
       
+    sigma.mu   <- 1/sigma.mu
+    sigma.l    <- 1/sigma.l
     mu         <- sim.mu.p(P, sigma.mu)  
     f          <- sim.f.p(Q, N)
     lmat       <- sim.l.p(Q, P, sigma.l)
     psi.inv    <- sim.pi.p(P, psi.alpha, psi.beta)
-    l.sigma    <- 1/sigma.l * diag(Q)
+    l.sigma    <- sigma.l * diag(Q)
     sum.data   <- colSums(data)
   
   # Iterate

@@ -2,29 +2,44 @@
 ### Simulate Data (Single & Shrinkage Case) ###
 ###############################################
 
-sim.imifa      <- function(P=25, Q=2, N=1500,
-                          mean.mu=1, mean.load=0, shape.psi=1, rate.psi=0.3) {
-   # N.old    <- N
-   # G        <- 3
-   # rand     <- sample(1:(N.old - 1), G, replace=F)
-   # N.grp    <- round(rand/sum(rand) * N.old); N <- sum(N.grp)
-   # i in 1:N.grp[1]
-   # i in (N.grp[1] + 1):(N.grp[1] + N.grp[2])
-   # i in (N.grp[1] + N.grp[2] + 1):N
+sim.imifa     <- function(N=1500, P=25, Q=2) {
+   
+  # N.old     <- N
+  # G         <- 3
+  # rand      <- sample(1:(N.old - 1), G, replace=F)
+  # N.grp     <- round(rand/sum(rand) * N.old); N <- sum(N.grp)
+  # i in 1:N.grp[1]
+  # i in (N.grp[1] + 1):(N.grp[1] + N.grp[2])
+  # i in (N.grp[1] + N.grp[2] + 1):N
   
     SimData   <- matrix(0, nr=N, nc=P)
   
   # Simulate true parameter values
-    mu.true   <- mvrnorm(mu=rep(mean.mu, P), Sigma=diag(P))
-    load.true <- mvrnorm(n=P, mu=rep(mean.load, Q), Sigma=diag(Q))        
-    psi.true  <- 1/rgamma(n=P, shape=shape.psi, rate=rate.psi)                            
+    U.mu      <- sqrt(Q * diag(P))
+    z.mu      <- rnorm(P, 0, 1)
+    v.mu      <- U.mu %*% z.mu
+    mu.mu     <- sample(-Q:Q, size=P, replace=T)
+    mu.true   <- as.vector(mu.mu + v.mu)
+    
+    U.load    <- sqrt(Q * diag(Q))
+    z.load    <- matrix(rnorm(P * Q, 0, 1), nr=Q, ncol=P)
+    v.load    <- t(U.load %*% z.load)
+    mu.load   <- sample(-Q:Q, size=Q, replace=T)
+    load.true <- mu.load + v.load
+    
+    psi.true  <- 1/rgamma(n=P, shape=2, rate=0.3)                            
+    
     names(mu.true)      <- c(1:P)
     colnames(load.true) <- paste("Factor", 1:Q)
     rownames(load.true) <- c(1:P)
     names(psi.true)     <- c(1:P)
   
   # Simulate data
-    SimData   <- mvrnorm(n=N, mu=mu.true, Sigma=tcrossprod(load.true, load.true) + diag(psi.true))
+    omega     <- tcrossprod(load.true, load.true) + diag(psi.true)
+    U         <- chol(omega)
+    z         <- matrix(rnorm(P * N, 0, 1), nr=P, ncol=N)
+    v         <- U %*% z
+    SimData   <- t(mu.true + v)
   
   # Post-process data
     SimData   <- SimData[sample(1:N, N, replace=F),]

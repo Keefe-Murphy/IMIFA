@@ -4,11 +4,11 @@
                          
 # Means
   sim.mu        <- function(N, P, sigma.mu, psi.inv, sum.data, sum.f, lmat, ...) {
-    mu.omega    <- diag(1/(1/sigma.mu + N * psi.inv))
-    U.mu        <- chol(mu.omega)
+    mu.omega    <- diag(1/(sigma.mu + N * psi.inv))
+    U.mu        <- sqrt(mu.omega)
     z.mu        <- rnorm(P, 0, 1)
-    v.mu        <- crossprod(U.mu, z.mu)
-    mu.mu       <- crossprod(crossprod(mu.omega, diag(psi.inv)), sum.data - lmat %*% sum.f)
+    v.mu        <- U.mu %*% z.mu
+    mu.mu       <- mu.omega %*% (diag(psi.inv) %*% (sum.data - lmat %*% sum.f))
       mu.mu + v.mu
 };  sim.mu      <- cmpfun(sim.mu)
 
@@ -16,9 +16,9 @@
   sim.scores    <- function(N, Q, lmat, psi.inv, c.data, ...) {
     f.omega.a   <- diag(Q) + crossprod(lmat, diag(psi.inv)) %*% lmat
     U.f         <- chol(f.omega.a)
-    f.omega.b   <- tcrossprod(chol2inv(U.f), lmat) %*% diag(psi.inv)
-    z.f         <- mvrnorm(n=N, mu=rep(0, Q), Sigma=diag(Q))
-    v.f         <- solve(U.f, t(z.f))
+    f.omega.b   <- chol2inv(U.f) %*% crossprod(lmat, diag(psi.inv))
+    z.f         <- matrix(rnorm(Q * N, 0, 1), nr=Q, ncol=N)
+    v.f         <- solve(U.f, z.f)
     mu.f        <- tcrossprod(f.omega.b, c.data)
       t(mu.f + v.f)
 };  sim.scores  <- cmpfun(sim.scores)
@@ -29,7 +29,7 @@
     U.load      <- chol(l.omega)
     z.load      <- rnorm(Q, 0, 1)
     v.load      <- backsolve(U.load, z.load)
-    mu.load     <- psi.inv.j * tcrossprod(chol2inv(U.load), f) %*% c.data.j
+    mu.load     <- psi.inv.j * chol2inv(U.load) %*% crossprod(f, c.data.j)
       t(mu.load + v.load)
 };  sim.load    <- cmpfun(sim.load)
 
@@ -44,10 +44,9 @@
 # Priors
   # Means
     sim.mu.p    <- function(P, sigma.mu, ...) {
-      mu.omega  <- sigma.mu * diag(P)
-      U.mu      <- sqrt(mu.omega)
+      U.mu      <- sqrt(1/sigma.mu * diag(P))
       z.mu      <- rnorm(P, 0, 1)
-        as.vector(crossprod(U.mu, z.mu))
+        U.mu %*% z.mu
     }; sim.mu.p <- cmpfun(sim.mu.p)
   
   # Scores
@@ -57,10 +56,9 @@
 
   # Loadings
     sim.l.p     <- function(Q, P, sigma.l, ...) {
-      l.omega   <- sigma.l * diag(Q)
-      U.l       <- sqrt(l.omega)
+      U.l       <- sqrt(1/sigma.l * diag(Q))
       z.l       <- matrix(rnorm(P * Q, 0, 1), nr=Q, ncol=P)
-        t(crossprod(U.l, z.l))
+        t(U.l %*% z.l)
     }; sim.l.p  <- cmpfun(sim.l.p)
 
   # Uniquenesses
