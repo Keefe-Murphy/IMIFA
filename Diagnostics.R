@@ -123,4 +123,4 @@ tune.sims     <- function(sims=NULL, burnin=1, thinning=1, Q=NULL, Q.meth=NULL, 
     class(results) <- "IMIFA"
   }
   return(results)
-};tune.sims   <- cmpfun(tune.sims)
+}

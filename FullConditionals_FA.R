@@ -4,11 +4,11 @@
                          
 # Means
   sim.mu        <- function(N, P, sigma.mu, psi.inv, sum.data, sum.f, lmat, ...) {
-    mu.omega    <- diag(1/(sigma.mu + N * psi.inv))
+    mu.omega    <- 1/(sigma.mu + N * psi.inv)
     U.mu        <- sqrt(mu.omega)
     z.mu        <- rnorm(P, 0, 1)
-    v.mu        <- U.mu %*% z.mu
-    mu.mu       <- mu.omega %*% (diag(psi.inv) %*% (sum.data - lmat %*% sum.f))
+    v.mu        <- U.mu * z.mu
+    mu.mu       <- mu.omega * (psi.inv * (sum.data - lmat %*% sum.f))
       mu.mu + v.mu
   }
 
@@ -44,7 +44,7 @@
 # Priors
   # Means
     sim.mu.p    <- function(P, sigma.mu, ...) {
-      U.mu      <- sqrt(1/sigma.mu * diag(P))
+      U.mu      <- sqrt(1/sigma.mu) * diag(P)
       z.mu      <- rnorm(P, 0, 1)
         U.mu %*% z.mu
     }
@@ -56,7 +56,7 @@
 
   # Loadings
     sim.l.p     <- function(Q, P, sigma.l, ...) {
-      U.l       <- sqrt(1/sigma.l * diag(Q))
+      U.l       <- sqrt(1/sigma.l) * diag(Q)
       z.l       <- matrix(rnorm(P * Q, 0, 1), nr=Q, ncol=P)
         t(U.l %*% z.l)
     }
