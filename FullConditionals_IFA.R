@@ -30,7 +30,7 @@
     z.load      <- rnorm(Q, 0, 1)
     v.load      <- backsolve(U.load, z.load)
     mu.load     <- psi.inv.j * chol2inv(U.load) %*% crossprod(f, c.data.j)
-      t(mu.load + v.load)
+      mu.load + v.load
   }
 
 # Uniquenesses

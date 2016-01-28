@@ -30,7 +30,7 @@
     z.load      <- rnorm(Q, 0, 1)
     v.load      <- backsolve(U.load, z.load)
     mu.load     <- psi.inv.j * chol2inv(U.load) %*% crossprod(f, c.data.j)
-      t(mu.load + v.load)
+      mu.load + v.load
   }
 
 # Uniquenesses
@@ -57,8 +57,8 @@
   # Loadings
     sim.l.p     <- function(Q, P, sigma.l, ...) {
       U.l       <- sqrt(1/sigma.l) * diag(Q)
-      z.l       <- matrix(rnorm(P * Q, 0, 1), nr=Q, ncol=P)
-        t(U.l %*% z.l)
+      z.l       <- matrix(rnorm(P * Q, 0, 1), nr=P, ncol=Q)
+        z.l %*% U.l
     }
 
   # Uniquenesses
