@@ -6,6 +6,7 @@ tune.sims     <- function(sims=NULL, burnin=1, thinning=1, Q=NULL, Q.meth=NULL, 
   if(missing(sims))             stop("Simulations must be supplied")
   if(!exists(as.character(match.call()$sims),
              envir=.GlobalEnv)) stop(paste0("Object ", match.call()$sims, " not found"))
+  if(class(sims) != "IMIFA")    stop(paste0("Simulations object of class 'IMIFA' must be supplied"))
   if(!missing(burnin))    burnin <- burnin + 1
   store       <- seq(from=burnin + 1, to=attr(sims, "Store"), by=thinning)
   method      <- attr(sims, "Method")
@@ -117,10 +118,9 @@ tune.sims     <- function(sims=NULL, burnin=1, thinning=1, Q=NULL, Q.meth=NULL, 
                       store = store, SS.load = SS.load, communality = communality, 
                       prop.var = prop.var, cum.var = cum.var, 
                       prop.exp = prop.exp, prop.uni = prop.uni, Q = Q)
-  class(results)   <- "IMIFA"
   if(method   == "IFA") {
     results   <- unlist(list(results, res.bar), recursive=F)
-    class(results) <- "IMIFA"
   }
+  class(results)  <- "IMIFA"
   return(results)
 }

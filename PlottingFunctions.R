@@ -8,6 +8,7 @@ plot.IMIFA  <- function(results=NULL, plot.meth=NULL, var=NULL, Label=NULL,
   if(missing(results))                 stop("Results must be supplied")
   if(!exists(as.character(match.call()$results),
              envir=.GlobalEnv))        stop(paste0("Object ", match.call()$results, " not found"))
+  if(class(results) != "IMIFA")        stop(paste0("Results object of class 'IMIFA' must be supplied"))
   if(missing(n.fac)) n.fac <- results$Q
   if(n.fac   > results$Q)              stop("Cannot plot this many factors")
   n.var     <- nrow(results$post.load)

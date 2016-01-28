@@ -108,22 +108,17 @@ imifa.gibbs <- function(dat=NULL, method=c("IMIFA", "MIFA", "MFA", "IFA", "FA"),
   attr(imifa, "Store")   <- n.store
   attr(imifa, "Time")    <- list(Total = tot.time, Average = avg.time) 
   if(print)    print(attr(imifa, "Time"))  
-  attrs     <- attributes(imifa)
       
 # Vanilla 'factanal' for comparison purposes
   if(!missing(Q.fac)) factanal  <- T
   if(factanal) {
     if(missing(Q.fac)) Q.fac    <- round(sqrt(P))
-    fac     <- factanal(dat[,sapply(dat, is.numeric)], 
-                         factors=Q.fac, control=list(nstart=50))
+    fac     <- factanal(dat, factors=Q.fac, control=list(nstart=50))
     imifa   <- append(imifa, list(fac=fac))
-    attributes(imifa)    <- attrs
     names(imifa)         <- c(paste0("IMIFA", 1:(length(imifa) - 1)), "fac")
-    return(imifa)
-  } else {
-    attributes(imifa)    <- attrs
-    return(imifa)
-  }
+  } 
+  class(imifa)           <- "IMIFA"
+  return(imifa)
 }
 
 source(paste(getwd(), "/IMIFA-GIT/Diagnostics.R", sep=""))
