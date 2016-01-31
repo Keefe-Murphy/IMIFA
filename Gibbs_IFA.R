@@ -123,8 +123,8 @@
       }
     }
   return(list(mu      = mu.store,
-              f       = f.store, 
-              load    = load.store, 
+              f       = as.simple_sparse_array(f.store), 
+              load    = as.simple_sparse_array(load.store), 
               psi     = psi.store,
               Q.store = Q.store))
   }

@@ -89,12 +89,18 @@ tune.sims     <- function(sims=NULL, burnin=1, thinning=1, Q=NULL, Q.meth=NULL, 
   }
   
   mu      <- sims[[Q.ind]]$mu[,store]                            
-  f       <- sims[[Q.ind]]$f[,1:Q,store, drop=F]
-  lmat    <- sims[[Q.ind]]$load[,1:Q,store, drop=F]
   psi     <- sims[[Q.ind]]$psi[,store]
-    
-# Loadings matrix / identifiability / # etc.
-  l.temp  <- as.matrix(sims[[Q.ind]]$load[,1:Q,burnin])
+  if(method   != "FA") {
+    f         <- as.array(sims[[Q.ind]]$f)[,1:Q,store, drop=F]
+    lmat      <- as.array(sims[[Q.ind]]$load)[,1:Q,store, drop=F]
+    l.temp    <- as.matrix(as.array(sims[[Q.ind]]$load)[,1:Q,burnin])
+  } else {
+    f         <- sims[[Q.ind]]$f[,1:Q,store, drop=F]
+    lmat      <- sims[[Q.ind]]$load[,1:Q,store, drop=F]
+    l.temp    <- as.matrix(sims[[Q.ind]]$load[,1:Q,burnin])
+  }
+  
+# Loadings matrix / identifiability / # etc.  
   for(b in 1:length(store)) {
     rot       <- procrustes(X=as.matrix(lmat[,,b]), Xstar=l.temp)$R
     lmat[,,b] <- lmat[,,b] %*% rot

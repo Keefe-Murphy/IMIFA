@@ -30,12 +30,15 @@ plot.IMIFA  <- function(results=NULL, plot.meth=NULL, var=NULL, Label=NULL,
        var == "loadings") {
       if(missing(ind)) ind <- c(1, 1)
       if(length(ind) > 2)              stop("Length of indexes for plotting cannot be greater than 2")
-      if(ind[1] >  n.obs)              stop(paste0("Length of first index cannot be greater than ", n.obs))
+      if(var == "scores"   && 
+         ind[1] >  n.obs)              stop(paste0("Length of first index cannot be greater than ", n.obs))
+      if(var == "loadings" && 
+         ind[1] >  n.var)              stop(paste0("Length of first index cannot be greater than ", n.var))
       if(ind[2] >  n.fac)              stop(paste0("Length of second index cannot be greater than ", n.fac))
     } else {
       if(missing(ind)) ind <- 1
       if(length(ind) > 1)              stop("Length of indexes for plotting cannot be greater than 1")
-      if(ind    > n.var)               stop(paste0("Length of second index cannot be greater than ", n.var))
+      if(ind    > n.var)               stop(paste0("Length of index cannot be greater than ", n.var))
     }
     if(var == "means") {
       acf(results$means[ind,], main="Means")
@@ -72,9 +75,11 @@ plot.IMIFA  <- function(results=NULL, plot.meth=NULL, var=NULL, Label=NULL,
       if(missing(ind))   ind   <- c(1, 2)
       if(n.fac == 1) {
         ind    <- 1
-      } else if(length(ind) > 2 ||
-                ind[1] == ind[2])      stop("Only two columns can be plotted")
-      if(ind[2] > n.fac)               stop(paste0("Only the first ", n.fac, " columns can be plotted"))
+      } else {
+        if(length(ind) > 2 ||
+           ind[1] == ind[2])           stop("Only two columns can be plotted")
+        if(ind[2]  > n.fac)            stop(paste0("Only the first ", n.fac, " columns can be plotted"))
+      }
     }
     if(var  == "means") {
       plot.x   <- results$post.mu

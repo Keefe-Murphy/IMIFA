@@ -2,13 +2,14 @@
 ### Set-up for Keefe Murphy's IMIFA R Package ###
 #################################################
 
-packages  <- c("MCMCpack")
+packages  <- c("MCMCpack", "slam")
 if(length(setdiff(packages, rownames(installed.packages()))) > 0) {
   invisible(install.packages(setdiff(packages, rownames(installed.packages()))))
 }
 if(length(setdiff(packages, (.packages()))) > 0) {
   invisible(lapply(setdiff(packages, (.packages())), library, ch=T))
 }
+rm(packages)
 
 imifa.gibbs <- function(dat=NULL, method=c("IMIFA", "MIFA", "MFA", "IFA", "FA"), n.iters=50000,
                         factanal=F, Q.star=NULL, range.Q=NULL, Q.fac=NULL, thinning=2,
