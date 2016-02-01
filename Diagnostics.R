@@ -13,7 +13,7 @@ tune.sims     <- function(sims=NULL, burnin=1, thinning=1, Q=NULL, Q.meth=NULL, 
   n.fac       <- attr(sims, "Factors")
   
   if(!missing(Q)) {
-    if(Q > n.fac)               stop("Q cannot be greater than the number of factors in sim")
+    if(Q > max(n.fac))          stop("Q cannot be greater than the number of factors in sim")
     if(method == 'FA' && length(n.fac) > 1) { 
       
       Q.ind   <- which(n.fac == Q) 

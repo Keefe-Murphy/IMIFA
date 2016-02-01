@@ -14,14 +14,16 @@
 
 # Scores
   sim.scores    <- function(N, Q, lmat, psi.inv, c.data, ...) {
-    f.omega.a   <- diag(Q) + crossprod(lmat, diag(psi.inv)) %*% lmat
+    load.psi    <- lmat * psi.inv
+    f.omega.a   <- diag(Q) + crossprod(load.psi, lmat)
     U.f         <- chol(f.omega.a)
-    f.omega.b   <- chol2inv(U.f) %*% crossprod(lmat, diag(psi.inv))
+    f.omega.b   <- load.psi %*% chol2inv(U.f)
     z.f         <- matrix(rnorm(Q * N, 0, 1), nr=Q, ncol=N)
-    v.f         <- solve(U.f, z.f)
-    mu.f        <- tcrossprod(f.omega.b, c.data)
-      t(mu.f + v.f)
+    v.f         <- backsolve(U.f, z.f)
+    mu.f        <- c.data %*% f.omega.b
+      mu.f + t(v.f)
   }
+
 
 # Loadings
   sim.load      <- function(D.load, Q, c.data.j, f, psi.inv.j, FtF, ...) {
@@ -45,12 +47,12 @@
   sim.phi       <- function(Q, P, phi.nu, tau, load.2, ...) {
     rate.t      <- (phi.nu + sweep(load.2, 2, tau, FUN="*"))/2
     matrix(rgamma(P * Q, shape=(phi.nu + 1)/2, 
-                  rate= rate.t), nr=P, nc=Q)
+                  rate=rate.t), nr=P, nc=Q)
   }
     
 # Global Shrinkage
   sim.delta1    <- function(Q, P, delta.a1, delta, tau, sum.term, ...) {
-    rgamma(1, shape=delta.a1 + (P * Q)/2, 
+    rgamma(1, shape=delta.a1 + P * Q/2, 
               rate=1 + 0.5/delta[1] * tau %*% sum.term)
   }
 
@@ -62,9 +64,9 @@
 # Priors
   # Means
     sim.mu.p    <- function(sigma.mu, P, ...) {
-      U.mu      <- sqrt(1/sigma.mu) * diag(P)
+      U.mu      <- sqrt(1/sigma.mu)
       z.mu      <- rnorm(P, 0, 1)
-        U.mu %*% z.mu
+        U.mu * z.mu
     }
     
   # Scores
@@ -74,9 +76,9 @@
     
   # Loadings
     sim.l.p     <- function(D.load, Q, ...) {
-      U.l       <- diag(sqrt(1/D.load))
+      U.l       <- sqrt(1/D.load)
       z.l       <- rnorm(Q, 0, 1)
-        U.l %*% z.l
+        U.l * z.l
     }
 
   # Uniquenesses

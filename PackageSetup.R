@@ -83,9 +83,9 @@ imifa.gibbs <- function(dat=NULL, method=c("IMIFA", "MIFA", "MFA", "IFA", "FA"),
       imifa[[1]]   <- do.call(paste0("gibbs.", method), 
                               args=append(list(range.Q), gibbs.arg))
     } else {
+      start.time   <- proc.time()
       for(q in range.Q) { 
         Q.ind      <- q - min(range.Q) + 1
-        start.time <- proc.time()
         imifa[[Q.ind]]   <- do.call(paste0("gibbs.", method),
                                    args=append(list(q), gibbs.arg))
         cat(paste0(round(Q.ind/length(range.Q) * 100, 2), "% Complete\n"))

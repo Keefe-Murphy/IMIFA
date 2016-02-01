@@ -14,13 +14,14 @@
 
 # Scores
   sim.scores    <- function(N, Q, lmat, psi.inv, c.data, ...) {
-    f.omega.a   <- diag(Q) + crossprod(lmat, diag(psi.inv)) %*% lmat
+    load.psi    <- lmat * psi.inv
+    f.omega.a   <- diag(Q) + crossprod(load.psi, lmat)
     U.f         <- chol(f.omega.a)
-    f.omega.b   <- chol2inv(U.f) %*% crossprod(lmat, diag(psi.inv))
+    f.omega.b   <- load.psi %*% chol2inv(U.f)
     z.f         <- matrix(rnorm(Q * N, 0, 1), nr=Q, ncol=N)
-    v.f         <- solve(U.f, z.f)
-    mu.f        <- tcrossprod(f.omega.b, c.data)
-      t(mu.f + v.f)
+    v.f         <- backsolve(U.f, z.f)
+    mu.f        <- c.data %*% f.omega.b
+      mu.f + t(v.f)
   }
 
 # Loadings
@@ -44,9 +45,9 @@
 # Priors
   # Means
     sim.mu.p    <- function(P, sigma.mu, ...) {
-      U.mu      <- sqrt(1/sigma.mu) * diag(P)
+      U.mu      <- sqrt(1/sigma.mu)
       z.mu      <- rnorm(P, 0, 1)
-        U.mu %*% z.mu
+        U.mu * z.mu
     }
   
   # Scores
@@ -56,9 +57,9 @@
 
   # Loadings
     sim.l.p     <- function(Q, P, sigma.l, ...) {
-      U.l       <- sqrt(1/sigma.l) * diag(Q)
+      U.l       <- sqrt(1/sigma.l)
       z.l       <- matrix(rnorm(P * Q, 0, 1), nr=P, ncol=Q)
-        z.l %*% U.l
+        z.l * U.l
     }
 
   # Uniquenesses
