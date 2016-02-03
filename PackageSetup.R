@@ -11,8 +11,8 @@ if(length(setdiff(packages, (.packages()))) > 0) {
 }
 rm(packages)
 
-imifa.gibbs <- function(dat=NULL, method=c("IMIFA", "MIFA", "MFA", "IFA", "FA"), n.iters=50000,
-                        factanal=F, Q.star=NULL, range.Q=NULL, Q.fac=NULL, thinning=2,
+imifa.gibbs <- function(dat=NULL, method=c("IMIFA", "MIFA", "MFA", "IFA", "FA", "classify"), n.iters=50000,
+                        Label=NULL, factanal=F, Q.star=NULL, range.Q=NULL, Q.fac=NULL, thinning=2,
                         burnin=n.iters/5 - 1, n.store=ceiling((n.iters - burnin)/thinning),
                         centering=T, scaling=T, print=T, adapt=T,
                         sigma.mu=NULL, sigma.l=NULL, psi.alpha=NULL, psi.beta=NULL,
@@ -22,16 +22,14 @@ imifa.gibbs <- function(dat=NULL, method=c("IMIFA", "MIFA", "MFA", "IFA", "FA"),
   if(missing(dat))                    stop("Dataset must be supplied")
   if(!exists(as.character(match.call()$dat),
              envir=.GlobalEnv))       stop(paste0("Object ", match.call()$dat, " not found"))
-  if(!is.element(factanal, c(T, F)))  stop("Arg. must be TRUE or FALSE")
-  if(method == "FA") {
-    if(missing(range.Q))              stop("Arg. range.Q must be specified")
-  }
+  if(!is.element(factanal,  c(T, F))) stop("Arg. must be TRUE or FALSE")
   if(!is.element(centering, c(T, F))) stop("Arg. must be TRUE or FALSE")
   if(!is.element(scaling,   c(T, F))) stop("Arg. must be TRUE or FALSE")
   if(!is.element(print,     c(T, F))) stop("Arg. must be TRUE or FALSE")
   if(!is.element(profile,   c(T, F))) stop("Arg. must be TRUE or FALSE")
   
   # Remove non-numeric columns & apply centering & scaling if necessary 
+  dat       <- as.data.frame(dat)
   dat       <- dat[sapply(dat, is.numeric)]
   dat       <- scale(dat, center=centering, scale=scaling)
   
@@ -44,56 +42,75 @@ imifa.gibbs <- function(dat=NULL, method=c("IMIFA", "MIFA", "MFA", "IFA", "FA"),
   if(missing("psi.beta"))    psi.beta      <- 0.6
   if(method == "FA") {
     if(missing("sigma.l"))   sigma.l       <- 0.5
-  } else if(method == "IFA") {
+  } else if(method == "IFA" ||
+            method == "classify") {
     if(missing("phi.nu"))    phi.nu        <- 3
     if(missing("delta.a1"))  delta.a1      <- 2.1
     if(missing("delta.a2"))  delta.a2      <- 12.1
   }
-  source(paste(getwd(), "/IMIFA-GIT/FullConditionals_", method, ".R", sep=""), local=T)
-  source(paste(getwd(), "/IMIFA-GIT/Gibbs_", method, ".R", sep=""), local=T)
-  gibbs.arg <- list(dat, n.iters, N, P, sigma.mu, psi.alpha, psi.beta, 
-                    burnin, thinning, n.store, print)
-  if(method == "IFA") {
-    gibbs.arg <- append(gibbs.arg, list(phi.nu, delta.a1, delta.a2, adapt, 
-                                        b0=0.1, b1=0.00005, prop=3/4, 
-                                        epsilon=ifelse(centering, 0.1, 0.01)))
-  } else if(method == "FA") {
-    gibbs.arg <- append(gibbs.arg, list(sigma.l))
+  if(method == "classify") {
+    source(paste(getwd(), "/IMIFA-GIT/FullConditionals_", "IFA", ".R", sep=""), local=T)
+    source(paste(getwd(), "/IMIFA-GIT/Gibbs_", "IFA", ".R", sep=""), local=T)
+  } else {
+    source(paste(getwd(), "/IMIFA-GIT/FullConditionals_", method, ".R", sep=""), local=T)
+    source(paste(getwd(), "/IMIFA-GIT/Gibbs_", method, ".R", sep=""), local=T)
   }
-    
-  if(profile) {
-    Rprof()
-  }
-    if(method == 'IFA') {
-    if(missing(Q.star)) {
-      Q.star       <- min(round(5 * log(P)), P)
-    } else if(Q.star > P)             stop("Number of factors must be less than the number of variables")
+  gibbs.arg <- list(n.iters=n.iters, P=P, sigma.mu=sigma.mu, 
+                    psi.alpha=psi.alpha, psi.beta=psi.beta, burnin=burnin, 
+                    thinning=thinning, n.store=n.store, print=print)
+  if(profile) Rprof()
+  if(method == "IFA" ||
+     method == "classify") {
+     gibbs.arg     <- append(gibbs.arg, list(phi.nu=phi.nu, delta.a1=delta.a1, delta.a2=delta.a2,
+                                             adapt=adapt, b0=0.1, b1=0.00005, prop=3/4, 
+                                             epsilon=ifelse(centering, 0.1, 0.01)))
+  if(missing(Q.star)) {
+     Q.star        <- min(round(5 * log(P)), P)
+  } else if(Q.star  > P)              stop("Number of factors must be less than the number of variables")
     if(!is.element(adapt,   c(T, F))) stop("Arg. must be TRUE or FALSE")
-    imifa          <- vector("list", length(Q.star))
-    start.time     <- proc.time()
-    imifa[[1]]     <- do.call(paste0("gibbs.", method),                          
-                              args=append(list(Q.star), gibbs.arg))
-  } else if(method == 'FA') {
+    if(method == "IFA") {
+      imifa        <- vector("list", length(Q.star))
+      start.time   <- proc.time()
+      imifa[[1]]   <- do.call(paste0("gibbs.", method),                          
+                              args=append(list(data=dat, N=N, Q=Q.star), gibbs.arg))
+    } else {
+      if(missing(Label))              stop("Data must be labelled for classification")
+      if(!exists(as.character(match.call()$Label),
+                 envir=.GlobalEnv))   stop(paste0("Object ", match.call()$Label, " not found"))
+      Label   <- as.factor(Label)
+      if(length(Label) != N)          stop(paste0("Labels must be a factor of length N=",  n.obs))
+      imifa   <- vector("list", nlevels(Label))
+      start.time   <- proc.time()
+      for(i in 1:nlevels(Label)) {
+        temp.dat   <- dat[Label==levels(Label)[i],]
+        imifa[[i]] <- do.call(paste0("gibbs.", "IFA"),
+                              args=append(list(data=temp.dat, N=nrow(temp.dat), Q=Q.star), gibbs.arg))
+        cat(paste0(round(i/nlevels(Label) * 100, 2), "% Complete\n"))
+      }
+    }
+  } else if(method == "FA") {
+    gibbs.arg      <- append(gibbs.arg, list(sigma.l))
+    if(missing(range.Q))              stop("Arg. range.Q must be specified")
     if((length(range.Q)  == 1 && range.Q >= P) || 
        (length(range.Q)   > 1 && any(range.Q) >= P))  
-                                       stop ("Number of factors must be less than the number of variables")
+                                      stop ("Number of factors must be less than the number of variables")
     imifa          <- vector("list", length(range.Q))
     if(length(range.Q)   == 1) {
       start.time   <- proc.time()
       imifa[[1]]   <- do.call(paste0("gibbs.", method), 
-                              args=append(list(range.Q), gibbs.arg))
+                              args=append(list(data=dat, N=N, Q=range.Q), gibbs.arg))
     } else {
       start.time   <- proc.time()
       for(q in range.Q) { 
         Q.ind      <- q - min(range.Q) + 1
         imifa[[Q.ind]]   <- do.call(paste0("gibbs.", method),
-                                   args=append(list(q), gibbs.arg))
+                                   args=append(list(data=dat, N=N, Q=q), gibbs.arg))
         cat(paste0(round(Q.ind/length(range.Q) * 100, 2), "% Complete\n"))
       }
     }
   }
   tot.time  <- proc.time() - start.time
-  avg.time  <- tot.time/ifelse(method == "FA", length(range.Q), length(Q.star))
+  avg.time  <- tot.time/ifelse(method == "FA", length(range.Q), ifelse(method == "classify", nlevels(Label), length(Q.star)))
   if(profile) {
     Rprof(NULL)
     print(summaryRprof())
@@ -102,8 +119,9 @@ imifa.gibbs <- function(dat=NULL, method=c("IMIFA", "MIFA", "MFA", "IFA", "FA"),
     
   dat.name  <- as.character(match.call()$dat)
   attr(imifa, "Date")    <- format(Sys.Date(), "%d-%b-%Y")
-  attr(imifa, "Factors") <- if(method == 'FA') range.Q else Q.star
-  attr(imifa, "Method")  <- method
+  attr(imifa, "Factors") <- if(method == "FA") range.Q else Q.star
+  attr(imifa, "Method")  <- paste0(toupper(substr(method, 1, 1)),
+                                   substr(method, 2, nchar(method)))
   attr(imifa, "Name")    <- paste0(toupper(substr(dat.name, 1, 1)),
                                    substr(dat.name, 2, nchar(dat.name)))
   attr(imifa, "Store")   <- n.store

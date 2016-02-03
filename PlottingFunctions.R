@@ -64,8 +64,9 @@ plot.IMIFA  <- function(results=NULL, plot.meth=NULL, var=NULL, Label=NULL,
        axis(2, at=seq(0,1,0.1), labels=seq(0,100,10), cex.axis=0.8) 
        points(x=n.fac, y=prop.exp, col="red", bg="red", pch=21)
      }
-     cat(paste0("Proportion of Variation Explained = ",
-                round(prop.exp[length(prop.exp)], 3), "\n"))
+    cat(paste0("Proportion of Variation Explained = ",
+                round(prop.exp[length(prop.exp)]*100, 2), "%", "\n"))
+    if(max(prop.exp) > 1)              cat(paste0("Warning: chain may not have converged", "\n"))
   }
   
   if(plot.meth == "posterior") {
@@ -88,20 +89,20 @@ plot.IMIFA  <- function(results=NULL, plot.meth=NULL, var=NULL, Label=NULL,
     }
     if(var == "scores") {
       plot.x   <- results$post.f
-      if(ind[1] > nrow(plot.x))        stop(paste0("Only the first ", nrow(plot.x), " scores can be plotted"))
+      if(ind[1] > n.obs)               stop(paste0("Only the first ", n.obs, " scores can be plotted"))
       if(!missing(Label)) {
         if(!exists(as.character(match.call()$Label),
                    envir=.GlobalEnv))  stop(paste0("Object ", match.call()$Label, " not found"))
-        if((length(Label) != nrow(plot.x)) ||
-             !is.factor(Label))        stop("Labels must be a factor of length N")
+        Label  <- as.factor(Label)
+        if(length(Label) != n.obs)     stop(paste0("Labels must be a factor of length N=",  n.obs))
       } else {
         Label  <- 1
-        print("Should the data be labelled?")
+        cat(paste0("Should the data be labelled?", "\n"))
       }
       if(n.fac != 1) {
         plot(plot.x[,ind[1]], plot.x[,ind[2]], type=type, main="Posterior Scores", 
              xlab=paste0("Factor ", ind[1]), ylab=paste0("Factor ", ind[2]), col=as.numeric(Label))
-        if(type == "n") text(plot.x[,ind[1]], plot.x[,ind[2]], 1:nrow(plot.x), 
+        if(type == "n") text(plot.x[,ind[1]], plot.x[,ind[2]], 1:n.obs, 
                              col=as.numeric(Label), cex=0.5)
       } else {
         plot(plot.x[,ind], type=type, main="Posterior Scores", 
@@ -118,7 +119,7 @@ plot.IMIFA  <- function(results=NULL, plot.meth=NULL, var=NULL, Label=NULL,
         axis(1, cex.axis=0.8, line=-0.5, tick=F, 
              at=if(n.fac != 1) seq(0, 1, 1/(n.fac - 1)) else 0, labels=1:n.fac)
         axis(2, cex.axis=0.5, line=-0.5, tick=F, las=1,
-             at=seq(0, 1, 1/(nrow(plot.x) - 1)), 
+             at=seq(0, 1, 1/(n.var - 1)), 
              labels=rownames(plot.x)[n.var:1])
         box(lwd=2)
         mtext("Factors", side=1, line=2)
@@ -127,7 +128,7 @@ plot.IMIFA  <- function(results=NULL, plot.meth=NULL, var=NULL, Label=NULL,
                                     1/(n.fac - 1)), lty=2, lwd=1)
         par(mfrow=c(1, 1), mar=c(5.1, 4.1, 4.1, 2.1))
       } else {
-        if(ind[1] > nrow(plot.x))       stop(paste0("Only the first ", nrow(plot.x), " variables can be plotted"))
+        if(ind[1] > n.var)             stop(paste0("Only the first ", n.var, " variables can be plotted"))
         if(n.fac != 1) {
           plot(plot.x[,ind[1]], plot.x[,ind[2]], type=type, main="Posterior Loadings", 
                xlab=paste0("Factor ", ind[1]), ylab=paste0("Factor ", ind[2]))

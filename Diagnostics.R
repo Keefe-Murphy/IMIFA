@@ -15,28 +15,20 @@ tune.sims     <- function(sims=NULL, burnin=1, thinning=1, Q=NULL, Q.meth=NULL, 
   if(!missing(Q)) {
     if(Q > max(n.fac))          stop("Q cannot be greater than the number of factors in sim")
     if(method == 'FA' && length(n.fac) > 1) { 
-      
       Q.ind   <- which(n.fac == Q) 
-      
-    } else {
-      
-      Q.ind   <- 1
-      
     }
-  } else if(method == 'FA' && length(n.fac) == 1) {
-    
-    Q         <- n.fac
+  } else {
     Q.ind     <- 1
-      
+  }
+  if(method   == 'FA' && length(n.fac) == 1) {
+    Q         <- n.fac
   } else if(method == 'IFA') {
-    
     if(missing(Q.meth)) {
       Q.meth  <- "Mode"
     } else {
       if(!is.element(Q.meth, 
        c("Mode", "Median")))    stop("Q.meth must be MODE or MEDIAN")
     }
-    Q.ind     <- 1 
     
   # Retrieve distribution of Q, tabulate & plot
     Q.store   <- sims[[Q.ind]]$Q.store[store]
@@ -52,13 +44,12 @@ tune.sims     <- function(sims=NULL, burnin=1, thinning=1, Q=NULL, Q.meth=NULL, 
     if(Q.meth == 'Mode') { 
        Q      <- min(Q.mode)
     } else Q  <- Q.median
-      
-    Q.CI      <- quantile(Q.store, c(0.025, 0.975))
+    Q.CI      <- round(quantile(Q.store, c(0.025, 0.975)))
     res.bar   <- list(Mode = Q.mode, Median = Q.median, 
                       CI = Q.CI, Probs= Q.prob, Counts = Q.tab)
-    print(unlist(list(Q=Q, res.bar, 
-                      Warning="But the user should choose Q based on the attached bar plot!"), recursive=F))
-    } else {    
+    print(unlist(list(Q=Q, res.bar), recursive=F))
+    cat(paste0("Warning: the user should choose Q based on the attached bar plot!", "\n"))
+  } else {    
       
   # Initialise
     Q.range   <- n.fac - min(n.fac) + 1
@@ -75,7 +66,8 @@ tune.sims     <- function(sims=NULL, burnin=1, thinning=1, Q=NULL, Q.meth=NULL, 
       }
       post.load   <- apply(lmat, c(1,2), mean)
       prop.exp[Q] <- sum(colSums(post.load * post.load))/nrow(lmat)
-    }
+    }  
+    if(max(prop.exp) > 1)       cat(paste0("Warning: chain may not have converged", "\n"))
       
   # Produce Scree Plot & choose optimum Q
     plot(prop.exp, type="l", main="Scree Plot to Choose Q", xlab="# Factors", 
@@ -85,7 +77,8 @@ tune.sims     <- function(sims=NULL, burnin=1, thinning=1, Q=NULL, Q.meth=NULL, 
     Q.ind <- which.max(prop.exp)
     Q     <- n.fac[Q.ind]
     points(x=Q.ind, y=prop.exp[Q.ind], col="red", bg="red", pch=21)
-    print(list(Q=Q, Warning="But the user should choose Q based on the attached scree plot!"))
+    cat(paste0("Q = ", Q, "\n"))
+    cat(paste0("Warning: the user should choose Q based on the attached scree plot!", "\n"))
   }
   
   mu      <- sims[[Q.ind]]$mu[,store]                            
@@ -118,6 +111,7 @@ tune.sims     <- function(sims=NULL, burnin=1, thinning=1, Q=NULL, Q.meth=NULL, 
   cum.var     <- cumsum(prop.var)          
   prop.exp    <- communality/nrow(post.load)
   prop.uni    <- 1 - prop.exp
+  if(prop.exp  > 1)             cat(paste0("Warning: chain may not have converged", "\n"))
   
   results     <- list(means = mu, scores = f, loadings = lmat, uniquenesses = psi,
                       post.mu = post.mu, post.f = post.f, post.load = post.load, post.psi = post.psi,

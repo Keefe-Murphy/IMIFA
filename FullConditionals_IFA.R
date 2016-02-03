@@ -24,7 +24,6 @@
       mu.f + t(v.f)
   }
 
-
 # Loadings
   sim.load      <- function(D.load, Q, c.data.j, f, psi.inv.j, FtF, ...) {
     l.omega     <- diag(D.load) + psi.inv.j * FtF
