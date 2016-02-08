@@ -3,7 +3,7 @@
 ################################
 
 plot.IMIFA  <- function(results=NULL, plot.meth=NULL, var=NULL, Label=NULL, 
-                        ind=NULL, heat=T, n.fac=NULL, type=c("n", "p"), mat=T, ... ) {
+                        ind=NULL, heat=T, n.fac=NULL, type=c("n", "p", "l"), mat=T, ... ) {
  
   if(missing(results))                 stop("Results must be supplied")
   if(!exists(as.character(match.call()$results),
@@ -84,7 +84,7 @@ plot.IMIFA  <- function(results=NULL, plot.meth=NULL, var=NULL, Label=NULL,
     }
     if(var  == "means") {
       plot.x   <- results$post.mu
-      plot(plot.x, type=type, main="Posterior Means", ylab="Means", xlab="Variable")
+      plot(plot.x, type=type, main="Posterior Means", ylab="Means", xlab="Variable", ylim=if(is.element(attr(results, "Method"), c("FA", "IFA"))) c(-1,1))
       if(type  == "n") text(x=1:length(plot.x), y=plot.x, names(plot.x), cex=0.5)
     }
     if(var == "scores") {
@@ -166,9 +166,9 @@ plot.IMIFA  <- function(results=NULL, plot.meth=NULL, var=NULL, Label=NULL,
     if(var == "means") {
       plot.x   <- results$means
       if(mat) {
-        matplot(t(plot.x[,]), type="l", main="Trace Plot:\nMeans", ylab="Means", xlab="Iteration")
+        matplot(t(plot.x[,]), type="l", main="Trace Plot:\nMeans", ylab="Means", xlab="Iteration", ylim=if(is.element(attr(results, "Method"), c("FA", "IFA"))) c(-1,1))
       } else plot(x=iter, y=plot.x[ind,], type="l", ylab="Mean", xlab="Iteration", 
-                         main=paste0("Trace Plot:\nMean of ", rownames(plot.x)[ind]))
+                         main=paste0("Trace Plot:\nMean of ", rownames(plot.x)[ind]), ylim=if(is.element(attr(results, "Method"), c("FA", "IFA"))) c(-1,1))
     }
     if(var == "scores") {
       plot.x   <- results$scores
