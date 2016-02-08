@@ -118,9 +118,11 @@ plot.IMIFA  <- function(results=NULL, plot.meth=NULL, var=NULL, Label=NULL,
               main="Posterior Loadings", xaxt="n", yaxt="n")
         axis(1, cex.axis=0.8, line=-0.5, tick=F, 
              at=if(n.fac != 1) seq(0, 1, 1/(n.fac - 1)) else 0, labels=1:n.fac)
-        axis(2, cex.axis=0.5, line=-0.5, tick=F, las=1,
-             at=seq(0, 1, 1/(n.var - 1)), 
-             labels=rownames(plot.x)[n.var:1])
+        if(n.var < 100) {
+          axis(2, cex.axis=0.5, line=-0.5, tick=F, las=1,
+               at=seq(0, 1, 1/(n.var - 1)), 
+               labels=rownames(plot.x)[n.var:1])
+        }
         box(lwd=2)
         mtext("Factors", side=1, line=2)
         if(n.fac != 1) abline(v=seq(1/(2*(n.fac - 1)), 
@@ -159,7 +161,7 @@ plot.IMIFA  <- function(results=NULL, plot.meth=NULL, var=NULL, Label=NULL,
       if(length(ind) > 1)              stop("Length of indexes for plotting cannot be greater than 1")
       if(ind    >  n.var)              stop(paste0("Length of second index cannot be greater than ", n.var))
     }
-    if(!mat) iter <- results$store
+    if(!mat) iter <- 1:length(results$store)
     
     if(var == "means") {
       plot.x   <- results$means

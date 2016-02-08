@@ -24,15 +24,17 @@
 
 # Run the Gibbs Sampler
   sim  <- imifa.gibbs(wine, method="IFA")
-  #sim <- imifa.gibbs(wine, method="classify", Label=Lab)
+ #sim  <- imifa.gibbs(wine, method="classify", Label=Lab)
 
 # Save / Load results
-  save(sim, file=paste0(getwd(), "/Simulations/", 
-                        attr(sim, "Name"), "__Simulations_", attr(sim, "Method"), "_", 
-                        attr(sim, "Date"), ".Rdata", sep=""))
-  load(file=paste0(getwd(), "/Simulations/", 
-                   attr(sim, "Name"), "__Simulations_", attr(sim, "Method"), "_", 
-                   attr(sim, "Date"), ".Rdata", sep=""), envir=.GlobalEnv)
+  save(sim, file=paste0(getwd(), "/Simulations/", attr(sim, "Name"), 
+                        "__Simulations_", attr(sim, "Method"), 
+                       #"_", attr(sim, "Date"), 
+                        ".Rdata", sep=""))
+  load(file=paste0(getwd(), "/Simulations/", attr(sim, "Name"), 
+                   "__Simulations_", attr(sim, "Method"), 
+                  #"_", attr(sim, "Date"), 
+                   ".Rdata", sep=""), envir=.GlobalEnv)
 
 # Convergence diagnostics (optional: additional 'burnin' & 'thinning' & user-defined Q)
   res <- tune.sims(sim)
