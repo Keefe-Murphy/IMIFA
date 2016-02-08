@@ -40,7 +40,7 @@ tune.sims     <- function(sims=NULL, burnin=1, thinning=1, Q=NULL, Q.meth=NULL, 
     
   # Set Q as the (lesser of) the distribution's mode(s) & compute credible interval
     Q.mode    <- as.numeric(names(Q.tab[Q.tab == max(Q.tab)]))
-    Q.median  <- ceiling(median(Q.store))
+    Q.median  <- ceiling(median(Q.store) * 2)/2
     if(Q.meth == 'Mode') { 
        Q      <- min(Q.mode)
     } else Q  <- Q.median
@@ -74,30 +74,33 @@ tune.sims     <- function(sims=NULL, burnin=1, thinning=1, Q=NULL, Q.meth=NULL, 
          ylab="% Variation Explained", xaxt="n", yaxt="n", ylim=c(0,1))
     axis(1, at=1:length(prop.exp), labels=n.fac)
     axis(2, at=seq(0,1,0.1), labels=seq(0,100,10), cex.axis=0.8)
-    Q.ind <- which.max(prop.exp)
-    Q     <- n.fac[Q.ind]
+    Q.ind     <- which.max(prop.exp)
+    Q         <- n.fac[Q.ind]
     points(x=Q.ind, y=prop.exp[Q.ind], col="red", bg="red", pch=21)
     cat(paste0("Q = ", Q, "\n"))
     cat(paste0("Warning: the user should choose Q based on the attached scree plot!", "\n"))
   }
   
-  mu      <- sims[[Q.ind]]$mu[,store]                            
-  psi     <- sims[[Q.ind]]$psi[,store]
-  if(method   != "FA") {
-    f         <- as.array(sims[[Q.ind]]$f)[,1:Q,store, drop=F]
-    lmat      <- as.array(sims[[Q.ind]]$load)[,1:Q,store, drop=F]
-    l.temp    <- as.matrix(as.array(sims[[Q.ind]]$load)[,1:Q,burnin])
-  } else {
+  if(method   == "FA") {
     f         <- sims[[Q.ind]]$f[,1:Q,store, drop=F]
     lmat      <- sims[[Q.ind]]$load[,1:Q,store, drop=F]
     l.temp    <- as.matrix(sims[[Q.ind]]$load[,1:Q,burnin])
+    Qt        <- Q
+  } else {
+    store     <- which(Q.store[store] == Q)
+    Qt        <- min(Q.store[burnin], Q)
+    f         <- as.array(sims[[Q.ind]]$f)[,1:Q,store, drop=F]
+    lmat      <- as.array(sims[[Q.ind]]$load)[,1:Q,store, drop=F]
+    l.temp    <- as.matrix(as.array(sims[[Q.ind]]$load)[,1:Qt,burnin])
   }
+  mu          <- sims[[Q.ind]]$mu[,store]                            
+  psi         <- sims[[Q.ind]]$psi[,store]
   
 # Loadings matrix / identifiability / # etc.  
   for(b in 1:length(store)) {
-    rot       <- procrustes(X=as.matrix(lmat[,,b]), Xstar=l.temp)$R
-    lmat[,,b] <- lmat[,,b] %*% rot
-    f[,,b]    <- t(f[,,b]  %*% rot)
+    rot           <- procrustes(X=as.matrix(lmat[,1:Qt,b]), Xstar=l.temp)$R
+    lmat[,1:Qt,b] <- lmat[,1:Qt,b] %*% rot
+    f[,1:Qt,b]    <- f[,1:Qt,b]    %*% rot
   }
 
   post.mu     <- apply(mu, 1, mean)
@@ -121,6 +124,7 @@ tune.sims     <- function(sims=NULL, burnin=1, thinning=1, Q=NULL, Q.meth=NULL, 
   if(method   == "IFA") {
     results   <- unlist(list(results, res.bar), recursive=F)
   }
-  class(results)  <- "IMIFA"
+  class(results)          <- "IMIFA"
+  attr(results, "Method") <- attr(sims, "Method")
   return(results)
 }
