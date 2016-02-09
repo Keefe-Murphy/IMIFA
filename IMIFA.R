@@ -3,24 +3,32 @@
 ######################################################
 
 # Preamble
+ #set.seed(1)
   if(getwd() != "/home/kmurphy") {
     setwd("C:/Users/Windows/Documents/Claire IMIFA")
   }
   source(paste0(getwd(), "/IMIFA-GIT/PackageSetup.R", sep=""))
     
 # Read in the data
-  load(file=paste0(getwd(), "/Data/Wine.Rdata", sep=""), envir=.GlobalEnv)
-  Lab        <- wine[,1]
-  #load(file=paste0(getwd(), "/Data/Meat.Rdata", sep=""), envir=.GlobalEnv)
-  #spectra   <- t(spectra); rm(last.warning)
-  #matplot(t(spectra), type="l", col=1:nlevels(as.factor(type)), xlab="Wavelength", ylab="Spectral Reflectance", main="Meat Data")
-  #subjects  <- read.csv(paste0(getwd(), "/Data/", "SubjectMarks.csv", sep=""))
-  #cereal    <- read.csv(paste0(getwd(), "/Data/", "Cereal.csv", sep=""))
-
-# Simulate data
-  SimData    <- sim.imifa()
-  #save(SimData, file=paste0(getwd(),"/Data/Simulated_Data.Rdata", sep=""))
-  load(file=paste0(getwd(), "/Data/Simulated_Data.Rdata", sep=""), envir=.GlobalEnv)
+  # Wine
+    load(file=paste0(getwd(), "/Data/Wine.Rdata", sep=""), envir=.GlobalEnv)
+    Lab      <- wine[,1]
+  # Urine
+    load(file=paste0(getwd(), "/Data/Epi_urine_data.Rdata", sep=""), envir=.GlobalEnv)
+    ppms     <- substr(colnames(x10[,4:ncol(x10)]), 2,6); rm(x)
+    urine    <- x10[,4:ncol(x10)]
+  # Meat
+    load(file=paste0(getwd(), "/Data/Meat.Rdata", sep=""), envir=.GlobalEnv)
+    spectra  <- t(spectra); rm(last.warning)
+    matplot(t(spectra), type="l", col=1:nlevels(as.factor(type)), xlab="Wavelength", ylab="Spectral Reflectance", main="Meat Data")
+  # Subjects 
+    subjects <- read.csv(paste0(getwd(), "/Data/", "SubjectMarks.csv", sep=""))
+  # Cereal 
+    cereal   <- read.csv(paste0(getwd(), "/Data/", "Cereal.csv", sep=""))
+  # Simulated data
+   #SimData  <- sim.imifa()
+   #save(SimData, file=paste0(getwd(),"/Data/Simulated_Data.Rdata", sep=""))
+    load(file=paste0(getwd(), "/Data/Simulated_Data.Rdata", sep=""), envir=.GlobalEnv)
 
 # Run the Gibbs Sampler
   sim  <- imifa.gibbs(wine, method="IFA")

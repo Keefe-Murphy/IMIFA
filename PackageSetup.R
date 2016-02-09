@@ -58,14 +58,14 @@ imifa.gibbs <- function(dat=NULL, method=c("IMIFA", "MIFA", "MFA", "IFA", "FA", 
   gibbs.arg <- list(n.iters=n.iters, P=P, sigma.mu=sigma.mu, 
                     psi.alpha=psi.alpha, psi.beta=psi.beta, burnin=burnin, 
                     thinning=thinning, n.store=n.store, print=print)
-  if(profile) Rprof()
+  if(profile)  Rprof()
   if(method == "IFA" ||
      method == "classify") {
      gibbs.arg     <- append(gibbs.arg, list(phi.nu=phi.nu, delta.a1=delta.a1, delta.a2=delta.a2,
                                              adapt=adapt, b0=0.1, b1=0.00005, prop=3/4, 
                                              epsilon=ifelse(centering, 0.1, 0.01)))
   if(missing(Q.star)) {
-     Q.star        <- min(round(5 * log(P)), P)
+     Q.star        <- min(floor(3 * log(P)), P)
   } else if(Q.star  > P)              stop("Number of factors must be less than the number of variables")
     if(!is.element(adapt,   c(T, F))) stop("Arg. must be TRUE or FALSE")
     if(method == "IFA") {

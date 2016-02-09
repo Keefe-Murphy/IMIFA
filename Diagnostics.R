@@ -7,8 +7,8 @@ tune.sims     <- function(sims=NULL, burnin=1, thinning=1, Q=NULL, Q.meth=NULL, 
   if(!exists(as.character(match.call()$sims),
              envir=.GlobalEnv)) stop(paste0("Object ", match.call()$sims, " not found"))
   if(class(sims) != "IMIFA")    stop(paste0("Simulations object of class 'IMIFA' must be supplied"))
-  if(!missing(burnin))    burnin <- burnin + 1
-  store       <- seq(from=burnin + 1, to=attr(sims, "Store"), by=thinning)
+  if(!missing(burnin))          burnin <- burnin + 1
+  store       <- seq(from=burnin, to=attr(sims, "Store"), by=thinning)
   method      <- attr(sims, "Method")
   n.fac       <- attr(sims, "Factors")
   
@@ -64,7 +64,7 @@ tune.sims     <- function(sims=NULL, burnin=1, thinning=1, Q=NULL, Q.meth=NULL, 
         rot       <- procrustes(X=as.matrix(lmat[,,b]), Xstar=l.temp)$R
         lmat[,,b] <- lmat[,,b] %*% rot
       }
-      post.load   <- apply(lmat, c(1,2), mean)
+      post.load   <- rowMeans(lmat, dims=2)
       prop.exp[Q] <- sum(colSums(post.load * post.load))/nrow(lmat)
     }  
     if(max(prop.exp) > 1)       cat(paste0("Warning: chain may not have converged", "\n"))
@@ -82,31 +82,32 @@ tune.sims     <- function(sims=NULL, burnin=1, thinning=1, Q=NULL, Q.meth=NULL, 
   }
   
   if(method   == "FA") {
+    store     <- store[-1]
     f         <- sims[[Q.ind]]$f[,1:Q,store, drop=F]
     lmat      <- sims[[Q.ind]]$load[,1:Q,store, drop=F]
     l.temp    <- as.matrix(sims[[Q.ind]]$load[,1:Q,burnin])
-    Qt        <- Q
   } else {
-    store     <- which(Q.store[store] == Q)
-    Qt        <- min(Q.store[burnin], Q)
+    store     <- which(Q.store[store] >= Q)
+    burnin    <- store[1]
+    store     <- store[-1]
     f         <- as.array(sims[[Q.ind]]$f)[,1:Q,store, drop=F]
     lmat      <- as.array(sims[[Q.ind]]$load)[,1:Q,store, drop=F]
-    l.temp    <- as.matrix(as.array(sims[[Q.ind]]$load)[,1:Qt,burnin])
+    l.temp    <- as.matrix(as.array(sims[[Q.ind]]$load)[,1:Q,burnin])
   }
   mu          <- sims[[Q.ind]]$mu[,store]                            
   psi         <- sims[[Q.ind]]$psi[,store]
   
 # Loadings matrix / identifiability / # etc.  
   for(b in 1:length(store)) {
-    rot           <- procrustes(X=as.matrix(lmat[,1:Qt,b]), Xstar=l.temp)$R
-    lmat[,1:Qt,b] <- lmat[,1:Qt,b] %*% rot
-    f[,1:Qt,b]    <- f[,1:Qt,b]    %*% rot
+    rot       <- procrustes(X=as.matrix(lmat[,,b]), Xstar=l.temp)$R
+    lmat[,,b] <- lmat[,,b] %*% rot
+    f[,,b]    <- f[,,b]    %*% rot
   }
 
-  post.mu     <- apply(mu, 1, mean)
-  post.f      <- apply(f, c(1,2), mean)
-  post.load   <- apply(lmat, c(1,2), mean) 
-  post.psi    <- apply(psi, 1, mean)       
+  post.mu     <- rowMeans(mu, 1)
+  post.f      <- rowMeans(f, dims=2)
+  post.load   <- rowMeans(lmat, dims=2)
+  post.psi    <- rowMeans(psi, 1)       
         
   SS.load     <- colSums(post.load * post.load)
   communality <- sum(SS.load)
@@ -114,8 +115,10 @@ tune.sims     <- function(sims=NULL, burnin=1, thinning=1, Q=NULL, Q.meth=NULL, 
   cum.var     <- cumsum(prop.var)          
   prop.exp    <- communality/nrow(post.load)
   prop.uni    <- 1 - prop.exp
-  if(prop.exp  > 1)             cat(paste0("Warning: chain may not have converged", "\n"))
-  
+  if(sum(round(diag(tcrossprod(lmat[,,length(store)]) 
+                  + psi[,length(store)])) != 1) != 0
+  || prop.exp  > 1)         cat(paste0("Warning: chain may not have converged", "\n"))
+
   results     <- list(means = mu, scores = f, loadings = lmat, uniquenesses = psi,
                       post.mu = post.mu, post.f = post.f, post.load = post.load, post.psi = post.psi,
                       store = store, SS.load = SS.load, communality = communality, 
