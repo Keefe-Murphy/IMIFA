@@ -72,6 +72,7 @@
 # Uniquenesses
   plot(res, "t", "u")
   plot(res, "t", "u", mat=F)
+  summary(res$post.psi)
   plot(res, "p", "u")
   plot(res, "a", "u")
 ####

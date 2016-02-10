@@ -128,7 +128,11 @@ imifa.gibbs <- function(dat=NULL, method=c("IMIFA", "MIFA", "MFA", "IFA", "FA", 
   attr(imifa, "Name")    <- paste0(toupper(substr(dat.name, 1, 1)),
                                    substr(dat.name, 2, nchar(dat.name)))
   attr(imifa, "Store")   <- n.store
-  attr(imifa, "Time")    <- list(Total = tot.time, Average = avg.time) 
+  if(method == "IFA") {
+    attr(imifa, "Time")  <- tot.time
+  } else {
+    attr(imifa, "Time")  <- list(Total = tot.time, Average = avg.time) 
+  }
   if(verbose)               print(attr(imifa, "Time"))  
       
 # Vanilla 'factanal' for comparison purposes

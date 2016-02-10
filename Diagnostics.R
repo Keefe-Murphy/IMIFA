@@ -118,7 +118,8 @@ tune.sims     <- function(sims=NULL, burnin=1, thinning=1, Q=NULL, Q.meth=NULL, 
   prop.uni    <- 1 - prop.exp
   if(sum(round(diag(tcrossprod(lmat[,,length(store)]) 
                  +  psi[,length(store)])) != 1) != 0
-  || prop.exp  > 1)         cat(paste0("Warning: chain may not have converged", "\n"))
+  || sum(abs(post.psi - (1 - post.psi)) < 0)    != 0
+  || prop.exp  > 1)             cat(paste0("Warning: chain may not have converged", "\n"))
 
   class(post.load)        <- "loadings"
   results     <- list(means = mu, scores = f, loadings = lmat, uniquenesses = psi,
