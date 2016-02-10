@@ -26,7 +26,7 @@
   # Cereal 
     cereal   <- read.csv(paste0(getwd(), "/Data/", "Cereal.csv", sep=""))
   # Simulated data
-   #SimData  <- sim.imifa()
+   #SimData  <- sim.imifa(N=20, P=100, Q=4)
    #save(SimData, file=paste0(getwd(),"/Data/Simulated_Data.Rdata", sep=""))
     load(file=paste0(getwd(), "/Data/Simulated_Data.Rdata", sep=""), envir=.GlobalEnv)
 

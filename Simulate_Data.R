@@ -18,13 +18,13 @@ sim.imifa     <- function(N=1500, P=25, Q=2) {
     U.mu      <- sqrt(Q * diag(P))
     z.mu      <- rnorm(P, 0, 1)
     v.mu      <- U.mu %*% z.mu
-    mu.mu     <- sample(-Q:Q, size=P, replace=T)
+    mu.mu     <- rnorm(P, 0, Q)
     mu.true   <- as.vector(mu.mu + v.mu)
     
     U.load    <- sqrt(Q * diag(Q))
     z.load    <- matrix(rnorm(P * Q, 0, 1), nr=Q, ncol=P)
     v.load    <- t(U.load %*% z.load)
-    mu.load   <- sample(-Q:Q, size=Q, replace=T)
+    mu.load   <- rnorm(Q, 0, Q/2)
     load.true <- mu.load + v.load
     
     psi.true  <- 1/rgamma(n=P, shape=2, rate=0.3)                            

@@ -2,14 +2,14 @@
 ### IMIFA Plotting Functions ###
 ################################
 
-plot.IMIFA  <- function(results=NULL, plot.meth=NULL, var=NULL, Label=NULL, 
+plot.IMIFA  <- function(results=NULL, plot.meth=NULL, var=NULL, Label=NULL, fac=NULL,
                         ind=NULL, heat=T, n.fac=NULL, type=c("n", "p", "l"), mat=T, ... ) {
  
   if(missing(results))                 stop("Results must be supplied")
   if(!exists(as.character(match.call()$results),
              envir=.GlobalEnv))        stop(paste0("Object ", match.call()$results, " not found"))
   if(class(results) != "IMIFA")        stop(paste0("Results object of class 'IMIFA' must be supplied"))
-  if(missing(n.fac)) n.fac <- results$Q
+  if(missing(n.fac))     n.fac <- results$Q
   if(n.fac   > results$Q)              stop("Cannot plot this many factors")
   n.var     <- nrow(results$post.load)
   n.obs     <- nrow(results$post.f)
@@ -23,12 +23,13 @@ plot.IMIFA  <- function(results=NULL, plot.meth=NULL, var=NULL, Label=NULL,
   }
   if(!is.element(mat, c(T, F)))        stop("Arg. must be TRUE or FALSE")
   if(n.fac  == 1 ||
-     !missing(ind))    mat <- F
+     !missing(ind))        mat <- F
   
   if(plot.meth == "acf") {
     if(var == "scores" || 
        var == "loadings") {
-      if(missing(ind)) ind <- c(1, 1)
+      if(missing(ind))     ind <- c(1, 1)
+      if(!missing(fac)) ind[2] <- fac
       if(length(ind) > 2)              stop("Length of indexes for plotting cannot be greater than 2")
       if(var == "scores"   && 
          ind[1] >  n.obs)              stop(paste0("Length of first index cannot be greater than ", n.obs))
@@ -36,7 +37,7 @@ plot.IMIFA  <- function(results=NULL, plot.meth=NULL, var=NULL, Label=NULL,
          ind[1] >  n.var)              stop(paste0("Length of first index cannot be greater than ", n.var))
       if(ind[2] >  n.fac)              stop(paste0("Length of second index cannot be greater than ", n.fac))
     } else {
-      if(missing(ind)) ind <- 1
+      if(missing(ind))     ind <- 1
       if(length(ind) > 1)              stop("Length of indexes for plotting cannot be greater than 1")
       if(ind    > n.var)               stop(paste0("Length of index cannot be greater than ", n.var))
     }
@@ -70,10 +71,11 @@ plot.IMIFA  <- function(results=NULL, plot.meth=NULL, var=NULL, Label=NULL,
   }
   
   if(plot.meth == "posterior") {
-    if(!missing(ind)) heat   <- F
+    if(!missing(ind))     heat <- F
     if(var == "scores" || 
        var == "loadings") {
-      if(missing(ind))   ind   <- c(1, 2)
+      if(missing(ind))     ind <- c(1, 2)
+      if(!missing(fac)) ind[2] <- max(fac, 2)
       if(n.fac == 1) {
         ind    <- 1
       } else {
@@ -152,12 +154,13 @@ plot.IMIFA  <- function(results=NULL, plot.meth=NULL, var=NULL, Label=NULL,
   if(plot.meth == "trace") {
     if(var == "scores" || 
        var  == "loadings") {
-      if(missing(ind)) ind <- c(1, 1)
+      if(missing(ind))     ind <- c(1, 1)
+      if(!missing(fac)) ind[2] <- fac
       if(length(ind) > 2)              stop("Length of indexes for plotting cannot be greater than 2")
       if(ind[1] >  n.var)              stop(paste0("Length of first index cannot be greater than ", n.var))
       if(ind[2] >  n.fac)              stop(paste0("Length of second index cannot be greater than ", n.fac))
     } else {
-      if(missing(ind)) ind <- 1
+      if(missing(ind))     ind <- 1
       if(length(ind) > 1)              stop("Length of indexes for plotting cannot be greater than 1")
       if(ind    >  n.var)              stop(paste0("Length of second index cannot be greater than ", n.var))
     }

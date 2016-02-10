@@ -3,18 +3,18 @@
 ###################################################################
   
 # Gibbs Sampler Function
-  gibbs.IFA    <- function(Q, data, n.iters, N, P, 
+  gibbs.IFA     <- function(Q, data, n.iters, N, P, 
                            sigma.mu, psi.alpha, psi.beta, 
-                           burnin, thinning, n.store, print, 
+                           burnin, thinning, n.store, verbose, 
                            phi.nu, delta.a1, delta.a2, 
                            adapt, b0, b1, prop, epsilon, ...) {    
     
   # Define & initialise variables
-    mu.store   <- matrix(0, nr=P, nc=n.store)
-    f.store    <- array(0, dim=c(N, Q, n.store))
-    load.store <- array(0, dim=c(P, Q, n.store))
-    psi.store  <- matrix(0, nr=P, nc=n.store)
-    Q.store    <- c(Q, rep(0, n.store - 1))
+    mu.store    <- matrix(0, nr=P, nc=n.store)
+    f.store     <- array(0, dim=c(N, Q, n.store))
+    load.store  <- array(0, dim=c(P, Q, n.store))
+    psi.store   <- matrix(0, nr=P, nc=n.store)
+    Q.store     <- c(Q, rep(0, n.store - 1))
     
     dimnames(mu.store)[[1]]   <- colnames(data)
     dimnames(f.store)[[1]]    <- rownames(data)
@@ -27,24 +27,24 @@
     dimnames(load.store)[[3]] <- paste0("Iteration", 1:n.store)
     dimnames(psi.store)[[2]]  <- paste0("Iteration", 1:n.store)
     
-    sigma.mu   <- 1/sigma.mu
-    mu         <- sim.mu.p(sigma.mu, P)  
-    f          <- sim.f.p(Q, N)
-    psi.inv    <- sim.pi.p(P, psi.alpha, psi.beta)
-    phi        <- sim.p.p(Q, P, phi.nu)
-    delta      <- sim.d.p(Q, delta.a1, delta.a2)
-    tau        <- cumprod(delta)
-    lmat       <- matrix(0, nr=P, nc=Q)
+    sigma.mu    <- 1/sigma.mu
+    mu          <- sim.mu.p(sigma.mu, P)  
+    f           <- sim.f.p(Q, N)
+    psi.inv     <- sim.pi.p(P, psi.alpha, psi.beta)
+    phi         <- sim.p.p(Q, P, phi.nu)
+    delta       <- sim.d.p(Q, delta.a1, delta.a2)
+    tau         <- cumprod(delta)
+    lmat        <- matrix(0, nr=P, nc=Q)
     for(j in 1:P) {
-      D.load   <- phi[j,] * tau
-      lmat[j,] <- sim.l.p(D.load, Q)
+      D.load    <- phi[j,] * tau
+      lmat[j,]  <- sim.l.p(D.load, Q)
     }
     
-    sum.data   <- colSums(data)
+    sum.data    <- colSums(data)
   
   # Iterate
     for(iter in 2:n.iters) { 
-      if(print) {
+      if(verbose) {
         if(iter <= burnin && iter %% ((burnin + 1)/10) == 0) {
           cat(paste0("Iteration: ", iter, "\n"))
         } else if (iter %% (n.iters/10) == 0) {

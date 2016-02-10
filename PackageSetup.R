@@ -14,8 +14,8 @@ rm(packages)
 imifa.gibbs <- function(dat=NULL, method=c("IMIFA", "MIFA", "MFA", "IFA", "FA", "classify"), n.iters=50000,
                         Label=NULL, factanal=F, Q.star=NULL, range.Q=NULL, Q.fac=NULL, thinning=2,
                         burnin=n.iters/5 - 1, n.store=ceiling((n.iters - burnin)/thinning),
-                        centering=T, scaling=T, print=T, adapt=T,
-                        sigma.mu=NULL, sigma.l=NULL, psi.alpha=NULL, psi.beta=NULL,
+                        centering=T, scaling=T, verbose=T, adapt=T, b0=NULL, b1=NULL, prop=NULL,
+                        epsilon=NULL, sigma.mu=NULL, sigma.l=NULL, psi.alpha=NULL, psi.beta=NULL,
                         phi.nu=NULL, delta.a1=NULL, delta.a2=NULL, profile=F, ...) {
   
   method    <- match.arg(method)
@@ -25,7 +25,7 @@ imifa.gibbs <- function(dat=NULL, method=c("IMIFA", "MIFA", "MFA", "IFA", "FA", 
   if(!is.element(factanal,  c(T, F))) stop("Arg. must be TRUE or FALSE")
   if(!is.element(centering, c(T, F))) stop("Arg. must be TRUE or FALSE")
   if(!is.element(scaling,   c(T, F))) stop("Arg. must be TRUE or FALSE")
-  if(!is.element(print,     c(T, F))) stop("Arg. must be TRUE or FALSE")
+  if(!is.element(verbose,   c(T, F))) stop("Arg. must be TRUE or FALSE")
   if(!is.element(profile,   c(T, F))) stop("Arg. must be TRUE or FALSE")
   
   # Remove non-numeric columns & apply centering & scaling if necessary 
@@ -47,6 +47,10 @@ imifa.gibbs <- function(dat=NULL, method=c("IMIFA", "MIFA", "MFA", "IFA", "FA", 
     if(missing("phi.nu"))    phi.nu        <- 3
     if(missing("delta.a1"))  delta.a1      <- 2.1
     if(missing("delta.a2"))  delta.a2      <- 12.1
+    if(missing("b0"))        b0            <- 0.1
+    if(missing("b1"))        b1            <- 0.00005
+    if(missing("prop"))      prop          <- 3/4
+    if(missing("epsilon"))   epsilon       <- ifelse(centering, 0.1, 0.01)
   }
   if(method == "classify") {
     source(paste(getwd(), "/IMIFA-GIT/FullConditionals_", "IFA", ".R", sep=""), local=T)
@@ -57,13 +61,12 @@ imifa.gibbs <- function(dat=NULL, method=c("IMIFA", "MIFA", "MFA", "IFA", "FA", 
   }
   gibbs.arg <- list(n.iters=n.iters, P=P, sigma.mu=sigma.mu, 
                     psi.alpha=psi.alpha, psi.beta=psi.beta, burnin=burnin, 
-                    thinning=thinning, n.store=n.store, print=print)
+                    thinning=thinning, n.store=n.store, verbose=verbose)
   if(profile)  Rprof()
   if(method == "IFA" ||
      method == "classify") {
      gibbs.arg     <- append(gibbs.arg, list(phi.nu=phi.nu, delta.a1=delta.a1, delta.a2=delta.a2,
-                                             adapt=adapt, b0=0.1, b1=0.00005, prop=3/4, 
-                                             epsilon=ifelse(centering, 0.1, 0.01)))
+                                             adapt=adapt, b0=b0, b1=b1, prop=prop, epsilon=epsilon))
   if(missing(Q.star)) {
      Q.star        <- min(floor(3 * log(P)), P)
   } else if(Q.star  > P)              stop("Number of factors must be less than the number of variables")
@@ -126,7 +129,7 @@ imifa.gibbs <- function(dat=NULL, method=c("IMIFA", "MIFA", "MFA", "IFA", "FA", 
                                    substr(dat.name, 2, nchar(dat.name)))
   attr(imifa, "Store")   <- n.store
   attr(imifa, "Time")    <- list(Total = tot.time, Average = avg.time) 
-  if(print)    print(attr(imifa, "Time"))  
+  if(verbose)               print(attr(imifa, "Time"))  
       
 # Vanilla 'factanal' for comparison purposes
   if(!missing(Q.fac)) factanal  <- T
