@@ -37,11 +37,9 @@
 # Save / Load results
   save(sim, file=paste0(getwd(), "/Simulations/", attr(sim, "Name"), 
                         "__Simulations_", attr(sim, "Method"), 
-                       #"_", attr(sim, "Date"), 
                         ".Rdata", sep=""))
-  load(file=paste0(getwd(), "/Simulations/", attr(sim, "Name"), 
-                   "__Simulations_", attr(sim, "Method"), 
-                  #"_", attr(sim, "Date"), 
+  load(file=paste0(getwd(), "/Simulations/", "Wine", 
+                   "__Simulations_", "IFA", 
                    ".Rdata", sep=""), envir=.GlobalEnv)
 
 # Convergence diagnostics (optional: additional 'burnin' & 'thinning' & user-defined Q)
@@ -66,6 +64,7 @@
 # Loadings
   plot(res, "t", "l")
   plot(res, "t", "l", mat=F)
+  res$post.load
   plot(res, "p", "l", heat=F)
   plot(res, "p", "l")
   plot(res, "a", "l")

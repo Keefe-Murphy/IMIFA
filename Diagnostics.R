@@ -88,6 +88,7 @@ tune.sims     <- function(sims=NULL, burnin=1, thinning=1, Q=NULL, Q.meth=NULL, 
     l.temp    <- as.matrix(sims[[Q.ind]]$load[,1:Q,burnin])
   } else {
     store     <- which(Q.store[store] >= Q)
+   #store     <- tail(store, 0.9 * length(store))
     burnin    <- store[1]
     store     <- store[-1]
     f         <- as.array(sims[[Q.ind]]$f)[,1:Q,store, drop=F]
@@ -107,8 +108,8 @@ tune.sims     <- function(sims=NULL, burnin=1, thinning=1, Q=NULL, Q.meth=NULL, 
   post.mu     <- rowMeans(mu, 1)
   post.f      <- rowMeans(f, dims=2)
   post.load   <- rowMeans(lmat, dims=2)
-  post.psi    <- rowMeans(psi, 1)       
-        
+  post.psi    <- rowMeans(psi, 1)
+
   SS.load     <- colSums(post.load * post.load)
   communality <- sum(SS.load)
   prop.var    <- SS.load/nrow(post.load)
@@ -116,9 +117,10 @@ tune.sims     <- function(sims=NULL, burnin=1, thinning=1, Q=NULL, Q.meth=NULL, 
   prop.exp    <- communality/nrow(post.load)
   prop.uni    <- 1 - prop.exp
   if(sum(round(diag(tcrossprod(lmat[,,length(store)]) 
-                  + psi[,length(store)])) != 1) != 0
+                 +  psi[,length(store)])) != 1) != 0
   || prop.exp  > 1)         cat(paste0("Warning: chain may not have converged", "\n"))
 
+  class(post.load)        <- "loadings"
   results     <- list(means = mu, scores = f, loadings = lmat, uniquenesses = psi,
                       post.mu = post.mu, post.f = post.f, post.load = post.load, post.psi = post.psi,
                       store = store, SS.load = SS.load, communality = communality, 
