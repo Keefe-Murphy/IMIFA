@@ -15,9 +15,9 @@
   
     dimnames(mu.store)[[1]]   <- colnames(data)
     dimnames(f.store)[[1]]    <- rownames(data)
-    dimnames(f.store)[[2]]    <- paste0("Factor", 1:Q)
+    dimnames(f.store)[[2]]    <- paste0("Factor ", 1:Q)
     dimnames(load.store)[[1]] <- colnames(data)
-    dimnames(load.store)[[2]] <- paste0("Factor", 1:Q)
+    dimnames(load.store)[[2]] <- paste0("Factor ", 1:Q)
     dimnames(psi.store)[[1]]  <- colnames(data)
     dimnames(mu.store)[[2]]   <- paste0("Iteration", 1:n.store)
     dimnames(f.store)[[3]]    <- paste0("Iteration", 1:n.store)
