@@ -12,18 +12,21 @@
     f.store     <- array(NA, dim=c(N, Q, n.store))
     load.store  <- array(NA, dim=c(P, Q, n.store))
     psi.store   <- matrix(NA, nr=P, nc=n.store)
+    post.Sigma  <- matrix(0, nr=P, nc=P)
   
-    dimnames(mu.store)[[1]]   <- colnames(data)
+    cnames      <- colnames(data)
+    dimnames(mu.store)[[1]]   <- cnames
     dimnames(f.store)[[1]]    <- rownames(data)
     dimnames(f.store)[[2]]    <- paste0("Factor ", 1:Q)
-    dimnames(load.store)[[1]] <- colnames(data)
+    dimnames(load.store)[[1]] <- cnames
     dimnames(load.store)[[2]] <- paste0("Factor ", 1:Q)
-    dimnames(psi.store)[[1]]  <- colnames(data)
+    dimnames(psi.store)[[1]]  <- cnames
     dimnames(mu.store)[[2]]   <- paste0("Iteration", 1:n.store)
     dimnames(f.store)[[3]]    <- paste0("Iteration", 1:n.store)
     dimnames(load.store)[[3]] <- paste0("Iteration", 1:n.store)
     dimnames(psi.store)[[2]]  <- paste0("Iteration", 1:n.store)
-      
+    dimnames(post.Sigma)      <- list(cnames, cnames)
+    
     sigma.mu    <- 1/sigma.mu
     sigma.l     <- 1/sigma.l
     mu          <- sim.mu.p(P, sigma.mu)  
@@ -64,14 +67,18 @@
       
       if(iter > burnin && iter %% thinning == 0) {
         new.iter    <- ceiling((iter - burnin)/thinning)
+        psi  <- 1/psi.inv
         mu.store[,new.iter]    <- mu  
         f.store[,,new.iter]    <- f
         load.store[,,new.iter] <- lmat
-        psi.store[,new.iter]   <- 1/psi.inv
+        psi.store[,new.iter]   <- psi
+        Sigma                  <- tcrossprod(lmat) + diag(psi)
+        post.Sigma             <- post.Sigma + Sigma/n.store
       }  
     }
-  return(list(mu     = mu.store,
-              f      = f.store, 
-              load   = load.store, 
-              psi    = psi.store))
+  return(list(mu         = mu.store,
+              f          = f.store, 
+              load       = load.store, 
+              psi        = psi.store,
+              post.Sigma = post.Sigma))
   }

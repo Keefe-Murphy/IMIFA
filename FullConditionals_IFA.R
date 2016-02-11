@@ -50,13 +50,13 @@
   }
     
 # Global Shrinkage
-  sim.delta1    <- function(Q, P, delta.a1, delta, tau, sum.term, ...) {
-    rgamma(1, shape=delta.a1 + P * Q/2, 
+  sim.delta1    <- function(Q, P, alpha.d1, delta, tau, sum.term, ...) {
+    rgamma(1, shape=alpha.d1 + P * Q/2, 
               rate=1 + 0.5/delta[1] * tau %*% sum.term)
   }
 
-  sim.deltak    <- function(Q, P, k, delta.a2, delta, tau, sum.term) {
-    rgamma(1, shape=delta.a2 + P/2 * (Q - k + 1), 
+  sim.deltak    <- function(Q, P, k, alpha.d2, delta, tau, sum.term) {
+    rgamma(1, shape=alpha.d2 + P/2 * (Q - k + 1), 
               rate=1 + 0.5/delta[k] * tau[k:Q] %*% sum.term[k:Q])
   }
 
@@ -91,8 +91,8 @@
     }
 
   # Global Shrinkage
-    sim.d.p     <- function(Q, delta.a1, delta.a2, ...) {
-        delta1  <- rgamma(n=1,     shape=delta.a1, rate=1)
-        deltak  <- rgamma(n=Q - 1, shape=delta.a2, rate=1)
+    sim.d.p     <- function(Q, alpha.d1, alpha.d2, ...) {
+        delta1  <- rgamma(n=1,     shape=alpha.d1, rate=1)
+        deltak  <- rgamma(n=Q - 1, shape=alpha.d2, rate=1)
           c(delta1, deltak)
     }

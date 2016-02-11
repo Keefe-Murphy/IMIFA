@@ -26,13 +26,13 @@
   # Cereal 
     cereal   <- read.csv(paste0(getwd(), "/Data/", "Cereal.csv", sep=""))
   # Simulated data
-   #SimData  <- sim.imifa(N=20, P=100, Q=4)
+   #SimData  <- sim.imifa(N=20, P=100, Q=15)
    #save(SimData, file=paste0(getwd(),"/Data/Simulated_Data.Rdata", sep=""))
     load(file=paste0(getwd(), "/Data/Simulated_Data.Rdata", sep=""), envir=.GlobalEnv)
 
 # Run the Gibbs Sampler
-  sim  <- imifa.gibbs(wine, method="IFA")
- #sim  <- imifa.gibbs(wine, method="classify", Label=Lab)
+  sim  <- imifa(wine, method="IFA")
+ #sim  <- imifa(wine, method="classify", Label=Lab)
 
 # Save / Load results
   save(sim, file=paste0(getwd(), "/Simulations/", attr(sim, "Name"), 

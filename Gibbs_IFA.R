@@ -6,7 +6,7 @@
   gibbs.IFA     <- function(Q, data, n.iters, N, P, 
                            sigma.mu, psi.alpha, psi.beta, 
                            burnin, thinning, n.store, verbose, 
-                           phi.nu, delta.a1, delta.a2, 
+                           phi.nu, alpha.d1, alpha.d2, 
                            adapt, b0, b1, prop, epsilon, ...) {    
     
   # Define & initialise variables
@@ -14,25 +14,28 @@
     f.store     <- array(0, dim=c(N, Q, n.store))
     load.store  <- array(0, dim=c(P, Q, n.store))
     psi.store   <- matrix(0, nr=P, nc=n.store)
+    post.Sigma  <- matrix(0, nr=P, nc=P)
     Q.store     <- c(Q, rep(0, n.store - 1))
     
-    dimnames(mu.store)[[1]]   <- colnames(data)
+    cnames      <- colnames(data)
+    dimnames(mu.store)[[1]]   <- cnames
     dimnames(f.store)[[1]]    <- rownames(data)
     dimnames(f.store)[[2]]    <- paste0("Factor ", 1:Q)
-    dimnames(load.store)[[1]] <- colnames(data)
+    dimnames(load.store)[[1]] <- cnames
     dimnames(load.store)[[2]] <- paste0("Factor ", 1:Q)
-    dimnames(psi.store)[[1]]  <- colnames(data)
+    dimnames(psi.store)[[1]]  <- cnames
     dimnames(mu.store)[[2]]   <- paste0("Iteration", 1:n.store)
     dimnames(f.store)[[3]]    <- paste0("Iteration", 1:n.store)
     dimnames(load.store)[[3]] <- paste0("Iteration", 1:n.store)
     dimnames(psi.store)[[2]]  <- paste0("Iteration", 1:n.store)
+    dimnames(post.Sigma)      <- list(cnames, cnames)
     
     sigma.mu    <- 1/sigma.mu
     mu          <- sim.mu.p(sigma.mu, P)  
     f           <- sim.f.p(Q, N)
     psi.inv     <- sim.pi.p(P, psi.alpha, psi.beta)
     phi         <- sim.p.p(Q, P, phi.nu)
-    delta       <- sim.d.p(Q, delta.a1, delta.a2)
+    delta       <- sim.d.p(Q, alpha.d1, alpha.d2)
     tau         <- cumprod(delta)
     lmat        <- matrix(0, nr=P, nc=Q)
     for(j in 1:P) {
@@ -78,10 +81,10 @@
           
       # Global Shrinkage
         sum.term     <- diag(crossprod(phi, load.2))
-        delta[1]     <- sim.delta1(Q, P, delta.a1, delta, tau, sum.term)
+        delta[1]     <- sim.delta1(Q, P, alpha.d1, delta, tau, sum.term)
         tau          <- cumprod(delta)
         for(k in 2:Q) { 
-          delta[k]   <- sim.deltak(Q, P, k, delta.a2, delta, tau, sum.term)
+          delta[k]   <- sim.deltak(Q, P, k, alpha.d2, delta, tau, sum.term)
           tau        <- cumprod(delta)      
         }
       
@@ -98,7 +101,7 @@
               Q      <- Q + 1
               f      <- cbind(f, rnorm(n=N, mean=0, sd=1))         
               phi    <- cbind(phi, rgamma(n=P, shape=phi.nu/2, rate=phi.nu/2))
-              delta  <- c(delta, rgamma(n=1, shape=delta.a2, rate=1))
+              delta  <- c(delta, rgamma(n=1, shape=alpha.d2, rate=1))
               tau    <- cumprod(delta)
               lmat   <- cbind(lmat, rnorm(n=P, mean=0, sd=sqrt(1/phi[,Q] * 1/tau[Q])))
             } else if(numred > 0) {    # remove redundant columns
@@ -115,16 +118,20 @@
       
       if(iter > burnin && iter %% thinning == 0) {
         new.iter     <- ceiling((iter - burnin)/thinning)
+        psi  <- 1/psi.inv
         mu.store[,new.iter]       <- mu  
         f.store[,1:Q,new.iter]    <- f
         load.store[,1:Q,new.iter] <- lmat
-        psi.store[,new.iter]      <- 1/psi.inv  
+        psi.store[,new.iter]      <- psi
+        Sigma                     <- tcrossprod(lmat) + diag(psi)
+        post.Sigma                <- post.Sigma + Sigma/n.store
         Q.store[new.iter]         <- Q
       }
     }
-  return(list(mu      = mu.store,
-              f       = as.simple_sparse_array(f.store), 
-              load    = as.simple_sparse_array(load.store), 
-              psi     = psi.store,
-              Q.store = Q.store))
+  return(list(mu         = mu.store,
+              f          = as.simple_sparse_array(f.store), 
+              load       = as.simple_sparse_array(load.store), 
+              psi        = psi.store,
+              post.Sigma = post.Sigma,
+              Q.store    = Q.store))
   }

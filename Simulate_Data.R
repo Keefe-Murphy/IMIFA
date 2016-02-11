@@ -2,7 +2,7 @@
 ### Simulate Data (Single & Shrinkage Case) ###
 ###############################################
 
-sim.imifa     <- function(N=1500, P=25, Q=2) {
+sim.imifa     <- function(N=1000, P=25, Q=5) {
    
   # N.old     <- N
   # G         <- 3
@@ -27,7 +27,7 @@ sim.imifa     <- function(N=1500, P=25, Q=2) {
     mu.load   <- rnorm(Q, 0, Q/2)
     load.true <- mu.load + v.load
     
-    psi.true  <- 1/rgamma(n=P, shape=2, rate=0.3)                            
+    psi.true  <- 1/rgamma(n=P, shape=4, rate=1)                            
     
     names(mu.true)      <- c(1:P)
     colnames(load.true) <- paste("Factor", 1:Q)

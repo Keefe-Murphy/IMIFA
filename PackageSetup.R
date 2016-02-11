@@ -11,12 +11,12 @@ if(length(setdiff(packages, (.packages()))) > 0) {
 }
 rm(packages)
 
-imifa.gibbs <- function(dat=NULL, method=c("IMIFA", "MIFA", "MFA", "IFA", "FA", "classify"), n.iters=50000,
+imifa       <- function(dat=NULL, method=c("IMIFA", "MIFA", "MFA", "IFA", "FA", "classify"), n.iters=50000,
                         Label=NULL, factanal=F, Q.star=NULL, range.Q=NULL, Q.fac=NULL, thinning=2,
                         burnin=n.iters/5 - 1, n.store=ceiling((n.iters - burnin)/thinning),
                         centering=T, scaling=c("unit", "pareto", "none"), verbose=T, adapt=T, b0=NULL, b1=NULL, 
                         prop=NULL, epsilon=NULL, sigma.mu=NULL, sigma.l=NULL, psi.alpha=NULL, psi.beta=NULL,
-                        phi.nu=NULL, delta.a1=NULL, delta.a2=NULL, profile=F, ...) {
+                        phi.nu=NULL, alpha.d1=NULL, alpha.d2=NULL, profile=F, ...) {
   
   method    <- match.arg(method)
   scaling   <- match.arg(scaling)
@@ -45,15 +45,15 @@ imifa.gibbs <- function(dat=NULL, method=c("IMIFA", "MIFA", "MFA", "IFA", "FA", 
   P         <- ncol(dat)
   if(is.null(rownames(dat))) rownames(dat) <- c(1:N)
   if(missing("sigma.mu"))    sigma.mu      <- 0.5
-  if(missing("psi.alpha"))   psi.alpha     <- 2
-  if(missing("psi.beta"))    psi.beta      <- 0.6
+  if(missing("psi.alpha"))   psi.alpha     <- 4
+  if(missing("psi.beta"))    psi.beta      <- 1
   if(method == "FA") {
     if(missing("sigma.l"))   sigma.l       <- 0.5
   } else if(method == "IFA" ||
             method == "classify") {
     if(missing("phi.nu"))    phi.nu        <- 3
-    if(missing("delta.a1"))  delta.a1      <- 2.1
-    if(missing("delta.a2"))  delta.a2      <- 12.1
+    if(missing("alpha.d1"))  alpha.d1      <- 2
+    if(missing("alpha.d2"))  alpha.d2      <- 10
     if(missing("b0"))        b0            <- 0.1
     if(missing("b1"))        b1            <- 0.00005
     if(missing("prop"))      prop          <- 3/4
@@ -72,7 +72,7 @@ imifa.gibbs <- function(dat=NULL, method=c("IMIFA", "MIFA", "MFA", "IFA", "FA", 
   if(profile)  Rprof()
   if(method == "IFA" ||
      method == "classify") {
-     gibbs.arg     <- append(gibbs.arg, list(phi.nu=phi.nu, delta.a1=delta.a1, delta.a2=delta.a2,
+     gibbs.arg     <- append(gibbs.arg, list(phi.nu=phi.nu, alpha.d1=alpha.d1, alpha.d2=alpha.d2,
                                              adapt=adapt, b0=b0, b1=b1, prop=prop, epsilon=epsilon))
   if(missing(Q.star)) {
      Q.star        <- min(floor(3 * log(P)), P)
