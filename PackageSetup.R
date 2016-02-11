@@ -2,7 +2,7 @@
 ### Set-up for Keefe Murphy's IMIFA R Package ###
 #################################################
 
-packages  <- c("MCMCpack", "slam")
+packages    <- c("MCMCpack", "slam")
 if(length(setdiff(packages, rownames(installed.packages()))) > 0) {
   invisible(install.packages(setdiff(packages, rownames(installed.packages()))))
 }
@@ -14,23 +14,30 @@ rm(packages)
 imifa.gibbs <- function(dat=NULL, method=c("IMIFA", "MIFA", "MFA", "IFA", "FA", "classify"), n.iters=50000,
                         Label=NULL, factanal=F, Q.star=NULL, range.Q=NULL, Q.fac=NULL, thinning=2,
                         burnin=n.iters/5 - 1, n.store=ceiling((n.iters - burnin)/thinning),
-                        centering=T, scaling=T, verbose=T, adapt=T, b0=NULL, b1=NULL, prop=NULL,
-                        epsilon=NULL, sigma.mu=NULL, sigma.l=NULL, psi.alpha=NULL, psi.beta=NULL,
+                        centering=T, scaling=c("unit", "pareto", "none"), verbose=T, adapt=T, b0=NULL, b1=NULL, 
+                        prop=NULL, epsilon=NULL, sigma.mu=NULL, sigma.l=NULL, psi.alpha=NULL, psi.beta=NULL,
                         phi.nu=NULL, delta.a1=NULL, delta.a2=NULL, profile=F, ...) {
   
   method    <- match.arg(method)
+  scaling   <- match.arg(scaling)
   if(missing(dat))                    stop("Dataset must be supplied")
   if(!exists(as.character(match.call()$dat),
              envir=.GlobalEnv))       stop(paste0("Object ", match.call()$dat, " not found"))
   if(!is.element(factanal,  c(T, F))) stop("Arg. must be TRUE or FALSE")
   if(!is.element(centering, c(T, F))) stop("Arg. must be TRUE or FALSE")
-  if(!is.element(scaling,   c(T, F))) stop("Arg. must be TRUE or FALSE")
   if(!is.element(verbose,   c(T, F))) stop("Arg. must be TRUE or FALSE")
   if(!is.element(profile,   c(T, F))) stop("Arg. must be TRUE or FALSE")
   
   # Remove non-numeric columns & apply centering & scaling if necessary 
   dat       <- as.data.frame(dat)
   dat       <- dat[sapply(dat, is.numeric)]
+  if(scaling == "pareto") {
+    scaling <- sqrt(as.matrix(apply(data, 2, sd)))
+  } else if(scaling == "unit") {
+    scaling <- T
+  } else {
+    scaling <- F
+  }
   dat       <- scale(dat, center=centering, scale=scaling)
   
   # Define full conditionals, hyperparamters & Gibbs Sampler function for desired method
