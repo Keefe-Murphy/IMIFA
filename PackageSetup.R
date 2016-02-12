@@ -13,20 +13,29 @@ rm(packages)
 
 imifa       <- function(dat=NULL, method=c("IMIFA", "MIFA", "MFA", "IFA", "FA", "classify"), n.iters=50000,
                         Label=NULL, factanal=F, Q.star=NULL, range.Q=NULL, Q.fac=NULL, thinning=2,
-                        burnin=n.iters/5 - 1, n.store=ceiling((n.iters - burnin)/thinning),
+                        burnin=n.iters/5, n.store=ceiling((n.iters - burnin)/thinning),
                         centering=T, scaling=c("unit", "pareto", "none"), verbose=T, adapt=T, b0=NULL, b1=NULL, 
                         prop=NULL, epsilon=NULL, sigma.mu=NULL, sigma.l=NULL, psi.alpha=NULL, psi.beta=NULL,
-                        phi.nu=NULL, alpha.d1=NULL, alpha.d2=NULL, profile=F, ...) {
+                        phi.nu=NULL, alpha.d1=NULL, alpha.d2=NULL, profile=F, 
+                        mu.switch=T, f.switch=T, load.switch=T, psi.switch=T, ...) {
   
   method    <- match.arg(method)
   scaling   <- match.arg(scaling)
   if(missing(dat))                  stop("Dataset must be supplied")
   if(!exists(as.character(match.call()$dat),
              envir=.GlobalEnv))     stop(paste0("Object ", match.call()$dat, " not found"))
-  if(!is.logical(factanal))         stop("Arg. must be TRUE or FALSE")
-  if(!is.logical(centering))        stop("Arg. must be TRUE or FALSE")
-  if(!is.logical(verbose))          stop("Arg. must be TRUE or FALSE")
-  if(!is.logical(profile))          stop("Arg. must be TRUE or FALSE")
+  if(!is.logical(factanal))         stop("factanal  must be TRUE or FALSE")
+  if(!is.logical(centering))        stop("centering must be TRUE or FALSE")
+  if(!is.logical(verbose))          stop("verbose   must be TRUE or FALSE")
+  if(!is.logical(profile))          stop("profile   must be TRUE or FALSE")
+  if(!is.element(method, c("FA", "IFA"))) {
+    centering  <- F
+  }
+  if(centering && missing(mu.switch)) {
+    mu.switch  <- F 
+  }
+  switches  <- c(mu.sw=mu.switch, f.sw=f.switch, l.sw=load.switch, p.sw=psi.switch)
+  if(!is.logical(switches))         stop("All logical switches must be TRUE or FALSE")
   
   # Remove non-numeric columns & apply centering & scaling if necessary 
   dat       <- as.data.frame(dat)
@@ -68,7 +77,7 @@ imifa       <- function(dat=NULL, method=c("IMIFA", "MIFA", "MFA", "IFA", "FA", 
   }
   gibbs.arg <- list(n.iters=n.iters, P=P, sigma.mu=sigma.mu, 
                     psi.alpha=psi.alpha, psi.beta=psi.beta, burnin=burnin, 
-                    thinning=thinning, n.store=n.store, verbose=verbose)
+                    thinning=thinning, n.store=n.store, verbose=verbose, sw=switches)
   if(profile)  Rprof()
   if(method == "IFA" ||
      method == "classify") {
@@ -137,7 +146,9 @@ imifa       <- function(dat=NULL, method=c("IMIFA", "MIFA", "MFA", "IFA", "FA", 
   attr(imifa, "Center")  <- centering
   attr(imifa, "Scaling") <- scaling
   attr(imifa, "Store")   <- n.store
-  if(method == "IFA") {
+  attr(imifa, "Switch")  <- switches
+  if(method == "IFA" ||
+     length(range.Q) > 1) {
     attr(imifa, "Time")  <- tot.time
   } else {
     attr(imifa, "Time")  <- list(Total = tot.time, Average = avg.time) 

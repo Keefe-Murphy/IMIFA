@@ -2,8 +2,8 @@
 ### IMIFA Plotting Functions ###
 ################################
 
-plot.IMIFA  <- function(results=NULL, plot.meth=NULL, var=NULL, Label=NULL, fac=NULL,
-                        ind=NULL, heat=T, n.fac=NULL, type=c("n", "p", "l"), mat=T, ... ) {
+plot.IMIFA  <- function(results=NULL, plot.meth=NULL, var=c("means", "scores", "loadings", "uniquenesses"), Label=NULL, 
+                        fac=NULL, ind=NULL, heat=T, n.fac=NULL, type=c("n", "p", "l"), mat=T, ... ) {
  
   if(missing(results))                stop("Results must be supplied")
   if(!exists(as.character(match.call()$results),
@@ -17,10 +17,13 @@ plot.IMIFA  <- function(results=NULL, plot.meth=NULL, var=NULL, Label=NULL, fac=
   if(missing(plot.meth))              stop("What type of plot would you like to produce?")
   plot.meth <- match.arg(plot.meth, c("acf", "cum.var", "posterior", "trace"))
   type      <- match.arg(type)
-  if(plot.meth != "cum.var") {
-    if(missing(var))                  stop("What variable would you like to plot?")               
-    var     <- match.arg(var, c("means", "scores", "loadings", "uniquenesses"))
-  }
+  if(plot.meth != "cum.var" &&
+     missing(var))                    stop("What variable would you like to plot?")               
+  switches  <- attr(results, "Switch")
+  names(switches)   <- formals(sys.function(sys.parent()))$var
+  var       <- match.arg(var)
+  if(!switches[var] && 
+     plot.meth != "cum.var")          stop(paste0(var, " were not stored"))
   if(!is.logical(mat))                stop("Arg. must be TRUE or FALSE")
   if(n.fac  == 1 ||
      !missing(ind))        mat <- F
@@ -164,7 +167,7 @@ plot.IMIFA  <- function(results=NULL, plot.meth=NULL, var=NULL, Label=NULL, fac=
       if(length(ind) > 1)             stop("Length of indexes for plotting cannot be greater than 1")
       if(ind    >  n.var)             stop(paste0("Length of second index cannot be greater than ", n.var))
     }
-    if(!mat) iter <- 1:length(results$store)
+    if(!mat) iter <- 1:length(attr(results, "Store"))
     
     if(var == "means") {
       plot.x   <- results$means
