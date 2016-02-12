@@ -116,17 +116,27 @@ tune.sims     <- function(sims=NULL, burnin=1, thinning=1, Q=NULL, Q.meth=NULL, 
   cum.var     <- cumsum(prop.var)          
   prop.exp    <- communality/nrow(post.load)
   prop.uni    <- 1 - prop.exp
-  if(sum(round(diag(tcrossprod(lmat[,,length(store)]) 
-                 +  diag(psi[,length(store)]))) != 1) != 0
-  || sum(abs(post.psi - (1 - post.psi)) < 0)    != 0
+
+  data        <- as.data.frame(get(tolower(attr(sims, "Name"))))
+  data        <- data[sapply(data, is.numeric)]
+  data        <- scale(data, center=attr(sims, "Center"), scale=attr(sims, "Scaling"))
+  cov.estim   <- sims[[Q.ind]]$post.Sigma
+  cov.empir   <- cov(data)
+  error       <- cov.empir - cov.estim
+  MSE         <- mean(error * error)
+  MAD         <- mean(abs(error))
+  error       <- list(MSE=MSE, MAD=MAD)
+  print(error)
+  if(sum(round(diag(cov.estim)) != 1) != 0
+  || sum(abs(post.psi - (1-post.psi))  < 0) != 0
   || prop.exp  > 1)             cat(paste0("Warning: chain may not have converged", "\n"))
 
   class(post.load)        <- "loadings"
-  results     <- list(means = mu, scores = f, loadings = lmat, uniquenesses = psi,
-                      post.mu = post.mu, post.f = post.f, post.load = post.load, post.psi = post.psi,
-                      store = store, SS.load = SS.load, communality = communality, 
-                      prop.var = prop.var, cum.var = cum.var, 
-                      prop.exp = prop.exp, prop.uni = prop.uni, Q = Q)
+  results     <- list(means=mu, scores=f, loadings=lmat, uniquenesses=psi,
+                      post.mu=post.mu, post.f=post.f, post.load=post.load, 
+                      post.psi=post.psi, store=store, SS.load=SS.load, communality=communality, 
+                      Q=Q, prop.var=prop.var, cum.var=cum.var, prop.exp=prop.exp, 
+                      prop.uni=prop.uni, error=error)
   if(method   == "IFA") {
     results   <- unlist(list(results, res.bar), recursive=F)
   }

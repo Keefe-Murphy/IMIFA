@@ -5,23 +5,23 @@
 plot.IMIFA  <- function(results=NULL, plot.meth=NULL, var=NULL, Label=NULL, fac=NULL,
                         ind=NULL, heat=T, n.fac=NULL, type=c("n", "p", "l"), mat=T, ... ) {
  
-  if(missing(results))                 stop("Results must be supplied")
+  if(missing(results))                stop("Results must be supplied")
   if(!exists(as.character(match.call()$results),
-             envir=.GlobalEnv))        stop(paste0("Object ", match.call()$results, " not found"))
-  if(class(results) != "IMIFA")        stop(paste0("Results object of class 'IMIFA' must be supplied"))
+             envir=.GlobalEnv))       stop(paste0("Object ", match.call()$results, " not found"))
+  if(class(results) != "IMIFA")       stop(paste0("Results object of class 'IMIFA' must be supplied"))
   if(missing(n.fac))     n.fac <- results$Q
-  if(n.fac   > results$Q)              stop("Cannot plot this many factors")
+  if(n.fac   > results$Q)             stop("Cannot plot this many factors")
   n.var     <- nrow(results$post.load)
   n.obs     <- nrow(results$post.f)
-  if(!is.element(heat, c(T, F)))       stop("Arg. must be TRUE or FALSE")
-  if(missing(plot.meth))               stop("What type of plot would you like to produce?")
+  if(!is.logical(heat))               stop("Arg. must be TRUE or FALSE")
+  if(missing(plot.meth))              stop("What type of plot would you like to produce?")
   plot.meth <- match.arg(plot.meth, c("acf", "cum.var", "posterior", "trace"))
   type      <- match.arg(type)
   if(plot.meth != "cum.var") {
-    if(missing(var))                   stop("What variable would you like to plot?")               
+    if(missing(var))                  stop("What variable would you like to plot?")               
     var     <- match.arg(var, c("means", "scores", "loadings", "uniquenesses"))
   }
-  if(!is.element(mat, c(T, F)))        stop("Arg. must be TRUE or FALSE")
+  if(!is.logical(mat))                stop("Arg. must be TRUE or FALSE")
   if(n.fac  == 1 ||
      !missing(ind))        mat <- F
   
@@ -30,16 +30,16 @@ plot.IMIFA  <- function(results=NULL, plot.meth=NULL, var=NULL, Label=NULL, fac=
        var == "loadings") {
       if(missing(ind))     ind <- c(1, 1)
       if(!missing(fac)) ind[2] <- fac
-      if(length(ind) > 2)              stop("Length of indexes for plotting cannot be greater than 2")
+      if(length(ind) > 2)             stop("Length of indexes for plotting cannot be greater than 2")
       if(var == "scores"   && 
-         ind[1] >  n.obs)              stop(paste0("Length of first index cannot be greater than ", n.obs))
+         ind[1] >  n.obs)             stop(paste0("Length of first index cannot be greater than ", n.obs))
       if(var == "loadings" && 
-         ind[1] >  n.var)              stop(paste0("Length of first index cannot be greater than ", n.var))
-      if(ind[2] >  n.fac)              stop(paste0("Length of second index cannot be greater than ", n.fac))
+         ind[1] >  n.var)             stop(paste0("Length of first index cannot be greater than ", n.var))
+      if(ind[2] >  n.fac)             stop(paste0("Length of second index cannot be greater than ", n.fac))
     } else {
       if(missing(ind))     ind <- 1
-      if(length(ind) > 1)              stop("Length of indexes for plotting cannot be greater than 1")
-      if(ind    > n.var)               stop(paste0("Length of index cannot be greater than ", n.var))
+      if(length(ind) > 1)             stop("Length of indexes for plotting cannot be greater than 1")
+      if(ind    > n.var)              stop(paste0("Length of index cannot be greater than ", n.var))
     }
     if(var == "means") {
       acf(results$means[ind,], main="Means")
@@ -67,7 +67,7 @@ plot.IMIFA  <- function(results=NULL, plot.meth=NULL, var=NULL, Label=NULL, fac=
      }
     cat(paste0("Proportion of Variation Explained = ",
                 round(prop.exp[length(prop.exp)]*100, 2), "%", "\n"))
-    if(max(prop.exp) > 1)              cat(paste0("Warning: chain may not have converged", "\n"))
+    if(max(prop.exp) > 1)             cat(paste0("Warning: chain may not have converged", "\n"))
   }
   
   if(plot.meth == "posterior") {
@@ -80,8 +80,8 @@ plot.IMIFA  <- function(results=NULL, plot.meth=NULL, var=NULL, Label=NULL, fac=
         ind    <- 1
       } else {
         if(length(ind) > 2 ||
-           ind[1] == ind[2])           stop("Only two columns can be plotted")
-        if(ind[2]  > n.fac)            stop(paste0("Only the first ", n.fac, " columns can be plotted"))
+           ind[1] == ind[2])          stop("Only two columns can be plotted")
+        if(ind[2]  > n.fac)           stop(paste0("Only the first ", n.fac, " columns can be plotted"))
       }
     }
     if(var  == "means") {
@@ -91,12 +91,12 @@ plot.IMIFA  <- function(results=NULL, plot.meth=NULL, var=NULL, Label=NULL, fac=
     }
     if(var == "scores") {
       plot.x   <- results$post.f
-      if(ind[1] > n.obs)               stop(paste0("Only the first ", n.obs, " scores can be plotted"))
+      if(ind[1] > n.obs)              stop(paste0("Only the first ", n.obs, " scores can be plotted"))
       if(!missing(Label)) {
         if(!exists(as.character(match.call()$Label),
-                   envir=.GlobalEnv))  stop(paste0("Object ", match.call()$Label, " not found"))
+                   envir=.GlobalEnv)) stop(paste0("Object ", match.call()$Label, " not found"))
         Label  <- as.factor(Label)
-        if(length(Label) != n.obs)     stop(paste0("Labels must be a factor of length N=",  n.obs))
+        if(length(Label) != n.obs)    stop(paste0("Labels must be a factor of length N=",  n.obs))
       } else {
         Label  <- 1
         cat(paste0("Should the data be labelled?", "\n"))
@@ -132,7 +132,7 @@ plot.IMIFA  <- function(results=NULL, plot.meth=NULL, var=NULL, Label=NULL, fac=
                                     1/(n.fac - 1)), lty=2, lwd=1)
         par(mfrow=c(1, 1), mar=c(5.1, 4.1, 4.1, 2.1))
       } else {
-        if(ind[1] > n.var)             stop(paste0("Only the first ", n.var, " variables can be plotted"))
+        if(ind[1] > n.var)            stop(paste0("Only the first ", n.var, " variables can be plotted"))
         if(n.fac != 1) {
           plot(plot.x[,ind[1]], plot.x[,ind[2]], type=type, main="Posterior Loadings", 
                xlab=paste0("Factor ", ind[1]), ylab=paste0("Factor ", ind[2]))
@@ -156,13 +156,13 @@ plot.IMIFA  <- function(results=NULL, plot.meth=NULL, var=NULL, Label=NULL, fac=
        var  == "loadings") {
       if(missing(ind))     ind <- c(1, 1)
       if(!missing(fac)) ind[2] <- fac
-      if(length(ind) > 2)              stop("Length of indexes for plotting cannot be greater than 2")
-      if(ind[1] >  n.var)              stop(paste0("Length of first index cannot be greater than ", n.var))
-      if(ind[2] >  n.fac)              stop(paste0("Length of second index cannot be greater than ", n.fac))
+      if(length(ind) > 2)             stop("Length of indexes for plotting cannot be greater than 2")
+      if(ind[1] >  n.var)             stop(paste0("Length of first index cannot be greater than ", n.var))
+      if(ind[2] >  n.fac)             stop(paste0("Length of second index cannot be greater than ", n.fac))
     } else {
       if(missing(ind))     ind <- 1
-      if(length(ind) > 1)              stop("Length of indexes for plotting cannot be greater than 1")
-      if(ind    >  n.var)              stop(paste0("Length of second index cannot be greater than ", n.var))
+      if(length(ind) > 1)             stop("Length of indexes for plotting cannot be greater than 1")
+      if(ind    >  n.var)             stop(paste0("Length of second index cannot be greater than ", n.var))
     }
     if(!mat) iter <- 1:length(results$store)
     

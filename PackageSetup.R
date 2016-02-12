@@ -20,19 +20,19 @@ imifa       <- function(dat=NULL, method=c("IMIFA", "MIFA", "MFA", "IFA", "FA", 
   
   method    <- match.arg(method)
   scaling   <- match.arg(scaling)
-  if(missing(dat))                    stop("Dataset must be supplied")
+  if(missing(dat))                  stop("Dataset must be supplied")
   if(!exists(as.character(match.call()$dat),
-             envir=.GlobalEnv))       stop(paste0("Object ", match.call()$dat, " not found"))
-  if(!is.element(factanal,  c(T, F))) stop("Arg. must be TRUE or FALSE")
-  if(!is.element(centering, c(T, F))) stop("Arg. must be TRUE or FALSE")
-  if(!is.element(verbose,   c(T, F))) stop("Arg. must be TRUE or FALSE")
-  if(!is.element(profile,   c(T, F))) stop("Arg. must be TRUE or FALSE")
+             envir=.GlobalEnv))     stop(paste0("Object ", match.call()$dat, " not found"))
+  if(!is.logical(factanal))         stop("Arg. must be TRUE or FALSE")
+  if(!is.logical(centering))        stop("Arg. must be TRUE or FALSE")
+  if(!is.logical(verbose))          stop("Arg. must be TRUE or FALSE")
+  if(!is.logical(profile))          stop("Arg. must be TRUE or FALSE")
   
   # Remove non-numeric columns & apply centering & scaling if necessary 
   dat       <- as.data.frame(dat)
   dat       <- dat[sapply(dat, is.numeric)]
   if(scaling == "pareto") {
-    scaling <- sqrt(as.matrix(apply(data, 2, sd)))
+    scaling <- sqrt(as.matrix(apply(dat, 2, sd)))
   } else if(scaling == "unit") {
     scaling <- T
   } else {
@@ -76,23 +76,23 @@ imifa       <- function(dat=NULL, method=c("IMIFA", "MIFA", "MFA", "IFA", "FA", 
                                              adapt=adapt, b0=b0, b1=b1, prop=prop, epsilon=epsilon))
   if(missing(Q.star)) {
      Q.star        <- min(floor(3 * log(P)), P)
-  } else if(Q.star  > P)              stop("Number of factors must be less than the number of variables")
-    if(!is.element(adapt,   c(T, F))) stop("Arg. must be TRUE or FALSE")
+  } else if(Q.star  > P)            stop("Number of factors must be less than the number of variables")
+    if(!is.logical(adapt))          stop("Arg. must be TRUE or FALSE")
     if(method == "IFA") {
       imifa        <- vector("list", length(Q.star))
       start.time   <- proc.time()
       imifa[[1]]   <- do.call(paste0("gibbs.", method),                          
                               args=append(list(data=dat, N=N, Q=Q.star), gibbs.arg))
     } else {
-      if(missing(Label))              stop("Data must be labelled for classification")
+      if(missing(Label))            stop("Data must be labelled for classification")
       if(!exists(as.character(match.call()$Label),
-                 envir=.GlobalEnv))   stop(paste0("Object ", match.call()$Label, " not found"))
+                 envir=.GlobalEnv)) stop(paste0("Object ", match.call()$Label, " not found"))
       Label   <- as.factor(Label)
-      if(length(Label) != N)          stop(paste0("Labels must be a factor of length N=",  n.obs))
+      if(length(Label) != N)        stop(paste0("Labels must be a factor of length N=",  n.obs))
       imifa   <- vector("list", nlevels(Label))
       start.time   <- proc.time()
       for(i in 1:nlevels(Label)) {
-        temp.dat   <- dat[Label==levels(Label)[i],]
+        temp.dat   <- dat[Label == levels(Label)[i],]
         imifa[[i]] <- do.call(paste0("gibbs.", "IFA"),
                               args=append(list(data=temp.dat, N=nrow(temp.dat), Q=Q.star), gibbs.arg))
         cat(paste0(round(i/nlevels(Label) * 100, 2), "% Complete\n"))
@@ -100,10 +100,10 @@ imifa       <- function(dat=NULL, method=c("IMIFA", "MIFA", "MFA", "IFA", "FA", 
     }
   } else if(method == "FA") {
     gibbs.arg      <- append(gibbs.arg, list(sigma.l))
-    if(missing(range.Q))              stop("Arg. range.Q must be specified")
+    if(missing(range.Q))            stop("Arg. range.Q must be specified")
     if((length(range.Q)  == 1 && range.Q >= P) || 
        (length(range.Q)   > 1 && any(range.Q) >= P))  
-                                      stop ("Number of factors must be less than the number of variables")
+                                    stop ("Number of factors must be less than the number of variables")
     imifa          <- vector("list", length(range.Q))
     if(length(range.Q)   == 1) {
       start.time   <- proc.time()
@@ -134,6 +134,8 @@ imifa       <- function(dat=NULL, method=c("IMIFA", "MIFA", "MFA", "IFA", "FA", 
                                    substr(method, 2, nchar(method)))
   attr(imifa, "Name")    <- paste0(toupper(substr(dat.name, 1, 1)),
                                    substr(dat.name, 2, nchar(dat.name)))
+  attr(imifa, "Center")  <- centering
+  attr(imifa, "Scaling") <- scaling
   attr(imifa, "Store")   <- n.store
   if(method == "IFA") {
     attr(imifa, "Time")  <- tot.time
@@ -143,9 +145,9 @@ imifa       <- function(dat=NULL, method=c("IMIFA", "MIFA", "MFA", "IFA", "FA", 
   if(verbose)               print(attr(imifa, "Time"))  
       
 # Vanilla 'factanal' for comparison purposes
-  if(!missing(Q.fac)) factanal  <- T
+  if(!missing(Q.fac)) factanal <- T
   if(factanal) {
-    if(missing(Q.fac)) Q.fac    <- round(sqrt(P))
+    if(missing(Q.fac)) Q.fac   <- round(sqrt(P))
     fac     <- factanal(dat, factors=Q.fac, control=list(nstart=50))
     imifa   <- append(imifa, list(fac=fac))
     names(imifa)         <- c(paste0("IMIFA", 1:(length(imifa) - 1)), "fac")
