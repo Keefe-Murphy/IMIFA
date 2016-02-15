@@ -55,7 +55,7 @@
   # Iterate
     for(iter in 2:n.iters) { 
       if(verbose) {
-        if(iter   < burnin && iter %% burnin/10 == 0) {
+        if(iter   < burnin && iter %% (burnin/10) == 0) {
           cat(paste0("Iteration: ", iter, "\n"))
         } else if (iter %% (n.iters/10) == 0) {
           cat(paste0("Iteration: ", iter, "\n"))
