@@ -38,7 +38,7 @@ imifa       <- function(dat=NULL, method=c("IMIFA", "MIFA", "MFA", "IFA", "FA", 
   if(!is.logical(switches))         stop("All logical switches must be TRUE or FALSE")
   
   # Remove non-numeric columns & apply centering & scaling if necessary 
-  dat       <- as.data.frame(dat)
+  dat       <- as.data.frame(wine)
   dat       <- dat[sapply(dat, is.numeric)]
   if(scaling == "pareto") {
     scaling <- sqrt(as.matrix(apply(dat, 2, sd)))
@@ -56,6 +56,13 @@ imifa       <- function(dat=NULL, method=c("IMIFA", "MIFA", "MFA", "IFA", "FA", 
   if(missing("sigma.mu"))    sigma.mu      <- 0.5
   if(missing("psi.alpha"))   psi.alpha     <- 4
   if(missing("psi.beta"))    psi.beta      <- 1
+ #if(missing("psi.alpha"))   psi.alpha     <- 2.5
+ #if(missing("psi.beta")) {
+ #  psi.beta       <- diag(cov(dat)) * (psi.alpha - 1)
+ #  if(isTRUE(scaling)) {
+ #    psi.beta     <- psi.beta[1]
+ #  }
+ #}   
   if(method == "FA") {
     if(missing("sigma.l"))   sigma.l       <- 0.5
   } else if(method == "IFA" ||

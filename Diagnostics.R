@@ -144,8 +144,9 @@ tune.sims     <- function(sims=NULL, burnin=0, thinning=1, Q=NULL, Q.meth=NULL, 
   MAD         <- mean(abs(error))
   error       <- list(MSE=MSE, MAD=MAD)
   print(error)
-  if(sum(round(diag(cov.estim)) != 1) != 0
-  || sum(abs(post.psi - (1 - post.psi))  < 0) != 0
+  if(sum(round(diag(cov.estim))  !=
+         round(diag(cov.empir))) != 0
+  || sum(abs(post.psi - (1 - post.psi)) < 0) != 0
   || prop.exp  > 1)             cat(paste0("Warning: chain may not have converged", "\n"))
 
   class(post.load)        <- "loadings"
