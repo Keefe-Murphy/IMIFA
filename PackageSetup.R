@@ -141,8 +141,7 @@ imifa       <- function(dat=NULL, method=c("IMIFA", "MIFA", "MFA", "IFA", "FA", 
   attr(imifa, "Factors") <- if(method == "FA") range.Q else Q.star
   attr(imifa, "Method")  <- paste0(toupper(substr(method, 1, 1)),
                                    substr(method, 2, nchar(method)))
-  attr(imifa, "Name")    <- paste0(toupper(substr(dat.name, 1, 1)),
-                                   substr(dat.name, 2, nchar(dat.name)))
+  attr(imifa, "Name")    <- dat.name
   attr(imifa, "Center")  <- centering
   attr(imifa, "Scaling") <- scaling
   attr(imifa, "Store")   <- n.store

@@ -134,7 +134,7 @@ tune.sims     <- function(sims=NULL, burnin=0, thinning=1, Q=NULL, Q.meth=NULL, 
     prop.exp  <- comm/nrow(post.load)
     prop.uni  <- 1 - prop.exp
   }
-  data        <- as.data.frame(get(tolower(attr(sims, "Name"))))
+  data        <- as.data.frame(get(attr(sims, "Name")))
   data        <- data[sapply(data, is.numeric)]
   data        <- scale(data, center=attr(sims, "Center"), scale=attr(sims, "Scaling"))
   cov.estim   <- sims[[Q.ind]]$post.Sigma
