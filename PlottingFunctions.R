@@ -13,7 +13,7 @@ plot.IMIFA  <- function(results=NULL, plot.meth=NULL, var=c("means", "scores", "
   if(n.fac   > results$Q)             stop("Cannot plot this many factors")
   n.var     <- nrow(results$post.load)
   n.obs     <- nrow(results$post.f)
-  if(!is.logical(heat))               stop("Arg. must be TRUE or FALSE")
+  if(!is.logical(heat))               stop("heat must be TRUE or FALSE")
   if(missing(plot.meth))              stop("What type of plot would you like to produce?")
   plot.meth <- match.arg(plot.meth, c("acf", "cum.var", "posterior", "trace"))
   type      <- match.arg(type)
@@ -24,7 +24,7 @@ plot.IMIFA  <- function(results=NULL, plot.meth=NULL, var=c("means", "scores", "
   var       <- match.arg(var)
   if(!switches[var] && 
      plot.meth != "cum.var")          stop(paste0(var, " were not stored"))
-  if(!is.logical(mat))                stop("Arg. must be TRUE or FALSE")
+  if(!is.logical(mat))                stop("mat must be TRUE or FALSE")
   if(n.fac  == 1 ||
      !missing(ind))        mat <- F
   
@@ -167,7 +167,7 @@ plot.IMIFA  <- function(results=NULL, plot.meth=NULL, var=c("means", "scores", "
       if(length(ind) > 1)             stop("Length of indexes for plotting cannot be greater than 1")
       if(ind    >  n.var)             stop(paste0("Length of second index cannot be greater than ", n.var))
     }
-    if(!mat) iter <- 1:length(attr(results, "Store"))
+    if(!mat) iter <- 1:attr(results, "Store")
     
     if(var == "means") {
       plot.x   <- results$means

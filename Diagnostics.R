@@ -2,16 +2,21 @@
 ### Tune Parameters (Single & Shrinkage Case) ###
 #################################################
 
-tune.sims     <- function(sims=NULL, burnin=0, thinning=1, Q=NULL, Q.meth=NULL, ...) {
+tune.sims     <- function(sims=NULL, burnin=0, thinning=1, 
+                          Q=NULL, Q.meth=NULL, recomp=F, ...) {
   if(missing(sims))             stop("Simulations must be supplied")
   if(!exists(as.character(match.call()$sims),
              envir=.GlobalEnv)) stop(paste0("Object ", match.call()$sims, " not found"))
   if(class(sims) != "IMIFA")    stop(paste0("Simulations object of class 'IMIFA' must be supplied"))
   store       <- seq(from=burnin + 1, to=attr(sims, "Store"), by=thinning)
-  if(length(store) <= 1)        stop(paste0("burnin must be less than the stored number of iterations"))
+  n.store     <- length(store)
+  if(n.store  <= 1)             stop(paste0("burnin must be less than the stored number of iterations"))
   method      <- attr(sims, "Method")
   n.fac       <- attr(sims, "Factors")
   sw          <- attr(sims, "Switch")
+  if(!is.logical(recomp))       stop("recomp must be TRUE or FALSE")
+  if(thinning  > 1    ||
+     burnin    > 0)   recomp <- T
   
   if(!missing(Q)) {
     if(Q > max(n.fac))          stop("Q cannot be greater than the number of factors in sim")
@@ -58,11 +63,12 @@ tune.sims     <- function(sims=NULL, burnin=0, thinning=1, Q=NULL, Q.meth=NULL, 
     prop.exp  <- rep(NA, length(n.fac))
   
   # Calculate Proportion of Variation Explained
-    if(sw["sw.l"]) {
+    if(sw["l.sw"]) {
+      temp.b  <- max(1, burnin)
       for(Q in Q.range) {
         lmat  <- sims[[Q]]$load[,1:n.fac[Q],store, drop=F]
-        l.temp      <- as.matrix(sims[[Q]]$load[,1:n.fac[Q],burnin])
-        for(b in 1:length(store)) {
+        l.temp      <- as.matrix(sims[[Q]]$load[,1:n.fac[Q],temp.b])
+        for(b in 1:n.store) {
           rot       <- procrustes(X=as.matrix(lmat[,,b]), Xstar=l.temp)$R
           lmat[,,b] <- lmat[,,b] %*% rot
         }
@@ -90,18 +96,20 @@ tune.sims     <- function(sims=NULL, burnin=0, thinning=1, Q=NULL, Q.meth=NULL, 
     }
     if(sw["l.sw"]) {
       lmat    <- sims[[Q.ind]]$load[,1:Q,store, drop=F]
-      l.temp  <- as.matrix(sims[[Q.ind]]$load[,1:Q,max(1, burnin)])
+      temp.b  <- max(1, burnin)
+      l.temp  <- as.matrix(sims[[Q.ind]]$load[,1:Q,temp.b])
     }
   } else {
     store     <- store[which(Q.store >= Q)]
-   #store     <- tail(store, 0.9 * length(store))
-    burnin    <- store[1]
+    n.store   <- length(store)
+   #store     <- tail(store, 0.9 * n.store)
+    temp.b    <- store[1]
     if(sw["f.sw"]) {
       f       <- as.array(sims[[Q.ind]]$f)[,1:Q,store, drop=F]
     }
     if(sw["l.sw"]) {
       lmat    <- as.array(sims[[Q.ind]]$load)[,1:Q,store, drop=F]
-      l.temp  <- as.matrix(as.array(sims[[Q.ind]]$load)[,1:Q,burnin])
+      l.temp  <- as.matrix(as.array(sims[[Q.ind]]$load)[,1:Q,temp.b])
     }
   }
   if(sw["mu.sw"])  {
@@ -113,11 +121,11 @@ tune.sims     <- function(sims=NULL, burnin=0, thinning=1, Q=NULL, Q.meth=NULL, 
   
 # Loadings matrix / identifiability / # etc.  
   if(sw["l.sw"])   {
-    for(b in 1:length(store)) {
-      rot       <- procrustes(X=as.matrix(lmat[,,b]), Xstar=l.temp)$R
-      lmat[,,b] <- lmat[,,b] %*% rot
+    for(p in 1:n.store) {
+      rot       <- procrustes(X=as.matrix(lmat[,,p]), Xstar=l.temp)$R
+      lmat[,,p] <- lmat[,,p] %*% rot
       if(sw["f.sw"]) {
-        f[,,b]  <- f[,,b]    %*% rot
+        f[,,p]  <- f[,,p]    %*% rot
       }  
     }
   }
@@ -137,8 +145,19 @@ tune.sims     <- function(sims=NULL, burnin=0, thinning=1, Q=NULL, Q.meth=NULL, 
   data        <- as.data.frame(get(attr(sims, "Name")))
   data        <- data[sapply(data, is.numeric)]
   data        <- scale(data, center=attr(sims, "Center"), scale=attr(sims, "Scaling"))
-  cov.estim   <- sims[[Q.ind]]$post.Sigma
   cov.empir   <- cov(data)
+  cov.estim   <- sims[[Q.ind]]$post.Sigma
+  if(recomp) {
+    if(!all(c(sw["l.sw"], 
+              sw["p.sw"]))) {    cat(paste0("Loadings and/or uniquenesses not stored: can't recompute Sigma", "\n"))
+    } else {
+    cov.estim <- replace(cov.estim, is.numeric(cov.estim), 0)
+      for(r in 1:n.store) {
+        Sigma       <- tcrossprod(lmat[,,r]) + diag(psi[,r])
+        cov.estim   <- cov.estim + Sigma/n.store
+      } 
+    }
+  }
   error       <- cov.empir - cov.estim
   MSE         <- mean(error * error)
   MAD         <- mean(abs(error))
@@ -164,7 +183,7 @@ tune.sims     <- function(sims=NULL, burnin=0, thinning=1, Q=NULL, Q.meth=NULL, 
   }
   class(results)          <- "IMIFA"
   attr(results, "Method") <- attr(sims, "Method")
-  attr(results, "Store")  <- store
+  attr(results, "Store")  <- n.store
   attr(results, "Switch") <- attr(sims, "Switch")
   return(results)
 }
