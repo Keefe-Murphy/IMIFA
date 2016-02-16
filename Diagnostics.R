@@ -176,7 +176,8 @@ tune.sims     <- function(sims=NULL, burnin=0, thinning=1,
                                            communality=comm, SS.load=SS.load,
                                            prop.exp=prop.exp, prop.uni=prop.uni,
                                            prop.var=prop.var, cum.var=cum.var),
-                      list(Q=Q, error=error))
+                      list(Q=Q, cov.mat=cov.empir, 
+                           post.Sigma = cov.estim, error=error))
   results     <- unlist(results, recursive=F)
   if(method   == "IFA") {
     results   <- unlist(list(results, res.bar), recursive=F)

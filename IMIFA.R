@@ -38,7 +38,7 @@
   save(sim, file=paste0(getwd(), "/Simulations/", attr(sim, "Name"), 
                         "__Simulations_", attr(sim, "Method"), 
                         ".Rdata", sep=""))
-  load(file=paste0(getwd(), "/Simulations/", "Wine", 
+  load(file=paste0(getwd(), "/Simulations/", "wine", 
                    "__Simulations_", "IFA", 
                    ".Rdata", sep=""), envir=.GlobalEnv)
 
