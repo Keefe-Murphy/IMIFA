@@ -51,6 +51,8 @@
   plot(res, "Q")
   
 # Means
+  plot(res, "a", "m")
+  plot(res, "a", "m", mat=F)
   plot(res, "t", "m")
   plot(res, "t", "m", mat=F)
   plot(res, "d", "m")
@@ -59,6 +61,8 @@
   plot(res, "c", "m")
   
 # Scores
+  plot(res, "a", "s", Lab)
+  plot(res, "a", "s", Lab, mat=F)
   plot(res, "t", "s")
   plot(res, "t", "s", mat=F)
   plot(res, "d", "s")
@@ -67,6 +71,8 @@
   plot(res, "c", "s")
       
 # Loadings
+  plot(res, "a", "l")
+  plot(res, "a", "l", mat=F)
   plot(res, "t", "l")
   plot(res, "t", "l", mat=F)
   plot(res, "d", "l")
@@ -77,6 +83,8 @@
   plot(res, "c", "l")
   
 # Uniquenesses
+  plot(res, "a", "u")
+  plot(res, "a", "u", mat=F)
   plot(res, "t", "u")
   plot(res, "t", "u", mat=F)
   plot(res, "d", "u")

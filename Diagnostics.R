@@ -71,7 +71,7 @@ tune.sims     <- function(sims=NULL, burnin=0, thinning=1,
         post.load   <- rowMeans(lmat, dims=2)
         prop.exp[Q] <- sum(colSums(post.load * post.load))/nrow(lmat)
       }  
-      if(max(prop.exp) > 1)       cat(paste0("Warning: chain may not have converged", "\n"))
+      if(max(prop.exp) > 1)       warning("chain may not have converged")
       Q.ind   <- which.max(prop.exp)
       Q       <- n.fac[Q.ind]
       Q.res   <- list(Q = Q, prop.exp = prop.exp)
@@ -153,7 +153,7 @@ tune.sims     <- function(sims=NULL, burnin=0, thinning=1,
   if(sum(round(diag(cov.estim))  !=
          round(diag(cov.empir))) != 0
   || sum(abs(post.psi - (1 - post.psi)) < 0) != 0
-  || prop.exp  > 1)             cat(paste0("Warning: chain may not have converged", "\n"))
+  || prop.exp  > 1)             warning("chain may not have converged")
 
   class(post.load)        <- "loadings"
   results     <- list(if(sw["mu.sw"]) list(means=mu, post.mu=post.mu),
