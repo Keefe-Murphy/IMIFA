@@ -2,7 +2,7 @@
 ### IMIFA Plotting Functions ###
 ################################
 
-plot.IMIFA  <- function(results=NULL, plot.meth=c("all", "cor", "density", "posterior", "trace", "var"), 
+plot.IMIFA  <- function(results=NULL, plot.meth=c("all", "cor", "density", "posterior", "Q", "trace"), 
                         var=c("means", "scores", "loadings", "uniquenesses"), Label=NULL, 
                         fac=NULL, ind=NULL, heat=T, n.fac=NULL, type=c("n", "p", "l"), mat=T, ... ) {
  
@@ -10,21 +10,22 @@ plot.IMIFA  <- function(results=NULL, plot.meth=c("all", "cor", "density", "post
   if(!exists(as.character(match.call()$results),
              envir=.GlobalEnv))       stop(paste0("Object ", match.call()$results, " not found"))
   if(class(results) != "IMIFA")       stop(paste0("Results object of class 'IMIFA' must be supplied"))
-  if(missing(n.fac))     n.fac <- results$Q
-  if(n.fac   > results$Q)             stop("Cannot plot this many factors")
+  if(missing(n.fac))     n.fac <- results$Q.results$Q
+  if(n.fac   > results$Q.results$Q)   stop("Cannot plot this many factors")
   n.var     <- nrow(results$post.load)
   n.obs     <- nrow(results$post.f)
   if(!is.logical(heat))               stop("heat must be TRUE or FALSE")
   if(missing(plot.meth))              stop("What type of plot would you like to produce?")
   plot.meth <- match.arg(plot.meth)
   type      <- match.arg(type)
-  if(plot.meth != "var" &&
+  if(plot.meth != "Q"   &&
      missing(var))                    stop("What variable would you like to plot?")               
   switches  <- attr(results, "Switch")
   names(switches)   <- formals(sys.function(sys.parent()))$var
   var       <- match.arg(var)
+  method    <- attr(results, "Method")
   if(!switches[var]     && 
-     plot.meth != "var")              stop(paste0(var, " were not stored"))
+     plot.meth != "Q")                stop(paste0(var, " were not stored"))
   if(!is.logical(mat))                stop("mat must be TRUE or FALSE")
   if(n.fac  == 1 ||
      !missing(ind))        mat <- F
@@ -142,7 +143,7 @@ plot.IMIFA  <- function(results=NULL, plot.meth=c("all", "cor", "density", "post
     }
     if(var  == "means") {
       plot.x   <- results$post.mu
-      plot(plot.x, type=type, main="Posterior Means", ylab="Means", xlab="Variable", ylim=if(is.element(attr(results, "Method"), c("FA", "IFA"))) c(-1,1))
+      plot(plot.x, type=type, main="Posterior Means", ylab="Means", xlab="Variable", ylim=if(is.element(method, c("FA", "IFA"))) c(-1, 1))
       if(type  == "n") text(x=1:length(plot.x), y=plot.x, names(plot.x), cex=0.5)
     }
     if(var == "scores") {
@@ -205,7 +206,41 @@ plot.IMIFA  <- function(results=NULL, plot.meth=c("all", "cor", "density", "post
       plot(plot.x, type=type, main="Posterior Uniquenesses", ylab="Uniquenesses", xlab="Variable")
       if(type    == "n") text(1:length(plot.x), plot.x, names(plot.x), cex=0.5)
     }
-  }  
+  } 
+  
+  if(plot.meth == "Q") {
+    Q.res    <- results$Q.results
+    print(Q.res[1])
+    range.Q  <- attr(Q.res, "Factors")
+    if(method  == "IFA") {
+      par(mfrow=c(1,2))
+      plot.Q     <- Q.res$Counts
+      col.Q      <- c("black", "red")[(names(plot.Q) == n.fac) + 1]
+      Q.plot     <- barplot(plot.Q, main="Posterior Distribution of Q", 
+                            ylab="Frequency", xlab="Q", xaxt="n", col=col.Q)
+      axis(1, at=Q.plot, labels=names(plot.Q), tick=F)
+    } else if(length(range.Q) > 1) {
+      par(mfrow=c(1,2))
+      plot.Q     <- Q.res$prop.exp
+      plot(plot.Q, type="l", main="Scree Plot to Choose Q", xlab="# Factors", 
+           ylab="% Variation Explained", xaxt="n", yaxt="n", ylim=c(0,1))
+      axis(1, at=1:length(plot.Q), labels=range.Q)
+      axis(2, at=seq(0, 1, 0.1), labels=seq(0, 100, 10), cex.axis=0.8)
+    }
+    plot.x       <- results$cum.var
+    prop.exp     <- plot.x[n.fac]
+    if(n.fac      > 1) {
+      plot(plot.x, type="l", main=paste0("Cumulative Variance:\n", n.fac, " Factors"), xlab="# Factors", 
+           ylab="% Variation Explained", xaxt="n", yaxt="n", ylim=c(0,1))
+      axis(1, at=1:length(plot.x), labels=1:n.fac)
+      axis(2, at=seq(0, 1, 0.1), labels=seq(0, 100, 10), cex.axis=0.8) 
+    }
+    cat(paste0("Proportion of Variation Explained = ",
+               round(prop.exp[length(prop.exp)]*100, 2), "%", "\n"))
+    if(max(prop.exp) > 1)             cat(paste0("Warning: chain may not have converged", "\n"))
+    par(mfrow=c(1,1))
+  }
+
   
   if(plot.meth == "trace") {
     if(var == "scores" || 
@@ -225,9 +260,9 @@ plot.IMIFA  <- function(results=NULL, plot.meth=c("all", "cor", "density", "post
     if(var == "means") {
       plot.x   <- results$means
       if(mat) {
-        matplot(t(plot.x[,]), type="l", main="Trace Plot:\nMeans", ylab="Means", xlab="Iteration", ylim=if(is.element(attr(results, "Method"), c("FA", "IFA"))) c(-1,1))
+        matplot(t(plot.x[,]), type="l", main="Trace Plot:\nMeans", ylab="Means", xlab="Iteration", ylim=if(is.element(method, c("FA", "IFA"))) c(-1, 1))
       } else plot(x=iter, y=plot.x[ind,], type="l", ylab="Mean", xlab="Iteration", 
-                         main=paste0("Trace Plot:\nMean of ", rownames(plot.x)[ind], " Variable"), ylim=if(is.element(attr(results, "Method"), c("FA", "IFA"))) c(-1,1))
+                         main=paste0("Trace Plot:\nMean of ", rownames(plot.x)[ind], " Variable"), ylim=if(is.element(method, c("FA", "IFA"))) c(-1, 1))
     }
     if(var == "scores") {
       plot.x   <- results$scores
@@ -250,20 +285,5 @@ plot.IMIFA  <- function(results=NULL, plot.meth=c("all", "cor", "density", "post
       } else plot(x=iter, y=plot.x[ind,], ylab="Uniquenesses", type="l", xlab="Iteration",
                          main=paste0("Trace Plot:\nUniqueness of ", rownames(plot.x)[ind], " Variable"))
     }
-  }
-  
-  if(plot.meth == "var") {
-    plot.x     <- results$cum.var
-    prop.exp   <- plot.x[n.fac]
-    if(n.fac    > 1) {
-      plot(plot.x, type="l", main=paste0("Cumulative Variance:\n", n.fac, " Factors"), xlab="# Factors", 
-           ylab="% Variation Explained", xaxt="n", yaxt="n", ylim=c(0,1))
-      axis(1, at=1:length(plot.x), labels=1:n.fac)
-      axis(2, at=seq(0,1,0.1), labels=seq(0,100,10), cex.axis=0.8) 
-      points(x=n.fac, y=prop.exp, col="red", bg="red", pch=21)
-    }
-    cat(paste0("Proportion of Variation Explained = ",
-               round(prop.exp[length(prop.exp)]*100, 2), "%", "\n"))
-    if(max(prop.exp) > 1)             cat(paste0("Warning: chain may not have converged", "\n"))
   }
 }

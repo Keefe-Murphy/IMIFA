@@ -28,6 +28,7 @@ tune.sims     <- function(sims=NULL, burnin=0, thinning=1,
   }
   if(method   == 'FA' && length(n.fac) == 1) {
     Q         <- n.fac
+    Q.res     <- list(Q = Q)
   } else if(method == 'IFA') {
     if(missing(Q.meth)) {
       Q.meth  <- "Mode"
@@ -40,9 +41,6 @@ tune.sims     <- function(sims=NULL, burnin=0, thinning=1,
     Q.store   <- sims[[Q.ind]]$Q.store[store]
     Q.tab     <- table(Q.store, dnn=NULL)
     Q.prob    <- prop.table(Q.tab)
-    Q.plot    <- barplot(Q.tab, main="Posterior Distribution of Q", 
-                 ylab="Frequency", xlab="Q", xaxt="n")
-    axis(1, at=Q.plot, labels=names(Q.tab), tick=F)
     
   # Set Q as the (lesser of) the distribution's mode(s) & compute credible interval
     Q.mode    <- as.numeric(names(Q.tab[Q.tab == max(Q.tab)]))
@@ -51,10 +49,8 @@ tune.sims     <- function(sims=NULL, burnin=0, thinning=1,
        Q      <- min(Q.mode)
     } else Q  <- Q.median
     Q.CI      <- round(quantile(Q.store, c(0.025, 0.975)))
-    res.bar   <- list(Mode = Q.mode, Median = Q.median, 
+    Q.res     <- list(Q = Q, Mode = Q.mode, Median = Q.median, 
                       CI = Q.CI, Probs= Q.prob, Counts = Q.tab)
-    print(unlist(list(Q=Q, res.bar), recursive=F))
-    cat(paste0("Warning: the user should choose Q based on the attached bar plot!", "\n"))
   } else {    
       
   # Initialise
@@ -76,17 +72,9 @@ tune.sims     <- function(sims=NULL, burnin=0, thinning=1,
         prop.exp[Q] <- sum(colSums(post.load * post.load))/nrow(lmat)
       }  
       if(max(prop.exp) > 1)       cat(paste0("Warning: chain may not have converged", "\n"))
-        
-    # Produce Scree Plot & choose optimum Q
-      plot(prop.exp, type="l", main="Scree Plot to Choose Q", xlab="# Factors", 
-           ylab="% Variation Explained", xaxt="n", yaxt="n", ylim=c(0,1))
-      axis(1, at=1:length(prop.exp), labels=n.fac)
-      axis(2, at=seq(0,1,0.1), labels=seq(0,100,10), cex.axis=0.8)
       Q.ind   <- which.max(prop.exp)
       Q       <- n.fac[Q.ind]
-      points(x=Q.ind, y=prop.exp[Q.ind], col="red", bg="red", pch=21)
-      cat(paste0("Q = ", Q, "\n"))
-      cat(paste0("Warning: the user should choose Q based on the attached scree plot!", "\n"))
+      Q.res   <- list(Q = Q, prop.exp = prop.exp)
     }
   }
   
@@ -162,7 +150,6 @@ tune.sims     <- function(sims=NULL, burnin=0, thinning=1,
   MSE         <- mean(error * error)
   MAD         <- mean(abs(error))
   error       <- list(MSE=MSE, MAD=MAD)
-  print(error)
   if(sum(round(diag(cov.estim))  !=
          round(diag(cov.empir))) != 0
   || sum(abs(post.psi - (1 - post.psi)) < 0) != 0
@@ -176,12 +163,10 @@ tune.sims     <- function(sims=NULL, burnin=0, thinning=1,
                                            communality=comm, SS.load=SS.load,
                                            prop.exp=prop.exp, prop.uni=prop.uni,
                                            prop.var=prop.var, cum.var=cum.var),
-                      list(Q=Q, cov.mat=cov.empir, 
-                           post.Sigma = cov.estim, error=error))
+                      list(cov.mat=cov.empir, post.Sigma = cov.estim, error=error))
   results     <- unlist(results, recursive=F)
-  if(method   == "IFA") {
-    results   <- unlist(list(results, res.bar), recursive=F)
-  }
+  attr(Q.res, "Factors")  <- n.fac 
+  results     <- c(results, Q.results = list(Q.res))
   class(results)          <- "IMIFA"
   attr(results, "Method") <- attr(sims, "Method")
   attr(results, "Store")  <- n.store

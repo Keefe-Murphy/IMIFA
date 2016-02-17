@@ -46,8 +46,9 @@
   res <- tune.sims(sim)
  #res <- tune.sims(sim, Q=2)
   
-# Posterior Summaries & Plots, etc.  
-  plot(res, "v")
+# Posterior Summaries & Plots, etc.
+  res$error
+  plot(res, "Q")
   
 # Means
   plot(res, "t", "m")
