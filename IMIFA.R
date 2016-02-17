@@ -47,32 +47,40 @@
  #res <- tune.sims(sim, Q=2)
   
 # Posterior Summaries & Plots, etc.  
-  plot(res, "c")
+  plot(res, "v")
   
 # Means
   plot(res, "t", "m")
   plot(res, "t", "m", mat=F)
+  plot(res, "d", "m")
+  plot(res, "d", "m", mat=F)
   plot(res, "p", "m")
-  plot(res, "a", "m")
+  plot(res, "c", "m")
   
 # Scores
   plot(res, "t", "s")
   plot(res, "t", "s", mat=F)
+  plot(res, "d", "s")
+  plot(res, "d", "s", mat=F)
   plot(res, "p", "s", Lab)
-  plot(res, "a", "s")
+  plot(res, "c", "s")
       
 # Loadings
   plot(res, "t", "l")
   plot(res, "t", "l", mat=F)
+  plot(res, "d", "l")
+  plot(res, "d", "l", mat=F)
   res$post.load
   plot(res, "p", "l", heat=F)
   plot(res, "p", "l")
-  plot(res, "a", "l")
+  plot(res, "c", "l")
   
 # Uniquenesses
   plot(res, "t", "u")
   plot(res, "t", "u", mat=F)
+  plot(res, "d", "u")
+  plot(res, "d", "u", mat=F)
   summary(res$post.psi)
   plot(res, "p", "u")
-  plot(res, "a", "u")
+  plot(res, "c", "u")
 ####
