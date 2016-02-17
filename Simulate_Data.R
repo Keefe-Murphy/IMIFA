@@ -2,7 +2,7 @@
 ### Simulate Data (Single & Shrinkage Case) ###
 ###############################################
 
-sim.imifa     <- function(N=1000, P=25, Q=5) {
+sim.imifa     <- function(N = 1000, P = 25, Q = 5) {
    
   # N.old     <- N
   # G         <- 3

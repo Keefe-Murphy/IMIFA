@@ -2,8 +2,8 @@
 ### Tune Parameters (Single & Shrinkage Case) ###
 #################################################
 
-tune.sims     <- function(sims=NULL, burnin=0, thinning=1, 
-                          Q=NULL, Q.meth=NULL, recomp=F, ...) {
+tune.sims     <- function(sims = NULL, burnin = 0, thinning = 1, 
+                          Q = NULL, Q.meth = NULL, recomp = F, ...) {
   if(missing(sims))             stop("Simulations must be supplied")
   if(!exists(as.character(match.call()$sims),
              envir=.GlobalEnv)) stop(paste0("Object ", match.call()$sims, " not found"))
@@ -130,31 +130,34 @@ tune.sims     <- function(sims=NULL, burnin=0, thinning=1,
     prop.exp  <- comm/nrow(post.load)
     prop.uni  <- 1 - prop.exp
   }
-  data        <- as.data.frame(get(attr(sims, "Name")))
-  data        <- data[sapply(data, is.numeric)]
-  data        <- scale(data, center=attr(sims, "Center"), scale=attr(sims, "Scaling"))
-  cov.empir   <- cov(data)
   cov.estim   <- sims[[Q.ind]]$post.Sigma
   if(recomp) {
     if(!all(c(sw["l.sw"], 
-              sw["p.sw"]))) {    cat(paste0("Loadings and/or uniquenesses not stored: can't recompute Sigma", "\n"))
+              sw["p.sw"]))) {    warning("Loadings and/or uniquenesses not stored: can't recompute Sigma")
     } else {
-    cov.estim <- replace(cov.estim, is.numeric(cov.estim), 0)
+      cov.estim <- replace(cov.estim, is.numeric(cov.estim), 0)
       for(r in 1:n.store) {
         Sigma       <- tcrossprod(lmat[,,r]) + diag(psi[,r])
         cov.estim   <- cov.estim + Sigma/n.store
       } 
     }
   }
-  error       <- cov.empir - cov.estim
-  MSE         <- mean(error * error)
-  MAD         <- mean(abs(error))
-  error       <- list(MSE=MSE, MAD=MAD)
-  if(sum(round(diag(cov.estim))  !=
-         round(diag(cov.empir))) != 0
-  || sum(abs(post.psi - (1 - post.psi)) < 0) != 0
-  || prop.exp  > 1)             warning("chain may not have converged")
-
+  if(!exists(attr(sims, "Name"),
+     envir=.GlobalEnv)) {        warning("Can't obtain empirical covariance and report error metrics")
+  } else {
+    data      <- as.data.frame(get(attr(sims, "Name")))
+    data      <- data[sapply(data, is.numeric)]
+    data      <- scale(data, center=attr(sims, "Center"), scale=attr(sims, "Scaling"))
+    cov.empir <- cov(data)
+    error     <- cov.empir - cov.estim
+    MSE       <- mean(error * error)
+    MAD       <- mean(abs(error))
+    error     <- list(MSE=MSE, MAD=MAD)
+    if(sum(round(diag(cov.estim))  !=
+           round(diag(cov.empir))) != 0
+    || sum(abs(post.psi - (1 - post.psi)) < 0) != 0
+    || prop.exp  > 1)            warning("Chain may not have converged")
+  }
   class(post.load)        <- "loadings"
   results     <- list(if(sw["mu.sw"]) list(means=mu, post.mu=post.mu),
                       if(sw["f.sw"])  list(scores=f, post.f=post.f),
@@ -163,7 +166,7 @@ tune.sims     <- function(sims=NULL, burnin=0, thinning=1,
                                            communality=comm, SS.load=SS.load,
                                            prop.exp=prop.exp, prop.uni=prop.uni,
                                            prop.var=prop.var, cum.var=cum.var),
-                      list(cov.mat=cov.empir, post.Sigma = cov.estim, error=error))
+                      if(exists("cov.empir")) list(error=error, cov.mat=cov.empir), list(post.Sigma = cov.estim))
   results     <- unlist(results, recursive=F)
   attr(Q.res, "Factors")  <- n.fac 
   results     <- c(results, Q.results = list(Q.res))

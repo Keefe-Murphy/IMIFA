@@ -11,13 +11,13 @@ if(length(setdiff(packages, (.packages()))) > 0) {
 }
 rm(packages)
 
-imifa       <- function(dat=NULL, method=c("IMIFA", "MIFA", "MFA", "IFA", "FA", "classify"), n.iters=50000,
-                        Label=NULL, factanal=F, Q.star=NULL, range.Q=NULL, Q.fac=NULL, thinning=2,
-                        burnin=n.iters/5, n.store=ceiling((n.iters - burnin)/thinning),
-                        centering=T, scaling=c("unit", "pareto", "none"), verbose=T, adapt=T, b0=NULL, b1=NULL, 
-                        prop=NULL, epsilon=NULL, sigma.mu=NULL, sigma.l=NULL, psi.alpha=NULL, psi.beta=NULL,
-                        phi.nu=NULL, alpha.d1=NULL, alpha.d2=NULL, profile=F, 
-                        mu.switch=T, f.switch=T, load.switch=T, psi.switch=T, ...) {
+imifa       <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "FA", "classify"), n.iters = 50000,
+                        Label = NULL, factanal = F, Q.star = NULL, range.Q = NULL, Q.fac = NULL, thinning = 2,
+                        burnin = n.iters/5, n.store = ceiling((n.iters - burnin)/thinning),
+                        centering = T, scaling = c("unit", "pareto", "none"), verbose = T, adapt = T, b0 = NULL, b1 = NULL, 
+                        prop = NULL, epsilon = NULL, sigma.mu = NULL, sigma.l = NULL, psi.alpha = NULL, psi.beta = NULL,
+                        phi.nu = NULL, alpha.d1 = NULL, alpha.d2 = NULL, profile = F, 
+                        mu.switch = T, f.switch = T, load.switch = T, psi.switch = T, ...) {
   
   method    <- match.arg(method)
   scaling   <- match.arg(scaling)

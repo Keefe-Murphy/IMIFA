@@ -18,6 +18,8 @@ plot.IMIFA  <- function(results=NULL, plot.meth=c("all", "correlation", "density
   if(missing(plot.meth))              stop("What type of plot would you like to produce?")
   plot.meth <- match.arg(plot.meth)
   type      <- match.arg(type)
+  pardef    <- par(no.readonly = T)
+  pardef$mfrow <- c(1, 1)
   m.sw      <- c(Q.sw = F, cor.sw = F, den.sw = F, pos.sw = F, tra.sw = F)
   if(plot.meth == "all")  {
     m.sw[-1]   <- !m.sw[-1]
@@ -29,14 +31,14 @@ plot.IMIFA  <- function(results=NULL, plot.meth=c("all", "correlation", "density
     cex.t   <- 1
   }
   if(!m.sw["Q.sw"]      &&
-     missing(var))                    stop("What variable would you like to plot?")               
+     missing(var))                  { stop("What variable would you like to plot?"); par(pardef) }              
   v.sw      <- attr(results, "Switch")
   names(v.sw)  <- formals(sys.function(sys.parent()))$var
   var       <- match.arg(var)
   method    <- attr(results, "Method")
   if(!v.sw[var]         && 
-     m.sw["Q.sw"])                    stop(paste0(var, " were not stored"))
-  if(!is.logical(mat))                stop("mat must be TRUE or FALSE")
+     !m.sw["Q.sw"])                 { stop(paste0(var, " were not stored")); par(pardef) }
+  if(!is.logical(mat))              { stop("mat must be TRUE or FALSE"); par(pardef) }
   if(!missing(ind))      x.ind <- ind
   ind.x     <- !exists("x.ind", envir=environment())
   if(n.fac  == 1 ||
@@ -47,15 +49,15 @@ plot.IMIFA  <- function(results=NULL, plot.meth=c("all", "correlation", "density
        var == "loadings") {
       if(ind.x)            ind <- c(1, 1)
       if(!missing(fac)) ind[2] <- fac
-      if(length(ind) > 2)             stop("Length of indexes for plotting cannot be greater than 2")
+      if(length(ind) > 2)           { stop("Length of indexes for plotting cannot be greater than 2"); par(pardef) }
       if(var == "scores") {
-        if(ind[1] >  n.obs)           stop(paste0("First index cannot be greater than ",  n.obs))
-      } else if(ind[1] > n.var)       stop(paste0("First index cannot be greater than ",  n.var))
-      if(ind[2]   >  n.fac)           stop(paste0("Second index cannot be greater than ", n.fac))
+        if(ind[1] >  n.obs)         { stop(paste0("First index cannot be greater than ",  n.obs)); par(pardef) }
+      } else if(ind[1] > n.var)     { stop(paste0("First index cannot be greater than ",  n.var)); par(pardef) }
+      if(ind[2]   >  n.fac)         { stop(paste0("Second index cannot be greater than ", n.fac)); par(pardef) }
     } else {
       if(ind.x)            ind <- 1
-      if(length(ind) >   1)           stop("Length of indexes for plotting cannot be greater than 1")
-      if(ind      >  n.var)           stop(paste0("Index cannot be greater than ", n.var))
+      if(length(ind) >   1)         { stop("Length of indexes for plotting cannot be greater than 1"); par(pardef) }
+      if(ind      >  n.var)         { stop(paste0("Index cannot be greater than ", n.var)); par(pardef) }
     }
     if(!mat) iter <- 1:attr(results, "Store")
     
@@ -107,15 +109,15 @@ plot.IMIFA  <- function(results=NULL, plot.meth=c("all", "correlation", "density
        var  == "loadings") {
       if(ind.x)            ind <- c(1, 1)
       if(!missing(fac)) ind[2] <- fac
-      if(length(ind) > 2)             stop("Length of indexes for plotting cannot be greater than 2")
+      if(length(ind) > 2)           { stop("Length of indexes for plotting cannot be greater than 2"); par(pardef) }
       if(var == "scores") {
-        if(ind[1] >  n.obs)           stop(paste0("First index cannot be greater than ",  n.obs))
-      } else if(ind[1] > n.var)       stop(paste0("First index cannot be greater than ",  n.var))
-      if(ind[2]   >  n.fac)           stop(paste0("Second index cannot be greater than ", n.fac))
+        if(ind[1] >  n.obs)         { stop(paste0("First index cannot be greater than ",  n.obs)); par(pardef) }
+      } else if(ind[1] > n.var)     { stop(paste0("First index cannot be greater than ",  n.var)); par(pardef) }
+      if(ind[2]   >  n.fac)         { stop(paste0("Second index cannot be greater than ", n.fac)); par(pardef) }
     } else {
       if(ind.x)            ind <- 1
-      if(length(ind) >   1)           stop("Length of indexes for plotting cannot be greater than 1")
-      if(ind      >  n.var)           stop(paste0("Index cannot be greater than ", n.var))
+      if(length(ind) >   1)         { stop("Length of indexes for plotting cannot be greater than 1"); par(pardef) }
+      if(ind      >  n.var)         { stop(paste0("Index cannot be greater than ", n.var)); par(pardef) }
     }
     if(var == "means") {
       plot.x   <- results$means
@@ -184,9 +186,9 @@ plot.IMIFA  <- function(results=NULL, plot.meth=c("all", "correlation", "density
       if(n.fac == 1) {
         ind    <- 1
       } else {
-        if(length(ind) >  2)          stop("Only two columns can be plotted")
-        if(ind[1]  >  n.fac)          stop(paste0("Only the first ", n.fac, " columns can be plotted"))
-        if(ind[2]  >  n.fac)          stop(paste0("Only the first ", n.fac, " columns can be plotted"))
+        if(length(ind) >  2)        { stop("Only two columns can be plotted"); par(pardef) }
+        if(ind[1]  >  n.fac)        { stop(paste0("Only the first ", n.fac, " columns can be plotted")); par(pardef) }
+        if(ind[2]  >  n.fac)        { stop(paste0("Only the first ", n.fac, " columns can be plotted")); par(pardef) }
       }
     }
     if(var  == "means") {
@@ -197,15 +199,14 @@ plot.IMIFA  <- function(results=NULL, plot.meth=c("all", "correlation", "density
     }
     if(var == "scores") {
       plot.x   <- results$post.f
-      if(ind[1] > n.obs)              stop(paste0("Only the first ", n.obs, " scores can be plotted"))
+      if(ind[1] > n.obs)            { stop(paste0("Only the first ", n.obs, " scores can be plotted")); par(pardef) }
       if(!missing(Label)) {
         if(!exists(as.character(match.call()$Label),
-                   envir=.GlobalEnv)) stop(paste0("Object ", match.call()$Label, " not found"))
+           envir=.GlobalEnv))       { stop(paste0("Object ", match.call()$Label, " not found")); par(pardef) }
         Label  <- as.factor(Label)
-        if(length(Label) != n.obs)    stop(paste0("Labels must be a factor of length N=",  n.obs))
+        if(length(Label) != n.obs)  { stop(paste0("Labels must be a factor of length N=",  n.obs)); par(pardef) }
       } else {
         Label  <- 1
-        cat(paste0("Should the data be labelled?", "\n"))
       }
       if(n.fac != 1) {
         plot(plot.x[,ind[1]], plot.x[,ind[2]], type=type, col=as.numeric(Label),
@@ -223,7 +224,7 @@ plot.IMIFA  <- function(results=NULL, plot.meth=c("all", "correlation", "density
     if(var == "loadings") {
       plot.x   <- results$post.load
       if(heat) {
-        par(mar=c(5.1, 7.1, 4.1, 2.1))
+        if(n.var < 100) par(mar=c(5.1, 7.1, 4.1, 2.1))
         image(z=t(plot.x[n.var:1,1:n.fac]), xlab="", 
               ylab="", xaxt="n", yaxt="n")
         title(main=list("Posterior Loadings", cex=cex.t))
@@ -237,11 +238,11 @@ plot.IMIFA  <- function(results=NULL, plot.meth=c("all", "correlation", "density
         box(lwd=2)
         mtext("Factors", side=1, line=2)
         if(n.fac != 1) abline(v=seq(1/(2 * (n.fac - 1)), 
-                                    1-1/(2 * (n.fac - 1)), 
+                                    1 - 1/(2 * (n.fac - 1)), 
                                     1/(n.fac - 1)), lty=2, lwd=1)
-        par(mar=c(5.1, 4.1, 4.1, 2.1))
+        par(pardef$mar)
     } else {
-      if(ind[1] > n.var)              stop(paste0("Only the first ", n.var, " variables can be plotted"))
+      if(ind[1] > n.var)            { stop(paste0("Only the first ", n.var, " variables can be plotted")); par(pardef) }
       if(n.fac != 1) {
         plot(plot.x[,ind[1]], plot.x[,ind[2]], type=type, 
              xlab=paste0("Factor ", ind[1]), ylab=paste0("Factor ", ind[2]))
@@ -304,15 +305,15 @@ plot.IMIFA  <- function(results=NULL, plot.meth=c("all", "correlation", "density
          var == "loadings") {
       if(ind.x)            ind <- c(1, 1)
       if(!missing(fac)) ind[2] <- fac
-      if(length(ind) > 2)             stop("Length of indexes for plotting cannot be greater than 2")
+      if(length(ind) > 2)           { stop("Length of indexes for plotting cannot be greater than 2"); par(pardef) }
       if(var == "scores") {
-        if(ind[1] >  n.obs)           stop(paste0("First index cannot be greater than ",  n.obs))
-      } else if(ind[1] > n.var)       stop(paste0("First index cannot be greater than ",  n.var))
-      if(ind[2]   >  n.fac)           stop(paste0("Second index cannot be greater than ", n.fac))
+        if(ind[1] >  n.obs)         { stop(paste0("First index cannot be greater than ",  n.obs)); par(pardef) }
+      } else if(ind[1] > n.var)     { stop(paste0("First index cannot be greater than ",  n.var)); par(pardef) }
+      if(ind[2]   >  n.fac)         { stop(paste0("Second index cannot be greater than ", n.fac)); par(pardef) }
     } else {
       if(ind.x)            ind <- 1
-      if(length(ind) >   1)           stop("Length of indexes for plotting cannot be greater than 1")
-      if(ind      >  n.var)           stop(paste0("Index cannot be greater than ", n.var))
+      if(length(ind) >   1)         { stop("Length of indexes for plotting cannot be greater than 1"); par(pardef) }
+      if(ind      >  n.var)         { stop(paste0("Index cannot be greater than ", n.var)); par(pardef) }
     }
     if(var == "means") {
       plot.x   <- results$means 
@@ -336,5 +337,5 @@ plot.IMIFA  <- function(results=NULL, plot.meth=c("all", "correlation", "density
     }
     if(!ind.x)             ind <- x.ind
   }
-  par(mfrow = c(1, 1))
+  par(pardef)
 }
