@@ -130,43 +130,48 @@ tune.sims     <- function(sims = NULL, burnin = 0, thinning = 1,
     prop.exp  <- comm/nrow(post.load)
     prop.uni  <- 1 - prop.exp
   }
-  cov.estim   <- sims[[Q.ind]]$post.Sigma
+  cov.est     <- sims[[Q.ind]]$post.Sigma
   if(recomp) {
     if(!all(c(sw["l.sw"], 
               sw["p.sw"]))) {    warning("Loadings and/or uniquenesses not stored: can't recompute Sigma")
     } else {
-      cov.estim <- replace(cov.estim, is.numeric(cov.estim), 0)
+      cov.est <- replace(cov.est, is.numeric(cov.est), 0)
       for(r in 1:n.store) {
-        Sigma       <- tcrossprod(lmat[,,r]) + diag(psi[,r])
-        cov.estim   <- cov.estim + Sigma/n.store
+        Sigma   <- tcrossprod(lmat[,,r]) + diag(psi[,r])
+        cov.est <- cov.est + Sigma/n.store
       } 
     }
   }
-  if(!exists(attr(sims, "Name"),
+  data        <- attr(sims, "Name")
+  if(!exists(data,
      envir=.GlobalEnv)) {        warning("Can't obtain empirical covariance and report error metrics")
   } else {
-    data      <- as.data.frame(get(attr(sims, "Name")))
+    data      <- as.data.frame(get(data))
     data      <- data[sapply(data, is.numeric)]
-    data      <- scale(data, center=attr(sims, "Center"), scale=attr(sims, "Scaling"))
-    cov.empir <- cov(data)
-    error     <- cov.empir - cov.estim
+    centering <- attr(sims, "Center")
+    scaling   <- attr(sims, "Scaling")
+    data      <- scale(data, center=centering, scale=scaling)
+    cov.emp   <- cov(data)
+    error     <- cov.emp - cov.est
     MSE       <- mean(error * error)
     MAD       <- mean(abs(error))
-    error     <- list(MSE=MSE, MAD=MAD)
-    if(sum(round(diag(cov.estim))  !=
-           round(diag(cov.empir))) != 0
+    error     <- list(MSE = MSE, MAD = MAD)
+    if(ifelse(scaling, 
+              sum(round(diag(cov.est))   != 
+              round(diag(cov.emp)))      != 0,
+              F)
     || sum(abs(post.psi - (1 - post.psi)) < 0) != 0
     || prop.exp  > 1)            warning("Chain may not have converged")
   }
   class(post.load)        <- "loadings"
-  results     <- list(if(sw["mu.sw"]) list(means=mu, post.mu=post.mu),
-                      if(sw["f.sw"])  list(scores=f, post.f=post.f),
-                      if(sw["p.sw"])  list(uniquenesses=psi, post.psi=post.psi),
-                      if(sw["l.sw"])  list(loadings=lmat, post.load=post.load,  
-                                           communality=comm, SS.load=SS.load,
-                                           prop.exp=prop.exp, prop.uni=prop.uni,
-                                           prop.var=prop.var, cum.var=cum.var),
-                      if(exists("cov.empir")) list(error=error, cov.mat=cov.empir), list(post.Sigma = cov.estim))
+  results     <- list(if(sw["mu.sw"]) list(means = mu, post.mu = post.mu),
+                      if(sw["f.sw"])  list(scores = f, post.f = post.f),
+                      if(sw["p.sw"])  list(uniquenesses = psi, post.psi = post.psi),
+                      if(sw["l.sw"])  list(loadings = lmat, post.load = post.load,  
+                                           communality = comm, SS.load = SS.load,
+                                           prop.exp = prop.exp, prop.uni = prop.uni,
+                                           prop.var = prop.var, cum.var = cum.var),
+                      if(exists("cov.emp")) list(error = error, cov.mat = cov.emp), list(post.Sigma = cov.est))
   results     <- unlist(results, recursive=F)
   attr(Q.res, "Factors")  <- n.fac 
   results     <- c(results, Q.results = list(Q.res))
