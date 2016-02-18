@@ -137,21 +137,23 @@ imifa       <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   }
     
   dat.name  <- as.character(match.call()$dat)
+  attr(imifa, "Center")  <- centering
   attr(imifa, "Date")    <- format(Sys.Date(), "%d-%b-%Y")
   attr(imifa, "Factors") <- if(method == "FA") range.Q else Q.star
   attr(imifa, "Method")  <- paste0(toupper(substr(method, 1, 1)),
                                    substr(method, 2, nchar(method)))
-  attr(imifa, "Name")    <- paste0(toupper(substr(dat.name, 1, 1)),
-                                   substr(dat.name, 2, nchar(dat.name)))
+  attr(imifa, "Name")    <- dat.name
+  attr(imifa, "Obs")     <- N
   attr(imifa, "Scaling") <- scaling
   attr(imifa, "Store")   <- n.store
   attr(imifa, "Switch")  <- switches
   if(method == "IFA" ||
-     length(range.Q) > 1) {
+     length(range.Q) == 1) {
     attr(imifa, "Time")  <- tot.time
   } else {
     attr(imifa, "Time")  <- list(Total = tot.time, Average = avg.time) 
   }
+  attr(imifa, "Vars")    <- P
   if(verbose)               print(attr(imifa, "Time"))  
       
 # Vanilla 'factanal' for comparison purposes

@@ -12,8 +12,8 @@ plot.IMIFA  <- function(results=NULL, plot.meth=c("all", "correlation", "density
   if(class(results) != "IMIFA")       stop(paste0("Results object of class 'IMIFA' must be supplied"))
   if(missing(n.fac))     n.fac <- results$Q.results$Q
   if(n.fac   > results$Q.results$Q)   stop("Cannot plot this many factors")
-  n.var     <- nrow(results$post.load)
-  n.obs     <- nrow(results$post.f)
+  n.var     <- attr(results, "Vars")
+  n.obs     <- attr(results, "Obs")
   if(!is.logical(heat))               stop("heat must be TRUE or FALSE")
   if(missing(plot.meth))              stop("What type of plot would you like to produce?")
   plot.meth <- match.arg(plot.meth)
