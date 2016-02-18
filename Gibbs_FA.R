@@ -32,8 +32,10 @@
       dimnames(psi.store)[[1]]  <- cnames
       dimnames(psi.store)[[2]]  <- paste0("Iteration", 1:n.store)
     }
-    post.Sigma   <-  matrix(0, nr=P, nc=P)
+    post.Sigma   <- matrix(0, nr=P, nc=P)
+    cov.emp      <- cov(dat)
     dimnames(post.Sigma)        <- list(cnames, cnames)
+    dimnames(cov.emp)           <- dimnames(post.Sigma)
     
     sigma.mu     <- 1/sigma.mu
     sigma.l      <- 1/sigma.l
@@ -88,6 +90,7 @@
                     f    = if(sw["f.sw"])  f.store, 
                     load = if(sw["l.sw"])  load.store, 
                     psi  = if(sw["p.sw"])  psi.store,
+                    cov.mat    = cov.emp,
                     post.Sigma = post.Sigma)
     return(returns[!sapply(returns, is.null)])
   }

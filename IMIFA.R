@@ -26,7 +26,7 @@
   # Cereal 
     cereal   <- read.csv(paste0(getwd(), "/Data/", "Cereal.csv", sep=""))
   # Simulated data
-   #SimData  <- sim.imifa(N=20, P=100, Q=15)
+   #SimData  <- sim.imifa(N=150, P=100, Q=15)
    #save(SimData, file=paste0(getwd(),"/Data/Simulated_Data.Rdata", sep=""))
     load(file=paste0(getwd(), "/Data/Simulated_Data.Rdata", sep=""), envir=.GlobalEnv)
 
@@ -42,13 +42,11 @@
                    "__Simulations_", "IFA", 
                    ".Rdata", sep=""), envir=.GlobalEnv)
 
-# Convergence diagnostics (optional: additional 'burnin' & 'thinning' & user-defined Q)
+# Posterior Summaries & Plots, etc. (optional: additional 'burnin' & 'thinning' & user-defined Q)
   res <- tune.sims(sim)
- #res <- tune.sims(sim, Q=2)
-  
-# Posterior Summaries & Plots, etc.
   res$error
   plot(res, "Q")
+ #res <- tune.sims(sim, Q=2)
   
 # Means
   plot(res, "a", "m")

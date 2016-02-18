@@ -38,7 +38,7 @@ imifa       <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   if(!is.logical(switches))         stop("All logical switches must be TRUE or FALSE")
   
   # Remove non-numeric columns & apply centering & scaling if necessary 
-  dat       <- as.data.frame(wine)
+  dat       <- as.data.frame(dat)
   dat       <- dat[sapply(dat, is.numeric)]
   if(scaling == "pareto") {
     scaling <- sqrt(as.matrix(apply(dat, 2, sd)))
@@ -56,13 +56,6 @@ imifa       <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   if(missing("sigma.mu"))    sigma.mu      <- 0.5
   if(missing("psi.alpha"))   psi.alpha     <- 4
   if(missing("psi.beta"))    psi.beta      <- 1
- #if(missing("psi.alpha"))   psi.alpha     <- 2.5
- #if(missing("psi.beta")) {
- #  psi.beta       <- diag(cov(dat)) * (psi.alpha - 1)
- #  if(isTRUE(scaling)) {
- #    psi.beta     <- psi.beta[1]
- #  }
- #}   
   if(method == "FA") {
     if(missing("sigma.l"))   sigma.l       <- 0.5
   } else if(method == "IFA" ||
@@ -148,8 +141,8 @@ imifa       <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   attr(imifa, "Factors") <- if(method == "FA") range.Q else Q.star
   attr(imifa, "Method")  <- paste0(toupper(substr(method, 1, 1)),
                                    substr(method, 2, nchar(method)))
-  attr(imifa, "Name")    <- dat.name
-  attr(imifa, "Center")  <- centering
+  attr(imifa, "Name")    <- paste0(toupper(substr(dat.name, 1, 1)),
+                                   substr(dat.name, 2, nchar(dat.name)))
   attr(imifa, "Scaling") <- scaling
   attr(imifa, "Store")   <- n.store
   attr(imifa, "Switch")  <- switches
@@ -166,7 +159,7 @@ imifa       <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   if(factanal) {
     if(missing(Q.fac)) Q.fac   <- round(sqrt(P))
     fac     <- factanal(dat, factors=Q.fac, control=list(nstart=50))
-    imifa   <- append(imifa, list(fac=fac))
+    imifa   <- append(imifa, list(fac = fac))
     names(imifa)         <- c(paste0("IMIFA", 1:(length(imifa) - 1)), "fac")
   } 
   class(imifa)           <- "IMIFA"

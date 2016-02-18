@@ -224,7 +224,6 @@ plot.IMIFA  <- function(results=NULL, plot.meth=c("all", "correlation", "density
     if(var == "loadings") {
       plot.x   <- results$post.load
       if(heat) {
-        if(n.var < 100) par(mar=c(5.1, 7.1, 4.1, 2.1))
         image(z=t(plot.x[n.var:1,1:n.fac]), xlab="", 
               ylab="", xaxt="n", yaxt="n")
         title(main=list("Posterior Loadings", cex=cex.t))
@@ -233,14 +232,13 @@ plot.IMIFA  <- function(results=NULL, plot.meth=c("all", "correlation", "density
         if(n.var < 100) {
           axis(2, cex.axis=0.5, line=-0.5, tick=F, las=1,
                at=seq(0, 1, 1/(n.var - 1)), 
-               labels=rownames(plot.x)[n.var:1])
+               labels=substring(rownames(plot.x)[n.var:1], 1, 10))
         }
         box(lwd=2)
         mtext("Factors", side=1, line=2)
         if(n.fac != 1) abline(v=seq(1/(2 * (n.fac - 1)), 
                                     1 - 1/(2 * (n.fac - 1)), 
                                     1/(n.fac - 1)), lty=2, lwd=1)
-        par(pardef$mar)
     } else {
       if(ind[1] > n.var)            { stop(paste0("Only the first ", n.var, " variables can be plotted")); par(pardef) }
       if(n.fac != 1) {
@@ -267,7 +265,7 @@ plot.IMIFA  <- function(results=NULL, plot.meth=c("all", "correlation", "density
   
   if(m.sw["Q.sw"]) {
     Q.res    <- results$Q.results
-    print(Q.res[1])
+    print(Q.res[-length(Q.res)])
     range.Q  <- attr(Q.res, "Factors")
     if(method  == "IFA") {
       par(mfrow =  c(1, 2))

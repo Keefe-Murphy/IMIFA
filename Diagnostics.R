@@ -130,6 +130,7 @@ tune.sims     <- function(sims = NULL, burnin = 0, thinning = 1,
     prop.exp  <- comm/nrow(post.load)
     prop.uni  <- 1 - prop.exp
   }
+  cov.emp     <- sims[[Q.ind]]$cov.mat
   cov.est     <- sims[[Q.ind]]$post.Sigma
   if(recomp) {
     if(!all(c(sw["l.sw"], 
@@ -142,27 +143,16 @@ tune.sims     <- function(sims = NULL, burnin = 0, thinning = 1,
       } 
     }
   }
-  data        <- attr(sims, "Name")
-  if(!exists(data,
-     envir=.GlobalEnv)) {        warning("Can't obtain empirical covariance and report error metrics")
-  } else {
-    data      <- as.data.frame(get(data))
-    data      <- data[sapply(data, is.numeric)]
-    centering <- attr(sims, "Center")
-    scaling   <- attr(sims, "Scaling")
-    data      <- scale(data, center=centering, scale=scaling)
-    cov.emp   <- cov(data)
-    error     <- cov.emp - cov.est
-    MSE       <- mean(error * error)
-    MAD       <- mean(abs(error))
-    error     <- list(MSE = MSE, MAD = MAD)
-    if(ifelse(scaling, 
-              sum(round(diag(cov.est))   != 
-              round(diag(cov.emp)))      != 0,
-              F)
-    || sum(abs(post.psi - (1 - post.psi)) < 0) != 0
-    || prop.exp  > 1)            warning("Chain may not have converged")
-  }
+  error       <- cov.emp - cov.est
+  MSE         <- mean(error * error)
+  MAD         <- mean(abs(error))
+  error       <- list(MSE = MSE, MAD = MAD) 
+  if(ifelse(isTRUE(attr(sims, "Scaling")), 
+            sum(round(diag(cov.est))   != 
+            round(diag(cov.emp)))      != 0,
+            F)
+  || sum(abs(post.psi - (1 - post.psi)) < 0) != 0
+  || prop.exp  > 1)              warning("Chain may not have converged")
   class(post.load)        <- "loadings"
   results     <- list(if(sw["mu.sw"]) list(means = mu, post.mu = post.mu),
                       if(sw["f.sw"])  list(scores = f, post.f = post.f),

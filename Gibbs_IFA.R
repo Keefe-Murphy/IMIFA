@@ -34,7 +34,9 @@
       dimnames(psi.store)[[2]]  <- paste0("Iteration", 1:n.store)
     }
     post.Sigma   <- matrix(0, nr=P, nc=P)
+    cov.emp      <- cov(dat)
     dimnames(post.Sigma)        <- list(cnames, cnames)
+    dimnames(cov.emp)           <- dimnames(post.Sigma)
     Q.store      <- c(Q, rep(0, n.store - 1))
     
     sigma.mu     <- 1/sigma.mu
@@ -139,6 +141,7 @@
                     f      = if(sw["f.sw"])  as.simple_sparse_array(f.store), 
                     load   = if(sw["l.sw"])  as.simple_sparse_array(load.store), 
                     psi    = if(sw["p.sw"])  psi.store,
+                    cov.mat    = cov.emp,
                     post.Sigma = post.Sigma,
                     Q.store    = Q.store)
     return(returns[!sapply(returns, is.null)])
