@@ -265,17 +265,19 @@ plot.IMIFA  <- function(results=NULL, plot.meth=c("all", "correlation", "density
   
   if(m.sw["Q.sw"]) {
     Q.res    <- results$Q.results
-    print(Q.res[-length(Q.res)])
+    if(method  == "FA") {
+      BIC    <- round(Q.res$BIC, 2)
+    }
     range.Q  <- attr(Q.res, "Factors")
     if(method  == "IFA") {
-      par(mfrow =  c(1, 2))
+      if(range.Q != n.fac) par(mfrow = c(1, 2))
       plot.Q     <- Q.res$Counts
       col.Q      <- c("black", "red")[(names(plot.Q) == n.fac) + 1]
       Q.plot     <- barplot(plot.Q, ylab="Frequency", xlab="Q", xaxt="n", col=col.Q)
       title(main=list("Posterior Distribution of Q", cex=cex.t))
       axis(1, at=Q.plot, labels=names(plot.Q), tick=F)
     } else if(length(range.Q) > 1) {
-      par(mfrow = c(1, 2))
+      if(n.fac > 1)        par(mfrow = c(1, 2))
       plot.Q     <- Q.res$prop.exp
       plot(plot.Q, type="l", xlab="# Factors", ylim=c(0,1),
            ylab="% Variation Explained", xaxt="n", yaxt="n")
@@ -291,9 +293,11 @@ plot.IMIFA  <- function(results=NULL, plot.meth=c("all", "correlation", "density
       title(main=list(paste0("Cumulative Variance:\n", n.fac, " Factors"), cex=cex.t))
       axis(1, at=1:length(plot.x), labels=1:n.fac)
       axis(2, at=seq(0, 1, 0.1), labels=seq(0, 100, 10), cex.axis=0.8) 
-    }
+    }                                 
+    cat(paste0("Q = ", n.fac, "\n"))
+    if(method == "FA") cat(paste0("BIC = ", BIC[which.max(BIC)], "\n"))
     cat(paste0("Proportion of Variation Explained = ",
-               round(prop.exp[length(prop.exp)]*100, 2), "%", "\n"))
+    round(prop.exp[length(prop.exp)]*100, 2), "%\n"))
     if(max(prop.exp) > 1)             warning("chain may not have converged")
     par(mfrow = c(1, 1))
   }

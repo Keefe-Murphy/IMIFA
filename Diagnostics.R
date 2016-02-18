@@ -13,23 +13,23 @@ tune.sims     <- function(sims = NULL, burnin = 0, thinning = 1,
   if(n.store  <= 1)             stop(paste0("burnin must be less than the stored number of iterations"))
   method      <- attr(sims, "Method")
   n.fac       <- attr(sims, "Factors")
+  n.obs       <- attr(sims, "Obs")
+  n.var       <- attr(sims, "Vars")
   sw          <- attr(sims, "Switch")
   if(!is.logical(recomp))       stop("recomp must be TRUE or FALSE")
-  if(thinning  > 1    ||
+  if(thinning  > 1  ||
      burnin    > 0)   recomp <- T
   
   if(!missing(Q)) {
-    if(Q > max(n.fac))          stop("Q cannot be greater than the number of factors in sim")
-    if(method == 'FA' && length(n.fac) > 1) { 
-      Q.ind   <- which(n.fac == Q) 
-    }
-  } else {
-    Q.ind     <- 1
-  }
-  if(method   == 'FA' && length(n.fac) == 1) {
-    Q         <- n.fac
-    Q.res     <- list(Q = Q)
-  } else if(method == 'IFA') {
+    Q.x       <- Q
+    Q.ind     <- which(n.fac == Q.x)
+    if(method == "FA"  &&
+       !is.element(Q, n.fac))   stop("This Q value was not used during simulation")
+    if(method == "IFA" &&
+       Q  > n.fac)              stop(paste0("Q cannot be greater than the number of factors in ", match.call()$sims))
+  } 
+  Q.T         <- exists("Q.x", envir=environment())
+  if(method == "IFA") {
     if(missing(Q.meth)) {
       Q.meth  <- "Mode"
     } else {
@@ -38,6 +38,7 @@ tune.sims     <- function(sims = NULL, burnin = 0, thinning = 1,
     }
     
   # Retrieve distribution of Q, tabulate & plot
+    Q.ind     <- 1
     Q.store   <- sims[[Q.ind]]$Q.store[store]
     Q.tab     <- table(Q.store, dnn=NULL)
     Q.prob    <- prop.table(Q.tab)
@@ -45,38 +46,70 @@ tune.sims     <- function(sims = NULL, burnin = 0, thinning = 1,
   # Set Q as the (lesser of) the distribution's mode(s) & compute credible interval
     Q.mode    <- as.numeric(names(Q.tab[Q.tab == max(Q.tab)]))
     Q.median  <- ceiling(median(Q.store) * 2)/2
-    if(Q.meth == 'Mode') { 
+    if(Q.T) {
+       Q      <- Q.x
+    } else if(Q.meth   == 'Mode') { 
        Q      <- min(Q.mode)
     } else Q  <- Q.median
     Q.CI      <- round(quantile(Q.store, c(0.025, 0.975)))
     Q.res     <- list(Q = Q, Mode = Q.mode, Median = Q.median, 
                       CI = Q.CI, Probs= Q.prob, Counts = Q.tab)
   } else {    
-      
-  # Initialise
-    Q.range   <- n.fac - min(n.fac) + 1
-    P         <- length(sims[[1]]$psi[,1])
-    prop.exp  <- rep(NA, length(n.fac))
   
-  # Calculate Proportion of Variation Explained
-    if(sw["l.sw"]) {
-      temp.b  <- max(1, burnin)
-      for(Q in Q.range) {
-        lmat  <- sims[[Q]]$load[,1:n.fac[Q],store, drop=F]
-        l.temp      <- as.matrix(sims[[Q]]$load[,1:n.fac[Q],temp.b])
-        for(b in 1:n.store) {
-          rot       <- procrustes(X=as.matrix(lmat[,,b]), Xstar=l.temp)$R
-          lmat[,,b] <- lmat[,,b] %*% rot
-        }
-        post.load   <- rowMeans(lmat, dims=2)
-        prop.exp[Q] <- sum(colSums(post.load * post.load))/nrow(lmat)
-      }  
-      if(max(prop.exp) > 1)       warning("chain may not have converged")
-      Q.ind   <- which.max(prop.exp)
-      Q       <- n.fac[Q.ind]
-      Q.res   <- list(Q = Q, prop.exp = prop.exp)
+  # Calculate Proportion of Variation Explained & BIC
+    if(!all(c(sw["l.sw"], 
+              sw["p.sw"])))     warning("Loadings and/or uniquenesses not stored: can't calculate BIC")
+    Q.range   <- n.fac - min(n.fac) + 1
+    prop.exp  <- rep(NA, length(n.fac))
+    BIC       <- rep(NA, length(n.fac))
+    temp.b    <- max(1, burnin)
+    data      <- attr(sims, "Name")
+    if(!exists(data,
+       envir=.GlobalEnv)) {     warning(paste0("Object ", data, " not found: can't compute BIC"))
+    } else {
+      data    <- as.data.frame(get(data))
+      data    <- data[sapply(data, is.numeric)]
+      cent    <- attr(sims, "Center")
+      scaling <- attr(sims, "Scaling")
+      data    <- scale(data, center=cent, scale=scaling)
     }
-  }
+    if(!sw["mu.sw"])            warning(paste0("Zero mean vector used in BIC calculation as means were not stored"))
+    for(q in Q.range) {
+      Q.fac   <- n.fac[q]
+      lmat    <- sims[[q]]$load[,1:Q.fac,store, drop=F]
+      psi     <- sims[[q]]$psi[,store]
+      l.temp  <- as.matrix(sims[[q]]$load[,1:Q.fac,temp.b])
+      for(b in 1:n.store) {
+        rot       <- procrustes(X=as.matrix(lmat[,,b]), Xstar=l.temp)$R
+        lmat[,,b] <- lmat[,,b] %*% rot
+      }
+      post.load   <- rowMeans(lmat, dims=2)
+      post.psi    <- rowMeans(psi, 1)
+      prop.exp[q] <- sum(colSums(post.load * post.load))/n.var
+      if(sw["mu.sw"]) {
+        mu    <- sims[[q]]$mu[,store]
+        post.mu   <- rowMeans(mu, 1)
+      }
+      Sigma   <- tcrossprod(post.load) + diag(post.psi)
+      K       <- n.var * Q.fac - 0.5 * Q.fac * (Q.fac - 1) + n.var
+      rooti   <- backsolve(chol(Sigma), diag(n.var))
+      quad    <- crossprod(rooti, t(data) - ifelse(isTRUE(as.logical(sw["mu.sw"])), post.mu, rep(0, n.var)))
+      quads   <- colSums(quad * quad)
+      log.lik <- sum(log(exp(-n.var/2 * log(2 * pi) + sum(log(diag(rooti))) - 0.5 * quads)))
+      BIC[q]  <- -2 * log.lik + K * log(n.obs)
+    }  
+    if(max(prop.exp) > 1)       warning("chain may not have converged")
+    if(Q.T) {
+      prop.exp  <- prop.exp[Q.ind]
+      BIC       <- BIC[Q.ind]
+      Q         <- Q.x
+      n.fac     <- Q
+    } else {
+      Q.ind     <- which.max(BIC)
+      Q         <- n.fac[Q.ind]
+    }
+    Q.res     <- list(Q = Q, BIC = BIC, prop.exp = prop.exp) 
+  }   
   
   if(method   == "FA") {
     if(sw["f.sw"]) {
@@ -125,16 +158,16 @@ tune.sims     <- function(sims = NULL, burnin = 0, thinning = 1,
     post.load <- rowMeans(lmat, dims=2)
     SS.load   <- colSums(post.load * post.load)
     comm      <- sum(SS.load)
-    prop.var  <- SS.load/nrow(post.load)
+    prop.var  <- SS.load/n.var
     cum.var   <- cumsum(prop.var)          
-    prop.exp  <- comm/nrow(post.load)
+    prop.exp  <- comm/n.var
     prop.uni  <- 1 - prop.exp
   }
   cov.emp     <- sims[[Q.ind]]$cov.mat
   cov.est     <- sims[[Q.ind]]$post.Sigma
   if(recomp) {
     if(!all(c(sw["l.sw"], 
-              sw["p.sw"]))) {    warning("Loadings and/or uniquenesses not stored: can't recompute Sigma")
+              sw["p.sw"]))) {   warning("Loadings and/or uniquenesses not stored: can't recompute Sigma")
     } else {
       cov.est <- replace(cov.est, is.numeric(cov.est), 0)
       for(r in 1:n.store) {
@@ -152,7 +185,7 @@ tune.sims     <- function(sims = NULL, burnin = 0, thinning = 1,
             round(diag(cov.emp)))      != 0,
             F)
   || sum(abs(post.psi - (1 - post.psi)) < 0) != 0
-  || prop.exp  > 1)              warning("Chain may not have converged")
+  || prop.exp  > 1)             warning("Chain may not have converged")
   class(post.load)        <- "loadings"
   results     <- list(if(sw["mu.sw"]) list(means = mu, post.mu = post.mu),
                       if(sw["f.sw"])  list(scores = f, post.f = post.f),
@@ -163,11 +196,19 @@ tune.sims     <- function(sims = NULL, burnin = 0, thinning = 1,
                                            prop.var = prop.var, cum.var = cum.var),
                       if(exists("cov.emp")) list(error = error, cov.mat = cov.emp), list(post.Sigma = cov.est))
   results     <- unlist(results, recursive=F)
-  attr(Q.res, "Factors")  <- n.fac 
+  if(Q.T) {
+    attr(Q.res,
+         "Factors")       <- Q.x
+  } else  {
+    attr(Q.res, 
+         "Factors")       <- n.fac
+  } 
   results     <- c(results, Q.results = list(Q.res))
   class(results)          <- "IMIFA"
   attr(results, "Method") <- attr(sims, "Method")
+  attr(results, "Obs")    <- n.obs
   attr(results, "Store")  <- n.store
   attr(results, "Switch") <- attr(sims, "Switch")
+  attr(results, "Vars")   <- n.var
   return(results)
 }
