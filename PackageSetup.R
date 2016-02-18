@@ -14,7 +14,7 @@ rm(packages)
 imifa       <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "FA", "classify"), n.iters = 50000,
                         Label = NULL, factanal = F, Q.star = NULL, range.Q = NULL, Q.fac = NULL, thinning = 2,
                         burnin = n.iters/5, n.store = ceiling((n.iters - burnin)/thinning),
-                        centering = T, scaling = c("unit", "pareto", "none"), verbose = T, adapt = T, b0 = NULL, b1 = NULL, 
+                        centering = F, scaling = c("unit", "pareto", "none"), verbose = F, adapt = T, b0 = NULL, b1 = NULL, 
                         prop = NULL, epsilon = NULL, sigma.mu = NULL, sigma.l = NULL, psi.alpha = NULL, psi.beta = NULL,
                         phi.nu = NULL, alpha.d1 = NULL, alpha.d2 = NULL, profile = F, 
                         mu.switch = T, f.switch = T, load.switch = T, psi.switch = T, ...) {
@@ -28,11 +28,20 @@ imifa       <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   if(!is.logical(centering))        stop("centering must be TRUE or FALSE")
   if(!is.logical(verbose))          stop("verbose   must be TRUE or FALSE")
   if(!is.logical(profile))          stop("profile   must be TRUE or FALSE")
-  if(!is.element(method, c("FA", "IFA"))) {
-    centering  <- F
+  if(is.element(method, 
+     c("FA", "IFA"))     &&
+     missing(centering)  && !centering) {
+    centering  <- T
+  } else if(!is.element(method,
+     c("FA", "IFA"))) {
+     centering <- F
   }
-  if(centering && missing(mu.switch)) {
+  if(all(centering, missing(mu.switch))) {
     mu.switch  <- F 
+  }
+  if(!missing(mu.switch) && !mu.switch && !centering) {
+    mu.switch  <- T                 
+                                    warning("Means were stored since centering was not applied")
   }
   switches  <- c(mu.sw=mu.switch, f.sw=f.switch, l.sw=load.switch, p.sw=psi.switch)
   if(!is.logical(switches))         stop("All logical switches must be TRUE or FALSE")
@@ -104,7 +113,7 @@ imifa       <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
         temp.dat   <- dat[Label == levels(Label)[i],]
         imifa[[i]] <- do.call(paste0("gibbs.", "IFA"),
                               args=append(list(data=temp.dat, N=nrow(temp.dat), Q=Q.star), gibbs.arg))
-        cat(paste0(round(i/nlevels(Label) * 100, 2), "% Complete\n"))
+        if(verbose)                 cat(paste0(round(i/nlevels(Label) * 100, 2), "% Complete\n"))
       }
     }
   } else if(method == "FA") {
@@ -123,8 +132,8 @@ imifa       <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
       for(q in range.Q) { 
         Q.ind      <- q - min(range.Q) + 1
         imifa[[Q.ind]]   <- do.call(paste0("gibbs.", method),
-                                   args=append(list(data=dat, N=N, Q=q), gibbs.arg))
-        cat(paste0(round(Q.ind/length(range.Q) * 100, 2), "% Complete\n"))
+                                    args=append(list(data=dat, N=N, Q=q), gibbs.arg))
+        if(verbose)                 cat(paste0(round(Q.ind/length(range.Q) * 100, 2), "% Complete\n"))
       }
     }
   }
