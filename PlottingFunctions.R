@@ -24,6 +24,7 @@ plot.IMIFA  <- function(results=NULL, plot.meth=c("all", "correlation", "density
   if(plot.meth == "all")  {
     m.sw[-1]   <- !m.sw[-1]
     layout(matrix(c(1, 2, 3, 4), nr=2, nc=2, byrow = TRUE))
+    par(oma=c(0, 0.5, 1.5, 0), mai=c(0.7, 0.7, 0.5, 0.2), mgp=c(2, 1, 0))
     cex.t   <- 0.75
   } else {
     sw.n    <- paste0(substring(plot.meth, 1, 3), ".sw")

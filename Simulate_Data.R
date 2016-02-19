@@ -49,5 +49,6 @@ sim.imifa     <- function(N = 1000, P = 25, Q = 5) {
     attr(SimData, "mu.true")   <- mu.true
     attr(SimData, "load.true") <- load.true
     attr(SimData, "psi.true")  <- psi.true
+    class(SimData)      <- "IMIFA"
     return(SimData)
   }

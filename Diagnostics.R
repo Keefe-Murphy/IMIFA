@@ -79,9 +79,9 @@ tune.sims     <- function(sims = NULL, burnin = 0, thinning = 1,
       lmat    <- sims[[q]]$load[,1:Q.fac,store, drop=F]
       psi     <- sims[[q]]$psi[,store]
       l.temp  <- as.matrix(sims[[q]]$load[,1:Q.fac,temp.b])
-      for(b in 1:n.store) {
-        rot       <- procrustes(X=as.matrix(lmat[,,b]), Xstar=l.temp)$R
-        lmat[,,b] <- lmat[,,b] %*% rot
+      for(p in 1:n.store) {
+        rot       <- procrustes(X=as.matrix(lmat[,,p]), Xstar=l.temp)$R
+        lmat[,,p] <- lmat[,,p] %*% rot
       }
       post.load   <- rowMeans(lmat, dims=2)
       post.psi    <- rowMeans(psi, 1)
@@ -95,8 +95,8 @@ tune.sims     <- function(sims = NULL, burnin = 0, thinning = 1,
       rooti   <- backsolve(chol(Sigma), diag(n.var))
       quad    <- crossprod(rooti, t(data) - ifelse(isTRUE(as.logical(sw["mu.sw"])), post.mu, rep(0, n.var)))
       quads   <- colSums(quad * quad)
-      log.lik <- sum(log(exp(-n.var/2 * log(2 * pi) + sum(log(diag(rooti))) - 0.5 * quads)))
-      BIC[q]  <- -2 * log.lik + K * log(n.obs)
+      log.lik <- sum(log(exp(- n.var/2 * log(2 * pi) + sum(log(diag(rooti))) - 0.5 * quads)))
+      BIC[q]  <- 2 * log.lik - K * log(n.obs)
     }  
     if(max(prop.exp) > 1)       warning("chain may not have converged")
     if(Q.T) {
