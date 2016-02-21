@@ -22,7 +22,7 @@ imifa       <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   method    <- match.arg(method)
   scaling   <- match.arg(scaling)
   if(missing(dat))                  stop("Dataset must be supplied")
-  if(!exists(as.character(match.call()$dat),
+  if(!exists(deparse(substitute(dat)),
              envir=.GlobalEnv))     stop(paste0("Object ", match.call()$dat, " not found"))
   if(!is.logical(factanal))         stop("factanal  must be TRUE or FALSE")
   if(!is.logical(centering))        stop("centering must be TRUE or FALSE")
@@ -39,9 +39,17 @@ imifa       <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   if(all(centering, missing(mu.switch))) {
     mu.switch  <- F 
   }
-  if(!missing(mu.switch) && !mu.switch && !centering) {
+  if(!missing(mu.switch) && !mu.switch   && !centering) {
     mu.switch  <- T                 
                                     warning("Means were stored since centering was not applied")
+  }
+  if(method == "FA") {
+    if(missing(range.Q))            stop("Arg. range.Q must be specified")
+    if((!load.switch     || !psi.switch) && length(range.Q) > 1) {
+      load.switch <- T
+      psi.switch  <- T
+                                    warning("Loadings and Uniquenesses were stored since the optimum Q from the range supplied needs to be determined")
+    }
   }
   switches  <- c(mu.sw=mu.switch, f.sw=f.switch, l.sw=load.switch, p.sw=psi.switch)
   if(!is.logical(switches))         stop("All logical switches must be TRUE or FALSE")
@@ -103,7 +111,7 @@ imifa       <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
                               args=append(list(data=dat, N=N, Q=Q.star), gibbs.arg))
     } else {
       if(missing(Label))            stop("Data must be labelled for classification")
-      if(!exists(as.character(match.call()$Label),
+      if(!exists(deparse(substitute(Label)),
                  envir=.GlobalEnv)) stop(paste0("Object ", match.call()$Label, " not found"))
       Label   <- as.factor(Label)
       if(length(Label) != N)        stop(paste0("Labels must be a factor of length N=",  n.obs))
@@ -117,11 +125,10 @@ imifa       <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
       }
     }
   } else if(method == "FA") {
-    gibbs.arg      <- append(gibbs.arg, list(sigma.l))
-    if(missing(range.Q))            stop("Arg. range.Q must be specified")
     if((length(range.Q)  == 1 && range.Q >= P) || 
-       (length(range.Q)   > 1 && any(range.Q) >= P))  
+       (length(range.Q)   > 1 && any(range.Q) >= P))   
                                     stop ("Number of factors must be less than the number of variables")
+    gibbs.arg      <- append(gibbs.arg, list(sigma.l))
     imifa          <- vector("list", length(range.Q))
     if(length(range.Q)   == 1) {
       start.time   <- proc.time()

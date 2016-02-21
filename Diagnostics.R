@@ -5,7 +5,7 @@
 tune.sims     <- function(sims = NULL, burnin = 0, thinning = 1, 
                           Q = NULL, Q.meth = NULL, recomp = F, ...) {
   if(missing(sims))             stop("Simulations must be supplied")
-  if(!exists(as.character(match.call()$sims),
+  if(!exists(deparse(substitute(sims)),
              envir=.GlobalEnv)) stop(paste0("Object ", match.call()$sims, " not found"))
   if(class(sims) != "IMIFA")    stop(paste0("Simulations object of class 'IMIFA' must be supplied"))
   store       <- seq(from=burnin + 1, to=attr(sims, "Store"), by=thinning)
@@ -54,11 +54,9 @@ tune.sims     <- function(sims = NULL, burnin = 0, thinning = 1,
     Q.CI      <- round(quantile(Q.store, c(0.025, 0.975)))
     Q.res     <- list(Q = Q, Mode = Q.mode, Median = Q.median, 
                       CI = Q.CI, Probs= Q.prob, Counts = Q.tab)
-  } else {    
+  } else if(all(c(sw["l.sw"], sw["p.sw"]))) {     
   
   # Calculate Proportion of Variation Explained & BIC
-    if(!all(c(sw["l.sw"], 
-              sw["p.sw"])))     warning("Loadings and/or uniquenesses not stored: can't calculate BIC")
     Q.range   <- n.fac - min(n.fac) + 1
     prop.exp  <- rep(NA, length(n.fac))
     BIC       <- rep(NA, length(n.fac))
@@ -109,7 +107,12 @@ tune.sims     <- function(sims = NULL, burnin = 0, thinning = 1,
       Q         <- n.fac[Q.ind]
     }
     Q.res     <- list(Q = Q, BIC = BIC, prop.exp = prop.exp) 
-  }   
+  }  else if(length(n.fac) == 1) {
+     Q.ind    <- 1
+     Q        <- n.fac
+     Q.res    <- list(Q = Q)
+                                warning("Loadings and/or Uniquenesses not stored: can't calculate BIC or proportion of variation explained")
+  } 
   
   if(method   == "FA") {
     if(sw["f.sw"]) {
@@ -184,9 +187,14 @@ tune.sims     <- function(sims = NULL, burnin = 0, thinning = 1,
             sum(round(diag(cov.est))   != 
             round(diag(cov.emp)))      != 0,
             F)
-  || sum(abs(post.psi - (1 - post.psi)) < 0) != 0
-  || prop.exp  > 1)             warning("Chain may not have converged")
-  class(post.load)        <- "loadings"
+  || ifelse(sw["p.sw"], 
+            sum(abs(post.psi - (1 - post.psi)) < 0) != 0, F)
+  || ifelse(sw["l.sw"], 
+            prop.exp  > 1, F)) warning("Chain may not have converged")
+
+  if(sw["l.sw"]) {
+    class(post.load)      <- "loadings"
+  }
   results     <- list(if(sw["mu.sw"]) list(means = mu, post.mu = post.mu),
                       if(sw["f.sw"])  list(scores = f, post.f = post.f),
                       if(sw["p.sw"])  list(uniquenesses = psi, post.psi = post.psi),
