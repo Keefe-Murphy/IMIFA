@@ -19,6 +19,11 @@ imifa       <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
                         phi.nu = NULL, alpha.d1 = NULL, alpha.d2 = NULL, profile = F, 
                         mu.switch = T, f.switch = T, load.switch = T, psi.switch = T, ...) {
   
+  defpar    <- par(no.readonly = T)
+  defop     <- options()
+  options(warn=1)
+  on.exit(par(defpar))
+  on.exit(options(defop), add=T)
   method    <- match.arg(method)
   scaling   <- match.arg(scaling)
   if(missing(dat))                  stop("Dataset must be supplied")

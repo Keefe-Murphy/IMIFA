@@ -4,6 +4,11 @@
 
 tune.sims     <- function(sims = NULL, burnin = 0, thinning = 1, 
                           Q = NULL, Q.meth = NULL, recomp = F, ...) {
+  defpar      <- par(no.readonly = T)
+  defop       <- options()
+  options(warn=1)
+  on.exit(par(defpar))
+  on.exit(options(defop), add=T)
   if(missing(sims))             stop("Simulations must be supplied")
   if(!exists(deparse(substitute(sims)),
              envir=.GlobalEnv)) stop(paste0("Object ", match.call()$sims, " not found"))

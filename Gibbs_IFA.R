@@ -51,7 +51,6 @@
       D.load     <- phi[j,] * tau
       lmat[j,]   <- sim.l.p(D.load, Q)
     }
-    
     sum.data     <- colSums(data)
   
   # Iterate
