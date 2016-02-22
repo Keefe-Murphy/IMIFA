@@ -45,10 +45,12 @@ imifa       <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   }
   if(method == "FA") {
     if(missing(range.Q))            stop("Arg. range.Q must be specified")
-    if((!load.switch     || !psi.switch) && length(range.Q) > 1) {
+    if(!load.switch      && length(range.Q) > 1) {
       load.switch <- T
-      psi.switch  <- T
-                                    warning("Loadings and Uniquenesses were stored since the optimum Q from the range supplied needs to be determined")
+                                    warning("Loadings were stored in order to find optimum Q from supplied range")
+      if(!psi.switch) {
+                                    warning("Q will be tuned using % variation explained rather than BIC as Uniquenesses weren't stored")
+      }
     }
   }
   switches  <- c(mu.sw=mu.switch, f.sw=f.switch, l.sw=load.switch, p.sw=psi.switch)

@@ -37,7 +37,7 @@ plot.IMIFA  <- function(results=NULL, plot.meth=c("all", "correlation", "density
   var       <- match.arg(var)
   method    <- attr(results, "Method")
   if(!v.sw[var]         && 
-     !m.sw["Q.sw"])                 { stop(paste0(var, " were not stored")); par(defpar) }
+     !m.sw["Q.sw"])                 { stop(paste0(var, " weren't stored")); par(defpar) }
   if(!is.logical(mat))              { stop("mat must be TRUE or FALSE"); par(defpar) }
   if(!missing(ind))      x.ind <- ind
   ind.x     <- !exists("x.ind", envir=environment())

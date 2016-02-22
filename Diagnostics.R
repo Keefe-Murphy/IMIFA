@@ -54,11 +54,11 @@ tune.sims     <- function(sims = NULL, burnin = 0, thinning = 1,
     Q.CI      <- round(quantile(Q.store, c(0.025, 0.975)))
     Q.res     <- list(Q = Q, Mode = Q.mode, Median = Q.median, 
                       CI = Q.CI, Probs= Q.prob, Counts = Q.tab)
-  } else if(all(c(sw["l.sw"], sw["p.sw"]))) {     
+  } else if(sw["l.sw"]) {     
   
   # Calculate Proportion of Variation Explained & BIC
     Q.range   <- n.fac - min(n.fac) + 1
-    prop.exp  <- rep(NA, length(n.fac))
+    propexp   <- rep(NA, length(n.fac))
     BIC       <- rep(NA, length(n.fac))
     temp.b    <- max(1, burnin)
     data      <- attr(sims, "Name")
@@ -71,42 +71,47 @@ tune.sims     <- function(sims = NULL, burnin = 0, thinning = 1,
       scaling <- attr(sims, "Scaling")
       data    <- scale(data, center=cent, scale=scaling)
     }
-    if(!sw["mu.sw"])            warning(paste0("Zero mean vector used in BIC calculation as means were not stored"))
+    if(!sw["mu.sw"])            warning(paste0("Zero mean vector used in BIC calculation as means weren't stored"))
     for(q in Q.range) {
       Q.fac   <- n.fac[q]
       lmat    <- sims[[q]]$load[,1:Q.fac,store, drop=F]
-      psi     <- sims[[q]]$psi[,store]
       l.temp  <- as.matrix(sims[[q]]$load[,1:Q.fac,temp.b])
       for(p in 1:n.store) {
         rot       <- procrustes(X=as.matrix(lmat[,,p]), Xstar=l.temp)$R
         lmat[,,p] <- lmat[,,p] %*% rot
       }
       post.load   <- rowMeans(lmat, dims=2)
-      post.psi    <- rowMeans(psi, 1)
-      prop.exp[q] <- sum(colSums(post.load * post.load))/n.var
+      propexp[q]  <- sum(colSums(post.load * post.load))/n.var
       if(sw["mu.sw"]) {
         mu    <- sims[[q]]$mu[,store]
         post.mu   <- rowMeans(mu, 1)
       }
-      Sigma   <- tcrossprod(post.load) + diag(post.psi)
-      K       <- n.var * Q.fac - 0.5 * Q.fac * (Q.fac - 1) + n.var
-      rooti   <- backsolve(chol(Sigma), diag(n.var))
-      quad    <- crossprod(rooti, t(data) - ifelse(isTRUE(as.logical(sw["mu.sw"])), post.mu, rep(0, n.var)))
-      quads   <- colSums(quad * quad)
-      log.lik <- sum(log(exp(- n.var/2 * log(2 * pi) + sum(log(diag(rooti))) - 0.5 * quads)))
-      BIC[q]  <- 2 * log.lik - K * log(n.obs)
-    }  
-    if(max(prop.exp) > 1)       warning("chain may not have converged")
-    if(Q.T) {
-      prop.exp  <- prop.exp[Q.ind]
-      BIC       <- BIC[Q.ind]
-      Q         <- Q.x
-      n.fac     <- Q
-    } else {
-      Q.ind     <- which.max(BIC)
-      Q         <- n.fac[Q.ind]
+      if(sw["p.sw"])  {
+        psi   <- sims[[q]]$psi[,store]
+        post.psi  <- rowMeans(psi, 1)
+        Sigma <- tcrossprod(post.load) + diag(post.psi)
+        K     <- n.var * Q.fac - 0.5 * Q.fac * (Q.fac - 1) + n.var
+        rooti <- backsolve(chol(Sigma), diag(n.var))
+        quad  <- crossprod(rooti, t(data) - ifelse(isTRUE(as.logical(sw["mu.sw"])), post.mu, rep(0, n.var)))
+        quads <- colSums(quad * quad)
+        log.lik   <- sum(log(exp(- n.var/2 * log(2 * pi) + sum(log(diag(rooti))) - 0.5 * quads)))
+        BIC[q]    <- 2 * log.lik - K * log(n.obs)
+      }
     }
-    Q.res     <- list(Q = Q, BIC = BIC, prop.exp = prop.exp) 
+    if(max(propexp) > 1)        warning("chain may not have converged")
+    if(Q.T) {
+      propexp <- propexp[Q.ind]
+      BIC     <- BIC[Q.ind]
+      Q       <- Q.x
+      n.fac   <- Q
+    } else if(sw["p.sw"]) {
+      Q.ind   <- which.max(BIC)
+      Q       <- n.fac[Q.ind]
+    } else {
+      Q.ind   <- which.max(propexp)
+      Q       <- n.fac[Q.ind]
+    }
+    Q.res     <- list(Q = Q, BIC = BIC, prop.exp = propexp) 
   }  else if(length(n.fac) == 1) {
      Q.ind    <- 1
      Q        <- n.fac
@@ -163,8 +168,8 @@ tune.sims     <- function(sims = NULL, burnin = 0, thinning = 1,
     comm      <- sum(SS.load)
     prop.var  <- SS.load/n.var
     cum.var   <- cumsum(prop.var)          
-    prop.exp  <- comm/n.var
-    prop.uni  <- 1 - prop.exp
+    propexp   <- comm/n.var
+    prop.uni  <- 1 - propexp
   }
   cov.emp     <- sims[[Q.ind]]$cov.mat
   cov.est     <- sims[[Q.ind]]$post.Sigma
@@ -190,7 +195,7 @@ tune.sims     <- function(sims = NULL, burnin = 0, thinning = 1,
   || ifelse(sw["p.sw"], 
             sum(abs(post.psi - (1 - post.psi)) < 0) != 0, F)
   || ifelse(sw["l.sw"], 
-            prop.exp  > 1, F)) warning("Chain may not have converged")
+            propexp > 1, F))    warning("Chain may not have converged")
 
   if(sw["l.sw"]) {
     class(post.load)      <- "loadings"
@@ -200,7 +205,7 @@ tune.sims     <- function(sims = NULL, burnin = 0, thinning = 1,
                       if(sw["p.sw"])  list(uniquenesses = psi, post.psi = post.psi),
                       if(sw["l.sw"])  list(loadings = lmat, post.load = post.load,  
                                            communality = comm, SS.load = SS.load,
-                                           prop.exp = prop.exp, prop.uni = prop.uni,
+                                           prop.exp = propexp, prop.uni = prop.uni,
                                            prop.var = prop.var, cum.var = cum.var),
                       if(exists("cov.emp")) list(error = error, cov.mat = cov.emp), list(post.Sigma = cov.est))
   results     <- unlist(results, recursive=F)
