@@ -211,13 +211,16 @@ plot.IMIFA  <- function(results=NULL, plot.meth=c("all", "correlation", "density
     if(var == "scores") {
       plot.x   <- results$post.f
       if(ind[1] > n.obs)              stop(paste0("Only the first ", n.obs, " scores can be plotted"))
-      if(!missing(Label)) {
-        if(!exists(deparse(substitute(Label)),
-           envir=.GlobalEnv))         stop(paste0("Object ", match.call()$Label, " not found"))
-        Label  <- as.factor(Label)
-        if(length(Label) != n.obs)    stop(paste0("Labels must be a factor of length N=",  n.obs))
+      iif(!missing(Label)) {
+        if(!exists(as.character(match.call()$Label),
+           envir=.GlobalEnv)) {       warning(paste0("Object ", match.call()$Label, " not found"))
+          Label <- 1
+        } else {
+          Label <- as.factor(Label)
+          if(length(Label) != n.obs)  stop(paste0("Labels must be a factor of length N=",  n.obs))
+        }
       } else {
-        Label  <- 1
+        Label   <- 1
       }
       if(n.fac != 1) {
         plot(plot.x[,ind[1]], plot.x[,ind[2]], type=type, col=as.numeric(Label),
