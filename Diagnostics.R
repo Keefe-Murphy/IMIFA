@@ -193,7 +193,7 @@ tune.sims     <- function(sims = NULL, burnin = 0, thinning = 1,
   MSE         <- mean(error * error)
   MAD         <- mean(abs(error))
   error       <- list(MSE = MSE, MAD = MAD) 
-  if(ifelse(isTRUE(attr(sims, "Scaling")), 
+  if(ifelse(all(isTRUE(attr(sim, "Scaling")), attr(sim, "Center")), 
             sum(round(diag(cov.est))   != 
             round(diag(cov.emp)))      != 0,
             F)
