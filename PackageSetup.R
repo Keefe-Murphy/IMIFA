@@ -61,6 +61,7 @@ imifa       <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   if(!is.logical(switches))         stop("All logical switches must be TRUE or FALSE")
   
   # Remove non-numeric columns & apply centering & scaling if necessary 
+  n.store   <- ceiling((n.iters - burnin)/thinning)
   dat       <- as.data.frame(dat)
   dat       <- dat[sapply(dat, is.numeric)]
   if(scaling == "pareto") {
@@ -98,14 +99,14 @@ imifa       <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
     source(paste(getwd(), "/IMIFA-GIT/FullConditionals_", method, ".R", sep=""), local=T)
     source(paste(getwd(), "/IMIFA-GIT/Gibbs_", method, ".R", sep=""), local=T)
   }
-  gibbs.arg <- list(n.iters=n.iters, P=P, sigma.mu=sigma.mu, 
-                    psi.alpha=psi.alpha, psi.beta=psi.beta, burnin=burnin, 
-                    thinning=thinning, verbose=verbose, sw=switches)
+  gibbs.arg <- list(n.iters = n.iters, P = P, sigma.mu = sigma.mu, 
+                    psi.alpha = psi.alpha, psi.beta = psi.beta, burnin = burnin, 
+                    thinning = thinning, n.store = n.store, verbose = verbose, sw = switches)
   if(profile)  Rprof()
   if(method == "IFA" ||
      method == "classify") {
-     gibbs.arg     <- append(gibbs.arg, list(phi.nu=phi.nu, alpha.d1=alpha.d1, alpha.d2=alpha.d2,
-                                             adapt=adapt, b0=b0, b1=b1, prop=prop, epsilon=epsilon))
+     gibbs.arg     <- append(gibbs.arg, list(phi.nu = phi.nu, alpha.d1 = alpha.d1, alpha.d2 = alpha.d2,
+                                             adapt = adapt, b0 = b0, b1 = b1, prop = prop, epsilon = epsilon))
   if(missing(Q.star)) {
      Q.star        <- min(floor(3 * log(P)), P)
   } else if(Q.star  > P)            stop("Number of factors must be less than the number of variables")
@@ -114,7 +115,7 @@ imifa       <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
       imifa        <- vector("list", length(Q.star))
       start.time   <- proc.time()
       imifa[[1]]   <- do.call(paste0("gibbs.", method),                          
-                              args=append(list(data=dat, N=N, Q=Q.star), gibbs.arg))
+                              args=append(list(data = dat, N = N, Q = Q.star), gibbs.arg))
     } else {
       if(missing(Label))            stop("Data must be labelled for classification")
       if(!exists(deparse(substitute(Label)),
@@ -126,7 +127,7 @@ imifa       <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
       for(i in 1:nlevels(Label)) {
         temp.dat   <- dat[Label == levels(Label)[i],]
         imifa[[i]] <- do.call(paste0("gibbs.", "IFA"),
-                              args=append(list(data=temp.dat, N=nrow(temp.dat), Q=Q.star), gibbs.arg))
+                              args=append(list(data = temp.dat, N = nrow(temp.dat), Q = Q.star), gibbs.arg))
         if(verbose)                 cat(paste0(round(i/nlevels(Label) * 100, 2), "% Complete\n"))
       }
     }
@@ -139,13 +140,13 @@ imifa       <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
     if(length(range.Q)   == 1) {
       start.time   <- proc.time()
       imifa[[1]]   <- do.call(paste0("gibbs.", method), 
-                              args=append(list(data=dat, N=N, Q=range.Q), gibbs.arg))
+                              args=append(list(data = dat, N = N, Q = range.Q), gibbs.arg))
     } else {
       start.time   <- proc.time()
       for(q in range.Q) { 
         Q.ind      <- q - min(range.Q) + 1
         imifa[[Q.ind]]   <- do.call(paste0("gibbs.", method),
-                                    args=append(list(data=dat, N=N, Q=q), gibbs.arg))
+                                    args=append(list(data = dat, N = N, Q = q), gibbs.arg))
         if(verbose)                 cat(paste0(round(Q.ind/length(range.Q) * 100, 2), "% Complete\n"))
       }
     }

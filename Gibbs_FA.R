@@ -5,7 +5,8 @@
 # Gibbs Sampler Function
   gibbs.FA        <- function(Q, data, n.iters, N, P, 
                             sigma.mu, psi.alpha, psi.beta,
-                            burnin, thinning, verbose, sw, sigma.l, ...) {
+                            burnin, thinning, n.store,
+                            verbose, sw, sigma.l, ...) {
         
   # Define & initialise variables
     cnames        <- colnames(data)

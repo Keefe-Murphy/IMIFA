@@ -5,13 +5,12 @@
 # Gibbs Sampler Function
   gibbs.IFA        <- function(Q, data, n.iters, N, P, 
                            sigma.mu, psi.alpha, psi.beta, 
-                           burnin, thinning, verbose, sw,
-                           phi.nu, alpha.d1, alpha.d2, 
+                           burnin, thinning, n.store, verbose, 
+                           sw, phi.nu, alpha.d1, alpha.d2, 
                            adapt, b0, b1, prop, epsilon, ...) {    
     
   # Define & initialise variables
     cnames         <- colnames(data)
-    n.store        <- ceiling((n.iters - burnin)/thinning)
     if(sw["mu.sw"]) {
       mu.store     <- matrix(0, nr=P, nc=n.store)
       dimnames(mu.store)[[1]]   <- cnames
