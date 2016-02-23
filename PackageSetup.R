@@ -107,7 +107,7 @@ imifa       <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
      gibbs.arg     <- append(gibbs.arg, list(phi.nu=phi.nu, alpha.d1=alpha.d1, alpha.d2=alpha.d2,
                                              adapt=adapt, b0=b0, b1=b1, prop=prop, epsilon=epsilon))
   if(missing(Q.star)) {
-     Q.star        <- min(ceiling(3 * log(P)), P)
+     Q.star        <- min(floor(3 * log(P)), P)
   } else if(Q.star  > P)            stop("Number of factors must be less than the number of variables")
     if(!is.logical(adapt))          stop("Arg. must be TRUE or FALSE")
     if(method == "IFA") {

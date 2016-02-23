@@ -125,7 +125,7 @@
           }
         }
       } 
-      if(Q > Q.star)    stop("Q cannot exceed initial number of loadings columns: try increasing Q.star")
+    if(Q > Q.star)    stop(paste0("Q cannot exceed initial number of loadings columns: try increasing Q.star from ", Q.star))
       if(iter >= burnin && iter %% thinning == 0) {
         new.iter   <- ceiling((iter - burnin)/thinning)
         psi   <- 1/psi.inv

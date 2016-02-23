@@ -211,7 +211,7 @@ plot.IMIFA  <- function(results=NULL, plot.meth=c("all", "correlation", "density
     if(var == "scores") {
       plot.x   <- results$post.f
       if(ind[1] > n.obs)              stop(paste0("Only the first ", n.obs, " scores can be plotted"))
-      iif(!missing(Label)) {
+      if(!missing(Label)) {
         if(!exists(as.character(match.call()$Label),
            envir=.GlobalEnv)) {       warning(paste0("Object ", match.call()$Label, " not found"))
           Label <- 1
