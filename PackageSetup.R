@@ -13,11 +13,10 @@ rm(packages)
 
 imifa       <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "FA", "classify"), n.iters = 50000,
                         Label = NULL, factanal = F, Q.star = NULL, range.Q = NULL, Q.fac = NULL, thinning = 2,
-                        burnin = n.iters/5, n.store = ceiling((n.iters - burnin)/thinning),
-                        centering = F, scaling = c("unit", "pareto", "none"), verbose = F, adapt = T, b0 = NULL, b1 = NULL, 
-                        prop = NULL, epsilon = NULL, sigma.mu = NULL, sigma.l = NULL, psi.alpha = NULL, psi.beta = NULL,
-                        phi.nu = NULL, alpha.d1 = NULL, alpha.d2 = NULL, profile = F, 
-                        mu.switch = T, f.switch = T, load.switch = T, psi.switch = T, ...) {
+                        burnin = n.iters/5, centering = F, scaling = c("unit", "pareto", "none"), verbose = F, 
+                        adapt = T, b0 = NULL, b1 = NULL, prop = NULL, epsilon = NULL, sigma.mu = NULL, 
+                        sigma.l = NULL, psi.alpha = NULL, psi.beta = NULL, phi.nu = NULL, alpha.d1 = NULL, 
+                        alpha.d2 = NULL, profile = F, mu.switch = T, f.switch = T, load.switch = T, psi.switch = T, ...) {
   
   defpar    <- par(no.readonly = T)
   defop     <- options()
@@ -101,14 +100,14 @@ imifa       <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   }
   gibbs.arg <- list(n.iters=n.iters, P=P, sigma.mu=sigma.mu, 
                     psi.alpha=psi.alpha, psi.beta=psi.beta, burnin=burnin, 
-                    thinning=thinning, n.store=n.store, verbose=verbose, sw=switches)
+                    thinning=thinning, verbose=verbose, sw=switches)
   if(profile)  Rprof()
   if(method == "IFA" ||
      method == "classify") {
      gibbs.arg     <- append(gibbs.arg, list(phi.nu=phi.nu, alpha.d1=alpha.d1, alpha.d2=alpha.d2,
                                              adapt=adapt, b0=b0, b1=b1, prop=prop, epsilon=epsilon))
   if(missing(Q.star)) {
-     Q.star        <- min(floor(3 * log(P)), P)
+     Q.star        <- min(ceiling(3 * log(P)), P)
   } else if(Q.star  > P)            stop("Number of factors must be less than the number of variables")
     if(!is.logical(adapt))          stop("Arg. must be TRUE or FALSE")
     if(method == "IFA") {
