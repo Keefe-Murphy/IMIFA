@@ -34,7 +34,7 @@
       dimnames(psi.store)[[2]]  <- paste0("Iteration", 1:n.store)
     }
     post.Sigma    <- matrix(0, nr=P, nc=P)
-    cov.emp       <- cov(dat)
+    cov.emp       <- cov(data)
     dimnames(post.Sigma)        <- list(cnames, cnames)
     dimnames(cov.emp)           <- dimnames(post.Sigma)
     

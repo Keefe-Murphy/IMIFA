@@ -86,7 +86,7 @@ plot.IMIFA  <- function(results=NULL, plot.meth=c("all", "correlation", "density
         title(main=list(paste0("Trace", ifelse(all.ind, ":\n", ":\nScores - "), "Observation ", rownames(plot.x)[ind[1]]), cex=cex.t))
       } else {
         plot(x=iter, y=plot.x[ind[1],ind[2],], type="l", ylab="Scores", xlab="Iteration")
-        title(main=list(paste0("Trace", ifelse(all.ind, ":\n", ":\nScores - "), "Observation ", ind[1], ", Factor ", ind[2]), cex=cex.t))
+        title(main=list(paste0("Trace", ifelse(all.ind, ":\n", ":\nScores - "), "Observation ", rownames(plot.x)[ind[1]], ", Factor ", ind[2]), cex=cex.t))
       }
     }
     if(var == "loadings") {
@@ -348,7 +348,7 @@ plot.IMIFA  <- function(results=NULL, plot.meth=c("all", "correlation", "density
     if(var == "scores") { 
       plot.x   <- results$scores
       acf(plot.x[ind[1],ind[2],], main="")
-      title(main=list(paste0("ACF", ifelse(all.ind, ":\n", ":\n Scores - "), "Observation ", ind[1], ", Factor ", ind[2]), cex=cex.t))
+      title(main=list(paste0("ACF", ifelse(all.ind, ":\n", ":\n Scores - "), "Observation ", rownames(plot.x)[ind[1]], ", Factor ", ind[2]), cex=cex.t))
     }
     if(var == "loadings") { 
       plot.x   <- results$loadings

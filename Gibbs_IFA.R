@@ -34,7 +34,7 @@
       dimnames(psi.store)[[2]]  <- paste0("Iteration", 1:n.store)
     }
     post.Sigma     <- matrix(0, nr=P, nc=P)
-    cov.emp        <- cov(dat)
+    cov.emp        <- cov(data)
     dimnames(post.Sigma)        <- list(cnames, cnames)
     dimnames(cov.emp)           <- dimnames(post.Sigma)
     Q.star         <- Q
@@ -77,7 +77,7 @@
       for (j in 1:P) {
         psi.inv.j  <- psi.inv[j]
         c.data.j   <- c.data[,j]
-        D.load     <- phi[j,] * tau
+        D.load     <- phi[j,] * tau * diag(Q)
         lmat[j,]   <- sim.load(D.load, Q, c.data.j, f, psi.inv.j, FtF)
       } 
     
@@ -92,9 +92,11 @@
       sum.term     <- diag(crossprod(phi, load.2))
       delta[1]     <- sim.delta1(Q, P, alpha.d1, delta, tau, sum.term)
       tau          <- cumprod(delta)
-      for(k in 2:Q) { 
-        delta[k]   <- sim.deltak(Q, P, k, alpha.d2, delta, tau, sum.term)
-        tau        <- cumprod(delta)      
+      if(Q >= 2) {
+        for(k in 2:Q) { 
+          delta[k] <- sim.deltak(Q, P, k, alpha.d2, delta, tau, sum.term)
+          tau      <- cumprod(delta)      
+        }
       }
     
     # Adaptation  
@@ -116,11 +118,11 @@
           } else if(numred > 0) {    # remove redundant columns
             nonred <- which(colvec == 0)
             Q      <- max(Q - numred, 1)
-            f      <- f[,nonred]
-            phi    <- phi[,nonred]
+            f      <- f[,nonred, drop=F]
+            phi    <- phi[,nonred, drop=F]
             delta  <- delta[nonred]
             tau    <- cumprod(delta)
-            lmat   <- lmat[,nonred]
+            lmat   <- lmat[,nonred, drop=F]
           }
         }
       } 

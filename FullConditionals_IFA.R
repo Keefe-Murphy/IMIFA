@@ -26,7 +26,7 @@
 
 # Loadings
   sim.load      <- function(D.load, Q, c.data.j, f, psi.inv.j, FtF, ...) {
-    l.omega     <- diag(D.load) + psi.inv.j * FtF
+    l.omega     <- D.load + psi.inv.j * FtF
     U.load      <- chol(l.omega)
     z.load      <- rnorm(Q, 0, 1)
     v.load      <- backsolve(U.load, z.load)

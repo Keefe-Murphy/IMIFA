@@ -22,15 +22,15 @@ tune.sims     <- function(sims = NULL, burnin = 0, thinning = 1,
   n.var       <- attr(sims, "Vars")
   sw          <- attr(sims, "Switch")
   if(!is.logical(recomp))       stop("recomp must be TRUE or FALSE")
-  if(thinning  > 1  ||
+  if(thinning  > 1      ||
      burnin    > 0)   recomp <- T
   
   if(!missing(Q)) {
     Q.x       <- Q
     Q.ind     <- which(n.fac == Q.x)
-    if(method == "FA"  &&
+    if(method == "FA"   &&
        !is.element(Q, n.fac))   stop("This Q value was not used during simulation")
-    if(method == "IFA" &&
+    if(method == "IFA"  &&
        Q  > n.fac)              stop(paste0("Q cannot be greater than the number of factors in ", match.call()$sims))
   } 
   Q.T         <- exists("Q.x", envir=environment())
@@ -53,7 +53,7 @@ tune.sims     <- function(sims = NULL, burnin = 0, thinning = 1,
     Q.median  <- ceiling(median(Q.store) * 2)/2
     if(Q.T) {
        Q      <- Q.x
-    } else if(Q.meth   == 'Mode') { 
+    } else if(Q.meth    == 'Mode') { 
        Q      <- min(Q.mode)
     } else Q  <- Q.median
     Q.CI      <- round(quantile(Q.store, c(0.025, 0.975)))
@@ -76,7 +76,6 @@ tune.sims     <- function(sims = NULL, burnin = 0, thinning = 1,
       scaling <- attr(sims, "Scaling")
       data    <- scale(data, center=cent, scale=scaling)
     }
-    if(!sw["mu.sw"])            warning(paste0("Zero mean vector used in BIC calculation as means weren't stored"))
     for(q in Q.range) {
       Q.fac   <- n.fac[q]
       lmat    <- sims[[q]]$load[,1:Q.fac,store, drop=F]
@@ -90,6 +89,9 @@ tune.sims     <- function(sims = NULL, burnin = 0, thinning = 1,
       if(sw["mu.sw"]) {
         mu    <- sims[[q]]$mu[,store]
         post.mu   <- rowMeans(mu, 1)
+      } else {
+        post.mu   <- rep(0, n.var)
+                                warning(paste0("Zero mean vector used in BIC calculation as means weren't stored"))
       }
       if(sw["p.sw"])  {
         psi   <- sims[[q]]$psi[,store]
@@ -97,13 +99,14 @@ tune.sims     <- function(sims = NULL, burnin = 0, thinning = 1,
         Sigma <- tcrossprod(post.load) + diag(post.psi)
         K     <- n.var * Q.fac - 0.5 * Q.fac * (Q.fac - 1) + n.var
         rooti <- backsolve(chol(Sigma), diag(n.var))
-        quad  <- crossprod(rooti, t(data) - ifelse(isTRUE(as.logical(sw["mu.sw"])), post.mu, rep(0, n.var)))
+        quad  <- crossprod(rooti, t(data) - post.mu)
         quads <- colSums(quad * quad)
         log.lik   <- sum(log(exp(- n.var/2 * log(2 * pi) + sum(log(diag(rooti))) - 0.5 * quads)))
         BIC[q]    <- 2 * log.lik - K * log(n.obs)
       }
     }
-    if(max(propexp) > 1)        warning("Chain may not have converged")
+    if(max(propexp) > 1 ||
+       any(!is.finite(BIC)))    warning("Chain may not have converged")
     if(Q.T) {
       propexp <- propexp[Q.ind]
       BIC     <- BIC[Q.ind]
@@ -194,8 +197,8 @@ tune.sims     <- function(sims = NULL, burnin = 0, thinning = 1,
   MAD         <- mean(abs(error))
   error       <- list(MSE = MSE, MAD = MAD) 
   if(ifelse(all(isTRUE(attr(sim, "Scaling")), attr(sim, "Center")), 
-            sum(round(diag(cov.est))   != 
-            round(diag(cov.emp)))      != 0,
+            sum(round(diag(cov.est)) != 
+            round(diag(cov.emp)))    != 0,
             F)
   || ifelse(sw["p.sw"], 
             sum(abs(post.psi - (1 - post.psi)) < 0) != 0, F)
