@@ -48,7 +48,7 @@ plot.IMIFA  <- function(results=NULL, plot.meth=c("all", "correlation", "density
   if(!missing(ind))      x.ind <- ind
   ind.x     <- !exists("x.ind", envir=environment())
   if(((var  == "means"  || 
-      var  == "uniquenesses")  &&
+       var  == "uniquenesses") &&
       !missing(ind))    ||
      n.fac == 1)           mat <- F
   
@@ -307,13 +307,17 @@ plot.IMIFA  <- function(results=NULL, plot.meth=c("all", "correlation", "density
         axis(2, at=seq(0, 1, 0.1), labels=seq(0, 100, 10), cex.axis=0.8, las=1) 
       }
     }
+    if(method == "IFA") {
+        print(Q.res[1:length(Q.res)])
+    } else {
         cat(paste0("Q = ", n.fac, "\n"))
+    }
     if(v.sw["loadings"]) {
       if(method == "FA"&& v.sw["uniquenesses"]) {
         cat(paste0("BIC = ", BIC[which.max(BIC)], "\n"))
       }
-      cat(paste0("Proportion of Variation Explained = ",
-      round(prop.exp[length(prop.exp)]*100, 2), "%\n"))
+        cat(paste0("Proportion of Variation Explained = ",
+            round(prop.exp[length(prop.exp)]*100, 2), "%\n"))
       if(max(prop.exp) > 1)           warning("chain may not have converged")
     }
   }
