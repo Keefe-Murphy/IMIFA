@@ -38,7 +38,8 @@
     cov.emp        <- cov(dat)
     dimnames(post.Sigma)        <- list(cnames, cnames)
     dimnames(cov.emp)           <- dimnames(post.Sigma)
-    Q.store        <- c(Q, rep(0, n.store - 1))
+    Q.star         <- Q
+    Q.store        <- rep(0, n.store)
     
     sigma.mu       <- 1/sigma.mu
     mu             <- sim.mu.p(sigma.mu, P)  
@@ -124,7 +125,7 @@
           }
         }
       } 
-      if(Q > Q.store[1])   stop("Q cannot exceed initial number of loadings columns: try increasing Q.star")
+      if(Q > Q.star)    stop("Q cannot exceed initial number of loadings columns: try increasing Q.star")
       if(iter >= burnin && iter %% thinning == 0) {
         new.iter   <- ceiling((iter - burnin)/thinning)
         psi   <- 1/psi.inv

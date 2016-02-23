@@ -103,7 +103,7 @@ tune.sims     <- function(sims = NULL, burnin = 0, thinning = 1,
         BIC[q]    <- 2 * log.lik - K * log(n.obs)
       }
     }
-    if(max(propexp) > 1)        warning("chain may not have converged")
+    if(max(propexp) > 1)        warning("Chain may not have converged")
     if(Q.T) {
       propexp <- propexp[Q.ind]
       BIC     <- BIC[Q.ind]

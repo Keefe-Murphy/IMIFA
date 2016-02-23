@@ -321,7 +321,7 @@ plot.IMIFA  <- function(results=NULL, plot.meth=c("all", "correlation", "density
       }
         cat(paste0("Proportion of Variation Explained = ",
             round(prop.exp[length(prop.exp)]*100, 2), "%\n"))
-      if(max(prop.exp) > 1)           warning("chain may not have converged")
+      if(max(prop.exp) > 1)           warning("Chain may not have converged")
     }
   }
 

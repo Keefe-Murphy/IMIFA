@@ -89,7 +89,7 @@ imifa       <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
     if(missing("b0"))        b0            <- 0.1
     if(missing("b1"))        b1            <- 0.00005
     if(missing("prop"))      prop          <- 3/4
-    if(missing("epsilon"))   epsilon       <- ifelse(centering, 0.1, 0.01)
+    if(missing("epsilon"))   epsilon       <- ifelse(centering, 0.1, 0.005)
   }
   if(method == "classify") {
     source(paste(getwd(), "/IMIFA-GIT/FullConditionals_", "IFA", ".R", sep=""), local=T)
