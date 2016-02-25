@@ -40,7 +40,7 @@ sim.imifa     <- function(N = 1000, P = 25, Q = 5, G = 1) {
   
 # Simulate data
   omega       <- tcrossprod(load.true, load.true) + diag(psi.true)
-  if(Q.fac > 0) {
+  if(Q > 0) {
     U.om      <- chol(omega)
   } else {
     U.om      <- sqrt(omega)
