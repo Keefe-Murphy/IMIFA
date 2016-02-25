@@ -76,7 +76,6 @@
   plot(res, "d", "l")
   plot(res, "d", "l", mat=F)
   res$post.load
-  plot(res, "p", "l", heat=F)
   plot(res, "p", "l")
   plot(res, "c", "l")
   

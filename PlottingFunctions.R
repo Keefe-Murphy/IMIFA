@@ -3,8 +3,8 @@
 ################################
 
 plot.IMIFA  <- function(results=NULL, plot.meth=c("all", "correlation", "density", "posterior", "Q", "trace"), 
-                        var=c("means", "scores", "loadings", "uniquenesses"), Label=NULL, 
-                        fac=NULL, ind=NULL, heat=T, n.fac=NULL, type=c("n", "p", "l"), mat=T, ... ) {
+                        vars=c("means", "scores", "loadings", "uniquenesses"), Label=NULL, 
+                        fac=NULL, ind=NULL, n.fac=NULL, type=c("n", "p", "l"), mat=T, ... ) {
  
   defpar    <- par(no.readonly = T)
   defop     <- options()
@@ -20,14 +20,25 @@ plot.IMIFA  <- function(results=NULL, plot.meth=c("all", "correlation", "density
   if(n.fac   > results$Q.results$Q)   stop("Cannot plot this many factors")
   n.var     <- attr(results, "Vars")
   n.obs     <- attr(results, "Obs")
-  if(!is.logical(heat))               stop("heat must be TRUE or FALSE")
   if(missing(plot.meth))              stop("What type of plot would you like to produce?")
   plot.meth <- match.arg(plot.meth)
   type      <- match.arg(type)
   m.sw      <- c(Q.sw = F, cor.sw = F, den.sw = F, pos.sw = F, tra.sw = F)
-  if(plot.meth == "all")  {
+  if(!m.sw["Q.sw"]      &&
+       missing(vars))                 stop("What variable would you like to plot?")
+  v.sw      <- attr(results, "Switch")
+  names(v.sw)  <- formals(sys.function(sys.parent()))$vars
+  method    <- attr(results, "Method")
+  vars      <- match.arg(vars)
+  if(!v.sw[vars]        && 
+       !m.sw["Q.sw"])                 stop(paste0(vars, " weren't stored"))
+  if(plot.meth == "all")   {
     m.sw[-1]   <- !m.sw[-1]
-    layout(matrix(c(1, 2, 3, 4), nr=2, nc=2, byrow = TRUE))
+    if(vars == "loadings") {
+      layout(matrix(c(1, 2, 3, 4, 3, 5), nr=3, nc=2, byrow = TRUE))
+    } else {
+      layout(matrix(c(1, 2, 3, 4), nr=2, nc=2, byrow = TRUE))
+    }
     par(oma=c(0, 0, 2, 0), mai=c(0.7, 0.7, 0.5, 0.2), mgp=c(2, 1, 0), cex=0.8)
     all.ind <- T
   } else {
@@ -35,29 +46,21 @@ plot.IMIFA  <- function(results=NULL, plot.meth=c("all", "correlation", "density
     m.sw[sw.n] <- T
     all.ind <- F
   }
-  if(!m.sw["Q.sw"]      &&
-       missing(var))                  stop("What variable would you like to plot?")
-  v.sw      <- attr(results, "Switch")
-  names(v.sw)  <- formals(sys.function(sys.parent()))$var
-  var       <- match.arg(var)
-  method    <- attr(results, "Method")
-  if(!v.sw[var]         && 
-       !m.sw["Q.sw"])                 stop(paste0(var, " weren't stored"))
   if(!is.logical(mat))                stop("mat must be TRUE or FALSE")
   if(!missing(ind))      x.ind <- ind
   ind.x     <- !exists("x.ind", envir=environment())
-  if(((var  == "means"  || 
-       var  == "uniquenesses") &&
+  if(((vars == "means"  || 
+       vars == "uniquenesses") &&
       !missing(ind))    ||
-     n.fac == 1)           mat <- F
+     n.fac  == 1)           mat <- F
   
   if(m.sw["tra.sw"]) {
-    if(var == "scores"  || 
-       var == "loadings") {
+    if(vars == "scores"  || 
+       vars == "loadings") {
       if(ind.x)            ind <- c(1, 1)
       if(!missing(fac)) ind[2] <- fac
       if(length(ind) > 2)             stop("Length of indexes for plotting cannot be greater than 2")
-      if(var == "scores") {
+      if(vars == "scores") {
         if(ind[1] >  n.obs)           stop(paste0("First index cannot be greater than ",  n.obs))
       } else if(ind[1] > n.var)       stop(paste0("First index cannot be greater than ",  n.var))
       if(ind[2]   >  n.fac)           stop(paste0("Second index cannot be greater than ", n.fac))
@@ -68,7 +71,7 @@ plot.IMIFA  <- function(results=NULL, plot.meth=c("all", "correlation", "density
     }
     if(!mat) iter <- 1:attr(results, "Store")
     
-    if(var == "means") {
+    if(vars == "means") {
       plot.x   <- results$means
       if(mat) {
         matplot(t(plot.x[,]), type="l", ylab="Means", xlab="Iteration", ylim=if(is.element(method, c("FA", "IFA"))) c(-1, 1))
@@ -78,7 +81,7 @@ plot.IMIFA  <- function(results=NULL, plot.meth=c("all", "correlation", "density
         title(main=list(paste0("Trace", ifelse(all.ind, ":\n", ":\nMean of "), rownames(plot.x)[ind], " Variable")))
       }
     }
-    if(var == "scores") {
+    if(vars == "scores") {
       plot.x   <- results$scores
       if(mat) {
         matplot(t(plot.x[ind[1],,]), type="l", ylab="Scores", xlab="Iteration")
@@ -88,7 +91,7 @@ plot.IMIFA  <- function(results=NULL, plot.meth=c("all", "correlation", "density
         title(main=list(paste0("Trace", ifelse(all.ind, ":\n", ":\nScores - "), "Observation ", rownames(plot.x)[ind[1]], ", Factor ", ind[2])))
       }
     }
-    if(var == "loadings") {
+    if(vars == "loadings") {
       plot.x   <- results$loadings
       if(mat) {
         matplot(t(plot.x[ind[1],,]), type="l", ylab="Loadings", xlab="Iteration")
@@ -98,7 +101,7 @@ plot.IMIFA  <- function(results=NULL, plot.meth=c("all", "correlation", "density
         title(main=list(paste0("Trace", ifelse(all.ind, ":\n", ":\nLoadings - "), rownames(plot.x)[ind[1]], " Variable, Factor ", ind[2])))
       }
     }
-    if(var == "uniquenesses") {
+    if(vars == "uniquenesses") {
       plot.x   <- results$uniquenesses
       if(mat) {
         matplot(t(plot.x[,]), type="l", ylab="Uniquenesses", xlab="Iteration")
@@ -109,17 +112,17 @@ plot.IMIFA  <- function(results=NULL, plot.meth=c("all", "correlation", "density
       }
     }
     if(!ind.x)             ind <- x.ind
-    if(all.ind) title(paste0(toupper(substr(var, 1, 1)),
-                      substr(var, 2, nchar(var))), outer=T)
+    if(all.ind) title(paste0(toupper(substr(vars, 1, 1)),
+                      substr(vars, 2, nchar(vars))), outer=T)
   }
   
   if(m.sw["den.sw"]) {
-    if(var == "scores"  || 
-       var  == "loadings") {
+    if(vars == "scores"  || 
+       vars == "loadings") {
       if(ind.x)            ind <- c(1, 1)
       if(!missing(fac)) ind[2] <- fac
       if(length(ind) > 2)             stop("Length of indexes for plotting cannot be greater than 2")
-      if(var == "scores") {
+      if(vars == "scores") {
         if(ind[1] >  n.obs)           stop(paste0("First index cannot be greater than ",  n.obs))
       } else if(ind[1] > n.var)       stop(paste0("First index cannot be greater than ",  n.var))
       if(ind[2]   >  n.fac)           stop(paste0("Second index cannot be greater than ", n.fac))
@@ -128,7 +131,7 @@ plot.IMIFA  <- function(results=NULL, plot.meth=c("all", "correlation", "density
       if(length(ind) >   1)           stop("Length of indexes for plotting cannot be greater than 1")
       if(ind      >  n.var)           stop(paste0("Index cannot be greater than ", n.var))
     }
-    if(var == "means") {
+    if(vars == "means") {
       plot.X   <- results$means
       if(mat) {
         plot.x <- apply(plot.X, 1, density)
@@ -142,7 +145,7 @@ plot.IMIFA  <- function(results=NULL, plot.meth=c("all", "correlation", "density
         polygon(plot.d, col="black")
       }
     }
-    if(var == "scores") {
+    if(vars == "scores") {
       plot.X   <- results$scores
       if(mat) {
         plot.x <- plot.X[ind[1],,]
@@ -157,7 +160,7 @@ plot.IMIFA  <- function(results=NULL, plot.meth=c("all", "correlation", "density
         polygon(plot.d, col="black")
       }
     }
-    if(var == "loadings") {
+    if(vars == "loadings") {
       plot.X   <- results$loadings
       if(mat) {
         plot.x <- plot.X[ind[1],,]
@@ -172,7 +175,7 @@ plot.IMIFA  <- function(results=NULL, plot.meth=c("all", "correlation", "density
         polygon(plot.d, col="black")
       }
     }
-    if(var == "uniquenesses") {
+    if(vars == "uniquenesses") {
       plot.X   <- results$uniquenesses
       if(mat) {
         plot.x <- apply(plot.X, 1, density)
@@ -190,10 +193,21 @@ plot.IMIFA  <- function(results=NULL, plot.meth=c("all", "correlation", "density
   }
   
   if(m.sw["pos.sw"]) {
-    if(var == "scores"  || 
-       var == "loadings") {
-      if(ind.x)            ind <- c(1, 2)
-      if(!missing(fac)) ind[2] <- max(fac, 2)
+    if(vars == "scores"  || 
+       vars == "loadings") {
+      if(ind.x) {
+       if(vars == "scores") {
+           ind <- c(1, 2)
+       } else {
+           ind <- c(1, 1)
+       } 
+      }
+      if(!missing(fac)) {
+       if(vars == "loadings") {
+        ind[2] <- fac
+       }
+        ind[2] <- max(fac, 2)
+      }
       if(n.fac == 1) {
         ind    <- 1
       } else {
@@ -202,13 +216,13 @@ plot.IMIFA  <- function(results=NULL, plot.meth=c("all", "correlation", "density
         if(ind[2]  >  n.fac)          stop(paste0("Only the first ", n.fac, " columns can be plotted"))
       }
     }
-    if(var  == "means") {
+    if(vars == "means") {
       plot.x   <- results$post.mu
       plot(plot.x, type=type, ylab="Means", xlab="Variable", ylim=if(is.element(method, c("FA", "IFA"))) c(-1, 1))
       title(main=list(paste0("Posterior Mean", ifelse(all.ind, "", ":\nMeans"))))
       if(type  == "n") text(x=1:length(plot.x), y=plot.x, names(plot.x), cex=0.5)
     }
-    if(var == "scores") {
+    if(vars == "scores") {
       plot.x   <- results$post.f
       if(ind[1] > n.obs)              stop(paste0("Only the first ", n.obs, " scores can be plotted"))
       if(!missing(Label)) {
@@ -235,46 +249,29 @@ plot.IMIFA  <- function(results=NULL, plot.meth=c("all", "correlation", "density
         if(type == "n") text(plot.x[,ind], col=as.numeric(Label), cex=0.5)
       }
     }
-    if(var == "loadings") {
+    if(vars == "loadings") {
       if(plot.meth != "all") {
         par(mfrow=c(1, 2))
       }
       plot.x   <- results$post.load
-      if(heat) {
-        image(z=t(plot.x[n.var:1,1:n.fac]), xlab="", 
-              ylab="", xaxt="n", yaxt="n")
-        title(main=list(paste0("Posterior Mean Heatmap", ifelse(all.ind, "", ":\nLoadings"))))
-        axis(1, line=-0.5, tick=F, 
-             at=if(n.fac != 1) seq(0, 1, 1/(n.fac - 1)) else 0, labels=1:n.fac)
-        if(n.var < 100) {
-          axis(2, cex.axis=0.5, line=-0.5, tick=F, las=1,
-               at=seq(0, 1, 1/(n.var - 1)), 
-               labels=substring(rownames(plot.x)[n.var:1], 1, 10))
-        }
-        box(lwd=2)
-        mtext("Factors", side=1, line=2)
-        if(n.fac != 1) abline(v=seq(1/(2 * (n.fac - 1)), 
-                                    1 - 1/(2 * (n.fac - 1)), 
-                                    1/(n.fac - 1)), lty=2, lwd=1)
-    } else {
-      if(ind[1] > n.var)              stop(paste0("Only the first ", n.var, " variables can be plotted"))
-      if(n.fac != 1) {
-        plot(plot.x[,ind[1]], plot.x[,ind[2]], type=type, 
-             xlab=paste0("Factor ", ind[1]), ylab=paste0("Factor ", ind[2]))
-        title(main=list(paste0("Posterior Mean", ifelse(all.ind, "", ":\nLoadings"))))
-        if(type == "n") text(plot.x[,ind[1]], plot.x[,ind[2]], rownames(plot.x), cex=0.5)
-      } else { 
-        plot(plot.x[,ind], type=type,
-             xlab="Variable", ylab=paste0("Factor ", ind))
-        title(main=list(paste0("Posterior Mean", ifelse(all.ind, "", ":\nLoadings"))))
-        if(type == "n") text(plot.x[,ind], rownames(plot.x), cex=0.5)
-        }
+      image(z=t(plot.x[n.var:1,1:n.fac]), xlab="", 
+            ylab="", xaxt="n", yaxt="n")
+      title(main=list(paste0("Posterior Mean Heatmap", ifelse(all.ind, "", ":\nLoadings"))))
+      axis(1, line=-0.5, tick=F, 
+           at=if(n.fac != 1) seq(0, 1, 1/(n.fac - 1)) else 0, labels=1:n.fac)
+      if(n.var < 100) {
+        axis(2, cex.axis=0.5, line=-0.5, tick=F, las=1,
+             at=seq(0, 1, 1/(n.var - 1)), 
+             labels=substring(rownames(plot.x)[n.var:1], 1, 10))
       }
-      if(plot.meth != "all") {
-        plot(plot.x[,ind[1]], type="h", main=paste0("Loadings:\nFactor ", ind[1]), xlab="Variable #", ylab=paste0("Factor ", ind[1]))
-      }
+      box(lwd=2)
+      mtext("Factors", side=1, line=2)
+      if(n.fac != 1) abline(v=seq(1/(2 * (n.fac - 1)), 
+                                  1 - 1/(2 * (n.fac - 1)), 
+                                  1/(n.fac - 1)), lty=2, lwd=1)
+      plot(plot.x[,ind[2]], type="h", main=paste0(ifelse(all.ind, "", "Loadings:\n"), "Factor ", ind[2]), xlab="Variable #", ylab=paste0("Factor ", ind[2]))
     }
-    if(var == "uniquenesses") {
+    if(vars == "uniquenesses") {
       plot.x     <- results$post.psi
       plot(plot.x, type=type, ylab="Uniquenesses", xlab="Variable")
       title(main=list(paste0("Posterior Mean", ifelse(all.ind, "", ":\nUniquenesses"))))
@@ -348,12 +345,12 @@ plot.IMIFA  <- function(results=NULL, plot.meth=c("all", "correlation", "density
   }
 
   if(m.sw["cor.sw"]) {
-    if(var == "scores"  || 
-       var == "loadings") {
+    if(vars == "scores"  || 
+       vars == "loadings") {
       if(ind.x)            ind <- c(1, 1)
       if(!missing(fac)) ind[2] <- fac
       if(length(ind) > 2)             stop("Length of indexes for plotting cannot be greater than 2")
-      if(var == "scores") {
+      if(vars == "scores") {
         if(ind[1] >  n.obs)           stop(paste0("First index cannot be greater than ",  n.obs))
       } else if(ind[1] > n.var)       stop(paste0("First index cannot be greater than ",  n.var))
       if(ind[2]   >  n.fac)           stop(paste0("Second index cannot be greater than ", n.fac))
@@ -362,22 +359,22 @@ plot.IMIFA  <- function(results=NULL, plot.meth=c("all", "correlation", "density
       if(length(ind) >   1)           stop("Length of indexes for plotting cannot be greater than 1")
       if(ind      >  n.var)           stop(paste0("Index cannot be greater than ", n.var))
     }
-    if(var == "means") {
+    if(vars == "means") {
       plot.x   <- results$means 
       acf(plot.x[ind,], main="")
       title(main=list(paste0("ACF", ifelse(all.ind, ":\n", ":\n Mean of "), rownames(plot.x)[ind], " Variable")))
     }
-    if(var == "scores") { 
+    if(vars == "scores") { 
       plot.x   <- results$scores
       acf(plot.x[ind[1],ind[2],], main="")
       title(main=list(paste0("ACF", ifelse(all.ind, ":\n", ":\n Scores - "), "Observation ", rownames(plot.x)[ind[1]], ", Factor ", ind[2])))
     }
-    if(var == "loadings") { 
+    if(vars == "loadings") { 
       plot.x   <- results$loadings
       acf(plot.x[ind[1],ind[2],], main="")
       title(main=list(paste0("ACF", ifelse(all.ind, ":\n", ":\n Loadings - "), rownames(plot.x)[ind[1]], " Variable, Factor ", ind[2])))
     }
-    if(var == "uniquenesses") { 
+    if(vars == "uniquenesses") { 
       plot.x   <- results$uniquenesses
       acf(plot.x[ind,], main="")
       title(main=list(paste0("ACF", ifelse(all.ind, ":\n", ":\n Uniqueness of "), rownames(plot.x)[ind], " Variable")))
