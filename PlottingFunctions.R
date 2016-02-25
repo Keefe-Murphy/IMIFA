@@ -24,14 +24,12 @@ plot.IMIFA  <- function(results=NULL, plot.meth=c("all", "correlation", "density
   plot.meth <- match.arg(plot.meth)
   type      <- match.arg(type)
   m.sw      <- c(Q.sw = F, cor.sw = F, den.sw = F, pos.sw = F, tra.sw = F)
-  if(!m.sw["Q.sw"]      &&
-       missing(vars))                 stop("What variable would you like to plot?")
   v.sw      <- attr(results, "Switch")
   names(v.sw)  <- formals(sys.function(sys.parent()))$vars
   method    <- attr(results, "Method")
+  missing   <- missing(vars)
+  if(!is.character(vars))             stop("vars should be one of 'means', 'scores', 'loadings', or 'uniquenesses'")
   vars      <- match.arg(vars)
-  if(!v.sw[vars]        && 
-       !m.sw["Q.sw"])                 stop(paste0(vars, " weren't stored"))
   if(plot.meth == "all")   {
     m.sw[-1]   <- !m.sw[-1]
     if(vars == "loadings") {
@@ -46,6 +44,10 @@ plot.IMIFA  <- function(results=NULL, plot.meth=c("all", "correlation", "density
     m.sw[sw.n] <- T
     all.ind <- F
   }
+  if(!m.sw["Q.sw"]      &&
+      missing(vars))                  stop("What variable would you like to plot?")
+  if(!v.sw[vars]        && 
+     !m.sw["Q.sw"])                   stop(paste0(vars, " weren't stored"))
   if(!is.logical(mat))                stop("mat must be TRUE or FALSE")
   if(!missing(ind))      x.ind <- ind
   ind.x     <- !exists("x.ind", envir=environment())
@@ -55,7 +57,7 @@ plot.IMIFA  <- function(results=NULL, plot.meth=c("all", "correlation", "density
      n.fac  == 1)           mat <- F
   
   if(m.sw["tra.sw"]) {
-    if(vars == "scores"  || 
+    if(vars == "scores" || 
        vars == "loadings") {
       if(ind.x)            ind <- c(1, 1)
       if(!missing(fac)) ind[2] <- fac
@@ -117,7 +119,7 @@ plot.IMIFA  <- function(results=NULL, plot.meth=c("all", "correlation", "density
   }
   
   if(m.sw["den.sw"]) {
-    if(vars == "scores"  || 
+    if(vars == "scores" || 
        vars == "loadings") {
       if(ind.x)            ind <- c(1, 1)
       if(!missing(fac)) ind[2] <- fac
@@ -193,7 +195,7 @@ plot.IMIFA  <- function(results=NULL, plot.meth=c("all", "correlation", "density
   }
   
   if(m.sw["pos.sw"]) {
-    if(vars == "scores"  || 
+    if(vars == "scores" || 
        vars == "loadings") {
       if(ind.x) {
        if(vars == "scores") {
@@ -345,7 +347,7 @@ plot.IMIFA  <- function(results=NULL, plot.meth=c("all", "correlation", "density
   }
 
   if(m.sw["cor.sw"]) {
-    if(vars == "scores"  || 
+    if(vars == "scores" || 
        vars == "loadings") {
       if(ind.x)            ind <- c(1, 1)
       if(!missing(fac)) ind[2] <- fac
