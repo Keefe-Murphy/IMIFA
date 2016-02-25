@@ -9,8 +9,8 @@ plot.IMIFA  <- function(results=NULL, plot.meth=c("all", "correlation", "density
   defpar    <- par(no.readonly = T)
   defop     <- options()
   options(warn=1)
-  on.exit(par(defpar))
-  on.exit(options(defop), add=T)
+  on.exit(suppressWarnings(par(defpar)))
+  on.exit(suppressWarnings(options(defop)), add=T)
   if(missing(results))                stop("Results must be supplied")
   if(!exists(deparse(substitute(results)),
              envir=.GlobalEnv))       stop(paste0("Object ", match.call()$results, " not found"))
@@ -213,7 +213,7 @@ plot.IMIFA  <- function(results=NULL, plot.meth=c("all", "correlation", "density
       if(ind[1] > n.obs)              stop(paste0("Only the first ", n.obs, " scores can be plotted"))
       if(!missing(Label)) {
         if(!exists(as.character(match.call()$Label),
-           envir=.GlobalEnv)) {       warning(paste0("Object ", match.call()$Label, " not found"))
+           envir=.GlobalEnv)) {       warning(paste0("Object ", match.call()$Label, " not found"), call.=F)
           Label <- 1
         } else {
           Label <- as.factor(Label)
@@ -279,34 +279,48 @@ plot.IMIFA  <- function(results=NULL, plot.meth=c("all", "correlation", "density
   
   if(m.sw["Q.sw"]) {
     Q.res    <- results$Q.results
-    if(method  == "FA" && v.sw["loadings"] && v.sw["uniquenesses"]) {
+    no.fac   <- length(n.fac) == 1  &&  n.fac == 0
+    if(method == "FA" && v.sw["uniquenesses"] && (v.sw["loadings"] || no.fac)) {
       BIC    <- round(Q.res$BIC, 2)
     }
     range.Q  <- attr(Q.res, "Factors")
     if(method  == "IFA") {
-      if(range.Q != n.fac && v.sw["loadings"]) par(mfrow = c(1, 2))
+      if(range.Q != n.fac && v.sw["loadings"]) {
+        par(mfrow = c(1, 2))
+      }
       plot.Q     <- Q.res$Counts
       col.Q      <- c("black", "red")[(names(plot.Q) == n.fac) + 1]
       Q.plot     <- barplot(plot.Q, ylab="Frequency", xlab="Q", xaxt="n", col=col.Q)
       title(main=list("Posterior Distribution of Q", cex=cex.t))
       axis(1, at=Q.plot, labels=names(plot.Q), tick=F)
-    } else if(length(range.Q) > 1 && v.sw["loadings"]) {
-      if(n.fac > 1)                            par(mfrow = c(1, 2))
-      plot.Q     <- Q.res$prop.exp
-      plot(plot.Q, type="l", xlab="# Factors", ylim=c(0,1),
-           ylab="% Variation Explained", xaxt="n", yaxt="n")
-      title(main=list("Scree Plot to Choose Q", cex=cex.t))
-      axis(1, at=1:length(plot.Q), labels=range.Q)
-      axis(2, at=seq(0, 1, 0.1), labels=seq(0, 100, 10), cex.axis=0.8, las=1)
+    } else {
+      if(n.fac > 1 && length(range.Q) > 1 && v.sw["loadings"]) {
+        par(mfrow = c(1, 2))
+      }     
+      plot.Q     <- Q.res$cum.var
+      if(length(range.Q)  > 1 && v.sw["loadings"]) {
+        plot.Q   <- plot.Q[!is.na(plot.Q)]  
+        if(length(plot.Q) > 1) {
+          plot(plot.Q, type="l", xlab="# Factors", ylim=c(0,1),
+               ylab="% Variation Explained", xaxt="n", yaxt="n")
+          title(main=list("Scree Plot to Choose Q", cex=cex.t))
+          axis(1, at=1:length(plot.Q), labels=range.Q[range.Q > 0], cex.axis=0.8)
+          axis(2, at=seq(0, 1, 0.1), labels=seq(0, 100, 10), cex.axis=0.8, las=1)
+        }
+      } else if(!exists("Q.plot", envir=environment())) {
+                                      warning("Nothing to plot", call.=F)
+      }
     }
-    if(v.sw["loadings"]) {
+    if(!exists("cum.var", where=results)) {
+      prop.exp   <- results$prop.exp
+    } else {
       plot.x     <- results$cum.var
       prop.exp   <- plot.x[n.fac]
-      if(n.fac      > 1) {
+      if(n.fac > 1) {
         plot(plot.x, type="l", xlab="# Factors", ylim=c(0,1),
              ylab="% Variation Explained", xaxt="n", yaxt="n")
         title(main=list(paste0("Cumulative Variance:\n", n.fac, " Factors"), cex=cex.t))
-        axis(1, at=1:length(plot.x), labels=1:n.fac)
+        axis(1, at=1:length(plot.x), labels=1:n.fac, cex.axis=0.8)
         axis(2, at=seq(0, 1, 0.1), labels=seq(0, 100, 10), cex.axis=0.8, las=1) 
       }
     }
@@ -315,13 +329,13 @@ plot.IMIFA  <- function(results=NULL, plot.meth=c("all", "correlation", "density
     } else {
         cat(paste0("Q = ", n.fac, "\n"))
     }
-    if(v.sw["loadings"]) {
-      if(method == "FA"&& v.sw["uniquenesses"]) {
+    if(method == "FA" && v.sw["uniquenesses"] && (v.sw["loadings"] || no.fac)) {
         cat(paste0("BIC = ", BIC[which.max(BIC)], "\n"))
-      }
+    }
+    if(!is.null(prop.exp)) {
         cat(paste0("Proportion of Variation Explained = ",
-            round(prop.exp[length(prop.exp)]*100, 2), "%\n"))
-      if(max(prop.exp) > 1)           warning("Chain may not have converged")
+            round(prop.exp[length(prop.exp)] * 100, 2), "%\n"))
+      if(max(prop.exp) > 1)           warning("Chain may not have converged", call.=F)
     }
   }
 

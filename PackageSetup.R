@@ -11,7 +11,7 @@ if(length(setdiff(packages, (.packages()))) > 0) {
 }
 rm(packages)
 
-imifa       <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "FA", "classify"), n.iters = 50000,
+imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "FA", "classify"), n.iters = 50000,
                         Label = NULL, factanal = F, Q.star = NULL, range.Q = NULL, Q.fac = NULL, thinning = 2,
                         burnin = n.iters/5, centering = F, scaling = c("unit", "pareto", "none"), verbose = F, 
                         adapt = T, b0 = NULL, b1 = NULL, prop = NULL, epsilon = NULL, sigma.mu = NULL, 
@@ -21,8 +21,8 @@ imifa       <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   defpar    <- par(no.readonly = T)
   defop     <- options()
   options(warn=1)
-  on.exit(par(defpar))
-  on.exit(options(defop), add=T)
+  on.exit(suppressWarnings(par(defpar)))
+  on.exit(suppressWarnings(options(defop)), add=T)
   method    <- match.arg(method)
   scaling   <- match.arg(scaling)
   if(missing(dat))                  stop("Dataset must be supplied")
@@ -43,22 +43,35 @@ imifa       <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   if(all(centering, missing(mu.switch))) {
     mu.switch  <- F 
   }
-  if(!missing(mu.switch) && !mu.switch   && !centering) {
+  if(!missing(mu.switch) && !mu.switch    && !centering) {
     mu.switch  <- T                 
-                                    warning("Means were stored since centering was not applied")
-  }
-  if(method == "FA") {
-    if(missing(range.Q))            stop("Arg. range.Q must be specified")
-    if(!load.switch      && length(range.Q) > 1) {
-      load.switch <- T
-                                    warning("Loadings were stored in order to find optimum Q from supplied range")
-      if(!psi.switch) {
-                                    warning("Q will be tuned using % variation explained rather than BIC as Uniquenesses weren't stored")
-      }
-    }
+                                    warning("Means were stored since centering was not applied", call.=F)
   }
   switches  <- c(mu.sw=mu.switch, f.sw=f.switch, l.sw=load.switch, p.sw=psi.switch)
   if(!is.logical(switches))         stop("All logical switches must be TRUE or FALSE")
+  if(method == "FA") {
+    if(missing(range.Q))            stop("Arg. range.Q must be specified")
+    if(any(range.Q < 0))            stop("range.Q must be strictly non-negative")
+    no.fac     <- length(range.Q) == 1    && range.Q == 0
+    if(!psi.switch       &&  !load.switch && length(range.Q) > 1) {
+      switches["p.sw"]   <- T
+                                    warning("Uniquenesses were stored in order to find optimum Q from supplied range", call.=F)                               
+    }
+    if(no.fac) {   
+      if(all(switches["f.sw"], 
+             switches["l.sw"]))   { warning("Scores and Loadings not stored as only one model with zero factors was simulated from", call.=F)
+      } else if(switches["f.sw"]) { warning("Scores not stored as only one model with zero factors was simulated from", call.=F)
+      } else if(switches["l.sw"]) { warning("Loadings not stored as only one model with zero factors was simulated from", call.=F)
+      }                               
+      switches[c("f.sw", "l.sw")] <- F                              
+    } 
+    if(!all(switches["l.sw"], switches["p.sw"]) &&
+        any(switches["l.sw"], switches["p.sw"])) {
+      if(!no.fac) {
+        warning("Proportion of variation explained will be calculated instead of BIC", call.=F)      
+      } 
+    }
+  }
   
   # Remove non-numeric columns & apply centering & scaling if necessary 
   n.store   <- ceiling((n.iters - burnin)/thinning)
@@ -103,7 +116,7 @@ imifa       <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
                     psi.alpha = psi.alpha, psi.beta = psi.beta, burnin = burnin, 
                     thinning = thinning, n.store = n.store, verbose = verbose, sw = switches)
   if(profile)  Rprof()
-  if(method == "IFA" ||
+  if(method == "IFA"     ||
      method == "classify") {
      gibbs.arg     <- append(gibbs.arg, list(phi.nu = phi.nu, alpha.d1 = alpha.d1, alpha.d2 = alpha.d2,
                                              adapt = adapt, b0 = b0, b1 = b1, prop = prop, epsilon = epsilon))
@@ -121,7 +134,7 @@ imifa       <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
       if(!exists(deparse(substitute(Label)),
                  envir=.GlobalEnv)) stop(paste0("Object ", match.call()$Label, " not found"))
       Label   <- as.factor(Label)
-      if(length(Label) != N)        stop(paste0("Labels must be a factor of length N=",  n.obs))
+      if(length(Label)   != N)      stop(paste0("Labels must be a factor of length N=",  n.obs))
       imifa   <- vector("list", nlevels(Label))
       start.time   <- proc.time()
       for(i in 1:nlevels(Label)) {
@@ -170,8 +183,7 @@ imifa       <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   attr(imifa, "Scaling") <- scaling
   attr(imifa, "Store")   <- n.store
   attr(imifa, "Switch")  <- switches
-  if(method == "IFA" ||
-     length(range.Q) == 1) {
+  if(method == "IFA"     || length(range.Q) == 1) {
     attr(imifa, "Time")  <- tot.time
   } else {
     attr(imifa, "Time")  <- list(Total = tot.time, Average = avg.time) 
@@ -182,7 +194,13 @@ imifa       <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
 # Vanilla 'factanal' for comparison purposes
   if(!missing(Q.fac)) factanal <- T
   if(factanal) {
-    if(missing(Q.fac)) Q.fac   <- round(sqrt(P))
+    if(missing(Q.fac)) {
+      if(missing(range.Q)) {
+        Q.fac      <- round(sqrt(P))
+      } else {
+        Q.fac      <- max(1, max(range.Q))
+      }
+    }
     fac     <- factanal(dat, factors=Q.fac, control=list(nstart=50))
     imifa   <- append(imifa, list(fac = fac))
     names(imifa)         <- c(paste0("IMIFA", 1:(length(imifa) - 1)), "fac")
@@ -193,4 +211,4 @@ imifa       <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
 
 source(paste(getwd(), "/IMIFA-GIT/Diagnostics.R", sep=""))
 source(paste(getwd(), "/IMIFA-GIT/PlottingFunctions.R", sep=""))
-source(paste(getwd(), "/IMIFA-GIT/Simulate_Data.R", sep=""))
+source(paste(getwd(), "/IMIFA-GIT/SimulateData.R", sep=""))
