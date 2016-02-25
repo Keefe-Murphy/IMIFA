@@ -23,7 +23,7 @@ tune.sims     <- function(sims = NULL, burnin = 0, thinning = 1,
   sw          <- attr(sims, "Switch")
   cov.emp     <- sims[[1]]$cov.mat
   if(!is.logical(recomp))       stop("recomp must be TRUE or FALSE")
-  if(thinning  > 1      ||
+  if(thinning  > 1       ||
      burnin    > 0)   recomp <- T
   
   if(!missing(Q)) {
@@ -65,10 +65,10 @@ tune.sims     <- function(sims = NULL, burnin = 0, thinning = 1,
   } else if(any(sw["l.sw"], sw["p.sw"])) {     
   
   # Calculate Proportion of Variation Explained & BIC
-    Q.range   <- n.fac - min(n.fac) + 1
+    Q.range   <- 1:length(n.fac)
     cum.var   <- rep(NA, length(n.fac))
     if(sw["p.sw"]   && (sw["l.sw"] || (length(n.fac) == 1 && n.fac == 0))) {
-      BIC     <- rep(NA, length(n.fac))
+      bic     <- rep(NA, length(n.fac))
       if(!sw["mu.sw"]) {
         post.mu     <- rep(0, n.var) 
                                 warning(paste0("Zero mean vector used in BIC calculation as means weren't stored"), call.=F)
@@ -106,7 +106,10 @@ tune.sims     <- function(sims = NULL, burnin = 0, thinning = 1,
       if(sw["p.sw"])  {
         psi     <- sims[[q]]$psi[,store]
         post.psi    <- rowMeans(psi, 1)
-        if(!sw["l.sw"])  cum.var[q]  <- (sum(diag(cov.emp)) - sum(post.psi))/n.var
+        if(!sw["l.sw"]   ||
+           (sw["l.sw"]   && Q.fac == 0)) {
+          cum.var[q]     <- (sum(diag(cov.emp)) - sum(post.psi))/n.var
+        }  
         if(sw["l.sw"]    || Q.fac == 0) {
           Sigma <- tcrossprod(post.load) + diag(post.psi)
           K     <- n.var * Q.fac - 0.5 * Q.fac * (Q.fac - 1) + n.var
@@ -119,25 +122,30 @@ tune.sims     <- function(sims = NULL, burnin = 0, thinning = 1,
           quad  <- crossprod(rooti, t(data) - post.mu)
           quads <- colSums(quad * quad)
           log.lik   <- sum(log(exp(- n.var/2 * log(2 * pi) + sum(log(diag(rooti))) - 0.5 * quads)))
-          BIC[q]    <- 2 * log.lik - K * log(n.obs)
+          bic[q]    <- 2 * log.lik - K * log(n.obs)
         }
       }
     }
-    if(max(cum.var[!is.na(cum.var)]) > 1 ||
-       any(!is.finite(BIC)))    warning("Chain may not have converged", call.=F)
+    if(max(cum.var[!is.na(cum.var)]) > 1    ||
+       (exists("bic", envir=environment())  &&
+       any(!is.finite(bic))))   warning("Chain may not have converged", call.=F)
     if(Q.T) {
       cum.var <- cum.var[Q.ind]
-      BIC     <- BIC[Q.ind]
+      bic     <- bic[Q.ind]
       Q       <- Q.x
       n.fac   <- Q
-    } else if(sw["p.sw"] && (sw["l.sw"] || (length(n.fac) == 1 && n.fac == 0))) {
-      Q.ind   <- which.max(BIC)
+    } else if(sw["p.sw"] && (sw["l.sw"]     || (length(n.fac) == 1 && n.fac == 0))) {
+      Q.ind   <- which.max(bic)
       Q       <- n.fac[Q.ind]
     } else {
       Q.ind   <- which.max(cum.var)
       Q       <- n.fac[Q.ind]
     }
-    Q.res     <- list(Q = Q, BIC = BIC, cum.var = cum.var) 
+    if(exists("bic", envir=environment())) {
+      Q.res     <- list(Q = Q, BIC = bic, cum.var = cum.var)
+    } else {
+      Q.res     <- list(Q = Q, cum.var = cum.var)
+    }
   }  else if(length(n.fac) == 1) {
      Q.ind    <- 1
      Q        <- n.fac
@@ -200,6 +208,7 @@ tune.sims     <- function(sims = NULL, burnin = 0, thinning = 1,
     prop.uni  <- 1 - prop.exp
   } else if(sw["p.sw"]) {
     prop.exp  <- (sum(diag(cov.emp)) - sum(post.psi))/n.var
+    cum.var   <- max(prop.exp)
   }
   cov.est     <- sims[[Q.ind]]$post.Sigma
   if(recomp) {
@@ -233,9 +242,8 @@ tune.sims     <- function(sims = NULL, burnin = 0, thinning = 1,
                       if(sw["p.sw"])  list(uniquenesses = psi, post.psi = post.psi),
                       if(sw["l.sw"])  list(loadings = lmat, post.load = post.load,  
                                            communality = comm, SS.load = SS.load,
-                                           prop.var = prop.var, cum.var=cum.var,
-                                           prop.uni = prop.uni),
-                      if(any(sw[c("p.sw", "l.sw")])) list(prop.exp = prop.exp),
+                                           prop.var = prop.var, prop.uni = prop.uni),
+                      if(any(sw[c("p.sw", "l.sw")])) list(prop.exp = prop.exp, cum.var = cum.var),
                       if(exists("cov.emp")) list(error = error, cov.mat = cov.emp), list(post.Sigma = cov.est))
   results     <- unlist(results, recursive=F)
   if(Q.T) {

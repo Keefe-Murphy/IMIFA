@@ -52,7 +52,8 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   if(method == "FA") {
     if(missing(range.Q))            stop("Arg. range.Q must be specified")
     if(any(range.Q < 0))            stop("range.Q must be strictly non-negative")
-    no.fac     <- length(range.Q) == 1    && range.Q == 0
+    range.Q <- sort(unique(range.Q))
+    no.fac  <- length(range.Q) == 1       && range.Q == 0
     if(!psi.switch       &&  !load.switch && length(range.Q) > 1) {
       switches["p.sw"]   <- T
                                     warning("Uniquenesses were stored in order to find optimum Q from supplied range", call.=F)                               
@@ -121,7 +122,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
      gibbs.arg     <- append(gibbs.arg, list(phi.nu = phi.nu, alpha.d1 = alpha.d1, alpha.d2 = alpha.d2,
                                              adapt = adapt, b0 = b0, b1 = b1, prop = prop, epsilon = epsilon))
   if(missing(Q.star)) {
-     Q.star        <- min(floor(3 * log(P)), P)
+     Q.star        <- min(floor(3 * log(P)), P, N - 1)
   } else if(Q.star  > P)            stop("Number of factors must be less than the number of variables")
     if(!is.logical(adapt))          stop("Arg. must be TRUE or FALSE")
     if(method == "IFA") {
@@ -145,9 +146,9 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
       }
     }
   } else if(method == "FA") {
-    if((length(range.Q)  == 1 && range.Q >= P) || 
-       (length(range.Q)   > 1 && any(range.Q) >= P))   
-                                    stop ("Number of factors must be less than the number of variables")
+    if((length(range.Q)  == 1 && (range.Q >= P || range.Q >= N - 1)) ||
+       (length(range.Q)   > 1 && (any(range.Q  >= P) || any(range.Q  >= N - 1))))   
+                                    stop ("Number of factors must be less than the number of variables and number of observations")
     gibbs.arg      <- append(gibbs.arg, list(sigma.l))
     imifa          <- vector("list", length(range.Q))
     if(length(range.Q)   == 1) {
@@ -157,7 +158,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
     } else {
       start.time   <- proc.time()
       for(q in range.Q) { 
-        Q.ind      <- q - min(range.Q) + 1
+        Q.ind      <- which(range.Q == q)
         imifa[[Q.ind]]   <- do.call(paste0("gibbs.", method),
                                     args=append(list(data = dat, N = N, Q = q), gibbs.arg))
         if(verbose)                 cat(paste0(round(Q.ind/length(range.Q) * 100, 2), "% Complete\n"))

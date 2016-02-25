@@ -287,7 +287,7 @@ plot.IMIFA  <- function(results=NULL, plot.meth=c("all", "correlation", "density
     Q.res    <- results$Q.results
     no.fac   <- length(n.fac) == 1  &&  n.fac == 0
     if(method == "FA" && v.sw["uniquenesses"] && (v.sw["loadings"] || no.fac)) {
-      BIC    <- round(Q.res$BIC, 2)
+      bic    <- round(Q.res$BIC, 2)
     }
     range.Q  <- attr(Q.res, "Factors")
     if(method  == "IFA") {
@@ -310,12 +310,10 @@ plot.IMIFA  <- function(results=NULL, plot.meth=c("all", "correlation", "density
           plot(plot.Q, type="l", xlab="# Factors", ylim=c(0,1),
                ylab="% Variation Explained", xaxt="n", yaxt="n")
           title(main=list("Scree Plot to Choose Q"))
-          axis(1, at=1:length(plot.Q), labels=range.Q[range.Q > 0])
+          axis(1, at=1:length(plot.Q), labels=range.Q)
           axis(2, at=seq(0, 1, 0.1), labels=seq(0, 100, 10), las=1)
         }
-      } else if(!exists("Q.plot", envir=environment())) {
-                                      warning("Nothing to plot", call.=F)
-      }
+      } 
     }
     if(!exists("cum.var", where=results)) {
       prop.exp   <- results$prop.exp
@@ -329,6 +327,11 @@ plot.IMIFA  <- function(results=NULL, plot.meth=c("all", "correlation", "density
         axis(1, at=1:length(plot.x), labels=1:n.fac)
         axis(2, at=seq(0, 1, 0.1), labels=seq(0, 100, 10), las=1) 
       }
+    } 
+    if(all(!exists("Q.plot",  envir=environment()),
+           !exists("cum.var", where=results),
+           length(n.fac) == 1)) {
+                                      warning("Nothing to plot", call.=F)
     }
     if(method == "IFA") {
         print(Q.res[1:length(Q.res)])
@@ -336,13 +339,12 @@ plot.IMIFA  <- function(results=NULL, plot.meth=c("all", "correlation", "density
         cat(paste0("Q = ", n.fac, "\n"))
     }
     if(method == "FA" && v.sw["uniquenesses"] && (v.sw["loadings"] || no.fac)) {
-        cat(paste0("BIC = ", BIC[which.max(BIC)], "\n"))
+        cat(paste0("BIC = ", bic[which.max(bic)], "\n"))
     }
-    if(!is.null(prop.exp)) {
         cat(paste0("Proportion of Variation Explained = ",
             round(prop.exp[length(prop.exp)] * 100, 2), "%\n"))
-      if(max(prop.exp) > 1)           warning("Chain may not have converged", call.=F)
-    }
+    if(max(prop.exp) > 1)             warning("Chain may not have converged", call.=F)
+    
   }
 
   if(m.sw["cor.sw"]) {
