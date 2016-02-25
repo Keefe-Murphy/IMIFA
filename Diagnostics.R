@@ -197,7 +197,7 @@ tune.sims     <- function(sims = NULL, burnin = 0, thinning = 1,
     prop.var  <- SS.load/n.var
     cum.var   <- cumsum(prop.var)          
     prop.exp  <- comm/n.var
-    prop.uni  <- 1 - propexp
+    prop.uni  <- 1 - prop.exp
   } else if(sw["p.sw"]) {
     prop.exp  <- (sum(diag(cov.emp)) - sum(post.psi))/n.var
   }
@@ -223,7 +223,7 @@ tune.sims     <- function(sims = NULL, burnin = 0, thinning = 1,
      ifelse(sw["p.sw"], 
             sum(abs(post.psi - (1 - post.psi)) < 0) != 0, F),
      ifelse(sw["l.sw"], 
-            propexp > 1, F)))   warning("Chain may not have converged", call.=F)
+            prop.exp > 1, F)))  warning("Chain may not have converged", call.=F)
 
   if(sw["l.sw"]) {
     class(post.load)       <- "loadings"
