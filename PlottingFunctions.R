@@ -2,9 +2,9 @@
 ### IMIFA Plotting Functions ###
 ################################
 
-plot.IMIFA  <- function(results=NULL, plot.meth=c("all", "correlation", "density", "posterior", "Q", "trace"), 
-                        vars=c("means", "scores", "loadings", "uniquenesses"), Label=NULL, 
-                        fac=NULL, ind=NULL, n.fac=NULL, type=c("n", "p", "l"), mat=T, ... ) {
+plot.IMIFA  <- function(results = NULL, plot.meth = c("all", "correlation", "density", "posterior", "Q", "trace"), 
+                        vars = c("means", "scores", "loadings", "uniquenesses"), Label = NULL, fac = NULL,
+                        by.fac = T, ind = NULL, n.fac = NULL, type = c("n", "p", "l"), mat = T, ... ) {
  
   defpar    <- par(no.readonly = T)
   defop     <- options()
@@ -84,23 +84,41 @@ plot.IMIFA  <- function(results=NULL, plot.meth=c("all", "correlation", "density
       }
     }
     if(vars == "scores") {
-      plot.x   <- results$scores
-      if(mat) {
-        matplot(t(plot.x[ind[1],,]), type="l", ylab="Scores", xlab="Iteration")
-        title(main=list(paste0("Trace", ifelse(all.ind, ":\n", ":\nScores - "), "Observation ", rownames(plot.x)[ind[1]])))
+      plot.X   <- results$scores
+      if(by.fac) {
+        plot.x <- plot.X[ind[1],,]
       } else {
-        plot(x=iter, y=plot.x[ind[1],ind[2],], type="l", ylab="Scores", xlab="Iteration")
-        title(main=list(paste0("Trace", ifelse(all.ind, ":\n", ":\nScores - "), "Observation ", rownames(plot.x)[ind[1]], ", Factor ", ind[2])))
+        plot.x <- plot.X[,ind[2],]
+      }
+      if(mat) {
+        matplot(t(plot.x), type="l", ylab="Scores", xlab="Iteration")    
+        if(by.fac) {
+          title(main=list(paste0("Trace", ifelse(all.ind, ":\n", ":\nScores - "), "Observation ", rownames(plot.X)[ind[1]])))
+        } else {
+          title(main=list(paste0("Trace", ifelse(all.ind, ":\n", ":\nScores - "), "Factor ", ind[2])))
+        }
+      } else {
+        plot(x=iter, y=plot.X[ind[1],ind[2],], type="l", ylab="Scores", xlab="Iteration")
+        title(main=list(paste0("Trace", ifelse(all.ind, ":\n", ":\nScores - "), "Observation ", rownames(plot.X)[ind[1]], ", Factor ", ind[2])))
       }
     }
     if(vars == "loadings") {
-      plot.x   <- results$loadings
-      if(mat) {
-        matplot(t(plot.x[ind[1],,]), type="l", ylab="Loadings", xlab="Iteration")
-        title(main=list(paste0("Trace", ifelse(all.ind, ":\n", ":\nLoadings - "), rownames(plot.x)[ind[1]], " Variable")))
+      plot.X   <- results$loadings
+      if(by.fac) {
+        plot.x <- plot.X[ind[1],,]
       } else {
-        plot(x=iter, y=plot.x[ind[1],ind[2],], type="l", ylab="Loadings", xlab="Iteration")
-        title(main=list(paste0("Trace", ifelse(all.ind, ":\n", ":\nLoadings - "), rownames(plot.x)[ind[1]], " Variable, Factor ", ind[2])))
+        plot.x <- plot.X[,ind[2],]
+      }
+      if(mat) {
+        matplot(t(plot.x), type="l", ylab="Loadings", xlab="Iteration")
+        if(by.fac) {
+          title(main=list(paste0("Trace", ifelse(all.ind, ":\n", ":\nLoadings - "), rownames(plot.X)[ind[1]], " Variable")))
+        } else {
+          title(main=list(paste0("Trace", ifelse(all.ind, ":\n", ":\nLoadings - "), "Factor ", ind[2])))
+        }
+      } else {
+        plot(x=iter, y=plot.X[ind[1],ind[2],], type="l", ylab="Loadings", xlab="Iteration")
+        title(main=list(paste0("Trace", ifelse(all.ind, ":\n", ":\nLoadings - "), rownames(plot.X)[ind[1]], " Variable, Factor ", ind[2])))
       }
     }
     if(vars == "uniquenesses") {
@@ -148,13 +166,21 @@ plot.IMIFA  <- function(results=NULL, plot.meth=c("all", "correlation", "density
       }
     }
     if(vars == "scores") {
-      plot.X   <- results$scores
-      if(mat) {
+      plot.X   <- res$scores
+      if(by.fac) {
         plot.x <- plot.X[ind[1],,]
+      } else {
+        plot.x <- plot.X[,ind[2],]
+      }
+      if(mat) {
         plot.x <- apply(plot.x, 1, density)
         plot.x <- sapply(plot.x, "[[", "y")
         matplot(plot.x, type="l", ylab="Density")
-        title(main=list(paste0("Density", ifelse(all.ind, ":\n", ":\nScores - "), "Observation ", rownames(plot.X)[ind[1]])))
+        if(by.fac) {
+          title(main=list(paste0("Density", ifelse(all.ind, ":\n", ":\nScores - "), "Observation ", rownames(plot.X)[ind[1]])))
+        } else {
+          title(main=list(paste0("Density", ifelse(all.ind, ":\n", ":\nScores - "), "Factor ", ind[2])))
+        }
       } else {
         plot.d <- density(plot.X[ind[1],ind[2],])
         plot(plot.d, main="")
@@ -164,12 +190,20 @@ plot.IMIFA  <- function(results=NULL, plot.meth=c("all", "correlation", "density
     }
     if(vars == "loadings") {
       plot.X   <- results$loadings
-      if(mat) {
+      if(by.fac) {
         plot.x <- plot.X[ind[1],,]
+      } else {
+        plot.x <- plot.X[,ind[2],]
+      }
+      if(mat) {
         plot.x <- apply(plot.x, 1, density)
         plot.x <- sapply(plot.x, "[[", "y")
         matplot(plot.x, type="l", ylab="Density")
-        title(main=list(paste0("Density", ifelse(all.ind, ":\n", ":\nLoadings - "), rownames(plot.X)[ind[1]], " Variable")))
+        if(by.fac) {
+          title(main=list(paste0("Density", ifelse(all.ind, ":\n", ":\nLoadings - "), rownames(plot.X)[ind[1]], " Variable")))
+        } else {
+          title(main=list(paste0("Density", ifelse(all.ind, ":\n", ":\nLoadings - "), "Factor ", ind[2])))
+        }
       } else {
         plot.d <- density(plot.X[ind[1],ind[2],])
         plot(plot.d, main="")
@@ -271,7 +305,11 @@ plot.IMIFA  <- function(results=NULL, plot.meth=c("all", "correlation", "density
       if(n.fac != 1) abline(v=seq(1/(2 * (n.fac - 1)), 
                                   1 - 1/(2 * (n.fac - 1)), 
                                   1/(n.fac - 1)), lty=2, lwd=1)
-      plot(plot.x[,ind[2]], type="h", main=paste0(ifelse(all.ind, "", "Loadings:\n"), "Factor ", ind[2]), xlab="Variable #", ylab=paste0("Factor ", ind[2]))
+      if(by.fac) {
+        plot(plot.x[,ind[2]], type="h", main=paste0(ifelse(all.ind, "", "Loadings:\n"), "Factor ", ind[2]), xlab="Variable #", ylab="Loading")
+      } else {
+        plot(plot.x[ind[1],], type="h", main=paste0(ifelse(all.ind, "", "Loadings:\n"), rownames(plot.x)[ind[1]], " Variable"), xlab="Factor", ylab="Loading")
+      }
     }
     if(vars == "uniquenesses") {
       plot.x     <- results$post.psi

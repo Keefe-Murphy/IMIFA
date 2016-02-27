@@ -32,7 +32,7 @@ tune.sims     <- function(sims = NULL, burnin = 0, thinning = 1,
     if(method == "FA"    &&
        !is.element(Q, n.fac))   stop("This Q value was not used during simulation")
     if(method == "IFA"   &&
-       Q  > n.fac)              stop(paste0("Q cannot be greater than the number of factors in ", match.call()$sims))
+      (Q * (n.fac - Q))  <= 0)  stop(paste0("Q cannot be greater than the number of factors in ", match.call()$sims))
   } 
   Q.T         <- exists("Q.x", envir=environment())
   if(method == "IFA") {
