@@ -134,7 +134,8 @@ tune.sims     <- function(sims = NULL, burnin = 0, thinning = 1,
       bic     <- bic[Q.ind]
       Q       <- Q.x
       n.fac   <- Q
-    } else if(sw["p.sw"] && (sw["l.sw"]     || (length(n.fac) == 1 && n.fac == 0))) {
+    } else if(sw["p.sw"] && (sw["l.sw"]     || (length(n.fac) == 1 && n.fac == 0)) &&
+              !any(is.nan(bic), is.finite(bic))) {
       Q.ind   <- which.max(bic)
       Q       <- n.fac[Q.ind]
     } else {

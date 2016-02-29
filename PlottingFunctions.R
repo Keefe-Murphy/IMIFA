@@ -335,7 +335,7 @@ plot.IMIFA  <- function(results = NULL, plot.meth = c("all", "correlation", "den
     range.Q  <- attr(Q.res, "Factors")
     supplied <- attr(Q.res, "Supplied")
     if(method  == "IFA") {
-      if(!supplied    && n.fac > 1  && v.sw["loadings"]) {
+      if(!supplied    && n.fac > 1  && v.sw["loadings"] && results$prop.exp <= 1) {
         par(mfrow = c(1, 2))
       }
       if(!supplied) {
@@ -352,7 +352,7 @@ plot.IMIFA  <- function(results = NULL, plot.meth = c("all", "correlation", "den
       plot.Q     <- Q.res$cum.var
       if(length(range.Q)  > 1 && v.sw["loadings"]) {
         plot.Q   <- plot.Q[!is.na(plot.Q)]  
-        if(length(plot.Q) > 1) {
+        if(length(plot.Q) > 1 && !any(plot.Q > 1)) {
           plot(plot.Q, type="l", xlab="# Factors", ylim=c(0,1),
                ylab="% Variation Explained", xaxt="n", yaxt="n")
           title(main=list("Scree Plot to Choose Q"))
@@ -366,7 +366,7 @@ plot.IMIFA  <- function(results = NULL, plot.meth = c("all", "correlation", "den
     } else {
       plot.x     <- results$cum.var
       prop.exp   <- plot.x[max(1, n.fac)]
-      if(n.fac > 1) {
+      if(n.fac > 1 && !any(plot.x > 1)) {
         plot(plot.x, type="l", xlab="# Factors", ylim=c(0,1),
              ylab="% Variation Explained", xaxt="n", yaxt="n")
         title(main=list(paste0("Cumulative Variance:\n", n.fac, " Factors")))
