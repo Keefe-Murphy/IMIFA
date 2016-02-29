@@ -11,7 +11,7 @@ plot.IMIFA  <- function(results = NULL, plot.meth = c("all", "correlation", "den
   options(warn=1)
   on.exit(suppressWarnings(par(defpar)))
   on.exit(suppressWarnings(options(defop)), add=T)
-  par(cex.axis=0.8)
+  par(cex.axis=0.8, new=F)
   if(missing(results))                stop("Results must be supplied")
   if(!exists(deparse(substitute(results)),
              envir=.GlobalEnv))       stop(paste0("Object ", match.call()$results, " not found"))
@@ -30,7 +30,8 @@ plot.IMIFA  <- function(results = NULL, plot.meth = c("all", "correlation", "den
   missing   <- missing(vars)
   if(!is.character(vars))             stop("vars should be one of 'means', 'scores', 'loadings', or 'uniquenesses'")
   vars      <- match.arg(vars)
-  if(plot.meth == "all")   {
+  all.ind   <- plot.meth == "all"
+  if(all.ind)   {
     m.sw[-1]   <- !m.sw[-1]
     if(vars == "loadings") {
       layout(matrix(c(1, 2, 3, 4, 3, 5), nr=3, nc=2, byrow = TRUE))
@@ -38,11 +39,9 @@ plot.IMIFA  <- function(results = NULL, plot.meth = c("all", "correlation", "den
       layout(matrix(c(1, 2, 3, 4), nr=2, nc=2, byrow = TRUE))
     }
     par(oma=c(0, 0, 2, 0), mai=c(0.7, 0.7, 0.5, 0.2), mgp=c(2, 1, 0), cex=0.8)
-    all.ind <- T
   } else {
     sw.n    <- paste0(substring(plot.meth, 1, 3), ".sw")
     m.sw[sw.n] <- T
-    all.ind <- F
   }
   if(!m.sw["Q.sw"]      &&
       missing(vars))                  stop("What variable would you like to plot?")
@@ -334,15 +333,18 @@ plot.IMIFA  <- function(results = NULL, plot.meth = c("all", "correlation", "den
       bic    <- round(Q.res$BIC, 2)
     }
     range.Q  <- attr(Q.res, "Factors")
+    supplied <- attr(Q.res, "Supplied")
     if(method  == "IFA") {
-      if(range.Q != n.fac && v.sw["loadings"]) {
+      if(!supplied    && n.fac > 1  && v.sw["loadings"]) {
         par(mfrow = c(1, 2))
       }
-      plot.Q     <- Q.res$Counts
-      col.Q      <- c("black", "red")[(names(plot.Q) == n.fac) + 1]
-      Q.plot     <- barplot(plot.Q, ylab="Frequency", xlab="Q", xaxt="n", col=col.Q)
-      title(main=list("Posterior Distribution of Q"))
-      axis(1, at=Q.plot, labels=names(plot.Q), tick=F)
+      if(!supplied) {
+        plot.Q <- Q.res$Counts
+        col.Q  <- c("black", "red")[(names(plot.Q) == n.fac) + 1]
+        Q.plot <- barplot(plot.Q, ylab="Frequency", xlab="Q", xaxt="n", col=col.Q)
+        title(main=list("Posterior Distribution of Q"))
+        axis(1, at=Q.plot, labels=names(plot.Q), tick=F) 
+      }
     } else {
       if(n.fac > 1 && length(range.Q) > 1 && v.sw["loadings"]) {
         par(mfrow = c(1, 2))
@@ -363,7 +365,7 @@ plot.IMIFA  <- function(results = NULL, plot.meth = c("all", "correlation", "den
       prop.exp   <- results$prop.exp
     } else {
       plot.x     <- results$cum.var
-      prop.exp   <- plot.x[n.fac]
+      prop.exp   <- plot.x[max(1, n.fac)]
       if(n.fac > 1) {
         plot(plot.x, type="l", xlab="# Factors", ylim=c(0,1),
              ylab="% Variation Explained", xaxt="n", yaxt="n")

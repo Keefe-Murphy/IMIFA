@@ -253,6 +253,7 @@ tune.sims     <- function(sims = NULL, burnin = 0, thinning = 1,
     attr(Q.res, 
          "Factors")        <- n.fac
   } 
+  attr(Q.res, "Supplied")  <- Q.T
   results     <- c(results, Q.results = list(Q.res))
   class(results)           <- "IMIFA"
   attr(results, "Method")  <- attr(sims, "Method")

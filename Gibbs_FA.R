@@ -68,7 +68,6 @@
       } else {
         f        <- matrix(, nr=N, nc=0)
       }
-      
                 
     # Loadings
       FtF        <- crossprod(f)
@@ -87,7 +86,7 @@
     
       if(iter >= burnin && iter %% thinning == 0) {
         new.iter <- ceiling((iter - burnin)/thinning)
-        psi   <- 1/psi.inv
+        psi      <- 1/psi.inv
         if(sw["mu.sw"]) mu.store[,new.iter]    <- mu  
         if(sw["f.sw"])  f.store[,,new.iter]    <- f
         if(sw["l.sw"])  load.store[,,new.iter] <- lmat
