@@ -29,6 +29,8 @@
       psi.store  <- matrix(0, nr=P, nc=n.store)
       dimnames(psi.store)  <- list(cnames, iternames)
     }
+    post.mu      <- setNames(rep(0, P), cnames)
+    post.psi     <- setNames(rep(0, P), cnames)
     post.Sigma   <- matrix(0, nr=P, nc=P)
     cov.emp      <- cov(data)
     dimnames(post.Sigma)   <- list(cnames, cnames)
@@ -46,9 +48,9 @@
   # Iterate
     for(iter in 2:n.iters) { 
       if(verbose) {
-        if(iter < burnin && iter %% (burnin/10) == 0) {
+        if(all(iter < burnin, iter %% (burnin/10) == 0)) {
           cat(paste0("Iteration: ", iter, "\n"))
-        } else if (iter %% (n.iters/10) == 0) {
+        } else if(iter %% (n.iters/10) == 0) {
           cat(paste0("Iteration: ", iter, "\n"))
         }
       }
@@ -80,13 +82,15 @@
     # Uniquenesses
       psi.inv    <- sim.psi.inv(N, P, psi.alpha, psi.beta, c.data, f, lmat)
     
-      if(iter >= burnin && iter %% thinning == 0) {
+      if(all(iter > burnin, iter %% thinning == 0)) {
         new.iter <- ceiling((iter - burnin)/thinning)
         psi      <- 1/psi.inv
         if(sw["mu.sw"]) mu.store[,new.iter]    <- mu  
         if(sw["f.sw"])  f.store[,,new.iter]    <- f
         if(sw["l.sw"])  load.store[,,new.iter] <- lmat
         if(sw["p.sw"])  psi.store[,new.iter]   <- psi
+        post.mu     <-  post.mu + as.vector(mu)/n.store
+        post.psi    <-  post.psi + psi/n.store
         Sigma       <-  tcrossprod(lmat) + diag(psi)
         post.Sigma  <-  post.Sigma + Sigma/n.store
       }  
@@ -96,6 +100,8 @@
                       load = if(sw["l.sw"])  load.store, 
                       psi  = if(sw["p.sw"])  psi.store,
                       cov.mat    = cov.emp,
+                      post.mu    = post.mu,
+                      post.psi   = post.psi,
                       post.Sigma = post.Sigma)
     return(returns[!sapply(returns, is.null)])
   }

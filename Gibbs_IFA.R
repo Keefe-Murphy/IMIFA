@@ -30,6 +30,8 @@
       psi.store  <- matrix(0, nr=P, nc=n.store)
       dimnames(psi.store)    <- list(cnames, iternames)
     }
+    post.mu      <- setNames(rep(0, P), cnames)
+    post.psi     <- setNames(rep(0, P), cnames)
     post.Sigma   <- matrix(0, nr=P, nc=P)
     cov.emp      <- cov(data)
     Q.star       <- Q
@@ -54,9 +56,9 @@
   # Iterate
     for(iter in 2:n.iters) { 
       if(verbose) {
-        if(iter   < burnin && iter %% (burnin/10) == 0) {
+        if(all(iter < burnin, iter %% (burnin/10) == 0)) {
           cat(paste0("Iteration: ", iter, "\n"))
-        } else if (iter %% (n.iters/10) == 0) {
+        } else if(iter %% (n.iters/10) == 0) {
           cat(paste0("Iteration: ", iter, "\n"))
         }
       }
@@ -107,7 +109,7 @@
       }
     
     # Adaptation  
-      if(adapt && iter >= burnin) {      
+      if(all(adapt, iter > burnin)) {      
         prob     <- 1/exp(b0 + b1 * pmax(iter - burnin, 0))
         unif     <- runif(n=1, min=0, max=1)
         if(Q > 0) {
@@ -139,13 +141,15 @@
       } 
     
     if(Q > Q.star)  stop(paste0("Q cannot exceed initial number of loadings columns: try increasing Q.star from ", Q.star))
-      if(iter >= burnin && iter %% thinning == 0) {
+      if(all(iter > burnin, iter %% thinning == 0)) {
         new.iter <- ceiling((iter - burnin)/thinning)
         psi      <- 1/psi.inv
         if(sw["mu.sw"])             mu.store[,new.iter]       <- mu  
-        if(sw["f.sw"]   &&  Q > 0)  f.store[,1:Q,new.iter]    <- f
-        if(sw["l.sw"]   &&  Q > 0)  load.store[,1:Q,new.iter] <- lmat
+        if(all(sw["f.sw"], Q > 0))  f.store[,1:Q,new.iter]    <- f
+        if(all(sw["l.sw"], Q > 0))  load.store[,1:Q,new.iter] <- lmat
         if(sw["p.sw"])              psi.store[,new.iter]      <- psi
+        post.mu     <- post.mu + as.vector(mu)/n.store
+        post.psi    <- post.psi + psi/n.store
         Sigma       <- tcrossprod(lmat) + diag(psi)
         post.Sigma  <- post.Sigma + Sigma/n.store
         Q.store[new.iter]    <- Q
@@ -156,6 +160,8 @@
                          load = if(sw["l.sw"])  as.simple_sparse_array(load.store), 
                          psi  = if(sw["p.sw"])  psi.store,
                          cov.mat    = cov.emp,
+                         post.mu    = post.mu,
+                         post.psi   = post.psi,
                          post.Sigma = post.Sigma,
                          Q.store    = Q.store)
     return(returns[!sapply(returns, is.null)])

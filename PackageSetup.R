@@ -32,9 +32,8 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   if(!is.logical(centering))        stop("centering must be TRUE or FALSE")
   if(!is.logical(verbose))          stop("verbose   must be TRUE or FALSE")
   if(!is.logical(profile))          stop("profile   must be TRUE or FALSE")
-  if(is.element(method, 
-     c("FA", "IFA"))     &&
-     missing(centering)  && !centering) {
+  if(all(is.element(method, c("FA", "IFA")), 
+         missing(centering), !centering)) {
     centering  <- T
   } else if(!is.element(method,
      c("FA", "IFA"))) {
@@ -43,51 +42,47 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   if(all(centering, missing(mu.switch))) {
     mu.switch  <- F 
   }
-  if(!missing(mu.switch) && !mu.switch    && !centering) {
+  if(all(!missing(mu.switch), !mu.switch, !centering)) {
     mu.switch  <- T                 
                                     warning("Means were stored since centering was not applied", call.=F)
   }
   switches  <- c(mu.sw=mu.switch, f.sw=f.switch, l.sw=load.switch, p.sw=psi.switch)
   if(!is.logical(switches))         stop("All logical switches must be TRUE or FALSE")
+  no.fac    <- all(length(range.Q) == 1, range.Q == 0, method == "FA")
   if(method == "FA") {
     if(missing(range.Q))            stop("Arg. range.Q must be specified")
     if(any(range.Q < 0))            stop("range.Q must be strictly non-negative")
-    range.Q <- sort(unique(range.Q))
-    no.fac  <- length(range.Q) == 1       && range.Q == 0
-    if(!psi.switch       &&  !load.switch && length(range.Q) > 1) {
-      switches["p.sw"]   <- T
-                                    warning("Uniquenesses were stored in order to find optimum Q from supplied range", call.=F)                               
-    }
-    if(no.fac) {   
-      if(all(switches["f.sw"], 
-             switches["l.sw"]))   { warning("Scores and Loadings not stored as only one model with zero factors was simulated from", call.=F)
-      } else if(switches["f.sw"]) { warning("Scores not stored as only one model with zero factors was simulated from", call.=F)
-      } else if(switches["l.sw"]) { warning("Loadings not stored as only one model with zero factors was simulated from", call.=F)
-      }                               
-      switches[c("f.sw", "l.sw")] <- F                              
-    } 
-    if(!all(switches["l.sw"], switches["p.sw"]) &&
-        any(switches["l.sw"], switches["p.sw"])) {
-      if(!no.fac) {
-        warning("Proportion of variation explained will be calculated instead of BIC", call.=F)      
-      } 
+    range.Q <- sort(unique(range.Q))   
+  }
+  if(no.fac) {   
+    if(all(switches["f.sw"], 
+           switches["l.sw"]))     { warning("Scores & Loadings not stored as model has zero factors", call.=F)
+    } else if(switches["f.sw"])   { warning("Scores not stored as model has zero factors", call.=F)
+    } else if(switches["l.sw"])   { warning("Loadings not stored as model has zero factors", call.=F)
+    }                               
+    switches[c("f.sw", "l.sw")] <- F                              
+  } else {
+    if(all(!switches["f.sw"], 
+           !switches["l.sw"]))    { warning("Posterior Scores & Loadings won't be available as they're not being stored", call.=F)
+    } else if(!switches["f.sw"])  { warning("Posterior Scores won't be available as they're not being stored", call.=F)
+    } else if(!switches["l.sw"])  { warning("Posterior Loadings won't be available as they're not being stored", call.=F)
     }
   }
-  
-  # Remove non-numeric columns & apply centering & scaling if necessary 
+  if(all(!switches["l.sw"], 
+         !no.fac))                  warning("Loadings not stored: BIC & by-factor breakdown of % variation explained not available", call.=F)
+
+# Remove non-numeric columns & apply centering & scaling if necessary 
   n.store   <- ceiling((n.iters - burnin)/thinning)
   dat       <- as.data.frame(dat)
   dat       <- dat[sapply(dat, is.numeric)]
   if(scaling == "pareto") {
     scaling <- sqrt(as.matrix(apply(dat, 2, sd)))
-  } else if(scaling == "unit") {
-    scaling <- T
   } else {
-    scaling <- F
+    scaling <- scaling == "unit"
   }
   dat       <- scale(dat, center=centering, scale=scaling)
   
-  # Define full conditionals, hyperparamters & Gibbs Sampler function for desired method
+# Define full conditionals, hyperparamters & Gibbs Sampler function for desired method
   N         <- nrow(dat)
   P         <- ncol(dat)
   if(is.null(rownames(dat))) rownames(dat) <- c(1:N)
@@ -96,8 +91,8 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   if(missing("psi.beta"))    psi.beta      <- 1
   if(method == "FA") {
     if(missing("sigma.l"))   sigma.l       <- 0.5
-  } else if(method == "IFA" ||
-            method == "classify") {
+  } else if(any(method == "IFA",
+                method == "classify")) {
     if(missing("phi.nu"))    phi.nu        <- 3
     if(missing("alpha.d1"))  alpha.d1      <- 2
     if(missing("alpha.d2"))  alpha.d2      <- 10
@@ -117,15 +112,15 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
                     psi.alpha = psi.alpha, psi.beta = psi.beta, burnin = burnin, 
                     thinning = thinning, n.store = n.store, verbose = verbose, sw = switches)
   if(profile)  Rprof()
-  if(method == "IFA"     ||
-     method == "classify") {
+  if(any(method == "IFA",
+     method     == "classify")) {
      gibbs.arg     <- append(gibbs.arg, list(phi.nu = phi.nu, alpha.d1 = alpha.d1, alpha.d2 = alpha.d2,
                                              adapt = adapt, b0 = b0, b1 = b1, prop = prop, epsilon = epsilon))
   if(missing(Q.star)) {
      Q.star        <- min(floor(3 * log(P)), P, N - 1)
   } else if(Q.star  > P)            stop("Number of factors must be less than the number of variables")
     if(!is.logical(adapt))          stop("Arg. must be TRUE or FALSE")
-    if(method == "IFA") {
+    if(method   == "IFA") {
       imifa        <- vector("list", length(Q.star))
       start.time   <- proc.time()
       imifa[[1]]   <- do.call(paste0("gibbs.", method),                          
@@ -146,8 +141,8 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
       }
     }
   } else if(method == "FA") {
-    if((length(range.Q)  == 1 && (range.Q >= P || range.Q >= N - 1)) ||
-       (length(range.Q)   > 1 && (any(range.Q  >= P) || any(range.Q  >= N - 1))))   
+    if(any(all(length(range.Q)  == 1, any(range.Q >= P, range.Q >= N - 1)), 
+           all(length(range.Q)   > 1, any(any(range.Q  >= P), any(range.Q  >= N - 1)))))   
                                     stop ("Number of factors must be less than the number of variables and number of observations")
     gibbs.arg      <- append(gibbs.arg, list(sigma.l))
     imifa          <- vector("list", length(range.Q))
@@ -184,7 +179,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   attr(imifa, "Scaling") <- scaling
   attr(imifa, "Store")   <- n.store
   attr(imifa, "Switch")  <- switches
-  if(method == "IFA"     || length(range.Q) == 1) {
+  if(any(method == "IFA", length(range.Q) == 1)) {
     attr(imifa, "Time")  <- tot.time
   } else {
     attr(imifa, "Time")  <- list(Total = tot.time, Average = avg.time) 
@@ -193,7 +188,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   if(verbose)               print(attr(imifa, "Time"))  
       
 # Vanilla 'factanal' for comparison purposes
-  if(!missing(Q.fac)) factanal <- T
+  if(!missing(Q.fac))  factanal <- T
   if(factanal) {
     if(missing(Q.fac)) {
       if(missing(range.Q)) {
