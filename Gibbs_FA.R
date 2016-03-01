@@ -13,30 +13,24 @@
     n.store      <- ceiling((n.iters - burnin)/thinning)
     if(sw["mu.sw"]) {
       mu.store   <- matrix(0, nr=P, nc=n.store)
-      dimnames(mu.store)[[1]]   <- cnames
-      dimnames(mu.store)[[2]]   <- paste0("Iteration", 1:n.store)
+      dimnames(mu.store)   <- list(cnames, paste0("Iteration", 1:n.store))
     }
     if(sw["f.sw"])  {
       f.store    <- array(0, dim=c(N, Q, n.store))
-      dimnames(f.store)[[1]]    <- rownames(data)
-      if(Q > 0) dimnames(f.store)[[2]]    <- paste0("Factor ", 1:Q)
-      dimnames(f.store)[[3]]    <- paste0("Iteration", 1:n.store)
+      dimnames(f.store)    <- list(rownames(data), if(Q > 0) paste0("Factor ", 1:Q), paste0("Iteration", 1:n.store))
     }
     if(sw["l.sw"])  {
       load.store <- array(0, dim=c(P, Q, n.store))
-      dimnames(load.store)[[1]] <- cnames
-      if(Q > 0) dimnames(load.store)[[2]] <- paste0("Factor ", 1:Q)
-      dimnames(load.store)[[3]] <- paste0("Iteration", 1:n.store)
+      dimnames(load.store) <- list(cnames, if(Q > 0) paste0("Factor ", 1:Q), paste0("Iteration", 1:n.store))
     }
     if(sw["p.sw"])  {
       psi.store  <- matrix(0, nr=P, nc=n.store)
-      dimnames(psi.store)[[1]]  <- cnames
-      dimnames(psi.store)[[2]]  <- paste0("Iteration", 1:n.store)
+      dimnames(psi.store)  <- list(cnames, paste0("Iteration", 1:n.store))
     }
     post.Sigma   <- matrix(0, nr=P, nc=P)
     cov.emp      <- cov(data)
-    dimnames(post.Sigma)        <- list(cnames, cnames)
-    dimnames(cov.emp)           <- dimnames(post.Sigma)
+    dimnames(post.Sigma)   <- list(cnames, cnames)
+    dimnames(cov.emp)      <- dimnames(post.Sigma)
     
     sigma.mu     <- 1/sigma.mu
     sigma.l      <- 1/sigma.l
