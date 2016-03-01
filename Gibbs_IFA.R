@@ -11,28 +11,32 @@
     
   # Define & initialise variables
     cnames       <- colnames(data)
+    rnames       <- rownames(data)
+    facnames     <- paste0("Factor ", 1:Q)
+    iternames    <- paste0("Iteration", 1:n.store)
     if(sw["mu.sw"]) {
       mu.store   <- matrix(0, nr=P, nc=n.store)
-      dimnames(mu.store)     <- list(cnames, paste0("Iteration", 1:n.store))
+      dimnames(mu.store)     <- list(cnames, iternames)
     }
     if(sw["f.sw"])  {
       f.store    <- array(0, dim=c(N, Q, n.store))
-      dimnames(f.store)      <- list(rownames(data), paste0("Factor ", 1:Q), paste0("Iteration", 1:n.store))
+      dimnames(f.store)      <- list(rnames, facnames, iternames)
     }
     if(sw["l.sw"])  {
       load.store <- array(0, dim=c(P, Q, n.store))
-      dimnames(load.store)   <- list(cnames, paste0("Factor ", 1:Q), paste0("Iteration", 1:n.store))
+      dimnames(load.store)   <- list(cnames, facnames, iternames)
     }
     if(sw["p.sw"])  {
       psi.store  <- matrix(0, nr=P, nc=n.store)
-      dimnames(psi.store)    <- list(cnames, paste0("Iteration", 1:n.store))
+      dimnames(psi.store)    <- list(cnames, iternames)
     }
     post.Sigma   <- matrix(0, nr=P, nc=P)
     cov.emp      <- cov(data)
-    dimnames(post.Sigma)     <- list(cnames, cnames)
-    dimnames(cov.emp)        <- dimnames(post.Sigma)
     Q.star       <- Q
     Q.store      <- rep(0, n.store)
+    dimnames(post.Sigma)     <- list(cnames, cnames)
+    dimnames(cov.emp)        <- dimnames(post.Sigma)
+    names(Q.store)           <- iternames
     
     sigma.mu     <- 1/sigma.mu
     mu           <- sim.mu.p(sigma.mu, P)  

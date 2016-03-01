@@ -4,6 +4,7 @@
 
 # Preamble
  #set.seed(1)
+ #rm(list=ls(all=T))
   if(getwd() != "/home/kmurphy") {
     setwd("C:/Users/Windows/Documents/Claire IMIFA")
   }
