@@ -33,10 +33,9 @@
     post.Sigma   <- matrix(0, nr=P, nc=P)
     cov.emp      <- cov(data)
     Q.star       <- Q
-    Q.store      <- rep(0, n.store)
+    Q.store      <- setNames(rep(0, n.store), iternames)
     dimnames(post.Sigma)     <- list(cnames, cnames)
     dimnames(cov.emp)        <- dimnames(post.Sigma)
-    names(Q.store)           <- iternames
     
     sigma.mu     <- 1/sigma.mu
     mu           <- sim.mu.p(sigma.mu, P)  
