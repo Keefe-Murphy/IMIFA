@@ -24,31 +24,41 @@ plot.IMIFA  <- function(results = NULL, plot.meth = c("all", "correlation", "den
   plot.meth <- match.arg(plot.meth)
   type.x    <- missing(type)
   type      <- match.arg(type)
-  m.sw      <- c(Q.sw = F, cor.sw = F, den.sw = F, pos.sw = F, tra.sw = F)
+  m.sw      <- c(Q.sw = F, C.sw = F, D.sw = F, P.sw = F, T.sw = F)
   v.sw      <- attr(results, "Switch")
   names(v.sw)  <- formals(sys.function(sys.parent()))$vars
   method    <- attr(results, "Method")
   missing   <- missing(vars)
-  if(!is.character(vars))             stop("vars should be one of 'means', 'scores', 'loadings', or 'uniquenesses'")
   vars      <- match.arg(vars)
   all.ind   <- plot.meth == "all"
   if(all.ind)   {
-    m.sw[-1]   <- !m.sw[-1]
-    if(vars == "loadings") {
-      layout(matrix(c(1, 2, 3, 4, 3, 5), nr=3, nc=2, byrow = TRUE))
-    } else {
-      layout(matrix(c(1, 2, 3, 4), nr=2, nc=2, byrow = TRUE))
+    if(v.sw[vars]) {
+      m.sw[-1]  <- !m.sw[-1]
+      if(vars   == "loadings") {
+        layout(matrix(c(1, 2, 3, 4, 3, 5), nr=3, nc=2, byrow = TRUE))
+      } else {
+        layout(matrix(c(1, 2, 3, 4), nr=2, nc=2, byrow = TRUE))
+      }
+      par(oma=c(0, 0, 2, 0), mai=c(0.7, 0.7, 0.5, 0.2), mgp=c(2, 1, 0), cex=0.8)
     }
-    par(oma=c(0, 0, 2, 0), mai=c(0.7, 0.7, 0.5, 0.2), mgp=c(2, 1, 0), cex=0.8)
   } else {
-    sw.n    <- paste0(substring(plot.meth, 1, 3), ".sw")
-    m.sw[sw.n] <- T
+    sw.n    <- paste0(toupper(substring(plot.meth, 1, 1)), ".sw")
+    m.sw[sw.n]  <- T
   }
   if(all(!m.sw["Q.sw"],
-      missing(vars)))                 stop("What variable would you like to plot?")
+     missing(vars)))                  stop("What variable would you like to plot?")
   if(all(any(vars == "scores",
-      vars  == "loadings"),
-      n.fac == 0))                    stop(paste0("Can't plot ", vars, " as they contain no columns/factors"))
+     vars   == "loadings"),
+     n.fac  == 0))                    stop(paste0("Can't plot ", vars, " as they contain no columns/factors"))
+  if(all(any(m.sw["P.sw"], all.ind),
+     any(vars   == "means",
+         vars   == "uniquenesses"),
+     !v.sw[vars])) {  
+    if(all.ind)                       warning(paste0("Can only plot posterior mean, as ", vars, " weren't stored"), call.=F)
+   v.sw[vars]   <- !v.sw[vars]
+   all.ind      <- F
+   m.sw["P.sw"] <- T
+  } 
   if(all(!v.sw[vars],
      !m.sw["Q.sw"]))                  stop(paste0(vars, " weren't stored"))
   if(!is.logical(mat))                stop("mat must be TRUE or FALSE")
@@ -59,7 +69,7 @@ plot.IMIFA  <- function(results = NULL, plot.meth = c("all", "correlation", "den
      !missing(ind)),
      n.fac  == 1))         mat <- F
   
-  if(m.sw["tra.sw"]) {
+  if(m.sw["T.sw"]) {
     if(any(vars == "scores",
            vars == "loadings")) {
       if(ind.x)            ind <- c(1, 1)
@@ -139,7 +149,7 @@ plot.IMIFA  <- function(results = NULL, plot.meth = c("all", "correlation", "den
                       substr(vars, 2, nchar(vars))), outer=T)
   }
   
-  if(m.sw["den.sw"]) {
+  if(m.sw["D.sw"]) {
     if(any(vars == "scores", 
            vars == "loadings")) {
       if(ind.x)            ind <- c(1, 1)
@@ -231,7 +241,7 @@ plot.IMIFA  <- function(results = NULL, plot.meth = c("all", "correlation", "den
     if(!ind.x)             ind <- x.ind
   }
   
-  if(m.sw["pos.sw"]) {
+  if(m.sw["P.sw"]) {
     if(any(vars == "scores", 
            vars == "loadings")) {
       if(ind.x) {
@@ -392,7 +402,7 @@ plot.IMIFA  <- function(results = NULL, plot.meth = c("all", "correlation", "den
     if(max(prop.exp) > 1)             warning("Chain may not have converged", call.=F)
   }
 
-  if(m.sw["cor.sw"]) {
+  if(m.sw["C.sw"]) {
     if(any(vars == "scores",
            vars == "loadings")) {
       if(ind.x)            ind <- c(1, 1)
