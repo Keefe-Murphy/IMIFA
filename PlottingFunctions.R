@@ -4,7 +4,7 @@
 
 plot.IMIFA  <- function(results = NULL, plot.meth = c("all", "correlation", "density", "posterior", "Q", "trace"), 
                         vars = c("means", "scores", "loadings", "uniquenesses"), Label = NULL, fac = NULL,
-                        by.fac = T, ind = NULL, n.fac = NULL, type = c("n", "p", "l"), mat = T, ... ) {
+                        by.fac = T, ind = NULL, n.fac = NULL, type = c("h", "n", "p"), mat = T, ... ) {
  
   defpar    <- par(no.readonly = T)
   defop     <- options()
@@ -22,6 +22,7 @@ plot.IMIFA  <- function(results = NULL, plot.meth = c("all", "correlation", "den
   n.obs     <- attr(results, "Obs")
   if(missing(plot.meth))              stop("What type of plot would you like to produce?")
   plot.meth <- match.arg(plot.meth)
+  type.x    <- missing(type)
   type      <- match.arg(type)
   m.sw      <- c(Q.sw = F, cor.sw = F, den.sw = F, pos.sw = F, tra.sw = F)
   v.sw      <- attr(results, "Switch")
@@ -263,25 +264,27 @@ plot.IMIFA  <- function(results = NULL, plot.meth = c("all", "correlation", "den
     if(vars == "scores") {
       plot.x   <- results$post.f
       if(ind[1] > n.obs)              stop(paste0("Only the first ", n.obs, " scores can be plotted"))
+      Labs     <- 1
       if(!missing(Label)) {
         if(!exists(as.character(match.call()$Label),
-            envir=.GlobalEnv))        warning(paste0("Object ", match.call()$Label, " not found"), call.=F)
-        Label  <- as.factor(Label)
-        if(length(Label) != n.obs)     stop(paste0("Labels must be a factor of length N=",  n.obs))
-      } else {
-        Label  <- 1
+            envir=.GlobalEnv)) {      warning(paste0("Object ", match.call()$Label, " not found"), call.=F)
+        } else {
+          Labs <- as.factor(Label)
+          if(length(Labs) != n.obs)   stop(paste0("Labels must be a factor of length N=",  n.obs))
+        }
       }
+      type.f   <- ifelse(type.x, "p", type)
       if(n.fac != 1) {
-        plot(plot.x[,ind[1]], plot.x[,ind[2]], type=type, col=as.numeric(Label),
+        plot(plot.x[,ind[1]], plot.x[,ind[2]], type=type.f, col=as.numeric(Labs), 
              xlab=paste0("Factor ", ind[1]), ylab=paste0("Factor ", ind[2]))
         title(main=list(paste0("Posterior Mean", ifelse(all.ind, "", ":\nScores"))))
-        if(type == "n") text(plot.x[,ind[1]], plot.x[,ind[2]], 1:n.obs, 
-                             col=as.numeric(Label), cex=0.5)
+        if(type.f == "n") text(plot.x[,ind[1]], plot.x[,ind[2]], 1:n.obs, 
+                             col=as.numeric(Labs), cex=0.5)
       } else {
-        plot(plot.x[,ind], type=type, col=as.numeric(Label),
+        plot(plot.x[,ind], type=type.f, col=as.numeric(Labs), 
              xlab="Observation", ylab=paste0("Factor ", ind))
         title(main=list(paste0("Posterior Mean", ifelse(all.ind, "", ":\nScores"))))
-        if(type == "n") text(plot.x[,ind], col=as.numeric(Label), cex=0.5)
+        if(type.f == "n") text(plot.x[,ind], col=as.numeric(Labs), cex=0.5)
       }
     }
     if(vars == "loadings") {
