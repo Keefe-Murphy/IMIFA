@@ -32,7 +32,7 @@ sim.imifa      <- function(N = 1000, G = 2, P = 25, Q = rep(5, G)) {
     nn   <- nn[nn > 0]
   }
   
-  gnames        <- paste0("Group ", 1:G)
+  gnames        <- paste0("Group", 1:G)
   vnames        <- paste0("Var ", 1:P)
   SimData       <- matrix(0, nr=0, nc=P)
   true.mu       <- setNames(vector("list", G), gnames)

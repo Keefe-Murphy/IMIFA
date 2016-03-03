@@ -2,7 +2,7 @@
 ### Tune Parameters (Single & Shrinkage Case) ###
 #################################################
 
-tune.sims     <- function(sims = NULL, burnin = 0, thinning = 1, 
+tune.sims     <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
                           Q = NULL, Q.meth = c("Mode", "Median"), recomp = F, ...) {
   defpar      <- par(no.readonly = T)
   defop       <- options()
@@ -21,7 +21,9 @@ tune.sims     <- function(sims = NULL, burnin = 0, thinning = 1,
   n.obs       <- attr(sims, "Obs")
   n.var       <- attr(sims, "Vars")
   sw          <- attr(sims, "Switch")
-  cov.emp     <- sims[[1]]$cov.mat
+  G.ind       <- 1
+  Q.ind       <- 1
+  cov.emp     <- sims[[G.ind]][[Q.ind]]$cov.mat
   if(!is.logical(recomp))       stop("recomp must be TRUE or FALSE")
   if(any(thinning > 1, 
          burnin > 0)) recomp <- T
@@ -43,8 +45,7 @@ tune.sims     <- function(sims = NULL, burnin = 0, thinning = 1,
     }
     
   # Retrieve distribution of Q, tabulate & plot
-    Q.ind     <- 1
-    Q.store   <- sims[[Q.ind]]$Q.store[store]
+    Q.store   <- sims[[G.ind]][[Q.ind]]$Q.store[store]
     Q.tab     <- table(Q.store, dnn=NULL)
     Q.prob    <- prop.table(Q.tab)
     
@@ -82,8 +83,8 @@ tune.sims     <- function(sims = NULL, burnin = 0, thinning = 1,
     for(q in Q.range) {
       Q.fac   <- n.fac[q]
       if(all(sw["l.sw"], Q.fac > 0)) {
-        lmat         <- sims[[q]]$load[,1:Q.fac,store, drop=F]
-        l.temp       <- as.matrix(sims[[q]]$load[,1:Q.fac,temp.b])
+        lmat         <- sims[[G.ind]][[q]]$load[,1:Q.fac,store, drop=F]
+        l.temp       <- as.matrix(sims[[G.ind]][[q]]$load[,1:Q.fac,temp.b])
         for(p in 1:n.store) {
           rot        <- procrustes(X=as.matrix(lmat[,,p]), Xstar=l.temp)$R
           lmat[,,p]  <- lmat[,,p] %*% rot
@@ -93,14 +94,14 @@ tune.sims     <- function(sims = NULL, burnin = 0, thinning = 1,
       } else {
         post.load    <- matrix(, nr=n.var, nc=0)
       }
-      post.mu        <- sims[[q]]$post.mu
-      post.psi       <- sims[[q]]$post.psi
+      post.mu        <- sims[[G.ind]][[q]]$post.mu
+      post.psi       <- sims[[G.ind]][[q]]$post.psi
       if(sw["mu.sw"]) {
-        mu    <- sims[[q]]$mu[,store]
+        mu    <- sims[[G.ind]][[q]]$mu[,store]
         post.mu      <- rowMeans(mu, 1)
       } 
       if(sw["p.sw"])  {
-        psi   <- sims[[q]]$psi[,store]
+        psi   <- sims[[G.ind]][[q]]$psi[,store]
         post.psi     <- rowMeans(psi, 1)
       }
       if(any(!sw["l.sw"], all(sw["l.sw"], Q.fac == 0))) {
@@ -148,12 +149,12 @@ tune.sims     <- function(sims = NULL, burnin = 0, thinning = 1,
   }
   if(method   == "FA") {
     if(sw["f.sw"]) {
-      f       <- sims[[Q.ind]]$f[,1:Q,store, drop=F]
+      f       <- sims[[G.ind]][[Q.ind]]$f[,1:Q,store, drop=F]
     }
     if(sw["l.sw"]) {
-      lmat    <- sims[[Q.ind]]$load[,1:Q,store, drop=F]
+      lmat    <- sims[[G.ind]][[Q.ind]]$load[,1:Q,store, drop=F]
       temp.b  <- max(1, burnin)
-      l.temp  <- as.matrix(sims[[Q.ind]]$load[,1:Q,temp.b])
+      l.temp  <- as.matrix(sims[[G.ind]][[Q.ind]]$load[,1:Q,temp.b])
     }
   } else {
     store     <- store[which(Q.store >= Q)]
@@ -161,21 +162,21 @@ tune.sims     <- function(sims = NULL, burnin = 0, thinning = 1,
    #store     <- tail(store, 0.9 * n.store)
     temp.b    <- store[1]
     if(sw["f.sw"]) {
-      f       <- as.array(sims[[Q.ind]]$f)[,1:Q,store, drop=F]
+      f       <- as.array(sims[[G.ind]][[Q.ind]]$f)[,1:Q,store, drop=F]
     }
     if(sw["l.sw"]) {
-      lmat    <- as.array(sims[[Q.ind]]$load)[,1:Q,store, drop=F]
-      l.temp  <- as.matrix(as.array(sims[[Q.ind]]$load)[,1:Q,temp.b])
+      lmat    <- as.array(sims[[G.ind]][[Q.ind]]$load)[,1:Q,store, drop=F]
+      l.temp  <- as.matrix(as.array(sims[[G.ind]][[Q.ind]]$load)[,1:Q,temp.b])
     }
   }
-  post.mu     <- sims[[Q.ind]]$post.mu
-  post.psi    <- sims[[Q.ind]]$post.psi
+  post.mu     <- sims[[G.ind]][[Q.ind]]$post.mu
+  post.psi    <- sims[[G.ind]][[Q.ind]]$post.psi
   if(sw["mu.sw"])  {
-    mu        <- sims[[Q.ind]]$mu[,store]                            
+    mu        <- sims[[G.ind]][[Q.ind]]$mu[,store]                            
     post.mu   <- rowMeans(mu, 1)
   }
   if(sw["p.sw"])   {
-    psi       <- sims[[Q.ind]]$psi[,store]
+    psi       <- sims[[G.ind]][[Q.ind]]$psi[,store]
     post.psi  <- rowMeans(psi, 1)
   }  
   
@@ -203,7 +204,7 @@ tune.sims     <- function(sims = NULL, burnin = 0, thinning = 1,
     prop.exp  <- (sum(diag(cov.emp)) - sum(post.psi))/n.var
     cum.var   <- max(prop.exp)
   }
-  cov.est     <- sims[[Q.ind]]$post.Sigma
+  cov.est     <- sims[[G.ind]][[Q.ind]]$post.Sigma
   if(all(recomp, sw["l.sw"])) {
     cov.est   <- replace(cov.est, is.numeric(cov.est), 0)
     for(r in 1:n.store) {
