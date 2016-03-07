@@ -18,6 +18,7 @@ tune.sims     <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
   if(n.store  <= 1)             stop(paste0("burnin must be less than the stored number of iterations"))
   method      <- attr(sims, "Method")
   n.fac       <- attr(sims, "Factors")
+  n.grp       <- attr(sims, "Groups")
   n.obs       <- attr(sims, "Obs")
   n.var       <- attr(sims, "Vars")
   sw          <- attr(sims, "Switch")
@@ -28,15 +29,25 @@ tune.sims     <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
   if(any(thinning > 1, 
          burnin > 0)) recomp <- T
   
+  if(!missing(G)) {
+    G.x       <- G
+    G.xind    <- which(n.grp == G.x)
+    if(all(is.element(method, c("MFA", "MIFA")),
+       !is.element(G, n.grp)))  stop("This G value was not used during simulation")
+    if(all(method == "IFA", 
+      (G * (n.grp - G)) < 0))   stop(paste0("G cannot be greater than the number of groups in ", match.call()$sims))
+  } 
+  G.T         <- exists("G.x", envir=environment())
   if(!missing(Q)) {
     Q.x       <- Q
-    Q.ind     <- which(n.fac == Q.x)
-    if(all(method == "FA",
+    Q.xind    <- which(n.fac == Q.x)
+    if(all(is.element(method, c("FA", "MFA")),
        !is.element(Q, n.fac)))  stop("This Q value was not used during simulation")
     if(all(method == "IFA", 
       (Q * (n.fac - Q)) < 0))   stop(paste0("Q cannot be greater than the number of factors in ", match.call()$sims))
   } 
   Q.T         <- exists("Q.x", envir=environment())
+  
   if(method   == "IFA") {
     if(missing(Q.meth)) {
       Q.meth  <- "Mode"
@@ -63,10 +74,11 @@ tune.sims     <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
   } else {     
   
   # Calculate Proportion of Variation Explained & BIC
+    G.range   <- 1:length(n.grp)
     Q.range   <- 1:length(n.fac)
-    cum.var   <- rep(NA, length(n.fac))
+    cumvar    <- matrix(NA, nr=length(n.grp), nc=length(n.fac))
     if(any(sw["l.sw"], all(length(n.fac) == 1, n.fac == 0))) {
-      bic     <- rep(NA, length(n.fac))
+      bic     <- matrix(NA, nr=length(n.grp), nc=length(n.fac))
     }
     bic.x     <- exists("bic", envir=environment())
     temp.b    <- max(1, burnin)
@@ -80,70 +92,100 @@ tune.sims     <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
       scaling <- attr(sims, "Scaling")
       data    <- scale(data, center=cent, scale=scaling)
     }
-    for(q in Q.range) {
-      Q.fac   <- n.fac[q]
-      if(all(sw["l.sw"], Q.fac > 0)) {
-        lmat         <- sims[[G.ind]][[q]]$load[,1:Q.fac,store, drop=F]
-        l.temp       <- as.matrix(sims[[G.ind]][[q]]$load[,1:Q.fac,temp.b])
-        for(p in 1:n.store) {
-          rot        <- procrustes(X=as.matrix(lmat[,,p]), Xstar=l.temp)$R
-          lmat[,,p]  <- lmat[,,p] %*% rot
-        }
-        post.load    <- rowMeans(lmat, dims=2)
-        cum.var[q]   <- sum(colSums(post.load * post.load))/n.var
-      } else {
-        post.load    <- matrix(, nr=n.var, nc=0)
-      }
-      post.mu        <- sims[[G.ind]][[q]]$post.mu
-      post.psi       <- sims[[G.ind]][[q]]$post.psi
-      if(sw["mu.sw"]) {
-        mu    <- sims[[G.ind]][[q]]$mu[,store]
-        post.mu      <- rowMeans(mu, 1)
-      } 
-      if(sw["p.sw"])  {
-        psi   <- sims[[G.ind]][[q]]$psi[,store]
-        post.psi     <- rowMeans(psi, 1)
-      }
-      if(any(!sw["l.sw"], all(sw["l.sw"], Q.fac == 0))) {
-        cum.var[q]   <- (sum(diag(cov.emp)) - sum(post.psi))/n.var
-      }  
-      if(any(sw["l.sw"], Q.fac == 0)) {
-        Sigma <- tcrossprod(post.load) + diag(post.psi)
-        K     <- n.var * Q.fac - 0.5 * Q.fac * (Q.fac - 1) + n.var
-        if(Q.fac   > 0) {
-          U.Sig   <- chol(Sigma)
+    for(g in G.range) {
+      for(q in Q.range) {
+        Q.fac <- n.fac[q]
+        if(all(sw["l.sw"], Q.fac > 0)) {
+          lmat        <- sims[[g]][[q]]$load[,1:Q.fac,store, drop=F]
+          l.temp      <- as.matrix(sims[[g]][[q]]$load[,1:Q.fac,temp.b])
+          for(p in 1:n.store) {
+            rot       <- procrustes(X=as.matrix(lmat[,,p]), Xstar=l.temp)$R
+            lmat[,,p] <- lmat[,,p] %*% rot
+          }
+          post.load   <- rowMeans(lmat, dims=2)
+          cumvar[q]   <- sum(colSums(post.load * post.load))/n.var
         } else {
-          U.Sig   <- sqrt(Sigma)
+          post.load   <- matrix(, nr=n.var, nc=0)
         }
-        rooti <- backsolve(U.Sig, diag(n.var))
-        quad  <- crossprod(rooti, t(data) - post.mu)
-        quads <- colSums(quad * quad)
-        log.lik   <- sum(log(exp(- n.var/2 * log(2 * pi) + sum(log(diag(rooti))) - 0.5 * quads)))
-        bic[q]    <- 2 * log.lik - K * log(n.obs)
+        post.mu       <- sims[[g]][[q]]$post.mu
+        post.psi      <- sims[[g]][[q]]$post.psi
+        if(sw["mu.sw"]) {
+          mu  <- sims[[g]][[q]]$mu[,store]
+          post.mu     <- rowMeans(mu, 1)
+        } 
+        if(sw["p.sw"])  {
+          psi <- sims[[g]][[q]]$psi[,store]
+          post.psi    <- rowMeans(psi, 1)
+        }
+        if(any(!sw["l.sw"], all(sw["l.sw"], Q.fac == 0))) {
+          cumvar[g,q] <- (sum(diag(cov.emp)) - sum(post.psi))/n.var
+        }  
+        if(any(sw["l.sw"], Q.fac == 0)) {
+          Sigma       <- tcrossprod(post.load) + diag(post.psi)
+          K           <- n.var * Q.fac - 0.5 * Q.fac * (Q.fac - 1) + n.var
+          if(Q.fac > 0) {
+            U.Sig     <- chol(Sigma)
+          } else {
+            U.Sig     <- sqrt(Sigma)
+          }
+          rooti       <- backsolve(U.Sig, diag(n.var))
+          quad        <- crossprod(rooti, t(data) - post.mu)
+          quads       <- colSums(quad * quad)
+          log.lik     <- sum(log(exp(- n.var/2 * log(2 * pi) + sum(log(diag(rooti))) - 0.5 * quads)))
+          bic[g,q]    <- 2 * log.lik - K * log(n.obs)
+        }
       }
     }
-    if(any(max(cum.var[!is.na(cum.var)]) > 1, bic.x &&
+    if(any(max(cumvar[!is.na(cumvar)]) > 1, bic.x &&
        any(!is.finite(bic))))   warning("Chain may not have converged", call.=F)
-    if(Q.T) {
-      cum.var <- cum.var[Q.ind]
+    if(bic.x && !any(is.nan(bic), !is.finite(bic))) {
+      bic.max <- which(bic == max(bic), arr.ind = T)
+      G.ind   <- bic.max[1]
+      Q.ind   <- bic.max[2]
+      G       <- n.grp[G.ind]
+      Q       <- n.fac[Q.ind]
+    } else {
+      var.max <- which(cumvar == max(cumvar), arr.ind = TRUE)
+      G.ind   <- var.max[1]
+      Q.ind   <- var.max[2]
+      G       <- n.grp[G.ind]
+      Q       <- n.fac[Q.ind]
+    }
+    if(all(Q.T, G.T)) {
+      cumvar  <- cumvar[G.xind,Q.xind]
       if(bic.x) {
-        bic   <- bic[Q.ind]
+        bic   <- bic[G.xind,Q.xind]
+      }
+      G       <- G.x
+      Q       <- Q.x
+      n.grp   <- G
+      n.fac   <- Q  
+      G.ind   <- G.xind
+      Q.ind   <- Q.xind
+    } else if(Q.T) {
+      cumvar  <- cumvar[G.ind,Q.xind]
+      if(bic.x) {
+        bic   <- bic[G.ind,Q.xind]
       }
       Q       <- Q.x
-      n.fac   <- Q  
-    } else if(bic.x && !any(is.nan(bic), is.finite(bic))) {
-      Q.ind   <- which.max(bic)
-      Q       <- n.fac[Q.ind]
-    } else {
-      Q.ind   <- which.max(cum.var)
-      Q       <- n.fac[Q.ind]
+      n.fac   <- Q
+      Q.ind   <- Q.xind
+    } else if(G.T) {
+      cumvar  <- cumvar[G.xind,Q.ind]
+      if(bic.x) {
+        bic   <- bic[G.xind,Q.ind]
+      }
+      G       <- G.x
+      n.grp   <- G
+      G.ind   <- G.xind
     }
     if(bic.x) {
-      Q.res   <- list(Q = Q, BIC = bic, cum.var = cum.var)
+      Q.res   <- list(Q = Q, G = G, BIC = bic, cum.var = cumvar)
     } else {
-      Q.res   <- list(Q = Q, cum.var = cum.var)
+      Q.res   <- list(Q = Q, G = G, cum.var = cumvar)
     }
-  }  
+  } 
+  
   if(Q == 0) {
     sw[c("f.sw", "l.sw")]    <- F
   }
@@ -214,8 +256,9 @@ tune.sims     <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
   } else if(recomp)             warning("Loadings not stored: can't recompute Sigma", call.=F)
   error       <- cov.emp - cov.est
   MSE         <- mean(error * error)
+  RMSE        <- sqrt(MSE)
   MAD         <- mean(abs(error))
-  error       <- list(MSE = MSE, MAD = MAD) 
+  error       <- list(MSE = MSE, RMSE = RMSE, MAD = MAD) 
   if(any(ifelse(all(isTRUE(attr(sim, "Scaling")), attr(sim, "Center")), 
             sum(round(diag(cov.est))  != 
             round(diag(cov.emp)))     != 0, F), 
@@ -226,22 +269,22 @@ tune.sims     <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
   if(sw["l.sw"]) {
     class(post.load)         <- "loadings"
   }
-  results     <- list(if(sw["mu.sw"])   list(means = mu), 
-                      list(post.mu   =  post.mu),
-                      if(sw["f.sw"])    list(scores = f, 
-                                             post.f = post.f),
-                      if(sw["p.sw"])    list(uniquenesses = psi), 
-                      list(post.psi  =  post.psi),
-                      if(sw["l.sw"])    list(loadings = lmat, 
-                                             post.load = post.load,  
-                                             communality = comm, 
-                                             SS.load = SS.load,
-                                             prop.var = prop.var, 
-                                             prop.uni = prop.uni),
-                      list(prop.exp  =  prop.exp, 
-                           cum.var   =  cum.var),
-                      if(exists("cov.emp"))  list(error = error, 
-                                                  cov.mat = cov.emp), 
+  results     <- list(if(sw["mu.sw"])    list(means  = mu), 
+                      list(post.mu    =  post.mu),
+                      if(sw["f.sw"])     list(scores = f, 
+                                              post.f = post.f),
+                      if(sw["p.sw"])     list(uniquenesses = psi), 
+                      list(post.psi   =  post.psi),
+                      if(sw["l.sw"])     list(loadings     = lmat, 
+                                              post.load    = post.load,  
+                                              communality  = comm, 
+                                              SS.load      = SS.load,
+                                              prop.var     = prop.var, 
+                                              prop.uni     = prop.uni),
+                      list(prop.exp   =  prop.exp, 
+                           cum.var    =  cum.var),
+                      if(exists("cov.emp"))   list(error   = error, 
+                                                   cov.mat = cov.emp), 
                       list(post.Sigma = cov.est))
   results     <- unlist(results, recursive=F)
   if(Q.T) {
@@ -251,7 +294,14 @@ tune.sims     <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
     attr(Q.res, 
          "Factors")          <- n.fac
   } 
-  attr(Q.res, "Supplied")    <- Q.T
+  if(G.T) {
+    attr(Q.res,
+         "Groups")           <- G.x
+  } else  {
+    attr(Q.res, 
+         "Groups")           <- n.grp
+  }
+  attr(Q.res, "Supplied")    <- c(Q=Q.T, G=G.T)
   results     <- c(results, Q.results = list(Q.res))
   class(results)             <- "IMIFA"
   attr(results, "Method")    <- attr(sims, "Method")
