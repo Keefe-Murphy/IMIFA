@@ -45,7 +45,7 @@
 
 # Posterior Summaries & Plots, etc. (optional: additional 'burnin' & 'thinning' & user-defined Q)
   res <- tune.sims(sim)
-  res$error
+  res$Error
   plot(res, "Q")
  #res <- tune.sims(sim, Q=2)
   
