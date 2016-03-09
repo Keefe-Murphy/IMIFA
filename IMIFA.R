@@ -76,7 +76,7 @@
   plot(res, "t", "l", mat=F)
   plot(res, "d", "l")
   plot(res, "d", "l", mat=F)
-  res$post.load
+  res[[1]]$post.load
   plot(res, "p", "l")
   plot(res, "c", "l")
   
@@ -87,7 +87,7 @@
   plot(res, "t", "u", mat=F)
   plot(res, "d", "u")
   plot(res, "d", "u", mat=F)
-  summary(res$post.psi)
+  summary(res[[1]]$post.psi)
   plot(res, "p", "u")
   plot(res, "c", "u")
 ####
