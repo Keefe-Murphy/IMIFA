@@ -314,7 +314,7 @@ plot.IMIFA  <- function(results = NULL, plot.meth = c("all", "correlation", "den
     }
     if(vars == "loadings") {
       if(!all.ind) {
-        par(mfrow=c(1, 2), oma=c(0,0,1,0))
+        par(mfrow=c(1, 2), oma=c(0, 0, 1, 0), mai=c(1.25, 1, 0.75, 0.5))
       }
       plot.x   <- result$post.load
       image(z=t(plot.x[n.var:1,1:Q]), xlab="", 
@@ -334,18 +334,23 @@ plot.IMIFA  <- function(results = NULL, plot.meth = c("all", "correlation", "den
                                   1/(Q - 1)), lty=2, lwd=1)
       if(by.fac) {
         if(Q != 1) {
-          plot(plot.x[,ind[2]], type=type, xlab="Variable #", ylab="Loading")
+          plot(plot.x[,ind[2]], type=type, xaxt="n", xlab="", ylab="Loading")
+          axis(1, line=-0.5, tick=F, at=1:n.var, labels=1:n.var)
+          mtext("Variable #", side=1, line=2)
           title(main=list(paste0("Factor ", ind[2])))
-          if(type == "n") text(x=plot.x[,ind[2]], var.names, cex=0.5)
+          if(type == "n") text(x=plot.x, var.names, cex=0.5)
         } else {
-          plot(plot.x[,ind], type=type, xlab="Variable #", ylab="Loading")
+          plot(plot.x[,ind], type=type, xaxt="n", xlab="", ylab="Loading")
+          axis(1, line=-0.5, tick=F, at=1:n.var, labels=1:n.var)
+          mtext("Variable #", side=1, line=2)
           title(main=list(paste0("Factor ", ind)))
           if(type == "n") text(x=plot.x[,ind], var.names, cex=0.5)
         }
       } else {
-        plot(plot.x[ind[1],], type=type, xlab="Factor", ylab="Loading", xaxt="n")
-        title(main=list(paste0(ifelse(all.ind, "", "Loadings:\n"), var.names[ind[1]], " Variable")))
-        axis(1, line=0, tick=T, at=1:Q, labels=1:Q)
+        plot(plot.x[ind[1],], type=type, xaxt="n", xlab="", ylab="Loading")
+        axis(1, line=-0.5, tick=F, at=1:Q, labels=1:Q)
+        mtext("Factors", side=1, line=2)
+        title(main=list(paste0(var.names[ind[1]], " Variable")))
         if(type == "n") text(x=plot.x[ind[1],], paste0("Factor ", 1:Q), cex=0.5)
       }
       if(!all.ind) {
