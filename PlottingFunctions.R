@@ -28,8 +28,8 @@ plot.IMIFA  <- function(results = NULL, plot.meth = c("all", "correlation", "den
          (G * (n.grp - G)) < 0))      stop(paste0("G cannot be greater than the number of groups in ", match.call()$results))
   G.ind     <- which(n.grp == G)
   result    <- results[[G.ind]]
-  if(missing(Q))             Q <- GQ.res$Q
-  if(Q       > GQ.res$Q)              stop("can't plot this many factors")
+  if(missing(Q))             Q <- GQ.res$Q[G]
+  if(Q       > GQ.res$Q[G])           stop("can't plot this many factors")
   n.var     <- attr(results, "Vars")
   n.obs     <- attr(results, "Obs")
   if(missing(plot.meth))              stop("What type of plot would you like to produce?")

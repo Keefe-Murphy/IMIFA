@@ -22,9 +22,6 @@ tune.sims       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
   n.obs         <- attr(sims, "Obs")
   n.var         <- attr(sims, "Vars")
   sw            <- attr(sims, "Switch")
-  G             <- 1
-  Q.ind         <- 1
-  cov.emp       <- sims[[G]][[Q.ind]]$cov.mat
   if(!is.logical(recomp))        stop("recomp must be TRUE or FALSE")
   if(any(thinning > 1, 
          burnin > 0))  recomp <- T
@@ -47,6 +44,9 @@ tune.sims       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
       (Q * (n.fac - Q)) < 0))    stop(paste0("Q cannot be greater than the number of factors in ", match.call()$sims))
   } 
   Q.T           <- exists("Q.x", envir=environment())
+  G             <- 1
+  Q.ind         <- 1
+  cov.emp       <- sims[[G]][[Q.ind]]$cov.mat
   
   if(method == "IFA") {
     if(missing(Q.meth)) {
@@ -103,7 +103,7 @@ tune.sims       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
             lmat[,,p] <- lmat[,,p] %*% rot
           }
           post.load   <- rowMeans(lmat, dims=2)
-          cumvar[q]   <- sum(colSums(post.load * post.load))/n.var
+          cumvar[g,q] <- sum(colSums(post.load * post.load))/n.var
         } else {
           post.load   <- matrix(, nr=n.var, nc=0)
         }
@@ -179,6 +179,7 @@ tune.sims       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
       n.grp     <- G
       G.ind     <- G.xind
     }
+    Q           <- setNames(rep(Q, G), paste0("Q", 1:G))
     if(bic.x) {
       GQ.res    <- list(G = G, Q = Q, BIC = bic, cum.var = cumvar)
     } else {
@@ -189,29 +190,30 @@ tune.sims       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
   result        <- list(list())
   for(g in 1:G) {
     G.ind       <- which(n.grp == G)
+    Qg          <- Q[g]
     if(Q == 0) {
       sw[c("f.sw", "l.sw")]   <- F
     }
     if(method   == "FA") {
       if(sw["f.sw"]) {
-        f       <- sims[[G.ind]][[Q.ind]]$f[,1:Q,store, drop=F]
+        f       <- sims[[G.ind]][[Q.ind]]$f[,1:Qg,store, drop=F]
       }
       if(sw["l.sw"]) {
-        lmat    <- sims[[G.ind]][[Q.ind]]$load[,1:Q,store, drop=F]
+        lmat    <- sims[[G.ind]][[Q.ind]]$load[,1:Qg,store, drop=F]
         temp.b  <- max(1, burnin)
-        l.temp  <- as.matrix(sims[[G.ind]][[Q.ind]]$load[,1:Q,temp.b])
+        l.temp  <- as.matrix(sims[[G.ind]][[Q.ind]]$load[,1:Qg,temp.b])
       }
     } else {
-      store     <- store[which(Q.store >= Q)]
+      store     <- store[which(Q.store >= Qg)]
       n.store   <- length(store)
      #store     <- tail(store, 0.9 * n.store)
       temp.b    <- store[1]
       if(sw["f.sw"]) {
-        f       <- as.array(sims[[G.ind]][[Q.ind]]$f)[,1:Q,store, drop=F]
+        f       <- as.array(sims[[G.ind]][[Q.ind]]$f)[,1:Qg,store, drop=F]
       }
       if(sw["l.sw"]) {
-        lmat    <- as.array(sims[[G.ind]][[Q.ind]]$load)[,1:Q,store, drop=F]
-        l.temp  <- as.matrix(as.array(sims[[G.ind]][[Q.ind]]$load)[,1:Q,temp.b])
+        lmat    <- as.array(sims[[G.ind]][[Q.ind]]$load)[,1:Qg,store, drop=F]
+        l.temp  <- as.matrix(as.array(sims[[G.ind]][[Q.ind]]$load)[,1:Qg,temp.b])
       }
     }
     post.mu     <- sims[[G.ind]][[Q.ind]]$post.mu
