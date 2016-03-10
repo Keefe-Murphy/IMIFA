@@ -17,15 +17,13 @@ plot.IMIFA  <- function(results = NULL, plot.meth = c("all", "correlation", "den
              envir=.GlobalEnv))       stop(paste0("Object ", match.call()$results, " not found"))
   if(class(results) != "IMIFA")       stop(paste0("Results object of class 'IMIFA' must be supplied"))
   GQ.res    <- results$GQ.results
-  n.grp     <- attr(GQ.res, "Groups")
+  n.grp     <- GQ.res$G
   n.fac     <- attr(GQ.res, "Factors")
   G.supp    <- attr(GQ.res, "Supplied")["G"]
   Q.supp    <- attr(GQ.res, "Supplied")["Q"]
   method    <- attr(results, "Method")
   if(all(is.element(method, c("MFA", "MIFA")),
-         !is.element(G, n.grp)))      stop("This G value was not used during simulation")
-  if(all(method == "IFA", 
-         (G * (n.grp - G)) < 0))      stop(paste0("G cannot be greater than the number of groups in ", match.call()$results))
+         !is.element(G, 1:n.grp)))    stop(paste0("G cannot be greater than the number of groups in ", match.call()$results))
   G.ind     <- which(n.grp == G)
   result    <- results[[G.ind]]
   if(missing(Q))             Q <- GQ.res$Q[G]
@@ -367,7 +365,7 @@ plot.IMIFA  <- function(results = NULL, plot.meth = c("all", "correlation", "den
   } 
   
   if(m.sw["Q.sw"]) {
-    no.fac   <- all(length(Q) == 1, Q == 0)
+    no.fac   <- all(Q == 0)
     if(all(method == "FA", any(v.sw["loadings"], no.fac))) {
       bic    <- round(GQ.res$BIC, 2)
     }
@@ -417,7 +415,7 @@ plot.IMIFA  <- function(results = NULL, plot.meth = c("all", "correlation", "den
                                       warning("Nothing to plot", call.=F)
     }
     if(method == "IFA") {
-        print(GQ.res[1:length(GQ.res)])
+        print(GQ.res[2:length(GQ.res)])
     } else {
         cat(paste0("Q = ", Q, "\n"))
     }

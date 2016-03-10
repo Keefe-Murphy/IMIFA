@@ -31,8 +31,6 @@ tune.sims       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
     G.xind      <- which(n.grp == G.x)
     if(all(is.element(method, c("MFA", "MIFA")),
        !is.element(G, n.grp)))   stop("This G value was not used during simulation")
-    if(all(method == "IFA", 
-      (G * (n.grp - G)) < 0))    stop(paste0("G cannot be greater than the number of groups in ", match.call()$sims))
   } 
   G.T           <- exists("G.x", envir=environment())
   if(!missing(Q)) {
@@ -74,11 +72,13 @@ tune.sims       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
   } else {     
   
   # Calculate Proportion of Variation Explained & BIC
-    G.range     <- 1:length(n.grp)
-    Q.range     <- 1:length(n.fac)
-    cumvar      <- matrix(NA, nr=length(n.grp), nc=length(n.fac))
-    if(any(sw["l.sw"], all(length(n.fac) == 1, n.fac == 0))) {
-      bic       <- matrix(NA, nr=length(n.grp), nc=length(n.fac))
+    Gs          <- length(n.grp)
+    Qs          <- length(n.fac)
+    G.range     <- 1:Gs
+    Q.range     <- 1:Qs
+    cumvar      <- matrix(NA, nr=Gs, nc=Qs, dimnames=list(paste0("G", n.grp), paste0("Q", n.fac)))
+    if(any(sw["l.sw"], all(Gs == 1, n.fac == 0))) {
+      bic       <- matrix(NA, nr=Gs, nc=Qs, dimnames=list(paste0("G", n.grp), paste0("Q", n.fac)))
     }
     bic.x       <- exists("bic", envir=environment())
     temp.b      <- max(1, burnin)
@@ -179,7 +179,7 @@ tune.sims       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
       n.grp     <- G
       G.ind     <- G.xind
     }
-    Q           <- setNames(rep(Q, G), paste0("Q", 1:G))
+    Q           <- setNames(rep(Q, G), paste0("Qg", 1:G))
     if(bic.x) {
       GQ.res    <- list(G = G, Q = Q, BIC = bic, cum.var = cumvar)
     } else {

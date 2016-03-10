@@ -87,7 +87,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
     }                               
     range.G <- sort(unique(range.G))
   } 
-  no.fac    <- all(length(range.Q) == 1, range.Q == 0, is.element(method, c("FA", "MFA")))
+  no.fac    <- all(all(range.Q == 0), is.element(method, c("FA", "MFA")))
   if(is.element(method, c("FA", "MFA"))) {
     if(!missing(Q.star))            rm(Q.star)
     if(missing(range.Q))            stop("range.Q must be specified")
@@ -236,11 +236,11 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   }  
   dat.name  <- as.character(match.call()$dat)
   if(is.element(method, c("FA", "MFA"))) {
-    imifa   <- lapply(seq_along(imifa), function(x) setNames(imifa[[x]], paste0("Factors", range.Q)))
+    imifa   <- lapply(seq_along(imifa), function(x) setNames(imifa[[x]], paste0(range.Q, ifelse(range.Q == 1, "Factor", "Factors"))))
   } else {
     imifa   <- lapply(seq_along(imifa), function(x) setNames(imifa[[x]], "IMIFA"))
   }
-  gnames    <- paste0("Group", 1:length(range.G))
+  gnames    <- paste0(range.G, ifelse(range.G == 1, "Group", "Groups"))
   names(imifa)            <- gnames
   attr(imifa, "Center")   <- centering
   attr(imifa, "Date")     <- format(Sys.Date(), "%d-%b-%Y")
