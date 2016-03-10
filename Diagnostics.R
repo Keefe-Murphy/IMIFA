@@ -93,11 +93,19 @@ tune.sims       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
       data      <- scale(data, center=cent, scale=scaling)
     }
     for(g in G.range) {
+      G.ind     <- which(G.range == g)
+    for(gg in 1:g) {
       for(q in Q.range) {
+        Q.ind   <- which(Q.range == q)
         Q.fac   <- n.fac[q]
         if(all(sw["l.sw"], Q.fac > 0)) {
-          lmat        <- sims[[g]][[q]]$load[,1:Q.fac,store, drop=F]
-          l.temp      <- as.matrix(sims[[g]][[q]]$load[,1:Q.fac,temp.b])
+          if(method   == "MFA") {
+            lmat      <- adrop(sims[[G.ind]][[Q.ind]]$load[,1:Q.fac,gg,store, drop=F], drop=3)
+            l.temp    <- adrop(sims[[G.ind]][[Q.ind]]$load[,1:Q.fac,gg,temp.b, drop=F], drop=3:4)
+          } else {
+            lmat      <- sims[[G.ind]][[Q.ind]]$load[,1:Q.fac,store, drop=F]
+            l.temp    <- adrop(sims[[G.ind]][[Q.ind]]$load[,1:Q.fac,temp.b, drop=F], drop=3)
+          }
           for(p in 1:n.store) {
             rot       <- procrustes(X=as.matrix(lmat[,,p]), Xstar=l.temp)$R
             lmat[,,p] <- lmat[,,p] %*% rot
@@ -107,15 +115,30 @@ tune.sims       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
         } else {
           post.load   <- matrix(, nr=n.var, nc=0)
         }
-        post.mu       <- sims[[g]][[q]]$post.mu
-        post.psi      <- sims[[g]][[q]]$post.psi
+        if(method     == "MFA") {
+          post.mu     <- sims[[G,ind]][[Q.ind]]$post.mu[,gg]
+          post.psi    <- sims[[G.ind]][[Q.ind]]$post.psi[,gg]
+          if(sw["mu.sw"]) {
+            mu        <- sims[[G.ind]][[Q.ind]]$mu[,gg,store]
+          }
+          if(sw["psi.sw"]) {
+            psi       <- sims[[G.ind]][[Q.ind]]$psi[,gg,store]
+          }
+        } else {
+          post.mu     <- sims[[G,ind]][[Q.ind]]$post.mu
+          post.psi    <- sims[[G.ind]][[Q.ind]]$post.psi
+          if(sw["mu.sw"]) {
+            mu        <- sims[[G.ind]][[Q.ind]]$mu[,store]
+          }
+          if(sw["psi.sw"]) {
+            psi       <- sims[[G.ind]][[Q.ind]]$psi[,store]
+          }
+        }
         if(sw["mu.sw"]) {
-          mu    <- sims[[g]][[q]]$mu[,store]
-          post.mu     <- rowMeans(mu, 1)
+          post.mu     <- rowMeans(mu, dims=1)
         } 
         if(sw["p.sw"])  {
-          psi   <- sims[[g]][[q]]$psi[,store]
-          post.psi    <- rowMeans(psi, 1)
+          post.psi    <- rowMeans(psi, dims=1)
         }
         if(any(!sw["l.sw"], all(sw["l.sw"], Q.fac == 0))) {
           cumvar[g,q] <- (sum(diag(cov.emp)) - sum(post.psi))/n.var
@@ -135,6 +158,7 @@ tune.sims       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
           bic[g,q]    <- 2 * log.lik - K * log(n.obs)
         }
       }
+    }
     }
     if(any(max(cumvar[!is.na(cumvar)]) > 1, bic.x &&
        any(!is.finite(bic))))    warning("Chain may not have converged", call.=F)
@@ -188,44 +212,68 @@ tune.sims       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
   } 
   
   result        <- list(list())
+  G.ind         <- which(n.grp == G)
+  temp.b        <- max(1, burnin)
   for(g in 1:G) {
-    G.ind       <- which(n.grp == G)
     Qg          <- Q[g]
-    if(Q == 0) {
+    if(Qg == 0) {
       sw[c("f.sw", "l.sw")]   <- F
+    } else {
+      sw[c("f.sw", "l.sw")]   <- attr(sims, "Switch")[c("f.sw", "l.sw")]
     }
-    if(method   == "FA") {
+    
+    if(method   == "MFA") {
+      if(sw["f.sw"]) {
+        f       <- adrop(sims[[G.ind]][[Q.ind]]$f[,1:Qg,g,store, drop=F], drop=3)
+      }
+      if(sw["l.sw"]) {
+        lmat    <- adrop(sims[[G.ind]][[Q.ind]]$load[,1:Qg,g,store, drop=F], drop=3)
+        l.temp  <- adrop(sims[[G.ind]][[Q.ind]]$load[,1:Qg,g,temp.b, drop=F], drop=3:4)
+      }
+    }
+    
+    if(method   == "FA")  {
       if(sw["f.sw"]) {
         f       <- sims[[G.ind]][[Q.ind]]$f[,1:Qg,store, drop=F]
       }
       if(sw["l.sw"]) {
         lmat    <- sims[[G.ind]][[Q.ind]]$load[,1:Qg,store, drop=F]
-        temp.b  <- max(1, burnin)
-        l.temp  <- as.matrix(sims[[G.ind]][[Q.ind]]$load[,1:Qg,temp.b])
+        l.temp  <- adrop(sims[[G.ind]][[Q.ind]]$load[,1:Qg,temp.b, drop=F], drop=3)
       }
-    } else {
+    } 
+    
+    if(method   == "IFA") {
       store     <- store[which(Q.store >= Qg)]
       n.store   <- length(store)
-     #store     <- tail(store, 0.9 * n.store)
       temp.b    <- store[1]
       if(sw["f.sw"]) {
         f       <- as.array(sims[[G.ind]][[Q.ind]]$f)[,1:Qg,store, drop=F]
       }
       if(sw["l.sw"]) {
         lmat    <- as.array(sims[[G.ind]][[Q.ind]]$load)[,1:Qg,store, drop=F]
-        l.temp  <- as.matrix(as.array(sims[[G.ind]][[Q.ind]]$load)[,1:Qg,temp.b])
+        l.temp  <- adrop(as.array(sims[[G.ind]][[Q.ind]]$load)[,1:Qg,temp.b, drop=F], drop=3)
       }
     }
-    post.mu     <- sims[[G.ind]][[Q.ind]]$post.mu
-    post.psi    <- sims[[G.ind]][[Q.ind]]$post.psi
-    if(sw["mu.sw"])  {
-      mu        <- sims[[G.ind]][[Q.ind]]$mu[,store]                            
-      post.mu   <- rowMeans(mu, 1)
+    
+    if(is.element(method, c("MFA", "MIFA"))) {
+      post.mu   <- sims[[G.ind]][[Q.ind]]$post.mu[,g]
+      post.psi  <- sims[[G.ind]][[Q.ind]]$post.psi[,g]
+      if(sw["mu.sw"])  {
+        mu      <- sims[[G.ind]][[Q.ind]]$mu[,g,store]                            
+      }
+      if(sw["p.sw"])   {
+        psi     <- sims[[G.ind]][[Q.ind]]$psi[,g,store]
+      }
+    } else {
+      post.mu   <- sims[[G.ind]][[Q.ind]]$post.mu
+      post.psi  <- sims[[G.ind]][[Q.ind]]$post.psi
+      if(sw["mu.sw"])  {
+        mu      <- sims[[G.ind]][[Q.ind]]$mu[,store]                            
+      }
+      if(sw["p.sw"])   {
+        psi     <- sims[[G.ind]][[Q.ind]]$psi[,store]
+      }
     }
-    if(sw["p.sw"])   {
-      psi       <- sims[[G.ind]][[Q.ind]]$psi[,store]
-      post.psi  <- rowMeans(psi, 1)
-    }  
     
   # Loadings matrix / identifiability / # etc.  
     if(sw["l.sw"])   {
@@ -238,7 +286,9 @@ tune.sims       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
       }
     }
   
-    if(sw["f.sw"])     post.f <- rowMeans(f, dims=2)
+    if(sw["mu.sw"])  post.mu  <- rowMeans(mu, dims=1)
+    if(sw["f.sw"])   post.f   <- rowMeans(f, dims=2)
+    if(sw["p.sw"])   post.psi <- rowMeans(psi, dims=1)
     if(sw["l.sw"])  {        
       post.load <- rowMeans(lmat, dims=2)
       SS.load   <- colSums(post.load * post.load)
@@ -246,11 +296,11 @@ tune.sims       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
       prop.var  <- SS.load/n.var
       cum.var   <- cumsum(prop.var)          
       prop.exp  <- comm/n.var
-      prop.uni  <- 1 - prop.exp
     } else {
       prop.exp  <- (sum(diag(cov.emp)) - sum(post.psi))/n.var
       cum.var   <- max(prop.exp)
     }
+    prop.uni    <- 1 - prop.exp
     cov.est     <- sims[[G.ind]][[Q.ind]]$post.Sigma
     if(all(recomp, sw["l.sw"])) {
       cov.est   <- replace(cov.est, is.numeric(cov.est), 0)
@@ -276,7 +326,7 @@ tune.sims       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
     if(sw["l.sw"]) {
       class(post.load)        <- "loadings"
     }  
-  results     <- list(if(sw["mu.sw"])   list(means  = mu), 
+    results     <- list(if(sw["mu.sw"]) list(means  = mu), 
                         list(post.mu  = post.mu),
                         if(sw["f.sw"])  list(scores = f, 
                                              post.f = post.f),
@@ -286,9 +336,9 @@ tune.sims       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
                                              post.load      = post.load,  
                                              communality    = comm, 
                                              SS.load        = SS.load,
-                                             prop.var       = prop.var, 
-                                             prop.uni       = prop.uni),
-                        list(prop.exp = prop.exp, cum.var   = cum.var),
+                                             prop.var       = prop.var),
+                        list(prop.exp = prop.exp, cum.var   = cum.var,
+                             prop.uni = prop.uni),
                         list(cov.mat  = cov.emp, post.Sigma = cov.est))
     result[[g]] <- unlist(results, recursive=F)
   }
