@@ -104,15 +104,15 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
     if(!is.logical(adapt))          stop("adapt must be TRUE or FALSE") 
   }
   if(no.fac) {   
-    if(all(switches["f.sw"], 
-           switches["l.sw"]))     { warning("Scores & Loadings not stored as model has zero factors", call.=F)
+    if(all(switches[c("f.sw", "l.sw")]))  {
+                                    warning("Scores & Loadings not stored as model has zero factors", call.=F)
     } else if(switches["f.sw"])   { warning("Scores not stored as model has zero factors", call.=F)
     } else if(switches["l.sw"])   { warning("Loadings not stored as model has zero factors", call.=F)
     }                               
     switches[c("f.sw", "l.sw")]  <- F                              
   } else {
-    if(all(!switches["f.sw"], 
-           !switches["l.sw"]))    { warning("Posterior Scores & Loadings won't be available as they're not being stored", call.=F)
+    if(all(!switches[c("f.sw", "l.sw")])) { 
+                                    warning("Posterior Scores & Loadings won't be available as they're not being stored", call.=F)
     } else if(!switches["f.sw"])  { warning("Posterior Scores won't be available as they're not being stored", call.=F)
     } else if(!switches["l.sw"])  { warning("Posterior Loadings won't be available as they're not being stored", call.=F)
     }
@@ -264,7 +264,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   attr(imifa, "Center")   <- centering
   attr(imifa, "Date")     <- format(Sys.Date(), "%d-%b-%Y")
   attr(imifa, "Factors")  <- if(is.element(method, c("FA", "MFA"))) range.Q else Q.star
-  attr(imifa, "Groups")   <- range.G #if(method != "IMIFA") range.G else G.star
+  attr(imifa, "Groups")   <- if(method != "IMIFA") range.G else G.star
   attr(imifa, "Method")   <- paste0(toupper(substr(method, 1, 1)),
                                     substr(method, 2, nchar(method)))
   attr(imifa, "Name")     <- dat.name
