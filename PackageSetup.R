@@ -17,8 +17,8 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
                         scaling = c("unit", "pareto", "none"), verbose = F, adapt = T, b0 = NULL, 
                         b1 = NULL, prop = NULL, epsilon = NULL, sigma.mu = NULL, sigma.l = NULL, 
                         psi.alpha = NULL, psi.beta = NULL, phi.nu = NULL, alpha.d1 = NULL, alpha.d2 = NULL, 
-                        alpha.pi = NULL, z.init = c("kmeans", "priors"), profile = F, mu.switch = T, 
-                        f.switch = T, load.switch = T, psi.switch = T, ...) {
+                        alpha.pi = NULL, z.init = c("kmeans", "priors", "list"), z.list = NULL, 
+                        profile = F, mu.switch = T, f.switch = T, load.switch = T, psi.switch = T, ...) {
   
   defpar    <- par(no.readonly = T)
   defop     <- options()
@@ -37,7 +37,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   if(!is.logical(centering))        stop("centering must be TRUE or FALSE")
   if(!is.logical(verbose))          stop("verbose   must be TRUE or FALSE")
   if(!is.logical(profile))          stop("profile   must be TRUE or FALSE")
-  if(all(is.element(method, c("FA", "IFA")))) {
+  if(is.element(method, c("FA", "IFA", "classify"))) {
     if(missing(centering) || !centering) {
      centering <- T  
     } 
@@ -75,7 +75,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   } else {
     if(missing(range.G))            stop("range.G must be specified")
     if(any(range.G  < 1))           stop("range.G must be strictly positive")
-    if(any(range.G == 1)) {
+    if(all(range.G == 1)) {
       if(method != "IMIFA") {
                                     warning(paste0("Forced use of ", method, " method as range.G is equal to 1"), call.=F)                        
         if(method  == "MFA") {
@@ -138,8 +138,22 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   } 
   if(!is.element(method, c("FA", "IFA"))) {
     if(missing("alpha.pi"))  alpha.pi      <- 0.5
-    if(method != "IMIFA")    z.init        <- match.arg(z.init)
+                             z.init        <- match.arg(z.init)
+    if(!missing(z.list)) {
+                             z.list        <- lapply(z.list, as.factor)
+      if(z.init != "list")          stop(paste0("z.init must be set to 'list' if z.list is supplied"))
+      if(length(z.list)   != length(range.G)) {
+                                    stop(paste0("z.list must be a list of length ", length(range.G))) }
+      if(!all(lapply(z.list, nlevels)      == range.G)) {
+                                    stop(paste0("Each element of z.list must have the same number of levels as range.G")) }
+      if(!all(lapply(z.list, length)       == N)) {
+                                    stop(paste0("Each element of z.list must be a vector of length N=", N)) }
+    }
+    if(all(missing(z.list),  z.init == "list")) {
+                                    stop(paste0("z.list must be supplied if z.init is set to 'list"))
+    }
   }  
+  
   if(method == "classify") {
     source(paste(getwd(), "/IMIFA-GIT/FullConditionals_", "IFA", ".R", sep=""), local=T)
     source(paste(getwd(), "/IMIFA-GIT/Gibbs_", "IFA", ".R", sep=""), local=T)
@@ -147,17 +161,27 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
     source(paste(getwd(), "/IMIFA-GIT/FullConditionals_", method, ".R", sep=""), local=T)
     source(paste(getwd(), "/IMIFA-GIT/Gibbs_", method, ".R", sep=""), local=T)
   }
+
   imifa     <- list(list())
   Gi        <- 1
   Qi        <- 1
   gibbs.arg <- list(n.iters = n.iters, P = P, sigma.mu = sigma.mu, 
                     psi.alpha = psi.alpha, psi.beta = psi.beta, burnin = burnin, 
                     thinning = thinning, n.store = n.store, verbose = verbose, sw = switches)
-  if(profile)  Rprof()
   if(!is.element(method, c("FA", "MFA"))) {
-     gibbs.arg     <- append(gibbs.arg, list(phi.nu = phi.nu, alpha.d1 = alpha.d1, alpha.d2 = alpha.d2,
-                                             adapt = adapt, b0 = b0, b1 = b1, prop = prop, epsilon = epsilon))
+    gibbs.arg     <- append(gibbs.arg, list(phi.nu = phi.nu, alpha.d1 = alpha.d1, alpha.d2 = alpha.d2,
+                                          adapt = adapt, b0 = b0, b1 = b1, prop = prop, epsilon = epsilon))
+  } else {
+    gibbs.arg     <- append(gibbs.arg, list(sigma.l = sigma.l))
   }
+  if(!is.element(method, c("FA", "IFA", "classify"))) {
+    gibbs.arg      <- append(gibbs.arg, list(range.G = range.G, alpha.pi = alpha.pi, z.init = z.init))
+    if(z.list == "list") {
+      gibbs.arg    <- append(gibbs.arg, list(z.list = z.list))
+    }
+  }
+  
+  if(profile)  Rprof()
   if(method == "IFA") {
     start.time     <- proc.time()
     imifa[[Gi]][[Qi]]   <- do.call(paste0("gibbs.", method),                          
@@ -169,25 +193,20 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
                envir=.GlobalEnv))   stop(paste0("Object ", match.call()$Label, " not found"))
     Label   <- as.factor(Label)
     if(length(Label) != N)          stop(paste0("Labels must be a factor of length N=",  n.obs))
-    Gi             <- nlevels(Label)
-    range.G        <- 1:Gi
+    range.G        <- nlevels(Label)
     start.time     <- proc.time()
-    for(g in range.G) {
+    for(g in 1:range.G) {
       temp.dat     <- dat[Label == levels(Label)[g],]
       imifa[[g]]          <- list()
       imifa[[g]][[Qi]]    <- do.call(paste0("gibbs.", "IFA"),
                                      args=append(list(data = temp.dat, N = nrow(temp.dat), Q = Q.star), gibbs.arg))
-      if(verbose)                   cat(paste0(round(g/Gi * 100, 2), "% Complete\n"))
+      if(verbose)                   cat(paste0(round(g/range.G * 100, 2), "% Complete\n"))
     }
   } 
   if(is.element(method, c("FA", "MFA"))) {
     if(any(all(length(range.Q)   == 1, any(range.Q >= P, range.Q >= N - 1)), 
            all(length(range.Q)    > 1, any(any(range.Q  >= P), any(range.Q  >= N - 1)))))   
                                     stop("Number of factors must be less than the number of variables and number of observations")
-    gibbs.arg    <- append(gibbs.arg, list(sigma.l = sigma.l))
-    if(method == "MFA") {
-      gibbs.arg    <- append(gibbs.arg, list(range.G = range.G, alpha.pi = alpha.pi, z.init = z.init))
-    }
     if(all(length(range.G) == 1, length(range.Q) == 1)) {
       start.time   <- proc.time()
         imifa[[Gi]][[Qi]] <- do.call(paste0("gibbs.", method), 
