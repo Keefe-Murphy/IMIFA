@@ -2,7 +2,7 @@
 ### Tune Parameters (Single & Shrinkage Case) ###
 #################################################
 
-tune.sims       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
+tune.imifa      <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
                             Q = NULL, Q.meth = c("Mode", "Median"), recomp = F, ...) {
   defpar        <- par(no.readonly = T)
   defop         <- options()
@@ -44,7 +44,6 @@ tune.sims       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
   Q.T           <- exists("Q.x", envir=environment())
   G             <- 1
   Q.ind         <- 1
-  cov.emp       <- sims[[G]][[Q.ind]]$cov.mat
   
   if(method == "IFA") {
     if(missing(Q.meth)) {
@@ -161,7 +160,7 @@ tune.sims       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
     }
     }
     if(any(max(cumvar[!is.na(cumvar)]) > 1, bic.x &&
-       any(!is.finite(bic))))    warning("Chain may not have converged", call.=F)
+       any(!is.finite(bic))))    warning(paste0(ifelse(G == 1, "C", paste0("Group ", gg, " of the ", g, "-groups c")), "hain may not have converged"), call.=F)
     if(bic.x && !any(is.nan(bic), !is.finite(bic))) {
       bic.max   <- which(bic == max(bic), arr.ind = T)
       G.ind     <- bic.max[1]
@@ -214,6 +213,7 @@ tune.sims       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
   result        <- list(list())
   G.ind         <- which(n.grp == G)
   temp.b        <- max(1, burnin)
+  MSE  <- RMSE  <- NRMSE  <- CVRMSE  <- MAD  <- rep(NA, G)
   for(g in 1:G) {
     Qg          <- Q[g]
     if(Qg == 0) {
@@ -255,7 +255,7 @@ tune.sims       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
       }
     }
     
-    if(is.element(method, c("MFA", "MIFA"))) {
+    if(is.element(method, c("MFA", "MIFA", "IMIFA"))) {
       post.mu   <- sims[[G.ind]][[Q.ind]]$post.mu[,g]
       post.psi  <- sims[[G.ind]][[Q.ind]]$post.psi[,g]
       if(sw["mu.sw"])  {
@@ -301,27 +301,37 @@ tune.sims       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
       cum.var   <- max(prop.exp)
     }
     prop.uni    <- 1 - prop.exp
-    cov.est     <- sims[[G.ind]][[Q.ind]]$post.Sigma
-    if(all(recomp, sw["l.sw"])) {
+    if(is.element(method, c("MFA", "MIFA", "IMIFA"))) {
+      cov.emp   <- sims[[G.ind]][[Q.ind]]$cov.mat[,,g]
+      cov.est   <- sims[[G.ind]][[Q.ind]]$post.Sigma[,,g]
+    } else {
+      cov.emp   <- sims[[G.ind]][[Q.ind]]$cov.mat
+      cov.est   <- sims[[G.ind]][[Q.ind]]$post.Sigma
+    }
+    if(all(recomp, sw[c("l.sw", "p.sw")])) {
       cov.est   <- replace(cov.est, is.numeric(cov.est), 0)
       for(r in 1:n.store) {
         Sigma   <- tcrossprod(lmat[,,r]) + diag(psi[,r])
         cov.est <- cov.est + Sigma/n.store
       }
-    } else if(recomp)            warning("Loadings not stored: can't recompute Sigma", call.=F)
+    } else if(recomp) {
+      if(!sw["l.sw"]) {
+                                 warning("Loadings not stored: can't re-estimate Sigma", call.=F)
+      } else {
+                                 warning("Uniquenesses not stored: can't re-estimate Sigma", call.=F)
+      }
+    }          
     error       <- cov.emp - cov.est
-    MSE         <- mean(error * error)
-    RMSE        <- sqrt(MSE)
-    NRMSE       <- RMSE/(max(cov.emp) - min(cov.emp))
-    CVRMSE      <- RMSE/mean(cov.emp)
-    MAD         <- mean(abs(error))
-    errors      <- list(MSE = MSE, RMSE = RMSE, NRMSE = NRMSE, CVRMSE = CVRMSE, MAD = MAD) 
-    if(any(ifelse(all(isTRUE(attr(sims, "Scaling")), attr(sims, "Center")), 
-              sum(round(diag(cov.est))  != 
-              round(diag(cov.emp)))     != 0, F), 
-       sum(abs(post.psi - (1 - post.psi))  <  0) != 0,
-       ifelse(sw["l.sw"], 
-              prop.exp > 1, F))) warning("Chain may not have converged", call.=F)
+    MSE[g]      <- mean(error * error)
+    RMSE[g]     <- sqrt(MSE)
+    NRMSE[g]    <- RMSE/(max(cov.emp) - min(cov.emp))
+    CVRMSE[g]   <- RMSE/mean(cov.emp)
+    MAD[g]      <- mean(abs(error))
+    if(any(all(isTRUE(attr(sims, "Scaling")), attr(sims, "Center")) && 
+               sum(round(diag(cov.est))  != 
+               round(diag(cov.emp)))     != 0,
+       sum(abs(post.psi - (1 - post.psi)) < 0) != 0,
+       prop.exp  > 1))           warning(paste0(ifelse(G == 1, "C", paste0("Group ", g, "'s c")), "hain may not have converged"), call.=F)
   
     if(sw["l.sw"]) {
       class(post.load)        <- "loadings"
@@ -358,6 +368,8 @@ tune.sims       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
          "Groups")            <- n.grp
   }
   attr(GQ.res, "Supplied")    <- c(Q=Q.T, G=G.T)
+  errors        <- list(MSE = mean(MSE), RMSE = mean(RMSE), NRMSE = mean(NRMSE),
+                        CVRMSE = mean(CVRMSE), MAD = mean(MAD)) 
   result        <- c(result, Error = list(errors), GQ.results = list(GQ.res))
   class(result)               <- "IMIFA"
   attr(result, "Method")      <- attr(sims, "Method")
@@ -365,5 +377,5 @@ tune.sims       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
   attr(result, "Store")       <- n.store
   attr(result, "Switch")      <- sw
   attr(result, "Vars")        <- n.var
-  return(result)
+  return(result[!sapply(result, is.null)])
 }
