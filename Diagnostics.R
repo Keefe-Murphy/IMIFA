@@ -38,7 +38,7 @@ tune.sims       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
     Q.xind      <- which(n.fac == Q.x)
     if(all(is.element(method, c("FA", "MFA")),
        !is.element(Q, n.fac)))   stop("This Q value was not used during simulation")
-    if(all(method == "IFA", 
+    if(all(is.element(method, c("IFA", "classify")), 
       (Q * (n.fac - Q)) < 0))    stop(paste0("Q cannot be greater than the number of factors in ", match.call()$sims))
   } 
   Q.T           <- exists("Q.x", envir=environment())
@@ -116,21 +116,21 @@ tune.sims       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
           post.load   <- matrix(, nr=n.var, nc=0)
         }
         if(method     == "MFA") {
-          post.mu     <- sims[[G,ind]][[Q.ind]]$post.mu[,gg]
+          post.mu     <- sims[[G.ind]][[Q.ind]]$post.mu[,gg]
           post.psi    <- sims[[G.ind]][[Q.ind]]$post.psi[,gg]
           if(sw["mu.sw"]) {
             mu        <- sims[[G.ind]][[Q.ind]]$mu[,gg,store]
           }
-          if(sw["psi.sw"]) {
+          if(sw["p.sw"]) {
             psi       <- sims[[G.ind]][[Q.ind]]$psi[,gg,store]
           }
         } else {
-          post.mu     <- sims[[G,ind]][[Q.ind]]$post.mu
+          post.mu     <- sims[[G.ind]][[Q.ind]]$post.mu
           post.psi    <- sims[[G.ind]][[Q.ind]]$post.psi
           if(sw["mu.sw"]) {
             mu        <- sims[[G.ind]][[Q.ind]]$mu[,store]
           }
-          if(sw["psi.sw"]) {
+          if(sw["p.sw"]) {
             psi       <- sims[[G.ind]][[Q.ind]]$psi[,store]
           }
         }
