@@ -70,3 +70,22 @@
     sim.pi.p    <- function(P = NULL, psi.alpha = NULL, psi.beta = NULL, ...) {
         rgamma(n=P, shape=psi.alpha/2, rate=psi.beta/2) 
     }
+
+  # Multivariate Normal Density
+    mvdnorm     <- function(data = NULL, mu = NULL, 
+                            Sigma = NULL, P = NULL, pie = 1) {
+      if(all(Sigma[!diag(P)] == 0)) {
+        U.Sig   <- sqrt(Sigma)
+      } else {
+        U.Sig   <- chol(Sigma)
+      }
+      rooti     <- backsolve(U.Sig, diag(P))
+      quad      <- crossprod(rooti, t(data) - mu)
+      quads     <- colSums(quad * quad)
+        pie * exp(- P/2 * log(2 * pi) + sum(log(diag(rooti))) - 0.5 * quads)
+    }
+  
+  # BIC
+    bic.mcmc    <- function(like = NULL, pen = NULL, ...) {
+        2 * sum(log(like)) - pen
+    }
