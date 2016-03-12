@@ -3,7 +3,8 @@
 #############################################
                          
 # Means
-  sim.mu        <- function(N, P, sigma.mu, psi.inv, sum.data, sum.f, lmat, ...) {
+  sim.mu        <- function(N = NULL, P = NULL, sigma.mu = NULL, psi.inv = NULL, 
+                            sum.data = NULL, sum.f = NULL, lmat = NULL, ...) {
     mu.omega    <- 1/(sigma.mu + N * psi.inv)
     U.mu        <- sqrt(mu.omega)
     z.mu        <- rnorm(P, 0, 1)
@@ -13,7 +14,8 @@
   }
 
 # Scores
-  sim.scores    <- function(N, Q, lmat, psi.inv, c.data, ...) {
+  sim.scores    <- function(N = NULL, Q = NULL, lmat = NULL,
+                            psi.inv = NULL, c.data = NULL, ...) {
     load.psi    <- lmat * psi.inv
     f.omega.a   <- diag(Q) + crossprod(load.psi, lmat)
     U.f         <- chol(f.omega.a)
@@ -25,7 +27,8 @@
   }
 
 # Loadings
-  sim.load      <- function(l.sigma, Q, c.data.j, f, psi.inv.j, FtF, ...) {
+  sim.load      <- function(l.sigma = NULL, Q = NULL, c.data.j = NULL, 
+                            f = NULL, psi.inv.j = NULL, FtF = NULL, ...) {
     l.omega     <- l.sigma + psi.inv.j * FtF
     U.load      <- chol(l.omega)
     z.load      <- rnorm(Q, 0, 1)
@@ -35,7 +38,8 @@
   }
 
 # Uniquenesses
-  sim.psi.inv   <- function(N, P, psi.alpha, psi.beta, c.data, f, lmat, ...) { 
+  sim.psi.inv   <- function(N = NULL, P = NULL, psi.alpha = NULL, psi.beta = NULL, 
+                            c.data = NULL, f = NULL, lmat = NULL, ...) { 
     rate.t      <- c.data - tcrossprod(f, lmat)
     rate.t      <- colSums(rate.t * rate.t)
       rgamma(P, shape=(N + psi.alpha)/2, 
@@ -44,25 +48,25 @@
 
 # Priors
   # Means
-    sim.mu.p    <- function(P, sigma.mu, ...) {
+    sim.mu.p    <- function(P = NULL, sigma.mu = NULL, ...) {
       U.mu      <- sqrt(1/sigma.mu)
       z.mu      <- rnorm(P, 0, 1)
         U.mu * z.mu
     }
   
   # Scores
-    sim.f.p     <- function(Q, N, ...) {
+    sim.f.p     <- function(Q = NULL, N = NULL, ...) {
         matrix(rnorm(N * Q, 0, 1), nr=N, ncol=Q)
     }
 
   # Loadings
-    sim.l.p     <- function(Q, P, sigma.l, ...) {
+    sim.l.p     <- function(Q = NULL, P = NULL, sigma.l = NULL, ...) {
       U.l       <- sqrt(1/sigma.l)
       z.l       <- matrix(rnorm(P * Q, 0, 1), nr=P, ncol=Q)
         z.l * U.l
     }
 
   # Uniquenesses
-    sim.pi.p    <- function(P, psi.alpha, psi.beta, ...) {
+    sim.pi.p    <- function(P = NULL, psi.alpha = NULL, psi.beta = NULL, ...) {
         rgamma(n=P, shape=psi.alpha/2, rate=psi.beta/2) 
     }

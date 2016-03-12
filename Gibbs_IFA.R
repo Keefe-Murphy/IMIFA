@@ -40,16 +40,16 @@
     dimnames(cov.emp)        <- dimnames(post.Sigma)
     
     sigma.mu     <- 1/sigma.mu
-    mu           <- sim.mu.p(sigma.mu, P)  
-    f            <- sim.f.p(Q, N)
-    psi.inv      <- sim.pi.p(P, psi.alpha, psi.beta)
-    phi          <- sim.p.p(Q, P, phi.nu)
-    delta        <- sim.d.p(Q, alpha.d1, alpha.d2)
+    mu           <- sim.mu.p(sigma.mu=sigma.mu, P=P)  
+    f            <- sim.f.p(Q=Q, N=N)
+    psi.inv      <- sim.pi.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
+    phi          <- sim.p.p(Q=Q, P=P, phi.nu=phi.nu)
+    delta        <- sim.d.p(Q=Q, alpha.d1=alpha.d1, alpha.d2=alpha.d2)
     tau          <- cumprod(delta)
     lmat         <- matrix(0, nr=P, nc=Q)
     for(j in 1:P) {
       D.load     <- phi[j,] * tau
-      lmat[j,]   <- sim.l.p(D.load, Q)
+      lmat[j,]   <- sim.l.p(D.load=D.load, Q=Q)
     }
     sum.data     <- colSums(data)
   
@@ -65,12 +65,13 @@
       
     # Means
       sum.f      <- colSums(f)
-      mu         <- sim.mu(N, P, sigma.mu, psi.inv, sum.data, sum.f, lmat)
+      mu         <- sim.mu(N=N, P=P, sigma.mu=sigma.mu, psi.inv=psi.inv,
+                           sum.data=sum.data, sum.f=sum.f, lmat=lmat)
       
     # Scores
       c.data     <- sweep(data, 2, mu, FUN="-")
       if(Q  > 0) {
-        f        <- sim.scores(N, Q, lmat, psi.inv, c.data)
+        f        <- sim.scores(N=N, Q=Q, lmat=lmat, psi.inv=psi.inv, c.data=c.data)
       } else {
         f        <- matrix(, nr=N, nc=0)
       }          
@@ -82,28 +83,32 @@
           psi.inv.j <- psi.inv[j]
           c.data.j  <- c.data[,j]
           D.load    <- phi[j,] * tau * diag(Q)
-          lmat[j,]  <- sim.load(D.load, Q, c.data.j, f, psi.inv.j, FtF)
+          lmat[j,]  <- sim.load(D.load=D.load, Q=Q, c.data.j=c.data.j, 
+                                f=f, psi.inv.j=psi.inv.j, FtF=FtF)
         } 
       } else {
         lmat     <- matrix(, nr=P, nc=0)
       }
     
     # Uniquenesses
-      psi.inv    <- sim.psi.inv(N, P, psi.alpha, psi.beta, c.data, f, lmat)
+      psi.inv    <- sim.psi.inv(N=N, P=P, psi.alpha=psi.alpha, psi.beta=psi.beta,
+                                c.data=c.data, f=f, lmat=lmat)
     
     # Local Shrinkage
       load.2     <- lmat * lmat
-      phi        <- sim.phi(Q, P, phi.nu, tau, load.2)
+      phi        <- sim.phi(Q=Q, P=P, phi.nu=phi.nu, tau=tau, load.2=load.2)
           
     # Global Shrinkage
       sum.term   <- diag(crossprod(phi, load.2))
       if(Q  > 0) {
-        delta[1]    <- sim.delta1(Q, P, alpha.d1, delta, tau, sum.term)
+        delta[1]    <- sim.delta1(Q=Q, P=P, alpha.d1=alpha.d1, delta=delta,
+                                  tau=tau, sum.term=sum.term)
         tau         <- cumprod(delta)  
       } 
       if(Q >= 2) {
         for(k in 2:Q) { 
-          delta[k]  <- sim.deltak(Q, P, k, alpha.d2, delta, tau, sum.term)
+          delta[k]  <- sim.deltak(Q=Q, P=P, k=k, alpha.d2=alpha.d2,
+                                  delta=delta, tau=tau, sum.term=sum.term)
           tau       <- cumprod(delta)      
         }
       }

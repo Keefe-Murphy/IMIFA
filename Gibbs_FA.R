@@ -38,10 +38,10 @@
     
     sigma.mu     <- 1/sigma.mu
     sigma.l      <- 1/sigma.l
-    mu           <- sim.mu.p(P, sigma.mu)  
-    f            <- sim.f.p(Q, N)
-    lmat         <- sim.l.p(Q, P, sigma.l)
-    psi.inv      <- sim.pi.p(P, psi.alpha, psi.beta)
+    mu           <- sim.mu.p(P=P, sigma.mu=sigma.mu)  
+    f            <- sim.f.p(Q=Q, N=N)
+    lmat         <- sim.l.p(Q=Q, P=P, sigma.l=sigma.l)
+    psi.inv      <- sim.pi.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
     l.sigma      <- sigma.l * diag(Q)
     sum.data     <- colSums(data)
   
@@ -57,12 +57,13 @@
       
     # Means
       sum.f      <- colSums(f)
-      mu         <- sim.mu(N, P, sigma.mu, psi.inv, sum.data, sum.f, lmat)
+      mu         <- sim.mu(N=N, P=P, sigma.mu=sigma.mu, psi.inv=psi.inv,
+                           sum.data=sum.data, sum.f=sum.f, lmat=lmat)
     
     # Scores
       c.data     <- sweep(data, 2, mu, FUN="-")
       if(Q > 0) {
-        f        <- sim.scores(N, Q, lmat, psi.inv, c.data)
+        f        <- sim.scores(N=N, Q=Q, lmat=lmat, psi.inv=psi.inv, c.data=c.data)
       } else {
         f        <- matrix(, nr=N, nc=0)
       }
@@ -73,14 +74,16 @@
         for (j in 1:P) {
           psi.inv.j <- psi.inv[j]
           c.data.j  <- c.data[,j]
-          lmat[j,]  <- sim.load(l.sigma, Q, c.data.j, f, psi.inv.j, FtF)
+          lmat[j,]  <- sim.load(l.sigma=l.sigma, Q=Q, c.data.j=c.data.j, 
+                                f=f, psi.inv.j = psi.inv.j, FtF=FtF)
         }
       } else {
         lmat     <- matrix(, nr=P, nc=0)
       }
       
     # Uniquenesses
-      psi.inv    <- sim.psi.inv(N, P, psi.alpha, psi.beta, c.data, f, lmat)
+      psi.inv    <- sim.psi.inv(N=N, P=P, psi.alpha=psi.alpha, psi.beta=psi.beta,
+                                c.data=c.data, f=f, lmat=lmat)
     
       if(all(iter > burnin, iter %% thinning == 0)) {
         new.iter <- ceiling((iter - burnin)/thinning)
