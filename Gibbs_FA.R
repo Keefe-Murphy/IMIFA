@@ -89,7 +89,7 @@
         if(sw["f.sw"])  f.store[,,new.iter]    <- f
         if(sw["l.sw"])  load.store[,,new.iter] <- lmat
         if(sw["p.sw"])  psi.store[,new.iter]   <- psi
-        post.mu     <-  post.mu + as.vector(mu)/n.store
+        post.mu     <-  post.mu + mu/n.store
         post.psi    <-  post.psi + psi/n.store
         Sigma       <-  tcrossprod(lmat) + diag(psi)
         post.Sigma  <-  post.Sigma + Sigma/n.store

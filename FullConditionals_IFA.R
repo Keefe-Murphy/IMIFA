@@ -9,7 +9,7 @@
     z.mu        <- rnorm(P, 0, 1)
     v.mu        <- U.mu * z.mu
     mu.mu       <- mu.omega * (psi.inv * (sum.data - lmat %*% sum.f))
-      mu.mu + v.mu
+      as.vector(mu.mu + v.mu)
   }
 
 # Scores
