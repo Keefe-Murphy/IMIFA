@@ -115,6 +115,7 @@ tune.imifa      <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
           post.load   <- matrix(, nr=n.var, nc=0)
         }
         if(method     == "MFA") {
+          cov.emp     <- sims[[G.ind]][[Q.ind]]$cov.mat[,,gg]
           post.mu     <- sims[[G.ind]][[Q.ind]]$post.mu[,gg]
           post.psi    <- sims[[G.ind]][[Q.ind]]$post.psi[,gg]
           if(sw["mu.sw"]) {
@@ -124,6 +125,7 @@ tune.imifa      <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
             psi       <- sims[[G.ind]][[Q.ind]]$psi[,gg,store]
           }
         } else {
+          cov.emp     <- sims[[G.ind]][[Q.ind]]$cov.mat
           post.mu     <- sims[[G.ind]][[Q.ind]]$post.mu
           post.psi    <- sims[[G.ind]][[Q.ind]]$post.psi
           if(sw["mu.sw"]) {
@@ -256,6 +258,8 @@ tune.imifa      <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
     }
     
     if(is.element(method, c("MFA", "MIFA", "IMIFA"))) {
+      cov.emp   <- sims[[G.ind]][[Q.ind]]$cov.mat[,,g]
+      cov.est   <- sims[[G.ind]][[Q.ind]]$post.Sigma[,,g]
       post.mu   <- sims[[G.ind]][[Q.ind]]$post.mu[,g]
       post.psi  <- sims[[G.ind]][[Q.ind]]$post.psi[,g]
       if(sw["mu.sw"])  {
@@ -265,6 +269,8 @@ tune.imifa      <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
         psi     <- sims[[G.ind]][[Q.ind]]$psi[,g,store]
       }
     } else {
+      cov.emp   <- sims[[G.ind]][[Q.ind]]$cov.mat
+      cov.est   <- sims[[G.ind]][[Q.ind]]$post.Sigma
       post.mu   <- sims[[G.ind]][[Q.ind]]$post.mu
       post.psi  <- sims[[G.ind]][[Q.ind]]$post.psi
       if(sw["mu.sw"])  {
@@ -275,7 +281,7 @@ tune.imifa      <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
       }
     }
     
-  # Loadings matrix / identifiability / # etc.  
+  # Loadings matrix / identifiability / error metrics / etc.  
     if(sw["l.sw"])   {
       for(p in 1:n.store) {
         rot           <- procrustes(X=as.matrix(lmat[,,p]), Xstar=l.temp)$R
@@ -285,7 +291,7 @@ tune.imifa      <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
         }  
       }
     }
-  
+    
     if(sw["mu.sw"])  post.mu  <- rowMeans(mu, dims=1)
     if(sw["f.sw"])   post.f   <- rowMeans(f, dims=2)
     if(sw["p.sw"])   post.psi <- rowMeans(psi, dims=1)
@@ -301,13 +307,6 @@ tune.imifa      <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
       cum.var   <- max(prop.exp)
     }
     prop.uni    <- 1 - prop.exp
-    if(is.element(method, c("MFA", "MIFA", "IMIFA"))) {
-      cov.emp   <- sims[[G.ind]][[Q.ind]]$cov.mat[,,g]
-      cov.est   <- sims[[G.ind]][[Q.ind]]$post.Sigma[,,g]
-    } else {
-      cov.emp   <- sims[[G.ind]][[Q.ind]]$cov.mat
-      cov.est   <- sims[[G.ind]][[Q.ind]]$post.Sigma
-    }
     if(all(recomp, sw[c("l.sw", "p.sw")])) {
       cov.est   <- replace(cov.est, is.numeric(cov.est), 0)
       for(r in 1:n.store) {
