@@ -365,66 +365,30 @@ plot.IMIFA  <- function(results = NULL, plot.meth = c("all", "correlation", "den
   } 
   
   if(m.sw["Q.sw"]) {
-    no.fac   <- all(Q == 0)
-    if(all(method == "FA", any(v.sw["loadings"], no.fac))) {
+    if(is.element(method, c("FA", "MFA"))) {
       bic    <- round(GQ.res$BIC, 2)
     }
-    if(method  == "IFA") {
-      if(all(!Q.supp, Q > 1, v.sw["loadings"], result$prop.exp <= 1)) {
-        par(mfrow = c(1, 2))
-      }
-      if(!Q.supp) {
-        plot.Q <- GQ.res$Counts
-        col.Q  <- c("black", "red")[(names(plot.Q) == Q) + 1]
-        Q.plot <- barplot(plot.Q, ylab="Frequency", xlab="Q", xaxt="n", col=col.Q)
-        title(main=list("Posterior Distribution of Q"))
-        axis(1, at=Q.plot, labels=names(plot.Q), tick=F) 
-      }
-    } else {
-      if(all(Q > 1, length(n.fac) > 1, v.sw["loadings"])) {
-        par(mfrow = c(1, 2))
-      }     
-      plot.Q     <- GQ.res$cum.var
-      if(length(n.fac) > 1) {
-        plot.Q   <- plot.Q[!is.na(plot.Q)]  
-        if(all(length(plot.Q) > 1, !any(plot.Q > 1))) {
-          plot(plot.Q, type="l", xlab="# Factors", ylim=c(0,1),
-               ylab="% Variation Explained", xaxt="n", yaxt="n")
-          title(main=list("Scree Plot to Choose Q"))
-          axis(1, at=1:length(plot.Q), labels=n.fac)
-          axis(2, at=seq(0, 1, 0.1), labels=seq(0, 100, 10), las=1)
-        }
-      } 
-    }
-    plot.x       <- result$cum.var
-    if(length(plot.x) == 1) {
-      prop.exp   <- result$prop.exp
-    } else {
-      prop.exp   <- plot.x[max(1, Q)]
-      if(all(Q > 1, !any(plot.x > 1))) {
-        plot(plot.x, type="l", xlab="# Factors", ylim=c(0,1),
-             ylab="% Variation Explained", xaxt="n", yaxt="n")
-        title(main=list(paste0("Cumulative Variance:\n", Q, " Factors")))
-        axis(1, at=1:length(plot.x), labels=1:Q)
-        axis(2, at=seq(0, 1, 0.1), labels=seq(0, 100, 10), las=1) 
-      }
-    } 
-    if(all(!exists("Q.plot",  envir=environment()),
-           length(plot.x) == 1,
-           length(Q)      == 1)) {
+    if(all(method == "IFA", !Q.supp)) {
+      plot.Q <- GQ.res$Counts
+      col.Q  <- c("black", "red")[(names(plot.Q) == Q) + 1]
+      Q.plot <- barplot(plot.Q, ylab="Frequency", xlab="Q", xaxt="n", col=col.Q)
+      title(main=list("Posterior Distribution of Q"))
+      axis(1, at=Q.plot, labels=names(plot.Q), tick=F) 
+    }  
+    if(!exists("Q.plot",  envir=environment())) 
                                       warning("Nothing to plot", call.=F)
-    }
-    if(method == "IFA") {
+    if(method == "MIFA") {
+        print(GQ.res)
+    } else if(method == "IFA") {
         print(GQ.res[2:length(GQ.res)])
+    } else if(method == "MFA") {
+        print(GQ.res[-length(GQ.res)])
     } else {
         cat(paste0("Q = ", Q, "\n"))
     }
-    if(all(method == "FA", any(v.sw["loadings"], no.fac))) {
+    if(is.element(method, c("FA", "MFA"))) {
         cat(paste0("BIC = ", bic[which.max(bic)], "\n"))
     }
-        cat(paste0("Proportion of Variation Explained = ",
-            round(prop.exp[length(prop.exp)] * 100, 2), "%\n"))
-    if(max(prop.exp) > 1)             warning("Chain may not have converged", call.=F)
   }
 
   if(m.sw["C.sw"]) {

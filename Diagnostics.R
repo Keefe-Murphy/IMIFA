@@ -189,21 +189,14 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
       }
     }
     
-    if(sw["mu.sw"])   post.mu  <- rowMeans(mu, dims=1)
-    if(sw["f.sw"])    post.f   <- rowMeans(f, dims=2)
-    if(sw["p.sw"])    post.psi <- rowMeans(psi, dims=1)
-    if(sw["l.sw"])  {        
-      post.load  <- rowMeans(lmat, dims=2)
-      SS.load    <- colSums(post.load * post.load)
-      comm       <- sum(SS.load)
-      prop.var   <- SS.load/n.var
-      cum.var    <- cumsum(prop.var)          
-      prop.exp   <- comm/n.var
+    if(sw["mu.sw"])  post.mu   <- rowMeans(mu, dims=1)
+    if(sw["f.sw"])   post.f    <- rowMeans(f, dims=2)
+    if(sw["p.sw"])   post.psi  <- rowMeans(psi, dims=1)
+    if(sw["l.sw"]) { post.load <- rowMeans(lmat, dims=2)
+      var.exp    <- sum(colSums(post.load * post.load))/n.var
     } else {
-      prop.exp   <- (sum(diag(cov.emp)) - sum(post.psi))/n.var
-      cum.var    <- max(prop.exp)
+      var.exp    <- (sum(diag(cov.emp)) - sum(post.psi))/n.var
     }
-    prop.uni     <- 1 - prop.exp
     if(all(recomp, sw[c("l.sw", "p.sw")])) {
       cov.est    <- replace(cov.est, is.numeric(cov.est), 0)
       for(r in 1:n.store) {
@@ -227,25 +220,22 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
                sum(round(diag(cov.est))  != 
                round(diag(cov.emp)))     != 0,
        sum(abs(post.psi - (1 - post.psi)) < 0) != 0,
-       prop.exp   > 1))           warning(paste0(ifelse(G == 1, "C", paste0("Group ", g, "'s c")), "hain may not have converged"), call.=F)
+       var.exp    > 1))           warning(paste0(ifelse(G == 1, "C", paste0("Group ", g, "'s c")), "hain may not have converged"), call.=F)
   
     if(sw["l.sw"]) {
       class(post.load)         <- "loadings"
     }  
-    results      <- list(if(sw["mu.sw"]) list(means  = mu), 
-                         list(post.mu  = post.mu),
-                         if(sw["f.sw"])  list(scores = f, 
-                                              post.f = post.f),
-                         if(sw["p.sw"])  list(uniquenesses   = psi), 
-                         list(post.psi = post.psi),
-                         if(sw["l.sw"])  list(loadings       = lmat, 
-                                              post.load      = post.load,  
-                                              communality    = comm, 
-                                              SS.load        = SS.load,
-                                              prop.var       = prop.var),
-                         list(prop.exp = prop.exp, cum.var   = cum.var,
-                              prop.uni = prop.uni),
-                         list(cov.mat  = cov.emp, post.Sigma = cov.est))
+    results      <- list(if(sw["mu.sw"])   list(means  = mu), 
+                         list(post.mu    = post.mu),
+                         if(sw["f.sw"])    list(scores = f, 
+                                                post.f = post.f),
+                         if(sw["p.sw"])    list(uniquenesses = psi), 
+                         list(post.psi   = post.psi),
+                         if(sw["l.sw"])    list(loadings     = lmat, 
+                                                post.load    = post.load),
+                         list(var.exp    = var.exp,
+                              cov.mat    = cov.emp, 
+                              post.Sigma = cov.est))
     result[[g]]  <- unlist(results, recursive=F)
   }
   names(result)  <- paste0("Group", 1:G)
@@ -265,7 +255,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
   }
   attr(GQ.res, "Supplied")     <- c(Q=Q.T, G=G.T)
   errors         <- list(MSE = mean(MSE), RMSE = mean(RMSE), NRMSE = mean(NRMSE),
-                         CVRMSE = mean(CVRMSE), MAD = mean(MAD)) 
+                         CVRMSE = mean(CVRMSE), MAD = mean(MAD))
   result         <- c(result, Error = list(errors), GQ.results = list(GQ.res))
   class(result)                <- "IMIFA"
   attr(result, "Method")       <- attr(sims, "Method")

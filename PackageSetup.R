@@ -117,8 +117,6 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
     } else if(!switches["l.sw"])  { warning("Posterior Loadings won't be available as they're not being stored", call.=F)
     }
   }
-  if(all(!switches["l.sw"], 
-         !no.fac))                  warning("By-factor breakdown of % variation explained won't be available", call.=F)
   
 # Define full conditionals, hyperparamters & Gibbs Sampler function for desired method
   if(is.null(rownames(dat))) rownames(dat) <- 1:N
