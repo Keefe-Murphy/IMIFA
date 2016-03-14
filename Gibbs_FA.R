@@ -100,7 +100,7 @@
         Sigma       <-  tcrossprod(lmat) + diag(psi)
         post.Sigma  <-  post.Sigma + Sigma/n.store
         like        <-  mvdnorm(data=data, mu=mu, Sigma=Sigma, P=P)
-        bicM        <-  max(bicM, bic.mcmc(like=like, pen=pen))
+        bicM        <-  max(bicM, bic.mcmc(like=like, pen=pen), na.rm=T)
       }  
     }
     returns   <- list(mu   = if(sw["mu.sw"]) mu.store,
