@@ -94,7 +94,7 @@
 
   # Local Shrinkage
     sim.p.p     <- function(Q = NULL, P = NULL, phi.nu = NULL, ...) {
-        matrix(rgamma(n=P * Q, shape=phi.nu/2, rate=phi.nu/2), nr=P)
+        matrix(rgamma(n=P * Q, shape=phi.nu/2, rate=phi.nu/2), nr=P, nc=Q)
     }
 
   # Global Shrinkage

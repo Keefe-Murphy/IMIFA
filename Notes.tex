@@ -459,6 +459,7 @@ p_g &=~\mathrm{P}\left(\underline{z}_{ig}=1\given\underline{x}_i,\gamma\right) =
 \subsubsection[Mixtures of Infinite Factor Analyzers Pseudo-Code]{Mixtures of Infinite Factor Analyzers Pseudo-Code}
 \begin{enumerate}[label*=\arabic*.]
 	\item Choose scalar hyperparameters as before.
+	\item Start with an initialisation of the cluster labels $Z^{\left(0\right)}\colon$~simulate from the $\operatorname{Mult}\left(1, \underline{\pi}\right)$ prior $N$ times, or employ another clustering algorithm, such as K-means.
 	\item Initialise, $\forall~g=1,\ldots,G\colon$
 		\begin{flalign}
 	\underline{\mu}_g^{\left(0\right)} &\sim \operatorname{MVN}_p\left(\underline{0}, \Sigma_{\mu}\mathcal{I}_p\right) &\nonumber\\
@@ -469,9 +470,6 @@ p_g &=~\mathrm{P}\left(\underline{z}_{ig}=1\given\underline{x}_i,\gamma\right) =
 	\delta_{g1}^{\left(0\right)} &\sim \operatorname{Ga}\left(\alpha_1,1\right),\quad\delta_{gh}^{\left(0\right)} \sim \operatorname{Ga}\left(\alpha_2,1\right),\quad h\geq 2\nonumber\\
 	\tau_{gk}^{\left(0\right)} &= \prod_{h=1}^{k}\delta_{gh}^{\left(0\right)}\quad\hspace{21mm}\forall~k=1,\ldots,q_g^\star\nonumber
 		\end{flalign}
-	\item Start with an initialisation of the cluster labels $Z^{\left(0\right)}\colon$~simulate from the $\operatorname{Mult}\left(1, \underline{\pi}\right)$ prior $N$ times, or employ another clustering algorithm, such as K-means.
-		
-	\item Compute $\underline{n}$ and sample $\underline{\pi}$ from $\operatorname{Dir}\left(\underline{\alpha} + \underline{n}\right)$.
 	\item For $g = 1,\ldots,G$, sample other parameters as before, but this time from their \textit{group specific} full conditionals$\colon$
 	\begin{alignat*}{4}
 		\alphloop&\Omega_{\mu_g}^{\left(t\right)} &=&~\left(\Sigma_{\mu}\mathcal{I}_p\right)^{-1} + n_g\Psi_g^{-1^{\left(t-1\right)}}\\
@@ -487,8 +485,9 @@ p_g &=~\mathrm{P}\left(\underline{z}_{ig}=1\given\underline{x}_i,\gamma\right) =
 		&\delta_{gh}^{\left(t\right)} &\sim& \operatorname{Ga}\left(\alpha_2 + \frac{p}{2}\left(q_g^\star-k+1\right), 1 + \frac{1}{2}\sum_{h=k}^{q_g^\star}\tau_{gh}^{\left(k\right)^{\left(t\right)}}\sum_{j=1}^p\lambda_{gjh}^{2^{\left(t-1\right)}}\phi_{gjh}^{\left(t\right)}\right),\quad h\geq 2\\
 		&\tau_{gk}^{\left(t\right)} &=& \prod_{h=1}^{k}\delta_{gh}^{\left(t\right)}\quad\hspace{38mm}\forall~k=1,\ldots,q_g^\star\nonumber
 		\end{alignat*}
-	\item Follow the adaptation procedure outlined in \ref{Adapt_Section}\footnote{Our R-package also implements MFA, without the MGP shrinkage prior in \ref{MGP} and adaptation.}.
+	\item Compute $\underline{n}$ and sample $\underline{\pi}$ from $\operatorname{Dir}\left(\underline{\alpha} + \underline{n}\right)$.
 	\item For $i=1,\ldots,N$, sample $\underline{z}_i$ as outlined in \eqref{eq:33}.
+	\item Follow the adaptation procedure outlined in \ref{Adapt_Section}\footnote{Our R-package also implements MFA, without the MGP shrinkage prior in \ref{MGP} and adaptation.}.
 	\item Repeat steps 4--7 for $t=2,\ldots,T$ using the current value for $q_g^\star$.
 	\item Disregard the first $\operatorname{B}$ burn-in iterations and thin every $\operatorname{K}$-th iteration \footnote{If using the MFA approach, one should choose between competing models using the BICM, as outlined in \ref{Gibbs1}}.
 \end{enumerate}
