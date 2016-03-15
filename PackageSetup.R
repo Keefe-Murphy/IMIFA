@@ -172,7 +172,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
     gibbs.arg     <- append(gibbs.arg, list(sigma.l = sigma.l))
   }
   if(!is.element(method, c("FA", "IFA", "classify"))) {
-    gibbs.arg      <- append(gibbs.arg, list(alpha.pie = alpha.pie, z.init = z.init)
+    gibbs.arg      <- append(gibbs.arg, list(alpha.pie = alpha.pie, z.init = z.init))
   }
   
   if(profile)  Rprof()
@@ -220,7 +220,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
         imifa[[Gi]]       <- list()
         imifa[[Gi]][[Qi]] <- do.call(paste0("gibbs.", method),
                                      args=append(list(data = dat, N = N, G = g, Q = range.Q,
-                                                 if(z.list == "list"), z.list = z.list[[Gi]]), gibbs.arg))
+                                                 if(z.list == "list") z.list = z.list[[Gi]]), gibbs.arg))
         if(verbose)                 cat(paste0(round(Gi/length(range.G) * 100, 2), "% Complete\n"))
       }
     } else {
@@ -232,7 +232,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
           Qi       <- which(range.Q == q)
         imifa[[Gi]][[Qi]] <- do.call(paste0("Gibbs.", method),
                                      args=append(list(data = dat, N = N, G = g, Q = q,
-                                                 if(z.list == "list"), z.list = z.list[[Gi]]), gibbs.arg))
+                                                 if(z.list == "list") z.list = z.list[[Gi]]), gibbs.arg))
         if(verbose)                 cat(paste0(round((Gi * Qi)/(length(range.G) * length(range.Q)) * 100, 2), "% Complete\n"))
         }
       }

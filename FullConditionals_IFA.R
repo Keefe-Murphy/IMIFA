@@ -81,10 +81,10 @@
     }
     
   # Loadings
-    sim.l.p     <- function(D.load = NULL, Q = NULL, ...) {
-      U.l       <- sqrt(1/D.load)
-      z.l       <- rnorm(Q, 0, 1)
-        U.l * z.l
+    sim.load.p  <- function(D.load = NULL, Q = NULL, ...) {
+      U.load    <- sqrt(1/D.load)
+      z.load    <- rnorm(Q, 0, 1)
+        U.load * z.load
     }
 
   # Uniquenesses

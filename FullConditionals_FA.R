@@ -60,10 +60,10 @@
     }
 
   # Loadings
-    sim.l.p     <- function(Q = NULL, P = NULL, sigma.l = NULL, ...) {
-      U.l       <- sqrt(1/sigma.l)
-      z.l       <- matrix(rnorm(P * Q, 0, 1), nr=P, ncol=Q)
-        z.l * U.l
+    sim.load.p  <- function(Q = NULL, P = NULL, sigma.l = NULL, ...) {
+      U.load    <- sqrt(1/sigma.l)
+      z.load    <- matrix(rnorm(P * Q, 0, 1), nr=P, ncol=Q)
+        z.load * U.load
     }
 
   # Uniquenesses
