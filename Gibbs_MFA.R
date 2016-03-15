@@ -1,12 +1,14 @@
 ################################################################
-### Gibbs Sampler for Bayesian Factor Analysis (Single Case) ###
+### Gibbs Sampler for Bayesian Factor Analysis (Group Case) ####
 ################################################################
   
 # Gibbs Sampler Function
-  gibbs.FA       <- function(Q, data, n.iters, N, P, 
-                             sigma.mu, psi.alpha, psi.beta,
-                             burnin, thinning, n.store,
-                             verbose, sw, sigma.l, ...) {
+  gibbs.FA       <- function(Q = NULL, data = NULL, n.iters = NULL,
+                             N = NULL, P = NULL, sigma.mu = NULL,
+                             psi.alpha = NULL, psi.beta = NULL,
+                             burnin = NULL, thinning = NULL, 
+                             n.store = NULL, verbose = NULL,
+                             sw = NULL, sigma.l = NULL, ...) {
         
   # Define & initialise variables
     cnames       <- colnames(data)

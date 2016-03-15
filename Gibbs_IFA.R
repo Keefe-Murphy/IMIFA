@@ -3,11 +3,14 @@
 ###################################################################
   
 # Gibbs Sampler Function
-  gibbs.IFA      <- function(Q, data, n.iters, N, P, 
-                             sigma.mu, psi.alpha, psi.beta, 
-                             burnin, thinning, n.store, verbose, 
-                             sw, phi.nu, alpha.d1, alpha.d2, 
-                             adapt, b0, b1, prop, epsilon, ...) {    
+  gibbs.IFA      <- function(Q = NULL, data = NULL, n.iters = NULL, 
+                             N = NULL, P = NULL, sigma.mu = NULL, 
+                             psi.alpha = NULL, psi.beta = NULL, 
+                             burnin = NULL, thinning = NULL, 
+                             n.store = NULL, verbose = NULL, 
+                             sw = NULL, phi.nu = NULL, alpha.d1 = NULL, 
+                             alpha.d2 = NULL, adapt = NULL, b0 = NULL, 
+                             b1 = NULL, prop = NULL, epsilon = NULL, ...) {    
     
   # Define & initialise variables
     cnames       <- colnames(data)
@@ -42,7 +45,7 @@
     sigma.mu     <- 1/sigma.mu
     mu           <- sim.mu.p(sigma.mu=sigma.mu, P=P)  
     f            <- sim.f.p(Q=Q, N=N)
-    psi.inv      <- sim.pi.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
+    psi.inv      <- sim.psi.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
     phi          <- sim.p.p(Q=Q, P=P, phi.nu=phi.nu)
     delta        <- sim.d.p(Q=Q, alpha.d1=alpha.d1, alpha.d2=alpha.d2)
     tau          <- cumprod(delta)

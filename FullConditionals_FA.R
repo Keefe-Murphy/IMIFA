@@ -67,7 +67,7 @@
     }
 
   # Uniquenesses
-    sim.pi.p    <- function(P = NULL, psi.alpha = NULL, psi.beta = NULL, ...) {
+    sim.psi.p   <- function(P = NULL, psi.alpha = NULL, psi.beta = NULL, ...) {
         rgamma(n=P, shape=psi.alpha/2, rate=psi.beta/2) 
     }
 

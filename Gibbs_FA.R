@@ -3,10 +3,12 @@
 ################################################################
   
 # Gibbs Sampler Function
-  gibbs.FA       <- function(Q, data, n.iters, N, P, 
-                             sigma.mu, psi.alpha, psi.beta,
-                             burnin, thinning, n.store,
-                             verbose, sw, sigma.l, ...) {
+  gibbs.FA       <- function(Q = NULL, data = NULL, n.iters = NULL,
+                             N = NULL, P = NULL, sigma.mu = NULL,
+                             psi.alpha = NULL, psi.beta = NULL,
+                             burnin = NULL, thinning = NULL, 
+                             n.store = NULL, verbose = NULL,
+                             sw = NULL, sigma.l = NULL, ...) {
         
   # Define & initialise variables
     cnames       <- colnames(data)
@@ -44,7 +46,7 @@
     mu           <- sim.mu.p(P=P, sigma.mu=sigma.mu)  
     f            <- sim.f.p(Q=Q, N=N)
     lmat         <- sim.l.p(Q=Q, P=P, sigma.l=sigma.l)
-    psi.inv      <- sim.pi.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
+    psi.inv      <- sim.psi.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
     l.sigma      <- sigma.l * diag(Q)
     sum.data     <- colSums(data)
   
