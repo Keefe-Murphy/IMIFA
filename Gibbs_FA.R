@@ -65,27 +65,22 @@
       mu         <- sim.mu(N=N, P=P, sigma.mu=sigma.mu, psi.inv=psi.inv,
                            sum.data=sum.data, sum.f=sum.f, lmat=lmat)
     
-    # Scores
+    # Scores & Loadings
       c.data     <- sweep(data, 2, mu, FUN="-")
       if(Q > 0) {
         f        <- sim.scores(N=N, Q=Q, lmat=lmat, psi.inv=psi.inv, c.data=c.data)
-      } else {
-        f        <- matrix(, nr=N, nc=0)
-      }
-                
-    # Loadings
-      FtF        <- crossprod(f)
-      if(Q > 0) {
-        for (j in seq_len(P)) {
+        FtF      <- crossprod(f)
+        for(j in seq_len(P)) {
           psi.inv.j <- psi.inv[j]
           c.data.j  <- c.data[,j]
           lmat[j,]  <- sim.load(l.sigma=l.sigma, Q=Q, c.data.j=c.data.j, 
                                 f=f, psi.inv.j = psi.inv.j, FtF=FtF)
         }
       } else {
+        f        <- matrix(, nr=N, nc=0)
         lmat     <- matrix(, nr=P, nc=0)
       }
-      
+                      
     # Uniquenesses
       psi.inv    <- sim.psi.inv(N=N, P=P, psi.alpha=psi.alpha, psi.beta=psi.beta,
                                 c.data=c.data, f=f, lmat=lmat)
