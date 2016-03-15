@@ -17,7 +17,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
                         scaling = c("unit", "pareto", "none"), verbose = F, adapt = T, b0 = NULL, 
                         b1 = NULL, prop = NULL, epsilon = NULL, sigma.mu = NULL, sigma.l = NULL, 
                         psi.alpha = NULL, psi.beta = NULL, phi.nu = NULL, alpha.d1 = NULL, alpha.d2 = NULL, 
-                        alpha.pi = NULL, z.init = c("kmeans", "priors", "list"), z.list = NULL, 
+                        alpha.pie = NULL, z.init = c("kmeans", "priors", "list"), z.list = NULL, 
                         profile = F, mu.switch = T, f.switch = T, load.switch = T, psi.switch = T, ...) {
   
   defpar    <- par(no.readonly = T)
@@ -135,7 +135,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
     if(missing("epsilon"))   epsilon       <- ifelse(centering, 0.1, 0.005)
   } 
   if(!is.element(method, c("FA", "IFA"))) {
-    if(missing("alpha.pi"))  alpha.pi      <- 0.5
+    if(missing("alpha.pie")) alpha.pie     <- 0.5
                              z.init        <- match.arg(z.init)
     if(!missing(z.list)) {
                              z.list        <- lapply(z.list, as.factor)
@@ -173,10 +173,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
     gibbs.arg     <- append(gibbs.arg, list(sigma.l = sigma.l))
   }
   if(!is.element(method, c("FA", "IFA", "classify"))) {
-    gibbs.arg      <- append(gibbs.arg, list(range.G = range.G, alpha.pi = alpha.pi, z.init = z.init))
-    if(z.list == "list") {
-      gibbs.arg    <- append(gibbs.arg, list(z.list = z.list))
-    }
+    gibbs.arg      <- append(gibbs.arg, list(alpha.pie = alpha.pie, z.init = z.init)
   }
   
   if(profile)  Rprof()
@@ -223,7 +220,8 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
         Gi         <- which(range.G == g)
         imifa[[Gi]]       <- list()
         imifa[[Gi]][[Qi]] <- do.call(paste0("gibbs.", method),
-                                     args=append(list(data = dat, N = N, G = g, Q = range.Q), gibbs.arg))
+                                     args=append(list(data = dat, N = N, G = g, Q = range.Q,
+                                                 if(z.list == "list"), z.list = z.list[[Gi]]), gibbs.arg))
         if(verbose)                 cat(paste0(round(Gi/length(range.G) * 100, 2), "% Complete\n"))
       }
     } else {
@@ -234,7 +232,8 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
         for(q in range.Q) {
           Qi       <- which(range.Q == q)
         imifa[[Gi]][[Qi]] <- do.call(paste0("Gibbs.", method),
-                                     args=append(list(data = dat, N = N, G = g, Q = q), gibbs.arg))
+                                     args=append(list(data = dat, N = N, G = g, Q = q,
+                                                 if(z.list == "list"), z.list = z.list[[Gi]]), gibbs.arg))
         if(verbose)                 cat(paste0(round((Gi * Qi)/(length(range.G) * length(range.Q)) * 100, 2), "% Complete\n"))
         }
       }
