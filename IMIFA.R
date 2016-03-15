@@ -21,7 +21,7 @@
   # Meat
     load(file=paste0(getwd(), "/Data/Meat.Rdata", sep=""), envir=.GlobalEnv)
     spectra  <- t(spectra); rm(last.warning)
-    matplot(t(spectra), type="l", col=1:nlevels(as.factor(type)), xlab="Wavelength", ylab="Spectral Reflectance", main="Meat Data")
+    matplot(t(spectra), type="l", col=seq_len(nlevels(as.factor(type))), xlab="Wavelength", ylab="Spectral Reflectance", main="Meat Data")
   # Subjects 
     subjects <- read.csv(paste0(getwd(), "/Data/", "SubjectMarks.csv", sep=""))
   # Cereal 

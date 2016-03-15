@@ -76,8 +76,8 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
     G.range      <- length(n.grp)
     Q.range      <- length(n.fac)
     bic          <- matrix(NA, nr=G.range, nc=Q.range, dimnames=list(paste0("G", n.grp), paste0("Q", n.fac)))
-    for(g in 1:G.range) { 
-      for(q in 1:Q.range) {
+    for(g in seq_len(G.range)) { 
+      for(q in seq_len(G.range)) {
         bic[g,q] <- sim[[g]][[q]]$bic  
       }  
     }
@@ -105,7 +105,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
       n.grp      <- G
       G.ind      <- G.xind
     }
-    Q            <- setNames(rep(Q, G), paste0("Qg", 1:G))
+    Q            <- setNames(rep(Q, G), paste0("Qg", seq_len(G)))
     GQ.res       <- list(G = G, Q = Q, BIC = bic)
   } 
   
@@ -113,8 +113,9 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
   G.ind          <- which(n.grp == G)
   temp.b         <- max(1, burnin)
   MSE  <-  RMSE  <-  NRMSE  <-  CVRMSE  <-  MAD  <- rep(NA, G)
-  for(g in 1:G) {
+  for(g in seq_len(G)) {
     Qg           <- Q[g]
+    Qgs          <- seq_len(Qg)
     if(Qg == 0) {
       sw[c("f.sw", "l.sw")]    <- F
     } else {
@@ -123,21 +124,21 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
     
     if(method == "MFA") {
       if(sw["f.sw"]) {
-        f        <- adrop(sims[[G.ind]][[Q.ind]]$f[,1:Qg,g,store, drop=F], drop=3)
+        f        <- adrop(sims[[G.ind]][[Q.ind]]$f[,Qgs,g,store, drop=F], drop=3)
       }
       if(sw["l.sw"]) {
-        lmat     <- adrop(sims[[G.ind]][[Q.ind]]$load[,1:Qg,g,store, drop=F], drop=3)
-        l.temp   <- adrop(sims[[G.ind]][[Q.ind]]$load[,1:Qg,g,temp.b, drop=F], drop=3:4)
+        lmat     <- adrop(sims[[G.ind]][[Q.ind]]$load[,Qgs,g,store, drop=F], drop=3)
+        l.temp   <- adrop(sims[[G.ind]][[Q.ind]]$load[,Qgs,g,temp.b, drop=F], drop=3:4)
       }
     }
     
     if(method == "FA")  {
       if(sw["f.sw"]) {
-        f        <- sims[[G.ind]][[Q.ind]]$f[,1:Qg,store, drop=F]
+        f        <- sims[[G.ind]][[Q.ind]]$f[,Qgs,store, drop=F]
       }
       if(sw["l.sw"]) {
-        lmat     <- sims[[G.ind]][[Q.ind]]$load[,1:Qg,store, drop=F]
-        l.temp   <- adrop(sims[[G.ind]][[Q.ind]]$load[,1:Qg,temp.b, drop=F], drop=3)
+        lmat     <- sims[[G.ind]][[Q.ind]]$load[,Qgs,store, drop=F]
+        l.temp   <- adrop(sims[[G.ind]][[Q.ind]]$load[,Qgs,temp.b, drop=F], drop=3)
       }
     } 
     
@@ -146,11 +147,11 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
       n.store    <- length(store)
       temp.b     <- store[1]
       if(sw["f.sw"]) {
-        f        <- as.array(sims[[G.ind]][[Q.ind]]$f)[,1:Qg,store, drop=F]
+        f        <- as.array(sims[[G.ind]][[Q.ind]]$f)[,Qgs,store, drop=F]
       }
       if(sw["l.sw"]) {
-        lmat     <- as.array(sims[[G.ind]][[Q.ind]]$load)[,1:Qg,store, drop=F]
-        l.temp   <- adrop(as.array(sims[[G.ind]][[Q.ind]]$load)[,1:Qg,temp.b, drop=F], drop=3)
+        lmat     <- as.array(sims[[G.ind]][[Q.ind]]$load)[,Qgs,store, drop=F]
+        l.temp   <- adrop(as.array(sims[[G.ind]][[Q.ind]]$load)[,Qgs,temp.b, drop=F], drop=3)
       }
     }
     
@@ -180,7 +181,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
     
   # Loadings matrix / identifiability / error metrics / etc.  
     if(sw["l.sw"])   {
-      for(p in 1:n.store) {
+      for(p in seq_len(n.store)) {
         rot           <- procrustes(X=as.matrix(lmat[,,p]), Xstar=l.temp)$R
         lmat[,,p]     <- lmat[,,p] %*% rot
         if(sw["f.sw"]) {
@@ -199,7 +200,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
     }
     if(all(recomp, sw[c("l.sw", "p.sw")])) {
       cov.est    <- replace(cov.est, is.numeric(cov.est), 0)
-      for(r in 1:n.store) {
+      for(r in seq_len(n.store)) {
         Sigma    <- tcrossprod(lmat[,,r]) + diag(psi[,r])
         cov.est  <- cov.est + Sigma/n.store
       }
@@ -238,7 +239,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
                               post.Sigma = cov.est))
     result[[g]]  <- unlist(results, recursive=F)
   }
-  names(result)  <- paste0("Group", 1:G)
+  names(result)  <- paste0("Group", seq_len(G))
   if(Q.T) {
     attr(GQ.res,
          "Factors")   <- Q.x

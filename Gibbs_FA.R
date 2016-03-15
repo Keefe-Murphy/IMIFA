@@ -13,8 +13,8 @@
   # Define & initialise variables
     cnames       <- colnames(data)
     rnames       <- rownames(data)
-    facnames     <- paste0("Factor ", 1:Q)
-    iternames    <- paste0("Iteration", 1:n.store)
+    facnames     <- paste0("Factor ", seq_len(Q))
+    iternames    <- paste0("Iteration", seq_len(n.store))
     if(sw["mu.sw"]) {
       mu.store   <- matrix(0, nr=P, nc=n.store)
       dimnames(mu.store)   <- list(cnames, iternames)
@@ -45,7 +45,7 @@
     sigma.l      <- 1/sigma.l
     mu           <- sim.mu.p(P=P, sigma.mu=sigma.mu)  
     f            <- sim.f.p(Q=Q, N=N)
-    lmat         <- sim.l.p(Q=Q, P=P, sigma.l=sigma.l)
+    lmat         <- sim.load.p(Q=Q, P=P, sigma.l=sigma.l)
     psi.inv      <- sim.psi.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
     l.sigma      <- sigma.l * diag(Q)
     sum.data     <- colSums(data)
@@ -76,7 +76,7 @@
     # Loadings
       FtF        <- crossprod(f)
       if(Q > 0) {
-        for (j in 1:P) {
+        for (j in seq_len(P)) {
           psi.inv.j <- psi.inv[j]
           c.data.j  <- c.data[,j]
           lmat[j,]  <- sim.load(l.sigma=l.sigma, Q=Q, c.data.j=c.data.j, 

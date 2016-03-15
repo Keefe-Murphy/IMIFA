@@ -106,7 +106,7 @@
 
   # Multivariate Normal Density
   mvdnorm     <- function(data = NULL, mu = NULL, 
-                          Sigma = NULL, P = NULL, pie = 1) {
+                          Sigma = NULL, P = NULL, pi.prop = 1) {
     if(all(Sigma[!diag(P)] == 0)) {
       U.Sig   <- sqrt(Sigma)
     } else {
@@ -115,7 +115,7 @@
     rooti     <- backsolve(U.Sig, diag(P))
     quad      <- crossprod(rooti, t(data) - mu)
     quads     <- colSums(quad * quad)
-      pie * exp(- P/2 * log(2 * pi) + sum(log(diag(rooti))) - 0.5 * quads)
+      pi.prop * exp(- P/2 * log(2 * pi) + sum(log(diag(rooti))) - 0.5 * quads)
   }
   
   # BIC

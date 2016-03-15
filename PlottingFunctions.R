@@ -23,7 +23,7 @@ plot.IMIFA  <- function(results = NULL, plot.meth = c("all", "correlation", "den
   Q.supp    <- attr(GQ.res, "Supplied")["Q"]
   method    <- attr(results, "Method")
   if(all(is.element(method, c("MFA", "MIFA")),
-         !is.element(G, 1:n.grp)))    stop(paste0("G cannot be greater than the number of groups in ", match.call()$results))
+     !is.element(G, seq_len(n.grp)))) stop(paste0("G cannot be greater than the number of groups in ", match.call()$results))
   G.ind     <- which(n.grp == G)
   result    <- results[[G.ind]]
   if(missing(Q))             Q <- GQ.res$Q[G]
@@ -96,7 +96,7 @@ plot.IMIFA  <- function(results = NULL, plot.meth = c("all", "correlation", "den
       if(length(ind) >  1)            stop("Length of plotting indices can't be greater than 1")
       if(ind      > n.var)            stop(paste0("Index can't be greater than the number of variables - ", n.var))
     }
-    if(!mat)              iter <- 1:attr(results, "Store")
+    if(!mat)              iter <- seq_len(attr(results, "Store"))
     
     if(vars == "means") {
       plot.x   <- result$means
@@ -282,7 +282,7 @@ plot.IMIFA  <- function(results = NULL, plot.meth = c("all", "correlation", "den
       plot.x   <- result$post.mu
       plot(plot.x, type=type, ylab="Means", xlab="Variable", ylim=if(is.element(method, c("FA", "IFA"))) c(-1, 1))
       title(main=list(paste0("Posterior Mean", ifelse(all.ind, "", paste0(":\nMeans", ifelse(grp.ind, paste0(" - Group ", G), ""))))))
-      if(type  == "n") text(x=1:length(plot.x), y=plot.x, var.names, cex=0.5)
+      if(type  == "n") text(x=seq_along(plot.x), y=plot.x, var.names, cex=0.5)
     }
     if(vars == "scores") {
       plot.x   <- result$post.f
@@ -315,11 +315,11 @@ plot.IMIFA  <- function(results = NULL, plot.meth = c("all", "correlation", "den
         par(mfrow=c(1, 2), oma=c(0, 0, 1, 0), mai=c(1.25, 1, 0.75, 0.5))
       }
       plot.x   <- result$post.load
-      image(z=t(plot.x[n.var:1,1:Q]), xlab="", 
+      image(z=t(plot.x[seq(n.var, 1),seq_len(Q)]), xlab="", 
             ylab="", xaxt="n", yaxt="n")
       title(main=list(paste0("Posterior Mean Heatmap")))
       axis(1, line=-0.5, tick=F, 
-           at=if(Q != 1) seq(0, 1, 1/(Q - 1)) else 0, labels=1:Q)
+           at=if(Q != 1) seq(0, 1, 1/(Q - 1)) else 0, labels=seq_len(Q))
       if(n.var < 100) {
         axis(2, cex.axis=0.5, line=-0.5, tick=F, las=1,
              at=seq(0, 1, 1/(n.var - 1)), 
@@ -333,23 +333,23 @@ plot.IMIFA  <- function(results = NULL, plot.meth = c("all", "correlation", "den
       if(by.fac) {
         if(Q != 1) {
           plot(plot.x[,ind[2]], type=type, xaxt="n", xlab="", ylab="Loading")
-          axis(1, line=-0.5, tick=F, at=1:n.var, labels=1:n.var)
+          axis(1, line=-0.5, tick=F, at=seq_len(n.var), labels=seq_len(n.var))
           mtext("Variable #", side=1, line=2)
           title(main=list(paste0("Factor ", ind[2])))
           if(type == "n") text(x=plot.x, var.names, cex=0.5)
         } else {
           plot(plot.x[,ind], type=type, xaxt="n", xlab="", ylab="Loading")
-          axis(1, line=-0.5, tick=F, at=1:n.var, labels=1:n.var)
+          axis(1, line=-0.5, tick=F, at=seq_len(n.var), labels=seq_len(n.var))
           mtext("Variable #", side=1, line=2)
           title(main=list(paste0("Factor ", ind)))
           if(type == "n") text(x=plot.x[,ind], var.names, cex=0.5)
         }
       } else {
         plot(plot.x[ind[1],], type=type, xaxt="n", xlab="", ylab="Loading")
-        axis(1, line=-0.5, tick=F, at=1:Q, labels=1:Q)
+        axis(1, line=-0.5, tick=F, at=seq_len(Q), labels=seq_len(Q))
         mtext("Factors", side=1, line=2)
         title(main=list(paste0(var.names[ind[1]], " Variable")))
-        if(type == "n") text(x=plot.x[ind[1],], paste0("Factor ", 1:Q), cex=0.5)
+        if(type == "n") text(x=plot.x[ind[1],], paste0("Factor ", seq_len(Q)), cex=0.5)
       }
       if(!all.ind) {
         title(paste0("Loadings", ifelse(grp.ind, paste0(" - Group ", G), "")), outer=T)
@@ -359,7 +359,7 @@ plot.IMIFA  <- function(results = NULL, plot.meth = c("all", "correlation", "den
       plot.x   <- result$post.psi
       plot(plot.x, type=type, ylab="Uniquenesses", xlab="Variable")
       title(main=list(paste0("Posterior Mean", ifelse(all.ind, "", paste0(":\nUniquenesses", ifelse(grp.ind, paste0(" - Group ", G), ""))))))
-      if(type  == "n") text(1:length(plot.x), plot.x, var.names, cex=0.5)
+      if(type  == "n") text(seq_along(plot.x), plot.x, var.names, cex=0.5)
     }
     if(!ind.x)             ind <- x.ind
   } 

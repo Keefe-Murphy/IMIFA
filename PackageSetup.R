@@ -17,7 +17,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
                         scaling = c("unit", "pareto", "none"), verbose = F, adapt = T, b0 = NULL, 
                         b1 = NULL, prop = NULL, epsilon = NULL, sigma.mu = NULL, sigma.l = NULL, 
                         psi.alpha = NULL, psi.beta = NULL, phi.nu = NULL, alpha.d1 = NULL, alpha.d2 = NULL, 
-                        alpha.pie = NULL, z.init = c("kmeans", "priors", "list"), z.list = NULL, 
+                        alpha.pi = NULL, z.init = c("kmeans", "priors", "list"), z.list = NULL, 
                         profile = F, mu.switch = T, f.switch = T, load.switch = T, psi.switch = T, ...) {
   
   defpar    <- par(no.readonly = T)
@@ -48,12 +48,13 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
 # Remove non-numeric columns & apply centering & scaling if necessary 
   n.store   <- ceiling((n.iters - burnin)/thinning)
   dat       <- dat[sapply(dat, is.numeric)]
+  dat       <- as.data.frame(dat)
   if(scaling == "pareto") {
     scaling <- sqrt(as.matrix(apply(dat, 2, sd)))
   } else {
     scaling <- scaling == "unit"
   }
-  dat       <- as.data.frame(scale(dat, center=centering, scale=scaling))
+  dat       <- scale(dat, center=centering, scale=scaling)
   N         <- nrow(dat)
   P         <- ncol(dat)
   
@@ -118,7 +119,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   }
   
 # Define full conditionals, hyperparamters & Gibbs Sampler function for desired method
-  if(is.null(rownames(dat))) rownames(dat) <- 1:N
+  if(is.null(rownames(dat))) rownames(dat) <- seq_len(N)
   if(missing("sigma.mu"))    sigma.mu      <- 0.5
   if(missing("psi.alpha"))   psi.alpha     <- 4
   if(missing("psi.beta"))    psi.beta      <- 1
@@ -134,7 +135,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
     if(missing("epsilon"))   epsilon       <- ifelse(centering, 0.1, 0.005)
   } 
   if(!is.element(method, c("FA", "IFA"))) {
-    if(missing("alpha.pie")) alpha.pie     <- 0.5
+    if(missing("alpha.pi"))  alpha.pi      <- 0.5
                              z.init        <- match.arg(z.init)
     if(!missing(z.list)) {
                              z.list        <- lapply(z.list, as.factor)
@@ -172,7 +173,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
     gibbs.arg     <- append(gibbs.arg, list(sigma.l = sigma.l))
   }
   if(!is.element(method, c("FA", "IFA", "classify"))) {
-    gibbs.arg      <- append(gibbs.arg, list(alpha.pie = alpha.pie, z.init = z.init))
+    gibbs.arg      <- append(gibbs.arg, list(alpha.pi = alpha.pi, z.init = z.init))
   }
   
   if(profile)  Rprof()
@@ -189,7 +190,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
     if(length(Label) != N)          stop(paste0("Labels must be a factor of length N=",  n.obs))
     range.G        <- nlevels(Label)
     start.time     <- proc.time()
-    for(g in 1:range.G) {
+    for(g in seq_len(range.G)) {
       temp.dat     <- dat[Label == levels(Label)[g],]
       imifa[[g]]          <- list()
       imifa[[g]][[Qi]]    <- do.call(paste0("gibbs.", "IFA"),

@@ -28,12 +28,12 @@ sim.imifa      <- function(N = 1000, G = 2, P = 25, Q = rep(5, G)) {
   }
   if(any(nn == 0)) {
     G    <- G - sum(nn == 0)
-    Q    <- Q[1:length(G)]
+    Q    <- Q[seq_along(G)]
     nn   <- nn[nn > 0]
   }
   
-  gnames        <- paste0("Group", 1:G)
-  vnames        <- paste0("Var ", 1:P)
+  gnames        <- paste0("Group", seq_len(G))
+  vnames        <- paste0("Var ", seq_len(P))
   SimData       <- matrix(0, nr=0, nc=P)
   true.mu       <- setNames(vector("list", G), gnames)
   true.l        <- setNames(vector("list", G), gnames)
@@ -42,7 +42,7 @@ sim.imifa      <- function(N = 1000, G = 2, P = 25, Q = rep(5, G)) {
   true.zlab     <- rep(0, N)
   
 # Simulate true parameter values
-  for(g in 1:G) {
+  for(g in seq_len(G)) {
     Q.g         <- Q[g]
     U.mu        <- sqrt(abs(rnorm(P, Q.g, g)) * diag(P))
     z.mu        <- rnorm(P, 0, 1)
@@ -76,7 +76,7 @@ sim.imifa      <- function(N = 1000, G = 2, P = 25, Q = rep(5, G)) {
     names(mu.true)      <- vnames
     names(psi.true)     <- vnames
     dimnames(covmat)    <- list(vnames, vnames)
-    dimnames(l.true)    <- list(vnames, if(Q.g > 0) paste0("Factor ", 1:Q.g))
+    dimnames(l.true)    <- list(vnames, if(Q.g > 0) paste0("Factor ", seq_len(Q.g)))
     true.mu[[g]]        <- mu.true
     true.l[[g]]         <- l.true
     true.psi[[g]]       <- psi.true
@@ -84,11 +84,11 @@ sim.imifa      <- function(N = 1000, G = 2, P = 25, Q = rep(5, G)) {
   }
   
 # Post-process data
-  true.zlab     <- factor(rep(nn, nn), labels=1:length(nn))
-  permute       <- sample(1:N, N, replace=F)
+  true.zlab     <- factor(rep(nn, nn), labels=seq_along(nn))
+  permute       <- sample(seq_len(N), N, replace=F)
   SimData       <- SimData[permute,]
   true.zlab     <- true.zlab[permute]
-  dimnames(SimData)     <- list(paste0("Obs ", 1:N), vnames)
+  dimnames(SimData)     <- list(paste0("Obs ", seq_len(N)), vnames)
   SimData       <- as.data.frame(SimData)
   attr(SimData, 
        "Means")         <- true.mu
