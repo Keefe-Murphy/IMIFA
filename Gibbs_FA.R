@@ -74,7 +74,7 @@
           psi.inv.j <- psi.inv[j]
           c.data.j  <- c.data[,j]
           lmat[j,]  <- sim.load(l.sigma=l.sigma, Q=Q, c.data.j=c.data.j, 
-                                f=f, psi.inv.j = psi.inv.j, FtF=FtF)
+                                f=f, psi.inv.j=psi.inv.j, FtF=FtF)
         }
       } else {
         f        <- matrix(, nr=N, nc=0)
