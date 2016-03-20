@@ -77,7 +77,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
     Q.range      <- length(n.fac)
     bic          <- matrix(NA, nr=G.range, nc=Q.range, dimnames=list(paste0("G", n.grp), paste0("Q", n.fac)))
     for(g in seq_len(G.range)) { 
-      for(q in seq_len(G.range)) {
+      for(q in seq_len(Q.range)) {
         bic[g,q] <- sim[[g]][[q]]$bic  
       }  
     }

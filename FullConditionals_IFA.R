@@ -105,20 +105,20 @@
     }
 
   # Multivariate Normal Density
-  mvdnorm     <- function(data = NULL, mu = NULL, 
-                          Sigma = NULL, P = NULL, pi.prop = 1) {
-    if(all(Sigma[!diag(P)] == 0)) {
-      U.Sig   <- sqrt(Sigma)
-    } else {
-      U.Sig   <- chol(Sigma)
+    mvdnorm     <- function(data = NULL, mu = NULL, Sigma = NULL, 
+                            P = NULL, log.d = T, ...) {
+      if(all(Sigma[!diag(P)] == 0)) {
+        U.Sig   <- sqrt(Sigma)
+      } else {
+        U.Sig   <- chol(Sigma)
+      }
+      rooti     <- backsolve(U.Sig, diag(P))
+      quad      <- crossprod(rooti, t(data) - mu)
+      quads     <- colSums(quad * quad)
+      log.dens  <- - P/2 * log(2 * pi) + sum(log(diag(rooti))) - 0.5 * quads
+        if(isTRUE(log.d)) {
+          log.dens
+        } else {
+          exp(log.dens)
+        }
     }
-    rooti     <- backsolve(U.Sig, diag(P))
-    quad      <- crossprod(rooti, t(data) - mu)
-    quads     <- colSums(quad * quad)
-      pi.prop * exp(- P/2 * log(2 * pi) + sum(log(diag(rooti))) - 0.5 * quads)
-  }
-  
-  # BIC
-  bic.mcmc    <- function(like = NULL, pen = NULL, ...) {
-      2 * sum(log(like)) - pen
-  }
