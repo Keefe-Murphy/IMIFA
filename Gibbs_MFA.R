@@ -6,40 +6,42 @@
   gibbs.FA       <- function(Q = NULL, data = NULL, n.iters = NULL,
                              N = NULL, P = NULL, sigma.mu = NULL,
                              psi.alpha = NULL, psi.beta = NULL,
-                             burnin = NULL, thinning = NULL, 
-                             n.store = NULL, verbose = NULL,
-                             sw = NULL, sigma.l = NULL, ...) {
+                             burnin = NULL, thinning = NULL, sw = NULL,
+                             n.store = NULL, verbose = NULL, sigma.l = NULL,
+                             alpha.pi = NULL, z.init = NULL, z.list = NULL,  ...) {
         
   # Define & initialise variables
     cnames       <- colnames(data)
     rnames       <- rownames(data)
-    facnames     <- paste0("Factor ", 1:Q)
-    iternames    <- paste0("Iteration", 1:n.store)
+    facnames     <- paste0("Factor ", seq_len(Q))
+    gnames       <- paste0("Group ", seq_len(G))
+    iternames    <- paste0("Iteration", seq_len(n.store))
     if(sw["mu.sw"]) {
-      mu.store   <- matrix(0, nr=P, nc=n.store)
-      dimnames(mu.store)   <- list(cnames, iternames)
+      mu.store   <- array(0, dim=c(P, G, n.store))
+      dimnames(mu.store)   <- list(cnames, gnames, iternames)
     }
     if(sw["f.sw"])  {
-      f.store    <- array(0, dim=c(N, Q, n.store))
-      dimnames(f.store)    <- list(rnames, if(Q > 0) facnames, iternames)
+      f.store    <- array(0, dim=c(N, Q, G, n.store))
+      dimnames(f.store)    <- list(rnames, if(Q > 0) facnames, gnames, iternames)
     }
     if(sw["l.sw"])  {
-      load.store <- array(0, dim=c(P, Q, n.store))
-      dimnames(load.store) <- list(cnames, if(Q > 0) facnames, iternames)
+      load.store <- array(0, dim=c(P, Q, G, n.store))
+      dimnames(load.store) <- list(cnames, if(Q > 0) facnames, gnames, iternames)
     }
     if(sw["p.sw"])  {
-      psi.store  <- matrix(0, nr=P, nc=n.store)
-      dimnames(psi.store)  <- list(cnames, iternames)
+      psi.store  <- array(0, dim=c(P, G, n.store))
+      dimnames(psi.store)  <- list(cnames, gnames, iternames)
     }
-    post.mu      <- setNames(rep(0, P), cnames)
-    post.psi     <- setNames(rep(0, P), cnames)
-    post.Sigma   <- matrix(0, nr=P, nc=P)
-    bicM         <- -Inf
-    K            <- P * Q - 0.5 * Q * (Q - 1) + 2 * P
+    post.mu      <- matrix(0, nr=P, nc=G)
+    post.psi     <- matrix(0, nr=P, nc=G)
+   #post.Sigma   <- array(0, dim=c(P, P, G))
+    bic.mcmc     <- - Inf
+    K            <- G - 1 + G * (P * Q - 0.5 * Q * (Q - 1)) + 2 * G * P
     pen          <- K * log(N)
-    cov.emp      <- cov(data)
-    dimnames(post.Sigma)   <- list(cnames, cnames)
-    dimnames(cov.emp)      <- dimnames(post.Sigma)
+   #cov.emp      <- cov(data)
+    dimnames(post.mu)      <- dimnames(post.psi)   <- list(cnames, gnames)
+   #dimnames(post.Sigma)   <- list(cnames, cnames, gnames)
+   #dimnames(cov.emp)      <- dimnames(post.Sigma)
     
     sigma.mu     <- 1/sigma.mu
     sigma.l      <- 1/sigma.l
@@ -47,6 +49,15 @@
     f            <- sim.f.p(Q=Q, N=N)
     lmat         <- sim.l.p(Q=Q, P=P, sigma.l=sigma.l)
     psi.inv      <- sim.pi.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
+    alpha.pi     <- rep(alpha.pi, G)
+    pi.prop      <- sim.pi(alpha.pi=alpha.pi)
+    if(z.init == "list") {
+      z          <- z.list[[G]]
+    } else if(z.init == "kmeans") {
+      z          <- kmeans(data, G, nstart=100)$cluster
+    } else {
+      z          <- sim.z.p(N=N, prob.z=pi.prop)
+    }
     l.sigma      <- sigma.l * diag(Q)
     sum.data     <- colSums(data)
   
@@ -93,16 +104,16 @@
       if(all(iter > burnin, iter %% thinning == 0)) {
         new.iter <- ceiling((iter - burnin)/thinning)
         psi      <- 1/psi.inv
-        if(sw["mu.sw"]) mu.store[,new.iter]    <- mu  
-        if(sw["f.sw"])  f.store[,,new.iter]    <- f
-        if(sw["l.sw"])  load.store[,,new.iter] <- lmat
-        if(sw["p.sw"])  psi.store[,new.iter]   <- psi
+        if(sw["mu.sw"]) mu.store[,,new.iter]    <- mu  
+        if(sw["f.sw"])  f.store[,,,new.iter]    <- f # cbind(f)
+        if(sw["l.sw"])  load.store[,,,new.iter] <- lmat
+        if(sw["p.sw"])  psi.store[,,new.iter]   <- psi
         post.mu     <-  post.mu + mu/n.store
         post.psi    <-  post.psi + psi/n.store
         Sigma       <-  tcrossprod(lmat) + diag(psi)
         post.Sigma  <-  post.Sigma + Sigma/n.store
-        like        <-  mvdnorm(data=data, mu=mu, Sigma=Sigma, P=P)
-        bicM        <-  max(bicM, bic.mcmc(like=like, pen=pen), na.rm=T)
+        log.like    <-  sum(mvdnorm(data=data, mu=mu, Sigma=Sigma, P=P, log.d=T))
+        bic.mcmc    <-  max(bic.mcmc, log.like, na.rm=T)
       }  
     }
     returns   <- list(mu   = if(sw["mu.sw"]) mu.store,
@@ -113,6 +124,6 @@
                       post.mu    = post.mu,
                       post.psi   = post.psi,
                       post.Sigma = post.Sigma,
-                      bic        = bicM)
+                      bic        = 2 * bic.mcmc - pen)
     return(returns[!sapply(returns, is.null)])
   }
