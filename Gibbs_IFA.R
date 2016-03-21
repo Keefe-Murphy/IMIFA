@@ -29,7 +29,7 @@
       load.store <- array(0, dim=c(P, Q, n.store))
       dimnames(load.store)   <- list(cnames, facnames, iternames)
     }
-    if(sw["p.sw"])  {
+    if(sw["si.sw"]) {
       psi.store  <- matrix(0, nr=P, nc=n.store)
       dimnames(psi.store)    <- list(cnames, iternames)
     }
@@ -150,7 +150,7 @@
         if(sw["mu.sw"])             mu.store[,new.iter]       <- mu  
         if(all(sw["f.sw"], Q > 0))  f.store[,1:Q,new.iter]    <- f
         if(all(sw["l.sw"], Q > 0))  load.store[,1:Q,new.iter] <- lmat
-        if(sw["p.sw"])              psi.store[,new.iter]      <- psi
+        if(sw["si.sw"])             psi.store[,new.iter]      <- psi
         post.mu     <- post.mu + mu/n.store
         post.psi    <- post.psi + psi/n.store
         Sigma       <- tcrossprod(lmat) + diag(psi)
@@ -161,7 +161,7 @@
     returns      <- list(mu   = if(sw["mu.sw"]) mu.store,
                          f    = if(sw["f.sw"])  as.simple_sparse_array(f.store), 
                          load = if(sw["l.sw"])  as.simple_sparse_array(load.store), 
-                         psi  = if(sw["p.sw"])  psi.store,
+                         psi  = if(sw["si.sw"]) psi.store,
                          cov.mat    = cov.emp,
                          post.mu    = post.mu,
                          post.psi   = post.psi,

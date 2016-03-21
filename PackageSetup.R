@@ -17,8 +17,8 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
                         scaling = c("unit", "pareto", "none"), verbose = F, adapt = T, b0 = NULL, 
                         b1 = NULL, prop = NULL, epsilon = NULL, sigma.mu = NULL, sigma.l = NULL, 
                         psi.alpha = NULL, psi.beta = NULL, phi.nu = NULL, alpha.d1 = NULL, alpha.d2 = NULL, 
-                        alpha.pi = NULL, z.init = c("kmeans", "priors", "list"), z.list = NULL, 
-                        profile = F, mu.switch = T, f.switch = T, load.switch = T, psi.switch = T, ...) {
+                        alpha.pi = NULL, z.init = c("kmeans", "priors", "list"), z.list = NULL, profile = F, 
+                        mu.switch = T, f.switch = T, load.switch = T, psi.switch = T, pi.switch = T, ...) {
   
   defpar    <- par(no.readonly = T)
   defop     <- options()
@@ -66,7 +66,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
     mu.switch  <- T                 
                                     warning("Means were stored since centering was not applied", call.=F)
   }
-  switches  <- c(mu.sw=mu.switch, f.sw=f.switch, l.sw=load.switch, p.sw=psi.switch)
+  switches  <- c(mu.sw=mu.switch, f.sw=f.switch, l.sw=load.switch, si.sw=psi.switch, pi.sw=pi.switch)
   if(!is.logical(switches))         stop("All logical switches must be TRUE or FALSE")
   if(!is.element(method, c("MFA", "MIFA"))) {
     if(!missing(range.G) &&  
