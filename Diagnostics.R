@@ -117,6 +117,10 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
     Qg           <- Q[g]
     Qgs          <- seq_len(Qg)
     if(Qg == 0) {
+      if(all(sw[c("f.sw", "l.sw")])) {  warning(paste0("Scores & Loadings not stored as", ifelse(G > 1, paste0(" group ", g), " model"), " has zero factors"), call.=F)
+      } else if(sw["f.sw"])          {  warning(paste0("Scores not stored as", ifelse(G > 1, paste0(" group ", g), " model"), " has zero factors"), call.=F)
+      } else if(sw["l.sw"])          {  warning(paste0("Loadings not stored as", ifelse(G > 1, paste0(" group ", g), " model"), " has zero factors"), call.=F)
+      }
       sw[c("f.sw", "l.sw")]    <- F
     } else {
       sw[c("f.sw", "l.sw")]    <- attr(sims, "Switch")[c("f.sw", "l.sw")]

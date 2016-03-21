@@ -88,10 +88,10 @@
       if(all(iter > burnin, iter %% thinning == 0)) {
         new.iter <- ceiling((iter - burnin)/thinning)
         psi      <- 1/psi.inv
-        if(sw["mu.sw"]) mu.store[,new.iter]    <- mu  
-        if(sw["f.sw"])  f.store[,,new.iter]    <- f
-        if(sw["l.sw"])  load.store[,,new.iter] <- lmat
-        if(sw["si.sw"]) psi.store[,new.iter]   <- psi
+        if(sw["mu.sw"])             mu.store[,new.iter]    <- mu  
+        if(all(sw["f.sw"], Q > 0))  f.store[,,new.iter]    <- f
+        if(all(sw["l.sw"], Q > 0))  load.store[,,new.iter] <- lmat
+        if(sw["si.sw"])             psi.store[,new.iter]   <- psi
         post.mu     <-  post.mu + mu/n.store
         post.psi    <-  post.psi + psi/n.store
         Sigma       <-  tcrossprod(lmat) + diag(psi)
@@ -100,10 +100,10 @@
         bic.mcmc    <-  max(bic.mcmc, log.like, na.rm=T)
       }  
     }
-    returns   <- list(mu   = if(sw["mu.sw"]) mu.store,
-                      f    = if(sw["f.sw"])  f.store, 
-                      load = if(sw["l.sw"])  load.store, 
-                      psi  = if(sw["si.sw"]) psi.store,
+    returns   <- list(mu   = if(sw["mu.sw"])             mu.store,
+                      f    = if(all(sw["f.sw"], Q > 0))  f.store, 
+                      load = if(all(sw["l.sw"], Q > 0))  load.store, 
+                      psi  = if(sw["si.sw"])             psi.store,
                       cov.mat    = cov.emp,
                       post.mu    = post.mu,
                       post.psi   = post.psi,
