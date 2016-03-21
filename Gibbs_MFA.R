@@ -45,10 +45,6 @@
     
     sigma.mu     <- 1/sigma.mu
     sigma.l      <- 1/sigma.l
-    mu           <- sim.mu.p(P=P, sigma.mu=sigma.mu)  
-    f            <- sim.f.p(Q=Q, N=N)
-    lmat         <- sim.l.p(Q=Q, P=P, sigma.l=sigma.l)
-    psi.inv      <- sim.pi.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
     alpha.pi     <- rep(alpha.pi, G)
     pi.prop      <- sim.pi(alpha.pi=alpha.pi)
     if(z.init == "list") {
@@ -58,8 +54,11 @@
     } else {
       z          <- sim.z.p(N=N, prob.z=pi.prop)
     }
+    mu           <- sim.mu.p(P=P, sigma.mu=sigma.mu, G=G)  
+    f            <- sim.f.p(Q=Q, nn=tabulate(z, nbins=G))
+    lmat         <- sim.load.p(Q=Q, P=P, sigma.l=sigma.l, G=G)
+    psi.inv      <- sim.psi.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta, G=G)
     l.sigma      <- sigma.l * diag(Q)
-    sum.data     <- colSums(data)
   
   # Iterate
     for(iter in 2:n.iters) { 
@@ -70,36 +69,37 @@
           cat(paste0("Iteration: ", iter, "\n"))
         }
       }
+      nn         <- tabulate(z, nbins=G)
       
     # Means
-      sum.f      <- colSums(f)
+      sum.data   <- apply(data, 2, tapply, z, sum)
+      sum.data   <- t(replace(sum.data, which(is.na(sum.data)), 0))
+      sum.f      <- do.call(cbind, lapply(f, colSums))
       mu         <- sim.mu(N=N, P=P, sigma.mu=sigma.mu, psi.inv=psi.inv,
-                           sum.data=sum.data, sum.f=sum.f, lmat=lmat)
+                           sum.data=sum.data, sum.f=sum.f, lmat=lmat, G=G)
     
-    # Scores
-      c.data     <- sweep(data, 2, mu, FUN="-")
+    # Scores & Loadings
+      c.data     <- lapply(seq_len(G), function(g) sweep(data[z == g,], 2, mu[,g]))
       if(Q > 0) {
-        f        <- sim.scores(N=N, Q=Q, lmat=lmat, psi.inv=psi.inv, c.data=c.data)
-      } else {
-        f        <- matrix(, nr=N, nc=0)
-      }
-                
-    # Loadings
-      FtF        <- crossprod(f)
-      if(Q > 0) {
-        for (j in 1:P) {
-          psi.inv.j <- psi.inv[j]
-          c.data.j  <- c.data[,j]
-          lmat[j,]  <- sim.load(l.sigma=l.sigma, Q=Q, c.data.j=c.data.j, 
-                                f=f, psi.inv.j = psi.inv.j, FtF=FtF)
+        f        <- sim.scores(nn=nn, Q=Q, lmat=lmat, psi.inv=psi.inv, c.data=c.data)
+        FtF      <- lapply(f, crossprod)
+        for(j in seq_len(P)) {
+          psi.inv.j <- psi.inv[j,]
+          c.data.j  <- lapply(c.data, function(dat) dat[,j])
+          lmat[j,,] <- sim.load(l.sigma=l.sigma, Q=Q, c.data.j=c.data.j, 
+                                f=f, psi.inv.j=psi.inv.j, FtF=FtF, G=G)
         }
       } else {
-        lmat     <- matrix(, nr=P, nc=0)
+        f        <- array(, dim=c(N, 0, G))
+        lmat     <- array(, dim=c(P, 0, G))
       }
-      
+                  
     # Uniquenesses
       psi.inv    <- sim.psi.inv(N=N, P=P, psi.alpha=psi.alpha, psi.beta=psi.beta,
-                                c.data=c.data, f=f, lmat=lmat)
+                                c.data=c.data, f=f, lmat=lmat, G=G)
+    
+    # Mixing Proportions
+      pi.prop    <- sim.pi(alpha.pi=alpha.pi, nn=nn)
     
       if(all(iter > burnin, iter %% thinning == 0)) {
         new.iter <- ceiling((iter - burnin)/thinning)
