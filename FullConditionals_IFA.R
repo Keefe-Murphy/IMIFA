@@ -16,7 +16,8 @@
 # Scores
   sim.scores    <- function(N = NULL, Q = NULL, lmat = NULL,
                             psi.inv = NULL, c.data = NULL, ...) {
-    f.omega     <- diag(Q) + crossprod(lmat * psi.inv, lmat)
+    load.psi    <- lmat * psi.inv
+    f.omega     <- diag(Q) + crossprod(load.psi, lmat)
     U.f         <- chol(f.omega) 
     z.f         <- matrix(rnorm(Q * N, 0, 1), nr=Q, ncol=N)
     v.f         <- backsolve(U.f, z.f)

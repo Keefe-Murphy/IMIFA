@@ -162,9 +162,9 @@
                          f    = if(sw["f.sw"])  as.simple_sparse_array(f.store), 
                          load = if(sw["l.sw"])  as.simple_sparse_array(load.store), 
                          psi  = if(sw["si.sw"]) psi.store,
-                         cov.mat    = cov.emp,
                          post.mu    = post.mu,
                          post.psi   = post.psi,
+                         cov.mat    = cov.emp,
                          post.Sigma = post.Sigma,
                          Q.store    = Q.store)
     return(returns[!sapply(returns, is.null)])

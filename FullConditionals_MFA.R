@@ -17,7 +17,8 @@
 # Scores
   sim.scores    <- function(nn = NULL, Q = NULL, lmat = NULL,
                             psi.inv = NULL, c.data = NULL, ...) {
-    f.omega     <- lapply(seq_along(nn), function(g) diag(Q) + crossprod(lmat[,,g] * psi.inv[,g], lmat[,,g]))
+    load.psi    <- lapply(seq_along(nn), function(g) lmat[,,g] * psi.inv[,g])
+    f.omega     <- lapply(seq_along(nn), function(g) diag(Q) + crossprod(load.psi[[g]], lmat[,,g]))
     U.f         <- lapply(f.omega, chol)
     z.f         <- lapply(seq_along(nn), function(g) matrix(rnorm(Q * nn[g], 0, 1), nr=Q, nc=nn[g]))
     v.f         <- lapply(seq_along(nn), function(g) backsolve(U.f[[g]], z.f[[g]]))

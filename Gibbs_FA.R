@@ -104,9 +104,9 @@
                       f    = if(all(sw["f.sw"], Q > 0))  f.store, 
                       load = if(all(sw["l.sw"], Q > 0))  load.store, 
                       psi  = if(sw["si.sw"])             psi.store,
-                      cov.mat    = cov.emp,
                       post.mu    = post.mu,
                       post.psi   = post.psi,
+                      cov.mat    = cov.emp,
                       post.Sigma = post.Sigma,
                       bic        = 2 * bic.mcmc - pen)
     return(returns[!sapply(returns, is.null)])
