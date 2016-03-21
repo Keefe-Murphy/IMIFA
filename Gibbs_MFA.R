@@ -32,6 +32,12 @@
       psi.store  <- array(0, dim=c(P, G, n.store))
       dimnames(psi.store)  <- list(varnames, gnames, iternames)
     }
+    if(sw["pi.sw"]) {
+      pi.store   <- matrix(0, nr=G, nc=n.store)
+      dimnames(pi.store)   <- list(gnames, iternames)
+    }
+    z.store      <- matrix(0, nr=N, nc=n.store)
+    dimnames(z.store)      <- list(obsnames, iternames)
     post.mu      <- matrix(0, nr=P, nc=G)
     post.psi     <- matrix(0, nr=P, nc=G)
    #post.Sigma   <- array(0, dim=c(P, P, G))
@@ -108,22 +114,30 @@
         if(all(sw["f.sw"], Q > 0))  f.store[,,,new.iter]    <- f # cbind(f)
         if(all(sw["l.sw"], Q > 0))  load.store[,,,new.iter] <- lmat
         if(sw["si.sw"])             psi.store[,,new.iter]   <- psi
+        if(sw["pi.sw"])             pi.store[,new.iter]     <- pi.prop
+                                    z.store[,new.iter]      <- z 
         post.mu     <-  post.mu + mu/n.store
         post.psi    <-  post.psi + psi/n.store
+        post.z      <-  setNames(apply(z.store, 1, function(x) factor(which.max(tabulate(x)), levels=seq_len(G))), obsnames)
+        post.pi     <-  setNames(prop.table(tabulate(post.z, nbins=G)), gnames)
         Sigma       <-  tcrossprod(lmat) + diag(psi)
-        post.Sigma  <-  post.Sigma + Sigma/n.store
+       #post.Sigma  <-  post.Sigma + Sigma/n.store
         log.like    <-  sum(mvdnorm(data=data, mu=mu, Sigma=Sigma, P=P, log.d=T))
         bic.mcmc    <-  max(bic.mcmc, log.like, na.rm=T)
       }  
     }
-    returns   <- list(mu   = if(sw["mu.sw"])             mu.store,
-                      f    = if(all(sw["f.sw"], Q > 0))  f.store, 
-                      load = if(all(sw["l.sw"], Q > 0))  load.store, 
-                      psi  = if(sw["si.sw"])             psi.store,
-                      cov.mat    = cov.emp,
+    returns   <- list(mu      = if(sw["mu.sw"])             mu.store,
+                      f       = if(all(sw["f.sw"], Q > 0))  f.store, 
+                      load    = if(all(sw["l.sw"], Q > 0))  load.store, 
+                      psi     = if(sw["si.sw"])             psi.store,
+                      pi.prop = if(sw["pi.sw"])             pi.store,
+                      z          = z.store,
                       post.mu    = post.mu,
                       post.psi   = post.psi,
-                      post.Sigma = post.Sigma,
+                      post.z     = post.z,
+                      post.pi    = post.pi,
+                     #cov.mat    = cov.emp,
+                     #post.Sigma = post.Sigma,
                       bic        = 2 * bic.mcmc - pen)
     return(returns[!sapply(returns, is.null)])
   }

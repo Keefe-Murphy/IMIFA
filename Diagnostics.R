@@ -243,6 +243,22 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
                               post.Sigma = cov.est))
     result[[g]]  <- unlist(results, recursive=F)
   }
+  
+  if(is.element(method, c("MFA", "MIFA", "IMIFA"))) {
+    z            <- sims[[G.ind]][[Q.ind]]$z.store[,store]
+    post.z       <- sims[[G.ind]][[Q.ind]]$post.z
+    if(sw["pi.sw"]) {
+      pi.prop    <- sims[[G.ind]][[Q.ind]]$pi.store[,store]
+    }
+    post.pi      <- sims[[G.ind]][[Q.ind]]$post.pi
+    if(recomp) {
+      post.z     <- replace(post.z, post.z, apply(z, 1, function(x) factor(which.max(tabulate(x)), levels=seq_len(G))))
+      post.pi    <- replace(post.pi, post.pi, prop.table(tabulate(post.z, nbins=G)))
+    }
+    cluster      <- list(z = z, post.z = post.z, 
+                         pi.prop = pi.prop, post.pi = post.pi)
+  }
+  
   names(result)  <- paste0("Group", seq_len(G))
   if(Q.T) {
     attr(GQ.res,
@@ -259,9 +275,11 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
          "Groups")    <- n.grp
   }
   attr(GQ.res, "Supplied")     <- c(Q=Q.T, G=G.T)
+  
   errors         <- list(MSE = mean(MSE), RMSE = mean(RMSE), NRMSE = mean(NRMSE),
                          CVRMSE = mean(CVRMSE), MAD = mean(MAD))
-  result         <- c(result, Error = list(errors), GQ.results = list(GQ.res))
+  result         <- c(result, if(exists("cluster", envir=environment())) list(Clust = cluster), 
+                      list(Error = errors, GQ.results = GQ.res))
   class(result)                <- "IMIFA"
   attr(result, "Method")       <- attr(sims, "Method")
   attr(result, "Obs")          <- n.obs
