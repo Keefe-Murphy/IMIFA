@@ -16,13 +16,11 @@
 # Scores
   sim.scores    <- function(N = NULL, Q = NULL, lmat = NULL,
                             psi.inv = NULL, c.data = NULL, ...) {
-    load.psi    <- lmat * psi.inv
-    f.omega.a   <- diag(Q) + crossprod(load.psi, lmat)
-    U.f         <- chol(f.omega.a)
-    f.omega.b   <- load.psi %*% chol2inv(U.f)
+    f.omega     <- diag(Q) + crossprod(lmat * psi.inv, lmat)
+    U.f         <- chol(f.omega)
     z.f         <- matrix(rnorm(Q * N, 0, 1), nr=Q, ncol=N)
     v.f         <- backsolve(U.f, z.f)
-    mu.f        <- c.data %*% f.omega.b
+    mu.f        <- c.data %*% (load.psi %*% chol2inv(U.f))
       mu.f + t(v.f)
   }
 
