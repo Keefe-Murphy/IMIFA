@@ -199,8 +199,8 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
     }
   } 
   if(is.element(method, c("FA", "MFA"))) {
-    if(any(all(length(range.Q)   == 1, any(range.Q >= P, range.Q >= N - 1)), 
-           all(length(range.Q)    > 1, any(any(range.Q  >= P), any(range.Q  >= N - 1)))))   
+    if(any(all(length(range.Q)  == 1, any(range.Q >= P, range.Q >= N - 1)), 
+           all(length(range.Q)   > 1, any(any(range.Q  >= P), any(range.Q  >= N - 1)))))   
                                     stop("Number of factors must be less than the number of variables and number of observations")
     if(all(length(range.G) == 1, length(range.Q) == 1)) {
       start.time   <- proc.time()

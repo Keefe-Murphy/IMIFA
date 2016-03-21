@@ -13,33 +13,33 @@
                              b1 = NULL, prop = NULL, epsilon = NULL, ...) {    
     
   # Define & initialise variables
-    cnames       <- colnames(data)
-    rnames       <- rownames(data)
+    obsnames     <- rownames(data)
+    varnames     <- colnames(data)
     facnames     <- paste0("Factor ", seq_len(Q))
     iternames    <- paste0("Iteration", seq_len(n.store))
     if(sw["mu.sw"]) {
       mu.store   <- matrix(0, nr=P, nc=n.store)
-      dimnames(mu.store)     <- list(cnames, iternames)
+      dimnames(mu.store)     <- list(varnames, iternames)
     }
     if(sw["f.sw"])  {
       f.store    <- array(0, dim=c(N, Q, n.store))
-      dimnames(f.store)      <- list(rnames, facnames, iternames)
+      dimnames(f.store)      <- list(obsnames, facnames, iternames)
     }
     if(sw["l.sw"])  {
       load.store <- array(0, dim=c(P, Q, n.store))
-      dimnames(load.store)   <- list(cnames, facnames, iternames)
+      dimnames(load.store)   <- list(varnames, facnames, iternames)
     }
     if(sw["si.sw"]) {
       psi.store  <- matrix(0, nr=P, nc=n.store)
-      dimnames(psi.store)    <- list(cnames, iternames)
+      dimnames(psi.store)    <- list(varnames, iternames)
     }
-    post.mu      <- setNames(rep(0, P), cnames)
-    post.psi     <- setNames(rep(0, P), cnames)
+    post.mu      <- setNames(rep(0, P), varnames)
+    post.psi     <- setNames(rep(0, P), varnames)
     post.Sigma   <- matrix(0, nr=P, nc=P)
     cov.emp      <- cov(data)
     Q.star       <- Q
     Q.store      <- setNames(rep(0, n.store), iternames)
-    dimnames(post.Sigma)     <- list(cnames, cnames)
+    dimnames(post.Sigma)     <- list(varnames, varnames)
     dimnames(cov.emp)        <- dimnames(post.Sigma)
     
     sigma.mu     <- 1/sigma.mu

@@ -11,26 +11,26 @@
                              alpha.pi = NULL, z.init = NULL, z.list = NULL,  ...) {
         
   # Define & initialise variables
-    cnames       <- colnames(data)
-    rnames       <- rownames(data)
+    obsnames     <- rownames(data)
+    varnames     <- colnames(data)
     facnames     <- paste0("Factor ", seq_len(Q))
     gnames       <- paste0("Group ", seq_len(G))
     iternames    <- paste0("Iteration", seq_len(n.store))
     if(sw["mu.sw"]) {
       mu.store   <- array(0, dim=c(P, G, n.store))
-      dimnames(mu.store)   <- list(cnames, gnames, iternames)
+      dimnames(mu.store)   <- list(varnames, gnames, iternames)
     }
     if(sw["f.sw"])  {
       f.store    <- array(0, dim=c(N, Q, G, n.store))
-      dimnames(f.store)    <- list(rnames, if(Q > 0) facnames, gnames, iternames)
+      dimnames(f.store)    <- list(obsnames, if(Q > 0) facnames, gnames, iternames)
     }
     if(sw["l.sw"])  {
       load.store <- array(0, dim=c(P, Q, G, n.store))
-      dimnames(load.store) <- list(cnames, if(Q > 0) facnames, gnames, iternames)
+      dimnames(load.store) <- list(varnames, if(Q > 0) facnames, gnames, iternames)
     }
     if(sw["si.sw"]) {
       psi.store  <- array(0, dim=c(P, G, n.store))
-      dimnames(psi.store)  <- list(cnames, gnames, iternames)
+      dimnames(psi.store)  <- list(varnames, gnames, iternames)
     }
     post.mu      <- matrix(0, nr=P, nc=G)
     post.psi     <- matrix(0, nr=P, nc=G)
@@ -39,8 +39,8 @@
     K            <- G - 1 + G * (P * Q - 0.5 * Q * (Q - 1)) + 2 * G * P
     pen          <- K * log(N)
    #cov.emp      <- cov(data)
-    dimnames(post.mu)      <- dimnames(post.psi)   <- list(cnames, gnames)
-   #dimnames(post.Sigma)   <- list(cnames, cnames, gnames)
+    dimnames(post.mu)      <- dimnames(post.psi)   <- list(varnames, gnames)
+   #dimnames(post.Sigma)   <- list(varnames, varnames, gnames)
    #dimnames(cov.emp)      <- dimnames(post.Sigma)
     
     sigma.mu     <- 1/sigma.mu
