@@ -70,8 +70,10 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
     Q.CI         <- round(quantile(Q.store, c(0.025, 0.975)))
     GQ.res       <- list(G = G, Q = Q, Mode = Q.mode, Median = Q.med, 
                          CI = Q.CI, Probs= Q.prob, Counts = Q.tab)
-  } else {
+  }
     
+  if(is.element(method, c("FA", "MFA"))) {
+  
   # Retrieve BIC to tune G & Q   
     G.range      <- length(n.grp)
     Q.range      <- length(n.fac)
