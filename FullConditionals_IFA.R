@@ -17,8 +17,7 @@
   sim.scores    <- function(N = NULL, Q = NULL, lmat = NULL,
                             psi.inv = NULL, c.data = NULL, ...) {
     load.psi    <- lmat * psi.inv
-    f.omega     <- diag(Q) + crossprod(load.psi, lmat)
-    U.f         <- chol(f.omega) 
+    U.f         <- chol(diag(Q) + crossprod(load.psi, lmat)) 
     z.f         <- matrix(rnorm(Q * N, 0, 1), nr=Q, ncol=N)
     v.f         <- backsolve(U.f, z.f)
     mu.f        <- c.data %*% (load.psi %*% chol2inv(U.f))
@@ -28,8 +27,7 @@
 # Loadings
   sim.load      <- function(D.load = NULL, Q = NULL, c.data.j = NULL, 
                             f = NULL, psi.inv.j = NULL, FtF = NULL, ...) {
-    l.omega     <- D.load + psi.inv.j * FtF
-    U.load      <- chol(l.omega)
+    U.load      <- chol(D.load + psi.inv.j * FtF)
     z.load      <- rnorm(Q, 0, 1)
     v.load      <- backsolve(U.load, z.load)
     mu.load     <- psi.inv.j * chol2inv(U.load) %*% crossprod(f, c.data.j)

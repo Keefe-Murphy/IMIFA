@@ -16,10 +16,9 @@
 
 # Scores
   sim.scores    <- function(nn = NULL, Q = NULL, lmat = NULL,
-                            psi.inv = NULL, c.data = NULL, ...) {
+                            psi.inv = NULL, c.data = NULL, ...) {     
     load.psi    <- lapply(seq_along(nn), function(g) lmat[,,g] * psi.inv[,g])
-    f.omega     <- lapply(seq_along(nn), function(g) diag(Q) + crossprod(load.psi[[g]], lmat[,,g]))
-    U.f         <- lapply(f.omega, chol)
+    U.f         <- lapply(seq_along(nn), function(g) chol(diag(Q) + crossprod(load.psi[[g]], lmat[,,g])))
     z.f         <- lapply(seq_along(nn), function(g) matrix(rnorm(Q * nn[g], 0, 1), nr=Q, nc=nn[g]))
     v.f         <- lapply(seq_along(nn), function(g) backsolve(U.f[[g]], z.f[[g]]))
     mu.f        <- lapply(seq_along(nn), function(g) c.data[[g]] %*% (load.psi[[g]] %*% chol2inv(U.f[[g]])))
@@ -29,8 +28,7 @@
 # Loadings
   sim.load      <- function(l.sigma = NULL, Q = NULL, c.data.j = NULL, f = NULL, 
                             psi.inv.j = NULL, FtF = NULL, G = NULL, ...) {
-    l.omega     <- lapply(seq_len(G), function(g) l.sigma + psi.inv.j[g] * FtF[[g]])
-    U.load      <- lapply(l.omega, chol)
+    U.load      <- lapply(seq_len(G), function(g) chol(l.sigma + psi.inv.j[g] * FtF[[g]]))
     z.load      <- matrix(rnorm(Q * G, 0, 1), nr=Q, nc=G)
     v.load      <- do.call(cbind, lapply(seq_len(G), function(g) backsolve(U.load[[g]], z.load[,g])))
     mu.load     <- do.call(cbind, lapply(seq_len(G), function(g) psi.inv.j[g] * chol2inv(U.load[[g]]) %*% crossprod(f[[g]], c.data.j[[g]])))
