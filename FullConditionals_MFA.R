@@ -44,6 +44,12 @@
                     rate=(rate.t + psi.beta)/2), nr=P, nc=G)
   }
 
+  # Mixing Proportions
+    sim.pi      <- function(pi.alpha = NULL, nn = 0, ...) {
+        rdirichlet(1, pi.alpha + nn)
+    }
+  
+
 # Priors
   # Means
     sim.mu.p    <- function(P = NULL, sigma.mu = NULL, G = NULL, ...) {
@@ -69,6 +75,13 @@
         matrix(rgamma(n=P * G, shape=psi.alpha/2, rate=psi.beta/2), nr=P, nc=G) 
     }
 
+  # Cluster Labels
+    sim.z.p     <- function(N = NULL, prob.z = NULL, ...) {
+      ind.mat   <- rmultinom(N, size=1, prob=prob.z)
+      labs      <- which(ind.mat != 0, arr.ind=T)[,1]
+        factor(labs, levels=seq_along(prob.z))
+    }
+
   # Multivariate Normal Density
     mvdnorm     <- function(data = NULL, mu = NULL, Sigma = NULL, 
                             P = NULL, log.d = T, ...) {
@@ -87,12 +100,6 @@
           exp(log.dens)
         }
     }
-
-  # Mixing Proportions
-    sim.pi      <- function(pi.alpha = NULL, nn = 0, ...) {
-        rdirichlet(1, pi.alpha + nn)
-    }
-  
   # Cluster Labels
     sim.z.p     <- function(N = NULL, prob.z = NULL, ...) {
       ind.mat   <- rmultinom(N, size=1, prob=prob.z)

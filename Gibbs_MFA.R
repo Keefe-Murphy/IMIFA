@@ -38,14 +38,14 @@
     }
     z.store      <- matrix(0, nr=N, nc=n.store)
     dimnames(z.store)      <- list(obsnames, iternames)
-    post.mu      <- matrix(0, nr=P, nc=G)
-    post.psi     <- matrix(0, nr=P, nc=G)
+   #post.mu      <- matrix(0, nr=P, nc=G)
+   #post.psi     <- matrix(0, nr=P, nc=G)
    #post.Sigma   <- array(0, dim=c(P, P, G))
     bic.mcmc     <- - Inf
     K            <- G - 1 + G * (P * Q - 0.5 * Q * (Q - 1)) + 2 * G * P
     pen          <- K * log(N)
    #cov.emp      <- cov(data)
-    dimnames(post.mu)      <- dimnames(post.psi)   <- list(varnames, gnames)
+   #dimnames(post.mu)      <- dimnames(post.psi)   <- list(varnames, gnames)
    #dimnames(post.Sigma)   <- list(varnames, varnames, gnames)
    #dimnames(cov.emp)      <- dimnames(post.Sigma)
     
@@ -105,7 +105,7 @@
                                 c.data=c.data, f=f, lmat=lmat, G=G)
     
     # Mixing Proportions
-      pi.prop    <- sim.pi(alpha.pi=alpha.pi, nn=nn)
+      pi.prop    <- sim.pi(pi.alpha=pi.alpha, nn=nn)
     
       if(all(iter > burnin, iter %% thinning == 0)) {
         new.iter <- ceiling((iter - burnin)/thinning)
@@ -116,8 +116,8 @@
         if(sw["psi.sw"])            psi.store[,,new.iter]   <- psi
         if(sw["pi.sw"])             pi.store[,new.iter]     <- pi.prop
                                     z.store[,new.iter]      <- z 
-        post.mu     <-  post.mu + mu/n.store
-        post.psi    <-  post.psi + psi/n.store
+       #post.mu     <-  post.mu + mu/n.store
+       #post.psi    <-  post.psi + psi/n.store
         post.z      <-  setNames(apply(z.store, 1, function(x) factor(which.max(tabulate(x)), levels=seq_len(G))), obsnames)
         post.pi     <-  setNames(prop.table(tabulate(post.z, nbins=G)), gnames)
         Sigma       <-  tcrossprod(lmat) + diag(psi)
@@ -132,8 +132,8 @@
                       psi     = if(sw["psi.sw"])            psi.store,
                       pi.prop = if(sw["pi.sw"])             pi.store,
                       z          = z.store,
-                      post.mu    = post.mu,
-                      post.psi   = post.psi,
+                     #post.mu    = post.mu,
+                     #post.psi   = post.psi,
                       post.z     = post.z,
                       post.pi    = post.pi,
                      #cov.mat    = cov.emp,
