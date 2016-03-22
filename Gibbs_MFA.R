@@ -3,9 +3,9 @@
 ################################################################
   
 # Gibbs Sampler Function
-  gibbs.FA       <- function(Q = NULL, data = NULL, n.iters = NULL,
+  gibbs.MFA      <- function(Q = NULL, data = NULL, n.iters = NULL,
                              N = NULL, P = NULL, sigma.mu = NULL,
-                             psi.alpha = NULL, psi.beta = NULL,
+                             psi.alpha = NULL, psi.beta = NULL, G = NULL,
                              burnin = NULL, thinning = NULL, sw = NULL,
                              n.store = NULL, verbose = NULL, sigma.l = NULL,
                              alpha.pi = NULL, z.init = NULL, z.list = NULL,  ...) {
@@ -117,15 +117,15 @@
         if(sw["psi.sw"])            psi.store[,,new.iter]   <- psi
         if(sw["pi.sw"])             pi.store[,new.iter]     <- pi.prop
                                     z.store[,new.iter]      <- z 
-        post.mu     <-  post.mu + mu/n.store
-        post.psi    <-  post.psi + psi/n.store
-        post.z      <-  setNames(apply(z.store, 1, function(x) factor(which.max(tabulate(x)), levels=seq_len(G))), obsnames)
-        post.pi     <-  setNames(prop.table(tabulate(post.z, nbins=G)), gnames)
-       #post.Sigma  <-  post.Sigma + Sigma/n.store
         log.like    <-  sum(mvdnorm(data=data, mu=mu, Sigma=Sigma, P=P, log.d=T))
         bic.mcmc    <-  max(bic.mcmc, log.like, na.rm=T)
+        post.mu     <- post.mu + mu/n.store
+        post.psi    <- post.psi + psi/n.store
+       #post.Sigma  <- post.Sigma + Sigma/n.store
       }  
     }
+    post.z    <- setNames(apply(z.store, 1, function(x) factor(which.max(tabulate(x)), levels=seq_len(G))), obsnames)
+    post.pi   <- setNames(prop.table(tabulate(post.z, nbins=G)), gnames)
     returns   <- list(mu      = if(sw["mu.sw"])             mu.store,
                       f       = if(all(sw["f.sw"], Q > 0))  f.store, 
                       load    = if(all(sw["l.sw"], Q > 0))  load.store, 
