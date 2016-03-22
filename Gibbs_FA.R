@@ -92,12 +92,12 @@
         if(all(sw["f.sw"], Q > 0))  f.store[,,new.iter]    <- f
         if(all(sw["l.sw"], Q > 0))  load.store[,,new.iter] <- lmat
         if(sw["psi.sw"])            psi.store[,new.iter]   <- psi
-        post.mu     <-  post.mu + mu/n.store
-        post.psi    <-  post.psi + psi/n.store
-        Sigma       <-  tcrossprod(lmat) + diag(psi)
-        post.Sigma  <-  post.Sigma + Sigma/n.store
-        log.like    <-  sum(mvdnorm(data=data, mu=mu, Sigma=Sigma, P=P, log.d=T))
-        bic.mcmc    <-  max(bic.mcmc, log.like, na.rm=T)
+        post.mu     <- post.mu + mu/n.store
+        post.psi    <- post.psi + psi/n.store
+        Sigma       <- tcrossprod(lmat) + diag(psi)
+        post.Sigma  <- post.Sigma + Sigma/n.store
+        log.like    <- sum(mvdnorm(data=data, mu=mu, Sigma=Sigma, P=P, log.d=T))
+        bic.mcmc    <- max(bic.mcmc, log.like, na.rm=T)
       }  
     }
     returns   <- list(mu   = if(sw["mu.sw"])             mu.store,
