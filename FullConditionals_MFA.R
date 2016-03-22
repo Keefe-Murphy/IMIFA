@@ -3,9 +3,9 @@
 #############################################
                          
 # Means
-  sim.mu        <- function(N = NULL, P = NULL, sigma.mu = NULL, psi.inv = NULL, 
+  sim.mu        <- function(nn = NULL, P = NULL, sigma.mu = NULL, psi.inv = NULL, 
                             sum.data = NULL, sum.f = NULL, lmat = NULL, G = NULL, ...) {
-    mu.omega    <- 1/(sigma.mu + N * psi.inv)
+    mu.omega    <- 1/(sigma.mu + sweep(psi.inv, 2, nn, FUN="*"))
     U.mu        <- apply(mu.omega, 2, sqrt)
     z.mu        <- matrix(rnorm(P * G, 0, 1), nr=P, nc=G)
     v.mu        <- U.mu * z.mu
@@ -16,29 +16,29 @@
 
 # Scores
   sim.scores    <- function(nn = NULL, Q = NULL, lmat = NULL,
-                            psi.inv = NULL, c.data = NULL, ...) {     
+                            psi.inv = NULL, c.data = NULL, ...) {
     load.psi    <- lapply(seq_along(nn), function(g) lmat[,,g] * psi.inv[,g])
     U.f         <- lapply(seq_along(nn), function(g) chol(diag(Q) + crossprod(load.psi[[g]], lmat[,,g])))
     z.f         <- lapply(seq_along(nn), function(g) matrix(rnorm(Q * nn[g], 0, 1), nr=Q, nc=nn[g]))
     v.f         <- lapply(seq_along(nn), function(g) backsolve(U.f[[g]], z.f[[g]]))
     mu.f        <- lapply(seq_along(nn), function(g) c.data[[g]] %*% (load.psi[[g]] %*% chol2inv(U.f[[g]])))
-      lapply(seq_along(nn), function(g) mu.f[[g]] + t(v.f[[g]]))
+      do.call(rbind, lapply(seq_along(nn), function(g) mu.f[[g]] + t(v.f[[g]])))
   }
 
 # Loadings
   sim.load      <- function(l.sigma = NULL, Q = NULL, c.data.j = NULL, f = NULL, 
-                            psi.inv.j = NULL, FtF = NULL, G = NULL, ...) {
+                            psi.inv.j = NULL, FtF = NULL, G = NULL, z = NULL, ...) {
     U.load      <- lapply(seq_len(G), function(g) chol(l.sigma + psi.inv.j[g] * FtF[[g]]))
     z.load      <- matrix(rnorm(Q * G, 0, 1), nr=Q, nc=G)
     v.load      <- do.call(cbind, lapply(seq_len(G), function(g) backsolve(U.load[[g]], z.load[,g])))
-    mu.load     <- do.call(cbind, lapply(seq_len(G), function(g) psi.inv.j[g] * chol2inv(U.load[[g]]) %*% crossprod(f[[g]], c.data.j[[g]])))
+    mu.load     <- do.call(cbind, lapply(seq_len(G), function(g) psi.inv.j[g] * chol2inv(U.load[[g]]) %*% crossprod(f[z == g,, drop=F], c.data.j[[g]])))
       mu.load + v.load
   }
 
 # Uniquenesses
   sim.psi.inv   <- function(N = NULL, P = NULL, psi.alpha = NULL, psi.beta = NULL, 
-                            c.data = NULL, f = NULL, lmat = NULL, G = NULL, ...) { 
-    rate.t      <- lapply(seq_len(G), function(g) c.data[[g]] - tcrossprod(f[[g]], lmat[,,g]))
+                            c.data = NULL, f = NULL, lmat = NULL, G = NULL, z = NULL, ...) { 
+    rate.t      <- lapply(seq_len(G), function(g) c.data[[g]] - tcrossprod(f[z == g,, drop=F], lmat[,,g]))
     rate.t      <- unlist(lapply(seq_len(G), function(g) colSums(rate.t[[g]] * rate.t[[g]])))
       matrix(rgamma(P * G, shape=(N + psi.alpha)/2, 
                     rate=(rate.t + psi.beta)/2), nr=P, nc=G)
@@ -60,7 +60,7 @@
   
   # Scores
     sim.f.p     <- function(Q = NULL, nn = NULL, ...) {
-        lapply(seq_along(nn), function(g) matrix(rnorm(nn[g] * Q, 0, 1), nr=nn[g], nc=Q))
+        matrix(rnorm(N * Q, 0, 1), nr=N, nc=Q)
     }
 
   # Loadings
@@ -99,10 +99,4 @@
         } else {
           exp(log.dens)
         }
-    }
-  # Cluster Labels
-    sim.z.p     <- function(N = NULL, prob.z = NULL, ...) {
-      ind.mat   <- rmultinom(N, size=1, prob=prob.z)
-      labs      <- which(ind.mat != 0, arr.ind=T)[,1]
-        factor(labs, levels=seq_along(prob.z))
     }

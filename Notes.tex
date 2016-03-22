@@ -459,37 +459,37 @@ p_g &=~\mathrm{P}\left(\underline{z}_{ig}=1\given\underline{x}_i,\gamma\right) =
 \subsubsection[Mixtures of Infinite Factor Analyzers Pseudo-Code]{Mixtures of Infinite Factor Analyzers Pseudo-Code}
 \begin{enumerate}[label*=\arabic*.]
 	\item Choose scalar hyperparameters as before.
-	\item Start with an initialisation of the cluster labels $Z^{\left(0\right)}\colon$~simulate from the $\operatorname{Mult}\left(1, \underline{\pi}\right)$ prior $N$ times, or employ another clustering algorithm, such as K-means.
+	\item Start with an initialisation of the cluster labels $Z^{\left(0\right)}\colon$~simulate from the $\operatorname{Mult}\left(1, \underline{\pi}\right)$ prior $N$ times, or employ another clustering algorithm, such as K-means, and compute $\underline{n}$.
 	\item Initialise, $\forall~g=1,\ldots,G\colon$
 		\begin{flalign}
 	\underline{\mu}_g^{\left(0\right)} &\sim \operatorname{MVN}_p\left(\underline{0}, \Sigma_{\mu}\mathcal{I}_p\right) &\nonumber\\
-	\underline{\text{f}}_{gi}^{\left(0\right)} &\sim\operatorname{MVN}_{q_g^\star}\left(\underline{0},\mathcal{I}_{q_g^\star}\right)~\quad\quad\hspace{1.5mm}\forall~i = 1,\ldots,n_g&\nonumber\\
-	\underline{\Lambda}_{gj}^{\left(0\right)} &\sim\operatorname{MVN}_{q_g^\star}\left(\underline{0},\Sigma_{\lambda}\mathcal{I}_{q_g^\star}\right)~\quad\forall~j = 1,\ldots,p&\nonumber\\
-	\psi_{gj}^{-1^{\left(0\right)}} &\sim \operatorname{Ga}\left(\nicefrac{\alpha}{2},\nicefrac{\beta}{2}\right)~\quad\quad\hspace{7mm}\forall~j = 1,\ldots,p&\nonumber\\
-	\phi_{gjk}^{\left(0\right)} &\sim \operatorname{Ga}\left(\nicefrac{\nu}{2},\nicefrac{\nu}{2}\right)~\quad\quad\hspace{7.5mm}\forall~j = 1,\ldots,p\quad\mbox{and}\quad k=1,\ldots,q_g^\star\nonumber\\
-	\delta_{g1}^{\left(0\right)} &\sim \operatorname{Ga}\left(\alpha_1,1\right),\quad\delta_{gh}^{\left(0\right)} \sim \operatorname{Ga}\left(\alpha_2,1\right),\quad h\geq 2\nonumber\\
-	\tau_{gk}^{\left(0\right)} &= \prod_{h=1}^{k}\delta_{gh}^{\left(0\right)}\quad\hspace{21mm}\forall~k=1,\ldots,q_g^\star\nonumber
+	\underline{\text{f}}_{i}^{\left(0\right)} &\sim\operatorname{MVN}_{q_g^\star}\left(\underline{0},\mathcal{I}_{q_g^\star}\right)~\quad\quad\hspace{1.5mm}\forall~i = 1,\ldots,N&\nonumber\\
+	\underline{\Lambda}_{jg}^{\left(0\right)} &\sim\operatorname{MVN}_{q_g^\star}\left(\underline{0},\Sigma_{\lambda}\mathcal{I}_{q_g^\star}\right)~\quad\forall~j = 1,\ldots,p&\nonumber\\
+	\psi_{jg}^{-1^{\left(0\right)}} &\sim \operatorname{Ga}\left(\nicefrac{\alpha}{2},\nicefrac{\beta}{2}\right)~\quad\quad\hspace{7mm}\forall~j = 1,\ldots,p&\nonumber\\
+	\phi_{jkg}^{\left(0\right)} &\sim \operatorname{Ga}\left(\nicefrac{\nu}{2},\nicefrac{\nu}{2}\right)~\quad\quad\hspace{7.5mm}\forall~j = 1,\ldots,p\quad\mbox{and}\quad k=1,\ldots,q_g^\star\nonumber\\
+	\delta_{1g}^{\left(0\right)} &\sim \operatorname{Ga}\left(\alpha_1,1\right),\quad\delta_{hg}^{\left(0\right)} \sim \operatorname{Ga}\left(\alpha_2,1\right),\quad h\geq 2\nonumber\\
+	\tau_{kg}^{\left(0\right)} &= \prod_{h=1}^{k}\delta_{hg}^{\left(0\right)}\quad\hspace{21mm}\forall~k=1,\ldots,q_g^\star\nonumber
 		\end{flalign}
 	\item For $g = 1,\ldots,G$, sample other parameters as before, but this time from their \textit{group specific} full conditionals$\colon$
 	\begin{alignat*}{4}
 		\alphloop&\Omega_{\mu_g}^{\left(t\right)} &=&~\left(\Sigma_{\mu}\mathcal{I}_p\right)^{-1} + n_g\Psi_g^{-1^{\left(t-1\right)}}\\
-		&\underline{\mu}_g^{\left(t\right)} &\sim&~\operatorname{MVN}_p\left(\Omega_{\mu_g}^{-1^{\left(t\right)}}\Psi_g^{-1^{\left(t-1\right)}}\Big(\sum_{i=1}^{N}\underline{x}_{gi} - \sum_{i=1}^{N}\Lambda_g^{\left(t-1\right)}\underline{\text{f}}_{gi}^{\left(t-1\right)}\Big),\Omega_{\mu_g}^{-1^{\left(t\right)}}\right)\\
+		&\underline{\mu}_g^{\left(t\right)} &\sim&~\operatorname{MVN}_p\left(\Omega_{\mu_g}^{-1^{\left(t\right)}}\Psi_g^{-1^{\left(t-1\right)}}\Big(\sum_{i\colon z_{ig} = 1}\underline{x}_{i} - \Lambda_g^{\left(t-1\right)}\sum_{i\colon z_{ig} = 1}\underline{\text{f}}_{i}^{\left(t-1\right)}\Big),\Omega_{\mu_g}^{-1^{\left(t\right)}}\right)\\
 		\alphloop&\Omega_{F_g}^{\left(t\right)} &=&~\mathcal{I}_{q_g^\star} + \Lambda_g^{T^{\left(t-1\right)}}\Psi_g^{-1^{\left(t-1\right)}}\Lambda_g^{\left(t-1\right)}\\
-		&\underline{\text{f}}_{gi}^{\left(t\right)} &\sim&~\operatorname{MVN}_q\left(\Omega_{F_g}^{-1^{\left(t\right)}}\Lambda_g^{T^{\left(t-1\right)}}\Psi_g^{-1^{\left(t-1\right)}}\left(\underline{x}_{gi} -\underline{\mu}_g^{\left(t\right)}\right),\Omega_{F_g}^{-1^{\left(t\right)}}\right)\\
+		&\underline{\text{f}}_{i\colon z_{ig} = 1}^{\left(t\right)}~&\sim&~\operatorname{MVN}_q\left(\Omega_{F_g}^{-1^{\left(t\right)}}\Lambda_g^{T^{\left(t-1\right)}}\Psi_g^{-1^{\left(t-1\right)}}\left(\underline{x}_{i\colon z_{ig} = 1} -\underline{\mu}_g^{\left(t\right)}\right),\Omega_{F_g}^{-1^{\left(t\right)}}\right)\\
 		\alphloop &\mbox{For}~j &=& 1, \ldots, p\\
-		\bullet~&\Omega_{\lambda_{gj}}^{\left(t\right)} &=& \left(\Sigma_{\lambda}\mathcal{I}_{q_g^\star}\right)^{-1} + \psi_{gj}^{-1^{\left(t-1\right)}}\text{F}_g^{T^{\left(t-1\right)}}\text{F}_g^{\left(t\right)}\\
-		&  \underline{\Lambda}_{gj}^{\left(t\right)} &\sim& \operatorname{MVN}_{q_g^\star}\left(\Omega_{\lambda_{gj}}^{-1^{\left(t\right)}}\text{F}_g^{T^{\left(t\right)}}\psi_{gj}^{-1^{\left(t-1\right)}}\left(\underline{x}_g^j -\underline{1}\mu_{gj}^{\left(t\right)}\right),\Omega_{\lambda_{gj}}^{-1^{\left(t\right)}}\right)\\
-		\bullet~&  \psi_{gj}^{-1^{\left(t\right)}} &\sim& \operatorname{Ga}\left(\frac{n_g + \alpha}{2},\frac{S_{gj}^{\left(t\right)} + \beta}{2}\right)\\
-		\bullet~& \phi_{gjk}^{\left(t\right)} &\sim& \operatorname{Ga}\left(\frac{\nu+1}{2},\frac{\nu+\tau_{gk}^{\left(t-1\right)}\lambda_{gjk}^{2^{\left(t\right)}}}{2}\right)\quad\forall~k=1,\ldots,q_g^\star\\
-		\alphloop&\delta_{g1}^{\left(t\right)} &\sim& \operatorname{Ga}\left(\alpha_1 + \frac{pq_g^\star}{2}, 1 + \frac{1}{2}\sum_{h=1}^{q_g^\star}\tau_{gh}^{\left(1\right)^{\left(t-1\right)}}\sum_{j=1}^p\lambda_{gjh}^{2^{\left(t\right)}}\phi_{gjh}^{\left(t\right)}\right)\\
-		&\delta_{gh}^{\left(t\right)} &\sim& \operatorname{Ga}\left(\alpha_2 + \frac{p}{2}\left(q_g^\star-k+1\right), 1 + \frac{1}{2}\sum_{h=k}^{q_g^\star}\tau_{gh}^{\left(k\right)^{\left(t\right)}}\sum_{j=1}^p\lambda_{gjh}^{2^{\left(t-1\right)}}\phi_{gjh}^{\left(t\right)}\right),\quad h\geq 2\\
-		&\tau_{gk}^{\left(t\right)} &=& \prod_{h=1}^{k}\delta_{gh}^{\left(t\right)}\quad\hspace{38mm}\forall~k=1,\ldots,q_g^\star\nonumber
+		\bullet~&\Omega_{\lambda_{jg}}^{\left(t\right)} &=& \left(\Sigma_{\lambda}\mathcal{I}_{q_g^\star}\right)^{-1} + \psi_{jg}^{-1^{\left(t-1\right)}}\text{F}_{i\colon z_{ig} = 1}^{T^{\left(t-1\right)}}\text{F}_{i\colon z_{ig} = 1}^{\left(t\right)}\\
+		&  \underline{\Lambda}_{jg}^{\left(t\right)} &\sim& \operatorname{MVN}_{q_g^\star}\left(\Omega_{\lambda_{jg}}^{-1^{\left(t\right)}}\text{F}_{i\colon z_{ig} = 1}^{T^{\left(t\right)}}\psi_{jg}^{-1^{\left(t-1\right)}}\left(\underline{x}_{i\colon z_{ig} = 1}^j -\underline{1}\mu_{jg}^{\left(t\right)}\right),\Omega_{\lambda_{jg}}^{-1^{\left(t\right)}}\right)\\
+		\bullet~&  \psi_{jg}^{-1^{\left(t\right)}} &\sim& \operatorname{Ga}\left(\frac{n_g + \alpha}{2},\frac{S_{jg}^{\left(t\right)} + \beta}{2}\right)\\
+		\bullet~& \phi_{jkg}^{\left(t\right)} &\sim& \operatorname{Ga}\left(\frac{\nu+1}{2},\frac{\nu+\tau_{kg}^{\left(t-1\right)}\lambda_{jkg}^{2^{\left(t\right)}}}{2}\right)\quad\forall~k=1,\ldots,q_g^\star\\
+		\alphloop&\delta_{1g}^{\left(t\right)} &\sim& \operatorname{Ga}\left(\alpha_1 + \frac{pq_g^\star}{2}, 1 + \frac{1}{2}\sum_{h=1}^{q_g^\star}\tau_{hg}^{\left(1\right)^{\left(t-1\right)}}\sum_{j=1}^p\lambda_{jhg}^{2^{\left(t\right)}}\phi_{jhg}^{\left(t\right)}\right)\\
+		&\delta_{hg}^{\left(t\right)} &\sim& \operatorname{Ga}\left(\alpha_2 + \frac{p}{2}\left(q_g^\star-k+1\right), 1 + \frac{1}{2}\sum_{h=k}^{q_g^\star}\tau_{hg}^{\left(k\right)^{\left(t\right)}}\sum_{j=1}^p\lambda_{jhg}^{2^{\left(t-1\right)}}\phi_{jhg}^{\left(t\right)}\right),\quad h\geq 2\\
+		&\tau_{kg}^{\left(t\right)} &=& \prod_{h=1}^{k}\delta_{hg}^{\left(t\right)}\quad\hspace{38mm}\forall~k=1,\ldots,q_g^\star\nonumber
 		\end{alignat*}
-	\item Compute $\underline{n}$ and sample $\underline{\pi}$ from $\operatorname{Dir}\left(\underline{\alpha} + \underline{n}\right)$.
+	\item Re-compute $\underline{n}$ and sample $\underline{\pi}$ from $\operatorname{Dir}\left(\underline{\alpha} + \underline{n}\right)$.
 	\item For $i=1,\ldots,N$, sample $\underline{z}_i$ as outlined in \eqref{eq:33}.
 	\item Follow the adaptation procedure outlined in \ref{Adapt_Section}\footnote{Our R-package also implements MFA, without the MGP shrinkage prior in \ref{MGP} and adaptation.}.
 	\item Repeat steps 4--7 for $t=2,\ldots,T$ using the current value for $q_g^\star$.
-	\item Disregard the first $\operatorname{B}$ burn-in iterations and thin every $\operatorname{K}$-th iteration \footnote{If using the MFA approach, one should choose between competing models using the BIC-MCMC, as outlined in \ref{Gibbs1}}.
+	\item Disregard the first $\operatorname{B}$ burn-in iterations and thin every $\operatorname{K}$-th iteration \footnote{If using the MFA approach, one chooses between competing models using BIC-MCMC, as outlined in \ref{Gibbs1}}.
 \end{enumerate}
 \subsection[Label Switching]{Label Switching}
 When the main goal is identifying/interpreting the mixture components and/or clustering, then \textit{label switching} needs to be addressed. It's easy to see that $\mathrm{P}\left(X\given\gamma\right) = \mathrm{P}\left(X\given\tilde\gamma\right)$ where $\tilde\gamma = \left(\theta_{j_1},\ldots,\theta_{j_G},\pi_{j_1},\ldots,\pi_{j_G}\right)$ and $j_1,\ldots,j_G$ is any permutation of $1,\ldots,G$. This type of finite mixture distribution nonidentifiability is caused by the invariance of mixture distributions to component relabelling: by interchanging the order of components, the distributions induced by $\gamma$ and $\tilde{\gamma}$ are the same, although evidently the two parameters are distinct. For the finite mixture distribution as defined above with $G$ components, there exist $G!$ equivalent ways of arranging them.

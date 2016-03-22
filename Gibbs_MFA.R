@@ -21,8 +21,8 @@
       dimnames(mu.store)   <- list(varnames, gnames, iternames)
     }
     if(sw["f.sw"])   {
-      f.store    <- array(0, dim=c(N, Q, G, n.store))
-      dimnames(f.store)    <- list(obsnames, if(Q > 0) facnames, gnames, iternames)
+      f.store    <- array(0, dim=c(N, Q, n.store))
+      dimnames(f.store)    <- list(obsnames, if(Q > 0) facnames, iternames)
     }
     if(sw["l.sw"])   {
       load.store <- array(0, dim=c(P, Q, G, n.store))
@@ -38,14 +38,14 @@
     }
     z.store      <- matrix(0, nr=N, nc=n.store)
     dimnames(z.store)      <- list(obsnames, iternames)
-   #post.mu      <- matrix(0, nr=P, nc=G)
-   #post.psi     <- matrix(0, nr=P, nc=G)
+    post.mu      <- matrix(0, nr=P, nc=G)
+    post.psi     <- matrix(0, nr=P, nc=G)
    #post.Sigma   <- array(0, dim=c(P, P, G))
     bic.mcmc     <- - Inf
     K            <- G - 1 + G * (P * Q - 0.5 * Q * (Q - 1)) + 2 * G * P
     pen          <- K * log(N)
    #cov.emp      <- cov(data)
-   #dimnames(post.mu)      <- dimnames(post.psi)   <- list(varnames, gnames)
+    dimnames(post.mu)      <- dimnames(post.psi)   <- list(varnames, gnames)
    #dimnames(post.Sigma)   <- list(varnames, varnames, gnames)
    #dimnames(cov.emp)      <- dimnames(post.Sigma)
     
@@ -61,7 +61,7 @@
       z          <- sim.z.p(N=N, prob.z=pi.prop)
     }
     mu           <- sim.mu.p(P=P, sigma.mu=sigma.mu, G=G) 
-    f            <- sim.f.p(Q=Q, nn=tabulate(z, nbins=G))
+    f            <- sim.f.p(Q=Q, N=N)
     lmat         <- sim.load.p(Q=Q, P=P, sigma.l=sigma.l, G=G)
     psi.inv      <- sim.psi.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta, G=G)
     l.sigma      <- sigma.l * diag(Q)
@@ -80,20 +80,21 @@
     # Means
       sum.data   <- apply(data, 2, tapply, z, sum)
       sum.data   <- t(replace(sum.data, which(is.na(sum.data)), 0))
-      sum.f      <- do.call(cbind, lapply(f, colSums))
-      mu         <- sim.mu(N=N, P=P, sigma.mu=sigma.mu, psi.inv=psi.inv,
+      sum.f      <- do.call(cbind, lapply(seq_len(G), function(g) colSums(f[z == g,, drop=F])))
+      mu         <- sim.mu(nn=nn, P=P, sigma.mu=sigma.mu, psi.inv=psi.inv,
                            sum.data=sum.data, sum.f=sum.f, lmat=lmat, G=G)
     
     # Scores & Loadings
-      c.data     <- lapply(seq_len(G), function(g) sweep(data[z == g,], 2, mu[,g]))
+      c.data     <- lapply(seq_len(G), function(g) sweep(data[z == g,], 2, mu[,g], FUN="-"))
       if(Q > 0) {
-        f        <- sim.scores(nn=nn, Q=Q, lmat=lmat, psi.inv=psi.inv, c.data=c.data)
-        FtF      <- lapply(f, crossprod)
+        f        <- sim.scores(nn=nn, Q=Q, lmat=lmat, psi.inv=psi.inv, 
+                               c.data=c.data)[as.character(seq_len(N)),]
+        FtF      <- lapply(seq_len(G), function(g) crossprod(f[z == g,, drop=F]))
         for(j in seq_len(P)) {
           psi.inv.j <- psi.inv[j,]
           c.data.j  <- lapply(c.data, function(dat) dat[,j])
           lmat[j,,] <- sim.load(l.sigma=l.sigma, Q=Q, c.data.j=c.data.j, 
-                                f=f, psi.inv.j=psi.inv.j, FtF=FtF, G=G)
+                                f=f, psi.inv.j=psi.inv.j, FtF=FtF, G=G, z=z)
         }
       } else {
         f        <- array(, dim=c(N, 0, G))
@@ -102,7 +103,7 @@
                   
     # Uniquenesses
       psi.inv    <- sim.psi.inv(N=N, P=P, psi.alpha=psi.alpha, psi.beta=psi.beta,
-                                c.data=c.data, f=f, lmat=lmat, G=G)
+                                c.data=c.data, f=f, lmat=lmat, G=G, z=z)
     
     # Mixing Proportions
       pi.prop    <- sim.pi(pi.alpha=pi.alpha, nn=nn)
@@ -111,16 +112,15 @@
         new.iter <- ceiling((iter - burnin)/thinning)
         psi      <- 1/psi.inv
         if(sw["mu.sw"])             mu.store[,,new.iter]    <- mu  
-        if(all(sw["f.sw"], Q > 0))  f.store[,,,new.iter]    <- f # cbind(f)
+        if(all(sw["f.sw"], Q > 0))  f.store[,,new.iter]     <- f
         if(all(sw["l.sw"], Q > 0))  load.store[,,,new.iter] <- lmat
         if(sw["psi.sw"])            psi.store[,,new.iter]   <- psi
         if(sw["pi.sw"])             pi.store[,new.iter]     <- pi.prop
                                     z.store[,new.iter]      <- z 
-       #post.mu     <-  post.mu + mu/n.store
-       #post.psi    <-  post.psi + psi/n.store
+        post.mu     <-  post.mu + mu/n.store
+        post.psi    <-  post.psi + psi/n.store
         post.z      <-  setNames(apply(z.store, 1, function(x) factor(which.max(tabulate(x)), levels=seq_len(G))), obsnames)
         post.pi     <-  setNames(prop.table(tabulate(post.z, nbins=G)), gnames)
-        Sigma       <-  tcrossprod(lmat) + diag(psi)
        #post.Sigma  <-  post.Sigma + Sigma/n.store
         log.like    <-  sum(mvdnorm(data=data, mu=mu, Sigma=Sigma, P=P, log.d=T))
         bic.mcmc    <-  max(bic.mcmc, log.like, na.rm=T)
@@ -132,8 +132,8 @@
                       psi     = if(sw["psi.sw"])            psi.store,
                       pi.prop = if(sw["pi.sw"])             pi.store,
                       z          = z.store,
-                     #post.mu    = post.mu,
-                     #post.psi   = post.psi,
+                      post.mu    = post.mu,
+                      post.psi   = post.psi,
                       post.z     = post.z,
                       post.pi    = post.pi,
                      #cov.mat    = cov.emp,
