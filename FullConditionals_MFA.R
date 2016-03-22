@@ -48,7 +48,7 @@
   # Means
     sim.mu.p    <- function(P = NULL, sigma.mu = NULL, G = NULL, ...) {
       U.mu      <- sqrt(1/sigma.mu)
-      z.mu      <- matrix(rnorm(P * G, 0, 1), nr=P, ncol=G)
+      z.mu      <- matrix(rnorm(P * G, 0, 1), nr=P, nc=G)
         U.mu * z.mu
     }
   

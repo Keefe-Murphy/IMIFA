@@ -18,7 +18,7 @@
                             psi.inv = NULL, c.data = NULL, ...) {
     load.psi    <- lmat * psi.inv
     U.f         <- chol(diag(Q) + crossprod(load.psi, lmat)) 
-    z.f         <- matrix(rnorm(Q * N, 0, 1), nr=Q, ncol=N)
+    z.f         <- matrix(rnorm(Q * N, 0, 1), nr=Q, nc=N)
     v.f         <- backsolve(U.f, z.f)
     mu.f        <- c.data %*% (load.psi %*% chol2inv(U.f))
       mu.f + t(v.f)
@@ -74,7 +74,7 @@
     
   # Scores
     sim.f.p     <- function(Q = NULL, N = NULL, ...) {
-        matrix(rnorm(N * Q, 0, 1), nr=N, ncol=Q)
+        matrix(rnorm(N * Q, 0, 1), nr=N, nc=Q)
     }
     
   # Loadings
