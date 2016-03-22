@@ -51,8 +51,8 @@
     
     sigma.mu     <- 1/sigma.mu
     sigma.l      <- 1/sigma.l
-    alpha.pi     <- rep(alpha.pi, G)
-    pi.prop      <- sim.pi(alpha.pi=alpha.pi)
+    pi.alpha     <- rep(alpha.pi, G)
+    pi.prop      <- sim.pi(pi.alpha=pi.alpha)
     if(z.init == "list") {
       z          <- z.list[[G]]
     } else if(z.init == "kmeans") {
@@ -60,7 +60,7 @@
     } else {
       z          <- sim.z.p(N=N, prob.z=pi.prop)
     }
-    mu           <- sim.mu.p(P=P, sigma.mu=sigma.mu, G=G)  
+    mu           <- sim.mu.p(P=P, sigma.mu=sigma.mu, G=G) 
     f            <- sim.f.p(Q=Q, nn=tabulate(z, nbins=G))
     lmat         <- sim.load.p(Q=Q, P=P, sigma.l=sigma.l, G=G)
     psi.inv      <- sim.psi.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta, G=G)

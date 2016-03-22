@@ -89,8 +89,8 @@
     }
 
   # Mixing Proportions
-    sim.pi      <- function(alpha.pi = NULL, nn = 0, ...) {
-        rdirichlet(1, alpha.pi + nn)
+    sim.pi      <- function(pi.alpha = NULL, nn = 0, ...) {
+        rdirichlet(1, pi.alpha + nn)
     }
   
   # Cluster Labels
