@@ -109,12 +109,31 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
     }
     Q            <- setNames(rep(Q, G), paste0("Qg", seq_len(G)))
     GQ.res       <- list(G = G, Q = Q, BIC = bic)
-  } 
+  }
+  
+  if(is.element(method, c("MFA", "MIFA", "IMIFA"))) {
+    z            <- sims[[G.ind]][[Q.ind]]$z.store[,store]
+    post.z       <- sims[[G.ind]][[Q.ind]]$post.z
+    if(sw["pi.sw"]) {
+      pi.prop    <- sims[[G.ind]][[Q.ind]]$pi.store[,store]
+    } 
+    post.pi      <- sims[[G.ind]][[Q.ind]]$post.pi
+    if(recomp) {
+      post.z     <- replace(post.z, post.z, apply(z, 1, function(x) factor(which.max(tabulate(x)), levels=seq_len(G))))
+      if(sw["pi.sw"]) {
+        post.pi  <- rowMeans(pi.prop, dims=1)
+      } else {
+        post.pi  <- replace(post.pi, post.pi, prop.table(tabulate(post.z, nbins=G)))
+      }
+    }
+    cluster      <- list(z = z, post.z = post.z, 
+                         pi.prop = pi.prop, post.pi = post.pi)
+  }
   
   result         <- list(list())
   G.ind          <- which(n.grp == G)
   temp.b         <- max(1, burnin)
-  MSE  <-  RMSE  <-  NRMSE  <-  CVRMSE  <-  MAD  <- rep(NA, G)
+  MSE  <- RMSE   <- NRMSE   <- CVRMSE   <- MAD   <- rep(NA, G)
   for(g in seq_len(G)) {
     Qg           <- Q[g]
     Qgs          <- seq_len(Qg)
@@ -128,10 +147,11 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
       sw[c("f.sw", "l.sw")]    <- attr(sims, "Switch")[c("f.sw", "l.sw")]
     }
     
-    if(method == "MFA") {
       if(sw["f.sw"]) {
         f        <- adrop(sims[[G.ind]][[Q.ind]]$f[,Qgs,g,store, drop=F], drop=3)
       }
+    
+    if(method == "MFA") {
       if(sw["l.sw"]) {
         lmat     <- adrop(sims[[G.ind]][[Q.ind]]$load[,Qgs,g,store, drop=F], drop=3)
         l.temp   <- adrop(sims[[G.ind]][[Q.ind]]$load[,Qgs,g,temp.b, drop=F], drop=3:4)
@@ -244,21 +264,6 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
                               cov.mat    = cov.emp, 
                               post.Sigma = cov.est))
     result[[g]]  <- unlist(results, recursive=F)
-  }
-  
-  if(is.element(method, c("MFA", "MIFA", "IMIFA"))) {
-    z            <- sims[[G.ind]][[Q.ind]]$z.store[,store]
-    post.z       <- sims[[G.ind]][[Q.ind]]$post.z
-    if(sw["pi.sw"]) {
-      pi.prop    <- sims[[G.ind]][[Q.ind]]$pi.store[,store]
-    }
-    post.pi      <- sims[[G.ind]][[Q.ind]]$post.pi
-    if(recomp) {
-      post.z     <- replace(post.z, post.z, apply(z, 1, function(x) factor(which.max(tabulate(x)), levels=seq_len(G))))
-      post.pi    <- replace(post.pi, post.pi, prop.table(tabulate(post.z, nbins=G)))
-    }
-    cluster      <- list(z = z, post.z = post.z, 
-                         pi.prop = pi.prop, post.pi = post.pi)
   }
   
   names(result)  <- paste0("Group", seq_len(G))
