@@ -16,23 +16,23 @@
     facnames     <- paste0("Factor ", seq_len(Q))
     gnames       <- paste0("Group ", seq_len(G))
     iternames    <- paste0("Iteration", seq_len(n.store))
-    if(sw["mu.sw"]) {
+    if(sw["mu.sw"])  {
       mu.store   <- array(0, dim=c(P, G, n.store))
       dimnames(mu.store)   <- list(varnames, gnames, iternames)
     }
-    if(sw["f.sw"])  {
+    if(sw["f.sw"])   {
       f.store    <- array(0, dim=c(N, Q, G, n.store))
       dimnames(f.store)    <- list(obsnames, if(Q > 0) facnames, gnames, iternames)
     }
-    if(sw["l.sw"])  {
+    if(sw["l.sw"])   {
       load.store <- array(0, dim=c(P, Q, G, n.store))
       dimnames(load.store) <- list(varnames, if(Q > 0) facnames, gnames, iternames)
     }
-    if(sw["si.sw"]) {
+    if(sw["psi.sw"]) {
       psi.store  <- array(0, dim=c(P, G, n.store))
       dimnames(psi.store)  <- list(varnames, gnames, iternames)
     }
-    if(sw["pi.sw"]) {
+    if(sw["pi.sw"])  {
       pi.store   <- matrix(0, nr=G, nc=n.store)
       dimnames(pi.store)   <- list(gnames, iternames)
     }
@@ -113,7 +113,7 @@
         if(sw["mu.sw"])             mu.store[,,new.iter]    <- mu  
         if(all(sw["f.sw"], Q > 0))  f.store[,,,new.iter]    <- f # cbind(f)
         if(all(sw["l.sw"], Q > 0))  load.store[,,,new.iter] <- lmat
-        if(sw["si.sw"])             psi.store[,,new.iter]   <- psi
+        if(sw["psi.sw"])            psi.store[,,new.iter]   <- psi
         if(sw["pi.sw"])             pi.store[,new.iter]     <- pi.prop
                                     z.store[,new.iter]      <- z 
         post.mu     <-  post.mu + mu/n.store
@@ -129,7 +129,7 @@
     returns   <- list(mu      = if(sw["mu.sw"])             mu.store,
                       f       = if(all(sw["f.sw"], Q > 0))  f.store, 
                       load    = if(all(sw["l.sw"], Q > 0))  load.store, 
-                      psi     = if(sw["si.sw"])             psi.store,
+                      psi     = if(sw["psi.sw"])            psi.store,
                       pi.prop = if(sw["pi.sw"])             pi.store,
                       z          = z.store,
                       post.mu    = post.mu,

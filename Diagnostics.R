@@ -167,7 +167,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
       if(sw["mu.sw"])  {
         mu       <- sims[[G.ind]][[Q.ind]]$mu[,g,store]                            
       }
-      if(sw["si.sw"])  {
+      if(sw["psi.sw"]) {
         psi      <- sims[[G.ind]][[Q.ind]]$psi[,g,store]
       }
     } else {
@@ -178,7 +178,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
       if(sw["mu.sw"])  {
         mu       <- sims[[G.ind]][[Q.ind]]$mu[,store]                            
       }
-      if(sw["si.sw"])  {
+      if(sw["psi.sw"]) {
         psi      <- sims[[G.ind]][[Q.ind]]$psi[,store]
       }
     }
@@ -196,13 +196,13 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
     
     if(sw["mu.sw"])  post.mu   <- rowMeans(mu, dims=1)
     if(sw["f.sw"])   post.f    <- rowMeans(f, dims=2)
-    if(sw["si.sw"])  post.psi  <- rowMeans(psi, dims=1)
+    if(sw["psi.sw"]) post.psi  <- rowMeans(psi, dims=1)
     if(sw["l.sw"]) { post.load <- rowMeans(lmat, dims=2)
       var.exp    <- sum(colSums(post.load * post.load))/n.var
     } else {
       var.exp    <- (sum(diag(cov.emp)) - sum(post.psi))/n.var
     }
-    if(all(recomp, sw[c("l.sw", "si.sw")])) {
+    if(all(recomp, sw[c("l.sw", "psi.sw")])) {
       cov.est    <- replace(cov.est, is.numeric(cov.est), 0)
       for(r in seq_len(n.store)) {
         Sigma    <- tcrossprod(lmat[,,r]) + diag(psi[,r])
@@ -234,7 +234,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
                          list(post.mu    = post.mu),
                          if(sw["f.sw"])    list(scores = f, 
                                                 post.f = post.f),
-                         if(sw["si.sw"])   list(uniquenesses = psi), 
+                         if(sw["psi.sw"])  list(uniquenesses = psi), 
                          list(post.psi   = post.psi),
                          if(sw["l.sw"])    list(loadings     = lmat, 
                                                 post.load    = post.load),

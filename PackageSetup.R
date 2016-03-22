@@ -66,7 +66,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
     mu.switch  <- T                 
                                     warning("Means were stored since centering was not applied", call.=F)
   }
-  switches  <- c(mu.sw=mu.switch, f.sw=f.switch, l.sw=load.switch, si.sw=psi.switch, pi.sw=pi.switch)
+  switches  <- c(mu.sw=mu.switch, f.sw=f.switch, l.sw=load.switch, psi.sw=psi.switch, pi.sw=pi.switch)
   if(!is.logical(switches))         stop("All logical switches must be TRUE or FALSE")
   if(!is.element(method, c("MFA", "MIFA"))) {
     if(!missing(range.G) &&  

@@ -17,19 +17,19 @@
     varnames     <- colnames(data)
     facnames     <- paste0("Factor ", seq_len(Q))
     iternames    <- paste0("Iteration", seq_len(n.store))
-    if(sw["mu.sw"]) {
+    if(sw["mu.sw"])  {
       mu.store   <- matrix(0, nr=P, nc=n.store)
       dimnames(mu.store)     <- list(varnames, iternames)
     }
-    if(sw["f.sw"])  {
+    if(sw["f.sw"])   {
       f.store    <- array(0, dim=c(N, Q, n.store))
       dimnames(f.store)      <- list(obsnames, facnames, iternames)
     }
-    if(sw["l.sw"])  {
+    if(sw["l.sw"])   {
       load.store <- array(0, dim=c(P, Q, n.store))
       dimnames(load.store)   <- list(varnames, facnames, iternames)
     }
-    if(sw["si.sw"]) {
+    if(sw["psi.sw"]) {
       psi.store  <- matrix(0, nr=P, nc=n.store)
       dimnames(psi.store)    <- list(varnames, iternames)
     }
@@ -150,7 +150,7 @@
         if(sw["mu.sw"])             mu.store[,new.iter]       <- mu  
         if(all(sw["f.sw"], Q > 0))  f.store[,1:Q,new.iter]    <- f
         if(all(sw["l.sw"], Q > 0))  load.store[,1:Q,new.iter] <- lmat
-        if(sw["si.sw"])             psi.store[,new.iter]      <- psi
+        if(sw["psi.sw"])            psi.store[,new.iter]      <- psi
         post.mu     <- post.mu + mu/n.store
         post.psi    <- post.psi + psi/n.store
         Sigma       <- tcrossprod(lmat) + diag(psi)
@@ -158,10 +158,10 @@
         Q.store[new.iter]    <- Q
       }
     }
-    returns      <- list(mu   = if(sw["mu.sw"]) mu.store,
-                         f    = if(sw["f.sw"])  as.simple_sparse_array(f.store), 
-                         load = if(sw["l.sw"])  as.simple_sparse_array(load.store), 
-                         psi  = if(sw["si.sw"]) psi.store,
+    returns      <- list(mu   = if(sw["mu.sw"])  mu.store,
+                         f    = if(sw["f.sw"])   as.simple_sparse_array(f.store), 
+                         load = if(sw["l.sw"])   as.simple_sparse_array(load.store), 
+                         psi  = if(sw["psi.sw"]) psi.store,
                          post.mu    = post.mu,
                          post.psi   = post.psi,
                          cov.mat    = cov.emp,
