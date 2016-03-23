@@ -263,6 +263,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
                               cov.mat    = cov.emp, 
                               post.Sigma = cov.est))
     result[[g]]  <- unlist(results, recursive=F)
+    attr(result[[g]], "Store") <- n.store
   }
   
   names(result)  <- paste0("Group", seq_len(G))
@@ -289,7 +290,6 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
   class(result)                <- "IMIFA"
   attr(result, "Method")       <- attr(sims, "Method")
   attr(result, "Obs")          <- n.obs
-  attr(result, "Store")        <- n.store
   attr(result, "Switch")       <- sw
   attr(result, "Vars")         <- n.var
   return(result)

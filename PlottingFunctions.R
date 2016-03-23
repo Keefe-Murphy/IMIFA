@@ -96,7 +96,7 @@ plot.IMIFA  <- function(results = NULL, plot.meth = c("all", "correlation", "den
       if(length(ind) >  1)            stop("Length of plotting indices can't be greater than 1")
       if(ind      > n.var)            stop(paste0("Index can't be greater than the number of variables - ", n.var))
     }
-    if(!mat)              iter <- seq_len(attr(results, "Store"))
+    if(!mat)              iter <- seq_len(attr(result, "Store"))
     
     if(vars == "means") {
       plot.x   <- result$means
