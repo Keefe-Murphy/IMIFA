@@ -205,13 +205,13 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
     if(all(length(range.G) == 1, length(range.Q) == 1)) {
       start.time   <- proc.time()
         imifa[[Gi]][[Qi]] <- do.call(paste0("gibbs.", method), 
-                                     args=append(list(data = dat, N = N, Q = range.Q), gibbs.arg))
+                                     args=append(list(data = dat, N = N, G = range.G, Q = range.Q), gibbs.arg))
     } else if(length(range.G) == 1) {
       start.time   <- proc.time()
       for(q in range.Q) { 
         Qi         <- which(range.Q == q)
         imifa[[Gi]][[Qi]] <- do.call(paste0("gibbs.", method),
-                                     args=append(list(data = dat, N = N, Q = q), gibbs.arg))
+                                     args=append(list(data = dat, N = N, G = range.G, Q = q), gibbs.arg))
         if(verbose)                 cat(paste0(round(Qi/length(range.Q) * 100, 2), "% Complete\n"))
       }
     } else if(length(range.Q) == 1) {
@@ -272,7 +272,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   if(is.element(method, c("IFA", "IMIFA")) || length(range.Q) == 1) {
     attr(imifa, "Time")   <- tot.time
   } else {
-    attr(imifa, "Time")   <- list(Total = tot.time, Average = avg.time) 
+    attr(imifa, "Time")   <- lapply(list(Total = tot.time, Average = avg.time), function(x) round(x, 2)) 
   }
   attr(imifa, "Vars")     <- P
   if(verbose)                print(attr(imifa, "Time"))  

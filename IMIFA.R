@@ -32,7 +32,7 @@
     load(file=paste0(getwd(), "/Data/Simulated_Data.Rdata", sep=""), envir=.GlobalEnv)
 
 # Run the Gibbs Sampler
-  sim  <- imifa.mcmc(wine, method="MFA", range.G=c(2,3), range.Q=c(0,1,4,5,6))
+  sim  <- imifa.mcmc(wine, method="MFA", range.G=c(1,2,3), range.Q=c(0,1,3,4))
  #sim  <- imifa.mcmc(wine, method="classify", Label=Lab)
 
 # Save / Load results
@@ -47,7 +47,7 @@
   res <- tune.imifa(sim)
   res$Error
   plot(res, "Q")
- #res <- tune.sims(sim, Q=2)
+ #res <- tune.imifa(sim, Q=3, G=3)
   
 # Means
   plot(res, "a", "m")

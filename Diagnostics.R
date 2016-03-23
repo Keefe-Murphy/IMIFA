@@ -112,10 +112,10 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
   }
   
   if(is.element(method, c("MFA", "MIFA", "IMIFA"))) {
-    z            <- sims[[G.ind]][[Q.ind]]$z.store[,store]
+    z            <- sims[[G.ind]][[Q.ind]]$z[,store]
     post.z       <- sims[[G.ind]][[Q.ind]]$post.z
     if(sw["pi.sw"]) {
-      pi.prop    <- sims[[G.ind]][[Q.ind]]$pi.store[,store]
+      pi.prop    <- sims[[G.ind]][[Q.ind]]$pi.prop[,store]
     } 
     post.pi      <- sims[[G.ind]][[Q.ind]]$post.pi
     if(recomp) {
@@ -131,7 +131,6 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
   }
   
   result         <- list(list())
-  G.ind          <- which(n.grp == G)
   temp.b         <- max(1, burnin)
   MSE  <- RMSE   <- NRMSE   <- CVRMSE   <- MAD   <- rep(NA, G)
   for(g in seq_len(G)) {

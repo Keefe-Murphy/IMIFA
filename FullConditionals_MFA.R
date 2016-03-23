@@ -1,6 +1,6 @@
-#############################################
-### IMIFA Full Conditionals (Single Case) ###
-#############################################
+############################################
+### IMIFA Full Conditionals (Group Case) ###
+############################################
                          
 # Means
   sim.mu        <- function(nn = NULL, P = NULL, sigma.mu = NULL, psi.inv = NULL, 
@@ -9,7 +9,7 @@
     U.mu        <- apply(mu.omega, 2, sqrt)
     z.mu        <- matrix(rnorm(P * G, 0, 1), nr=P, nc=G)
     v.mu        <- U.mu * z.mu
-    lf.prod     <- do.call(cbind, lapply(seq_len(G), function(g) lmat[,,g] %*% sum.f[,g]))
+    lf.prod     <- do.call(cbind, lapply(seq_len(G), function(g) adrop(lmat[,,g, drop=F], drop=3) %*% sum.f[,g]))
     mu.mu       <- mu.omega * (psi.inv * (sum.data - lf.prod))
       mu.mu + v.mu
   }
@@ -17,8 +17,8 @@
 # Scores
   sim.scores    <- function(nn = NULL, Q = NULL, lmat = NULL,
                             psi.inv = NULL, c.data = NULL, ...) {
-    load.psi    <- lapply(seq_along(nn), function(g) lmat[,,g] * psi.inv[,g])
-    U.f         <- lapply(seq_along(nn), function(g) chol(diag(Q) + crossprod(load.psi[[g]], lmat[,,g])))
+    load.psi    <- lapply(seq_along(nn), function(g) adrop(lmat[,,g, drop=F], drop=3) * psi.inv[,g])
+    U.f         <- lapply(seq_along(nn), function(g) chol(diag(Q) + crossprod(load.psi[[g]], adrop(lmat[,,g, drop=F], drop=3))))
     z.f         <- lapply(seq_along(nn), function(g) matrix(rnorm(Q * nn[g], 0, 1), nr=Q, nc=nn[g]))
     v.f         <- lapply(seq_along(nn), function(g) backsolve(U.f[[g]], z.f[[g]]))
     mu.f        <- lapply(seq_along(nn), function(g) c.data[[g]] %*% (load.psi[[g]] %*% chol2inv(U.f[[g]])))
@@ -38,8 +38,8 @@
 # Uniquenesses
   sim.psi.inv   <- function(N = NULL, P = NULL, psi.alpha = NULL, psi.beta = NULL, 
                             c.data = NULL, f = NULL, lmat = NULL, G = NULL, z = NULL, ...) { 
-    rate.t      <- lapply(seq_len(G), function(g) c.data[[g]] - tcrossprod(f[z == g,, drop=F], lmat[,,g]))
-    rate.t      <- unlist(lapply(seq_len(G), function(g) colSums(rate.t[[g]] * rate.t[[g]])))
+    rate.t      <- lapply(seq_len(G), function(g) c.data[[g]] - tcrossprod(f[z == g,, drop=F], adrop(lmat[,,g, drop=F], drop=3)))
+    rate.t      <- unlist(lapply(rate.t, function(x) colSums(x * x)))
       matrix(rgamma(P * G, shape=(N + psi.alpha)/2, 
                     rate=(rate.t + psi.beta)/2), nr=P, nc=G)
   }
