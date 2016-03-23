@@ -79,9 +79,8 @@
       
     # Means
       sum.data   <- apply(data, 2, tapply, z, sum)
-      sum.data   <- replace(sum.data, which(is.na(sum.data)), 0)
       if(G > 1) {
-        sum.data <- t(sum.data)
+        sum.data <- t(replace(sum.data, which(is.na(sum.data)), 0))
       }
       sum.f      <- do.call(cbind, lapply(seq_len(G), function(g) colSums(f[z == g,, drop=F])))
       mu         <- sim.mu(nn=nn, P=P, sigma.mu=sigma.mu, psi.inv=psi.inv,
