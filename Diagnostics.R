@@ -146,9 +146,11 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
       sw[c("f.sw", "l.sw")]    <- attr(sims, "Switch")[c("f.sw", "l.sw")]
     }
     
-      if(sw["f.sw"]) {
-        f        <- adrop(sims[[G.ind]][[Q.ind]]$f[,Qgs,g,store, drop=F], drop=3)
+    if(is.element(method, c("MFA", "FA"))) {
+      if(all(sw["f.sw"], g == 1)) {
+        f        <- sims[[G.ind]][[Q.ind]]$f[,Qgs,store, drop=F]
       }
+    }
     
     if(method == "MFA") {
       if(sw["l.sw"]) {
@@ -158,9 +160,6 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
     }
     
     if(method == "FA")  {
-      if(sw["f.sw"]) {
-        f        <- sims[[G.ind]][[Q.ind]]$f[,Qgs,store, drop=F]
-      }
       if(sw["l.sw"]) {
         lmat     <- sims[[G.ind]][[Q.ind]]$load[,Qgs,store, drop=F]
         l.temp   <- adrop(sims[[G.ind]][[Q.ind]]$load[,Qgs,temp.b, drop=F], drop=3)
@@ -171,7 +170,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
       store      <- store[which(Q.store >= Qg)]
       n.store    <- length(store)
       temp.b     <- store[1]
-      if(sw["f.sw"]) {
+      if(all(sw["f.sw"], g == 1)) {
         f        <- as.array(sims[[G.ind]][[Q.ind]]$f)[,Qgs,store, drop=F]
       }
       if(sw["l.sw"]) {
@@ -207,16 +206,19 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
   # Loadings matrix / identifiability / error metrics / etc.  
     if(sw["l.sw"])   {
       for(p in seq_len(n.store)) {
-        rot           <- procrustes(X=as.matrix(lmat[,,p]), Xstar=l.temp)$R
-        lmat[,,p]     <- lmat[,,p] %*% rot
+        rot          <- procrustes(X=as.matrix(lmat[,,p]), Xstar=l.temp)$R
+        lmat[,,p]    <- lmat[,,p] %*% rot
         if(sw["f.sw"]) {
-          f[,,p]      <- f[,,p]    %*% rot
+          if(is.element(method, c("MFA", "MIFA", "IMIFA"))) {
+            f[post.z == g,,p]  <- f[post.z == g,,p]    %*% rot
+          } else {
+            f[,,p]   <- f[,,p]    %*% rot
+          }
         }  
       }
     }
     
     if(sw["mu.sw"])  post.mu   <- rowMeans(mu, dims=1)
-    if(sw["f.sw"])   post.f    <- rowMeans(f, dims=2)
     if(sw["psi.sw"]) post.psi  <- rowMeans(psi, dims=1)
     if(sw["l.sw"]) { post.load <- rowMeans(lmat, dims=2)
       var.exp    <- sum(colSums(post.load * post.load))/n.var
@@ -253,8 +255,6 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
     }  
     results      <- list(if(sw["mu.sw"])   list(means  = mu), 
                          list(post.mu    = post.mu),
-                         if(sw["f.sw"])    list(scores = f, 
-                                                post.f = post.f),
                          if(sw["psi.sw"])  list(uniquenesses = psi), 
                          list(post.psi   = post.psi),
                          if(sw["l.sw"])    list(loadings     = lmat, 
@@ -265,8 +265,11 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
     result[[g]]  <- unlist(results, recursive=F)
     attr(result[[g]], "Store") <- n.store
   }
-  
   names(result)  <- paste0("Group", seq_len(G))
+  
+  errors         <- list(MSE = mean(MSE), RMSE = mean(RMSE), NRMSE = mean(NRMSE),
+                         CVRMSE = mean(CVRMSE), MAD = mean(MAD))
+
   if(Q.T) {
     attr(GQ.res,
          "Factors")   <- Q.x
@@ -283,10 +286,12 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
   }
   attr(GQ.res, "Supplied")     <- c(Q=Q.T, G=G.T)
   
-  errors         <- list(MSE = mean(MSE), RMSE = mean(RMSE), NRMSE = mean(NRMSE),
-                         CVRMSE = mean(CVRMSE), MAD = mean(MAD))
+  if(sw["f.sw"]) {
+    scores       <- list(f = f, post.f = rowMeans(f, dims=2))
+  }    
+  
   result         <- c(result, if(exists("cluster", envir=environment())) list(Clust = cluster), 
-                      list(Error = errors, GQ.results = GQ.res))
+                      list(Error = errors, GQ.results = GQ.res, Scores = scores))
   class(result)                <- "IMIFA"
   attr(result, "Method")       <- attr(sims, "Method")
   attr(result, "Obs")          <- n.obs
