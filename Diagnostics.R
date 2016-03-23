@@ -92,19 +92,15 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
       bic        <- bic[G.xind,Q.xind]
       G          <- G.x
       Q          <- Q.x
-      n.grp      <- G
-      n.fac      <- Q  
       G.ind      <- G.xind
       Q.ind      <- Q.xind
     } else if(Q.T) {
       bic        <- bic[,Q.xind, drop=F]
       Q          <- Q.x
-      n.fac      <- Q
       Q.ind      <- Q.xind
     } else if(G.T) {
       bic        <- bic[G.xind,, drop=F]
       G          <- G.x
-      n.grp      <- G
       G.ind      <- G.xind
     }
     Q            <- setNames(rep(Q, G), paste0("Qg", seq_len(G)))
@@ -270,20 +266,8 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
   errors         <- list(MSE = mean(MSE), RMSE = mean(RMSE), NRMSE = mean(NRMSE),
                          CVRMSE = mean(CVRMSE), MAD = mean(MAD))
 
-  if(Q.T) {
-    attr(GQ.res,
-         "Factors")   <- Q.x
-  } else  {
-    attr(GQ.res, 
-         "Factors")   <- n.fac
-  } 
-  if(G.T) {
-    attr(GQ.res,
-         "Groups")    <- G.x
-  } else  {
-    attr(GQ.res, 
-         "Groups")    <- n.grp
-  }
+  attr(GQ.res, "Factors")      <- n.fac
+  attr(GQ.res, "Groups")       <- n.grp
   attr(GQ.res, "Supplied")     <- c(Q=Q.T, G=G.T)
   
   if(sw["f.sw"]) {
