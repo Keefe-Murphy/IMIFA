@@ -111,8 +111,13 @@
     # Mixing Proportions
       pi.prop    <- sim.pi(pi.alpha=pi.alpha, nn=nn)
     
+    # Cluster Labels
       psi        <- 1/psi.inv
       Sigma      <- lapply(seq_len(G), function(g) tcrossprod(adrop(lmat[,,g, drop=F], drop=3)) + diag(psi[,g]))
+      z.res      <- sim.z(data=data, mu=mu, Sigma=Sigma, 
+                          N=N, G=G, P=P, pi.prop=pi.prop)
+      z          <- z.res$z
+    
       if(all(iter > burnin, iter %% thinning == 0)) {
         new.iter <- ceiling((iter - burnin)/thinning)
         if(sw["mu.sw"])             mu.store[,,new.iter]    <- mu  
@@ -121,10 +126,10 @@
         if(sw["psi.sw"])            psi.store[,,new.iter]   <- psi
         if(sw["pi.sw"])             pi.store[,new.iter]     <- pi.prop
                                     z.store[,new.iter]      <- z 
-        log.like    <-  sum(mvdnorm(data=data, mu=mu, Sigma=Sigma, P=P, log.d=T))
         post.mu     <- post.mu + mu/n.store
         post.psi    <- post.psi + psi/n.store
        #post.Sigma  <- post.Sigma + Sigma/n.store
+        log.like    <- sum(z.res$log.liks)
         bic.mcmc    <- max(bic.mcmc, log.like, na.rm=T)
       }  
     }
