@@ -54,9 +54,10 @@
                             G = NULL, P = NULL, pi.prop = NULL, ...) {
       numer     <- do.call(cbind, lapply(seq_len(G), function(g) mvdnorm(data, mu[,g], Sigma[[g]], P, log.d=F) * pi.prop[,g]))
       denomin   <- rowSums(numer)
-      prob.z    <- sweep(numer, 1, denomin, FUN="/")
-     #prob.z    <- ifelse(prob.z <= 0, 1/G, prob.z)
-      z         <- factor(do.call(c, lapply(seq_len(N), function(i) which(rmultinom(1, size=1, prob=prob.z[i,]) !=0))), levels=seq_len(G))
+      pz        <- sweep(numer, 1, denomin, FUN="/")
+      pz[rowSums(pz > 0) == 0,] <- rep(1/G, G)
+      pz[pz <= 0]               <- .Machine$double.eps
+      z         <- factor(do.call(c, lapply(seq_len(N), function(i) which(rmultinom(1, size=1, prob=pz[i,]) !=0))), levels=seq_len(G))
         return(list(z = z, log.liks = log(denomin)))
     }
 
