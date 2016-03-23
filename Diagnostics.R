@@ -97,12 +97,12 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
       G.ind      <- G.xind
       Q.ind      <- Q.xind
     } else if(Q.T) {
-      bic        <- bic[G.ind,Q.xind]
+      bic        <- bic[,Q.xind, drop=F]
       Q          <- Q.x
       n.fac      <- Q
       Q.ind      <- Q.xind
     } else if(G.T) {
-      bic        <- bic[G.xind,Q.ind]
+      bic        <- bic[G.xind,, drop=F]
       G          <- G.x
       n.grp      <- G
       G.ind      <- G.xind
