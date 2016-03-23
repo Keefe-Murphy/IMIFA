@@ -70,7 +70,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   if(!is.logical(switches))         stop("All logical switches must be TRUE or FALSE")
   if(!is.element(method, c("MFA", "MIFA"))) {
     if(!missing(range.G) &&  
-       any(range.G  > 1))           warning(paste0("range.G must be 1 for method = ", method), call.=F)
+       any(range.G  > 1))           warning(paste0("range.G must be 1 for the ", method, " method"), call.=F)
     range.G <- 1
   } else {
     if(missing(range.G))            stop("range.G must be specified")
@@ -89,12 +89,18 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   } 
   no.fac    <- all(all(range.Q == 0), is.element(method, c("FA", "MFA")))
   if(is.element(method, c("FA", "MFA"))) {
-    if(!missing(Q.star))            rm(Q.star)
+    if(!missing(Q.star)) {
+      rm(Q.star)
+                                    warning(paste0("Q.star is not used for the ", method, " method"), call.=F)
+    }            
     if(missing(range.Q))            stop("range.Q must be specified")
     if(any(range.Q < 0))            stop("range.Q must be strictly non-negative")
     range.Q <- sort(unique(range.Q))   
   } else {
-    if(!missing(range.Q))           rm(range.Q)
+    if(!missing(range.Q)) {
+      rm(range.Q)
+                                    warning(paste0("range.Q is not used for the ", method, " method"), call.=F)
+    }           
     if(missing(Q.star)) {
       Q.star       <- min(floor(3 * log(P)), P, N - 1)
     } else {

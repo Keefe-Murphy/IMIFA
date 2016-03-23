@@ -40,7 +40,7 @@
                         "__Simulations_", attr(sim, "Method"), 
                         ".Rdata", sep=""))
   load(file=paste0(getwd(), "/Simulations/", "wine", 
-                   "__Simulations_", "IFA", 
+                   "__Simulations_", "MFA", 
                    ".Rdata", sep=""), envir=.GlobalEnv)
 
 # Posterior Summaries & Plots, etc. (optional: additional 'burnin' & 'thinning' & user-defined Q)
