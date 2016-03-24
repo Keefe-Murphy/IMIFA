@@ -2,7 +2,7 @@
 ### IMIFA Plotting Functions ###
 ################################
 
-plot.IMIFA  <- function(results = NULL, plot.meth = c("all", "correlation", "density", "posterior", "Q", "trace"), 
+plot.IMIFA  <- function(results = NULL, plot.meth = c("all", "correlation", "density", "posterior", "GQ", "trace"), 
                         vars = c("means", "scores", "loadings", "uniquenesses"), Label = NULL, g = 1, Q = NULL,
                         fac = NULL, by.fac = T, ind = NULL, type = c("h", "n", "p", "l"), mat = T, ... ) {
  
@@ -38,7 +38,7 @@ plot.IMIFA  <- function(results = NULL, plot.meth = c("all", "correlation", "den
   plot.meth <- match.arg(plot.meth)
   type.x    <- missing(type)
   type      <- match.arg(type)
-  m.sw      <- c(Q.sw = F, C.sw = F, D.sw = F, P.sw = F, T.sw = F)
+  m.sw      <- c(GQ.sw = F, C.sw = F, D.sw = F, P.sw = F, T.sw = F)
   v.sw      <- attr(results, "Switch")
   names(v.sw)  <- formals(sys.function(sys.parent()))$vars
   var.names <- rownames(result$post.load)
@@ -62,7 +62,7 @@ plot.IMIFA  <- function(results = NULL, plot.meth = c("all", "correlation", "den
     sw.n    <- paste0(toupper(substring(plot.meth, 1, 1)), ".sw")
     m.sw[sw.n]  <- T
   }
-  if(all(!m.sw["Q.sw"],
+  if(all(!m.sw["GQ.sw"],
      missing(vars)))                  stop("What variable would you like to plot?")
   if(all(any(vars == "scores",
      vars   == "loadings"),
@@ -77,7 +77,7 @@ plot.IMIFA  <- function(results = NULL, plot.meth = c("all", "correlation", "den
    m.sw["P.sw"] <- T
   } 
   if(all(!v.sw[vars],
-     !m.sw["Q.sw"]))                  stop(paste0(vars, " weren't stored"))
+     !m.sw["GQ.sw"]))                 stop(paste0(vars, " weren't stored"))
   if(!is.logical(mat))                stop("mat must be TRUE or FALSE")
   if(!missing(ind))      x.ind <- ind
   ind.x     <- !exists("x.ind", envir=environment())
@@ -374,7 +374,7 @@ plot.IMIFA  <- function(results = NULL, plot.meth = c("all", "correlation", "den
     if(!ind.x)             ind <- x.ind
   } 
   
-  if(m.sw["Q.sw"]) {
+  if(m.sw["GQ.sw"]) {
     if(is.element(method, c("FA", "MFA"))) {
       aic    <- round(GQ.res$AIC, 2)
       bic    <- round(GQ.res$BIC, 2)

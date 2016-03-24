@@ -45,14 +45,14 @@
     sigma.mu     <- 1/sigma.mu
     mu           <- sim.mu.p(sigma.mu=sigma.mu, P=P)  
     f            <- sim.f.p(Q=Q, N=N)
-    psi.inv      <- sim.psi.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
-    phi          <- sim.p.p(Q=Q, P=P, phi.nu=phi.nu)
-    delta        <- sim.d.p(Q=Q, alpha.d1=alpha.d1, alpha.d2=alpha.d2)
+    psi.inv      <- sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
+    phi          <- sim.phi.p(Q=Q, P=P, phi.nu=phi.nu)
+    delta        <- sim.delta.p(Q=Q, alpha.d1=alpha.d1, alpha.d2=alpha.d2)
     tau          <- cumprod(delta)
     lmat         <- matrix(0, nr=P, nc=Q)
     for(j in seq_len(P)) {
       D.load     <- phi[j,] * tau
-      lmat[j,]   <- sim.load.p(D.load=D.load, Q=Q)
+      lmat[j,]   <- sim.load.ps(D.load=D.load, Q=Q)
     }
     sum.data     <- colSums(data)
   
@@ -74,13 +74,13 @@
     # Scores & Loadings
       c.data     <- sweep(data, 2, mu, FUN="-")
       if(Q  > 0) {
-        f        <- sim.scores(N=N, Q=Q, lmat=lmat, psi.inv=psi.inv, c.data=c.data)
+        f        <- sim.score(N=N, Q=Q, lmat=lmat, psi.inv=psi.inv, c.data=c.data)
         FtF      <- crossprod(f)
         for(j in seq_len(P)) {
           psi.inv.j <- psi.inv[j]
           c.data.j  <- c.data[,j]
           D.load    <- phi[j,] * tau * diag(Q)
-          lmat[j,]  <- sim.load(D.load=D.load, Q=Q, c.data.j=c.data.j, 
+          lmat[j,]  <- sim.load(l.sigma=D.load, Q=Q, c.data.j=c.data.j, 
                                 f=f, psi.inv.j=psi.inv.j, FtF=FtF)
         }
       } else {
@@ -89,8 +89,8 @@
       }          
     
     # Uniquenesses
-      psi.inv    <- sim.psi.inv(N=N, P=P, psi.alpha=psi.alpha, psi.beta=psi.beta,
-                                c.data=c.data, f=f, lmat=lmat)
+      psi.inv    <- sim.psi.i(N=N, P=P, psi.alpha=psi.alpha, psi.beta=psi.beta,
+                              c.data=c.data, f=f, lmat=lmat)
     
     # Local Shrinkage
       load.2     <- lmat * lmat

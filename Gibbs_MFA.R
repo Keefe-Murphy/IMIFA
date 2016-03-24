@@ -59,10 +59,10 @@
     } else {
       z          <- sim.z.p(N=N, prob.z=pi.prop)
     }
-    mu           <- sim.mu.p(P=P, sigma.mu=sigma.mu, G=G) 
-    f            <- sim.f.p(Q=Q, N=N)
-    lmat         <- sim.load.p(Q=Q, P=P, sigma.l=sigma.l, G=G)
-    psi.inv      <- sim.psi.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta, G=G)
+    mu           <- sim.mu.mp(P=P, sigma.mu=sigma.mu, G=G) 
+    f            <- sim.f.mp(Q=Q, N=N)
+    lmat         <- sim.load.mp(Q=Q, P=P, sigma.l=sigma.l, G=G)
+    psi.inv      <- sim.psi.imp(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta, G=G)
     l.sigma      <- sigma.l * diag(Q)
     
   # Iterate
@@ -82,20 +82,20 @@
         sum.data <- t(replace(sum.data, which(is.na(sum.data)), 0))
       }
       sum.f      <- do.call(cbind, lapply(seq_len(G), function(g) colSums(f[z == g,, drop=F])))
-      mu         <- sim.mu(nn=nn, P=P, sigma.mu=sigma.mu, psi.inv=psi.inv,
-                           sum.data=sum.data, sum.f=sum.f, lmat=lmat, G=G)
+      mu         <- sim.mu.m(nn=nn, P=P, sigma.mu=sigma.mu, psi.inv=psi.inv,
+                             sum.data=sum.data, sum.f=sum.f, lmat=lmat, G=G)
     
     # Scores & Loadings
-      c.data     <- lapply(seq_len(G), function(g) sweep(data[z == g,], 2, mu[,g], FUN="-"))
+      c.data     <- lapply(seq_len(G), function(g) sweep(data[z == g,, drop=F], 2, mu[,g], FUN="-"))
       if(Q > 0) {
-        f        <- sim.scores(nn=nn, Q=Q, lmat=lmat, psi.inv=psi.inv, 
-                               c.data=c.data)[as.character(seq_len(N)),, drop=F]
+        f        <- sim.score.m(nn=nn, Q=Q, lmat=lmat, psi.inv=psi.inv, 
+                                c.data=c.data)[as.character(seq_len(N)),, drop=F]
         FtF      <- lapply(seq_len(G), function(g) crossprod(f[z == g,, drop=F]))
         for(j in seq_len(P)) {
           psi.inv.j <- psi.inv[j,]
           c.data.j  <- lapply(c.data, function(dat) dat[,j])
-          lmat[j,,] <- sim.load(l.sigma=l.sigma, Q=Q, c.data.j=c.data.j, 
-                                f=f, psi.inv.j=psi.inv.j, FtF=FtF, G=G, z=z)
+          lmat[j,,] <- sim.load.m(l.sigma=l.sigma, Q=Q, c.data.j=c.data.j, 
+                                  f=f, psi.inv.j=psi.inv.j, FtF=FtF, G=G, z=z)
         }
       } else {
         f        <- matrix(, nr=N, nc=0)
@@ -103,8 +103,8 @@
       }
                   
     # Uniquenesses
-      psi.inv    <- sim.psi.inv(N=N, P=P, psi.alpha=psi.alpha, psi.beta=psi.beta,
-                                c.data=c.data, f=f, lmat=lmat, G=G, z=z)
+      psi.inv    <- sim.psi.im(N=N, P=P, psi.alpha=psi.alpha, psi.beta=psi.beta,
+                               c.data=c.data, f=f, lmat=lmat, G=G, z=z)
     
     # Mixing Proportions
       pi.prop    <- sim.pi(pi.alpha=pi.alpha, nn=nn)

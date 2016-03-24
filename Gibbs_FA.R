@@ -45,7 +45,7 @@
     mu           <- sim.mu.p(P=P, sigma.mu=sigma.mu)  
     f            <- sim.f.p(Q=Q, N=N)
     lmat         <- sim.load.p(Q=Q, P=P, sigma.l=sigma.l)
-    psi.inv      <- sim.psi.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
+    psi.inv      <- sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
     l.sigma      <- sigma.l * diag(Q)
     sum.data     <- colSums(data)
   
@@ -67,7 +67,7 @@
     # Scores & Loadings
       c.data     <- sweep(data, 2, mu, FUN="-")
       if(Q > 0) {
-        f        <- sim.scores(N=N, Q=Q, lmat=lmat, psi.inv=psi.inv, c.data=c.data)
+        f        <- sim.score(N=N, Q=Q, lmat=lmat, psi.inv=psi.inv, c.data=c.data)
         FtF      <- crossprod(f)
         for(j in seq_len(P)) {
           psi.inv.j <- psi.inv[j]
@@ -81,8 +81,8 @@
       }
                       
     # Uniquenesses
-      psi.inv    <- sim.psi.inv(N=N, P=P, psi.alpha=psi.alpha, psi.beta=psi.beta,
-                                c.data=c.data, f=f, lmat=lmat)
+      psi.inv    <- sim.psi.i(N=N, P=P, psi.alpha=psi.alpha, psi.beta=psi.beta,
+                              c.data=c.data, f=f, lmat=lmat)
     
       if(all(iter > burnin, iter %% thinning == 0)) {
         new.iter <- ceiling((iter - burnin)/thinning)

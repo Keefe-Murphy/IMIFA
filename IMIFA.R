@@ -46,7 +46,7 @@
 # Posterior Summaries & Plots, etc. (optional: additional 'burnin' & 'thinning' & user-defined Q)
   res <- tune.imifa(sim)
   res$Error
-  plot(res, "Q")
+  plot(res, "GQ")
  #res <- tune.imifa(sim, Q=3, G=3, criterion="aic")
   
 # Means
