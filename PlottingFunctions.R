@@ -45,6 +45,9 @@ plot.IMIFA  <- function(results = NULL, plot.meth = c("all", "correlation", "den
   obs.names <- rownames(result$post.f)
   all.ind   <- plot.meth == "all"
   grp.ind   <- all(G != 1, !is.element(method, c("FA", "IFA")))
+  if(grp.ind) {
+    clust   <- results$Clust
+  }
   if(all.ind)   {
     if(v.sw[vars]) {
       m.sw[-1]  <- !m.sw[-1]
@@ -290,7 +293,11 @@ plot.IMIFA  <- function(results = NULL, plot.meth = c("all", "correlation", "den
     if(vars == "scores") {
       plot.x   <- results$Scores$post.f
       if(ind[1] > n.obs)              stop(paste0("Only the first ", n.obs, " scores can be plotted"))
-      Labs     <- 1
+      if(grp.ind) {
+        Labs   <- clust$post.z
+      } else {
+        Labs   <- 1
+      }
       if(!missing(Label)) {
         if(!exists(as.character(match.call()$Label),
             envir=.GlobalEnv)) {      warning(paste0("Object ", match.call()$Label, " not found"), call.=F)

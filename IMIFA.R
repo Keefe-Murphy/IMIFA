@@ -60,13 +60,14 @@
   plot(res, "c", "m")
   
 # Scores
+  plot(res, "a", "s")
   plot(res, "a", "s", Lab)
-  plot(res, "a", "s", Lab, mat=F)
+  plot(res, "a", "s", mat=F)
   plot(res, "t", "s")
   plot(res, "t", "s", mat=F)
   plot(res, "d", "s")
   plot(res, "d", "s", mat=F)
-  plot(res, "p", "s", Lab)
+  plot(res, "p", "s")
   plot(res, "c", "s")
       
 # Loadings
