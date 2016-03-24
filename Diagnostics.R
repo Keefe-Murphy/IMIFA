@@ -2,8 +2,8 @@
 ### Tune Parameters (Single & Shrinkage Case) ###
 #################################################
 
-tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
-                             Q = NULL, Q.meth = c("Mode", "Median"), recomp = F, ...) {
+tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q = NULL,
+                             criterion = c("bic", "aic"), Q.meth = c("Mode", "Median"), recomp = F, ...) {
   defpar         <- par(no.readonly = T)
   defop          <- options()
   options(warn=1)
@@ -22,28 +22,32 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
   n.obs          <- attr(sims, "Obs")
   n.var          <- attr(sims, "Vars")
   sw             <- attr(sims, "Switch")
+  criterion      <- match.arg(criterion)
   if(!is.logical(recomp))         stop("recomp must be TRUE or FALSE")
   if(any(burnin   > 0, 
      thinning     > 1)) recomp <- T
   
-  if(!missing(G)) {
-    G.x          <- G
-    G.xind       <- which(n.grp == G.x)
+  G.ind          <- 1
+  Q.ind          <- 1
+  G.T            <- !missing(G)
+  Q.T            <- !missing(Q)
+  if(G.T) {
+    if(!is.element(method, c("FA", "IFA"))) {
+      G.ind      <- which(n.grp == G)
+    } else if(G > 1)              warning(paste0("G must be equal to 1 for the ", method, " method"), call.=F)
     if(all(is.element(method, c("MFA", "MIFA")),
        !is.element(G, n.grp)))    stop("This G value was not used during simulation")
   } 
-  G.T            <- exists("G.x", envir=environment())
-  if(!missing(Q)) {
-    Q.x          <- Q
-    Q.xind       <- which(n.fac == Q.x)
+  if(Q.T) {
+    if(!is.element(method, c("IFA", "MIFA", "IMIFA"))) {
+      Q.ind      <- which(n.fac == Q)
+    }
     if(all(is.element(method, c("FA", "MFA")),
        !is.element(Q, n.fac)))    stop("This Q value was not used during simulation")
     if(all(is.element(method, c("IFA", "classify")), 
       (Q * (n.fac - Q)) < 0))     stop(paste0("Q cannot be greater than the number of factors in ", match.call()$sims))
   } 
-  Q.T            <- exists("Q.x", envir=environment())
-  G.ind          <-     G      <- 1
-  Q.ind          <- 1
+  G              <- ifelse(all(G.T, !is.element(method, c("FA", "IFA"))), G, 1)
   
   if(method == "IFA") {
     if(missing(Q.meth)) {
@@ -60,12 +64,12 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
   # Set Q as the (lesser of) the distribution's mode(s) & compute credible interval
     Q.mode       <- as.numeric(names(Q.tab[Q.tab == max(Q.tab)]))
     Q.med        <- ceiling(median(Q.store) * 2)/2
-    if(Q.T) {
-      Q          <- Q.x
-    } else if(Q.meth == 'Mode') { 
-      Q          <- min(Q.mode)
-    } else {
-      Q          <- Q.med
+    if(!Q.T) {
+      if(Q.meth == 'Mode') { 
+        Q        <- min(Q.mode)
+      } else {
+        Q        <- Q.med
+      }
     }
     Q.CI         <- round(quantile(Q.store, c(0.025, 0.975)))
     GQ.res       <- list(G = G, Q = Q, Mode = Q.mode, Median = Q.med, 
@@ -73,38 +77,42 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL,
   }
     
   if(is.element(method, c("FA", "MFA"))) {
-  
-  # Retrieve BIC to tune G & Q   
     G.range      <- length(n.grp)
     Q.range      <- length(n.fac)
-    bic          <- matrix(NA, nr=G.range, nc=Q.range, dimnames=list(paste0("G", n.grp), paste0("Q", n.fac)))
+    
+  # Retrieve AIC & BIC to tune G & Q   
+    aic  <- bic  <- matrix(NA, nr=G.range, nc=Q.range, dimnames=list(paste0("G", n.grp), paste0("Q", n.fac)))
     for(g in seq_len(G.range)) { 
       for(q in seq_len(Q.range)) {
+        aic[g,q] <- sim[[g]][[q]]$aic
         bic[g,q] <- sim[[g]][[q]]$bic  
       }  
     }
-    bic.max      <- which(bic == max(bic), arr.ind = T)
-    G.ind        <- bic.max[1]
-    Q.ind        <- bic.max[2]
-    G            <- n.grp[G.ind]
-    Q            <- n.fac[Q.ind]
+    crit         <- get(criterion)
+    crit.max     <- which(crit == max(crit), arr.ind = T)
     if(all(Q.T, G.T)) {
-      bic        <- bic[G.xind,Q.xind]
-      G          <- G.x
-      Q          <- Q.x
-      G.ind      <- G.xind
-      Q.ind      <- Q.xind
+      aic        <- aic[G.ind,Q.ind]
+      bic        <- bic[G.ind,Q.ind]
     } else if(Q.T) {
-      bic        <- bic[,Q.xind, drop=F]
-      Q          <- Q.x
-      Q.ind      <- Q.xind
+      aic        <- aic[,Q.ind, drop=F]
+      bic        <- bic[,Q.ind, drop=F]
+      crit       <- crit[,Q.ind]
+      G.ind      <- which(crit == max(crit))
+      G          <- n.grp[G.ind]
     } else if(G.T) {
-      bic        <- bic[G.xind,, drop=F]
-      G          <- G.x
-      G.ind      <- G.xind
+      aic        <- aic[G.ind,, drop=F]
+      bic        <- bic[G.ind,, drop=F]
+      crit       <- crit[G.ind,]
+      Q.ind      <- which(crit == max(crit))
+      Q          <- n.fac[Q.ind]
+    } else {
+      G.ind      <- crit.max[1]
+      Q.ind      <- crit.max[2]
+      G          <- n.grp[G.ind]
+      Q          <- n.fac[Q.ind]
     }
     Q            <- setNames(rep(Q, G), paste0("Qg", seq_len(G)))
-    GQ.res       <- list(G = G, Q = Q, BIC = bic)
+    GQ.res       <- list(G = G, Q = Q, AIC = aic, BIC = bic)
   }
   
   if(is.element(method, c("MFA", "MIFA", "IMIFA"))) {

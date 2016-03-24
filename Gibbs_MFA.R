@@ -41,9 +41,8 @@
     post.mu      <- matrix(0, nr=P, nc=G)
     post.psi     <- matrix(0, nr=P, nc=G)
    #post.Sigma   <- array(0, dim=c(P, P, G))
-    bic.mcmc     <- - Inf
+    ll.max       <- - Inf
     K            <- G - 1 + G * (P * Q - 0.5 * Q * (Q - 1)) + 2 * G * P
-    pen          <- K * log(N)
    #cov.emp      <- cov(data)
     dimnames(post.mu)      <- dimnames(post.psi)   <- list(varnames, gnames)
    #dimnames(post.Sigma)   <- list(varnames, varnames, gnames)
@@ -129,7 +128,7 @@
         post.psi    <- post.psi + psi/n.store
        #post.Sigma  <- post.Sigma + Sigma/n.store
         log.like    <- sum(z.res$log.liks)
-        bic.mcmc    <- max(bic.mcmc, log.like, na.rm=T)
+        ll.max      <- max(ll.max, log.like, na.rm=T)
       }  
     }
     post.z    <- setNames(apply(z.store, 1, function(x) factor(which.max(tabulate(x)), levels=seq_len(G))), obsnames)
@@ -146,6 +145,7 @@
                       post.pi    = post.pi,
                      #cov.mat    = cov.emp,
                      #post.Sigma = post.Sigma,
-                      bic        = 2 * bic.mcmc - pen)
+                      aic        = 2 * ll.max - K * 2,
+                      bic        = 2 * ll.max - K * log(N))
     return(returns[!sapply(returns, is.null)])
   }

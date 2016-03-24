@@ -47,7 +47,7 @@
   res <- tune.imifa(sim)
   res$Error
   plot(res, "Q")
- #res <- tune.imifa(sim, Q=3, G=3)
+ #res <- tune.imifa(sim, Q=3, G=3, criterion="aic")
   
 # Means
   plot(res, "a", "m")

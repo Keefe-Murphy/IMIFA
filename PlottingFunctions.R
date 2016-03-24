@@ -369,6 +369,7 @@ plot.IMIFA  <- function(results = NULL, plot.meth = c("all", "correlation", "den
   
   if(m.sw["Q.sw"]) {
     if(is.element(method, c("FA", "MFA"))) {
+      aic    <- round(GQ.res$AIC, 2)
       bic    <- round(GQ.res$BIC, 2)
     }
     if(all(method == "IFA", !Q.supp)) {
@@ -383,13 +384,14 @@ plot.IMIFA  <- function(results = NULL, plot.meth = c("all", "correlation", "den
     if(method == "MIFA") {
         print(GQ.res)
     } else if(method == "IFA") {
-        print(GQ.res[2:length(GQ.res)])
+        print(tail(GQ.res, -1))
     } else if(method == "MFA") {
-        print(GQ.res[-length(GQ.res)])
+        print(head(GQ.res, -2))
     } else {
         cat(paste0("Q = ", Q, "\n"))
     }
     if(is.element(method, c("FA", "MFA"))) {
+        cat(paste0("AIC = ", aic[which.max(aic)], "\n"))
         cat(paste0("BIC = ", bic[which.max(bic)], "\n"))
     }
   }

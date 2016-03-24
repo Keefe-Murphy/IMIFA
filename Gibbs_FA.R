@@ -34,9 +34,8 @@
     post.mu      <- setNames(rep(0, P), varnames)
     post.psi     <- setNames(rep(0, P), varnames)
     post.Sigma   <- matrix(0, nr=P, nc=P)
-    bic.mcmc     <- - Inf
+    ll.max       <- - Inf
     K            <- P * Q - 0.5 * Q * (Q - 1) + 2 * P
-    pen          <- K * log(N)
     cov.emp      <- cov(data)
     dimnames(post.Sigma)   <- list(varnames, varnames)
     dimnames(cov.emp)      <- dimnames(post.Sigma)
@@ -97,7 +96,7 @@
         Sigma       <- tcrossprod(lmat) + diag(psi)
         post.Sigma  <- post.Sigma + Sigma/n.store
         log.like    <- sum(mvdnorm(data=data, mu=mu, Sigma=Sigma, P=P, log.d=T))
-        bic.mcmc    <- max(bic.mcmc, log.like, na.rm=T)
+        ll.max      <- max(ll.max, log.like, na.rm=T)
       }  
     }
     returns   <- list(mu   = if(sw["mu.sw"])             mu.store,
@@ -108,6 +107,7 @@
                       post.psi   = post.psi,
                       cov.mat    = cov.emp,
                       post.Sigma = post.Sigma,
-                      bic        = 2 * bic.mcmc - pen)
+                      aic        = 2 * ll.max - K * 2,
+                      bic        = 2 * ll.max - K * log(N))
     return(returns[!sapply(returns, is.null)])
   }
