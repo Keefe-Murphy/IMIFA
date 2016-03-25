@@ -156,21 +156,21 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       }
     }
     
-    if(method == "MFA") {
+    if(all(method == "MFA", g > 1)) {
       if(sw["l.sw"]) {
         lmat     <- adrop(sims[[G.ind]][[Q.ind]]$load[,Qgs,g,store, drop=F], drop=3)
         l.temp   <- adrop(sims[[G.ind]][[Q.ind]]$load[,Qgs,g,temp.b, drop=F], drop=3:4)
       }
     }
     
-    if(method == "FA")  {
+    if(any(method == "FA",  all(method == "MFA",  g == 1))) {
       if(sw["l.sw"]) {
         lmat     <- sims[[G.ind]][[Q.ind]]$load[,Qgs,store, drop=F]
         l.temp   <- adrop(sims[[G.ind]][[Q.ind]]$load[,Qgs,temp.b, drop=F], drop=3)
       }
     } 
     
-    if(method == "IFA") {
+    if(any(method == "IFA", all(method == "MIFA", g == 1))) {
       store      <- store[which(Q.store >= Qg)]
       n.store    <- length(store)
       temp.b     <- store[1]
@@ -183,7 +183,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       }
     }
     
-    if(is.element(method, c("MFA", "MIFA", "IMIFA"))) {
+    if(all(is.element(method, c("MFA", "MIFA", "IMIFA")), g > 1)) {
       cov.emp    <- sims[[G.ind]][[Q.ind]]$cov.mat[,,g]
       cov.est    <- sims[[G.ind]][[Q.ind]]$post.Sigma[,,g]
       post.mu    <- sims[[G.ind]][[Q.ind]]$post.mu[,g]
