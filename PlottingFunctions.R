@@ -62,7 +62,7 @@ plot.IMIFA  <- function(results = NULL, plot.meth = c("all", "correlation", "den
     sw.n    <- paste0(toupper(substring(plot.meth, 1, 1)), ".sw")
     m.sw[sw.n]  <- T
   }
-  if(all(!m.sw["GQ.sw"],
+  if(all(!m.sw["Q.sw"],
      missing(vars)))                  stop("What variable would you like to plot?")
   if(all(any(vars == "scores",
      vars   == "loadings"),
@@ -77,7 +77,7 @@ plot.IMIFA  <- function(results = NULL, plot.meth = c("all", "correlation", "den
    m.sw["P.sw"] <- T
   } 
   if(all(!v.sw[vars],
-     !m.sw["GQ.sw"]))                 stop(paste0(vars, " weren't stored"))
+     !m.sw["G.sw"]))                  stop(paste0(vars, " weren't stored"))
   if(!is.logical(mat))                stop("mat must be TRUE or FALSE")
   if(!missing(ind))      x.ind <- ind
   ind.x     <- !exists("x.ind", envir=environment())
@@ -374,7 +374,7 @@ plot.IMIFA  <- function(results = NULL, plot.meth = c("all", "correlation", "den
     if(!ind.x)             ind <- x.ind
   } 
   
-  if(m.sw["GQ.sw"]) {
+  if(m.sw["G.sw"]) {
     if(is.element(method, c("FA", "MFA"))) {
       aic    <- round(GQ.res$AIC, 2)
       bic    <- round(GQ.res$BIC, 2)
