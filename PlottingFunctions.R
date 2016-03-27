@@ -2,9 +2,9 @@
 ### IMIFA Plotting Functions ###
 ################################
 
-plot.IMIFA    <- function(results = NULL, plot.meth = c("all", "correlation", "density", "posterior", "GQ", "trace"), 
-                          vars = c("means", "scores", "loadings", "uniquenesses"), Label = NULL, fac = NULL, 
-                          by.fac = T, ind = NULL, type = c("h", "n", "p", "l"), mat = T, ... ) {
+plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "density", "posterior", "GQ", "trace"), 
+                           vars = c("means", "scores", "loadings", "uniquenesses"), Label = NULL, fac = NULL, g = NULL,
+                           by.fac = T, ind = NULL, type = c("h", "n", "p", "l"), mat = T, ... ) {
  
   defpar  <- par(no.readonly = T)
   defop   <- options()
@@ -18,6 +18,7 @@ plot.IMIFA    <- function(results = NULL, plot.meth = c("all", "correlation", "d
   if(class(results) != "IMIFA")       stop(paste0("Results object of class 'IMIFA' must be supplied"))
   GQ.res  <- results$GQ.results
   G       <- GQ.res$G
+  Qs      <- GQ.res$Q
   n.grp   <- attr(GQ.res, "Groups")
   n.fac   <- attr(GQ.res, "Factors")
   G.supp  <- attr(GQ.res, "Supplied")["G"]
@@ -31,14 +32,14 @@ plot.IMIFA    <- function(results = NULL, plot.meth = c("all", "correlation", "d
      c("G", "Q", 
        "QG"))) {       plot.meth <- "GQ"
   }
-  plot.meth   <- match.arg(plot.meth)
-  type.x      <- missing(type)
-  type        <- match.arg(type)
-  m.sw        <- c(G.sw = F, C.sw = F, D.sw = F, P.sw = F, T.sw = F)
-  v.sw        <- attr(results, "Switch")
-  names(v.sw) <- formals(sys.function(sys.parent()))$vars
-  var.names   <- rownames(results[[1]]$post.load)
-  obs.names   <- rownames(results$Scores$post.f)
+  plot.meth    <- match.arg(plot.meth)
+  type.x       <- missing(type)
+  type         <- match.arg(type)
+  m.sw         <- c(G.sw = F, C.sw = F, D.sw = F, P.sw = F, T.sw = F)
+  v.sw         <- attr(results, "Switch")
+  names(v.sw)  <- formals(sys.function(sys.parent()))$vars
+  var.names    <- rownames(results[[1]]$post.load)
+  obs.names    <- rownames(results$Scores$post.f)
   all.ind <- plot.meth == "all"
   grp.ind <- all(G != 1, !is.element(method, c("FA", "IFA")))
   if(grp.ind) {
@@ -47,7 +48,7 @@ plot.IMIFA    <- function(results = NULL, plot.meth = c("all", "correlation", "d
   if(all.ind)   {
     if(v.sw[vars]) {
       m.sw[-1]    <- !m.sw[-1]
-      if(vars     == "loadings") {
+      if(vars  == "loadings") {
         layout(matrix(c(1, 2, 3, 4, 3, 5), nr=3, nc=2, byrow = TRUE))
       } else {
         layout(matrix(c(1, 2, 3, 4), nr=2, nc=2, byrow = TRUE))
@@ -61,8 +62,7 @@ plot.IMIFA    <- function(results = NULL, plot.meth = c("all", "correlation", "d
   if(all(!m.sw["G.sw"],
      missing(vars)))                  stop("What variable would you like to plot?")
   if(all(any(m.sw["P.sw"], all.ind),
-     any(vars  == "means",
-         vars  == "uniquenesses"),
+     is.element(vars, c("means", "uniquenesses")),
      !v.sw[vars])) {  
     if(all.ind)                       warning(paste0("Can only plot posterior mean, as ", vars, " weren't stored"), call.=F)
    v.sw[vars]     <- !v.sw[vars]
@@ -72,33 +72,47 @@ plot.IMIFA    <- function(results = NULL, plot.meth = c("all", "correlation", "d
   if(all(!v.sw[vars],
      !m.sw["G.sw"]))                  stop(paste0(vars, " weren't stored"))
   if(!is.logical(mat))                stop("mat must be TRUE or FALSE")
-  if(!missing(ind))        x.ind <- ind
-  ind.x   <- !exists("x.ind", envir=environment())
-  if(any(vars == "scores",
+  indx    <- missing(ind)
+  if(!indx)                 xind <- ind
+  if(any(vars  == "scores",
          m.sw["G.sw"])) {
     Gs    <- 1
+  } else if(!missing(g)) {
+    if(g > 1)                         warning(paste0("g must be equal to 1 for the ", method, " method"), call.=F)
+    if(all(is.element(method, c("MFA", "MIFA")),
+      !is.element(g, seq_len(G))))    stop("This g value was not used during simulation")
+    Gs    <- g
+    rm(g)
   } else {
     Gs    <- seq_len(G)
   }
   
   for(g in Gs) {
-    Q     <- GQ.res$Q[g]
-    result     <- results[[g]]
-    if(all(any(vars == "scores",
-               vars == "loadings"),
-           Q   == 0))                 stop(paste0("Can't plot ", vars, " as they contain no columns/factors"))
-    if(any(all(any(vars == "means", 
-                   vars == "uniquenesses"),
-               !missing(ind)),
-           Q   == 1)) {    mat.x <- F
+    Q     <- Qs[g]
+    msg   <- "Hit <Return> to see next plot: "
+    msgx  <- all(interactive(), g != max(Gs))
+    result    <- results[[g]]
+    if(any(all(Q  == 0,  vars == "loadings"),
+       all(all(Qs == 0), vars == "scores"))) {            
+                                       warning(paste0("Can't plot ", vars, " as they contain no columns/factors"), call.=F)
+      if(length(unique(tail(Qs, - g))) == 1) {
+        break
+      } else {
+        ifelse(msgx, readline(msg), "")
+        next
+      }
+    }
+    if(any(all(is.element(vars, c("means", "uniquenesses")),
+               !indx),
+           all(is.element(vars, c("scores", "loadings")),
+               Q  == 1))) { matx <- F
     } else {
-      mat.x   <- mat
+      matx     <- mat
     }                           
     
     if(m.sw["T.sw"]) {
-      if(any(vars == "scores",
-             vars == "loadings")) {
-        if(ind.x)            ind <- c(1, 1)
+      if(is.element(vars, c("scores", "loadings"))) {
+        if(indx)             ind <- c(1, 1)
         if(!missing(fac)) ind[2] <- fac
         if(length(ind) > 2)           stop("Length of plotting indices can't be greater than 2")
         if(vars   == "scores") {
@@ -106,15 +120,15 @@ plot.IMIFA    <- function(results = NULL, plot.meth = c("all", "correlation", "d
         } else if(ind[1] > n.var)     stop(paste0("First index can't be greater than the number of variables - ",  n.var))
         if(ind[2]   > Q)              stop(paste0("Second index can't be greater than the number of factors - ", Q))
       } else {
-        if(ind.x)            ind <- 1
+        if(indx)             ind <- 1
         if(length(ind) >  1)          stop("Length of plotting indices can't be greater than 1")
         if(ind      > n.var)          stop(paste0("Index can't be greater than the number of variables - ", n.var))
       }
-      if(!mat.x)            iter <- seq_len(attr(result, "Store"))
+      if(!matx)             iter <- seq_len(attr(result, "Store"))
       
       if(vars  == "means") {
         plot.x <- result$means
-        if(mat.x) {
+        if(matx) {
           matplot(t(plot.x[,]), type="l", ylab="Means", xlab="Iteration", ylim=if(is.element(method, c("FA", "IFA"))) c(-1, 1))
           title(main=list(paste0("Trace", ifelse(all.ind, "", paste0(":\nMeans", ifelse(grp.ind, paste0(" - Group ", g), ""))))))
         } else {
@@ -129,7 +143,7 @@ plot.IMIFA    <- function(results = NULL, plot.meth = c("all", "correlation", "d
         } else {
           plot.x  <- plot.X[,ind[2],]
         }
-        if(mat.x) {
+        if(matx) {
           matplot(t(plot.x), type="l", ylab="Scores", xlab="Iteration")    
           if(by.fac) {
             title(main=list(paste0("Trace", ifelse(all.ind, ":\n", ":\nScores - "), "Observation ", obs.names[ind[1]])))
@@ -148,7 +162,7 @@ plot.IMIFA    <- function(results = NULL, plot.meth = c("all", "correlation", "d
         } else {
           plot.x  <- plot.X[,ind[2],]
         }
-        if(mat.x) {
+        if(matx) {
           matplot(t(plot.x), type="l", ylab="Loadings", xlab="Iteration")
           if(by.fac) {
             title(main=list(paste0("Trace", ifelse(all.ind, ":\n", paste0(":\nLoadings - ", ifelse(grp.ind, paste0("Group ", g, " - "), ""))), var.names[ind[1]], " Variable")))
@@ -161,8 +175,8 @@ plot.IMIFA    <- function(results = NULL, plot.meth = c("all", "correlation", "d
         }
       }
       if(vars  == "uniquenesses") {
-        plot.x    <- result$uniquenesses
-        if(mat.x) {
+        plot.x <- result$uniquenesses
+        if(matx) {
           matplot(t(plot.x[,]), type="l", ylab="Uniquenesses", xlab="Iteration")
           title(main=list(paste0("Trace", ifelse(all.ind, "", paste0(":\nUniquenesses", ifelse(grp.ind, paste0(" - Group ", g), ""))))))
         } else {
@@ -170,7 +184,7 @@ plot.IMIFA    <- function(results = NULL, plot.meth = c("all", "correlation", "d
           title(main=list(paste0("Trace", ifelse(all.ind, ":\n", paste0(":\nUniquenesses - ", ifelse(grp.ind, paste0("Group ", g, " - "), ""))), var.names[ind], " Variable")))
         }
       }
-      if(!ind.x)             ind <- x.ind
+      if(!indx)              ind <- xind
       if(all.ind) title(paste0(toupper(substr(vars, 1, 1)),
                         substr(vars, 2, nchar(vars)), 
                         ifelse(all(grp.ind, vars != "scores"), 
@@ -178,9 +192,8 @@ plot.IMIFA    <- function(results = NULL, plot.meth = c("all", "correlation", "d
     }
     
     if(m.sw["D.sw"]) {
-      if(any(vars == "scores", 
-             vars == "loadings")) {
-        if(ind.x)            ind <- c(1, 1)
+      if(is.element(vars, c("scores", "loadings"))) {
+        if(indx)             ind <- c(1, 1)
         if(!missing(fac)) ind[2] <- fac
         if(length(ind) > 2)           stop("Length of plotting indices can't be greater than 2")
         if(vars   == "scores") {
@@ -188,13 +201,13 @@ plot.IMIFA    <- function(results = NULL, plot.meth = c("all", "correlation", "d
         } else if(ind[1] > n.var)     stop(paste0("First index can't be greater than the number of variables - ",  n.var))
         if(ind[2]   > Q)              stop(paste0("Second index can't be greater than the number of factors - ", Q))
       } else {
-        if(ind.x)            ind <- 1
+        if(indx)             ind <- 1
         if(length(ind) >  1)          stop("Length of plotting indices can't be greater than 1")
         if(ind      > n.var)          stop(paste0("Index can't be greater than the number of variables - ", n.var))
       }
       if(vars  == "means") {
         plot.X <- result$means
-        if(mat.x) {
+        if(matx) {
           plot.x  <- apply(plot.X, 1, density)
           plot.x  <- sapply(plot.x, "[[", "y")
           matplot(plot.x, type="l", ylab="Density")
@@ -213,7 +226,7 @@ plot.IMIFA    <- function(results = NULL, plot.meth = c("all", "correlation", "d
         } else {
           plot.x  <- plot.X[,ind[2],]
         }
-        if(mat.x) {
+        if(matx) {
           plot.x  <- apply(plot.x, 1, density)
           plot.x  <- sapply(plot.x, "[[", "y")
           matplot(plot.x, type="l", ylab="Density")
@@ -236,7 +249,7 @@ plot.IMIFA    <- function(results = NULL, plot.meth = c("all", "correlation", "d
         } else {
           plot.x  <- plot.X[,ind[2],]
         }
-        if(mat.x) {
+        if(matx) {
           plot.x  <- apply(plot.x, 1, density)
           plot.x  <- sapply(plot.x, "[[", "y")
           matplot(plot.x, type="l", ylab="Density")
@@ -254,7 +267,7 @@ plot.IMIFA    <- function(results = NULL, plot.meth = c("all", "correlation", "d
       }
       if(vars  == "uniquenesses") {
         plot.X <- result$uniquenesses
-        if(mat.x) {
+        if(matx) {
           plot.x  <- apply(plot.X, 1, density)
           plot.x  <- sapply(plot.x, "[[", "y")
           matplot(plot.x, type="l", ylab="Density")
@@ -266,13 +279,12 @@ plot.IMIFA    <- function(results = NULL, plot.meth = c("all", "correlation", "d
           polygon(plot.d, col="black")
         }
       }
-      if(!ind.x)             ind <- x.ind
+      if(!indx)              ind <- xind
     }
     
     if(m.sw["P.sw"]) {
-      if(any(vars == "scores", 
-             vars == "loadings")) {
-        if(ind.x) {
+      if(is.element(vars, c("scores", "loadings"))) {
+        if(indx) {
          if(vars  == "scores") {
              ind  <- c(1, 2)
          } else {
@@ -315,12 +327,13 @@ plot.IMIFA    <- function(results = NULL, plot.meth = c("all", "correlation", "d
             if(length(Labs) != n.obs) stop(paste0("Labels must be a factor of length N=",  n.obs))
           }
         }
+        ind2   <- ifelse(Q > 1, max(2, ind[2]), ind[2])
         type.f <- ifelse(any(type.x, type == "l"), "p", type)
         if(Q   != 1) {
-          plot(plot.x[,ind[1]], plot.x[,ind[2]], type=type.f, col=as.numeric(Labs), 
-               xlab=paste0("Factor ", ind[1]), ylab=paste0("Factor ", ind[2]))
+          plot(plot.x[,ind[1]], plot.x[,ind2], type=type.f, col=as.numeric(Labs), 
+               xlab=paste0("Factor ", ind[1]), ylab=paste0("Factor ", ind2))
           title(main=list(paste0("Posterior Mean", ifelse(all.ind, "", ":\nScores"))))
-          if(type.f == "n") text(plot.x[,ind[1]], plot.x[,ind[2]], obs.names, 
+          if(type.f == "n") text(plot.x[,ind[1]], plot.x[,ind2], obs.names, 
                                col=as.numeric(Labs), cex=0.5)
         } else {
           plot(plot.x[,ind], type=type.f, col=as.numeric(Labs), 
@@ -380,7 +393,7 @@ plot.IMIFA    <- function(results = NULL, plot.meth = c("all", "correlation", "d
         title(main=list(paste0("Posterior Mean", ifelse(all.ind, "", paste0(":\nUniquenesses", ifelse(grp.ind, paste0(" - Group ", g), ""))))))
         if(type  == "n") text(seq_along(plot.x), plot.x, var.names, cex=0.5)
       }
-      if(!ind.x)             ind <- x.ind
+      if(!indx)              ind <- xind
     } 
     
     if(m.sw["G.sw"]) {
@@ -413,9 +426,8 @@ plot.IMIFA    <- function(results = NULL, plot.meth = c("all", "correlation", "d
     }
   
     if(m.sw["C.sw"]) {
-      if(any(vars == "scores",
-             vars == "loadings")) {
-        if(ind.x)            ind <- c(1, 1)
+      if(is.element(vars, c("scores", "loadings"))) {
+        if(indx)             ind <- c(1, 1)
         if(!missing(fac)) ind[2] <- fac
         if(length(ind) > 2)           stop("Length of plotting indices can't be greater than 2")
         if(vars   == "scores") {
@@ -423,7 +435,7 @@ plot.IMIFA    <- function(results = NULL, plot.meth = c("all", "correlation", "d
         } else if(ind[1] > n.var)     stop(paste0("First index can't be greater than the number of variables - ",  n.var))
         if(ind[2] > Q)                stop(paste0("Second index can't be greater than the number of factors - ", Q))
       } else {
-        if(ind.x)            ind <- 1
+        if(indx)             ind <- 1
         if(length(ind) > 1)           stop("Length of plotting indices can't be greater than 1")
         if(ind    >  n.var)           stop(paste0("Index can't be greater than the number of variables - ", n.var))
       }
@@ -447,10 +459,8 @@ plot.IMIFA    <- function(results = NULL, plot.meth = c("all", "correlation", "d
         acf(plot.x[ind,], main="")
         title(main=list(paste0("ACF", ifelse(all.ind, ":\n", paste0(":\nUniquenesses - ", ifelse(grp.ind, paste0("Group ", g, " - "), ""))), var.names[ind], " Variable")))
       }
-      if(!ind.x)             ind <- x.ind
+      if(!indx)              ind <- xind
     }
-    if(all(interactive(), g != max(Gs))) {
-      readline(prompt="Hit <Return> to see next plot: ")
-    }
+    ifelse(msgx, readline(msg), "")
   }
 }
