@@ -83,6 +83,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
       !is.element(g, seq_len(G))))    stop("This g value was not used during simulation")
     Gs    <- g
     rm(g)
+  } else if(!interactive()) {         stop("g must be supplied for non-interactive sessions")
   } else {
     Gs    <- seq_len(G)
   }
@@ -91,7 +92,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
     Q     <- Qs[g]
     msg   <- "Hit <Return> to see next plot: "
     msgx  <- all(interactive(), g != max(Gs))
-    result    <- results[[g]]
+    result     <- results[[g]]
     if(any(all(Q  == 0,  vars == "loadings"),
        all(all(Qs == 0), vars == "scores"))) {            
                                        warning(paste0("Can't plot ", vars, " as they contain no columns/factors"), call.=F)
