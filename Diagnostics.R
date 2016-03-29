@@ -150,25 +150,20 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       sw[c("f.sw", "l.sw")]    <- attr(sims, "Switch")[c("f.sw", "l.sw")]
     }
     
-    if(is.element(method, c("MFA", "FA"))) {
-      if(all(sw["f.sw"], g == 1)) {
-        f        <- sims[[G.ind]][[Q.ind]]$f[,Qgs,store, drop=F]
-      }
+    if(all(is.element(method, c("MFA", "FA")), sw["f.sw"], g == 1)) {
+      f          <- sims[[G.ind]][[Q.ind]]$f[,Qgs,store, drop=F]
     }
     
-    if(all(method == "MFA", G > 1)) {
-      if(sw["l.sw"]) {
+    if(sw["l.sw"]) {
+      if(all(method == "MFA", G > 1)) {
         lmat     <- adrop(sims[[G.ind]][[Q.ind]]$load[,Qgs,g,store, drop=F], drop=3)
         l.temp   <- adrop(sims[[G.ind]][[Q.ind]]$load[,Qgs,g,temp.b, drop=F], drop=3:4)
       }
-    }
-    
-    if(any(method == "FA",  all(method == "MFA",  G == 1))) {
-      if(sw["l.sw"]) {
+      if(any(method == "FA",  all(method == "MFA",  G == 1))) {
         lmat     <- sims[[G.ind]][[Q.ind]]$load[,Qgs,store, drop=F]
         l.temp   <- adrop(sims[[G.ind]][[Q.ind]]$load[,Qgs,temp.b, drop=F], drop=3)
       }
-    } 
+    }
     
     if(any(method == "IFA", all(method == "MIFA", G == 1))) {
       store      <- store[which(Q.store >= Qg)]
