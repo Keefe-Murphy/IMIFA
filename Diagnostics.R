@@ -52,7 +52,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   if(method == "IFA") {
     if(missing(Q.meth)) {
       Q.meth     <- "Mode"
-    } else {
+    } else   {
       Q.meth     <- match.arg(Q.meth)
     }
     
@@ -134,17 +134,17 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     cluster      <- c(cluster, if(sw["pi.sw"]) list(pi.prop  = pi.prop))
   }
   
-  Qm   <- max(Q)
-  if(Qm == 0) {
+  if(all(Q == 0)) {
     if(sw["f.sw"])                warning("Scores not stored as model has zero factors", call.=F)
     sw["f.sw"]   <- F
   }
-  if(sw["f.sw"]) {
+  if(sw["f.sw"])  {
+    Qms          <- seq_len(max(Q))
     if(is.element(method, c("FA", "MFA"))) {
-      f          <- sims[[G.ind]][[Q.ind]]$f[,seq_len(Qm),store, drop=F]
+      f          <- sims[[G.ind]][[Q.ind]]$f[,Qms,store, drop=F]
     }
-    if(is.element(method, c("IFA", "MIFA"))) {
-      f          <- as.array(sims[[G.ind]][[Q.ind]]$f)[,seq_len(Qm),store, drop=F]
+    if(is.element(method, c("IFA", "MIFA", "IMIFA"))) {
+      f          <- as.array(sims[[G.ind]][[Q.ind]]$f)[,Qms,store, drop=F]
     }
   }
   
@@ -207,7 +207,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     }
     
   # Loadings matrix / identifiability / error metrics / etc.  
-    if(sw["l.sw"])   {
+    if(sw["l.sw"])     {
       for(p in seq_len(n.store)) {
         rot          <- procrustes(X=as.matrix(lmat[,,p]), Xstar=l.temp)$R
         lmat[,,p]    <- lmat[,,p] %*% rot
@@ -227,8 +227,8 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
         Sigma    <- tcrossprod(lmat[,,r]) + diag(psi[,r])
         cov.est  <- cov.est + Sigma/n.store
       }
-    } else if(recomp) {
-      if(!sw["l.sw"]) {
+    } else if(recomp)  {
+      if(!sw["l.sw"])  {
                                   warning("Loadings not stored: can't re-estimate Sigma", call.=F)
       } else {
                                   warning("Uniquenesses not stored: can't re-estimate Sigma", call.=F)
@@ -238,7 +238,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     if(sw["psi.sw"]) post.psi  <- rowMeans(psi, dims=1)
     if(sw["l.sw"]) { post.load <- rowMeans(lmat, dims=2)
       var.exp    <- sum(colSums(post.load * post.load))/n.var
-    } else {
+    } else   {
       var.exp    <- (sum(diag(cov.emp)) - sum(post.psi))/n.var
     }
     error        <- cov.emp - cov.est
@@ -277,7 +277,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   attr(GQ.res, "Groups")       <- n.grp
   attr(GQ.res, "Supplied")     <- c(Q=Q.T, G=G.T)
   
-  if(sw["f.sw"]) {
+  if(sw["f.sw"])   {
     scores       <- list(f = f, post.f = rowMeans(f, dims=2))
   }    
   
