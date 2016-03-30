@@ -52,7 +52,7 @@
     lmat         <- matrix(0, nr=P, nc=Q)
     for(j in seq_len(P)) {
       D.load     <- phi[j,] * tau
-      lmat[j,]   <- sim.load.ps(l.sigma=D.load, Q=Q)
+      lmat[j,]   <- sim.load.ps(D.load=D.load, Q=Q)
     }
     sum.data     <- colSums(data)
   

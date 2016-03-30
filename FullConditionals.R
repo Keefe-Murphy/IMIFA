@@ -182,7 +182,7 @@
     }
 
   # Loadings (Shrinkage)
-    sim.load.ps <- function(D.load = NULL, Q = NULL, ...) {
+    sim.load.ps <- function(Q = NULL, D.load = NULL, ...) {
       U.load    <- sqrt(1/D.load)
       z.load    <- rnorm(Q, 0, 1)
         U.load * z.load
