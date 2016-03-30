@@ -7,10 +7,10 @@ sim.imifa      <- function(N = 1000, G = 2, P = 25, Q = rep(5, G)) {
   if(any(N  < 0, P  < 0, Q < 0, G <= 0)) stop("N, P, and Q must be strictly non-negative and G must be strictly positive")
   if(any(Q >= P, Q >= N - 1))            stop(paste0("Cannot generate this many factors relative to N=", N, " and P=", P))
   if(length(Q)  != G)                    
-  if(!missing(Q)) {
-   if(length(Q) == 1) {
+  if(!missing(Q))  {
+   if(length(Q) == 1)  {
     Q    <- rep(Q, G)
-   } else if(length(Q != G)) {           stop(paste0("Q must supplied for each of the G=", G, " groups"))  
+   } else if(length(Q != G))  {          stop(paste0("Q must supplied for each of the G=", G, " groups"))  
    }                                       
   }
   nn     <- rnorm(G, N/G, exp(G * G))

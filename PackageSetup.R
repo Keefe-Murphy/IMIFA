@@ -59,7 +59,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   P         <- ncol(dat)
   
 # Manage storage switches and warnings for other function inputs
-  if(all(centering, missing(mu.switch))) {
+  if(all(centering, missing(mu.switch)))    {
     mu.switch  <- F 
   }
   if(!missing(mu.switch) && all(!mu.switch, !centering)) {
@@ -77,7 +77,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
     if(any(range.G  < 1))           stop("range.G must be strictly positive")
     range.G <- sort(unique(range.G))
     meth    <- rep(method, length(range.G))
-    if(range.G[1]  == 1) {
+    if(range.G[1]  == 1)  {
       if(meth[1] != "IMIFA")  {                                    
         if(meth[1] == "MFA")  {
           meth[1]  <- "FA"                              
@@ -91,7 +91,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   } 
   no.fac    <- all(all(range.Q == 0), is.element(method, c("FA", "MFA")))
   if(is.element(method, c("FA", "MFA"))) {
-    if(!missing(Q.star)) {
+    if(!missing(Q.star))  {
       rm(Q.star)
                                     warning(paste0("Q.star is not used for the ", method, " method"), call.=F)
     }            
@@ -112,7 +112,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
     if(!is.logical(adapt))          stop("adapt must be TRUE or FALSE") 
   }
   if(no.fac) {   
-    if(all(switches[c("f.sw", "l.sw")]))  {
+    if(all(switches[c("f.sw", "l.sw")])) {
                                     warning("Scores & Loadings not stored as model has zero factors", call.=F)
     } else if(switches["f.sw"])   { warning("Scores not stored as model has zero factors", call.=F)
     } else if(switches["l.sw"])   { warning("Loadings not stored as model has zero factors", call.=F)
@@ -145,17 +145,17 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   if(!is.element(method, c("FA", "IFA"))) {
     if(missing("alpha.pi"))  alpha.pi      <- 0.5
                              z.init        <- match.arg(z.init)
-    if(!missing(z.list)) {
+    if(!missing(z.list))   {
                              z.list        <- lapply(z.list, as.factor)
       if(z.init != "list")          stop(paste0("z.init must be set to 'list' if z.list is supplied"))
-      if(length(z.list)   != length(range.G)) {
+      if(length(z.list)   != length(range.G))      {
                                     stop(paste0("z.list must be a list of length ", length(range.G))) }
-      if(!all(lapply(z.list, nlevels)      == range.G)) {
+      if(!all(lapply(z.list, nlevels) == range.G)) {
                                     stop(paste0("Each element of z.list must have the same number of levels as range.G")) }
-      if(!all(lapply(z.list, length)       == N)) {
+      if(!all(lapply(z.list, length)  == N))       {
                                     stop(paste0("Each element of z.list must be a vector of length N=", N)) }
     }
-    if(all(missing(z.list),  z.init == "list")) {
+    if(all(missing(z.list),  z.init   == "list"))  {
                                     stop(paste0("z.list must be supplied if z.init is set to 'list"))
     }
   }  
