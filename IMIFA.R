@@ -77,7 +77,7 @@
   plot(res, "t", "l", mat=F)
   plot(res, "d", "l")
   plot(res, "d", "l", mat=F)
-  res[[1]]$post.load
+  lapply(seq_len(res$GQ.results$G), function(g) res[[g]]$post.load)
   plot(res, "p", "l")
   plot(res, "c", "l")
   
@@ -88,7 +88,7 @@
   plot(res, "t", "u", mat=F)
   plot(res, "d", "u")
   plot(res, "d", "u", mat=F)
-  summary(res[[1]]$post.psi)
+  lapply(seq_len(res$GQ.results$G), function(g) summary(res[[g]]$post.load))
   plot(res, "p", "u")
   plot(res, "c", "u")
 ####
