@@ -89,7 +89,7 @@
       c.data     <- lapply(seq_len(G), function(g) sweep(data[z == g,, drop=F], 2, mu[,g], FUN="-"))
       if(Q > 0) {
         f        <- sim.score.m(nn=nn, Q=Q, lmat=lmat, psi.inv=psi.inv, 
-                                c.data=c.data)[as.character(seq_len(N)),, drop=F]
+                                c.data=c.data)[obsnames,, drop=F]
         FtF      <- lapply(seq_len(G), function(g) crossprod(f[z == g,, drop=F]))
         for(j in seq_len(P)) {
           psi.inv.j <- psi.inv[j,]
