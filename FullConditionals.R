@@ -54,7 +54,7 @@
   # Cluster Labels
     sim.z       <- function(data = NULL, mu = NULL, Sigma = NULL, N = NULL, 
                             G = NULL, P = NULL, pi.prop = NULL, ...) {
-      numer     <- do.call(cbind, lapply(seq_len(G), function(g) mvdnorm(data, mu[,g], Sigma[[g]], P, log.d=F) * pi.prop[,g]))
+      numer     <- do.call(cbind, lapply(seq_len(G), function(g) exp(mvdnorm(data, mu[,g], Sigma[[g]], P, log.d=T) + log(pi.prop[,g]))))
       denomin   <- rowSums(numer)
       pz        <- sweep(numer, 1, denomin, FUN="/")
       pz[rowSums(pz > 0) == 0,] <- rep(1/G, G)
