@@ -132,6 +132,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     }
     cluster      <- list(post.z = post.z, post.pi = post.pi, z = z)
     cluster      <- c(cluster, if(sw["pi.sw"]) list(pi.prop  = pi.prop))
+    attr(cluster, "Z.init")    <- attr(sim[[G.ind]][[Q.ind]], "Z.init")
   }
   
   if(all(Q == 0)) {

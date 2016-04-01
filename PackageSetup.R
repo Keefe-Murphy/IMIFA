@@ -72,6 +72,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
     if(!missing(range.G) &&  
        any(range.G  > 1))           warning(paste0("range.G must be 1 for the ", method, " method"), call.=F)
     range.G <- 1
+    meth    <- method
   } else {
     if(missing(range.G))            stop("range.G must be specified")
     if(any(range.G  < 1))           stop("range.G must be strictly positive")
@@ -88,7 +89,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
       }
                                     warning(paste0("Forced use of ", meth[1], " method where range.G is equal to 1"), call.=F)
     }                               
-  } 
+  }
   no.fac    <- all(all(range.Q == 0), is.element(method, c("FA", "MFA")))
   if(is.element(method, c("FA", "MFA"))) {
     if(!missing(Q.star))  {
@@ -143,22 +144,29 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
     if(missing("epsilon"))   epsilon       <- ifelse(centering, 0.1, 0.005)
   } 
   if(!is.element(method, c("FA", "IFA"))) {
-    if(missing("alpha.pi"))  alpha.pi      <- 0.5
+    if(missing("alpha.pi"))  alpha.pi      <- ifelse(method == "IMIFA", 0.1, 0.5)
                              z.init        <- match.arg(z.init)
-    if(!missing(z.list))   {
-                             z.list        <- lapply(z.list, as.factor)
-      if(z.init != "list")          stop(paste0("z.init must be set to 'list' if z.list is supplied"))
-      if(length(z.list)   != length(range.G))      {
+    if(method != "IMIFA") {
+      if(!missing(z.list))   {
+        if(!is.list(z.list))   z.list      <- list(z.list)
+                               z.list      <- lapply(z.list, as.factor)
+        if(z.init != "list")        stop(paste0("z.init must be set to 'list' if z.list is supplied"))
+        if(length(z.list)   != length(range.G))      {
                                     stop(paste0("z.list must be a list of length ", length(range.G))) }
-      if(!all(lapply(z.list, nlevels) == range.G)) {
+        if(!all(lapply(z.list, nlevels) == range.G)) {
                                     stop(paste0("Each element of z.list must have the same number of levels as range.G")) }
-      if(!all(lapply(z.list, length)  == N))       {
+        if(!all(lapply(z.list, length)  == N))       {
                                     stop(paste0("Each element of z.list must be a vector of length N=", N)) }
+      }
+      if(all(missing(z.list),  z.init   == "list"))  {
+                                    stop(paste0("z.list must be supplied if z.init is set to 'list'"))                           
+      }
     }
-    if(all(missing(z.list),  z.init   == "list"))  {
-                                    stop(paste0("z.list must be supplied if z.init is set to 'list"))
-    }
-  }  
+  }
+  if(all(!is.element(method, c("MFA", "MIFA")), 
+         !missing(z.init) || 
+         !missing(z.list)))         warning(paste0("z does not need to be initialised for the ", method, " method"), call.=F)
+  z.x       <- exists("z.init", envir=environment())
   
   if(method == "classify") {
     source(paste(getwd(), "/IMIFA-GIT/Gibbs_", "IFA", ".R", sep=""), local=T)
@@ -182,7 +190,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
     gibbs.arg     <- append(gibbs.arg, list(sigma.l = sigma.l))
   }
   if(!is.element(method, c("FA", "IFA", "classify"))) {
-    gibbs.arg      <- append(gibbs.arg, list(alpha.pi = alpha.pi, z.init = z.init))
+    gibbs.arg      <- append(gibbs.arg, list(alpha.pi = alpha.pi, zinit = z.init))
   }
   
   if(profile)  Rprof()
@@ -214,13 +222,15 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
     if(all(length(range.G) == 1, length(range.Q) == 1)) {
       start.time   <- proc.time()
         imifa[[Gi]][[Qi]] <- do.call(paste0("gibbs.", meth[Gi]), 
-                                     args=append(list(data = dat, N = N, G = range.G, Q = range.Q), gibbs.arg))
+                                     args=append(list(data = dat, N = N, G = range.G, Q = range.Q,
+                                                      if(z.x && z.init == "list") zlist = z.list[[Gi]]), gibbs.arg))
     } else if(length(range.G) == 1) {
       start.time   <- proc.time()
       for(q in range.Q) { 
         Qi         <- which(range.Q == q)
         imifa[[Gi]][[Qi]] <- do.call(paste0("gibbs.", meth[Gi]),
-                                     args=append(list(data = dat, N = N, G = range.G, Q = q), gibbs.arg))
+                                     args=append(list(data = dat, N = N, G = range.G, Q = q,
+                                                      if(z.x && z.init == "list") zlist = z.list[[Gi]]), gibbs.arg))
         if(verbose)                 cat(paste0(round(Qi/length(range.Q) * 100, 2), "% Complete\n"))
       }
     } else if(length(range.Q) == 1) {
@@ -230,7 +240,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
         imifa[[Gi]]       <- list()
         imifa[[Gi]][[Qi]] <- do.call(paste0("gibbs.", meth[Gi]),
                                      args=append(list(data = dat, N = N, G = g, Q = range.Q,
-                                                 if(z.init == "list") z.list = z.list[[Gi]]), gibbs.arg))
+                                                 if(z.x && z.init == "list") zlist = z.list[[Gi]]), gibbs.arg))
         if(verbose)                 cat(paste0(round(Gi/length(range.G) * 100, 2), "% Complete\n"))
       }
     } else {
@@ -243,7 +253,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
           Qi       <- which(range.Q == q)
         imifa[[Gi]][[Qi]] <- do.call(paste0("gibbs.", meth[Gi]),
                                      args=append(list(data = dat, N = N, G = g, Q = q,
-                                                 if(z.init == "list") z.list = z.list[[Gi]]), gibbs.arg))
+                                                 if(z.x && z.init == "list") zlist = z.list[[Gi]]), gibbs.arg))
         counter    <- counter + 1
         if(verbose)                 cat(paste0(round(counter/(length(range.G) * length(range.Q)) * 100, 2), "% Complete\n"))
         }

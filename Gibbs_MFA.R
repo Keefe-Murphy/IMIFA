@@ -8,7 +8,7 @@
                              psi.alpha = NULL, psi.beta = NULL, G = NULL,
                              burnin = NULL, thinning = NULL, sw = NULL,
                              n.store = NULL, verbose = NULL, sigma.l = NULL,
-                             alpha.pi = NULL, z.init = NULL, z.list = NULL,  ...) {
+                             alpha.pi = NULL, zinit = NULL, zlist = NULL,  ...) {
         
   # Define & initialise variables
     obsnames     <- rownames(data)
@@ -52,13 +52,14 @@
     sigma.l      <- 1/sigma.l
     pi.alpha     <- rep(alpha.pi, G)
     pi.prop      <- sim.pi(pi.alpha=pi.alpha)
-    if(z.init == "list") {
-      z          <- z.list[[G]]
-    } else if(z.init == "kmeans") {
+    if(zinit == "list") {
+      z          <- zlist
+    } else if(zinit == "kmeans") {
       z          <- factor(kmeans(data, G, nstart=100)$cluster, levels=seq_len(G))
     } else {
       z          <- sim.z.p(N=N, prob.z=pi.prop)
     }
+    zinit        <- z
     mu           <- sim.mu.mp(P=P, sigma.mu=sigma.mu, G=G) 
     f            <- sim.f.mp(Q=Q, N=N)
     lmat         <- sim.load.mp(Q=Q, P=P, sigma.l=sigma.l, G=G)
@@ -147,5 +148,6 @@
                      #post.Sigma = post.Sigma,
                       aic        = 2 * ll.max - K * 2,
                       bic        = 2 * ll.max - K * log(N))
-    return(returns[!sapply(returns, is.null)])
+    attr(returns, "Z.init")  <- zinit
+    return(returns)
   }
