@@ -109,5 +109,5 @@
                       post.Sigma = post.Sigma,
                       aic        = 2 * ll.max - K * 2,
                       bic        = 2 * ll.max - K * log(N))
-    return(returns[!sapply(returns, is.null)])
+    return(returns)
   }

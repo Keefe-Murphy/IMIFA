@@ -167,5 +167,5 @@
                          cov.mat    = cov.emp,
                          post.Sigma = post.Sigma,
                          Q.store    = Q.store)
-    return(returns[!sapply(returns, is.null)])
+    return(returns)
   }
