@@ -2,8 +2,8 @@
 ### Tune Parameters (Single & Shrinkage Case) ###
 #################################################
 
-tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q = NULL,
-                             criterion = c("bic", "aic"), Q.meth = c("Mode", "Median"), recomp = F, ...) {
+tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q = NULL, Q.meth = c("Mode", "Median"),
+                             criterion = c("bic.mcmc", "aic.mcmc", "bicm", "aicm"), recomp = F, ...) {
   defpar         <- par(no.readonly = T)
   defop          <- options()
   options(warn=1)
@@ -80,28 +80,42 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     G.range      <- length(n.grp)
     Q.range      <- length(n.fac)
     
-  # Retrieve AIC & BIC to tune G & Q   
-    aic  <- bic  <- matrix(NA, nr=G.range, nc=Q.range, dimnames=list(paste0("G", n.grp), paste0("Q", n.fac)))
+  # Retrieve log-likelihoods and tune G & Q according to criterion
+    aic.mcmc     <- bic.mcmc   <- 
+    aicm         <- bicm       <- matrix(NA, nr=G.range, nc=Q.range, dimnames=list(paste0("G", n.grp), paste0("Q", n.fac)))
     for(g in seq_len(G.range)) { 
       for(q in seq_len(Q.range)) {
-        aic[g,q] <- sim[[g]][[q]]$aic
-        bic[g,q] <- sim[[g]][[q]]$bic  
+       log.likes     <- sims[[g]][[q]]$log.likes[store]
+       K             <- attr(sims[[g]][[q]], "K")
+       ll.max        <- max(log.likes)
+       ll.mean       <- mean(log.likes)
+       d.hat         <- 2 * var(log.likes)
+       aic.mcmc[g,q] <- 2 * (ll.max  - K)
+       bic.mcmc[g,q] <- 2 * ll.max   - K * log(n.obs)
+       aicm[g,q]     <- 2 * (ll.mean - d.hat)
+       bicm[g,q]     <- 2 * ll.mean  - d.hat * log(n.obs)
       }  
     }
     crit         <- get(criterion)
     crit.max     <- which(crit == max(crit), arr.ind = T)
     if(all(Q.T, G.T)) {
-      aic        <- aic[G.ind,Q.ind]
-      bic        <- bic[G.ind,Q.ind]
+      aic.mcmc   <- aic.mcmc[G.ind,Q.ind, drop=F]
+      bic.mcmc   <- bic.mcmc[G.ind,Q.ind, drop=F]
+      aicm       <- aicm[G.ind,Q.ind, drop=F]
+      bicm       <- bicm[G.ind,Q.ind, drop=F]
     } else if(Q.T) {
-      aic        <- aic[,Q.ind, drop=F]
-      bic        <- bic[,Q.ind, drop=F]
+      aic.mcmc   <- aic.mcmc[,Q.ind, drop=F]
+      bic.mcmc   <- bic.mcmc[,Q.ind, drop=F]
+      aicm       <- aicm[,Q.ind, drop=F]
+      bicm       <- bicm[,Q.ind, drop=F]
       crit       <- crit[,Q.ind]
       G.ind      <- which(crit == max(crit))
       G          <- n.grp[G.ind]
     } else if(G.T) {
-      aic        <- aic[G.ind,, drop=F]
-      bic        <- bic[G.ind,, drop=F]
+      aic.mcmc   <- aic.mcmc[G.ind,, drop=F]
+      bic.mcmc   <- bic.mcmc[G.ind,, drop=F]
+      aicm       <- aicm[G.ind,, drop=F]
+      bicm       <- bicm[G.ind,, drop=F]
       crit       <- crit[G.ind,]
       Q.ind      <- which(crit == max(crit))
       Q          <- n.fac[Q.ind]
@@ -112,7 +126,8 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       Q          <- n.fac[Q.ind]
     }
     Q            <- setNames(rep(Q, G), paste0("Qg", seq_len(G)))
-    GQ.res       <- list(G = G, Q = Q, AIC = aic, BIC = bic)
+    GQ.res       <- list(G = G, Q = Q, AICM = aicm, BICM = bicm,
+                         AIC.mcmc = aic.mcmc, BIC.mcmc = bic.mcmc)
   }
   
   if(all(is.element(method, c("MFA", "MIFA", "IMIFA")), G > 1)) {
@@ -184,8 +199,8 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     }
     
     if(all(is.element(method, c("MFA", "MIFA", "IMIFA")), G > 1)) {
-      cov.emp    <- sims[[G.ind]][[Q.ind]]$cov.mat[,,g]
-      cov.est    <- sims[[G.ind]][[Q.ind]]$post.Sigma[,,g]
+      cov.emp    <- sims[[G.ind]][[Q.ind]]$cov.emp[,,g]
+      cov.est    <- sims[[G.ind]][[Q.ind]]$cov.est[,,g]
       post.mu    <- sims[[G.ind]][[Q.ind]]$post.mu[,g]
       post.psi   <- sims[[G.ind]][[Q.ind]]$post.psi[,g]
       if(sw["mu.sw"])  {
@@ -195,8 +210,8 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
         psi      <- sims[[G.ind]][[Q.ind]]$psi[,g,store]
       }
     } else {
-      cov.emp    <- sims[[G.ind]][[Q.ind]]$cov.mat
-      cov.est    <- sims[[G.ind]][[Q.ind]]$post.Sigma
+      cov.emp    <- sims[[G.ind]][[Q.ind]]$cov.emp
+      cov.est    <- sims[[G.ind]][[Q.ind]]$cov.est
       post.mu    <- sims[[G.ind]][[Q.ind]]$post.mu
       post.psi   <- sims[[G.ind]][[Q.ind]]$post.psi
       if(sw["mu.sw"])  {
@@ -265,7 +280,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
                                                 post.load    = post.load),
                          list(var.exp    = var.exp,
                               cov.mat    = cov.emp, 
-                              post.Sigma = cov.est))
+                              cov.est    = cov.est))
     result[[g]]  <- unlist(results, recursive=F)
     attr(result[[g]], "Store") <- n.store
   }

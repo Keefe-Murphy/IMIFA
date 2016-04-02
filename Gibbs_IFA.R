@@ -35,12 +35,12 @@
     }
     post.mu      <- setNames(rep(0, P), varnames)
     post.psi     <- setNames(rep(0, P), varnames)
-    post.Sigma   <- matrix(0, nr=P, nc=P)
     cov.emp      <- cov(data)
+    cov.est      <- matrix(0, nr=P, nc=P)
     Q.star       <- Q
     Q.store      <- setNames(rep(0, n.store), iternames)
-    dimnames(post.Sigma)     <- list(varnames, varnames)
-    dimnames(cov.emp)        <- dimnames(post.Sigma)
+    dimnames(cov.emp)        <- list(varnames, varnames)
+    dimnames(cov.est)        <- dimnames(cov.emp)
     
     sigma.mu     <- 1/sigma.mu
     mu           <- sim.mu.p(sigma.mu=sigma.mu, P=P)  
@@ -147,25 +147,25 @@
       if(all(iter > burnin, iter %% thinning == 0)) {
         new.iter <- ceiling((iter - burnin)/thinning)
         psi      <- 1/psi.inv
+        post.mu  <- post.mu + mu/n.store
+        post.psi <- post.psi + psi/n.store
+        Sigma    <- tcrossprod(lmat) + diag(psi)
+        cov.est  <- cov.est + Sigma/n.store
         if(sw["mu.sw"])             mu.store[,new.iter]       <- mu  
         if(all(sw["f.sw"], Q > 0))  f.store[,1:Q,new.iter]    <- f
         if(all(sw["l.sw"], Q > 0))  load.store[,1:Q,new.iter] <- lmat
         if(sw["psi.sw"])            psi.store[,new.iter]      <- psi
-        post.mu     <- post.mu + mu/n.store
-        post.psi    <- post.psi + psi/n.store
-        Sigma       <- tcrossprod(lmat) + diag(psi)
-        post.Sigma  <- post.Sigma + Sigma/n.store
-        Q.store[new.iter]    <- Q
+                                    Q.store[new.iter]         <- Q
       }
     }
-    returns      <- list(mu   = if(sw["mu.sw"])  mu.store,
-                         f    = if(sw["f.sw"])   as.simple_sparse_array(f.store), 
-                         load = if(sw["l.sw"])   as.simple_sparse_array(load.store), 
-                         psi  = if(sw["psi.sw"]) psi.store,
-                         post.mu    = post.mu,
-                         post.psi   = post.psi,
-                         cov.mat    = cov.emp,
-                         post.Sigma = post.Sigma,
-                         Q.store    = Q.store)
+    returns      <- list(mu       = if(sw["mu.sw"])  mu.store,
+                         f        = if(sw["f.sw"])   as.simple_sparse_array(f.store), 
+                         load     = if(sw["l.sw"])   as.simple_sparse_array(load.store), 
+                         psi      = if(sw["psi.sw"]) psi.store,
+                         post.mu  = post.mu,
+                         post.psi = post.psi,
+                         cov.emp  = cov.emp,
+                         cov.est  = cov.est,
+                         Q.store  = Q.store)
     return(returns)
   }

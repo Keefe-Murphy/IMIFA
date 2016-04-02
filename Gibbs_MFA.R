@@ -40,13 +40,12 @@
     dimnames(z.store)      <- list(obsnames, iternames)
     post.mu      <- matrix(0, nr=P, nc=G)
     post.psi     <- matrix(0, nr=P, nc=G)
-   #post.Sigma   <- array(0, dim=c(P, P, G))
-    ll.max       <- - Inf
-    K            <- G - 1 + G * (P * Q - 0.5 * Q * (Q - 1)) + 2 * G * P
    #cov.emp      <- cov(data)
+   #cov.est      <- array(0, dim=c(P, P, G))
+    log.likes    <- rep(0, n.store)
     dimnames(post.mu)      <- dimnames(post.psi)   <- list(varnames, gnames)
-   #dimnames(post.Sigma)   <- list(varnames, varnames, gnames)
-   #dimnames(cov.emp)      <- dimnames(post.Sigma)
+   #dimnames(cov.emp)      <- list(varnames, varnames, gnames)
+   #dimnames(cov.est)      <- dimnames(cov.emp)
     
     sigma.mu     <- 1/sigma.mu
     sigma.l      <- 1/sigma.l
@@ -119,35 +118,35 @@
     
       if(all(iter > burnin, iter %% thinning == 0)) {
         new.iter <- ceiling((iter - burnin)/thinning)
+        post.mu  <- post.mu + mu/n.store
+        post.psi <- post.psi + psi/n.store
+       #cov.est  <- cov.est + Sigma/n.store
+        log.like <- sum(z.res$log.likelihoods)
         if(sw["mu.sw"])             mu.store[,,new.iter]    <- mu  
         if(all(sw["f.sw"], Q > 0))  f.store[,,new.iter]     <- f
         if(all(sw["l.sw"], Q > 0))  load.store[,,,new.iter] <- lmat
         if(sw["psi.sw"])            psi.store[,,new.iter]   <- psi
         if(sw["pi.sw"])             pi.store[,new.iter]     <- pi.prop
                                     z.store[,new.iter]      <- z 
-        post.mu     <- post.mu + mu/n.store
-        post.psi    <- post.psi + psi/n.store
-       #post.Sigma  <- post.Sigma + Sigma/n.store
-        log.like    <- sum(z.res$log.liks)
-        ll.max      <- max(ll.max, log.like, na.rm=T)
+                                    log.likes[new.iter]     <- log.like
       }  
     }
     post.z    <- setNames(apply(z.store, 1, function(x) factor(which.max(tabulate(x)), levels=seq_len(G))), obsnames)
     post.pi   <- setNames(prop.table(tabulate(post.z, nbins=G)), gnames)
-    returns   <- list(mu      = if(sw["mu.sw"])             mu.store,
-                      f       = if(all(sw["f.sw"], Q > 0))  f.store, 
-                      load    = if(all(sw["l.sw"], Q > 0))  load.store, 
-                      psi     = if(sw["psi.sw"])            psi.store,
-                      pi.prop = if(sw["pi.sw"])             pi.store,
-                      z          = z.store,
-                      post.mu    = post.mu,
-                      post.psi   = post.psi,
-                      post.z     = post.z,
-                      post.pi    = post.pi,
-                     #cov.mat    = cov.emp,
-                     #post.Sigma = post.Sigma,
-                      aic        = 2 * ll.max - K * 2,
-                      bic        = 2 * ll.max - K * log(N))
-    attr(returns, "Z.init")  <- zinit
+    returns   <- list(mu        = if(sw["mu.sw"])              mu.store,
+                      f         = if(all(sw["f.sw"], Q > 0))   f.store, 
+                      load      = if(all(sw["l.sw"], Q > 0))   load.store, 
+                      psi       = if(sw["psi.sw"])             psi.store,
+                      pi.prop   = if(sw["pi.sw"])              pi.store,
+                      z         = z.store,
+                      post.mu   = post.mu,
+                      post.psi  = post.psi,
+                      post.z    = post.z,
+                      post.pi   = post.pi,
+                     #cov.emp   = cov.emp,
+                     #cov.est   = cov.est,
+                      log.likes = log.likes)
+    attr(returns, "K")         <- G - 1 + G * (P * Q - 0.5 * Q * (Q - 1)) + 2 * G * P
+    attr(returns, "Z.init")    <- zinit
     return(returns)
   }

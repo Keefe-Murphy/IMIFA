@@ -33,12 +33,11 @@
     }
     post.mu      <- setNames(rep(0, P), varnames)
     post.psi     <- setNames(rep(0, P), varnames)
-    post.Sigma   <- matrix(0, nr=P, nc=P)
-    ll.max       <- - Inf
-    K            <- P * Q - 0.5 * Q * (Q - 1) + 2 * P
     cov.emp      <- cov(data)
-    dimnames(post.Sigma)   <- list(varnames, varnames)
-    dimnames(cov.emp)      <- dimnames(post.Sigma)
+    cov.est      <- matrix(0, nr=P, nc=P)
+    log.likes    <- rep(0, n.store)
+    dimnames(cov.emp)      <- list(varnames, varnames)
+    dimnames(cov.est)      <- dimnames(cov.emp)
     
     sigma.mu     <- 1/sigma.mu
     sigma.l      <- 1/sigma.l
@@ -87,27 +86,27 @@
       if(all(iter > burnin, iter %% thinning == 0)) {
         new.iter <- ceiling((iter - burnin)/thinning)
         psi      <- 1/psi.inv
+        post.mu  <- post.mu + mu/n.store
+        post.psi <- post.psi + psi/n.store
+        Sigma    <- tcrossprod(lmat) + diag(psi)
+        cov.est  <- cov.est + Sigma/n.store
+        log.like <- sum(mvdnorm(data=data, mu=mu, Sigma=Sigma, P=P, log.d=T))
         if(sw["mu.sw"])             mu.store[,new.iter]    <- mu  
         if(all(sw["f.sw"], Q > 0))  f.store[,,new.iter]    <- f
         if(all(sw["l.sw"], Q > 0))  load.store[,,new.iter] <- lmat
         if(sw["psi.sw"])            psi.store[,new.iter]   <- psi
-        post.mu     <- post.mu + mu/n.store
-        post.psi    <- post.psi + psi/n.store
-        Sigma       <- tcrossprod(lmat) + diag(psi)
-        post.Sigma  <- post.Sigma + Sigma/n.store
-        log.like    <- sum(mvdnorm(data=data, mu=mu, Sigma=Sigma, P=P, log.d=T))
-        ll.max      <- max(ll.max, log.like, na.rm=T)
+                                    log.likes[new.iter]    <- log.like
       }  
     }
-    returns   <- list(mu   = if(sw["mu.sw"])             mu.store,
-                      f    = if(all(sw["f.sw"], Q > 0))  f.store, 
-                      load = if(all(sw["l.sw"], Q > 0))  load.store, 
-                      psi  = if(sw["psi.sw"])            psi.store,
-                      post.mu    = post.mu,
-                      post.psi   = post.psi,
-                      cov.mat    = cov.emp,
-                      post.Sigma = post.Sigma,
-                      aic        = 2 * ll.max - K * 2,
-                      bic        = 2 * ll.max - K * log(N))
+    returns   <- list(mu        = if(sw["mu.sw"])             mu.store,
+                      f         = if(all(sw["f.sw"], Q > 0))  f.store, 
+                      load      = if(all(sw["l.sw"], Q > 0))  load.store, 
+                      psi       = if(sw["psi.sw"])            psi.store,
+                      post.mu   = post.mu,
+                      post.psi  = post.psi,
+                      cov.emp   = cov.emp,
+                      cov.est   = cov.est,
+                      log.likes = log.likes)
+    attr(returns, "K")         <- P * Q - 0.5 * Q * (Q - 1) + 2 * P
     return(returns)
   }

@@ -381,8 +381,10 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
     
     if(m.sw["G.sw"]) {
       if(is.element(method, c("FA", "MFA"))) {
-        aic    <- round(GQ.res$AIC, 2)
-        bic    <- round(GQ.res$BIC, 2)
+        aicm        <- round(GQ.res$AICM, 2)
+        bicm        <- round(GQ.res$BICM, 2)
+        aic.mcmc    <- round(GQ.res$AIC.mcmc, 2)
+        bic.mcmc    <- round(GQ.res$BIC.mcmc, 2)
       }
       if(all(method == "IFA", !Q.supp)) {
         plot.Q <- GQ.res$Counts
@@ -398,13 +400,17 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
       } else if(method == "IFA") {
           print(tail(GQ.res, -1))
       } else if(method == "MFA") {
-          print(head(GQ.res, -2))
+          print(head(GQ.res, -4))
       } else {
           cat(paste0("Q = ", Q, "\n"))
       }
       if(is.element(method, c("FA", "MFA"))) {
-          cat(paste0("AIC = ", aic[which.max(aic)], "\n"))
-          cat(paste0("BIC = ", bic[which.max(bic)], "\n"))
+        G.ind  <- ifelse(G.supp, 1, which(n.grp == G))
+        Q.ind  <- ifelse(Q.supp, 1, which(n.fac == Q))
+          cat(paste0("AICM = ", aicm[G.ind,Q.ind], "\n"))
+          cat(paste0("BICM = ", bicm[G.ind,Q.ind], "\n"))
+          cat(paste0("AIC.mcmc = ", aic.mcmc[G.ind,Q.ind], "\n"))
+          cat(paste0("BIC.mcmc = ", bic.mcmc[G.ind,Q.ind], "\n"))
       }
     }
   
