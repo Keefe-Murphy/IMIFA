@@ -131,8 +131,6 @@
                                     log.likes[new.iter]     <- log.like
       }  
     }
-    post.z    <- setNames(apply(z.store, 1, function(x) factor(which.max(tabulate(x)), levels=seq_len(G))), obsnames)
-    post.pi   <- setNames(prop.table(tabulate(post.z, nbins=G)), gnames)
     returns   <- list(mu        = if(sw["mu.sw"])              mu.store,
                       f         = if(all(sw["f.sw"], Q > 0))   f.store, 
                       load      = if(all(sw["l.sw"], Q > 0))   load.store, 
@@ -141,8 +139,6 @@
                       z         = z.store,
                       post.mu   = post.mu,
                       post.psi  = post.psi,
-                      post.z    = post.z,
-                      post.pi   = post.pi,
                      #cov.emp   = cov.emp,
                      #cov.est   = cov.est,
                       log.likes = log.likes)

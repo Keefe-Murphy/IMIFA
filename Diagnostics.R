@@ -132,18 +132,12 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   
   if(all(is.element(method, c("MFA", "MIFA", "IMIFA")), G > 1)) {
     z            <- sims[[G.ind]][[Q.ind]]$z[,store]
-    post.z       <- sims[[G.ind]][[Q.ind]]$post.z
+    post.z       <- setNames(apply(z, 1, function(x) factor(which.max(tabulate(x)), levels=seq_len(G))), seq_len(n.obs))
     if(sw["pi.sw"])    {
       pi.prop    <- sims[[G.ind]][[Q.ind]]$pi.prop[,store]
       post.pi    <- rowMeans(pi.prop, dims=1)
     } else {
-      post.pi    <- sims[[G.ind]][[Q.ind]]$post.pi
-    }
-    if(recomp) {
-      post.z     <- replace(post.z, post.z, apply(z, 1, function(x) factor(which.max(tabulate(x)), levels=seq_len(G))))
-      if(!sw["pi.sw"]) {
-        post.pi  <- replace(post.pi, post.pi, prop.table(tabulate(post.z, nbins=G)))
-      }
+      post.pi    <- setNames(prop.table(tabulate(post.z, nbins=G)), paste0("Group ", seq_len(G)))
     }
     cluster      <- list(post.z = post.z, post.pi = post.pi, z = z)
     cluster      <- c(cluster, if(sw["pi.sw"]) list(pi.prop  = pi.prop))
