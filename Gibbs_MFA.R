@@ -42,7 +42,7 @@
     post.psi     <- matrix(0, nr=P, nc=G)
    #cov.emp      <- cov(data)
    #cov.est      <- array(0, dim=c(P, P, G))
-    log.likes    <- rep(0, n.store)
+    ll.store     <- rep(0, n.store)
     dimnames(post.mu)      <- dimnames(post.psi)   <- list(varnames, gnames)
    #dimnames(cov.emp)      <- list(varnames, varnames, gnames)
    #dimnames(cov.est)      <- dimnames(cov.emp)
@@ -121,28 +121,28 @@
         post.mu  <- post.mu + mu/n.store
         post.psi <- post.psi + psi/n.store
        #cov.est  <- cov.est + Sigma/n.store
-        log.like <- sum(z.res$log.likelihoods)
+        log.like <- sum(z.res$log.likes)
         if(sw["mu.sw"])             mu.store[,,new.iter]    <- mu  
         if(all(sw["f.sw"], Q > 0))  f.store[,,new.iter]     <- f
         if(all(sw["l.sw"], Q > 0))  load.store[,,,new.iter] <- lmat
         if(sw["psi.sw"])            psi.store[,,new.iter]   <- psi
         if(sw["pi.sw"])             pi.store[,new.iter]     <- pi.prop
                                     z.store[,new.iter]      <- z 
-                                    log.likes[new.iter]     <- log.like
+                                    ll.store[new.iter]      <- log.like
       }  
     }
-    returns   <- list(mu        = if(sw["mu.sw"])              mu.store,
-                      f         = if(all(sw["f.sw"], Q > 0))   f.store, 
-                      load      = if(all(sw["l.sw"], Q > 0))   load.store, 
-                      psi       = if(sw["psi.sw"])             psi.store,
-                      pi.prop   = if(sw["pi.sw"])              pi.store,
-                      z         = z.store,
-                      post.mu   = post.mu,
-                      post.psi  = post.psi,
-                     #cov.emp   = cov.emp,
-                     #cov.est   = cov.est,
-                      log.likes = log.likes)
-    attr(returns, "K")         <- G - 1 + G * (P * Q - 0.5 * Q * (Q - 1)) + 2 * G * P
-    attr(returns, "Z.init")    <- zinit
+    returns   <- list(mu       = if(sw["mu.sw"])               mu.store,
+                      f        = if(all(sw["f.sw"], Q > 0))    f.store, 
+                      load     = if(all(sw["l.sw"], Q > 0))    load.store, 
+                      psi      = if(sw["psi.sw"])              psi.store,
+                      pi.prop  = if(sw["pi.sw"])               pi.store,
+                      z        = z.store,
+                      post.mu  = post.mu,
+                      post.psi = post.psi,
+                     #cov.emp  = cov.emp,
+                     #cov.est  = cov.est,
+                      ll.store = ll.store)
+    attr(returns, "K")        <- G - 1 + G * (P * Q - 0.5 * Q * (Q - 1)) + 2 * G * P
+    attr(returns, "Z.init")   <- zinit
     return(returns)
   }

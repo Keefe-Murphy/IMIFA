@@ -35,7 +35,7 @@
     post.psi     <- setNames(rep(0, P), varnames)
     cov.emp      <- cov(data)
     cov.est      <- matrix(0, nr=P, nc=P)
-    log.likes    <- rep(0, n.store)
+    ll.store     <- rep(0, n.store)
     dimnames(cov.emp)      <- list(varnames, varnames)
     dimnames(cov.est)      <- dimnames(cov.emp)
     
@@ -95,18 +95,18 @@
         if(all(sw["f.sw"], Q > 0))  f.store[,,new.iter]    <- f
         if(all(sw["l.sw"], Q > 0))  load.store[,,new.iter] <- lmat
         if(sw["psi.sw"])            psi.store[,new.iter]   <- psi
-                                    log.likes[new.iter]    <- log.like
+                                    ll.store[new.iter]     <- log.like
       }  
     }
-    returns   <- list(mu        = if(sw["mu.sw"])             mu.store,
-                      f         = if(all(sw["f.sw"], Q > 0))  f.store, 
-                      load      = if(all(sw["l.sw"], Q > 0))  load.store, 
-                      psi       = if(sw["psi.sw"])            psi.store,
-                      post.mu   = post.mu,
-                      post.psi  = post.psi,
-                      cov.emp   = cov.emp,
-                      cov.est   = cov.est,
-                      log.likes = log.likes)
-    attr(returns, "K")         <- P * Q - 0.5 * Q * (Q - 1) + 2 * P
+    returns   <- list(mu       = if(sw["mu.sw"])              mu.store,
+                      f        = if(all(sw["f.sw"], Q > 0))   f.store, 
+                      load     = if(all(sw["l.sw"], Q > 0))   load.store, 
+                      psi      = if(sw["psi.sw"])             psi.store,
+                      post.mu  = post.mu,
+                      post.psi = post.psi,
+                      cov.emp  = cov.emp,
+                      cov.est  = cov.est,
+                      ll.store = ll.store)
+    attr(returns, "K")        <- P * Q - 0.5 * Q * (Q - 1) + 2 * P
     return(returns)
   }

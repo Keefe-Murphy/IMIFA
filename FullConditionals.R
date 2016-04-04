@@ -60,7 +60,7 @@
       pz[rowSums(pz > 0) == 0,] <- rep(1/G, G)
       pz[pz <= 0]               <- .Machine$double.eps
       z         <- factor(do.call(c, lapply(seq_len(N), function(i) which(rmultinom(1, size=1, prob=pz[i,]) !=0))), levels=seq_len(G))
-        return(list(z = z, log.likelihoods = log(denomin)))
+        return(list(z = z, log.likes = log(denomin)))
     }
 
 # Priors (Group Case)

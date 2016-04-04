@@ -3,7 +3,7 @@
 #################################################
 
 tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q = NULL, Q.meth = c("Mode", "Median"),
-                             criterion = c("bic.mcmc", "aic.mcmc", "bicm", "aicm"), recomp = F, ...) {
+                             criterion = c("bicm", "aicm", "bic.mcmc", "aic.mcmc"), recomp = F, ...) {
   defpar         <- par(no.readonly = T)
   defop          <- options()
   options(warn=1)
@@ -23,6 +23,9 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   n.var          <- attr(sims, "Vars")
   sw             <- attr(sims, "Switch")
   criterion      <- match.arg(criterion)
+  if(all(method  == "MIFA", 
+     !is.element(criterion, 
+     c("aicm", "bicm"))))         stop("criterion should be one of 'aicm' or 'bicm' for the MIFA method")
   if(!is.logical(recomp))         stop("recomp must be TRUE or FALSE")
   if(any(burnin   > 0, 
      thinning     > 1)) recomp <- T
@@ -81,19 +84,19 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     Q.range      <- length(n.fac)
     
   # Retrieve log-likelihoods and tune G & Q according to criterion
-    aic.mcmc     <- bic.mcmc   <- 
-    aicm         <- bicm       <- matrix(NA, nr=G.range, nc=Q.range, dimnames=list(paste0("G", n.grp), paste0("Q", n.fac)))
+    aicm         <- bicm       <- 
+    aic.mcmc     <- bic.mcmc   <- matrix(NA, nr=G.range, nc=Q.range, dimnames=list(paste0("G", n.grp), paste0("Q", n.fac)))
     for(g in seq_len(G.range)) { 
       for(q in seq_len(Q.range)) {
-       log.likes     <- sims[[g]][[q]]$log.likes[store]
+       log.likes     <- sims[[g]][[q]]$ll.store[store]
        K             <- attr(sims[[g]][[q]], "K")
-       ll.max        <- max(log.likes)
+       ll.max        <- 2 * max(log.likes)
+       ll.var        <- 2 * var(log.likes)
        ll.mean       <- mean(log.likes)
-       d.hat         <- 2 * var(log.likes)
-       aic.mcmc[g,q] <- 2 * (ll.max  - K)
-       bic.mcmc[g,q] <- 2 * ll.max   - K * log(n.obs)
-       aicm[g,q]     <- 2 * (ll.mean - d.hat)
-       bicm[g,q]     <- 2 * ll.mean  - d.hat * log(n.obs)
+       aicm[g,q]     <- ll.max - ll.var * 2
+       bicm[g,q]     <- ll.max - ll.var * log(n.obs)     
+       aic.mcmc[g,q] <- ll.max - K * 2
+       bic.mcmc[g,q] <- ll.max - K * log(n.obs)
       }  
     }
     crit         <- get(criterion)
