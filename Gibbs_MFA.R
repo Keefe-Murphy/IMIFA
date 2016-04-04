@@ -40,12 +40,8 @@
     dimnames(z.store)      <- list(obsnames, iternames)
     post.mu      <- matrix(0, nr=P, nc=G)
     post.psi     <- matrix(0, nr=P, nc=G)
-   #cov.emp      <- cov(data)
-   #cov.est      <- array(0, dim=c(P, P, G))
     ll.store     <- rep(0, n.store)
     dimnames(post.mu)      <- dimnames(post.psi)   <- list(varnames, gnames)
-   #dimnames(cov.emp)      <- list(varnames, varnames, gnames)
-   #dimnames(cov.est)      <- dimnames(cov.emp)
     
     sigma.mu     <- 1/sigma.mu
     sigma.l      <- 1/sigma.l
@@ -120,7 +116,6 @@
         new.iter <- ceiling((iter - burnin)/thinning)
         post.mu  <- post.mu + mu/n.store
         post.psi <- post.psi + psi/n.store
-       #cov.est  <- cov.est + Sigma/n.store
         log.like <- sum(z.res$log.likes)
         if(sw["mu.sw"])             mu.store[,,new.iter]    <- mu  
         if(all(sw["f.sw"], Q > 0))  f.store[,,new.iter]     <- f
@@ -139,8 +134,6 @@
                       z        = z.store,
                       post.mu  = post.mu,
                       post.psi = post.psi,
-                     #cov.emp  = cov.emp,
-                     #cov.est  = cov.est,
                       ll.store = ll.store)
     attr(returns, "K")        <- G - 1 + G * (P * Q - 0.5 * Q * (Q - 1)) + 2 * G * P
     attr(returns, "Z.init")   <- zinit

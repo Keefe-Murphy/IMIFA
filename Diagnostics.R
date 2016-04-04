@@ -23,6 +23,8 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   n.var          <- attr(sims, "Vars")
   sw             <- attr(sims, "Switch")
   criterion      <- match.arg(criterion)
+  cent           <- attr(sims, "Center")
+  scaling        <- attr(sims, "Scaling")
   if(all(method  == "MIFA", 
      !is.element(criterion, 
      c("aicm", "bicm"))))         stop("criterion should be one of 'aicm' or 'bicm' for the MIFA method")
@@ -59,16 +61,14 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       Q.meth     <- match.arg(Q.meth)
     }
     
-  # Retrieve distribution of Q, tabulate & plot
+  # Set Q as the (lesser of) the distribution's mode(s) & compute credible interval
     Q.store      <- sims[[G.ind]][[Q.ind]]$Q.store[store]
     Q.tab        <- table(Q.store, dnn=NULL)
     Q.prob       <- prop.table(Q.tab)
-    
-  # Set Q as the (lesser of) the distribution's mode(s) & compute credible interval
     Q.mode       <- as.numeric(names(Q.tab[Q.tab == max(Q.tab)]))
     Q.med        <- ceiling(median(Q.store) * 2)/2
     if(!Q.T) {
-      if(Q.meth == 'Mode') { 
+      if(Q.meth  == 'Mode') { 
         Q        <- min(Q.mode)
       } else {
         Q        <- Q.med
@@ -101,6 +101,8 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     }
     crit         <- get(criterion)
     crit.max     <- which(crit == max(crit), arr.ind = T)
+  
+  # Control for supplied values of G &/or Q
     if(all(Q.T, G.T)) {
       aic.mcmc   <- aic.mcmc[G.ind,Q.ind, drop=F]
       bic.mcmc   <- bic.mcmc[G.ind,Q.ind, drop=F]
@@ -133,6 +135,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
                          AIC.mcmc = aic.mcmc, BIC.mcmc = bic.mcmc)
   }
   
+# Retrieve cluster labels and mixing proportions
   if(all(is.element(method, c("MFA", "MIFA", "IMIFA")), G > 1)) {
     z            <- sims[[G.ind]][[Q.ind]]$z[,store]
     post.z       <- setNames(apply(z, 1, function(x) factor(which.max(tabulate(x)), levels=seq_len(G))), seq_len(n.obs))
@@ -147,6 +150,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     attr(cluster, "Z.init")    <- attr(sim[[G.ind]][[Q.ind]], "Z.init")
   }
   
+# Retrieve (unrotated) scores
   if(all(Q == 0)) {
     if(sw["f.sw"])                warning("Scores not stored as model has zero factors", call.=F)
     sw["f.sw"]   <- F
@@ -160,7 +164,8 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       f          <- as.array(sims[[G.ind]][[Q.ind]]$f)[,Qms,store, drop=F]
     }
   }
-  
+
+# Loop over g in G to extract other results
   result         <- list(list())
   temp.b         <- max(1, burnin)
   MSE  <- RMSE   <- NRMSE   <- CVRMSE   <- MAD   <- rep(NA, G)
@@ -173,7 +178,8 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     } else {
       sw["l.sw"] <- attr(sims, "Switch")["l.sw"]
     }
-    
+  
+  # Retrieve (unrotated) loadings  
     if(sw["l.sw"]) {
       if(all(method == "MFA", G > 1)) {
         lmat     <- adrop(sims[[G.ind]][[Q.ind]]$load[,Qgs,g,store, drop=F], drop=3)
@@ -184,7 +190,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
         l.temp   <- adrop(sims[[G.ind]][[Q.ind]]$load[,Qgs,temp.b, drop=F], drop=3)
       }
     }
-    
+  
     if(any(method == "IFA", all(method == "MIFA", G == 1))) {
       store      <- store[which(Q.store >= Qg)]
       n.store    <- length(store)
@@ -195,9 +201,24 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       }
     }
     
+  # Loadings matrix / identifiability / error metrics / etc.  
+    if(sw["l.sw"])     {
+      for(p in seq_len(n.store)) {
+        rot          <- procrustes(X=as.matrix(lmat[,,p]), Xstar=l.temp)$R
+        lmat[,,p]    <- adrop(lmat[,,p, drop=F], drop=3) %*% rot
+        if(sw["f.sw"]) {
+          if(all(is.element(method, c("MFA", "MIFA", "IMIFA")), G > 1)) {
+            f[post.z == g,,p]  <- adrop(f[post.z == g,,p, drop=F], drop=3) %*% rot
+          } else {
+            f[,,p]   <- adrop(f[,,p, drop=F], drop=3)    %*% rot
+          }
+          scores     <- list(f = f, post.f = rowMeans(f, dims=2))
+        }  
+      }
+    }
+  
+  # Retrieve means, uniquenesses & empirical covariance matrix
     if(all(is.element(method, c("MFA", "MIFA", "IMIFA")), G > 1)) {
-      cov.emp    <- sims[[G.ind]][[Q.ind]]$cov.emp[,,g]
-      cov.est    <- sims[[G.ind]][[Q.ind]]$cov.est[,,g]
       post.mu    <- sims[[G.ind]][[Q.ind]]$post.mu[,g]
       post.psi   <- sims[[G.ind]][[Q.ind]]$post.psi[,g]
       if(sw["mu.sw"])  {
@@ -206,9 +227,18 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       if(sw["psi.sw"]) {
         psi      <- sims[[G.ind]][[Q.ind]]$psi[,g,store]
       }
+      data       <- attr(sims, "Name")
+      if(!exists(data,
+         envir=.GlobalEnv)) {     warning(paste0("Object ", data, " not found in .GlobalEnv: can't compute empirical covariance and error metrics"), call.=F)
+      } else {
+        data     <- as.data.frame(get(data))
+        data     <- data[sapply(data, is.numeric)]
+        data     <- scale(data, center=cent, scale=scaling)
+      }
+      varnames   <- colnames(data)
+      cov.emp    <- cov(data[post.z == g,, drop=F])
+      dimnames(cov.emp)        <- list(varnames, varnames)
     } else {
-      cov.emp    <- sims[[G.ind]][[Q.ind]]$cov.emp
-      cov.est    <- sims[[G.ind]][[Q.ind]]$cov.est
       post.mu    <- sims[[G.ind]][[Q.ind]]$post.mu
       post.psi   <- sims[[G.ind]][[Q.ind]]$post.psi
       if(sw["mu.sw"])  {
@@ -217,85 +247,89 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       if(sw["psi.sw"]) {
         psi      <- sims[[G.ind]][[Q.ind]]$psi[,store]
       }
+      cov.emp    <- sims[[G.ind]][[Q.ind]]$cov.emp
     }
-    
-  # Loadings matrix / identifiability / error metrics / etc.  
-    if(sw["l.sw"])     {
-      for(p in seq_len(n.store)) {
-        rot          <- procrustes(X=as.matrix(lmat[,,p]), Xstar=l.temp)$R
-        lmat[,,p]    <- lmat[,,p] %*% rot
-        if(sw["f.sw"]) {
-          if(all(is.element(method, c("MFA", "MIFA", "IMIFA")), G > 1)) {
-            f[post.z == g,,p]  <- f[post.z == g,,p]   %*% rot
-          } else {
-            f[,,p]   <- f[,,p]    %*% rot
-          }
-        }  
-      }
-    }
-    
-    if(all(recomp, sw[c("l.sw", "psi.sw")])) {
-      cov.est    <- replace(cov.est, is.numeric(cov.est), 0)
-      for(r in seq_len(n.store)) {
-        Sigma    <- tcrossprod(lmat[,,r]) + diag(psi[,r])
-        cov.est  <- cov.est + Sigma/n.store
-      }
-    } else if(recomp)  {
-      if(!sw["l.sw"])  {
-                                  warning("Loadings not stored: can't re-estimate Sigma", call.=F)
-      } else {
-                                  warning("Uniquenesses not stored: can't re-estimate Sigma", call.=F)
-      }
-    }
+  
+  # Compute posterior means and % variation explained
     if(sw["mu.sw"])  post.mu   <- rowMeans(mu, dims=1)
     if(sw["psi.sw"]) post.psi  <- rowMeans(psi, dims=1)
     if(sw["l.sw"]) { post.load <- rowMeans(lmat, dims=2)
+              class(post.load) <- "loadings"
       var.exp    <- sum(colSums(post.load * post.load))/n.var
     } else   {
       var.exp    <- (sum(diag(cov.emp)) - sum(post.psi))/n.var
     }
-    error        <- cov.emp - cov.est
-    MSE[g]       <- mean(error * error)
-    RMSE[g]      <- sqrt(MSE)
-    NRMSE[g]     <- RMSE/(max(cov.emp) - min(cov.emp))
-    CVRMSE[g]    <- RMSE/mean(cov.emp)
-    MAD[g]       <- mean(abs(error))
-    if(any(all(isTRUE(attr(sims, "Scaling")), attr(sims, "Center")) && 
-               sum(round(diag(cov.est))  != 
-               round(diag(cov.emp)))     != 0,
-       sum(abs(post.psi - (1 - post.psi)) < 0) != 0,
-       var.exp    > 1))           warning(paste0(ifelse(G == 1, "C", paste0("Group ", g, "'s c")), "hain may not have converged"), call.=F)
   
-    if(sw["l.sw"]) {
-      class(post.load)         <- "loadings"
-    }  
+  # Calculate estimated covariance matrices & compute error metrics
+    if(all(is.element(method, c("MFA", "MIFA", "IMIFA")), G > 1)) {
+      if(all(sw["psi.sw"], any(sw["l.sw"], Q == 0))) {
+        cov.est  <- tcrossprod(post.load) + diag(post.psi)
+        dimnames(cov.est)      <- list(varnames, varnames)
+      } else {
+        if(all(!sw["l.sw"], Q > 0, !sw["psi.sw"])) {
+                                  warning("Loadings & Uniquenesses not stored: can't estimate Sigma and compute error metrics", call.=F)
+        } else if(all(Q > 0,
+                  !sw["l.sw"])) { warning("Loadings not stored: can't estimate Sigma and compute error metrics", call.=F)
+        } else if(!sw["psi.sw"])  warning("Uniquenesses not stored: can't estimate Sigma and compute error metrics", call.=F)
+      }  
+    } else {
+      cov.est    <- sims[[G.ind]][[Q.ind]]$cov.est
+      if(all(recomp, sw["psi.sw"], any(sw["l.sw"], Q == 0))) {
+        cov.est  <- replace(cov.est, is.numeric(cov.est), 0)
+        for(r in seq_len(n.store))  {
+         Sigma   <- tcrossprod(lmat[,,r]) + diag(psi[,r])
+         cov.est <- cov.est + Sigma/n.store
+        }
+      } else if(recomp)   {
+        if(all(!sw["l.sw"], Q > 0, !sw["psi.sw"])) {
+                                  warning("Loadings & Uniquenesses not stored: can't re-estimate Sigma", call.=F)
+        } else if(all(Q > 0,
+                  !sw["l.sw"])) { warning("Loadings not stored: can't re-estimate Sigma", call.=F)
+        } else if(!sw["psi.sw"])  warning("Uniquenesses not stored: can't re-estimate Sigma", call.=F)
+        
+      }
+    }
+    
+    emp.T        <- exists("cov.emp", envir=environment())
+    est.T        <- exists("cov.est", envir=environment())
+    if(all(emp.T, est.T)) {
+      error      <- cov.emp - cov.est
+      MSE[g]     <- mean(error * error)
+      RMSE[g]    <- sqrt(MSE[g])
+      NRMSE[g]   <- RMSE[g]/(max(cov.emp) - min(cov.emp))
+      CVRMSE[g]  <- RMSE[g]/mean(cov.emp)
+      MAD[g]     <- mean(abs(error))
+      if(any(all(isTRUE(scaling), cent)    && 
+                 sum(round(diag(cov.est))  != 
+                 round(diag(cov.emp)))     != 0,
+         sum(abs(post.psi - (1 - post.psi)) < 0) != 0,
+         var.exp  > 1))           warning(paste0(ifelse(G == 1, "C", paste0("Group ", g, "'s c")), "hain may not have fully converged"), call.=F)
+    }
+  
     results      <- list(if(sw["mu.sw"])   list(means = mu), 
                          list(post.mu    = post.mu),
                          if(sw["psi.sw"])  list(uniquenesses = psi), 
                          list(post.psi   = post.psi),
                          if(sw["l.sw"])    list(loadings     = lmat, 
                                                 post.load    = post.load),
-                         list(var.exp    = var.exp,
-                              cov.mat    = cov.emp, 
-                              cov.est    = cov.est))
+                         list(var.exp    = var.exp),
+                         if(emp.T) list(cov.mat = cov.emp), 
+                         if(est.T) list(cov.est = cov.est))
     result[[g]]  <- unlist(results, recursive=F)
     attr(result[[g]], "Store") <- n.store
   }
   names(result)  <- paste0("Group", seq_len(G))
-  
-  errors         <- list(MSE = mean(MSE), RMSE = mean(RMSE), NRMSE = mean(NRMSE),
-                         CVRMSE = mean(CVRMSE), MAD = mean(MAD))
-
   attr(GQ.res, "Factors")      <- n.fac
   attr(GQ.res, "Groups")       <- n.grp
   attr(GQ.res, "Supplied")     <- c(Q=Q.T, G=G.T)
-  
-  if(sw["f.sw"])   {
-    scores       <- list(f = f, post.f = rowMeans(f, dims=2))
-  }    
+  if(all(emp.T, est.T)) {
+    errors       <- list(MSE = mean(MSE), RMSE = mean(RMSE), NRMSE = mean(NRMSE),
+                         CVRMSE = mean(CVRMSE), MAD = mean(MAD))  
+  }
   
   result         <- c(result, if(exists("cluster", envir=environment())) list(Clust = cluster), 
-                      list(Error = errors, GQ.results = GQ.res, Scores = scores))
+                      if(all(emp.T, est.T)) list(Error = errors), list(GQ.results = GQ.res), 
+                      if(sw["f.sw"]) list(Scores = scores))
   class(result)                <- "IMIFA"
   attr(result, "Method")       <- attr(sims, "Method")
   attr(result, "Obs")          <- n.obs
