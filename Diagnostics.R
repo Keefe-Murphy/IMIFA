@@ -80,16 +80,28 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   }
     
   if(is.element(method, c("FA", "MFA"))) {
-    G.range      <- length(n.grp)
-    Q.range      <- length(n.fac)
+    G.range      <- ifelse(G.T, 1, length(n.grp))
+    Q.range      <- ifelse(Q.T, 1, length(n.fac))
+    crit.mat     <- matrix(NA, nr=G.range, nc=Q.range)
     
   # Retrieve log-likelihoods and tune G & Q according to criterion
+    if(all(G.T, Q.T)) {
+      dimnames(crit.mat) <- list(paste0("G", G), paste0("Q", Q))
+    } else if(G.T)    {
+      dimnames(crit.mat) <- list(paste0("G", G), paste0("Q", n.fac))
+    } else if(Q.T)    {
+      dimnames(crit.mat) <- list(paste0("G", n.grp), paste0("Q", Q))
+    } else {
+      dimnames(crit.mat) <- list(paste0("G", n.grp), paste0("Q", n.fac))
+    }
     aicm         <- bicm       <- 
-    aic.mcmc     <- bic.mcmc   <- matrix(NA, nr=G.range, nc=Q.range, dimnames=list(paste0("G", n.grp), paste0("Q", n.fac)))
+    aic.mcmc     <- bic.mcmc   <- crit.mat
     for(g in seq_len(G.range)) { 
       for(q in seq_len(Q.range)) {
-       log.likes     <- sims[[g]][[q]]$ll.store[store]
-       K             <- attr(sims[[g]][[q]], "K")
+       gi            <- ifelse(G.T, G.ind, g)
+       qi            <- ifelse(Q.T, Q.ind, q)
+       log.likes     <- sims[[gi]][[qi]]$ll.store[store]
+       K             <- attr(sims[[gi]][[qi]], "K")
        ll.max        <- 2 * max(log.likes)
        ll.var        <- 2 * var(log.likes)
        ll.mean       <- mean(log.likes)
@@ -103,33 +115,18 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     crit.max     <- which(crit == max(crit), arr.ind = T)
   
   # Control for supplied values of G &/or Q
-    if(all(Q.T, G.T)) {
-      aic.mcmc   <- aic.mcmc[G.ind,Q.ind, drop=F]
-      bic.mcmc   <- bic.mcmc[G.ind,Q.ind, drop=F]
-      aicm       <- aicm[G.ind,Q.ind, drop=F]
-      bicm       <- bicm[G.ind,Q.ind, drop=F]
-    } else if(Q.T) {
-      aic.mcmc   <- aic.mcmc[,Q.ind, drop=F]
-      bic.mcmc   <- bic.mcmc[,Q.ind, drop=F]
-      aicm       <- aicm[,Q.ind, drop=F]
-      bicm       <- bicm[,Q.ind, drop=F]
-      crit       <- crit[,Q.ind]
-      G.ind      <- which(crit == max(crit))
-      G          <- n.grp[G.ind]
-    } else if(G.T) {
-      aic.mcmc   <- aic.mcmc[G.ind,, drop=F]
-      bic.mcmc   <- bic.mcmc[G.ind,, drop=F]
-      aicm       <- aicm[G.ind,, drop=F]
-      bicm       <- bicm[G.ind,, drop=F]
-      crit       <- crit[G.ind,]
-      Q.ind      <- which(crit == max(crit))
-      Q          <- n.fac[Q.ind]
-    } else {
+    if(!any(Q.T, G.T)) {
       G.ind      <- crit.max[1]
       Q.ind      <- crit.max[2]
       G          <- n.grp[G.ind]
       Q          <- n.fac[Q.ind]
-    }
+    } else if(all(G.T, !Q.T)) {
+      Q.ind      <- which(crit == max(crit))
+      Q          <- n.fac[Q.ind]
+    } else if(all(Q.T, !G.T)) {
+      G.ind      <- which(crit == max(crit))
+      G          <- n.grp[G.ind]
+    } 
     Q            <- setNames(rep(Q, G), paste0("Qg", seq_len(G)))
     GQ.res       <- list(G = G, Q = Q, AICM = aicm, BICM = bicm,
                          AIC.mcmc = aic.mcmc, BIC.mcmc = bic.mcmc)
