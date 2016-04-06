@@ -20,7 +20,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
                         alpha.pi = NULL, z.init = c("kmeans", "priors", "list"), z.list = NULL, profile = F, 
                         mu.switch = T, f.switch = T, load.switch = T, psi.switch = T, pi.switch = T, ...) {
   
-  defpar    <- par(no.readonly = T)
+  defpar    <- suppressWarnings(par(no.readonly = T))
   defop     <- options()
   options(warn=1)
   on.exit(suppressWarnings(par(defpar)))

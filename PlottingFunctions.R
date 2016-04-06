@@ -5,11 +5,11 @@
 plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "density", "posterior", "GQ", "trace"), 
                            vars = c("means", "scores", "loadings", "uniquenesses"), Label = NULL, fac = NULL, g = NULL,
                            by.fac = T, ind = NULL, type = c("h", "n", "p", "l"), mat = T, ... ) {
- 
-  defpar  <- par(no.readonly = T)
+
+  defpar  <- suppressWarnings(par(no.readonly = T))
   defop   <- options()
   options(warn=1)
-  par(cex.axis=0.8, new=F)
+  suppressWarnings(par(cex.axis=0.8, new=F))
   on.exit(suppressWarnings(par(defpar)))
   on.exit(suppressWarnings(options(defop)), add=T)
   if(missing(results))                stop("Results must be supplied")
