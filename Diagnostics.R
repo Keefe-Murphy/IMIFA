@@ -172,11 +172,10 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   for(g in seq_len(G)) {
     Qg           <- Q[g]
     Qgs          <- seq_len(Qg)
+    sw["l.sw"]   <- attr(sims, "Switch")["l.sw"]
     if(Qg == 0) {
       if(sw["l.sw"])              warning(paste0("Loadings not stored as", ifelse(G > 1, paste0(" group ", g), " model"), " has zero factors"), call.=F)
       sw["l.sw"] <- F
-    } else {
-      sw["l.sw"] <- attr(sims, "Switch")["l.sw"]
     }
   
   # Retrieve (unrotated) loadings  
@@ -262,28 +261,32 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   
   # Calculate estimated covariance matrices & compute error metrics
     if(all(is.element(method, c("MFA", "MIFA", "IMIFA")), G > 1)) {
-      if(all(sw["psi.sw"], any(sw["l.sw"], Q == 0))) {
-        cov.est  <- tcrossprod(post.load) + diag(post.psi)
+      if(all(sw["psi.sw"], any(sw["l.sw"], Qg == 0))) {
+        if(Qg > 0) {
+          cov.est    <- tcrossprod(post.load) + diag(post.psi)
+        } else {
+          cov.est    <- diag(post.psi)
+        }
         dimnames(cov.est)      <- list(varnames, varnames)
       } else {
-        if(all(!sw["l.sw"], Q > 0, !sw["psi.sw"])) {
+        if(all(!sw["l.sw"], Qg > 0, !sw["psi.sw"]))   {
                                   warning("Loadings & Uniquenesses not stored: can't estimate Sigma and compute error metrics", call.=F)
-        } else if(all(Q > 0,
+        } else if(all(Qg > 0,
                   !sw["l.sw"])) { warning("Loadings not stored: can't estimate Sigma and compute error metrics", call.=F)
         } else if(!sw["psi.sw"])  warning("Uniquenesses not stored: can't estimate Sigma and compute error metrics", call.=F)
       }  
     } else {
       cov.est    <- sims[[G.ind]][[Q.ind]]$cov.est
-      if(all(recomp, sw["psi.sw"], any(sw["l.sw"], Q == 0))) {
+      if(all(recomp, sw["psi.sw"], any(sw["l.sw"], Qg == 0))) {
         cov.est  <- replace(cov.est, is.numeric(cov.est), 0)
         for(r in seq_len(n.store))  {
          Sigma   <- tcrossprod(lmat[,,r]) + diag(psi[,r])
          cov.est <- cov.est + Sigma/n.store
         }
       } else if(recomp)   {
-        if(all(!sw["l.sw"], Q > 0, !sw["psi.sw"])) {
+        if(all(!sw["l.sw"], Qg > 0, !sw["psi.sw"]))   {
                                   warning("Loadings & Uniquenesses not stored: can't re-estimate Sigma", call.=F)
-        } else if(all(Q > 0,
+        } else if(all(Qg > 0,
                   !sw["l.sw"])) { warning("Loadings not stored: can't re-estimate Sigma", call.=F)
         } else if(!sw["psi.sw"])  warning("Uniquenesses not stored: can't re-estimate Sigma", call.=F)
         
@@ -319,6 +322,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     attr(result[[g]], "Store") <- n.store
   }
   names(result)  <- paste0("Group", seq_len(G))
+  attr(GQ.res, "Criterion")    <- criterion
   attr(GQ.res, "Factors")      <- n.fac
   attr(GQ.res, "Groups")       <- n.grp
   attr(GQ.res, "Supplied")     <- c(Q=Q.T, G=G.T)
