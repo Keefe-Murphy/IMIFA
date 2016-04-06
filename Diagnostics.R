@@ -224,16 +224,17 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
         psi      <- sims[[G.ind]][[Q.ind]]$psi[,g,store]
       }
       data       <- attr(sims, "Name")
-      if(!exists(data,
-         envir=.GlobalEnv)) {     warning(paste0("Object ", data, " not found in .GlobalEnv: can't compute empirical covariance and error metrics"), call.=F)
+      data.x     <- exists(data, envir=.GlobalEnv)
+      if(!data.x) {
+        if(g == 1)                warning(paste0("Object ", data, " not found in .GlobalEnv: can't compute empirical covariance and error metrics"), call.=F) 
       } else {
         data     <- as.data.frame(get(data))
         data     <- data[sapply(data, is.numeric)]
         data     <- scale(data, center=cent, scale=scaling)
+        varnames <- colnames(data)
+        cov.emp  <- cov(data[post.z == g,, drop=F])
+        dimnames(cov.emp)      <- list(varnames, varnames)
       }
-      varnames   <- colnames(data)
-      cov.emp    <- cov(data[post.z == g,, drop=F])
-      dimnames(cov.emp)        <- list(varnames, varnames)
     } else {
       post.mu    <- sims[[G.ind]][[Q.ind]]$post.mu
       post.psi   <- sims[[G.ind]][[Q.ind]]$post.psi
@@ -264,7 +265,9 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
         } else {
           cov.est    <- diag(post.psi)
         }
-        dimnames(cov.est)      <- list(varnames, varnames)
+        if(data.x)   {
+          dimnames(cov.est)    <- list(varnames, varnames)
+        }
       } else {
         if(all(!sw["l.sw"], Qg  > 0, !sw["psi.sw"]))  {
                                   warning("Loadings & Uniquenesses not stored: can't estimate Sigma and compute error metrics", call.=F)
