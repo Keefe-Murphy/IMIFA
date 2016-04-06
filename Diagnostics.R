@@ -277,8 +277,12 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       if(all(recomp, sw["psi.sw"], any(sw["l.sw"], Qg == 0))) {
         cov.est  <- replace(cov.est, is.numeric(cov.est), 0)
         for(r in seq_len(n.store))  {
-         Sigma   <- tcrossprod(lmat[,,r]) + diag(psi[,r])
-         cov.est <- cov.est + Sigma/n.store
+          if(Qg > 0) {
+            Sig <- tcrossprod(lmat[,,r]) + diag(psi[,r])
+          } else {
+            Sig <- diag(psi[,r])
+          }
+         cov.est <- cov.est + Sig/n.store
         }
       } else if(recomp)   {
         if(all(!sw["l.sw"], Qg > 0, !sw["psi.sw"]))   {
