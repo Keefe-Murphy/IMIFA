@@ -266,7 +266,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
         }
         dimnames(cov.est)      <- list(varnames, varnames)
       } else {
-        if(all(!sw["l.sw"], Qg > 0, !sw["psi.sw"]))   {
+        if(all(!sw["l.sw"], Qg  > 0, !sw["psi.sw"]))  {
                                   warning("Loadings & Uniquenesses not stored: can't estimate Sigma and compute error metrics", call.=F)
         } else if(all(Qg > 0,
                   !sw["l.sw"])) { warning("Loadings not stored: can't estimate Sigma and compute error metrics", call.=F)
@@ -285,7 +285,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
          cov.est <- cov.est + Sig/n.store
         }
       } else if(recomp)   {
-        if(all(!sw["l.sw"], Qg > 0, !sw["psi.sw"]))   {
+        if(all(!sw["l.sw"], Qg  > 0, !sw["psi.sw"]))  {
                                   warning("Loadings & Uniquenesses not stored: can't re-estimate Sigma", call.=F)
         } else if(all(Qg > 0,
                   !sw["l.sw"])) { warning("Loadings not stored: can't re-estimate Sigma", call.=F)
@@ -337,6 +337,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
                       if(sw["f.sw"]) list(Scores = scores))
   class(result)                <- "IMIFA"
   attr(result, "Method")       <- attr(sims, "Method")
+  attr(result, "Name")         <- attr(sims, "Name")
   attr(result, "Obs")          <- n.obs
   attr(result, "Switch")       <- sw
   attr(result, "Vars")         <- n.var

@@ -322,7 +322,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
     imifa   <- append(imifa, list(fac = fac))
     names(imifa)[length(imifa)] <- "Factanal"
   } 
-  class(imifa)            <- "IMIFA"
+  class(imifa)     <- "IMIFA"
   return(imifa)
 }
 

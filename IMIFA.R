@@ -35,7 +35,7 @@
   sim  <- imifa.mcmc(wine, method="MFA", range.G=c(1,2,3), range.Q=c(0,1,3,5,7))
  #sim  <- imifa.mcmc(wine, method="classify", Label=Lab)
 
-# Save / Load results
+# Save / Load Simulations
   save(sim, file=paste0(getwd(), "/Simulations/", attr(sim, "Name"), 
                         "__Simulations_", attr(sim, "Method"), 
                         ".Rdata", sep=""))
@@ -43,12 +43,20 @@
                    "__Simulations_", "MFA", 
                    ".Rdata", sep=""), envir=.GlobalEnv)
 
-# Posterior Summaries & Plots, etc. (optional: additional 'burnin' & 'thinning' & user-defined Q)
+# Posterior Summaries (optional: additional 'burnin' & 'thinning', user-defined G/Q, model selection criterion)
   res <- tune.imifa(sim)
   res$Error
   plot(res, "GQ")
  #res <- tune.imifa(sim, G=3, Q=3, criterion="aicm")
   
+# Save / Load Results
+  save(res, file=paste0(getwd(), "/Simulations/", attr(res, "Name"), 
+                        "__Results_", attr(res, "Method"), 
+                        ".Rdata", sep=""))
+  load(file=paste0(getwd(), "/Simulations/", "wine", 
+                   "__Results_", "MFA", 
+                   ".Rdata", sep=""), envir=.GlobalEnv)
+
 # Means
   plot(res, "a", "m")
   plot(res, "a", "m", mat=F)
