@@ -2,36 +2,33 @@
 ### Simulate Data (Single & Shrinkage Case) ###
 ###############################################
 
-sim.imifa      <- function(N = 1000, G = 2, P = 25, Q = rep(5, G)) {
+sim.imifa      <- function(N = 500, G = 3, P = 25, Q = rep(5, G), nn = NULL, ...) {
   
   if(any(N  < 0, P  < 0, Q < 0, G <= 0)) stop("N, P, and Q must be strictly non-negative and G must be strictly positive")
   if(any(Q >= P, Q >= N - 1))            stop(paste0("Cannot generate this many factors relative to N=", N, " and P=", P))
-  if(length(Q)  != G)                    
-  if(!missing(Q))  {
-   if(length(Q) == 1)  {
-    Q    <- rep(Q, G)
-   } else if(length(Q != G))  {          stop(paste0("Q must supplied for each of the G=", G, " groups"))  
-   }                                       
+  if(length(Q) != G)                    
+    if(!missing(Q))  {
+      if(length(Q) == 1)  {
+        Q      <- rep(Q, G)
+      } else if(length(Q != G))  {       stop(paste0("Q must supplied for each of the G=", G, " groups"))  
+      }                                       
+    }
+  if(missing(nn)) {
+    pie        <- rdirichlet(1, rep(0.5, G))
+    ind.mat    <- rmultinom(N, size=1, prob=pie)
+    labs       <- factor(which(ind.mat != 0, arr.ind=T)[,1], levels=seq_len(G))
+    nn         <- tabulate(labs, nbins=G)
+  } else if(any(length(nn) != G, 
+                sum(nn) != N))   {       stop(paste0("nn must be a vector of length ", G, " which sums to ", N))
   }
-  nn     <- rnorm(G, N/G, exp(G * G))
-  if(abs(sum(nn)) < 0.01) nn <- nn + 1
-  nn     <- round(nn / sum(nn) * N)
-  dev    <- N - sum(nn)
-  for(. in seq_len(abs(dev))) {
-    nn[i]       <- nn[i <- sample(G, 1)] + sign(dev)
-  }
-  while(any(nn   < 0)) {
-    neg  <- nn   < 0
-    pos  <- nn   > 0
-    nn[neg][i]  <- nn[neg][i <- sample(sum(neg), 1)] + 1
-    nn[pos][i]  <- nn[pos][i <- sample(sum(pos), 1)] - 1
-  }
-  if(any(nn == 0)) {
-    G    <- G - sum(nn == 0)
-    Q    <- Q[seq_along(G)]
-    nn   <- nn[nn > 0]
-  }
-  
+  if(sum(nn == 0) > 0) {
+    nn.ind     <- which(nn == 0)
+    n.max      <- which.max(nn)
+    n.empty    <- length(nn.ind)
+    nn[nn.ind] <- nn[nn.ind] + 1
+    nn[n.max]  <- nn[n.max] - n.empty
+  }                           
+                                              
   gnames        <- paste0("Group", seq_len(G))
   vnames        <- paste0("Var ", seq_len(P))
   SimData       <- matrix(0, nr=0, nc=P)
@@ -39,7 +36,6 @@ sim.imifa      <- function(N = 1000, G = 2, P = 25, Q = rep(5, G)) {
   true.l        <- setNames(vector("list", G), gnames)
   true.psi      <- setNames(vector("list", G), gnames)
   true.cov      <- setNames(vector("list", G), gnames)
-  true.zlab     <- rep(0, N)
   
 # Simulate true parameter values
   for(g in seq_len(G)) {
@@ -84,7 +80,8 @@ sim.imifa      <- function(N = 1000, G = 2, P = 25, Q = rep(5, G)) {
   }
   
 # Post-process data
-  true.zlab     <- factor(rep(nn, nn), labels=seq_along(nn))
+  nn.seq        <- seq_along(nn)
+  true.zlab     <- factor(rep(nn.seq, nn), labels=seq_along(nn.seq))
   permute       <- sample(seq_len(N), N, replace=F)
   SimData       <- SimData[permute,]
   true.zlab     <- true.zlab[permute]
