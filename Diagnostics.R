@@ -202,12 +202,12 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     if(sw["l.sw"])     {
       for(p in seq_len(n.store)) {
         rot          <- procrustes(X=as.matrix(lmat[,,p]), Xstar=l.temp)$R
-        lmat[,,p]    <- adrop(lmat[,,p, drop=F], drop=3) %*% rot
+        lmat[,,p]    <- lmat[,,p] %*% rot
         if(sw["f.sw"]) {
           if(all(is.element(method, c("MFA", "MIFA", "IMIFA")), G > 1)) {
-            f[post.z == g,,p]  <- adrop(f[post.z == g,,p, drop=F], drop=3) %*% rot
+            f[post.z == g,,p]  <- f[post.z == g,,p] %*% rot
           } else {
-            f[,,p]   <- adrop(f[,,p, drop=F], drop=3)    %*% rot
+            f[,,p]   <- f[,,p] %*% rot
           }
           scores     <- list(f = f, post.f = rowMeans(f, dims=2))
         }  
