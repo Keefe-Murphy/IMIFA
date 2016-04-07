@@ -184,7 +184,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       }
       if(any(method == "FA",  all(method == "MFA",  G == 1))) {
         lmat     <- sims[[G.ind]][[Q.ind]]$load[,Qgs,store, drop=F]
-        l.temp   <- adrop(sims[[G.ind]][[Q.ind]]$load[,Qgs,temp.b, drop=F], drop=3)
+        l.temp   <- as.matrix(sims[[G.ind]][[Q.ind]]$load[,Qgs,temp.b])
       }
     }
   
@@ -194,7 +194,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       temp.b     <- store[1]
       if(sw["l.sw"]) {
         lmat     <- as.array(sims[[G.ind]][[Q.ind]]$load)[,Qgs,store, drop=F]
-        l.temp   <- adrop(as.array(sims[[G.ind]][[Q.ind]]$load)[,Qgs,temp.b, drop=F], drop=3)
+        l.temp   <- as.matrix(as.array(sims[[G.ind]][[Q.ind]]$load)[,Qgs,temp.b])
       }
     }
     

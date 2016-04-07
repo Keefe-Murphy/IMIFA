@@ -11,7 +11,7 @@
       U.mu      <- apply(mu.omega, 2, sqrt)
       z.mu      <- matrix(rnorm(P * G, 0, 1), nr=P, nc=G)
       v.mu      <- U.mu * z.mu
-      lf.prod   <- do.call(cbind, lapply(seq_len(G), function(g) adrop(lmat[,,g, drop=F], drop=3) %*% sum.f[,g]))
+      lf.prod   <- do.call(cbind, lapply(seq_len(G), function(g) as.matrix(lmat[,,g]) %*% sum.f[,g]))
       mu.mu     <- mu.omega * (psi.inv * (sum.data - lf.prod))
         mu.mu + v.mu
     }
@@ -19,8 +19,8 @@
   # Scores
     sim.score.m <- function(nn = NULL, Q = NULL, lmat = NULL,
                             psi.inv = NULL, c.data = NULL, ...) {
-      load.psi  <- lapply(seq_along(nn), function(g) adrop(lmat[,,g, drop=F], drop=3) * psi.inv[,g])
-      U.f       <- lapply(seq_along(nn), function(g) chol(diag(Q) + crossprod(load.psi[[g]], adrop(lmat[,,g, drop=F], drop=3))))
+      load.psi  <- lapply(seq_along(nn), function(g) as.matrix(lmat[,,g]) * psi.inv[,g])
+      U.f       <- lapply(seq_along(nn), function(g) chol(diag(Q) + crossprod(load.psi[[g]], as.matrix(lmat[,,g]))))
       z.f       <- lapply(seq_along(nn), function(g) matrix(rnorm(Q * nn[g], 0, 1), nr=Q, nc=nn[g]))
       v.f       <- lapply(seq_along(nn), function(g) backsolve(U.f[[g]], z.f[[g]]))
       mu.f      <- lapply(seq_along(nn), function(g) c.data[[g]] %*% (load.psi[[g]] %*% chol2inv(U.f[[g]])))
@@ -38,28 +38,28 @@
     }
   
   # Uniquenesses
-    sim.psi.im  <- function(N = NULL, P = NULL, psi.alpha = NULL, psi.beta = NULL, 
+    sim.psi.im  <- function(nn = NULL, P = NULL, psi.alpha = NULL, psi.beta = NULL, 
                             c.data = NULL, f = NULL, lmat = NULL, G = NULL, z = NULL, ...) { 
-      rate.t    <- lapply(seq_len(G), function(g) c.data[[g]] - tcrossprod(f[z == g,, drop=F], adrop(lmat[,,g, drop=F], drop=3)))
+      rate.t    <- lapply(seq_len(G), function(g) c.data[[g]] - tcrossprod(f[z == g,, drop=F], as.matrix(lmat[,,g])))
       rate.t    <- unlist(lapply(rate.t, function(x) colSums(x * x)))
-        matrix(rgamma(P * G, shape=(N + psi.alpha)/2, 
+        matrix(rgamma(P * G, shape=rep((nn + psi.alpha)/2, each=P), 
                       rate=(rate.t + psi.beta)/2), nr=P, nc=G)
     }
-  
+
   # Mixing Proportions
     sim.pi      <- function(pi.alpha = NULL, nn = 0, ...) {
         rdirichlet(1, pi.alpha + nn)
     }
     
   # Cluster Labels
-    sim.z       <- function(data = NULL, mu = NULL, Sigma = NULL, N = NULL, 
+    sim.z       <- function(data = NULL, mu = NULL, Sigma = NULL, 
                             G = NULL, P = NULL, pi.prop = NULL, ...) {
       numer     <- do.call(cbind, lapply(seq_len(G), function(g) exp(mvdnorm(data, mu[,g], Sigma[[g]], P, log.d=T) + log(pi.prop[,g]))))
       denomin   <- rowSums(numer)
       pz        <- sweep(numer, 1, denomin, FUN="/")
       pz[rowSums(pz > 0) == 0,] <- rep(1/G, G)
       pz[pz <= 0]               <- .Machine$double.eps
-      z         <- factor(do.call(c, lapply(seq_len(N), function(i) which(rmultinom(1, size=1, prob=pz[i,]) !=0))), levels=seq_len(G))
+      z         <- factor(do.call(c, lapply(seq_along(denomin), function(i) which(rmultinom(1, size=1, prob=pz[i,]) != 0))), levels=seq_len(G))
         return(list(z = z, log.likes = log(denomin)))
     }
 

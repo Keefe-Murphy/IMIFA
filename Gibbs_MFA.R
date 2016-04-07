@@ -59,7 +59,7 @@
     l.sigma      <- sigma.l * diag(Q)
     
   # Iterate
-    for(iter in 2:n.iters) { 
+    for(iter in seq_len(n.iters)) { 
       if(verbose) {
         if(all(iter < burnin, iter %% (burnin/10) == 0)) {
           cat(paste0("Iteration: ", iter, "\n"))
@@ -96,7 +96,7 @@
       }
                   
     # Uniquenesses
-      psi.inv    <- sim.psi.im(N=N, P=P, psi.alpha=psi.alpha, psi.beta=psi.beta,
+      psi.inv    <- sim.psi.im(nn=nn, P=P, psi.alpha=psi.alpha, psi.beta=psi.beta,
                                c.data=c.data, f=f, lmat=lmat, G=G, z=z)
     
     # Mixing Proportions
@@ -104,9 +104,9 @@
     
     # Cluster Labels
       psi        <- 1/psi.inv
-      Sigma      <- lapply(seq_len(G), function(g) tcrossprod(adrop(lmat[,,g, drop=F], drop=3)) + diag(psi[,g]))
+      Sigma      <- lapply(seq_len(G), function(g) tcrossprod(as.matrix(lmat[,,g])) + diag(psi[,g]))
       z.res      <- sim.z(data=data, mu=mu, Sigma=Sigma, 
-                          N=N, G=G, P=P, pi.prop=pi.prop)
+                          G=G, P=P, pi.prop=pi.prop)
       z          <- z.res$z
     
       if(all(iter > burnin, iter %% thinning == 0)) {

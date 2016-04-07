@@ -57,7 +57,7 @@
     sum.data     <- colSums(data)
   
   # Iterate
-    for(iter in 2:n.iters) { 
+    for(iter in seq_len(n.iters)) { 
       if(verbose) {
         if(all(iter < burnin, iter %% (burnin/10) == 0)) {
           cat(paste0("Iteration: ", iter, "\n"))
