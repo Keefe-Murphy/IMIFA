@@ -5,7 +5,7 @@
 tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q = NULL, Q.meth = c("Mode", "Median"),
                              criterion = c("bicm", "aicm", "bic.mcmc", "aic.mcmc"), recomp = F, ...) {
   
-  defpar         <- suppressWarnings(par(no.readonly = T))
+  defpar         <- suppressWarnings(par(no.readonly = T, new=F))
   defop          <- options()
   options(warn=1)
   on.exit(suppressWarnings(par(defpar)))
