@@ -216,8 +216,6 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   
   # Retrieve means, uniquenesses & empirical covariance matrix
     if(all(is.element(method, c("MFA", "MIFA", "IMIFA")), G > 1)) {
-      post.mu    <- sims[[G.ind]][[Q.ind]]$post.mu[,g]
-      post.psi   <- sims[[G.ind]][[Q.ind]]$post.psi[,g]
       if(sw["mu.sw"])  {
         mu       <- sims[[G.ind]][[Q.ind]]$mu[,g,store]                            
       }

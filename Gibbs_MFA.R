@@ -38,10 +38,7 @@
     }
     z.store      <- matrix(0, nr=N, nc=n.store)
     dimnames(z.store)      <- list(obsnames, iternames)
-    post.mu      <- matrix(0, nr=P, nc=G)
-    post.psi     <- matrix(0, nr=P, nc=G)
     ll.store     <- rep(0, n.store)
-    dimnames(post.mu)      <- dimnames(post.psi)   <- list(varnames, gnames)
     
     sigma.mu     <- 1/sigma.mu
     sigma.l      <- 1/sigma.l
@@ -114,8 +111,6 @@
     
       if(all(iter > burnin, iter %% thinning == 0)) {
         new.iter <- ceiling((iter - burnin)/thinning)
-        post.mu  <- post.mu + mu/n.store
-        post.psi <- post.psi + psi/n.store
         log.like <- sum(z.res$log.likes)
         if(sw["mu.sw"])             mu.store[,,new.iter]    <- mu  
         if(all(sw["f.sw"], Q > 0))  f.store[,,new.iter]     <- f
@@ -132,8 +127,6 @@
                       psi      = if(sw["psi.sw"])              psi.store,
                       pi.prop  = if(sw["pi.sw"])               pi.store,
                       z        = z.store,
-                      post.mu  = post.mu,
-                      post.psi = post.psi,
                       ll.store = ll.store)
     attr(returns, "K")        <- G - 1 + G * (P * Q - 0.5 * Q * (Q - 1)) + 2 * G * P
     attr(returns, "Z.init")   <- zinit
