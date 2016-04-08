@@ -43,12 +43,12 @@
     sigma.mu     <- 1/sigma.mu
     sigma.l      <- 1/sigma.l
     pi.alpha     <- rep(alpha.pi, G)
-    pi.prop      <- sim.pi(pi.alpha=pi.alpha)
     if(zinit == "list") {
       z          <- zlist
     } else if(zinit == "kmeans") {
       z          <- factor(kmeans(data, G, nstart=100)$cluster, levels=seq_len(G))
     } else {
+      pi.prop    <- sim.pi(pi.alpha=pi.alpha)
       z          <- sim.z.p(N=N, prob.z=pi.prop)
     }
     zinit        <- z
