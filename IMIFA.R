@@ -18,6 +18,7 @@
     load(file=paste0(getwd(), "/Data/Epi_urine_data.Rdata", sep=""), envir=.GlobalEnv)
     ppms     <- substr(colnames(x10[,4:ncol(x10)]), 2,6); rm(x)
     urine    <- x10[,4:ncol(x10)]
+    Grp      <- x10[,"Group"]
   # Meat
     load(file=paste0(getwd(), "/Data/Meat.Rdata", sep=""), envir=.GlobalEnv)
     spectra  <- t(spectra); rm(last.warning)
