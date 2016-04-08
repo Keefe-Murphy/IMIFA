@@ -47,8 +47,8 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   
 # Remove non-numeric columns & apply centering & scaling if necessary 
   n.store   <- ceiling((n.iters - burnin)/thinning)
-  dat       <- dat[sapply(dat, is.numeric)]
   dat       <- as.data.frame(dat)
+  dat       <- dat[sapply(dat, is.numeric)]
   if(scaling == "pareto") {
     scaling <- sqrt(as.matrix(apply(dat, 2, sd)))
   } else {
