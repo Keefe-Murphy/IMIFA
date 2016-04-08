@@ -11,27 +11,27 @@
       U.mu      <- apply(mu.omega, 2, sqrt)
       z.mu      <- matrix(rnorm(P * G, 0, 1), nr=P, nc=G)
       v.mu      <- U.mu * z.mu
-      lf.prod   <- do.call(cbind, lapply(seq_len(G), function(g) as.matrix(lmat[,,g]) %*% sum.f[,g]))
+      lf.prod   <- do.call(cbind, lapply(seq_len(G), function(g) as.matrix(lmat[,,g]) %*% sum.f[[g]]))
       mu.mu     <- mu.omega * (psi.inv * (sum.data - lf.prod))
         mu.mu + v.mu
     }
   
   # Scores
-    sim.score.m <- function(nn = NULL, Q = NULL, lmat = NULL,
+    sim.score.m <- function(nn = NULL, Qs = NULL, lmat = NULL,
                             psi.inv = NULL, c.data = NULL, ...) {
       load.psi  <- lapply(seq_along(nn), function(g) as.matrix(lmat[,,g]) * psi.inv[,g])
-      U.f       <- lapply(seq_along(nn), function(g) chol(diag(Q) + crossprod(load.psi[[g]], as.matrix(lmat[,,g]))))
-      z.f       <- lapply(seq_along(nn), function(g) matrix(rnorm(Q * nn[g], 0, 1), nr=Q, nc=nn[g]))
+      U.f       <- lapply(seq_along(nn), function(g) chol(diag(Qs[g]) + crossprod(load.psi[[g]], as.matrix(lmat[,,g]))))
+      z.f       <- lapply(seq_along(nn), function(g) matrix(rnorm(Qs[g] * nn[g], 0, 1), nr=Qs[g], nc=nn[g]))
       v.f       <- lapply(seq_along(nn), function(g) backsolve(U.f[[g]], z.f[[g]]))
       mu.f      <- lapply(seq_along(nn), function(g) c.data[[g]] %*% (load.psi[[g]] %*% chol2inv(U.f[[g]])))
         do.call(rbind, lapply(seq_along(nn), function(g) mu.f[[g]] + t(v.f[[g]])))
     }
   
   # Loadings
-    sim.load.m  <- function(l.sigma = NULL, Q = NULL, c.data.j = NULL, f = NULL, 
+    sim.load.m  <- function(l.sigma = NULL, Qs = NULL, c.data.j = NULL, f = NULL, 
                             psi.inv.j = NULL, FtF = NULL, G = NULL, z = NULL, ...) {
-      U.load    <- lapply(seq_len(G), function(g) chol(l.sigma + psi.inv.j[g] * FtF[[g]]))
-      z.load    <- matrix(rnorm(Q * G, 0, 1), nr=Q, nc=G)
+      U.load    <- lapply(seq_len(G), function(g) chol(l.sigma[seq_len(Qs[g]),seq_len(Qs[g])] + psi.inv.j[g] * FtF[[g]]))
+      z.load    <- matrix(rnorm(max(Qs) * G, 0, 1), nr=max(Qs), nc=G)
       v.load    <- do.call(cbind, lapply(seq_len(G), function(g) backsolve(U.load[[g]], z.load[,g])))
       mu.load   <- do.call(cbind, lapply(seq_len(G), function(g) psi.inv.j[g] * chol2inv(U.load[[g]]) %*% crossprod(f[z == g,, drop=F], c.data.j[[g]])))
         mu.load + v.load
