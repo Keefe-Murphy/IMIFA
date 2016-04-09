@@ -17,21 +17,23 @@
     varnames     <- colnames(data)
     facnames     <- paste0("Factor ", seq_len(Q))
     iternames    <- paste0("Iteration", seq_len(n.store))
+    iters        <- seq(from=burnin + 1, to=n.iters, by=thinning)
+    iters        <- iters[iters > 0]
     if(sw["mu.sw"])  {
       mu.store   <- matrix(0, nr=P, nc=n.store)
-      dimnames(mu.store)     <- list(varnames, iternames)
+      dimnames(mu.store)   <- list(varnames, iternames)
     }
     if(sw["f.sw"])   {
       f.store    <- array(0, dim=c(N, Q, n.store))
-      dimnames(f.store)      <- list(obsnames, facnames, iternames)
+      dimnames(f.store)    <- list(obsnames, facnames, iternames)
     }
     if(sw["l.sw"])   {
       load.store <- array(0, dim=c(P, Q, n.store))
-      dimnames(load.store)   <- list(varnames, facnames, iternames)
+      dimnames(load.store) <- list(varnames, facnames, iternames)
     }
     if(sw["psi.sw"]) {
       psi.store  <- matrix(0, nr=P, nc=n.store)
-      dimnames(psi.store)    <- list(varnames, iternames)
+      dimnames(psi.store)  <- list(varnames, iternames)
     }
     post.mu      <- setNames(rep(0, P), varnames)
     post.psi     <- setNames(rep(0, P), varnames)
@@ -39,8 +41,8 @@
     cov.est      <- matrix(0, nr=P, nc=P)
     Q.star       <- Q
     Q.store      <- setNames(rep(0, n.store), iternames)
-    dimnames(cov.emp)        <- list(varnames, varnames)
-    dimnames(cov.est)        <- dimnames(cov.emp)
+    dimnames(cov.emp)      <- list(varnames, varnames)
+    dimnames(cov.est)      <- dimnames(cov.emp)
     
     sigma.mu     <- 1/sigma.mu
     mu           <- sim.mu.p(sigma.mu=sigma.mu, P=P)  
@@ -55,9 +57,15 @@
       lmat[j,]   <- sim.load.ps(D.load=D.load, Q=Q)
     }
     sum.data     <- colSums(data)
+    if(burnin     < 1) {
+      mu.store[,1]         <- mu
+      f.store[,,1]         <- f
+      load.store[,,1]      <- lmat
+      psi.store[,1]        <- 1/psi.inv
+    }
   
   # Iterate
-    for(iter in seq_len(n.iters)) { 
+    for(iter in seq_len(max(iters))[-1]) { 
       if(verbose) {
         if(all(iter < burnin, iter %% (burnin/10) == 0)) {
           cat(paste0("Iteration: ", iter, "\n"))
@@ -144,8 +152,8 @@
       } 
     
     if(Q > Q.star)  stop(paste0("Q cannot exceed initial number of loadings columns: try increasing Q.star from ", Q.star))
-      if(all(iter > burnin, iter %% thinning == 0)) {
-        new.iter <- ceiling((iter - burnin)/thinning)
+     if(is.element(iter, iters)) {
+        new.iter <- which(iters == iter)  
         psi      <- 1/psi.inv
         post.mu  <- post.mu + mu/n.store
         post.psi <- post.psi + psi/n.store

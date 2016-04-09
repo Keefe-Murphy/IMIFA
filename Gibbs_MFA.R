@@ -16,6 +16,8 @@
     facnames     <- paste0("Factor ", seq_len(Q))
     gnames       <- paste0("Group ", seq_len(G))
     iternames    <- paste0("Iteration", seq_len(n.store))
+    iters        <- seq(from=burnin + 1, to=n.iters, by=thinning)
+    iters        <- iters[iters > 0]
     if(sw["mu.sw"])  {
       mu.store   <- array(0, dim=c(P, G, n.store))
       dimnames(mu.store)   <- list(varnames, gnames, iternames)
@@ -43,24 +45,34 @@
     sigma.mu     <- 1/sigma.mu
     sigma.l      <- 1/sigma.l
     pi.alpha     <- rep(alpha.pi, G)
-    if(zinit == "list") {
-      z          <- zlist
-    } else if(zinit == "kmeans") {
-      z          <- factor(kmeans(data, G, nstart=100)$cluster, levels=seq_len(G))
-    } else {
+    if(zinit == "priors") {
       pi.prop    <- sim.pi(pi.alpha=pi.alpha)
       z          <- sim.z.p(N=N, prob.z=pi.prop)
-    }
-    zinit        <- z
+    } else   {
+      if(zinit == "list") {
+        z        <- zlist
+      } else {
+        z        <- factor(kmeans(data, G, nstart=100)$cluster, levels=seq_len(G))
+      }
+      pi.prop    <- prop.table(tabulate(z, nbins=G))
+    } 
     mu           <- sim.mu.mp(P=P, sigma.mu=sigma.mu, G=G) 
     f            <- sim.f.mp(Q=Q, N=N)
     lmat         <- sim.load.mp(Q=Q, P=P, sigma.l=sigma.l, G=G)
     psi.inv      <- sim.psi.imp(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta, G=G)
     l.sigma      <- sigma.l * diag(Q)
     Qs           <- rep(Q, G)
+    if(burnin     < 1)    {
+      mu.store[,,1]        <- mu
+      f.store[,,1]         <- f
+      load.store[,,,1]     <- lmat
+      psi.store[,,1]       <- 1/psi.inv
+      pi.store[,1]         <- pi.prop
+      z.store[,1]          <- zinit  <- z
+    }
     
   # Iterate
-    for(iter in seq_len(n.iters)) { 
+    for(iter in seq_len(max(iters))[-1]) { 
       if(verbose) {
         if(all(iter < burnin, iter %% (burnin/10) == 0)) {
           cat(paste0("Iteration: ", iter, "\n"))
@@ -107,8 +119,8 @@
                           G=G, P=P, pi.prop=pi.prop)
       z          <- z.res$z
     
-      if(all(iter > burnin, iter %% thinning == 0)) {
-        new.iter <- ceiling((iter - burnin)/thinning)
+      if(is.element(iter, iters)) {
+        new.iter <- which(iters == iter)
         log.like <- sum(z.res$log.likes)
         if(sw["mu.sw"])             mu.store[,,new.iter]    <- mu  
         if(all(sw["f.sw"], Q > 0))  f.store[,,new.iter]     <- f

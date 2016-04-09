@@ -46,7 +46,9 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   }
   
 # Remove non-numeric columns & apply centering & scaling if necessary 
-  n.store   <- ceiling((n.iters - burnin)/thinning)
+  burnin    <- as.integer(burnin)
+  thinning  <- as.integer(thinning)
+  n.store   <- max(1, sum(seq(from=burnin + 1, to=n.iters, by=thinning) > 0))
   dat       <- as.data.frame(dat)
   dat       <- dat[sapply(dat, is.numeric)]
   if(scaling == "pareto") {

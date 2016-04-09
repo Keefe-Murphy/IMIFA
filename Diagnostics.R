@@ -16,7 +16,6 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   if(class(sims) != "IMIFA")      stop(paste0("Simulations object of class 'IMIFA' must be supplied"))
   store          <- seq(from=burnin + 1, to=attr(sims, "Store"), by=thinning)
   n.store        <- length(store)
-  if(n.store     <= 1)            stop(paste0("burnin must be less than the stored number of iterations"))
   method         <- attr(sims, "Method")
   n.fac          <- attr(sims, "Factors")
   n.grp          <- attr(sims, "Groups")
@@ -104,7 +103,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
        log.likes     <- sims[[gi]][[qi]]$ll.store[store]
        K             <- attr(sims[[gi]][[qi]], "K")
        ll.max        <- 2 * max(log.likes)
-       ll.var        <- 2 * var(log.likes)
+       ll.var        <- ifelse(length(log.likes) != 1, 2 * var(log.likes), 0)
        ll.mean       <- mean(log.likes)
        aicm[g,q]     <- ll.max - ll.var * 2
        bicm[g,q]     <- ll.max - ll.var * log(n.obs)     
@@ -135,10 +134,10 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   
 # Retrieve cluster labels and mixing proportions
   if(all(is.element(method, c("MFA", "MIFA", "IMIFA")), G > 1)) {
-    z            <- sims[[G.ind]][[Q.ind]]$z[,store]
+    z            <- as.matrix(sims[[G.ind]][[Q.ind]]$z[,store])
     post.z       <- setNames(apply(z, 1, function(x) factor(which.max(tabulate(x)), levels=seq_len(G))), seq_len(n.obs))
     if(sw["pi.sw"])    {
-      pi.prop    <- sims[[G.ind]][[Q.ind]]$pi.prop[,store]
+      pi.prop    <- as.matrix(sims[[G.ind]][[Q.ind]]$pi.prop[,store])
       post.pi    <- rowMeans(pi.prop, dims=1)
     } else {
       post.pi    <- setNames(prop.table(tabulate(post.z, nbins=G)), paste0("Group ", seq_len(G)))
@@ -217,10 +216,10 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   # Retrieve means, uniquenesses & empirical covariance matrix
     if(all(is.element(method, c("MFA", "MIFA", "IMIFA")), G > 1)) {
       if(sw["mu.sw"])  {
-        mu       <- sims[[G.ind]][[Q.ind]]$mu[,g,store]                            
+        mu       <- as.matrix(sims[[G.ind]][[Q.ind]]$mu[,g,store])                            
       }
       if(sw["psi.sw"]) {
-        psi      <- sims[[G.ind]][[Q.ind]]$psi[,g,store]
+        psi      <- as.matrix(sims[[G.ind]][[Q.ind]]$psi[,g,store])
       }
       data       <- attr(sims, "Name")
       data.x     <- exists(data, envir=.GlobalEnv)

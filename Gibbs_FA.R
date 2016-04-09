@@ -15,6 +15,8 @@
     varnames     <- colnames(data)
     facnames     <- paste0("Factor ", seq_len(Q))
     iternames    <- paste0("Iteration", seq_len(n.store))
+    iters        <- seq(from=burnin + 1, to=n.iters, by=thinning)
+    iters        <- iters[iters > 0]
     if(sw["mu.sw"])  {
       mu.store   <- matrix(0, nr=P, nc=n.store)
       dimnames(mu.store)   <- list(varnames, iternames)
@@ -47,9 +49,15 @@
     psi.inv      <- sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
     l.sigma      <- sigma.l * diag(Q)
     sum.data     <- colSums(data)
+    if(burnin     < 1)    {
+      mu.store[,1]         <- mu
+      f.store[,,1]         <- f
+      load.store[,,1]      <- lmat
+      psi.store[,1]        <- 1/psi.inv
+    }
   
   # Iterate
-    for(iter in seq_len(n.iters)) { 
+    for(iter in seq_len(max(iters))[-1]) { 
       if(verbose) {
         if(all(iter < burnin, iter %% (burnin/10) == 0)) {
           cat(paste0("Iteration: ", iter, "\n"))
@@ -83,8 +91,8 @@
       psi.inv    <- sim.psi.i(N=N, P=P, psi.alpha=psi.alpha, psi.beta=psi.beta,
                               c.data=c.data, f=f, lmat=lmat)
     
-      if(all(iter > burnin, iter %% thinning == 0)) {
-        new.iter <- ceiling((iter - burnin)/thinning)
+      if(is.element(iter, iters)) {
+        new.iter <- which(iters == iter)  
         psi      <- 1/psi.inv
         post.mu  <- post.mu + mu/n.store
         post.psi <- post.psi + psi/n.store

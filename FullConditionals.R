@@ -59,7 +59,7 @@
       pz        <- sweep(numer, 1, denomin, FUN="/")
       pz[rowSums(pz > 0) == 0,] <- rep(1/G, G)
       pz[pz <= 0]               <- .Machine$double.eps
-      z         <- factor(do.call(c, lapply(seq_along(denomin), function(i) which(rmultinom(1, size=1, prob=pz[i,]) != 0))), levels=seq_len(G))
+      z         <- factor(do.call(base::c, lapply(seq_along(denomin), function(i) which(rmultinom(1, size=1, prob=pz[i,]) != 0))), levels=seq_len(G))
         return(list(z = z, log.likes = log(denomin)))
     }
 
