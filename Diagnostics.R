@@ -14,6 +14,8 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   if(!exists(deparse(substitute(sims)),
              envir=.GlobalEnv))   stop(paste0("Object ", match.call()$sims, " not found"))
   if(class(sims) != "IMIFA")      stop(paste0("Simulations object of class 'IMIFA' must be supplied"))
+  burnin         <- as.integer(burnin)
+  thinning       <- as.integer(thinning)
   store          <- seq(from=burnin + 1, to=attr(sims, "Store"), by=thinning)
   n.store        <- length(store)
   method         <- attr(sims, "Method")
@@ -22,9 +24,9 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   n.obs          <- attr(sims, "Obs")
   n.var          <- attr(sims, "Vars")
   sw             <- attr(sims, "Switch")
-  criterion      <- match.arg(criterion)
   cent           <- attr(sims, "Center")
   scaling        <- attr(sims, "Scaling")
+  criterion      <- match.arg(criterion)
   if(all(method  == "MIFA", 
      !is.element(criterion, 
      c("aicm", "bicm"))))         stop("criterion should be one of 'aicm' or 'bicm' for the MIFA method")
@@ -97,18 +99,18 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     aicm         <- bicm       <- 
     aic.mcmc     <- bic.mcmc   <- crit.mat
     for(g in seq_len(G.range)) { 
+      gi               <- ifelse(G.T, G.ind, g)
       for(q in seq_len(Q.range)) {
-       gi            <- ifelse(G.T, G.ind, g)
-       qi            <- ifelse(Q.T, Q.ind, q)
-       log.likes     <- sims[[gi]][[qi]]$ll.store[store]
-       K             <- attr(sims[[gi]][[qi]], "K")
-       ll.max        <- 2 * max(log.likes)
-       ll.var        <- ifelse(length(log.likes) != 1, 2 * var(log.likes), 0)
-       ll.mean       <- mean(log.likes)
-       aicm[g,q]     <- ll.max - ll.var * 2
-       bicm[g,q]     <- ll.max - ll.var * log(n.obs)     
-       aic.mcmc[g,q] <- ll.max - K * 2
-       bic.mcmc[g,q] <- ll.max - K * log(n.obs)
+        qi             <- ifelse(Q.T, Q.ind, q)
+        log.likes      <- sims[[gi]][[qi]]$ll.store[store]
+        K              <- attr(sims[[gi]][[qi]], "K")
+        ll.max         <- 2 * max(log.likes)
+        ll.var         <- ifelse(length(log.likes) != 1, 2 * var(log.likes), 0)
+        ll.mean        <- mean(log.likes)
+        aicm[g,q]      <- ll.max - ll.var * 2
+        bicm[g,q]      <- ll.max - ll.var * log(n.obs)     
+        aic.mcmc[g,q]  <- ll.max - K * 2
+        bic.mcmc[g,q]  <- ll.max - K * log(n.obs)
       }  
     }
     crit         <- get(criterion)
@@ -198,19 +200,24 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     }
     
   # Loadings matrix / identifiability / error metrics / etc.  
+    if(all(sw["f.sw"], is.element(method, c("MFA", "MIFA", "IMIFA")), G > 1)) {
+      fg         <- f[post.z == g,,, drop=F]
+    }
     if(sw["l.sw"])     {
       for(p in seq_len(n.store)) {
-        rot          <- procrustes(X=as.matrix(lmat[,,p]), Xstar=l.temp)$R
-        lmat[,,p]    <- lmat[,,p] %*% rot
+        rot            <- procrustes(X=as.matrix(lmat[,,p]), Xstar=l.temp)$R
+        lmat[,,p]      <- lmat[,,p] %*% rot
         if(sw["f.sw"]) {
           if(all(is.element(method, c("MFA", "MIFA", "IMIFA")), G > 1)) {
-            f[post.z == g,,p]  <- f[post.z == g,,p] %*% rot
+            fg[,,p]    <- fg[,,p]   %*% rot
           } else {
-            f[,,p]   <- f[,,p] %*% rot
+            f[,,p]     <- f[,,p]    %*% rot
           }
-          scores     <- list(f = f, post.f = rowMeans(f, dims=2))
         }  
       }
+    }
+    if(all(sw["f.sw"], is.element(method, c("MFA", "MIFA", "IMIFA")), G > 1)) {
+      f[post.z == g,,] <- fg
     }
   
   # Retrieve means, uniquenesses & empirical covariance matrix
@@ -259,9 +266,9 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     if(all(is.element(method, c("MFA", "MIFA", "IMIFA")), G > 1)) {
       if(all(sw["psi.sw"], any(sw["l.sw"], Qg == 0))) {
         if(Qg > 0) {
-          cov.est    <- tcrossprod(post.load) + diag(post.psi)
+          cov.est      <- tcrossprod(post.load) + diag(post.psi)
         } else {
-          cov.est    <- diag(post.psi)
+          cov.est      <- diag(post.psi)
         }
         if(data.x)   {
           dimnames(cov.est)    <- list(varnames, varnames)
@@ -323,14 +330,15 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     result[[g]]  <- unlist(results, recursive=F)
     attr(result[[g]], "Store") <- n.store
   }
+  scores         <- list(f = f, post.f = rowMeans(f, dims=2))
   names(result)  <- paste0("Group", seq_len(G))
   attr(GQ.res, "Criterion")    <- criterion
   attr(GQ.res, "Factors")      <- n.fac
   attr(GQ.res, "Groups")       <- n.grp
   attr(GQ.res, "Supplied")     <- c(Q=Q.T, G=G.T)
   if(all(emp.T, est.T)) {
-    errors       <- list(MSE = mean(MSE), RMSE = mean(RMSE), NRMSE = mean(NRMSE),
-                         CVRMSE = mean(CVRMSE), MAD = mean(MAD))  
+    errors       <- list(MSE = mean(MSE, na.rm=T), RMSE = mean(RMSE, na.rm=T), NRMSE = mean(NRMSE, na.rm=T),
+                         CVRMSE = mean(CVRMSE, na.rm=T), MAD = mean(MAD, na.rm=T))  
   }
   
   result         <- c(result, if(exists("cluster", envir=environment())) list(Clust = cluster), 
