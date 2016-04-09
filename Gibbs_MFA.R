@@ -56,6 +56,7 @@
       }
       pi.prop    <- prop.table(tabulate(z, nbins=G))
     } 
+    zinit        <- z
     mu           <- sim.mu.mp(P=P, sigma.mu=sigma.mu, G=G) 
     f            <- sim.f.mp(Q=Q, N=N)
     lmat         <- sim.load.mp(Q=Q, P=P, sigma.l=sigma.l, G=G)
@@ -68,7 +69,7 @@
       load.store[,,,1]     <- lmat
       psi.store[,,1]       <- 1/psi.inv
       pi.store[,1]         <- pi.prop
-      z.store[,1]          <- zinit  <- z
+      z.store[,1]          <- zinit
     }
     
   # Iterate
