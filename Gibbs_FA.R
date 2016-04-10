@@ -76,15 +76,8 @@
       if(Q > 0) {
         f        <- sim.score(N=N, Q=Q, lmat=lmat, psi.inv=psi.inv, c.data=c.data)
         FtF      <- crossprod(f)
-        for(j in seq_len(P)) {
-          psi.inv.j <- psi.inv[j]
-          c.data.j  <- c.data[,j]
-          lmat[j,]  <- sim.load(l.sigma=l.sigma, Q=Q, c.data.j=c.data.j, 
-                                f=f, psi.inv.j=psi.inv.j, FtF=FtF)
-        }
-      } else {
-        f        <- matrix(, nr=N, nc=0)
-        lmat     <- matrix(, nr=P, nc=0)
+        lmat     <- sim.load(l.sigma=l.sigma, Q=Q, c.data=c.data, 
+                             P=P, f=f, psi.inv=psi.inv, FtF=FtF)
       }
                       
     # Uniquenesses
@@ -92,24 +85,24 @@
                               c.data=c.data, f=f, lmat=lmat)
     
       if(is.element(iter, iters)) {
-        new.iter <- which(iters == iter)  
+        new.it   <- which(iters == iter)  
         psi      <- 1/psi.inv
         post.mu  <- post.mu + mu/n.store
         post.psi <- post.psi + psi/n.store
         Sigma    <- tcrossprod(lmat) + diag(psi)
         cov.est  <- cov.est + Sigma/n.store
         log.like <- sum(mvdnorm(data=data, mu=mu, Sigma=Sigma, P=P, log.d=T))
-        if(sw["mu.sw"])             mu.store[,new.iter]    <- mu  
-        if(all(sw["f.sw"], Q > 0))  f.store[,,new.iter]    <- f
-        if(all(sw["l.sw"], Q > 0))  load.store[,,new.iter] <- lmat
-        if(sw["psi.sw"])            psi.store[,new.iter]   <- psi
-                                    ll.store[new.iter]     <- log.like
+        if(sw["mu.sw"])             mu.store[,new.it]    <- mu  
+        if(all(sw["f.sw"], Q > 0))  f.store[,,new.it]    <- f
+        if(all(sw["l.sw"], Q > 0))  load.store[,,new.it] <- lmat
+        if(sw["psi.sw"])            psi.store[,new.it]   <- psi
+                                    ll.store[new.it]     <- log.like
       }  
     }
-    returns   <- list(mu       = if(sw["mu.sw"])              mu.store,
-                      f        = if(all(sw["f.sw"], Q > 0))   f.store, 
-                      load     = if(all(sw["l.sw"], Q > 0))   load.store, 
-                      psi      = if(sw["psi.sw"])             psi.store,
+    returns   <- list(mu       = if(sw["mu.sw"])            mu.store,
+                      f        = if(all(sw["f.sw"], Q > 0)) f.store, 
+                      load     = if(all(sw["l.sw"], Q > 0)) load.store, 
+                      psi      = if(sw["psi.sw"])           psi.store,
                       post.mu  = post.mu,
                       post.psi = post.psi,
                       cov.emp  = cov.emp,

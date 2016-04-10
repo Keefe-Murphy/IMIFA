@@ -51,11 +51,7 @@
     phi          <- sim.phi.p(Q=Q, P=P, phi.nu=phi.nu)
     delta        <- sim.delta.p(Q=Q, alpha.d1=alpha.d1, alpha.d2=alpha.d2)
     tau          <- cumprod(delta)
-    lmat         <- matrix(0, nr=P, nc=Q)
-    for(j in seq_len(P)) {
-      D.load     <- phi[j,] * tau
-      lmat[j,]   <- sim.load.ps(D.load=D.load, Q=Q)
-    }
+    lmat         <- sim.load.ps(Q=Q, phi=phi, tau=tau, P=P)
     sum.data     <- colSums(data)
     if(burnin     < 1) {
       mu.store[,1]         <- mu
@@ -84,13 +80,8 @@
       if(Q  > 0) {
         f        <- sim.score(N=N, Q=Q, lmat=lmat, psi.inv=psi.inv, c.data=c.data)
         FtF      <- crossprod(f)
-        for(j in seq_len(P)) {
-          psi.inv.j <- psi.inv[j]
-          c.data.j  <- c.data[,j]
-          D.load    <- phi[j,] * tau * diag(Q)
-          lmat[j,]  <- sim.load(l.sigma=D.load, Q=Q, c.data.j=c.data.j, 
-                                f=f, psi.inv.j=psi.inv.j, FtF=FtF)
-        }
+        lmat     <- sim.load.s(Q=Q, c.data=c.data, P=P, f=f, phi=phi,
+                               tau=tau, psi.inv=psi.inv, FtF=FtF)
       } else {
         f        <- matrix(, nr=N, nc=0)
         lmat     <- matrix(, nr=P, nc=0)
@@ -153,17 +144,17 @@
     
     if(Q > Q.star)  stop(paste0("Q cannot exceed initial number of loadings columns: try increasing Q.star from ", Q.star))
      if(is.element(iter, iters)) {
-        new.iter <- which(iters == iter)  
+        new.it   <- which(iters == iter)  
         psi      <- 1/psi.inv
         post.mu  <- post.mu + mu/n.store
         post.psi <- post.psi + psi/n.store
         Sigma    <- tcrossprod(lmat) + diag(psi)
         cov.est  <- cov.est + Sigma/n.store
-        if(sw["mu.sw"])             mu.store[,new.iter]              <- mu  
-        if(all(sw["f.sw"], Q > 0))  f.store[,seq_len(Q),new.iter]    <- f
-        if(all(sw["l.sw"], Q > 0))  load.store[,seq_len(Q),new.iter] <- lmat
-        if(sw["psi.sw"])            psi.store[,new.iter]             <- psi
-                                    Q.store[new.iter]                <- Q
+        if(sw["mu.sw"])             mu.store[,new.it]              <- mu  
+        if(all(sw["f.sw"], Q > 0))  f.store[,seq_len(Q),new.it]    <- f
+        if(all(sw["l.sw"], Q > 0))  load.store[,seq_len(Q),new.it] <- lmat
+        if(sw["psi.sw"])            psi.store[,new.it]             <- psi
+                                    Q.store[new.it]                <- Q
       }
     }
     returns      <- list(mu       = if(sw["mu.sw"])  mu.store,

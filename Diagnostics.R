@@ -330,7 +330,9 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     result[[g]]  <- unlist(results, recursive=F)
     attr(result[[g]], "Store") <- n.store
   }
-  scores         <- list(f = f, post.f = rowMeans(f, dims=2))
+  if(sw["f.sw"]) {
+    scores       <- list(f = f, post.f = rowMeans(f, dims=2))
+  }
   names(result)  <- paste0("Group", seq_len(G))
   attr(GQ.res, "Criterion")    <- criterion
   attr(GQ.res, "Factors")      <- n.fac
