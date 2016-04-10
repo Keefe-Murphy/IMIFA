@@ -51,7 +51,9 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
 # Remove non-numeric columns & apply centering & scaling if necessary 
   burnin    <- as.integer(burnin)
   thinning  <- as.integer(thinning)
-  n.store   <- max(1, sum(seq(from=burnin + 1, to=n.iters, by=thinning) > 0))
+  n.iters   <- max(burnin + 1, as.integer(n.iters))
+  iters     <- seq(from=burnin + 1, to=n.iters, by=thinning)
+  iters     <- iters[iters > 0]
   dat       <- as.data.frame(dat)
   dat       <- dat[sapply(dat, is.numeric)]
   if(scaling == "pareto") {
@@ -204,9 +206,8 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   imifa     <- list(list())
   Gi        <- 1
   Qi        <- 1
-  gibbs.arg <- list(n.iters = n.iters, P = P, sigma.mu = sigma.mu, 
-                    psi.alpha = psi.alpha, psi.beta = psi.beta, burnin = burnin, 
-                    thinning = thinning, n.store = n.store, verbose = verbose, sw = switches)
+  gibbs.arg <- list(P = P, sigma.mu = sigma.mu, psi.alpha = psi.alpha, psi.beta = psi.beta, burnin = burnin, 
+                    thinning = thinning, iters = iters, verbose = verbose, sw = switches)
   if(!is.element(method, c("FA", "MFA"))) {
     gibbs.arg     <- append(gibbs.arg, list(phi.nu = phi.nu, alpha.d1 = alpha.d1, alpha.d2 = alpha.d2,
                                           adapt = adapt, b0 = b0, b1 = b1, prop = prop, epsilon = epsilon))
@@ -312,7 +313,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   attr(imifa, "Name")     <- dat.name
   attr(imifa, "Obs")      <- N
   attr(imifa, "Scaling")  <- scaling
-  attr(imifa, "Store")    <- n.store
+  attr(imifa, "Store")    <- length(iters)
   attr(imifa, "Switch")   <- switches
   if(is.element(method, c("IFA", "IMIFA")) || length(range.Q) == 1) {
     attr(imifa, "Time")   <- tot.time

@@ -3,21 +3,21 @@
 ################################################################
   
 # Gibbs Sampler Function
-  gibbs.MFA      <- function(Q = NULL, data = NULL, n.iters = NULL,
+  gibbs.MFA      <- function(Q = NULL, data = NULL, iters = NULL,
                              N = NULL, P = NULL, sigma.mu = NULL,
                              psi.alpha = NULL, psi.beta = NULL, G = NULL,
                              burnin = NULL, thinning = NULL, sw = NULL,
-                             n.store = NULL, verbose = NULL, sigma.l = NULL,
-                             alpha.pi = NULL, zinit = NULL, zlist = NULL,  ...) {
+                             verbose = NULL, sigma.l = NULL, alpha.pi = NULL, 
+                             zinit = NULL, zlist = NULL,  ...) {
         
   # Define & initialise variables
+    n.iters      <- round(max(iters), -1)
+    n.store      <- length(iters)
     obsnames     <- rownames(data)
     varnames     <- colnames(data)
     facnames     <- paste0("Factor ", seq_len(Q))
     gnames       <- paste0("Group ", seq_len(G))
     iternames    <- paste0("Iteration", seq_len(n.store))
-    iters        <- seq(from=burnin + 1, to=n.iters, by=thinning)
-    iters        <- iters[iters > 0]
     if(sw["mu.sw"])  {
       mu.store   <- array(0, dim=c(P, G, n.store))
       dimnames(mu.store)   <- list(varnames, gnames, iternames)
