@@ -29,6 +29,9 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
     method  <- "classify"
   }
   method    <- match.arg(method)
+  if(is.logical(scaling) && !scaling) {
+    scaling <- "none"
+  }
   scaling   <- match.arg(scaling)
   if(missing(dat))                  stop("Dataset must be supplied")
   if(!exists(deparse(substitute(dat)),
