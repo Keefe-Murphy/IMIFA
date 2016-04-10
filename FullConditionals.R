@@ -29,18 +29,18 @@
   
   # Loadings
     sim.load.m  <- function(l.sigma = NULL, Qs = NULL, c.data.j = NULL, f = NULL, 
-                            psi.inv.j = NULL, FtF = NULL, G = NULL, z = NULL, ...) {
+                            psi.inv.j = NULL, FtF = NULL, G = NULL, z.ind = NULL, ...) {
       U.load    <- lapply(seq_len(G), function(g) chol(l.sigma[seq_len(Qs[g]),seq_len(Qs[g])] + psi.inv.j[g] * FtF[[g]]))
       z.load    <- matrix(rnorm(max(Qs) * G, 0, 1), nr=max(Qs), nc=G)
       v.load    <- do.call(cbind, lapply(seq_len(G), function(g) backsolve(U.load[[g]], z.load[,g])))
-      mu.load   <- do.call(cbind, lapply(seq_len(G), function(g) psi.inv.j[g] * chol2inv(U.load[[g]]) %*% crossprod(f[z == g,, drop=F], c.data.j[[g]])))
+      mu.load   <- do.call(cbind, lapply(seq_len(G), function(g) psi.inv.j[g] * chol2inv(U.load[[g]]) %*% crossprod(f[z.ind[[g]],, drop=F], c.data.j[[g]])))
         mu.load + v.load
     }
   
   # Uniquenesses
     sim.psi.im  <- function(nn = NULL, P = NULL, psi.alpha = NULL, psi.beta = NULL, 
-                            c.data = NULL, f = NULL, lmat = NULL, G = NULL, z = NULL, ...) { 
-      rate.t    <- lapply(seq_len(G), function(g) c.data[[g]] - tcrossprod(f[z == g,, drop=F], as.matrix(lmat[,,g])))
+                            c.data = NULL, f = NULL, lmat = NULL, G = NULL, z.ind = NULL, ...) { 
+      rate.t    <- lapply(seq_len(G), function(g) c.data[[g]] - tcrossprod(f[z.ind[[g]],, drop=F], as.matrix(lmat[,,g])))
       rate.t    <- unlist(lapply(rate.t, function(x) colSums(x * x)))
         matrix(rgamma(P * G, shape=rep((nn + psi.alpha)/2, each=P), 
                       rate=(rate.t + psi.beta)/2), nr=P, nc=G)

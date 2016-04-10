@@ -82,24 +82,25 @@
         }
       }
       nn         <- tabulate(z, nbins=G)
+      z.ind      <- lapply(seq_len(G), function(g) z == g)
       
     # Means
-      sum.data   <- do.call(cbind, lapply(seq_len(G), function(g) colSums(data[z == g,,drop=F])))
-      sum.f      <- lapply(seq_len(G), function(g) colSums(f[z == g,, drop=F]))
+      sum.data   <- do.call(cbind, lapply(seq_len(G), function(g) colSums(data[z.ind[[g]],,drop=F])))
+      sum.f      <- lapply(seq_len(G), function(g) colSums(f[z.ind[[g]],, drop=F]))
       mu         <- sim.mu.m(nn=nn, P=P, sigma.mu=sigma.mu, psi.inv=psi.inv,
                              sum.data=sum.data, sum.f=sum.f, lmat=lmat, G=G)
     
     # Scores & Loadings
-      c.data     <- lapply(seq_len(G), function(g) sweep(data[z == g,, drop=F], 2, mu[,g], FUN="-"))
+      c.data     <- lapply(seq_len(G), function(g) sweep(data[z.ind[[g]],, drop=F], 2, mu[,g], FUN="-"))
       if(Q > 0) {
         f        <- sim.score.m(nn=nn, Qs=Qs, lmat=lmat, psi.inv=psi.inv, 
                                 c.data=c.data)[obsnames,, drop=F]
-        FtF      <- lapply(seq_len(G), function(g) crossprod(f[z == g,, drop=F]))
+        FtF      <- lapply(seq_len(G), function(g) crossprod(f[z.ind[[g]],, drop=F]))
         for(j in seq_len(P)) {
           psi.inv.j <- psi.inv[j,]
           c.data.j  <- lapply(c.data, function(dat) dat[,j])
-          lmat[j,,] <- sim.load.m(l.sigma=l.sigma, Qs=Qs, c.data.j=c.data.j, 
-                                  f=f, psi.inv.j=psi.inv.j, FtF=FtF, G=G, z=z)
+          lmat[j,,] <- sim.load.m(l.sigma=l.sigma, Qs=Qs, c.data.j=c.data.j, f=f, 
+                                  psi.inv.j=psi.inv.j, FtF=FtF, G=G, z.ind=z.ind)
         }
       } else {
         f        <- matrix(, nr=N, nc=0)
@@ -108,7 +109,7 @@
                   
     # Uniquenesses
       psi.inv    <- sim.psi.im(nn=nn, P=P, psi.alpha=psi.alpha, psi.beta=psi.beta,
-                               c.data=c.data, f=f, lmat=lmat, G=G, z=z)
+                               c.data=c.data, f=f, lmat=lmat, G=G, z.ind=z.ind)
     
     # Mixing Proportions
       pi.prop    <- sim.pi(pi.alpha=pi.alpha, nn=nn)
@@ -119,7 +120,7 @@
       z.res      <- sim.z(data=data, mu=mu, Sigma=Sigma, 
                           G=G, P=P, pi.prop=pi.prop)
       z          <- z.res$z
-    
+      
       if(is.element(iter, iters)) {
         new.iter <- which(iters == iter)
         log.like <- sum(z.res$log.likes)

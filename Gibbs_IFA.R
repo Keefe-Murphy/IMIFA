@@ -112,7 +112,7 @@
         tau         <- cumprod(delta)  
       } 
       if(Q >= 2) {
-        for(k in 2:Q) { 
+        for(k in seq_len(Q)[-1]) { 
           delta[k]  <- sim.deltak(Q=Q, P=P, k=k, alpha.d2=alpha.d2,
                                   delta=delta, tau=tau, sum.term=sum.term)
           tau       <- cumprod(delta)      
@@ -159,11 +159,11 @@
         post.psi <- post.psi + psi/n.store
         Sigma    <- tcrossprod(lmat) + diag(psi)
         cov.est  <- cov.est + Sigma/n.store
-        if(sw["mu.sw"])             mu.store[,new.iter]       <- mu  
-        if(all(sw["f.sw"], Q > 0))  f.store[,1:Q,new.iter]    <- f
-        if(all(sw["l.sw"], Q > 0))  load.store[,1:Q,new.iter] <- lmat
-        if(sw["psi.sw"])            psi.store[,new.iter]      <- psi
-                                    Q.store[new.iter]         <- Q
+        if(sw["mu.sw"])             mu.store[,new.iter]              <- mu  
+        if(all(sw["f.sw"], Q > 0))  f.store[,seq_len(Q),new.iter]    <- f
+        if(all(sw["l.sw"], Q > 0))  load.store[,seq_len(Q),new.iter] <- lmat
+        if(sw["psi.sw"])            psi.store[,new.iter]             <- psi
+                                    Q.store[new.iter]                <- Q
       }
     }
     returns      <- list(mu       = if(sw["mu.sw"])  mu.store,
