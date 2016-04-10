@@ -45,11 +45,11 @@
     sigma.mu     <- 1/sigma.mu
     sigma.l      <- 1/sigma.l
     pi.alpha     <- rep(alpha.pi, G)
-    if(zinit == "priors") {
+    if(zinit == "priors")  {
       pi.prop    <- sim.pi(pi.alpha=pi.alpha)
       z          <- sim.z.p(N=N, prob.z=pi.prop)
     } else   {
-      if(zinit == "list") {
+      if(zinit == "list")  {
         z        <- zlist
       } else {
         z        <- factor(kmeans(data, G, nstart=100)$cluster, levels=seq_len(G))
@@ -63,10 +63,17 @@
     psi.inv      <- sim.psi.imp(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta, G=G)
     l.sigma      <- sigma.l * diag(Q)
     Qs           <- rep(Q, G)
-    if(burnin     < 1)    {
+   #fact         <- lapply(seq_len(G), function(g) factanal(data[z == g,, drop=F], factors=Q, scores="regression", control=list(nstart=50)))
+   #mu           <- do.call(cbind, lapply(seq_len(G), function(g) colMeans(data[z == g,, drop=F])))
+   #f            <- do.call(rbind, lapply(seq_len(G), function(g) fact[[g]]$scores))
+   #lmat         <- lapply(seq_len(G), function(g) fact[[g]]$loadings)
+   #psi.inv      <- 1/do.call(cbind, lapply(seq_len(G), function(g) fact[[g]]$uniquenesses))
+    if(burnin     < 1)     {
       mu.store[,,1]        <- mu
       f.store[,,1]         <- f
-      load.store[,,,1]     <- lmat
+      for(g in seq_len(G)) {
+        load.store[,,g,1]  <- lmat[[g]]
+      }
       psi.store[,,1]       <- 1/psi.inv
       pi.store[,1]         <- pi.prop
       z.store[,1]          <- zinit
@@ -96,16 +103,13 @@
         f        <- sim.score.m(nn=nn, Qs=Qs, lmat=lmat, psi.inv=psi.inv, 
                                 c.data=c.data)[obsnames,, drop=F]
         FtF      <- lapply(seq_len(G), function(g) crossprod(f[z.ind[[g]],, drop=F]))
-        for(j in seq_len(P)) {
-          psi.inv.j <- psi.inv[j,]
-          c.data.j  <- lapply(c.data, function(dat) dat[,j])
-          lmat[j,,] <- sim.load.m(l.sigma=l.sigma, Qs=Qs, c.data.j=c.data.j, f=f, 
-                                  psi.inv.j=psi.inv.j, FtF=FtF, G=G, z.ind=z.ind)
-        }
-      } else {
-        f        <- matrix(, nr=N, nc=0)
-        lmat     <- array(, dim=c(P, 0, G))
+        lmat     <- sim.load.m(l.sigma=l.sigma, Qs=Qs, c.data=c.data, f=f, P=P,
+                               psi.inv=psi.inv, FtF=FtF, G=G, z.ind=z.ind)
       }
+     #} else {
+     #  f        <- matrix(, nr=N, nc=0)
+     #  lmat     <- lapply(seq_len(G), function(g) matrix(, nr=P, nc=0))
+     #}
                   
     # Uniquenesses
       psi.inv    <- sim.psi.im(nn=nn, P=P, psi.alpha=psi.alpha, psi.beta=psi.beta,
@@ -116,28 +120,32 @@
     
     # Cluster Labels
       psi        <- 1/psi.inv
-      Sigma      <- lapply(seq_len(G), function(g) tcrossprod(as.matrix(lmat[,,g])) + diag(psi[,g]))
+      Sigma      <- lapply(seq_len(G), function(g) tcrossprod(lmat[[g]]) + diag(psi[,g]))
       z.res      <- sim.z(data=data, mu=mu, Sigma=Sigma, 
                           G=G, P=P, pi.prop=pi.prop)
       z          <- z.res$z
       
-      if(is.element(iter, iters)) {
-        new.iter <- which(iters == iter)
+      if(is.element(iter, iters))  {
+        new.it   <- which(iters == iter)
         log.like <- sum(z.res$log.likes)
-        if(sw["mu.sw"])             mu.store[,,new.iter]    <- mu  
-        if(all(sw["f.sw"], Q > 0))  f.store[,,new.iter]     <- f
-        if(all(sw["l.sw"], Q > 0))  load.store[,,,new.iter] <- lmat
-        if(sw["psi.sw"])            psi.store[,,new.iter]   <- psi
-        if(sw["pi.sw"])             pi.store[,new.iter]     <- pi.prop
-                                    z.store[,new.iter]      <- z 
-                                    ll.store[new.iter]      <- log.like
+        if(sw["mu.sw"])             mu.store[,,new.it]     <- mu  
+        if(all(sw["f.sw"], Q > 0))  f.store[,,new.it]      <- f
+        if(all(sw["l.sw"], Q > 0)) {
+          for(g in seq_len(G)) {
+                                    load.store[,,g,new.it] <- lmat[[g]]
+          }
+        }
+        if(sw["psi.sw"])            psi.store[,,new.it]    <- psi
+        if(sw["pi.sw"])             pi.store[,new.it]      <- pi.prop
+                                    z.store[,new.it]       <- z 
+                                    ll.store[new.it]       <- log.like
       }  
     }
-    returns   <- list(mu       = if(sw["mu.sw"])               mu.store,
-                      f        = if(all(sw["f.sw"], Q > 0))    f.store, 
-                      load     = if(all(sw["l.sw"], Q > 0))    load.store, 
-                      psi      = if(sw["psi.sw"])              psi.store,
-                      pi.prop  = if(sw["pi.sw"])               pi.store,
+    returns   <- list(mu       = if(sw["mu.sw"])              mu.store,
+                      f        = if(all(sw["f.sw"], Q > 0))   f.store, 
+                      load     = if(all(sw["l.sw"], Q > 0))   load.store, 
+                      psi      = if(sw["psi.sw"])             psi.store,
+                      pi.prop  = if(sw["pi.sw"])              pi.store,
                       z        = z.store,
                       ll.store = ll.store)
     attr(returns, "K")        <- G - 1 + G * (P * Q - 0.5 * Q * (Q - 1)) + 2 * G * P

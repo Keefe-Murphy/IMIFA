@@ -97,7 +97,7 @@
   plot(res, "t", "u", mat=F)
   plot(res, "d", "u")
   plot(res, "d", "u", mat=F)
-  lapply(seq_len(res$GQ.results$G), function(g) summary(res[[g]]$post.load))
+  lapply(seq_len(res$GQ.results$G), function(g) summary(res[[g]]$post.psi))
   plot(res, "p", "u")
   plot(res, "c", "u")
 ####
