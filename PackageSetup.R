@@ -117,8 +117,8 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
     if(missing(Q.star)) {
       Q.star       <- min(floor(3 * log(P)), P, N - 1)
     } else {
-      if(Q.star     > P)            stop("Number of factors must be less than the number of variables")
-      if(Q.star    >= N)            stop("Number of factors must be less than the number of observations")
+      if(Q.star     > P)            stop(paste0("Number of factors must be less than the number of variables, ", P))
+      if(Q.star    >= N)            stop(paste0("Number of factors must be less than the number of observations, ", N))
     } 
     if(!is.logical(adapt))          stop("adapt must be TRUE or FALSE") 
   }
@@ -244,9 +244,8 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
     }
   } 
   if(is.element(method, c("FA", "MFA"))) {
-    if(any(all(length(range.Q)  == 1, any(range.Q >= P, range.Q >= N - 1)), 
-           all(length(range.Q)   > 1, any(any(range.Q  >= P), any(range.Q  >= N - 1)))))   
-                                    stop("Number of factors must be less than the number of variables and number of observations")
+    if(any(range.Q >= P))           stop(paste0("Number of factors must be less than the number of variables ", P))
+    if(any(range.Q >= N - 1))       stop(paste0("Number of factors must be less than the number of observations minus 1 ", N - 1))
     if(all(length(range.G) == 1, length(range.Q) == 1)) {
       start.time   <- proc.time()
         imifa[[Gi]][[Qi]] <- do.call(paste0("gibbs.", meth[Gi]), 
