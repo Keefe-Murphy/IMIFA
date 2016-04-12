@@ -56,12 +56,15 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   iters     <- iters[iters > 0]
   dat       <- as.data.frame(dat)
   dat       <- dat[sapply(dat, is.numeric)]
-  if(scaling == "pareto") {
-    scaling <- sqrt(as.matrix(apply(dat, 2, sd)))
+  if(scaling != "none") {
+    scal    <- apply(dat, 2, sd)
+    if(scaling == "pareto") {
+      scal  <- sqrt(scal)
+    }
   } else {
-    scaling <- scaling == "unit"
+    scal    <- F
   }
-  dat       <- scale(dat, center=centering, scale=scaling)
+  dat       <- scale(dat, center=centering, scale=scal)
   N         <- nrow(dat)
   P         <- ncol(dat)
   
@@ -312,7 +315,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
                                     substr(method, 2, nchar(method)))
   attr(imifa, "Name")     <- dat.name
   attr(imifa, "Obs")      <- N
-  attr(imifa, "Scaling")  <- scaling
+  attr(imifa, "Scaling")  <- scal
   attr(imifa, "Store")    <- length(iters)
   attr(imifa, "Switch")   <- switches
   if(is.element(method, c("IFA", "IMIFA")) || length(range.Q) == 1) {

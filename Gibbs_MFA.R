@@ -121,8 +121,7 @@
     # Cluster Labels
       psi        <- 1/psi.inv
       Sigma      <- lapply(seq_len(G), function(g) tcrossprod(lmat[[g]]) + diag(psi[,g]))
-      z.res      <- sim.z(data=data, mu=mu, Sigma=Sigma, 
-                          G=G, P=P, pi.prop=pi.prop)
+      z.res      <- sim.z(data=data, mu=mu, Sigma=Sigma, G=G, pi.prop=pi.prop)
       z          <- z.res$z
       
       if(is.element(iter, iters))  {

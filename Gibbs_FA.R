@@ -90,7 +90,7 @@
         post.psi <- post.psi + psi/n.store
         Sigma    <- tcrossprod(lmat) + diag(psi)
         cov.est  <- cov.est + Sigma/n.store
-        log.like <- sum(mvdnorm(data=data, mu=mu, Sigma=Sigma, P=P, log.d=T))
+        log.like <- sum(mvdnorm(data=data, mu=mu, Sigma=Sigma, log.d=T))
         if(sw["mu.sw"])             mu.store[,new.it]    <- mu  
         if(all(sw["f.sw"], Q > 0))  f.store[,,new.it]    <- f
         if(all(sw["l.sw"], Q > 0))  load.store[,,new.it] <- lmat

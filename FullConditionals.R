@@ -41,7 +41,7 @@
     sim.psi.im  <- function(nn = NULL, P = NULL, psi.alpha = NULL, psi.beta = NULL, 
                             c.data = NULL, f = NULL, lmat = NULL, G = NULL, z.ind = NULL, ...) { 
       rate.t    <- lapply(seq_len(G), function(g) c.data[[g]] - tcrossprod(f[z.ind[[g]],, drop=F], lmat[[g]]))
-      rate.t    <- unlist(lapply(rate.t, function(x) colSums(x * x)))
+      rate.t    <- unlist(lapply(rate.t, function(r) colSums(r * r)))
         matrix(rgamma(P * G, shape=rep((nn + psi.alpha)/2, each=P), 
                       rate=(rate.t + psi.beta)/2), nr=P, nc=G)
     }
@@ -53,13 +53,13 @@
     
   # Cluster Labels
     sim.z       <- function(data = NULL, mu = NULL, Sigma = NULL, 
-                            G = NULL, P = NULL, pi.prop = NULL, ...) {
-      numer     <- do.call(cbind, lapply(seq_len(G), function(g) exp(mvdnorm(data, mu[,g], Sigma[[g]], P, log.d=T) + log(pi.prop[,g]))))
+                            G = NULL, pi.prop = NULL, ...) {
+      numer     <- do.call(cbind, lapply(seq_len(G), function(g) exp(mvdnorm(data, mu[,g], Sigma[[g]], log.d=T) + log(pi.prop[,g]))))
       denomin   <- rowSums(numer)
       pz        <- sweep(numer, 1, denomin, FUN="/")
       pz[rowSums(pz > 0) == 0,] <- rep(1/G, G)
       pz[pz <= 0]               <- .Machine$double.eps
-      z         <- factor(do.call(base::c, lapply(seq_along(denomin), function(i) which(rmultinom(1, size=1, prob=pz[i,]) != 0))), levels=seq_len(G))
+      z         <- unlist(lapply(seq_along(denomin), function(i) which(rmultinom(1, size=1, prob=pz[i,]) != 0)))
         return(list(z = z, log.likes = log(denomin)))
     }
 
@@ -217,8 +217,8 @@
 # Other Functions
 
   # Multivariate Normal Density
-    mvdnorm     <- function(data = NULL, mu = NULL, Sigma = NULL, 
-                            P = NULL, log.d = T, ...) {
+    mvdnorm     <- function(data = NULL, mu = NULL, Sigma = NULL, log.d = T, ...) {
+      P         <- length(mu)
       if(all(Sigma[!diag(P)] == 0)) {
         U.Sig   <- sqrt(Sigma)
       } else {
