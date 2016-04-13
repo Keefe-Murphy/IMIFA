@@ -58,8 +58,8 @@
     } 
     zinit        <- z
     mu           <- sim.mu.mp(P=P, sigma.mu=sigma.mu, G=G) 
-    f            <- sim.f.mp(Q=Q, N=N)
-    lmat         <- sim.load.mp(Q=Q, P=P, sigma.l=sigma.l, G=G)
+    f            <- sim.f.mp(N=N, Q=Q)
+    lmat         <- sim.load.mp(P=P, Q=Q, sigma.l=sigma.l, G=G)
     psi.inv      <- sim.psi.imp(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta, G=G)
     l.sigma      <- sigma.l * diag(Q)
     Qs           <- rep(Q, G)
