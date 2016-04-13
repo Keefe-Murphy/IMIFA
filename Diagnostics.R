@@ -166,7 +166,6 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
 
 # Loop over g in G to extract other results
   result         <- list(list())
-  temp.b         <- max(1, burnin)
   MSE  <- RMSE   <- NRMSE   <- CVRMSE   <- MAD   <- rep(NA, G)
   for(g in seq_len(G)) {
     Qg           <- Q[g]
@@ -181,21 +180,20 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     if(sw["l.sw"]) {
       if(all(method == "MFA", G > 1)) {
         lmat     <- adrop(sims[[G.ind]][[Q.ind]]$load[,Qgs,g,store, drop=F], drop=3)
-        l.temp   <- adrop(sims[[G.ind]][[Q.ind]]$load[,Qgs,g,temp.b, drop=F], drop=3:4)
+        l.temp   <- adrop(lmat[,,1, drop=F], drop=3)
       }
       if(any(method == "FA",  all(method == "MFA",  G == 1))) {
         lmat     <- sims[[G.ind]][[Q.ind]]$load[,Qgs,store, drop=F]
-        l.temp   <- as.matrix(sims[[G.ind]][[Q.ind]]$load[,Qgs,temp.b])
+        l.temp   <- adrop(lmat[,,1, drop=F], drop=3)
       }
     }
   
     if(any(method == "IFA", all(method == "MIFA", G == 1))) {
       store      <- store[which(Q.store >= Qg)]
       n.store    <- length(store)
-      temp.b     <- store[1]
       if(sw["l.sw"]) {
         lmat     <- as.array(sims[[G.ind]][[Q.ind]]$load)[,Qgs,store, drop=F]
-        l.temp   <- as.matrix(as.array(sims[[G.ind]][[Q.ind]]$load)[,Qgs,temp.b])
+        l.temp   <- adrop(lmat[,,1, drop=F], drop=3)
       }
     }
     

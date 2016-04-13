@@ -50,7 +50,7 @@
       z          <- sim.z.p(N=N, prob.z=pi.prop)
     } else   {
       if(zinit == "list")  {
-        z        <- zlist
+        z        <- as.numeric(zlist)
       } else {
         z        <- factor(kmeans(data, G, nstart=100)$cluster, levels=seq_len(G))
       }
