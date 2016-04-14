@@ -105,7 +105,6 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
         log.likes      <- sims[[gi]][[qi]]$ll.store[store]
         K              <- attr(sims[[gi]][[qi]], "K")
         ll.max         <- 2 * max(log.likes, na.rm=T)
-        log.likes      <- log.likes[log.likes >= 0]
         ll.var         <- ifelse(length(log.likes) != 1, 2 * var(log.likes, na.rm=T), 0)
         ll.mean        <- mean(log.likes, na.rm=T)
         aicm[g,q]      <- ll.max - ll.var * 2
