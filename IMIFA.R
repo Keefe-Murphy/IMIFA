@@ -65,6 +65,7 @@
   plot(res, "t", "m", mat=F)
   plot(res, "d", "m")
   plot(res, "d", "m", mat=F)
+  do.call(rbind, lapply(seq_len(res$GQ.results$G), function(g) res[[g]]$post.mu))
   plot(res, "p", "m")
   plot(res, "c", "m")
   
@@ -97,7 +98,7 @@
   plot(res, "t", "u", mat=F)
   plot(res, "d", "u")
   plot(res, "d", "u", mat=F)
-  lapply(seq_len(res$GQ.results$G), function(g) summary(res[[g]]$post.psi))
+  do.call(rbind, lapply(seq_len(res$GQ.results$G), function(g) summary(res[[g]]$post.psi)))
   plot(res, "p", "u")
   plot(res, "c", "u")
 ####
