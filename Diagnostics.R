@@ -104,9 +104,10 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
         qi             <- ifelse(Q.T, Q.ind, q)
         log.likes      <- sims[[gi]][[qi]]$ll.store[store]
         K              <- attr(sims[[gi]][[qi]], "K")
-        ll.max         <- 2 * max(log.likes)
-        ll.var         <- ifelse(length(log.likes) != 1, 2 * var(log.likes), 0)
-        ll.mean        <- mean(log.likes)
+        ll.max         <- 2 * max(log.likes, na.rm=T)
+        log.likes      <- log.likes[log.likes >= 0]
+        ll.var         <- ifelse(length(log.likes) != 1, 2 * var(log.likes, na.rm=T), 0)
+        ll.mean        <- mean(log.likes, na.rm=T)
         aicm[g,q]      <- ll.max - ll.var * 2
         bicm[g,q]      <- ll.max - ll.var * log(n.obs)     
         aic.mcmc[g,q]  <- ll.max - K * 2
@@ -129,6 +130,8 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       G.ind      <- which(crit == max(crit))
       G          <- n.grp[G.ind]
     } 
+    G            <- ifelse(length(n.grp) == 1, n.grp, G)
+    Q            <- ifelse(length(n.fac) == 1, n.grp, Q)
     Q            <- setNames(rep(Q, G), paste0("Qg", seq_len(G)))
     GQ.res       <- list(G = G, Q = Q, AICM = aicm, BICM = bicm,
                          AIC.mcmc = aic.mcmc, BIC.mcmc = bic.mcmc)
