@@ -130,7 +130,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       G          <- n.grp[G.ind]
     } 
     G            <- ifelse(length(n.grp) == 1, n.grp, G)
-    Q            <- ifelse(length(n.fac) == 1, n.grp, Q)
+    Q            <- ifelse(length(n.fac) == 1, n.fac, Q)
     Q            <- setNames(rep(Q, G), paste0("Qg", seq_len(G)))
     GQ.res       <- list(G = G, Q = Q, AICM = aicm, BICM = bicm,
                          AIC.mcmc = aic.mcmc, BIC.mcmc = bic.mcmc)
