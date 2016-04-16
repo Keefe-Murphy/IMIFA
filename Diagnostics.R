@@ -79,6 +79,9 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     Q.CI         <- round(quantile(Q.store, c(0.025, 0.975)))
     GQ.res       <- list(G = G, Q = Q, Mode = Q.mode, Median = Q.med, 
                          CI = Q.CI, Probs= Q.prob, Counts = Q.tab)
+    clust.ind    <- all(is.element(method, c("MFA", "MIFA", "IMIFA")), G > 1)
+    sw.mx        <- ifelse(clust.ind, sw["mu.sw"], T)
+    sw.px        <- ifelse(clust.ind, sw["psi.sw"], T)
   }
     
   if(is.element(method, c("FA", "MFA"))) {
@@ -137,17 +140,22 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   }
   
 # Retrieve cluster labels and mixing proportions
-  if(all(is.element(method, c("MFA", "MIFA", "IMIFA")), G > 1)) {
+  if(clust.ind) {
     z            <- as.matrix(sims[[G.ind]][[Q.ind]]$z[,store])
     post.z       <- setNames(apply(z, 1, function(x) factor(which.max(tabulate(x)), levels=seq_len(G))), seq_len(n.obs))
+    var.z        <- apply(z, 1, var)
+   #CI.z         <- round(quantile(z, c(0.025, 0.975)))
     if(sw["pi.sw"])    {
       pi.prop    <- as.matrix(sims[[G.ind]][[Q.ind]]$pi.prop[,store])
       post.pi    <- rowMeans(pi.prop, dims=1)
+      var.pi     <- apply(pi.prop, 1, var)
+     #CI.pi      <- quantile(pi, c(0.025, 0.975))
     } else {
       post.pi    <- setNames(prop.table(tabulate(post.z, nbins=G)), paste0("Group ", seq_len(G)))
     }
-    cluster      <- list(post.z = post.z, post.pi = post.pi, z = z)
-    cluster      <- c(cluster, if(sw["pi.sw"]) list(pi.prop  = pi.prop))
+    cluster      <- list(post.z = post.z, post.pi = post.pi, 
+                         z = z, var.z = var.z)
+    cluster      <- c(cluster, if(sw["pi.sw"]) list(pi.prop  = pi.prop, var.pi = var.pi))
     attr(cluster, "Z.init")    <- attr(sim[[G.ind]][[Q.ind]], "Z.init")
   }
   
@@ -160,8 +168,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     Qms          <- seq_len(max(Q))
     if(is.element(method, c("FA", "MFA"))) {
       f          <- sims[[G.ind]][[Q.ind]]$f[,Qms,store, drop=F]
-    }
-    if(is.element(method, c("IFA", "MIFA", "IMIFA"))) {
+    } else {
       f          <- as.array(sims[[G.ind]][[Q.ind]]$f)[,Qms,store, drop=F]
     }
   }
@@ -200,7 +207,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     }
     
   # Loadings matrix / identifiability / error metrics / etc.  
-    if(all(sw["f.sw"], is.element(method, c("MFA", "MIFA", "IMIFA")), G > 1)) {
+    if(all(sw["f.sw"], clust.ind)) {
       fg         <- f[post.z == g,,, drop=F]
     }
     if(sw["l.sw"])     {
@@ -208,7 +215,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
         rot            <- procrustes(X=as.matrix(lmat[,,p]), Xstar=l.temp)$R
         lmat[,,p]      <- lmat[,,p] %*% rot
         if(sw["f.sw"]) {
-          if(all(is.element(method, c("MFA", "MIFA", "IMIFA")), G > 1)) {
+          if(clust.ind) {
             fg[,,p]    <- fg[,,p]   %*% rot
           } else {
             f[,,p]     <- f[,,p]    %*% rot
@@ -216,12 +223,12 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
         }  
       }
     }
-    if(all(sw["f.sw"], is.element(method, c("MFA", "MIFA", "IMIFA")), G > 1)) {
+    if(all(sw["f.sw"], clust.ind)) {
       f[post.z == g,,] <- fg
     }
   
   # Retrieve means, uniquenesses & empirical covariance matrix
-    if(all(is.element(method, c("MFA", "MIFA", "IMIFA")), G > 1)) {
+    if(clust.ind) {
       if(sw["mu.sw"])  {
         mu       <- as.matrix(sims[[G.ind]][[Q.ind]]$mu[,g,store])                            
       }
@@ -253,19 +260,30 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     }
   
   # Compute posterior means and % variation explained
-    if(sw["mu.sw"])  post.mu   <- rowMeans(mu, dims=1)
-    if(sw["psi.sw"]) post.psi  <- rowMeans(psi, dims=1)
-    if(sw["l.sw"]) { post.load <- rowMeans(lmat, dims=2)
-              class(post.load) <- "loadings"
+    if(sw["mu.sw"])  {
+      post.mu    <- rowMeans(mu, dims=1)
+      var.mu     <- apply(mu, 1, var)
+     #CI.mu      <- quantile(mu, c(0.025, 0.975))
+    }
+    if(sw["psi.sw"]) {
+      post.psi   <- rowMeans(psi, dims=1)
+      var.psi    <- apply(psi, 1, var)
+     #CI.psi     <- quantile(psi, c(0.025, 0.975))
+    }
+    if(sw["l.sw"])   { 
+      post.load  <- rowMeans(lmat, dims=2)
+      var.load   <- apply(lmat, c(1, 2), var)
+     #CI.load    <- quantile(lmat, c(0.025, 0.975))
       var.exp    <- sum(colSums(post.load * post.load))/n.var
+      class(post.load) <- "loadings"
     } else   {
       var.exp    <- (sum(diag(cov.emp)) - sum(post.psi))/n.var
     }
   
   # Calculate estimated covariance matrices & compute error metrics
-    if(all(is.element(method, c("MFA", "MIFA", "IMIFA")), G > 1)) {
+    if(clust.ind) {
       if(all(sw["psi.sw"], any(sw["l.sw"], Qg == 0))) {
-        if(Qg > 0) {
+        if(Qg > 0)   {
           cov.est      <- tcrossprod(post.load) + diag(post.psi)
         } else {
           cov.est      <- diag(post.psi)
@@ -273,14 +291,14 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
         if(data.x)   {
           dimnames(cov.est)    <- list(varnames, varnames)
         }
-      } else {
+      } else   {
         if(all(!sw["l.sw"], Qg  > 0, !sw["psi.sw"]))  {
                                   warning("Loadings & Uniquenesses not stored: can't estimate Sigma and compute error metrics", call.=F)
         } else if(all(Qg > 0,
                   !sw["l.sw"])) { warning("Loadings not stored: can't estimate Sigma and compute error metrics", call.=F)
         } else if(!sw["psi.sw"])  warning("Uniquenesses not stored: can't estimate Sigma and compute error metrics", call.=F)
       }  
-    } else {
+    } else     {
       cov.est    <- sims[[G.ind]][[Q.ind]]$cov.est
       if(all(recomp, sw["psi.sw"], any(sw["l.sw"], Qg == 0))) {
         cov.est  <- replace(cov.est, is.numeric(cov.est), 0)
@@ -318,20 +336,26 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
          var.exp  > 1))           warning(paste0(ifelse(G == 1, "C", paste0("Group ", g, "'s c")), "hain may not have fully converged"), call.=F)
     }
   
-    results      <- list(if(sw["mu.sw"])   list(means = mu), 
-                         list(post.mu    = post.mu),
-                         if(sw["psi.sw"])  list(uniquenesses = psi), 
-                         list(post.psi   = post.psi),
-                         if(sw["l.sw"])    list(loadings     = lmat, 
-                                                post.load    = post.load),
-                         list(var.exp    = var.exp),
-                         if(emp.T) list(cov.mat = cov.emp), 
-                         if(est.T) list(cov.est = cov.est))
+    results      <- list(if(sw["mu.sw"])  list(means        = mu,
+                                               var.mu       = var.mu), 
+                         if(sw["l.sw"])   list(loadings     = lmat, 
+                                               post.load    = post.load,
+                                               var.load     = var.load),
+                         if(sw["psi.sw"]) list(uniquenesses = psi,
+                                               var.psi      = var.psi),
+                         if(sw.mx)        list(post.mu      = post.mu), 
+                         if(sw.px)        list(post.psi     = post.psi),
+                         if(any(sw["l.sw"], 
+                                sw.px))   list(var.exp      = var.exp),
+                         if(emp.T)        list(cov.mat      = cov.emp), 
+                         if(est.T)        list(cov.est      = cov.est))
     result[[g]]  <- unlist(results, recursive=F)
     attr(result[[g]], "Store") <- n.store
   }
   if(sw["f.sw"]) {
-    scores       <- list(f = f, post.f = rowMeans(f, dims=2))
+    scores       <- list(f = f, post.f = rowMeans(f, dims=2),
+                         var.f = apply(f, c(1, 2), var))
+                        #CI.f  = quantile(f, c(0.025, 0.975)))
   }
   names(result)  <- paste0("Group", seq_len(G))
   attr(GQ.res, "Criterion")    <- criterion

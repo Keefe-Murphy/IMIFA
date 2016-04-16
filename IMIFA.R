@@ -66,6 +66,7 @@
   plot(res, "d", "m")
   plot(res, "d", "m", mat=F)
   do.call(rbind, lapply(seq_len(res$GQ.results$G), function(g) res[[g]]$post.mu))
+  do.call(rbind, lapply(seq_len(res$GQ.results$G), function(g) res[[g]]$var.mu))
   plot(res, "p", "m")
   plot(res, "c", "m")
   
@@ -88,6 +89,7 @@
   plot(res, "d", "l")
   plot(res, "d", "l", mat=F)
   lapply(seq_len(res$GQ.results$G), function(g) res[[g]]$post.load)
+  lapply(seq_len(res$GQ.results$G), function(g) res[[g]]$var.load)
   plot(res, "p", "l")
   plot(res, "c", "l")
   
@@ -99,6 +101,11 @@
   plot(res, "d", "u")
   plot(res, "d", "u", mat=F)
   do.call(rbind, lapply(seq_len(res$GQ.results$G), function(g) summary(res[[g]]$post.psi)))
+  do.call(rbind, lapply(seq_len(res$GQ.results$G), function(g) res[[g]]$var.psi))
   plot(res, "p", "u")
   plot(res, "c", "u")
+
+# Mixing Proportions
+
+# Cluster Labels
 ####
