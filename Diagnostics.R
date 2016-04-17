@@ -144,18 +144,18 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     z            <- as.matrix(sims[[G.ind]][[Q.ind]]$z[,store])
     post.z       <- setNames(apply(z, 1, function(x) factor(which.max(tabulate(x)), levels=seq_len(G))), seq_len(n.obs))
     var.z        <- apply(z, 1, var)
-   #CI.z         <- round(quantile(z, c(0.025, 0.975)))
+    CI.z         <- apply(z, 1, function(x) round(quantile(x, c(0.025, 0.975))))
     if(sw["pi.sw"])    {
       pi.prop    <- as.matrix(sims[[G.ind]][[Q.ind]]$pi.prop[,store])
       post.pi    <- rowMeans(pi.prop, dims=1)
       var.pi     <- apply(pi.prop, 1, var)
-     #CI.pi      <- quantile(pi, c(0.025, 0.975))
+      CI.pi      <- apply(pi.prop, 1, function(x) quantile(x, c(0.025, 0.975)))
     } else {
       post.pi    <- setNames(prop.table(tabulate(post.z, nbins=G)), paste0("Group ", seq_len(G)))
     }
     cluster      <- list(post.z = post.z, post.pi = post.pi, 
-                         z = z, var.z = var.z)
-    cluster      <- c(cluster, if(sw["pi.sw"]) list(pi.prop  = pi.prop, var.pi = var.pi))
+                         z = z, var.z = var.z, CI.z = CI.z)
+    cluster      <- c(cluster, if(sw["pi.sw"]) list(pi.prop = pi.prop, var.pi = var.pi, CI.pi = CI.pi))
     attr(cluster, "Z.init")    <- attr(sim[[G.ind]][[Q.ind]], "Z.init")
   }
   
@@ -263,17 +263,17 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     if(sw["mu.sw"])  {
       post.mu    <- rowMeans(mu, dims=1)
       var.mu     <- apply(mu, 1, var)
-     #CI.mu      <- quantile(mu, c(0.025, 0.975))
+      CI.mu      <- apply(mu, 1, function(x) quantile(x, c(0.025, 0.975)))
     }
     if(sw["psi.sw"]) {
       post.psi   <- rowMeans(psi, dims=1)
       var.psi    <- apply(psi, 1, var)
-     #CI.psi     <- quantile(psi, c(0.025, 0.975))
+      CI.psi     <- apply(psi, 1, function(x) quantile(x, c(0.025, 0.975)))
     }
     if(sw["l.sw"])   { 
       post.load  <- rowMeans(lmat, dims=2)
       var.load   <- apply(lmat, c(1, 2), var)
-     #CI.load    <- quantile(lmat, c(0.025, 0.975))
+      CI.load    <- apply(lmat, c(1, 2), function(x) quantile(x, c(0.025, 0.975)))
       var.exp    <- sum(colSums(post.load * post.load))/n.var
       class(post.load) <- "loadings"
     } else   {
@@ -304,9 +304,9 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
         cov.est  <- replace(cov.est, is.numeric(cov.est), 0)
         for(r in seq_len(n.store))    {
           if(Qg > 0) {
-            Sig <- tcrossprod(lmat[,,r]) + diag(psi[,r])
+            Sig  <- tcrossprod(lmat[,,r]) + diag(psi[,r])
           } else {
-            Sig <- diag(psi[,r])
+            Sig  <- diag(psi[,r])
           }
          cov.est <- cov.est + Sig/n.store
         }
@@ -335,26 +335,28 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
          var.exp  > 1))           warning(paste0(ifelse(G == 1, "C", paste0("Group ", g, "'s c")), "hain may not have fully converged"), call.=F)
     }
   
-    results      <- list(if(sw["mu.sw"])  list(means        = mu,
-                                               var.mu       = var.mu), 
-                         if(sw["l.sw"])   list(loadings     = lmat, 
-                                               post.load    = post.load,
-                                               var.load     = var.load),
-                         if(sw["psi.sw"]) list(uniquenesses = psi,
-                                               var.psi      = var.psi),
-                         if(sw.mx)        list(post.mu      = post.mu), 
-                         if(sw.px)        list(post.psi     = post.psi),
+    results      <- list(if(sw["mu.sw"])  list(means     = mu,
+                                               var.mu    = var.mu,
+                                               CI.mu     = CI.mu), 
+                         if(sw["l.sw"])   list(loadings  = lmat, 
+                                               post.load = post.load,
+                                               var.load  = var.load,
+                                               CI.load   = CI.load),
+                         if(sw["psi.sw"]) list(psi       = psi,
+                                               var.psi   = var.psi,
+                                               CI.psi    = CI.psi),
+                         if(sw.mx)        list(post.mu   = post.mu), 
+                         if(sw.px)        list(post.psi  = post.psi),
                          if(any(sw["l.sw"], 
-                                sw.px))   list(var.exp      = var.exp),
-                         if(emp.T)        list(cov.mat      = cov.emp), 
-                         if(est.T)        list(cov.est      = cov.est))
+                                sw.px))   list(var.exp   = var.exp),
+                         if(emp.T)        list(cov.mat   = cov.emp), 
+                         if(est.T)        list(cov.est   = cov.est))
     result[[g]]  <- unlist(results, recursive=F)
     attr(result[[g]], "Store") <- n.store
   }
   if(sw["f.sw"]) {
-    scores       <- list(f = f, post.f = rowMeans(f, dims=2),
-                         var.f = apply(f, c(1, 2), var))
-                        #CI.f  = quantile(f, c(0.025, 0.975)))
+    scores       <- list(f = f, post.f = rowMeans(f, dims=2), var.f = apply(f, c(1, 2), var),
+                         CI.f  = apply(f, c(1, 2), function(x) quantile(x, c(0.025, 0.975))))
   }
   names(result)  <- paste0("Group", seq_len(G))
   attr(GQ.res, "Criterion")    <- criterion

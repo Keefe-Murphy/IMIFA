@@ -185,7 +185,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
         }
       }
       if(vars  == "uniquenesses") {
-        plot.x <- result$uniquenesses
+        plot.x <- result$psi
         if(matx) {
           matplot(t(plot.x[,]), type="l", ylab="Uniquenesses", xlab="Iteration")
           title(main=list(paste0("Trace", ifelse(all.ind, "", paste0(":\nUniquenesses", ifelse(grp.ind, paste0(" - Group ", g), ""))))))
@@ -262,7 +262,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
         }
       }
       if(vars  == "uniquenesses") {
-        plot.X <- result$uniquenesses
+        plot.X <- result$psi
         if(matx) {
           plot.x  <- apply(plot.X, 1, density)
           plot.x  <- sapply(plot.x, "[[", "y")
@@ -458,7 +458,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
         }
       }
       if(vars  == "uniquenesses")  { 
-        plot.x <- result$uniquenesses
+        plot.x <- result$psi
         if(!partial) {
           acf(plot.x[ind,], main="")
           title(main=list(paste0("ACF", ifelse(all.ind, paste0(":\n", var.names[ind], " Variable"), ""))))
