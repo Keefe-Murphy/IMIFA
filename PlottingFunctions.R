@@ -4,7 +4,7 @@
 
 plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "density", "posterior", "GQ", "trace"), 
                            vars = c("means", "scores", "loadings", "uniquenesses"), Label = NULL, fac = NULL, g = NULL,
-                           by.fac = T, ind = NULL, type = c("h", "n", "p", "l"), mat = T, ... ) {
+                           by.fac = T, ind = NULL, type = c("h", "n", "p", "l"), mat = T, partial = F, ... ) {
 
   defpar  <- suppressWarnings(par(no.readonly = T, new=F))
   defop   <- options()
@@ -73,6 +73,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
   if(all(!v.sw[vars],
      !m.sw["G.sw"]))                  stop(paste0(vars, " weren't stored"))
   if(!is.logical(mat))                stop("mat must be TRUE or FALSE")
+  if(!is.logical(partial))            stop("partial must be TRUE or FALSE")
   indx    <- missing(ind)
   facx    <- missing(fac)
   if(!indx)                 xind <- ind
@@ -416,47 +417,56 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
     }
   
     if(m.sw["C.sw"]) {
+      if(!all.ind) partial <- F
       if(!all.ind) {
         par(mai=c(1.25, 1, 0.75, 0.5), mfrow=c(1, 2), oma=c(0, 0, 2, 0))
       }
-      if(vars  == "means") {
+      if(vars  == "means")    {
         plot.x <- result$means 
-        acf(plot.x[ind,], main="")
-        title(main=list(paste0("ACF", ifelse(all.ind, paste0(":\n", var.names[ind], " Variable"), ""))))
-        if(!all.ind) {
+        if(!partial) { 
+          acf(plot.x[ind,], main="")
+          title(main=list(paste0("ACF", ifelse(all.ind, paste0(":\n", var.names[ind], " Variable"), ""))))
+        }
+        if(any(!all.ind, partial)) {
           acf(plot.x[ind,], main="", type="partial")
-          title(main="PACF")
-          title(main=list(paste0("Means - ", ifelse(grp.ind, paste0("Group ", g, ":\n "), ""), var.names[ind], " Variable")), outer=T)
+          title(main=list(paste0("PACF", ifelse(partial, paste0(":\n", var.names[ind], " Variable"), ""))))
+          if(!all.ind) title(main=list(paste0("Means - ", ifelse(grp.ind, paste0("Group ", g, ":\n "), ""), var.names[ind], " Variable")), outer=T)
         }
       }
-      if(vars  == "scores") { 
+      if(vars  == "scores")   { 
         plot.x <- results$Scores$f
-        acf(plot.x[ind[1],ind[2],], main="")
-        title(main=list(paste0("ACF", ifelse(all.ind, paste0(":\n", "Observation ", obs.names[ind[1]], ", Factor ", ind[2]), ""))))
-        if(!all.ind) {
+        if(!partial) {
+          acf(plot.x[ind[1],ind[2],], main="")
+          title(main=list(paste0("ACF", ifelse(all.ind, paste0(":\n", "Observation ", obs.names[ind[1]], ", Factor ", ind[2]), ""))))
+        }
+        if(any(!all.ind, partial)) {
           acf(plot.x[ind[1],ind[2],], main="", type="partial")
-          title(main="PACF")
-          title(main=list(paste0("Scores - ", "Observation ", obs.names[ind[1]], ", Factor ", ind[2])), outer=T)
+          title(main=list(paste0("PACF", ifelse(partial, paste0(":\n", "Observation ", obs.names[ind[1]], ", Factor ", ind[2]), ""))))
+          if(!all.ind) title(main=list(paste0("Scores - ", "Observation ", obs.names[ind[1]], ", Factor ", ind[2])), outer=T)
         }
       }
       if(vars  == "loadings") { 
         plot.x <- result$loadings
-        acf(plot.x[ind[1],ind[2],], main="")
-        title(main=list(paste0("ACF", ifelse(all.ind, paste0(":\n", var.names[ind[1]], " Variable, Factor ", ind[2]), ""))))
-        if(!all.ind) {
+        if(!partial) {
+          acf(plot.x[ind[1],ind[2],], main="")
+          title(main=list(paste0("ACF", ifelse(all.ind, paste0(":\n", var.names[ind[1]], " Variable, Factor ", ind[2]), ""))))
+        }
+        if(any(!all.ind, partial)) {
           acf(plot.x[ind[1],ind[2],], main="", type="partial")
-          title(main="PACF")
-          title(main=list(paste0("Loadings - ", ifelse(grp.ind, paste0("Group ", g, ":\n "), ""), var.names[ind[1]], " Variable, Factor ", ind[2])), outer=T)
+          title(main=list(paste0("PACF", ifelse(partial, paste0(":\n", var.names[ind[1]], " Variable, Factor ", ind[2]), ""))))
+          if(!all.ind) title(main=list(paste0("Loadings - ", ifelse(grp.ind, paste0("Group ", g, ":\n "), ""), var.names[ind[1]], " Variable, Factor ", ind[2])), outer=T)
         }
       }
-      if(vars  == "uniquenesses") { 
+      if(vars  == "uniquenesses")  { 
         plot.x <- result$uniquenesses
-        acf(plot.x[ind,], main="")
-        title(main=list(paste0("ACF", ifelse(all.ind, paste0(":\n", var.names[ind], " Variable"), ""))))
-        if(!all.ind) {
+        if(!partial) {
+          acf(plot.x[ind,], main="")
+          title(main=list(paste0("ACF", ifelse(all.ind, paste0(":\n", var.names[ind], " Variable"), ""))))
+        }
+        if(any(!all.ind, partial)) {
           acf(plot.x[ind,], main="", type="partial")
-          title(main="PACF")
-          title(main=list(paste0("Uniquenesses - ", ifelse(grp.ind, paste0("Group ", g, ":\n "), ""), var.names[ind], " Variable")), outer=T)
+          title(main=list(paste0("PACF", ifelse(partial, paste0(":\n", var.names[ind], " Variable"), ""))))
+          if(!all.ind) title(main=list(paste0("Uniquenesses - ", ifelse(grp.ind, paste0("Group ", g, ":\n "), ""), var.names[ind], " Variable")), outer=T)
         }
       }
     }
