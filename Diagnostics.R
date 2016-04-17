@@ -79,9 +79,6 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     Q.CI         <- round(quantile(Q.store, c(0.025, 0.975)))
     GQ.res       <- list(G = G, Q = Q, Mode = Q.mode, Median = Q.med, 
                          CI = Q.CI, Probs= Q.prob, Counts = Q.tab)
-    clust.ind    <- all(is.element(method, c("MFA", "MIFA", "IMIFA")), G > 1)
-    sw.mx        <- ifelse(clust.ind, sw["mu.sw"], T)
-    sw.px        <- ifelse(clust.ind, sw["psi.sw"], T)
   }
     
   if(is.element(method, c("FA", "MFA"))) {
@@ -138,6 +135,9 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     GQ.res       <- list(G = G, Q = Q, AICM = aicm, BICM = bicm,
                          AIC.mcmc = aic.mcmc, BIC.mcmc = bic.mcmc)
   }
+  clust.ind      <- all(is.element(method, c("MFA", "MIFA", "IMIFA")), G > 1)
+  sw.mx          <- ifelse(clust.ind, sw["mu.sw"], T)
+  sw.px          <- ifelse(clust.ind, sw["psi.sw"], T)
   
 # Retrieve cluster labels and mixing proportions
   if(clust.ind) {
@@ -288,21 +288,21 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
         } else {
           cov.est      <- diag(post.psi)
         }
-        if(data.x)   {
+        if(data.x)      {
           dimnames(cov.est)    <- list(varnames, varnames)
         }
-      } else   {
+      } else if(g == 1) {
         if(all(!sw["l.sw"], Qg  > 0, !sw["psi.sw"]))  {
-                                  warning("Loadings & Uniquenesses not stored: can't estimate Sigma and compute error metrics", call.=F)
+                                  warning("Loadings & Psi not stored: can't estimate Sigma and compute error metrics", call.=F)
         } else if(all(Qg > 0,
                   !sw["l.sw"])) { warning("Loadings not stored: can't estimate Sigma and compute error metrics", call.=F)
-        } else if(!sw["psi.sw"])  warning("Uniquenesses not stored: can't estimate Sigma and compute error metrics", call.=F)
+        } else if(!sw["psi.sw"])  warning("Psi not stored: can't estimate Sigma and compute error metrics", call.=F)
       }  
     } else     {
       cov.est    <- sims[[G.ind]][[Q.ind]]$cov.est
       if(all(recomp, sw["psi.sw"], any(sw["l.sw"], Qg == 0))) {
         cov.est  <- replace(cov.est, is.numeric(cov.est), 0)
-        for(r in seq_len(n.store))  {
+        for(r in seq_len(n.store))    {
           if(Qg > 0) {
             Sig <- tcrossprod(lmat[,,r]) + diag(psi[,r])
           } else {
@@ -310,13 +310,12 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
           }
          cov.est <- cov.est + Sig/n.store
         }
-      } else if(recomp)   {
+      } else if(all(recomp,  g == 1)) {
         if(all(!sw["l.sw"], Qg  > 0, !sw["psi.sw"]))  {
-                                  warning("Loadings & Uniquenesses not stored: can't re-estimate Sigma", call.=F)
+                                  warning("Loadings & Psi not stored: can't re-estimate Sigma", call.=F)
         } else if(all(Qg > 0,
                   !sw["l.sw"])) { warning("Loadings not stored: can't re-estimate Sigma", call.=F)
-        } else if(!sw["psi.sw"])  warning("Uniquenesses not stored: can't re-estimate Sigma", call.=F)
-        
+        } else if(!sw["psi.sw"])  warning("Psi not stored: can't re-estimate Sigma", call.=F) 
       }
     }
     

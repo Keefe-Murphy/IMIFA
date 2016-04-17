@@ -179,7 +179,8 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
       if(!missing(z.list))   {
         if(!is.list(z.list))   z.list      <- list(z.list)
                                z.list      <- lapply(z.list, as.factor)
-        if(z.init != "list")        stop(paste0("z.init must be set to 'list' if z.list is supplied"))
+        if(z.init != "list") { z.init      <- "list"
+                                    warning("z.init set to 'list' as z.list was supplied", call.=F) }
         if(length(z.list)   != length(range.G))      {
                                     stop(paste0("z.list must be a list of length ", length(range.G))) }
         if(!all(lapply(z.list, nlevels) == range.G)) {
@@ -188,8 +189,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
                                     stop(paste0("Each element of z.list must be a vector of length N=", N)) }
       }
       if(all(missing(z.list),  z.init   == "list"))  {
-                                    stop(paste0("z.list must be supplied if z.init is set to 'list'"))                           
-      }
+                                    stop(paste0("z.list must be supplied if z.init is set to 'list'")) }
     }
   }
   if(all(!is.element(method, c("MFA", "MIFA")), 
