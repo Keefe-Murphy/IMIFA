@@ -3,7 +3,7 @@
 ################################
 
 plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "density", "posterior", "GQ", "trace"), 
-                           vars = c("means", "scores", "loadings", "uniquenesses"), Label = NULL, fac = NULL, g = NULL,
+                           vars = c("means", "scores", "loadings", "uniquenesses"), Labels = NULL, fac = NULL, g = NULL,
                            by.fac = T, ind = NULL, type = c("h", "n", "p", "l"), mat = T, partial = F, ... ) {
 
   defpar  <- suppressWarnings(par(no.readonly = T, new=F))
@@ -309,11 +309,11 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
         } else   {
           Labs <- 1
         }
-        if(!missing(Label)) {
-          if(!exists(as.character(match.call()$Label),
-              envir=.GlobalEnv)) {    warning(paste0("Object ", match.call()$Label, " not found"), call.=F)
+        if(!missing(Labels)) {
+          if(!exists(as.character(match.call()$Labels),
+              envir=.GlobalEnv)) {    warning(paste0("Object ", match.call()$Labels, " not found"), call.=F)
           } else {
-            Labs  <- as.factor(Label)
+            Labs  <- as.factor(Labels)
             if(length(Labs) != n.obs) stop(paste0("Labels must be a factor of length N=",  n.obs))
           }
         }

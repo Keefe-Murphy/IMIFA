@@ -3,7 +3,7 @@
 #################################################
 
 tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q = NULL, Q.meth = c("Mode", "Median"),
-                             criterion = c("bicm", "aicm", "bic.mcmc", "aic.mcmc"), conf.level = 0.95, recomp = F, ...) {
+                             criterion = c("bicm", "aicm", "bic.mcmc", "aic.mcmc"), conf.level = 0.95, Labels = NULL, recomp = F, ...) {
   
   defpar         <- suppressWarnings(par(no.readonly = T, new=F))
   defop          <- options()
@@ -181,9 +181,18 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     } else {
       post.pi    <- setNames(prop.table(tabulate(post.z, nbins=G)), paste0("Group ", seq_len(G)))
     }
+    if(!missing(Labels)) {
+      if(!exists(deparse(substitute(Labels)),
+         envir=.GlobalEnv))           stop(paste0("Object ", match.call()$Labels, " not found"))
+      Labels     <- as.factor(Labels)
+      if(length(Labels) != n.obs)     stop(paste0("Labels must be a factor of length N=",  n.obs))
+      tab        <- table(post.z, Labels)
+      tab.stat   <- classAgreement(tab)
+    }
     cluster      <- list(post.z = post.z, post.pi = post.pi, 
                          z = z, var.z = var.z, CI.z = CI.z)
-    cluster      <- c(cluster, if(sw["pi.sw"]) list(pi.prop = pi.prop, var.pi = var.pi, CI.pi = CI.pi))
+    cluster      <- c(cluster, if(!missing(Labels)) list(conf.mat = tab, perf = tab.stat),
+                      if(sw["pi.sw"]) list(pi.prop = pi.prop, var.pi = var.pi, CI.pi = CI.pi))
     attr(cluster, "Z.init")    <- attr(sim[[G.ind]][[Q.ind]], "Z.init")
   }
   

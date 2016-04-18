@@ -45,7 +45,7 @@
                    ".Rdata", sep=""), envir=.GlobalEnv)
 
 # Posterior Summaries (optional: additional 'burnin' & 'thinning', user-defined G/Q, model selection criterion)
-  res <- tune.imifa(sim)
+  res <- tune.imifa(sim, Labels=Lab)
   res$Error
   plot(res, "GQ")
  #res <- tune.imifa(sim, G=3, Q=3, criterion="aicm")

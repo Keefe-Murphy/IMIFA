@@ -12,7 +12,7 @@ if(length(setdiff(packages, (.packages()))) > 0) {
 rm(packages)
 
 imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "FA", "classify"), 
-                        n.iters = 50000, Label = NULL, factanal = F, Q.star = NULL, range.G = NULL, 
+                        n.iters = 50000, Labels = NULL, factanal = F, Q.star = NULL, range.G = NULL, 
                         range.Q = NULL, Q.fac = NULL,  burnin = n.iters/5, thinning = 2, centering = F, 
                         scaling = c("unit", "pareto", "none"), verbose = F, adapt = T, b0 = NULL, 
                         b1 = NULL, prop = NULL, epsilon = NULL, sigma.mu = NULL, sigma.l = NULL, 
@@ -228,15 +228,15 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
                                    args=append(list(data = dat, N = N, Q = Q.star), gibbs.arg))
   }
   if(method == "classify") {
-    if(missing(Label))              stop("Data must be labelled for classification")
-    if(!exists(deparse(substitute(Label)),
-               envir=.GlobalEnv))   stop(paste0("Object ", match.call()$Label, " not found"))
-    Label   <- as.factor(Label)
-    if(length(Label) != N)          stop(paste0("Labels must be a factor of length N=",  n.obs))
-    range.G        <- nlevels(Label)
+    if(missing(Labels))             stop("Data must be labelled for classification")
+    if(!exists(deparse(substitute(Labels)),
+               envir=.GlobalEnv))   stop(paste0("Object ", match.call()$Labels, " not found"))
+    Labels  <- as.factor(Labels)
+    if(length(Labels) != N)         stop(paste0("Labels must be a factor of length N=",  n.obs))
+    range.G        <- nlevels(Labels)
     start.time     <- proc.time()
     for(g in seq_len(range.G)) {
-      temp.dat     <- dat[Label == levels(Label)[g],]
+      temp.dat     <- dat[Labels == levels(Labels)[g],]
       imifa[[g]]          <- list()
       imifa[[g]][[Qi]]    <- do.call(paste0("gibbs.", "IFA"),
                                      args=append(list(data = temp.dat, N = nrow(temp.dat), Q = Q.star), gibbs.arg))
@@ -291,7 +291,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   avg.time  <- tot.time/ifelse(method == "MFA", length(range.G) * length(range.Q),
                           ifelse(method == "FA",  length(range.Q), 
                             ifelse(method == "MIFA", length(range.G),
-                              ifelse(method == "classify", nlevels(Label), 
+                              ifelse(method == "classify", nlevels(Labels), 
                                      length(Q.star)))))
   if(profile) {
     Rprof(NULL)
