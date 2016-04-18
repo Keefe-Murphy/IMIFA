@@ -139,9 +139,33 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   sw.mx          <- ifelse(clust.ind, sw["mu.sw"], T)
   sw.px          <- ifelse(clust.ind, sw["psi.sw"], T)
   
-# Retrieve cluster labels and mixing proportions
+# Manage Label Switching & retrieve cluster labels/mixing proportions
   if(clust.ind) {
+    if(sw["mu.sw"])  {
+      mus        <- sims[[G.ind]][[Q.ind]]$mu[,,store, drop=F]                            
+    }
+    if(sw["l.sw"])   {
+      lmats      <- sims[[G.ind]][[Q.ind]]$load[,,,store, drop=F]
+    }
+    if(sw["psi.sw"]) {
+      psis       <- sims[[G.ind]][[Q.ind]]$psi[,,store, drop=F]
+    }
     z            <- as.matrix(sims[[G.ind]][[Q.ind]]$z[,store])
+    z.temp       <- z[,1]
+    for(ls in seq_len(n.store)) {
+      tab        <- table(z[,ls], z.temp)
+      z.perm     <- matchClasses(tab, method="exact", verbose=F)
+      z[,ls]     <- factor(z[,ls], levels=z.perm)
+      if(sw["mu.sw"])  {
+        mus[,,ls]      <- mus[,z.perm,ls]
+      }
+      if(sw["l.sw"])   {
+        lmats[,,,ls]   <- lmats[,,z.perm,ls]
+      }
+      if(sw["psi.sw"]) {
+        psis[,,ls]     <- psis[,z.perm,ls]
+      }
+    }
     post.z       <- setNames(apply(z, 1, function(x) factor(which.max(tabulate(x)), levels=seq_len(G))), seq_len(n.obs))
     var.z        <- apply(z, 1, var)
     CI.z         <- apply(z, 1, function(x) round(quantile(x, c(0.025, 0.975))))
@@ -188,7 +212,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   # Retrieve (unrotated) loadings  
     if(sw["l.sw"]) {
       if(all(method == "MFA", G > 1)) {
-        lmat     <- adrop(sims[[G.ind]][[Q.ind]]$load[,Qgs,g,store, drop=F], drop=3)
+        lmat     <- adrop(lmats[,Qgs,g,store, drop=F], drop=3)
         l.temp   <- adrop(lmat[,,1, drop=F], drop=3)
       }
       if(any(method == "FA",  all(method == "MFA",  G == 1))) {
@@ -230,10 +254,10 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   # Retrieve means, uniquenesses & empirical covariance matrix
     if(clust.ind) {
       if(sw["mu.sw"])  {
-        mu       <- as.matrix(sims[[G.ind]][[Q.ind]]$mu[,g,store])                            
+        mu       <- as.matrix(mus[,g,store])
       }
       if(sw["psi.sw"]) {
-        psi      <- as.matrix(sims[[G.ind]][[Q.ind]]$psi[,g,store])
+        psi      <- as.matrix(psis[,g,store])
       }
       data       <- attr(sims, "Name")
       data.x     <- exists(data, envir=.GlobalEnv)

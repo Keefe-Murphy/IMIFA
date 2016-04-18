@@ -2,7 +2,7 @@
 ### Set-up for Keefe Murphy's IMIFA R Package ###
 #################################################
 
-packages    <- c("abind", "MCMCpack", "slam")
+packages    <- c("abind", "e1071", "MCMCpack", "slam")
 if(length(setdiff(packages, rownames(installed.packages()))) > 0) {
   invisible(install.packages(setdiff(packages, rownames(installed.packages()))))
 }
