@@ -3,7 +3,7 @@
 #################################################
 
 tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q = NULL, Q.meth = c("Mode", "Median"),
-                             criterion = c("bicm", "aicm", "bic.mcmc", "aic.mcmc"), recomp = F, ...) {
+                             criterion = c("bicm", "aicm", "bic.mcmc", "aic.mcmc"), conf.level = 0.95, recomp = F, ...) {
   
   defpar         <- suppressWarnings(par(no.readonly = T, new=F))
   defop          <- options()
@@ -26,11 +26,15 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   sw             <- attr(sims, "Switch")
   cent           <- attr(sims, "Center")
   scaling        <- attr(sims, "Scaling")
+  conf.level     <- as.numeric(conf.level)
+  if(abs(conf.level -
+        (1 - conf.level)) < 0)    stop("'conf.level' must be a single number between 0 and 1")
+  conf.level     <- c((1 - conf.level)/2, 1 - (1 - conf.level)/2)
   criterion      <- match.arg(criterion)
   if(all(method  == "MIFA", 
      !is.element(criterion, 
-     c("aicm", "bicm"))))         stop("criterion should be one of 'aicm' or 'bicm' for the MIFA method")
-  if(!is.logical(recomp))         stop("recomp must be TRUE or FALSE")
+     c("aicm", "bicm"))))         stop("'criterion' should be one of 'aicm' or 'bicm' for the MIFA method")
+  if(!is.logical(recomp))         stop("'recomp' must be TRUE or FALSE")
   if(any(burnin   > 0, 
      thinning     > 1)) recomp <- T
   
@@ -52,7 +56,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     if(all(is.element(method, c("FA", "MFA")),
        !is.element(Q, n.fac)))    stop("This Q value was not used during simulation")
     if(all(is.element(method, c("IFA", "classify")), 
-      (Q * (n.fac - Q)) < 0))     stop(paste0("Q cannot be greater than the number of factors in ", match.call()$sims))
+      (Q * (n.fac - Q)) < 0))     stop(paste0("Q can't be greater than the number of factors in ", match.call()$sims))
   } 
   G              <- ifelse(all(G.T, !is.element(method, c("FA", "IFA"))), G, 1)
   
@@ -76,7 +80,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
         Q        <- Q.med
       }
     }
-    Q.CI         <- round(quantile(Q.store, c(0.025, 0.975)))
+    Q.CI         <- round(quantile(Q.store, conf.level))
     GQ.res       <- list(G = G, Q = Q, Mode = Q.mode, Median = Q.med, 
                          CI = Q.CI, Probs= Q.prob, Counts = Q.tab)
   }
@@ -168,12 +172,12 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     }
     post.z       <- setNames(apply(z, 1, function(x) factor(which.max(tabulate(x)), levels=seq_len(G))), seq_len(n.obs))
     var.z        <- apply(z, 1, var)
-    CI.z         <- apply(z, 1, function(x) round(quantile(x, c(0.025, 0.975))))
+    CI.z         <- apply(z, 1, function(x) round(quantile(x, conf.level)))
     if(sw["pi.sw"])    {
       pi.prop    <- as.matrix(sims[[G.ind]][[Q.ind]]$pi.prop[,store])
       post.pi    <- rowMeans(pi.prop, dims=1)
       var.pi     <- apply(pi.prop, 1, var)
-      CI.pi      <- apply(pi.prop, 1, function(x) quantile(x, c(0.025, 0.975)))
+      CI.pi      <- apply(pi.prop, 1, function(x) quantile(x, conf.level))
     } else {
       post.pi    <- setNames(prop.table(tabulate(post.z, nbins=G)), paste0("Group ", seq_len(G)))
     }
@@ -287,17 +291,17 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     if(sw["mu.sw"])  {
       post.mu    <- rowMeans(mu, dims=1)
       var.mu     <- apply(mu, 1, var)
-      CI.mu      <- apply(mu, 1, function(x) quantile(x, c(0.025, 0.975)))
+      CI.mu      <- apply(mu, 1, function(x) quantile(x, conf.level))
     }
     if(sw["psi.sw"]) {
       post.psi   <- rowMeans(psi, dims=1)
       var.psi    <- apply(psi, 1, var)
-      CI.psi     <- apply(psi, 1, function(x) quantile(x, c(0.025, 0.975)))
+      CI.psi     <- apply(psi, 1, function(x) quantile(x, conf.level))
     }
     if(sw["l.sw"])   { 
       post.load  <- rowMeans(lmat, dims=2)
       var.load   <- apply(lmat, c(1, 2), var)
-      CI.load    <- apply(lmat, c(1, 2), function(x) quantile(x, c(0.025, 0.975)))
+      CI.load    <- apply(lmat, c(1, 2), function(x) quantile(x, conf.level))
       var.exp    <- sum(colSums(post.load * post.load))/n.var
       class(post.load) <- "loadings"
     } else   {
@@ -380,7 +384,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   }
   if(sw["f.sw"]) {
     scores       <- list(f = f, post.f = rowMeans(f, dims=2), var.f = apply(f, c(1, 2), var),
-                         CI.f  = apply(f, c(1, 2), function(x) quantile(x, c(0.025, 0.975))))
+                         CI.f  = apply(f, c(1, 2), function(x) quantile(x, conf.level)))
   }
   names(result)  <- paste0("Group", seq_len(G))
   attr(GQ.res, "Criterion")    <- criterion
