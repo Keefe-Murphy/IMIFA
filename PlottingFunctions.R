@@ -72,14 +72,14 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
   } 
   if(all(!v.sw[vars],
      !m.sw["G.sw"]))                  stop(paste0(vars, " weren't stored"))
-  if(!is.logical(mat))                stop("mat must be TRUE or FALSE")
-  if(!is.logical(partial))            stop("partial must be TRUE or FALSE")
+  if(!is.logical(mat))                stop("'mat' must be TRUE or FALSE")
+  if(!is.logical(partial))            stop("'partial' must be TRUE or FALSE")
   indx    <- missing(ind)
   facx    <- missing(fac)
   if(!indx)                 xind <- ind
   if(!facx) {
     if(length(fac) == 1)     fac <- rep(fac, G)
-    if(length(fac) != G)              stop(paste0("fac must be supplied for each of the ", G, " groups"))
+    if(length(fac) != G)              stop(paste0("'fac' must be supplied for each of the ", G, " groups"))
   }
   if(any(vars  == "scores",
          m.sw["G.sw"]))  {

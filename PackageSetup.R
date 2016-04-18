@@ -36,10 +36,10 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   if(missing(dat))                  stop("Dataset must be supplied")
   if(!exists(deparse(substitute(dat)),
              envir=.GlobalEnv))     stop(paste0("Object ", match.call()$dat, " not found"))
-  if(!is.logical(factanal))         stop("factanal  must be TRUE or FALSE")
-  if(!is.logical(centering))        stop("centering must be TRUE or FALSE")
-  if(!is.logical(verbose))          stop("verbose   must be TRUE or FALSE")
-  if(!is.logical(profile))          stop("profile   must be TRUE or FALSE")
+  if(!is.logical(factanal))         stop("'factanal' must be TRUE or FALSE")
+  if(!is.logical(centering))        stop("'centering' must be TRUE or FALSE")
+  if(!is.logical(verbose))          stop("'verbose' must be TRUE or FALSE")
+  if(!is.logical(profile))          stop("'profile' must be TRUE or FALSE")
   if(is.element(method, c("FA", "IFA", "classify"))) {
     if(missing(centering) || !centering) {
      centering <- T  
@@ -80,12 +80,12 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   if(!is.logical(switches))         stop("All logical switches must be TRUE or FALSE")
   if(!is.element(method, c("MFA", "MIFA"))) {
     if(!missing(range.G) &&  
-       any(range.G  > 1))           warning(paste0("range.G must be 1 for the ", method, " method"), call.=F)
+       any(range.G  > 1))           warning(paste0("'range.G' must be 1 for the ", method, " method"), call.=F)
     range.G <- 1
     meth    <- method
   } else {
-    if(missing(range.G))            stop("range.G must be specified")
-    if(any(range.G  < 1))           stop("range.G must be strictly positive")
+    if(missing(range.G))            stop("'range.G' must be specified")
+    if(any(range.G  < 1))           stop("'range.G' must be strictly positive")
     range.G <- sort(unique(range.G))
     meth    <- rep(method, length(range.G))
     if(range.G[1]  == 1)  {
@@ -104,15 +104,15 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   if(is.element(method, c("FA", "MFA"))) {
     if(!missing(Q.star))  {
       rm(Q.star)
-                                    warning(paste0("Q.star is not used for the ", method, " method"), call.=F)
+                                    warning(paste0("'Q.star' is not used for the ", method, " method"), call.=F)
     }            
-    if(missing(range.Q))            stop("range.Q must be specified")
-    if(any(range.Q < 0))            stop("range.Q must be strictly non-negative")
+    if(missing(range.Q))            stop("'range.Q' must be specified")
+    if(any(range.Q < 0))            stop("'range.Q' must be strictly non-negative")
     range.Q <- sort(unique(range.Q))   
   } else {
     if(!missing(range.Q)) {
       rm(range.Q)
-                                    warning(paste0("range.Q is not used for the ", method, " method"), call.=F)
+                                    warning(paste0("'range.Q' is not used for the ", method, " method"), call.=F)
     }           
     if(missing(Q.star)) {
       Q.star       <- min(floor(3 * log(P)), P, N - 1)
@@ -120,7 +120,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
       if(Q.star     > P)            stop(paste0("Number of factors must be less than the number of variables, ", P))
       if(Q.star    >= N)            stop(paste0("Number of factors must be less than the number of observations, ", N))
     } 
-    if(!is.logical(adapt))          stop("adapt must be TRUE or FALSE") 
+    if(!is.logical(adapt))          stop("'adapt' must be TRUE or FALSE") 
   }
   if(no.fac) {   
     if(all(switches[c("f.sw", "l.sw")])) {
@@ -180,16 +180,16 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
         if(!is.list(z.list))   z.list      <- list(z.list)
                                z.list      <- lapply(z.list, as.factor)
         if(z.init != "list") { z.init      <- "list"
-                                    warning("z.init set to 'list' as z.list was supplied", call.=F) }
+                                    warning("'z.init' set to 'list' as 'z.list' was supplied", call.=F) }
         if(length(z.list)   != length(range.G))      {
-                                    stop(paste0("z.list must be a list of length ", length(range.G))) }
+                                    stop(paste0("'z.list' must be a list of length ", length(range.G))) }
         if(!all(lapply(z.list, nlevels) == range.G)) {
-                                    stop(paste0("Each element of z.list must have the same number of levels as range.G")) }
+                                    stop(paste0("Each element of 'z.list' must have the same number of levels as 'range.G'")) }
         if(!all(lapply(z.list, length)  == N))       {
-                                    stop(paste0("Each element of z.list must be a vector of length N=", N)) }
+                                    stop(paste0("Each element of 'z.list' must be a vector of length N=", N)) }
       }
       if(all(missing(z.list),  z.init   == "list"))  {
-                                    stop(paste0("z.list must be supplied if z.init is set to 'list'")) }
+                                    stop(paste0("'z.list' must be supplied if 'z.init' is set to 'list'")) }
     }
   }
   if(all(!is.element(method, c("MFA", "MIFA")), 
