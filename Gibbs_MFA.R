@@ -55,8 +55,8 @@
       } else {
         z        <- factor(kmeans(data, G, nstart=100)$cluster, levels=Gseq)
       }
-      pi.prop    <- prop.table(tabulate(z, nbins=G))
     } 
+    pi.prop      <- prop.table(tabulate(z, nbins=G))
     zinit        <- z
     if(Q > 0) {
       fact       <- lapply(Gseq, function(g) factanal(data[z == g,, drop=F], factors=Q, scores="regression", control=list(nstart=50)))

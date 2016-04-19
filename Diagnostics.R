@@ -29,7 +29,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   conf.level     <- as.numeric(conf.level)
   if(abs(conf.level -
         (1 - conf.level)) < 0)    stop("'conf.level' must be a single number between 0 and 1")
-  conf.level     <- c((1 - conf.level)/2, 1 - (1 - conf.level)/2)
+  conf.levels    <- c((1 - conf.level)/2, 1 - (1 - conf.level)/2)
   criterion      <- match.arg(criterion)
   if(all(method  == "MIFA", 
      !is.element(criterion, 
@@ -80,7 +80,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
         Q        <- Q.med
       }
     }
-    Q.CI         <- round(quantile(Q.store, conf.level))
+    Q.CI         <- round(quantile(Q.store, conf.levels))
     GQ.res       <- list(G = G, Q = Q, Mode = Q.mode, Median = Q.med, 
                          CI = Q.CI, Probs= Q.prob, Counts = Q.tab)
   }
@@ -135,6 +135,8 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     } 
     G            <- ifelse(length(n.grp) == 1, n.grp, G)
     Q            <- ifelse(length(n.fac) == 1, n.fac, Q)
+    G.ind        <- ifelse(length(n.grp) == 1, which(n.grp == G), G.ind)
+    Q.ind        <- ifelse(length(n.fac) == 1, which(n.fac == Q), Q.ind)
     Q            <- setNames(rep(Q, G), paste0("Qg", seq_len(G)))
     GQ.res       <- list(G = G, Q = Q, AICM = aicm, BICM = bicm,
                          AIC.mcmc = aic.mcmc, BIC.mcmc = bic.mcmc)
@@ -155,9 +157,9 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       psis       <- sims[[G.ind]][[Q.ind]]$psi[,,store, drop=F]
     }
     z            <- as.matrix(sims[[G.ind]][[Q.ind]]$z[,store])
-    z.temp       <- z[,1]
+    z.temp       <- factor(z[,1], levels=seq_len(G))
     for(ls in seq_len(n.store)[-1]) {
-      tab        <- table(z[,ls], z.temp)
+      tab        <- table(factor(z[,ls], levels=seq_len(G)), z.temp)
       z.perm     <- matchClasses(tab, method="exact", verbose=F)
       z[,ls]     <- factor(z[,ls], levels=z.perm)
       if(sw["mu.sw"])  {
@@ -172,12 +174,12 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     }
     post.z       <- setNames(apply(z, 1, function(x) factor(which.max(tabulate(x)), levels=seq_len(G))), seq_len(n.obs))
     var.z        <- apply(z, 1, var)
-    CI.z         <- apply(z, 1, function(x) round(quantile(x, conf.level)))
+    CI.z         <- apply(z, 1, function(x) round(quantile(x, conf.levels)))
     if(sw["pi.sw"])    {
       pi.prop    <- as.matrix(sims[[G.ind]][[Q.ind]]$pi.prop[,store])
       post.pi    <- rowMeans(pi.prop, dims=1)
       var.pi     <- apply(pi.prop, 1, var)
-      CI.pi      <- apply(pi.prop, 1, function(x) quantile(x, conf.level))
+      CI.pi      <- apply(pi.prop, 1, function(x) quantile(x, conf.levels))
     } else {
       post.pi    <- setNames(prop.table(tabulate(post.z, nbins=G)), paste0("Group ", seq_len(G)))
     }
@@ -303,17 +305,17 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     if(sw["mu.sw"])  {
       post.mu    <- rowMeans(mu, dims=1)
       var.mu     <- apply(mu, 1, var)
-      CI.mu      <- apply(mu, 1, function(x) quantile(x, conf.level))
+      CI.mu      <- apply(mu, 1, function(x) quantile(x, conf.levels))
     }
     if(sw["psi.sw"]) {
       post.psi   <- rowMeans(psi, dims=1)
       var.psi    <- apply(psi, 1, var)
-      CI.psi     <- apply(psi, 1, function(x) quantile(x, conf.level))
+      CI.psi     <- apply(psi, 1, function(x) quantile(x, conf.levels))
     }
     if(sw["l.sw"])   { 
       post.load  <- rowMeans(lmat, dims=2)
       var.load   <- apply(lmat, c(1, 2), var)
-      CI.load    <- apply(lmat, c(1, 2), function(x) quantile(x, conf.level))
+      CI.load    <- apply(lmat, c(1, 2), function(x) quantile(x, conf.levels))
       var.exp    <- sum(colSums(post.load * post.load))/n.var
       class(post.load) <- "loadings"
     } else   {
@@ -396,7 +398,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   }
   if(sw["f.sw"]) {
     scores       <- list(f = f, post.f = rowMeans(f, dims=2), var.f = apply(f, c(1, 2), var),
-                         CI.f  = apply(f, c(1, 2), function(x) quantile(x, conf.level)))
+                         CI.f  = apply(f, c(1, 2), function(x) quantile(x, conf.levels)))
   }
   names(result)  <- paste0("Group", seq_len(G))
   attr(GQ.res, "Criterion")    <- criterion
