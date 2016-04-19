@@ -2,7 +2,7 @@
 ### Set-up for Keefe Murphy's IMIFA R Package ###
 #################################################
 
-packages    <- c("abind", "e1071", "MCMCpack", "slam")
+packages    <- c("abind", "e1071", "MCMCpack", "plotrix", "slam")
 if(length(setdiff(packages, rownames(installed.packages()))) > 0) {
   invisible(install.packages(setdiff(packages, rownames(installed.packages()))))
 }
@@ -20,7 +20,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
                         alpha.pi = NULL, z.init = c("kmeans", "priors", "list"), z.list = NULL, profile = F, 
                         mu.switch = T, f.switch = T, load.switch = T, psi.switch = T, pi.switch = T, ...) {
   
-  defpar    <- suppressWarnings(par(no.readonly = T, new=F))
+  defpar    <- suppressWarnings(par(no.readonly = T))
   defop     <- options()
   options(warn=1)
   on.exit(suppressWarnings(par(defpar)))
@@ -174,12 +174,13 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   } 
   if(!is.element(method, c("FA", "IFA"))) {
     if(missing("alpha.pi"))  alpha.pi      <- ifelse(method == "IMIFA", 0.1, 0.5)
+                             z.inx         <- missing(z.init)
                              z.init        <- match.arg(z.init)
     if(method != "IMIFA") {
       if(!missing(z.list))   {
         if(!is.list(z.list))   z.list      <- list(z.list)
                                z.list      <- lapply(z.list, as.factor)
-        if(z.init != "list") { z.init      <- "list"
+        if(!z.inx)           { z.init      <- "list"
                                     warning("'z.init' set to 'list' as 'z.list' was supplied", call.=F) }
         if(length(z.list)   != length(range.G))      {
                                     stop(paste0("'z.list' must be a list of length ", length(range.G))) }

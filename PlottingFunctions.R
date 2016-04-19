@@ -4,9 +4,9 @@
 
 plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "density", "posterior", "GQ", "trace"), 
                            vars = c("means", "scores", "loadings", "uniquenesses"), Labels = NULL, fac = NULL, g = NULL,
-                           by.fac = T, ind = NULL, type = c("h", "n", "p", "l"), mat = T, partial = F, ... ) {
+                           by.fac = T, ind = NULL, type = c("h", "n", "p", "l"), intervals = T, mat = T, partial = F, ... ) {
 
-  defpar  <- suppressWarnings(par(no.readonly = T, new=F))
+  defpar  <- suppressWarnings(par(no.readonly = T))
   defop   <- options()
   options(warn=1)
   suppressWarnings(par(cex.axis=0.8, new=F))
@@ -30,7 +30,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
   if(missing(plot.meth))              stop("What type of plot would you like to produce?")
   if(is.element(plot.meth, 
      c("G", "Q", 
-       "QG"))) {       plot.meth <- "GQ"
+       "QG")))  {      plot.meth <- "GQ"
   }
   plot.meth    <- match.arg(plot.meth)
   type.x       <- missing(type)
@@ -38,11 +38,12 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
   m.sw         <- c(G.sw = F, C.sw = F, D.sw = F, P.sw = F, T.sw = F)
   v.sw         <- attr(results, "Switch")
   names(v.sw)  <- formals(sys.function(sys.parent()))$vars
+  ci.sw        <- v.sw
   var.names    <- rownames(results[[1]]$post.load)
   obs.names    <- rownames(results$Scores$post.f)
   all.ind <- plot.meth == "all"
   grp.ind <- all(G != 1, !is.element(method, c("FA", "IFA")))
-  if(grp.ind) {
+  if(grp.ind)   {
     clust <- results$Clust
   }
   if(all.ind)   {
@@ -72,6 +73,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
   } 
   if(all(!v.sw[vars],
      !m.sw["G.sw"]))                  stop(paste0(vars, " weren't stored"))
+  if(!is.logical(intervals))          stop("'intervals' must be TRUE or FALSE")
   if(!is.logical(mat))                stop("'mat' must be TRUE or FALSE")
   if(!is.logical(partial))            stop("'partial' must be TRUE or FALSE")
   indx    <- missing(ind)
@@ -297,7 +299,9 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
       }
       if(vars  == "means") {
         plot.x <- result$post.mu
-        plot(plot.x, type=type, ylab="Means", xlab="Variable", ylim=if(is.element(method, c("FA", "IFA"))) c(-1, 1))
+        if(ci.sw[vars]) ci.x   <- result$CI.mu
+        plot(plot.x, type=type, ylab="Means", xlab="Variable", ylim=if(is.element(method, c("FA", "IFA"))) c(-1, 1) else if(ci.sw[vars]) c(min(ci.x[1,]), max(ci.x[2,])))
+        if(all(intervals, ci.sw[vars])) plotCI(plot.x, li=ci.x[1,], ui=ci.x[2,], slty=3, scol="grey", add=T, gap=T, pch=ifelse(type == "n", NA, 16))
         title(main=list(paste0("Posterior Mean", ifelse(all.ind, "", paste0(":\nMeans", ifelse(grp.ind, paste0(" - Group ", g), ""))))))
         if(type  == "n") text(x=seq_along(plot.x), y=plot.x, var.names, cex=0.5)
       }
@@ -319,15 +323,26 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
         }
         ind2   <- ifelse(Q > 1, max(2, ind[2]), ind[2])
         type.f <- ifelse(any(type.x, type == "l"), "p", type)
+        if(ci.sw[vars]) ci.x   <- results$Scores$CI.f
         if(Q   != 1) {
-          plot(plot.x[,ind[1]], plot.x[,ind2], type=type.f, col=as.numeric(Labs), 
-               xlab=paste0("Factor ", ind[1]), ylab=paste0("Factor ", ind2))
+          if(all(intervals, ci.sw[vars])) {
+            plotCI(plot.x[,ind[1]], plot.x[,ind2], li=ci.x[1,,ind2], ui=ci.x[2,,ind2], gap=T, pch=NA, scol="grey", slty=3, xlab=paste0("Factor ", ind[1]), ylab=paste0("Factor ", ind2))
+            plotCI(plot.x[,ind[1]], plot.x[,ind2], li=ci.x[1,,ind[1]], ui=ci.x[2,,ind[1]], add=T, gap=T, pch=NA, scol="grey", slty=3, err="x")
+            if(type.f != "n") points(plot.x[,ind[1]], plot.x[,ind2], type=type.f, col=as.numeric(Labs))
+          } else {
+            plot(plot.x[,ind[1]], plot.x[,ind2], type=type.f, col=as.numeric(Labs),
+                 xlab=paste0("Factor ", ind[1]), ylab=paste0("Factor ", ind2))
+          }
           title(main=list(paste0("Posterior Mean", ifelse(all.ind, "", ":\nScores"))))
           if(type.f == "n") text(plot.x[,ind[1]], plot.x[,ind2], obs.names, 
                                col=as.numeric(Labs), cex=0.5)
         } else   {
-          plot(plot.x[,ind[1]], type=type.f, col=as.numeric(Labs), 
-               xlab="Observation", ylab=paste0("Factor ", ind2))
+          if(all(intervals, ci.sw[vars])) {
+            plotCI(seq_len(n.obs), plot.x[,ind[1]], li=ci.x[1,,ind[1]], ui=ci.x[2,,ind[1]], gap=T, pch=NA, scol="grey", slty=3, xlab="Observation", ylab=paste0("Factor ", ind[1]))
+            points(plot.x[,ind[1]], type=type.f, col=as.numeric(Labs))
+          } else {
+            plot(plot.x[,ind[1]], type=type.f, col=as.numeric(Labs), xlab="Observation", ylab=paste0("Factor ", ind[1]))
+          }
           title(main=list(paste0("Posterior Mean", ifelse(all.ind, "", ":\nScores"))))
           if(type.f == "n") text(plot.x[,ind[1]], col=as.numeric(Labs), cex=0.5)
         }
@@ -352,14 +367,19 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
         if(Q   != 1) abline(v=seq(1/(2 * (Q - 1)), 
                                   1 - 1/(2 * (Q - 1)), 
                                   1/(Q - 1)), lty=2, lwd=1)
+        if(ci.sw[vars]) ci.x   <- result$CI.load  
         if(by.fac) {
-          plot(plot.x[,ind[2]], type=type, xaxt="n", xlab="", ylab="Loading")
+          if(ci.sw[vars]) ci.x <- ci.x[,,ind[2]]
+          plot(plot.x[,ind[2]], type=type, xaxt="n", xlab="", ylab="Loading", ylim=if(ci.sw[vars]) c(min(ci.x[1,]), max(ci.x[2,])))
+          if(all(intervals, ci.sw[vars])) plotCI(plot.x[,ind[2]], li=ci.x[1,], ui=ci.x[2,], slty=3, scol="grey", add=T, gap=T, pch=ifelse(type == "n", NA, 16))
           axis(1, line=-0.5, tick=F, at=seq_len(n.var), labels=seq_len(n.var))
           mtext("Variable #", side=1, line=2)
           title(main=list(paste0("Factor ", ind[2])))
           if(type == "n") text(x=plot.x, var.names, cex=0.5)
         } else     {
-          plot(plot.x[ind[1],], type=type, xaxt="n", xlab="", ylab="Loading")
+          if(ci.sw[vars]) ci.x <- ci.x[,ind[1],]
+          plot(plot.x[ind[1],], type=type, xaxt="n", xlab="", ylab="Loading", ylim=if(ci.sw[vars]) c(min(ci.x[1,]), max(ci.x[2,])))
+          if(all(intervals, ci.s[vars])) plotCI(plot.x[ind[1],], li=ci.x[1,], ui=ci.x[2,], slty=3, scol="grey", add=T, gap=T, pch=ifelse(type == "n", NA, 16))
           axis(1, line=-0.5, tick=F, at=seq_len(Q), labels=seq_len(Q))
           mtext("Factors", side=1, line=2)
           title(main=list(paste0(var.names[ind[1]], " Variable")))
@@ -371,7 +391,9 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
       }
       if(vars  == "uniquenesses") {
         plot.x <- result$post.psi
-        plot(plot.x, type=type, ylab="Uniquenesses", xlab="Variable")
+        if(ci.sw[vars]) ci.x   <- result$CI.psi
+        plot(plot.x, type=type, ylab="Uniquenesses", xlab="Variable", ylim=if(ci.sw[vars]) c(min(ci.x[1,]), max(ci.x[2,])))
+        if(all(intervals, ci.sw[vars])) plotCI(plot.x, li=ci.x[1,], ui=ci.x[2,], slty=3, scol="grey", add=T, gap=T, pch=ifelse(type == "n", NA, 16))
         title(main=list(paste0("Posterior Mean", ifelse(all.ind, "", paste0(":\nUniquenesses", ifelse(grp.ind, paste0(" - Group ", g), ""))))))
         if(type  == "n") text(seq_along(plot.x), plot.x, var.names, cex=0.5)
       }
