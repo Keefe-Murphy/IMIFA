@@ -156,7 +156,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     }
     z            <- as.matrix(sims[[G.ind]][[Q.ind]]$z[,store])
     z.temp       <- z[,1]
-    for(ls in seq_len(n.store)) {
+    for(ls in seq_len(n.store)[-1]) {
       tab        <- table(z[,ls], z.temp)
       z.perm     <- matchClasses(tab, method="exact", verbose=F)
       z[,ls]     <- factor(z[,ls], levels=z.perm)
@@ -187,6 +187,9 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       Labels     <- as.factor(Labels)
       if(length(Labels) != n.obs)     stop(paste0("Labels must be a factor of length N=",  n.obs))
       tab        <- table(post.z, Labels)
+      perm       <- matchClasses(tab, method="exact", verbose=F)
+      post.z     <- factor(post.z, levels=perm)
+      tab        <- table(as.numeric(post.z), as.numeric(Labels))
       tab.stat   <- classAgreement(tab)
     }
     cluster      <- list(post.z = post.z, post.pi = post.pi, 
