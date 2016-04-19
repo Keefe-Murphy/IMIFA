@@ -40,13 +40,13 @@
     dimnames(cov.emp)      <- list(varnames, varnames)
     dimnames(cov.est)      <- dimnames(cov.emp)
     
-    sigma.mu     <- 1/sigma.mu
-    sigma.l      <- 1/sigma.l
-    mu           <- sim.mu.p(P=P, sigma.mu=sigma.mu)  
+    mu.sigma     <- 1/sigma.mu
+    l.sigma      <- 1/sigma.l
+    mu           <- sim.mu.p(P=P, mu.sigma=mu.sigma)  
     f            <- sim.f.p(Q=Q, N=N)
-    lmat         <- sim.load.p(Q=Q, P=P, sigma.l=sigma.l)
+    lmat         <- sim.load.p(Q=Q, P=P, l.sigma=l.sigma)
     psi.inv      <- sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
-    l.sigma      <- sigma.l * diag(Q)
+    l.sigma      <- l.sigma * diag(Q)
     sum.data     <- colSums(data)
     if(burnin     < 1)    {
       mu.store[,1]         <- mu
@@ -67,7 +67,7 @@
       
     # Means
       sum.f      <- colSums(f)
-      mu         <- sim.mu(N=N, P=P, sigma.mu=sigma.mu, psi.inv=psi.inv,
+      mu         <- sim.mu(N=N, P=P, mu.sigma=mu.sigma, psi.inv=psi.inv,
                            sum.data=sum.data, sum.f=sum.f, lmat=lmat)
     
     # Scores & Loadings

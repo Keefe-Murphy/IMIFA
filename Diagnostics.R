@@ -189,7 +189,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       tab        <- table(post.z, Labels)
       perm       <- matchClasses(tab, method="exact", verbose=F)
       post.z     <- factor(post.z, levels=perm)
-      tab        <- table(as.numeric(post.z), as.numeric(Labels))
+      tab        <- table(as.numeric(post.z), as.numeric(Labels), dnn=list("Predicted", "Observed"))
       tab.stat   <- classAgreement(tab)
     }
     cluster      <- list(post.z = post.z, post.pi = post.pi, 

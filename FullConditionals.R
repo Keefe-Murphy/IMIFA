@@ -5,9 +5,9 @@
 # Full Conditionals (Group Case)
 
   # Means
-    sim.mu.m    <- function(nn = NULL, P = NULL, sigma.mu = NULL, psi.inv = NULL, 
+    sim.mu.m    <- function(nn = NULL, P = NULL, mu.sigma = NULL, psi.inv = NULL, 
                             sum.data = NULL, sum.f = NULL, lmat = NULL, G = NULL, ...) {
-      mu.omega  <- 1/(sigma.mu + sweep(psi.inv, 2, nn, FUN="*"))
+      mu.omega  <- 1/(mu.sigma + sweep(psi.inv, 2, nn, FUN="*"))
       U.mu      <- apply(mu.omega, 2, sqrt)
       z.mu      <- matrix(rnorm(P * G, 0, 1), nr=P, nc=G)
       v.mu      <- U.mu * z.mu
@@ -67,8 +67,8 @@
 # Priors (Group Case)
 
   # Means
-    sim.mu.mp   <- function(P = NULL, sigma.mu = NULL, G = NULL, ...) {
-      U.mu      <- sqrt(1/sigma.mu)
+    sim.mu.mp   <- function(P = NULL, mu.sigma = NULL, G = NULL, ...) {
+      U.mu      <- sqrt(1/mu.sigma)
       z.mu      <- matrix(rnorm(P * G, 0, 1), nr=P, nc=G)
         U.mu * z.mu
     }
@@ -79,8 +79,8 @@
     }
 
   # Loadings
-    sim.load.mp <- function(Q = NULL, P = NULL, sigma.l = NULL, G = NULL, ...) {
-      U.load    <- sqrt(1/sigma.l)
+    sim.load.mp <- function(Q = NULL, P = NULL, l.sigma = NULL, G = NULL, ...) {
+      U.load    <- sqrt(1/l.sigma)
       z.load    <- lapply(seq_len(G), function(g) matrix(rnorm(P * Q, 0, 1), nr=P, nc=Q))
         lapply(seq_len(G), function(g) z.load[[g]] * U.load)
     }
@@ -100,9 +100,9 @@
 # Full Conditionals (Single Case)
 
   # Means
-    sim.mu      <- function(N = NULL, P = NULL, sigma.mu = NULL, psi.inv = NULL, 
+    sim.mu      <- function(N = NULL, P = NULL, mu.sigma = NULL, psi.inv = NULL, 
                               sum.data = NULL, sum.f = NULL, lmat = NULL, ...) {
-      mu.omega  <- 1/(sigma.mu + N * psi.inv)
+      mu.omega  <- 1/(mu.sigma + N * psi.inv)
       U.mu      <- sqrt(mu.omega)
       z.mu      <- rnorm(P, 0, 1)
       v.mu      <- U.mu * z.mu
@@ -173,8 +173,8 @@
 # Priors (Single Case)
 
   # Means
-    sim.mu.p    <- function(P = NULL, sigma.mu = NULL, ...) {
-      U.mu      <- sqrt(1/sigma.mu)
+    sim.mu.p    <- function(P = NULL, mu.sigma = NULL, ...) {
+      U.mu      <- sqrt(1/mu.sigma)
       z.mu      <- rnorm(P, 0, 1)
         U.mu * z.mu
     }
@@ -185,8 +185,8 @@
     }
   
   # Loadings
-    sim.load.p  <- function(Q = NULL, P = NULL, sigma.l = NULL, ...) {
-      U.load    <- sqrt(1/sigma.l)
+    sim.load.p  <- function(Q = NULL, P = NULL, l.sigma = NULL, ...) {
+      U.load    <- sqrt(1/l.sigma)
       z.load    <- matrix(rnorm(P * Q, 0, 1), nr=P, nc=Q)
         z.load * U.load
     }

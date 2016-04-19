@@ -43,8 +43,8 @@
     dimnames(cov.emp)      <- list(varnames, varnames)
     dimnames(cov.est)      <- dimnames(cov.emp)
     
-    sigma.mu     <- 1/sigma.mu
-    mu           <- sim.mu.p(sigma.mu=sigma.mu, P=P)  
+    mu.sigma     <- 1/sigma.mu
+    mu           <- sim.mu.p(mu.sigma=mu.sigma, P=P)  
     f            <- sim.f.p(Q=Q, N=N)
     psi.inv      <- sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
     phi          <- sim.phi.p(Q=Q, P=P, phi.nu=phi.nu)
@@ -71,7 +71,7 @@
       
     # Means
       sum.f      <- colSums(f)
-      mu         <- sim.mu(N=N, P=P, sigma.mu=sigma.mu, psi.inv=psi.inv,
+      mu         <- sim.mu(N=N, P=P, mu.sigma=mu.sigma, psi.inv=psi.inv,
                            sum.data=sum.data, sum.f=sum.f, lmat=lmat)
       
     # Scores & Loadings
