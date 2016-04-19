@@ -58,14 +58,13 @@
     } 
     pi.prop      <- prop.table(tabulate(z, nbins=G))
     zinit        <- z
+    mu           <- do.call(cbind, lapply(Gseq, function(g) colMeans(data[z == g,, drop=F])))
     if(Q > 0) {
       fact       <- lapply(Gseq, function(g) factanal(data[z == g,, drop=F], factors=Q, scores="regression", control=list(nstart=50)))
-      mu         <- do.call(cbind, lapply(Gseq, function(g) colMeans(data[z == g,, drop=F])))
       f          <- do.call(rbind, lapply(Gseq, function(g) fact[[g]]$scores))
       lmat       <- lapply(Gseq, function(g) fact[[g]]$loadings)
       psi.inv    <- 1/do.call(cbind, lapply(Gseq, function(g) fact[[g]]$uniquenesses))
     } else    {
-      mu         <- sim.mu.mp(P=P, mu.sigma=mu.sigma, G=G) 
       f          <- sim.f.mp(N=N, Q=Q)
       lmat       <- sim.load.mp(P=P, Q=Q, l.sigma=l.sigma, G=G)
       psi.inv    <- sim.psi.imp(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta, G=G)
