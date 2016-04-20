@@ -46,7 +46,7 @@
     l.sigma      <- 1/sigma.l 
     pi.alpha     <- clust$pi.alpha
     z            <- clust$z
-    pi.prop      <- prop.table(tabulate(z, nbins=G))
+    pi.prop      <- t(prop.table(tabulate(z, nbins=G)))
     mu           <- do.call(cbind, lapply(Gseq, function(g) colMeans(data[z == g,, drop=F])))
     f            <- sim.f.mp(N=N, Q=Q)
     lmat         <- sim.load.mp(P=P, Q=Q, l.sigma=l.sigma, G=G, shrink=F)
