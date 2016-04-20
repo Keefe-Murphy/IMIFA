@@ -161,7 +161,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     for(ls in seq_len(n.store)[-1]) {
       tab        <- table(factor(z[,ls], levels=seq_len(G)), z.temp)
       z.perm     <- matchClasses(tab, method="exact", verbose=F)
-      z[,ls]     <- factor(z[,ls], levels=z.perm)
+      z[,ls]     <- factor(z[,ls], labels=z.perm, levels=seq_len(G))
       if(sw["mu.sw"])  {
         mus[,,ls]      <- mus[,z.perm,ls]
       }
@@ -190,15 +190,15 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       if(length(Labels) != n.obs)     stop(paste0("Labels must be a factor of length N=",  n.obs))
       tab        <- table(post.z, Labels)
       perm       <- matchClasses(tab, method="exact", verbose=F)
-      post.z     <- factor(post.z, levels=perm)
-      tab        <- table(as.numeric(post.z), as.numeric(Labels), dnn=list("Predicted", "Observed"))
+      post.z     <- factor(post.z, levels=perm, labels=seq_len(G))
+      tab        <- table(post.z, Labels, dnn=list("Predicted", "Observed"))
       tab.stat   <- classAgreement(tab)
     }
     cluster      <- list(post.z = post.z, post.pi = post.pi, 
                          z = z, var.z = var.z, CI.z = CI.z)
     cluster      <- c(cluster, if(!missing(Labels)) list(conf.mat = tab, perf = tab.stat),
                       if(sw["pi.sw"]) list(pi.prop = pi.prop, var.pi = var.pi, CI.pi = CI.pi))
-    attr(cluster, "Z.init")    <- attr(sim[[G.ind]][[Q.ind]], "Z.init")
+    attr(cluster, "Z.init")    <- attr(sim[[G.ind]], "Z.init")
   }
   
 # Retrieve (unrotated) scores

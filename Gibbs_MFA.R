@@ -4,11 +4,10 @@
   
 # Gibbs Sampler Function
   gibbs.MFA      <- function(Q = NULL, data = NULL, iters = NULL,
-                             N = NULL, P = NULL, sigma.mu = NULL,
-                             psi.alpha = NULL, psi.beta = NULL, G = NULL,
-                             burnin = NULL, thinning = NULL, sw = NULL,
-                             verbose = NULL, sigma.l = NULL, alpha.pi = NULL, 
-                             zinit = NULL, zlist = NULL,  ...) {
+                             N = NULL, P = NULL, G = NULL, sigma.mu = NULL, 
+                             sigma.l = NULL, burnin = NULL, thinning = NULL, 
+                             psi.alpha = NULL, psi.beta = NULL, sw = NULL, 
+                             verbose = NULL, clust = NULL, ...) {
         
   # Define & initialise variables
     n.iters      <- round(max(iters), -1)
@@ -44,30 +43,23 @@
     ll.store     <- rep(0, n.store)
     
     mu.sigma     <- 1/sigma.mu
-    l.sigma      <- 1/sigma.l
-    pi.alpha     <- rep(alpha.pi, G)
-    if(zinit == "priors")  {
-      pi.prop    <- sim.pi(pi.alpha=pi.alpha)
-      z          <- sim.z.p(N=N, prob.z=pi.prop)
-    } else   {
-      if(zinit == "list")  {
-        z        <- as.numeric(zlist)
-      } else {
-        z        <- factor(kmeans(data, G, nstart=100)$cluster, levels=Gseq)
-      }
-    } 
+    l.sigma      <- 1/sigma.l 
+    pi.alpha     <- clust$pi.alpha
+    z            <- clust$z
     pi.prop      <- prop.table(tabulate(z, nbins=G))
-    zinit        <- z
     mu           <- do.call(cbind, lapply(Gseq, function(g) colMeans(data[z == g,, drop=F])))
+    f            <- sim.f.mp(N=N, Q=Q)
+    lmat         <- sim.load.mp(P=P, Q=Q, l.sigma=l.sigma, G=G)
+    psi.inv      <- sim.psi.imp(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta, G=G)
     if(Q > 0) {
-      fact       <- lapply(Gseq, function(g) factanal(data[z == g,, drop=F], factors=Q, scores="regression", control=list(nstart=50)))
-      f          <- do.call(rbind, lapply(Gseq, function(g) fact[[g]]$scores))
-      lmat       <- lapply(Gseq, function(g) fact[[g]]$loadings)
-      psi.inv    <- 1/do.call(cbind, lapply(Gseq, function(g) fact[[g]]$uniquenesses))
-    } else    {
-      f          <- sim.f.mp(N=N, Q=Q)
-      lmat       <- sim.load.mp(P=P, Q=Q, l.sigma=l.sigma, G=G)
-      psi.inv    <- sim.psi.imp(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta, G=G)
+      for(g in Gseq) {
+        fact     <- try(factanal(data[z == g,, drop=F], factors=Q, scores="regression", control=list(nstart=50)), silent=T)
+        if(!inherits(fact, "try-error")) {
+          f[z == g,]       <- fact$scores
+          lmat[[g]]        <- fact$loadings
+          psi.inv[,g]      <- 1/fact$uniquenesses
+        }
+      }
     }
     l.sigma      <- l.sigma * diag(Q)
     Qs           <- rep(Q, G)
@@ -79,7 +71,7 @@
       }
       psi.store[,,1]       <- 1/psi.inv
       pi.store[,1]         <- pi.prop
-      z.store[,1]          <- zinit
+      z.store[,1]          <- z
     }
     
   # Iterate
@@ -151,6 +143,5 @@
                       z        = z.store,
                       ll.store = ll.store)
     attr(returns, "K")        <- G - 1 + G * (P * Q - 0.5 * Q * (Q - 1)) + 2 * G * P
-    attr(returns, "Z.init")   <- zinit
     return(returns)
   }

@@ -33,7 +33,7 @@
     load(file=paste0(getwd(), "/Data/Simulated_Data.Rdata", sep=""), envir=.GlobalEnv)
 
 # Run the Gibbs Sampler
-  sim  <- imifa.mcmc(wine, method="MFA", range.G=3, range.Q=1, z.list=Lab)
+  sim  <- imifa.mcmc(wine, method="MFA", range.G=3, range.Q=c(0,1,2,3), z.list=Lab)
  #sim  <- imifa.mcmc(wine, method="classify", Label=Lab)
 
 # Save / Load Simulations
