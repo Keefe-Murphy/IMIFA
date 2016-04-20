@@ -50,7 +50,7 @@
     phi          <- sim.phi.p(Q=Q, P=P, phi.nu=phi.nu)
     delta        <- sim.delta.p(Q=Q, alpha.d1=alpha.d1, alpha.d2=alpha.d2)
     tau          <- cumprod(delta)
-    lmat         <- sim.load.ps(Q=Q, phi=phi, tau=tau, P=P)
+    lmat         <- sim.load.p(Q=Q, phi=phi, tau=tau, P=P)
     sum.data     <- colSums(data)
     if(burnin     < 1) {
       mu.store[,1]         <- mu
@@ -79,8 +79,8 @@
       if(Q  > 0) {
         f        <- sim.score(N=N, Q=Q, lmat=lmat, psi.inv=psi.inv, c.data=c.data)
         FtF      <- crossprod(f)
-        lmat     <- sim.load.s(Q=Q, c.data=c.data, P=P, f=f, phi=phi,
-                               tau=tau, psi.inv=psi.inv, FtF=FtF)
+        lmat     <- sim.load(Q=Q, c.data=c.data, P=P, f=f, phi=phi,
+                             tau=tau, psi.inv=psi.inv, FtF=FtF)
       } else {
         f        <- matrix(, nr=N, nc=0)
         lmat     <- matrix(, nr=P, nc=0)

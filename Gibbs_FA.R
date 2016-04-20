@@ -44,7 +44,7 @@
     l.sigma      <- 1/sigma.l
     mu           <- sim.mu.p(P=P, mu.sigma=mu.sigma)  
     f            <- sim.f.p(Q=Q, N=N)
-    lmat         <- sim.load.p(Q=Q, P=P, l.sigma=l.sigma)
+    lmat         <- sim.load.p(Q=Q, P=P, l.sigma=l.sigma, shrink=F)
     psi.inv      <- sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
     l.sigma      <- l.sigma * diag(Q)
     sum.data     <- colSums(data)
@@ -75,8 +75,8 @@
       if(Q > 0) {
         f        <- sim.score(N=N, Q=Q, lmat=lmat, psi.inv=psi.inv, c.data=c.data)
         FtF      <- crossprod(f)
-        lmat     <- sim.load(l.sigma=l.sigma, Q=Q, c.data=c.data, 
-                             P=P, f=f, psi.inv=psi.inv, FtF=FtF)
+        lmat     <- sim.load(l.sigma=l.sigma, Q=Q, c.data=c.data, f=f, 
+                             P=P, psi.inv=psi.inv, FtF=FtF, shrink=F)
       }
                       
     # Uniquenesses

@@ -29,8 +29,12 @@
   
   # Loadings
     sim.load.m  <- function(l.sigma = NULL, Qs = NULL, c.data = NULL, f = NULL, P = NULL,
-                            psi.inv = NULL, FtF = NULL, G = NULL, z.ind = NULL, ...) {
-      U.load    <- lapply(seq_len(G), function(g) lapply(seq_len(P), function(j) chol(l.sigma[seq_len(Qs[g]),seq_len(Qs[g])] + psi.inv[j,g] * FtF[[g]])))
+                            psi.inv = NULL, FtF = NULL, G = NULL, z.ind = NULL, shrink = T, ...) {
+      if(shrink) {
+        U.load  <- lapply(seq_len(G), function(g) lapply(seq_len(P), function(j) chol(l.sigma[seq_len(Qs[g]),seq_len(Qs[g])] + psi.inv[j,g] * FtF[[g]])))
+      } else      {
+        U.load  <- lapply(seq_len(G), function(g) lapply(seq_len(P), function(j) chol(l.sigma[seq_len(Qs[g]),seq_len(Qs[g])] + psi.inv[j,g] * FtF[[g]])))
+      }
       z.load    <- lapply(seq_len(G), function(g) lapply(seq_len(P), function(j) rnorm(Qs[g], 0, 1)))
       v.load    <- lapply(seq_len(G), function(g) do.call(rbind, lapply(seq_len(P), function(j) backsolve(U.load[[g]][[j]], z.load[[g]][[j]]))))
       mu.load   <- lapply(seq_len(G), function(g) do.call(cbind, lapply(seq_len(P), function(j) psi.inv[j,g] * chol2inv(U.load[[g]][[j]]) %*% crossprod(f[z.ind[[g]],, drop=F], c.data[[g]][,j]))))
@@ -79,8 +83,12 @@
     }
 
   # Loadings
-    sim.load.mp <- function(Q = NULL, P = NULL, l.sigma = NULL, G = NULL, ...) {
-      U.load    <- sqrt(1/l.sigma)
+    sim.load.mp <- function(Q = NULL, P = NULL, l.sigma = NULL, G = NULL, shrink = T, ...) {
+      if(shrink) {
+        U.load  <- sqrt(1/l.sigma)
+      } else     {
+        U.load  <- sqrt(1/l.sigma)
+      }
       z.load    <- lapply(seq_len(G), function(g) matrix(rnorm(P * Q, 0, 1), nr=P, nc=Q))
         lapply(seq_len(G), function(g) z.load[[g]] * U.load)
     }
@@ -122,22 +130,17 @@
     }
   
   # Loadings
-    sim.load    <- function(l.sigma = NULL, Q = NULL, c.data = NULL, P = NULL,
-                            f = NULL, psi.inv = NULL, FtF = NULL, ...) {
-      U.load    <- lapply(seq_len(P), function(j) chol(l.sigma + psi.inv[j] * FtF))
+    sim.load    <- function(l.sigma = NULL, Q = NULL, c.data = NULL, P = NULL, f = NULL,
+                            phi = NULL, tau = NULL, psi.inv = NULL, FtF = NULL, shrink = T, ...) {
+      if(shrink) {
+        U.load  <- lapply(seq_len(P), function(j) chol((phi[j,] * tau * diag(Q)) + psi.inv[j] * FtF))
+      } else     {
+        U.load  <- lapply(seq_len(P), function(j) chol(l.sigma + psi.inv[j] * FtF))
+      }
       z.load    <- lapply(seq_len(P), function(j) rnorm(Q, 0, 1))
       v.load    <- do.call(rbind, lapply(seq_len(P), function(j) backsolve(U.load[[j]], z.load[[j]])))
       mu.load   <- do.call(cbind, lapply(seq_len(P), function(j) psi.inv[j] * chol2inv(U.load[[j]]) %*% crossprod(f, c.data[,j])))
         t(mu.load) + v.load
-    }
-
-    sim.load.s  <- function(Q = NULL, c.data = NULL, P = NULL, f = NULL, phi = NULL,
-                            tau = NULL, psi.inv = NULL, FtF = NULL, ...) {
-      U.load    <- lapply(seq_len(P), function(j) chol((phi[j,] * tau * diag(Q)) + psi.inv[j] * FtF))
-      z.load    <- lapply(seq_len(P), function(j) rnorm(Q, 0, 1))
-      v.load    <- do.call(rbind, lapply(seq_len(P), function(j) backsolve(U.load[[j]], z.load[[j]])))
-      mu.load   <- do.call(cbind, lapply(seq_len(P), function(j) psi.inv[j] * chol2inv(U.load[[j]]) %*% crossprod(f, c.data[,j])))
-       t(mu.load) + v.load
     }
   
   # Uniquenesses
@@ -185,17 +188,17 @@
     }
   
   # Loadings
-    sim.load.p  <- function(Q = NULL, P = NULL, l.sigma = NULL, ...) {
-      U.load    <- sqrt(1/l.sigma)
-      z.load    <- matrix(rnorm(P * Q, 0, 1), nr=P, nc=Q)
-        z.load * U.load
-    }
-
-  # Loadings (Shrinkage)
-    sim.load.ps <- function(Q = NULL, phi = NULL, tau = NULL, P = NULL, ...) {
-      U.load    <- lapply(seq_len(P), function(j) sqrt(1/(phi[j,] * tau)))
-      z.load    <- lapply(seq_len(P), function(j) rnorm(Q, 0, 1))
-        do.call(rbind, lapply(seq_len(P), function(j) U.load[[j]] * z.load[[j]]))
+    sim.load.p  <- function(Q = NULL, P = NULL, l.sigma = NULL, 
+                            phi = NULL, tau = NULL, shrink = T, ...) {
+      if(shrink) {
+        U.load  <- lapply(seq_len(P), function(j) sqrt(1/(phi[j,] * tau)))
+        z.load  <- lapply(seq_len(P), function(j) rnorm(Q, 0, 1))
+          do.call(rbind, lapply(seq_len(P), function(j) U.load[[j]] * z.load[[j]]))
+      } else     {
+        U.load  <- sqrt(1/l.sigma)
+        z.load  <- matrix(rnorm(P * Q, 0, 1), nr=P, nc=Q)
+          z.load * U.load
+      }
     }
   
   # Uniquenesses

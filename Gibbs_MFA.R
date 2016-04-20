@@ -49,7 +49,7 @@
     pi.prop      <- prop.table(tabulate(z, nbins=G))
     mu           <- do.call(cbind, lapply(Gseq, function(g) colMeans(data[z == g,, drop=F])))
     f            <- sim.f.mp(N=N, Q=Q)
-    lmat         <- sim.load.mp(P=P, Q=Q, l.sigma=l.sigma, G=G)
+    lmat         <- sim.load.mp(P=P, Q=Q, l.sigma=l.sigma, G=G, shrink=F)
     psi.inv      <- sim.psi.imp(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta, G=G)
     if(Q > 0) {
       for(g in Gseq) {
@@ -58,7 +58,7 @@
           f[z == g,]       <- fact$scores
           lmat[[g]]        <- fact$loadings
           psi.inv[,g]      <- 1/fact$uniquenesses
-        }
+        } else                warning(paste0("Parameters of group ", g, " initialised by simulation from priors, not factanal: G=", G, ", Q=", Q), call.=F)
       }
     }
     l.sigma      <- l.sigma * diag(Q)
@@ -99,7 +99,7 @@
                                 c.data=c.data)[obsnames,, drop=F]
         FtF      <- lapply(Gseq, function(g) crossprod(f[z.ind[[g]],, drop=F]))
         lmat     <- sim.load.m(l.sigma=l.sigma, Qs=Qs, c.data=c.data, f=f, P=P,
-                               psi.inv=psi.inv, FtF=FtF, G=G, z.ind=z.ind)
+                               psi.inv=psi.inv, FtF=FtF, G=G, z.ind=z.ind, shrink=F)
       }
      #} else {
      #  f        <- matrix(, nr=N, nc=0)
