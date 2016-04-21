@@ -48,9 +48,9 @@
     z            <- clust$z
     pi.prop      <- t(prop.table(tabulate(z, nbins=G)))
     mu           <- do.call(cbind, lapply(Gseq, function(g) colMeans(data[z == g,, drop=F])))
-    f            <- sim.f.mp(N=N, Q=Q)
-    lmat         <- sim.load.mp(P=P, Q=Q, l.sigma=l.sigma, G=G, shrink=F)
-    psi.inv      <- sim.psi.imp(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta, G=G)
+    f            <- sim.f.p(N=N, Q=Q)
+    lmat         <- lapply(Gseq, function(g) sim.load.p(Q=Q, P=P, sigma.l=sigma.l, shrink=F))
+    psi.inv      <- do.call(cbind, lapply(Gseq, function(g) sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)))
     if(Q > 0) {
       for(g in Gseq) {
         fact     <- try(factanal(data[z == g,, drop=F], factors=Q, scores="regression", control=list(nstart=50)), silent=T)
@@ -89,26 +89,22 @@
     # Means
       sum.data   <- do.call(cbind, lapply(Gseq, function(g) colSums(data[z.ind[[g]],,drop=F])))
       sum.f      <- lapply(Gseq, function(g) colSums(f[z.ind[[g]],, drop=F]))
-      mu         <- sim.mu.m(nn=nn, P=P, mu.sigma=mu.sigma, psi.inv=psi.inv,
-                             sum.data=sum.data, sum.f=sum.f, lmat=lmat, G=G)
+      mu         <- do.call(cbind, lapply(Gseq, function(g) sim.mu(N=nn[g], P=P, mu.sigma=mu.sigma, 
+                            psi.inv=psi.inv[,g], sum.data=sum.data[,g], sum.f=sum.f[[g]], lmat=lmat[[g]])))
     
     # Scores & Loadings
       c.data     <- lapply(Gseq, function(g) sweep(data[z.ind[[g]],, drop=F], 2, mu[,g], FUN="-"))
       if(Q > 0) {
-        f        <- sim.score.m(nn=nn, Qs=Qs, lmat=lmat, psi.inv=psi.inv, 
-                                c.data=c.data)[obsnames,, drop=F]
+        f        <- do.call(rbind, lapply(Gseq, function(g) sim.score(N=nn[g], lmat=lmat[[g]], 
+                            c.data=c.data[[g]], psi.inv=psi.inv[,g], Q=Qs[g])))[obsnames,, drop=F]
         FtF      <- lapply(Gseq, function(g) crossprod(f[z.ind[[g]],, drop=F]))
-        lmat     <- sim.load.m(l.sigma=l.sigma, Qs=Qs, c.data=c.data, f=f, P=P,
-                               psi.inv=psi.inv, FtF=FtF, G=G, z.ind=z.ind, shrink=F)
+        lmat     <- lapply(Gseq, function(g) sim.load(l.sigma=l.sigma, Q=Qs[g], c.data=c.data[[g]], 
+                           P=P, f=f[z.ind[[g]],, drop=F], psi.inv=psi.inv[,g], FtF=FtF[[g]], shrink=F))
       }
-     #} else {
-     #  f        <- matrix(, nr=N, nc=0)
-     #  lmat     <- lapply(Gseq, function(g) matrix(, nr=P, nc=0))
-     #}
                   
     # Uniquenesses
-      psi.inv    <- sim.psi.im(nn=nn, P=P, psi.alpha=psi.alpha, psi.beta=psi.beta,
-                               c.data=c.data, f=f, lmat=lmat, G=G, z.ind=z.ind)
+      psi.inv    <- do.call(cbind, lapply(Gseq, function(g) sim.psi.i(N=nn[g], P=P, psi.alpha=psi.alpha, 
+                            psi.beta=psi.beta, c.data=c.data[[g]], f=f[z.ind[[g]],,drop=F], lmat=lmat[[g]])))
     
     # Mixing Proportions
       pi.prop    <- sim.pi(pi.alpha=pi.alpha, nn=nn)

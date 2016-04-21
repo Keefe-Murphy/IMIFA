@@ -44,7 +44,7 @@
     dimnames(cov.est)      <- dimnames(cov.emp)
     
     mu.sigma     <- 1/sigma.mu
-    mu           <- sim.mu.p(mu.sigma=mu.sigma, P=P)  
+    mu           <- sim.mu.p(P=P, sigma.mu=sigma.mu)  
     f            <- sim.f.p(Q=Q, N=N)
     psi.inv      <- sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
     phi          <- sim.phi.p(Q=Q, P=P, phi.nu=phi.nu)

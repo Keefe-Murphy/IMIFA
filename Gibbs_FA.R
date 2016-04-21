@@ -42,9 +42,9 @@
     
     mu.sigma     <- 1/sigma.mu
     l.sigma      <- 1/sigma.l
-    mu           <- sim.mu.p(P=P, mu.sigma=mu.sigma)  
+    mu           <- sim.mu.p(P=P, sigma.mu=sigma.mu)  
     f            <- sim.f.p(Q=Q, N=N)
-    lmat         <- sim.load.p(Q=Q, P=P, l.sigma=l.sigma, shrink=F)
+    lmat         <- sim.load.p(Q=Q, P=P, sigma.l=sigma.l, shrink=F)
     psi.inv      <- sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
     l.sigma      <- l.sigma * diag(Q)
     sum.data     <- colSums(data)
