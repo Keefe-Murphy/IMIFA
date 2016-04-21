@@ -39,7 +39,7 @@
       mu.load   <- do.call(cbind, lapply(seq_len(P), function(j) psi.inv[j] * chol2inv(U.load[[j]]) %*% crossprod(f, c.data[,j])))
         t(mu.load) + v.load
     }
-  
+
   # Uniquenesses
     sim.psi.i   <- function(N = NULL, P = NULL, psi.alpha = NULL, psi.beta = NULL, 
                             c.data = NULL, f = NULL, lmat = NULL, ...) { 
@@ -137,7 +137,7 @@
     sim.z.p     <- function(N = NULL, prob.z = NULL, ...) {
       ind.mat   <- rmultinom(N, size=1, prob=prob.z)
       labs      <- which(ind.mat != 0, arr.ind=T)[,1]
-       factor(labs, levels=seq_along(prob.z))
+        factor(labs, levels=seq_along(prob.z))
     }
 
 # Other Functions
