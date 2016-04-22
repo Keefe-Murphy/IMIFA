@@ -156,6 +156,9 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     if(sw["psi.sw"]) {
       psis       <- sims[[G.ind]][[Q.ind]]$psi[,,store, drop=F]
     }
+    if(sw["pi.sw"])  {
+      pies       <- sims[[G.ind]][[Q.ind]]$pi.prop[,store, drop=F]
+    }
     z            <- as.matrix(sims[[G.ind]][[Q.ind]]$z[,store])
     z.temp       <- factor(z[,1], levels=seq_len(G))
     for(ls in seq_len(n.store)[-1]) {
@@ -171,12 +174,15 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       if(sw["psi.sw"]) {
         psis[,,ls]     <- psis[,z.perm,ls]
       }
+      if(sw["pi.sw"])  {
+        pies[,ls]      <- pies[z.perm,ls]
+      }
     }
     post.z       <- setNames(apply(z, 1, function(x) factor(which.max(tabulate(x)), levels=seq_len(G))), seq_len(n.obs))
     var.z        <- apply(z, 1, var)
     CI.z         <- apply(z, 1, function(x) round(quantile(x, conf.levels)))
     if(sw["pi.sw"])    {
-      pi.prop    <- as.matrix(sims[[G.ind]][[Q.ind]]$pi.prop[,store])
+      pi.prop    <- pies[,store]
       post.pi    <- rowMeans(pi.prop, dims=1)
       var.pi     <- apply(pi.prop, 1, var)
       CI.pi      <- apply(pi.prop, 1, function(x) quantile(x, conf.levels))
@@ -191,6 +197,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       tab        <- table(post.z, Labels)
       perm       <- matchClasses(tab, method="exact", verbose=F)
       post.z     <- factor(post.z, levels=perm, labels=seq_len(G))
+      post.pi    <- post.pi[perm]
       tab        <- table(post.z, Labels, dnn=list("Predicted", "Observed"))
       tab.stat   <- classAgreement(tab)
     }
