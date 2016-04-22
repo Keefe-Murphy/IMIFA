@@ -6,18 +6,18 @@
 
   # Means
     sim.mu      <- function(N = NULL, P = NULL, mu.sigma = NULL, psi.inv = NULL, 
-                              sum.data = NULL, sum.f = NULL, lmat = NULL, ...) {
+                            sum.data = NULL, sum.f = NULL, lmat = NULL, mu.zero = rep(0, P), ...) {
       mu.omega  <- 1/(mu.sigma + N * psi.inv)
       U.mu      <- sqrt(mu.omega)
       z.mu      <- rnorm(P, 0, 1)
       v.mu      <- U.mu * z.mu
-      mu.mu     <- mu.omega * (psi.inv * (sum.data - lmat %*% sum.f))
+      mu.mu     <- mu.omega * (psi.inv * (sum.data - lmat %*% sum.f) + mu.zero * mu.sigma)
         as.vector(mu.mu + v.mu)
     }
   
   # Scores
     sim.score   <- function(N = NULL, Q = NULL, lmat = NULL,
-                              psi.inv = NULL, c.data = NULL, ...) {
+                            psi.inv = NULL, c.data = NULL, ...) {
       load.psi  <- lmat * psi.inv
       U.f       <- chol(diag(Q) + crossprod(load.psi, lmat))
       z.f       <- matrix(rnorm(Q * N, 0, 1), nr=Q, nc=N)
@@ -91,10 +91,10 @@
 # Priors
 
   # Means
-    sim.mu.p    <- function(P = NULL, sigma.mu = NULL, ...) {
+    sim.mu.p    <- function(P = NULL, sigma.mu = NULL, mu.zero = rep(0, P), ...) {
       U.mu      <- sqrt(sigma.mu)
       z.mu      <- rnorm(P, 0, 1)
-        U.mu * z.mu
+        U.mu * z.mu + mu.zero
     }
   
   # Scores

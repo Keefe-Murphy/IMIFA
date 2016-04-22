@@ -1,6 +1,6 @@
 \documentclass[a4paper,12pt,fleqn]{article}
 %\documentclass[a4paper,12pt,twocolumn]{article}
-\usepackage[margin=0.7in]{geometry}
+\usepackage[margin=0.65in]{geometry}
 \usepackage{fancyhdr}
 \usepackage{amsmath,amsthm,amssymb,mathtools}
 \usepackage{algorithm}% http://ctan.org/pkg/algorithm
@@ -219,7 +219,7 @@ To obtain the full conditional for $\underline{\text{f}}_i$ we can multiply the 
 \subsection[Loadings Matrix]{Loadings Matrix - $\Lambda$}
 \label{Loadings_Section}A Gaussian distribution is a conjugate prior for $\Lambda$, implying an $\operatorname{MVN}_q$ distribution prior for each row $\underline{\Lambda}_j$ of $\Lambda$ s.t. $\underline{\Lambda}_j \sim \operatorname{MVN}_q\left(\underline{0},\Sigma_{\lambda}\mathcal{I}_q\right)$ where $\Sigma_{\lambda}$ is a scalar hyperparameter which controls the diagonal covariance matrix of the prior. As above, we can expect the result of the product of two $\operatorname{MVN}_q$ distributions to itself be distributed this way.
 \begin{flalign}
-\quad\mathrm{P}\left(\underline{\Lambda}_j\given X^\star,\text{F},\Psi\right) &\sim \mathrm{P}\left(X^\star \given \text{F}, \underline{\Lambda}_j,\Psi\right)\mathrm{P}\left(\underline{\Lambda}_j\given\Sigma_{\lambda}\right)\nonumber&\\
+\mathrm{P}\left(\underline{\Lambda}_j\given X^\star,\text{F},\Psi\right) &\sim \mathrm{P}\left(X^\star \given \text{F}, \underline{\Lambda}_j,\Psi\right)\mathrm{P}\left(\underline{\Lambda}_j\given\Sigma_{\lambda}\right)\nonumber&\\
 & \propto \exp\left(-\frac{1}{2}\sum_{i=1}^{N}\left(\underline{x}_i^\star - \underline{\Lambda}_j\underline{\text{f}}_i\right)^T\psi_j^{-1}\left(\underline{x}_i^\star - \underline{\Lambda}_j\underline{\text{f}}_i\right)\right)\exp\left(-\frac{1}{2}\left(\underline{\Lambda}_j^T\Sigma_{\lambda}^{-1}\mathcal{I}_q\underline{\Lambda}_j\right)\right) \nonumber&\\
 & \propto \exp\left(-\frac{1}{2}\sum_{i=1}^{N}\left[- 2\underline{x}_i^{\star^{T}}\psi_j^{-1}\left(\underline{\Lambda}_j\underline{\text{f}}_i\right) + \left(\underline{\Lambda}_j\underline{\text{f}}_i\right)^T\psi_j^{-1}\left(\underline{\Lambda}_j\underline{\text{f}}_i\right) + \underline{\Lambda}_j^T\Sigma_{\lambda}^{-1}\mathcal{I}_q
 \underline{\Lambda}_j\right]\right)\nonumber&\\
@@ -266,17 +266,17 @@ $\mathrm{V}^{-1} \sim \operatorname{Wish}_p\left(\nu, \Sigma\right)~\mbox{when}~
 \mathrm{P}\left(\psi_j^{-1}\given X,F,\Lambda\right) & \sim \operatorname{Ga}\left(\frac{N + \alpha}{2},\frac{S_j + \beta}{2}\right)&\label{eq:18}
 \end{flalign}
 \subsection[Reintroducing $\mu$]{Reintroducing $\underline{\mu}$}
-We've already seen from \eqref{eq:13}, \eqref{eq:16} and \eqref{eq:18} that reintroducing $\mu$ to the other full conditionals is trivial. All that remains is to specify the conjugate Gaussian prior for $\mu$ itself, and to derive its full conditional. This implies an $\operatorname{MVN}_p$ distribution prior s.t. $\underline{\mu} \sim \operatorname{MVN}_p\left(\underline{0}, \Sigma_{\mu}\mathcal{I}_p\right)$ where $\Sigma_{\mu}$ is a scalar hyperparameter which controls the diagonal covariance matrix of the prior. As above, we can expect the result of the product of two $\operatorname{MVN}_p$ distributions to itself be distributed this way.
+We've already seen from \eqref{eq:13}, \eqref{eq:16} and \eqref{eq:18} that reintroducing $\mu$ to the other full conditionals is trivial. All that remains is to specify the conjugate Gaussian prior for $\mu$ itself, and to derive its full conditional. This implies an $\operatorname{MVN}_p$ distribution prior s.t. $\underline{\mu} \sim \operatorname{MVN}_p\left(\underline{\tilde{\mu}}, \Sigma_{\mu}\mathcal{I}_p\right)$ where $\Sigma_{\mu}$ is a scalar hyperparameter which controls the diagonal covariance matrix of the prior, and $\underline{\tilde{\mu}}$ is a vector of prior mean means, typically the sample mean for each group. As above, we can expect the result of the product of two $\operatorname{MVN}_p$ distributions to itself be distributed this way.
 \begin{flalign}
-\quad~\mathrm{P}\left(\underline{\mu}\given X,\text{F},\Psi, \Lambda\right)
-& \propto  \exp\left(-\frac{1}{2}\sum_{i=1}^{N}\left(\underline{x}_i - \underline{\mu} - \Lambda\underline{\text{f}}_i\right)^T\Psi^{-1}\left(\underline{x}_i - \underline{\mu} - \Lambda\underline{\text{f}}_i\right)\right)\exp\left(-\frac{1}{2}\left(\underline{\mu}^T\Sigma_{\mu}^{-1}\mathcal{I}_p\underline{\mu}\right)\right) \nonumber&\\
-& \propto \exp\left(-\frac{1}{2}\sum_{i=1}^{N}\left[-2 \underline{x}_i^T\Psi^{-1}\underline{\mu} + 2\left(\Lambda\underline{\text{f}}_i\right)^T\Psi^{-1}\underline{\mu}  + \underline{\mu}^T\Psi^{-1}\underline{\mu} +\underline{\mu}^T \Sigma_{\mu}^{-1}\mathcal{I}_p\underline{\mu}\right]\right)\nonumber&\\
-& \propto  \exp\left(\sum_{i=1}^{N}\underline{x}_i^T\Psi^{-1}\underline{\mu} -\sum_{i=1}^{N}\left(\Lambda\underline{\text{f}}_i\right)^T\Psi^{-1}\underline{\mu} -\frac{1}{2}\left[\underline{\mu}^T\left(\Sigma_{\mu}^{-1}\mathcal{I}_p + N\Psi^{-1}\right)\underline{\mu}\right]\right)\nonumber&
+\mathrm{P}\left(\underline{\mu}\given X,\text{F},\Psi, \Lambda\right)
+& \propto  \exp\left(-\frac{1}{2}\sum_{i=1}^{N}\left(\underline{x}_i - \underline{\mu} - \Lambda\underline{\text{f}}_i\right)^T\Psi^{-1}\left(\underline{x}_i - \underline{\mu} - \Lambda\underline{\text{f}}_i\right)\right)\exp\left(-\frac{1}{2}\left(\underline{\mu} - \underline{\tilde{\mu}}\right)^T\Sigma_{\mu}^{-1}\mathcal{I}_p\left(\underline{\mu} - \underline{\tilde{\mu}}\right)\right) \nonumber&\\
+& \propto \exp\left(-\frac{1}{2}\sum_{i=1}^{N}\left[-2 \underline{x}_i^T\Psi^{-1}\underline{\mu} + 2\left(\Lambda\underline{\text{f}}_i\right)^T\Psi^{-1}\underline{\mu}  + \underline{\mu}^T\Psi^{-1}\underline{\mu}\right] +\underline{\mu}^T \Sigma_{\mu}^{-1}\mathcal{I}_p\underline{\mu} - 2\underline{\tilde{\mu}}^T\Sigma_{\mu}^{-1}\mathcal{I}_p\underline{\mu}\right)\nonumber&\\
+& \propto  \exp\left(\sum_{i=1}^{N}\underline{x}_i^T\Psi^{-1}\underline{\mu} -\sum_{i=1}^{N}\left(\Lambda\underline{\text{f}}_i\right)^T\Psi^{-1}\underline{\mu} -\frac{1}{2}\left[\underline{\mu}^T\left(\Sigma_{\mu}^{-1}\mathcal{I}_p + N\Psi^{-1}\right)\underline{\mu}\right] + \underline{\tilde{\mu}}^T\Sigma_{\mu}^{-1}\mathcal{I}_p\underline{\mu}\right)\nonumber&
 \end{flalign}
 \vspace{-5mm}
 \begin{equation}
 	\begin{split}
-	\therefore \mathrm{P}\left(\underline{\mu}\given X,\text{F},\Psi,\Lambda\right)&\sim&\hspace{-3mm}\operatorname{MVN}_p\Big(\left[\Sigma_{\mu}^{-1}\mathcal{I}_p + N\Psi^{-1}\right]^{-1}\Psi^{-1}\Big(\sum_{i=1}^{N}\underline{x}_i - \sum_{i=1}^{N}\Lambda\underline{\text{f}}_i\Big), \\&& \left[\Sigma_{\mu}^{-1}\mathcal{I}_p + N\Psi^{-1}\right]^{-1}\Big)\label{eq:19}
+	\therefore \mathrm{P}\left(\underline{\mu}\given X,\text{F},\Psi,\Lambda\right)&\sim&\hspace{-3mm}\operatorname{MVN}_p\Bigg(\left[\Sigma_{\mu}^{-1}\mathcal{I}_p + N\Psi^{-1}\right]^{-1}\Big(\Psi^{-1}\big(\sum_{i=1}^{N}\underline{x}_i - \sum_{i=1}^{N}\Lambda\underline{\text{f}}_i\big) + \underline{\tilde{\mu}}^T\Sigma_{\mu}^{-1}\mathcal{I}_p\Big), \\&& \left[\Sigma_{\mu}^{-1}\mathcal{I}_p + N\Psi^{-1}\right]^{-1}\Bigg)\label{eq:19}
 	\end{split}
 \end{equation}
 \noindent However, we can save on computational time, as before, if we:
@@ -286,7 +286,7 @@ We've already seen from \eqref{eq:13}, \eqref{eq:16} and \eqref{eq:18} that rein
 	\item $\Omega_{\mu}^{-1} = U^TU$ can be obtained by taking the square root of $\Omega_{\mu}$ since this matrix is diagonal.
 	\item Sample $\underline{z} \sim \operatorname{MVN}_p\left(\underline{0}, \mathcal{I}_p\right)$.
 	\item Compute $\underline{v} = U^T\underline{z}$.
-	\Item $\mbox{Return}~\Omega_{\mu}^{-1}\Psi^{-1}\Big(\sum_{i=1}^{N}\underline{x}_i - \sum_{i=1}^{N}\Lambda\underline{\text{f}}_i\Big) + \underline{v}$.
+	\Item $\mbox{Return}~\Omega_{\mu}^{-1}\Big(\Psi^{-1}\big(\sum_{i=1}^{N}\underline{x}_i - \sum_{i=1}^{N}\Lambda\underline{\text{f}}_i\big) + \underline{\tilde{\mu}}^T\Sigma_{\mu}^{-1}\mathcal{I}_p\Big) + \underline{v}$.
 	\label{eq:20}
 \end{itemize}
 
@@ -300,14 +300,14 @@ We've already seen from \eqref{eq:13}, \eqref{eq:16} and \eqref{eq:18} that rein
 \newcommand{\alphloop}{\refstepcounter{loop}\text{\thepart}\quad}
 \label{Gibbs1}
 	\begin{alignat*}{7}
-	\intertext{\num Choose scalar hyperparameters $\Sigma_{\mu}, \Sigma_{\lambda}, \alpha, \mbox{and}~ \beta$, and select $q$.}
-	\num& \mbox{Initalise:} \quad& &\underline{\mu}^{\left(0\right)} &~\sim~& \operatorname{MVN}_p\left(\underline{0}, \Sigma_{\mu}\mathcal{I}_p\right) &\\
+	\intertext{\num Choose scalar hyperparameters $\Sigma_{\mu}, \Sigma_{\lambda}, \alpha, \mbox{and}~ \beta$, select $q$ and initialise $\underline{\tilde{\mu}}$.}
+	\num& \mbox{Initalise:} \quad& &\underline{\mu}^{\left(0\right)} &~\sim~& \operatorname{MVN}_p\left(\underline{\tilde{\mu}}, \Sigma_{\mu}\mathcal{I}_p\right) &\\
 	&\quad& &\underline{\text{f}}_i^{\left(0\right)} &~\sim~&\operatorname{MVN}_q\left(\underline{0},\mathcal{I}_q\right)~\quad\quad\hspace{1.5mm}\forall~i = 1,\ldots,N&\\
 	&\quad& &\underline{\Lambda}_j^{\left(0\right)} &~\sim~&\operatorname{MVN}_q\left(\underline{0},\Sigma_{\lambda}\mathcal{I}_q\right)~\quad\forall~j = 1,\ldots,p&\\
 	&\quad& &\psi_j^{-1^{\left(0\right)}} &~\sim~& \operatorname{Ga}\left(\nicefrac{\alpha}{2},\nicefrac{\beta}{2}\right)~\quad\quad\hspace{3.5mm}\forall~j = 1,\ldots,p
 	\intertext{\num For $t = 1, \ldots, T$, using the routines specified in \eqref{eq:13}, \eqref{eq:16}, \eqref{eq:18} and \eqref{eq:20}$\colon$}
 	&\quad& \alphloop&\Omega_{\mu}^{\left(t\right)} &~=~& \Sigma_{\mu}^{-1}\mathcal{I}_p + N\Psi^{-1^{\left(t-1\right)}}&\\
-	&\quad& &\underline{\mu}^{\left(t\right)} &~\sim~& \operatorname{MVN}_p\left(\Omega_{\mu}^{-1^{\left(t\right)}}\Psi^{-1^{\left(t-1\right)}}\Big(\sum_{i=1}^{N}\underline{x}_i - \sum_{i=1}^{N}\Lambda^{\left(t-1\right)}\underline{\text{f}}_i^{\left(t-1\right)}\Big),\Omega_{\mu}^{-1^{\left(t\right)}}\right)&\\
+	&\quad& &\underline{\mu}^{\left(t\right)} &~\sim~& \operatorname{MVN}_p\left(\Omega_{\mu}^{-1^{\left(t\right)}}\Big(\Psi^{-1}\big(\sum_{i=1}^{N}\underline{x}_i - \sum_{i=1}^{N}\Lambda\underline{\text{f}}_i\big) + \underline{\tilde{\mu}}^T\Sigma_{\mu}^{-1}\mathcal{I}_p\Big),\Omega_{\mu}^{-1^{\left(t\right)}}\right)&\\
 	&\quad& \alphloop&\Omega_F^{\left(t\right)} &~=~&\mathcal{I}_q + \Lambda^{T^{\left(t-1\right)}}\Psi^{-1^{\left(t-1\right)}}\Lambda^{\left(t-1\right)}&\\
 		&\quad & & \underline{\text{f}}_i^{\left(t\right)} &~\sim~& \operatorname{MVN}_q\left(\Omega_F^{-1^{\left(t\right)}}\Lambda^{T^{\left(t-1\right)}}\Psi^{-1^{\left(t-1\right)}}\left(\underline{x}_i -\underline{\mu}^{\left(t\right)}\right),\Omega_F^{-1^{\left(t\right)}}\right)&\\
 	&\quad &\alphloop &\mbox{For}~j &~=~& 1, \ldots, p&\\
@@ -460,10 +460,10 @@ p_g &=~\mathrm{P}\left(\underline{z}_{ig}=1\given\underline{x}_i,\gamma\right) =
 \subsubsection[Mixtures of Infinite Factor Analyzers Pseudo-Code]{Mixtures of Infinite Factor Analyzers Pseudo-Code}
 \begin{enumerate}[label*=\arabic*.]
 	\item Choose scalar hyperparameters as before.
-	\item Start with an initialisation of the cluster labels $Z^{\left(0\right)}\colon$~simulate from the $\operatorname{Mult}\left(1, \underline{\pi}\right)$ prior $N$ times, or employ another clustering algorithm, such as K-means, and compute $\underline{n}$.
+	\item Start by initialising the cluster labels $Z^{\left(0\right)}\colon$~simulate from the $\operatorname{Mult}\left(1, \underline{\pi}\right)$ prior $N$ times, or employ another clustering algorithm, such as K-means. Compute $\underline{n}$, and $\underline{\tilde{\mu}}_g$ for each group.
 	\item Initialise, $\forall~g=1,\ldots,G\colon$
 		\begin{flalign}
-	\underline{\mu}_g^{\left(0\right)} &\sim \operatorname{MVN}_p\left(\underline{0}, \Sigma_{\mu}\mathcal{I}_p\right) &\nonumber\\
+	\underline{\mu}_g^{\left(0\right)} &\sim \operatorname{MVN}_p\left(\underline{\tilde{\mu}}_g, \Sigma_{\mu}\mathcal{I}_p\right) &\nonumber\\
 	\underline{\text{f}}_{i}^{\left(0\right)} &\sim\operatorname{MVN}_{q_g^\star}\left(\underline{0},\mathcal{I}_{q_g^\star}\right)~\quad\quad\hspace{1.5mm}\forall~i = 1,\ldots,N&\nonumber\\
 	\underline{\Lambda}_{jg}^{\left(0\right)} &\sim\operatorname{MVN}_{q_g^\star}\left(\underline{0},\Sigma_{\lambda}\mathcal{I}_{q_g^\star}\right)~\quad\forall~j = 1,\ldots,p&\nonumber\\
 	\psi_{jg}^{-1^{\left(0\right)}} &\sim \operatorname{Ga}\left(\nicefrac{\alpha}{2},\nicefrac{\beta}{2}\right)~\quad\quad\hspace{7mm}\forall~j = 1,\ldots,p&\nonumber\\
@@ -474,7 +474,7 @@ p_g &=~\mathrm{P}\left(\underline{z}_{ig}=1\given\underline{x}_i,\gamma\right) =
 	\item For $g = 1,\ldots,G$, sample other parameters as before, but this time from their \textit{group specific} full conditionals$\colon$
 	\begin{alignat*}{4}
 		\alphloop&\Omega_{\mu_g}^{\left(t\right)} &=&~\Sigma_{\mu}^{-1}\mathcal{I}_p + n_g\Psi_g^{-1^{\left(t-1\right)}}\\
-		&\underline{\mu}_g^{\left(t\right)} &\sim&~\operatorname{MVN}_p\left(\Omega_{\mu_g}^{-1^{\left(t\right)}}\Psi_g^{-1^{\left(t-1\right)}}\Big(\sum_{i\colon z_{ig} = 1}\underline{x}_{i} - \Lambda_g^{\left(t-1\right)}\sum_{i\colon z_{ig} = 1}\underline{\text{f}}_{i}^{\left(t-1\right)}\Big),\Omega_{\mu_g}^{-1^{\left(t\right)}}\right)\\
+		&\underline{\mu}_g^{\left(t\right)} &\sim&~\operatorname{MVN}_p\left(\Omega_{\mu_g}^{-1^{\left(t\right)}}\Big(\Psi_g^{-1^{\left(t-1\right)}}\big(\sum_{i\colon z_{ig} = 1}\underline{x}_i - \sum_{i\colon z_{ig} = 1}\Lambda_g^{\left(t-1\right)}\underline{\text{f}}_i^{\left(t-1\right)}\big) + \underline{\tilde{\mu}}_g^T\Sigma_{\mu}^{-1}\mathcal{I}_p\Big),\Omega_{\mu_g}^{-1^{\left(t\right)}}\right)\\
 		\alphloop&\Omega_{F_g}^{\left(t\right)} &=&~\mathcal{I}_{q_g^\star} + \Lambda_g^{T^{\left(t-1\right)}}\Psi_g^{-1^{\left(t-1\right)}}\Lambda_g^{\left(t-1\right)}\\
 		&\underline{\text{f}}_{i\colon z_{ig} = 1}^{\left(t\right)}~&\sim&~\operatorname{MVN}_q\left(\Omega_{F_g}^{-1^{\left(t\right)}}\Lambda_g^{T^{\left(t-1\right)}}\Psi_g^{-1^{\left(t-1\right)}}\left(\underline{x}_{i\colon z_{ig} = 1} -\underline{\mu}_g^{\left(t\right)}\right),\Omega_{F_g}^{-1^{\left(t\right)}}\right)\\
 		\alphloop &\mbox{For}~j &=& 1, \ldots, p\\

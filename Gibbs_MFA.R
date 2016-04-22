@@ -47,7 +47,7 @@
     pi.alpha     <- clust$pi.alpha
     z            <- clust$z
     pi.prop      <- t(prop.table(tabulate(z, nbins=G)))
-    mu           <- do.call(cbind, lapply(Gseq, function(g) colMeans(data[z == g,, drop=F])))
+    mu.zero      <- mu     <- do.call(cbind, lapply(Gseq, function(g) colMeans(data[z == g,, drop=F])))
     f            <- sim.f.p(N=N, Q=Q)
     lmat         <- lapply(Gseq, function(g) sim.load.p(Q=Q, P=P, sigma.l=sigma.l, shrink=F))
     psi.inv      <- do.call(cbind, lapply(Gseq, function(g) sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)))
@@ -91,8 +91,8 @@
     # Means
       sum.data   <- do.call(cbind, lapply(Gseq, function(g) colSums(data[z.ind[[g]],,drop=F])))
       sum.f      <- lapply(Gseq, function(g) colSums(f[z.ind[[g]],, drop=F]))
-      mu         <- do.call(cbind, lapply(Gseq, function(g) sim.mu(N=nn[g], P=P, mu.sigma=mu.sigma, 
-                            psi.inv=psi.inv[,g], sum.data=sum.data[,g], sum.f=sum.f[[g]], lmat=lmat[[g]])))
+      mu         <- do.call(cbind, lapply(Gseq, function(g) sim.mu(N=nn[g], mu.sigma=mu.sigma, psi.inv=psi.inv[,g], 
+                            P=P, sum.data=sum.data[,g], sum.f=sum.f[[g]], lmat=lmat[[g]], mu.zero=mu.zero[,g])))
     
     # Scores & Loadings
       c.data     <- lapply(Gseq, function(g) sweep(data[z.ind[[g]],, drop=F], 2, mu[,g], FUN="-"))
