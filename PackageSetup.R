@@ -57,7 +57,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   dat       <- as.data.frame(dat)
   raw.dat   <- dat[sapply(dat, is.numeric)]
   if(scaling != "none") {
-    scal    <- apply(dat, 2, sd)
+    scal    <- apply(raw.dat, 2, sd)
     if(scaling == "pareto") {
       scal  <- sqrt(scal)
     }
