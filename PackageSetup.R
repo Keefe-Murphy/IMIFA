@@ -2,7 +2,7 @@
 ### Set-up for Keefe Murphy's IMIFA R Package ###
 #################################################
 
-packages    <- c("abind", "e1071", "MCMCpack", "plotrix", "slam")
+packages    <- c("abind", "e1071", "mclust", "MCMCpack", "plotrix", "slam")
 if(length(setdiff(packages, rownames(installed.packages()))) > 0) {
   invisible(install.packages(setdiff(packages, rownames(installed.packages()))))
 }
@@ -17,7 +17,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
                         scaling = c("unit", "pareto", "none"), verbose = F, adapt = T, b0 = NULL, 
                         b1 = NULL, prop = NULL, epsilon = NULL, sigma.mu = NULL, sigma.l = NULL, 
                         psi.alpha = NULL, psi.beta = NULL, phi.nu = NULL, alpha.d1 = NULL, alpha.d2 = NULL, 
-                        alpha.pi = NULL, z.init = c("kmeans", "priors", "list"), z.list = NULL, profile = F, 
+                        alpha.pi = NULL, z.init = c("kmeans", "list", "mclust", "priors"), z.list = NULL, profile = F, 
                         mu.switch = T, f.switch = T, load.switch = T, psi.switch = T, pi.switch = T, ...) {
   
   defpar    <- suppressWarnings(par(no.readonly = T))
@@ -55,7 +55,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   iters     <- seq(from=burnin + 1, to=n.iters, by=thinning)
   iters     <- iters[iters > 0]
   dat       <- as.data.frame(dat)
-  dat       <- dat[sapply(dat, is.numeric)]
+  raw.dat   <- dat[sapply(dat, is.numeric)]
   if(scaling != "none") {
     scal    <- apply(dat, 2, sd)
     if(scaling == "pareto") {
@@ -64,7 +64,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   } else {
     scal    <- F
   }
-  dat       <- scale(dat, center=centering, scale=scal)
+  dat       <- scale(raw.dat, center=centering, scale=scal)
   N         <- nrow(dat)
   P         <- ncol(dat)
   
@@ -222,21 +222,21 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
     for(g in seq_along(range.G)) {
       G            <- range.G[g]
       pi.alpha[[g]]     <- rep(alpha.pi, G)
-      if(z.init == "priors")  {
+      if(z.init    == "kmeans")     {
+        zi[[g]]    <- as.numeric(factor(kmeans(dat, G, nstart=100)$cluster, levels=seq_len(G)))
+      } else if(z.init  == "list")   {
+        zi[[g]]    <- as.numeric(z.list[[g]])
+      } else if(z.init  == "mclust") {
+        zi[[g]]    <- Mclust(dat, g)$classification
+      } else {
         zips       <- rep(1, N)
         while(all(length(unique(zips)) != G,
               any(prop.table(tabulate(zips, nbins=G)) < 1/G^2))) {
           pi.prop  <- sim.pi(pi.alpha=pi.alpha[[g]])
           zips     <- sim.z.p(N=N, prob.z=pi.prop)
         }
-          zi[[g]]  <- as.numeric(zips)
-          rm(zips)
-      } else   {
-        if(z.init == "list")  {
-          zi[[g]]  <- as.numeric(z.list[[g]])
-        } else {
-          zi[[g]]  <- as.numeric(factor(kmeans(dat, G, nstart=100)$cluster, levels=seq_len(G)))
-        }
+        zi[[g]]  <- as.numeric(zips)
+        rm(zips)
       }
     }
   }
