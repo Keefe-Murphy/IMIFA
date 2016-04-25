@@ -193,10 +193,12 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       if(!exists(deparse(substitute(Labels)),
          envir=.GlobalEnv))           stop(paste0("Object ", match.call()$Labels, " not found"))
       Labels     <- as.factor(Labels)
+      levs       <- levels(Labels)
       if(length(Labels) != n.obs)     stop(paste0("Labels must be a factor of length N=",  n.obs))
-      tab        <- table(post.z, Labels)
+      tab        <- table(post.z, as.numeric(Labels))
       perm       <- matchClasses(tab, method="exact", verbose=F)
-      post.z     <- factor(post.z, levels=perm, labels=seq_len(G))
+      post.nn    <- tabulate(post.z, nbins=G)
+      post.z     <- factor(factor(post.z, labels=levs[perm][post.nn > 0]), levels=levs)
       post.pi    <- post.pi[perm]
       tab        <- table(post.z, Labels, dnn=list("Predicted", "Observed"))
       tab.stat   <- classAgreement(tab)
