@@ -270,13 +270,13 @@ We've already seen from \eqref{eq:13}, \eqref{eq:16} and \eqref{eq:18} that rein
 \begin{flalign}
 \mathrm{P}\left(\underline{\mu}\given X,\text{F},\Psi, \Lambda\right)
 & \propto  \exp\left(-\frac{1}{2}\sum_{i=1}^{N}\left(\underline{x}_i - \underline{\mu} - \Lambda\underline{\text{f}}_i\right)^T\Psi^{-1}\left(\underline{x}_i - \underline{\mu} - \Lambda\underline{\text{f}}_i\right)\right)\exp\left(-\frac{1}{2}\left(\underline{\mu} - \underline{\tilde{\mu}}\right)^T\Sigma_{\mu}^{-1}\mathcal{I}_p\left(\underline{\mu} - \underline{\tilde{\mu}}\right)\right) \nonumber&\\
-& \propto \exp\left(-\frac{1}{2}\sum_{i=1}^{N}\left[-2 \underline{x}_i^T\Psi^{-1}\underline{\mu} + 2\left(\Lambda\underline{\text{f}}_i\right)^T\Psi^{-1}\underline{\mu}  + \underline{\mu}^T\Psi^{-1}\underline{\mu}\right] +\underline{\mu}^T \Sigma_{\mu}^{-1}\mathcal{I}_p\underline{\mu} - 2\underline{\tilde{\mu}}^T\Sigma_{\mu}^{-1}\mathcal{I}_p\underline{\mu}\right)\nonumber&\\
+& \propto \exp\left(-\frac{1}{2}\bigg(\sum_{i=1}^{N}\left[-2 \underline{x}_i^T\Psi^{-1}\underline{\mu} + 2\left(\Lambda\underline{\text{f}}_i\right)^T\Psi^{-1}\underline{\mu}  + \underline{\mu}^T\Psi^{-1}\underline{\mu}\right] +\underline{\mu}^T \Sigma_{\mu}^{-1}\mathcal{I}_p\underline{\mu} - 2\underline{\tilde{\mu}}^T\Sigma_{\mu}^{-1}\mathcal{I}_p\underline{\mu}\bigg)\right)\nonumber&\\
 & \propto  \exp\left(\sum_{i=1}^{N}\underline{x}_i^T\Psi^{-1}\underline{\mu} -\sum_{i=1}^{N}\left(\Lambda\underline{\text{f}}_i\right)^T\Psi^{-1}\underline{\mu} -\frac{1}{2}\left[\underline{\mu}^T\left(\Sigma_{\mu}^{-1}\mathcal{I}_p + N\Psi^{-1}\right)\underline{\mu}\right] + \underline{\tilde{\mu}}^T\Sigma_{\mu}^{-1}\mathcal{I}_p\underline{\mu}\right)\nonumber&
 \end{flalign}
 \vspace{-5mm}
 \begin{equation}
 	\begin{split}
-	\therefore \mathrm{P}\left(\underline{\mu}\given X,\text{F},\Psi,\Lambda\right)&\sim&\hspace{-3mm}\operatorname{MVN}_p\Bigg(\left[\Sigma_{\mu}^{-1}\mathcal{I}_p + N\Psi^{-1}\right]^{-1}\Big(\Psi^{-1}\big(\sum_{i=1}^{N}\underline{x}_i - \sum_{i=1}^{N}\Lambda\underline{\text{f}}_i\big) + \underline{\tilde{\mu}}^T\Sigma_{\mu}^{-1}\mathcal{I}_p\Big), \\&& \left[\Sigma_{\mu}^{-1}\mathcal{I}_p + N\Psi^{-1}\right]^{-1}\Bigg)\label{eq:19}
+	\therefore \mathrm{P}\left(\underline{\mu}\given X,\text{F},\Psi,\Lambda\right)&\sim&\hspace{-3mm}\operatorname{MVN}_p\Bigg(\left[\Sigma_{\mu}^{-1}\mathcal{I}_p + N\Psi^{-1}\right]^{-1}\Big(\Psi^{-1}\big(\sum_{i=1}^{N}\underline{x}_i - \sum_{i=1}^{N}\Lambda\underline{\text{f}}_i\big) + \Sigma_{\mu}^{-1}\mathcal{I}_p\underline{\tilde{\mu}}\Big), \\&& \left[\Sigma_{\mu}^{-1}\mathcal{I}_p + N\Psi^{-1}\right]^{-1}\Bigg)\label{eq:19}
 	\end{split}
 \end{equation}
 \noindent However, we can save on computational time, as before, if we:
@@ -286,7 +286,7 @@ We've already seen from \eqref{eq:13}, \eqref{eq:16} and \eqref{eq:18} that rein
 	\item $\Omega_{\mu}^{-1} = U^TU$ can be obtained by taking the square root of $\Omega_{\mu}$ since this matrix is diagonal.
 	\item Sample $\underline{z} \sim \operatorname{MVN}_p\left(\underline{0}, \mathcal{I}_p\right)$.
 	\item Compute $\underline{v} = U^T\underline{z}$.
-	\Item $\mbox{Return}~\Omega_{\mu}^{-1}\Big(\Psi^{-1}\big(\sum_{i=1}^{N}\underline{x}_i - \sum_{i=1}^{N}\Lambda\underline{\text{f}}_i\big) + \underline{\tilde{\mu}}^T\Sigma_{\mu}^{-1}\mathcal{I}_p\Big) + \underline{v}$.
+	\Item $\mbox{Return}~\Omega_{\mu}^{-1}\Big(\Psi^{-1}\big(\sum_{i=1}^{N}\underline{x}_i - \sum_{i=1}^{N}\Lambda\underline{\text{f}}_i\big) + \Sigma_{\mu}^{-1}\mathcal{I}_p\underline{\tilde{\mu}}\Big) + \underline{v}$.
 	\label{eq:20}
 \end{itemize}
 
@@ -307,7 +307,7 @@ We've already seen from \eqref{eq:13}, \eqref{eq:16} and \eqref{eq:18} that rein
 	&\quad& &\psi_j^{-1^{\left(0\right)}} &~\sim~& \operatorname{Ga}\left(\nicefrac{\alpha}{2},\nicefrac{\beta}{2}\right)~\quad\quad\hspace{3.5mm}\forall~j = 1,\ldots,p
 	\intertext{\num For $t = 1, \ldots, T$, using the routines specified in \eqref{eq:13}, \eqref{eq:16}, \eqref{eq:18} and \eqref{eq:20}$\colon$}
 	&\quad& \alphloop&\Omega_{\mu}^{\left(t\right)} &~=~& \Sigma_{\mu}^{-1}\mathcal{I}_p + N\Psi^{-1^{\left(t-1\right)}}&\\
-	&\quad& &\underline{\mu}^{\left(t\right)} &~\sim~& \operatorname{MVN}_p\left(\Omega_{\mu}^{-1^{\left(t\right)}}\Big(\Psi^{-1}\big(\sum_{i=1}^{N}\underline{x}_i - \sum_{i=1}^{N}\Lambda\underline{\text{f}}_i\big) + \underline{\tilde{\mu}}^T\Sigma_{\mu}^{-1}\mathcal{I}_p\Big),\Omega_{\mu}^{-1^{\left(t\right)}}\right)&\\
+	&\quad& &\underline{\mu}^{\left(t\right)} &~\sim~& \operatorname{MVN}_p\left(\Omega_{\mu}^{-1^{\left(t\right)}}\Big(\Psi^{-1}\big(\sum_{i=1}^{N}\underline{x}_i - \sum_{i=1}^{N}\Lambda\underline{\text{f}}_i\big) + \Sigma_{\mu}^{-1}\mathcal{I}_p\underline{\tilde{\mu}}\Big),\Omega_{\mu}^{-1^{\left(t\right)}}\right)&\\
 	&\quad& \alphloop&\Omega_F^{\left(t\right)} &~=~&\mathcal{I}_q + \Lambda^{T^{\left(t-1\right)}}\Psi^{-1^{\left(t-1\right)}}\Lambda^{\left(t-1\right)}&\\
 		&\quad & & \underline{\text{f}}_i^{\left(t\right)} &~\sim~& \operatorname{MVN}_q\left(\Omega_F^{-1^{\left(t\right)}}\Lambda^{T^{\left(t-1\right)}}\Psi^{-1^{\left(t-1\right)}}\left(\underline{x}_i -\underline{\mu}^{\left(t\right)}\right),\Omega_F^{-1^{\left(t\right)}}\right)&\\
 	&\quad &\alphloop &\mbox{For}~j &~=~& 1, \ldots, p&\\
@@ -460,7 +460,7 @@ p_g &=~\mathrm{P}\left(\underline{z}_{ig}=1\given\underline{x}_i,\gamma\right) =
 \subsubsection[Mixtures of Infinite Factor Analyzers Pseudo-Code]{Mixtures of Infinite Factor Analyzers Pseudo-Code}
 \begin{enumerate}[label*=\arabic*.]
 	\item Choose scalar hyperparameters as before.
-	\item Start by initialising the cluster labels $Z^{\left(0\right)}\colon$~simulate from the $\operatorname{Mult}\left(1, \underline{\pi}\right)$ prior $N$ times, or employ another clustering algorithm, such as K-means. Compute $\underline{n}$, and $\underline{\tilde{\mu}}_g$ for each group.
+	\item Start by initialising the cluster labels $Z^{\left(0\right)}\colon$~simulate from the $\operatorname{Mult}\left(1, \underline{\pi}\right)$ prior $N$ times, or employ another clustering algorithm, such as K-Means. Compute $\underline{n}$, and $\underline{\tilde{\mu}}_g$ for each group.
 	\item Initialise, $\forall~g=1,\ldots,G\colon$
 		\begin{flalign}
 	\underline{\mu}_g^{\left(0\right)} &\sim \operatorname{MVN}_p\left(\underline{\tilde{\mu}}_g, \Sigma_{\mu}\mathcal{I}_p\right) &\nonumber\\
@@ -474,7 +474,7 @@ p_g &=~\mathrm{P}\left(\underline{z}_{ig}=1\given\underline{x}_i,\gamma\right) =
 	\item For $g = 1,\ldots,G$, sample other parameters as before, but this time from their \textit{group specific} full conditionals$\colon$
 	\begin{alignat*}{4}
 		\alphloop&\Omega_{\mu_g}^{\left(t\right)} &=&~\Sigma_{\mu}^{-1}\mathcal{I}_p + n_g\Psi_g^{-1^{\left(t-1\right)}}\\
-		&\underline{\mu}_g^{\left(t\right)} &\sim&~\operatorname{MVN}_p\left(\Omega_{\mu_g}^{-1^{\left(t\right)}}\Big(\Psi_g^{-1^{\left(t-1\right)}}\big(\sum_{i\colon z_{ig} = 1}\underline{x}_i - \sum_{i\colon z_{ig} = 1}\Lambda_g^{\left(t-1\right)}\underline{\text{f}}_i^{\left(t-1\right)}\big) + \underline{\tilde{\mu}}_g^T\Sigma_{\mu}^{-1}\mathcal{I}_p\Big),\Omega_{\mu_g}^{-1^{\left(t\right)}}\right)\\
+		&\underline{\mu}_g^{\left(t\right)} &\sim&~\operatorname{MVN}_p\left(\Omega_{\mu_g}^{-1^{\left(t\right)}}\Big(\Psi_g^{-1^{\left(t-1\right)}}\big(\sum_{i\colon z_{ig} = 1}\underline{x}_i - \sum_{i\colon z_{ig} = 1}\Lambda_g^{\left(t-1\right)}\underline{\text{f}}_i^{\left(t-1\right)}\big) + \Sigma_{\mu}^{-1}\mathcal{I}_p\underline{\tilde{\mu}}_g\Big),\Omega_{\mu_g}^{-1^{\left(t\right)}}\right)\\
 		\alphloop&\Omega_{F_g}^{\left(t\right)} &=&~\mathcal{I}_{q_g^\star} + \Lambda_g^{T^{\left(t-1\right)}}\Psi_g^{-1^{\left(t-1\right)}}\Lambda_g^{\left(t-1\right)}\\
 		&\underline{\text{f}}_{i\colon z_{ig} = 1}^{\left(t\right)}~&\sim&~\operatorname{MVN}_q\left(\Omega_{F_g}^{-1^{\left(t\right)}}\Lambda_g^{T^{\left(t-1\right)}}\Psi_g^{-1^{\left(t-1\right)}}\left(\underline{x}_{i\colon z_{ig} = 1} -\underline{\mu}_g^{\left(t\right)}\right),\Omega_{F_g}^{-1^{\left(t\right)}}\right)\\
 		\alphloop &\mbox{For}~j &=& 1, \ldots, p\\

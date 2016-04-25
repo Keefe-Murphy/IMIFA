@@ -61,7 +61,7 @@
         } else                warning(paste0("Parameters of group ", g, " initialised by simulation from priors, not factanal: G=", G, ", Q=", Q), call.=F)
       }
     } else {
-      psi.inv    <- do.call(cbind, lapply(Gseq, function(g) apply(data[z == g,, drop=F], 2, var)))
+      psi.inv    <- 1/do.call(cbind, lapply(Gseq, function(g) apply(data[z == g,, drop=F], 2, var)))
     }
     l.sigma      <- l.sigma * diag(Q)
     Qs           <- rep(Q, G)

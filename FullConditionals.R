@@ -11,7 +11,7 @@
       U.mu      <- sqrt(mu.omega)
       z.mu      <- rnorm(P, 0, 1)
       v.mu      <- U.mu * z.mu
-      mu.mu     <- mu.omega * (psi.inv * (sum.data - lmat %*% sum.f) + mu.zero * mu.sigma)
+      mu.mu     <- mu.omega * (psi.inv * (sum.data - lmat %*% sum.f) + mu.sigma * mu.zero)
         as.vector(mu.mu + v.mu)
     }
   
