@@ -4,12 +4,13 @@
 
 packages    <- c("abind", "e1071", "mclust", "MCMCpack", "plotrix", "slam")
 if(length(setdiff(packages, rownames(installed.packages()))) > 0) {
-  invisible(install.packages(setdiff(packages, rownames(installed.packages()))))
+  suppressMessages(install.packages(setdiff(packages, rownames(installed.packages()))))
 }
 if(length(setdiff(packages, (.packages()))) > 0) {
-  invisible(lapply(setdiff(packages, (.packages())), library, ch=T))
+  suppressMessages(lapply(setdiff(packages, (.packages())), library, ch=T))
 }
 rm(packages)
+message("   ________  _________________\n  /_  __/  |/  /_  __/ ___/ _ \\  \n   / / / /|_/ / / / / /__/ /_\\ \\ \n _/ /_/ /  / /_/ /_/ ___/ /___\\ \\ \n/____/_/  /_/_____/_/  /_/     \\_\\    version 1.0")
 
 imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "FA", "classify"), 
                         n.iters = 50000, Labels = NULL, factanal = F, Q.star = NULL, range.G = NULL, 
