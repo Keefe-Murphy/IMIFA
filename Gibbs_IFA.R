@@ -24,11 +24,11 @@
     }
     if(sw["f.sw"])   {
       f.store    <- array(0, dim=c(N, Q, n.store))
-      dimnames(f.store)    <- list(obsnames, facnames, iternames)
+      dimnames(f.store)    <- list(obsnames, if(Q > 0) facnames, iternames)
     }
     if(sw["l.sw"])   {
       load.store <- array(0, dim=c(P, Q, n.store))
-      dimnames(load.store) <- list(varnames, facnames, iternames)
+      dimnames(load.store) <- list(varnames, if(Q > 0) facnames, iternames)
     }
     if(sw["psi.sw"]) {
       psi.store  <- matrix(0, nr=P, nc=n.store)
@@ -96,18 +96,18 @@
           
     # Global Shrinkage
       sum.term   <- diag(crossprod(phi, load.2))
-      if(Q  > 0) {
-        delta[1]    <- sim.delta1(Q=Q, P=P, alpha.d1=alpha.d1, delta=delta,
-                                  tau=tau, sum.term=sum.term)
-        tau         <- cumprod(delta)  
-      } 
-      if(Q >= 2) {
-        for(k in seq_len(Q)[-1]) { 
-          delta[k]  <- sim.deltak(Q=Q, P=P, k=k, alpha.d2=alpha.d2,
-                                  delta=delta, tau=tau, sum.term=sum.term)
-          tau       <- cumprod(delta)      
-        }
+    if(Q  > 0) {
+      delta[1]   <- sim.delta1(Q=Q, P=P, alpha.d1=alpha.d1, delta=delta,
+                               tau=tau, sum.term=sum.term)
+      tau        <- cumprod(delta)  
+    } 
+    if(Q >= 2) {
+      for(k in seq_len(Q)[-1]) { 
+        delta[k] <- sim.deltak(Q=Q, P=P, k=k, alpha.d2=alpha.d2,
+                               delta=delta, tau=tau, sum.term=sum.term)
+        tau      <- cumprod(delta)      
       }
+    }
     
     # Adaptation  
       if(all(adapt, iter > burnin)) {      

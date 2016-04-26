@@ -357,7 +357,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   if(verbose)                print(attr(imifa, "Time"))  
       
 # Vanilla 'factanal' for comparison purposes
-  if(!missing(Q.fac))   factanal <- T
+  if(!missing(Q.fac))    factanal <- T
   if(factanal) {
     if(missing(Q.fac)) {
       if(missing(range.Q)) {
@@ -366,9 +366,11 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
         Q.fac      <- max(1, max(range.Q))
       }
     }
-    fac     <- factanal(dat, factors=Q.fac, control=list(nstart=50))
-    imifa   <- append(imifa, list(fac = fac))
-    names(imifa)[length(imifa)] <- "Factanal"
+    fac     <- try(factanal(dat, factors=Q.fac, control=list(nstart=50)))
+    if(!inherits(fac, "try-error")) {
+      imifa <- append(imifa, list(fac = fac))
+      names(imifa)[length(imifa)] <- "Factanal"
+    }
   } 
   class(imifa)     <- "IMIFA"
   return(imifa)
