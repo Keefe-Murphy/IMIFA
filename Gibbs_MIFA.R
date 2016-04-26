@@ -41,6 +41,7 @@
     }
     z.store       <- matrix(0, nr=N, nc=n.store)
     ll.store      <- rep(0, n.store)
+    fin.ll        <- T
     Q.star        <- Q
     Q.store       <- matrix(0, nr=G, nc=n.store)
     dimnames(z.store)      <- list(obsnames, iternames)
@@ -177,6 +178,10 @@
       if(is.element(iter, iters))  {
         new.it   <- which(iters == iter)
         log.like <- sum(z.res$log.likes)
+        if(all(!is.finite(log.like),
+           isTRUE(fin.ll))) { warning("Infinite likelihood: model-selection criteria may not be obtainable", call.=F)
+          fin.ll <- F
+        }
         if(sw["mu.sw"])             mu.store[,,new.it]     <- mu  
         if(all(sw["f.sw"], Q > 0))  f.store[,,new.it]      <- f
         if(all(sw["l.sw"], Q > 0)) {
