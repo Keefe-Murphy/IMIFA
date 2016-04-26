@@ -16,7 +16,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
                         n.iters = 50000, Labels = NULL, factanal = F, Q.star = NULL, range.G = NULL, 
                         range.Q = NULL, Q.fac = NULL,  burnin = n.iters/5, thinning = 2, centering = F, 
                         scaling = c("unit", "pareto", "none"), verbose = F, adapt = T, b0 = NULL, 
-                        b1 = NULL, prop = NULL, epsilon = NULL, sigma.mu = NULL, sigma.l = NULL, 
+                        b1 = NULL, prop = NULL, epsilon = NULL, sigma.mu = NULL, sigma.l = NULL, mu0g = F,
                         psi.alpha = NULL, psi.beta = NULL, phi.nu = NULL, alpha.d1 = NULL, alpha.d2 = NULL, 
                         alpha.pi = NULL, z.init = c("kmeans", "list", "mclust", "priors"), z.list = NULL, profile = F, 
                         mu.switch = T, f.switch = T, load.switch = T, psi.switch = T, pi.switch = T, ...) {
@@ -174,6 +174,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
     if(missing("epsilon"))   epsilon       <- ifelse(centering, 0.1, 0.005)
   } 
   if(!is.element(method, c("FA", "IFA", "classify"))) {
+    if(!is.logical(mu0g))           stop("'mu0g' must be TRUE or FALSE")
     if(missing("alpha.pi"))  alpha.pi      <- ifelse(method == "IMIFA", 0.1, 0.5)
                              z.init        <- match.arg(z.init)
     if(method != "IMIFA") {
@@ -216,6 +217,9 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
                                              adapt = adapt, b0 = b0, b1 = b1, prop = prop, epsilon = epsilon))
   } else {
     gibbs.arg      <- append(gibbs.arg, list(sigma.l = sigma.l))
+  }
+  if(!is.element(method, c("FA", "IFA", "classify"))) {
+    gibbs.arg      <- append(gibbs.arg, list(mu0g = mu0g))
   }
   if(is.element(method, c("MFA", "MIFA"))) {
     pi.alpha       <- list()

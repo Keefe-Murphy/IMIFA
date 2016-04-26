@@ -7,7 +7,7 @@
                              N = NULL, P = NULL, G = NULL, sigma.mu = NULL, 
                              sigma.l = NULL, burnin = NULL, thinning = NULL, 
                              psi.alpha = NULL, psi.beta = NULL, sw = NULL, 
-                             verbose = NULL, clust = NULL, ...) {
+                             verbose = NULL, clust = NULL, mu0g = NULL, ...) {
         
   # Define & initialise variables
     n.iters      <- round(max(iters), -1)
@@ -47,10 +47,15 @@
     pi.alpha     <- clust$pi.alpha
     z            <- clust$z
     pi.prop      <- t(prop.table(tabulate(z, nbins=G)))
-    mu.zero      <- mu     <- do.call(cbind, lapply(Gseq, function(g) colMeans(data[z == g,, drop=F])))
+    mu           <- do.call(cbind, lapply(Gseq, function(g) colMeans(data[z == g,, drop=F])))
     f            <- sim.f.p(N=N, Q=Q)
     lmat         <- lapply(Gseq, function(g) sim.load.p(Q=Q, P=P, sigma.l=sigma.l, shrink=F))
     psi.inv      <- do.call(cbind, lapply(Gseq, function(g) sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)))
+    if(mu0g)  {
+      mu.zero    <- do.call(cbind, lapply(Gseq, function(g) colMeans(data)))
+    } else    {
+      mu.zero    <- mu
+    }
     if(Q > 0) {
       for(g in Gseq) {
         fact     <- try(factanal(data[z == g,, drop=F], factors=Q, scores="regression", control=list(nstart=50)), silent=T)
