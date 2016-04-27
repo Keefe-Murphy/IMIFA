@@ -110,32 +110,27 @@
     
     # Scores & Loadings
       c.data      <- lapply(Gseq, function(g) sweep(data[z.ind[[g]],, drop=F], 2, mu[,g], FUN="-"))
-#       for(g in Gseq)    {
-#         if(Qs[g] > 0)   {
-#           fgg              <- sim.score(N=nn[g], lmat=lmat[[g]], Q=Qs[g], 
-#                                         c.data=c.data[[g]], psi.inv=psi.inv[,g])
-#           FtF              <- crossprod(fgg)
-#           lmat[[g]]        <- sim.load(l.sigma=l.sigma, Q=Qs[g], c.data=c.data[[g]], P=P, f=fgg,
-#                                        psi.inv=psi.inv[,g], FtF=FtF, phi=phi[[g]], tau=tau[[g]])
-#           fg[[g]]          <- fgg
-#         } else {
-#           lmat[[g]]        <- matrix(, nr=P, nc=0)
-#         }
-#       }
-#       if(all(Qs[g] == 0)) {
-#         f         <- matrix(, nr=N, nc=0)
-#       } else {
-#         f         <- do.call(rbind, fg)[obsnames,, drop=F]
-#       }
-      if(Q > 0)    { 
-        f         <- do.call(rbind, lapply(Gseq, function(g) sim.score(N=nn[g], lmat=lmat[[g]], 
-                             c.data=c.data[[g]], psi.inv=psi.inv[,g], Q=Qs[g])))[obsnames,, drop=F]
-        FtF       <- lapply(Gseq, function(g) crossprod(f[z.ind[[g]],, drop=F]))
-        lmat      <- lapply(Gseq, function(g) sim.load(l.sigma=l.sigma, Q=Qs[g], c.data=c.data[[g]], P=P, 
-                            f=f[z.ind[[g]],, drop=F], psi.inv=psi.inv[,g], FtF=FtF[[g]], phi=phi[[g]], tau=tau[[g]]))
-      } else {
+      if(all(Qs   == 0))  {
         f         <- matrix(, nr=N, nc=0)
         lmat      <- lapply(Gseq, function(g) matrix(, nr=P, nc=0))
+      } else {
+        for(g in Gseq)    {
+          Qg      <- Qs[g]
+          c.datg  <- c.data[[g]]
+          psi.ig  <- psi.inv[,g]
+          if(Qg    > 0)   {
+            fgg            <- sim.score(N=nn[g], lmat=lmat[[g]], Q=Qg, 
+                                        c.data=c.datg, psi.inv=psi.ig)
+            FtF            <- crossprod(fgg)
+            lmat[[g]]      <- sim.load(l.sigma=l.sigma, Q=Qg, c.data=c.datg, P=P, f=fgg,
+                                       psi.inv=psi.ig, FtF=FtF, phi=phi[[g]], tau=tau[[g]])
+            fg[[g]]        <- fgg
+          } else {
+            fg[[g]]        <- matrix(, nr=nn[g], nc=0)
+            lmat[[g]]      <- matrix(, nr=P, nc=0)
+          }
+        }
+        f         <- do.call(rbind, fg)[obsnames,, drop=F]
       }
                   
     # Uniquenesses
@@ -148,18 +143,18 @@
     
     # Global Shrinkage
       sum.term    <- lapply(Gseq, function(g) diag(crossprod(phi[[g]], load.2[[g]])))
-      for(g in Gseq)   {
-        if(Qs[g] > 0)  {
-          delta[[g]][1]    <- sim.delta1(Q=Qs[g], alpha.d1=alpha.d1, delta=delta[[g]], 
-                                         P=P, tau=tau[[g]], sum.term=sum.term[[g]])
+      for(g in Gseq)    {
+        Qg        <- Qs[g]
+        sum.termg <- sum.term[[g]]
+        if(Qg      > 0) {
+          delta[[g]][1]    <- sim.delta1(Q=Qg, alpha.d1=alpha.d1, delta=delta[[g]], 
+                                         P=P, tau=tau[[g]], sum.term=sum.termg)
           tau[[g]]         <- cumprod(delta[[g]])
         }
-      }
-      for(g in Gseq)   {
-        if(Qs[g] >= 2) {
-          for(k in seq_len(Qs[g])[-1]) { 
-            delta[[g]][k]  <- sim.deltak(Q=Qs[g], alpha.d2=alpha.d2, delta=delta[[g]], 
-                                         P=P, k=k, tau=tau[[g]], sum.term=sum.term[[g]])
+        if(Qg     >= 2) {
+          for(k in seq_len(Qg)[-1]) { 
+            delta[[g]][k]  <- sim.deltak(Q=Qg, alpha.d2=alpha.d2, delta=delta[[g]], 
+                                         P=P, k=k, tau=tau[[g]], sum.term=sum.termg)
             tau[[g]]       <- cumprod(delta[[g]])
           }
         }
