@@ -183,10 +183,11 @@
           fin.ll <- F
         }
         if(sw["mu.sw"])             mu.store[,,new.it]     <- mu  
-        if(all(sw["f.sw"], Q > 0))  f.store[,,new.it]      <- f
-        if(all(sw["l.sw"], Q > 0)) {
-          for(g in Gseq)  {
-                                    load.store[,,g,new.it] <- lmat[[g]]
+        if(all(sw["f.sw"], 
+           any(Qs > 0)))            f.store[,,new.it]      <- f
+        if(sw["l.sw"]) {
+          for(g in Gseq)    {
+            if(Qs[g] > 0)   {       load.store[,,g,new.it] <- lmat[[g]]
           }
         }
         if(sw["psi.sw"])            psi.store[,,new.it]    <- psi
@@ -195,11 +196,11 @@
                                     ll.store[new.it]       <- log.like
       }  
     }
-    returns   <- list(mu       = if(sw["mu.sw"])              mu.store,
-                      f        = if(all(sw["f.sw"], Q > 0))   f.store, 
-                      load     = if(all(sw["l.sw"], Q > 0))   load.store, 
-                      psi      = if(sw["psi.sw"])             psi.store,
-                      pi.prop  = if(sw["pi.sw"])              pi.store,
+    returns   <- list(mu       = if(sw["mu.sw"])    mu.store,
+                      f        = if(all(sw["f.sw"]) as.simple_sparse_array(f.store), 
+                      load     = if(all(sw["l.sw"]) as.simple_sparse_array(load.store), 
+                      psi      = if(sw["psi.sw"])   psi.store,
+                      pi.prop  = if(sw["pi.sw"])    pi.store,
                       z        = z.store,
                       ll.store = ll.store)
     return(returns)
