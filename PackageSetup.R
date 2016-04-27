@@ -10,11 +10,11 @@ if(length(setdiff(packages, (.packages()))) > 0) {
   suppressMessages(lapply(setdiff(packages, (.packages())), library, ch=T))
 }
 rm(packages)
-message("   ________  _________________\n  /_  __/  |/  /_  __/ ___/ _ \\  \n   / / / /|_/ / / / / /__/ /_\\ \\ \n _/ /_/ /  / /_/ /_/ ___/ /___\\ \\ \n/____/_/  /_/_____/_/  /_/     \\_\\    version 1.0")
+message("   ________  __________________\n  /_  __/  |/   /_  __/ ___/ _ \\  \n   / / / /|_// / / / / /__/ /_\\ \\ \n _/ /_/ /   / /_/ /_/ ___/ /___\\ \\ \n/____/_/   /_/_____/_/  /_/     \\_\\    version 1.0")
 
 imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "FA", "classify"), 
                         n.iters = 50000, Labels = NULL, factanal = F, Q.star = NULL, range.G = NULL, 
-                        range.Q = NULL, Q.fac = NULL,  burnin = n.iters/5, thinning = 2, centering = F, 
+                        range.Q = NULL, Q.fac = NULL,  burnin = n.iters/5, thinning = 2, centering = T, 
                         scaling = c("unit", "pareto", "none"), verbose = F, adapt = T, b0 = NULL, 
                         b1 = NULL, prop = NULL, epsilon = NULL, sigma.mu = NULL, sigma.l = NULL, mu0g = F,
                         psi.alpha = NULL, psi.beta = NULL, phi.nu = NULL, alpha.d1 = NULL, alpha.d2 = NULL, 
@@ -41,13 +41,6 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   if(!is.logical(centering))        stop("'centering' must be TRUE or FALSE")
   if(!is.logical(verbose))          stop("'verbose' must be TRUE or FALSE")
   if(!is.logical(profile))          stop("'profile' must be TRUE or FALSE")
-  if(is.element(method, c("FA", "IFA", "classify"))) {
-    if(missing(centering) || !centering) {
-     centering <- T  
-    } 
-  } else {
-     centering <- F
-  }
   
 # Remove non-numeric columns & apply centering & scaling if necessary 
   burnin    <- as.integer(burnin)
@@ -69,13 +62,9 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   N         <- nrow(dat)
   P         <- ncol(dat)
   
-# Manage storage switches and warnings for other function inputs
-  if(all(centering, missing(mu.switch)))    {
-    mu.switch  <- F 
-  }
+# Manage storage switches & warnings for other function inputs
   if(!missing(mu.switch) && all(!mu.switch, !centering)) {
-    mu.switch  <- T                 
-                                    warning("Means were stored since centering was not applied", call.=F)
+                                    warning("Centering hasn't been applied - are you sure you want mu.switch=F?", call.=F)
   }
   switches  <- c(mu.sw=mu.switch, f.sw=f.switch, l.sw=load.switch, psi.sw=psi.switch, pi.sw=pi.switch)
   if(!is.logical(switches))         stop("All logical switches must be TRUE or FALSE")
@@ -159,11 +148,12 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   
 # Define full conditionals, hyperparamters & Gibbs Sampler function for desired method
   if(is.null(rownames(dat))) rownames(dat) <- seq_len(N)
-  if(missing("sigma.mu"))    sigma.mu      <- ifelse(centering, 0.5, max(10, floor(var(colMeans(dat)))))
+  if(missing("sigma.mu"))    sigma.mu      <- ifelse(all(centering, scaling != "none"), 
+                                                     1, max(10, floor(var(colMeans(dat)))))
   if(missing("psi.alpha"))   psi.alpha     <- 4
   if(missing("psi.beta"))    psi.beta      <- 1
   if(is.element(method, c("FA", "MFA"))) {
-    if(missing("sigma.l"))   sigma.l       <- 0.5
+    if(missing("sigma.l"))   sigma.l       <- 1
   } else {
     if(missing("phi.nu"))    phi.nu        <- 3
     if(missing("alpha.d1"))  alpha.d1      <- 2
