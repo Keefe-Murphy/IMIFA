@@ -101,7 +101,7 @@
                                tau=tau, sum.term=sum.term)
       tau        <- cumprod(delta)  
     } 
-    if(Q >= 2) {
+    if(Q  > 1) {
       for(k in seq_len(Q)[-1]) { 
         delta[k] <- sim.deltak(Q=Q, P=P, k=k, alpha.d2=alpha.d2,
                                delta=delta, tau=tau, sum.term=sum.term)

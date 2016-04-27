@@ -88,6 +88,8 @@
       psi.store[,,1]       <- 1/psi.inv
       pi.store[,1]         <- pi.prop
       z.store[,1]          <- z
+      ll.store[1]          <- sum(sim.z(data=data, mu=mu, G=G, pi.prop=pi.prop, Sigma=lapply(Gseq,
+                                  function(g) tcrossprod(lmat[[g]]) + diag(1/psi.inv[,g])))$log.likes)
     }
     
   # Iterate
@@ -151,7 +153,7 @@
                                          P=P, tau=tau[[g]], sum.term=sum.termg)
           tau[[g]]         <- cumprod(delta[[g]])
         }
-        if(Qg     >= 2) {
+        if(Qg      > 1) {
           for(k in seq_len(Qg)[-1]) { 
             delta[[g]][k]  <- sim.deltak(Q=Qg, alpha.d2=alpha.d2, delta=delta[[g]], 
                                          P=P, k=k, tau=tau[[g]], sum.term=sum.termg)

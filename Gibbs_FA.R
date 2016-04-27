@@ -54,6 +54,7 @@
       f.store[,,1]         <- f
       load.store[,,1]      <- lmat
       psi.store[,1]        <- 1/psi.inv
+      ll.store[1]          <- sum(mvdnorm(data=data, mu=mu, Sigma=tcrossprod(lmat) + diag(1/psi.inv), log.d=T))
     }
   
   # Iterate
