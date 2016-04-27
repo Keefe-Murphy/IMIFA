@@ -238,28 +238,25 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   }
 
   if(profile)  Rprof()
-  if(method == "IFA") {
-    start.time     <- proc.time()
-    imifa[[Gi]][[Qi]]   <- do.call(paste0("gibbs.", meth[Gi]),                          
-                                   args=append(list(data = dat, N = N, Q = Q.star), gibbs.arg))
-  }
-  if(method == "classify") {
-    if(missing(Labels))             stop("Data must be labelled for classification")
-    if(!exists(deparse(substitute(Labels)),
-               envir=.GlobalEnv))   stop(paste0("Object ", match.call()$Labels, " not found"))
-    Labels  <- as.factor(Labels)
-    if(length(Labels) != N)         stop(paste0("Labels must be a factor of length N=",  n.obs))
-    range.G        <- nlevels(Labels)
-    start.time     <- proc.time()
-    for(g in seq_len(range.G)) {
-      temp.dat     <- dat[Labels == levels(Labels)[g],]
-      imifa[[g]]          <- list()
-      imifa[[g]][[Qi]]    <- do.call(paste0("gibbs.", "IFA"),
-                                     args=append(list(data = temp.dat, N = nrow(temp.dat), Q = Q.star), gibbs.arg))
-      if(verbose)                   cat(paste0(round(g/range.G * 100, 2), "% Complete\n"))
+
+  if(is.element(method, c("IFA", "MIFA"))) {
+    if(length(range.G) == 1) {
+      start.time   <- proc.time()
+        imifa[[Gi]][[Qi]] <- do.call(paste0("gibbs.", meth[Gi]),                          
+                                     args=append(list(data = dat, N = N, G = range.G, Q = Q.star,
+                                                      clust = if(meth[Gi] == "MIFA") list(z = zi[[Gi]], pi.alpha = pi.alpha[[Gi]])), gibbs.arg))  
+    } else {
+      start.time   <- proc.time()
+      for(g in range.G) {
+        Gi         <- which(range.G == g)
+        imifa[[Gi]]       <- list()
+        imifa[[Gi]][[Qi]] <- do.call(paste0("gibbs.", meth[Gi]),
+                                     args=append(list(data = dat, N = N, G = g, Q = Q.star, 
+                                                      clust = if(meth[Gi] == "MFA") list(z = zi[[Gi]], pi.alpha = pi.alpha[[Gi]])), gibbs.arg))
+        if(verbose)                 cat(paste0(round(Gi/length(range.G) * 100, 2), "% Complete\n"))
+      }
     }
-  } 
-  if(is.element(method, c("FA", "MFA"))) {
+  } else if(is.element(method, c("FA", "MFA")))   {
     if(any(range.Q >= P))           stop(paste0("Number of factors must be less than the number of variables ", P))
     if(any(range.Q >= N - 1))       stop(paste0("Number of factors must be less than the number of observations minus 1 ", N - 1))
     if(all(length(range.G) == 1, length(range.Q) == 1)) {
@@ -301,6 +298,21 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
         if(verbose)                 cat(paste0(round(counter/(length(range.G) * length(range.Q)) * 100, 2), "% Complete\n"))
         }
       }
+    }
+  } else if(method == "classify") {
+    if(missing(Labels))             stop("Data must be labelled for classification")
+    if(!exists(deparse(substitute(Labels)),
+               envir=.GlobalEnv))   stop(paste0("Object ", match.call()$Labels, " not found"))
+    Labels  <- as.factor(Labels)
+    if(length(Labels) != N)         stop(paste0("Labels must be a factor of length N=",  n.obs))
+    range.G        <- nlevels(Labels)
+    start.time     <- proc.time()
+    for(g in seq_len(range.G)) {
+      temp.dat     <- dat[Labels == levels(Labels)[g],]
+      imifa[[g]]          <- list()
+      imifa[[g]][[Qi]]    <- do.call(paste0("gibbs.", "IFA"),
+                                     args=append(list(data = temp.dat, N = nrow(temp.dat), Q = Q.star), gibbs.arg))
+      if(verbose)                   cat(paste0(round(g/range.G * 100, 2), "% Complete\n"))
     }
   }
   tot.time  <- proc.time() - start.time
