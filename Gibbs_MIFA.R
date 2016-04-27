@@ -43,6 +43,7 @@
     ll.store      <- rep(0, n.store)
     fin.ll        <- T
     Q.star        <- Q
+    Qs            <- rep(Q, G)
     Q.store       <- matrix(0, nr=G, nc=n.store)
     dimnames(z.store)      <- list(obsnames, iternames)
     dimnames(Q.store)      <- list(gnames, iternames)
@@ -65,20 +66,14 @@
     } else    {
       mu.zero     <- do.call(cbind, lapply(Gseq, function(g) colMeans(data)))
     }
-    if(Q > 0) {
-      for(g in Gseq) {
-        fact      <- try(factanal(data[z == g,, drop=F], factors=Q, scores="regression", control=list(nstart=50)), silent=T)
-        if(!inherits(fact, "try-error")) {
-          f[z == g,]       <- fact$scores
-          lmat[[g]]        <- fact$loadings
-          psi.inv[,g]      <- 1/fact$uniquenesses
-        } else                warning(paste0("Parameters of group ", g, " initialised by simulation from priors, not factanal: G=", G, ", Q=", Q), call.=F)
-      }
-    } else {
-      psi.inv     <- 1/do.call(cbind, lapply(Gseq, function(g) apply(data[z == g,, drop=F], 2, var)))
+    for(g in Gseq) {
+      fact        <- try(factanal(data[z == g,, drop=F], factors=Q, scores="regression", control=list(nstart=50)), silent=T)
+      if(!inherits(fact, "try-error")) {
+        f[z == g,]         <- fact$scores
+        lmat[[g]]          <- fact$loadings
+        psi.inv[,g]        <- 1/fact$uniquenesses
+      } else                  warning(paste0("Parameters of group ", g, " initialised by simulation from priors, not factanal: G=", G, ", Q=", Q), call.=F)
     }
-    l.sigma       <- l.sigma * diag(Q)
-    Qs            <- rep(Q, G)
     if(burnin      < 1)     {
       mu.store[,,1]        <- mu
       f.store[,,1]         <- f
@@ -140,14 +135,14 @@
                              psi.beta=psi.beta, c.data=c.data[[g]], f=f[z.ind[[g]],,drop=F], lmat=lmat[[g]])))
     
     # Local Shrinkage
-      load.2      <- lapply(lmat, function(x) x * x)
+      load.2      <- lapply(lmat, function(lg) lg * lg)
       phi         <- lapply(Gseq, function(g) sim.phi(Q=Qs[g], P=P, phi.nu=phi.nu, tau=tau[[g]], load.2=load.2[[g]]))
     
     # Global Shrinkage
-      sum.term    <- lapply(Gseq, function(g) diag(crossprod(phi[[g]], load.2[[g]])))
+      sum.terms   <- lapply(Gseq, function(g) diag(crossprod(phi[[g]], load.2[[g]])))
       for(g in Gseq)    {
         Qg        <- Qs[g]
-        sum.termg <- sum.term[[g]]
+        sum.termg <- sum.terms[[g]]
         if(Qg      > 0) {
           delta[[g]][1]    <- sim.delta1(Q=Qg, alpha.d1=alpha.d1, delta=delta[[g]], 
                                          P=P, tau=tau[[g]], sum.term=sum.termg)
@@ -184,20 +179,20 @@
            any(Qs > 0)))            f.store[,,new.it]      <- f
         if(sw["l.sw"]) {
           for(g in Gseq)    {
-            if(Qs[g] > 0)   {       load.store[,,g,new.it] <- lmat[[g]]
+            if(Qs[g] > 0)           load.store[,,g,new.it] <- lmat[[g]]
           }
         }
         if(sw["psi.sw"])            psi.store[,,new.it]    <- psi
         if(sw["pi.sw"])             pi.store[,new.it]      <- pi.prop
                                     z.store[,new.it]       <- z 
-                                    ll.store[new.it]       <- log.like
-      }  
+                                    ll.store[new.it]       <- log.like  
+      }
     }
-    returns   <- list(mu       = if(sw["mu.sw"])    mu.store,
-                      f        = if(all(sw["f.sw"]) as.simple_sparse_array(f.store), 
-                      load     = if(all(sw["l.sw"]) as.simple_sparse_array(load.store), 
-                      psi      = if(sw["psi.sw"])   psi.store,
-                      pi.prop  = if(sw["pi.sw"])    pi.store,
+    returns   <- list(mu       = if(sw["mu.sw"])  mu.store,
+                      f        = if(sw["f.sw"])   as.simple_sparse_array(f.store), 
+                      load     = if(sw["l.sw"])   as.simple_sparse_array(load.store), 
+                      psi      = if(sw["psi.sw"]) psi.store,
+                      pi.prop  = if(sw["pi.sw"])  pi.store,
                       z        = z.store,
                       ll.store = ll.store)
     return(returns)

@@ -107,6 +107,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
     if(missing(Q.star)) {
       Q.star       <- min(floor(3 * log(P)), P, N - 1)
     } else {
+      if(Q.star    <= 0)            stop("Q.star must be strictly positive")
       if(Q.star     > P)            stop(paste0("Number of factors must be less than the number of variables, ", P))
       if(Q.star    >= N)            stop(paste0("Number of factors must be less than the number of observations, ", N))
     } 
@@ -312,12 +313,12 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
     Rprof(NULL)
     print(summaryRprof())
     invisible(file.remove("Rprof.out"))
-  }  
+  }
   dat.name  <- as.character(match.call()$dat)
   if(is.element(method, c("FA", "MFA")))   {
     imifa   <- lapply(seq_along(imifa), function(x) setNames(imifa[[x]], paste0(range.Q, ifelse(range.Q == 1, "Factor", "Factors"))))
   } else {
-    imifa   <- lapply(seq_along(imifa), function(x) setNames(imifa[[x]], "IMIFA"))
+    imifa   <- lapply(seq_along(imifa), function(x) setNames(imifa[[x]], "IFA"))
   }
   if(is.element(method, c("MFA", "MIFA"))) {
     for(g in seq_along(range.G)) {
