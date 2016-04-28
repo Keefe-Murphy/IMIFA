@@ -33,7 +33,7 @@
     load(file=paste0(getwd(), "/Data/Simulated_Data.Rdata", sep=""), envir=.GlobalEnv)
 
 # Run the Gibbs Sampler
-  sim  <- imifa.mcmc(wine, method="MFA", range.G=3, range.Q=c(0,1,2,3), z.list=Lab)
+  sim  <- imifa.mcmc(wine, method="MIFA", range.G=3, z.list=Lab)
  #sim  <- imifa.mcmc(wine, method="classify", Label=Lab)
 
 # Save / Load Simulations
@@ -48,7 +48,7 @@
   res <- tune.imifa(sim, Labels=Lab)
   res$Error
   plot(res, "GQ")
- #res <- tune.imifa(sim, G=3, Q=3, criterion="aicm")
+ #res <- tune.imifa(sim, G=3, Q=3, criterion="bicm", Labels=Lab)
   
 # Save / Load Results
   save(res, file=paste0(getwd(), "/Simulations/", attr(res, "Name"), 
@@ -104,6 +104,9 @@
   do.call(rbind, lapply(seq_len(res$GQ.results$G), function(g) res[[g]]$var.psi))
   plot(res, "p", "u")
   plot(res, "c", "u")
+
+# Covariance Matrices
+  lapply(seq_len(res$GQ.results$G), function(g) res[[g]]$cov.est)
 
 # Mixing Proportions
 
