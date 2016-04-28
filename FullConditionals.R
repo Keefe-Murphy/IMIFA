@@ -78,14 +78,14 @@
   # Cluster Labels
     sim.z       <- function(data = NULL, mu = NULL, Sigma = NULL, 
                             G = NULL, pi.prop = NULL, ...) {
-      numer     <- do.call(cbind, lapply(seq_len(G), function(g) exp(mvdnorm(data, mu[,g], Sigma[[g]], log.d=T) + log(pi.prop[,g]))))
-      denomin   <- rowSums(numer)
-      pz        <- sweep(numer, 1, denomin, FUN="/")
+      log.numer <- do.call(cbind, lapply(seq_len(G), function(g) mvdnorm(data, mu[,g], Sigma[[g]], log.d=T) + log(pi.prop[,g])))
+      log.denom <- apply(log.numer, 1, logSumExp)
+      pz        <- exp(sweep(log.numer, 1, log.denom, FUN="-"))
       pz[is.na(pz)]             <- 1/G
       pz[rowSums(pz > 0) == 0,] <- rep(1/G, G)
       pz[pz <= 0]               <- .Machine$double.eps
-      z         <- unlist(lapply(seq_along(denomin), function(i) which(rmultinom(1, size=1, prob=pz[i,]) == 1)))
-        return(list(z = z, log.likes = log(denomin)))
+      z         <- unlist(lapply(seq_along(log.denom), function(i) which(rmultinom(1, size=1, prob=pz[i,]) == 1)))
+        return(list(z = z, log.likes = log.denom))
     }
 
 # Priors
