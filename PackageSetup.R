@@ -149,12 +149,11 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   
 # Define full conditionals, hyperparamters & Gibbs Sampler function for desired method
   if(is.null(rownames(dat))) rownames(dat) <- seq_len(N)
-  if(missing("sigma.mu"))    sigma.mu      <- ifelse(all(centering, scaling != "none"), 
-                                                     1, max(10, floor(var(colMeans(dat)))))
+  if(missing("sigma.mu"))    sigma.mu      <- diag(cov(data))
   if(missing("psi.alpha"))   psi.alpha     <- 4
   if(missing("psi.beta"))    psi.beta      <- 1
   if(is.element(method, c("FA", "MFA"))) {
-    if(missing("sigma.l"))   sigma.l       <- 1
+    if(missing("sigma.l"))   sigma.l       <- 0.5
   } else {
     if(missing("phi.nu"))    phi.nu        <- 3
     if(missing("alpha.d1"))  alpha.d1      <- 2
