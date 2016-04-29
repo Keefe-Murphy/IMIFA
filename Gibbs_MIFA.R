@@ -66,6 +66,9 @@
     } else    {
       mu.zero     <- do.call(cbind, lapply(Gseq, function(g) colMeans(data)))
     }
+    if(round(sum(mu.zero)) == 0) {
+      mu.zero     <- rep(0, G)
+    }
     for(g in Gseq) {
       fact        <- try(factanal(data[z == g,, drop=F], factors=Q, scores="regression", control=list(nstart=50)), silent=T)
       if(!inherits(fact, "try-error")) {

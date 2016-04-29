@@ -6,7 +6,7 @@
 
   # Means
     sim.mu      <- function(N = NULL, P = NULL, mu.sigma = NULL, psi.inv = NULL, 
-                            sum.data = NULL, sum.f = NULL, lmat = NULL, mu.zero = rep(0, P), ...) {
+                            sum.data = NULL, sum.f = NULL, lmat = NULL, mu.zero = 0, ...) {
       mu.omega  <- 1/(mu.sigma + N * psi.inv)
       U.mu      <- sqrt(mu.omega)
       z.mu      <- rnorm(P, 0, 1)
@@ -90,7 +90,7 @@
 # Priors
 
   # Means
-    sim.mu.p    <- function(P = NULL, sigma.mu = NULL, mu.zero = rep(0, P), ...) {
+    sim.mu.p    <- function(P = NULL, sigma.mu = NULL, mu.zero = 0, ...) {
       U.mu      <- sqrt(sigma.mu)
       z.mu      <- rnorm(P, 0, 1)
         U.mu * z.mu + mu.zero

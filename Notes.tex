@@ -249,11 +249,11 @@ where $\underline{x}^{j^\star}$ is an $N$-vector containing the elements of the 
 \shortintertext{If we suggest an Inverse Wishart prior distribution for $\Psi$, we have:}
 \mathrm{P}\left(\Psi\right) & \propto \given\Psi^{-1}\given^{\frac{N + p + 1}{2}}\exp\left(-\frac{1}{2}\mathrm{tr}\left(\mathcal{S}^{-1^\star}\Psi\right)\right)&\nonumber\\
 \shortintertext{Using the fact that
-$\mathrm{V}^{-1} \sim \operatorname{Wish}_p\left(\nu, \Sigma\right)~\mbox{when}~ \mathrm{V} \sim \operatorname{Wish}_p^{-1}\left(m, \Sigma^{-1}\right)~\mbox{with}~m = \nu + p + 1$ we can rewrite as:}
+$\mathrm{V}^{-1} \sim \operatorname{Wish}_p\left(\nu, \Sigma\right)~\mbox{when}~ \mathrm{V} \sim \operatorname{Wish}_p^{-1}\left(m, \Sigma^{-1}\right)~\mbox{with}~m = \nu + p + 1$ we get:}
 \mathrm{P}\left(\Psi^{-1}\right) & \propto \given\Psi^{-1}\given^{\frac{N}{2}}\exp\left(-\frac{1}{2}\mathrm{tr}\left(\mathcal{S}^\star\Psi^{-1}\right)\right)\nonumber
 \shortintertext{Since $\Psi$ is a diagonal matrix$\colon$}
 \mathrm{P}\left(\Psi^{-1}\right) & \propto \prod_{j=1}^{p}\given\psi_j^{-1}\given^{\frac{N}{2}}\exp\left(-\frac{1}{2}\mathrm{tr}\left(\mathcal{S}_j^\star\psi_j^{-1}\right)\right)\nonumber
-\shortintertext{This suggests the prior for $\Psi^{-1}$ is a product of $p \hspace{2mm} \operatorname{Ga}\left(\nicefrac{\alpha}{2},\nicefrac{\beta}{2}\right)$ distributions. If the data are scaled, $\alpha$ and $\beta$ should be chosen such that the range each $\psi_j$ can take lies between $0$ and $1$.}
+\shortintertext{This suggests the prior for $\Psi^{-1}$ is a product of $p \hspace{2mm} \operatorname{Ga}\left(\nicefrac{\alpha}{2},\nicefrac{\beta}{2}\right)$ distributions. We choose hyperparameters as per \cite{Fruhwirth-Schnatter2010-II}, by bounding each $\psi_j$ away from zero in such a way that Heywood problems are avoided.}
 \therefore \mathrm{P}\left(\Psi^{-1} \given \alpha, \beta \right) & = \prod_{j=1}^{p}\mathrm{P}\left(\psi_j^{-1} \given \alpha, \beta \right)&\nonumber \\
 & \propto \prod_{j=1}^{p} \left(\psi_j^{-1}\right)^{\frac{\alpha}{2} - 1}\exp\left(- \frac{\beta}{2}\psi_j^{-1}\right)\nonumber&\\
 \therefore \mathrm{P}\left(\Psi^{-1}\given X^\star, \text{F}, \Lambda\right) &\propto \mathrm{P}\left(X^\star \given \text{F},\Lambda\right)\mathrm{P}\left(\Psi^{-1} \given \alpha,\beta\right) \nonumber&\\
