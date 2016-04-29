@@ -194,6 +194,7 @@
                       psi      = if(sw["psi.sw"]) psi.store,
                       pi.prop  = if(sw["pi.sw"])  pi.store,
                       z        = z.store,
-                      ll.store = ll.store)
+                      ll.store = ll.store,
+                      Q.store  = Q.store)
     return(returns)
   }
