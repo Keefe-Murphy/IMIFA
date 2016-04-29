@@ -83,6 +83,7 @@
       pz        <- exp(sweep(log.numer, 1, log.denom, FUN="-"))
       pz[rowSums(pz > 0) == 0,] <- rep(1/G, G)
       z         <- unlist(lapply(seq_along(log.denom), function(i) which(rmultinom(1, size=1, prob=pz[i,]) == 1)))
+     #z         <- unlist(lapply(seq_along(log.denom), function(i) sample(seq_len(G), size=1, prob=pz[i,])))
         return(list(z = z, log.likes = log.denom))
     }
 
