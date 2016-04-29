@@ -218,11 +218,17 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
       G            <- range.G[g]
       pi.alpha[[g]]     <- rep(alpha.pi, G)
       if(z.init    == "kmeans")     {
-        zi[[g]]    <- as.numeric(factor(kmeans(dat, G, nstart=100)$cluster, levels=seq_len(G)))
+        k.res      <- try(kmeans(dat, G, nstart=100))
+        if(!inherits(k.res, "try-error"))  {
+          zi[[g]]  <- as.numeric(factor(k.res$cluster, levels=seq_len(G)))
+        } else                      warning("Cannot initialise cluster labels using kmeans. Try another z.init method")
       } else if(z.init  == "list")   {
         zi[[g]]    <- as.numeric(z.list[[g]])
       } else if(z.init  == "mclust") {
-        zi[[g]]    <- Mclust(dat, g)$classification
+        m.res      <- try(Mclust(dat, g))
+        if(!inherits(m.res, "try_error"))  {
+          zi[[g]]  <- m.res$classification
+        } else                      warning("Cannot initialise cluster labels using mclust. Try another z.init method")
       } else {
         zips       <- rep(1, N)
         while(all(length(unique(zips)) != G,
