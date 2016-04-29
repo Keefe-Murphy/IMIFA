@@ -37,7 +37,6 @@
     cov.emp      <- cov(data)
     cov.est      <- matrix(0, nr=P, nc=P)
     ll.store     <- rep(0, n.store)
-    fin.ll       <- T
     dimnames(cov.emp)      <- list(varnames, varnames)
     dimnames(cov.est)      <- dimnames(cov.emp)
     
@@ -93,10 +92,6 @@
         Sigma    <- tcrossprod(lmat) + diag(psi)
         cov.est  <- cov.est + Sigma/n.store
         log.like <- sum(mvdnorm(data=data, mu=mu, Sigma=Sigma, log.d=T))
-        if(all(!is.finite(log.like),
-           isTRUE(fin.ll))) { warning("Infinite likelihood: model-selection criteria may not be obtainable", call.=F)
-          fin.ll <- F
-        }
         if(sw["mu.sw"])             mu.store[,new.it]    <- mu  
         if(all(sw["f.sw"], Q > 0))  f.store[,,new.it]    <- f
         if(all(sw["l.sw"], Q > 0))  load.store[,,new.it] <- lmat

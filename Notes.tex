@@ -454,7 +454,8 @@ Let the prior distribution of $\underline{\pi}$ be Dirichlet with parameter $\un
 \begin{flalign}
 \underline{z}_i \given \underline{x}_i,\gamma &\sim \operatorname{Mult}\left(1,\underline{p}\right),~\mbox{where}\nonumber\\
 \underline{p} &= \left(p_1,\ldots,p_G\right),~\mbox{and}\nonumber\\
-p_g &=~\mathrm{P}\left(\underline{z}_{ig}=1\given\underline{x}_i,\gamma\right) = \frac{\pi_g\mathrm{P}\left(\underline{x}_i\given\theta_g\right)}{\sum_{g=1}^{G}\pi_g\mathrm{P}\left(\underline{x}_i \given\theta_g\right)} = \frac{\pi_g f\left(\underline{x}_i \given \underline{\mu}_g,\Lambda_g\Lambda_g^T+\Psi_g\right)}{\sum_{g=1}^G\pi_g f\left(\underline{x}_i \given \underline{\mu}_g,\Lambda_g\Lambda_g^T+\Psi_g\right)}\label{eq:33}
+p_g &=~\mathrm{P}\left(\underline{z}_{ig}=1\given\underline{x}_i,\gamma\right) = \frac{\pi_g\mathrm{P}\left(\underline{x}_i\given\theta_g\right)}{\sum_{g=1}^{G}\pi_g\mathrm{P}\left(\underline{x}_i \given\theta_g\right)} = \frac{\pi_g f\left(\underline{x}_i \given \underline{\mu}_g,\Lambda_g\Lambda_g^T+\Psi_g\right)}{\sum_{g=1}^G\pi_g f\left(\underline{x}_i \given \underline{\mu}_g,\Lambda_g\Lambda_g^T+\Psi_g\right)}\label{eq:33}&\\
+&=\exp\Big[\log\left(\pi_g\right) + \log\Big(f\big(\underline{x}_i \given \underline{\mu}_g,\Lambda_g\Lambda_g^T+\Psi_g\big)\Big) - \sum_{g=1}^{G}\left(\log\left(\pi_g\right) + \log\Big(f\big(\underline{x}_i \given \underline{\mu}_g,\Lambda_g\Lambda_g^T+\Psi_g\big)\right)\Big]\nonumber
 \end{flalign}
 \newpage
 \subsubsection[Mixtures of Infinite Factor Analyzers Pseudo-Code]{Mixtures of Infinite Factor Analyzers Pseudo-Code}
