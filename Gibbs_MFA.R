@@ -57,7 +57,7 @@
       mu.zero    <- do.call(cbind, lapply(Gseq, function(g) colMeans(data)))
     }
     if(round(sum(mu.zero)) == 0) {
-      mu.zero    <- rep(0, G)
+      mu.zero    <- matrix(0, nr=1, nc=G)
     }
     if(Q > 0) {
       for(g in Gseq) {
