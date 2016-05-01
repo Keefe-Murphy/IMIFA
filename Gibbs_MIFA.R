@@ -54,7 +54,6 @@
     pi.prop       <- t(prop.table(tabulate(z, nbins=G)))
     mu            <- do.call(cbind, lapply(Gseq, function(g) colMeans(data[z == g,, drop=F])))
     f             <- sim.f.p(N=N, Q=Q)
-    fg            <- list()
     phi           <- lapply(Gseq, function(g) sim.phi.p(Q=Q, P=P, phi.nu=phi.nu))
     delta         <- lapply(Gseq, function(g) sim.delta.p(Q=Q, alpha.d1=alpha.d1, alpha.d2=alpha.d2))
     tau           <- lapply(delta, cumprod)
@@ -104,8 +103,8 @@
     # Means
       sum.data    <- lapply(Gseq, function(g) colSums(data[z.ind[[g]],,drop=F]))
       sum.f       <- lapply(Gseq, function(g) colSums(f[z.ind[[g]],, drop=F]))
-      mu          <- do.call(cbind, lapply(Gseq, function(g) sim.mu(N=nn[g], mu.sigma=mu.sigma, psi.inv=psi.inv[,g], 
-                             P=P, sum.data=sum.data[[g]], sum.f=sum.f[[g]], lmat=lmat[[g]], mu.zero=mu.zero[,g])))
+      mu          <- do.call(cbind, lapply(Gseq, function(g) sim.mu(N=nn[g], mu.sigma=mu.sigma, psi.inv=psi.inv[,g], P=P, 
+                             sum.data=sum.data[[g]], sum.f=sum.f[[g]][seq_len(Qs[g])], lmat=lmat[[g]], mu.zero=mu.zero[,g])))
     
     # Scores & Loadings
       c.data      <- lapply(Gseq, function(g) sweep(data[z.ind[[g]],, drop=F], 2, mu[,g], FUN="-"))
@@ -113,19 +112,24 @@
         f         <- matrix(, nr=N, nc=0)
         lmat      <- lapply(Gseq, function(g) matrix(, nr=P, nc=0))
       } else {
+        fg        <- lapply(Gseq, function(g) matrix(0, nr=nn[g], nc=max(Qs)))
+        fgnames   <- lapply(Gseq, function(g) obsnames[z.ind[[g]]])
+        fg        <- mapply(function(mats, nams) {rownames(mats) <- nams; mats}, fg, fgnames)
         for(g in Gseq)    {
           Qg      <- Qs[g]
+          Qgs     <- seq_len(Qg)
+          nng     <- nn[g]
           c.datg  <- c.data[[g]]
           psi.ig  <- psi.inv[,g]
           if(Qg    > 0)   {
-            fgg            <- sim.score(N=nn[g], lmat=lmat[[g]], Q=Qg, 
+            fgg            <- sim.score(N=nng, lmat=lmat[[g]], Q=Qg, 
                                         c.data=c.datg, psi.inv=psi.ig)
             FtF            <- crossprod(fgg)
             lmat[[g]]      <- sim.load(l.sigma=l.sigma, Q=Qg, c.data=c.datg, P=P, f=fgg,
                                        psi.inv=psi.ig, FtF=FtF, phi=phi[[g]], tau=tau[[g]])
-            fg[[g]]        <- fgg
+            fg[[g]][,Qgs]  <- fgg
           } else {
-            fg[[g]]        <- matrix(, nr=nn[g], nc=0)
+            fg[[g]][,Qgs]  <- matrix(, nr=nng, nc=0)
             lmat[[g]]      <- matrix(, nr=P, nc=0)
           }
         }
@@ -133,8 +137,8 @@
       }
                   
     # Uniquenesses
-      psi.inv     <- do.call(cbind, lapply(Gseq, function(g) sim.psi.i(N=nn[g], P=P, psi.alpha=psi.alpha, 
-                             psi.beta=psi.beta, c.data=c.data[[g]], f=f[z.ind[[g]],,drop=F], lmat=lmat[[g]])))
+      psi.inv     <- do.call(cbind, lapply(Gseq, function(g) sim.psi.i(N=nn[g], psi.alpha=psi.alpha, psi.beta=psi.beta, 
+                             P=P, c.data=c.data[[g]], f=f[z.ind[[g]],seq_len(Qs[g]),drop=F], lmat=lmat[[g]])))
     
     # Local Shrinkage
       load.2      <- lapply(lmat, function(lg) lg * lg)
@@ -174,16 +178,17 @@
         log.like <- sum(z.res$log.likes)
         if(sw["mu.sw"])             mu.store[,,new.it]     <- mu  
         if(all(sw["f.sw"], 
-           any(Qs > 0)))            f.store[,,new.it]      <- f
+           any(Qs > 0)))            f.store[,seq_len(max(Qs)),new.it]    <- f
         if(sw["l.sw"]) {
           for(g in Gseq)    {
-            if(Qs[g] > 0)           load.store[,,g,new.it] <- lmat[[g]]
+            if(Qs[g] > 0)           load.store[,seq_len(Qs[g]),g,new.it] <- lmat[[g]]
           }
         }
         if(sw["psi.sw"])            psi.store[,,new.it]    <- psi
         if(sw["pi.sw"])             pi.store[,new.it]      <- pi.prop
                                     z.store[,new.it]       <- z 
                                     ll.store[new.it]       <- log.like  
+                                    Q.store[,new.it]       <- Qs
       }
     }
     returns   <- list(mu       = if(sw["mu.sw"])  mu.store,
