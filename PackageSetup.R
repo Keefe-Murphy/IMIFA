@@ -152,7 +152,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   if(missing("sigma.mu"))    sigma.mu      <- diag(cov(dat))
   if(scaling == "unit")      sigma.mu      <- sigma.mu[1]
   if(missing("psi.alpha"))   psi.alpha     <- 5
-  if(missing("psi.beta"))    psi.beta      <- 2 * (psi.alpha - 1)/diag(solve(cov(data)))
+  if(missing("psi.beta"))    psi.beta      <- 2 * (psi.alpha - 1)/diag(solve(cov(dat)))
   if(is.element(method, c("FA", "MFA"))) {
     if(missing("sigma.l"))   sigma.l       <- 0.5
   } else {
