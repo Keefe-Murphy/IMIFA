@@ -242,9 +242,9 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
       } else if(z.init  == "list")   {
         zi[[g]]    <- as.numeric(z.list[[g]])
       } else if(z.init  == "mclust") {
-        m.res      <- try(Mclust(dat, g))
+        m.res      <- try(Mclust(dat, G))
         if(!inherits(m.res, "try_error"))  {
-          zi[[g]]  <- m.res$classification
+          zi[[g]]  <- as.numeric(m.res$classification)
         } else                      warning("Cannot initialise cluster labels using mclust. Try another z.init method")
       } else {
         zips       <- rep(1, N)

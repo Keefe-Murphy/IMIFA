@@ -54,7 +54,7 @@
     pi.alpha      <- clust$pi.alpha
     z             <- clust$z
     pi.prop       <- t(prop.table(tabulate(z, nbins=G)))
-    mu            <- do.call(cbind, lapply(Gseq, function(g) colMeans(data[z == g,, drop=F])))
+    mu            <- do.call(cbind, lapply(Gseq, function(g) if(pi.prop[,g] > 0) colMeans(data[z == g,, drop=F]) else rep(0, P)))
     f             <- sim.f.p(N=N, Q=Q)
     phi           <- lapply(Gseq, function(g) sim.phi.p(Q=Q, P=P, phi.nu=phi.nu))
     delta         <- lapply(Gseq, function(g) sim.delta.p(Q=Q, alpha.d1=alpha.d1, alpha.dk=alpha.dk, beta.d1=beta.d1, beta.dk=beta.dk))
@@ -99,7 +99,7 @@
       z.ind       <- lapply(Gseq, function(g) z == g)
       
     # Means
-      sum.data    <- lapply(Gseq, function(g) colSums(data[z.ind[[g]],,drop=F]))
+      sum.data    <- lapply(Gseq, function(g) colSums(data[z.ind[[g]],, drop=F]))
       sum.f       <- lapply(Gseq, function(g) colSums(f[z.ind[[g]],, drop=F]))
       mu          <- do.call(cbind, lapply(Gseq, function(g) sim.mu(N=nn[g], mu.sigma=mu.sigma, psi.inv=psi.inv[,g], P=P, 
                              sum.data=sum.data[[g]], sum.f=sum.f[[g]][seq_len(Qs[g])], lmat=lmat[[g]], mu.zero=mu.zero[,g])))

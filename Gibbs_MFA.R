@@ -47,7 +47,7 @@
     pi.alpha     <- clust$pi.alpha
     z            <- clust$z
     pi.prop      <- t(prop.table(tabulate(z, nbins=G)))
-    mu           <- do.call(cbind, lapply(Gseq, function(g) colMeans(data[z == g,, drop=F])))
+    mu           <- do.call(cbind, lapply(Gseq, function(g) if(pi.prop[,g] > 0) colMeans(data[z == g,, drop=F]) else rep(0, P)))
     f            <- sim.f.p(N=N, Q=Q)
     lmat         <- lapply(Gseq, function(g) sim.load.p(Q=Q, P=P, sigma.l=sigma.l, shrink=F))
     psi.inv      <- do.call(cbind, lapply(Gseq, function(g) sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)))
@@ -65,7 +65,7 @@
         } else                warning(paste0("Parameters of group ", g, " initialised by simulation from priors, not factanal: G=", G, ", Q=", Q), call.=F)
       }
     } else {
-      psi.inv    <- 1/do.call(cbind, lapply(Gseq, function(g) apply(data[z == g,, drop=F], 2, var)))
+      psi.inv    <- do.call(cbind, lapply(Gseq, function(g) if(pi.prop[,g] > 0) 1/apply(data[z == g,, drop=F], 2, var) else rep(1, P)))
     }
     l.sigma      <- l.sigma * diag(Q)
     Qs           <- rep(Q, G)
@@ -95,7 +95,7 @@
       z.ind      <- lapply(Gseq, function(g) z == g)
       
     # Means
-      sum.data   <- lapply(Gseq, function(g) colSums(data[z.ind[[g]],,drop=F]))
+      sum.data   <- lapply(Gseq, function(g) colSums(data[z.ind[[g]],, drop=F]))
       sum.f      <- lapply(Gseq, function(g) colSums(f[z.ind[[g]],, drop=F]))
       mu         <- do.call(cbind, lapply(Gseq, function(g) sim.mu(N=nn[g], mu.sigma=mu.sigma, psi.inv=psi.inv[,g], 
                             P=P, sum.data=sum.data[[g]], sum.f=sum.f[[g]], lmat=lmat[[g]], mu.zero=mu.zero[,g])))
