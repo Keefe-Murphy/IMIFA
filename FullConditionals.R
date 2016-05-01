@@ -45,15 +45,15 @@
                             c.data = NULL, f = NULL, lmat = NULL, ...) { 
       rate.t    <- c.data - tcrossprod(f, lmat)
       rate.t    <- colSums(rate.t * rate.t)
-        rgamma(P, shape=(N + psi.alpha)/2, 
-               rate=(rate.t + psi.beta)/2) 
+        rgamma(P, shape=N/2 + psi.alpha, 
+               rate=rate.t/2 + psi.beta) 
     }
 
   # Local Shrinkage
     sim.phi     <- function(Q = NULL, P = NULL, phi.nu = NULL, 
                             tau = NULL, load.2 = NULL, ...) {
       rate.t    <- (phi.nu + sweep(load.2, 2, tau, FUN="*"))/2
-        matrix(rgamma(P * Q, shape=(phi.nu + 1)/2, 
+        matrix(rgamma(P * Q, shape=1/2 + phi.nu, 
                       rate=rate.t), nr=P, nc=Q)
     }
   
@@ -117,12 +117,12 @@
   
   # Uniquenesses
     sim.psi.ip  <- function(P = NULL, psi.alpha = NULL, psi.beta = NULL, ...) {
-        rgamma(n=P, shape=psi.alpha/2, rate=psi.beta/2) 
+        rgamma(n=P, shape=psi.alpha, rate=psi.beta) 
     }
 
   # Local Shrinkage
     sim.phi.p   <- function(Q = NULL, P = NULL, phi.nu = NULL, ...) {
-        matrix(rgamma(n=P * Q, shape=phi.nu/2, rate=phi.nu/2), nr=P, nc=Q)
+        matrix(rgamma(n=P * Q, shape=phi.nu, rate=phi.nu), nr=P, nc=Q)
     }
   
   # Global Shrinkage

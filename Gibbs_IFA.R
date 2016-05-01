@@ -124,7 +124,7 @@
           if(numred == 0) { # simulate extra columns from priors
             Q       <- Q + 1
             f       <- cbind(f, rnorm(n=N, mean=0, sd=1))         
-            phi     <- cbind(phi, rgamma(n=P, shape=phi.nu/2, rate=phi.nu/2))
+            phi     <- cbind(phi, rgamma(n=P, shape=phi.nu, rate=phi.nu))
             delta   <- c(delta, rgamma(n=1, shape=alpha.dk, rate=beta.dk))
             tau     <- cumprod(delta)
             lmat    <- cbind(lmat, rnorm(n=P, mean=0, sd=sqrt(1/(phi[,Q] * tau[Q]))))

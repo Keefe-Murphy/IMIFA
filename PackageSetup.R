@@ -151,12 +151,12 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   if(is.null(rownames(dat))) rownames(dat) <- seq_len(N)
   if(missing("sigma.mu"))    sigma.mu      <- diag(cov(dat))
   if(scaling == "unit")      sigma.mu      <- sigma.mu[1]
-  if(missing("psi.alpha"))   psi.alpha     <- 5
-  if(missing("psi.beta"))    psi.beta      <- 2 * (psi.alpha - 1)/diag(solve(cov(dat)))
+  if(missing("psi.alpha"))   psi.alpha     <- 2.5
+  if(missing("psi.beta"))    psi.beta      <- (psi.alpha - 1)/diag(solve(cov(dat)))
   if(is.element(method, c("FA", "MFA"))) {
     if(missing("sigma.l"))   sigma.l       <- 0.5
   } else {
-    if(missing("phi.nu"))    phi.nu        <- 3
+    if(missing("phi.nu"))    phi.nu        <- 1.5
     if(missing("alpha.d1"))  alpha.d1      <- 2
     if(missing("alpha.dk"))  alpha.dk      <- 10
     if(missing("beta.d1"))   beta.d1       <- 1
