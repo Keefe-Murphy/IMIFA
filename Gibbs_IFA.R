@@ -128,7 +128,7 @@
             phi     <- cbind(phi, rgamma(n=P, shape=phi.nu/2, rate=phi.nu/2))
             delta   <- c(delta, rgamma(n=1, shape=alpha.d2, rate=1))
             tau     <- cumprod(delta)
-            lmat    <- cbind(lmat, rnorm(n=P, mean=0, sd=sqrt(1/phi[,Q] * 1/tau[Q])))
+            lmat    <- cbind(lmat, rnorm(n=P, mean=0, sd=sqrt(1/(phi[,Q] * tau[Q]))))
           } else          { # remove redundant columns
             nonred  <- which(colvec == 0)
             Q       <- Q - numred
