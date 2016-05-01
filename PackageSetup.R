@@ -15,11 +15,11 @@ message("   ________  __________________\n  /_  __/  |/   /_  __/ ___/ _ \\  \n 
 imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "FA", "classify"), 
                         n.iters = 50000, Labels = NULL, factanal = F, Q.star = NULL, range.G = NULL, 
                         range.Q = NULL, Q.fac = NULL,  burnin = n.iters/5, thinning = 2, centering = T, 
-                        scaling = c("unit", "pareto", "none"), verbose = F, adapt = T, b0 = NULL, 
-                        b1 = NULL, prop = NULL, epsilon = NULL, sigma.mu = NULL, sigma.l = NULL, mu0g = F,
-                        psi.alpha = NULL, psi.beta = NULL, phi.nu = NULL, alpha.d1 = NULL, alpha.d2 = NULL, 
-                        alpha.pi = NULL, z.init = c("kmeans", "list", "mclust", "priors"), z.list = NULL, profile = F, 
-                        mu.switch = T, f.switch = T, load.switch = T, psi.switch = T, pi.switch = T, ...) {
+                        scaling = c("unit", "pareto", "none"), verbose = F, adapt = T, b0 = NULL, b1 = NULL, 
+                        prop = NULL, epsilon = NULL, sigma.mu = NULL, sigma.l = NULL, mu0g = F, phi.nu = NULL,
+                        psi.alpha = NULL, psi.beta = NULL, alpha.d1 = NULL, alpha.dk = NULL, beta.d1 = NULL,
+                        beta.dk = NULL, alpha.pi = NULL, z.init = c("kmeans", "list", "mclust", "priors"), z.list = NULL, 
+                        profile = F, mu.switch = T, f.switch = T, load.switch = T, psi.switch = T, pi.switch = T, ...) {
   
   defpar    <- suppressWarnings(par(no.readonly = T))
   defop     <- options()
@@ -158,7 +158,9 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   } else {
     if(missing("phi.nu"))    phi.nu        <- 3
     if(missing("alpha.d1"))  alpha.d1      <- 2
-    if(missing("alpha.d2"))  alpha.d2      <- 10
+    if(missing("alpha.dk"))  alpha.dk      <- 10
+    if(missing("beta.d1"))   beta.d1       <- 1
+    if(missing("beta.dk"))   beta.dk       <- 1
     if(missing("b0"))        b0            <- 0.1
     if(missing("b1"))        b1            <- 0.00005
     if(missing("prop"))      prop          <- 3/4
@@ -204,8 +206,8 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   gibbs.arg <- list(P = P, sigma.mu = sigma.mu, psi.alpha = psi.alpha, psi.beta = psi.beta, burnin = burnin, 
                     thinning = thinning, iters = iters, verbose = verbose, sw = switches)
   if(!is.element(method, c("FA", "MFA"))) {
-    gibbs.arg      <- append(gibbs.arg, list(phi.nu = phi.nu, alpha.d1 = alpha.d1, alpha.d2 = alpha.d2,
-                                             adapt = adapt, b0 = b0, b1 = b1, prop = prop, epsilon = epsilon))
+    gibbs.arg      <- append(gibbs.arg, list(phi.nu = phi.nu, alpha.d1 = alpha.d1, alpha.dk = alpha.dk, beta.d1 = beta.d1,
+                                             beta.dk = beta.dk, adapt = adapt, b0 = b0, b1 = b1, prop = prop, epsilon = epsilon))
   } else {
     gibbs.arg      <- append(gibbs.arg, list(sigma.l = sigma.l))
   }

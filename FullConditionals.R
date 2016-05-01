@@ -59,15 +59,15 @@
   
   # Global Shrinkage
     sim.delta1  <- function(Q = NULL, P = NULL, alpha.d1 = NULL, delta = NULL,
-                            tau = NULL, sum.term = NULL, ...) {
+                            beta.d1 = NULL, tau = NULL, sum.term = NULL, ...) {
         rgamma(1, shape=alpha.d1 + P * Q/2, 
-               rate=1 + 0.5/delta[1] * tau %*% sum.term)
+               rate=beta.d1 + 0.5/delta[1] * tau %*% sum.term)
     }
     
-    sim.deltak  <- function(Q = NULL, P = NULL, k = NULL, alpha.d2 = NULL,
-                            delta = NULL, tau = NULL, sum.term = NULL) {
-        rgamma(1, shape=alpha.d2 + P/2 * (Q - k + 1), 
-               rate=1 + 0.5/delta[k] * tau[k:Q] %*% sum.term[k:Q])
+    sim.deltak  <- function(Q = NULL, P = NULL, k = NULL, alpha.dk = NULL,
+                            beta.dk = NULL, delta = NULL, tau = NULL, sum.term = NULL) {
+        rgamma(1, shape=alpha.dk + P/2 * (Q - k + 1), 
+               rate=beta.dk + 0.5/delta[k] * tau[k:Q] %*% sum.term[k:Q])
     }
 
   # Mixing Proportions
@@ -126,9 +126,10 @@
     }
   
   # Global Shrinkage
-    sim.delta.p <- function(Q = NULL, alpha.d1 = NULL, alpha.d2 = NULL, ...) {
-      delta1    <- rgamma(n=1,     shape=alpha.d1, rate=1)
-      deltak    <- rgamma(n=Q - 1, shape=alpha.d2, rate=1)
+    sim.delta.p <- function(Q = NULL, alpha.d1 = NULL, alpha.dk = NULL, 
+                            beta.d1 = NULL, beta.dk = NULL,...) {
+      delta1    <- rgamma(n=1,     shape=alpha.d1, rate=beta.d1)
+      deltak    <- rgamma(n=Q - 1, shape=alpha.dk, rate=beta.dk)
         c(delta1, deltak)
     }
 

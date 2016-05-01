@@ -6,9 +6,11 @@
   gibbs.MIFA      <- function(Q = NULL, data = NULL, iters = NULL, 
                               N = NULL, P = NULL, G = NULL, sigma.mu = NULL, 
                               burnin = NULL, thinning = NULL, psi.alpha = NULL, 
-                              psi.beta = NULL, sw = NULL, verbose = NULL, clust = NULL, 
-                              mu0g = NULL, phi.nu = NULL, alpha.d1 = NULL, alpha.d2 = NULL, 
-                              adapt = NULL, b0 = NULL, b1 = NULL, prop = NULL, epsilon = NULL, ...) {
+                              psi.beta = NULL, sw = NULL, verbose = NULL, 
+                              clust = NULL, mu0g = NULL, phi.nu = NULL, 
+                              alpha.d1 = NULL, alpha.dk = NULL, beta.d1 = NULL,
+                              beta.dk = NULL, adapt = NULL, b0 = NULL, b1 = NULL, 
+                              prop = NULL, epsilon = NULL, ...) {
         
   # Define & initialise variables
     n.iters       <- round(max(iters), -1)
@@ -55,7 +57,7 @@
     mu            <- do.call(cbind, lapply(Gseq, function(g) colMeans(data[z == g,, drop=F])))
     f             <- sim.f.p(N=N, Q=Q)
     phi           <- lapply(Gseq, function(g) sim.phi.p(Q=Q, P=P, phi.nu=phi.nu))
-    delta         <- lapply(Gseq, function(g) sim.delta.p(Q=Q, alpha.d1=alpha.d1, alpha.d2=alpha.d2))
+    delta         <- lapply(Gseq, function(g) sim.delta.p(Q=Q, alpha.d1=alpha.d1, alpha.dk=alpha.dk, beta.d1=beta.d1, beta.dk=beta.dk))
     tau           <- lapply(delta, cumprod)
     lmat          <- lapply(Gseq, function(g) sim.load.p(Q=Q, phi=phi[[g]], tau=tau[[g]], P=P))
     psi.inv       <- do.call(cbind, lapply(Gseq, function(g) sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)))
@@ -150,14 +152,14 @@
         Qg        <- Qs[g]
         sum.termg <- sum.terms[[g]]
         if(Qg      > 0) {
-          delta[[g]][1]    <- sim.delta1(Q=Qg, alpha.d1=alpha.d1, delta=delta[[g]], 
-                                         P=P, tau=tau[[g]], sum.term=sum.termg)
+          delta[[g]][1]    <- sim.delta1(Q=Qg, alpha.d1=alpha.d1, delta=delta[[g]], P=P,
+                                         beta.d1=beta.d1, tau=tau[[g]], sum.term=sum.termg)
           tau[[g]]         <- cumprod(delta[[g]])
         }
         if(Qg      > 1) {
           for(k in seq_len(Qg)[-1]) { 
-            delta[[g]][k]  <- sim.deltak(Q=Qg, alpha.d2=alpha.d2, delta=delta[[g]], 
-                                         P=P, k=k, tau=tau[[g]], sum.term=sum.termg)
+            delta[[g]][k]  <- sim.deltak(Q=Qg, alpha.dk=alpha.dk, delta=delta[[g]], P=P,
+                                         beta.dk=beta.dk, k=k, tau=tau[[g]], sum.term=sum.termg)
             tau[[g]]       <- cumprod(delta[[g]])
           }
         }
@@ -176,7 +178,7 @@
           Qs.old  <- Qs
           Qs      <- unlist(lapply(Gseq, function(g) if(notred[g]) Qs.old[g] + 1 else Qs.old[g] - numred[[g]]))
           phi     <- lapply(Gseq, function(g) if(notred[g]) cbind(phi[[g]][,seq_len(Qs.old[g])], rgamma(n=P, shape=phi.nu/2, rate=phi.nu/2)) else phi[[g]][,nonred[[g]], drop=F])
-          delta   <- lapply(Gseq, function(g) if(notred[g]) c(delta[[g]][seq_len(Qs.old[g])], rgamma(n=1, shape=alpha.d2, rate=1)) else delta[[g]][nonred[[g]]])  
+          delta   <- lapply(Gseq, function(g) if(notred[g]) c(delta[[g]][seq_len(Qs.old[g])], rgamma(n=1, shape=alpha.dk, rate=beta.dk)) else delta[[g]][nonred[[g]]])  
           tau     <- lapply(delta, cumprod)
           lmat    <- lapply(Gseq, function(g) if(notred[g]) cbind(lmat[[g]][,seq_len(Qs.old[g])], rnorm(n=P, mean=0, sd=sqrt(1/(phi[[g]][,Qs[g]] * tau[[g]][Qs[g]])))) else lmat[[g]][,nonred[[g]], drop=F])
           f       <- if(max(Qs) > max(Qs.old)) cbind(f[,seq_len(max(Qs.old))], rnorm(n=N, mean=0, sd=1)) else f[,seq_len(max(Qs)), drop=F]
