@@ -179,16 +179,7 @@
           delta   <- lapply(Gseq, function(g) if(notred[g]) c(delta[[g]][seq_len(Qs.old[g])], rgamma(n=1, shape=alpha.d2, rate=1)) else delta[[g]][nonred[[g]]])  
           tau     <- lapply(delta, cumprod)
           lmat    <- lapply(Gseq, function(g) if(notred[g]) cbind(lmat[[g]][,seq_len(Qs.old[g])], rnorm(n=P, mean=0, sd=sqrt(1/(phi[[g]][,Qs[g]] * tau[[g]][Qs[g]])))) else lmat[[g]][,nonred[[g]], drop=F])
-          f.tmp   <- list()
-          for(g in Gseq)  {
-            if(notred[g]) {
-              f.tmp[[g]]   <- cbind(f[,seq_len(Qs.old[g])], rnorm(n=N, mean=0, sd=1))
-            } else {
-              f.tmp[[g]]   <- f[,nonred[[g]], drop=F]
-            }
-          }
-          f       <- f.tmp[[Gseq[Qs == max(Qs)][1]]]
-         #f       <- if(any(notred)) cbind(f[,seq_len(max(Qs.old))], rnorm(n=N, mean=0, sd=1)) else f[,seq_len(max(sapply(nonred, length))), drop=F] 
+          f       <- if(max(Qs) > max(Qs.old)) cbind(f[,seq_len(max(Qs.old))], rnorm(n=N, mean=0, sd=1)) else f[,seq_len(max(Qs)), drop=F]
         }
       }
     
@@ -208,8 +199,8 @@
         if(sw["mu.sw"])       mu.store[,,new.it]   <- mu  
         if(all(sw["f.sw"], 
            any(Qs > 0)))      f.store[,seq_len(max(Qs)),new.it]    <- f
-        if(sw["l.sw"]) {
-          for(g in Gseq)    {
+        if(sw["l.sw"])   {
+          for(g in Gseq) {
             if(Qs[g] > 0)     load.store[,seq_len(Qs[g]),g,new.it] <- lmat[[g]]
           }
         }
