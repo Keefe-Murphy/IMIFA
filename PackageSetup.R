@@ -176,13 +176,13 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
     if(abs(prop - (1 - prop)) < 0)  stop("'prop' must be a single number between 0 and 1")
     if(missing("epsilon"))   epsilon       <- ifelse(centering, 0.1, 0.005)
     if(abs(epsilon - 
-          (1 - epsilon)) < 0)       stop("'epsilon' must be a single number between 0 and 1"
+          (1 - epsilon)) < 0)       stop("'epsilon' must be a single number between 0 and 1")
   } 
   if(!is.element(method, c("FA", "IFA", "classify"))) {
     if(!is.logical(mu0g))           stop("'mu0g' must be TRUE or FALSE")
     if(missing("alpha.pi"))  alpha.pi      <- ifelse(method == "IMIFA", 0.1, 0.5)
     if(abs(alpha.pi -
-          (1 - alpha.pi)) < 0)      stop("'alpha.pi' must be a single number between 0 and 1"
+          (1 - alpha.pi)) < 0)      stop("'alpha.pi' must be a single number between 0 and 1")
                              z.init        <- match.arg(z.init)
     if(method != "IMIFA") {
       if(!missing(z.list))   {
