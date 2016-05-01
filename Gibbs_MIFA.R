@@ -163,41 +163,98 @@
         }
       }
     
+    # Adaptation  
+      if(all(adapt, iter > burnin)) {      
+        prob      <- 1/exp(b0 + b1 * pmax(iter - burnin, 0))
+        unif      <- runif(n=1, min=0, max=1)
+        lind      <- lapply(Gseq, function(g) if(Qs[g] > 0) colSums(abs(lmat[[g]]) < epsilon)/P else 0)
+        colvec    <- lapply(lind, function(lx) lx >= prop)
+        numred    <- lapply(colvec, sum)
+        Qs.old    <- Qs
+        
+      if(unif < prob) { # check whether to adapt or not
+        adapted   <- F
+        if(all(numred == 0)) { # if all groups are 'big' add columns from priors.
+          Qs      <- Qs + 1
+          f       <- cbind(f, rnorm(n=N, mean=0, sd=1)) 
+          phi     <- lapply(Gseq, function(g) cbind(phi[[g]][,seq_len(Qs.old[g])], rgamma(n=P, shape=phi.nu/2, rate=phi.nu/2)))
+          delta   <- lapply(Gseq, function(g) c(delta[[g]][seq_len(Qs.old[g])], rgamma(n=1, shape=alpha.d2, rate=1)))
+          tau     <- lapply(delta, cumprod)
+          lmat    <- lapply(Gseq, function(g) cbind(lmat[[g]][,seq_len(Qs.old[g])], rnorm(n=P, mean=0, sd=sqrt(1/(phi[[g]][,Qs[g]] * tau[[g]][Qs[g]])))))
+          adapted <- T
+        } 
+        
+        if(all(numred > 0)) { # remove redundant columns if all groups require shrinkage.
+          nonred  <- lapply(colvec, function(cv) which(cv == 0))
+          Qs      <- unlist(lapply(Gseq, function(g) Qs[g] - numred[[g]]))
+          phi     <- lapply(Gseq, function(g) phi[[g]][,nonred[[g]], drop=F])
+          lmat    <- lapply(Gseq, function(g) lmat[[g]][,nonred[[g]], drop=F])
+          delta   <- lapply(Gseq, function(g) delta[[g]][nonred[[g]]])
+          tau     <- lapply(delta, cumprod)
+          keep    <- seq_len(max(sapply(nonred, length)))
+          f       <- f[,keep, drop=F]
+          adapted <- T
+        }
+        
+        if(!adapted) { # If there's a mix of groups to be shrunk and groups to be added to.
+          Qs      <- unlist(lapply(Gseq, function(g) if(numred[[g]] == 0) Qs.old[g] + 1 else Qs.old[g] - numred[[g]]))
+          f.tmp   <- list()
+          for(g in Gseq) {
+            if(numred[[g]] == 0) {
+              phi[[g]]     <- cbind(phi[[g]][,seq_len(Qs.old[g])], rgamma(n=P, shape=phi.nu/2, rate=phi.nu/2))
+              delta[[g]]   <- c(delta[[g]][seq_len(Qs.old[g])], rgamma(n=1, shape=alpha.d2, rate=1))
+              tau[[g]]     <- cumprod(delta[[g]])
+              lmat[[g]]    <- cbind(lmat[[g]][,seq_len(Qs.old[g])], rnorm(n=P, mean=0, sd=sqrt(1/(phi[[g]][,Qs[g]] * tau[[g]][Qs[g]]))))
+              f.tmp[[g]]   <- cbind(f[,seq_len(Qs.old[g])], rnorm(n=N, mean=0, sd=1))
+            } else {
+              nonred       <- which(colvec[[g]] == 0)
+              lmat[[g]]    <- lmat[[g]][,nonred, drop=F]
+              phi[[g]]     <- phi[[g]][,nonred, drop=F]
+              delta[[g]]   <- delta[[g]][nonred]
+              tau[[g]]     <- cumprod(delta[[g]])
+              f.tmp[[g]]   <- f[,nonred, drop=F]
+            }
+          }
+          f       <- f.tmp[[Gseq[Qs == max(Qs)][1]]]
+        }
+      }
+    }
+    
     # Mixing Proportions
-      pi.prop    <- sim.pi(pi.alpha=pi.alpha, nn=nn)
+      pi.prop     <- sim.pi(pi.alpha=pi.alpha, nn=nn)
     
     # Cluster Labels
-      psi        <- 1/psi.inv
-      Sigma      <- lapply(Gseq, function(g) tcrossprod(lmat[[g]]) + diag(psi[,g]))
-      z.res      <- sim.z(data=data, mu=mu, Sigma=Sigma, G=G, pi.prop=pi.prop)
-      z          <- z.res$z
+      psi         <- 1/psi.inv
+      Sigma       <- lapply(Gseq, function(g) tcrossprod(lmat[[g]]) + diag(psi[,g]))
+      z.res       <- sim.z(data=data, mu=mu, Sigma=Sigma, G=G, pi.prop=pi.prop)
+      z           <- z.res$z
       
     if(any(Qs > Q.star))      stop(paste0("Q cannot exceed initial number of loadings columns: try increasing Q.star from ", Q.star))
       if(is.element(iter, iters))  {
-        new.it   <- which(iters == iter)
-        log.like <- sum(z.res$log.likes)
-        if(sw["mu.sw"])             mu.store[,,new.it]     <- mu  
+        new.it    <- which(iters == iter)
+        log.like  <- sum(z.res$log.likes)
+        if(sw["mu.sw"])       mu.store[,,new.it]   <- mu  
         if(all(sw["f.sw"], 
-           any(Qs > 0)))            f.store[,seq_len(max(Qs)),new.it]    <- f
+           any(Qs > 0)))      f.store[,seq_len(max(Qs)),new.it]    <- f
         if(sw["l.sw"]) {
           for(g in Gseq)    {
-            if(Qs[g] > 0)           load.store[,seq_len(Qs[g]),g,new.it] <- lmat[[g]]
+            if(Qs[g] > 0)     load.store[,seq_len(Qs[g]),g,new.it] <- lmat[[g]]
           }
         }
-        if(sw["psi.sw"])            psi.store[,,new.it]    <- psi
-        if(sw["pi.sw"])             pi.store[,new.it]      <- pi.prop
-                                    z.store[,new.it]       <- z 
-                                    ll.store[new.it]       <- log.like  
-                                    Q.store[,new.it]       <- Qs
+        if(sw["psi.sw"])      psi.store[,,new.it]  <- psi
+        if(sw["pi.sw"])       pi.store[,new.it]    <- pi.prop
+                              z.store[,new.it]     <- z 
+                              ll.store[new.it]     <- log.like  
+                              Q.store[,new.it]     <- Qs
       }
     }
-    returns   <- list(mu       = if(sw["mu.sw"])  mu.store,
-                      f        = if(sw["f.sw"])   as.simple_sparse_array(f.store), 
-                      load     = if(sw["l.sw"])   as.simple_sparse_array(load.store), 
-                      psi      = if(sw["psi.sw"]) psi.store,
-                      pi.prop  = if(sw["pi.sw"])  pi.store,
-                      z        = z.store,
-                      ll.store = ll.store,
-                      Q.store  = Q.store)
+    returns       <- list(mu       = if(sw["mu.sw"])  mu.store,
+                          f        = if(sw["f.sw"])   as.simple_sparse_array(f.store), 
+                          load     = if(sw["l.sw"])   as.simple_sparse_array(load.store), 
+                          psi      = if(sw["psi.sw"]) psi.store,
+                          pi.prop  = if(sw["pi.sw"])  pi.store,
+                          z        = z.store,
+                          ll.store = ll.store,
+                          Q.store  = Q.store)
     return(returns)
   }

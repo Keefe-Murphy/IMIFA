@@ -130,26 +130,26 @@
       if(is.element(iter, iters))  {
         new.it   <- which(iters == iter)
         log.like <- sum(z.res$log.likes) 
-        if(sw["mu.sw"])             mu.store[,,new.it]     <- mu  
-        if(all(sw["f.sw"], Q > 0))  f.store[,,new.it]      <- f
+        if(sw["mu.sw"])             mu.store[,,new.it]      <- mu  
+        if(all(sw["f.sw"], Q > 0))  f.store[,,new.it]       <- f
         if(all(sw["l.sw"], Q > 0)) {
           for(g in Gseq)  {
-                                    load.store[,,g,new.it] <- lmat[[g]]
+                                    load.store[,,g,new.it]  <- lmat[[g]]
           }
         }
-        if(sw["psi.sw"])            psi.store[,,new.it]    <- psi
-        if(sw["pi.sw"])             pi.store[,new.it]      <- pi.prop
-                                    z.store[,new.it]       <- z 
-                                    ll.store[new.it]       <- log.like
+        if(sw["psi.sw"])            psi.store[,,new.it]     <- psi
+        if(sw["pi.sw"])             pi.store[,new.it]       <- pi.prop
+                                    z.store[,new.it]        <- z 
+                                    ll.store[new.it]        <- log.like
       }  
     }
-    returns   <- list(mu       = if(sw["mu.sw"])              mu.store,
-                      f        = if(all(sw["f.sw"], Q > 0))   f.store, 
-                      load     = if(all(sw["l.sw"], Q > 0))   load.store, 
-                      psi      = if(sw["psi.sw"])             psi.store,
-                      pi.prop  = if(sw["pi.sw"])              pi.store,
-                      z        = z.store,
-                      ll.store = ll.store)
-    attr(returns, "K")        <- G - 1 + G * (P * Q - 0.5 * Q * (Q - 1)) + 2 * G * P
+    returns      <- list(mu       = if(sw["mu.sw"])            mu.store,
+                         f        = if(all(sw["f.sw"], Q > 0)) f.store, 
+                         load     = if(all(sw["l.sw"], Q > 0)) load.store, 
+                         psi      = if(sw["psi.sw"])           psi.store,
+                         pi.prop  = if(sw["pi.sw"])            pi.store,
+                         z        = z.store,
+                         ll.store = ll.store)
+    attr(returns, "K")     <- G - 1 + G * (P * Q - 0.5 * Q * (Q - 1)) + 2 * G * P
     return(returns)
   }
