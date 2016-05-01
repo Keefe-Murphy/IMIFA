@@ -61,11 +61,7 @@
     tau           <- lapply(delta, cumprod)
     lmat          <- lapply(Gseq, function(g) sim.load.p(Q=Q, phi=phi[[g]], tau=tau[[g]], P=P))
     psi.inv       <- do.call(cbind, lapply(Gseq, function(g) sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)))
-    if(mu0g)  {
-      mu.zero     <- mu
-    } else    {
-      mu.zero     <- do.call(cbind, lapply(Gseq, function(g) colMeans(data)))
-    }
+    mu.zero       <- if(mu0g) mu else do.call(cbind, lapply(Gseq, function(g) colMeans(data)))
     if(round(sum(mu.zero)) == 0) {
       mu.zero     <- matrix(0, nr=1, nc=G)
     }

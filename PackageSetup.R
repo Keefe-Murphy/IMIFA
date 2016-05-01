@@ -151,24 +151,38 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   if(is.null(rownames(dat))) rownames(dat) <- seq_len(N)
   if(missing("sigma.mu"))    sigma.mu      <- diag(cov(dat))
   if(scaling == "unit")      sigma.mu      <- sigma.mu[1]
+  if(any(sigma.mu <= 0))            stop("'sigma.mu' must be strictly positive")
   if(missing("psi.alpha"))   psi.alpha     <- 2.5
+  if(psi.alpha <= 0)                stop("'psi.alpha' must be strictly positive")
   if(missing("psi.beta"))    psi.beta      <- (psi.alpha - 1)/diag(solve(cov(dat)))
+  if(any(psi.beta <= 0))            stop("'psi.beta' must be strictly positive")
   if(is.element(method, c("FA", "MFA"))) {
     if(missing("sigma.l"))   sigma.l       <- 0.5
+    if(sigma.l <= 0)                stop("'sigma.l' must be strictly positive")
   } else {
     if(missing("phi.nu"))    phi.nu        <- 1.5
+    if(phi.nu <= 0)                 stop("'phi.nu' must be strictly positive")
     if(missing("alpha.d1"))  alpha.d1      <- 2
+    if(alpha.d1 <= 0)               stop("'alpha.d1' must be strictly positive")
     if(missing("alpha.dk"))  alpha.dk      <- 10
+    if(alpha.dk <= 1)               stop("'alpha.dk' must be greater than 1")
     if(missing("beta.d1"))   beta.d1       <- 1
+    if(beta.d1 <= 0)                stop("'beta.d1' must be strictly positive")
     if(missing("beta.dk"))   beta.dk       <- 1
+    if(beta.dk <= 0)                stop("'beta.dk' must be strictly positive")
     if(missing("b0"))        b0            <- 0.1
     if(missing("b1"))        b1            <- 0.00005
     if(missing("prop"))      prop          <- 3/4
+    if(abs(prop - (1 - prop)) < 0)  stop("'prop' must be a single number between 0 and 1")
     if(missing("epsilon"))   epsilon       <- ifelse(centering, 0.1, 0.005)
+    if(abs(epsilon - 
+          (1 - epsilon)) < 0)       stop("'epsilon' must be a single number between 0 and 1"
   } 
   if(!is.element(method, c("FA", "IFA", "classify"))) {
     if(!is.logical(mu0g))           stop("'mu0g' must be TRUE or FALSE")
     if(missing("alpha.pi"))  alpha.pi      <- ifelse(method == "IMIFA", 0.1, 0.5)
+    if(abs(alpha.pi -
+          (1 - alpha.pi)) < 0)      stop("'alpha.pi' must be a single number between 0 and 1"
                              z.init        <- match.arg(z.init)
     if(method != "IMIFA") {
       if(!missing(z.list))   {
