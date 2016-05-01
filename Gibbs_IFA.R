@@ -112,16 +112,15 @@
     # Adaptation  
       if(all(adapt, iter > burnin)) {      
         prob     <- 1/exp(b0 + b1 * pmax(iter - burnin, 0))
-        unif     <- runif(n=1, min=0, max=1)
-        if(Q > 0) {
-          lind   <- colSums(abs(lmat) < epsilon) / P
-        } else {
-          lind   <- 0
-        }
-        colvec   <- lind >= prop
-        numred   <- sum(colvec)
-        
+        unif     <- runif(n=1, min=0, max=1)     
         if(unif   < prob) { # check whether to adapt or not
+          if(Q > 0) {
+            lind <- colSums(abs(lmat) < epsilon) / P
+          } else {
+            lind <- 0
+          }
+          colvec <- lind >= prop
+          numred <- sum(colvec)
           if(numred == 0) { # simulate extra columns from priors
             Q       <- Q + 1
             f       <- cbind(f, rnorm(n=N, mean=0, sd=1))         

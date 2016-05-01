@@ -166,59 +166,31 @@
     # Adaptation  
       if(all(adapt, iter > burnin)) {      
         prob      <- 1/exp(b0 + b1 * pmax(iter - burnin, 0))
-        unif      <- runif(n=1, min=0, max=1)
-        lind      <- lapply(Gseq, function(g) if(Qs[g] > 0) colSums(abs(lmat[[g]]) < epsilon)/P else 0)
-        colvec    <- lapply(lind, function(lx) lx >= prop)
-        numred    <- lapply(colvec, sum)
-        Qs.old    <- Qs
-        
-      if(unif < prob) { # check whether to adapt or not
-        adapted   <- F
-        if(all(numred == 0)) { # if all groups are 'big' add columns from priors.
-          Qs      <- Qs + 1
-          f       <- cbind(f, rnorm(n=N, mean=0, sd=1)) 
-          phi     <- lapply(Gseq, function(g) cbind(phi[[g]][,seq_len(Qs.old[g])], rgamma(n=P, shape=phi.nu/2, rate=phi.nu/2)))
-          delta   <- lapply(Gseq, function(g) c(delta[[g]][seq_len(Qs.old[g])], rgamma(n=1, shape=alpha.d2, rate=1)))
-          tau     <- lapply(delta, cumprod)
-          lmat    <- lapply(Gseq, function(g) cbind(lmat[[g]][,seq_len(Qs.old[g])], rnorm(n=P, mean=0, sd=sqrt(1/(phi[[g]][,Qs[g]] * tau[[g]][Qs[g]])))))
-          adapted <- T
-        } 
-        
-        if(all(numred > 0)) { # remove redundant columns if all groups require shrinkage.
+        unif      <- runif(n=1, min=0, max=1)     
+        if(unif    < prob) { 
+          lind    <- lapply(Gseq, function(g) if(Qs[g] > 0) colSums(abs(lmat[[g]]) < epsilon)/P else 0)
+          colvec  <- lapply(lind, function(lx) lx >= prop)
           nonred  <- lapply(colvec, function(cv) which(cv == 0))
-          Qs      <- unlist(lapply(Gseq, function(g) Qs[g] - numred[[g]]))
-          phi     <- lapply(Gseq, function(g) phi[[g]][,nonred[[g]], drop=F])
-          lmat    <- lapply(Gseq, function(g) lmat[[g]][,nonred[[g]], drop=F])
-          delta   <- lapply(Gseq, function(g) delta[[g]][nonred[[g]]])
+          numred  <- lapply(colvec, sum)
+          notred  <- unlist(lapply(Gseq, function(g) numred[[g]] == 0))
+          Qs.old  <- Qs
+          Qs      <- unlist(lapply(Gseq, function(g) if(notred[g]) Qs.old[g] + 1 else Qs.old[g] - numred[[g]]))
+          phi     <- lapply(Gseq, function(g) if(notred[g]) cbind(phi[[g]][,seq_len(Qs.old[g])], rgamma(n=P, shape=phi.nu/2, rate=phi.nu/2)) else phi[[g]][,nonred[[g]], drop=F])
+          delta   <- lapply(Gseq, function(g) if(notred[g]) c(delta[[g]][seq_len(Qs.old[g])], rgamma(n=1, shape=alpha.d2, rate=1)) else delta[[g]][nonred[[g]]])  
           tau     <- lapply(delta, cumprod)
-          keep    <- seq_len(max(sapply(nonred, length)))
-          f       <- f[,keep, drop=F]
-          adapted <- T
-        }
-        
-        if(!adapted) { # If there's a mix of groups to be shrunk and groups to be added to.
-          Qs      <- unlist(lapply(Gseq, function(g) if(numred[[g]] == 0) Qs.old[g] + 1 else Qs.old[g] - numred[[g]]))
+          lmat    <- lapply(Gseq, function(g) if(notred[g]) cbind(lmat[[g]][,seq_len(Qs.old[g])], rnorm(n=P, mean=0, sd=sqrt(1/(phi[[g]][,Qs[g]] * tau[[g]][Qs[g]])))) else lmat[[g]][,nonred[[g]], drop=F])
           f.tmp   <- list()
-          for(g in Gseq) {
-            if(numred[[g]] == 0) {
-              phi[[g]]     <- cbind(phi[[g]][,seq_len(Qs.old[g])], rgamma(n=P, shape=phi.nu/2, rate=phi.nu/2))
-              delta[[g]]   <- c(delta[[g]][seq_len(Qs.old[g])], rgamma(n=1, shape=alpha.d2, rate=1))
-              tau[[g]]     <- cumprod(delta[[g]])
-              lmat[[g]]    <- cbind(lmat[[g]][,seq_len(Qs.old[g])], rnorm(n=P, mean=0, sd=sqrt(1/(phi[[g]][,Qs[g]] * tau[[g]][Qs[g]]))))
+          for(g in Gseq)  {
+            if(notred[g]) {
               f.tmp[[g]]   <- cbind(f[,seq_len(Qs.old[g])], rnorm(n=N, mean=0, sd=1))
             } else {
-              nonred       <- which(colvec[[g]] == 0)
-              lmat[[g]]    <- lmat[[g]][,nonred, drop=F]
-              phi[[g]]     <- phi[[g]][,nonred, drop=F]
-              delta[[g]]   <- delta[[g]][nonred]
-              tau[[g]]     <- cumprod(delta[[g]])
-              f.tmp[[g]]   <- f[,nonred, drop=F]
+              f.tmp[[g]]   <- f[,nonred[[g]], drop=F]
             }
           }
           f       <- f.tmp[[Gseq[Qs == max(Qs)][1]]]
+         #f       <- if(any(notred)) cbind(f[,seq_len(max(Qs.old))], rnorm(n=N, mean=0, sd=1)) else f[,seq_len(max(sapply(nonred, length))), drop=F] 
         }
       }
-    }
     
     # Mixing Proportions
       pi.prop     <- sim.pi(pi.alpha=pi.alpha, nn=nn)
