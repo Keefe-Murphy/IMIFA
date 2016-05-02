@@ -148,13 +148,21 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   }
   
 # Define full conditionals, hyperparamters & Gibbs Sampler function for desired method
+  cov.mat          <- var(dat)
   if(is.null(rownames(dat))) rownames(dat) <- seq_len(N)
-  if(missing("sigma.mu"))    sigma.mu      <- diag(cov(dat))
+  if(missing("sigma.mu"))    sigma.mu      <- diag(cov.mat)
   if(scaling == "unit")      sigma.mu      <- sigma.mu[1]
   if(any(sigma.mu <= 0))            stop("'sigma.mu' must be strictly positive")
   if(missing("psi.alpha"))   psi.alpha     <- 2.5
   if(psi.alpha <= 0)                stop("'psi.alpha' must be strictly positive")
-  if(missing("psi.beta"))    psi.beta      <- (psi.alpha - 1)/diag(solve(cov(dat)))
+  if(missing("psi.beta")) {
+    inv.cov        <- try(chol2inv(chol(cov.mat)), silent=T)
+    if(inherits(inv.cov, "try-error"))   {
+      inv.cov      <- ginv(cov.mat)
+     #inv.cov      <- scal
+    }
+    psi.beta       <- (psi.alpha - 1)/diag(inv.cov)
+  }   
   if(any(psi.beta <= 0))            stop("'psi.beta' must be strictly positive")
   if(is.element(method, c("FA", "MFA"))) {
     if(missing("sigma.l"))   sigma.l       <- 0.5
@@ -237,14 +245,14 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
       G            <- range.G[g]
       pi.alpha[[g]]     <- rep(alpha.pi, G)
       if(z.init    == "kmeans")     {
-        k.res      <- try(kmeans(dat, G, nstart=100))
+        k.res      <- try(kmeans(dat, G, nstart=100), silent=T)
         if(!inherits(k.res, "try-error"))  {
           zi[[g]]  <- as.numeric(factor(k.res$cluster, levels=seq_len(G)))
         } else                      warning("Cannot initialise cluster labels using kmeans. Try another z.init method")
       } else if(z.init  == "list")   {
         zi[[g]]    <- as.numeric(z.list[[g]])
       } else if(z.init  == "mclust") {
-        m.res      <- try(Mclust(dat, G))
+        m.res      <- try(Mclust(dat, G), silent=T)
         if(!inherits(m.res, "try_error"))  {
           zi[[g]]  <- as.numeric(m.res$classification)
         } else                      warning("Cannot initialise cluster labels using mclust. Try another z.init method")
