@@ -222,6 +222,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     cluster      <- c(cluster, if(!missing(Labels)) list(conf.mat = tab, perf = tab.stat),
                       if(sw["pi.sw"]) list(pi.prop = pi.prop, var.pi = var.pi, CI.pi = CI.pi))
     attr(cluster, "Z.init")    <- attr(sim[[G.ind]], "Z.init")
+    attr(cluster, "Init.Meth") <- attr(sims, "Init.Z")
     post.z       <- as.numeric(post.z)
     ind          <- lapply(seq_len(G), function(g) post.z == g)
   }

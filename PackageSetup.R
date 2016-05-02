@@ -376,6 +376,9 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   attr(imifa, "Date")     <- format(Sys.Date(), "%d-%b-%Y")
   attr(imifa, "Factors")  <- if(is.element(method, c("FA", "MFA"))) range.Q else Q.star
   attr(imifa, "Groups")   <- if(method != "IMIFA") range.G else G.star
+  if(is.element(method, c("MFA", "MIFA"))) {
+    attr(imifa, "Init.Z") <- z.init
+  }
   attr(imifa, "Method")   <- paste0(toupper(substr(method, 1, 1)),
                                     substr(method, 2, nchar(method)))
   attr(imifa, "Name")     <- dat.name
