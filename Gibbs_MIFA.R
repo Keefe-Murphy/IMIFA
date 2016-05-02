@@ -3,14 +3,12 @@
 ################################################################
   
 # Gibbs Sampler Function
-  gibbs.MIFA      <- function(Q = NULL, data = NULL, iters = NULL, 
-                              N = NULL, P = NULL, G = NULL, sigma.mu = NULL, 
-                              burnin = NULL, thinning = NULL, psi.alpha = NULL, 
-                              psi.beta = NULL, sw = NULL, verbose = NULL, 
-                              clust = NULL, mu0g = NULL, phi.nu = NULL, 
-                              alpha.d1 = NULL, alpha.dk = NULL, beta.d1 = NULL,
-                              beta.dk = NULL, adapt = NULL, b0 = NULL, b1 = NULL, 
-                              prop = NULL, epsilon = NULL, ...) {
+  gibbs.MIFA      <- function(Q, data, iters, N, P, G, 
+                              sigma.mu, burnin, thinning, 
+                              psi.alpha, psi.beta, verbose, 
+                              sw, clust, mu0g, phi.nu, b0,
+                              b1, alpha.d1, alpha.dk, beta.d1,
+                              beta.dk, adapt, prop, epsilon, ...) {
         
   # Define & initialise variables
     n.iters       <- round(max(iters), -1)
@@ -123,8 +121,8 @@
             fgg            <- sim.score(N=nng, lmat=lmat[[g]], Q=Qg, 
                                         c.data=c.datg, psi.inv=psi.ig)
             FtF            <- crossprod(fgg)
-            lmat[[g]]      <- sim.load(l.sigma=l.sigma, Q=Qg, c.data=c.datg, P=P, f=fgg,
-                                       psi.inv=psi.ig, FtF=FtF, phi=phi[[g]], tau=tau[[g]])
+            lmat[[g]]      <- sim.load(Q=Qg, c.data=c.datg, P=P, f=fgg, FtF=FtF,
+                                       psi.inv=psi.ig, phi=phi[[g]], tau=tau[[g]])
             fg[[g]][,Qgs]  <- fgg
           } else {
             fg[[g]][,Qgs]  <- matrix(, nr=nng, nc=0)

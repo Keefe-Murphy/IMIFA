@@ -4,7 +4,7 @@
 
 plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "density", "posterior", "GQ", "trace"), 
                            vars = c("means", "scores", "loadings", "uniquenesses"), Labels = NULL, fac = NULL, g = NULL,
-                           by.fac = T, ind = NULL, type = c("h", "n", "p", "l"), intervals = T, mat = T, partial = F, ... ) {
+                           by.fac = T, ind = NULL, type = c("h", "n", "p", "l"), intervals = T, mat = T, partial = F) {
 
   defpar  <- suppressWarnings(par(no.readonly = T))
   defop   <- options()

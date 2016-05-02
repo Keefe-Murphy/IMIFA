@@ -3,11 +3,10 @@
 ################################################################
   
 # Gibbs Sampler Function
-  gibbs.MFA      <- function(Q = NULL, data = NULL, iters = NULL,
-                             N = NULL, P = NULL, G = NULL, sigma.mu = NULL, 
-                             sigma.l = NULL, burnin = NULL, thinning = NULL, 
-                             psi.alpha = NULL, psi.beta = NULL, sw = NULL, 
-                             verbose = NULL, clust = NULL, mu0g = NULL, ...) {
+  gibbs.MFA      <- function(Q, data, iters, N, P, G, 
+                             sigma.mu, sigma.l, burnin, 
+                             thinning, psi.alpha, psi.beta,
+                             sw, verbose, clust, mu0g, ...) {
         
   # Define & initialise variables
     n.iters      <- round(max(iters), -1)

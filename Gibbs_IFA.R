@@ -3,13 +3,12 @@
 ###################################################################
   
 # Gibbs Sampler Function
-  gibbs.IFA      <- function(Q = NULL, data = NULL, iters = NULL, 
-                             N = NULL, P = NULL, sigma.mu = NULL, 
-                             psi.alpha = NULL, psi.beta = NULL, burnin = NULL, 
-                             thinning = NULL, verbose = NULL, sw = NULL, 
-                             phi.nu = NULL, alpha.d1 = NULL, alpha.dk = NULL, 
-                             beta.d1 = NULL, beta.dk = NULL, b0 = NULL, b1 = NULL,
-                             adapt = NULL, prop = NULL, epsilon = NULL, ...) {    
+  gibbs.IFA      <- function(Q, data, iters, N, P, sigma.mu, 
+                             psi.alpha, psi.beta, burnin, 
+                             thinning, verbose, sw, 
+                             phi.nu, alpha.d1, alpha.dk, 
+                             beta.d1, beta.dk, b0, b1,
+                             adapt, prop, epsilon, ...) {    
     
   # Define & initialise variables
     n.iters      <- round(max(iters), -1)
