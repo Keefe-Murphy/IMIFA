@@ -228,6 +228,8 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   if(!is.element(method, c("FA", "IFA", "classify"))) {
     gibbs.arg      <- append(gibbs.arg, list(mu0g = mu0g))
   }
+  
+  init.start       <- proc.time()
   if(is.element(method, c("MFA", "MIFA"))) {
     pi.alpha       <- list()
     zi             <- list()
@@ -253,14 +255,14 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
           pi.prop  <- sim.pi(pi.alpha=pi.alpha[[g]])
           zips     <- sim.z.p(N=N, prob.z=pi.prop)
         }
-        zi[[g]]  <- as.numeric(zips)
+        zi[[g]]    <- as.numeric(zips)
         rm(zips)
       }
     }
   }
-
+  init.time        <- proc.time() - init.start
+  
   if(profile)  Rprof()
-
   if(is.element(method, c("IFA", "MIFA"))) {
     if(length(range.G) == 1) {
       start.time   <- proc.time()
@@ -373,8 +375,10 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   attr(imifa, "Scaling")  <- scal
   attr(imifa, "Store")    <- length(iters)
   attr(imifa, "Switch")   <- switches
-  if(is.element(method, c("IFA", "IMIFA")) || length(range.Q) == 1) {
-    attr(imifa, "Time")   <- tot.time
+  if(is.element(method, c("IFA", "IMIFA")) || length(range.Q) == 1)       {
+    attr(imifa, "Time")   <- round(tot.time, 2)
+  } else if(all(is.element(method, c("MFA", "MIFA")), z.init  != "list")) {
+    attr(imifa, "Time")   <- lapply(list(Total = tot.time, Average = avg.time, Z.Initialisation = init.time), function(x) round(x, 2)) 
   } else {
     attr(imifa, "Time")   <- lapply(list(Total = tot.time, Average = avg.time), function(x) round(x, 2)) 
   }
