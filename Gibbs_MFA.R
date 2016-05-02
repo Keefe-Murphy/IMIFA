@@ -143,7 +143,7 @@
                          load     = if(all(sw["l.sw"], Q > 0)) load.store, 
                          psi      = if(sw["psi.sw"])           psi.store,
                          pi.prop  = if(sw["pi.sw"])            pi.store,
-                         z        = z.store,
+                         z.store  = z.store,
                          ll.store = ll.store)
     attr(returns, "K")     <- G - 1 + G * (P * Q - 0.5 * Q * (Q - 1)) + 2 * G * P
     return(returns)

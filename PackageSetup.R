@@ -90,7 +90,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
                                     warning(paste0("Forced use of ", meth[1], " method where range.G is equal to 1"), call.=F)
     }                               
   }
-  no.fac    <- all(all(range.Q == 0), is.element(method, c("FA", "MFA")))
+  no.fac    <- is.element(method, c("FA", "MFA")) && all(range.Q == 0)
   if(is.element(method, c("FA", "MFA"))) {
     if(!missing(Q.star))  {
       rm(Q.star)
@@ -383,7 +383,8 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   attr(imifa, "Scaling")  <- scal
   attr(imifa, "Store")    <- length(iters)
   attr(imifa, "Switch")   <- switches
-  if(is.element(method, c("IFA", "IMIFA")) || length(range.Q) == 1)       {
+  if(any(is.element(method, c("IFA", "IMIFA")), 
+     (is.element(method, c("FA", "MFA")) && length(range.Q) == 1)))       {
     attr(imifa, "Time")   <- round(tot.time, 2)
   } else if(all(is.element(method, c("MFA", "MIFA")), z.init  != "list")) {
     attr(imifa, "Time")   <- lapply(list(Total = tot.time, Average = avg.time, Z.Initialisation = init.time), function(x) round(x, 2)) 

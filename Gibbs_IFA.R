@@ -162,6 +162,6 @@
                          post.psi = post.psi,
                          cov.emp  = cov.emp,
                          cov.est  = cov.est,
-                         Q.store  = Q.store)
+                         Q.store  = matrix(Q.store, nr=1))
     return(returns)
   }

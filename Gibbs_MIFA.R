@@ -209,7 +209,7 @@
                           load     = if(sw["l.sw"])   as.simple_sparse_array(load.store), 
                           psi      = if(sw["psi.sw"]) psi.store,
                           pi.prop  = if(sw["pi.sw"])  pi.store,
-                          z        = z.store,
+                          z.store  = z.store,
                           ll.store = ll.store,
                           Q.store  = Q.store)
     return(returns)
