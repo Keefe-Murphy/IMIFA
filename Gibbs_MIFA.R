@@ -48,7 +48,6 @@
     dimnames(Q.store)      <- list(gnames, iternames)
     
     mu.sigma      <- 1/sigma.mu
-    l.sigma       <- 1/sigma.l 
     pi.alpha      <- clust$pi.alpha
     z             <- clust$z
     pi.prop       <- t(prop.table(tabulate(z, nbins=G)))
@@ -110,7 +109,7 @@
       } else {
         fg        <- lapply(Gseq, function(g) matrix(0, nr=nn[g], nc=max(Qs)))
         fgnames   <- lapply(Gseq, function(g) obsnames[z.ind[[g]]])
-        fg        <- mapply(function(mats, nams) {rownames(mats) <- nams; mats}, fg, fgnames)
+        fg        <- mapply(function(mats, nams) {rownames(mats) <- nams; mats}, fg, fgnames, SIMPLIFY=F)
         for(g in Gseq)    {
           Qg      <- Qs[g]
           Qgs     <- seq_len(Qg)
@@ -120,12 +119,10 @@
           if(Qg    > 0)   {
             fgg            <- sim.score(N=nng, lmat=lmat[[g]], Q=Qg, 
                                         c.data=c.datg, psi.inv=psi.ig)
-            FtF            <- crossprod(fgg)
-            lmat[[g]]      <- sim.load(Q=Qg, c.data=c.datg, P=P, f=fgg, FtF=FtF,
-                                       psi.inv=psi.ig, phi=phi[[g]], tau=tau[[g]])
+            lmat[[g]]      <- sim.load(Q=Qg, c.data=c.datg, f=fgg, FtF=crossprod(fgg),
+                                       P=P, psi.inv=psi.ig, phi=phi[[g]], tau=tau[[g]])
             fg[[g]][,Qgs]  <- fgg
           } else {
-            fg[[g]][,Qgs]  <- matrix(, nr=nng, nc=0)
             lmat[[g]]      <- matrix(, nr=P, nc=0)
           }
         }
