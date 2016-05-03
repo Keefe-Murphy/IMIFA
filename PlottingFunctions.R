@@ -404,13 +404,15 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
     } 
     
     if(m.sw["G.sw"]) {
-      if(is.element(method, c("FA", "MFA"))) {
+      if(is.element(method, c("FA", "MFA", "MIFA"))) {
         aicm        <- round(GQ.res$AICM, 2)
         bicm        <- round(GQ.res$BICM, 2)
-        aic.mcmc    <- round(GQ.res$AIC.mcmc, 2)
-        bic.mcmc    <- round(GQ.res$BIC.mcmc, 2)
+        if(method   != "MIFA") {
+          aic.mcmc  <- round(GQ.res$AIC.mcmc, 2)
+          bic.mcmc  <- round(GQ.res$BIC.mcmc, 2)
+        }
       }
-      if(all(method == "IFA", !Q.supp)) {
+      if(method == "IFA")  {
         plot.Q <- GQ.res$Counts
         col.Q  <- c("black", "red")[(names(plot.Q) == Q) + 1]
         Q.plot <- barplot(plot.Q, ylab="Frequency", xlab="Q", xaxt="n", col=col.Q)
@@ -419,22 +421,25 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
       }  
       if(!exists("Q.plot",  envir=environment())) 
                                       warning("Nothing to plot", call.=F)
-      if(method  == "MIFA") {
+      class(GQ.res)    <- "listof"
+      if(is.element(method, c("MFA", "MIFA"))) {
           print(GQ.res)
       } else if(method == "IFA") {
           print(tail(GQ.res, -1))
-      } else if(method == "MFA") {
-          print(head(GQ.res, -4))
       } else {
           cat(paste0("Q = ", Q, "\n"))
       }
-      if(is.element(method, c("FA", "MFA"))) {
+      if(is.element(method, c("FA", "MFA", "MIFA"))) {
         G.ind  <- ifelse(G.supp, 1, which(n.grp == G))
-        Q.ind  <- ifelse(Q.supp, 1, which(n.fac == Q))
+        Q.ind  <- ifelse(any(Q.supp, method == "MIFA"), 1, which(n.fac == Q))
+        if(any(nrow(bicm) > 1, ncol(bicm) > 1)) {
           cat(paste0("AICM = ", aicm[G.ind,Q.ind], "\n"))
           cat(paste0("BICM = ", bicm[G.ind,Q.ind], "\n"))
-          cat(paste0("AIC.mcmc = ", aic.mcmc[G.ind,Q.ind], "\n"))
-          cat(paste0("BIC.mcmc = ", bic.mcmc[G.ind,Q.ind], "\n"))
+          if(method != "MIFA") {
+            cat(paste0("AIC.mcmc = ", aic.mcmc[G.ind,Q.ind], "\n"))
+            cat(paste0("BIC.mcmc = ", bic.mcmc[G.ind,Q.ind], "\n"))
+          }
+        }
       }
     }
   

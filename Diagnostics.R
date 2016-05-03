@@ -143,11 +143,11 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     G.ind        <- ifelse(length(n.grp) == 1, which(n.grp == G), G.ind)
     Q.ind        <- if(any(method == "MIFA", length(n.fac) > 1)) Q.ind else which(n.fac == Q)
     Q            <- if(method == "MIFA") Q else setNames(rep(Q, G), paste0("Group ", seq_len(G)))
-    GQ.res       <- list(G = G, Q = Q, AICM = aicm, BICM = bicm)
+    GQ.res       <- list(G = G, Q = Q, AICMs = aicm, BICMs = bicm)
     if(method == "MIFA") {
       GQ.res     <- c(GQ.res, GQres.temp)
     } else {
-      GQ.res     <- c(GQ.res, list(AIC.mcmc = aic.mcmc, BIC.mcmc = bic.mcmc))
+      GQ.res     <- c(GQ.res, list(AIC.mcmcs = aic.mcmc, BIC.mcmcs = bic.mcmc))
     }
   }
   clust.ind      <- all(is.element(method, c("MFA", "MIFA", "IMIFA")), G > 1)
