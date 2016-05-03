@@ -19,6 +19,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
   GQ.res  <- results$GQ.results
   G       <- GQ.res$G
   Qs      <- GQ.res$Q
+  Q.max   <- max(Qs)
   n.grp   <- attr(GQ.res, "Groups")
   n.fac   <- attr(GQ.res, "Factors")
   G.supp  <- attr(GQ.res, "Supplied")["G"]
@@ -124,12 +125,18 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
       if(indx)               ind <- c(1, 1)
       if(!facx)           ind[2] <- fac[g]
       if(length(ind) > 2)             stop("Length of plotting indices can't be greater than 2")
-      if(vars  == "scores") {
+      if(vars  == "scores")  {
         if(ind[1] >  n.obs)           stop(paste0("First index can't be greater than the number of observations - ",  n.obs))
-      } else if(ind[1] > n.var)       stop(paste0("First index can't be greater than the number of variables - ",  n.var))
-      if(ind[2]   > Q) {              warning(paste0("Second index can't be greater than ", Q, ", the number of factors", if(grp.ind) paste0(" in group ", g), ".\n Try specifying a vector of fac values with maximum entries ", paste0(Qs, collapse = ", "), "."), call.=F)
+        if(ind[2] >  Q.max)  {        warning(paste0("Second index can't be greater than ", Q.max, ", the total number of factors", if(grp.ind) paste0(" across groups"), ".\n Try specifying a vector of fac values with maximum entries ", paste0(Qs, collapse = ", "), "."), call.=F)
         ifelse(msgx, readline(msg), "")
         next
+        }
+      } else {
+        if(ind[1] > n.var)            stop(paste0("First index can't be greater than the number of variables - ",  n.var))
+        if(ind[2] > Q) {              warning(paste0("Second index can't be greater than ", Q, ", the number of factors", if(grp.ind) paste0(" in group ", g), ".\n Try specifying a vector of fac values with maximum entries ", paste0(Qs, collapse = ", "), "."), call.=F)
+        ifelse(msgx, readline(msg), "")
+        next
+        }
       }
     } else   {
       if(indx)               ind <- 1
@@ -283,7 +290,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
       if(is.element(vars, c("scores", "loadings"))) {
         if(indx)  {
          if(vars  == "scores")   {
-            ind   <- c(1, min(Q, 2))
+            ind   <- c(1, min(Q.max, 2))
          } else   {
             ind   <- c(1, 1)
          } 
@@ -295,7 +302,10 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
            ind[2] <- max(fac[g], 2)
          }
         }
-        if(ind[2] > Q)                stop(paste0("Only the first ", Q, " columns can be plotted"))
+        if(vars == "scores") {
+          if(any(ind[1]  > Q.max,
+                 ind[2]  > Q.max))    stop(paste0("Only the first ", Q.max, " columns can be plotted"))  
+        } else if(ind[2] > Q)         stop(paste0("Only the first ", Q, " columns can be plotted"))  
       }
       if(vars  == "means") {
         plot.x <- result$post.mu
@@ -307,7 +317,6 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
       }
       if(vars  == "scores") {
         plot.x <- results$Scores$post.f
-        if(ind[1] > n.obs)            stop(paste0("Only the first ", n.obs, " scores can be plotted"))
         if(grp.ind)   {
           Labs <- clust$post.z
         } else   {
@@ -321,10 +330,10 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
             if(length(Labs) != n.obs) stop(paste0("Labels must be a factor of length N=",  n.obs))
           }
         }
-        ind2   <- ifelse(Q > 1, max(2, ind[2]), ind[2])
+        ind2   <- ifelse(Q.max > 1, max(2, ind[2]), ind[2])
         type.f <- ifelse(any(type.x, type == "l"), "p", type)
         if(ci.sw[vars]) ci.x   <- results$Scores$CI.f
-        if(Q   != 1) {
+        if(Q.max != 1) {
           if(all(intervals, ci.sw[vars])) {
             plotCI(plot.x[,ind[1]], plot.x[,ind2], li=ci.x[1,,ind2], ui=ci.x[2,,ind2], gap=T, pch=NA, scol="grey", slty=3, xlab=paste0("Factor ", ind[1]), ylab=paste0("Factor ", ind2))
             plotCI(plot.x[,ind[1]], plot.x[,ind2], li=ci.x[1,,ind[1]], ui=ci.x[2,,ind[1]], add=T, gap=T, pch=NA, scol="grey", slty=3, err="x")
@@ -414,11 +423,30 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
       }
       if(method == "IFA")  {
         plot.Q <- GQ.res$Counts
-        col.Q  <- c("black", "red")[(names(plot.Q) == Q) + 1]
+        range  <- as.numeric(names(plot.Q))
+        range  <- seq(from=min(range), to=max(range), by=1)
+        miss   <- setdiff(range, names(plot.Q))
+        miss   <- setNames(rep(0, length(miss)), as.character(miss))
+        plot.Q <- c(plot.Q, miss)
+        plot.Q <- plot.Q[order(names(plot.Q))]
+        col.Q  <- c("black", "red")[(range == Q) + 1]
         Q.plot <- barplot(plot.Q, ylab="Frequency", xlab="Q", xaxt="n", col=col.Q)
         title(main=list("Posterior Distribution of Q"))
         axis(1, at=Q.plot, labels=names(plot.Q), tick=F) 
       }  
+      if(method == "MIFA") {
+        plot.Q <- GQ.res$Counts
+        range  <- as.numeric(unique(unlist(lapply(plot.Q, names))))
+        range  <- seq(from=min(range), to=max(range), by=1)
+        miss   <- lapply(seq_len(G), function(g) setdiff(range, as.numeric(names(plot.Q[[g]]))))
+        miss   <- lapply(seq_len(G), function(g) setNames(rep(0, length(miss[[g]])), as.character(miss[[g]])))
+        plot.Q <- lapply(seq_len(G), function(g) c(plot.Q[[g]], miss[[g]]))
+        plot.Q <- do.call(rbind, lapply(seq_len(G), function(g) plot.Q[[g]][order(names(plot.Q[[g]]))]))
+        Q.plot <- barplot(plot.Q, beside=T, ylab="Frequency", xlab="Q", xaxt="n", col=seq_len(G + 1)[-1])
+        title(main=list(expression('Posterior Distribution of Q'["g"])))
+        axis(1, at=apply(Q.plot, 2, median), labels=colnames(plot.Q), tick=F) 
+        legend("topright", legend=paste0("Group ", seq_len(G)), bty="n", pch=15, col=seq_len(G + 1)[-1])
+      }
       if(!exists("Q.plot",  envir=environment())) 
                                       warning("Nothing to plot", call.=F)
       class(GQ.res)    <- "listof"
