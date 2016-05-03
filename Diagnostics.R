@@ -27,6 +27,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   sw             <- attr(sims, "Switch")
   cent           <- attr(sims, "Center")
   scaling        <- attr(sims, "Scaling")
+  scal.meth      <- attr(scaling, "Method")
   conf.level     <- as.numeric(conf.level)
   if(abs(conf.level -
         (1 - conf.level)) < 0)    stop("'conf.level' must be a single number between 0 and 1")

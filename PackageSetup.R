@@ -384,6 +384,8 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   attr(imifa, "Name")     <- dat.name
   attr(imifa, "Obs")      <- N
   attr(imifa, "Scaling")  <- scal
+  attr(attr(imifa,
+  "Scaling"), "Method")   <- scaling
   attr(imifa, "Store")    <- length(iters)
   attr(imifa, "Switch")   <- switches
   if(any(is.element(method, c("IFA", "IMIFA")), 
