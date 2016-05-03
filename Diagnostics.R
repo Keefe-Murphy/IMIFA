@@ -79,7 +79,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     Q            <- if(Q.meth == "Mode") Q.mode else Q.med
     Q.CI         <- if(NQ > 1) apply(Q.store, 1, function(qs) round(quantile(qs, conf.levels))) else round(quantile(Q.store, conf.levels))
     GQ.res       <- list(G = G, Q = Q, Mode = Q.mode, Median = Q.med, 
-                         CI = Q.CI, Probs= Q.prob, Counts = Q.tab)
+                         Q.CI = Q.CI, Probs= Q.prob, Counts = Q.tab)
     if(method == "MIFA") {
       GQres.temp <- GQ.res[-seq_len(2)]
     }

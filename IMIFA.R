@@ -19,10 +19,20 @@
     ppms     <- substr(colnames(x10[,4:ncol(x10)]), 2,6); rm(x)
     urine    <- x10[,4:ncol(x10)]
     Grp      <- x10[,"Group"]
+    ppm.g    <- do.call(cbind, lapply(seq_len(max(Grp)), function(g) colMeans(urine[Grp == g,])))
+    matplot(ppm.g, type="l", xlab="Chemical Shift (ppm)", yaxt="n", ylab="", bty="n", xaxt="n", lwd=2, lty=1)
+    axis(1, at=seq(from=20, to=nrow(ppm.g), by=20), labels=9:1, tick=T, lwd.ticks=1, xpd=T)
+    axis(1, at=seq_len(nrow(ppm.g)), labels=FALSE, tick=T, tcl=-0.2)
+    legend("topleft", legend=c("Control", "Diseased"), bty="n", lty=1, col=c(1,2))  
   # Meat
     load(file=paste0(getwd(), "/Data/Meat.Rdata", sep=""), envir=.GlobalEnv)
     spectra  <- t(spectra); rm(last.warning)
-    matplot(t(spectra), type="l", col=seq_len(nlevels(as.factor(type))), xlab="Wavelength", ylab="Spectral Reflectance", main="Meat Data")
+    # All Meats
+      matplot(t(spectra), type="l", col=c(2,1,3,4,5), xlab="Wavelength", ylab="Spectral Reflectance", main="Meat Data")
+      legend("topleft", legend=levels(factor(type)), bty="n", lty=1, col=c(2,1,3,4,5))
+    # Red vs. White
+      matplot(t(spectra), type="l", col=c(2,1,2,1,1), xlab="Wavelength", ylab="Spectral Reflectance", main="Meat Data")
+      legend("topleft", legend=c("Red Meat", "White Meat"), bty="n", lty=1, col=c(2,1))
   # Subjects 
     subjects <- read.csv(paste0(getwd(), "/Data/", "SubjectMarks.csv", sep=""))
   # Cereal 
