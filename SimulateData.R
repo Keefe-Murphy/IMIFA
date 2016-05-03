@@ -87,6 +87,10 @@ sim.imifa      <- function(N = 500, G = 3, P = 25, Q = rep(5, G), nn = NULL) {
   true.zlab     <- true.zlab[permute]
   dimnames(SimData)     <- list(paste0("Obs ", seq_len(N)), vnames)
   SimData       <- as.data.frame(SimData)
+  attr(SimData,
+       "Factors")       <- Q
+  attr(SimData,
+       "Groups")        <- G
   attr(SimData, 
        "Means")         <- true.mu
   attr(SimData, 

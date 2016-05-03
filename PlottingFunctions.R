@@ -7,6 +7,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
                            by.fac = T, ind = NULL, type = c("h", "n", "p", "l"), intervals = T, mat = T, partial = F) {
 
   defpar  <- suppressWarnings(par(no.readonly = T))
+  defpar$new   <- F
   defop   <- options()
   options(warn=1)
   suppressWarnings(par(cex.axis=0.8, new=F))

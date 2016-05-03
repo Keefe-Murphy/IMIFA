@@ -203,7 +203,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       post.pi    <- setNames(prop.table(tabulate(post.z, nbins=G)), paste0("Group ", seq_len(G)))
     }
     if(!missing(Labels)) {
-      if(!exists(deparse(substitute(Labels)),
+      if(!exists(as.character(substitute(Labels)),
          envir=.GlobalEnv))           stop(paste0("Object ", match.call()$Labels, " not found"))
       Labels     <- as.factor(Labels)
       levs       <- levels(Labels)
