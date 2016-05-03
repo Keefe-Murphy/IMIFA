@@ -158,7 +158,7 @@
     
     # Adaptation  
       if(all(adapt, iter > burnin)) {      
-        prob      <- 1/exp(b0 + b1 * pmax(iter - burnin, 0))
+        prob      <- 1/exp(b0 + b1 * (iter - burnin))
         unif      <- runif(n=1, min=0, max=1)     
         if(unif    < prob) { 
           lind    <- lapply(Gseq, function(g) if(Qs[g] > 0) colSums(abs(lmat[[g]]) < epsilon)/P else 0)

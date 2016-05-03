@@ -179,7 +179,9 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
     if(missing("beta.dk"))   beta.dk       <- 1
     if(beta.dk <= 0)                stop("'beta.dk' must be strictly positive")
     if(missing("b0"))        b0            <- 0.1
+    if(b0  < 0)                     stop("'b0' must be positive to ensure valid adaptation probability")
     if(missing("b1"))        b1            <- 0.00005
+    if(b1 <= 0)                     stop("'b1' must be strictly positive to ensure adaptation probability decreases")
     if(missing("prop"))      prop          <- 3/4
     if(abs(prop - (1 - prop)) < 0)  stop("'prop' must be a single number between 0 and 1")
     if(missing("epsilon"))   epsilon       <- ifelse(centering, 0.1, 0.005)

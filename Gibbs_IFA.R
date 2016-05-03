@@ -110,7 +110,7 @@
     
     # Adaptation  
       if(all(adapt, iter > burnin)) {      
-        prob     <- 1/exp(b0 + b1 * pmax(iter - burnin, 0))
+        prob     <- 1/exp(b0 + b1 * (iter - burnin))
         unif     <- runif(n=1, min=0, max=1)     
         if(unif   < prob) { # check whether to adapt or not
           if(Q > 0) {
