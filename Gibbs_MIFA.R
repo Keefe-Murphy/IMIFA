@@ -48,9 +48,9 @@
     dimnames(Q.store)      <- list(gnames, iternames)
     
     mu.sigma      <- 1/sigma.mu
-    pi.alpha      <- clust$pi.alpha
     z             <- clust$z
-    pi.prop       <- t(prop.table(tabulate(z, nbins=G)))
+    pi.alpha      <- clust$pi.alpha
+    pi.prop       <- clust$pi.prop
     mu            <- do.call(cbind, lapply(Gseq, function(g) if(pi.prop[,g] > 0) colMeans(data[z == g,, drop=F]) else rep(0, P)))
     f             <- sim.f.p(N=N, Q=Q)
     phi           <- lapply(Gseq, function(g) sim.phi.p(Q=Q, P=P, phi.nu=phi.nu))
