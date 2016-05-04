@@ -158,8 +158,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   if(missing("psi.beta")) {
     inv.cov        <- try(chol2inv(chol(cov.mat)), silent=T)
     if(inherits(inv.cov, "try-error"))   {
-      inv.cov      <- ginv(cov.mat)
-     #inv.cov      <- scal
+      inv.cov      <- 1/cov.mat
     }
     psi.beta       <- (psi.alpha - 1)/diag(inv.cov)
   }   
