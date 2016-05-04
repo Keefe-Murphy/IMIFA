@@ -240,6 +240,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   
   init.start       <- proc.time()
   if(is.element(method, c("MFA", "MIFA"))) {
+    clust          <- list()
     pi.alpha       <- list()
     zi             <- list()
     for(g in seq_along(range.G)) {
@@ -267,6 +268,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
         zi[[g]]    <- as.numeric(zips)
         rm(zips)
       }
+      clust[[g]]   <- list(z = zi[[g]], pi.alpha = pi.alpha[[g]])
     }
   }
   init.time        <- proc.time() - init.start
@@ -277,7 +279,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
       start.time   <- proc.time()
         imifa[[Gi]][[Qi]] <- do.call(paste0("gibbs.", meth[Gi]),                          
                                      args=append(list(data = dat, N = N, G = range.G, Q = Q.star,
-                                                      clust = if(meth[Gi] == "MIFA") list(z = zi[[Gi]], pi.alpha = pi.alpha[[Gi]])), gibbs.arg))  
+                                                      clust = if(meth[Gi] == "MIFA") clust[[Gi]], gibbs.arg))  
     } else {
       start.time   <- proc.time()
       for(g in range.G) {
@@ -285,7 +287,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
         imifa[[Gi]]       <- list()
         imifa[[Gi]][[Qi]] <- do.call(paste0("gibbs.", meth[Gi]),
                                      args=append(list(data = dat, N = N, G = g, Q = Q.star, 
-                                                      clust = if(meth[Gi] == "MFA") list(z = zi[[Gi]], pi.alpha = pi.alpha[[Gi]])), gibbs.arg))
+                                                      clust = if(meth[Gi] == "MFA") clust[[Gi]], gibbs.arg))
         if(verbose)                 cat(paste0(round(Gi/length(range.G) * 100, 2), "% Complete\n"))
       }
     }
@@ -296,14 +298,14 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
       start.time   <- proc.time()
         imifa[[Gi]][[Qi]] <- do.call(paste0("gibbs.", meth[Gi]), 
                                      args=append(list(data = dat, N = N, G = range.G, Q = range.Q,
-                                                      clust = if(meth[Gi] == "MFA") list(z = zi[[Gi]], pi.alpha = pi.alpha[[Gi]])), gibbs.arg))
+                                                      clust = if(meth[Gi] == "MFA") clust[[Gi]], gibbs.arg))
     } else if(length(range.G) == 1) {
       start.time   <- proc.time()
       for(q in range.Q) { 
         Qi         <- which(range.Q == q)
         imifa[[Gi]][[Qi]] <- do.call(paste0("gibbs.", meth[Gi]),
                                      args=append(list(data = dat, N = N, G = range.G, Q = q, 
-                                                      clust = if(meth[Gi] == "MFA") list(z = zi[[Gi]], pi.alpha = pi.alpha[[Gi]])), gibbs.arg))
+                                                      clust = if(meth[Gi] == "MFA") clust[[Gi]], gibbs.arg))
         if(verbose)                 cat(paste0(round(Qi/length(range.Q) * 100, 2), "% Complete\n"))
       }
     } else if(length(range.Q) == 1) {
@@ -313,7 +315,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
         imifa[[Gi]]       <- list()
         imifa[[Gi]][[Qi]] <- do.call(paste0("gibbs.", meth[Gi]),
                                      args=append(list(data = dat, N = N, G = g, Q = range.Q, 
-                                                      clust = if(meth[Gi] == "MFA") list(z = zi[[Gi]], pi.alpha = pi.alpha[[Gi]])), gibbs.arg))
+                                                      clust = if(meth[Gi] == "MFA") clust[[Gi]], gibbs.arg))
         if(verbose)                 cat(paste0(round(Gi/length(range.G) * 100, 2), "% Complete\n"))
       }
     } else {
@@ -326,7 +328,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
           Qi       <- which(range.Q == q)
         imifa[[Gi]][[Qi]] <- do.call(paste0("gibbs.", meth[Gi]),
                                      args=append(list(data = dat, N = N, G = g, Q = q,
-                                                      clust = if(meth[Gi] == "MFA") list(z = zi[[Gi]], pi.alpha = pi.alpha[[Gi]])), gibbs.arg))
+                                                      clust = if(meth[Gi] == "MFA") clust[[Gi]], gibbs.arg))
         counter    <- counter + 1
         if(verbose)                 cat(paste0(round(counter/(length(range.G) * length(range.Q)) * 100, 2), "% Complete\n"))
         }
