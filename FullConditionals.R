@@ -5,7 +5,7 @@
 # Full Conditionals
 
   # Means
-    sim.mu      <- function(N, P, mu.sigma, psi.inv, sum.data, sum.f, lmat, mu.zero = 0) {
+    sim.mu      <- function(N, P, mu.sigma, psi.inv, sum.data, sum.f, lmat, mu.zero) {
       mu.omega  <- 1/(mu.sigma + N * psi.inv)
       U.mu      <- sqrt(mu.omega)
       z.mu      <- rnorm(P, 0, 1)
@@ -81,7 +81,7 @@
 # Priors
 
   # Means
-    sim.mu.p    <- function(P, sigma.mu, mu.zero = 0) {
+    sim.mu.p    <- function(P, sigma.mu, mu.zero) {
       U.mu      <- sqrt(sigma.mu)
       z.mu      <- rnorm(P, 0, 1)
         U.mu * z.mu + mu.zero

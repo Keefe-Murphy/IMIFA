@@ -43,7 +43,10 @@
     dimnames(cov.est)      <- dimnames(cov.emp)
     
     mu.sigma     <- 1/sigma.mu
-    mu           <- sim.mu.p(P=P, sigma.mu=sigma.mu)  
+    mu.zero      <- mu     <- colMeans(data)
+    if(round(sum(mu.zero)) == 0) {
+      mu.zero    <- 0
+    }
     f            <- sim.f.p(Q=Q, N=N)
     psi.inv      <- sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
     phi          <- sim.phi.p(Q=Q, P=P, phi.nu=phi.nu)
@@ -71,7 +74,7 @@
     # Means
       sum.f      <- colSums(f)
       mu         <- sim.mu(N=N, P=P, mu.sigma=mu.sigma, psi.inv=psi.inv,
-                           sum.data=sum.data, sum.f=sum.f, lmat=lmat)
+                           sum.data=sum.data, sum.f=sum.f, lmat=lmat, mu.zero=mu.zero)
       
     # Scores & Loadings
       c.data     <- sweep(data, 2, mu, FUN="-")
