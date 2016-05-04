@@ -4,8 +4,8 @@
   
 # Gibbs Sampler Function
   gibbs.IFA      <- function(Q, data, iters, N, P, sigma.mu, 
-                             psi.alpha, psi.beta, burnin, 
-                             thinning, verbose, sw, 
+                             psi.alpha, psi.beta, burnin, mu,
+                             thinning, verbose, sw, mu.zero,
                              phi.nu, alpha.d1, alpha.dk, 
                              beta.d1, beta.dk, b0, b1,
                              adapt, prop, epsilon, ...) {    
@@ -43,17 +43,13 @@
     dimnames(cov.est)      <- dimnames(cov.emp)
     
     mu.sigma     <- 1/sigma.mu
-    mu.zero      <- mu     <- colMeans(data)
-    if(round(sum(mu.zero)) == 0) {
-      mu.zero    <- 0
-    }
     f            <- sim.f.p(Q=Q, N=N)
     psi.inv      <- sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
     phi          <- sim.phi.p(Q=Q, P=P, phi.nu=phi.nu)
     delta        <- sim.delta.p(Q=Q, alpha.d1=alpha.d1, alpha.dk=alpha.dk, beta.d1=beta.d1, beta.dk=beta.dk)
     tau          <- cumprod(delta)
     lmat         <- sim.load.p(Q=Q, phi=phi, tau=tau, P=P)
-    sum.data     <- colSums(data)
+    sum.data     <- mu * N
     if(burnin     < 1) {
       mu.store[,1]         <- mu
       f.store[,,1]         <- f

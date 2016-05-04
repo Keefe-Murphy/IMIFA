@@ -3,8 +3,8 @@
 ################################################################
   
 # Gibbs Sampler Function
-  gibbs.FA       <- function(Q, data, iters, N, P, sigma.mu,
-                             psi.alpha, psi.beta, burnin, 
+  gibbs.FA       <- function(Q, data, iters, N, P, sigma.mu, mu,
+                             mu.zero, psi.alpha, psi.beta, burnin,
                              thinning, verbose, sw, sigma.l, ...) {
         
   # Define & initialise variables
@@ -40,15 +40,11 @@
     
     mu.sigma     <- 1/sigma.mu
     l.sigma      <- 1/sigma.l
-    mu.zero      <- mu     <- colMeans(data)
-    if(round(sum(mu.zero)) == 0) {
-      mu.zero    <- 0
-    }
     f            <- sim.f.p(Q=Q, N=N)
     lmat         <- sim.load.p(Q=Q, P=P, sigma.l=sigma.l, shrink=F)
     psi.inv      <- sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
     l.sigma      <- l.sigma * diag(Q)
-    sum.data     <- colSums(data)
+    sum.data     <- mu * N
     if(burnin     < 1)    {
       mu.store[,1]         <- mu
       f.store[,,1]         <- f

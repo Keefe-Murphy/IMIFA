@@ -3,12 +3,12 @@
 ################################################################
   
 # Gibbs Sampler Function
-  gibbs.MIFA      <- function(Q, data, iters, N, P, G, 
-                              sigma.mu, burnin, thinning, 
+  gibbs.MIFA      <- function(Q, data, iters, N, P, G, mu.zero,
+                              sigma.mu, burnin, thinning, mu,
                               psi.alpha, psi.beta, verbose, 
-                              sw, clust, mu0g, phi.nu, b0,
-                              b1, alpha.d1, alpha.dk, beta.d1,
-                              beta.dk, adapt, prop, epsilon, ...) {
+                              sw, clust, phi.nu, b0, b1, prop,
+                              alpha.d1, alpha.dk, beta.d1,
+                              beta.dk, adapt, epsilon, ...) {
         
   # Define & initialise variables
     n.iters       <- round(max(iters), -1)
@@ -48,20 +48,18 @@
     dimnames(Q.store)      <- list(gnames, iternames)
     
     mu.sigma      <- 1/sigma.mu
+    if(all(mu.zero == 0)) {
+      mu.zero     <- matrix(0, nr=1, nc=G)
+    }
     z             <- clust$z
     pi.alpha      <- clust$pi.alpha
     pi.prop       <- clust$pi.prop
-    mu            <- do.call(cbind, lapply(Gseq, function(g) if(pi.prop[,g] > 0) colMeans(data[z == g,, drop=F]) else rep(0, P)))
     f             <- sim.f.p(N=N, Q=Q)
     phi           <- lapply(Gseq, function(g) sim.phi.p(Q=Q, P=P, phi.nu=phi.nu))
     delta         <- lapply(Gseq, function(g) sim.delta.p(Q=Q, alpha.d1=alpha.d1, alpha.dk=alpha.dk, beta.d1=beta.d1, beta.dk=beta.dk))
     tau           <- lapply(delta, cumprod)
     lmat          <- lapply(Gseq, function(g) sim.load.p(Q=Q, phi=phi[[g]], tau=tau[[g]], P=P))
     psi.inv       <- do.call(cbind, lapply(Gseq, function(g) sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)))
-    mu.zero       <- if(mu0g) mu else do.call(cbind, lapply(Gseq, function(g) colMeans(data)))
-    if(round(sum(mu.zero)) == 0) {
-      mu.zero     <- matrix(0, nr=1, nc=G)
-    }
     for(g in Gseq) {
       fact        <- try(factanal(data[z == g,, drop=F], factors=Q, scores="regression", control=list(nstart=50)), silent=T)
       if(!inherits(fact, "try-error")) {

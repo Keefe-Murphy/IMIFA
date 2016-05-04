@@ -3,10 +3,10 @@
 ################################################################
   
 # Gibbs Sampler Function
-  gibbs.MFA      <- function(Q, data, iters, N, P, G, 
-                             sigma.mu, sigma.l, burnin, 
+  gibbs.MFA      <- function(Q, data, iters, N, P, G, mu.zero,
+                             sigma.mu, sigma.l, burnin, mu,
                              thinning, psi.alpha, psi.beta,
-                             sw, verbose, clust, mu0g, ...) {
+                             sw, verbose, clust, ...) {
         
   # Define & initialise variables
     n.iters      <- round(max(iters), -1)
@@ -42,18 +42,16 @@
     ll.store     <- rep(0, n.store)
     
     mu.sigma     <- 1/sigma.mu
+    if(all(mu.zero == 0)) {
+      mu.zero    <- matrix(0, nr=1, nc=G)
+    }
     l.sigma      <- 1/sigma.l 
     z            <- clust$z
     pi.alpha     <- clust$pi.alpha
     pi.prop      <- clust$pi.prop
-    mu           <- do.call(cbind, lapply(Gseq, function(g) if(pi.prop[,g] > 0) colMeans(data[z == g,, drop=F]) else rep(0, P)))
     f            <- sim.f.p(N=N, Q=Q)
     lmat         <- lapply(Gseq, function(g) sim.load.p(Q=Q, P=P, sigma.l=sigma.l, shrink=F))
     psi.inv      <- do.call(cbind, lapply(Gseq, function(g) sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)))
-    mu.zero      <- if(mu0g) mu else do.call(cbind, lapply(Gseq, function(g) colMeans(data)))
-    if(round(sum(mu.zero)) == 0) {
-      mu.zero    <- matrix(0, nr=1, nc=G)
-    }
     if(Q > 0) {
       for(g in Gseq) {
         fact     <- try(factanal(data[z == g,, drop=F], factors=Q, scores="regression", control=list(nstart=50)), silent=T)
