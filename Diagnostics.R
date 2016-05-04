@@ -60,7 +60,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     if(all(is.element(method, c("IFA", "classify")), 
       (Q * (n.fac - Q)) < 0))     stop(paste0("Q can't be greater than the number of factors in ", match.call()$sims))
   } 
-  G              <- ifelse(all(G.T, !is.element(method, c("FA", "IFA"))), G, n.grp)
+  G              <- ifelse(all(G.T, !is.element(method, c("FA", "IFA"))), G, 1)
   
   if(is.element(method, c("IFA", "MIFA"))) {
     if(missing(Q.meth)) {
@@ -74,7 +74,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     NQ           <- nrow(Q.store)
     Q.tab        <- if(NQ > 1) lapply(apply(Q.store, 1, function(x) list(table(x, dnn=NULL))), "[[", 1) else table(Q.store, dnn=NULL)
     Q.prob       <- if(NQ > 1) lapply(Q.tab, prop.table) else prop.table(Q.tab)
-    Q.mode       <- if(NQ > 1) do.call(c, lapply(Q.tab, function(qt) as.numeric(names(qt[qt == max(qt)])[1]))) else as.numeric(names(Q.tab[Q.tab == max(Q.tab)])[1])
+    Q.mode       <- if(NQ > 1) unlist(lapply(Q.tab, function(qt) as.numeric(names(qt[qt == max(qt)])[1]))) else as.numeric(names(Q.tab[Q.tab == max(Q.tab)])[1])
     Q.med        <- ceiling(apply(Q.store, 1, median) * 2)/2
     Q            <- if(Q.meth == "Mode") Q.mode else Q.med
     Q.CI         <- if(NQ > 1) apply(Q.store, 1, function(qs) round(quantile(qs, conf.levels))) else round(quantile(Q.store, conf.levels))
@@ -205,17 +205,17 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     if(!missing(Labels)) {
       if(!exists(as.character(substitute(Labels)),
          envir=.GlobalEnv))           stop(paste0("Object ", match.call()$Labels, " not found"))
-      Labels     <- as.factor(Labels)
-      levs       <- levels(Labels)
-      if(length(Labels)  != n.obs)    stop(paste0("Labels must be a factor of length N=",  n.obs))
-      tab        <- table(post.z, as.numeric(Labels))
+      labels     <- as.factor(Labels)
+      levs       <- levels(labels)
+      if(length(labels)  != n.obs)    stop(paste0("Labels must be a factor of length N=",  n.obs))
+      tab        <- table(post.z, as.numeric(labels))
       if(nlevels(post.z) == length(levs)) {
         perm     <- matchClasses(tab, method="exact", verbose=F)
         post.nn  <- tabulate(post.z, nbins=G)
         post.z   <- factor(factor(post.z, labels=levs[perm][post.nn > 0]), levels=levs)
         post.pi  <- post.pi[perm]  
       }
-      tab        <- table(post.z, Labels, dnn=list("Predicted", "Observed"))
+      tab        <- table(post.z, labels, dnn=list("Predicted", "Observed"))
       tab.stat   <- classAgreement(tab)
     }
     cluster      <- list(post.z = post.z, post.pi = post.pi, 
@@ -234,18 +234,19 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     sw["f.sw"]   <- F
   }
   if(sw["f.sw"])  {
-    Qmax         <- seq_len(max(Q))
+    Q.max        <- max(Q) 
+    Q.maxs       <- seq_len(Q.max)
     f            <- sims[[G.ind]][[Q.ind]]$f
     if(is.element(method, c("IFA", "MIFA"))) {
       f          <- as.array(f)
     }
-    f            <- f[,Qmax,store, drop=F]
+    f            <- f[,Q.maxs,store, drop=F]
   }
 
 # Loop over g in G to extract other results
   result         <- list(list())
-  MSE  <- RMSE   <- NRMSE   <- CVRMSE   <- 
-  MAD  <- emp.T  <- est.T   <- rep(NA, G)
+  MSE   <- RMSE  <- NRMSE  <- CVRMSE  <- 
+  MAD   <- emp.T <- est.T  <- rep(NA, G)
   for(g in seq_len(G)) {
     Qg           <- Q[g]
     Qgs          <- seq_len(Qg)
@@ -284,7 +285,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       for(p in seq_len(n.store)) {
         rot            <- procrustes(X=as.matrix(lmat[,,p]), Xstar=l.temp)$R
         lmat[,,p]      <- lmat[,,p] %*% rot
-        if(sw["f.sw"]) {
+        if(sw["f.sw"])  {
           if(clust.ind) {
             fg[,,p]    <- fg[,,p]   %*% rot
           } else {
