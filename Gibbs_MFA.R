@@ -11,9 +11,10 @@
   # Define & initialise variables
     n.iters      <- round(max(iters), -1)
     n.store      <- length(iters)
+    Gseq         <- seq_len(G)
+    Pseq         <- seq_len(P)
     obsnames     <- rownames(data)
     varnames     <- colnames(data)
-    Gseq         <- seq_len(G)
     facnames     <- paste0("Factor ", seq_len(Q))
     gnames       <- paste0("Group ", Gseq)
     iternames    <- paste0("Iteration", seq_len(n.store))
@@ -103,8 +104,8 @@
         f        <- do.call(rbind, lapply(Gseq, function(g) sim.score(N=nn[g], lmat=lmat[[g]], 
                             c.data=c.data[[g]], psi.inv=psi.inv[,g], Q=Qs[g])))[obsnames,, drop=F]
         FtF      <- lapply(Gseq, function(g) crossprod(f[z.ind[[g]],, drop=F]))
-        lmat     <- lapply(Gseq, function(g) sim.load(l.sigma=l.sigma, Q=Qs[g], c.data=c.data[[g]], 
-                           P=P, f=f[z.ind[[g]],, drop=F], psi.inv=psi.inv[,g], FtF=FtF[[g]], shrink=F))
+        lmat     <- lapply(Gseq, function(g) do.call(rbind, lapply(Pseq, function(j) sim.load(l.sigma=l.sigma, Q=Qs[g], P=P,
+                           c.data=c.data[[g]][,j],  f=f[z.ind[[g]],, drop=F], psi.inv=psi.inv[,g][j], FtF=FtF[[g]], shrink=F))))
       }
                   
     # Uniquenesses

@@ -13,6 +13,7 @@
   # Define & initialise variables
     n.iters      <- round(max(iters), -1)
     n.store      <- length(iters)
+    Pseq         <- seq_len(P)
     obsnames     <- rownames(data)
     varnames     <- colnames(data)
     facnames     <- paste0("Factor ", seq_len(Q))
@@ -77,8 +78,8 @@
       if(Q  > 0) {
         f        <- sim.score(N=N, Q=Q, lmat=lmat, psi.inv=psi.inv, c.data=c.data)
         FtF      <- crossprod(f)
-        lmat     <- sim.load(Q=Q, c.data=c.data, P=P, f=f, phi=phi,
-                             tau=tau, psi.inv=psi.inv, FtF=FtF)
+        lmat     <- do.call(rbind, lapply(Pseq, function(j) sim.load(Q=Q, tau=tau, P=P, 
+                            f=f, c.data=c.data[,j], phi=phi[j,], psi.inv=psi.inv[j], FtF=FtF)))
       } else {
         f        <- matrix(, nr=N, nc=0)
         lmat     <- matrix(, nr=P, nc=0)

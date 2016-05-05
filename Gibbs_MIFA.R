@@ -13,9 +13,10 @@
   # Define & initialise variables
     n.iters       <- round(max(iters), -1)
     n.store       <- length(iters)
+    Gseq          <- seq_len(G)
+    Pseq          <- seq_len(P)
     obsnames      <- rownames(data)
     varnames      <- colnames(data)
-    Gseq          <- seq_len(G)
     facnames      <- paste0("Factor ", seq_len(Q))
     gnames        <- paste0("Group ", Gseq)
     iternames     <- paste0("Iteration", seq_len(n.store))
@@ -117,8 +118,8 @@
           if(Qg    > 0)   {
             fgg            <- sim.score(N=nng, lmat=lmat[[g]], Q=Qg, 
                                         c.data=c.datg, psi.inv=psi.ig)
-            lmat[[g]]      <- sim.load(Q=Qg, c.data=c.datg, f=fgg, FtF=crossprod(fgg),
-                                       P=P, psi.inv=psi.ig, phi=phi[[g]], tau=tau[[g]])
+            lmat[[g]]      <- do.call(rbind, lapply(Pseq, function(j) sim.load(Q=Qg, c.data=c.datg[,j], f=fgg, 
+                                      FtF=crossprod(fgg), P=P, psi.inv=psi.ig[j], phi=phi[[g]][j,], tau=tau[[g]])))
             fg[[g]][,Qgs]  <- fgg
           } else {
             lmat[[g]]      <- matrix(, nr=P, nc=0)

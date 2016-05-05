@@ -264,7 +264,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
         zips       <- rep(1, N)
         while(all(length(unique(zips)) != G,
               any(prop.table(tabulate(zips, nbins=G)) < 1/G^2))) {
-          pi.prop  <- sim.pi(pi.alpha=pi.alpha[[g]])
+          pi.prop  <- sim.pi(pi.alpha=pi.alpha[[g]], nn=0)
           zips     <- sim.z.p(N=N, prob.z=pi.prop)
         }
         zi[[g]]    <- as.numeric(zips)

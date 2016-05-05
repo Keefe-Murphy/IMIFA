@@ -64,7 +64,7 @@
     }
 
   # Mixing Proportions
-    sim.pi      <- function(pi.alpha, nn = 0) {
+    sim.pi      <- function(pi.alpha, nn) {
         rdirichlet(1, pi.alpha + nn)
     }
   

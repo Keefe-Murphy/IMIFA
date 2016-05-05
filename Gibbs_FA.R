@@ -10,6 +10,7 @@
   # Define & initialise variables
     n.iters      <- round(max(iters), -1)
     n.store      <- length(iters)
+    Pseq         <- seq_len(P)
     obsnames     <- rownames(data)
     varnames     <- colnames(data)
     facnames     <- paste0("Factor ", seq_len(Q))
@@ -73,8 +74,8 @@
       if(Q > 0) {
         f        <- sim.score(N=N, Q=Q, lmat=lmat, psi.inv=psi.inv, c.data=c.data)
         FtF      <- crossprod(f)
-        lmat     <- sim.load(l.sigma=l.sigma, Q=Q, c.data=c.data, f=f, 
-                             P=P, psi.inv=psi.inv, FtF=FtF, shrink=F)
+        lmat     <- do.call(rbind, lapply(Pseq, function(j) sim.load(l.sigma=l.sigma, Q=Q,
+                            c.data=c.data[,j], f=f, P=P, psi.inv=psi.inv[j], FtF=FtF, shrink=F)))
       }
                       
     # Uniquenesses
