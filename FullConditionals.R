@@ -27,14 +27,14 @@
   # Loadings
     sim.load    <- function(l.sigma, Q, c.data, P, f, phi, tau, psi.inv, FtF, shrink = T) {
       if(shrink) {
-        U.load  <- lapply(seq_len(P), function(j) chol((phi[j,] * tau * diag(Q)) + psi.inv[j] * FtF))
+        U.load  <- chol(phi * tau * diag(Q) + psi.inv * FtF)
       } else     {
-        U.load  <- lapply(seq_len(P), function(j) chol(l.sigma + psi.inv[j] * FtF))
+        U.load  <- chol(l.sigma + psi.inv * FtF)
       }
-      z.load    <- lapply(seq_len(P), function(j) rnorm(Q, 0, 1))
-      v.load    <- do.call(rbind, lapply(seq_len(P), function(j) backsolve(U.load[[j]], z.load[[j]])))
-      mu.load   <- do.call(cbind, lapply(seq_len(P), function(j) psi.inv[j] * chol2inv(U.load[[j]]) %*% crossprod(f, c.data[,j])))
-        t(mu.load) + v.load
+      z.load    <- rnorm(Q, 0, 1)
+      v.load    <- backsolve(U.load, z.load)
+      mu.load   <- psi.inv * chol2inv(U.load) %*% crossprod(f, c.data)
+        as.vector(mu.load + v.load)
     }
 
   # Uniquenesses
