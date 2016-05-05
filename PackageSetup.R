@@ -229,12 +229,27 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   }
 
   beta.x           <- missing("psi.beta")
+  init.start       <- proc.time()  
   if(beta.x) {
     psi.beta       <- temp.psi <- list(psi.hyper(psi.alpha, cov.mat))
+  } else {
+    if(!is.list(psi.beta))     psi.beta    <- list(psi.beta)
+    if(length(psi.beta) != length(range.G)) {
+                                    stop(paste0("'psi.beta' must be a list of length ", length(range.G))) }
+    len.p          <- sapply(psi.beta, length)
+    if(is.element(method, c("FA", "IFA")))  {
+      if(!is.element(len.psi, c(1, P)))     {
+                                    stop(paste0("'psi.beta' must be list of length 1 containing a scalar or a vector of length P=", 27, " for a 1-group model")) }
+    } else {
+      if(all(is.element(len.p, c(1, range.G, P)))) {
+        if(all(len.p == 1))       psi.beta <- lapply(seq_along(range.G), function(g) matrix(psi.beta[[g]], nr=1, nc=range.G[g]))
+        if(all(len.p == range.G)) psi.beta <- lapply(seq_along(range.G), function(g) matrix(psi.beta[[g]], nr=1))
+        if(all(len.p == P))       psi.beta <- lapply(seq_along(range.G), function(g) matrix(psi.beta[[g]], nr=P, nc=range.G[g]))
+      } else if(!all(sapply(seq_along(range.G), function(g) is.matrix(psi.beta[[g]]) && is.element(dim(psi.beta[[g]]), c(c(1, range.G[g]), c(P, range.G[g])))))) {
+                                    stop(paste0("Each element of 'psi.beta' must be either of length 1, P=", P, ", or it's corresponding range.G, or a matrix with P rows and it's corresponding range.G columns.")) }
+    }
   }
   mu.zero          <- mu       <- list(colMeans(dat))
-
-  init.start       <- proc.time()  
   if(is.element(method, c("MFA", "MIFA"))) {
     clust          <- list()
     pi.alpha       <- list()
