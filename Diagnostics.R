@@ -63,35 +63,12 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   } 
   G              <- ifelse(all(G.T, !is.element(method, c("FA", "IFA"))), G, 1)
   
-  if(is.element(method, c("IFA", "MIFA"))) {
-    if(missing(Q.meth)) {
-      Q.meth     <- "Mode"
-    } else   {
-      Q.meth     <- match.arg(Q.meth)
-    }
-    
-  # Set Q as the (lesser of) the distribution's mode(s) & compute credible interval
-    Q.store      <- sims[[G.ind]][[Q.ind]]$Q.store[,store, drop=F]
-    NQ           <- nrow(Q.store)
-    Q.tab        <- if(NQ > 1) lapply(apply(Q.store, 1, function(x) list(table(x, dnn=NULL))), "[[", 1) else table(Q.store, dnn=NULL)
-    Q.prob       <- if(NQ > 1) lapply(Q.tab, prop.table) else prop.table(Q.tab)
-    Q.mode       <- if(NQ > 1) unlist(lapply(Q.tab, function(qt) as.numeric(names(qt[qt == max(qt)])[1]))) else as.numeric(names(Q.tab[Q.tab == max(Q.tab)])[1])
-    Q.med        <- ceiling(apply(Q.store, 1, median) * 2)/2
-    Q            <- if(Q.meth == "Mode") Q.mode else Q.med
-    Q.CI         <- if(NQ > 1) apply(Q.store, 1, function(qs) round(quantile(qs, conf.levels))) else round(quantile(Q.store, conf.levels))
-    GQ.res       <- list(G = G, Q = Q, Mode = Q.mode, Median = Q.med, 
-                         Q.CI = Q.CI, Probs= Q.prob, Counts = Q.tab)
-    if(method == "MIFA") {
-      GQres.temp <- GQ.res[-seq_len(2)]
-    }
-  }
-  
   if(is.element(method, c("FA", "MFA", "MIFA"))) {
     G.range      <- ifelse(G.T, 1, length(n.grp))
     Q.range      <- ifelse(any(Q.T, method == "MIFA"), 1, length(n.fac))
     crit.mat     <- matrix(NA, nr=G.range, nc=Q.range)
     
-  # Retrieve log-likelihoods and tune G & Q according to criterion
+  # Retrieve log-likelihoods and tune G &/or Q according to criterion
     if(all(G.T, Q.T)) {
       dimnames(crit.mat) <- list(paste0("G", G), paste0("Q", Q))
     } else if(G.T)    {
@@ -131,29 +108,36 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       G.ind      <- crit.max[1]
       Q.ind      <- crit.max[2]
       G          <- n.grp[G.ind]
-      Q          <- if(method == "MIFA") Q else n.fac[Q.ind]
+      if(method  != "MIFA") {
+        Q        <- n.fac[Q.ind]  
+      }
     } else if(all(G.T, !Q.T)) {
       Q.ind      <- which(crit == max(crit))
-      Q          <- if(method == "MIFA") Q else n.fac[Q.ind]
+      if(method  != "MIFA") {
+        Q        <- n.fac[Q.ind]  
+      }
     } else if(all(Q.T, !G.T)) {
       G.ind      <- which(crit == max(crit))
       G          <- n.grp[G.ind]
     } 
     G            <- ifelse(length(n.grp) == 1, n.grp, G)
-    Q            <- if(any(method == "MIFA", length(n.fac) > 1)) Q else n.fac
     G.ind        <- ifelse(length(n.grp) == 1, which(n.grp == G), G.ind)
-    Q.ind        <- if(any(method == "MIFA", length(n.fac) > 1)) Q.ind else which(n.fac == Q)
-    Q            <- if(method == "MIFA") Q else setNames(rep(Q, G), paste0("Group ", seq_len(G)))
-    GQ.res       <- list(G = G, Q = Q, AICMs = aicm, BICMs = bicm)
-    if(method == "MIFA") {
-      GQ.res     <- c(GQ.res, GQres.temp)
-    } else {
-      GQ.res     <- c(GQ.res, list(AIC.mcmcs = aic.mcmc, BIC.mcmcs = bic.mcmc))
+    GQ.temp      <- list(AICMs = aicm, BICMs = bicm)
+    if(method != "MIFA") {
+      Q          <- if(length(n.fac) > 1) Q     else n.fac
+      Q.ind      <- if(length(n.fac) > 1) Q.ind else which(n.fac == Q)
+      Q          <- setNames(rep(Q, G), paste0("Group ", seq_len(G)))  
+      GQ.res     <- c(list(G = G, Q = Q), GQ.temp, list(AIC.mcmcs = aic.mcmc, BIC.mcmcs = bic.mcmc))
     }
   }
   clust.ind      <- all(is.element(method, c("MFA", "MIFA", "IMIFA")), G > 1)
   sw.mx          <- ifelse(clust.ind, sw["mu.sw"], T)
-  sw.px          <- ifelse(clust.ind, sw["psi.sw"], T)
+  sw.px          <- ifelse(clust.ind, sw["psi.sw"], T)  
+  if(is.element(method, c("IFA", "MIFA"))) {
+    Q.store      <- sims[[G.ind]][[Q.ind]]$Q.store[,store, drop=F]
+    Q.meth       <- ifelse(missing(Q.meth), "Mode", match.arg(Q.meth))
+    NQ           <- nrow(Q.store)
+  }
   
 # Manage Label Switching & retrieve cluster labels/mixing proportions
   if(clust.ind) {
@@ -190,6 +174,9 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       }
       if(sw["pi.sw"])  {
         pies[,ls]      <- pies[z.perm,ls]
+      }
+      if(method == "MIFA") {
+        Q.store[,ls]   <- Q.store[z.perm,ls]
       }
     }
     post.z       <- setNames(apply(z, 1, function(x) factor(which.max(tabulate(x)), levels=seq_len(G))), seq_len(n.obs))
@@ -229,6 +216,20 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     ind          <- lapply(seq_len(G), function(g) post.z == g)
   }
   
+  if(is.element(method, c("IFA", "MIFA"))) {
+    Q.tab        <- if(NQ > 1) lapply(apply(Q.store, 1, function(x) list(table(x, dnn=NULL))), "[[", 1) else table(Q.store, dnn=NULL)
+    Q.prob       <- if(NQ > 1) lapply(Q.tab, prop.table) else prop.table(Q.tab)
+    Q.mode       <- if(NQ > 1) unlist(lapply(Q.tab, function(qt) as.numeric(names(qt[qt == max(qt)])[1]))) else as.numeric(names(Q.tab[Q.tab == max(Q.tab)])[1])
+    Q.med        <- ceiling(apply(Q.store, 1, median) * 2)/2
+    Q            <- if(Q.meth == "Mode") Q.mode else Q.med
+    Q.CI         <- if(NQ > 1) apply(Q.store, 1, function(qs) round(quantile(qs, conf.levels))) else round(quantile(Q.store, conf.levels))
+    GQ.res       <- list(G = G, Q = Q, Mode = Q.mode, Median = Q.med, 
+                         Q.CI = Q.CI, Probs= Q.prob, Counts = Q.tab)
+    if(method == "MIFA") {
+      GQ.res     <- c(GQ.res, GQ.temp)
+    }
+  }
+
 # Retrieve (unrotated) scores
   if(all(Q == 0)) {
     if(sw["f.sw"])                warning("Scores not stored as model has zero factors", call.=F)
