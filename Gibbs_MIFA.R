@@ -6,7 +6,7 @@
   gibbs.MIFA      <- function(Q, data, iters, N, P, G, mu.zero,
                               sigma.mu, burnin, thinning, mu,
                               psi.alpha, psi.beta, verbose, 
-                              sw, clust, phi.nu, b0, b1, prop,
+                              sw, cluster, phi.nu, b0, b1, prop,
                               alpha.d1, alpha.dk, beta.d1,
                               beta.dk, adapt, epsilon, ...) {
         
@@ -52,15 +52,18 @@
     if(all(mu.zero == 0)) {
       mu.zero     <- matrix(0, nr=1, nc=G)
     }
-    z             <- clust$z
-    pi.alpha      <- clust$pi.alpha
-    pi.prop       <- clust$pi.prop
+    z             <- cluster$z
+    pi.alpha      <- cluster$pi.alpha
+    pi.prop       <- cluster$pi.prop
+    mu0g          <- cluster$label.switch[1]
+    psi0g         <- cluster$label.switch[2]
+    label.switch  <- any(mu0g, psi0g)
     f             <- sim.f.p(N=N, Q=Q)
     phi           <- lapply(Gseq, function(g) sim.phi.p(Q=Q, P=P, phi.nu=phi.nu))
     delta         <- lapply(Gseq, function(g) sim.delta.p(Q=Q, alpha.d1=alpha.d1, alpha.dk=alpha.dk, beta.d1=beta.d1, beta.dk=beta.dk))
     tau           <- lapply(delta, cumprod)
     lmat          <- lapply(Gseq, function(g) sim.load.p(Q=Q, phi=phi[[g]], tau=tau[[g]], P=P))
-    psi.inv       <- do.call(cbind, lapply(Gseq, function(g) sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)))
+    psi.inv       <- do.call(cbind, lapply(Gseq, function(g) sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta[,g])))
     for(g in Gseq) {
       fact        <- try(factanal(data[z == g,, drop=F], factors=Q, scores="regression", control=list(nstart=50)), silent=T)
       if(!inherits(fact, "try-error")) {
@@ -129,8 +132,8 @@
       }
                   
     # Uniquenesses
-      psi.inv     <- do.call(cbind, lapply(Gseq, function(g) sim.psi.i(N=nn[g], psi.alpha=psi.alpha, psi.beta=psi.beta, 
-                             P=P, c.data=c.data[[g]], f=f[z.ind[[g]],seq_len(Qs[g]),drop=F], lmat=lmat[[g]])))
+      psi.inv     <- do.call(cbind, lapply(Gseq, function(g) sim.psi.i(N=nn[g], psi.alpha=psi.alpha, c.data=c.data[[g]], 
+                             psi.beta=psi.beta[,g], P=P, f=f[z.ind[[g]],seq_len(Qs[g]),drop=F], lmat=lmat[[g]])))
     
     # Local Shrinkage
       load.2      <- lapply(lmat, function(lg) lg * lg)

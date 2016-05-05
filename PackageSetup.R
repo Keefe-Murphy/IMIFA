@@ -16,8 +16,8 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
                         n.iters = 50000, Labels = NULL, factanal = F, Q.star = NULL, range.G = NULL, 
                         range.Q = NULL, Q.fac = NULL,  burnin = n.iters/5, thinning = 2, centering = T, 
                         scaling = c("unit", "pareto", "none"), verbose = F, adapt = T, b0 = NULL, b1 = NULL, 
-                        prop = NULL, epsilon = NULL, sigma.mu = NULL, sigma.l = NULL, mu0g = F, phi.nu = NULL,
-                        psi.alpha = NULL, psi.beta = NULL, alpha.d1 = NULL, alpha.dk = NULL, beta.d1 = NULL,
+                        prop = NULL, epsilon = NULL, sigma.mu = NULL, sigma.l = NULL, mu0g = F, psi0g = F, 
+                        phi.nu = NULL, psi.alpha = NULL, psi.beta = NULL, alpha.d1 = NULL, alpha.dk = NULL, beta.d1 = NULL,
                         beta.dk = NULL, alpha.pi = NULL, z.init = c("kmeans", "list", "mclust", "priors"), z.list = NULL, 
                         profile = F, mu.switch = T, f.switch = T, load.switch = T, psi.switch = T, pi.switch = T) {
   
@@ -155,14 +155,6 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   if(any(sigma.mu <= 0))            stop("'sigma.mu' must be strictly positive")
   if(missing("psi.alpha"))   psi.alpha     <- 2.5
   if(psi.alpha <= 0)                stop("'psi.alpha' must be strictly positive")
-  if(missing("psi.beta")) {
-    inv.cov        <- try(chol2inv(chol(cov.mat)), silent=T)
-    if(inherits(inv.cov, "try-error"))   {
-      inv.cov      <- 1/cov.mat
-    }
-    psi.beta       <- (psi.alpha - 1)/diag(inv.cov)
-  }   
-  if(any(psi.beta <= 0))            stop("'psi.beta' must be strictly positive")
   if(is.element(method, c("FA", "MFA"))) {
     if(missing("sigma.l"))   sigma.l       <- 0.5
     if(sigma.l <= 0)                stop("'sigma.l' must be strictly positive")
@@ -189,6 +181,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   } 
   if(!is.element(method, c("FA", "IFA", "classify"))) {
     if(!is.logical(mu0g))           stop("'mu0g' must be TRUE or FALSE")
+    if(!is.logical(psi0g))          stop("'psi0g' must be TRUE or FALSE")
     if(missing("alpha.pi"))  alpha.pi      <- ifelse(method == "IMIFA", 0.1, 0.5)
     if(abs(alpha.pi -
           (1 - alpha.pi)) < 0)      stop("'alpha.pi' must be a single number between 0 and 1")
@@ -226,7 +219,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   imifa     <- list(list())
   Gi        <- 1
   Qi        <- 1
-  gibbs.arg <- list(P = P, sigma.mu = sigma.mu, psi.alpha = psi.alpha, psi.beta = psi.beta, burnin = burnin, 
+  gibbs.arg <- list(P = P, sigma.mu = sigma.mu, psi.alpha = psi.alpha, burnin = burnin, 
                     thinning = thinning, iters = iters, verbose = verbose, sw = switches)
   if(!is.element(method, c("FA", "MFA"))) {
     gibbs.arg      <- append(gibbs.arg, list(phi.nu = phi.nu, alpha.d1 = alpha.d1, alpha.dk = alpha.dk, beta.d1 = beta.d1,
@@ -234,11 +227,13 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   } else {
     gibbs.arg      <- append(gibbs.arg, list(sigma.l = sigma.l))
   }
-  if(!is.element(method, c("FA", "IFA", "classify"))) {
-    gibbs.arg      <- append(gibbs.arg, list(mu0g = mu0g))
+
+  beta.x           <- missing("psi.beta")
+  if(beta.x) {
+    psi.beta       <- temp.psi <- list(psi.hyper(psi.alpha, cov.mat))
   }
-  
-  mu.zero          <- mu       <- list(colMeans(data))
+  mu.zero          <- mu       <- list(colMeans(dat))
+
   init.start       <- proc.time()  
   if(is.element(method, c("MFA", "MIFA"))) {
     clust          <- list()
@@ -273,12 +268,24 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
       pi.prop[[g]] <- t(prop.table(tabulate(zi[[g]], nbins=G)))
       mu[[g]]      <- do.call(cbind, lapply(seq_len(G), function(gg) if(pi.prop[[g]][,gg] > 0) colMeans(dat[zi[[g]] == gg,, drop=F]) else rep(0, P)))
       mu.zero[[g]] <- if(mu0g) mu[[g]] else do.call(cbind, lapply(seq_len(G), function(gg) colMeans(dat)))
-      clust[[g]]   <- list(z = zi[[g]], pi.alpha = pi.alpha[[g]], pi.prop = pi.prop[[g]])
+      if(beta.x)  {
+        if(psi0g) {
+          cov.gg   <- lapply(seq_len(G), function(gg) if(pi.prop[[g]][,gg] > 0) cov(dat[zi[[g]] == gg,, drop=F]) else cov.mat)
+          psi.beta[[g]] <- do.call(cbind, lapply(seq_len(G), function(gg) psi.hyper(psi.alpha, cov.gg[[gg]])))
+        } else {
+          psi.beta[[g]] <- replicate(G, temp.psi[[1]])
+        }
+      }
+      clust[[g]]   <- list(z = zi[[g]], pi.alpha = pi.alpha[[g]], 
+                           pi.prop = pi.prop[[g]], label.switch = c(mu0g, psi0g))
     }
   }
-  if(round(sapply(mu.zero, sum)) == 0) {
+  if(all(round(unlist(sapply(mu.zero, sum))) == 0)) {
     mu.zero        <- lapply(mu.zero, function(x) 0)
   }
+  if(any(unlist(sapply(psi.beta, 
+         function(x) sapply(x, 
+         function(x) x <= 0)))))    stop("'psi.beta' must be strictly positive")
   init.time        <- proc.time() - init.start
   
   if(profile)  Rprof()
@@ -287,7 +294,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
       start.time   <- proc.time()
         imifa[[Gi]][[Qi]] <- do.call(paste0("gibbs.", meth[Gi]),                          
                                      args=append(list(data = dat, N = N, G = range.G, Q = Q.star, mu = mu[[Gi]], mu.zero = mu.zero[[Gi]],
-                                                      clust = if(meth[Gi] == "MIFA") clust[[Gi]]), gibbs.arg))
+                                                      psi.beta = psi.beta[[Gi]], cluster = if(meth[Gi] == "MIFA") clust[[Gi]]), gibbs.arg))
     } else {
       start.time   <- proc.time()
       for(g in range.G) {
@@ -295,7 +302,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
         imifa[[Gi]]       <- list()
         imifa[[Gi]][[Qi]] <- do.call(paste0("gibbs.", meth[Gi]),
                                      args=append(list(data = dat, N = N, G = g, Q = Q.star, mu = mu[[Gi]], mu.zero = mu.zero[[Gi]],
-                                                      clust = if(meth[Gi] == "MFA") clust[[Gi]]), gibbs.arg))
+                                                      psi.beta = psi.beta[[Gi]], cluster = if(meth[Gi] == "MIFA") clust[[Gi]]), gibbs.arg))
         if(verbose)                 cat(paste0(round(Gi/length(range.G) * 100, 2), "% Complete\n"))
       }
     }
@@ -306,14 +313,14 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
       start.time   <- proc.time()
         imifa[[Gi]][[Qi]] <- do.call(paste0("gibbs.", meth[Gi]), 
                                      args=append(list(data = dat, N = N, G = range.G, Q = range.Q, mu = mu[[Gi]], mu.zero = mu.zero[[Gi]],
-                                                      clust = if(meth[Gi] == "MFA") clust[[Gi]]), gibbs.arg))
+                                                      psi.beta = psi.beta[[Gi]], cluster = if(meth[Gi] == "MFA") clust[[Gi]]), gibbs.arg))
     } else if(length(range.G) == 1) {
       start.time   <- proc.time()
       for(q in range.Q) { 
         Qi         <- which(range.Q == q)
         imifa[[Gi]][[Qi]] <- do.call(paste0("gibbs.", meth[Gi]),
                                      args=append(list(data = dat, N = N, G = range.G, Q = q, mu = mu[[Gi]], mu.zero = mu.zero[[Gi]],
-                                                      clust = if(meth[Gi] == "MFA") clust[[Gi]]), gibbs.arg))
+                                                      psi.beta = psi.beta[[Gi]], cluster = if(meth[Gi] == "MFA") clust[[Gi]]), gibbs.arg))
         if(verbose)                 cat(paste0(round(Qi/length(range.Q) * 100, 2), "% Complete\n"))
       }
     } else if(length(range.Q) == 1) {
@@ -323,7 +330,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
         imifa[[Gi]]       <- list()
         imifa[[Gi]][[Qi]] <- do.call(paste0("gibbs.", meth[Gi]),
                                      args=append(list(data = dat, N = N, G = g, Q = range.Q, mu = mu[[Gi]], mu.zero = mu.zero[[Gi]],
-                                                      clust = if(meth[Gi] == "MFA") clust[[Gi]]), gibbs.arg))
+                                                      psi.beta = psi.beta[[Gi]], cluster = if(meth[Gi] == "MFA") clust[[Gi]]), gibbs.arg))
         if(verbose)                 cat(paste0(round(Gi/length(range.G) * 100, 2), "% Complete\n"))
       }
     } else {
@@ -336,7 +343,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
           Qi       <- which(range.Q == q)
         imifa[[Gi]][[Qi]] <- do.call(paste0("gibbs.", meth[Gi]),
                                      args=append(list(data = dat, N = N, G = g, Q = q, mu = mu[[Gi]], mu.zero = mu.zero[[Gi]],
-                                                      clust = if(meth[Gi] == "MFA") clust[[Gi]]), gibbs.arg))
+                                                      psi.beta = psi.beta[[Gi]], cluster = if(meth[Gi] == "MFA") clust[[Gi]]), gibbs.arg))
         counter    <- counter + 1
         if(verbose)                 cat(paste0(round(counter/(length(range.G) * length(range.Q)) * 100, 2), "% Complete\n"))
         }
@@ -389,6 +396,8 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   attr(imifa, "Groups")   <- if(method != "IMIFA") range.G else G.star
   if(is.element(method, c("MFA", "MIFA"))) {
     attr(imifa, "Init.Z") <- z.init
+    attr(imifa, 
+         "Label.Switch")  <- any(mu0g, psi0g)
   }
   attr(imifa, "Method")   <- paste0(toupper(substr(method, 1, 1)),
                                     substr(method, 2, nchar(method)))

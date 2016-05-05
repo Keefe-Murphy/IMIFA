@@ -6,7 +6,7 @@
   gibbs.MFA      <- function(Q, data, iters, N, P, G, mu.zero,
                              sigma.mu, sigma.l, burnin, mu,
                              thinning, psi.alpha, psi.beta,
-                             sw, verbose, clust, ...) {
+                             sw, verbose, cluster, ...) {
         
   # Define & initialise variables
     n.iters      <- round(max(iters), -1)
@@ -47,12 +47,15 @@
       mu.zero    <- matrix(0, nr=1, nc=G)
     }
     l.sigma      <- 1/sigma.l 
-    z            <- clust$z
-    pi.alpha     <- clust$pi.alpha
-    pi.prop      <- clust$pi.prop
+    z            <- cluster$z
+    pi.alpha     <- cluster$pi.alpha
+    pi.prop      <- cluster$pi.prop
+    mu0g         <- cluster$label.switch[1]
+    psi0g        <- cluster$label.switch[2]
+    label.switch <- any(mu0g, psi0g)
     f            <- sim.f.p(N=N, Q=Q)
     lmat         <- lapply(Gseq, function(g) sim.load.p(Q=Q, P=P, sigma.l=sigma.l, shrink=F))
-    psi.inv      <- do.call(cbind, lapply(Gseq, function(g) sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)))
+    psi.inv      <- do.call(cbind, lapply(Gseq, function(g) sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta[,g])))
     if(Q > 0) {
       for(g in Gseq) {
         fact     <- try(factanal(data[z == g,, drop=F], factors=Q, scores="regression", control=list(nstart=50)), silent=T)
@@ -110,7 +113,7 @@
                   
     # Uniquenesses
       psi.inv    <- do.call(cbind, lapply(Gseq, function(g) sim.psi.i(N=nn[g], P=P, psi.alpha=psi.alpha, 
-                            psi.beta=psi.beta, c.data=c.data[[g]], f=f[z.ind[[g]],,drop=F], lmat=lmat[[g]])))
+                            psi.beta=psi.beta[,g], c.data=c.data[[g]], f=f[z.ind[[g]],,drop=F], lmat=lmat[[g]])))
     
     # Mixing Proportions
       pi.prop    <- sim.pi(pi.alpha=pi.alpha, nn=nn)

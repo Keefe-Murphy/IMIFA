@@ -17,8 +17,9 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   burnin         <- as.integer(burnin)
   thinning       <- as.integer(thinning)
   store          <- seq(from=burnin + 1, to=attr(sims, "Store"), by=thinning)
-  temp.store     <- store
   n.store        <- length(store)
+  temp.store     <- store
+  label.switch   <- attr(sims, "Label.Switch")
   method         <- attr(sims, "Method")
   n.fac          <- attr(sims, "Factors")
   n.grp          <- attr(sims, "Groups")

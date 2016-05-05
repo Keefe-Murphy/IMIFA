@@ -149,3 +149,13 @@
           exp(log.dens)
         }
     }
+  
+  # Uniqueness Hyperparameters
+    psi.hyper   <- function(alpha, covar) {
+      inv.cov   <- try(chol2inv(chol(covar)), silent=T)
+      if(inherits(inv.cov, "try-error"))   {
+        inv.cov <- 1/covar
+      }
+      psi.beta  <- (alpha - 1)/diag(inv.cov) 
+        psi.beta
+    }
