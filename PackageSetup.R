@@ -16,7 +16,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
                         n.iters = 50000, Labels = NULL, factanal = F, Q.star = NULL, range.G = NULL, 
                         range.Q = NULL, Q.fac = NULL,  burnin = n.iters/5, thinning = 2, centering = T, 
                         scaling = c("unit", "pareto", "none"), verbose = F, adapt = T, b0 = NULL, b1 = NULL, 
-                        prop = NULL, epsilon = NULL, sigma.mu = NULL, sigma.l = NULL, mu0g = F, psi0g = F, 
+                        prop = NULL, epsilon = NULL, sigma.mu = NULL, sigma.l = NULL, mu0g = F, psi0g = F, mu.zero = NULL,
                         phi.nu = NULL, psi.alpha = NULL, psi.beta = NULL, alpha.d1 = NULL, alpha.dk = NULL, beta.d1 = NULL,
                         beta.dk = NULL, alpha.pi = NULL, z.init = c("kmeans", "list", "mclust", "priors"), z.list = NULL, 
                         profile = F, mu.switch = T, f.switch = T, load.switch = T, psi.switch = T, pi.switch = T) {
@@ -228,28 +228,20 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
     gibbs.arg      <- append(gibbs.arg, list(sigma.l = sigma.l))
   }
 
-  beta.x           <- missing("psi.beta")
   init.start       <- proc.time()  
+  beta.x           <- missing("psi.beta")
+  mu0.x            <- missing("mu.zero")
+  mu               <- list(colMeans(dat))
   if(beta.x) {
     psi.beta       <- temp.psi <- list(psi.hyper(psi.alpha, cov.mat))
   } else {
-    if(!is.list(psi.beta))     psi.beta    <- list(psi.beta)
-    if(length(psi.beta) != length(range.G)) {
-                                    stop(paste0("'psi.beta' must be a list of length ", length(range.G))) }
-    len.p          <- sapply(psi.beta, length)
-    if(is.element(method, c("FA", "IFA")))  {
-      if(!is.element(len.psi, c(1, P)))     {
-                                    stop(paste0("'psi.beta' must be list of length 1 containing a scalar or a vector of length P=", 27, " for a 1-group model")) }
-    } else {
-      if(all(is.element(len.p, c(1, range.G, P)))) {
-        if(all(len.p == 1))       psi.beta <- lapply(seq_along(range.G), function(g) matrix(psi.beta[[g]], nr=1, nc=range.G[g]))
-        if(all(len.p == range.G)) psi.beta <- lapply(seq_along(range.G), function(g) matrix(psi.beta[[g]], nr=1))
-        if(all(len.p == P))       psi.beta <- lapply(seq_along(range.G), function(g) matrix(psi.beta[[g]], nr=P, nc=range.G[g]))
-      } else if(!all(sapply(seq_along(range.G), function(g) is.matrix(psi.beta[[g]]) && is.element(dim(psi.beta[[g]]), c(c(1, range.G[g]), c(P, range.G[g])))))) {
-                                    stop(paste0("Each element of 'psi.beta' must be either of length 1, P=", P, ", or it's corresponding range.G, or a matrix with P rows and it's corresponding range.G columns.")) }
-    }
+    psi.beta       <- len.check(psi.beta)
   }
-  mu.zero          <- mu       <- list(colMeans(dat))
+  if(mu0.x)  {
+    mu.zero        <- mu
+  } else {
+    mu.zero        <- len.check(mu.zero)
+  }
   if(is.element(method, c("MFA", "MIFA"))) {
     clust          <- list()
     pi.alpha       <- list()
@@ -282,7 +274,9 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
       }
       pi.prop[[g]] <- t(prop.table(tabulate(zi[[g]], nbins=G)))
       mu[[g]]      <- do.call(cbind, lapply(seq_len(G), function(gg) if(pi.prop[[g]][,gg] > 0) colMeans(dat[zi[[g]] == gg,, drop=F]) else rep(0, P)))
-      mu.zero[[g]] <- if(mu0g) mu[[g]] else do.call(cbind, lapply(seq_len(G), function(gg) colMeans(dat)))
+      if(mu0.x)   {
+        mu.zero[[g]]    <- if(mu0g) mu[[g]] else do.call(cbind, lapply(seq_len(G), function(gg) colMeans(dat)))  
+      }
       if(beta.x)  {
         if(psi0g) {
           cov.gg   <- lapply(seq_len(G), function(gg) if(pi.prop[[g]][,gg] > 0) cov(dat[zi[[g]] == gg,, drop=F]) else cov.mat)

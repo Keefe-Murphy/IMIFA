@@ -159,3 +159,22 @@
       psi.beta  <- (alpha - 1)/diag(inv.cov) 
         psi.beta
     }
+
+  # Length Checker for mu0g & psi0g
+    len.check   <- function(obj0g) {
+      obj.name  <- deparse(substitute(obj0g))
+      if(!is.list(obj0g))        obj0g  <- list(obj0g)
+      if(length(obj0g) != length(range.G)) stop(paste0(obj.name, " must be a list of length ", length(range.G)))
+      len       <- sapply(obj0g, length)
+      if(is.element(method, c("FA", "IFA")))       {
+        if(!is.element(len, c(1, P)))      stop(paste0(x.name, " must be list of length 1 containing a scalar or a vector of length P=", P, " for a 1-group model"))
+      } else {
+        if(all(is.element(len, c(1, range.G, P)))) {
+          if(all(len == 1))       obj0g <- lapply(seq_along(range.G), function(g) matrix(obj0g[[g]], nr=1, nc=range.G[g]))
+          if(all(len == range.G)) obj0g <- lapply(seq_along(range.G), function(g) matrix(obj0g[[g]], nr=1))
+          if(all(len == P))       obj0g <- lapply(seq_along(range.G), function(g) matrix(obj0g[[g]], nr=P, nc=range.G[g]))
+        } else if(!all(sapply(seq_along(range.G), function(g) is.matrix(obj0g[[g]]) && is.element(dim(obj0g[[g]]), c(c(1, range.G[g]), c(P, range.G[g])))))) {
+                                            stop(paste0("Each element of ", obj.name, " must be either of length 1, P=", P, ", or it's corresponding range.G, or a matrix with P rows and it's corresponding range.G columns")) }
+      }
+        obj0g
+    }
