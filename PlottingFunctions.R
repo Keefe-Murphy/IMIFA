@@ -89,7 +89,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
          m.sw["G.sw"]))  {
     Gs    <- 1
   } else if(!missing(g)) {
-    if(is.element(method, c("MFA", "MIFA")) {
+    if(is.element(method, c("MFA", "MIFA"))) {
       if(!is.element(g, seq_len(G)))  stop("This g value was not used during simulation")
       Gs  <- g
     } else if(g > 1)                  message(paste0("Forced g=1 for the ", method, " method"))
@@ -105,7 +105,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
     msgx  <- all(interactive(), g != max(Gs))
     result     <- results[[g]]
     if(any(all(Q  == 0, vars == "loadings"),
-       all(all(Qs == 0, vars == "scores"))   {            
+           all(Qs == 0, vars == "scores")))  {            
                                        warning(paste0("Can't plot ", vars, " as they contain no columns/factors"), call.=F)
       if(length(unique(tail(Qs, - g))) == 1) {
         break

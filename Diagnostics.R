@@ -48,7 +48,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   if(G.T) {
     if(!is.element(method, c("FA", "IFA"))) {
       G.ind      <- which(n.grp == G)
-    } else if(G > 1)              message(paste0("Forced G=1 for the ", method, " method"))
+    } else if(G   > 1)            message(paste0("Forced G=1 for the ", method, " method"))
     if(all(is.element(method, c("MFA", "MIFA")),
        !is.element(G, n.grp)))    stop("This G value was not used during simulation")
   }
@@ -84,7 +84,8 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     }
     aicm         <- bicm       <- 
     aic.mcmc     <- bic.mcmc   <- crit.mat
-    for(g in seq_len(G.range)) { 
+    log.N        <- log(n.obs)
+    for(g in seq_len(G.range))   { 
       gi                 <- ifelse(G.T, G.ind, g)
       for(q in seq_len(Q.range)) {
         qi               <- ifelse(Q.T, Q.ind, q)
@@ -93,11 +94,11 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
         ll.var           <- ifelse(length(log.likes) != 1, 2 * var(log.likes, na.rm=T), 0)
         ll.mean          <- mean(log.likes, na.rm=T)
         aicm[g,q]        <- ll.max - ll.var * 2
-        bicm[g,q]        <- ll.max - ll.var * log(n.obs) 
+        bicm[g,q]        <- ll.max - ll.var * log.N
         if(method != "MIFA") {
           K              <- attr(sims[[gi]][[qi]], "K")
           aic.mcmc[g,q]  <- ll.max - K * 2
-          bic.mcmc[g,q]  <- ll.max - K * log(n.obs)
+          bic.mcmc[g,q]  <- ll.max - K * log.N
         }
       }  
     }
@@ -142,20 +143,20 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   
 # Manage Label Switching & retrieve cluster labels/mixing proportions
   if(clust.ind) {
-    if(sw["mu.sw"])  {
+    if(sw["mu.sw"])   {
       mus        <- sims[[G.ind]][[Q.ind]]$mu[,,store, drop=F]                            
     }
-    if(sw["l.sw"])   {
+    if(sw["l.sw"])    {
       lmats      <- sims[[G.ind]][[Q.ind]]$load
       if(method  == "MIFA") {
         lmats    <- as.array(lmats)
       }
       lmats      <- lmats[,,,store, drop=F]
     }
-    if(sw["psi.sw"]) {
+    if(sw["psi.sw"])  {
       psis       <- sims[[G.ind]][[Q.ind]]$psi[,,store, drop=F]
     }
-    if(sw["pi.sw"])  {
+    if(sw["pi.sw"])   {
       pies       <- sims[[G.ind]][[Q.ind]]$pi.prop[,store, drop=F]
     }
     z            <- as.matrix(sims[[G.ind]][[Q.ind]]$z.store[,store])
@@ -267,7 +268,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   
   # Retrieve (unrotated) loadings  
     if(sw["l.sw"]) {
-      if(all(is.element(method, c("MFA", "MIFA")), G > 1)) {
+      if(all(is.element(method, c("MFA", "MIFA")), G  > 1))  {
         lmat     <- adrop(lmats[,Qgs,g,store, drop=F], drop=3)
         l.temp   <- adrop(lmat[,,1, drop=F], drop=3)
       }
@@ -286,21 +287,21 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     if(all(sw["f.sw"], clust.ind)) {
       fg         <- f[ind[[g]],Qgs,, drop=F]
     }
-    if(sw["l.sw"])     {
+    if(sw["l.sw"])      {
       for(p in seq_len(n.store)) {
-        rot            <- procrustes(X=as.matrix(lmat[,,p]), Xstar=l.temp)$R
-        lmat[,,p]      <- lmat[,,p] %*% rot
+        rot              <- procrustes(X=as.matrix(lmat[,,p]), Xstar=l.temp)$R
+        lmat[,,p]        <- lmat[,,p] %*% rot
         if(sw["f.sw"])  {
           if(clust.ind) {
-            fg[,,p]    <- fg[,,p]   %*% rot
+            fg[,,p]      <- fg[,,p]   %*% rot
           } else {
-            f[,,p]     <- f[,,p]    %*% rot
+            f[,,p]       <- f[,,p]    %*% rot
           }
         }  
       }
     }
     if(all(sw["f.sw"], clust.ind)) {
-      f[ind[[g]],Qgs,] <- fg
+      f[ind[[g]],Qgs,]   <- fg
     }
   
   # Retrieve means, uniquenesses & empirical covariance matrix
@@ -321,8 +322,8 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
         varnames <- colnames(data)
       }
       cov.emp    <- cov(data[ind[[g]],, drop=F])
-      dimnames(cov.emp)        <- list(varnames, varnames)
-      if(sum(ind[[g]]) == 0)      rm(cov.emp)
+      dimnames(cov.emp)  <- list(varnames, varnames)
+      if(sum(ind[[g]])   == 0)    rm(cov.emp)
     } else {
       post.mu    <- sims[[G.ind]][[Q.ind]]$post.mu
       post.psi   <- sims[[G.ind]][[Q.ind]]$post.psi
@@ -351,7 +352,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       var.load   <- apply(lmat, c(1, 2), var)
       CI.load    <- apply(lmat, c(1, 2), function(x) quantile(x, conf.levels))
       var.exp    <- sum(colSums(post.load * post.load))/n.var
-      class(post.load) <- "loadings"
+      class(post.load)   <- "loadings"
     } else   {
       var.exp    <- ifelse(sum(z.ind[[g]]) == 0, 0, max(0, (sum(diag(cov.emp)) - sum(post.psi))/n.var))
     }
@@ -360,9 +361,9 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     if(clust.ind) {
       if(all(sw["psi.sw"], any(sw["l.sw"], Qg == 0))) {
         if(Qg > 0)   {
-          cov.est      <- tcrossprod(post.load) + diag(post.psi)
+          cov.est        <- tcrossprod(post.load) + diag(post.psi)
         } else {
-          cov.est      <- diag(post.psi)
+          cov.est        <- diag(post.psi)
         }
         if(data.x)      {
           dimnames(cov.est)    <- list(varnames, varnames)
