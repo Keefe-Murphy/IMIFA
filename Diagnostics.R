@@ -160,25 +160,27 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       pies       <- sims[[G.ind]][[Q.ind]]$pi.prop[,store, drop=F]
     }
     z            <- as.matrix(sims[[G.ind]][[Q.ind]]$z.store[,store])
-    z.temp       <- factor(z[,1], levels=seq_len(G))
-    for(ls in seq_len(n.store)[-1]) {
-      tab        <- table(factor(z[,ls], levels=seq_len(G)), z.temp)
-      z.perm     <- matchClasses(tab, method="exact", verbose=F)
-      z[,ls]     <- factor(z[,ls], labels=z.perm, levels=seq_len(G))
-      if(sw["mu.sw"])  {
-        mus[,,ls]      <- mus[,z.perm,ls]
-      }
-      if(sw["l.sw"])   {
-        lmats[,,,ls]   <- lmats[,,z.perm,ls]
-      }
-      if(sw["psi.sw"]) {
-        psis[,,ls]     <- psis[,z.perm,ls]
-      }
-      if(sw["pi.sw"])  {
-        pies[,ls]      <- pies[z.perm,ls]
-      }
-      if(method == "MIFA") {
-        Q.store[,ls]   <- Q.store[z.perm,ls]
+    if(!label.switch) {
+      z.temp     <- factor(z[,1], levels=seq_len(G))
+      for(ls in seq_len(n.store)[-1]) {
+        tab      <- table(factor(z[,ls], levels=seq_len(G)), z.temp)
+        z.perm   <- matchClasses(tab, method="exact", verbose=F)
+        z[,ls]   <- factor(z[,ls], labels=z.perm, levels=seq_len(G))
+        if(sw["mu.sw"])  {
+          mus[,,ls]      <- mus[,z.perm,ls]
+        }
+        if(sw["l.sw"])   {
+          lmats[,,,ls]   <- lmats[,,z.perm,ls]
+        }
+        if(sw["psi.sw"]) {
+          psis[,,ls]     <- psis[,z.perm,ls]
+        }
+        if(sw["pi.sw"])  {
+          pies[,ls]      <- pies[z.perm,ls]
+        }
+        if(method == "MIFA") {
+          Q.store[,ls]   <- Q.store[z.perm,ls]
+        }
       }
     }
     post.z       <- setNames(apply(z, 1, function(x) factor(which.max(tabulate(x)), levels=seq_len(G))), seq_len(n.obs))

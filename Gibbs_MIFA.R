@@ -53,6 +53,7 @@
       mu.zero      <- matrix(0, nr=1, nc=G)
     }
     z              <- cluster$z
+    z.temp         <- factor(z, levels=Gseq)
     pi.alpha       <- cluster$pi.alpha
     pi.prop        <- cluster$pi.prop
     mu0g           <- cluster$label.switch[1]
@@ -186,6 +187,32 @@
       Sigma        <- lapply(Gseq, function(g) tcrossprod(lmat[[g]]) + diag(psi[,g]))
       z.res        <- sim.z(data=data, mu=mu, Sigma=Sigma, G=G, pi.prop=pi.prop)
       z            <- z.res$z
+    
+    # Label Switching
+      if(label.switch)   {
+        tab        <- table(factor(z, levels=Gseq), z.temp)
+        z.perm     <- matchClasses(tab, method="exact", verbose=F)
+        z          <- as.numeric(factor(z, labels=z.perm, levels=Gseq))
+        Qs         <- Qs[z.perm]
+        if(sw["mu.sw"])  {
+          mu       <- mu[,z.perm]
+        }
+        if(sw["l.sw"])   {
+          lmat     <- lapply(Gseq, function(g) lmat[[z.perm[g]]])
+        }
+        if(sw["psi.sw"]) {
+          psi.inv  <- psi.inv[,z.perm]
+        }
+        if(sw["pi.sw"])  {
+          pi.prop  <- pi.prop[,z.perm]
+        }
+        if(mu0g)         {
+          mu.zero  <- mu.zero[,z.perm]
+        }
+        if(psi0g)        {
+          psi.beta <- psi.beta[,z.perm]
+        }
+      }
       
     if(any(Qs > Q.star))      stop(paste0("Q cannot exceed initial number of loadings columns: try increasing Q.star from ", Q.star))
       if(is.element(iter, iters))  {

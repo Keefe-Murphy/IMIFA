@@ -48,6 +48,7 @@
     }
     l.sigma        <- 1/sigma.l 
     z              <- cluster$z
+    z.temp         <- factor(z, levels=Gseq)
     pi.alpha       <- cluster$pi.alpha
     pi.prop        <- cluster$pi.prop
     mu0g           <- cluster$label.switch[1]
@@ -69,18 +70,17 @@
       psi.inv      <- do.call(cbind, lapply(Gseq, function(g) if(pi.prop[,g] > 0) 1/apply(data[z == g,, drop=F], 2, var) else rep(1, P)))
     }
     l.sigma        <- l.sigma * diag(Q)
+    lmat           <- array(unlist(lmat), dim=c(P, Q, G))
     Qs             <- rep(Q, G)
     if(burnin       < 1)  {
       mu.store[,,1]        <- mu
       f.store[,,1]         <- f
-      for(g in Gseq) {
-        load.store[,,g,1]  <- lmat[[g]]
-      }
+      load.store[,,,1]     <- lmat
       psi.store[,,1]       <- 1/psi.inv
       pi.store[,1]         <- pi.prop
       z.store[,1]          <- z
       ll.store[1]          <- sum(sim.z(data=data, mu=mu, G=G, pi.prop=pi.prop, Sigma=lapply(Gseq,
-                                  function(g) tcrossprod(lmat[[g]]) + diag(1/psi.inv[,g])))$log.likes)
+                                  function(g) tcrossprod(lmat[,,g]) + diag(1/psi.inv[,g])))$log.likes)
     }
     
   # Iterate
@@ -99,41 +99,62 @@
       sum.data     <- lapply(Gseq, function(g) colSums(data[z.ind[[g]],, drop=F]))
       sum.f        <- lapply(Gseq, function(g) colSums(f[z.ind[[g]],, drop=F]))
       mu           <- do.call(cbind, lapply(Gseq, function(g) sim.mu(N=nn[g], mu.sigma=mu.sigma, psi.inv=psi.inv[,g], 
-                              P=P, sum.data=sum.data[[g]], sum.f=sum.f[[g]], lmat=lmat[[g]], mu.zero=mu.zero[,g])))
+                              P=P, sum.data=sum.data[[g]], sum.f=sum.f[[g]], lmat=lmat[,,g], mu.zero=mu.zero[,g])))
     
     # Scores & Loadings
       c.data       <- lapply(Gseq, function(g) sweep(data[z.ind[[g]],, drop=F], 2, mu[,g], FUN="-"))
       if(Q > 0)   {
-        f          <- do.call(rbind, lapply(Gseq, function(g) sim.score(N=nn[g], lmat=lmat[[g]], 
+        f          <- do.call(rbind, lapply(Gseq, function(g) sim.score(N=nn[g], lmat=lmat[,,g], 
                              c.data=c.data[[g]], psi.inv=psi.inv[,g], Q=Qs[g])))[obsnames,, drop=F]
         FtF        <- lapply(Gseq, function(g) crossprod(f[z.ind[[g]],, drop=F]))
-        lmat       <- lapply(Gseq, function(g) do.call(rbind, lapply(Pseq, function(j) sim.load(l.sigma=l.sigma, Q=Qs[g], P=P,
-                             c.data=c.data[[g]][,j],  f=f[z.ind[[g]],, drop=F], psi.inv=psi.inv[,g][j], FtF=FtF[[g]], shrink=F))))
+        lmat       <- array(unlist(lapply(Gseq, function(g) do.call(rbind, lapply(Pseq, function(j) sim.load(l.sigma=l.sigma, Q=Qs[g], P=P,
+                             c.data=c.data[[g]][,j],  f=f[z.ind[[g]],, drop=F], psi.inv=psi.inv[,g][j], FtF=FtF[[g]], shrink=F))))), dim=c(P, Q, G))
       }
                   
     # Uniquenesses
       psi.inv      <- do.call(cbind, lapply(Gseq, function(g) sim.psi.i(N=nn[g], P=P, psi.alpha=psi.alpha, 
-                              psi.beta=psi.beta[,g], c.data=c.data[[g]], f=f[z.ind[[g]],,drop=F], lmat=lmat[[g]])))
+                              psi.beta=psi.beta[,g], c.data=c.data[[g]], f=f[z.ind[[g]],,drop=F], lmat=lmat[,,g])))
     
     # Mixing Proportions
       pi.prop      <- sim.pi(pi.alpha=pi.alpha, nn=nn)
     
     # Cluster Labels
       psi          <- 1/psi.inv
-      Sigma        <- lapply(Gseq, function(g) tcrossprod(lmat[[g]]) + diag(psi[,g]))
+      Sigma        <- lapply(Gseq, function(g) tcrossprod(lmat[,,g]) + diag(psi[,g]))
       z.res        <- sim.z(data=data, mu=mu, Sigma=Sigma, G=G, pi.prop=pi.prop)
       z            <- z.res$z
+    
+    # Label Switching
+      if(label.switch)   {
+        tab        <- table(factor(z, levels=Gseq), z.temp)
+        z.perm     <- matchClasses(tab, method="exact", verbose=F)
+        z          <- as.numeric(factor(z, labels=z.perm, levels=Gseq))
+        if(sw["mu.sw"])  {
+          mu       <- mu[,z.perm]
+        }
+        if(sw["l.sw"])   {
+          lmat     <- lmat[,,z.perm]
+        }
+        if(sw["psi.sw"]) {
+          psi.inv  <- psi.inv[,z.perm]
+        }
+        if(sw["pi.sw"])  {
+          pi.prop  <- pi.prop[,z.perm]
+        }
+        if(mu0g)         {
+          mu.zero  <- mu.zero[,z.perm]
+        }
+        if(psi0g)        {
+          psi.beta <- psi.beta[,z.perm]
+        }
+      }
       
       if(is.element(iter, iters))  {
         new.it     <- which(iters == iter)
         log.like   <- sum(z.res$log.likes) 
         if(sw["mu.sw"])               mu.store[,,new.it]      <- mu  
         if(all(sw["f.sw"], Q > 0))    f.store[,,new.it]       <- f
-        if(all(sw["l.sw"], Q > 0)) {
-          for(g in Gseq) {
-                                      load.store[,,g,new.it]  <- lmat[[g]]
-          }
-        }
+        if(all(sw["l.sw"], Q > 0))    load.store[,,,new.it]   <- lmat
         if(sw["psi.sw"])              psi.store[,,new.it]     <- psi
         if(sw["pi.sw"])               pi.store[,new.it]       <- pi.prop
                                       z.store[,new.it]        <- z 
