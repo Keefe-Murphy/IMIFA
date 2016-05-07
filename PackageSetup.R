@@ -243,6 +243,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
     mu.zero        <- len.check(mu.zero)
   }
   if(is.element(method, c("MFA", "MIFA"))) {
+    if(verbose)                     cat(paste0("Initialising...\n"))
     clust          <- list()
     pi.alpha       <- list()
     pi.prop        <- list()
@@ -420,7 +421,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   if(any(is.element(method, c("IFA", "IMIFA")), 
      (is.element(method, c("FA", "MFA")) && length(range.Q) == 1)))       {
     attr(imifa, "Time")   <- round(tot.time, 2)
-  } else if(all(is.element(method, c("MFA", "MIFA")), z.init  != "list")) {
+  } else if(all(is.element(method, c("MFA", "MIFA")))) {
     attr(imifa, "Time")   <- lapply(list(Total = tot.time, Average = avg.time, Z.Initialisation = init.time), function(x) round(x, 2)) 
   } else {
     attr(imifa, "Time")   <- lapply(list(Total = tot.time, Average = avg.time), function(x) round(x, 2)) 
