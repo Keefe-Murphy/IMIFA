@@ -439,7 +439,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
       if(method == "MIFA") {
         plot.Q <- GQ.res$Counts
         Q.name <- lapply(plot.Q, names)
-        range  <- as.numeric(unique(unlist(Q.name)))
+        range  <- as.numeric(unique(unlist(Q.name, use.names=F)))
         range  <- seq(from=min(range), to=max(range), by=1)
         miss   <- lapply(seq_len(G), function(g) setdiff(range, as.numeric(Q.name[[g]])))
         miss   <- lapply(seq_len(G), function(g) setNames(rep(0, length(miss[[g]])), as.character(miss[[g]])))

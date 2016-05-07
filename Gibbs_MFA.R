@@ -70,7 +70,7 @@
       psi.inv      <- do.call(cbind, lapply(Gseq, function(g) if(pi.prop[,g] > 0) 1/apply(data[z == g,, drop=F], 2, var) else rep(1, P)))
     }
     l.sigma        <- l.sigma * diag(Q)
-    lmat           <- array(unlist(lmat), dim=c(P, Q, G))
+    lmat           <- array(unlist(lmat, use.names=F), dim=c(P, Q, G))
     Qs             <- rep(Q, G)
     if(burnin       < 1)  {
       mu.store[,,1]        <- mu
@@ -108,7 +108,7 @@
                              c.data=c.data[[g]], psi.inv=psi.inv[,g], Q=Qs[g])))[obsnames,, drop=F]
         FtF        <- lapply(Gseq, function(g) crossprod(f[z.ind[[g]],, drop=F]))
         lmat       <- array(unlist(lapply(Gseq, function(g) do.call(rbind, lapply(Pseq, function(j) sim.load(l.sigma=l.sigma, Q=Qs[g], P=P,
-                             c.data=c.data[[g]][,j],  f=f[z.ind[[g]],, drop=F], psi.inv=psi.inv[,g][j], FtF=FtF[[g]], shrink=F))))), dim=c(P, Q, G))
+                            c.data=c.data[[g]][,j],  f=f[z.ind[[g]],, drop=F], psi.inv=psi.inv[,g][j], FtF=FtF[[g]], shrink=F)))), use.names=F), dim=c(P, Q, G))
       }
                   
     # Uniquenesses

@@ -74,7 +74,7 @@
       log.denom <- apply(log.numer, 1, logSumExp)
       pz        <- exp(sweep(log.numer, 1, log.denom, FUN="-"))
       pz[rowSums(pz > 0) == 0,] <- rep(1/G, G)
-      z         <- unlist(lapply(seq_along(log.denom), function(i) sample(seq_len(G), size=1, prob=pz[i,])))
+      z         <- unlist(lapply(seq_along(log.denom), function(i) sample(seq_len(G), size=1, prob=pz[i,])), use.names=F)
         return(list(z = z, log.likes = log.denom))
     }
 

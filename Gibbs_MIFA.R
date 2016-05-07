@@ -168,9 +168,9 @@
           colvec   <- lapply(lind, function(lx) lx >= prop)
           nonred   <- lapply(colvec, function(cv) which(cv == 0))
           numred   <- lapply(colvec, sum)
-          notred   <- unlist(lapply(Gseq, function(g) numred[[g]] == 0))
+          notred   <- unlist(lapply(Gseq, function(g) numred[[g]] == 0), use.names=F)
           Qs.old   <- Qs
-          Qs       <- unlist(lapply(Gseq, function(g) if(notred[g]) Qs.old[g] + 1 else Qs.old[g] - numred[[g]]))
+          Qs       <- unlist(lapply(Gseq, function(g) if(notred[g]) Qs.old[g] + 1 else Qs.old[g] - numred[[g]]), use.names=F)
           phi      <- lapply(Gseq, function(g) if(notred[g]) cbind(phi[[g]][,seq_len(Qs.old[g])], rgamma(n=P, shape=phi.nu, rate=phi.nu)) else phi[[g]][,nonred[[g]], drop=F])
           delta    <- lapply(Gseq, function(g) if(notred[g]) c(delta[[g]][seq_len(Qs.old[g])], rgamma(n=1, shape=alpha.dk, rate=beta.dk)) else delta[[g]][nonred[[g]]])  
           tau      <- lapply(delta, cumprod)

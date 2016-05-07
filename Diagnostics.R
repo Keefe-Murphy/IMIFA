@@ -138,7 +138,6 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   if(is.element(method, c("IFA", "MIFA"))) {
     Q.store      <- sims[[G.ind]][[Q.ind]]$Q.store[,store, drop=F]
     Q.meth       <- ifelse(missing(Q.meth), "Mode", match.arg(Q.meth))
-    NQ           <- nrow(Q.store)
   }
   
 # Manage Label Switching & retrieve cluster labels/mixing proportions
@@ -221,12 +220,12 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   }
   
   if(is.element(method, c("IFA", "MIFA"))) {
-    Q.tab        <- if(NQ > 1) lapply(apply(Q.store, 1, function(x) list(table(x, dnn=NULL))), "[[", 1) else table(Q.store, dnn=NULL)
-    Q.prob       <- if(NQ > 1) lapply(Q.tab, prop.table) else prop.table(Q.tab)
-    Q.mode       <- if(NQ > 1) unlist(lapply(Q.tab, function(qt) as.numeric(names(qt[qt == max(qt)])[1]))) else as.numeric(names(Q.tab[Q.tab == max(Q.tab)])[1])
+    Q.tab        <- if(G > 1) lapply(apply(Q.store, 1, function(x) list(table(x, dnn=NULL))), "[[", 1) else table(Q.store, dnn=NULL)
+    Q.prob       <- if(G > 1) lapply(Q.tab, prop.table) else prop.table(Q.tab)
+    Q.mode       <- if(G > 1) unlist(lapply(Q.tab, function(qt) as.numeric(names(qt[qt == max(qt)])[1]))) else as.numeric(names(Q.tab[Q.tab == max(Q.tab)])[1])
     Q.med        <- ceiling(apply(Q.store, 1, median) * 2)/2
     Q            <- if(Q.meth == "Mode") Q.mode else Q.med
-    Q.CI         <- if(NQ > 1) apply(Q.store, 1, function(qs) round(quantile(qs, conf.levels))) else round(quantile(Q.store, conf.levels))
+    Q.CI         <- if(G > 1) apply(Q.store, 1, function(qs) round(quantile(qs, conf.levels))) else round(quantile(Q.store, conf.levels))
     GQ.res       <- list(G = G, Q = Q, Mode = Q.mode, Median = Q.med, 
                          Q.CI = Q.CI, Probs= Q.prob, Counts = Q.tab)
     if(method == "MIFA") {
