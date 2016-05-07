@@ -49,7 +49,7 @@
     phi          <- sim.phi.p(Q=Q, P=P, phi.nu=phi.nu)
     delta        <- sim.delta.p(Q=Q, alpha.d1=alpha.d1, alpha.dk=alpha.dk, beta.d1=beta.d1, beta.dk=beta.dk)
     tau          <- cumprod(delta)
-    lmat         <- do.call(rbind, lapply(Pseq, function(j) sim.load.p(Q=Q, phi=phi[j,], tau=tau, P=P)))
+    lmat         <- matrix(unlist(lapply(Pseq, function(j) sim.load.p(Q=Q, phi=phi[j,], tau=tau, P=P)), use.names=F), nr=P, byrow=T)
     sum.data     <- mu * N
     if(burnin     < 1) {
       mu.store[,1]         <- mu
@@ -78,8 +78,8 @@
       if(Q  > 0) {
         f        <- sim.score(N=N, Q=Q, lmat=lmat, psi.inv=psi.inv, c.data=c.data)
         FtF      <- crossprod(f)
-        lmat     <- do.call(rbind, lapply(Pseq, function(j) sim.load(Q=Q, tau=tau, P=P, 
-                            f=f, c.data=c.data[,j], phi=phi[j,], psi.inv=psi.inv[j], FtF=FtF)))
+        lmat     <- matrix(unlist(lapply(Pseq, function(j) sim.load(Q=Q, tau=tau, P=P, f=f, 
+                           c.data=c.data[,j], phi=phi[j,], psi.inv=psi.inv[j], FtF=FtF)), use.names=F), nr=P, byrow=T)
       } else {
         f        <- matrix(, nr=N, nc=0)
         lmat     <- matrix(, nr=P, nc=0)

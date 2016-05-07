@@ -74,8 +74,8 @@
       if(Q > 0) {
         f        <- sim.score(N=N, Q=Q, lmat=lmat, psi.inv=psi.inv, c.data=c.data)
         FtF      <- crossprod(f)
-        lmat     <- do.call(rbind, lapply(Pseq, function(j) sim.load(l.sigma=l.sigma, Q=Q,
-                            c.data=c.data[,j], f=f, P=P, psi.inv=psi.inv[j], FtF=FtF, shrink=F)))
+        lmat     <- matrix(unlist(lapply(Pseq, function(j) sim.load(l.sigma=l.sigma, Q=Q, f=f, P=P,
+                           c.data=c.data[,j], psi.inv=psi.inv[j], FtF=FtF, shrink=F)), use.names=F), nr=P, byrow=T)
       }
                       
     # Uniquenesses

@@ -107,8 +107,8 @@
         f          <- do.call(rbind, lapply(Gseq, function(g) sim.score(N=nn[g], lmat=lmat[,,g], 
                              c.data=c.data[[g]], psi.inv=psi.inv[,g], Q=Qs[g])))[obsnames,, drop=F]
         FtF        <- lapply(Gseq, function(g) crossprod(f[z.ind[[g]],, drop=F]))
-        lmat       <- array(unlist(lapply(Gseq, function(g) do.call(rbind, lapply(Pseq, function(j) sim.load(l.sigma=l.sigma, Q=Qs[g], P=P,
-                            c.data=c.data[[g]][,j],  f=f[z.ind[[g]],, drop=F], psi.inv=psi.inv[,g][j], FtF=FtF[[g]], shrink=F)))), use.names=F), dim=c(P, Q, G))
+        lmat       <- array(unlist(lapply(Gseq, function(g) matrix(unlist(lapply(Pseq, function(j) sim.load(l.sigma=l.sigma, Q=Qs[g], P=P, c.data=c.data[[g]][,j],  
+                            f=f[z.ind[[g]],, drop=F], psi.inv=psi.inv[,g][j], FtF=FtF[[g]], shrink=F)), use.names=F), nr=P, byrow=T)), use.names=F), dim=c(P, Q, G))
       }
                   
     # Uniquenesses

@@ -63,7 +63,7 @@
     phi            <- lapply(Gseq, function(g) sim.phi.p(Q=Q, P=P, phi.nu=phi.nu))
     delta          <- lapply(Gseq, function(g) sim.delta.p(Q=Q, alpha.d1=alpha.d1, alpha.dk=alpha.dk, beta.d1=beta.d1, beta.dk=beta.dk))
     tau            <- lapply(delta, cumprod)
-    lmat           <- lapply(Gseq, function(g) do.call(rbind, lapply(Pseq, function(j) sim.load.p(Q=Q, phi=phi[[g]][j,], tau=tau[[g]], P=P))))
+    lmat           <- lapply(Gseq, function(g) matrix(unlist(lapply(Pseq, function(j) sim.load.p(Q=Q, phi=phi[[g]][j,], tau=tau[[g]], P=P)), use.names=F), nr=P, byrow=T))
     psi.inv        <- do.call(cbind, lapply(Gseq, function(g) sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta[,g])))
     for(g in Gseq) {
       fact         <- try(factanal(data[z == g,, drop=F], factors=Q, scores="regression", control=list(nstart=50)), silent=T)
@@ -122,8 +122,8 @@
           if(Qg     > 0)  {
             fgg            <- sim.score(N=nng, lmat=lmat[[g]], Q=Qg, 
                                         c.data=c.datg, psi.inv=psi.ig)
-            lmat[[g]]      <- do.call(rbind, lapply(Pseq, function(j) sim.load(Q=Qg, c.data=c.datg[,j], f=fgg, 
-                                      FtF=crossprod(fgg), P=P, psi.inv=psi.ig[j], phi=phi[[g]][j,], tau=tau[[g]])))
+            lmat[[g]]      <- matrix(unlist(lapply(Pseq, function(j) sim.load(Q=Qg, c.data=c.datg[,j], f=fgg, FtF=crossprod(fgg), 
+                                     P=P, psi.inv=psi.ig[j], phi=phi[[g]][j,], tau=tau[[g]])), use.names=F), nr=P, byrow=T)
             fg[[g]][,Qgs]  <- fgg
           } else {
             lmat[[g]]      <- matrix(, nr=P, nc=0)
