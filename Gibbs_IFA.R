@@ -49,7 +49,7 @@
     phi          <- sim.phi.p(Q=Q, P=P, phi.nu=phi.nu)
     delta        <- sim.delta.p(Q=Q, alpha.d1=alpha.d1, alpha.dk=alpha.dk, beta.d1=beta.d1, beta.dk=beta.dk)
     tau          <- cumprod(delta)
-    lmat         <- sim.load.p(Q=Q, phi=phi, tau=tau, P=P)
+    lmat         <- do.call(rbind, lapply(Pseq, function(j) sim.load.p(Q=Q, phi=phi[j,], tau=tau, P=P)))
     sum.data     <- mu * N
     if(burnin     < 1) {
       mu.store[,1]         <- mu

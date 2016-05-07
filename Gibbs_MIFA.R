@@ -63,7 +63,7 @@
     phi            <- lapply(Gseq, function(g) sim.phi.p(Q=Q, P=P, phi.nu=phi.nu))
     delta          <- lapply(Gseq, function(g) sim.delta.p(Q=Q, alpha.d1=alpha.d1, alpha.dk=alpha.dk, beta.d1=beta.d1, beta.dk=beta.dk))
     tau            <- lapply(delta, cumprod)
-    lmat           <- lapply(Gseq, function(g) sim.load.p(Q=Q, phi=phi[[g]], tau=tau[[g]], P=P))
+    lmat           <- lapply(Gseq, function(g) do.call(rbind, lapply(Pseq, function(j) sim.load.p(Q=Q, phi=phi[[g]][j,], tau=tau[[g]], P=P))))
     psi.inv        <- do.call(cbind, lapply(Gseq, function(g) sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta[,g])))
     for(g in Gseq) {
       fact         <- try(factanal(data[z == g,, drop=F], factors=Q, scores="regression", control=list(nstart=50)), silent=T)

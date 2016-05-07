@@ -95,14 +95,13 @@
   # Loadings
     sim.load.p  <- function(Q, P, sigma.l, phi, tau, shrink = T) {
       if(shrink) {
-        U.load  <- lapply(seq_len(P), function(j) sqrt(1/(phi[j,] * tau)))
-        z.load  <- lapply(seq_len(P), function(j) rnorm(Q, 0, 1))
-          do.call(rbind, lapply(seq_len(P), function(j) U.load[[j]] * z.load[[j]]))
+        U.load  <- sqrt(1/(phi * tau))
+        z.load  <- rnorm(Q, 0, 1)
       } else     {
         U.load  <- sqrt(sigma.l)
         z.load  <- matrix(rnorm(P * Q, 0, 1), nr=P, nc=Q)
-          z.load * U.load
       }
+        U.load * z.load
     }
   
   # Uniquenesses
