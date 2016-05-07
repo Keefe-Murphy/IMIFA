@@ -48,10 +48,11 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   if(G.T) {
     if(!is.element(method, c("FA", "IFA"))) {
       G.ind      <- which(n.grp == G)
-    } else if(G > 1)              warning(paste0("G must be equal to 1 for the ", method, " method"), call.=F)
+    } else if(G > 1)              message(paste0("Forced G=1 for the ", method, " method"))
     if(all(is.element(method, c("MFA", "MIFA")),
        !is.element(G, n.grp)))    stop("This G value was not used during simulation")
-  } 
+  }
+  G              <- ifelse(all(G.T, !is.element(method, c("FA", "IFA"))), G, 1)
   if(Q.T) {
     if(!is.element(method, c("IFA", "MIFA", "IMIFA"))) {
       Q.ind      <- which(n.fac == Q)
@@ -61,7 +62,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     if(all(is.element(method, c("IFA", "classify")), 
       (Q * (n.fac - Q)) < 0))     stop(paste0("Q can't be greater than the number of factors in ", match.call()$sims))
   } 
-  G              <- ifelse(all(G.T, !is.element(method, c("FA", "IFA"))), G, 1)
+  
   
   if(is.element(method, c("FA", "MFA", "MIFA"))) {
     G.range      <- ifelse(G.T, 1, length(n.grp))
@@ -232,8 +233,9 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
 
 # Retrieve (unrotated) scores
   if(all(Q == 0)) {
-    if(sw["f.sw"])                warning("Scores not stored as model has zero factors", call.=F)
+    if(sw["f.sw"])                warning("Scores & loadings not stored as model has zero factors", call.=F)
     sw["f.sw"]   <- F
+    no.score     <- T
   }
   if(sw["f.sw"])  {
     Q.max        <- max(Q) 
@@ -254,7 +256,8 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     Qgs          <- seq_len(Qg)
     sw["l.sw"]   <- attr(sims, "Switch")["l.sw"]
     if(Qg == 0) {
-      if(sw["l.sw"])              warning(paste0("Loadings not stored as", ifelse(G > 1, paste0(" group ", g), " model"), " has zero factors"), call.=F)
+      if(all(sw["l.sw"],
+             !no.score))          warning(paste0("Loadings not stored as", ifelse(G > 1, paste0(" group ", g), " model"), " has zero factors"), call.=F)
       sw["l.sw"] <- F
     }
     if(is.element(method, c("IFA", "MIFA"))) {

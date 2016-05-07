@@ -87,14 +87,14 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
           meth[1]  <- "IFA"
         } 
       }
-                                    warning(paste0("Forced use of ", meth[1], " method where range.G is equal to 1"), call.=F)
+                                    message(paste0("Forced use of ", meth[1], " method where 'range.G' is equal to 1"))
     }                               
   }
   no.fac    <- is.element(method, c("FA", "MFA")) && all(range.Q == 0)
   if(is.element(method, c("FA", "MFA"))) {
     if(!missing(Q.star))  {
       rm(Q.star)
-                                    warning(paste0("'Q.star' is not used for the ", method, " method"), call.=F)
+                                    message(paste0("'Q.star' is not used for the ", method, " method"))
     }            
     if(missing(range.Q))            stop("'range.Q' must be specified")
     if(any(range.Q < 0))            stop("'range.Q' must be strictly non-negative")
@@ -102,7 +102,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   } else {
     if(!missing(range.Q)) {
       rm(range.Q)
-                                    warning(paste0("'range.Q' is not used for the ", method, " method"), call.=F)
+                                    message(paste0("'range.Q' is not used for the ", method, " method"))
     }           
     if(missing(Q.star)) {
       Q.star       <- min(floor(3 * log(P)), P, N - 1)
@@ -191,7 +191,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
         if(!is.list(z.list))   z.list      <- list(z.list)
                                z.list      <- lapply(z.list, as.factor)
         if(z.init != "list") { z.init      <- "list"
-                                    warning("'z.init' set to 'list' as 'z.list' was supplied", call.=F) }
+                                    message("'z.init' set to 'list' as 'z.list' was supplied") }
         if(length(z.list)   != length(range.G))      {
                                     stop(paste0("'z.list' must be a list of length ", length(range.G))) }
         if(!all(lapply(z.list, nlevels) == range.G)) {
@@ -205,7 +205,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   }
   if(all(!is.element(method, c("MFA", "MIFA")), 
          !missing(z.init) || 
-         !missing(z.list)))         warning(paste0("z does not need to be initialised for the ", method, " method"), call.=F)
+         !missing(z.list)))         message(paste0("z does not need to be initialised for the ", method, " method"))
   
   if(method == "classify") {
     source(paste(getwd(), "/IMIFA-GIT/Gibbs_", "IFA", ".R", sep=""), local=T)

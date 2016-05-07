@@ -89,11 +89,11 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
          m.sw["G.sw"]))  {
     Gs    <- 1
   } else if(!missing(g)) {
-    if(g > 1)                         warning(paste0("g must be equal to 1 for the ", method, " method"), call.=F)
-    if(all(is.element(method, c("MFA", "MIFA")),
-      !is.element(g, seq_len(G))))    stop("This g value was not used during simulation")
-    Gs    <- g
-    rm(g)
+    if(is.element(method, c("MFA", "MIFA")) {
+      if(!is.element(g, seq_len(G)))  stop("This g value was not used during simulation")
+      Gs  <- g
+    } else if(g > 1)                  message(paste0("Forced g=1 for the ", method, " method"))
+      Gs  <- 1
   } else if(!interactive()) {         stop("g must be supplied for non-interactive sessions")
   } else {
     Gs    <- seq_len(G)
@@ -104,8 +104,8 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
     msg   <- "Hit <Return> to see next plot: "
     msgx  <- all(interactive(), g != max(Gs))
     result     <- results[[g]]
-    if(any(all(Q  == 0,  vars == "loadings"),
-       all(all(Qs == 0), vars == "scores"))) {            
+    if(any(all(Q  == 0, vars == "loadings"),
+       all(all(Qs == 0, vars == "scores"))   {            
                                        warning(paste0("Can't plot ", vars, " as they contain no columns/factors"), call.=F)
       if(length(unique(tail(Qs, - g))) == 1) {
         break
@@ -451,7 +451,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
         legend("topright", legend=paste0("Group ", seq_len(G)), bty="n", pch=15, col=seq_len(G + 1)[-1])
       }
       if(!exists("Q.plot",  envir=environment())) 
-                                      warning("Nothing to plot", call.=F)
+                                      message("Nothing to plot")
       class(GQ.res)    <- "listof"
       if(is.element(method, c("MFA", "MIFA"))) {
           print(GQ.res)
