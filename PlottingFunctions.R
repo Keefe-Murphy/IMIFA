@@ -3,8 +3,8 @@
 ################################
 
 plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "density", "posterior", "GQ", "trace"), 
-                           vars = c("means", "scores", "loadings", "uniquenesses"), Labels = NULL, fac = NULL, g = NULL,
-                           by.fac = T, ind = NULL, type = c("h", "n", "p", "l"), intervals = T, mat = T, partial = F) {
+                           vars = c("means", "scores", "loadings", "uniquenesses"), load.meth = c("all", "heatmap", "raw"), Labels = NULL, 
+                           g = NULL, fac = NULL, by.fac = T, ind = NULL, type = c("h", "n", "p", "l"), intervals = T, mat = T, partial = F) {
 
   defpar  <- suppressWarnings(par(no.readonly = T))
   defpar$new   <- F
@@ -35,6 +35,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
        "QG")))  {      plot.meth <- "GQ"
   }
   plot.meth    <- match.arg(plot.meth)
+  load.meth    <- match.arg(load.meth)
   type.x       <- missing(type)
   type         <- match.arg(type)
   m.sw         <- c(G.sw = F, C.sw = F, D.sw = F, P.sw = F, T.sw = F)
@@ -43,15 +44,16 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
   ci.sw        <- v.sw
   var.names    <- rownames(results[[1]]$post.load)
   obs.names    <- rownames(results$Scores$post.f)
-  all.ind <- plot.meth == "all"
-  grp.ind <- all(G != 1, !is.element(method, c("FA", "IFA")))
+  all.ind      <- plot.meth == "all"
+  grp.ind      <- all(G != 1, !is.element(method, c("FA", "IFA")))
+  load.all     <- load.meth == "all"
   if(grp.ind)   {
     clust <- results$Clust
   }
   if(all.ind)   {
     if(v.sw[vars]) {
       m.sw[-1]    <- !m.sw[-1]
-      if(vars  == "loadings") {
+      if(all(vars  == "loadings", load.all)) {
         layout(matrix(c(1, 2, 3, 4, 3, 5), nr=3, nc=2, byrow = TRUE))
       } else {
         layout(matrix(c(1, 2, 3, 4), nr=2, nc=2, byrow = TRUE))
@@ -358,44 +360,48 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
         }
       }
       if(vars  == "loadings") {
-        if(!all.ind) {
+        if(all(!all.ind, load.all)) {
           par(mai=c(1.25, 1, 0.75, 0.5), mfrow=c(1, 2), oma=c(0, 0, 1, 0))
         }
         plot.x <- result$post.load
-        image(z=t(plot.x[seq(n.var, 1),seq_len(Q)]), xlab="", 
-              ylab="", xaxt="n", yaxt="n")
-        title(main=list(paste0("Posterior Mean Heatmap")))
-        axis(1, line=-0.5, tick=F, 
-             at=if(Q != 1) seq(0, 1, 1/(Q - 1)) else 0, labels=seq_len(Q))
-        if(n.var < 100) {
-          axis(2, cex.axis=0.5, line=-0.5, tick=F, las=1,
-               at=seq(0, 1, 1/(n.var - 1)), 
-               labels=substring(var.names[n.var:1], 1, 10))
-        }
-        box(lwd=2)
-        mtext("Factors", side=1, line=2)
-        if(Q   != 1) abline(v=seq(1/(2 * (Q - 1)), 
-                                  1 - 1/(2 * (Q - 1)), 
-                                  1/(Q - 1)), lty=2, lwd=1)
-        if(ci.sw[vars]) ci.x   <- result$CI.load  
-        if(by.fac) {
-          if(ci.sw[vars]) ci.x <- ci.x[,,ind[2]]
-          plot(plot.x[,ind[2]], type=type, xaxt="n", xlab="", ylab="Loading", ylim=if(ci.sw[vars]) c(min(ci.x[1,]), max(ci.x[2,])))
-          if(all(intervals, ci.sw[vars])) plotCI(plot.x[,ind[2]], li=ci.x[1,], ui=ci.x[2,], slty=3, scol="grey", add=T, gap=T, pch=ifelse(type == "n", NA, 16))
-          axis(1, line=-0.5, tick=F, at=seq_len(n.var), labels=seq_len(n.var))
-          mtext("Variable #", side=1, line=2)
-          title(main=list(paste0("Factor ", ind[2])))
-          if(type == "n") text(x=plot.x, var.names, cex=0.5)
-        } else     {
-          if(ci.sw[vars]) ci.x <- ci.x[,ind[1],]
-          plot(plot.x[ind[1],], type=type, xaxt="n", xlab="", ylab="Loading", ylim=if(ci.sw[vars]) c(min(ci.x[1,]), max(ci.x[2,])))
-          if(all(intervals, ci.s[vars])) plotCI(plot.x[ind[1],], li=ci.x[1,], ui=ci.x[2,], slty=3, scol="grey", add=T, gap=T, pch=ifelse(type == "n", NA, 16))
-          axis(1, line=-0.5, tick=F, at=seq_len(Q), labels=seq_len(Q))
+        if(is.element(load.meth, c("all", "heatmap"))) {
+          image(z=t(plot.x[seq(n.var, 1),seq_len(Q)]), xlab="", 
+                ylab="", xaxt="n", yaxt="n")
+          title(main=list(paste0("Posterior Mean", ifelse(all(!all.ind, !load.all), " Loadings ", " "), "Heatmap", ifelse(all(!all.ind, grp.ind, !load.all), paste0(" - Group ", g), ""))))
+          axis(1, line=-0.5, tick=F, 
+               at=if(Q != 1) seq(0, 1, 1/(Q - 1)) else 0, labels=seq_len(Q))
+          if(n.var < 100) {
+            axis(2, cex.axis=0.5, line=-0.5, tick=F, las=1,
+                 at=seq(0, 1, 1/(n.var - 1)), 
+                 labels=substring(var.names[n.var:1], 1, 10))
+          }
+          box(lwd=2)
           mtext("Factors", side=1, line=2)
-          title(main=list(paste0(var.names[ind[1]], " Variable")))
-          if(type == "n") text(x=plot.x[ind[1],], paste0("Factor ", seq_len(Q)), cex=0.5)
+          if(Q   != 1) abline(v=seq(1/(2 * (Q - 1)), 
+                                    1 - 1/(2 * (Q - 1)), 
+                                    1/(Q - 1)), lty=2, lwd=1)
         }
-        if(!all.ind) {
+        if(is.element(load.meth, c("all", "raw"))) {
+          if(ci.sw[vars]) ci.x   <- result$CI.load  
+          if(by.fac) {
+            if(ci.sw[vars]) ci.x <- ci.x[,,ind[2]]
+            plot(plot.x[,ind[2]], type=type, xaxt="n", xlab="", ylab="Loading", ylim=if(ci.sw[vars]) c(min(ci.x[1,]), max(ci.x[2,])))
+            if(all(intervals, ci.sw[vars])) plotCI(plot.x[,ind[2]], li=ci.x[1,], ui=ci.x[2,], slty=3, scol="grey", add=T, gap=T, pch=ifelse(type == "n", NA, 16))
+            axis(1, line=-0.5, tick=F, at=seq_len(n.var), labels=seq_len(n.var))
+            mtext("Variable #", side=1, line=2)
+            title(main=list(paste0(ifelse(all(!all.ind, !load.all), paste0("Loadings - ", ifelse(grp.ind, paste0("Group ", g, " - "), "")), ""), "Factor ", ind[2])))
+            if(type == "n") text(x=plot.x, var.names, cex=0.5)
+          } else     {
+            if(ci.sw[vars]) ci.x <- ci.x[,ind[1],]
+            plot(plot.x[ind[1],], type=type, xaxt="n", xlab="", ylab="Loading", ylim=if(ci.sw[vars]) c(min(ci.x[1,]), max(ci.x[2,])))
+            if(all(intervals, ci.sw[vars])) plotCI(plot.x[ind[1],], li=ci.x[1,], ui=ci.x[2,], slty=3, scol="grey", add=T, gap=T, pch=ifelse(type == "n", NA, 16))
+            axis(1, line=-0.5, tick=F, at=seq_len(Q), labels=seq_len(Q))
+            mtext("Factors", side=1, line=2)
+            title(main=list(paste0(ifelse(all(!all.ind, !load.all), paste0("Loadings - ", ifelse(grp.ind, paste0("Group ", g, " - "), "")), ""), var.names[ind[1]], " Variable")))
+            if(type == "n") text(x=plot.x[ind[1],], paste0("Factor ", seq_len(Q)), cex=0.5)
+          }
+        }
+        if(all(!all.ind, load.all)) {
           title(paste0("Loadings", ifelse(grp.ind, paste0(" - Group ", g), "")), outer=T)
         }
       }
