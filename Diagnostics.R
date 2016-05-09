@@ -163,7 +163,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     if(!label.miss) {
       if(!exists(as.character(substitute(Labels)),
           envir=.GlobalEnv))      stop(paste0("Object ", match.call()$Labels, " not found"))
-      labels     <- as.factor(Labels)
+      labels     <- factor(Labels, levels=seq_len(G))
       levs       <- levels(labels)
       len        <- length(labels)
       if(length(Labels) != n.obs) stop(paste0("Labels must be a factor of length N=",  n.obs))
@@ -171,7 +171,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     if(!label.switch) {
       z.temp     <- factor(z[,1], levels=seq_len(G))
       if(!label.miss) {    
-        tab      <- table(z.temp, as.numeric(labels))
+        tab      <- table(z.temp, labels)
         perm     <- matchClasses(tab, method="exact", verbose=F)
         z.temp   <- factor(factor(z.temp, labels=levs[perm]), levels=levs) 
       }
@@ -208,7 +208,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       post.pi    <- setNames(prop.table(tabulate(post.z, nbins=G)), paste0("Group ", seq_len(G)))
     }
     if(!label.miss) {
-      tab        <- table(post.z, as.numeric(labels))
+      tab        <- table(post.z, labels)
       if(nlevels(post.z) == length(levs)) {
         perm     <- matchClasses(tab, method="exact", verbose=F)
         post.nn  <- tabulate(post.z, nbins=G)
