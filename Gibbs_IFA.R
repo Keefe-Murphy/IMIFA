@@ -38,6 +38,7 @@
     post.psi     <- setNames(rep(0, P), varnames)
     cov.emp      <- cov(data)
     cov.est      <- matrix(0, nr=P, nc=P)
+    ll.store     <- rep(0, n.store)
     Q.star       <- Q
     Q.store      <- setNames(rep(0, n.store), iternames)
     dimnames(cov.emp)      <- list(varnames, varnames)
@@ -56,6 +57,7 @@
       f.store[,,1]         <- f
       load.store[,,1]      <- lmat
       psi.store[,1]        <- 1/psi.inv
+      ll.store[1]          <- sum(mvdnorm(data=data, mu=mu, Sigma=tcrossprod(lmat) + diag(1/psi.inv), log.d=T))
     }
   
   # Iterate
@@ -147,11 +149,13 @@
         post.psi <- post.psi + psi/n.store
         Sigma    <- tcrossprod(lmat) + diag(psi)
         cov.est  <- cov.est + Sigma/n.store
+        log.like <- sum(mvdnorm(data=data, mu=mu, Sigma=Sigma, log.d=T))
         if(sw["mu.sw"])             mu.store[,new.it]              <- mu  
         if(all(sw["f.sw"], Q > 0))  f.store[,seq_len(Q),new.it]    <- f
         if(all(sw["l.sw"], Q > 0))  load.store[,seq_len(Q),new.it] <- lmat
         if(sw["psi.sw"])            psi.store[,new.it]             <- psi
                                     Q.store[new.it]                <- Q
+                                    ll.store[new.it]               <- log.like
       }
     }
     returns      <- list(mu       = if(sw["mu.sw"])  mu.store,
@@ -162,6 +166,7 @@
                          post.psi = post.psi,
                          cov.emp  = cov.emp,
                          cov.est  = cov.est,
+                         ll.store = ll.store,
                          Q.store  = matrix(Q.store, nr=1))
     return(returns)
   }
