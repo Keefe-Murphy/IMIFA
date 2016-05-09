@@ -80,7 +80,7 @@
       pi.store[,1]         <- pi.prop
       z.store[,1]          <- z
       ll.store[1]          <- sum(sim.z(data=data, mu=mu, G=G, pi.prop=pi.prop, Sigma=lapply(Gseq,
-                                  function(g) tcrossprod(lmat[,,g]) + diag(1/psi.inv[,g])))$log.likes)
+                                  function(g) tcrossprod(as.matrix(lmat[,,g])) + diag(1/psi.inv[,g])))$log.likes)
     }
     
   # Iterate
@@ -99,12 +99,12 @@
       sum.data     <- lapply(Gseq, function(g) colSums(data[z.ind[[g]],, drop=F]))
       sum.f        <- lapply(Gseq, function(g) colSums(f[z.ind[[g]],, drop=F]))
       mu           <- do.call(cbind, lapply(Gseq, function(g) sim.mu(N=nn[g], mu.sigma=mu.sigma, psi.inv=psi.inv[,g], 
-                              P=P, sum.data=sum.data[[g]], sum.f=sum.f[[g]], lmat=lmat[,,g], mu.zero=mu.zero[,g])))
+                              P=P, sum.data=sum.data[[g]], sum.f=sum.f[[g]], lmat=as.matrix(lmat[,,g]), mu.zero=mu.zero[,g])))
     
     # Scores & Loadings
       c.data       <- lapply(Gseq, function(g) sweep(data[z.ind[[g]],, drop=F], 2, mu[,g], FUN="-"))
       if(Q > 0)   {
-        f          <- do.call(rbind, lapply(Gseq, function(g) sim.score(N=nn[g], lmat=lmat[,,g], 
+        f          <- do.call(rbind, lapply(Gseq, function(g) sim.score(N=nn[g], lmat=as.matrix(lmat[,,g]), 
                              c.data=c.data[[g]], psi.inv=psi.inv[,g], Q=Qs[g])))[obsnames,, drop=F]
         FtF        <- lapply(Gseq, function(g) crossprod(f[z.ind[[g]],, drop=F]))
         lmat       <- array(unlist(lapply(Gseq, function(g) matrix(unlist(lapply(Pseq, function(j) sim.load(l.sigma=l.sigma, Q=Qs[g], P=P, c.data=c.data[[g]][,j],  
@@ -113,14 +113,14 @@
                   
     # Uniquenesses
       psi.inv      <- do.call(cbind, lapply(Gseq, function(g) sim.psi.i(N=nn[g], P=P, psi.alpha=psi.alpha, 
-                              psi.beta=psi.beta[,g], c.data=c.data[[g]], f=f[z.ind[[g]],,drop=F], lmat=lmat[,,g])))
+                              psi.beta=psi.beta[,g], c.data=c.data[[g]], f=f[z.ind[[g]],,drop=F], lmat=as.matrix(lmat[,,g]))))
     
     # Mixing Proportions
       pi.prop      <- sim.pi(pi.alpha=pi.alpha, nn=nn)
     
     # Cluster Labels
       psi          <- 1/psi.inv
-      Sigma        <- lapply(Gseq, function(g) tcrossprod(lmat[,,g]) + diag(psi[,g]))
+      Sigma        <- lapply(Gseq, function(g) tcrossprod(as.matrix(lmat[,,g])) + diag(psi[,g]))
       z.res        <- sim.z(data=data, mu=mu, Sigma=Sigma, G=G, pi.prop=pi.prop)
       z            <- z.res$z
     
