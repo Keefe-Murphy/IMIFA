@@ -235,12 +235,12 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   if(beta.x) {
     psi.beta       <- temp.psi <- list(psi.hyper(psi.alpha, cov.mat))
   } else {
-    psi.beta       <- len.check(psi.beta)
+    psi.beta       <- len.check(psi.beta, psi0g)
   }
   if(mu0.x)  {
     mu.zero        <- mu
   } else {
-    mu.zero        <- len.check(mu.zero)
+    mu.zero        <- len.check(mu.zero, mu0g)
   }
   if(is.element(method, c("MFA", "MIFA"))) {
     if(verbose)                     cat(paste0("Initialising...\n"))

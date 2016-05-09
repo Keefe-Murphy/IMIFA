@@ -160,8 +160,9 @@
     }
 
   # Length Checker for mu0g & psi0g
-    len.check   <- function(obj0g) {
+    len.check   <- function(obj0g, switch0g) {
       obj.name  <- deparse(substitute(obj0g))
+      sw.name   <- deparse(substitute(switch0g))
       if(!is.list(obj0g))        obj0g  <- list(obj0g)
       if(length(obj0g) != length(range.G)) stop(paste0(obj.name, " must be a list of length ", length(range.G)))
       len       <- sapply(obj0g, length)
@@ -170,10 +171,13 @@
       } else {
         if(all(is.element(len, c(1, range.G, P)))) {
           if(all(len == 1))       obj0g <- lapply(seq_along(range.G), function(g) matrix(obj0g[[g]], nr=1, nc=range.G[g]))
-          if(all(len == range.G)) obj0g <- lapply(seq_along(range.G), function(g) matrix(obj0g[[g]], nr=1))
+          if(all(len == range.G)) obj0g <- if(switch0g) lapply(seq_along(range.G), function(g) matrix(obj0g[[g]], nr=1)) else stop(paste0(sw.name, "must be TRUE if the dimension of ", obj.name, " depends on G"))
           if(all(len == P))       obj0g <- lapply(seq_along(range.G), function(g) matrix(obj0g[[g]], nr=P, nc=range.G[g]))
         } else if(!all(sapply(seq_along(range.G), function(g) is.matrix(obj0g[[g]]) && is.element(dim(obj0g[[g]]), c(c(1, range.G[g]), c(P, range.G[g])))))) {
-                                            stop(paste0("Each element of ", obj.name, " must be either of length 1, P=", P, ", or it's corresponding range.G, or a matrix with P rows and it's corresponding range.G columns")) }
+                                            stop(paste0("Each element of ", obj.name, " must be either of length 1, P=", P, ", or it's corresponding range.G, or a matrix with P rows and it's corresponding range.G columns")) 
+        } else if(all(sapply(obj0g, is.matrix), !switch0g) && any(sapply(seq_along(range.G), function(g) any(dim(obj0g[[g]]) == range.G[g])))) {
+                                            stop(paste0(sw.name, "must be TRUE if the dimension of ", obj.name, " depends on G"))
+        }
       }
         obj0g
     }
