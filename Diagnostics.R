@@ -21,6 +21,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   temp.store     <- store
   label.switch   <- attr(sims, "Label.Switch")
   method         <- attr(sims, "Method")
+  inf.ind        <- is.element(method, c("IFA", "MIFA"))
   n.fac          <- attr(sims, "Factors")
   n.grp          <- attr(sims, "Groups")
   n.obs          <- attr(sims, "Obs")
@@ -64,9 +65,9 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   } 
   
   
-  if(is.element(method, c("FA", "MFA", "MIFA"))) {
+  if(is.element(method, c("FA", "IFA", "MFA", "MIFA"))) {
     G.range      <- ifelse(G.T, 1, length(n.grp))
-    Q.range      <- ifelse(any(Q.T, method == "MIFA"), 1, length(n.fac))
+    Q.range      <- ifelse(any(Q.T, inf.ind), 1, length(n.fac))
     crit.mat     <- matrix(NA, nr=G.range, nc=Q.range)
     
   # Retrieve log-likelihoods and tune G &/or Q according to criterion
@@ -79,7 +80,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     } else {
       dimnames(crit.mat) <- list(paste0("G", n.grp), paste0("Q", n.fac))
     }
-    if(method == "MIFA") {
+    if(inf.ind) {
       colnames(crit.mat) <- "IFA"
     }
     aicm         <- bicm       <- 
@@ -95,7 +96,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
         ll.mean          <- mean(log.likes, na.rm=T)
         aicm[g,q]        <- ll.max - ll.var * 2
         bicm[g,q]        <- ll.max - ll.var * log.N
-        if(method != "MIFA") {
+        if(!inf.ind) {
           K              <- attr(sims[[gi]][[qi]], "K")
           aic.mcmc[g,q]  <- ll.max - K * 2
           bic.mcmc[g,q]  <- ll.max - K * log.N
@@ -110,12 +111,12 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       G.ind      <- crit.max[1]
       Q.ind      <- crit.max[2]
       G          <- n.grp[G.ind]
-      if(method  != "MIFA") {
+      if(!inf.ind) {
         Q        <- n.fac[Q.ind]  
       }
     } else if(all(G.T, !Q.T)) {
       Q.ind      <- which(crit == max(crit))
-      if(method  != "MIFA") {
+      if(!inf.ind) {
         Q        <- n.fac[Q.ind]  
       }
     } else if(all(Q.T, !G.T)) {
@@ -125,7 +126,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     G            <- ifelse(length(n.grp) == 1, n.grp, G)
     G.ind        <- ifelse(length(n.grp) == 1, which(n.grp == G), G.ind)
     GQ.temp      <- list(AICMs = aicm, BICMs = bicm)
-    if(method != "MIFA") {
+    if(!inf.ind) {
       Q          <- if(length(n.fac) > 1) Q     else n.fac
       Q.ind      <- if(length(n.fac) > 1) Q.ind else which(n.fac == Q)
       Q          <- setNames(rep(Q, G), paste0("Group ", seq_len(G)))  
@@ -135,7 +136,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   clust.ind      <- all(is.element(method, c("MFA", "MIFA", "IMIFA")), G > 1)
   sw.mx          <- ifelse(clust.ind, sw["mu.sw"], T)
   sw.px          <- ifelse(clust.ind, sw["psi.sw"], T)  
-  if(is.element(method, c("IFA", "MIFA"))) {
+  if(inf.ind) {
     Q.store      <- sims[[G.ind]][[Q.ind]]$Q.store[,store, drop=F]
     Q.meth       <- ifelse(missing(Q.meth), "Mode", match.arg(Q.meth))
   }
@@ -228,7 +229,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     ind          <- lapply(seq_len(G), function(g) post.z == g)
   }
   
-  if(is.element(method, c("IFA", "MIFA"))) {
+  if(inf.ind) {
     Q.tab        <- if(G > 1) lapply(apply(Q.store, 1, function(x) list(table(x, dnn=NULL))), "[[", 1) else table(Q.store, dnn=NULL)
     Q.prob       <- if(G > 1) lapply(Q.tab, prop.table) else prop.table(Q.tab)
     Q.mode       <- if(G > 1) unlist(lapply(Q.tab, function(qt) as.numeric(names(qt[qt == max(qt)])[1]))) else as.numeric(names(Q.tab[Q.tab == max(Q.tab)])[1])
@@ -237,9 +238,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     Q.CI         <- if(G > 1) apply(Q.store, 1, function(qs) round(quantile(qs, conf.levels))) else round(quantile(Q.store, conf.levels))
     GQ.res       <- list(G = G, Q = Q, Mode = Q.mode, Median = Q.med, 
                          Q.CI = Q.CI, Probs= Q.prob, Counts = Q.tab)
-    if(method == "MIFA") {
-      GQ.res     <- c(GQ.res, GQ.temp)
-    }
+    GQ.res       <- c(GQ.res, GQ.temp)
   }
 
 # Retrieve (unrotated) scores
@@ -252,7 +251,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     Q.max        <- max(Q) 
     Q.maxs       <- seq_len(Q.max)
     f            <- sims[[G.ind]][[Q.ind]]$f
-    if(is.element(method, c("IFA", "MIFA"))) {
+    if(inf.ind) {
       f          <- as.array(f)
     }
     f            <- f[,Q.maxs,store, drop=F]
@@ -271,7 +270,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
              !no.score))          warning(paste0("Loadings not stored as", ifelse(G > 1, paste0(" group ", g), " model"), " has zero factors"), call.=F)
       sw["l.sw"] <- F
     }
-    if(is.element(method, c("IFA", "MIFA"))) {
+    if(inf.ind) {
       store      <- temp.store[which(Q.store[g,] >= Qg)]
       n.store    <- length(store)
     }
@@ -285,7 +284,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       if(any(is.element(method, c("FA", "IFA")), 
          all(is.element(method, c("MFA", "MIFA")), G == 1))) {
         lmat     <- sims[[G.ind]][[Q.ind]]$load
-        if(is.element(method, c("IFA", "MIFA"))) {
+        if(inf.ind) {
           lmat   <- as.array(lmat)
         }
         lmat     <- lmat[,Qgs,store, drop=F]
@@ -460,7 +459,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
                       if(any(err.T)) list(Error = errors), list(GQ.results = GQ.res), 
                       if(sw["f.sw"]) list(Scores = scores))
   class(result)                <- "IMIFA"
-  attr(result, "Method")       <- attr(sims, "Method")
+  attr(result, "Method")       <- method
   attr(result, "Name")         <- attr(sims, "Name")
   attr(result, "Obs")          <- n.obs
   attr(result, "Switch")       <- sw

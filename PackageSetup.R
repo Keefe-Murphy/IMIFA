@@ -409,6 +409,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
     attr(imifa, 
          "Label.Switch")  <- any(mu0g, psi0g)
   }
+  method                  <- names(table(meth)[max(table(meth))])
   attr(imifa, "Method")   <- paste0(toupper(substr(method, 1, 1)),
                                     substr(method, 2, nchar(method)))
   attr(imifa, "Name")     <- dat.name
