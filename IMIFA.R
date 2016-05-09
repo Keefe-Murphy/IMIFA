@@ -23,7 +23,7 @@
     matplot(ppm.g, type="l", xlab="Chemical Shift (ppm)", yaxt="n", ylab="", bty="n", xaxt="n", lwd=2, lty=1)
     axis(1, at=seq(from=20, to=nrow(ppm.g), by=20), labels=9:1, tick=T, lwd.ticks=1, xpd=T)
     axis(1, at=seq_len(nrow(ppm.g)), labels=FALSE, tick=T, tcl=-0.2)
-    legend("topleft", legend=c("Control", "Diseased"), bty="n", lty=1, col=c(1,2))  
+    legend("topleft", legend=c("Control", "Epileptic"), bty="n", lty=1, col=c(1,2))  
   # Meat
     load(file=paste0(getwd(), "/Data/Meat.Rdata", sep=""), envir=.GlobalEnv)
     spectra  <- t(spectra); rm(last.warning)
