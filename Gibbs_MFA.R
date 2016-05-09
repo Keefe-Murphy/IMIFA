@@ -142,10 +142,10 @@
           pi.prop  <- pi.prop[,z.perm]
         }
         if(mu0g)         {
-          mu.zero  <- mu.zero[,z.perm]
+          mu.zero  <- mu.zero[,z.perm, drop=F]
         }
         if(psi0g)        {
-          psi.beta <- psi.beta[,z.perm]
+          psi.beta <- psi.beta[,z.perm, drop=F]
         }
       }
       
