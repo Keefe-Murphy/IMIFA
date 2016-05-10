@@ -95,8 +95,9 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
     if(is.element(method, c("MFA", "MIFA"))) {
       if(!is.element(g, seq_len(G)))  stop("This g value was not used during simulation")
       Gs  <- g
-    } else if(g > 1)                  message(paste0("Forced g=1 for the ", method, " method"))
+    } else if(g > 1)     {            message(paste0("Forced g=1 for the ", method, " method"))
       Gs  <- 1
+    }
   } else if(!interactive()) {         stop("g must be supplied for non-interactive sessions")
   } else {
     Gs    <- seq_len(G)
