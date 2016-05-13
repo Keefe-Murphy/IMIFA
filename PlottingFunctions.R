@@ -367,21 +367,17 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
         }
         plot.x <- result$post.load
         if(is.element(load.meth, c("all", "heatmap"))) {
-          image(z=t(plot.x[seq(n.var, 1),seq_len(Q)]), xlab="", 
-                ylab="", xaxt="n", yaxt="n")
+          source(paste(getwd(), "/IMIFA-GIT/FullConditionals.R", sep=""), local=T)
+          mcol <- mat2color(plot.x)
+          plotcolors(mcol)
           if(titles) title(main=list(paste0("Posterior Mean", ifelse(all(!all.ind, !load.all), " Loadings ", " "), "Heatmap", ifelse(all(!all.ind, grp.ind, !load.all), paste0(" - Group ", g), ""))))
-          axis(1, line=-0.5, tick=F, 
-               at=if(Q != 1) seq(0, 1, 1/(Q - 1)) else 0, labels=seq_len(Q))
+          axis(1, line=-0.5, tick=F, at=if(Q != 1) seq_len(Q) else 0, labels=seq_len(Q))
           if(n.var < 100) {
-            axis(2, cex.axis=0.5, line=-0.5, tick=F, las=1,
-                 at=seq(0, 1, 1/(n.var - 1)), 
-                 labels=substring(var.names[n.var:1], 1, 10))
+            axis(2, cex.axis=0.5, line=-0.5, tick=F, las=1, at=seq_len(n.var), labels=substring(var.names[n.var:1], 1, 10))
           }
           box(lwd=2)
           mtext("Factors", side=1, line=2)
-          if(Q   != 1) abline(v=seq(1/(2 * (Q - 1)), 
-                                    1 - 1/(2 * (Q - 1)), 
-                                    1/(Q - 1)), lty=2, lwd=1)
+          if(Q   != 1) abline(v=seq(1, Q - 1, 1) + 0.5, lty=2, lwd=1)
         }
         if(is.element(load.meth, c("all", "raw"))) {
           if(ci.sw[vars]) ci.x   <- result$CI.load  

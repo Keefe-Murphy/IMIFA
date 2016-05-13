@@ -181,3 +181,17 @@
       }
         obj0g
     }
+
+  # Loadings Heatmaps
+    mat2color   <- function(m, colors = heat.colors(30), 
+                            byrank=FALSE, breaks=length(colors)) { 
+      m1        <- if(byrank == T) rank(m) else m
+      facs      <- cut(m1, breaks, include.lowest=TRUE)
+      ans       <- colors[as.numeric(facs)]
+      if(is.matrix(m)) {
+        ans     <- matrix(ans, nrow(m), ncol(m))
+        rownames(ans) <- rownames(m)
+        colnames(ans) <- colnames(m)
+      }
+        ans     
+    }

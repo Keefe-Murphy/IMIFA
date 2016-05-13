@@ -2,7 +2,7 @@
 ### Set-up for Keefe Murphy's IMIFA R Package ###
 #################################################
 
-packages    <- c("abind", "e1071", "matrixStats", "mclust", "MCMCpack", "plotrix", "slam")
+packages    <- c("abind", "e1071", "gclus", "matrixStats", "mclust", "MCMCpack", "plotrix", "slam")
 if(length(setdiff(packages, rownames(installed.packages()))) > 0) {
   suppressMessages(install.packages(setdiff(packages, rownames(installed.packages()))))
 }
