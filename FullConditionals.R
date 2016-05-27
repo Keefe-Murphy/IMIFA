@@ -72,8 +72,8 @@
     sim.z       <- function(data, mu, Sigma, G, pi.prop) {
       log.numer <- do.call(cbind, lapply(seq_len(G), function(g) mvdnorm(data, mu[,g], Sigma[[g]], log.d=T) + log(pi.prop[,g])))
       log.denom <- rowLogSumExps(log.numer)
-      pz        <- exp(sweep(log.numer, 1, log.denom, FUN="-"))
-      z         <- unlist(lapply(seq_along(log.denom), function(i) sample(seq_len(G), size=1, prob=pz[i,])), use.names=F)
+      log.pz    <- sweep(log.numer, 1, log.denom, FUN="-")
+      z         <- log.sample(log.pz, G, nrow(log.pz))
         return(list(z = z, log.likes = log.denom))
     }
 
@@ -146,6 +146,15 @@
         } else {
           exp(log.dens)
         }
+    }
+
+  # Sample log-probabilities
+    log.sample  <- function(lnp, nc, nr) {
+      for(g in seq_len(nc)[-1]) {
+        lnp[,g] <- colLogSumExps(rbind(lnp[,g], lnp[,g - 1]))
+      }
+      exps      <- rexp(nr)
+        nc       - unlist(lapply(seq_len(nr), function(i) findInterval(-exps[i], lnp[i,])))
     }
   
   # Uniqueness Hyperparameters
