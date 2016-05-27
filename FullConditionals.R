@@ -74,7 +74,7 @@
       log.denom <- rowLogSumExps(log.numer)
       log.pz    <- sweep(log.numer, 1, log.denom, FUN="-")
       z         <- log.sample(log.pz, G, nrow(log.pz))
-        return(list(z = z, log.likes = log.denom))
+        return(list(z = unname(z), log.likes = log.denom))
     }
 
 # Priors
@@ -154,7 +154,7 @@
         lnp[,g] <- colLogSumExps(rbind(lnp[,g], lnp[,g - 1]))
       }
       exps      <- rexp(nr)
-        nc       - unlist(lapply(seq_len(nr), function(i) findInterval(-exps[i], lnp[i,])))
+        nc       - rowSums(-exps > lnp)
     }
   
   # Uniqueness Hyperparameters
