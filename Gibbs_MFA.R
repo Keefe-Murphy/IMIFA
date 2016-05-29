@@ -53,7 +53,7 @@
     pi.prop        <- cluster$pi.prop
     mu0g           <- cluster$label.switch[1]
     psi0g          <- cluster$label.switch[2]
-    label.switch   <- any(mu0g, psi0g)
+    label.switch   <- any(cluster$label.switch)
     f              <- sim.f.p(N=N, Q=Q)
     lmat           <- lapply(Gseq, function(g) sim.load.p(Q=Q, P=P, sigma.l=sigma.l, shrink=F))
     psi.inv        <- do.call(cbind, lapply(Gseq, function(g) sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta[,g])))

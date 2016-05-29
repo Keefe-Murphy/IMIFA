@@ -90,30 +90,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
                                     message(paste0("Forced use of ", meth[1], " method where 'range.G' is equal to 1"))
     }                               
   }
-  no.fac    <- is.element(method, c("FA", "MFA")) && all(range.Q == 0)
-  if(is.element(method, c("FA", "MFA"))) {
-    if(!missing(Q.star))  {
-      rm(Q.star)
-                                    message(paste0("'Q.star' is not used for the ", method, " method"))
-    }            
-    if(missing(range.Q))            stop("'range.Q' must be specified")
-    if(any(range.Q < 0))            stop("'range.Q' must be strictly non-negative")
-    range.Q <- sort(unique(range.Q))   
-  } else {
-    if(!missing(range.Q)) {
-      rm(range.Q)
-                                    message(paste0("'range.Q' is not used for the ", method, " method"))
-    }           
-    if(missing(Q.star)) {
-      Q.star       <- min(floor(3 * log(P)), P, N - 1)
-    } else {
-      if(Q.star    <= 0)            stop("Q.star must be strictly positive")
-      if(Q.star     > P)            stop(paste0("Number of factors must be less than the number of variables, ", P))
-      if(Q.star    >= N)            stop(paste0("Number of factors must be less than the number of observations, ", N))
-    } 
-    if(!is.logical(adapt))          stop("'adapt' must be TRUE or FALSE") 
-  }
-  if(no.fac) {   
+  if(is.element(method, c("FA", "MFA")) && all(range.Q == 0)) {   
     if(all(switches[c("f.sw", "l.sw")])) {
                                     warning("Scores & Loadings not stored as model has zero factors", call.=F)
     } else if(switches["f.sw"])   { warning("Scores not stored as model has zero factors", call.=F)
@@ -158,13 +135,32 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   if(is.element(method, c("FA", "MFA"))) {
     if(missing("sigma.l"))   sigma.l       <- 0.5
     if(sigma.l <= 0)                stop("'sigma.l' must be strictly positive")
+    if(!missing(Q.star))  {
+      rm(Q.star)
+                                    message(paste0("'Q.star' is not used for the ", method, " method"))
+    }            
+    if(missing(range.Q))            stop("'range.Q' must be specified")
+    if(any(range.Q < 0))            stop("'range.Q' must be strictly non-negative")
+    range.Q <- sort(unique(range.Q))  
   } else {
+    if(!missing(range.Q)) {
+      rm(range.Q)
+                                    message(paste0("'range.Q' is not used for the ", method, " method"))
+    }           
+    if(missing(Q.star))   {
+      Q.star       <- min(floor(3 * log(P)), P, N - 1)
+    } else {
+      if(Q.star    <= 0)            stop("Q.star must be strictly positive")
+      if(Q.star     > P)            stop(paste0("Number of factors must be less than the number of variables, ", P))
+      if(Q.star    >= N)            stop(paste0("Number of factors must be less than the number of observations, ", N))
+    } 
+    if(!is.logical(adapt))          stop("'adapt' must be TRUE or FALSE") 
     if(missing("phi.nu"))    phi.nu        <- 1.5
-    if(phi.nu <= 0)                 stop("'phi.nu' must be strictly positive")
     if(missing("alpha.d1"))  alpha.d1      <- 2
     if(alpha.d1 <= 0)               stop("'alpha.d1' must be strictly positive")
     if(missing("alpha.dk"))  alpha.dk      <- 10
     if(alpha.dk <= 1)               stop("'alpha.dk' must be greater than 1")
+    if(phi.nu  <= 0)                stop("'phi.nu' must be strictly positive")
     if(missing("beta.d1"))   beta.d1       <- 1
     if(beta.d1 <= 0)                stop("'beta.d1' must be strictly positive")
     if(missing("beta.dk"))   beta.dk       <- 1
@@ -229,9 +225,9 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   }
 
   init.start       <- proc.time()  
+  mu               <- list(colMeans(dat))
   beta.x           <- missing("psi.beta")
   mu0.x            <- missing("mu.zero")
-  mu               <- list(colMeans(dat))
   if(beta.x) {
     psi.beta       <- temp.psi <- list(psi.hyper(psi.alpha, cov.mat))
   } else {
@@ -293,9 +289,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   if(all(round(unlist(sapply(mu.zero, sum))) == 0)) {
     mu.zero        <- lapply(mu.zero, function(x) 0)
   }
-  if(any(unlist(sapply(psi.beta, 
-         function(x) sapply(x, 
-         function(x) x <= 0)))))    stop("'psi.beta' must be strictly positive")
+  if(any(unlist(psi.beta) <= 0))    stop("'psi.beta' must be strictly positive")
   init.time        <- proc.time() - init.start
   
   if(profile)  Rprof()

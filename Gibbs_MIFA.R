@@ -58,7 +58,7 @@
     pi.prop        <- cluster$pi.prop
     mu0g           <- cluster$label.switch[1]
     psi0g          <- cluster$label.switch[2]
-    label.switch   <- any(mu0g, psi0g)
+    label.switch   <- any(cluster$label.switch)
     f              <- sim.f.p(N=N, Q=Q)
     phi            <- lapply(Gseq, function(g) sim.phi.p(Q=Q, P=P, phi.nu=phi.nu))
     delta          <- lapply(Gseq, function(g) sim.delta.p(Q=Q, alpha.d1=alpha.d1, alpha.dk=alpha.dk, beta.d1=beta.d1, beta.dk=beta.dk))

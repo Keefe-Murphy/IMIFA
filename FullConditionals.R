@@ -167,26 +167,29 @@
         psi.beta
     }
 
-  # Length Checker for mu0g & psi0g
-    len.check   <- function(obj0g, switch0g) {
+  # Length Checker
+    len.check   <- function(obj0g, switch0g, P.dim=T) {
+      V         <- ifelse(P.dim, P, 1)
       obj.name  <- deparse(substitute(obj0g))
       sw.name   <- deparse(substitute(switch0g))
       if(!is.list(obj0g))        obj0g  <- list(obj0g)
       if(length(obj0g) != length(range.G)) stop(paste0(obj.name, " must be a list of length ", length(range.G)))
       len       <- sapply(obj0g, length)
-      if(is.element(method, c("FA", "IFA")))       {
-        if(!is.element(len, c(1, P)))      stop(paste0(x.name, " must be list of length 1 containing a scalar or a vector of length P=", P, " for a 1-group model"))
+      if(is.element(method, c("FA", "IFA"))) {
+        if(any(!is.element(len, c(1, V)))) stop(paste0(obj.name, " must be list of length 1 containing a scalar", ifelse(P.dim, paste0(" or a vector of length P=", V), ""), " for a 1-group model"))
       } else {
-        if(all(is.element(len, c(1, range.G, P)))) {
+        if(all(is.element(len, c(1, range.G, V)))) {
           if(all(len == 1))       obj0g <- lapply(seq_along(range.G), function(g) matrix(obj0g[[g]], nr=1, nc=range.G[g]))
           if(all(len == range.G)) obj0g <- if(switch0g) lapply(seq_along(range.G), function(g) matrix(obj0g[[g]], nr=1)) else stop(paste0(sw.name, "must be TRUE if the dimension of ", obj.name, " depends on G"))
-          if(all(len == P))       obj0g <- lapply(seq_along(range.G), function(g) matrix(obj0g[[g]], nr=P, nc=range.G[g]))
-        } else if(!all(sapply(seq_along(range.G), function(g) is.matrix(obj0g[[g]]) && is.element(dim(obj0g[[g]]), c(c(1, range.G[g]), c(P, range.G[g])))))) {
-                                            stop(paste0("Each element of ", obj.name, " must be either of length 1, P=", P, ", or it's corresponding range.G, or a matrix with P rows and it's corresponding range.G columns")) 
+          if(all(len == V))       obj0g <- lapply(seq_along(range.G), function(g) matrix(obj0g[[g]], nr=V, nc=range.G[g]))
+        } else if(!all(sapply(seq_along(range.G), function(g) is.matrix(obj0g[[g]]) && any(identical(dim(obj0g[[g]]), c(1, range.G[g])), identical(dim(obj0g[[g]]), c(V, range.G[g])))))) {
+                                           stop(paste0("Each element of ", obj.name, " must be either of length 1, P=", V, ", or it's corresponding range.G, or a matrix with P rows and it's corresponding range.G columns")) 
         } else if(all(sapply(obj0g, is.matrix), !switch0g) && any(sapply(seq_along(range.G), function(g) any(dim(obj0g[[g]]) == range.G[g])))) {
-                                            stop(paste0(sw.name, "must be TRUE if the dimension of ", obj.name, " depends on G"))
+                                           stop(paste0(sw.name, " must be TRUE if the dimension of ", obj.name, " depends on G"))
         }
       }
+      if(all(length(unique(unlist(obj0g))) > 1,
+             !switch0g, !P.dim))           stop(paste0(obj.name, " must be a scalar if ", sw.name, " is TRUE"))
         obj0g
     }
 
