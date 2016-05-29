@@ -7,8 +7,7 @@
                                sigma.mu, burnin, thinning, mu,
                                psi.alpha, psi.beta, verbose, 
                                sw, cluster, phi.nu, b0, b1, prop,
-                               alpha.d1, alpha.dk, beta.d1,
-                               beta.dk, adapt, epsilon, ...) {
+                               beta.d1, beta.dk, adapt, epsilon, ...) {
         
   # Define & initialise variables
     n.iters        <- round(max(iters), -1)
@@ -56,12 +55,18 @@
     z.temp         <- factor(z, levels=Gseq)
     pi.alpha       <- cluster$pi.alpha
     pi.prop        <- cluster$pi.prop
+    alpha.d1       <- cluster$alpha.d1
+    alpha.dk       <- cluster$alpha.dk
+    ad1.x          <- length(unique(alpha.d1)) == 1
+    adk.x          <- length(unique(alpha.dk)) == 1
     mu0g           <- cluster$label.switch[1]
     psi0g          <- cluster$label.switch[2]
+    delta0g        <- cluster$label.switch[3]
+    qstar0g        <- cluster$label.switch[4]
     label.switch   <- any(cluster$label.switch)
     f              <- sim.f.p(N=N, Q=Q)
     phi            <- lapply(Gseq, function(g) sim.phi.p(Q=Q, P=P, phi.nu=phi.nu))
-    delta          <- lapply(Gseq, function(g) sim.delta.p(Q=Q, alpha.d1=alpha.d1, alpha.dk=alpha.dk, beta.d1=beta.d1, beta.dk=beta.dk))
+    delta          <- lapply(Gseq, function(g) sim.delta.p(Q=Q, alpha.d1=alpha.d1[g], alpha.dk=alpha.dk[g], beta.d1=beta.d1, beta.dk=beta.dk))
     tau            <- lapply(delta, cumprod)
     lmat           <- lapply(Gseq, function(g) matrix(unlist(lapply(Pseq, function(j) sim.load.p(Q=Q, phi=phi[[g]][j,], tau=tau[[g]], P=P)), use.names=F), nr=P, byrow=T))
     psi.inv        <- do.call(cbind, lapply(Gseq, function(g) sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta[,g])))
@@ -146,13 +151,13 @@
         Qg         <- Qs[g]
         sum.termg  <- sum.terms[[g]]
         if(Qg       > 0) {
-          delta[[g]][1]    <- sim.delta1(Q=Qg, alpha.d1=alpha.d1, delta=delta[[g]], P=P,
+          delta[[g]][1]    <- sim.delta1(Q=Qg, alpha.d1=alpha.d1[g], delta=delta[[g]], P=P,
                                          beta.d1=beta.d1, tau=tau[[g]], sum.term=sum.termg)
           tau[[g]]         <- cumprod(delta[[g]])
         }
         if(Qg       > 1) {
           for(k in seq_len(Qg)[-1]) { 
-            delta[[g]][k]  <- sim.deltak(Q=Qg, alpha.dk=alpha.dk, delta=delta[[g]], P=P,
+            delta[[g]][k]  <- sim.deltak(Q=Qg, alpha.dk=alpha.dk[g], delta=delta[[g]], P=P,
                                          beta.dk=beta.dk, k=k, tau=tau[[g]], sum.term=sum.termg)
             tau[[g]]       <- cumprod(delta[[g]])
           }
@@ -172,7 +177,7 @@
           Qs.old   <- Qs
           Qs       <- unlist(lapply(Gseq, function(g) if(notred[g]) Qs.old[g] + 1 else Qs.old[g] - numred[[g]]), use.names=F)
           phi      <- lapply(Gseq, function(g) if(notred[g]) cbind(phi[[g]][,seq_len(Qs.old[g])], rgamma(n=P, shape=phi.nu, rate=phi.nu)) else phi[[g]][,nonred[[g]], drop=F])
-          delta    <- lapply(Gseq, function(g) if(notred[g]) c(delta[[g]][seq_len(Qs.old[g])], rgamma(n=1, shape=alpha.dk, rate=beta.dk)) else delta[[g]][nonred[[g]]])  
+          delta    <- lapply(Gseq, function(g) if(notred[g]) c(delta[[g]][seq_len(Qs.old[g])], rgamma(n=1, shape=alpha.dk[g], rate=beta.dk)) else delta[[g]][nonred[[g]]])  
           tau      <- lapply(delta, cumprod)
           lmat     <- lapply(Gseq, function(g) if(notred[g]) cbind(lmat[[g]][,seq_len(Qs.old[g])], rnorm(n=P, mean=0, sd=sqrt(1/(phi[[g]][,Qs[g]] * tau[[g]][Qs[g]])))) else lmat[[g]][,nonred[[g]], drop=F])
           f        <- if(max(Qs) > max(Qs.old)) cbind(f[,seq_len(max(Qs.old))], rnorm(n=N, mean=0, sd=1)) else f[,seq_len(max(Qs)), drop=F]
@@ -211,6 +216,14 @@
         }
         if(psi0g)        {
           psi.beta <- psi.beta[,z.perm, drop=F]
+        }
+        if(all(delta0g, 
+               !ad1.x))  {
+          alpha.d1 <- alpha.d1[z.perm]
+        }
+        if(all(delta0g, 
+               !adk.x))  {
+          alpha.dk <- alpha.dk[z.perm]
         }
       }
       
