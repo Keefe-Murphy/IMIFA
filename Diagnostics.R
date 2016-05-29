@@ -124,12 +124,13 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       G          <- n.grp[G.ind]
     } 
     G            <- ifelse(length(n.grp) == 1, n.grp, G)
+    Gseq         <- seq_len(G)
     G.ind        <- ifelse(length(n.grp) == 1, which(n.grp == G), G.ind)
     GQ.temp      <- list(AICMs = aicm, BICMs = bicm)
     if(!inf.ind) {
       Q          <- if(length(n.fac) > 1) Q     else n.fac
       Q.ind      <- if(length(n.fac) > 1) Q.ind else which(n.fac == Q)
-      Q          <- setNames(rep(Q, G), paste0("Group ", seq_len(G)))  
+      Q          <- setNames(rep(Q, G), paste0("Group ", Gseq))  
       GQ.res     <- c(list(G = G, Q = Q), GQ.temp, list(AIC.mcmcs = aic.mcmc, BIC.mcmcs = bic.mcmc))
     }
   }
@@ -164,22 +165,25 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     if(!label.miss) {
       if(!exists(as.character(substitute(Labels)),
           envir=.GlobalEnv))      stop(paste0("Object ", match.call()$Labels, " not found"))
-      labels     <- factor(Labels, levels=seq_len(G))
+      labels     <- factor(Labels, levels=Gseq)
       levs       <- levels(labels)
       len        <- length(labels)
       if(length(Labels) != n.obs) stop(paste0("Labels must be a factor of length N=",  n.obs))
     }
     if(!label.switch) {
-      z.temp     <- factor(z[,1], levels=seq_len(G))
+      z.temp     <- factor(z[,1], levels=Gseq)
+      old.perm   <- Gseq
       if(!label.miss) {    
         tab      <- table(z.temp, labels)
-        perm     <- matchClasses(tab, method="exact", verbose=F)
-        z.temp   <- factor(factor(z.temp, labels=levs[perm]), levels=levs) 
+        l.perm   <- matchClasses(tab, method="exact", verbose=F)
+        z.temp   <- factor(factor(z.temp, labels=levs[l.perm]), levels=levs) 
       }
       for(ls in seq_len(n.store)[-1]) {
-        tab      <- table(factor(z[,ls], levels=seq_len(G)), z.temp)
+        tab      <- table(factor(z[,ls], levels=Gseq), z.temp)
         z.perm   <- matchClasses(tab, method="exact", verbose=F)
-        z[,ls]   <- factor(z[,ls], labels=z.perm, levels=seq_len(G))
+        z[,ls]   <- factor(z[,ls], labels=z.perm, levels=Gseq)
+        perm     <- !identical(unname(z.perm), old.perm)
+       if(perm) {
         if(sw["mu.sw"])  {
           mus[,,ls]      <- mus[,z.perm,ls]
         }
@@ -195,9 +199,11 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
         if(method == "MIFA") {
           Q.store[,ls]   <- Q.store[z.perm,ls]
         }
+       }
+       old.perm  <- z.perm
       }
     }
-    post.z       <- setNames(apply(z, 1, function(x) factor(which.max(tabulate(x)), levels=seq_len(G))), seq_len(n.obs))
+    post.z       <- setNames(apply(z, 1, function(x) factor(which.max(tabulate(x)), levels=Gseq)), seq_len(n.obs))
     var.z        <- apply(z, 1, var)
     CI.z         <- apply(z, 1, function(x) round(quantile(x, conf.levels)))
     if(sw["pi.sw"])    {
@@ -206,15 +212,15 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       var.pi     <- apply(pi.prop, 1, var)
       CI.pi      <- apply(pi.prop, 1, function(x) quantile(x, conf.levels))
     } else {
-      post.pi    <- setNames(prop.table(tabulate(post.z, nbins=G)), paste0("Group ", seq_len(G)))
+      post.pi    <- setNames(prop.table(tabulate(post.z, nbins=G)), paste0("Group ", Gseq))
     }
     if(!label.miss) {
       tab        <- table(post.z, labels)
       if(nlevels(post.z) == length(levs)) {
-        perm     <- matchClasses(tab, method="exact", verbose=F)
+        l.perm   <- matchClasses(tab, method="exact", verbose=F)
         post.nn  <- tabulate(post.z, nbins=G)
-        post.z   <- factor(factor(post.z, labels=levs[perm][post.nn > 0]), levels=levs)
-        post.pi  <- post.pi[perm]  
+        post.z   <- factor(factor(post.z, labels=levs[l.perm][post.nn > 0]), levels=levs)
+        post.pi  <- post.pi[l.perm]  
       }
       tab        <- table(post.z, labels, dnn=list("Predicted", "Observed"))
       tab.stat   <- classAgreement(tab)
@@ -226,7 +232,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     attr(cluster, "Z.init")    <- attr(sim[[G.ind]], "Z.init")
     attr(cluster, "Init.Meth") <- attr(sims, "Init.Z")
     post.z       <- as.numeric(post.z)
-    ind          <- lapply(seq_len(G), function(g) post.z == g)
+    ind          <- lapply(Gseq, function(g) post.z == g)
   }
   
   if(inf.ind) {
@@ -261,16 +267,16 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   result         <- list(list())
   MSE   <- RMSE  <- NRMSE  <- CVRMSE  <- 
   MAD   <- emp.T <- est.T  <- rep(NA, G)
-  for(g in seq_len(G)) {
+  for(g in Gseq) {
     Qg           <- Q[g]
     Qgs          <- seq_len(Qg)
     sw["l.sw"]   <- attr(sims, "Switch")["l.sw"]
-    if(Qg == 0) {
+    if(Qg == 0)  {
       if(all(sw["l.sw"],
              !no.score))          warning(paste0("Loadings not stored as", ifelse(G > 1, paste0(" group ", g), " model"), " has zero factors"), call.=F)
       sw["l.sw"] <- F
     }
-    if(inf.ind) {
+    if(inf.ind)  {
       store      <- temp.store[which(Q.store[g,] >= Qg)]
       n.store    <- length(store)
     }
@@ -444,12 +450,12 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     scores       <- list(f = f, post.f = rowMeans(f, dims=2), var.f = apply(f, c(1, 2), var),
                          CI.f  = apply(f, c(1, 2), function(x) quantile(x, conf.levels)))
   }
-  names(result)  <- paste0("Group", seq_len(G))
+  names(result)  <- paste0("Group", Gseq)
   attr(GQ.res, "Criterion")    <- criterion
   attr(GQ.res, "Factors")      <- n.fac
   attr(GQ.res, "Groups")       <- n.grp
   attr(GQ.res, "Supplied")     <- c(Q=Q.T, G=G.T)
-  err.T                        <- unlist(lapply(seq_len(G), function(g) all(emp.T[g], est.T[g])))
+  err.T                        <- unlist(lapply(Gseq, function(g) all(emp.T[g], est.T[g])))
   if(any(err.T)) {
     errors       <- list(MSE = mean(MSE, na.rm=T), RMSE = mean(RMSE, na.rm=T), NRMSE = mean(NRMSE, na.rm=T),
                          CVRMSE = mean(CVRMSE, na.rm=T), MAD = mean(MAD, na.rm=T))  

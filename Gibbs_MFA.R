@@ -12,6 +12,7 @@
     n.iters        <- round(max(iters), -1)
     n.store        <- length(iters)
     Gseq           <- seq_len(G)
+    old.perm       <- Gseq
     Pseq           <- seq_len(P)
     obsnames       <- rownames(data)
     varnames       <- colnames(data)
@@ -129,6 +130,8 @@
         tab        <- table(factor(z, levels=Gseq), z.temp)
         z.perm     <- matchClasses(tab, method="exact", verbose=F)
         z          <- as.numeric(factor(z, labels=z.perm, levels=Gseq))
+        perm       <- !identical(unname(z.perm), old.perm)
+       if(perm) {
         if(sw["mu.sw"])  {
           mu       <- mu[,z.perm]
         }
@@ -147,6 +150,8 @@
         if(psi0g)        {
           psi.beta <- psi.beta[,z.perm, drop=F]
         }
+       }
+       old.perm    <- z.perm
       }
       
       if(is.element(iter, iters))  {

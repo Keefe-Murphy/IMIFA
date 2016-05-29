@@ -13,6 +13,7 @@
     n.iters        <- round(max(iters), -1)
     n.store        <- length(iters)
     Gseq           <- seq_len(G)
+    old.perm       <- Gseq
     Pseq           <- seq_len(P)
     obsnames       <- rownames(data)
     varnames       <- colnames(data)
@@ -199,11 +200,18 @@
         z.perm     <- matchClasses(tab, method="exact", verbose=F)
         z          <- as.numeric(factor(z, labels=z.perm, levels=Gseq))
         Qs         <- Qs[z.perm]
+        perm       <- !identical(unname(z.perm), old.perm)
+       if(perm) {
         if(sw["mu.sw"])  {
           mu       <- mu[,z.perm]
         }
         if(sw["l.sw"])   {
-          lmat     <- lapply(Gseq, function(g) lmat[[z.perm[g]]])
+          for(g in Gseq) {
+            lmat[[g]]      <- lmat[[z.perm[g]]]
+            delta[[g]]     <- delta[[z.perm[g]]]
+            phi[[g]]       <- phi[[z.perm[g]]]
+            tau[[g]]       <- tau[[z.perm[g]]]
+          }
         }
         if(sw["psi.sw"]) {
           psi.inv  <- psi.inv[,z.perm]
@@ -225,6 +233,8 @@
                !adk.x))  {
           alpha.dk <- alpha.dk[z.perm]
         }
+       }
+       old.perm    <- z.perm
       }
       
     if(any(Qs > Q.star))      stop(paste0("Q cannot exceed initial number of loadings columns: try increasing Q.star from ", Q.star))
