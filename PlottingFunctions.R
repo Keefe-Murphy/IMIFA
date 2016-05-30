@@ -3,7 +3,7 @@
 ################################
 
 plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "density", "posterior", "GQ", "trace"), 
-                           vars = c("means", "scores", "loadings", "uniquenesses"), load.meth = c("all", "heatmap", "raw"), Labels = NULL, 
+                           vars = c("means", "scores", "loadings", "uniquenesses"), Labels = NULL, load.meth = c("all", "heatmap", "raw"),
                            g = NULL, fac = NULL, by.fac = T, ind = NULL, type = c("h", "n", "p", "l"), intervals = T, mat = T, partial = F, titles = T) {
 
   defpar  <- suppressWarnings(par(no.readonly = T))
@@ -26,6 +26,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
   G.supp  <- attr(GQ.res, "Supplied")["G"]
   Q.supp  <- attr(GQ.res, "Supplied")["Q"]
   method  <- attr(results, "Method")
+  store   <- attr(results, "Store")
   vars    <- match.arg(vars)
   n.var   <- attr(results, "Vars")
   n.obs   <- attr(results, "Obs")
@@ -88,7 +89,8 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
     if(length(fac) == 1)     fac <- rep(fac, G)
     if(length(fac) != G)              stop(paste0("'fac' must be supplied for each of the ", G, " groups"))
   }
-  if(any(vars  == "scores",
+  g.score <- all(grp.ind, !all.ind, vars == "scores")
+  if(any(all(vars  == "scores", any(all.ind, !m.sw["P.sw"])), 
          m.sw["G.sw"]))  {
     Gs    <- 1
   } else if(!missing(g)) {
@@ -125,7 +127,13 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
     } else   {
       matx     <- mat
     }  
-    if(!matx)               iter <- seq_len(attr(result, "Store"))
+    if(!matx) {
+      if(vars  == "scores")   {
+        iter   <- store
+      } else {
+        iter   <- seq_len(attr(result, "Store"))
+      }
+    }               
     if(is.element(vars, c("scores", "loadings"))) {
       if(indx)               ind <- c(1, 1)
       if(!facx)           ind[2] <- fac[g]
@@ -301,11 +309,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
          } 
         }
         if(!facx) {
-         if(vars  == "loadings") {
-           ind[2] <- fac[g]
-         } else if(all(Qs > 1)) {
-           ind[2] <- max(fac[g], 2)
-         }
+          ind[2]  <- fac[g]
         }
         if(vars == "scores") {
           if(any(ind[1]  > Q.max,
@@ -321,7 +325,6 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
         if(type  == "n") text(x=seq_along(plot.x), y=plot.x, var.names, cex=0.5)
       }
       if(vars  == "scores") {
-        plot.x <- results$Scores$post.f
         if(grp.ind)   {
           Labs <- clust$post.z
         } else   {
@@ -335,10 +338,20 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
             if(length(Labs) != n.obs) stop(paste0("Labels must be a factor of length N=",  n.obs))
           }
         }
-        ind2   <- ifelse(Q.max > 1, max(2, ind[2]), ind[2])
+        if(g.score)  {
+          if(g == 1) temp.labs  <- Labs
+          z.ind  <- as.numeric(temp.labs) == g
+          plot.x <- results$Scores$post.f[z.ind,]
+          ind2   <- ifelse(any(!facx, Q <= 1), ind[2], if(Q > 1) max(2, ind[2]))
+          if(ci.sw[vars]) ci.x  <- results$Scores$CI.f[,z.ind,]
+          Labs   <- g
+        } else      {
+          plot.x <- results$Scores$post.f
+          ind2   <- ifelse(any(!facx, Q.max <= 1), ind[2], if(Q.max > 1) max(2, ind[2]))
+          if(ci.sw[vars]) ci.x  <- results$Scores$CI.f
+        }
         type.f <- ifelse(any(type.x, type == "l"), "p", type)
-        if(ci.sw[vars]) ci.x   <- results$Scores$CI.f
-        if(Q.max != 1) {
+        if(ind2 != 1)  {
           if(all(intervals, ci.sw[vars])) {
             plotCI(plot.x[,ind[1]], plot.x[,ind2], li=ci.x[1,,ind2], ui=ci.x[2,,ind2], gap=T, pch=NA, scol="grey", slty=3, xlab=paste0("Factor ", ind[1]), ylab=paste0("Factor ", ind2))
             plotCI(plot.x[,ind[1]], plot.x[,ind2], li=ci.x[1,,ind[1]], ui=ci.x[2,,ind[1]], add=T, gap=T, pch=NA, scol="grey", slty=3, err="x")
@@ -347,17 +360,17 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
             plot(plot.x[,ind[1]], plot.x[,ind2], type=type.f, col=as.numeric(Labs),
                  xlab=paste0("Factor ", ind[1]), ylab=paste0("Factor ", ind2))
           }
-          if(titles) title(main=list(paste0("Posterior Mean", ifelse(all.ind, "", ":\nScores"))))
+          if(titles) title(main=list(paste0("Posterior Mean", ifelse(all.ind, "", ":\nScores"), ifelse(g.score, paste0(" - Group ", g), ""))))
           if(type.f == "n") text(plot.x[,ind[1]], plot.x[,ind2], obs.names, 
                                col=as.numeric(Labs), cex=0.5)
         } else   {
           if(all(intervals, ci.sw[vars])) {
-            plotCI(seq_len(n.obs), plot.x[,ind[1]], li=ci.x[1,,ind[1]], ui=ci.x[2,,ind[1]], gap=T, pch=NA, scol="grey", slty=3, xlab="Observation", ylab=paste0("Factor ", ind[1]))
+            plotCI(if(!g.score) seq_len(n.obs) else seq_len(sum(z.ind)), plot.x[,ind[1]], li=ci.x[1,,ind[1]], ui=ci.x[2,,ind[1]], gap=T, pch=NA, scol="grey", slty=3, xlab="Observation", ylab=paste0("Factor ", ind[1]))
             points(plot.x[,ind[1]], type=type.f, col=as.numeric(Labs))
           } else {
             plot(plot.x[,ind[1]], type=type.f, col=as.numeric(Labs), xlab="Observation", ylab=paste0("Factor ", ind[1]))
           }
-          if(titles) title(main=list(paste0("Posterior Mean", ifelse(all.ind, "", ":\nScores"))))
+          if(titles) title(main=list(paste0("Posterior Mean", ifelse(all.ind, "", ":\nScores"), ifelse(g.score, paste0(" - Group ", g), ""))))
           if(type.f == "n") text(plot.x[,ind[1]], col=as.numeric(Labs), cex=0.5)
         }
       }
