@@ -55,10 +55,14 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   }
   G              <- ifelse(all(G.T, !is.element(method, c("FA", "IFA"))), G, 1)
   if(Q.T) {
-    if(!is.element(method, c("IFA", "MIFA", "IMIFA"))) {
+    if(G.T) {
+      if(length(Q) == 1)     Q <- rep(Q, G)
+      if(length(Q) != G)          stop(paste0("'Q' must be supplied for each of the ", G, " groups"))
+    } else if(length(Q) != 1)     stop("'Q' must be a scalar if G=1 or G is not suppplied")
+    if(all(!is.element(method, c("IFA", "MIFA", "IMIFA")), !G.T)) {
       Q.ind      <- which(n.fac == Q)
     }
-    if(all(is.element(method, c("FA", "MFA")),
+    if(all(is.element(method, c("FA", "MFA")), 
        !is.element(Q, n.fac)))    stop("This Q value was not used during simulation")
     if(all(is.element(method, c("IFA", "classify")), 
       (Q * (n.fac - Q)) < 0))     stop(paste0("Q can't be greater than the number of factors in ", match.call()$sims))
@@ -72,7 +76,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     
   # Retrieve log-likelihoods and tune G &/or Q according to criterion
     if(all(G.T, Q.T)) {
-      dimnames(crit.mat) <- list(paste0("G", G), paste0("Q", Q))
+      dimnames(crit.mat) <- list(paste0("G", G), paste0("Q", ifelse(length(Q) == 1, Q, "IFA")))
     } else if(G.T)    {
       dimnames(crit.mat) <- list(paste0("G", G), paste0("Q", n.fac))
     } else if(Q.T)    {
@@ -234,13 +238,16 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     post.z       <- as.numeric(post.z)
     ind          <- lapply(Gseq, function(g) post.z == g)
   }
-  
   if(inf.ind) {
     Q.tab        <- if(G > 1) lapply(apply(Q.store, 1, function(x) list(table(x, dnn=NULL))), "[[", 1) else table(Q.store, dnn=NULL)
     Q.prob       <- if(G > 1) lapply(Q.tab, prop.table) else prop.table(Q.tab)
     Q.mode       <- if(G > 1) unlist(lapply(Q.tab, function(qt) as.numeric(names(qt[qt == max(qt)])[1]))) else as.numeric(names(Q.tab[Q.tab == max(Q.tab)])[1])
     Q.med        <- ceiling(apply(Q.store, 1, median) * 2)/2
-    Q            <- if(Q.meth == "Mode") Q.mode else Q.med
+    if(all(!Q.T, G.T)) {
+      Q          <- if(Q.meth == "Mode") Q.mode else Q.med
+    } else if(Q.T) {
+      Q          <- if(G.T) Q else rep(Q, G)
+    }
     Q.CI         <- if(G > 1) apply(Q.store, 1, function(qs) round(quantile(qs, conf.levels))) else round(quantile(Q.store, conf.levels))
     GQ.res       <- list(G = G, Q = Q, Mode = Q.mode, Median = Q.med, 
                          Q.CI = Q.CI, Probs= Q.prob, Counts = Q.tab)
