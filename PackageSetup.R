@@ -68,8 +68,9 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   }
   switches  <- c(mu.sw=mu.switch, f.sw=f.switch, l.sw=load.switch, psi.sw=psi.switch, pi.sw=pi.switch)
   if(!is.logical(switches))         stop("All logical switches must be TRUE or FALSE")
+  G.x       <- missing(range.G)
   if(!is.element(method, c("MFA", "MIFA"))) {
-    if(!missing(range.G) &&  
+    if(!G.x &&  
        any(range.G  > 1))           warning(paste0("'range.G' must be 1 for the ", method, " method"), call.=F)
     range.G <- 1
     meth    <- method
@@ -129,7 +130,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   if(is.null(rownames(dat))) rownames(dat) <- seq_len(N)
   if(missing("sigma.mu"))    sigma.mu      <- diag(cov.mat)
   if(scaling == "unit")      sigma.mu      <- sigma.mu[1]
-  if(any(sigma.mu <= 0))            stop("'sigma.mu' must be strictly positive")
+  if(any(sigma.mu  <= 0))           stop("'sigma.mu' must be strictly positive")
   if(missing("psi.alpha"))   psi.alpha     <- 2.5
   if(psi.alpha <= 0)                stop("'psi.alpha' must be strictly positive")
   if(is.element(method, c("FA", "MFA"))) {
@@ -261,7 +262,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
       alpha.dk     <- len.check(alpha.dk, delta0g, P.dim=F)
     }
   }
-  if(is.element(method, c("MFA", "MIFA"))) {
+  if(!is.element(method, c("FA", "IFA"))) {
     if(verbose)                     cat(paste0("Initialising...\n"))
     clust          <- list()
     pi.alpha       <- list()
@@ -311,7 +312,10 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
       if(adk.x)   {
         alpha.dk[[g]]   <- rep(unlist(alpha.dk), G)
       }
-      clust[[g]]   <- list(z = zi[[g]], pi.alpha = pi.alpha[[g]], pi.prop = pi.prop[[g]], label.switch = sw0gs)
+      clust[[g]]   <- list(z = zi[[g]], pi.alpha = pi.alpha[[g]], pi.prop = pi.prop[[g]])
+      if(is.element(method, c("MFA", "MIFA"))) {
+        clust[[g]] <- append(clust[[g]], list(label.switch = sw0gs))
+      }
       if(method == "MIFA") {
         clust[[g]] <- append(clust[[g]], list(alpha.d1 = alpha.d1[[g]], alpha.dk = alpha.dk[[g]]))
       }

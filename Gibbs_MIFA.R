@@ -241,19 +241,19 @@
       if(is.element(iter, iters))  {
         new.it     <- which(iters == iter)
         log.like   <- sum(z.res$log.likes)
-        if(sw["mu.sw"])        mu.store[,,new.it]   <- mu  
+        if(sw["mu.sw"])    mu.store[,,new.it]       <- mu  
         if(all(sw["f.sw"], 
-           any(Qs   > 0)))     f.store[,seq_len(max(Qs)),new.it]    <- f
+           any(Qs   > 0))) f.store[,seq_len(max(Qs)),new.it]    <- f
         if(sw["l.sw"])   {
           for(g in Gseq) {
-            if(Qs[g] > 0)      load.store[,seq_len(Qs[g]),g,new.it] <- lmat[[g]]
+            if(Qs[g] > 0)  load.store[,seq_len(Qs[g]),g,new.it] <- lmat[[g]]
           }
         }
-        if(sw["psi.sw"])       psi.store[,,new.it]  <- psi
-        if(sw["pi.sw"])        pi.store[,new.it]    <- pi.prop
-                               z.store[,new.it]     <- z 
-                               ll.store[new.it]     <- log.like  
-                               Q.store[,new.it]     <- Qs
+        if(sw["psi.sw"])   psi.store[,,new.it]      <- psi
+        if(sw["pi.sw"])    pi.store[,new.it]        <- pi.prop
+                           z.store[,new.it]         <- z 
+                           ll.store[new.it]         <- log.like  
+                           Q.store[,new.it]         <- Qs
       }
     }
     returns        <- list(mu       = if(sw["mu.sw"])  mu.store,
