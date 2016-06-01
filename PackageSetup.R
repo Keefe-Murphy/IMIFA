@@ -12,7 +12,7 @@ if(length(setdiff(packages, (.packages()))) > 0) {
 rm(packages)
 message("   ________  __________________\n  /_  __/  |/   /_  __/ ___/ _ \\  \n   / / / /|_// / / / / /__/ /_\\ \\ \n _/ /_/ /   / /_/ /_/ ___/ /___\\ \\ \n/____/_/   /_/_____/_/  /_/     \\_\\    version 1.0")
 
-imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "FA", "classify"), 
+imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "OMIFA", "MIFA", "MFA", "IFA", "FA", "classify"), 
                         n.iters = 50000, Labels = NULL, factanal = F, Q.star = NULL, range.G = NULL, 
                         range.Q = NULL, Q.fac = NULL,  burnin = n.iters/5, thinning = 2, centering = T, qstar0g = F,
                         scaling = c("unit", "pareto", "none"), verbose = F, adapt = T, b0 = NULL, b1 = NULL, delta0g = F,
@@ -70,26 +70,35 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   if(!is.logical(switches))         stop("All logical switches must be TRUE or FALSE")
   G.x       <- missing(range.G)
   if(!is.element(method, c("MFA", "MIFA"))) {
-    if(!G.x &&  
+    if(all(!G.x, is.element(method, c("FA", "IFA"))) &&  
        any(range.G  > 1))           warning(paste0("'range.G' must be 1 for the ", method, " method"), call.=F)
-    range.G <- 1
+    if(method == "OMIFA") {
+      if(G.x) {
+        range.G    <- floor(3 * log(N))
+      }
+    } else {
+      range.G <- 1
+    }
+    if(length(range.G) != 1)        stop("Only one range.G value can be specified for the OMIFA method")
     meth    <- method
   } else {
-    if(missing(range.G))            stop("'range.G' must be specified")
+    if(G.x)                         stop("'range.G' must be specified")
     if(any(range.G  < 1))           stop("'range.G' must be strictly positive")
     range.G <- sort(unique(range.G))
-    meth    <- rep(method, length(range.G))
-    if(range.G[1]  == 1)  {
-      if(meth[1] != "IMIFA")  {                                    
-        if(meth[1] == "MFA")  {
-          meth[1]  <- "FA"                              
-        } 
-        if(meth[1] == "MIFA") {
-          meth[1]  <- "IFA"
-        } 
-      }
+    meth    <- rep(method, length(range.G))                               
+  }
+  if(range.G[1]  == 1)  {
+    if(is.element(meth[1], 
+       c("IMIFA", "OMIFA")))  {     stop("'method' must be FA or IFA for a one group model")
+    } else {
+      if(meth[1] == "MFA")  {
+        meth[1]  <- "FA"                              
+      } 
+      if(meth[1] == "MIFA") {
+        meth[1]  <- "IFA"
+      } 
+    }
                                     message(paste0("Forced use of ", meth[1], " method where 'range.G' is equal to 1"))
-    }                               
   }
   if(is.element(method, c("FA", "MFA")) && all(range.Q == 0)) {   
     if(all(switches[c("f.sw", "l.sw")])) {
@@ -107,8 +116,8 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   }
 
   if(any(all(method == "MFA",  any(range.G > 1)) && any(range.Q > 0),
-         all(method == "MIFA", any(range.G > 1)),
-             method == "IMIFA"))  {
+         all(method == "MIFA", any(range.G > 1)), is.element(method, 
+           c("IMIFA", "OMIFA")))) {
     if(all(!switches["l.sw"], 
            !switches["psi.sw"]))  {
                                     warning("Loadings & Psi not stored: unable to estimate covariance matrix and compute error metrics", call.=F)
@@ -116,8 +125,8 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
     } else if(!switches["psi.sw"])  warning("Psi not stored: unable to estimate covariance matrix and compute error metrics", call.=F)
   }
   if(any(all(method == "MFA",  any(range.G > 1)),
-         all(method == "MIFA", any(range.G > 1)),
-         method == "IMIFA"))      {
+         all(method == "MIFA", any(range.G > 1)), is.element(method, 
+           c("IMIFA", "OMIFA")))) {
     if(all(!switches["mu.sw"], 
            !switches["psi.sw"]))  {
                                     warning("Means & Psi not stored: posterior mean estimates won't be available", call.=F)
@@ -182,11 +191,12 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
            any(sw0gs)))             stop(paste0(names(which(sw0gs)), " should be FALSE for the ", method, " method\n"))
     if(all(method != "MIFA",
        any(!delta0g, !qstar0g)))    stop("'delta0g' and 'qstar0g' can only be TRUE for the 'MIFA' method")
-    if(missing("alpha.pi"))  alpha.pi      <- ifelse(method == "IMIFA", 0.1, 0.5)
+    if(missing("alpha.pi"))  alpha.pi      <- ifelse(method == "OMIFA", 1/1000, 0.5)
     if(abs(alpha.pi -
           (1 - alpha.pi)) < 0)      stop("'alpha.pi' must be a single number between 0 and 1")
                              z.init        <- match.arg(z.init)
-    if(method != "IMIFA") {
+    if(!is.element(method, 
+       c("IMIFA", "OMIFA"))) {
       if(!missing(z.list))   {
         if(!is.list(z.list))   z.list      <- list(z.list)
                                z.list      <- lapply(z.list, as.factor)
@@ -441,7 +451,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   attr(imifa, "Center")   <- centering
   attr(imifa, "Date")     <- format(Sys.Date(), "%d-%b-%Y")
   attr(imifa, "Factors")  <- if(is.element(method, c("FA", "MFA"))) range.Q else Q.star
-  attr(imifa, "Groups")   <- if(method != "IMIFA") range.G else G.star
+  attr(imifa, "Groups")   <- range.G
   if(is.element(method, c("MFA", "MIFA"))) {
     attr(imifa, "Init.Z") <- z.init
     attr(imifa, 
@@ -457,7 +467,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "MIFA", "MFA", "IFA", "F
   "Scaling"), "Method")   <- scaling
   attr(imifa, "Store")    <- length(iters)
   attr(imifa, "Switch")   <- switches
-  if(any(is.element(method, c("IFA", "IMIFA")), 
+  if(any(is.element(method, c("IFA", "OMIFA", "IMIFA")), 
      (is.element(method, c("FA", "MFA")) && length(range.Q) == 1)))       {
     attr(imifa, "Time")   <- round(tot.time, 2)
   } else if(all(is.element(method, c("MFA", "MIFA")))) {
