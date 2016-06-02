@@ -6,7 +6,7 @@
  #set.seed(1)
  #rm(list=ls(all=T))
   if(getwd() != "/home/kmurphy") {
-    setwd("C:/Users/Windows/Documents/Claire IMIFA")
+    setwd("C:/Users/Windows/Dropbox/UCD/Claire IMIFA")
   }
   source(paste0(getwd(), "/IMIFA-GIT/PackageSetup.R", sep=""))
     
