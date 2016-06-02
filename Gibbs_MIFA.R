@@ -90,6 +90,7 @@
       z.store[,1]          <- z
       ll.store[1]          <- sum(sim.z(data=data, mu=mu, G=G, pi.prop=pi.prop, Sigma=lapply(Gseq,
                                   function(g) tcrossprod(lmat[[g]]) + diag(1/psi.inv[,g])))$log.likes)
+      Q.store[,1]          <- Qs
     }
     
   # Iterate
