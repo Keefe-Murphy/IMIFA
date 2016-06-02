@@ -5,15 +5,14 @@
 # Gibbs Sampler Function
   gibbs.OMIFA      <- function(Q, data, iters, N, P, G, mu.zero,
                                sigma.mu, burnin, thinning, mu,
-                               psi.alpha, psi.beta, verbose, 
-                               sw, cluster, phi.nu, b0, b1, prop,
+                               psi.alpha, psi.beta, verbose, alpha.d1,
+                               alpha.dk, sw, cluster, phi.nu, b0, b1, prop,
                                beta.d1, beta.dk, adapt, epsilon, ...) {
         
   # Define & initialise variables
     n.iters        <- round(max(iters), -1)
     n.store        <- length(iters)
     Gseq           <- seq_len(G)
-    old.perm       <- Gseq
     Pseq           <- seq_len(P)
     obsnames       <- rownames(data)
     varnames       <- colnames(data)
@@ -45,32 +44,21 @@
     Q.star         <- Q
     Qs             <- rep(Q, G)
     Q.store        <- matrix(0, nr=G, nc=n.store)
+    G.store        <- rep(0, n.store)
     dimnames(z.store)      <- list(obsnames, iternames)
     dimnames(Q.store)      <- list(gnames, iternames)
     
     mu.sigma       <- 1/sigma.mu
-    if(all(mu.zero == 0)) {
-      mu.zero      <- matrix(0, nr=1, nc=G)
-    }
     z              <- cluster$z
     z.temp         <- factor(z, levels=Gseq)
     pi.alpha       <- cluster$pi.alpha
     pi.prop        <- cluster$pi.prop
-    alpha.d1       <- cluster$alpha.d1
-    alpha.dk       <- cluster$alpha.dk
-    ad1.x          <- length(unique(alpha.d1)) == 1
-    adk.x          <- length(unique(alpha.dk)) == 1
-    mu0g           <- cluster$label.switch[1]
-    psi0g          <- cluster$label.switch[2]
-    delta0g        <- cluster$label.switch[3]
-    qstar0g        <- cluster$label.switch[4]
-    label.switch   <- any(cluster$label.switch)
     f              <- sim.f.p(N=N, Q=Q)
     phi            <- lapply(Gseq, function(g) sim.phi.p(Q=Q, P=P, phi.nu=phi.nu))
-    delta          <- lapply(Gseq, function(g) sim.delta.p(Q=Q, alpha.d1=alpha.d1[g], alpha.dk=alpha.dk[g], beta.d1=beta.d1, beta.dk=beta.dk))
+    delta          <- lapply(Gseq, function(g) sim.delta.p(Q=Q, alpha.d1=alpha.d1, alpha.dk=alpha.dk, beta.d1=beta.d1, beta.dk=beta.dk))
     tau            <- lapply(delta, cumprod)
     lmat           <- lapply(Gseq, function(g) matrix(unlist(lapply(Pseq, function(j) sim.load.p(Q=Q, phi=phi[[g]][j,], tau=tau[[g]], P=P)), use.names=F), nr=P, byrow=T))
-    psi.inv        <- do.call(cbind, lapply(Gseq, function(g) sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta[,g])))
+    psi.inv        <- do.call(cbind, lapply(Gseq, function(g) sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)))
     for(g in Gseq) {
       fact         <- try(factanal(data[z == g,, drop=F], factors=Q, scores="regression", control=list(nstart=50)), silent=T)
       if(!inherits(fact, "try-error")) {
@@ -91,6 +79,7 @@
       ll.store[1]          <- sum(sim.z(data=data, mu=mu, G=G, pi.prop=pi.prop, Sigma=lapply(Gseq,
                                   function(g) tcrossprod(lmat[[g]]) + diag(1/psi.inv[,g])))$log.likes)
       Q.store[,1]          <- Qs
+      G.store[1]           <- G
     }
     
   # Iterate
@@ -109,7 +98,7 @@
       sum.data     <- lapply(Gseq, function(g) colSums(data[z.ind[[g]],, drop=F]))
       sum.f        <- lapply(Gseq, function(g) colSums(f[z.ind[[g]],, drop=F]))
       mu           <- do.call(cbind, lapply(Gseq, function(g) sim.mu(N=nn[g], mu.sigma=mu.sigma, psi.inv=psi.inv[,g], P=P, 
-                              sum.data=sum.data[[g]], sum.f=sum.f[[g]][seq_len(Qs[g])], lmat=lmat[[g]], mu.zero=mu.zero[,g])))
+                              sum.data=sum.data[[g]], sum.f=sum.f[[g]][seq_len(Qs[g])], lmat=lmat[[g]], mu.zero=mu.zero)))
     
     # Scores & Loadings
       c.data       <- lapply(Gseq, function(g) sweep(data[z.ind[[g]],, drop=F], 2, mu[,g], FUN="-"))
@@ -141,7 +130,7 @@
                   
     # Uniquenesses
       psi.inv      <- do.call(cbind, lapply(Gseq, function(g) sim.psi.i(N=nn[g], psi.alpha=psi.alpha, c.data=c.data[[g]], 
-                              psi.beta=psi.beta[,g], P=P, f=f[z.ind[[g]],seq_len(Qs[g]),drop=F], lmat=lmat[[g]])))
+                              psi.beta=psi.beta, P=P, f=f[z.ind[[g]],seq_len(Qs[g]),drop=F], lmat=lmat[[g]])))
     
     # Local Shrinkage
       load.2       <- lapply(lmat, function(lg) lg * lg)
@@ -153,13 +142,13 @@
         Qg         <- Qs[g]
         sum.termg  <- sum.terms[[g]]
         if(Qg       > 0) {
-          delta[[g]][1]    <- sim.delta1(Q=Qg, alpha.d1=alpha.d1[g], delta=delta[[g]], P=P,
+          delta[[g]][1]    <- sim.delta1(Q=Qg, alpha.d1=alpha.d1, delta=delta[[g]], P=P,
                                          beta.d1=beta.d1, tau=tau[[g]], sum.term=sum.termg)
           tau[[g]]         <- cumprod(delta[[g]])
         }
         if(Qg       > 1) {
           for(k in seq_len(Qg)[-1]) { 
-            delta[[g]][k]  <- sim.deltak(Q=Qg, alpha.dk=alpha.dk[g], delta=delta[[g]], P=P,
+            delta[[g]][k]  <- sim.deltak(Q=Qg, alpha.dk=alpha.dk, delta=delta[[g]], P=P,
                                          beta.dk=beta.dk, k=k, tau=tau[[g]], sum.term=sum.termg)
             tau[[g]]       <- cumprod(delta[[g]])
           }
@@ -179,7 +168,7 @@
           Qs.old   <- Qs
           Qs       <- unlist(lapply(Gseq, function(g) if(notred[g]) Qs.old[g] + 1 else Qs.old[g] - numred[[g]]), use.names=F)
           phi      <- lapply(Gseq, function(g) if(notred[g]) cbind(phi[[g]][,seq_len(Qs.old[g])], rgamma(n=P, shape=phi.nu, rate=phi.nu)) else phi[[g]][,nonred[[g]], drop=F])
-          delta    <- lapply(Gseq, function(g) if(notred[g]) c(delta[[g]][seq_len(Qs.old[g])], rgamma(n=1, shape=alpha.dk[g], rate=beta.dk)) else delta[[g]][nonred[[g]]])  
+          delta    <- lapply(Gseq, function(g) if(notred[g]) c(delta[[g]][seq_len(Qs.old[g])], rgamma(n=1, shape=alpha.dk, rate=beta.dk)) else delta[[g]][nonred[[g]]])  
           tau      <- lapply(delta, cumprod)
           lmat     <- lapply(Gseq, function(g) if(notred[g]) cbind(lmat[[g]][,seq_len(Qs.old[g])], rnorm(n=P, mean=0, sd=sqrt(1/(phi[[g]][,Qs[g]] * tau[[g]][Qs[g]])))) else lmat[[g]][,nonred[[g]], drop=F])
           f        <- if(max(Qs) > max(Qs.old)) cbind(f[,seq_len(max(Qs.old))], rnorm(n=N, mean=0, sd=1)) else f[,seq_len(max(Qs)), drop=F]
@@ -196,47 +185,47 @@
       z            <- z.res$z
     
     # Label Switching
-      if(label.switch)   {
-        tab        <- table(factor(z, levels=Gseq), z.temp)
-        z.perm     <- matchClasses(tab, method="exact", verbose=F)
-        z          <- as.numeric(factor(z, labels=z.perm, levels=Gseq))
-        Qs         <- Qs[z.perm]
-        perm       <- !identical(unname(z.perm), old.perm)
-       if(perm) {
-        if(sw["mu.sw"])  {
-          mu       <- mu[,z.perm]
-        }
-        if(sw["l.sw"])   {
-          for(g in Gseq) {
-            lmat[[g]]      <- lmat[[z.perm[g]]]
-            delta[[g]]     <- delta[[z.perm[g]]]
-            phi[[g]]       <- phi[[z.perm[g]]]
-            tau[[g]]       <- tau[[z.perm[g]]]
-          }
-        }
-        if(sw["psi.sw"]) {
-          psi.inv  <- psi.inv[,z.perm]
-        }
-        if(sw["pi.sw"])  {
-          pi.prop  <- pi.prop[,z.perm]
-        }
-        if(mu0g)         {
-          mu.zero  <- mu.zero[,z.perm, drop=F]
-        }
-        if(psi0g)        {
-          psi.beta <- psi.beta[,z.perm, drop=F]
-        }
-        if(all(delta0g, 
-               !ad1.x))  {
-          alpha.d1 <- alpha.d1[z.perm]
-        }
-        if(all(delta0g, 
-               !adk.x))  {
-          alpha.dk <- alpha.dk[z.perm]
-        }
-       }
-       old.perm    <- z.perm
-      }
+#       if(label.switch)   {
+#         tab        <- table(factor(z, levels=Gseq), z.temp)
+#         z.perm     <- matchClasses(tab, method="exact", verbose=F)
+#         z          <- as.numeric(factor(z, labels=z.perm, levels=Gseq))
+#         Qs         <- Qs[z.perm]
+#         perm       <- !identical(unname(z.perm), old.perm)
+#        if(perm) {
+#         if(sw["mu.sw"])  {
+#           mu       <- mu[,z.perm]
+#         }
+#         if(sw["l.sw"])   {
+#           for(g in Gseq) {
+#             lmat[[g]]      <- lmat[[z.perm[g]]]
+#             delta[[g]]     <- delta[[z.perm[g]]]
+#             phi[[g]]       <- phi[[z.perm[g]]]
+#             tau[[g]]       <- tau[[z.perm[g]]]
+#           }
+#         }
+#         if(sw["psi.sw"]) {
+#           psi.inv  <- psi.inv[,z.perm]
+#         }
+#         if(sw["pi.sw"])  {
+#           pi.prop  <- pi.prop[,z.perm]
+#         }
+#         if(mu0g)         {
+#           mu.zero  <- mu.zero[,z.perm, drop=F]
+#         }
+#         if(psi0g)        {
+#           psi.beta <- psi.beta[,z.perm, drop=F]
+#         }
+#         if(all(delta0g, 
+#                !ad1.x))  {
+#           alpha.d1 <- alpha.d1[z.perm]
+#         }
+#         if(all(delta0g, 
+#                !adk.x))  {
+#           alpha.dk <- alpha.dk[z.perm]
+#         }
+#        }
+#        old.perm    <- z.perm
+#       }
       
     if(any(Qs > Q.star))      stop(paste0("Q cannot exceed initial number of loadings columns: try increasing Q.star from ", Q.star))
       if(is.element(iter, iters))  {
@@ -255,6 +244,7 @@
                            z.store[,new.it]         <- z 
                            ll.store[new.it]         <- log.like  
                            Q.store[,new.it]         <- Qs
+                           G.store[new.it]          <- sum(nn > 0)
       }
     }
     returns        <- list(mu       = if(sw["mu.sw"])  mu.store,
@@ -264,6 +254,7 @@
                            pi.prop  = if(sw["pi.sw"])  pi.store,
                            z.store  = z.store,
                            ll.store = ll.store,
-                           Q.store  = Q.store)
+                           Q.store  = Q.store,
+                           G.store  = G.store)
     return(returns)
   }

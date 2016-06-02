@@ -74,7 +74,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "OMIFA", "MIFA", "MFA", 
        any(range.G  > 1))           warning(paste0("'range.G' must be 1 for the ", method, " method"), call.=F)
     if(method == "OMIFA") {
       if(G.x) {
-        range.G    <- floor(3 * log(N))
+        range.G    <- floor(2 * log(N))
       }
     } else {
       range.G <- 1
@@ -190,30 +190,30 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "OMIFA", "MIFA", "MFA", 
     if(all(is.element(method, c("FA", "IFA")), 
            any(sw0gs)))             stop(paste0(names(which(sw0gs)), " should be FALSE for the ", method, " method\n"))
     if(all(method != "MIFA",
-       any(!delta0g, !qstar0g)))    stop("'delta0g' and 'qstar0g' can only be TRUE for the 'MIFA' method")
-    if(missing("alpha.pi"))  alpha.pi      <- ifelse(method == "OMIFA", 1/1000, 0.5)
+       any(delta0g, qstar0g)))      stop("'delta0g' and 'qstar0g' can only be TRUE for the 'MIFA' method")
+    if(missing("alpha.pi"))  alpha.pi      <- ifelse(method == "OMIFA", 1/(10 * range.G), 1)
     if(abs(alpha.pi -
           (1 - alpha.pi)) < 0)      stop("'alpha.pi' must be a single number between 0 and 1")
                              z.init        <- match.arg(z.init)
-    if(!is.element(method, 
-       c("IMIFA", "OMIFA"))) {
-      if(!missing(z.list))   {
-        if(!is.list(z.list))   z.list      <- list(z.list)
-                               z.list      <- lapply(z.list, as.factor)
-        if(z.init != "list") { z.init      <- "list"
+    if(!missing(z.list))   {
+      if(!is.list(z.list))   z.list        <- list(z.list)
+                             z.list        <- lapply(z.list, as.factor)
+      if(z.init != "list") { z.init        <- "list"
                                     message("'z.init' set to 'list' as 'z.list' was supplied") }
-        if(length(z.list)   != length(range.G))      {
+      if(length(z.list)   != length(range.G))        {
                                     stop(paste0("'z.list' must be a list of length ", length(range.G))) }
+      if(!is.element(method, c("IMIFA", "OMIFA")))   {
         if(!all(lapply(z.list, nlevels) == range.G)) {
                                     stop(paste0("Each element of 'z.list' must have the same number of levels as 'range.G'")) }
-        if(!all(lapply(z.list, length)  == N))       {
-                                    stop(paste0("Each element of 'z.list' must be a vector of length N=", N)) }
       }
-      if(all(missing(z.list),  z.init   == "list"))  {
-                                    stop(paste0("'z.list' must be supplied if 'z.init' is set to 'list'")) }
+      if(!all(lapply(z.list, length)    == N))       {
+                                    stop(paste0("Each element of 'z.list' must be a vector of length N=", N)) }
     }
+    if(all(missing(z.list),  z.init     == "list"))  {
+                                    stop(paste0("'z.list' must be supplied if 'z.init' is set to 'list'")) }
+    
   }
-  if(all(!is.element(method, c("MFA", "MIFA")), 
+  if(all(is.element(method, c("FA", "IFA")), 
          !missing(z.init) || 
          !missing(z.list)))         message(paste0("z does not need to be initialised for the ", method, " method"))
   
@@ -295,11 +295,11 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "OMIFA", "MIFA", "MFA", 
         } else                      warning("Cannot initialise cluster labels using mclust. Try another z.init method")
       } else {
         zips       <- rep(1, N)
-        while(all(length(unique(zips)) != G,
-              any(prop.table(tabulate(zips, nbins=G)) < 1/G^2))) {
+        while(all(length(unique(zips)) != G, !is.element(method, c("IMIFA", "OMIFA")),
+                  any(prop.table(tabulate(zips, nbins=G)) < 1/G^2))) {
           pi.props <- sim.pi(pi.alpha=pi.alpha[[g]], nn=0)
           zips     <- sim.z.p(N=N, prob.z=pi.props)
-        }
+        } 
         zi[[g]]    <- as.numeric(zips)
         rm(zips)
       }
@@ -331,6 +331,12 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "OMIFA", "MIFA", "MFA", 
       }
     }
   }
+  if(is.element(method, c("IMIFA", "OMIFA"))) {
+    mu.zero        <- list(mu.zero[[1]][,1])
+    psi.beta       <- list(psi.beta[[1]][,1])
+    alpha.d1       <- list(alpha.d1[[1]][1])
+    alpha.dk       <- list(alpha.dk[[1]][1])
+  } 
   if(all(round(unlist(sapply(mu.zero, sum))) == 0)) {
     mu.zero        <- lapply(mu.zero, function(x) 0)
   }
@@ -341,15 +347,15 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "OMIFA", "MIFA", "MFA", 
   init.time        <- proc.time() - init.start
   
   if(profile)  Rprof()
-  if(is.element(method, c("IFA", "MIFA"))) {
-    if(length(range.G) == 1) {
+  if(is.element(method, c("IFA", "MIFA", "OMIFA", "IMIFA"))) {
+    if(length(range.G) == 1)  {
       start.time   <- proc.time()
-      if(meth[Gi]  == "IFA") {
+      if(meth[Gi]  != "MIFA") {
         gibbs.arg  <- append(temp.args, deltas[[Gi]])
       }
         imifa[[Gi]][[Qi]] <- do.call(paste0("gibbs.", meth[Gi]),                          
                                      args=append(list(data = dat, N = N, G = range.G, Q = Q.star, mu = mu[[Gi]], mu.zero = mu.zero[[Gi]],
-                                                      psi.beta = psi.beta[[Gi]], cluster = if(meth[Gi] == "MIFA") clust[[Gi]]), gibbs.arg))
+                                                      psi.beta = psi.beta[[Gi]], cluster = if(meth[Gi] != "IFA") clust[[Gi]]), gibbs.arg))
     } else {
       start.time   <- proc.time()
       for(g in range.G) {
@@ -440,7 +446,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "OMIFA", "MIFA", "MFA", 
   } else {
     imifa   <- lapply(seq_along(imifa), function(x) setNames(imifa[[x]], "IFA"))
   }
-  if(is.element(method, c("MFA", "MIFA"))) {
+  if(!is.element(method, c("FA", "IFA"))) {
     for(g in seq_along(range.G)) {
       attr(imifa[[g]], 
            "Z.init")      <- factor(zi[[g]], levels=seq_len(range.G[g]))
@@ -452,7 +458,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "OMIFA", "MIFA", "MFA", 
   attr(imifa, "Date")     <- format(Sys.Date(), "%d-%b-%Y")
   attr(imifa, "Factors")  <- if(is.element(method, c("FA", "MFA"))) range.Q else Q.star
   attr(imifa, "Groups")   <- range.G
-  if(is.element(method, c("MFA", "MIFA"))) {
+  if(!is.element(method, c("FA", "IFA"))) {
     attr(imifa, "Init.Z") <- z.init
     attr(imifa, 
          "Label.Switch")  <- any(sw0gs)
