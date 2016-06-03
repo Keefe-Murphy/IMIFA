@@ -46,15 +46,16 @@
     mu.sigma       <- 1/sigma.mu
     if(all(mu.zero == 0)) {
       mu.zero      <- matrix(0, nr=1, nc=G)
+      cluster$l.switch[1]  <- F
     }
     l.sigma        <- 1/sigma.l 
     z              <- cluster$z
     z.temp         <- factor(z, levels=Gseq)
     pi.alpha       <- cluster$pi.alpha
     pi.prop        <- cluster$pi.prop
-    mu0g           <- cluster$label.switch[1]
-    psi0g          <- cluster$label.switch[2]
-    label.switch   <- any(cluster$label.switch)
+    mu0g           <- cluster$l.switch[1]
+    psi0g          <- cluster$l.switch[2]
+    label.switch   <- any(cluster$l.switch)
     f              <- sim.f.p(N=N, Q=Q)
     lmat           <- lapply(Gseq, function(g) sim.load.p(Q=Q, P=P, sigma.l=sigma.l, shrink=F))
     psi.inv        <- do.call(cbind, lapply(Gseq, function(g) sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta[,g])))

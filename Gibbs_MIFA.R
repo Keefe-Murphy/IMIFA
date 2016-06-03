@@ -51,6 +51,7 @@
     mu.sigma       <- 1/sigma.mu
     if(all(mu.zero == 0)) {
       mu.zero      <- matrix(0, nr=1, nc=G)
+      cluster$l.switch[1]  <- F
     }
     z              <- cluster$z
     z.temp         <- factor(z, levels=Gseq)
@@ -60,11 +61,11 @@
     alpha.dk       <- cluster$alpha.dk
     ad1.x          <- length(unique(alpha.d1)) == 1
     adk.x          <- length(unique(alpha.dk)) == 1
-    mu0g           <- cluster$label.switch[1]
-    psi0g          <- cluster$label.switch[2]
-    delta0g        <- cluster$label.switch[3]
-    qstar0g        <- cluster$label.switch[4]
-    label.switch   <- any(cluster$label.switch)
+    mu0g           <- cluster$l.switch[1]
+    psi0g          <- cluster$l.switch[2]
+    delta0g        <- cluster$l.switch[3]
+    qstar0g        <- cluster$l.switch[4]
+    label.switch   <- any(cluster$l.switch)
     f              <- sim.f.p(N=N, Q=Q)
     phi            <- lapply(Gseq, function(g) sim.phi.p(Q=Q, P=P, phi.nu=phi.nu))
     delta          <- lapply(Gseq, function(g) sim.delta.p(Q=Q, alpha.d1=alpha.d1[g], alpha.dk=alpha.dk[g], beta.d1=beta.d1, beta.dk=beta.dk))
@@ -200,9 +201,9 @@
         tab        <- table(factor(z, levels=Gseq), z.temp)
         z.perm     <- matchClasses(tab, method="exact", verbose=F)
         z          <- as.numeric(factor(z, labels=z.perm, levels=Gseq))
-        Qs         <- Qs[z.perm]
         perm       <- !identical(unname(z.perm), old.perm)
        if(perm) {
+         Qs        <- Qs[z.perm]
         if(sw["mu.sw"])  {
           mu       <- mu[,z.perm]
         }

@@ -191,7 +191,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "OMIFA", "MIFA", "MFA", 
            any(sw0gs)))             stop(paste0(names(which(sw0gs)), " should be FALSE for the ", method, " method\n"))
     if(all(method != "MIFA",
        any(delta0g, qstar0g)))      stop("'delta0g' and 'qstar0g' can only be TRUE for the 'MIFA' method")
-    if(missing("alpha.pi"))  alpha.pi      <- ifelse(method == "OMIFA", 1/(10 * range.G), 1)
+    if(missing("alpha.pi"))  alpha.pi      <- ifelse(method == "OMIFA", 0.5/range.G, 1)
     if(abs(alpha.pi -
           (1 - alpha.pi)) < 0)      stop("'alpha.pi' must be a single number between 0 and 1")
                              z.init        <- match.arg(z.init)
@@ -324,7 +324,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "OMIFA", "MIFA", "MFA", 
       }
       clust[[g]]   <- list(z = zi[[g]], pi.alpha = pi.alpha[[g]], pi.prop = pi.prop[[g]])
       if(is.element(method, c("MFA", "MIFA"))) {
-        clust[[g]] <- append(clust[[g]], list(label.switch = sw0gs))
+        clust[[g]] <- append(clust[[g]], list(l.switch = sw0gs))
       }
       if(method == "MIFA") {
         clust[[g]] <- append(clust[[g]], list(alpha.d1 = alpha.d1[[g]], alpha.dk = alpha.dk[[g]]))
@@ -339,6 +339,9 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "OMIFA", "MIFA", "MFA", 
   } 
   if(all(round(unlist(sapply(mu.zero, sum))) == 0)) {
     mu.zero        <- lapply(mu.zero, function(x) 0)
+  }
+  if(any(is.na(unlist(psi.beta)))) {
+    psi.beta       <- lapply(psi.beta, function(x) replace(x, is.na(x), 0))
   }
   if(any(unlist(psi.beta) <= 0))    stop("'psi.beta' must be strictly positive")
   if(any(unlist(alpha.d1) <= 0))    stop("'alpha.d1' must be strictly positive")
