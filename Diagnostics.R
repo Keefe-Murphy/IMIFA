@@ -21,7 +21,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   temp.store     <- store
   label.switch   <- attr(sims, "Label.Switch")
   method         <- attr(sims, "Method")
-  inf.ind        <- is.element(method, c("IFA", "MIFA"))
+  inf.ind        <- !is.element(method, c("FA", "MFA"))
   n.fac          <- attr(sims, "Factors")
   n.grp          <- attr(sims, "Groups")
   n.obs          <- attr(sims, "Obs")
@@ -67,7 +67,6 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     if(all(is.element(method, c("IFA", "classify")), 
       (Q * (n.fac - Q)) < 0))     stop(paste0("Q can't be greater than the number of factors in ", match.call()$sims))
   } 
-  
   
   if(is.element(method, c("FA", "IFA", "MFA", "MIFA"))) {
     G.range      <- ifelse(G.T, 1, length(n.grp))
@@ -231,7 +230,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     }
     cluster      <- list(post.z = post.z, post.pi = post.pi, 
                          z = z, var.z = var.z, CI.z = CI.z)
-    cluster      <- c(cluster, if(!missing(Labels)) list(conf.mat = tab, perf = tab.stat),
+    cluster      <- c(cluster, if(!label.miss) list(conf.mat = tab, perf = tab.stat),
                       if(sw["pi.sw"]) list(pi.prop = pi.prop, var.pi = var.pi, CI.pi = CI.pi))
     attr(cluster, "Z.init")    <- attr(sims[[G.ind]], "Z.init")
     attr(cluster, "Init.Meth") <- attr(sims, "Init.Z")
@@ -243,7 +242,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     Q.prob       <- if(G > 1) lapply(Q.tab, prop.table) else prop.table(Q.tab)
     Q.mode       <- if(G > 1) unlist(lapply(Q.tab, function(qt) as.numeric(names(qt[qt == max(qt)])[1]))) else as.numeric(names(Q.tab[Q.tab == max(Q.tab)])[1])
     Q.med        <- ceiling(apply(Q.store, 1, median) * 2)/2
-    if(all(!Q.T, G.T)) {
+    if(!all(Q.T, G.T)) {
       Q          <- if(Q.meth == "Mode") Q.mode else Q.med
     } else if(Q.T) {
       Q          <- if(G.T) Q else rep(Q, G)
