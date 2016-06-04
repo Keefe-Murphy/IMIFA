@@ -324,7 +324,12 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "OMIFA", "MIFA", "MFA", 
       }
       clust[[g]]   <- list(z = zi[[g]], pi.alpha = pi.alpha[[g]], pi.prop = pi.prop[[g]])
       if(is.element(method, c("MFA", "MIFA"))) {
-        clust[[g]] <- append(clust[[g]], list(l.switch = sw0gs))
+        sw0g.tmp   <- sw0gs
+        if(G > 9) {
+          sw0g.tmp <- setNames(rep(F, 4), names(sw0gs))
+          warning(paste0(names(which(sw0gs == T)), " set to FALSE where G > 9, as 'exact' label-switching is not possible in this case\n"))
+        }
+        clust[[g]] <- append(clust[[g]], list(l.switch = sw0g.tmp))
       }
       if(method == "MIFA") {
         clust[[g]] <- append(clust[[g]], list(alpha.d1 = alpha.d1[[g]], alpha.dk = alpha.dk[[g]]))

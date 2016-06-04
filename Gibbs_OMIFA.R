@@ -13,7 +13,7 @@
     n.iters        <- round(max(iters), -1)
     n.store        <- length(iters)
     Gseq           <- seq_len(G)
-    old.perm       <- Gseq
+    old.perm       <- setNames(Gseq, Gseq)
     Pseq           <- seq_len(P)
     obsnames       <- rownames(data)
     varnames       <- colnames(data)
@@ -189,24 +189,24 @@
       tab          <- table(factor(z, levels=Gseq), z.temp)
       z.perm       <- matchClasses(tab, method="exact", verbose=F)
       z            <- as.numeric(factor(z, labels=z.perm, levels=Gseq))
-      perm         <- !identical(unname(z.perm), old.perm)
+      perm         <- !identical(z.perm, old.perm)
       if(perm) {
         Qs         <- Qs[z.perm]
-        if(sw["mu.sw"])  {
+        if(sw["mu.sw"])   {
           mu       <- mu[,z.perm]
         }
-        if(sw["l.sw"])   {
-          for(g in Gseq) {
+        if(sw["l.sw"])    {
+          for(g in Gseq)  {
             lmat[[g]]      <- lmat[[z.perm[g]]]
             delta[[g]]     <- delta[[z.perm[g]]]
             phi[[g]]       <- phi[[z.perm[g]]]
             tau[[g]]       <- tau[[z.perm[g]]]
           }
         }
-        if(sw["psi.sw"]) {
+        if(sw["psi.sw"])  {
           psi.inv  <- psi.inv[,z.perm]
         }
-        if(sw["pi.sw"])  {
+        if(sw["pi.sw"])   {
           pi.prop  <- pi.prop[,z.perm]
         }
         old.perm    <- z.perm

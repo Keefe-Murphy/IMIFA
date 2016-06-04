@@ -175,10 +175,11 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     }
     if(!label.switch) {
       z.temp     <- factor(z[,1], levels=Gseq)
-      old.perm   <- Gseq
+      old.perm   <- setNames(Gseq, Gseq)
       if(!label.miss) {    
         tab      <- table(z.temp, labels)
         l.perm   <- matchClasses(tab, method="exact", verbose=F)
+        old.perm <- l.perm
         z.temp   <- factor(factor(z.temp, labels=levs[l.perm]), levels=levs) 
       }
       for(ls in seq_len(n.store)[-1]) {
@@ -202,8 +203,8 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
         if(method == "MIFA") {
           Q.store[,ls]   <- Q.store[z.perm,ls]
         }
+        old.perm <- z.perm
        }
-       old.perm  <- z.perm
       }
     }
     post.z       <- setNames(apply(z, 1, function(x) factor(which.max(tabulate(x)), levels=Gseq)), seq_len(n.obs))
