@@ -12,7 +12,6 @@
     n.iters        <- round(max(iters), -1)
     n.store        <- length(iters)
     Gseq           <- seq_len(G)
-    old.perm       <- setNames(Gseq, Gseq)
     Pseq           <- seq_len(P)
     obsnames       <- rownames(data)
     varnames       <- colnames(data)
@@ -51,6 +50,7 @@
     l.sigma        <- 1/sigma.l 
     z              <- cluster$z
     z.temp         <- factor(z, levels=Gseq)
+    old.perm       <- setNames(unique(as.numeric(z.temp)), Gseq)
     pi.alpha       <- cluster$pi.alpha
     pi.prop        <- cluster$pi.prop
     mu0g           <- cluster$l.switch[1]
@@ -128,9 +128,9 @@
     
     # Label Switching
       if(label.switch)   {
-        tab        <- table(factor(z, levels=Gseq), z.temp)
-        z.perm     <- matchClasses(tab, method="exact", verbose=F)
-        z          <- as.numeric(factor(z, labels=z.perm, levels=Gseq))
+        switch.lab <- lab.switch(z.new=z, z.old=z.temp)
+        z          <- switch.lab$z
+        z.perm     <- switch.lab$z.perm
         perm       <- !identical(z.perm, old.perm)
        if(perm) {
         if(sw["mu.sw"])  {

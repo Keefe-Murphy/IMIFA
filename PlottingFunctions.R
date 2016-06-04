@@ -440,26 +440,26 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
         }
       }
       if(method == "IFA")  {
-        plot.Q <- GQ.res$Counts
+        plot.Q <- GQ.res$Q.Counts
         Q.name <- names(plot.Q)
-        range  <- as.numeric(Q.name)
-        range  <- seq(from=min(range), to=max(range), by=1)
-        miss   <- setdiff(range, Q.name)
+        rangeq <- as.numeric(Q.name)
+        rangeq <- seq(from=min(rangeq), to=max(rangeq), by=1)
+        miss   <- setdiff(rangeq, Q.name)
         miss   <- setNames(rep(0, length(miss)), as.character(miss))
         plot.Q <- c(plot.Q, miss)
         plot.Q <- plot.Q[order(as.numeric(names(plot.Q)))]
-        col.Q  <- c("black", "red")[(range == Q) + 1]
+        col.Q  <- c("black", "red")[(rangeq == Q) + 1]
         Q.plot <- barplot(plot.Q, ylab="Frequency", xaxt="n", col=col.Q)
         if(titles) title(main=list("Posterior Distribution of Q"))
         axis(1, at=Q.plot, labels=Q.name, tick=F) 
         axis(1, at=median(Q.plot), labels="Q", tick=F, line=1.5) 
       }  
       if(method == "MIFA") {
-        plot.Q <- GQ.res$Counts
+        plot.Q <- GQ.res$Q.Counts
         Q.name <- lapply(plot.Q, names)
-        range  <- as.numeric(unique(unlist(Q.name, use.names=F)))
-        range  <- seq(from=min(range), to=max(range), by=1)
-        miss   <- lapply(seq_len(G), function(g) setdiff(range, as.numeric(Q.name[[g]])))
+        rangeq <- as.numeric(unique(unlist(Q.name, use.names=F)))
+        rangeq <- seq(from=min(rangeq), to=max(rangeq), by=1)
+        miss   <- lapply(seq_len(G), function(g) setdiff(rangeq, as.numeric(Q.name[[g]])))
         miss   <- lapply(seq_len(G), function(g) setNames(rep(0, length(miss[[g]])), as.character(miss[[g]])))
         plot.Q <- lapply(seq_len(G), function(g) c(plot.Q[[g]], miss[[g]]))
         plot.Q <- do.call(rbind, lapply(seq_len(G), function(g) plot.Q[[g]][order(as.numeric(names(plot.Q[[g]])))]))
