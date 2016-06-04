@@ -2,7 +2,7 @@
 ### Tune Parameters (Single & Shrinkage Case) ###
 #################################################
 
-tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q = NULL, Q.meth = c("Mode", "Median"),
+tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q = NULL, Q.meth = c("Mode", "Median"), G.meth = c("Mode", "Median"),
                              criterion = c("bicm", "aicm", "bic.mcmc", "aic.mcmc"), conf.level = 0.95, Labels = NULL, recomp = F) {
   
   defpar         <- suppressWarnings(par(no.readonly = T))
@@ -21,7 +21,8 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   temp.store     <- store
   label.switch   <- attr(sims, "Label.Switch")
   method         <- attr(sims, "Method")
-  inf.ind        <- !is.element(method, c("FA", "MFA"))
+  inf.G          <- is.element(method, c("IMIFA", "OMIFA"))
+  inf.Q          <- !is.element(method, c("FA", "MFA"))
   n.fac          <- attr(sims, "Factors")
   n.grp          <- attr(sims, "Groups")
   n.obs          <- attr(sims, "Obs")
@@ -46,34 +47,53 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   Q.ind          <- 1
   G.T            <- !missing(G)
   Q.T            <- !missing(Q)
-  if(G.T) {
-    if(!is.element(method, c("FA", "IFA"))) {
-      G.ind      <- which(n.grp == G)
-    } else if(G   > 1)            message(paste0("Forced G=1 for the ", method, " method"))
+  if(inf.G) {
+    G.store      <- sims[[G.ind]][[Q.ind]]$G.store[store]
+  }
+  if(G.T)   {
+    if(!inf.G) {
+      if(!is.element(method, c("FA", "IFA"))) {
+        G.ind    <- which(n.grp == G)
+      } else if(G > 1)            message(paste0("Forced G=1 for the ", method, " method"))
+    } else if(!is.element(G, 
+              unique(G.store)))   stop("This G value was not visited during simulation")
     if(all(is.element(method, c("MFA", "MIFA")),
        !is.element(G, n.grp)))    stop("This G value was not used during simulation")
   }
   G              <- ifelse(all(G.T, !is.element(method, c("FA", "IFA"))), G, 1)
-  if(Q.T) {
+  if(Q.T)   {
     if(G.T) {
       if(length(Q) == 1)     Q <- rep(Q, G)
       if(length(Q) != G)          stop(paste0("'Q' must be supplied for each of the ", G, " groups"))
     } else if(length(Q) != 1)     stop("'Q' must be a scalar if G=1 or G is not suppplied")
-    if(all(!is.element(method, c("IFA", "MIFA", "IMIFA")), !G.T)) {
+    if(all(is.element(method, c("FA", "MFA")), !G.T)) {
       Q.ind      <- which(n.fac == Q)
     }
     if(all(is.element(method, c("FA", "MFA")), 
        !is.element(Q, n.fac)))    stop("This Q value was not used during simulation")
-    if(all(is.element(method, c("IFA", "classify")), 
+    if(all(inf.Q, 
       (Q * (n.fac - Q)) < 0))     stop(paste0("Q can't be greater than the number of factors in ", match.call()$sims))
   } 
   
-  if(is.element(method, c("FA", "IFA", "MFA", "MIFA"))) {
-    G.range      <- ifelse(G.T, 1, length(n.grp))
-    Q.range      <- ifelse(any(Q.T, inf.ind), 1, length(n.fac))
-    crit.mat     <- matrix(NA, nr=G.range, nc=Q.range)
+  if(inf.G) {
+    G.meth       <- ifelse(missing(G.meth), "Mode", match.arg(G.meth))
+    G.tab        <- table(G.store, dnn=NULL)
+    G.prob       <- prop.table(G.tab)
+    Q.mode       <- as.numeric(names(G.tab[G.tab == max(G.tab)])[1])
+    Q.med        <- ceiling(median(G.store) * 2)/2
+    if(!G.T) {
+      G          <- if(Q.meth == "Mode") G.mode else floor(G.med)
+    }
+    G.CI         <- round(quantile(G.store, conf.levels))
+    GQ.temp1     <- list(G = G, G.Mode = G.mode, G.Median = G.med, 
+                         G.CI = G.CI, G.Probs = G.prob, G.Counts = G.tab)
+  }
+  
+  G.range        <- ifelse(G.T, 1, length(n.grp))
+  Q.range        <- ifelse(any(Q.T, inf.Q), 1, length(n.fac))
+  crit.mat       <- matrix(NA, nr=G.range, nc=Q.range)
     
-  # Retrieve log-likelihoods and tune G &/or Q according to criterion
+  # Retrieve log-likelihoods and/or tune G &/or Q according to criterion
     if(all(G.T, Q.T)) {
       dimnames(crit.mat) <- list(paste0("G", G), paste0("Q", ifelse(length(Q) == 1, Q, "IFA")))
     } else if(G.T)    {
@@ -83,8 +103,11 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     } else {
       dimnames(crit.mat) <- list(paste0("G", n.grp), paste0("Q", n.fac))
     }
-    if(inf.ind) {
+    if(inf.Q) {
       colnames(crit.mat) <- "IFA"
+    }
+    if(inf.G) {
+      rownames(crit.mat) <- "IM"
     }
     aicm         <- bicm       <- 
     aic.mcmc     <- bic.mcmc   <- crit.mat
@@ -99,7 +122,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
         ll.mean          <- mean(log.likes, na.rm=T)
         aicm[g,q]        <- ll.max - ll.var * 2
         bicm[g,q]        <- ll.max - ll.var * log.N
-        if(!inf.ind) {
+        if(!inf.Q) {
           K              <- attr(sims[[gi]][[qi]], "K")
           aic.mcmc[g,q]  <- ll.max - K * 2
           bic.mcmc[g,q]  <- ll.max - K * log.N
@@ -113,35 +136,39 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     if(!any(Q.T, G.T)) {
       G.ind      <- crit.max[1]
       Q.ind      <- crit.max[2]
-      G          <- n.grp[G.ind]
-      if(!inf.ind) {
+      if(!inf.G) {
+        G        <- n.grp[G.ind]
+      }
+      if(!inf.Q) {
         Q        <- n.fac[Q.ind]  
       }
     } else if(all(G.T, !Q.T)) {
       Q.ind      <- which(crit == max(crit))
-      if(!inf.ind) {
+      if(!inf.Q) {
         Q        <- n.fac[Q.ind]  
       }
     } else if(all(Q.T, !G.T)) {
       G.ind      <- which(crit == max(crit))
-      G          <- n.grp[G.ind]
+      if(!inf.G) {
+        G        <- n.grp[G.ind]
+      }
     } 
-    G            <- ifelse(length(n.grp) == 1, n.grp, G)
+    G            <- ifelse(all(length(n.grp) == 1, !inf.G), n.grp, G)
     Gseq         <- seq_len(G)
-    G.ind        <- ifelse(length(n.grp) == 1, which(n.grp == G), G.ind)
-    GQ.temp      <- list(AICMs = aicm, BICMs = bicm)
-    if(!inf.ind) {
+    G.ind        <- ifelse(all(length(n.grp) == 1, !inf.G), which(n.grp == G), G.ind)
+    GQ.temp2     <- list(AICMs = aicm, BICMs = bicm)
+    if(!inf.Q) {
       Q          <- if(length(n.fac) > 1) Q     else n.fac
       Q.ind      <- if(length(n.fac) > 1) Q.ind else which(n.fac == Q)
       Q          <- setNames(rep(Q, G), paste0("Group ", Gseq))  
-      GQ.res     <- c(list(G = G, Q = Q), GQ.temp, list(AIC.mcmcs = aic.mcmc, BIC.mcmcs = bic.mcmc))
+      GQ.res     <- c(list(G = G, Q = Q), GQ.temp2, list(AIC.mcmcs = aic.mcmc, BIC.mcmcs = bic.mcmc))
     }
   }
-  clust.ind      <- all(is.element(method, c("MFA", "MIFA", "IMIFA")), G > 1)
+  clust.ind      <- all(!is.element(method, c("FA", "IFA")), G > 1)
   sw.mx          <- ifelse(clust.ind, sw["mu.sw"], T)
   sw.px          <- ifelse(clust.ind, sw["psi.sw"], T)  
-  if(inf.ind) {
     Q.store      <- sims[[G.ind]][[Q.ind]]$Q.store[,store, drop=F]
+  if(inf.Q) {
     Q.meth       <- ifelse(missing(Q.meth), "Mode", match.arg(Q.meth))
   }
   
@@ -152,7 +179,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     }
     if(sw["l.sw"])    {
       lmats      <- sims[[G.ind]][[Q.ind]]$load
-      if(method  == "MIFA") {
+      if(method  != "MFA") {
         lmats    <- as.array(lmats)
       }
       lmats      <- lmats[,,,store, drop=F]
@@ -168,12 +195,13 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     if(!label.miss) {
       if(!exists(as.character(substitute(Labels)),
           envir=.GlobalEnv))      stop(paste0("Object ", match.call()$Labels, " not found"))
-      labels     <- factor(Labels, levels=Gseq)
+      labels     <- factor(Labels)
       levs       <- levels(labels)
       len        <- length(labels)
-      if(length(Labels) != n.obs) stop(paste0("Labels must be a factor of length N=",  n.obs))
+      if(length(levs)   != G)     stop(paste0("'Labels' must have G=", G, " levels"))
+      if(length(Labels) != n.obs) stop(paste0("'Labels' must be a factor of length N=",  n.obs))
     }
-    if(!label.switch) {
+    if(any(!label.switch, G > 9)) {
       z.temp     <- factor(z[,1], levels=Gseq)
       old.perm   <- setNames(Gseq, Gseq)
       if(!label.miss) {    
@@ -238,20 +266,20 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     post.z       <- as.numeric(post.z)
     ind          <- lapply(Gseq, function(g) post.z == g)
   }
-  if(inf.ind) {
+  if(inf.Q) {
     Q.tab        <- if(G > 1) lapply(apply(Q.store, 1, function(x) list(table(x, dnn=NULL))), "[[", 1) else table(Q.store, dnn=NULL)
     Q.prob       <- if(G > 1) lapply(Q.tab, prop.table) else prop.table(Q.tab)
     Q.mode       <- if(G > 1) unlist(lapply(Q.tab, function(qt) as.numeric(names(qt[qt == max(qt)])[1]))) else as.numeric(names(Q.tab[Q.tab == max(Q.tab)])[1])
-    Q.med        <- ceiling(apply(Q.store, 1, median) * 2)/2
+    Q.med        <- if(G > 1) ceiling(apply(Q.store, 1, median) * 2)/2 else ceiling(median(Q.store) * 2)/2
     if(!all(Q.T, G.T)) {
-      Q          <- if(Q.meth == "Mode") Q.mode else Q.med
+      Q          <- if(Q.meth == "Mode") Q.mode else floor(Q.med)
     } else if(Q.T) {
       Q          <- if(G.T) Q else rep(Q, G)
     }
     Q.CI         <- if(G > 1) apply(Q.store, 1, function(qs) round(quantile(qs, conf.levels))) else round(quantile(Q.store, conf.levels))
-    GQ.res       <- list(G = G, Q = Q, Mode = Q.mode, Median = Q.med, 
-                         Q.CI = Q.CI, Probs= Q.prob, Counts = Q.tab)
-    GQ.res       <- c(GQ.res, GQ.temp)
+    GQ.res       <- list(G = G, Q = Q, Q.Mode = Q.mode, Q.Median = Q.med, 
+                         Q.CI = Q.CI, Q.Probs = Q.prob, Q.Counts = Q.tab)
+    GQ.res       <- c(GQ.res, GQ.temp2)
   }
 
 # Retrieve (unrotated) scores
@@ -264,7 +292,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     Q.max        <- max(Q) 
     Q.maxs       <- seq_len(Q.max)
     f            <- sims[[G.ind]][[Q.ind]]$f
-    if(inf.ind) {
+    if(inf.Q) {
       f          <- as.array(f)
     }
     f            <- f[,Q.maxs,store, drop=F]
@@ -283,8 +311,8 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
              !no.score))          warning(paste0("Loadings not stored as", ifelse(G > 1, paste0(" group ", g), " model"), " has zero factors"), call.=F)
       sw["l.sw"] <- F
     }
-    if(inf.ind)  {
       store      <- temp.store[which(Q.store[g,] >= Qg)]
+    if(inf.Q) {
       n.store    <- length(store)
     }
   
@@ -297,7 +325,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       if(any(is.element(method, c("FA", "IFA")), 
          all(is.element(method, c("MFA", "MIFA")), G == 1))) {
         lmat     <- sims[[G.ind]][[Q.ind]]$load
-        if(inf.ind) {
+        if(inf.Q) {
           lmat   <- as.array(lmat)
         }
         lmat     <- lmat[,Qgs,store, drop=F]
