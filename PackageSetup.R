@@ -181,14 +181,14 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "OMIFA", "MIFA", "MFA", 
     if(abs(epsilon - 
           (1 - epsilon)) < 0)       stop("'epsilon' must be a single number between 0 and 1")
   } 
+  if(!is.logical(mu0g))             stop("'mu0g' must be TRUE or FALSE")
+  if(!is.logical(psi0g))            stop("'psi0g' must be TRUE or FALSE")
+  if(!is.logical(delta0g))          stop("'delta0g' must be TRUE or FALSE")
+  if(!is.logical(qstar0g))          stop("'qstar0g' must be TRUE or FALSE")
+  sw0gs     <- c(mu0g = mu0g, psi0g = psi0g, delta0g = delta0g, qstar0g = qstar0g)
+  if(all(is.element(method, c("FA", "IFA")), 
+         any(sw0gs)))               stop(paste0(names(which(sw0gs)), " should be FALSE for the ", method, " method\n"))
   if(!is.element(method, c("FA", "IFA", "classify"))) {
-    if(!is.logical(mu0g))           stop("'mu0g' must be TRUE or FALSE")
-    if(!is.logical(psi0g))          stop("'psi0g' must be TRUE or FALSE")
-    if(!is.logical(delta0g))        stop("'delta0g' must be TRUE or FALSE")
-    if(!is.logical(qstar0g))        stop("'qstar0g' must be TRUE or FALSE")
-    sw0gs   <- c(mu0g = mu0g, psi0g = psi0g, delta0g = delta0g, qstar0g = qstar0g)
-    if(all(is.element(method, c("FA", "IFA")), 
-           any(sw0gs)))             stop(paste0(names(which(sw0gs)), " should be FALSE for the ", method, " method\n"))
     if(all(method != "MIFA",
        any(delta0g, qstar0g)))      stop("'delta0g' and 'qstar0g' can only be TRUE for the 'MIFA' method")
     if(missing("alpha.pi"))  alpha.pi      <- ifelse(method == "OMIFA", 0.5/range.G, 1)
