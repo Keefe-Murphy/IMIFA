@@ -54,7 +54,7 @@
     }
     z              <- cluster$z
     z.temp         <- factor(z, levels=Gseq)
-    old.perm       <- setNames(unique(as.numeric(z.temp)), Gseq)
+    old.perm       <- setNames(c(unique(as.numeric(z.temp)), setdiff(Gseq, unique(as.numeric(z.temp)))), Gseq)
     pi.alpha       <- cluster$pi.alpha
     pi.prop        <- cluster$pi.prop
     alpha.d1       <- cluster$alpha.d1
@@ -198,8 +198,8 @@
     
     # Label Switching
       if(label.switch)   {
-        switch.lab <- lab.switch(z.new=z, z.old=z.temp)
-        z          <- switch.lab$z
+        switch.lab <- lab.switch(z.new=z, z.old=z.temp, Gs=Gseq, ng=nn)
+        z          <- as.numeric(switch.lab$z)
         z.perm     <- switch.lab$z.perm
         perm       <- !identical(z.perm, old.perm)
        if(perm) {

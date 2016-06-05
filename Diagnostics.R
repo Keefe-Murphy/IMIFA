@@ -43,10 +43,10 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   if(any(burnin   > 0, 
      thinning     > 1)) recomp <- T
   
-  G.ind          <- 1
-  Q.ind          <- 1
   G.T            <- !missing(G)
   Q.T            <- !missing(Q)
+  G.ind          <- 1
+  Q.ind          <- 1
   if(inf.G) {
     G.store      <- sims[[G.ind]][[Q.ind]]$G.store[store]
     G.meth       <- ifelse(missing(G.meth), "Mode", match.arg(G.meth))
@@ -82,7 +82,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     G.mode       <- as.numeric(names(G.tab[G.tab == max(G.tab)])[1])
     G.med        <- ceiling(median(G.store) * 2)/2
     if(!G.T) {
-      G          <- if(Q.meth == "Mode") G.mode else floor(G.med)
+      G          <- if(G.meth == "Mode") G.mode else floor(G.med)
     }
     G.CI         <- round(quantile(G.store, conf.levels))
     GQ.temp1     <- list(G = G, G.Mode = G.mode, G.Median = G.med, 
@@ -173,6 +173,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   
 # Manage Label Switching & retrieve cluster labels/mixing proportions
   if(clust.ind) {
+    source(paste(getwd(), "/IMIFA-GIT/FullConditionals.R", sep=""), local=T)
     if(sw["mu.sw"])   {
       mus        <- sims[[G.ind]][[Q.ind]]$mu[,,store, drop=F]                            
     }
@@ -194,24 +195,23 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     if(!label.miss) {
       if(!exists(as.character(substitute(Labels)),
           envir=.GlobalEnv))      stop(paste0("Object ", match.call()$Labels, " not found"))
-      labels     <- factor(Labels)
-      levs       <- levels(labels)
-      len        <- length(labels)
+      zlabels    <- factor(Labels)
+      levs       <- levels(zlabels)
       if(length(levs)   != G)     stop(paste0("'Labels' must have G=", G, " levels"))
       if(length(Labels) != n.obs) stop(paste0("'Labels' must be a factor of length N=",  n.obs))
     }
     if(any(!label.switch, G > 9)) {
       z.temp     <- factor(z[,1], levels=Gseq)
-      old.perm   <- setNames(unique(as.numeric(z.temp)), Gseq)
+      old.perm   <- setNames(c(unique(as.numeric(z.temp)), setdiff(Gseq, unique(as.numeric(z.temp)))), Gseq)
       if(!label.miss) {    
-        sw.lab   <- lab.switch(z.new=z.temp, z.old=labels)
+        sw.lab   <- lab.switch(z.new=z.temp, z.old=zlabels, Gs=Gseq)
+        z.temp   <- sw.lab$z
         l.perm   <- sw.lab$z.perm
         perm     <- !identical(l.perm, old.perm)
         old.perm <- l.perm
-        z.temp   <- factor(factor(z.temp, labels=levs[l.perm]), levels=levs) 
       }
       for(ls in seq_len(n.store)[-1]) {
-        sw.lab   <- lab.switch(z.new=z[,ls], z.old=z.temp)
+        sw.lab   <- lab.switch(z.new=z[,ls], z.old=z.temp, Gs=Gseq)
         z[,ls]   <- sw.lab$z
         z.perm   <- sw.lab$z.perm
         perm     <- !identical(z.perm, old.perm)
@@ -248,13 +248,12 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     }
     if(!label.miss) {
       if(nlevels(post.z) == length(levs)) {
-        sw.lab   <- lab.switch(z.new=post.z, z.old=labels)
+        sw.lab   <- lab.switch(z.new=post.z, z.old=zlabels, Gs=Gseq)
+        post.z   <- sw.lab$z
         l.perm   <- sw.lab$z.perm
-        post.nn  <- tabulate(post.z, nbins=G)
-        post.z   <- factor(factor(post.z, labels=levs[l.perm][post.nn > 0]), levels=levs)
         post.pi  <- post.pi[l.perm]  
       }
-      tab        <- table(post.z, labels, dnn=list("Predicted", "Observed"))
+      tab        <- table(post.z, zlabels, dnn=list("Predicted", "Observed"))
       tab.stat   <- classAgreement(tab)
     }
     cluster      <- list(post.z = post.z, post.pi = post.pi, 

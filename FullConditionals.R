@@ -168,24 +168,28 @@
     }
 
   # Label Switching
-    lab.switch  <- function(z.new, z.old, Gs=Gseq) {
+    lab.switch  <- function(z.new, z.old, Gs, ng=tabulate(z.new, nbins=length(Gs))) {
       tab       <- table(factor(z.new, levels=Gs), z.old)
       tab.tmp   <- tab[rowSums(tab) != 0,colSums(tab) != 0]
       nc        <- ncol(tab.tmp)
       nr        <- nrow(tab.tmp)
       if(nc > nr) {
         tmp.mat <- matrix(rep(0, nc), nr=nc - nr, nc=nc)
-        rownames(tmp.mat) <- paste0(seq_len(nc - nr) + nr)
+        rownames(tmp.mat) <- setdiff(as.numeric(colnames(tab.tmp)), as.numeric(rownames(tab.tmp)))
         tab.tmp <- rbind(tab.tmp, tmp.mat)
       } else if(nr > nc) {
         tmp.mat <- matrix(rep(0, nr), nr=nr, nc=nr - nc)
-        colnames(tmp.mat) <- paste0(seq_len(nr - nc) + nc)
+        colnames(tmp.mat) <- setdiff(as.numeric(rownames(tab.tmp)), as.numeric(colnames(tab.tmp)))
         tab.tmp <- cbind(tab.tmp, tmp.mat)
       }
       z.perm     <- matchClasses(tab.tmp, method="exact", verbose=F)
       miss.z     <- setdiff(Gs, names(z.perm))
       z.perm     <- c(z.perm, setNames(miss.z, miss.z))
-        return(list(z = as.numeric(factor(z.new, labels=Gs, levels=z.perm)), z.perm = z.perm))
+      z.names    <- as.numeric(names(z.perm))
+      z.perm.ord <- z.perm[order(z.names)]
+      nn.temp    <- ng[z.names]
+      z          <- factor(factor(z.new, labels=z.perm.ord[nn.temp > 0]), levels=Gs)
+        return(list(z = z, z.perm = z.perm))
     }
 
   # Length Checker
