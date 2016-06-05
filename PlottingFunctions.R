@@ -90,8 +90,10 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
     if(length(fac) != G)              stop(paste0("'fac' must be supplied for each of the ", G, " groups"))
   }
   g.score <- all(grp.ind, !all.ind, vars == "scores")
-  if(any(all(vars  == "scores", any(all.ind, !m.sw["P.sw"])), 
-         m.sw["G.sw"]))  {
+  if(all(is.element(method, c("IMIFA", "OMIFA")), m.sw["G.sw"])) {
+    Gs    <- seq_len(2)
+  } else if(any(all(vars  == "scores", any(all.ind, !m.sw["P.sw"])), 
+            m.sw["G.sw"]))  {
     Gs    <- 1
   } else if(!missing(g)) {
     if(is.element(method, c("MFA", "MIFA"))) {
@@ -431,37 +433,51 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
     } 
     
     if(m.sw["G.sw"]) {
-      if(is.element(method, c("FA", "MFA", "MIFA"))) {
-        aicm        <- round(GQ.res$AICM, 2)
-        bicm        <- round(GQ.res$BICM, 2)
-        if(method   != "MIFA") {
-          aic.mcmc  <- round(GQ.res$AIC.mcmc, 2)
-          bic.mcmc  <- round(GQ.res$BIC.mcmc, 2)
-        }
+      plot2.ind  <- any(any(g > 1, is.element(method, c("IFA", "MIFA"))), !all(is.element(method, c("IMIFA", "OMIFA")), g == 1))
+      aicm       <- round(GQ.res$AICM, 2)
+      bicm       <- round(GQ.res$BICM, 2)
+      if(is.element(method, c("FA", "MFA"))) {
+        aic.mcmc <- round(GQ.res$AIC.mcmc, 2)
+        bic.mcmc <- round(GQ.res$BIC.mcmc, 2)
       }
-      if(method == "IFA")  {
+      if(all(is.element(method, c("IMIFA", "OMIFA")), g == 1))  {
+        plot.G <- GQ.res$G.Counts
+        G.name <- names(plot.G)
+        rangeG <- as.numeric(G.name)
+        rangeG <- seq(from=min(rangeG), to=max(rangeG), by=1)
+        missG  <- setdiff(rangeG, G.name)
+        missG  <- setNames(rep(0, length(missG)), as.character(missG))
+        plot.G <- c(plot.G, missG)
+        plot.G <- plot.G[order(as.numeric(names(plot.G)))]
+        col.G  <- c("black", "red")[(rangeG == G) + 1]
+        G.plot <- barplot(plot.G, ylab="Frequency", xaxt="n", col=col.G)
+        if(titles) title(main=list("Posterior Distribution of G"))
+        axis(1, at=G.plot, labels=G.name, tick=F) 
+        axis(1, at=median(G.plot), labels="G", tick=F, line=1.5) 
+      }
+      if(all(method == "IFA", plot2.ind))  {
         plot.Q <- GQ.res$Q.Counts
         Q.name <- names(plot.Q)
-        rangeq <- as.numeric(Q.name)
-        rangeq <- seq(from=min(rangeq), to=max(rangeq), by=1)
-        miss   <- setdiff(rangeq, Q.name)
-        miss   <- setNames(rep(0, length(miss)), as.character(miss))
-        plot.Q <- c(plot.Q, miss)
+        rangeQ <- as.numeric(Q.name)
+        rangeQ <- seq(from=min(rangeQ), to=max(rangeQ), by=1)
+        missQ  <- setdiff(rangeQ, Q.name)
+        missQ  <- setNames(rep(0, length(missQ)), as.character(missQ))
+        plot.Q <- c(plot.Q, missQ)
         plot.Q <- plot.Q[order(as.numeric(names(plot.Q)))]
-        col.Q  <- c("black", "red")[(rangeq == Q) + 1]
+        col.Q  <- c("black", "red")[(rangeQ == Q) + 1]
         Q.plot <- barplot(plot.Q, ylab="Frequency", xaxt="n", col=col.Q)
         if(titles) title(main=list("Posterior Distribution of Q"))
         axis(1, at=Q.plot, labels=Q.name, tick=F) 
         axis(1, at=median(Q.plot), labels="Q", tick=F, line=1.5) 
       }  
-      if(method == "MIFA") {
+      if(all(is.element(method, c("MIFA", "MIFA", "IMIFA", "OMIFA")), plot2.ind)) {
         plot.Q <- GQ.res$Q.Counts
         Q.name <- lapply(plot.Q, names)
-        rangeq <- as.numeric(unique(unlist(Q.name, use.names=F)))
-        rangeq <- seq(from=min(rangeq), to=max(rangeq), by=1)
-        miss   <- lapply(seq_len(G), function(g) setdiff(rangeq, as.numeric(Q.name[[g]])))
-        miss   <- lapply(seq_len(G), function(g) setNames(rep(0, length(miss[[g]])), as.character(miss[[g]])))
-        plot.Q <- lapply(seq_len(G), function(g) c(plot.Q[[g]], miss[[g]]))
+        rangeQ <- as.numeric(unique(unlist(Q.name, use.names=F)))
+        rangeQ <- seq(from=min(rangeQ), to=max(rangeQ), by=1)
+        missQ  <- lapply(seq_len(G), function(g) setdiff(rangeQ, as.numeric(Q.name[[g]])))
+        missQ  <- lapply(seq_len(G), function(g) setNames(rep(0, length(missQ[[g]])), as.character(missQ[[g]])))
+        plot.Q <- lapply(seq_len(G), function(g) c(plot.Q[[g]], missQ[[g]]))
         plot.Q <- do.call(rbind, lapply(seq_len(G), function(g) plot.Q[[g]][order(as.numeric(names(plot.Q[[g]])))]))
         Q.plot <- barplot(plot.Q, beside=T, ylab="Frequency", xaxt="n", col=seq_len(G + 1)[-1])
         if(titles) title(main=list(expression('Posterior Distribution of Q'["g"])))
@@ -469,26 +485,29 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
         axis(1, at=median(Q.plot), labels="Q", tick=F, line=1.5)
         if(titles) legend("topright", legend=paste0("Group ", seq_len(G)), bty="n", pch=15, col=seq_len(G + 1)[-1])
       }
-      if(!exists("Q.plot",  envir=environment())) 
-                                      message("Nothing to plot")
+      if(!plot2.ind)                  message("Nothing to plot")
       class(GQ.res)    <- "listof"
-      if(is.element(method, c("MFA", "MIFA"))) {
+      if(is.element(method, c("IMIFA", "OMIFA")))     {
+        if(g == 1) {
+          print(GQ.res[substring(names(GQ.res), 1, 1) == "G"])
+        } else     {
+          print(GQ.res[substring(names(GQ.res), 1, 1) != "G"])
+        }
+      } else if(is.element(method, c("MFA", "MIFA"))) {
           print(GQ.res)
       } else if(method == "IFA") {
           print(tail(GQ.res, -1))
       } else {
           cat(paste0("Q = ", Q, "\n"))
       }
-      if(is.element(method, c("FA", "MFA", "MIFA"))) {
+      if(any(nrow(bicm) > 1, ncol(bicm) > 1)) {
         G.ind  <- ifelse(G.supp, 1, which(n.grp == G))
-        Q.ind  <- ifelse(any(Q.supp, method == "MIFA"), 1, which(n.fac == Q))
-        if(any(nrow(bicm) > 1, ncol(bicm) > 1)) {
+        Q.ind  <- ifelse(any(Q.supp, !is.element(method, c("FA", "MFA"))), 1, which(n.fac == Q))
           cat(paste0("AICM = ", aicm[G.ind,Q.ind], "\n"))
           cat(paste0("BICM = ", bicm[G.ind,Q.ind], "\n"))
-          if(method != "MIFA") {
-            cat(paste0("AIC.mcmc = ", aic.mcmc[G.ind,Q.ind], "\n"))
-            cat(paste0("BIC.mcmc = ", bic.mcmc[G.ind,Q.ind], "\n"))
-          }
+        if(!is.element(method, c("IFA", "MIFA"))) {
+          cat(paste0("AIC.mcmc = ", aic.mcmc[G.ind,Q.ind], "\n"))
+          cat(paste0("BIC.mcmc = ", bic.mcmc[G.ind,Q.ind], "\n"))
         }
       }
     }
