@@ -18,7 +18,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   thinning       <- as.integer(thinning)
   store          <- seq(from=burnin + 1, to=attr(sims, "Store"), by=thinning)
   n.store        <- length(store)
-  temp.store     <- store
+  tmp.store      <- tmp.store2 <- store
   label.switch   <- attr(sims, "Label.Switch")
   method         <- attr(sims, "Method")
   inf.G          <- is.element(method, c("IMIFA", "OMIFA"))
@@ -85,6 +85,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       G          <- if(G.meth == "Mode") G.mode else floor(G.med)
     }
     G.CI         <- round(quantile(G.store, conf.levels))
+    tmp.store    <- store[which(G.store == G)]
     GQ.temp1     <- list(G = G, G.Mode = G.mode, G.Median = G.med, 
                          G.CI = G.CI, G.Probs = G.prob, G.Counts = G.tab)
   }
@@ -116,7 +117,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       gi                 <- ifelse(G.T, G.ind, g)
       for(q in seq_len(Q.range)) {
         qi               <- ifelse(Q.T, Q.ind, q)
-        log.likes        <- sims[[gi]][[qi]]$ll.store[store]
+        log.likes        <- sims[[gi]][[qi]]$ll.store[tmp.store]
         ll.max           <- 2 * max(log.likes, na.rm=T)
         ll.var           <- ifelse(length(log.likes) != 1, 2 * var(log.likes, na.rm=T), 0)
         ll.mean          <- mean(log.likes, na.rm=T)
@@ -163,7 +164,8 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       Q          <- setNames(rep(Q, G), paste0("Group ", Gseq))  
       GQ.res     <- c(list(G = G, Q = Q), GQ.temp2, list(AIC.mcmcs = aic.mcmc, BIC.mcmcs = bic.mcmc))
     }
-    clust.ind    <- all(!is.element(method, c("FA", "IFA")), G > 1)
+    clust.ind    <- !any(is.element(method,  c("FA", "IFA")), 
+                     all(!is.element(method, c("FA", "IFA")), G == 1))
     sw.mx        <- ifelse(clust.ind, sw["mu.sw"], T)
     sw.px        <- ifelse(clust.ind, sw["psi.sw"], T)  
     if(inf.Q) {
@@ -175,22 +177,22 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   if(clust.ind) {
     source(paste(getwd(), "/IMIFA-GIT/FullConditionals.R", sep=""), local=T)
     if(sw["mu.sw"])   {
-      mus        <- sims[[G.ind]][[Q.ind]]$mu[,,store, drop=F]                            
+      mus        <- sims[[G.ind]][[Q.ind]]$mu[,,tmp.store, drop=F]                            
     }
     if(sw["l.sw"])    {
       lmats      <- sims[[G.ind]][[Q.ind]]$load
       if(method  != "MFA") {
         lmats    <- as.array(lmats)
       }
-      lmats      <- lmats[,,,store, drop=F]
+      lmats      <- lmats[,,,tmp.store, drop=F]
     }
     if(sw["psi.sw"])  {
-      psis       <- sims[[G.ind]][[Q.ind]]$psi[,,store, drop=F]
+      psis       <- sims[[G.ind]][[Q.ind]]$psi[,,tmp.store, drop=F]
     }
     if(sw["pi.sw"])   {
-      pies       <- sims[[G.ind]][[Q.ind]]$pi.prop[,store, drop=F]
+      pies       <- sims[[G.ind]][[Q.ind]]$pi.prop[,tmp.store, drop=F]
     }
-    z            <- as.matrix(sims[[G.ind]][[Q.ind]]$z.store[,store])
+    z            <- as.matrix(sims[[G.ind]][[Q.ind]]$z.store[,tmp.store])
     label.miss   <- missing(Labels)
     if(!label.miss) {
       if(!exists(as.character(substitute(Labels)),
@@ -239,7 +241,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     var.z        <- apply(z, 1, var)
     CI.z         <- apply(z, 1, function(x) round(quantile(x, conf.levels)))
     if(sw["pi.sw"])    {
-      pi.prop    <- pies[,store]
+      pi.prop    <- pies[,tmp.store]
       post.pi    <- rowMeans(pi.prop, dims=1)
       var.pi     <- apply(pi.prop, 1, var)
       CI.pi      <- apply(pi.prop, 1, function(x) quantile(x, conf.levels))
@@ -276,8 +278,13 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       Q          <- if(G.T) Q else rep(Q, G)
     }
     Q.CI         <- if(G > 1) apply(Q.store, 1, function(qs) round(quantile(qs, conf.levels))) else round(quantile(Q.store, conf.levels))
-    GQ.res       <- list(G = G, Q = Q, Q.Mode = Q.mode, Q.Median = Q.med, 
+    GQ.temp3     <- list(Q = Q, Q.Mode = Q.mode, Q.Median = Q.med, 
                          Q.CI = Q.CI, Q.Probs = Q.prob, Q.Counts = Q.tab)
+    if(inf.G) {
+      GQ.res     <- c(GQ.temp1, GQ.temp3)
+    } else    {
+      GQ.res     <- c(list(G = G), GQ.temp3)
+    }
     GQ.res       <- c(GQ.res, GQ.temp2)
   }
 
@@ -294,7 +301,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     if(inf.Q) {
       f          <- as.array(f)
     }
-    f            <- f[,Q.maxs,store, drop=F]
+    f            <- f[,Q.maxs,tmp.store, drop=F]
   }
 
 # Loop over g in G to extract other results
@@ -310,19 +317,18 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
              !no.score))          warning(paste0("Loadings not stored as", ifelse(G > 1, paste0(" group ", g), " model"), " has zero factors"), call.=F)
       sw["l.sw"] <- F
     }
-      store      <- temp.store[which(Q.store[g,] >= Qg)]
     if(inf.Q) {
+      store      <- tmp.store[which(Q.store[g,] >= Qg)]
       n.store    <- length(store)
     }
   
   # Retrieve (unrotated) loadings  
     if(sw["l.sw"]) {
-      if(all(is.element(method, c("MFA", "MIFA")), G  > 1))  {
+      if(clust.ind)  {
         lmat     <- adrop(lmats[,Qgs,g,store, drop=F], drop=3)
         l.temp   <- adrop(lmat[,,1, drop=F], drop=3)
       }
-      if(any(is.element(method, c("FA", "IFA")), 
-         all(is.element(method, c("MFA", "MIFA")), G == 1))) {
+      if(!clust.ind) {
         lmat     <- sims[[G.ind]][[Q.ind]]$load
         if(inf.Q) {
           lmat   <- as.array(lmat)
@@ -502,7 +508,10 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   attr(result, "Method")       <- method
   attr(result, "Name")         <- attr(sims, "Name")
   attr(result, "Obs")          <- n.obs
-  attr(result, "Store")        <- temp.store
+  if(inf.G) {
+    attr(result, "G.store")    <- tmp.store
+  }
+  attr(result, "Store")        <- tmp.store2
   attr(result, "Switch")       <- sw
   attr(result, "Vars")         <- n.var
   return(result)
