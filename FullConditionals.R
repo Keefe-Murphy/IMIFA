@@ -114,10 +114,12 @@
     }
   
   # Global Shrinkage
-    sim.delta.p <- function(Q, alpha.d1, alpha.dk, beta.d1, beta.dk) {
-      delta1    <- rgamma(n=1,     shape=alpha.d1, rate=beta.d1)
-      deltak    <- rgamma(n=Q - 1, shape=alpha.dk, rate=beta.dk)
-        c(delta1, deltak)
+    sim.delt.1p <- function(alpha.d1, beta.d1) {
+        rgamma(n=1, shape=alpha.d1, rate=beta.d1)
+    }
+
+    sim.delt.kp <- function(Q, alpha.dk, beta.dk) {
+        rgamma(n=Q - 1, shape=alpha.dk, rate=beta.dk)
     }
 
   # Cluster Labels

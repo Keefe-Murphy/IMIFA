@@ -48,7 +48,7 @@
     f            <- sim.f.p(Q=Q, N=N)
     psi.inv      <- sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
     phi          <- sim.phi.p(Q=Q, P=P, phi.nu=phi.nu)
-    delta        <- sim.delta.p(Q=Q, alpha.d1=alpha.d1, alpha.dk=alpha.dk, beta.d1=beta.d1, beta.dk=beta.dk)
+    delta        <- c(sim.delt.1p(alpha.d1=alpha.d1, beta.d1=beta.d1), sim.delt.kp(Q=Q, alpha.dk=alpha.dk, beta.dk=beta.dk))
     tau          <- cumprod(delta)
     lmat         <- matrix(unlist(lapply(Pseq, function(j) sim.load.p(Q=Q, phi=phi[j,], tau=tau, P=P)), use.names=F), nr=P, byrow=T)
     sum.data     <- mu * N

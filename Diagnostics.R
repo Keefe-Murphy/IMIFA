@@ -199,12 +199,12 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
           envir=.GlobalEnv))      stop(paste0("Object ", match.call()$Labels, " not found"))
       zlabels    <- factor(Labels)
       levs       <- levels(zlabels)
-      lev.ind    <- length(levs == G)
+      lev.ind    <- length(levs) == G
       if(length(Labels) != n.obs) stop(paste0("'Labels' must be a factor of length N=",  n.obs))
     }
     if(any(!label.switch, G > 9))   {
       z.temp     <- z[,1]
-      if(all(!label.miss, lev.ind)) {    
+      if(!label.miss && lev.ind) {    
         sw.lab   <- lab.switch(z.new=z.temp, z.old=zlabels, Gs=Gseq)
         z.temp   <- sw.lab$z
         l.perm   <- sw.lab$z.perm
