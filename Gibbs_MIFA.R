@@ -54,7 +54,7 @@
     }
     z              <- cluster$z
     z.temp         <- factor(z, levels=Gseq)
-    old.perm       <- setNames(c(unique(as.numeric(z.temp)), setdiff(Gseq, unique(as.numeric(z.temp)))), Gseq)
+    nn             <- tabulate(z, nbins=G)
     pi.alpha       <- cluster$pi.alpha
     pi.prop        <- cluster$pi.prop
     alpha.d1       <- cluster$alpha.d1
@@ -103,7 +103,6 @@
           cat(paste0("Iteration: ", iter, "\n"))
         }
       }
-      nn           <- tabulate(z, nbins=G)
       z.ind        <- lapply(Gseq, function(g) z == g)
       
     # Means
@@ -195,15 +194,14 @@
       Sigma        <- lapply(Gseq, function(g) tcrossprod(lmat[[g]]) + diag(psi[,g]))
       z.res        <- sim.z(data=data, mu=mu, Sigma=Sigma, G=G, pi.prop=pi.prop)
       z            <- z.res$z
+      nn           <- tabulate(z, nbins=G)
     
     # Label Switching
       if(label.switch)   {
         switch.lab <- lab.switch(z.new=z, z.old=z.temp, Gs=Gseq, ng=nn)
         z          <- as.numeric(switch.lab$z)
         z.perm     <- switch.lab$z.perm
-        perm       <- !identical(z.perm, old.perm)
-       if(perm) {
-         Qs        <- Qs[z.perm]
+        Qs         <- Qs[z.perm]
         if(sw["mu.sw"])  {
           mu       <- mu[,z.perm]
         }
@@ -234,9 +232,7 @@
         if(all(delta0g, 
                !adk.x))  {
           alpha.dk <- alpha.dk[z.perm]
-        }
-        old.perm   <- z.perm
-       } 
+        } 
       }
       
     if(any(Qs > Q.star))      stop(paste0("Q cannot exceed initial number of loadings columns: try increasing Q.star from ", Q.star))

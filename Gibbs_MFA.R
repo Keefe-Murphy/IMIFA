@@ -50,7 +50,7 @@
     l.sigma        <- 1/sigma.l 
     z              <- cluster$z
     z.temp         <- factor(z, levels=Gseq)
-    old.perm       <- setNames(c(unique(as.numeric(z.temp)), setdiff(Gseq, unique(as.numeric(z.temp)))), Gseq)
+    nn             <- tabulate(z, nbins=G)
     pi.alpha       <- cluster$pi.alpha
     pi.prop        <- cluster$pi.prop
     mu0g           <- cluster$l.switch[1]
@@ -94,7 +94,6 @@
           cat(paste0("Iteration: ", iter, "\n"))
         }
       }
-      nn           <- tabulate(z, nbins=G)
       z.ind        <- lapply(Gseq, function(g) z == g)
       
     # Means
@@ -125,14 +124,13 @@
       Sigma        <- lapply(Gseq, function(g) tcrossprod(as.matrix(lmat[,,g])) + diag(psi[,g]))
       z.res        <- sim.z(data=data, mu=mu, Sigma=Sigma, G=G, pi.prop=pi.prop)
       z            <- z.res$z
+      nn           <- tabulate(z, nbins=G)
     
     # Label Switching
       if(label.switch)   {
         switch.lab <- lab.switch(z.new=z, z.old=z.temp, Gs=Gseq, ng=nn)
         z          <- as.numeric(switch.lab$z)
         z.perm     <- switch.lab$z.perm
-        perm       <- !identical(z.perm, old.perm)
-       if(perm) {
         if(sw["mu.sw"])  {
           mu       <- mu[,z.perm]
         }
@@ -151,8 +149,6 @@
         if(psi0g)        {
           psi.beta <- psi.beta[,z.perm, drop=F]
         }
-        old.perm   <- z.perm
-       }
       }
       
       if(is.element(iter, iters))  {

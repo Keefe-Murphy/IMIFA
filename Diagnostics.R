@@ -199,25 +199,21 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
           envir=.GlobalEnv))      stop(paste0("Object ", match.call()$Labels, " not found"))
       zlabels    <- factor(Labels)
       levs       <- levels(zlabels)
-      if(length(levs)   != G)     stop(paste0("'Labels' must have G=", G, " levels"))
+      lev.ind    <- length(levs == G)
       if(length(Labels) != n.obs) stop(paste0("'Labels' must be a factor of length N=",  n.obs))
     }
-    if(any(!label.switch, G > 9)) {
-      z.temp     <- factor(z[,1], levels=Gseq)
-      old.perm   <- setNames(c(unique(as.numeric(z.temp)), setdiff(Gseq, unique(as.numeric(z.temp)))), Gseq)
-      if(!label.miss) {    
+    if(any(!label.switch, G > 9))   {
+      z.temp     <- z[,1]
+      if(all(!label.miss, lev.ind)) {    
         sw.lab   <- lab.switch(z.new=z.temp, z.old=zlabels, Gs=Gseq)
         z.temp   <- sw.lab$z
         l.perm   <- sw.lab$z.perm
-        perm     <- !identical(l.perm, old.perm)
-        old.perm <- l.perm
+        z.temp   <- factor(z.temp)
       }
       for(ls in seq_len(n.store)[-1]) {
         sw.lab   <- lab.switch(z.new=z[,ls], z.old=z.temp, Gs=Gseq)
         z[,ls]   <- sw.lab$z
         z.perm   <- sw.lab$z.perm
-        perm     <- !identical(z.perm, old.perm)
-       if(perm) {
         if(sw["mu.sw"])  {
           mus[,,ls]      <- mus[,z.perm,ls]
         }
@@ -230,11 +226,10 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
         if(sw["pi.sw"])  {
           pies[,ls]      <- pies[z.perm,ls]
         }
-        if(method == "MIFA") {
+        if(is.element(method, c("MIFA", "OMIFA", 
+           "IMIFA")))    {
           Q.store[,ls]   <- Q.store[z.perm,ls]
         }
-        old.perm <- z.perm
-       }
       }
     }
     post.z       <- setNames(apply(z, 1, function(x) factor(which.max(tabulate(x)), levels=Gseq)), seq_len(n.obs))
@@ -250,7 +245,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     }
     if(!label.miss) {
       if(nlevels(post.z) == length(levs)) {
-        sw.lab   <- lab.switch(z.new=post.z, z.old=zlabels, Gs=Gseq)
+        sw.lab   <- lab.switch(z.new=as.numeric(post.z), z.old=zlabels, Gs=Gseq)
         post.z   <- sw.lab$z
         l.perm   <- sw.lab$z.perm
         post.pi  <- post.pi[l.perm]  
