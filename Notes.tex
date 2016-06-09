@@ -8,6 +8,7 @@
 \usepackage{graphicx}
 \usepackage{hyperref}
 \usepackage{breqn}
+\usepackage{bbm}
 \usepackage{lipsum}
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
@@ -442,7 +443,8 @@ Attention now turns towards deriving full conditional distributions for the new 
 	$\mathrm{P}\left(\underline{z}_i\given\underline{x}_i,\gamma\right) \propto \mathrm{P}\left(\underline{z}_i\right)\mathrm{P}\left(\underline{x}_i\given\theta_{i\colon z_{ig}=1},\underline{z}_i\right)$
 \end{itemize}
 \subsubsection[Cluster Mixing Proportions]{Cluster Mixing Proportions -- $\underline{\pi}$}
-Let the prior distribution of $\underline{\pi}$ be Dirichlet with parameter $\underline{\alpha}$ -- a multivariate generalisation of the Beta distribution.
+\label{pi_prior}
+Let the prior distribution of $\underline{\pi}$ be Dirichlet with parameter $\underline{\alpha}$ -- a multivariate generalisation of the Beta distribution. Typically a symmetric uniform prior is chosen, whereby $\alpha_g = 1~\forall~g=1,\ldots,G$.
 \begin{flalign}
 \mathrm{P}\left(\underline{\pi}\right) &\propto \prod_{g=1}^{G}\pi_g^{\alpha_g-1}\nonumber\\
 \therefore \mathrm{P}\left(\underline{\pi}\given Z, X\right) & \propto \prod_{g=1}^{G}\pi_g^{\alpha_g-1}\prod_{g=1}^{G}\pi_g^{n_g}\nonumber\\
@@ -495,5 +497,17 @@ p_g &=~\mathrm{P}\left(\underline{z}_{ig}=1\given\underline{x}_i,\gamma\right) =
 \end{enumerate}
 \subsection[Label Switching]{Label Switching}
 It's easy to see that $\mathrm{P}\left(X\given\gamma\right) = \mathrm{P}\left(X\given\tilde\gamma\right)$ where $\tilde\gamma = \left(\theta_{j_1},\ldots,\theta_{j_G},\pi_{j_1},\ldots,\pi_{j_G}\right)$ and $j_1,\ldots,j_G$ is any permutation of $1,\ldots,G$. This type of finite mixture distribution nonidentifiability is caused by the invariance of mixture distributions to component relabelling: by interchanging the order of components, the distributions induced by $\gamma$ and $\tilde{\gamma}$ are the same, although evidently the two parameters are distinct. For finite mixture distribution as defined above with $G$ components, there exist $G!$ equivalent ways of arranging them. Generally as the Markov chain progresses, we will observe switches between these equivalent modes. When the main goal is identifying/interpreting mixture components \&/or clustering, this \textit{label switching} phenomenon needs to be addressed. The approach we adopt to do so is applied post-hoc, after the chain has finished running, and has the advantage of not involving loss functions based on sampled model parameters. We only require samples of $Z$, which are matched to a template vector of cluster labels at burnin using the cost-minimizing permutation suggested by the square assignment algorithm of \cite{CarpToth1980}. This same permutation is applied to all other parameters which vary by group, namely the means, loadings, uniquenesses, and mixing proportions, prior to computing their posterior mean estimates.
+
+\subsection[Overfitting Mixtures]{Overfitting Mixtures}
+The need to choose the optimal number of latent factors in a mixture of factor analysers has been obviated using MIFA, but the issue of model choice is still not entirely resolved. Overfitting mixtures, along with Dirichlet Processes (\ref{Dirichlet}), are a means of extending the MIFA methodology in order to estimate $G$ in a similarly choice-free manner. The prior in \ref{pi_prior}  plays an important role. This method approaches mixture model estimation by initially overfitting the number of clusters expected to be present, and specified conditions on the Dirichlet hyperparameter for the cluster mixing proportions encourage the emptying out of excess components in the posterior distribution. 
+
+To initialise the method, a conservatively high number of groups $G^\star$ is chosen, and fixed for the entire length of the MCMC chain. It's assumed that $G^\star > G$. Each $\alpha_g = 0.5/G^\star$ is set small enough to favour empty groups a priori \cite{Ishwaran}. The symmetric uniform prior $\operatorname{Dir}\left(1,\ldots,1\right)$ used previously is rather indifferent in this respect. The number of non-empty groups at each iteration $G_0$ is recorded thusly:
+\begin{equation}
+	G_0 = G^{\star} - \sum_{g=1}^{G} \mathbbm{1}\big(\sum\limits_{i} z_{ig}=0\big)\label{eq:34}
+\end{equation}
+The true $G$ is estimated by the $G_0$ value visited most often by the sampler. Component specific inference is conducted only on the $M_0$ samples corresponding to those visits.
+
+\subsection[Dirichlet Process Mixtures]{Dirichlet Process Mixtures}
+\label{Dirichlet}
 \bibliography{Notes_bibtex}
 \end{document}
