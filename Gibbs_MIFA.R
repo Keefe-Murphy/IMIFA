@@ -67,7 +67,7 @@
     label.switch   <- any(cluster$l.switch)
     f              <- sim.f.p(N=N, Q=Q)
     phi            <- lapply(Gseq, function(g) sim.phi.p(Q=Q, P=P, phi.nu=phi.nu))
-    delta          <- lapply(Gseq, function(g) c(sim.delt.1p(alpha.d1=alpha.d1[g], beta.d1=beta.d1[g]), sim.delt.kp(Q=Q, alpha.dk=alpha.dk[g], beta.dk=beta.dk[g])))
+    delta          <- lapply(Gseq, function(g) c(sim.delt.1p(alpha.d1=alpha.d1[g], beta.d1=beta.d1), sim.delt.kp(Q=Q, alpha.dk=alpha.dk[g], beta.dk=beta.dk)))
     tau            <- lapply(delta, cumprod)
     lmat           <- lapply(Gseq, function(g) matrix(unlist(lapply(Pseq, function(j) sim.load.p(Q=Q, phi=phi[[g]][j,], tau=tau[[g]], P=P)), use.names=F), nr=P, byrow=T))
     psi.inv        <- do.call(cbind, lapply(Gseq, function(g) sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta[,g])))
@@ -200,40 +200,43 @@
         switch.lab <- lab.switch(z.new=z, z.old=z.temp, Gs=Gseq)
         z          <- switch.lab$z
         z.perm     <- switch.lab$z.perm
-        if(sw["mu.sw"])  {
+        perm       <- identical(unname(z.perm), Gseq)
+        if(!perm) {
+         if(sw["mu.sw"])  {
           mu       <- mu[,z.perm]
-        }
-        if(sw["l.sw"])   {
+         }
+         if(sw["l.sw"])   {
           for(g in Gseq) {
             lmat[[g]]      <- lmat[[z.perm[g]]]
             delta[[g]]     <- delta[[z.perm[g]]]
             phi[[g]]       <- phi[[z.perm[g]]]
             tau[[g]]       <- tau[[z.perm[g]]]
           }
-        }
-        if(all(adapt, iter > burnin)) {
+         }
+         if(all(adapt, iter > burnin)) {
           Qs       <- unlist(lapply(lmat, ncol))  
-        }
-        if(sw["psi.sw"]) {
+         }
+         if(sw["psi.sw"]) {
           psi.inv  <- psi.inv[,z.perm]
-        }
-        if(sw["pi.sw"])  {
+         }
+         if(sw["pi.sw"])  {
           pi.prop  <- pi.prop[,z.perm]
-        }
-        if(mu0g)         {
+         }
+         if(mu0g)         {
           mu.zero  <- mu.zero[,z.perm, drop=F]
-        }
-        if(psi0g)        {
+         }
+         if(psi0g)        {
           psi.beta <- psi.beta[,z.perm, drop=F]
-        }
-        if(all(delta0g, 
-               !ad1.x))  {
+         }
+         if(all(delta0g, 
+                !ad1.x))  {
           alpha.d1 <- alpha.d1[z.perm]
-        }
-        if(all(delta0g, 
-               !adk.x))  {
+         }
+         if(all(delta0g, 
+                !adk.x))  {
           alpha.dk <- alpha.dk[z.perm]
-        } 
+         } 
+        }
       }
       
     if(any(Qs > Q.star))      stop(paste0("Q cannot exceed initial number of loadings columns: try increasing Q.star from ", Q.star))

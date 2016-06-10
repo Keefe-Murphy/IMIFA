@@ -190,27 +190,31 @@
       switch.lab   <- lab.switch(z.new=z, z.old=z.temp, Gs=Gseq)
       z            <- switch.lab$z
       z.perm       <- switch.lab$z.perm
-      if(sw["mu.sw"])  {
-        mu         <- mu[,z.perm]
-      }
-      if(sw["l.sw"])   {
-        for(g in Gseq) {
-          lmat[[g]]        <- lmat[[z.perm[g]]]
-          delta[[g]]       <- delta[[z.perm[g]]]
-          phi[[g]]         <- phi[[z.perm[g]]]
-          tau[[g]]         <- tau[[z.perm[g]]]
+      perm         <- identical(unname(z.perm), Gseq)
+      if(!perm) {
+      # Qs         <- Qs[z.perm]
+        if(sw["mu.sw"])  {
+          mu       <- mu[,z.perm]
+        }
+        if(sw["l.sw"])   {
+          for(g in Gseq) {
+            lmat[[g]]      <- lmat[[z.perm[g]]]
+            delta[[g]]     <- delta[[z.perm[g]]]
+            phi[[g]]       <- phi[[z.perm[g]]]
+            tau[[g]]       <- tau[[z.perm[g]]]
+          }
+        }
+        if(all(adapt, iter > burnin)) {
+          Qs       <- unlist(lapply(lmat, ncol))  
+        }
+        if(sw["psi.sw"]) {
+          psi.inv  <- psi.inv[,z.perm]
+        }
+        if(sw["pi.sw"])  {
+          pi.prop  <- pi.prop[,z.perm]
         }
       }
-      if(all(adapt, iter > burnin)) {
-        Qs         <- unlist(lapply(lmat, ncol))  
-      }
-      if(sw["psi.sw"]) {
-        psi.inv    <- psi.inv[,z.perm]
-      }
-      if(sw["pi.sw"])  {
-        pi.prop    <- pi.prop[,z.perm]
-      }
-      
+    
     if(any(Qs > Q.star))      stop(paste0("Q cannot exceed initial number of loadings columns: try increasing Q.star from ", Q.star))
       if(is.element(iter, iters))  {
         new.it     <- which(iters == iter)

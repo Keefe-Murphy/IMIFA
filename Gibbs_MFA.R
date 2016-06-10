@@ -130,23 +130,26 @@
         switch.lab <- lab.switch(z.new=z, z.old=z.temp, Gs=Gseq)
         z          <- switch.lab$z
         z.perm     <- switch.lab$z.perm
-        if(sw["mu.sw"])  {
+        perm       <- identical(unname(z.perm), Gseq)
+        if(!perm) {
+         if(sw["mu.sw"])  {
           mu       <- mu[,z.perm]
-        }
-        if(sw["l.sw"])   {
+         }
+         if(sw["l.sw"])   {
           lmat     <- lmat[,,z.perm]
-        }
-        if(sw["psi.sw"]) {
+         }
+         if(sw["psi.sw"]) {
           psi.inv  <- psi.inv[,z.perm]
-        }
-        if(sw["pi.sw"])  {
+         }
+         if(sw["pi.sw"])  {
           pi.prop  <- pi.prop[,z.perm]
-        }
-        if(mu0g)         {
+         }
+         if(mu0g)         {
           mu.zero  <- mu.zero[,z.perm, drop=F]
-        }
-        if(psi0g)        {
+         }
+         if(psi0g)        {
           psi.beta <- psi.beta[,z.perm, drop=F]
+         }
         }
       }
       

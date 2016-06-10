@@ -214,21 +214,24 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
         sw.lab   <- lab.switch(z.new=z[,ls], z.old=z.temp, Gs=Gseq)
         z[,ls]   <- sw.lab$z
         z.perm   <- sw.lab$z.perm
-        if(sw["mu.sw"])  {
-          mus[,,ls]      <- mus[,z.perm,ls]
-        }
-        if(sw["l.sw"])   {
-          lmats[,,,ls]   <- lmats[,,z.perm,ls]
-        }
-        if(sw["psi.sw"]) {
-          psis[,,ls]     <- psis[,z.perm,ls]
-        }
-        if(sw["pi.sw"])  {
-          pies[,ls]      <- pies[z.perm,ls]
-        }
-        if(is.element(method, c("MIFA", "OMIFA", 
-           "IMIFA")))    {
-          Q.store[,ls]   <- Q.store[z.perm,ls]
+        perm     <- identical(unname(z.perm), Gseq)
+        if(!perm) {
+          if(sw["mu.sw"])  {
+            mus[,,ls]    <- mus[,z.perm,ls]
+          }
+          if(sw["l.sw"])   {
+            lmats[,,,ls] <- lmats[,,z.perm,ls]
+          }
+          if(sw["psi.sw"]) {
+            psis[,,ls]   <- psis[,z.perm,ls]
+          }
+          if(sw["pi.sw"])  {
+            pies[,ls]    <- pies[z.perm,ls]
+          }
+          if(is.element(method, c("MIFA", "OMIFA", 
+             "IMIFA")))    {
+            Q.store[,ls] <- Q.store[z.perm,ls]
+          }  
         }
       }
     }

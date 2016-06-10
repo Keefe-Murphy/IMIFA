@@ -156,7 +156,7 @@
         lnp[,g] <- colLogSumExps(rbind(lnp[,g], lnp[,g - 1]))
       }
       exps      <- rexp(nr)
-        nc       - rowSums(-exps > lnp)
+        rowSums(-exps > lnp) + 1
     }
   
   # Uniqueness Hyperparameters
