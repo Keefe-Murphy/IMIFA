@@ -13,13 +13,12 @@ rm(packages)
 message("   ________  __________________\n  /_  __/  |/   /_  __/ ___/ _ \\  \n   / / / /|_// / / / / /__/ /_\\ \\ \n _/ /_/ /   / /_/ /_/ ___/ /___\\ \\ \n/____/_/   /_/_____/_/  /_/     \\_\\    version 1.0")
 
 imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "OMIFA", "MIFA", "MFA", "IFA", "FA", "classify"), 
-                        n.iters = 50000, Labels = NULL, factanal = F, Q.star = NULL, range.G = NULL, 
-                        range.Q = NULL, Q.fac = NULL,  burnin = n.iters/5, thinning = 2, centering = T, qstar0g = F,
-                        scaling = c("unit", "pareto", "none"), verbose = F, adapt = T, b0 = NULL, b1 = NULL, delta0g = F,
-                        prop = NULL, epsilon = NULL, sigma.mu = NULL, sigma.l = NULL, mu0g = F, psi0g = F, mu.zero = NULL,
-                        phi.nu = NULL, psi.alpha = NULL, psi.beta = NULL, alpha.d1 = NULL, alpha.dk = NULL, beta.d1 = NULL,
-                        beta.dk = NULL, alpha.pi = NULL, z.init = c("mclust", "list", "kmeans", "priors"), z.list = NULL, 
-                        profile = F, mu.switch = T, f.switch = T, load.switch = T, psi.switch = T, pi.switch = T) {
+                        n.iters = 50000, Labels = NULL, factanal = F, range.G = NULL, range.Q = NULL, verbose = F, Q.fac = NULL,  
+                        burnin = n.iters/5, thinning = 2, centering = T, scaling = c("unit", "pareto", "none"), qstar0g = F, 
+                        adapt = T, b0 = NULL, b1 = NULL, delta0g = F, prop = NULL, epsilon = NULL, sigma.mu = NULL, sigma.l = NULL,
+                        mu0g = F, psi0g = F, mu.zero = NULL, phi.nu = NULL, psi.alpha = NULL, psi.beta = NULL, alpha.d1 = NULL, 
+                        alpha.dk = NULL, beta.d1 = NULL, beta.dk = NULL, alpha.pi = NULL, z.list = NULL, profile = F, mu.switch = T, 
+                        f.switch = T, load.switch = T, psi.switch = T, pi.switch = T, z.init = c("mclust", "list", "kmeans", "priors")) {
   
   defpar    <- suppressWarnings(par(no.readonly = T))
   defop     <- options()
@@ -101,21 +100,47 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "OMIFA", "MIFA", "MFA", 
     }
                                     message(paste0("Forced use of ", meth[1], " method where 'range.G' is equal to 1"))
   }
-  if(is.element(method, c("FA", "MFA")) && all(range.Q == 0)) {   
-    if(all(switches[c("f.sw", "l.sw")])) {
-                                    warning("Scores & Loadings not stored as model has zero factors", call.=F)
-    } else if(switches["f.sw"])   { warning("Scores not stored as model has zero factors", call.=F)
-    } else if(switches["l.sw"])   { warning("Loadings not stored as model has zero factors", call.=F)
-    }                               
-    switches[c("f.sw", "l.sw")]  <- F                              
+  
+# Define full conditionals, hyperparamters & Gibbs Sampler function for desired method
+  cov.mat          <- var(dat)
+  if(is.null(rownames(dat))) rownames(dat) <- seq_len(N)
+  if(missing("sigma.mu"))    sigma.mu      <- diag(cov.mat)
+  if(scaling == "unit")      sigma.mu      <- sigma.mu[1]
+  if(any(sigma.mu  <= 0))           stop("'sigma.mu' must be strictly positive")
+  if(missing("psi.alpha"))   psi.alpha     <- 2.5
+  if(psi.alpha <= 0)                stop("'psi.alpha' must be strictly positive")
+  Q.miss    <- missing(range.Q)
+  if(is.element(method, c("FA", "MFA"))) {
+    if(Q.miss)                      stop("'range.Q' must be specified") 
+    if(any(range.Q < 0))            stop(paste0("'range.Q' must be non-negative for the ", method, " method"))
   } else {
-    if(all(!switches[c("f.sw", "l.sw")])) { 
-                                    warning("Posterior Scores & Loadings won't be available as they're not being stored", call.=F)
-    } else if(!switches["f.sw"])  { warning("Posterior Scores won't be available as they're not being stored", call.=F)
-    } else if(!switches["l.sw"])  { warning("Posterior Loadings won't be available as they're not being stored", call.=F)
-    }
+    if(Q.miss)        range.Q    <- min(floor(3 * log(P)), P, N - 1)
+    if(range.Q    <= 0)             stop(paste0("'range.Q' must be strictly positive for the", method, " method"))
   }
-
+  range.Q   <- sort(unique(range.Q))  
+  if(range.Q       > P)             stop(paste0("Number of factors must be less than the number of variables, ", P))
+  if(range.Q      >= N)             stop(paste0("Number of factors must be less than the number of observations, ", N))
+  if(is.element(method, c("FA", "MFA"))) {
+    if(missing("sigma.l"))   sigma.l       <- 0.5
+    if(sigma.l <= 0)                stop("'sigma.l' must be strictly positive")            
+  } else {            
+    if(!is.logical(adapt))          stop("'adapt' must be TRUE or FALSE") 
+    if(missing("phi.nu"))    phi.nu        <- 1.5
+    if(phi.nu  <= 0)                stop("'phi.nu' must be strictly positive")
+    if(missing("beta.d1"))   beta.d1       <- 1
+    if(beta.d1 <= 0)                stop("'beta.d1' must be strictly positive")
+    if(missing("beta.dk"))   beta.dk       <- 1
+    if(beta.dk <= 0)                stop("'beta.dk' must be strictly positive")
+    if(missing("b0"))        b0            <- 0.1
+    if(b0  < 0)                     stop("'b0' must be positive to ensure valid adaptation probability")
+    if(missing("b1"))        b1            <- 0.00005
+    if(b1 <= 0)                     stop("'b1' must be strictly positive to ensure adaptation probability decreases")
+    if(missing("prop"))      prop          <- 3/4
+    if(abs(prop - (1 - prop)) < 0)  stop("'prop' must be a single number between 0 and 1")
+    if(missing("epsilon"))   epsilon       <- ifelse(centering, 0.1, 0.005)
+    if(abs(epsilon - 
+          (1 - epsilon)) < 0)       stop("'epsilon' must be a single number between 0 and 1")
+  } 
   if(any(all(method == "MFA",  any(range.G > 1)) && any(range.Q > 0),
          all(method == "MIFA", any(range.G > 1)), is.element(method, 
            c("IMIFA", "OMIFA")))) {
@@ -134,54 +159,23 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "OMIFA", "MIFA", "MFA", 
     } else if(!switches["mu.sw"]) { warning("Means not stored: posterior mean estimates won't be available", call.=F)
     } else if(!switches["psi.sw"])  warning("Psi not stored: posterior mean estimates won't be available", call.=F)
   }
-  
-# Define full conditionals, hyperparamters & Gibbs Sampler function for desired method
-  cov.mat          <- var(dat)
-  if(is.null(rownames(dat))) rownames(dat) <- seq_len(N)
-  if(missing("sigma.mu"))    sigma.mu      <- diag(cov.mat)
-  if(scaling == "unit")      sigma.mu      <- sigma.mu[1]
-  if(any(sigma.mu  <= 0))           stop("'sigma.mu' must be strictly positive")
-  if(missing("psi.alpha"))   psi.alpha     <- 2.5
-  if(psi.alpha <= 0)                stop("'psi.alpha' must be strictly positive")
-  if(is.element(method, c("FA", "MFA"))) {
-    if(missing("sigma.l"))   sigma.l       <- 0.5
-    if(sigma.l <= 0)                stop("'sigma.l' must be strictly positive")
-    if(!missing(Q.star))  {
-      rm(Q.star)
-                                    message(paste0("'Q.star' is not used for the ", method, " method"))
-    }            
-    if(missing(range.Q))            stop("'range.Q' must be specified")
-    if(any(range.Q < 0))            stop("'range.Q' must be strictly non-negative")
-    range.Q <- sort(unique(range.Q))  
+  if(is.element(method, c("FA", "MFA")) && all(range.Q == 0)) {   
+    if(all(switches[c("f.sw", "l.sw")]))  {
+                                    warning("Scores & Loadings not stored as model has zero factors", call.=F)
+    } else if(switches["f.sw"])   { warning("Scores not stored as model has zero factors", call.=F)
+    } else if(switches["l.sw"])   { warning("Loadings not stored as model has zero factors", call.=F)
+    }                               
+    switches[c("f.sw", "l.sw")]  <- F                              
   } else {
-    if(!missing(range.Q)) {
-      rm(range.Q)
-                                    message(paste0("'range.Q' is not used for the ", method, " method"))
-    }           
-    if(missing(Q.star))   {
-      Q.star       <- min(floor(3 * log(P)), P, N - 1)
-    } else {
-      if(Q.star    <= 0)            stop("Q.star must be strictly positive")
-      if(Q.star     > P)            stop(paste0("Number of factors must be less than the number of variables, ", P))
-      if(Q.star    >= N)            stop(paste0("Number of factors must be less than the number of observations, ", N))
-    } 
-    if(!is.logical(adapt))          stop("'adapt' must be TRUE or FALSE") 
-    if(missing("phi.nu"))    phi.nu        <- 1.5
-    if(phi.nu  <= 0)                stop("'phi.nu' must be strictly positive")
-    if(missing("beta.d1"))   beta.d1       <- 1
-    if(beta.d1 <= 0)                stop("'beta.d1' must be strictly positive")
-    if(missing("beta.dk"))   beta.dk       <- 1
-    if(beta.dk <= 0)                stop("'beta.dk' must be strictly positive")
-    if(missing("b0"))        b0            <- 0.1
-    if(b0  < 0)                     stop("'b0' must be positive to ensure valid adaptation probability")
-    if(missing("b1"))        b1            <- 0.00005
-    if(b1 <= 0)                     stop("'b1' must be strictly positive to ensure adaptation probability decreases")
-    if(missing("prop"))      prop          <- 3/4
-    if(abs(prop - (1 - prop)) < 0)  stop("'prop' must be a single number between 0 and 1")
-    if(missing("epsilon"))   epsilon       <- ifelse(centering, 0.1, 0.005)
-    if(abs(epsilon - 
-          (1 - epsilon)) < 0)       stop("'epsilon' must be a single number between 0 and 1")
-  } 
+    if(all(!switches[c("f.sw", "l.sw")])) { 
+                                    warning("Posterior Scores & Loadings won't be available as they're not being stored", call.=F)
+    } else if(!switches["f.sw"])  { warning("Posterior Scores won't be available as they're not being stored", call.=F)
+    } else if(!switches["l.sw"])  { warning("Posterior Loadings won't be available as they're not being stored", call.=F)
+    }
+  }
+  if(all(is.element(method, c("FA", "IFA")), 
+         !missing(z.init) || 
+         !missing(z.list)))         message(paste0("z does not need to be initialised for the ", method, " method"))
   if(!is.logical(mu0g))             stop("'mu0g' must be TRUE or FALSE")
   if(!is.logical(psi0g))            stop("'psi0g' must be TRUE or FALSE")
   if(!is.logical(delta0g))          stop("'delta0g' must be TRUE or FALSE")
@@ -213,12 +207,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "OMIFA", "MIFA", "MFA", 
     }
     if(all(missing(z.list),  z.init     == "list"))  {
                                     stop(paste0("'z.list' must be supplied if 'z.init' is set to 'list'")) }
-    
   }
-  if(all(is.element(method, c("FA", "IFA")), 
-         !missing(z.init) || 
-         !missing(z.list)))         message(paste0("z does not need to be initialised for the ", method, " method"))
-  
   if(method == "classify") {
     source(paste(getwd(), "/IMIFA-GIT/Gibbs_", "IFA", ".R", sep=""), local=T)
   } else {
@@ -364,7 +353,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "OMIFA", "MIFA", "MFA", 
         gibbs.arg  <- append(temp.args, deltas[[Gi]])
       }
         imifa[[Gi]][[Qi]] <- do.call(paste0("gibbs.", meth[Gi]),                          
-                                     args=append(list(data = dat, N = N, G = range.G, Q = Q.star, mu = mu[[Gi]], mu.zero = mu.zero[[Gi]],
+                                     args=append(list(data = dat, N = N, G = range.G, Q = range.Q, mu = mu[[Gi]], mu.zero = mu.zero[[Gi]],
                                                       psi.beta = psi.beta[[Gi]], cluster = if(meth[Gi] != "IFA") clust[[Gi]]), gibbs.arg))
     } else {
       start.time   <- proc.time()
@@ -375,14 +364,12 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "OMIFA", "MIFA", "MFA", 
         }
         imifa[[Gi]]       <- list()
         imifa[[Gi]][[Qi]] <- do.call(paste0("gibbs.", meth[Gi]),
-                                     args=append(list(data = dat, N = N, G = g, Q = Q.star, mu = mu[[Gi]], mu.zero = mu.zero[[Gi]],
+                                     args=append(list(data = dat, N = N, G = g, Q = range.Q, mu = mu[[Gi]], mu.zero = mu.zero[[Gi]],
                                                       psi.beta = psi.beta[[Gi]], cluster = if(meth[Gi] == "MIFA") clust[[Gi]]), gibbs.arg))
         if(verbose)                 cat(paste0(round(Gi/length(range.G) * 100, 2), "% Complete\n"))
       }
     }
   } else if(is.element(method, c("FA", "MFA")))   {
-    if(any(range.Q >= P))           stop(paste0("Number of factors must be less than the number of variables ", P))
-    if(any(range.Q >= N - 1))       stop(paste0("Number of factors must be less than the number of observations minus 1 ", N - 1))
     if(all(length(range.G) == 1, length(range.Q) == 1)) {
       start.time   <- proc.time()
         imifa[[Gi]][[Qi]] <- do.call(paste0("gibbs.", meth[Gi]), 
@@ -435,16 +422,15 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "OMIFA", "MIFA", "MFA", 
       temp.dat     <- dat[Labels == levels(Labels)[g],]
       imifa[[g]]          <- list()
       imifa[[g]][[Qi]]    <- do.call(paste0("gibbs.", "IFA"),
-                                     args=append(list(data = temp.dat, N = nrow(temp.dat), Q = Q.star), gibbs.arg))
+                                     args=append(list(data = temp.dat, N = nrow(temp.dat), Q = range.Q), gibbs.arg))
       if(verbose)                   cat(paste0(round(g/range.G * 100, 2), "% Complete\n"))
     }
   }
   tot.time  <- proc.time() - start.time
   avg.time  <- tot.time/ifelse(method == "MFA", length(range.G) * length(range.Q),
-                          ifelse(method == "FA",  length(range.Q), 
                             ifelse(method == "MIFA", length(range.G),
                               ifelse(method == "classify", nlevels(Labels), 
-                                     length(Q.star)))))
+                                     length(range.Q))))
   if(profile) {
     Rprof(NULL)
     print(summaryRprof())
@@ -466,7 +452,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "OMIFA", "MIFA", "MFA", 
   names(imifa)            <- gnames
   attr(imifa, "Center")   <- centering
   attr(imifa, "Date")     <- format(Sys.Date(), "%d-%b-%Y")
-  attr(imifa, "Factors")  <- if(is.element(method, c("FA", "MFA"))) range.Q else Q.star
+  attr(imifa, "Factors")  <- range.Q
   attr(imifa, "Groups")   <- range.G
   if(!is.element(method, c("FA", "IFA"))) {
     attr(imifa, "Init.Z") <- z.init
