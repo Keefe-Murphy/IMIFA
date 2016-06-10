@@ -54,7 +54,6 @@
     }
     z              <- cluster$z
     z.temp         <- factor(z, levels=Gseq)
-    nn             <- tabulate(z, nbins=G)
     pi.alpha       <- cluster$pi.alpha
     pi.prop        <- cluster$pi.prop
     alpha.d1       <- cluster$alpha.d1
@@ -103,8 +102,8 @@
           cat(paste0("Iteration: ", iter, "\n"))
         }
       }
+      nn           <- tabulate(z, nbins=G)
       z.ind        <- lapply(Gseq, function(g) z == g)
-      nn           <- unlist(lapply(z.ind, sum))
       
     # Means
       sum.data     <- lapply(Gseq, function(g) colSums(data[z.ind[[g]],, drop=F]))
@@ -195,14 +194,12 @@
       Sigma        <- lapply(Gseq, function(g) tcrossprod(lmat[[g]]) + diag(psi[,g]))
       z.res        <- sim.z(data=data, mu=mu, Sigma=Sigma, G=G, pi.prop=pi.prop)
       z            <- z.res$z
-      nn           <- tabulate(z, nbins=G)
     
     # Label Switching
       if(label.switch)   {
-        switch.lab <- lab.switch(z.new=z, z.old=z.temp, Gs=Gseq, ng=nn)
+        switch.lab <- lab.switch(z.new=z, z.old=z.temp, Gs=Gseq)
         z          <- switch.lab$z
         z.perm     <- switch.lab$z.perm
-        Qs         <- Qs[z.perm]
         if(sw["mu.sw"])  {
           mu       <- mu[,z.perm]
         }
@@ -213,6 +210,9 @@
             phi[[g]]       <- phi[[z.perm[g]]]
             tau[[g]]       <- tau[[z.perm[g]]]
           }
+        }
+        if(all(adapt, iter > burnin)) {
+          Qs       <- unlist(lapply(lmat, ncol))  
         }
         if(sw["psi.sw"]) {
           psi.inv  <- psi.inv[,z.perm]

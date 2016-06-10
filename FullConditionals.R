@@ -171,7 +171,7 @@
 
   # Label Switching
     lab.switch  <- function(z.new, z.old, Gs, ng=tabulate(z.new, 
-                            nbins=length(unique(z.new)))) {
+                            nbins=length(Gs))) {
       tab       <- table(z.new, z.old, dnn=NULL)
       tab.tmp   <- tab[rowSums(tab) != 0,colSums(tab) != 0, drop=F]
       nc        <- ncol(tab.tmp)

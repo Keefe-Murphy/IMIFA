@@ -210,7 +210,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
         l.perm   <- sw.lab$z.perm
         z.temp   <- factor(z.temp)
       }
-      for(ls in seq_len(n.store)[-1]) {
+      for(ls in tmp.store[-1])   {
         sw.lab   <- lab.switch(z.new=z[,ls], z.old=z.temp, Gs=Gseq)
         z[,ls]   <- sw.lab$z
         z.perm   <- sw.lab$z.perm

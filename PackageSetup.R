@@ -18,7 +18,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "OMIFA", "MIFA", "MFA", 
                         scaling = c("unit", "pareto", "none"), verbose = F, adapt = T, b0 = NULL, b1 = NULL, delta0g = F,
                         prop = NULL, epsilon = NULL, sigma.mu = NULL, sigma.l = NULL, mu0g = F, psi0g = F, mu.zero = NULL,
                         phi.nu = NULL, psi.alpha = NULL, psi.beta = NULL, alpha.d1 = NULL, alpha.dk = NULL, beta.d1 = NULL,
-                        beta.dk = NULL, alpha.pi = NULL, z.init = c("kmeans", "list", "mclust", "priors"), z.list = NULL, 
+                        beta.dk = NULL, alpha.pi = NULL, z.init = c("mclust", "list", "kmeans", "priors"), z.list = NULL, 
                         profile = F, mu.switch = T, f.switch = T, load.switch = T, psi.switch = T, pi.switch = T) {
   
   defpar    <- suppressWarnings(par(no.readonly = T))
