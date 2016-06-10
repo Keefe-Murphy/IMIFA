@@ -87,7 +87,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "OMIFA", "MIFA", "MFA", 
     range.G <- sort(unique(range.G))
     meth    <- rep(method, length(range.G))                               
   }
-  if(any(range.G >= N)              stop(paste0("'range.G' must be less than the number of observations N=", N))
+  if(any(range.G >= N))             stop(paste0("'range.G' must be less than the number of observations N=", N))
   if(range.G[1]  == 1)  {
     if(is.element(meth[1], 
        c("IMIFA", "OMIFA")))  {     stop("'method' must be FA or IFA for a one group model")

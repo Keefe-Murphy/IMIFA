@@ -93,6 +93,7 @@
         }
       }
       z.ind        <- lapply(Gseq, function(g) z == g)
+      nn           <- unlist(lapply(z.ind, sum))
       
     # Means
       sum.data     <- lapply(Gseq, function(g) colSums(data[z.ind[[g]],, drop=F]))
@@ -119,8 +120,7 @@
             fgg            <- if(nng > 0) sim.score(N=nng, lmat=lmat[[g]], Q=Qg, 
                               c.data=c.datg, psi.inv=psi.ig) else sim.f.p(Q=Qg, N=nng)
             lmat[[g]]      <- if(nng > 0) matrix(unlist(lapply(Pseq, function(j) sim.load(Q=Qg, c.data=c.datg[,j], f=fgg, FtF=crossprod(fgg), 
-                              P=P, psi.inv=psi.ig[j], phi=phi[[g]][j,], tau=tau[[g]])), use.names=F), nr=P, byrow=T) else lapply(Gseq, function(g) 
-                              matrix(unlist(lapply(Pseq, function(j) sim.load.p(Q=Qg, phi=phi[[g]][j,], tau=tau[[g]], P=P)), use.names=F), nr=P, byrow=T))
+                              P=P, psi.inv=psi.ig[j], phi=phi[[g]][j,], tau=tau[[g]])), use.names=F), nr=P, byrow=T) else matrix(unlist(lapply(Pseq, function(j) sim.load.p(Q=Qg, phi=phi[[g]][j,], tau=tau[[g]], P=P)), use.names=F), nr=P, byrow=T)
             fg[[g]][,Qgs]  <- fgg
           } else {
             lmat[[g]]      <- matrix(, nr=P, nc=0)
@@ -152,7 +152,7 @@
         if(Qg       > 1) {
           for(k in seq_len(Qg)[-1]) { 
             delta[[g]][k]  <- if(nng > 0) sim.deltak(Q=Qg, alpha.dk=alpha.dk, delta=delta[[g]], P=P, beta.dk=beta.dk, k=k, 
-                              tau=tau[[g]], sum.term=sum.termg) else sim.delt.kp(Q=Qg, alpha.dk=alpha.dk, beta.dk=beta.dk)
+                              tau=tau[[g]], sum.term=sum.termg) else sim.delt.kp(Q=2, alpha.dk=alpha.dk, beta.dk=beta.dk)
             tau[[g]]       <- cumprod(delta[[g]])
           }
         }
@@ -190,7 +190,7 @@
     
     # Label Switching
       switch.lab   <- lab.switch(z.new=z, z.old=z.temp, Gs=Gseq, ng=nn)
-      z            <- as.numeric(switch.lab$z)
+      z            <- switch.lab$z
       z.perm       <- switch.lab$z.perm
       Qs           <- Qs[z.perm]
       if(sw["mu.sw"])  {

@@ -180,10 +180,12 @@
         tmp.mat <- matrix(rep(0, nc), nr=nc - nr, nc=nc)
         rownames(tmp.mat) <- setdiff(as.numeric(colnames(tab.tmp)), as.numeric(rownames(tab.tmp)))[seq_len(nc - nr)]
         tab.tmp <- rbind(tab.tmp, tmp.mat)
+        tab.tmp <- tab.tmp[match(Gs, rownames(tab.tmp)),]
       } else if(nr > nc) {
         tmp.mat <- matrix(rep(0, nr), nr=nr, nc=nr - nc)
         colnames(tmp.mat) <- setdiff(as.numeric(rownames(tab.tmp)), as.numeric(colnames(tab.tmp)))[seq_len(nr - nc)]
         tab.tmp <- cbind(tab.tmp, tmp.mat)
+        tab.tmp <- tab.tmp[,match(Gs, colnames(tab.tmp))]
       }
       if(nr == 1) {
         z.perm  <- setNames(as.numeric(colnames(tab.tmp)))
@@ -198,9 +200,8 @@
       }
       z.names   <- as.numeric(names(z.perm))
       z.permord <- z.perm[order(z.names)]
-      nn.temp   <- ng[z.perm]
-      z         <- factor(z.new, labels=z.perm[nn.temp > 0][seq_len(sum(ng > 0))])
-        return(list(z = z, z.perm = z.permord))
+      z         <- factor(z.new, labels=z.perm[ng > 0][seq_len(sum(ng > 0))])
+        return(list(z = as.numeric(levels(z))[z], z.perm = z.permord))
     }
 
   # Length Checker

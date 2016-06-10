@@ -104,6 +104,7 @@
         }
       }
       z.ind        <- lapply(Gseq, function(g) z == g)
+      nn           <- unlist(lapply(z.ind, sum))
       
     # Means
       sum.data     <- lapply(Gseq, function(g) colSums(data[z.ind[[g]],, drop=F]))
@@ -199,7 +200,7 @@
     # Label Switching
       if(label.switch)   {
         switch.lab <- lab.switch(z.new=z, z.old=z.temp, Gs=Gseq, ng=nn)
-        z          <- as.numeric(switch.lab$z)
+        z          <- switch.lab$z
         z.perm     <- switch.lab$z.perm
         Qs         <- Qs[z.perm]
         if(sw["mu.sw"])  {
