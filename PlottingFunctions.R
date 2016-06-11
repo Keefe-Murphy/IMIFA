@@ -487,7 +487,6 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
         if(titles) legend("topright", legend=paste0("Group ", seq_len(G)), bty="n", pch=15, col=seq_len(G + 1)[-1])
       }
       if(!plot2.ind)                  message("Nothing to plot")
-      class(GQ.res)    <- "listof"
       if(is.element(method, c("IMIFA", "OMIFA")))     {
         if(g == 1) {
           print(GQ.res[substring(names(GQ.res), 1, 1) == "G"])

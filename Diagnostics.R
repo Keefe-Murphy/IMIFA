@@ -489,6 +489,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
                          CI.f  = apply(f, c(1, 2), function(x) quantile(x, conf.levels)))
   }
   names(result)  <- paste0("Group", Gseq)
+  class(GQ.res)                <- "listof"
   attr(GQ.res, "Criterion")    <- criterion
   attr(GQ.res, "Factors")      <- n.fac
   attr(GQ.res, "Groups")       <- n.grp
@@ -497,6 +498,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   if(any(err.T)) {
     errors       <- list(MSE = mean(MSE, na.rm=T), RMSE = mean(RMSE, na.rm=T), NRMSE = mean(NRMSE, na.rm=T),
                          CVRMSE = mean(CVRMSE, na.rm=T), MAD = mean(MAD, na.rm=T))  
+    class(errors)              <- "listof"
   }
   
   result         <- c(result, if(exists("cluster", envir=environment())) list(Clust = cluster), 
