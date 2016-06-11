@@ -163,7 +163,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
       if(vars  == "means")  {
         plot.x <- result$means
         if(matx) {
-          matplot(t(plot.x[,]), type="l", ylab="Means", xlab="Iteration", ylim=if(is.element(method, c("FA", "IFA"))) c(-1, 1))
+          matplot(t(plot.x), type="l", ylab="Means", xlab="Iteration", ylim=if(is.element(method, c("FA", "IFA"))) c(-1, 1))
           if(titles) title(main=list(paste0("Trace", ifelse(all.ind, "", paste0(":\nMeans", ifelse(grp.ind, paste0(" - Group ", g), ""))))))
         } else {
           plot(x=iter, y=plot.x[ind,], type="l", ylab="Mean", xlab="Iteration", ylim=if(is.element(method, c("FA", "IFA"))) c(-1, 1))
@@ -211,7 +211,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
       if(vars  == "uniquenesses") {
         plot.x <- result$psi
         if(matx) {
-          matplot(t(plot.x[,]), type="l", ylab="Uniquenesses", xlab="Iteration")
+          matplot(t(plot.x), type="l", ylab="Uniquenesses", xlab="Iteration")
           if(titles) title(main=list(paste0("Trace", ifelse(all.ind, "", paste0(":\nUniquenesses", ifelse(grp.ind, paste0(" - Group ", g), ""))))))
         } else   {
           plot(x=iter, y=plot.x[ind,], ylab="Uniquenesses", type="l", xlab="Iteration")
@@ -342,38 +342,39 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
         }
         if(g.score)  {
           if(g == 1) temp.labs  <- Labs
-          z.ind  <- as.numeric(temp.labs) == g
-          plot.x <- results$Scores$post.f[z.ind,]
+          z.ind  <- as.numeric(levels(temp.labs))[temp.labs] == g
+          plot.x <- results$Scores$post.f[z.ind,,drop=F]
           ind2   <- ifelse(any(!facx, Q <= 1), ind[2], if(Q > 1) max(2, ind[2]))
-          if(ci.sw[vars]) ci.x  <- results$Scores$CI.f[,z.ind,]
+          if(ci.sw[vars]) ci.x  <- results$Scores$CI.f[,z.ind,, drop=F]
           Labs   <- g
-        } else      {
+        } else       {
           plot.x <- results$Scores$post.f
           ind2   <- ifelse(any(!facx, Q.max <= 1), ind[2], if(Q.max > 1) max(2, ind[2]))
           if(ci.sw[vars]) ci.x  <- results$Scores$CI.f
         }
+        col.f  <- if(is.factor(Labs)) as.numeric(levels(Labs))[Labs] else Labs
         type.f <- ifelse(any(type.x, type == "l"), "p", type)
         if(ind2 != 1)  {
           if(all(intervals, ci.sw[vars])) {
             plotCI(plot.x[,ind[1]], plot.x[,ind2], li=ci.x[1,,ind2], ui=ci.x[2,,ind2], gap=T, pch=NA, scol="grey", slty=3, xlab=paste0("Factor ", ind[1]), ylab=paste0("Factor ", ind2))
             plotCI(plot.x[,ind[1]], plot.x[,ind2], li=ci.x[1,,ind[1]], ui=ci.x[2,,ind[1]], add=T, gap=T, pch=NA, scol="grey", slty=3, err="x")
-            if(type.f != "n") points(plot.x[,ind[1]], plot.x[,ind2], type=type.f, col=as.numeric(Labs))
+            if(type.f != "n") points(plot.x[,ind[1]], plot.x[,ind2], type=type.f, col=col.f)
           } else {
-            plot(plot.x[,ind[1]], plot.x[,ind2], type=type.f, col=as.numeric(Labs),
+            plot(plot.x[,ind[1]], plot.x[,ind2], type=type.f, col=col.f,
                  xlab=paste0("Factor ", ind[1]), ylab=paste0("Factor ", ind2))
           }
           if(titles) title(main=list(paste0("Posterior Mean", ifelse(all.ind, "", ":\nScores"), ifelse(g.score, paste0(" - Group ", g), ""))))
           if(type.f == "n") text(plot.x[,ind[1]], plot.x[,ind2], obs.names, 
-                               col=as.numeric(Labs), cex=0.5)
+                               col=col.f, cex=0.5)
         } else   {
           if(all(intervals, ci.sw[vars])) {
             plotCI(if(!g.score) seq_len(n.obs) else seq_len(sum(z.ind)), plot.x[,ind[1]], li=ci.x[1,,ind[1]], ui=ci.x[2,,ind[1]], gap=T, pch=NA, scol="grey", slty=3, xlab="Observation", ylab=paste0("Factor ", ind[1]))
-            points(plot.x[,ind[1]], type=type.f, col=as.numeric(Labs))
+            points(plot.x[,ind[1]], type=type.f, col=col.f)
           } else {
-            plot(plot.x[,ind[1]], type=type.f, col=as.numeric(Labs), xlab="Observation", ylab=paste0("Factor ", ind[1]))
+            plot(plot.x[,ind[1]], type=type.f, col=col.f, xlab="Observation", ylab=paste0("Factor ", ind[1]))
           }
           if(titles) title(main=list(paste0("Posterior Mean", ifelse(all.ind, "", ":\nScores"), ifelse(g.score, paste0(" - Group ", g), ""))))
-          if(type.f == "n") text(plot.x[,ind[1]], col=as.numeric(Labs), cex=0.5)
+          if(type.f == "n") text(plot.x[,ind[1]], col=col.f, cex=0.5)
         }
       }
       if(vars  == "loadings") {

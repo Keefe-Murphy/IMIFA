@@ -18,7 +18,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   thinning       <- as.integer(thinning)
   store          <- seq(from=burnin + 1, to=attr(sims, "Store"), by=thinning)
   n.store        <- length(store)
-  tmp.store      <- tmp.store2 <- store
+  tmp.store      <- store
   label.switch   <- attr(sims, "Label.Switch")
   method         <- attr(sims, "Method")
   inf.G          <- is.element(method, c("IMIFA", "OMIFA"))
@@ -36,7 +36,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
         (1 - conf.level)) < 0)    stop("'conf.level' must be a single number between 0 and 1")
   conf.levels    <- c((1 - conf.level)/2, 1 - (1 - conf.level)/2)
   criterion      <- match.arg(criterion)
-  if(all(method  == "MIFA", 
+  if(all(!is.element(method, c("FA", "MFA")),
      !is.element(criterion, 
      c("aicm", "bicm"))))         stop("'criterion' should be one of 'aicm' or 'bicm' for the MIFA method")
   if(!is.logical(recomp))         stop("'recomp' must be TRUE or FALSE")
@@ -156,6 +156,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     } 
     G            <- ifelse(all(length(n.grp) == 1, !inf.G), n.grp, G)
     Gseq         <- seq_len(G)
+    Gseq2        <- if(is.element(method, "OMIFA")) seq_len(n.grp) else Gseq
     G.ind        <- ifelse(all(length(n.grp) == 1, !inf.G), which(n.grp == G), G.ind)
     GQ.temp2     <- list(AICMs = aicm, BICMs = bicm)
     if(!inf.Q) {
@@ -197,24 +198,23 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     if(!label.miss) {
       if(!exists(as.character(substitute(Labels)),
           envir=.GlobalEnv))      stop(paste0("Object ", match.call()$Labels, " not found"))
-      zlabels    <- factor(Labels)
+      zlabels    <- factor(Labels, labels=seq_along(unique(Labels)))
       levs       <- levels(zlabels)
       lev.ind    <- length(levs) == G
       if(length(Labels) != n.obs) stop(paste0("'Labels' must be a factor of length N=",  n.obs))
     }
     if(any(!label.switch, G > 9))   {
-      z.temp     <- z[,1]
+      z.temp     <- factor(z[,1], labels=Gseq)
       if(!label.miss && lev.ind) {    
-        sw.lab   <- lab.switch(z.new=z.temp, z.old=zlabels, Gs=Gseq)
+        sw.lab   <- lab.switch(z.new=z.temp, z.old=zlabels, Gs=Gseq2)
         z.temp   <- sw.lab$z
         l.perm   <- sw.lab$z.perm
-        z.temp   <- factor(z.temp)
       }
-      for(ls in tmp.store[-1])   {
-        sw.lab   <- lab.switch(z.new=z[,ls], z.old=z.temp, Gs=Gseq)
+      for(ls in seq_along(tmp.store)[-1])   {
+        sw.lab   <- lab.switch(z.new=z[,ls], z.old=z.temp, Gs=Gseq2)
         z[,ls]   <- sw.lab$z
         z.perm   <- sw.lab$z.perm
-        perm     <- identical(unname(z.perm), Gseq)
+        perm     <- identical(unname(z.perm), Gseq2)
         if(!perm) {
           if(sw["mu.sw"])  {
             mus[,,ls]    <- mus[,z.perm,ls]
@@ -235,11 +235,11 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
         }
       }
     }
-    post.z       <- setNames(apply(z, 1, function(x) factor(which.max(tabulate(x)), levels=Gseq)), seq_len(n.obs))
+    post.z       <- droplevels(setNames(apply(z, 1, function(x) factor(which.max(tabulate(x)), levels=Gseq2)), seq_len(n.obs)))
     var.z        <- apply(z, 1, var)
     CI.z         <- apply(z, 1, function(x) round(quantile(x, conf.levels)))
     if(sw["pi.sw"])    {
-      pi.prop    <- pies[,tmp.store]
+      pi.prop    <- pies[,seq_along(tmp.store)]
       post.pi    <- rowMeans(pi.prop, dims=1)
       var.pi     <- apply(pi.prop, 1, var)
       CI.pi      <- apply(pi.prop, 1, function(x) quantile(x, conf.levels))
@@ -248,8 +248,8 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     }
     if(!label.miss) {
       if(nlevels(post.z) == length(levs)) {
-        sw.lab   <- lab.switch(z.new=as.numeric(post.z), z.old=zlabels, Gs=Gseq)
-        post.z   <- sw.lab$z
+        sw.lab   <- lab.switch(z.new=post.z, z.old=zlabels, Gs=Gseq2)
+        post.z   <- factor(sw.lab$z)
         l.perm   <- sw.lab$z.perm
         post.pi  <- post.pi[l.perm]  
       }
@@ -262,18 +262,18 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
                       if(sw["pi.sw"]) list(pi.prop = pi.prop, var.pi = var.pi, CI.pi = CI.pi))
     attr(cluster, "Z.init")    <- attr(sims[[G.ind]], "Z.init")
     attr(cluster, "Init.Meth") <- attr(sims, "Init.Z")
-    post.z       <- as.numeric(post.z)
+    post.z       <- as.numeric(levels(post.z))[post.z]
     ind          <- lapply(Gseq, function(g) post.z == g)
   }
-  if(inf.Q) {
+  if(inf.Q)   {
     Q.tab        <- if(G > 1) lapply(apply(Q.store, 1, function(x) list(table(x, dnn=NULL))), "[[", 1) else table(Q.store, dnn=NULL)
     Q.prob       <- if(G > 1) lapply(Q.tab, prop.table) else prop.table(Q.tab)
     Q.mode       <- if(G > 1) unlist(lapply(Q.tab, function(qt) as.numeric(names(qt[qt == max(qt)])[1]))) else as.numeric(names(Q.tab[Q.tab == max(Q.tab)])[1])
     Q.med        <- if(G > 1) ceiling(apply(Q.store, 1, median) * 2)/2 else ceiling(median(Q.store) * 2)/2
-    if(!all(Q.T, G.T)) {
+    if(!Q.T)  {
       Q          <- if(Q.meth == "Mode") Q.mode else floor(Q.med)
-    } else if(Q.T) {
-      Q          <- if(G.T) Q else rep(Q, G)
+    } else    {
+      Q          <- if(G.T) Q else setNames(rep(Q, G), paste0("Group ", Gseq))
     }
     Q.CI         <- if(G > 1) apply(Q.store, 1, function(qs) round(quantile(qs, conf.levels))) else round(quantile(Q.store, conf.levels))
     GQ.temp3     <- list(Q = Q, Q.Mode = Q.mode, Q.Median = Q.med, 
@@ -316,7 +316,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       sw["l.sw"] <- F
     }
     if(inf.Q) {
-      store      <- tmp.store[which(Q.store[g,] >= Qg)]
+      store      <- seq_along(tmp.store)[which(Q.store[g,] >= Qg)]
       n.store    <- length(store)
     }
   
@@ -366,15 +366,15 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
         psi      <- as.matrix(psis[,g,store])
       }
       if(g == 1) {
-        data     <- attr(sims, "Name")
-        data.x   <- exists(data, envir=.GlobalEnv)  
-        if(!data.x)               warning(paste0("Object ", data, " not found in .GlobalEnv: can't compute empirical covariance and error metrics"), call.=F) 
-        data     <- as.data.frame(get(data))
-        data     <- data[sapply(data, is.numeric)]
-        data     <- scale(data, center=cent, scale=scaling)
-        varnames <- colnames(data)
+        dat      <- attr(sims, "Name")
+        data.x   <- exists(dat, envir=.GlobalEnv)  
+        if(!data.x)               warning(paste0("Object ", dat, " not found in .GlobalEnv: can't compute empirical covariance and error metrics"), call.=F) 
+        dat      <- as.data.frame(get(dat))
+        dat      <- dat[sapply(dat, is.numeric)]
+        dat      <- scale(dat, center=cent, scale=scaling)
+        varnames <- colnames(dat)
       }
-      cov.emp    <- cov(data[ind[[g]],, drop=F])
+      cov.emp    <- cov(dat[ind[[g]],, drop=F])
       dimnames(cov.emp)  <- list(varnames, varnames)
       if(sum(ind[[g]])   == 0)    rm(cov.emp)
     } else {
@@ -506,10 +506,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   attr(result, "Method")       <- method
   attr(result, "Name")         <- attr(sims, "Name")
   attr(result, "Obs")          <- n.obs
-  if(inf.G) {
-    attr(result, "G.store")    <- tmp.store
-  }
-  attr(result, "Store")        <- tmp.store2
+  attr(result, "Store")        <- tmp.store
   attr(result, "Switch")       <- sw
   attr(result, "Vars")         <- n.var
   return(result)

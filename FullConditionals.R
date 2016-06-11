@@ -193,15 +193,17 @@
         z.perm  <- setNames(as.numeric(rownames(tab.tmp)))
       } else {
         z.perm  <- matchClasses(tab.tmp, method="exact", verbose=F)
+        z.perm  <- setNames(as.numeric(z.perm), names(z.perm))
       }
-      if(length(Gs) > max(z.perm)) {
-        miss.z  <- setdiff(Gs, names(z.perm))
-        z.perm  <- c(z.perm, setNames(c(as.numeric(names(z.perm[order(z.perm)])), setdiff(miss.z, z.perm)), miss.z))
+      if(length(Gs) > length(z.perm)) {
+        miss.z1 <- setdiff(Gs, names(z.perm))
+        miss.z2 <- setdiff(Gs, z.perm)
+        z.perm  <- c(z.perm, setNames(miss.z2, miss.z1))
       }
       z.names   <- as.numeric(names(z.perm))
-      z.permord <- z.perm[order(z.names)]
+      z.perm    <- z.perm[order(z.names)]
       z         <- factor(z.new, labels=z.perm[ng > 0][seq_len(sum(ng > 0))])
-        return(list(z = as.numeric(levels(z))[z], z.perm = z.permord))
+        return(list(z = as.numeric(levels(z))[z], z.perm = z.perm))
     }
 
   # Length Checker

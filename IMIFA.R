@@ -51,7 +51,7 @@
                         "__Simulations_", attr(sim, "Method"), 
                         ".Rdata", sep=""))
   load(file=paste0(getwd(), "/Simulations/", "wine", 
-                   "__Simulations_", "MIFA", 
+                   "__Simulations_", "OMIFA", 
                    ".Rdata", sep=""), envir=.GlobalEnv)
 
 # Posterior Summaries (optional: additional 'burnin' & 'thinning', user-defined G/Q, model selection criterion)
@@ -66,7 +66,7 @@
                         "__Results_", attr(res, "Method"), 
                         ".Rdata", sep=""))
   load(file=paste0(getwd(), "/Simulations/", "wine", 
-                   "__Results_", "MIFA", 
+                   "__Results_", "OMIFA", 
                    ".Rdata", sep=""), envir=.GlobalEnv)
 
 # Means
