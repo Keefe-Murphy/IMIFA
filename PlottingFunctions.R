@@ -92,11 +92,12 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
   g.score <- all(grp.ind, !all.ind, vars == "scores")
   if(all(is.element(method, c("IMIFA", "OMIFA")), m.sw["G.sw"])) {
     Gs    <- seq_len(2)
+    if(!missing(g))                   warning(paste0("Removed 'g'=", g ," for the ", plot.meth, " plotting method"), call.=F)
   } else if(any(all(vars  == "scores", any(all.ind, !m.sw["P.sw"])), 
             m.sw["G.sw"]))  {
     Gs    <- 1
   } else if(!missing(g)) {
-    if(is.element(method, c("MFA", "MIFA"))) {
+    if(!is.element(method, c("FA", "IFA"))) {
       if(!is.element(g, seq_len(G)))  stop("This g value was not used during simulation")
       Gs  <- g
     } else if(g > 1)     {            message(paste0("Forced g=1 for the ", method, " method"))
@@ -109,6 +110,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
   
   for(g in Gs) {
     Q     <- Qs[g]
+    g.ind <- which(Gs == g)
     msg   <- "Hit <Return> to see next plot: "
     msgx  <- all(interactive(), g != max(Gs))
     result     <- results[[g]]
@@ -340,9 +342,9 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
             if(length(Labs) != n.obs) stop(paste0("Labels must be a factor of length N=",  n.obs))
           }
         }
-        if(g.score)  {
-          if(g == 1) temp.labs  <- Labs
-          z.ind  <- as.numeric(levels(temp.labs))[temp.labs] == g
+        if(g.score)  { 
+          if(g.ind == 1) tmplab <- Labs
+          z.ind  <- as.numeric(levels(tmplab))[tmplab] == g
           plot.x <- results$Scores$post.f[z.ind,,drop=F]
           ind2   <- ifelse(any(!facx, Q <= 1), ind[2], if(Q > 1) max(2, ind[2]))
           if(ci.sw[vars]) ci.x  <- results$Scores$CI.f[,z.ind,, drop=F]
@@ -434,7 +436,8 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
     } 
     
     if(m.sw["G.sw"]) {
-      plot2.ind  <- any(any(g > 1, is.element(method, c("IFA", "MIFA"))), !all(is.element(method, c("IMIFA", "OMIFA")), g == 1))
+      plotG.ind  <- is.element(method, c("IMIFA", "OMIFA"))
+      plotQ.ind  <- any(any(g > 1, is.element(method, c("IFA", "MIFA"))), !all(is.element(method, c("IMIFA", "OMIFA")), g == 1))
       aicm       <- round(GQ.res$AICM, 2)
       bicm       <- round(GQ.res$BICM, 2)
       if(is.element(method, c("FA", "MFA"))) {
@@ -456,7 +459,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
         axis(1, at=G.plot, labels=G.name, tick=F) 
         axis(1, at=median(G.plot), labels="G", tick=F, line=1.5) 
       }
-      if(all(method == "IFA", plot2.ind))  {
+      if(all(method == "IFA", plotQ.ind))  {
         plot.Q <- GQ.res$Q.Counts
         Q.name <- names(plot.Q)
         rangeQ <- as.numeric(Q.name)
@@ -471,7 +474,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
         axis(1, at=Q.plot, labels=Q.name, tick=F) 
         axis(1, at=median(Q.plot), labels="Q", tick=F, line=1.5) 
       }  
-      if(all(is.element(method, c("MIFA", "MIFA", "IMIFA", "OMIFA")), plot2.ind)) {
+      if(all(is.element(method, c("MIFA", "IMIFA", "OMIFA")), plotQ.ind)) {
         plot.Q <- GQ.res$Q.Counts
         Q.name <- lapply(plot.Q, names)
         rangeQ <- as.numeric(unique(unlist(Q.name, use.names=F)))
@@ -486,23 +489,23 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
         axis(1, at=median(Q.plot), labels="Q", tick=F, line=1.5)
         if(titles) legend("topright", legend=paste0("Group ", seq_len(G)), bty="n", pch=15, col=seq_len(G + 1)[-1])
       }
-      if(!plot2.ind)                  message("Nothing to plot")
+      if(!any(plotQ.ind, plotG.ind))  message("Nothing to plot")
       if(is.element(method, c("IMIFA", "OMIFA")))     {
         if(g == 1) {
           print(GQ.res[substring(names(GQ.res), 1, 1) == "G"])
-        } else     {
+        } else {
           print(GQ.res[substring(names(GQ.res), 1, 1) != "G"])
         }
       } else if(is.element(method, c("MFA", "MIFA"))) {
           print(GQ.res)
       } else if(method == "IFA") {
           print(tail(GQ.res, -1))
-      } else {
+      } else   {
           cat(paste0("Q = ", Q, "\n"))
       }
       if(any(nrow(bicm) > 1, ncol(bicm) > 1)) {
-        G.ind  <- ifelse(G.supp, 1, which(n.grp == G))
-        Q.ind  <- ifelse(any(Q.supp, !is.element(method, c("FA", "MFA"))), 1, which(n.fac == Q))
+        G.ind  <- ifelse(any(G.supp, !is.element(method, c("MFA", "MIFA"))), 1, which(n.grp == G))
+        Q.ind  <- ifelse(any(Q.supp, !is.element(method, c("FA", "MFA"))),   1, which(n.fac == Q))
           cat(paste0("AICM = ", aicm[G.ind,Q.ind], "\n"))
           cat(paste0("BICM = ", bicm[G.ind,Q.ind], "\n"))
         if(!is.element(method, c("IFA", "MIFA"))) {
