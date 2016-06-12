@@ -474,7 +474,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
         axis(1, at=Q.plot, labels=Q.name, tick=F) 
         axis(1, at=median(Q.plot), labels="Q", tick=F, line=1.5) 
       }  
-      if(all(is.element(method, c("MIFA", "IMIFA", "OMIFA")), plotQ.ind)) {
+      if(all(is.element(method, c("MIFA", "MIFA", "IMIFA", "OMIFA")), plotQ.ind)) {
         plot.Q <- GQ.res$Q.Counts
         Q.name <- lapply(plot.Q, names)
         rangeQ <- as.numeric(unique(unlist(Q.name, use.names=F)))
@@ -483,11 +483,19 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
         missQ  <- lapply(seq_len(G), function(g) setNames(rep(0, length(missQ[[g]])), as.character(missQ[[g]])))
         plot.Q <- lapply(seq_len(G), function(g) c(plot.Q[[g]], missQ[[g]]))
         plot.Q <- do.call(rbind, lapply(seq_len(G), function(g) plot.Q[[g]][order(as.numeric(names(plot.Q[[g]])))]))
+        if(titles) {
+          layout(rbind(1, 2), heights=c(9, 1))
+          par(mar=c(3.1, 4.1, 4.1, 2.1))
+        }
         Q.plot <- barplot(plot.Q, beside=T, ylab="Frequency", xaxt="n", col=seq_len(G + 1)[-1])
         if(titles) title(main=list(expression('Posterior Distribution of Q'["g"])))
         axis(1, at=apply(Q.plot, 2, median), labels=colnames(plot.Q), tick=F)
         axis(1, at=median(Q.plot), labels="Q", tick=F, line=1.5)
-        if(titles) legend("topright", legend=paste0("Group ", seq_len(G)), bty="n", pch=15, col=seq_len(G + 1)[-1])
+        if(titles) {
+          par(mar=c(0, 0, 0, 0))
+          plot.new()
+          legend("center", legend=paste0("Group ", seq_len(G)), ncol=ceiling(G/5), bty="n", pch=15, col=seq_len(G + 1)[-1], cex=max(0.7, 1 - 0.03 * G))
+        }
       }
       if(!any(plotQ.ind, plotG.ind))  message("Nothing to plot")
       if(is.element(method, c("IMIFA", "OMIFA")))     {
