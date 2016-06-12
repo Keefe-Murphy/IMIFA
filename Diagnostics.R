@@ -210,27 +210,27 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
         z.temp   <- sw.lab$z
         l.perm   <- sw.lab$z.perm
       }
-      for(ls in seq_along(tmp.store)[-1])   {
-        sw.lab   <- lab.switch(z.new=z[,ls], z.old=z.temp, Gs=Gseq2)
-        z[,ls]   <- sw.lab$z
+      for(sl in seq_along(tmp.store)[-1])   {
+        sw.lab   <- lab.switch(z.new=z[,sl], z.old=z.temp, Gs=Gseq2)
+        z[,sl]   <- sw.lab$z
         z.perm   <- sw.lab$z.perm
         perm     <- identical(unname(z.perm), Gseq2)
         if(!perm) {
           if(sw["mu.sw"])  {
-            mus[,,ls]    <- mus[,z.perm,ls]
+            mus[,,sl]    <- mus[,z.perm,sl]
           }
           if(sw["l.sw"])   {
-            lmats[,,,ls] <- lmats[,,z.perm,ls]
+            lmats[,,,sl] <- lmats[,,z.perm,sl]
           }
           if(sw["psi.sw"]) {
-            psis[,,ls]   <- psis[,z.perm,ls]
+            psis[,,sl]   <- psis[,z.perm,sl]
           }
           if(sw["pi.sw"])  {
-            pies[,ls]    <- pies[z.perm,ls]
+            pies[,sl]    <- pies[z.perm,sl]
           }
           if(is.element(method, c("MIFA", "OMIFA", 
              "IMIFA")))    {
-            Q.store[,ls] <- Q.store[z.perm,ls]
+            Q.store[,sl] <- Q.store[z.perm,sl]
           }  
         }
       }
@@ -266,6 +266,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     ind          <- lapply(Gseq, function(g) post.z == g)
   }
   if(inf.Q)   {
+    Q.store      <- if(G > 1) Q.store[Gseq,] else Q.store
     Q.tab        <- if(G > 1) lapply(apply(Q.store, 1, function(x) list(table(x, dnn=NULL))), "[[", 1) else table(Q.store, dnn=NULL)
     Q.prob       <- if(G > 1) lapply(Q.tab, prop.table) else prop.table(Q.tab)
     Q.mode       <- if(G > 1) unlist(lapply(Q.tab, function(qt) as.numeric(names(qt[qt == max(qt)])[1]))) else as.numeric(names(Q.tab[Q.tab == max(Q.tab)])[1])
