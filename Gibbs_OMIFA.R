@@ -143,17 +143,19 @@
       sum.terms    <- lapply(Gseq, function(g) diag(crossprod(phi[[g]], load.2[[g]])))
       for(g in Gseq)     {
         Qg         <- Qs[g]
-        sum.termg  <- sum.terms[[g]]
         nng        <- nn[g]
+        if(nng      > 0) {
+          sumtermg <- sum.terms[[g]]  
+        }
         if(Qg       > 0) {
           delta[[g]][1]    <- if(nng > 0) sim.delta1(Q=Qg, alpha.d1=alpha.d1, delta=delta[[g]], P=P, beta.d1=beta.d1, 
-                              tau=tau[[g]], sum.term=sum.termg) else sim.delt.1p(alpha.d1=alpha.d1, beta.d1=beta.d1)
+                              tau=tau[[g]], sum.term=sumtermg) else sim.delt.1p(alpha.d1=alpha.d1, beta.d1=beta.d1)
           tau[[g]]         <- cumprod(delta[[g]])
         }
         if(Qg       > 1) {
           for(k in seq_len(Qg)[-1]) { 
             delta[[g]][k]  <- if(nng > 0) sim.deltak(Q=Qg, alpha.dk=alpha.dk, delta=delta[[g]], P=P, beta.dk=beta.dk, k=k, 
-                              tau=tau[[g]], sum.term=sum.termg) else sim.delt.kp(Q=2, alpha.dk=alpha.dk, beta.dk=beta.dk)
+                              tau=tau[[g]], sum.term=sumtermg) else sim.delt.kp(Q=2, alpha.dk=alpha.dk, beta.dk=beta.dk)
             tau[[g]]       <- cumprod(delta[[g]])
           }
         }
