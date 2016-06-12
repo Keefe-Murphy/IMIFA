@@ -214,7 +214,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
         sw.lab   <- lab.switch(z.new=z[,sl], z.old=z.temp, Gs=Gseq2)
         z[,sl]   <- sw.lab$z
         z.perm   <- sw.lab$z.perm
-        perm     <- identical(unname(z.perm), Gseq2)
+        perm     <- identical(as.integer(z.perm), Gseq2)
         if(!perm) {
           if(sw["mu.sw"])  {
             mus[,,sl]    <- mus[,z.perm,sl]

@@ -113,13 +113,15 @@
           Qg       <- Qs[g]
           Qgs      <- seq_len(Qg)
           nng      <- nn[g]
-          c.datg   <- c.data[[g]]
-          psi.ig   <- psi.inv[,g]
+          if(nng    > 0)  {
+            c.datg <- c.data[[g]]
+            psi.ig <- psi.inv[,g]  
+          }
           if(Qg     > 0)  {
-            fgg            <- if(nng > 0) sim.score(N=nng, lmat=lmat[[g]], Q=Qg, 
-                              c.data=c.datg, psi.inv=psi.ig) else sim.f.p(Q=Qg, N=nng)
+            fgg            <- if(nng > 0) sim.score(N=nng, lmat=lmat[[g]], Q=Qg, c.data=c.datg, psi.inv=psi.ig)
             lmat[[g]]      <- if(nng > 0) matrix(unlist(lapply(Pseq, function(j) sim.load(Q=Qg, c.data=c.datg[,j], f=fgg, FtF=crossprod(fgg), 
-                              P=P, psi.inv=psi.ig[j], phi=phi[[g]][j,], tau=tau[[g]])), use.names=F), nr=P, byrow=T) else matrix(unlist(lapply(Pseq, function(j) sim.load.p(Q=Qg, phi=phi[[g]][j,], tau=tau[[g]], P=P)), use.names=F), nr=P, byrow=T)
+                              P=P, psi.inv=psi.ig[j], phi=phi[[g]][j,], tau=tau[[g]])), use.names=F), nr=P, byrow=T) else matrix(unlist(
+                              lapply(Pseq, function(j) sim.load.p(Q=Qg, phi=phi[[g]][j,], tau=tau[[g]], P=P)), use.names=F), nr=P, byrow=F)
             fg[[g]][,Qgs]  <- fgg
           } else {
             lmat[[g]]      <- matrix(, nr=P, nc=0)
@@ -190,7 +192,7 @@
       switch.lab   <- lab.switch(z.new=z, z.old=z.temp, Gs=Gseq)
       z            <- switch.lab$z
       z.perm       <- switch.lab$z.perm
-      perm         <- identical(unname(z.perm), Gseq)
+      perm         <- identical(as.integer(z.perm), Gseq)
       if(!perm) {
       # Qs         <- Qs[z.perm]
         if(sw["mu.sw"])  {

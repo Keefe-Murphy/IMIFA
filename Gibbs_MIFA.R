@@ -200,7 +200,7 @@
         switch.lab <- lab.switch(z.new=z, z.old=z.temp, Gs=Gseq)
         z          <- switch.lab$z
         z.perm     <- switch.lab$z.perm
-        perm       <- identical(unname(z.perm), Gseq)
+        perm       <- identical(as.integer(z.perm), Gseq)
         if(!perm) {
          if(sw["mu.sw"])  {
           mu       <- mu[,z.perm]
