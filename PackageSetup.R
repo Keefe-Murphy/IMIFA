@@ -187,9 +187,9 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "OMIFA", "MIFA", "MFA", 
     if(all(method != "MIFA",
        any(delta0g, qstar0g)))      stop("'delta0g' and 'qstar0g' can only be TRUE for the 'MIFA' method")
     if(missing("alpha.pi"))  alpha.pi      <- ifelse(method == "OMIFA", 0.5/range.G, 1)
-    if(any(length(alpha.pi) != 1,
-           alpha.pi <= 0))          stop("'alpha.pi' must be a strictly positive scalar")
-    if(alpha.pi > 1)                warning("Are you sure alpha.pi should be greater than 1?")
+    if(length(alpha.pi) != 1)       stop("'alpha.pi' must be specified as a scalar to ensure an exchangeable prior")
+    if(alpha.pi <= 0))              stop("'alpha.pi' must be strictly positive")
+    if(alpha.pi  > 1)               warning("Are you sure alpha.pi should be greater than 1?")
                              z.init        <- match.arg(z.init)
     if(!missing(z.list))   {
       if(!is.list(z.list))   z.list        <- list(z.list)
