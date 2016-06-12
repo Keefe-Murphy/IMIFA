@@ -490,11 +490,11 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
         Q.plot <- barplot(plot.Q, beside=T, ylab="Frequency", xaxt="n", col=seq_len(G + 1)[-1])
         if(titles) title(main=list(expression('Posterior Distribution of Q'["g"])))
         axis(1, at=apply(Q.plot, 2, median), labels=colnames(plot.Q), tick=F)
-        axis(1, at=median(Q.plot), labels="Q", tick=F, line=1.5)
+        axis(1, at=median(Q.plot), labels="Q", tick=F, line=1)
         if(titles) {
           par(mar=c(0, 0, 0, 0))
           plot.new()
-          legend("center", legend=paste0("Group ", seq_len(G)), ncol=ceiling(G/5), bty="n", pch=15, col=seq_len(G + 1)[-1], cex=max(0.7, 1 - 0.03 * G))
+          legend("center", legend=paste0("Group ", seq_len(G)), ncol=ceiling(G/2), bty="n", pch=15, col=seq_len(G + 1)[-1], cex=max(0.7, 1 - 0.03 * G))
         }
       }
       if(!any(plotQ.ind, plotG.ind))  message("Nothing to plot")
