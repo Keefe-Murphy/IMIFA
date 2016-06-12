@@ -304,6 +304,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
 
 # Loop over g in G to extract other results
   result         <- list(list())
+  f.store        <- list()
   MSE   <- RMSE  <- NRMSE  <- CVRMSE  <- 
   MAD   <- emp.T <- est.T  <- rep(NA, G)
   for(g in Gseq) {
@@ -342,13 +343,14 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     }
     if(sw["l.sw"])      {
       for(p in seq_len(n.store)) {
+        pf               <- store[p]
         rot              <- procrustes(X=as.matrix(lmat[,,p]), Xstar=l.temp)$R
         lmat[,,p]        <- lmat[,,p] %*% rot
         if(sw["f.sw"])  {
           if(clust.ind) {
-            fg[,,p]      <- fg[,,p]   %*% rot
+            fg[,,pf]     <- fg[,,pf]  %*% rot
           } else {
-            f[,,p]       <- f[,,p]    %*% rot
+            f[,,pf]      <- f[,,pf]   %*% rot
           }
         }  
       }
@@ -483,8 +485,10 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
                          if(est.T[g])     list(cov.est   = cov.est))
     result[[g]]  <- unlist(results, recursive=F)
     attr(result[[g]], "Store") <- n.store
+    f.store[[g]] <- store
   }
   if(sw["f.sw"]) {
+    f            <- f[,,unique(unlist(f.store)), drop=F]
     scores       <- list(f = f, post.f = rowMeans(f, dims=2), var.f = apply(f, c(1, 2), var),
                          CI.f  = apply(f, c(1, 2), function(x) quantile(x, conf.levels)))
   }
