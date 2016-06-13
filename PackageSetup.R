@@ -18,7 +18,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "OMIFA", "MIFA", "MFA", 
                         adapt = T, b0 = NULL, b1 = NULL, delta0g = F, prop = NULL, epsilon = NULL, sigma.mu = NULL, sigma.l = NULL,
                         mu0g = F, psi0g = F, mu.zero = NULL, phi.nu = NULL, psi.alpha = NULL, psi.beta = NULL, alpha.d1 = NULL, 
                         alpha.dk = NULL, beta.d1 = NULL, beta.dk = NULL, alpha.pi = NULL, z.list = NULL, profile = F, mu.switch = T, 
-                        f.switch = T, load.switch = T, psi.switch = T, pi.switch = T, z.init = c("mclust", "list", "kmeans", "priors")) {
+                        f.switch = T, load.switch = T, psi.switch = T, pi.switch = T, z.init = c("kmeans", "list", "mclust", "priors")) {
   
   defpar    <- suppressWarnings(par(no.readonly = T))
   defop     <- options()
@@ -190,9 +190,9 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "OMIFA", "MIFA", "MFA", 
     if(length(alpha.pi) != 1)       stop("'alpha.pi' must be specified as a scalar to ensure an exchangeable prior")
     if(alpha.pi <= 0)               stop("'alpha.pi' must be strictly positive")
     if(alpha.pi  > 1)               warning("Are you sure alpha.pi should be greater than 1?", call.=F)
+                             z.init        <- match.arg(z.init)
     if(all(method == "OMIFA", !is.element(z.init, 
        c("list", "kmeans"))))       stop("'z.init' must be set to 'list' or 'kmeans' for the OMIFA method to ensure all groups are populated at the initialisation stage")
-                             z.init        <- match.arg(z.init)
     if(!missing(z.list))   {
       if(!is.list(z.list))   z.list        <- list(z.list)
                              z.list        <- lapply(z.list, as.factor)
