@@ -495,10 +495,10 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
         if(titles) {
           par(mar=c(0, 0, 0, 0))
           plot.new()
-          tmp  <- unlist(lapply(Gseq, function(g) c(Gseq[g], Gseq[g + ceiling(G/2)])))[Gseq]
+          tmp  <- if(G > 5) unlist(lapply(Gseq, function(g) c(Gseq[g], Gseq[g + ceiling(G/2)])))[Gseq] else Gseq
           ltxt <- paste0("Group ", tmp)
           lcol <- (Gseq + 1)[tmp]
-          legend("center", legend=ltxt, ncol=ceiling(G/2), bty="n", pch=15, col=lcol, cex=max(0.7, 1 - 0.03 * G))
+          legend("center", legend=ltxt, ncol=if(G > 5) ceiling(G/2) else G, bty="n", pch=15, col=lcol, cex=max(0.7, 1 - 0.03 * G))
         }
       }
       if(!any(plotQ.ind, plotG.ind))  message("Nothing to plot")
