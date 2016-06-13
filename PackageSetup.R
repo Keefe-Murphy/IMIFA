@@ -189,7 +189,9 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "OMIFA", "MIFA", "MFA", 
     if(missing("alpha.pi"))  alpha.pi      <- ifelse(method == "OMIFA", 0.5/range.G, 1)
     if(length(alpha.pi) != 1)       stop("'alpha.pi' must be specified as a scalar to ensure an exchangeable prior")
     if(alpha.pi <= 0)               stop("'alpha.pi' must be strictly positive")
-    if(alpha.pi  > 1)               warning("Are you sure alpha.pi should be greater than 1?")
+    if(alpha.pi  > 1)               warning("Are you sure alpha.pi should be greater than 1?", call.=F)
+    if(all(method == "OMIFA", !is.element(z.init, 
+       c("list", "kmeans"))))       stop("'z.init' must be set to 'list' or 'kmeans' for the OMIFA method to ensure all groups are populated at the initialisation stage")
                              z.init        <- match.arg(z.init)
     if(!missing(z.list))   {
       if(!is.list(z.list))   z.list        <- list(z.list)
@@ -198,9 +200,11 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "OMIFA", "MIFA", "MFA", 
                                     message("'z.init' set to 'list' as 'z.list' was supplied") }
       if(length(z.list)   != length(range.G))        {
                                     stop(paste0("'z.list' must be a list of length ", length(range.G))) }
-      if(!is.element(method, c("IMIFA", "OMIFA")))   {
-        if(!all(lapply(z.list, nlevels) == range.G)) {
-                                    stop(paste0("Each element of 'z.list' must have the same number of levels as 'range.G'")) }
+                             list.levels   <- lapply(z.list, nlevels)
+      if(!all(list.levels == range.G))               {
+        if(!is.element(method, c("IMIFA", "OMIFA"))) {
+                                    stop(paste0("Each element of 'z.list' must have the same number of levels as 'range.G'")) 
+        } else                      stop(paste0("Only ", list.levels, " groups are populated according to z.list, but 'range.G' has been set to ", range.G, ".\n  Reset range.G to this value to avoid redunandtly carrying around empty groups"))
       }
       if(!all(lapply(z.list, length)    == N))       {
                                     stop(paste0("Each element of 'z.list' must be a vector of length N=", N)) }
@@ -276,14 +280,14 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "OMIFA", "MIFA", "MFA", 
         k.res      <- try(kmeans(dat, G, nstart=100), silent=T)
         if(!inherits(k.res, "try-error"))  {
           zi[[g]]  <- as.numeric(factor(k.res$cluster, levels=seq_len(G)))
-        } else                      warning("Cannot initialise cluster labels using kmeans. Try another z.init method")
+        } else                      warning("Cannot initialise cluster labels using kmeans. Try another z.init method", call.=F)
       } else if(z.init  == "list")   {
         zi[[g]]    <- as.numeric(z.list[[g]])
       } else if(z.init  == "mclust") {
         m.res      <- try(Mclust(dat, G), silent=T)
         if(!inherits(m.res, "try_error"))  {
           zi[[g]]  <- as.numeric(m.res$classification)
-        } else                      warning("Cannot initialise cluster labels using mclust. Try another z.init method")
+        } else                      warning("Cannot initialise cluster labels using mclust. Try another z.init method", call.=F)
       } else {
         zips       <- rep(1, N)
         while(all(length(unique(zips)) != G, !is.element(method, c("IMIFA", "OMIFA")),
@@ -318,7 +322,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "OMIFA", "MIFA", "MFA", 
         sw0g.tmp   <- sw0gs
         if(all(G > 9, any(sw0gs))) {
           sw0g.tmp <- setNames(rep(F, 4), names(sw0gs))
-          warning(paste0(names(which(sw0gs == T)), " set to FALSE where G > 9, as 'exact' label-switching is not possible in this case\n"))
+                                    warning(paste0(names(which(sw0gs == T)), " set to FALSE where G > 9, as 'exact' label-switching is not possible in this case\n"), call.=F)
         }
         clust[[g]] <- append(clust[[g]], list(l.switch = sw0g.tmp))
       }
