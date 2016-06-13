@@ -5,8 +5,11 @@
 # Preamble
  #set.seed(1)
  #rm(list=ls(all=T))
-  if(getwd() != "/home/kmurphy") {
-    setwd("C:/Users/Windows/Dropbox/UCD/Claire IMIFA")
+  if(getwd() != "/home/kmurphy")  {
+    wd       <- try(setwd("C:/Users/Windows/Dropbox/UCD/Claire IMIFA"), silent=T)
+    if(inherits(wd, "try-error")) {
+      setwd("D:/Dropbox/UCD/Claire IMIFA")
+    }
   }
   source(paste0(getwd(), "/IMIFA-GIT/PackageSetup.R", sep=""))
     
