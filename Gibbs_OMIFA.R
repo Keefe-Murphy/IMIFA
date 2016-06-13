@@ -92,34 +92,37 @@
         }
       }
       nn           <- tabulate(z, nbins=G)
+      nn0          <- nn > 0
+      Q0           <- Qs > 0
       z.ind        <- lapply(Gseq, function(g) z == g)
       
     # Means
       sum.data     <- lapply(Gseq, function(g) colSums(data[z.ind[[g]],, drop=F]))
       sum.f        <- lapply(Gseq, function(g) colSums(f[z.ind[[g]],, drop=F]))
-      mu           <- do.call(cbind, lapply(Gseq, function(g) if(nn[g] > 0) sim.mu(N=nn[g], mu.sigma=mu.sigma, psi.inv=psi.inv[,g], P=P, sum.data=sum.data[[g]], 
+      mu           <- do.call(cbind, lapply(Gseq, function(g) if(nn0[g]) sim.mu(N=nn[g], mu.sigma=mu.sigma, psi.inv=psi.inv[,g], P=P, sum.data=sum.data[[g]], 
                               sum.f=sum.f[[g]][seq_len(Qs[g])], lmat=lmat[[g]], mu.zero=mu.zero) else sim.mu.p(P=P, sigma.mu=sigma.mu, mu.zero=mu.zero)))
     
     # Scores & Loadings
       c.data       <- lapply(Gseq, function(g) sweep(data[z.ind[[g]],, drop=F], 2, mu[,g], FUN="-"))
-      if(all(Qs    == 0)) {
+      if(!any(Q0))  {
         f          <- matrix(, nr=N, nc=0)
         lmat       <- lapply(Gseq, function(g) matrix(, nr=P, nc=0))
       } else {
         fg         <- lapply(Gseq, function(g) matrix(0, nr=nn[g], nc=max(Qs)))
         fgnames    <- lapply(Gseq, function(g) obsnames[z.ind[[g]]])
         fg         <- mapply(function(mats, nams) {rownames(mats) <- nams; mats}, fg, fgnames, SIMPLIFY=F)
-        for(g in Gseq)    {
+        for(g in Gseq) {
           Qg       <- Qs[g]
           Qgs      <- seq_len(Qg)
           nng      <- nn[g]
-          if(nng    > 0)  {
+          nn0g     <- nng > 0
+          if(nn0g)  {
             c.datg <- c.data[[g]]
             psi.ig <- psi.inv[,g]  
           }
-          if(Qg     > 0)  {
-            fgg            <- if(nng > 0) sim.score(N=nng, lmat=lmat[[g]], Q=Qg, c.data=c.datg, psi.inv=psi.ig)
-            lmat[[g]]      <- if(nng > 0) matrix(unlist(lapply(Pseq, function(j) sim.load(Q=Qg, c.data=c.datg[,j], f=fgg, FtF=crossprod(fgg), 
+          if(Q0[g]) {
+            fgg            <- if(nn0g) sim.score(N=nng, lmat=lmat[[g]], Q=Qg, c.data=c.datg, psi.inv=psi.ig)
+            lmat[[g]]      <- if(nn0g) matrix(unlist(lapply(Pseq, function(j) sim.load(Q=Qg, c.data=c.datg[,j], f=fgg, FtF=crossprod(fgg), 
                               P=P, psi.inv=psi.ig[j], phi=phi[[g]][j,], tau=tau[[g]])), use.names=F), nr=P, byrow=T) else matrix(unlist(
                               lapply(Pseq, function(j) sim.load.p(Q=Qg, phi=phi[[g]][j,], tau=tau[[g]], P=P)), use.names=F), nr=P, byrow=F)
             fg[[g]][,Qgs]  <- fgg
@@ -131,30 +134,31 @@
       }
                   
     # Uniquenesses
-      psi.inv      <- do.call(cbind, lapply(Gseq, function(g) if(nn[g] > 0) sim.psi.i(N=nn[g], psi.alpha=psi.alpha, c.data=c.data[[g]], psi.beta=psi.beta, 
+      psi.inv      <- do.call(cbind, lapply(Gseq, function(g) if(nn0[g]) sim.psi.i(N=nn[g], psi.alpha=psi.alpha, c.data=c.data[[g]], psi.beta=psi.beta, 
                               P=P, f=f[z.ind[[g]],seq_len(Qs[g]),drop=F], lmat=lmat[[g]]) else sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)))
     
     # Local Shrinkage
       load.2       <- lapply(lmat, function(lg) lg * lg)
-      phi          <- lapply(Gseq, function(g) if(nn[g] > 0) sim.phi(Q=Qs[g], P=P, phi.nu=phi.nu, 
+      phi          <- lapply(Gseq, function(g) if(nn0[g]) sim.phi(Q=Qs[g], P=P, phi.nu=phi.nu, 
                       tau=tau[[g]], load.2=load.2[[g]]) else sim.phi.p(Q=Qs[g], P=P, phi.nu=phi.nu))
     
     # Global Shrinkage
       sum.terms    <- lapply(Gseq, function(g) diag(crossprod(phi[[g]], load.2[[g]])))
-      for(g in Gseq)     {
+      for(g in Gseq)   {
         Qg         <- Qs[g]
         nng        <- nn[g]
-        if(nng      > 0) {
+        nn0g       <- nng > 0
+        if(nn0g)   {
           sumtermg <- sum.terms[[g]]  
         }
-        if(Qg       > 0) {
-          delta[[g]][1]    <- if(nng > 0) sim.delta1(Q=Qg, alpha.d1=alpha.d1, delta=delta[[g]], P=P, beta.d1=beta.d1, 
+        if(Q0[g])  {
+          delta[[g]][1]    <- if(nn0g) sim.delta1(Q=Qg, alpha.d1=alpha.d1, delta=delta[[g]], P=P, beta.d1=beta.d1, 
                               tau=tau[[g]], sum.term=sumtermg) else sim.delt.1p(alpha.d1=alpha.d1, beta.d1=beta.d1)
           tau[[g]]         <- cumprod(delta[[g]])
         }
-        if(Qg       > 1) {
+        if(Qg > 1) {
           for(k in seq_len(Qg)[-1]) { 
-            delta[[g]][k]  <- if(nng > 0) sim.deltak(Q=Qg, alpha.dk=alpha.dk, delta=delta[[g]], P=P, beta.dk=beta.dk, k=k, 
+            delta[[g]][k]  <- if(nn0g) sim.deltak(Q=Qg, alpha.dk=alpha.dk, delta=delta[[g]], P=P, beta.dk=beta.dk, k=k, 
                               tau=tau[[g]], sum.term=sumtermg) else sim.delt.kp(Q=2, alpha.dk=alpha.dk, beta.dk=beta.dk)
             tau[[g]]       <- cumprod(delta[[g]])
           }
@@ -166,7 +170,7 @@
         prob       <- 1/exp(b0 + b1 * (iter - burnin))
         unif       <- runif(n=1, min=0, max=1)     
         if(unif     < prob) { 
-          lind     <- lapply(Gseq, function(g) if(Qs[g] > 0) colSums(abs(lmat[[g]]) < epsilon)/P else 0)
+          lind     <- lapply(Gseq, function(g) if(Q0[g]) colSums(abs(lmat[[g]]) < epsilon)/P else 0)
           colvec   <- lapply(lind, function(lx) lx >= prop)
           nonred   <- lapply(colvec, function(cv) which(cv == 0))
           numred   <- lapply(colvec, sum)
@@ -225,10 +229,10 @@
         log.like   <- sum(z.res$log.likes)
         if(sw["mu.sw"])    mu.store[,,new.it]       <- mu 
         if(all(sw["f.sw"], 
-           any(Qs   > 0))) f.store[,seq_len(max(Qs)),new.it]    <- f
+           any(Q0)))  f.store[,seq_len(max(Qs)),new.it]    <- f
         if(sw["l.sw"])   {
           for(g in Gseq) {
-            if(Qs[g] > 0)  load.store[,seq_len(Qs[g]),g,new.it] <- lmat[[g]]
+            if(Q0[g]) load.store[,seq_len(Qs[g]),g,new.it] <- lmat[[g]]
           }
         }
         if(sw["psi.sw"])   psi.store[,,new.it]      <- psi
@@ -236,7 +240,7 @@
                            z.store[,new.it]         <- z 
                            ll.store[new.it]         <- log.like  
                            Q.store[,new.it]         <- Qs
-                           G.store[new.it]          <- sum(nn > 0)
+                           G.store[new.it]          <- sum(nn0)
       }
     }
     returns        <- list(mu       = if(sw["mu.sw"])  mu.store,
