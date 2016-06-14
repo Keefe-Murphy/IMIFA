@@ -21,8 +21,8 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   tmp.store      <- store
   label.switch   <- attr(sims, "Label.Switch")
   method         <- attr(sims, "Method")
-  inf.G          <- is.element(method, c("IMIFA", "OMIFA"))
-  inf.Q          <- !is.element(method, c("FA", "MFA"))
+  inf.G          <- is.element(method, c("IMIFA", "OMIFA", "OMFA"))
+  inf.Q          <- !is.element(method, c("FA", "MFA", "OMFA"))
   n.fac          <- attr(sims, "Factors")
   n.grp          <- attr(sims, "Groups")
   n.obs          <- attr(sims, "Obs")
@@ -36,9 +36,9 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
         (1 - conf.level)) < 0)    stop("'conf.level' must be a single number between 0 and 1")
   conf.levels    <- c((1 - conf.level)/2, 1 - (1 - conf.level)/2)
   criterion      <- match.arg(criterion)
-  if(all(!is.element(method, c("FA", "MFA")),
+  if(all(!is.element(method, c("FA", "MFA", "OMFA")),
      !is.element(criterion, 
-     c("aicm", "bicm"))))         stop("'criterion' should be one of 'aicm' or 'bicm' for the MIFA method")
+     c("aicm", "bicm"))))         stop(paste0("'criterion' should be one of 'aicm' or 'bicm' for the ", method, "method"))
   if(!is.logical(recomp))         stop("'recomp' must be TRUE or FALSE")
   if(any(burnin   > 0, 
      thinning     > 1)) recomp <- T
@@ -48,7 +48,8 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   G.ind          <- 1
   Q.ind          <- 1
   if(inf.G) {
-    G.store      <- sims[[G.ind]][[Q.ind]]$G.store[store]
+    GQs          <- length(sims[[G.ind]])
+    G.store      <- matrix(unlist(lapply(seq_len(GQs), function(gq) sims[[G.ind]][[gq]]$G.store[store])), nr=GQs, nc=length(store))
     G.meth       <- ifelse(missing(G.meth), "Mode", match.arg(G.meth))
   }
   if(G.T)   {
@@ -77,21 +78,21 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   } 
   
   if(inf.G) {
-    G.tab        <- table(G.store, dnn=NULL)
-    G.prob       <- prop.table(G.tab)
-    G.mode       <- as.numeric(names(G.tab[G.tab == max(G.tab)])[1])
-    G.med        <- ceiling(median(G.store) * 2)/2
+    G.tab        <- if(GQs > 1) lapply(apply(G.store, 1, function(x) list(table(x, dnn=NULL))), "[[", 1) else table(G.store, dnn=NULL)
+    G.prob       <- if(GQs > 1) lapply(G.tab, prop.table) else prop.table(G.tab)
+    G.mode       <- if(GQs > 1) unlist(lapply(G.tab, function(gt) as.numeric(names(gt[gt == max(gt)])[1]))) else as.numeric(names(G.tab[G.tab == max(G.tab)])[1])
+    G.med        <- if(GQs > 1) ceiling(apply(G.store, 1, median) * 2)/2 else ceiling(median(G.store) * 2)/2
     if(!G.T) {
       G          <- if(G.meth == "Mode") G.mode else floor(G.med)
     }
-    G.CI         <- round(quantile(G.store, conf.levels))
-    tmp.store    <- store[which(G.store == G)]
+    G.CI         <- if(GQs > 1) apply(G.store, 1, function(gs) round(quantile(gs, conf.levels))) else round(quantile(G.store, conf.levels))
+    tmp.store    <- if(GQs > 1) lapply(seq_len(GQs), function(gq) store[which(G.store[gq,] == G[gq])]) else store[which(G.store == G)]
     GQ.temp1     <- list(G = G, G.Mode = G.mode, G.Median = G.med, 
                          G.CI = G.CI, G.Probs = G.prob, G.Counts = G.tab)
   }
   
   G.range        <- ifelse(G.T, 1, length(n.grp))
-  Q.range        <- ifelse(any(Q.T, inf.Q), 1, length(n.fac))
+  Q.range        <- ifelse(any(Q.T, all(method != "OMFA", inf.Q)), 1, length(n.fac))
   crit.mat       <- matrix(NA, nr=G.range, nc=Q.range)
     
   # Retrieve log-likelihoods and/or tune G &/or Q according to criterion
@@ -104,10 +105,11 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     } else {
       dimnames(crit.mat) <- list(paste0("G", n.grp), paste0("Q", n.fac))
     }
-    if(inf.Q) {
+    if(all(method != "OMFA",
+       inf.Q)) {
       colnames(crit.mat) <- "IFA"
     }
-    if(inf.G) {
+    if(inf.G)  {
       rownames(crit.mat) <- "IM"
     }
     aicm         <- bicm       <- 
@@ -117,14 +119,14 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       gi                 <- ifelse(G.T, G.ind, g)
       for(q in seq_len(Q.range)) {
         qi               <- ifelse(Q.T, Q.ind, q)
-        log.likes        <- sims[[gi]][[qi]]$ll.store[tmp.store]
+        log.likes        <- if(method == "OMFA" && GQs > 1) sims[[gi]][[qi]]$ll.store[tmp.store[[qi]]] else sims[[gi]][[qi]]$ll.store[tmp.store]
         ll.max           <- 2 * max(log.likes, na.rm=T)
         ll.var           <- ifelse(length(log.likes) != 1, 2 * var(log.likes, na.rm=T), 0)
         ll.mean          <- mean(log.likes, na.rm=T)
         aicm[g,q]        <- ll.max - ll.var * 2
         bicm[g,q]        <- ll.max - ll.var * log.N
         if(!inf.Q) {
-          K              <- attr(sims[[gi]][[qi]], "K")
+          K              <- if(method != "OMFA") attr(sims[[gi]][[qi]], "K") else G[qi] - 1 + G[qi] * (n.var * n.fac[qi] - 0.5 * n.fac[qi] * (n.fac[qi] - 1)) + 2 * G[qi] * n.var
           aic.mcmc[g,q]  <- ll.max - K * 2
           bic.mcmc[g,q]  <- ll.max - K * log.N
         }
@@ -156,14 +158,20 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     } 
     G            <- ifelse(all(length(n.grp) == 1, !inf.G), n.grp, G)
     Gseq         <- seq_len(G)
-    Gseq2        <- if(is.element(method, "OMIFA")) seq_len(n.grp) else Gseq
+    Gseq2        <- if(is.element(method, c("OMIFA", "OMFA"))) seq_len(n.grp) else Gseq
     G.ind        <- ifelse(all(length(n.grp) == 1, !inf.G), which(n.grp == G), G.ind)
     GQ.temp2     <- list(AICMs = aicm, BICMs = bicm)
-    if(!inf.Q) {
+    if(method == "OMFA" &&
+       GQs > 1)  {
+      tmp.store  <- tmp.store[[Q.ind]]
+    }
+    if(!inf.Q)   {
       Q          <- if(length(n.fac) > 1) Q     else n.fac
       Q.ind      <- if(length(n.fac) > 1) Q.ind else which(n.fac == Q)
       Q          <- setNames(rep(Q, G), paste0("Group ", Gseq))  
-      GQ.res     <- c(list(G = G, Q = Q), GQ.temp2, list(AIC.mcmcs = aic.mcmc, BIC.mcmcs = bic.mcmc))
+      GQ.temp1   <- if(method == "OMFA" && GQs > 1) lapply(GQ.temp1, "[[", 1) else if(is.element(method, c("OMIFA", "IMIFA"))) GQ.temp1
+      GQ.temp3   <- c(GQ.temp2, list(AIC.mcmcs = aic.mcmc, BIC.mcmcs = bic.mcmc))
+      GQ.res     <- if(method != "OMFA") c(list(G = G, Q = Q), GQ.temp3) else c(GQ.temp1, list(Q = Q), GQ.temp3)
     }
     clust.ind    <- !any(is.element(method,  c("FA", "IFA")), 
                      all(!is.element(method, c("FA", "IFA")), G == 1))
@@ -182,7 +190,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     }
     if(sw["l.sw"])    {
       lmats      <- sims[[G.ind]][[Q.ind]]$load
-      if(method  != "MFA") {
+      if(!is.element(method, c("MFA", "OMFA"))) {
         lmats    <- as.array(lmats)
       }
       lmats      <- lmats[,,,tmp.store, drop=F]
@@ -195,7 +203,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     }
     z            <- as.matrix(sims[[G.ind]][[Q.ind]]$z.store[,tmp.store])
     label.miss   <- missing(Labels)
-    if(!label.miss) {
+    if(!label.miss)   {
       if(!exists(as.character(substitute(Labels)),
           envir=.GlobalEnv))      stop(paste0("Object ", match.call()$Labels, " not found"))
       zlabels    <- factor(Labels, labels=seq_along(unique(Labels)))
@@ -203,7 +211,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       lev.ind    <- length(levs) == G
       if(length(Labels) != n.obs) stop(paste0("'Labels' must be a factor of length N=",  n.obs))
     }
-    if(any(!label.switch, G > 9))   {
+    if(!label.switch) {
       z.temp     <- factor(z[,1], labels=Gseq)
       if(!label.miss && lev.ind) {    
         sw.lab   <- lab.switch(z.new=z.temp, z.old=zlabels, Gs=Gseq2)
@@ -277,12 +285,12 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       Q          <- if(G.T) Q else setNames(rep(Q, G), paste0("Group ", Gseq))
     }
     Q.CI         <- if(G > 1) apply(Q.store, 1, function(qs) round(quantile(qs, conf.levels))) else round(quantile(Q.store, conf.levels))
-    GQ.temp3     <- list(Q = Q, Q.Mode = Q.mode, Q.Median = Q.med, 
+    GQ.temp4     <- list(Q = Q, Q.Mode = Q.mode, Q.Median = Q.med, 
                          Q.CI = Q.CI, Q.Probs = Q.prob, Q.Counts = Q.tab)
     if(inf.G) {
-      GQ.res     <- c(GQ.temp1, GQ.temp3)
+      GQ.res     <- c(GQ.temp1, GQ.temp4)
     } else    {
-      GQ.res     <- c(list(G = G), GQ.temp3)
+      GQ.res     <- c(list(G = G), GQ.temp4)
     }
     GQ.res       <- c(GQ.res, GQ.temp2)
   }

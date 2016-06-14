@@ -1,6 +1,6 @@
-################################################################
-### Gibbs Sampler for Bayesian Factor Analysis (Group Case) ####
-################################################################
+#####################################################################
+### Gibbs Sampler for Bayesian Factor Analysis (Overfitted Case) ####
+#####################################################################
   
 # Gibbs Sampler Function
   gibbs.OMIFA      <- function(Q, data, iters, N, P, G, mu.zero,

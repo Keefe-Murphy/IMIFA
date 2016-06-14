@@ -437,15 +437,15 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
     } 
     
     if(m.sw["G.sw"]) {
-      plotG.ind  <- is.element(method, c("IMIFA", "OMIFA"))
-      plotQ.ind  <- any(any(g > 1, is.element(method, c("IFA", "MIFA"))), !all(is.element(method, c("IMIFA", "OMIFA")), g == 1))
+      plotG.ind  <- is.element(method, c("IMIFA", "OMIFA", "OMFA"))
+      plotQ.ind  <- any(any(g > 1, is.element(method, c("IFA", "MIFA"))), all(is.element(method, c("IMIFA", "OMIFA")), g != 1))
       aicm       <- round(GQ.res$AICM, 2)
       bicm       <- round(GQ.res$BICM, 2)
-      if(is.element(method, c("FA", "MFA"))) {
+      if(is.element(method, c("FA", "MFA", "OMFA"))) {
         aic.mcmc <- round(GQ.res$AIC.mcmc, 2)
         bic.mcmc <- round(GQ.res$BIC.mcmc, 2)
       }
-      if(all(is.element(method, c("IMIFA", "OMIFA")), g == 1))  {
+      if(all(plotG.ind, g == 1))  {
         plot.G <- GQ.res$G.Counts
         G.name <- names(plot.G)
         rangeG <- as.numeric(G.name)
@@ -460,7 +460,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
         axis(1, at=G.plot, labels=G.name, tick=F) 
         axis(1, at=median(G.plot), labels="G", tick=F, line=1.5) 
       }
-      if(all(method == "IFA", plotQ.ind))  {
+      if(all(method == "IFA", plotQ.ind)) {
         plot.Q <- GQ.res$Q.Counts
         Q.name <- names(plot.Q)
         rangeQ <- as.numeric(Q.name)
@@ -475,7 +475,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
         axis(1, at=Q.plot, labels=Q.name, tick=F) 
         axis(1, at=median(Q.plot), labels="Q", tick=F, line=1.5) 
       }  
-      if(all(is.element(method, c("MIFA", "MIFA", "IMIFA", "OMIFA")), plotQ.ind)) {
+      if(all(method != "IFA", plotQ.ind)) {
         plot.Q <- GQ.res$Q.Counts
         Q.name <- lapply(plot.Q, names)
         rangeQ <- as.numeric(unique(unlist(Q.name, use.names=F)))
@@ -502,13 +502,13 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
         }
       }
       if(!any(plotQ.ind, plotG.ind))  message("Nothing to plot")
-      if(is.element(method, c("IMIFA", "OMIFA")))     {
+      if(is.element(method, c("IMIFA", "OMIFA"))) {
         if(g == 1) {
           print(GQ.res[substring(names(GQ.res), 1, 1) == "G"])
         } else {
           print(GQ.res[substring(names(GQ.res), 1, 1) != "G"])
         }
-      } else if(is.element(method, c("MFA", "MIFA"))) {
+      } else if(is.element(method, c("MFA", "MIFA", "OMFA"))) {
           print(GQ.res)
       } else if(method == "IFA") {
           print(tail(GQ.res, -1))
