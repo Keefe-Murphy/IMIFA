@@ -203,6 +203,9 @@
         z.perm     <- switch.lab$z.perm
         perm       <- identical(as.integer(z.perm), Gseq)
         if(!perm) {
+         if(length(unique(Qs) != 1)) {
+          Qs       <- Qs[z.perm]  
+         }
          if(sw["mu.sw"])  {
           mu       <- mu[,z.perm]
          }
@@ -213,9 +216,6 @@
             phi[[g]]       <- phi[[z.perm[g]]]
             tau[[g]]       <- tau[[z.perm[g]]]
           }
-         }
-         if(all(adapt, iter > burnin)) {
-          Qs       <- unlist(lapply(lmat, ncol))  
          }
          if(sw["psi.sw"]) {
           psi.inv  <- psi.inv[,z.perm]
@@ -241,7 +241,7 @@
       }
       
     if(any(Qs > Q.star))      stop(paste0("Q cannot exceed initial number of loadings columns: try increasing Q.star from ", Q.star))
-      if(is.element(iter, iters))  {
+      if(is.element(iter, iters))    {
         new.it     <- which(iters == iter)
         log.like   <- sum(z.res$log.likes)
         if(sw["mu.sw"])    mu.store[,,new.it]       <- mu  
