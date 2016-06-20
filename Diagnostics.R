@@ -21,8 +21,8 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   tmp.store      <- store
   label.switch   <- attr(sims, "Label.Switch")
   method         <- attr(sims, "Method")
-  inf.G          <- is.element(method, c("IMIFA", "OMIFA", "OMFA"))
-  inf.Q          <- !is.element(method, c("FA", "MFA", "OMFA"))
+  inf.G          <- is.element(method, c("IMIFA", "IMFA", "OMIFA", "OMFA"))
+  inf.Q          <- !is.element(method, c("FA", "MFA", "OMFA", "IMFA"))
   n.fac          <- attr(sims, "Factors")
   n.grp          <- attr(sims, "Groups")
   n.obs          <- attr(sims, "Obs")
@@ -36,7 +36,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
         (1 - conf.level)) < 0)    stop("'conf.level' must be a single number between 0 and 1")
   conf.levels    <- c((1 - conf.level)/2, 1 - (1 - conf.level)/2)
   criterion      <- match.arg(criterion)
-  if(all(!is.element(method, c("FA", "MFA", "OMFA")),
+  if(all(!is.element(method, c("FA", "MFA", "OMFA", "IMFA")),
      !is.element(criterion, 
      c("aicm", "bicm"))))         stop(paste0("'criterion' should be one of 'aicm' or 'bicm' for the ", method, "method"))
   if(!is.logical(recomp))         stop("'recomp' must be TRUE or FALSE")
@@ -92,7 +92,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   }
   
   G.range        <- ifelse(G.T, 1, length(n.grp))
-  Q.range        <- ifelse(any(Q.T, all(method != "OMFA", inf.Q)), 1, length(n.fac))
+  Q.range        <- ifelse(any(Q.T, all(!is.element(method, c("OMFA", "IMFA")), inf.Q)), 1, length(n.fac))
   crit.mat       <- matrix(NA, nr=G.range, nc=Q.range)
     
   # Retrieve log-likelihoods and/or tune G &/or Q according to criterion
@@ -105,7 +105,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     } else {
       dimnames(crit.mat) <- list(paste0("G", n.grp), paste0("Q", n.fac))
     }
-    if(all(method != "OMFA",
+    if(all(!is.element(method, c("OMFA", "IMFA")),
        inf.Q)) {
       colnames(crit.mat) <- "IFA"
     }
@@ -119,14 +119,14 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       gi                 <- ifelse(G.T, G.ind, g)
       for(q in seq_len(Q.range)) {
         qi               <- ifelse(Q.T, Q.ind, q)
-        log.likes        <- if(method == "OMFA" && GQs > 1) sims[[gi]][[qi]]$ll.store[tmp.store[[qi]]] else sims[[gi]][[qi]]$ll.store[tmp.store]
+        log.likes        <- if(is.element(method, c("OMFA", "IMFA")) && GQs > 1) sims[[gi]][[qi]]$ll.store[tmp.store[[qi]]] else sims[[gi]][[qi]]$ll.store[tmp.store]
         ll.max           <- 2 * max(log.likes, na.rm=T)
         ll.var           <- ifelse(length(log.likes) != 1, 2 * var(log.likes, na.rm=T), 0)
         ll.mean          <- mean(log.likes, na.rm=T)
         aicm[g,q]        <- ll.max - ll.var * 2
         bicm[g,q]        <- ll.max - ll.var * log.N
         if(!inf.Q) {
-          K              <- if(method != "OMFA") attr(sims[[gi]][[qi]], "K") else G[qi] - 1 + G[qi] * (n.var * n.fac[qi] - 0.5 * n.fac[qi] * (n.fac[qi] - 1)) + 2 * G[qi] * n.var
+          K              <- if(!is.element(method, c("OMFA", "IMFA"))) attr(sims[[gi]][[qi]], "K") else G[qi] - 1 + G[qi] * (n.var * n.fac[qi] - 0.5 * n.fac[qi] * (n.fac[qi] - 1)) + 2 * G[qi] * n.var
           aic.mcmc[g,q]  <- ll.max - K * 2
           bic.mcmc[g,q]  <- ll.max - K * log.N
         }
@@ -158,10 +158,10 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     } 
     G            <- ifelse(all(length(n.grp) == 1, !inf.G), n.grp, G)
     Gseq         <- seq_len(G)
-    Gseq2        <- if(is.element(method, c("OMIFA", "OMFA"))) seq_len(n.grp) else Gseq
+    Gseq2        <- if(inf.G) seq_len(n.grp) else Gseq
     G.ind        <- ifelse(all(length(n.grp) == 1, !inf.G), which(n.grp == G), G.ind)
     GQ.temp2     <- list(AICMs = aicm, BICMs = bicm)
-    if(method == "OMFA" &&
+    if(is.element(method, c("OMFA", "IMFA")) &&
        GQs > 1)  {
       tmp.store  <- tmp.store[[Q.ind]]
     }
@@ -169,9 +169,9 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       Q          <- if(length(n.fac) > 1) Q     else n.fac
       Q.ind      <- if(length(n.fac) > 1) Q.ind else which(n.fac == Q)
       Q          <- setNames(rep(Q, G), paste0("Group ", Gseq))  
-      GQ.temp1   <- if(method == "OMFA" && GQs > 1) lapply(GQ.temp1, "[[", 1) else if(is.element(method, c("OMIFA", "IMIFA"))) GQ.temp1
+      GQ.temp1   <- if(is.element(method, c("OMFA", "IMFA")) && GQs > 1) lapply(GQ.temp1, "[[", 1) else if(is.element(method, c("OMIFA", "IMIFA"))) GQ.temp1
       GQ.temp3   <- c(GQ.temp2, list(AIC.mcmcs = aic.mcmc, BIC.mcmcs = bic.mcmc))
-      GQ.res     <- if(method != "OMFA") c(list(G = G, Q = Q), GQ.temp3) else c(GQ.temp1, list(Q = Q), GQ.temp3)
+      GQ.res     <- if(!is.element(method, c("OMFA", "IMFA"))) c(list(G = G, Q = Q), GQ.temp3) else c(GQ.temp1, list(Q = Q), GQ.temp3)
     }
     clust.ind    <- !any(is.element(method,  c("FA", "IFA")), 
                      all(!is.element(method, c("FA", "IFA")), G == 1))
@@ -190,7 +190,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     }
     if(sw["l.sw"])    {
       lmats      <- sims[[G.ind]][[Q.ind]]$load
-      if(!is.element(method, c("MFA", "OMFA"))) {
+      if(!is.element(method, c("MFA", "OMFA", "IMFA"))) {
         lmats    <- as.array(lmats)
       }
       lmats      <- lmats[,,,tmp.store, drop=F]
@@ -236,8 +236,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
           if(sw["pi.sw"])  {
             pies[,sl]    <- pies[z.perm,sl]
           }
-          if(is.element(method, c("MIFA", "OMIFA", 
-             "IMIFA")))    {
+          if(inf.Q)        {
             Q.store[,sl] <- Q.store[z.perm,sl]
           }  
         }

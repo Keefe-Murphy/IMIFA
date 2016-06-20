@@ -437,7 +437,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
     } 
     
     if(m.sw["G.sw"]) {
-      plotG.ind  <- is.element(method, c("IMIFA", "OMIFA", "OMFA"))
+      plotG.ind  <- is.element(method, c("IMIFA", "IMFA", "OMIFA", "OMFA"))
       plotQ.ind  <- any(any(g > 1, is.element(method, c("IFA", "MIFA"))), all(is.element(method, c("IMIFA", "OMIFA")), g != 1))
       aicm       <- round(GQ.res$AICM, 2)
       bicm       <- round(GQ.res$BICM, 2)
@@ -508,7 +508,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
         } else {
           print(GQ.res[substring(names(GQ.res), 1, 1) != "G"])
         }
-      } else if(is.element(method, c("MFA", "MIFA", "OMFA"))) {
+      } else if(is.element(method, c("MFA", "MIFA", "OMFA", "IMFA"))) {
           print(GQ.res)
       } else if(method == "IFA") {
           print(tail(GQ.res, -1))
