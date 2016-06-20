@@ -17,6 +17,9 @@
   # Wine
     load(file=paste0(getwd(), "/Data/Wine.Rdata", sep=""), envir=.GlobalEnv)
     Lab      <- wine[,1]
+  # Iris
+    load(file=paste0(getwd(), "/Data/Iris.Rdata", sep=""), envir=.GlobalEnv)
+    Species  <- iris[,5]
   # Urine
     load(file=paste0(getwd(), "/Data/Epi_urine_data.Rdata", sep=""), envir=.GlobalEnv)
     ppms     <- substr(colnames(x10[,4:ncol(x10)]), 2,6); rm(x)
