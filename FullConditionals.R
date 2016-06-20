@@ -192,7 +192,7 @@
       } else if(nc == 1) {
         z.perm  <- setNames(as.numeric(rownames(tab.tmp)))
       } else {
-        z.perm  <- matchClasses(tab.tmp, method="exact", verbose=F)
+        z.perm  <- suppressWarnings(matchClasses(tab.tmp, method="exact", verbose=F))
         z.perm  <- setNames(as.numeric(z.perm), names(z.perm))
       }
       if(length(Gs) > length(z.perm)) {
