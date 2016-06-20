@@ -136,7 +136,7 @@
           mu       <- mu[,z.perm]
          }
          if(sw["l.sw"])   {
-          lmat     <- lmat[,,z.perm]
+          lmat     <- lmat[,,z.perm, drop=F]
          }
          if(sw["psi.sw"]) {
           psi.inv  <- psi.inv[,z.perm]
