@@ -14,7 +14,7 @@ message("   ________  __________________\n  /_  __/  |/   /_  __/ ___/ _ \\  \n 
 
 imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA", "MFA", "IFA", "FA", "classify"), 
                         n.iters = 50000, Labels = NULL, factanal = F, range.G = NULL, range.Q = NULL, verbose = F, Q.fac = NULL,  
-                        burnin = n.iters/5, thinning = 2, centering = T, scaling = c("unit", "pareto", "none"), qstar0g = F, 
+                        burnin = n.iters/5, thinning = 2, centering = T, scaling = c("unit", "pareto", "none"), qstar0g = F, trunc = NULL,
                         adapt = T, b0 = NULL, b1 = NULL, delta0g = F, prop = NULL, epsilon = NULL, sigma.mu = NULL, sigma.l = NULL,
                         mu0g = F, psi0g = F, mu.zero = NULL, phi.nu = NULL, psi.alpha = NULL, psi.beta = NULL, alpha.d1 = NULL, 
                         alpha.dk = NULL, beta.d1 = NULL, beta.dk = NULL, alpha.pi = NULL, z.list = NULL, profile = F, mu.switch = T, 
@@ -74,6 +74,12 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(is.element(method, c("OMIFA", "OMFA", "IMFA", "IMIFA"))) {
       if(G.x) {
         range.G    <- floor(2 * log(N))
+      }
+      if(is.element(method, c("IMFA", "IMIFA"))) {
+        if(missing(trunc))  {
+          trunc    <- 100
+        } 
+        if(trunc    < min(N, 100))  stop(paste0("'trunc' must be at least min(N=", N, ", 100)"))
       }
     } else {
       range.G <- 1
@@ -227,6 +233,9 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   Qi        <- 1
   gibbs.arg <- list(P = P, sigma.mu = sigma.mu, psi.alpha = psi.alpha, burnin = burnin, 
                     thinning = thinning, iters = iters, verbose = verbose, sw = switches)
+  if(is.element(method, c("IMIFA", "IMFA"))) {
+    gibbs.arg      <- append(gibbs.arg, list(trunc = trunc))
+  }
   if(!is.element(method, c("FA", "MFA", "OMFA", "IMFA"))) {
     gibbs.arg      <- append(gibbs.arg, list(phi.nu = phi.nu, beta.d1 = beta.d1, beta.dk = beta.dk, 
                                              adapt = adapt, b0 = b0, b1 = b1, prop = prop, epsilon = epsilon))

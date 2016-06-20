@@ -69,9 +69,12 @@
     }
   
   # Cluster Labels
-    sim.z       <- function(data, mu, Sigma, G, pi.prop) {
-      log.numer <- do.call(cbind, lapply(seq_len(G), function(g) mvdnorm(data, mu[,g], Sigma[[g]], log.d=T) + log(pi.prop[,g])))
-      log.denom <- rowLogSumExps(log.numer)
+    sim.z       <- function(data, mu, Sigma, G, pi.prop, slice.ind=NULL) {
+      log.num   <- do.call(cbind, lapply(seq_len(G), function(g) mvdnorm(data, mu[,g], Sigma[[g]], log.d=T) + log(pi.prop[,g])))
+      if(!missing(slice.ind)) {
+        log.num <- log.num + log(slice.ind)
+      }
+      log.denom <- rowLogSumExps(log.num)
       log.pz    <- sweep(log.numer, 1, log.denom, FUN="-")
       z         <- log.sample(log.pz, G, nrow(log.pz))
         return(list(z = unname(z), log.likes = log.denom))

@@ -4,7 +4,7 @@
   
 # Gibbs Sampler Function
   gibbs.IMFA       <- function(Q, data, iters, N, P, G, mu.zero,
-                               sigma.mu, burnin, thinning, mu,
+                               sigma.mu, burnin, thinning, mu, trunc,
                                psi.alpha, psi.beta, verbose, alpha.d1,
                                alpha.dk, sw, cluster, phi.nu, b0, b1, prop,
                                beta.d1, beta.dk, adapt, epsilon, ...) {
@@ -12,16 +12,17 @@
   # Define & initialise variables
     n.iters        <- round(max(iters), -1)
     n.store        <- length(iters)
-    Gseq           <- seq_len(G)
-    Pseq           <- seq_len(P)
+    Gs             <- seq_len(G)
+    Ts             <- seq_len(trunc)
+    Ps             <- seq_len(P)
     obsnames       <- rownames(data)
     varnames       <- colnames(data)
     facnames       <- paste0("Factor ", seq_len(Q))
-    gnames         <- paste0("Group ", Gseq)
+    gnames         <- paste0("Group ", Ts)
     iternames      <- paste0("Iteration", seq_len(n.store))
     Q0             <- Q > 0
     if(sw["mu.sw"])  {
-      mu.store     <- array(0, dim=c(P, G, n.store))
+      mu.store     <- array(0, dim=c(P, trunc, n.store))
       dimnames(mu.store)   <- list(varnames, gnames, iternames)
     }
     if(sw["f.sw"])   {
@@ -29,33 +30,36 @@
       dimnames(f.store)    <- list(obsnames, if(Q0) facnames, iternames)
     }
     if(sw["l.sw"])   {
-      load.store   <- array(0, dim=c(P, Q, G, n.store))
+      load.store   <- array(0, dim=c(P, Q, trunc, n.store))
       dimnames(load.store) <- list(varnames, if(Q0) facnames, gnames, iternames)
     }
     if(sw["psi.sw"]) {
-      psi.store    <- array(0, dim=c(P, G, n.store))
+      psi.store    <- array(0, dim=c(P, trunc, n.store))
       dimnames(psi.store)  <- list(varnames, gnames, iternames)
     }
     if(sw["pi.sw"])  {
-      pi.store     <- matrix(0, nr=G, nc=n.store)
+      pi.store     <- matrix(0, nr=trunc, nc=n.store)
       dimnames(pi.store)   <- list(gnames, iternames)
     }
     z.store        <- matrix(0, nr=N, nc=n.store)
     ll.store       <- rep(0, n.store)
     G.store        <- rep(0, n.store)
+    v.stick        <- rep(0, trunc)
     dimnames(z.store)      <- list(obsnames, iternames)
     
     mu.sigma       <- 1/sigma.mu
     l.sigma        <- 1/sigma.l 
     z              <- cluster$z
-    z.temp         <- factor(z, levels=Gseq)
+    z.temp         <- factor(z, levels=Gs)
     pi.alpha       <- cluster$pi.alpha
     pi.prop        <- cluster$pi.prop
+    pi.prop        <- cbind(pi.prop, matrix(0, nr=1, nc=trunc - length(pi.prop)))
+    mu             <- cbind(mu, do.call(cbind, lapply(seq_len(trunc - G), function(g) sim.mu.p(P=P, sigma.mu=sigma.mu, mu.zero=mu.zero))))
     f              <- sim.f.p(N=N, Q=Q)
-    lmat           <- lapply(Gseq, function(g) sim.load.p(Q=Q, P=P, sigma.l=sigma.l, shrink=F))
-    psi.inv        <- do.call(cbind, lapply(Gseq, function(g) sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)))
+    lmat           <- lapply(Ts, function(t) sim.load.p(Q=Q, P=P, sigma.l=sigma.l, shrink=F))
+    psi.inv        <- do.call(cbind, lapply(Ts, function(t) sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)))
     if(Q0) {
-      for(g in Gseq) {
+      for(g in Gs)   {
         fact       <- try(factanal(data[z == g,, drop=F], factors=Q, scores="regression", control=list(nstart=50)), silent=T)
         if(!inherits(fact, "try-error")) {
           f[z == g,]       <- fact$scores
@@ -64,7 +68,7 @@
         } else                warning(paste0("Parameters of group ", g, " initialised by simulation from priors, not factanal: G=", G, ", Q=", Q), call.=F)
       }
     } else {
-      psi.inv      <- do.call(cbind, lapply(Gseq, function(g) if(pi.prop[,g] > 0) 1/apply(data[z == g,, drop=F], 2, var) else rep(1, P)))
+      psi.inv[,Gs]         <- do.call(cbind, lapply(Gs, function(g) if(pi.prop[,g] > 0) 1/apply(data[z == g,, drop=F], 2, var) else psi.inv[,g]))
     }
     l.sigma        <- l.sigma * diag(Q)
     lmat           <- array(unlist(lmat, use.names=F), dim=c(P, Q, G))
@@ -92,25 +96,32 @@
       nn           <- tabulate(z, nbins=G)
       nn0          <- nn > 0
       z.ind        <- lapply(Gseq, function(g) z == g)
+    
+    # Slice Sampler
+      pi.i         <- pi.prop[z]
+      u.slice      <- runif(N, 0, pi.i)
+      Au           <- unlist(lapply(seq_along(u.slice), function(u) sum(u.slice[u] < pi.prop)))
+      G            <- max(Au)
+      Gs           <- seq_len(G)
       
     # Means
-      sum.data     <- lapply(Gseq, function(g) colSums(data[z.ind[[g]],, drop=F]))
-      sum.f        <- lapply(Gseq, function(g) colSums(f[z.ind[[g]],, drop=F]))
-      mu           <- do.call(cbind, lapply(Gseq, function(g) if(nn0[g]) sim.mu(N=nn[g], mu.sigma=mu.sigma, psi.inv=psi.inv[,g], P=P, sum.data=sum.data[[g]], 
+      sum.data     <- lapply(Gs, function(g) colSums(data[z.ind[[g]],, drop=F]))
+      sum.f        <- lapply(Gs, function(g) colSums(f[z.ind[[g]],, drop=F]))
+      mu[,Gs]      <- do.call(cbind, lapply(Gs, function(g) if(nn0[g]) sim.mu(N=nn[g], mu.sigma=mu.sigma, psi.inv=psi.inv[,g], P=P, sum.data=sum.data[[g]], 
                               sum.f=sum.f[[g]], lmat=as.matrix(lmat[,,g]), mu.zero=mu.zero) else sim.mu.p(P=P, sigma.mu=sigma.mu, mu.zero=mu.zero)))
       
     # Scores & Loadings
-      c.data       <- lapply(Gseq, function(g) sweep(data[z.ind[[g]],, drop=F], 2, mu[,g], FUN="-"))
+      c.data       <- lapply(Gs, function(g) sweep(data[z.ind[[g]],, drop=F], 2, mu[,g], FUN="-"))
       if(Q0)   {
-        f          <- do.call(rbind, lapply(Gseq, function(g) if(nn0[g]) sim.score(N=nn[g], lmat=as.matrix(lmat[,,g]), 
+        f          <- do.call(rbind, lapply(Gs, function(g) if(nn0[g]) sim.score(N=nn[g], lmat=as.matrix(lmat[,,g]), 
                               c.data=c.data[[g]], psi.inv=psi.inv[,g], Q=Q)))[obsnames,, drop=F]
-        FtF        <- lapply(Gseq, function(g) if(nn0[g]) crossprod(f[z.ind[[g]],, drop=F]))
-        lmat       <- array(unlist(lapply(Gseq, function(g) if(nn0[g]) matrix(unlist(lapply(Pseq, function(j) sim.load(l.sigma=l.sigma, Q=Q, P=P, c.data=c.data[[g]][,j],  f=f[z.ind[[g]],, drop=F], 
+        FtF        <- lapply(Gs, function(g) if(nn0[g]) crossprod(f[z.ind[[g]],, drop=F]))
+        lmat[,,Gs] <- array(unlist(lapply(Gs, function(g) if(nn0[g]) matrix(unlist(lapply(Ps, function(j) sim.load(l.sigma=l.sigma, Q=Q, P=P, c.data=c.data[[g]][,j],  f=f[z.ind[[g]],, drop=F], 
                             psi.inv=psi.inv[,g][j], FtF=FtF[[g]], shrink=F)), use.names=F), nr=P, byrow=T) else sim.load.p(Q=Q, P=P, sigma.l=sigma.l, shrink=F)), use.names=F), dim=c(P, Q, G))
       }
                     
     # Uniquenesses
-      psi.inv      <- do.call(cbind, lapply(Gseq, function(g) if(nn0[g]) sim.psi.i(N=nn[g], psi.alpha=psi.alpha, c.data=c.data[[g]], psi.beta=psi.beta, 
+      psi.inv[,Gs] <- do.call(cbind, lapply(Gs, function(g) if(nn0[g]) sim.psi.i(N=nn[g], psi.alpha=psi.alpha, c.data=c.data[[g]], psi.beta=psi.beta, 
                               P=P, f=f[z.ind[[g]],,drop=F], lmat=as.matrix(lmat[,,g])) else sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)))
       
     # Mixing Proportions
@@ -118,15 +129,15 @@
     
     # Cluster Labels
       psi          <- 1/psi.inv
-      Sigma        <- lapply(Gseq, function(g) tcrossprod(as.matrix(lmat[,,g])) + diag(psi[,g]))
-      z.res        <- sim.z(data=data, mu=mu, Sigma=Sigma, G=G, pi.prop=pi.prop)
+      Sigma        <- lapply(Gs, function(g) tcrossprod(as.matrix(lmat[,,g])) + diag(psi[,g]))
+      z.res        <- sim.z(data=data, mu=mu, Sigma=Sigma, G=G, pi.prop=pi.prop, slice.ind=do.call(cbind, lapply(Gs, function(g) u.slice < pi.prop[,g])))
       z            <- z.res$z
     
     # Label Switching
-      switch.lab   <- lab.switch(z.new=z, z.old=z.temp, Gs=Gseq)
+      switch.lab   <- lab.switch(z.new=z, z.old=z.temp, Gs=Gs)
       z            <- switch.lab$z
       z.perm       <- switch.lab$z.perm
-      perm         <- identical(as.integer(z.perm), Gseq)
+      perm         <- identical(as.integer(z.perm), Gs)
       if(!perm) {
         if(sw["mu.sw"])  {
           mu       <- mu[,z.perm]
