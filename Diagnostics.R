@@ -270,7 +270,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     attr(cluster, "Z.init")    <- attr(sims[[G.ind]], "Z.init")
     attr(cluster, "Init.Meth") <- attr(sims, "Init.Z")
     post.z       <- as.numeric(levels(post.z))[post.z]
-    ind          <- lapply(Gseq, function(g) post.z == g)
+    z.ind        <- lapply(Gseq, function(g) post.z == g)
   }
   if(inf.Q)   {
     Q.store      <- if(G > 1) Q.store[Gseq,] else Q.store
@@ -326,8 +326,10 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     }
     if(inf.Q) {
       store      <- seq_along(tmp.store)[which(Q.store[g,] >= Qg)]
-      n.store    <- length(store)
+    } else    {
+      store      <- seq_along(tmp.store)
     }
+    n.store      <- length(store)
   
   # Retrieve (unrotated) loadings  
     if(sw["l.sw"]) {
@@ -347,7 +349,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   
   # Loadings matrix / identifiability / error metrics / etc.  
     if(all(sw["f.sw"], clust.ind)) {
-      fg         <- f[ind[[g]],Qgs,, drop=F]
+      fg         <- f[z.ind[[g]],Qgs,, drop=F]
     }
     if(sw["l.sw"])      {
       for(p in seq_len(n.store)) {
@@ -364,7 +366,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       }
     }
     if(all(sw["f.sw"], clust.ind)) {
-      f[ind[[g]],Qgs,]   <- fg
+      f[z.ind[[g]],Qgs,] <- fg
     }
   
   # Retrieve means, uniquenesses & empirical covariance matrix
@@ -384,9 +386,9 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
         dat      <- scale(dat, center=cent, scale=scaling)
         varnames <- colnames(dat)
       }
-      cov.emp    <- cov(dat[ind[[g]],, drop=F])
+      cov.emp    <- cov(dat[z.ind[[g]],, drop=F])
       dimnames(cov.emp)  <- list(varnames, varnames)
-      if(sum(ind[[g]])   == 0)    rm(cov.emp)
+      if(sum(z.ind[[g]]) == 0)    rm(cov.emp)
     } else {
       post.mu    <- sims[[G.ind]][[Q.ind]]$post.mu
       post.psi   <- sims[[G.ind]][[Q.ind]]$post.psi
@@ -417,7 +419,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       var.exp    <- sum(colSums(post.load * post.load))/n.var
       class(post.load)   <- "loadings"
     } else   {
-      var.exp    <- ifelse(sum(ind[[g]]) == 0, 0, max(0, (sum(diag(cov.emp)) - sum(post.psi))/n.var))
+      var.exp    <- ifelse(sum(z.ind[[g]]) == 0, 0, max(0, (sum(diag(cov.emp)) - sum(post.psi))/n.var))
     }
   
   # Calculate estimated covariance matrices & compute error metrics
