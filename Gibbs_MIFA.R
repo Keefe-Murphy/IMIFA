@@ -206,35 +206,27 @@
          if(length(unique(Qs) != 1)) {
           Qs       <- Qs[z.perm]  
          }
-         if(sw["mu.sw"])  {
-          mu       <- mu[,z.perm]
+         mu        <- mu[,z.perm, drop=F]
+         for(g in Gseq)  {
+          lmat[[g]]        <- lmat[[z.perm[g]]]
+          delta[[g]]       <- delta[[z.perm[g]]]
+          phi[[g]]         <- phi[[z.perm[g]]]
+          tau[[g]]         <- tau[[z.perm[g]]]
          }
-         if(sw["l.sw"])   {
-          for(g in Gseq)  {
-            lmat[[g]]      <- lmat[[z.perm[g]]]
-            delta[[g]]     <- delta[[z.perm[g]]]
-            phi[[g]]       <- phi[[z.perm[g]]]
-            tau[[g]]       <- tau[[z.perm[g]]]
-          }
-         }
-         if(sw["psi.sw"]) {
-          psi.inv  <- psi.inv[,z.perm]
-         }
-         if(sw["pi.sw"])  {
-          pi.prop  <- pi.prop[,z.perm]
-         }
-         if(mu0g)         {
+         psi.inv   <- psi.inv[,z.perm, drop=F]
+         pi.prop   <- pi.prop[,z.perm, drop=F]
+         if(mu0g)        {
           mu.zero  <- mu.zero[,z.perm, drop=F]
          }
-         if(psi0g)        {
+         if(psi0g)       {
           psi.beta <- psi.beta[,z.perm, drop=F]
          }
          if(all(delta0g, 
-                !ad1.x))  {
+                !ad1.x)) {
           alpha.d1 <- alpha.d1[z.perm]
          }
          if(all(delta0g, 
-                !adk.x))  {
+                !adk.x)) {
           alpha.dk <- alpha.dk[z.perm]
          } 
         }

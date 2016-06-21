@@ -126,28 +126,20 @@
       z            <- z.res$z
     
     # Label Switching
-      if(label.switch)   {
+      if(label.switch) {
         switch.lab <- lab.switch(z.new=z, z.old=z.temp, Gs=Gseq)
         z          <- switch.lab$z
         z.perm     <- switch.lab$z.perm
         perm       <- identical(as.integer(z.perm), Gseq)
-        if(!perm) {
-         if(sw["mu.sw"])  {
-          mu       <- mu[,z.perm]
-         }
-         if(sw["l.sw"])   {
+        if(!perm)  {
+          mu       <- mu[,z.perm, drop=F]
           lmat     <- lmat[,,z.perm, drop=F]
-         }
-         if(sw["psi.sw"]) {
-          psi.inv  <- psi.inv[,z.perm]
-         }
-         if(sw["pi.sw"])  {
-          pi.prop  <- pi.prop[,z.perm]
-         }
-         if(mu0g)         {
+          psi.inv  <- psi.inv[,z.perm, drop=F]
+          pi.prop  <- pi.prop[,z.perm, drop=F]
+         if(mu0g)  {
           mu.zero  <- mu.zero[,z.perm, drop=F]
          }
-         if(psi0g)        {
+         if(psi0g) {
           psi.beta <- psi.beta[,z.perm, drop=F]
          }
         }

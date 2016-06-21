@@ -139,18 +139,10 @@
       z.perm       <- switch.lab$z.perm
       perm         <- identical(as.integer(z.perm), Gs)
       if(!perm) {
-        if(sw["mu.sw"])  {
-          mu       <- mu[,z.perm]
-        }
-        if(sw["l.sw"])   {
-          lmat     <- lmat[,,z.perm, drop=F]
-        }
-        if(sw["psi.sw"]) {
-          psi.inv  <- psi.inv[,z.perm]
-        }
-        if(sw["pi.sw"])  {
-          pi.prop  <- pi.prop[,z.perm]
-        }
+        mu         <- mu[,z.perm, drop=F]
+        lmat       <- lmat[,,z.perm, drop=F]
+        psi.inv    <- psi.inv[,z.perm, drop=F]
+        pi.prop    <- pi.prop[,z.perm, drop=F]
       }
     
       if(is.element(iter, iters))   {

@@ -203,23 +203,15 @@
         if(length(unique(Qs) != 1)) {
           Qs       <- Qs[z.perm]  
         }
-        if(sw["mu.sw"])  {
-          mu       <- mu[,z.perm]
+        mu         <- mu[,z.perm, drop=F]
+        for(g in Gseq)   {
+          lmat[[g]]        <- lmat[[z.perm[g]]]
+          delta[[g]]       <- delta[[z.perm[g]]]
+          phi[[g]]         <- phi[[z.perm[g]]]
+          tau[[g]]         <- tau[[z.perm[g]]]
         }
-        if(sw["l.sw"])   {
-          for(g in Gseq) {
-            lmat[[g]]      <- lmat[[z.perm[g]]]
-            delta[[g]]     <- delta[[z.perm[g]]]
-            phi[[g]]       <- phi[[z.perm[g]]]
-            tau[[g]]       <- tau[[z.perm[g]]]
-          }
-        }
-        if(sw["psi.sw"]) {
-          psi.inv  <- psi.inv[,z.perm]
-        }
-        if(sw["pi.sw"])  {
-          pi.prop  <- pi.prop[,z.perm]
-        }
+        psi.inv    <- psi.inv[,z.perm, drop=F]
+        pi.prop    <- pi.prop[,z.perm, drop=F]
       }
     
     if(any(Qs > Q.star))      stop(paste0("Q cannot exceed initial number of loadings columns: try increasing Q.star from ", Q.star))
