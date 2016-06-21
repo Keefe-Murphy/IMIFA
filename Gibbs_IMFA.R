@@ -4,7 +4,7 @@
   
 # Gibbs Sampler Function
   gibbs.IMFA       <- function(Q, data, iters, N, P, G, mu.zero,
-                               sigma.mu, burnin, thinning, mu, trunc,
+                               sigma.mu, burnin, thinning, mu, trunc.G,
                                psi.alpha, psi.beta, verbose, alpha.d1,
                                alpha.dk, sw, cluster, phi.nu, b0, b1, prop,
                                beta.d1, beta.dk, adapt, epsilon, ...) {
@@ -13,7 +13,7 @@
     n.iters        <- round(max(iters), -1)
     n.store        <- length(iters)
     Gs             <- seq_len(G)
-    Ts             <- seq_len(trunc)
+    Ts             <- seq_len(trunc.G)
     Ps             <- seq_len(P)
     obsnames       <- rownames(data)
     varnames       <- colnames(data)
@@ -22,7 +22,7 @@
     iternames      <- paste0("Iteration", seq_len(n.store))
     Q0             <- Q > 0
     if(sw["mu.sw"])  {
-      mu.store     <- array(0, dim=c(P, trunc, n.store))
+      mu.store     <- array(0, dim=c(P, trunc.G, n.store))
       dimnames(mu.store)   <- list(varnames, gnames, iternames)
     }
     if(sw["f.sw"])   {
@@ -30,21 +30,21 @@
       dimnames(f.store)    <- list(obsnames, if(Q0) facnames, iternames)
     }
     if(sw["l.sw"])   {
-      load.store   <- array(0, dim=c(P, Q, trunc, n.store))
+      load.store   <- array(0, dim=c(P, Q, trunc.G, n.store))
       dimnames(load.store) <- list(varnames, if(Q0) facnames, gnames, iternames)
     }
     if(sw["psi.sw"]) {
-      psi.store    <- array(0, dim=c(P, trunc, n.store))
+      psi.store    <- array(0, dim=c(P, trunc.G, n.store))
       dimnames(psi.store)  <- list(varnames, gnames, iternames)
     }
     if(sw["pi.sw"])  {
-      pi.store     <- matrix(0, nr=trunc, nc=n.store)
+      pi.store     <- matrix(0, nr=trunc.G, nc=n.store)
       dimnames(pi.store)   <- list(gnames, iternames)
     }
     z.store        <- matrix(0, nr=N, nc=n.store)
     ll.store       <- rep(0, n.store)
     G.store        <- rep(0, n.store)
-    v.stick        <- rep(0, trunc)
+    v.stick        <- rep(0, trunc.G)
     dimnames(z.store)      <- list(obsnames, iternames)
     
     mu.sigma       <- 1/sigma.mu
@@ -53,8 +53,8 @@
     z.temp         <- factor(z, levels=Gs)
     pi.alpha       <- cluster$pi.alpha
     pi.prop        <- cluster$pi.prop
-    pi.prop        <- cbind(pi.prop, matrix(0, nr=1, nc=trunc - length(pi.prop)))
-    mu             <- cbind(mu, do.call(cbind, lapply(seq_len(trunc - G), function(g) sim.mu.p(P=P, sigma.mu=sigma.mu, mu.zero=mu.zero))))
+    pi.prop        <- cbind(pi.prop, matrix(0, nr=1, nc=trunc.G - length(pi.prop)))
+    mu             <- cbind(mu, do.call(cbind, lapply(seq_len(trunc.G - G), function(g) sim.mu.p(P=P, sigma.mu=sigma.mu, mu.zero=mu.zero))))
     f              <- sim.f.p(N=N, Q=Q)
     lmat           <- lapply(Ts, function(t) sim.load.p(Q=Q, P=P, sigma.l=sigma.l, shrink=F))
     psi.inv        <- do.call(cbind, lapply(Ts, function(t) sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)))
@@ -71,7 +71,7 @@
       psi.inv[,Gs]         <- do.call(cbind, lapply(Gs, function(g) if(pi.prop[,g] > 0) 1/apply(data[z == g,, drop=F], 2, var) else psi.inv[,g]))
     }
     l.sigma        <- l.sigma * diag(Q)
-    lmat           <- array(unlist(lmat, use.names=F), dim=c(P, Q, G))
+    lmat           <- array(unlist(lmat, use.names=F), dim=c(P, Q, trunc.G))
     if(burnin       < 1)  {
       mu.store[,,1]        <- mu
       f.store[,,1]         <- f
@@ -79,7 +79,7 @@
       psi.store[,,1]       <- 1/psi.inv
       pi.store[,1]         <- pi.prop
       z.store[,1]          <- z
-      ll.store[1]          <- sum(sim.z(data=data, mu=mu, G=G, pi.prop=pi.prop, Sigma=lapply(Gseq,
+      ll.store[1]          <- sum(sim.z(data=data, mu=mu, G=G, pi.prop=pi.prop, Sigma=lapply(Gs,
                                   function(g) tcrossprod(as.matrix(lmat[,,g])) + diag(1/psi.inv[,g])))$log.likes)
       G.store[1]           <- G
     }
@@ -93,9 +93,9 @@
           cat(paste0("Iteration: ", iter, "\n"))
         }
       }
-      nn           <- tabulate(z, nbins=G)
+      nn           <- tabulate(z, nbins=trunc.G)
       nn0          <- nn > 0
-      z.ind        <- lapply(Gseq, function(g) z == g)
+      z.ind        <- lapply(Gs, function(g) z == g)
     
     # Slice Sampler
       pi.i         <- pi.prop[z]

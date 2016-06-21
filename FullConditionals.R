@@ -75,7 +75,7 @@
         log.num <- log.num + log(slice.ind)
       }
       log.denom <- rowLogSumExps(log.num)
-      log.pz    <- sweep(log.numer, 1, log.denom, FUN="-")
+      log.pz    <- sweep(log.num, 1, log.denom, FUN="-")
       z         <- log.sample(log.pz, G, nrow(log.pz))
         return(list(z = unname(z), log.likes = log.denom))
     }
