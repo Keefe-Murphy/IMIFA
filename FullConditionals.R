@@ -67,6 +67,11 @@
     sim.pi      <- function(pi.alpha, nn) {
         rdirichlet(1, pi.alpha + nn)
     }
+
+    sim.stick   <- function(pi.alpha, nn) {
+      v.stick   <- rbeta(length(nn), 1 + nn, pi.alpha - cumsum(nn))
+        do.call(cbind, lapply(seq_along(nn), function(t) v.stick[t] * prod((1 - v.stick[seq_len(t - 1)]))))
+    }
   
   # Cluster Labels
     sim.z       <- function(data, mu, Sigma, G, pi.prop, slice.ind=NULL) {

@@ -51,7 +51,7 @@
     l.sigma        <- 1/sigma.l 
     z              <- cluster$z
     z.temp         <- factor(z, levels=Gs)
-    pi.alpha       <- cluster$pi.alpha
+    pi.alpha       <- cluster$pi.alpha + N
     pi.prop        <- cluster$pi.prop
     pi.prop        <- cbind(pi.prop, matrix(0, nr=1, nc=trunc.G - length(pi.prop)))
     mu             <- cbind(mu, do.call(cbind, lapply(seq_len(trunc.G - G), function(g) sim.mu.p(P=P, sigma.mu=sigma.mu, mu.zero=mu.zero))))
@@ -125,7 +125,7 @@
                               P=P, f=f[z.ind[[g]],,drop=F], lmat=as.matrix(lmat[,,g])) else sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)))
       
     # Mixing Proportions
-      pi.prop      <- sim.pi(pi.alpha=pi.alpha, nn=nn)
+      pi.prop      <- sim.stick(pi.alpha=pi.alpha, nn=nn)
     
     # Cluster Labels
       psi          <- 1/psi.inv

@@ -288,7 +288,6 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     zi             <- list()
     for(g in seq_along(range.G)) {
       G            <- range.G[g]
-      pi.alpha[[g]]     <- rep(alpha.pi, G)
       if(z.init    == "kmeans")     {
         k.res      <- try(kmeans(dat, G, nstart=100), silent=T)
         if(!inherits(k.res, "try-error"))  {
@@ -303,11 +302,17 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
         } else                      warning("Cannot initialise cluster labels using mclust. Try another z.init method", call.=F)
       } else {
         zips       <- rep(1, N)
-        while(all(length(unique(zips)) != G, !is.element(method, c("IMIFA", "IMFA", "OMIFA", "OMFA")),
-                  any(prop.table(tabulate(zips, nbins=G)) < 1/G^2))) {
-          pi.props <- sim.pi(pi.alpha=pi.alpha[[g]], nn=0)
-          zips     <- sim.z.p(N=N, prob.z=pi.props)
-        } 
+        if(!is.element(method, c("IMFA", "IMIFA"))) {
+          while(all(length(unique(zips)) != G,
+                any(prop.table(tabulate(zips, nbins=G)) < 1/G^2))) {
+            pies   <- sim.pi(pi.alpha=rep(alpha.pi, G), nn=0)
+            zips   <- sim.z.p(N=N, prob.z=pies)
+          }  
+        } else {
+          if(alpha.pi <= 1)         warning(paste0("Suggestion: increase alpha.pi from ", alpha.pi, " if initialising from the stick-breaking prior"))
+          pies     <- sim.stick(pi.alpha=alpha.pi, nn=0)
+          zips     <- sim.z.p(N=N, prob.z=pies)
+        }
         zi[[g]]    <- as.numeric(zips)
         rm(zips)
       }
@@ -330,7 +335,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
       if(adk.x)   {
         alpha.dk[[g]]   <- rep(unlist(alpha.dk), G)
       }
-      clust[[g]]   <- list(z = zi[[g]], pi.alpha = pi.alpha[[g]], pi.prop = pi.prop[[g]])
+      clust[[g]]   <- list(z = zi[[g]], pi.alpha = alpha.pi, pi.prop = pi.prop[[g]])
       if(is.element(method, c("MFA", "MIFA"))) {
         sw0g.tmp   <- sw0gs
         if(all(G > 9, any(sw0gs))) {
