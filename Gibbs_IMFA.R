@@ -52,6 +52,7 @@
     z.temp         <- factor(z, levels=Gs)
     pi.alpha       <- cluster$pi.alpha + N
     pi.prop        <- cbind(cluster$pi.prop, sim.stick(pi.alpha=cluster$pi.alpha, nn=rep(0, trunc.G))[,-Gs, drop=F])
+    nn             <- tabulate(z, nbins=trunc.G)
     mu             <- cbind(mu, do.call(cbind, lapply(seq_len(trunc.G - G), function(g) sim.mu.p(P=P, sigma.mu=sigma.mu, mu.zero=mu.zero))))
     f              <- sim.f.p(N=N, Q=Q)
     lmat           <- lapply(Ts, function(t) sim.load.p(Q=Q, P=P, sigma.l=sigma.l, shrink=F))
@@ -98,15 +99,24 @@
       }
     
     # Slice Sampler
-      nn           <- tabulate(z, nbins=trunc.G)
       pi.i         <- pi.prop[,z]
       u.slice      <- runif(N, 0, pi.i)
       Au           <- unlist(lapply(seq_along(u.slice), function(u) sum(u.slice[u] < pi.prop)))
       G            <- max(Au)
       Gs           <- seq_len(G)
+      slice.ind    <- do.call(cbind, lapply(Gs, function(g) u.slice < pi.prop[,g]))
+    
+    # Mixing Proportions
+      pi.prop      <- sim.stick(pi.alpha=pi.alpha, nn=nn)
+    
+    # Cluster Labels
+      psi          <- 1/psi.inv
+      Sigma        <- lapply(Gs, function(g) tcrossprod(as.matrix(lmat[,,g])) + diag(psi[,g]))
+      z.res        <- sim.z(data=data, mu=mu, Sigma=Sigma, G=G, pi.prop=pi.prop, slice.ind=slice.ind)
+      z            <- z.res$z
+      nn           <- tabulate(z, nbins=trunc.G)
       nn0          <- nn[Gs] > 0
       z.ind        <- lapply(Gs, function(g) z == g)
-      slice.ind    <- do.call(cbind, lapply(Gs, function(g) u.slice < pi.prop[,g]))
       
     # Means
       sum.data     <- lapply(Gs, function(g) colSums(data[z.ind[[g]],, drop=F]))
@@ -127,27 +137,8 @@
     # Uniquenesses
       psi.inv[,Gs] <- do.call(cbind, lapply(Gs, function(g) if(nn0[g]) sim.psi.i(N=nn[g], psi.alpha=psi.alpha, c.data=c.data[[g]], psi.beta=psi.beta, 
                               P=P, f=f[z.ind[[g]],,drop=F], lmat=as.matrix(lmat[,,g])) else sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)))
-      
-    # Mixing Proportions
-      pi.prop      <- sim.stick(pi.alpha=pi.alpha, nn=nn)
-    
-    # Cluster Labels
-      psi          <- 1/psi.inv
-      Sigma        <- lapply(Gs, function(g) tcrossprod(as.matrix(lmat[,,g])) + diag(psi[,g]))
-      z.res        <- sim.z(data=data, mu=mu, Sigma=Sigma, G=G, pi.prop=pi.prop, slice.ind=slice.ind)
-      z            <- z.res$z
     
     # Label Switching
-      switch.lab   <- lab.switch(z.new=z, z.old=z.temp, Gs=Gs)
-      z            <- switch.lab$z
-      z.perm       <- switch.lab$z.perm
-      perm         <- identical(as.integer(z.perm), Gs)
-      if(!perm) {
-        mu         <- mu[,z.perm, drop=F]
-        lmat       <- lmat[,,z.perm, drop=F]
-        psi.inv    <- psi.inv[,z.perm, drop=F]
-        pi.prop    <- pi.prop[,z.perm, drop=F]
-      }
     
       if(is.element(iter, iters))   {
         new.it     <- which(iters == iter)
