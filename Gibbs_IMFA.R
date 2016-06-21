@@ -44,7 +44,6 @@
     z.store        <- matrix(0, nr=N, nc=n.store)
     ll.store       <- rep(0, n.store)
     G.store        <- rep(0, n.store)
-    v.stick        <- rep(0, trunc.G)
     dimnames(z.store)      <- list(obsnames, iternames)
     
     mu.sigma       <- 1/sigma.mu
@@ -72,6 +71,11 @@
     }
     l.sigma        <- l.sigma * diag(Q)
     lmat           <- array(unlist(lmat, use.names=F), dim=c(P, Q, trunc.G))
+    index          <- order(pi.prop, decreasing=TRUE)
+    pi.prop        <- pi.prop[,index, drop=F]
+    mu             <- mu[,index, drop=FALSE]
+    lmat           <- lmat[,,index, drop=FALSE]
+    psi.inv        <- psi.inv[,index, drop=FALSE]
     if(burnin       < 1)  {
       mu.store[,,1]        <- mu
       f.store[,,1]         <- f
@@ -93,16 +97,16 @@
           cat(paste0("Iteration: ", iter, "\n"))
         }
       }
-      nn           <- tabulate(z, nbins=trunc.G)
-      nn0          <- nn > 0
-      z.ind        <- lapply(Gs, function(g) z == g)
     
     # Slice Sampler
-      pi.i         <- pi.prop[z]
+      nn           <- tabulate(z, nbins=trunc.G)
+      pi.i         <- pi.prop[,z]
       u.slice      <- runif(N, 0, pi.i)
       Au           <- unlist(lapply(seq_along(u.slice), function(u) sum(u.slice[u] < pi.prop)))
       G            <- max(Au)
       Gs           <- seq_len(G)
+      nn0          <- (nn > 0)[Gs]
+      z.ind        <- lapply(Gs, function(g) z == g)
       
     # Means
       sum.data     <- lapply(Gs, function(g) colSums(data[z.ind[[g]],, drop=F]))
