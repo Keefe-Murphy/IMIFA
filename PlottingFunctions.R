@@ -441,7 +441,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
       plotQ.ind  <- any(any(g > 1, is.element(method, c("IFA", "MIFA"))), all(is.element(method, c("IMIFA", "OMIFA")), g != 1))
       aicm       <- round(GQ.res$AICM, 2)
       bicm       <- round(GQ.res$BICM, 2)
-      if(is.element(method, c("FA", "MFA", "OMFA"))) {
+      if(is.element(method, c("FA", "MFA", "OMFA", "IMFA"))) {
         aic.mcmc <- round(GQ.res$AIC.mcmc, 2)
         bic.mcmc <- round(GQ.res$BIC.mcmc, 2)
       }
