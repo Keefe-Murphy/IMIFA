@@ -310,7 +310,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
           }  
         } else {
           if(alpha.pi <= 1)         warning(paste0("Suggestion: increase alpha.pi from ", alpha.pi, " if initialising from the stick-breaking prior"))
-          pies     <- sim.stick(pi.alpha=alpha.pi, nn=0)
+          pies     <- sim.stick(pi.alpha=alpha.pi, nn=rep(0, trunc.G))
           zips     <- sim.z.p(N=N, prob.z=pies)
         }
         zi[[g]]    <- as.numeric(zips)

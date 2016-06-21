@@ -51,8 +51,7 @@
     z              <- cluster$z
     z.temp         <- factor(z, levels=Gs)
     pi.alpha       <- cluster$pi.alpha + N
-    pi.prop        <- cluster$pi.prop
-    pi.prop        <- cbind(pi.prop, matrix(0, nr=1, nc=trunc.G - length(pi.prop)))
+    pi.prop        <- cbind(cluster$pi.prop, sim.stick(pi.alpha=cluster$pi.alpha, nn=rep(0, trunc.G))[,-Gs, drop=F])
     mu             <- cbind(mu, do.call(cbind, lapply(seq_len(trunc.G - G), function(g) sim.mu.p(P=P, sigma.mu=sigma.mu, mu.zero=mu.zero))))
     f              <- sim.f.p(N=N, Q=Q)
     lmat           <- lapply(Ts, function(t) sim.load.p(Q=Q, P=P, sigma.l=sigma.l, shrink=F))
@@ -105,8 +104,9 @@
       Au           <- unlist(lapply(seq_along(u.slice), function(u) sum(u.slice[u] < pi.prop)))
       G            <- max(Au)
       Gs           <- seq_len(G)
-      nn0          <- (nn > 0)[Gs]
+      nn0          <- nn[Gs] > 0
       z.ind        <- lapply(Gs, function(g) z == g)
+      slice.ind    <- do.call(cbind, lapply(Gs, function(g) u.slice < pi.prop[,g]))
       
     # Means
       sum.data     <- lapply(Gs, function(g) colSums(data[z.ind[[g]],, drop=F]))
@@ -134,7 +134,7 @@
     # Cluster Labels
       psi          <- 1/psi.inv
       Sigma        <- lapply(Gs, function(g) tcrossprod(as.matrix(lmat[,,g])) + diag(psi[,g]))
-      z.res        <- sim.z(data=data, mu=mu, Sigma=Sigma, G=G, pi.prop=pi.prop, slice.ind=do.call(cbind, lapply(Gs, function(g) u.slice < pi.prop[,g])))
+      z.res        <- sim.z(data=data, mu=mu, Sigma=Sigma, G=G, pi.prop=pi.prop, slice.ind=slice.ind)
       z            <- z.res$z
     
     # Label Switching

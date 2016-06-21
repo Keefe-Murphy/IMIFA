@@ -69,8 +69,9 @@
     }
 
     sim.stick   <- function(pi.alpha, nn) {
-      v.stick   <- rbeta(length(nn), 1 + nn, pi.alpha - cumsum(nn))
-        do.call(cbind, lapply(seq_along(nn), function(t) v.stick[t] * prod((1 - v.stick[seq_len(t - 1)]))))
+      vs        <- rbeta(length(nn), 1 + nn, pi.alpha - cumsum(nn))
+      vs[length(vs)]  <- 1
+        do.call(cbind, lapply(seq_along(nn), function(t) vs[t] * prod((1 - vs[seq_len(t - 1)]))))
     }
   
   # Cluster Labels
