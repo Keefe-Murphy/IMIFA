@@ -169,7 +169,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       Q          <- if(length(n.fac) > 1) Q     else n.fac
       Q.ind      <- if(length(n.fac) > 1) Q.ind else which(n.fac == Q)
       Q          <- setNames(rep(Q, G), paste0("Group ", Gseq))  
-      GQ.temp1   <- if(is.element(method, c("OMFA", "IMFA")) && GQs > 1) lapply(GQ.temp1, "[[", 1) else if(is.element(method, c("OMIFA", "IMIFA"))) GQ.temp1
+      GQ.temp1   <- if(is.element(method, c("OMFA", "IMFA")) && GQs > 1) lapply(GQ.temp1, "[[", 1) else if(inf.G) GQ.temp1
       GQ.temp3   <- c(GQ.temp2, list(AIC.mcmcs = aic.mcmc, BIC.mcmcs = bic.mcmc))
       GQ.res     <- if(!is.element(method, c("OMFA", "IMFA"))) c(list(G = G, Q = Q), GQ.temp3) else c(GQ.temp1, list(Q = Q), GQ.temp3)
     }
