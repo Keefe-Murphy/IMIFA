@@ -501,13 +501,14 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   "Scaling"), "Method")   <- scaling
   attr(imifa, "Store")    <- length(iters)
   attr(imifa, "Switch")   <- switches
-  if(any(is.element(method, c("IFA", "OMIFA", "IMIFA")), 
-     (is.element(method, c("FA", "MFA", "OMFA", "IMFA")) && length(range.Q) == 1))) {
-    attr(imifa, "Time")   <- round(tot.time, 2)
-  } else if(all(!is.element(method, c("FA", "IFA", "classify")))) {
+  if(!is.element(method, c("FA", "IFA", "classify"))) {
     attr(imifa, "Time")   <- lapply(list(Total = tot.time, Average = avg.time, Z.Initialisation = init.time), function(x) round(x, 2)) 
   } else {
     attr(imifa, "Time")   <- lapply(list(Total = tot.time, Average = avg.time), function(x) round(x, 2)) 
+  }
+  if(all(length(range.G)  == 1,
+         length(range.Q)  == 1)) {
+    attr(imifa, "Time")   <- attr(imifa, "Time")[-2]
   }
   attr(imifa, "Vars")     <- P
   if(verbose)                print(attr(imifa, "Time"))  
