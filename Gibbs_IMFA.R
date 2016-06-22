@@ -3,7 +3,7 @@
 #######################################################################
   
 # Gibbs Sampler Function
-  gibbs.IMFA       <- function(Q, data, iters, N, P, G, mu.zero,
+  gibbs.IMFA       <- function(Q, data, iters, N, P, G, mu.zero, pp,
                                sigma.mu, burnin, thinning, mu, trunc.G,
                                psi.alpha, psi.beta, verbose, alpha.d1,
                                alpha.dk, sw, cluster, phi.nu, b0, b1, prop,
@@ -49,7 +49,6 @@
     mu.sigma       <- 1/sigma.mu
     l.sigma        <- 1/sigma.l 
     z              <- cluster$z
-    z.temp         <- factor(z, levels=Gs)
     pi.alpha       <- cluster$pi.alpha + N
     pi.prop        <- cbind(cluster$pi.prop, sim.stick(pi.alpha=cluster$pi.alpha, nn=rep(0, trunc.G))[,-Gs, drop=F])
     nn             <- tabulate(z, nbins=trunc.G)
@@ -76,6 +75,7 @@
     mu             <- mu[,index, drop=FALSE]
     lmat           <- lmat[,,index, drop=FALSE]
     psi.inv        <- psi.inv[,index, drop=FALSE]
+    csi            <- pp * (1 - pp)^(Ts - 1)
     if(burnin       < 1)  {
       mu.store[,,1]        <- mu
       f.store[,,1]         <- f
@@ -99,12 +99,12 @@
       }
     
     # Slice Sampler
-      pi.i         <- pi.prop[,z]
-      u.slice      <- runif(N, 0, pi.i)
+      w.i          <- csi[z]
+      u.slice      <- runif(N, 0, w.i)
       Au           <- unlist(lapply(seq_along(u.slice), function(u) sum(u.slice[u] < pi.prop)))
       G            <- max(Au)
       Gs           <- seq_len(G)
-      slice.ind    <- do.call(cbind, lapply(Gs, function(g) u.slice < pi.prop[,g]))
+      slice.ind    <- do.call(cbind, lapply(Gs, function(g) (u.slice < csi[g])/csi[g]))
     
     # Mixing Proportions
       pi.prop      <- sim.stick(pi.alpha=pi.alpha, nn=nn)
@@ -137,9 +137,7 @@
     # Uniquenesses
       psi.inv[,Gs] <- do.call(cbind, lapply(Gs, function(g) if(nn0[g]) sim.psi.i(N=nn[g], psi.alpha=psi.alpha, c.data=c.data[[g]], psi.beta=psi.beta, 
                               P=P, f=f[z.ind[[g]],,drop=F], lmat=as.matrix(lmat[,,g])) else sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)))
-    
-    # Label Switching
-    
+        
       if(is.element(iter, iters))   {
         new.it     <- which(iters == iter)
         log.like   <- sum(z.res$log.likes)

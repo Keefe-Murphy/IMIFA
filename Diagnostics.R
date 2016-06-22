@@ -32,8 +32,8 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   scaling        <- attr(sims, "Scaling")
   scal.meth      <- attr(scaling, "Method")
   conf.level     <- as.numeric(conf.level)
-  if(abs(conf.level -
-        (1 - conf.level)) < 0)    stop("'conf.level' must be a single number between 0 and 1")
+  if(conf.level   > 0  && 
+     conf.level   < 1)            stop("'conf.level' must be a single number between 0 and 1")
   conf.levels    <- c((1 - conf.level)/2, 1 - (1 - conf.level)/2)
   criterion      <- match.arg(criterion)
   if(all(!is.element(method, c("FA", "MFA", "OMFA", "IMFA")),
