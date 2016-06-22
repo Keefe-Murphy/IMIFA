@@ -50,7 +50,7 @@
     cl <- attr(SimData, "Labels")
 
 # Run the Gibbs Sampler
-  sim  <- imifa.mcmc(wine, method="OMIFA", adapt=F)
+  sim  <- imifa.mcmc(wine, method="IMFA", range.Q=3)
  #sim  <- imifa.mcmc(wine, method="classify", Label=Lab)
 
 # Save / Load Simulations
@@ -64,6 +64,7 @@
 # Posterior Summaries (optional: additional 'burnin' & 'thinning', user-defined G/Q, model selection criterion)
   res <- tune.imifa(sim, Labels=Lab)
   res$Clust$conf.mat
+  res$Clust$perf
   res$Error
   plot(res, "GQ")
  #res <- tune.imifa(sim, G=3, Q=3, criterion="bicm", Labels=Lab)

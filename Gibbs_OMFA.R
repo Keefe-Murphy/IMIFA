@@ -43,6 +43,7 @@
     z.store        <- matrix(0, nr=N, nc=n.store)
     ll.store       <- rep(0, n.store)
     G.store        <- rep(0, n.store)
+    non.empty      <- list()
     dimnames(z.store)      <- list(obsnames, iternames)
     
     mu.sigma       <- 1/sigma.mu
@@ -145,6 +146,7 @@
                                    z.store[,new.it]        <- z 
                                    ll.store[new.it]        <- log.like
                                    G.store[new.it]         <- sum(nn0)
+                                   non.empty[[new.it]]     <- which(nn0)
       }
     }
     returns        <- list(mu       = if(sw["mu.sw"])         mu.store,
@@ -154,6 +156,7 @@
                            pi.prop  = if(sw["pi.sw"])         pi.store,
                            z.store  = z.store,
                            ll.store = ll.store,
-                           G.store  = G.store)
+                           G.store  = G.store,
+                           nonempty = non.empty)
     return(returns)
   }

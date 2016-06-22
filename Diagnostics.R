@@ -173,6 +173,9 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       GQ.temp3   <- c(GQ.temp2, list(AIC.mcmcs = aic.mcmc, BIC.mcmcs = bic.mcmc))
       GQ.res     <- if(!is.element(method, c("OMFA", "IMFA"))) c(list(G = G, Q = Q), GQ.temp3) else c(GQ.temp1, list(Q = Q), GQ.temp3)
     }
+    if(inf.G)    {
+      non.empty  <- sims[[G.ind]][[Q.ind]]$nonempty[tmp.store]
+    }
     clust.ind    <- !any(is.element(method,  c("FA", "IFA")), 
                      all(is.element(method, c("MFA", "MIFA")), G == 1))
     sw.mx        <- ifelse(clust.ind, sw["mu.sw"], T)
@@ -206,10 +209,10 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     if(!label.miss)   {
       if(!exists(as.character(substitute(Labels)),
           envir=.GlobalEnv))      stop(paste0("Object ", match.call()$Labels, " not found"))
+      if(length(Labels) != n.obs) stop(paste0("'Labels' must be a factor of length N=",  n.obs))
       zlabels    <- factor(Labels, labels=seq_along(unique(Labels)))
       levs       <- levels(zlabels)
       lev.ind    <- length(levs) == G
-      if(length(Labels) != n.obs) stop(paste0("'Labels' must be a factor of length N=",  n.obs))
     }
     if(!label.switch) {
       z.temp     <- factor(z[,1], labels=Gseq)
@@ -219,10 +222,12 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
         l.perm   <- sw.lab$z.perm
       }
       for(sl in seq_along(tmp.store)[-1])   {
-        sw.lab   <- lab.switch(z.new=z[,sl], z.old=z.temp, Gs=Gseq2)
+        n.ind    <- if(inf.G) non.empty[[sl]] else Gseq2
+        Nseq     <- seq_along(n.ind)
+        sw.lab   <- lab.switch(z.new=z[,sl], z.old=z.temp, Gs=Nseq)
         z[,sl]   <- sw.lab$z
         z.perm   <- sw.lab$z.perm
-        perm     <- identical(as.integer(z.perm), Gseq2)
+        perm     <- identical(as.integer(z.perm), Nseq)
         if(!perm) {
           if(sw["mu.sw"])  {
             mus[,,sl]    <- mus[,z.perm,sl]
