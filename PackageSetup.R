@@ -82,7 +82,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
         if(missing(pp)) {
           pp       <- 0.7
         }
-        if(pp > 0  && pp < 1)       stop("'pp' must be a single number between 0 and 1")
+        if(pp < 0  && pp > 1)       stop("'pp' must be a single number between 0 and 1")
         if(all(N    > 100, 
            trunc.G  < 100))         stop("'trunc.G' must be at least 100")
         if(trunc.G  < range.G)      stop(paste0("'trunc.G' must be at least range.G=", range.G))
