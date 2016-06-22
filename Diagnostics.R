@@ -174,7 +174,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       GQ.res     <- if(!is.element(method, c("OMFA", "IMFA"))) c(list(G = G, Q = Q), GQ.temp3) else c(GQ.temp1, list(Q = Q), GQ.temp3)
     }
     clust.ind    <- !any(is.element(method,  c("FA", "IFA")), 
-                     all(!is.element(method, c("FA", "IFA")), G == 1))
+                     all(is.element(method, c("MFA", "MIFA")), G == 1))
     sw.mx        <- ifelse(clust.ind, sw["mu.sw"], T)
     sw.px        <- ifelse(clust.ind, sw["psi.sw"], T)  
     if(inf.Q) {

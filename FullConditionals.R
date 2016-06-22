@@ -197,9 +197,9 @@
         tab.tmp <- tab.tmp[,match(colnames(tab.tmp), Gs)]
       }
       if(nr == 1) {
-        z.perm  <- setNames(as.numeric(colnames(tab.tmp)))
+        z.perm  <- setNames(as.numeric(colnames(tab.tmp)), as.numeric(colnames(tab.tmp)))
       } else if(nc == 1) {
-        z.perm  <- setNames(as.numeric(rownames(tab.tmp)))
+        z.perm  <- setNames(as.numeric(colnames(tab.tmp)), as.numeric(colnames(tab.tmp)))
       } else {
         z.perm  <- suppressWarnings(matchClasses(tab.tmp, method="exact", verbose=F))
         z.perm  <- setNames(as.numeric(z.perm), names(z.perm))

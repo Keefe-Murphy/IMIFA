@@ -47,6 +47,7 @@
    #SimData  <- sim.imifa(N=80, G=4, P=100, Q=c(5, 1, 4, 0), nn=c(20, 20, 20, 20))
    #save(SimData, file=paste0(getwd(),"/Data/Simulated_Data.Rdata", sep=""))
     load(file=paste0(getwd(), "/Data/Simulated_Data.Rdata", sep=""), envir=.GlobalEnv)
+    cl <- attr(SimData, "Labels")
 
 # Run the Gibbs Sampler
   sim  <- imifa.mcmc(wine, method="OMIFA", adapt=F)
