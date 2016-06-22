@@ -266,7 +266,10 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
         post.pi  <- post.pi[l.perm]  
       }
       tab        <- table(post.z, zlabels, dnn=list("Predicted", "Observed"))
-      tab.stat   <- classAgreement(tab)
+      tab.stat   <- c(classAgreement(tab), classError(post.z, zlabels))
+      if(nrow(tab) != ncol(tab)) {
+        tab.stat <- tab.stat[-seq_len(2)]
+      }
     }
     cluster      <- list(post.z = post.z, post.pi = post.pi, 
                          z = z, var.z = var.z, CI.z = CI.z)
