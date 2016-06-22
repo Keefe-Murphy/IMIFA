@@ -248,8 +248,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       }
     }
     post.z       <- droplevels(setNames(apply(z, 1, function(x) factor(which.max(tabulate(x)), levels=Gseq2)), seq_len(n.obs)))
-    var.z        <- apply(z, 1, var)
-    CI.z         <- apply(z, 1, function(x) round(quantile(x, conf.levels)))
+    uncertainty  <- 1 - apply(apply(z, 1, tabulate, nbins=G)/4000, 2, max)
     if(sw["pi.sw"])    {
       pi.prop    <- pies[,seq_along(tmp.store)]
       post.pi    <- rowMeans(pi.prop, dims=1)
@@ -271,8 +270,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
         tab.stat <- tab.stat[-seq_len(2)]
       }
     }
-    cluster      <- list(post.z = post.z, post.pi = post.pi, 
-                         z = z, var.z = var.z, CI.z = CI.z)
+    cluster      <- list(post.z = post.z, post.pi = post.pi, z = z, uncertainty = uncertainty)
     cluster      <- c(cluster, if(!label.miss) list(conf.mat = tab, perf = tab.stat),
                       if(sw["pi.sw"]) list(pi.prop = pi.prop, var.pi = var.pi, CI.pi = CI.pi))
     attr(cluster, "Z.init")    <- attr(sims[[G.ind]], "Z.init")
