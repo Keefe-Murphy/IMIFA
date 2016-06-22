@@ -158,7 +158,6 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     } 
     G            <- ifelse(all(length(n.grp) == 1, !inf.G), n.grp, G)
     Gseq         <- seq_len(G)
-    Gseq2        <- if(inf.G) seq_len(n.grp) else Gseq
     G.ind        <- ifelse(all(length(n.grp) == 1, !inf.G), which(n.grp == G), G.ind)
     GQ.temp2     <- list(AICMs = aicm, BICMs = bicm)
     if(is.element(method, c("OMFA", "IMFA")) &&
@@ -217,12 +216,12 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     if(!label.switch) {
       z.temp     <- factor(z[,1], labels=Gseq)
       if(!label.miss && lev.ind) {    
-        sw.lab   <- lab.switch(z.new=z.temp, z.old=zlabels, Gs=Gseq2)
+        sw.lab   <- lab.switch(z.new=z.temp, z.old=zlabels, Gs=Gseq)
         z.temp   <- sw.lab$z
         l.perm   <- sw.lab$z.perm
       }
       for(sl in seq_along(tmp.store)[-1])   {
-        n.ind    <- if(inf.G) non.empty[[sl]] else Gseq2
+        n.ind    <- if(inf.G) non.empty[[sl]] else Gseq
         Nseq     <- seq_along(n.ind)
         sw.lab   <- lab.switch(z.new=z[,sl], z.old=z.temp, Gs=Nseq)
         z[,sl]   <- sw.lab$z
@@ -230,24 +229,24 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
         perm     <- identical(as.integer(z.perm), Nseq)
         if(!perm) {
           if(sw["mu.sw"])  {
-            mus[,,sl]    <- mus[,z.perm,sl]
+            mus[,Nseq,sl]      <- mus[,z.perm,sl]
           }
           if(sw["l.sw"])   {
-            lmats[,,,sl] <- lmats[,,z.perm,sl]
+            lmats[,,Nseq,sl]   <- lmats[,,z.perm,sl]
           }
           if(sw["psi.sw"]) {
-            psis[,,sl]   <- psis[,z.perm,sl]
+            psis[,Nseq,sl]     <- psis[,z.perm,sl]
           }
           if(sw["pi.sw"])  {
-            pies[,sl]    <- pies[z.perm,sl]
+            pies[Nseq,sl]      <- pies[z.perm,sl]
           }
           if(inf.Q)        {
-            Q.store[,sl] <- Q.store[z.perm,sl]
+            Q.store[Nseq,sl]   <- Q.store[z.perm,sl]
           }  
         }
       }
     }
-    post.z       <- droplevels(setNames(apply(z, 1, function(x) factor(which.max(tabulate(x)), levels=Gseq2)), seq_len(n.obs)))
+    post.z       <- droplevels(setNames(apply(z, 1, function(x) factor(which.max(tabulate(x)), levels=Gseq)), seq_len(n.obs)))
     uncertainty  <- 1 - apply(apply(z, 1, tabulate, nbins=G)/4000, 2, max)
     if(sw["pi.sw"])    {
       pi.prop    <- pies[,seq_along(tmp.store)]
@@ -259,7 +258,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     }
     if(!label.miss) {
       if(nlevels(post.z) == length(levs)) {
-        sw.lab   <- lab.switch(z.new=post.z, z.old=zlabels, Gs=Gseq2)
+        sw.lab   <- lab.switch(z.new=post.z, z.old=zlabels, Gs=Gseq)
         post.z   <- factor(sw.lab$z)
         l.perm   <- sw.lab$z.perm
         post.pi  <- post.pi[l.perm]  
