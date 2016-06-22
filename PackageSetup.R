@@ -135,7 +135,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   if(any(range.Q   > P))            stop(paste0("Number of factors must be less than the number of variables, ", P))
   if(any(range.Q  >= N))            stop(paste0("Number of factors must be less than the number of observations, ", N))
   if(is.element(method, c("FA", "MFA", "OMFA", "IMFA"))) {
-    if(missing("sigma.l"))   sigma.l       <- 0.5
+    if(missing("sigma.l"))   sigma.l       <- 1
     if(sigma.l <= 0)                stop("'sigma.l' must be strictly positive")            
   } else {            
     if(!is.logical(adapt))          stop("'adapt' must be TRUE or FALSE") 
