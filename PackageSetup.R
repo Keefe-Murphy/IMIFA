@@ -73,8 +73,9 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
        any(range.G  > 1))           warning(paste0("'range.G' must be 1 for the ", method, " method"), call.=F)
     if(is.element(method, c("OMIFA", "OMFA", "IMFA", "IMIFA"))) {
       if(G.x) {
-        range.G    <- floor(2 * log(N))
+        range.G    <- max(2, floor(2 * log(N)))
       }
+      if(range.G   == 1)            stop(paste0("'range.G' should be at least greater than 1 for the ", method, " method"))
       if(is.element(method, c("IMFA", "IMIFA"))) {
         if(missing(trunc.G))  {
           trunc.G  <- ifelse(N < 100, N, 100)
@@ -202,7 +203,8 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(missing("alpha.pi"))  alpha.pi      <- ifelse(is.element(method, c("OMIFA", "OMFA")), 0.5/range.G, 1)
     if(length(alpha.pi) != 1)       stop("'alpha.pi' must be specified as a scalar to ensure an exchangeable prior")
     if(alpha.pi <= 0)               stop("'alpha.pi' must be strictly positive")
-    if(alpha.pi  > 1)               warning("Are you sure alpha.pi should be greater than 1?", call.=F)
+    if(all(!is.element(method, c("IMFA", "IMIFA")),
+           alpha.pi  > 1))          warning("Are you sure alpha.pi should be greater than 1?", call.=F)
                              z.init        <- match.arg(z.init)
     if(all(is.element(method, c("OMIFA", "OMFA")), !is.element(z.init, 
        c("list", "kmeans"))))       stop("'z.init' must be set to 'list' or 'kmeans' for the OMIFA method to ensure all groups are populated at the initialisation stage")
