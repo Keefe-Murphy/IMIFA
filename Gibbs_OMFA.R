@@ -4,10 +4,9 @@
   
 # Gibbs Sampler Function
   gibbs.OMFA       <- function(Q, data, iters, N, P, G, mu.zero,
-                               sigma.mu, burnin, thinning, mu,
-                               psi.alpha, psi.beta, verbose, alpha.d1,
-                               alpha.dk, sw, cluster, phi.nu, b0, b1, prop,
-                               beta.d1, beta.dk, adapt, epsilon, ...) {
+                               sigma.mu, sigma.l, burnin, mu, 
+                               thinning, psi.alpha, psi.beta, 
+                               verbose, sw, cluster, ...) {
         
   # Define & initialise variables
     n.iters        <- round(max(iters), -1)

@@ -246,7 +246,7 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       }
     }
     post.z       <- droplevels(setNames(apply(z, 1, function(x) factor(which.max(tabulate(x)), levels=Gseq)), seq_len(n.obs)))
-    uncertainty  <- 1 - apply(apply(z, 1, tabulate, nbins=G)/4000, 2, max)
+    uncertainty  <- 1 - apply(matrix(apply(z, 1, tabulate, nbins=G)/length(tmp.store), nr=nlevels(post.z), nc=n.obs), 2, max)
     if(sw["pi.sw"])    {
       pi.prop    <- pies[,seq_along(tmp.store)]
       post.pi    <- rowMeans(pi.prop, dims=1)

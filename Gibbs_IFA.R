@@ -141,7 +141,7 @@
         }
       } 
     
-    if(Q > Q.star)  stop(paste0("Q cannot exceed initial number of loadings columns: try increasing Q.star from ", Q.star))
+    if(Q > Q.star)  stop(paste0("Q cannot exceed initial number of loadings columns: try increasing range.Q from ", Q.star))
      if(is.element(iter, iters)) {
         new.it   <- which(iters == iter)  
         psi      <- 1/psi.inv

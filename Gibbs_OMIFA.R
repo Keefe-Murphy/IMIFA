@@ -215,7 +215,7 @@
         pi.prop    <- pi.prop[,z.perm, drop=F]
       }
     
-    if(any(Qs > Q.star))      stop(paste0("Q cannot exceed initial number of loadings columns: try increasing Q.star from ", Q.star))
+    if(any(Qs > Q.star))      stop(paste0("Q cannot exceed initial number of loadings columns: try increasing range.Q from ", Q.star))
       if(is.element(iter, iters))   {
         new.it     <- which(iters == iter)
         log.like   <- sum(z.res$log.likes)

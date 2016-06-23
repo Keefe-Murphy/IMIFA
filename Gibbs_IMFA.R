@@ -3,11 +3,9 @@
 #######################################################################
   
 # Gibbs Sampler Function
-  gibbs.IMFA       <- function(Q, data, iters, N, P, G, mu.zero, pp,
-                               sigma.mu, burnin, thinning, mu, trunc.G,
-                               psi.alpha, psi.beta, verbose, alpha.d1,
-                               alpha.dk, sw, cluster, phi.nu, b0, b1, prop,
-                               beta.d1, beta.dk, adapt, epsilon, ...) {
+  gibbs.IMFA       <- function(Q, data, iters, N, P, G, mu.zero, pp, sigma.l,
+                               sigma.mu, burnin, thinning, mu, trunc.G, gen.slice,
+                               psi.alpha, psi.beta, verbose, sw, cluster, ...) {
         
   # Define & initialise variables
     n.iters        <- round(max(iters), -1)
@@ -15,6 +13,7 @@
     Gs             <- seq_len(G)
     Ts             <- seq_len(trunc.G)
     Ps             <- seq_len(P)
+    Ns             <- seq_len(N)
     obsnames       <- rownames(data)
     varnames       <- colnames(data)
     facnames       <- paste0("Factor ", seq_len(Q))
@@ -100,9 +99,10 @@
       }
     
     # Slice Sampler
+      csi          <- if(gen.slice) csi else pi.prop
       w.i          <- csi[z]
       u.slice      <- runif(N, 0, w.i)
-      Au           <- unlist(lapply(seq_along(u.slice), function(u) sum(u.slice[u] < pi.prop)))
+      Au           <- unlist(lapply(Ns, function(i) sum(u.slice[i] < pi.prop)))
       G            <- max(Au)
       Gs           <- seq_len(G)
       slice.ind    <- do.call(cbind, lapply(Gs, function(g) (u.slice < csi[g])/csi[g]))

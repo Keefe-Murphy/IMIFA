@@ -17,7 +17,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
                         burnin = n.iters/5, thinning = 2, centering = T, scaling = c("unit", "pareto", "none"), qstar0g = F, trunc.G = NULL,
                         adapt = T, b0 = NULL, b1 = NULL, delta0g = F, prop = NULL, epsilon = NULL, sigma.mu = NULL, sigma.l = NULL,
                         mu0g = F, psi0g = F, mu.zero = NULL, phi.nu = NULL, psi.alpha = NULL, psi.beta = NULL, alpha.d1 = NULL, pp = NULL,
-                        alpha.dk = NULL, beta.d1 = NULL, beta.dk = NULL, alpha.pi = NULL, z.list = NULL, profile = F, mu.switch = T, 
+                        alpha.dk = NULL, beta.d1 = NULL, beta.dk = NULL, alpha.pi = NULL, z.list = NULL, profile = F, mu.switch = T, gen.slice = F,
                         f.switch = T, load.switch = T, psi.switch = T, pi.switch = T, z.init = c("kmeans", "list", "mclust", "priors")) {
   
   defpar    <- suppressWarnings(par(no.readonly = T))
@@ -80,8 +80,9 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
         if(missing(trunc.G))  {
           trunc.G  <- ifelse(N < 100, N, 100)
         } 
+        if(!is.logical(gen.slice))  stop("'gen.slice' must be TRUE or FALSE") 
         if(missing(pp)) {
-          pp       <- 0.7
+          pp       <- 0.5
         }
         if(pp < 0  && pp > 1)       stop("'pp' must be a single number between 0 and 1")
         if(all(N    > 100, 
@@ -243,7 +244,7 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   gibbs.arg <- list(P = P, sigma.mu = sigma.mu, psi.alpha = psi.alpha, burnin = burnin, 
                     thinning = thinning, iters = iters, verbose = verbose, sw = switches)
   if(is.element(method, c("IMIFA", "IMFA"))) {
-    gibbs.arg      <- append(gibbs.arg, list(trunc.G = trunc.G, pp = pp))
+    gibbs.arg      <- append(gibbs.arg, list(trunc.G = trunc.G, pp = pp, gen.slice = gen.slice))
   }
   if(!is.element(method, c("FA", "MFA", "OMFA", "IMFA"))) {
     gibbs.arg      <- append(gibbs.arg, list(phi.nu = phi.nu, beta.d1 = beta.d1, beta.dk = beta.dk, 
@@ -257,8 +258,8 @@ imifa.mcmc  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   mu               <- list(colMeans(dat))
   beta.x           <- missing("psi.beta")
   mu0.x            <- missing("mu.zero")
-  ad1.x            <- all(missing("alpha.d1"), is.element(method, c("MIFA", "OMIFA")))
-  adk.x            <- all(missing("alpha.dk"), is.element(method, c("MIFA", "OMIFA")))
+  ad1.x            <- all(missing("alpha.d1"), is.element(method, c("MIFA", "OMIFA", "IMIFA")))
+  adk.x            <- all(missing("alpha.dk"), is.element(method, c("MIFA", "OMIFA", "IMIFA")))
   if(all(z.init != "list", any(sw0gs))) {
     if(any(delta0g, qstar0g))       stop(paste0(names(which(sw0gs[3:4])), " can only be TRUE if z.init=list\n"))
     if(all(!mu0.x, mu0g))           stop("'mu.zero' can only be supplied for each group if z.init=list")
