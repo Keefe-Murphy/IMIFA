@@ -179,8 +179,7 @@
     }
 
   # Label Switching
-    lab.switch  <- function(z.new, z.old, Gs, ng=tabulate(z.new, 
-                            nbins=length(Gs))) {
+    lab.switch  <- function(z.new, z.old, Gs, ng=tabulate(z.new)) {
       tab       <- table(z.new, z.old, dnn=NULL)
       tab.tmp   <- tab[rowSums(tab) != 0,colSums(tab) != 0, drop=F]
       nc        <- ncol(tab.tmp)
@@ -211,7 +210,8 @@
       }
       z.names   <- as.numeric(names(z.perm))
       z.perm    <- z.perm[order(z.names)]
-      z.sw      <- factor(z.new, labels=z.perm[ng > 0][seq_len(sum(ng > 0))])
+      ng        <- ng[ng > 0]
+      z.sw      <- factor(z.new, labels=z.perm[seq_along(ng)])
         return(list(z = as.numeric(levels(z.sw))[z.sw], z.perm = z.perm))
     }
 

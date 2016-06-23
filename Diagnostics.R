@@ -218,7 +218,6 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       if(!label.miss && lev.ind) {    
         sw.lab   <- lab.switch(z.new=z.temp, z.old=zlabels, Gs=Gseq)
         z.temp   <- sw.lab$z
-        l.perm   <- sw.lab$z.perm
       }
       for(sl in seq_along(tmp.store)[-1])   {
         n.ind    <- if(inf.G) non.empty[[sl]] else Gseq
@@ -267,6 +266,9 @@ tune.imifa       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       tab.stat   <- c(classAgreement(tab), classError(post.z, zlabels))
       if(nrow(tab) != ncol(tab)) {
         tab.stat <- tab.stat[-seq_len(2)]
+      }
+      if(tab.stat$errorRate == 0) {
+        tab.stat$misclassified <- NULL
       }
     }
     cluster      <- list(post.z = post.z, post.pi = post.pi, z = z, uncertainty = uncertainty)
