@@ -2,7 +2,7 @@
 ### Simulate Data (Single & Shrinkage Case) ###
 ###############################################
 
-sim.imifa      <- function(N = 500, G = 3, P = 25, Q = rep(5, G), nn = NULL) {
+sim.IMIFA      <- function(N = 500, G = 3, P = 25, Q = rep(5, G), nn = NULL) {
   
   if(any(N  < 0, P  < 0, Q < 0, G <= 0)) stop("N, P, and Q must be strictly non-negative and G must be strictly positive")
   if(any(Q >= P, Q >= N - 1))            stop(paste0("Cannot generate this many factors relative to N=", N, " and P=", P))

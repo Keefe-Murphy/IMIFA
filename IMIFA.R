@@ -44,14 +44,14 @@
   # Cereal 
     cereal   <- read.csv(paste0(getwd(), "/Data/", "Cereal.csv", sep=""))
   # Simulated data
-   #SimData  <- sim.imifa(N=80, G=4, P=100, Q=c(5, 1, 4, 0), nn=c(20, 20, 20, 20))
+   #SimData  <- sim.IMIFA(N=80, G=4, P=100, Q=c(5, 1, 4, 0), nn=c(20, 20, 20, 20))
    #save(SimData, file=paste0(getwd(),"/Data/Simulated_Data.Rdata", sep=""))
     load(file=paste0(getwd(), "/Data/Simulated_Data.Rdata", sep=""), envir=.GlobalEnv)
     cl <- attr(SimData, "Labels")
 
 # Run the Gibbs Sampler
-  sim  <- imifa.mcmc(wine, method="IMFA", range.Q=3)
- #sim  <- imifa.mcmc(wine, method="classify", Label=Lab)
+  sim  <- IMIFA.mcmc(wine, method="IMFA", range.Q=3)
+ #sim  <- IMIFA.mcmc(wine, method="classify", Label=Lab)
 
 # Save / Load Simulations
   save(sim, file=paste0(getwd(), "/Simulations/", attr(sim, "Name"), 
@@ -62,12 +62,12 @@
                    ".Rdata", sep=""), envir=.GlobalEnv)
 
 # Posterior Summaries (optional: additional 'burnin' & 'thinning', user-defined G/Q, model selection criterion)
-  res <- tune.imifa(sim, Labels=Lab)
+  res <- tune.IMIFA(sim, Labels=Lab)
   res$Clust$conf.mat
   res$Clust$perf
   res$Error
   plot(res, "GQ")
- #res <- tune.imifa(sim, G=3, Q=3, criterion="bicm", Labels=Lab)
+ #res <- tune.IMIFA(sim, G=3, Q=3, criterion="bicm", Labels=Lab)
   
 # Save / Load Results
   save(res, file=paste0(getwd(), "/Simulations/", attr(res, "Name"), 
