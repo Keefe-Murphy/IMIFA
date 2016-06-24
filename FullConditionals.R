@@ -66,9 +66,9 @@
   # Mixing Proportions
     sim.pi      <- function(pi.alpha, nn, inf.G=F) {
       if(inf.G) {
-        vs      <- rbeta(length(nn), 1 + nn, pi.alpha - cumsum(nn))
+        vs      <- rbeta(length(nn), 1 + nn, pi.alpha + sum(nn) - cumsum(nn))
         vs[length(vs)]    <- 1
-          do.call(cbind, lapply(seq_along(nn), function(t) vs[t] * prod((1 - vs[seq_len(t - 1)]))))  
+          return(list(Vs = vs, pi.prop = do.call(cbind, lapply(seq_along(nn), function(t) vs[t] * prod((1 - vs[seq_len(t - 1)]))))))
       } else {
           rdirichlet(1, pi.alpha + nn)
       }
@@ -87,6 +87,17 @@
       }
       z         <- rowSums(-rexp(N) > lnp) + 1
         return(list(z = unname(z), log.likes = log.denom))
+    }
+
+  # Alpha
+    sim.alpha   <- function(beta, trunc.G, alpha, Vsum, rate) {
+      alpha.new <- runif(1, 0, beta)
+      a.prob    <- trunc.G * (log(alpha.new) - log(alpha)) * (alpha.new - alpha) * (trunc.G - Vsum)
+      if(-exp(1) < a.prob) {
+        alpha   <- alpha.new
+        rate    <- rate + 1
+      }
+      return(list(alpha = alpha, rate = rate))
     }
 
 # Priors

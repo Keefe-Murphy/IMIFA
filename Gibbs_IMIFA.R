@@ -4,7 +4,7 @@
   
 # Gibbs Sampler Function
   gibbs.IMIFA       <- function(Q, data, iters, N, P, G, mu.zero, pp, sigma.l,
-                                sigma.mu, burnin, thinning, mu, trunc.G,
+                                sigma.mu, burnin, thinning, mu, trunc.G, MH.step,
                                 psi.alpha, psi.beta, verbose, gen.slice, alpha.d1,
                                 alpha.dk, sw, cluster, phi.nu, b0, b1, prop,
                                 beta.d1, beta.dk, adapt, epsilon, ...) {
@@ -46,15 +46,19 @@
     Q.star          <- Q
     Qs              <- rep(Q, trunc.G)
     Q.store         <- matrix(0, nr=trunc.G, nc=n.store)
+    G.star          <- G
     G.store         <- rep(0, n.store)
+    rate            <- 0
+    rate.store      <- rep(0, n.iters)
     non.empty       <- list()
     dimnames(z.store)      <- list(obsnames, iternames)
     dimnames(Q.store)      <- list(gnames, iternames)
     
     mu.sigma        <- 1/sigma.mu
     z               <- cluster$z
-    pi.alpha        <- cluster$pi.alpha + N
-    pi.prop         <- cbind(cluster$pi.prop, sim.pi(pi.alpha=cluster$pi.alpha, nn=rep(0, trunc.G), inf.G=T)[,-Gs, drop=F])
+    pi.alpha        <- cluster$pi.alpha
+    alpha.store     <- rep(0, n.iters)
+    pi.prop         <- cbind(cluster$pi.prop, sim.pi(pi.alpha=pi.alpha, nn=rep(0, trunc.G, inf.G=T))[,-Gs, drop=F])
     nn              <- tabulate(z, nbins=trunc.G)
     mu              <- cbind(mu, do.call(cbind, lapply(seq_len(trunc.G - G), function(g) sim.mu.p(P=P, sigma.mu=sigma.mu, mu.zero=mu.zero))))
     f               <- sim.f.p(N=N, Q=Q)
@@ -90,6 +94,8 @@
                                   function(g) tcrossprod(lmat[[g]]) + diag(1/psi.inv[,g])))$log.likes)
       Q.store[,1]          <- Qs
       G.store[1]           <- G
+      rate.store[1]        <- rate
+      alpha.store[1]       <- pi.alpha
     }
     
   # Iterate
@@ -112,7 +118,11 @@
       slice.ind     <- do.call(cbind, lapply(Gs, function(g) (u.slice < csi[g])/csi[g]))
     
     # Mixing Proportions
-      pi.prop       <- sim.pi(pi.alpha=pi.alpha, nn=nn, inf.G=T)
+      weights       <- sim.pi(pi.alpha=pi.alpha, nn=nn, inf.G=T)
+      pi.prop       <- weights$pi.prop
+      if(MH.step) {
+        Vsum        <- sum(weights$Vs)
+      }
     
     # Cluster Labels
       psi           <- 1/psi.inv
@@ -193,6 +203,14 @@
       }
     }
     
+    
+    # Alpha
+      if(MH.step)   {
+        MH.alpha    <- sim.alpha(beta=G.star, trunc.G=trunc.G, alpha=pi.alpha, Vsum=Vsum, rate=rate) 
+        pi.alpha    <- MH.alpha$alpha
+        rate        <- MH.alpha$rate
+      }
+    
     if(any(Qs > Q.star))      stop(paste0("Q cannot exceed initial number of loadings columns: try increasing range.Q from ", Q.star))
       if(is.element(iter, iters))   {
         new.it      <- which(iters == iter)
@@ -212,6 +230,9 @@
                          Q.store[,new.it]           <- Qs
                          G.store[new.it]            <- sum(nn0)
                          non.empty[[new.it]]        <- which(nn0)
+        if(MH.step) {    rate.store[iter]           <- rate
+                         alpha.store[iter]          <- pi.alpha
+        }
       } 
     }
   
@@ -220,6 +241,8 @@
                             load     = if(sw["l.sw"])   as.simple_sparse_array(load.store), 
                             psi      = if(sw["psi.sw"]) psi.store,
                             pi.prop  = if(sw["pi.sw"])  pi.store,
+                            r.store  = if(MH.step)      rate.store,
+                            a.store  = if(MH.step)      alpha.store,
                             z.store  = z.store,
                             ll.store = ll.store,
                             Q.store  = Q.store,

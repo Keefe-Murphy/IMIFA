@@ -15,7 +15,7 @@ message("   ________  __________________\n  /_  __/  |/   /_  __/ ___/ _ \\  \n 
 IMIFA.mcmc  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA", "MFA", "IFA", "FA", "classify"), 
                         n.iters = 50000, Labels = NULL, factanal = F, range.G = NULL, range.Q = NULL, verbose = F, Q.fac = NULL,  
                         burnin = n.iters/5, thinning = 2, centering = T, scaling = c("unit", "pareto", "none"), qstar0g = F, trunc.G = NULL,
-                        adapt = T, b0 = NULL, b1 = NULL, delta0g = F, prop = NULL, epsilon = NULL, sigma.mu = NULL, sigma.l = NULL,
+                        adapt = T, b0 = NULL, b1 = NULL, delta0g = F, prop = NULL, epsilon = NULL, sigma.mu = NULL, sigma.l = NULL, MH.step = F,
                         mu0g = F, psi0g = F, mu.zero = NULL, phi.nu = NULL, psi.alpha = NULL, psi.beta = NULL, alpha.d1 = NULL, pp = NULL,
                         alpha.dk = NULL, beta.d1 = NULL, beta.dk = NULL, alpha.pi = NULL, z.list = NULL, profile = F, mu.switch = T, gen.slice = F,
                         f.switch = T, load.switch = T, psi.switch = T, pi.switch = T, z.init = c("kmeans", "list", "mclust", "priors")) {
@@ -81,6 +81,7 @@ IMIFA.mcmc  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
           trunc.G  <- ifelse(N < 100, N, 100)
         } 
         if(!is.logical(gen.slice))  stop("'gen.slice' must be TRUE or FALSE") 
+        if(!is.logical(MH.step))    stop("'MH.step' must be TRUE or FALSE") 
         if(missing(pp)) {
           pp       <- 0.5
         }
@@ -201,7 +202,8 @@ IMIFA.mcmc  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   if(!is.element(method, c("FA", "IFA", "classify"))) {
     if(all(method != "MIFA",
        any(delta0g, qstar0g)))      stop("'delta0g' and 'qstar0g' can only be TRUE for the 'MIFA' method")
-    if(missing("alpha.pi"))  alpha.pi      <- ifelse(is.element(method, c("OMIFA", "OMFA")), 0.5/range.G, 1)
+    if(missing("alpha.pi"))  alpha.pi      <- ifelse(is.element(method, c("IMIFA", "IMFA")), runif(1, 0, range.G), 
+                                              ifelse(is.element(method, c("OMIFA", "OMFA")), 0.5/range.G, 1))
     if(length(alpha.pi) != 1)       stop("'alpha.pi' must be specified as a scalar to ensure an exchangeable prior")
     if(alpha.pi <= 0)               stop("'alpha.pi' must be strictly positive")
     if(all(!is.element(method, c("IMFA", "IMIFA")),
@@ -244,7 +246,7 @@ IMIFA.mcmc  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   gibbs.arg <- list(P = P, sigma.mu = sigma.mu, psi.alpha = psi.alpha, burnin = burnin, 
                     thinning = thinning, iters = iters, verbose = verbose, sw = switches)
   if(is.element(method, c("IMIFA", "IMFA"))) {
-    gibbs.arg      <- append(gibbs.arg, list(trunc.G = trunc.G, pp = pp, gen.slice = gen.slice))
+    gibbs.arg      <- append(gibbs.arg, list(trunc.G = trunc.G, pp = pp, gen.slice = gen.slice, MH.step = MH.step))
   }
   if(!is.element(method, c("FA", "MFA", "OMFA", "IMFA"))) {
     gibbs.arg      <- append(gibbs.arg, list(phi.nu = phi.nu, beta.d1 = beta.d1, beta.dk = beta.dk, 

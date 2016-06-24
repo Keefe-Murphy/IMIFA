@@ -5,7 +5,7 @@
 # Gibbs Sampler Function
   gibbs.IMFA       <- function(Q, data, iters, N, P, G, mu.zero, pp, sigma.l,
                                sigma.mu, burnin, thinning, mu, trunc.G, gen.slice,
-                               psi.alpha, psi.beta, verbose, sw, cluster, ...) {
+                               psi.alpha, psi.beta, verbose, sw, cluster, MH.step, ...) {
         
   # Define & initialise variables
     n.iters        <- round(max(iters), -1)
@@ -42,15 +42,19 @@
     }
     z.store        <- matrix(0, nr=N, nc=n.store)
     ll.store       <- rep(0, n.store)
+    G.star         <- G
     G.store        <- rep(0, n.store)
+    rate           <- 0
+    rate.store     <- rep(0, n.iters)
     non.empty      <- list()
     dimnames(z.store)      <- list(obsnames, iternames)
     
     mu.sigma       <- 1/sigma.mu
     l.sigma        <- 1/sigma.l 
     z              <- cluster$z
-    pi.alpha       <- cluster$pi.alpha + N
-    pi.prop        <- cbind(cluster$pi.prop, sim.pi(pi.alpha=cluster$pi.alpha, nn=rep(0, trunc.G, inf.G=T))[,-Gs, drop=F])
+    pi.alpha       <- cluster$pi.alpha
+    alpha.store    <- rep(0, n.iters)
+    pi.prop        <- cbind(cluster$pi.prop, sim.pi(pi.alpha=pi.alpha, nn=rep(0, trunc.G, inf.G=T))[,-Gs, drop=F])
     nn             <- tabulate(z, nbins=trunc.G)
     mu             <- cbind(mu, do.call(cbind, lapply(seq_len(trunc.G - G), function(g) sim.mu.p(P=P, sigma.mu=sigma.mu, mu.zero=mu.zero))))
     f              <- sim.f.p(N=N, Q=Q)
@@ -86,6 +90,8 @@
       ll.store[1]          <- sum(sim.z(data=data, mu=mu, Gseq=Gs, N=N, pi.prop=pi.prop, Sigma=lapply(Gs,
                                   function(g) tcrossprod(as.matrix(lmat[,,g])) + diag(1/psi.inv[,g])))$log.likes)
       G.store[1]           <- G
+      rate.store[1]        <- rate
+      alpha.store[1]       <- pi.alpha
     }
     
   # Iterate
@@ -108,7 +114,11 @@
       slice.ind    <- do.call(cbind, lapply(Gs, function(g) (u.slice < csi[g])/csi[g]))
     
     # Mixing Proportions
-      pi.prop      <- sim.pi(pi.alpha=pi.alpha, nn=nn, inf.G=T)
+      weights      <- sim.pi(pi.alpha=pi.alpha, nn=nn, inf.G=T)
+      pi.prop      <- weights$pi.prop
+      if(MH.step) {
+        Vsum       <- sum(weights$Vs)
+      }
     
     # Cluster Labels
       psi          <- 1/psi.inv
@@ -138,7 +148,14 @@
     # Uniquenesses
       psi.inv[,Gs] <- do.call(cbind, lapply(Gs, function(g) if(nn0[g]) sim.psi.i(N=nn[g], psi.alpha=psi.alpha, c.data=c.data[[g]], psi.beta=psi.beta, 
                               P=P, f=f[z.ind[[g]],,drop=F], lmat=as.matrix(lmat[,,g])) else sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)))
-        
+      
+    # Alpha
+      if(MH.step)   {
+        MH.alpha   <- sim.alpha(beta=G.star, trunc.G=trunc.G, alpha=pi.alpha, Vsum=Vsum, rate=rate) 
+        pi.alpha   <- MH.alpha$alpha
+        rate       <- MH.alpha$rate
+      }
+      
       if(is.element(iter, iters))   {
         new.it     <- which(iters == iter)
         log.like   <- sum(z.res$log.likes)
@@ -151,6 +168,9 @@
                                    ll.store[new.it]        <- log.like
                                    G.store[new.it]         <- sum(nn0)
                                    non.empty[[new.it]]     <- which(nn0)
+        if(MH.step) {              rate.store[iter]        <- rate
+                                   alpha.store[iter]       <- pi.alpha
+        }
       } 
     }
     returns        <- list(mu       = if(sw["mu.sw"])         mu.store,
@@ -158,6 +178,8 @@
                            load     = if(all(sw["l.sw"], Q0)) load.store, 
                            psi      = if(sw["psi.sw"])        psi.store,
                            pi.prop  = if(sw["pi.sw"])         pi.store,
+                           r.store  = if(MH.step)             rate.store,
+                           a.store  = if(MH.step)             alpha.store,
                            z.store  = z.store,
                            ll.store = ll.store,
                            G.store  = G.store,
