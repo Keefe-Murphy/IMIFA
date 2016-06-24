@@ -64,14 +64,14 @@
     }
 
   # Mixing Proportions
-    sim.pi      <- function(pi.alpha, nn) {
-        rdirichlet(1, pi.alpha + nn)
-    }
-
-    sim.stick   <- function(pi.alpha, nn) {
-      vs        <- rbeta(length(nn), 1 + nn, pi.alpha - cumsum(nn))
-      vs[length(vs)]  <- 1
-        do.call(cbind, lapply(seq_along(nn), function(t) vs[t] * prod((1 - vs[seq_len(t - 1)]))))
+    sim.pi      <- function(pi.alpha, nn, inf.G=F) {
+      if(inf.G) {
+        vs      <- rbeta(length(nn), 1 + nn, pi.alpha - cumsum(nn))
+        vs[length(vs)]    <- 1
+          do.call(cbind, lapply(seq_along(nn), function(t) vs[t] * prod((1 - vs[seq_len(t - 1)]))))  
+      } else {
+          rdirichlet(1, pi.alpha + nn)
+      }
     }
   
   # Cluster Labels
@@ -246,11 +246,11 @@
                             byrank=FALSE, breaks=length(colors)) { 
       m1        <- if(byrank == T) rank(m) else m
       facs      <- cut(m1, breaks, include.lowest=TRUE)
-      ans       <- colors[as.numeric(facs)]
+      answer    <- colors[as.numeric(facs)]
       if(is.matrix(m)) {
-        ans     <- matrix(ans, nrow(m), ncol(m))
-        rownames(ans) <- rownames(m)
-        colnames(ans) <- colnames(m)
+        answer  <- matrix(answer, nrow(m), ncol(m))
+        rownames(answer)  <- rownames(m)
+        colnames(answer)  <- colnames(m)
       }
-        ans     
+        answer    
     }

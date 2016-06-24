@@ -50,7 +50,7 @@
     l.sigma        <- 1/sigma.l 
     z              <- cluster$z
     pi.alpha       <- cluster$pi.alpha + N
-    pi.prop        <- cbind(cluster$pi.prop, sim.stick(pi.alpha=cluster$pi.alpha, nn=rep(0, trunc.G))[,-Gs, drop=F])
+    pi.prop        <- cbind(cluster$pi.prop, sim.pi(pi.alpha=cluster$pi.alpha, nn=rep(0, trunc.G, inf.G=T))[,-Gs, drop=F])
     nn             <- tabulate(z, nbins=trunc.G)
     mu             <- cbind(mu, do.call(cbind, lapply(seq_len(trunc.G - G), function(g) sim.mu.p(P=P, sigma.mu=sigma.mu, mu.zero=mu.zero))))
     f              <- sim.f.p(N=N, Q=Q)
@@ -108,7 +108,7 @@
       slice.ind    <- do.call(cbind, lapply(Gs, function(g) (u.slice < csi[g])/csi[g]))
     
     # Mixing Proportions
-      pi.prop      <- sim.stick(pi.alpha=pi.alpha, nn=nn)
+      pi.prop      <- sim.stick(pi.alpha=pi.alpha, nn=nn, inf.G=T)
     
     # Cluster Labels
       psi          <- 1/psi.inv
