@@ -56,7 +56,7 @@
     pi.prop        <- cluster$pi.prop
     f              <- sim.f.p(N=N, Q=Q)
     phi            <- lapply(Gseq, function(g) sim.phi.p(Q=Q, P=P, phi.nu=phi.nu))
-    delta          <- lapply(Gseq, function(g) c(sim.delt.1p(alpha.d1=alpha.d1, beta.d1=beta.d1), sim.delt.kp(Q=Q, alpha.dk=alpha.dk, beta.dk=beta.dk)))
+    delta          <- lapply(Gseq, function(g) c(sim.delta.p(alpha=alpha.d1, beta=beta.d1), sim.delta.p(Q=Q, alpha=alpha.dk, beta=beta.dk)))
     tau            <- lapply(delta, cumprod)
     lmat           <- lapply(Gseq, function(g) matrix(unlist(lapply(Pseq, function(j) sim.load.p(Q=Q, phi=phi[[g]][j,], tau=tau[[g]], P=P)), use.names=F), nr=P, byrow=T))
     psi.inv        <- do.call(cbind, lapply(Gseq, function(g) sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)))
@@ -148,19 +148,19 @@
       for(g in Gseq)   {
         Qg         <- Qs[g]
         nng        <- nn[g]
-        nn0g       <- nng > 0
+        nn0g       <- nn0[g]
         if(nn0g)   {
           sumtermg <- sum.terms[[g]]  
         }
         if(Q0[g])  {
           delta[[g]][1]    <- if(nn0g) sim.delta1(Q=Qg, alpha.d1=alpha.d1, delta=delta[[g]], P=P, beta.d1=beta.d1, 
-                              tau=tau[[g]], sum.term=sumtermg) else sim.delt.1p(alpha.d1=alpha.d1, beta.d1=beta.d1)
+                              tau=tau[[g]], sum.term=sumtermg) else sim.delta.p(alpha=alpha.d1, beta=beta.d1)
           tau[[g]]         <- cumprod(delta[[g]])
         }
         if(Qg > 1) {
           for(k in seq_len(Qg)[-1]) { 
             delta[[g]][k]  <- if(nn0g) sim.deltak(Q=Qg, alpha.dk=alpha.dk, delta=delta[[g]], P=P, beta.dk=beta.dk, k=k, 
-                              tau=tau[[g]], sum.term=sumtermg) else sim.delt.kp(Q=2, alpha.dk=alpha.dk, beta.dk=beta.dk)
+                              tau=tau[[g]], sum.term=sumtermg) else sim.delta.p(alpha=alpha.dk, beta=beta.dk)
             tau[[g]]       <- cumprod(delta[[g]])
           }
         }

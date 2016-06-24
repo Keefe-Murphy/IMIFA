@@ -59,7 +59,7 @@
     mu              <- cbind(mu, do.call(cbind, lapply(seq_len(trunc.G - G), function(g) sim.mu.p(P=P, sigma.mu=sigma.mu, mu.zero=mu.zero))))
     f               <- sim.f.p(N=N, Q=Q)
     phi             <- lapply(Ts, function(t) sim.phi.p(Q=Q, P=P, phi.nu=phi.nu))
-    delta           <- lapply(Ts, function(t) c(sim.delt.1p(alpha.d1=alpha.d1, beta.d1=beta.d1), sim.delt.kp(Q=Q, alpha.dk=alpha.dk, beta.dk=beta.dk)))
+    delta           <- lapply(Ts, function(t) c(sim.delta.p(alpha=alpha.d1, beta=beta.d1), sim.delta.p(Q=Q, alpha=alpha.dk, beta=beta.dk)))
     tau             <- lapply(delta, cumprod)
     lmat            <- lapply(Ts, function(t) matrix(unlist(lapply(Ps, function(j) sim.load.p(Q=Q, phi=phi[[t]][j,], tau=tau[[t]], P=P)), use.names=F), nr=P, byrow=T))
     psi.inv         <- do.call(cbind, lapply(Ts, function(t) sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)))
@@ -164,6 +164,34 @@
     # Uniquenesses
       psi.inv[,Gs]  <- do.call(cbind, lapply(Gs, function(g) if(nn0[g]) sim.psi.i(N=nn[g], psi.alpha=psi.alpha, c.data=c.data[[g]], psi.beta=psi.beta, 
                                P=P, f=f[z.ind[[g]],seq_len(Qs[g]),drop=F], lmat=lmat[[g]]) else sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)))
+    
+    # Local Shrinkage
+      load.2        <- lapply(lmat[Gs], function(lg) lg * lg)
+      phi[Gs]       <- lapply(Gs, function(g) if(nn0[g]) sim.phi(Q=Qs[g], P=P, phi.nu=phi.nu, 
+                       tau=tau[[g]], load.2=load.2[[g]]) else sim.phi.p(Q=Qs[g], P=P, phi.nu=phi.nu))
+    
+    # Global Shrinkage
+      sum.terms    <- lapply(Gs, function(g) diag(crossprod(phi[[g]], load.2[[g]])))
+      for(g in Gs)   {
+        Qg         <- Qs[g]
+        nng        <- nn[g]
+        nn0g       <- nn0[g]
+      if(nn0g)   {
+        sumtermg <- sum.terms[[g]]  
+      }
+      if(Q0[g])  {
+        delta[[g]][1]    <- if(nn0g) sim.delta1(Q=Qg, alpha.d1=alpha.d1, delta=delta[[g]], P=P, beta.d1=beta.d1, 
+                            tau=tau[[g]], sum.term=sumtermg) else sim.delta.p(alpha=alpha.d1, beta=beta.d1)
+        tau[[g]]         <- cumprod(delta[[g]])
+      }
+      if(Qg > 1) {
+        for(k in seq_len(Qg)[-1]) { 
+          delta[[g]][k]  <- if(nn0g) sim.deltak(Q=Qg, alpha.dk=alpha.dk, delta=delta[[g]], P=P, beta.dk=beta.dk, k=k, 
+                            tau=tau[[g]], sum.term=sumtermg) else sim.delta.p(alpha=alpha.dk, beta=beta.dk)
+          tau[[g]]       <- cumprod(delta[[g]])
+        }
+      }
+    }
     
     if(any(Qs > Q.star))      stop(paste0("Q cannot exceed initial number of loadings columns: try increasing range.Q from ", Q.star))
       if(is.element(iter, iters))   {
