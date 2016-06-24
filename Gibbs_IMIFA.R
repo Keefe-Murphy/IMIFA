@@ -46,10 +46,9 @@
     Q.star          <- Q
     Qs              <- rep(Q, trunc.G)
     Q.store         <- matrix(0, nr=trunc.G, nc=n.store)
-    G.star          <- G
+    G.star          <- G/2
     G.store         <- rep(0, n.store)
-    rate            <- 0
-    rate.store      <- rep(0, n.iters)
+    rate            <- rep(0, n.iters)
     non.empty       <- list()
     dimnames(z.store)      <- list(obsnames, iternames)
     dimnames(Q.store)      <- list(gnames, iternames)
@@ -94,7 +93,7 @@
                                   function(g) tcrossprod(lmat[[g]]) + diag(1/psi.inv[,g])))$log.likes)
       Q.store[,1]          <- Qs
       G.store[1]           <- G
-      rate.store[1]        <- rate
+      rate[1]              <- 0
       alpha.store[1]       <- pi.alpha
     }
     
@@ -121,7 +120,7 @@
       weights       <- sim.pi(pi.alpha=pi.alpha, nn=nn, inf.G=T)
       pi.prop       <- weights$pi.prop
       if(MH.step) {
-        Vsum        <- sum(weights$Vs)
+        Vs          <- weights$Vs
       }
     
     # Cluster Labels
@@ -206,9 +205,10 @@
     
     # Alpha
       if(MH.step)   {
-        MH.alpha    <- sim.alpha(beta=G.star, trunc.G=trunc.G, alpha=pi.alpha, Vsum=Vsum, rate=rate) 
+        MH.alpha    <- sim.alpha(beta=G.star, trunc.G=trunc.G, alpha=pi.alpha, Vs=Vs) 
         pi.alpha    <- MH.alpha$alpha
-        rate        <- MH.alpha$rate
+        rate[iter]  <- MH.alpha$rate
+        alpha.store[iter]  <- pi.alpha
       }
     
     if(any(Qs > Q.star))      stop(paste0("Q cannot exceed initial number of loadings columns: try increasing range.Q from ", Q.star))
@@ -230,9 +230,6 @@
                          Q.store[,new.it]           <- Qs
                          G.store[new.it]            <- sum(nn0)
                          non.empty[[new.it]]        <- which(nn0)
-        if(MH.step) {    rate.store[iter]           <- rate
-                         alpha.store[iter]          <- pi.alpha
-        }
       } 
     }
   
@@ -241,8 +238,8 @@
                             load     = if(sw["l.sw"])   as.simple_sparse_array(load.store), 
                             psi      = if(sw["psi.sw"]) psi.store,
                             pi.prop  = if(sw["pi.sw"])  pi.store,
-                            r.store  = if(MH.step)      rate.store,
-                            a.store  = if(MH.step)      alpha.store,
+                            rate     = if(MH.step)      sum(rate[iters])/n.store,
+                            alpha    = if(MH.step)      alpha.store[iters],
                             z.store  = z.store,
                             ll.store = ll.store,
                             Q.store  = Q.store,
