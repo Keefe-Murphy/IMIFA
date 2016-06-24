@@ -180,7 +180,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     sw.mx        <- ifelse(clust.ind, sw["mu.sw"], T)
     sw.px        <- ifelse(clust.ind, sw["psi.sw"], T)  
     if(inf.Q) {
-      Q.store    <- sims[[G.ind]][[Q.ind]]$Q.store[,tmp.store, drop=F]
+      Q.store    <- sims[[G.ind]][[Q.ind]]$Q.store[Gseq,tmp.store, drop=F]
       Q.meth     <- ifelse(missing(Q.meth), "Mode", match.arg(Q.meth))
     }
   
@@ -280,17 +280,16 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     z.ind        <- lapply(Gseq, function(g) post.z == g)
   }
   if(inf.Q)   {
-    Q.store      <- if(G > 1) Q.store[Gseq,] else Q.store
-    Q.tab        <- if(G > 1) lapply(apply(Q.store, 1, function(x) list(table(x, dnn=NULL))), "[[", 1) else table(Q.store, dnn=NULL)
-    Q.prob       <- if(G > 1) lapply(Q.tab, prop.table) else prop.table(Q.tab)
-    Q.mode       <- if(G > 1) unlist(lapply(Q.tab, function(qt) as.numeric(names(qt[qt == max(qt)])[1]))) else as.numeric(names(Q.tab[Q.tab == max(Q.tab)])[1])
-    Q.med        <- if(G > 1) ceiling(apply(Q.store, 1, median) * 2)/2 else ceiling(median(Q.store) * 2)/2
+    Q.tab        <- lapply(apply(Q.store, 1, function(x) list(table(x, dnn=NULL))), "[[", 1)
+    Q.prob       <- lapply(Q.tab, prop.table)
+    Q.mode       <- unlist(lapply(Q.tab, function(qt) as.numeric(names(qt[qt == max(qt)])[1])))
+    Q.med        <- ceiling(apply(Q.store, 1, median) * 2)/2
     if(!Q.T)  {
       Q          <- if(Q.meth == "Mode") Q.mode else floor(Q.med)
     } else    {
       Q          <- if(G.T) Q else setNames(rep(Q, G), paste0("Group ", Gseq))
     }
-    Q.CI         <- if(G > 1) apply(Q.store, 1, function(qs) round(quantile(qs, conf.levels))) else round(quantile(Q.store, conf.levels))
+    Q.CI         <- apply(Q.store, 1, function(qs) round(quantile(qs, conf.levels)))
     GQ.temp4     <- list(Q = Q, Q.Mode = Q.mode, Q.Median = Q.med, 
                          Q.CI = Q.CI, Q.Probs = Q.prob, Q.Counts = Q.tab)
     if(inf.G) {

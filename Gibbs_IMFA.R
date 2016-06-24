@@ -108,7 +108,7 @@
       slice.ind    <- do.call(cbind, lapply(Gs, function(g) (u.slice < csi[g])/csi[g]))
     
     # Mixing Proportions
-      pi.prop      <- sim.stick(pi.alpha=pi.alpha, nn=nn, inf.G=T)
+      pi.prop      <- sim.pi(pi.alpha=pi.alpha, nn=nn, inf.G=T)
     
     # Cluster Labels
       psi          <- 1/psi.inv
