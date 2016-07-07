@@ -63,7 +63,6 @@
 
 # Posterior Summaries (optional: additional 'burnin' & 'thinning', user-defined G/Q, model selection criterion)
   res <- tune.IMIFA(sim, Labels=Lab)
-  res$Clust$conf.mat
   res$Clust$perf
   res$Error
   plot(res, "GQ")

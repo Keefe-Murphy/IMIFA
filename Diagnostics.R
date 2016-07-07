@@ -271,9 +271,10 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
         tab.stat$misclassified <- NULL
       }
     }
+    tab.stat     <- c(list(confusionMatrix = tab), tab.stat)
     class(tab.stat)            <- "listof"
     cluster      <- list(post.z = post.z, post.pi = post.pi, z = z, uncertainty = uncertainty)
-    cluster      <- c(cluster, if(!label.miss) list(conf.mat = tab, perf = tab.stat),
+    cluster      <- c(cluster, if(!label.miss) list(perf = tab.stat),
                       if(sw["pi.sw"]) list(pi.prop = pi.prop, var.pi = var.pi, CI.pi = CI.pi))
     attr(cluster, "Z.init")    <- attr(sims[[G.ind]], "Z.init")
     attr(cluster, "Init.Meth") <- attr(sims, "Init.Z")
@@ -510,7 +511,6 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
                          CI.f  = apply(f, c(1, 2), function(x) quantile(x, conf.levels)))
   }
   names(result)  <- paste0("Group", Gseq)
-  class(cluster)               <- "listof"
   class(GQ.res)                <- "listof"
   attr(GQ.res, "Criterion")    <- criterion
   attr(GQ.res, "Factors")      <- n.fac
