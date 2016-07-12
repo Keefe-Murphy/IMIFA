@@ -201,19 +201,18 @@
       z.perm       <- switch.lab$z.perm
       perm         <- identical(as.integer(z.perm), Gseq)
       if(!perm) {
-        if(length(unique(Qs) != 1)) {
+        if(length(unique(Qs)) != 1) {
           Qs       <- Qs[z.perm]  
         }
         mu         <- mu[,z.perm, drop=F]
-        for(g in Gseq)   {
-          lmat[[g]]        <- lmat[[z.perm[g]]]
-          delta[[g]]       <- delta[[z.perm[g]]]
-          phi[[g]]         <- phi[[z.perm[g]]]
-          tau[[g]]         <- tau[[z.perm[g]]]
-        }
+        lmat       <- lmat[z.perm]
+        delta      <- delta[z.perm]
+        phi        <- phi[z.perm]
+        tau        <- tau[z.perm]
         psi.inv    <- psi.inv[,z.perm, drop=F]
         pi.prop    <- pi.prop[,z.perm, drop=F]
       }
+    if(ncol(f) != max(Qs))    stop("FUCK SAKE")
     
     if(any(Qs > Q.star))      stop(paste0("Q cannot exceed initial number of loadings columns: try increasing range.Q from ", Q.star))
       if(is.element(iter, iters))   {
