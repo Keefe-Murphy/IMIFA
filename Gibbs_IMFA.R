@@ -44,7 +44,7 @@
     ll.store       <- rep(0, n.store)
     G.star         <- G/2
     G.store        <- rep(0, n.store)
-    rate           <- rep(0, n.iters)
+    rate           <- rep(0, n.store)
     non.empty      <- list()
     dimnames(z.store)      <- list(obsnames, iternames)
     
@@ -52,7 +52,7 @@
     l.sigma        <- 1/sigma.l 
     z              <- cluster$z
     pi.alpha       <- cluster$pi.alpha
-    alpha.store    <- rep(0, n.iters)
+    alpha.store    <- rep(0, n.store)
     pi.prop        <- cbind(cluster$pi.prop, sim.pi(pi.alpha=pi.alpha, nn=rep(0, trunc.G, inf.G=T))[,-Gs, drop=F])
     nn             <- tabulate(z, nbins=trunc.G)
     mu             <- cbind(mu, do.call(cbind, lapply(seq_len(trunc.G - G), function(g) sim.mu.p(P=P, sigma.mu=sigma.mu, mu.zero=mu.zero))))
@@ -152,8 +152,6 @@
       if(MH.step)   {
         MH.alpha   <- sim.alpha(beta=G.star, trunc.G=trunc.G, alpha=pi.alpha, Vs=Vs) 
         pi.alpha   <- MH.alpha$alpha
-        rate[iter] <- MH.alpha$rate
-        alpha.store[iter]  <- pi.alpha
       }
       
       if(is.element(iter, iters))   {
@@ -164,6 +162,8 @@
         if(all(sw["l.sw"], Q0))    load.store[,,,new.it]   <- lmat
         if(sw["psi.sw"])           psi.store[,,new.it]     <- psi
         if(sw["pi.sw"])            pi.store[,new.it]       <- pi.prop
+        if(MH.step) {              rate[new.it]            <- MH.alpha$rate
+                                   alpha.store[new.it]     <- pi.alpha }
                                    z.store[,new.it]        <- z 
                                    ll.store[new.it]        <- log.like
                                    G.store[new.it]         <- sum(nn0)
@@ -175,8 +175,8 @@
                            load     = if(all(sw["l.sw"], Q0)) load.store, 
                            psi      = if(sw["psi.sw"])        psi.store,
                            pi.prop  = if(sw["pi.sw"])         pi.store,
-                           rate     = if(MH.step)             sum(rate[iters])/n.store,
-                           alpha    = if(MH.step)             alpha.store[iters],
+                           rate     = if(MH.step)             mean(rate),
+                           alpha    = if(MH.step)             alpha.store,
                            z.store  = z.store,
                            ll.store = ll.store,
                            G.store  = G.store,
