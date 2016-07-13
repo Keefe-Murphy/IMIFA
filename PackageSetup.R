@@ -215,14 +215,17 @@ IMIFA.mcmc  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   if(!is.element(method, c("FA", "IFA", "classify"))) {
     if(all(method != "MIFA",
        any(delta0g, qstar0g)))      stop("'delta0g' and 'qstar0g' can only be TRUE for the 'MIFA' method")
-    if(missing("alpha.pi"))  alpha.pi      <- ifelse(is.element(method, c("IMIFA", "IMFA")), runif(1, MH.lower, MH.upper), 
-                                              ifelse(is.element(method, c("OMIFA", "OMFA")), 0.5/range.G, 1))
+    alpha.miss  <- missing("alpha.pi")
+    if(alpha.miss)           alpha.pi      <- ifelse(is.element(method, c("OMIFA", "OMFA")), 0.5/range.G, ifelse(all(MH.step, 
+                                                     is.element(method, c("IMIFA", "IMFA"))), runif(1, MH.lower, MH.upper), 1))
+    if(all(is.element(method,  c("IMIFA", "IMFA")),
+           alpha.miss,  !MH.step))  warning("'alpha.pi' fixed at default of 1 rather than simulated from prior as it's not being learned via Metropolis-Hastings updates", call.=F)
     if(length(alpha.pi) != 1)       stop("'alpha.pi' must be specified as a scalar to ensure an exchangeable prior")
     if(alpha.pi <= 0)               stop("'alpha.pi' must be strictly positive")
     if(all(!is.element(method, c("IMFA", "IMIFA")),
            alpha.pi  > 1))          warning("Are you sure alpha.pi should be greater than 1?", call.=F)
                              z.init        <- match.arg(z.init)
-    if(all(is.element(method, c("OMIFA", "OMFA")), !is.element(z.init, 
+    if(all(is.element(method,  c("OMIFA", "OMFA")), !is.element(z.init, 
        c("list", "kmeans"))))       stop("'z.init' must be set to 'list' or 'kmeans' for the OMIFA method to ensure all groups are populated at the initialisation stage")
     if(!missing(z.list))   {
       if(!is.list(z.list))   z.list        <- list(z.list)
