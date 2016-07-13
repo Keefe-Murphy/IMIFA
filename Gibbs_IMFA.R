@@ -3,9 +3,9 @@
 #######################################################################
   
 # Gibbs Sampler Function
-  gibbs.IMFA       <- function(Q, data, iters, N, P, G, mu.zero, pp, sigma.l,
-                               sigma.mu, burnin, thinning, mu, trunc.G, gen.slice,
-                               psi.alpha, psi.beta, verbose, sw, cluster, MH.step, ...) {
+  gibbs.IMFA       <- function(Q, data, iters, N, P, G, mu.zero, pp, sigma.l, MH.step,
+                               sigma.mu, burnin, thinning, mu, trunc.G, gen.slice, MH.lower,
+                               psi.alpha, psi.beta, verbose, sw, cluster, MH.upper, ...) {
         
   # Define & initialise variables
     n.iters        <- round(max(iters), -1)
@@ -42,7 +42,6 @@
     }
     z.store        <- matrix(0, nr=N, nc=n.store)
     ll.store       <- rep(0, n.store)
-    G.star         <- G/2
     G.store        <- rep(0, n.store)
     non.empty      <- list()
     dimnames(z.store)      <- list(obsnames, iternames)
@@ -153,7 +152,7 @@
       
     # Alpha
       if(MH.step)   {
-        MH.alpha   <- sim.alpha(beta=G.star, trunc.G=trunc.G, alpha=pi.alpha, Vs=Vs) 
+        MH.alpha   <- sim.alpha(lower=MH.lower, upper=MH.upper, trunc.G=trunc.G, alpha=pi.alpha, Vs=Vs) 
         pi.alpha   <- MH.alpha$alpha
       }
       

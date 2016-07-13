@@ -3,10 +3,10 @@
 #######################################################################
   
 # Gibbs Sampler Function
-  gibbs.IMIFA       <- function(Q, data, iters, N, P, G, mu.zero, pp, sigma.l,
-                                sigma.mu, burnin, thinning, mu, trunc.G, MH.step,
+  gibbs.IMIFA       <- function(Q, data, iters, N, P, G, mu.zero, pp, sigma.l, MH.step,
+                                sigma.mu, burnin, thinning, mu, trunc.G, MH.lower,
                                 psi.alpha, psi.beta, verbose, gen.slice, alpha.d1,
-                                alpha.dk, sw, cluster, phi.nu, b0, b1, prop,
+                                alpha.dk, sw, cluster, phi.nu, b0, b1, prop, MH.upper,
                                 beta.d1, beta.dk, adapt, epsilon, ...) {
         
   # Define & initialise variables
@@ -46,7 +46,6 @@
     Q.star          <- Q
     Qs              <- rep(Q, trunc.G)
     Q.store         <- matrix(0, nr=trunc.G, nc=n.store)
-    G.star          <- G/2
     G.store         <- rep(0, n.store)
     non.empty       <- list()
     dimnames(z.store)      <- list(obsnames, iternames)
@@ -209,7 +208,7 @@
     
     # Alpha
       if(MH.step)   {
-        MH.alpha    <- sim.alpha(beta=G.star, trunc.G=trunc.G, alpha=pi.alpha, Vs=Vs) 
+        MH.alpha    <- sim.alpha(lower=MH.lower, upper=MH.upper, trunc.G=trunc.G, alpha=pi.alpha, Vs=Vs) 
         pi.alpha    <- MH.alpha$alpha
       }
     

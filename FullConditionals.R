@@ -90,8 +90,8 @@
     }
 
   # Alpha
-    sim.alpha   <- function(beta, trunc.G, alpha, Vs) {
-      alpha.new <- runif(1, 0, beta)
+    sim.alpha   <- function(lower, upper, trunc.G, alpha, Vs) {
+      alpha.new <- runif(1, lower, upper)
       a.prob    <- trunc.G * (log(alpha.new) - log(alpha)) + (alpha.new - alpha) * sum(log((1 - Vs[-trunc.G])))
       if(a.prob >= 0 || -rexp(1) < a.prob) {
         alpha   <- alpha.new
