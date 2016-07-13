@@ -541,9 +541,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
         legend("top", legend=c(1/2, paste0("1/G = 1/", G)), ncol=2, lty=2, col=c("red", "blue"), bty="n")
       }
       if(!labelmiss) {
-        perf   <- clust$perf
-        perf$errorRate     <- paste0(round(100 * perf$errorRate, 2), "%")
-          print(perf)
+          print(clust$perf)
       } else                          message("Nothing to print: try re-running 'tune.IMIFA()' with known cluster labels supplied")
     }
   
