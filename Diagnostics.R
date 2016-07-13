@@ -528,6 +528,10 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
                       if(sw["f.sw"]) list(Scores = scores))
   class(result)                <- "IMIFA"
   attr(result, "Method")       <- method
+  if(is.element(method, c("IMFA", "IMIFA"))) {
+    attr(result, "MH.step")    <- MH.step
+    attr(result, "Gen.Slice")  <- gen.slice
+  }
   attr(result, "Name")         <- attr(sims, "Name")
   attr(result, "Obs")          <- n.obs
   attr(result, "Store")        <- tmp.store

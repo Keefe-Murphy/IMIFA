@@ -502,6 +502,12 @@ IMIFA.mcmc  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   attr(imifa, "Scaling")  <- scal
   attr(attr(imifa,
   "Scaling"), "Method")   <- scaling
+  if(is.element(method, c("IMFA", "IMIFA"))) {
+    attr(imifa, 
+         "MH.step")       <- MH.step
+    attr(imifa,
+         "Gen.Slice")     <- gen.slice
+  }
   attr(imifa, "Store")    <- length(iters)
   attr(imifa, "Switch")   <- switches
   if(!is.element(method, c("FA", "IFA", "classify"))) {
