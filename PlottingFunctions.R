@@ -2,7 +2,7 @@
 ### IMIFA Plotting Functions ###
 ################################
 
-plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "density", "posterior", "GQ", "trace"), 
+plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "density", "posterior", "GQ", "trace", "Z"), 
                            vars = c("means", "scores", "loadings", "uniquenesses"), Labels = NULL, load.meth = c("all", "heatmap", "raw"),
                            g = NULL, fac = NULL, by.fac = T, ind = NULL, type = c("h", "n", "p", "l"), intervals = T, mat = T, partial = F, titles = T) {
 
@@ -40,7 +40,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
   load.meth    <- match.arg(load.meth)
   type.x       <- missing(type)
   type         <- match.arg(type)
-  m.sw         <- c(G.sw = F, C.sw = F, D.sw = F, P.sw = F, T.sw = F)
+  m.sw         <- c(G.sw = F, Z.sw = F, C.sw = F, D.sw = F, P.sw = F, T.sw = F)
   v.sw         <- attr(results, "Switch")
   names(v.sw)  <- formals(sys.function(sys.parent()))$vars
   ci.sw        <- v.sw
@@ -50,12 +50,13 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
   grp.ind      <- all(G != 1, !is.element(method, c("FA", "IFA")))
   load.all     <- load.meth == "all"
   if(grp.ind)   {
-    clust <- results$Clust
+    clust      <- results$Clust
+    labelmiss  <- !attr(clust, "Label.Sup")
   }
   if(all.ind)   {
     if(v.sw[vars]) {
-      m.sw[-1]    <- !m.sw[-1]
-      if(all(vars  == "loadings", load.all)) {
+      m.sw[-c(1,2)] <- !m.sw[-c(1,2)]
+      if(all(vars   == "loadings", load.all)) {
         layout(matrix(c(1, 2, 3, 4, 3, 5), nr=3, nc=2, byrow = TRUE))
       } else {
         layout(matrix(c(1, 2, 3, 4), nr=2, nc=2, byrow = TRUE))
@@ -66,7 +67,8 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
     sw.n  <- paste0(toupper(substring(plot.meth, 1, 1)), ".sw")
     m.sw[sw.n]    <- T
   }
-  if(all(!m.sw["G.sw"],
+  if(all(m.sw["Z.sw"], !grp.ind))     stop("Can't use 'Z' for 'plot.meth' as no clustering has taken place")
+  if(all(!m.sw["G.sw"], !m.sw["Z.sw"],
      missing(vars)))                  stop("What variable would you like to plot?")
   if(all(any(m.sw["P.sw"], all.ind),
      is.element(vars, c("means", "uniquenesses")),
@@ -78,7 +80,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
    m.sw["P.sw"]   <- T
   } 
   if(all(!v.sw[vars],
-     !m.sw["G.sw"]))                  stop(paste0(vars, " weren't stored"))
+     !m.sw["G.sw"], !m.sw["Z.sw"]))   stop(paste0(vars, " weren't stored"))
   if(!is.logical(intervals))          stop("'intervals' must be TRUE or FALSE")
   if(!is.logical(mat))                stop("'mat' must be TRUE or FALSE")
   if(!is.logical(partial))            stop("'partial' must be TRUE or FALSE")
@@ -95,7 +97,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
     Gs    <- seq_len(2)
     if(!missing(g))                   warning(paste0("Removed 'g'=", g ," for the ", plot.meth, " plotting method"), call.=F)
   } else if(any(all(vars  == "scores", any(all.ind, !m.sw["P.sw"])), 
-            m.sw["G.sw"]))  {
+            m.sw["G.sw"], m.sw["Z.sw"]))    {
     Gs    <- 1
   } else if(!missing(g)) {
     if(!is.element(method, c("FA", "IFA"))) {
@@ -117,7 +119,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
     result     <- results[[g]]
     if(any(all(Q  == 0, vars == "loadings"),
            all(Qs == 0, vars == "scores")))  {            
-                                       warning(paste0("Can't plot ", vars, " as they contain no columns/factors"), call.=F)
+                                      warning(paste0("Can't plot ", vars, " as they contain no columns/factors"), call.=F)
       if(length(unique(tail(Qs, - g))) == 1) {
         break
       } else {
@@ -525,6 +527,22 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
           cat(paste0("BIC.mcmc = ", bic.mcmc[G.ind,Q.ind], "\n"))
         }
       }
+    }
+    
+    if(m.sw["Z.sw"]) {
+      plot.x <- clust$uncertainty
+      col.x  <- c("black", "blue", "red")[(plot.x >= 1/G) + (plot.x >= 0.5) + 1]
+      plot(plot.x, type=type, ylim=c(0, 1.05), col=col.x, ylab="Uncertainty", xlab="Observation")
+      if(titles) title(main=list("Clustering Uncertainty"))
+      if(type == "n") text(x=seq_along(plot.x), y=plot.x, obs.names, col=col.x, cex=0.5)
+      abline(h=1/G, lty=2, col="blue")
+      abline(h=0.5, lty=2, col="red")
+      if(titles) {
+        legend("top", legend=c(1/2, paste0("1/G = 1/", G)), ncol=2, lty=2, col=c("red", "blue"), bty="n")
+      }
+      if(!labelmiss) {
+          print(clust$perf)
+      } else                          message("Nothing to print: try re-running 'tune.IMIFA()' with known cluster labels supplied")
     }
   
     if(m.sw["C.sw"]) {

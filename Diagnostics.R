@@ -272,6 +272,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
         tab.stat$misclassified <- NULL
       }
       tab.stat   <- c(list(confusionMatrix = tab), tab.stat)
+      class(tab.stat)          <- "listof"
     }
     if(isTRUE(MH.step)) {
       alpha.pi   <- sims[[G.ind]][[Q.ind]]$alpha[tmp.store]
@@ -281,14 +282,14 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       rate       <- sims[[G.ind]][[Q.ind]]$rate
      #rate       <- paste0(round(100 * sims[[G.ind]][[Q.ind]]$rate, 2), "%")
       MH.alpha   <- list(alpha.pi = alpha.pi, post.alpha = post.alpha, var.alpha = var.alpha, CI.alpha = CI.alpha, acceptance.rate = rate)
+      class(MH.alpha)          <- "listof"
     }
-    class(tab.stat)            <- "listof"
-    class(MH.alpha)            <- "listof"
     cluster      <- list(post.z = post.z, post.pi = post.pi, z = z, uncertainty = uncertainty)
     cluster      <- c(cluster, if(sw["pi.sw"]) list(pi.prop = pi.prop, var.pi = var.pi, CI.pi = CI.pi),
                       if(!label.miss) list(perf = tab.stat), if(isTRUE(MH.step)) list(MH.alpha = MH.alpha))
     attr(cluster, "Z.init")    <- attr(sims[[G.ind]], "Z.init")
     attr(cluster, "Init.Meth") <- attr(sims, "Init.Z")
+    attr(cluster, "Label.Sup") <- !label.miss
     post.z       <- as.numeric(levels(post.z))[post.z]
     z.ind        <- lapply(Gseq, function(g) post.z == g)
   }

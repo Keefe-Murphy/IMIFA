@@ -75,11 +75,9 @@
 
 # Posterior Summaries (optional: additional 'burnin' & 'thinning', user-defined G/Q, model selection criterion)
   res <- tune.IMIFA(sim, Labels=Lab)
-  res$Clust$perf
-  res$Error
-  plot(res, "GQ")
  #res <- tune.IMIFA(sim, G=3, Q=3, criterion="bicm", Labels=Lab)
-  
+  res$Error
+
 # Save / Load Results
   save(res, file=paste0(getwd(), "/Simulations/", attr(res, "Name"), 
                         "__Results_", attr(res, "Method"), 
@@ -87,6 +85,12 @@
   load(file=paste0(getwd(), "/Simulations/", "wine", 
                    "__Results_", "OMIFA", 
                    ".Rdata", sep=""), envir=.GlobalEnv)
+
+# Model Selection Parameters
+  plot(res, "GQ") 
+
+# Cluster Labels
+  plot(res, "Z")
 
 # Means
   plot(res, "a", "m")
@@ -135,10 +139,11 @@
   plot(res, "p", "u")
   plot(res, "c", "u")
 
+# Mixing Proportions
+  
 # Covariance Matrices
   lapply(seq_len(res$GQ.results$G), function(g) res[[g]]$cov.est)
 
-# Mixing Proportions
-
-# Cluster Labels
+# Metropolis Hastings 'alpha' for Dirichlet Process methods
+  
 ####
