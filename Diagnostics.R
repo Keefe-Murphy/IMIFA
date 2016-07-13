@@ -21,6 +21,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   tmp.store      <- store
   label.switch   <- attr(sims, "Label.Switch")
   method         <- attr(sims, "Method")
+  MH.step        <- attr(sims, "MH.step")
   inf.G          <- is.element(method, c("IMIFA", "IMFA", "OMIFA", "OMFA"))
   inf.Q          <- !is.element(method, c("FA", "MFA", "OMFA", "IMFA"))
   n.fac          <- attr(sims, "Factors")
@@ -270,12 +271,22 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       if(tab.stat$errorRate == 0) {
         tab.stat$misclassified <- NULL
       }
+      tab.stat   <- c(list(confusionMatrix = tab), tab.stat)
     }
-    tab.stat     <- c(list(confusionMatrix = tab), tab.stat)
+    if(isTRUE(MH.step)) {
+      alpha.pi   <- sims[[G.ind]][[Q.ind]]$alpha[tmp.store]
+      post.alpha <- mean(alpha.pi)
+      var.alpha  <- var(alpha.pi)
+      CI.alpha   <- quantile(alpha.pi, conf.levels)
+      rate       <- sims[[G.ind]][[Q.ind]]$rate
+     #rate       <- paste0(round(100 * sims[[G.ind]][[Q.ind]]$rate, 2), "%")
+      MH.alpha   <- list(alpha.pi = alpha.pi, post.alpha = post.alpha, var.alpha = var.alpha, CI.alpha = CI.alpha, acceptance.rate = rate)
+    }
     class(tab.stat)            <- "listof"
+    class(MH.alpha)            <- "listof"
     cluster      <- list(post.z = post.z, post.pi = post.pi, z = z, uncertainty = uncertainty)
-    cluster      <- c(cluster, if(!label.miss) list(perf = tab.stat),
-                      if(sw["pi.sw"]) list(pi.prop = pi.prop, var.pi = var.pi, CI.pi = CI.pi))
+    cluster      <- c(cluster, if(sw["pi.sw"]) list(pi.prop = pi.prop, var.pi = var.pi, CI.pi = CI.pi),
+                      if(!label.miss) list(perf = tab.stat), if(isTRUE(MH.step)) list(MH.alpha = MH.alpha))
     attr(cluster, "Z.init")    <- attr(sims[[G.ind]], "Z.init")
     attr(cluster, "Init.Meth") <- attr(sims, "Init.Z")
     post.z       <- as.numeric(levels(post.z))[post.z]
@@ -530,7 +541,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   attr(result, "Method")       <- method
   if(is.element(method, c("IMFA", "IMIFA"))) {
     attr(result, "MH.step")    <- MH.step
-    attr(result, "Gen.Slice")  <- gen.slice
+    attr(result, "Gen.Slice")  <- attr(sims, "Gen.Slice")
   }
   attr(result, "Name")         <- attr(sims, "Name")
   attr(result, "Obs")          <- n.obs
