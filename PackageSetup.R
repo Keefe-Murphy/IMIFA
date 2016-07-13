@@ -219,7 +219,7 @@ IMIFA.mcmc  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(alpha.miss)           alpha.pi      <- ifelse(is.element(method, c("OMIFA", "OMFA")), 0.5/range.G, ifelse(all(MH.step, 
                                                      is.element(method, c("IMIFA", "IMFA"))), runif(1, MH.lower, MH.upper), 1))
     if(all(is.element(method,  c("IMIFA", "IMFA")),
-           alpha.miss,  !MH.step))  warning("'alpha.pi' fixed at default of 1 rather than simulated from prior as it's not being learned via Metropolis-Hastings updates", call.=F)
+           alpha.miss,  !MH.step))  warning("'alpha.pi' fixed at 1 rather than simulated from prior as it's not being learned via Metropolis-Hastings updates", call.=F)
     if(length(alpha.pi) != 1)       stop("'alpha.pi' must be specified as a scalar to ensure an exchangeable prior")
     if(alpha.pi <= 0)               stop("'alpha.pi' must be strictly positive")
     if(all(!is.element(method, c("IMFA", "IMIFA")),
