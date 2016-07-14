@@ -54,6 +54,7 @@
     }
     z              <- cluster$z
     z.temp         <- factor(z, levels=Gseq)
+    nn             <- tabulate(z, nbins=G)
     pi.alpha       <- cluster$pi.alpha
     pi.prop        <- cluster$pi.prop
     alpha.d1       <- cluster$alpha.d1
@@ -71,14 +72,21 @@
     tau            <- lapply(delta, cumprod)
     lmat           <- lapply(Gseq, function(g) matrix(unlist(lapply(Pseq, function(j) sim.load.p(Q=Q, phi=phi[[g]][j,], tau=tau[[g]], P=P)), use.names=F), nr=P, byrow=T))
     psi.inv        <- do.call(cbind, lapply(Gseq, function(g) sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta[,g])))
-    for(g in Gseq) {
+    fact.ind       <- nn <= 2.5 * Q
+    fail.gs        <- which(fact.ind)
+    for(g in which(!fact.ind)) {
       fact         <- try(factanal(data[z == g,, drop=F], factors=Q, scores="regression", control=list(nstart=50)), silent=T)
       if(!inherits(fact, "try-error")) {
         f[z == g,]         <- fact$scores
         lmat[[g]]          <- fact$loadings
         psi.inv[,g]        <- 1/fact$uniquenesses
-      } else                  warning(paste0("Parameters of group ", g, " initialised by simulation from priors, not factanal: G=", G, ", Q=", Q), call.=F)
+      } else  {
+        fail.gs    <- c(fail.gs, g)
+      }               
     }
+    fail.gs        <- fail.gs[order(fail.gs)]
+    len.fail       <- length(fail.gs)
+    if(len.fail     > 0)      message(paste0("Parameters of the following group", ifelse(len.fail > 2, "s ", " "), "were initialised by simulation from priors, not factanal: ", ifelse(len.fail > 1, paste0(paste0(fail.gs[-len.fail], sep="", collapse=", "), " and ", fail.gs[len.fail]), fail.gs), " - G=", G, ", Q=", Q))
     if(burnin       < 1)  {
       mu.store[,,1]        <- mu
       f.store[,,1]         <- f

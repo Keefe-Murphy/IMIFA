@@ -51,6 +51,7 @@
     l.sigma        <- 1/sigma.l 
     z              <- cluster$z
     z.temp         <- factor(z, levels=Gseq)
+    nn             <- tabulate(z, nbins=G)
     pi.alpha       <- cluster$pi.alpha
     pi.prop        <- cluster$pi.prop
     mu0g           <- cluster$l.switch[1]
@@ -60,15 +61,22 @@
     lmat           <- lapply(Gseq, function(g) sim.load.p(Q=Q, P=P, sigma.l=sigma.l, shrink=F))
     psi.inv        <- do.call(cbind, lapply(Gseq, function(g) sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta[,g])))
     if(Q0) {
-      for(g in Gseq) {
+      fact.ind     <- nn <= 2.5 * Q
+      fail.gs      <- which(fact.ind)
+      for(g in which(!fact.ind)) {
         fact       <- try(factanal(data[z == g,, drop=F], factors=Q, scores="regression", control=list(nstart=50)), silent=T)
         if(!inherits(fact, "try-error")) {
           f[z == g,]       <- fact$scores
           lmat[[g]]        <- fact$loadings
           psi.inv[,g]      <- 1/fact$uniquenesses
-        } else                warning(paste0("Parameters of group ", g, " initialised by simulation from priors, not factanal: G=", G, ", Q=", Q), call.=F)
+        } else {
+          fail.gs  <- c(fail.gs, g)
+        }
       }
-    } else {
+      fail.gs      <- fail.gs[order(fail.gs)]
+      len.fail     <- length(fail.gs)
+      if(len.fail   > 0)      message(paste0("Parameters of the following group", ifelse(len.fail > 2, "s ", " "), "were initialised by simulation from priors, not factanal: ", ifelse(len.fail > 1, paste0(paste0(fail.gs[-len.fail], sep="", collapse=", "), " and ", fail.gs[len.fail]), fail.gs), " - G=", G, ", Q=", Q))
+    } else     {
       psi.inv      <- do.call(cbind, lapply(Gseq, function(g) if(pi.prop[,g] > 0) 1/apply(data[z == g,, drop=F], 2, var) else psi.inv[,g]))
     }
     l.sigma        <- l.sigma * diag(Q)

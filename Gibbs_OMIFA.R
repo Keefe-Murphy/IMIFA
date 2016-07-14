@@ -60,13 +60,13 @@
     tau            <- lapply(delta, cumprod)
     lmat           <- lapply(Gseq, function(g) matrix(unlist(lapply(Pseq, function(j) sim.load.p(Q=Q, phi=phi[[g]][j,], tau=tau[[g]], P=P)), use.names=F), nr=P, byrow=T))
     psi.inv        <- do.call(cbind, lapply(Gseq, function(g) sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)))
-    for(g in Gseq) {
+    for(g in which(nn > 2.5 * Q))      {
       fact         <- try(factanal(data[z == g,, drop=F], factors=Q, scores="regression", control=list(nstart=50)), silent=T)
       if(!inherits(fact, "try-error")) {
         f[z == g,]         <- fact$scores
         lmat[[g]]          <- fact$loadings
         psi.inv[,g]        <- 1/fact$uniquenesses
-      } else                  warning(paste0("Parameters of group ", g, " initialised by simulation from priors, not factanal: G=", G, ", Q=", Q), call.=F)
+      }
     }
     if(burnin       < 1)  {
       mu.store[,,1]        <- mu

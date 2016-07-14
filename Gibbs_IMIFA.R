@@ -67,13 +67,13 @@
     tau             <- lapply(delta, cumprod)
     lmat            <- lapply(Ts, function(t) matrix(unlist(lapply(Ps, function(j) sim.load.p(Q=Q, phi=phi[[t]][j,], tau=tau[[t]], P=P)), use.names=F), nr=P, byrow=T))
     psi.inv         <- do.call(cbind, lapply(Ts, function(t) sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)))
-    for(g in Gs)   {
+    for(g in which(nn > 2.5 * Q))      {
       fact          <- try(factanal(data[z == g,, drop=F], factors=Q, scores="regression", control=list(nstart=50)), silent=T)
       if(!inherits(fact, "try-error")) {
         f[z == g,]         <- fact$scores
         lmat[[g]]          <- fact$loadings
         psi.inv[,g]        <- 1/fact$uniquenesses
-      } else                  warning(paste0("Parameters of group ", g, " initialised by simulation from priors, not factanal: G=", G, ", Q=", Q), call.=F)
+      } 
     }
     index           <- order(pi.prop, decreasing=TRUE)
     pi.prop         <- pi.prop[,index, drop=F]

@@ -55,13 +55,13 @@
     lmat           <- lapply(Gseq, function(g) sim.load.p(Q=Q, P=P, sigma.l=sigma.l, shrink=F))
     psi.inv        <- do.call(cbind, lapply(Gseq, function(g) sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)))
     if(Q0) {
-      for(g in Gseq) {
+      for(g in which(nn > 2.5 * Q))      {
         fact       <- try(factanal(data[z == g,, drop=F], factors=Q, scores="regression", control=list(nstart=50)), silent=T)
         if(!inherits(fact, "try-error")) {
           f[z == g,]       <- fact$scores
           lmat[[g]]        <- fact$loadings
           psi.inv[,g]      <- 1/fact$uniquenesses
-        } else                warning(paste0("Parameters of group ", g, " initialised by simulation from priors, not factanal: G=", G, ", Q=", Q), call.=F)
+        } 
       }
     } else {
       psi.inv      <- do.call(cbind, lapply(Gseq, function(g) if(pi.prop[,g] > 0) 1/apply(data[z == g,, drop=F], 2, var) else psi.inv[,g]))
