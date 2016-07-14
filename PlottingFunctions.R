@@ -531,14 +531,13 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
     
     if(m.sw["Z.sw"]) {
       plot.x <- clust$uncertainty
-      col.x  <- c("black", "blue", "red")[(plot.x >= 1/G) + (plot.x >= 0.5) + 1]
-      plot(plot.x, type=type, ylim=c(0, 1.05), col=col.x, ylab="Uncertainty", xlab="Observation")
+      col.x  <- c("black", "red")[(plot.x >= 1/G) + 1]
+      plot(plot.x, type=type, ylim=c(0, 1 - 1/G), col=col.x, ylab="Uncertainty", xlab="Observation")
       if(titles) title(main=list("Clustering Uncertainty"))
       if(type == "n") text(x=seq_along(plot.x), y=plot.x, obs.names, col=col.x, cex=0.5)
-      abline(h=1/G, lty=2, col="blue")
-      abline(h=0.5, lty=2, col="red")
+      abline(h=1/G, lty=2, col="red")
       if(titles) {
-        legend("top", legend=c(1/2, paste0("1/G = 1/", G)), ncol=2, lty=2, col=c("red", "blue"), bty="n")
+        legend("top", legend=paste0("1/G = 1/", G), ncol=2, lty=2, col="red", bty="n")
       }
       if(!labelmiss) {
         perf   <- clust$perf
