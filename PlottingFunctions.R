@@ -65,7 +65,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
     }
   } else {
     sw.n  <- paste0(toupper(substring(plot.meth, 1, 1)), ".sw")
-    m.sw[sw.n]    <- T
+    m.sw[sw.n] <- T
   }
   if(all(m.sw["Z.sw"], !grp.ind))     stop("Can't use 'Z' for 'plot.meth' as no clustering has taken place")
   if(all(!m.sw["G.sw"], !m.sw["Z.sw"],
@@ -80,7 +80,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
    m.sw["P.sw"]   <- T
   } 
   if(all(!v.sw[vars],
-     !m.sw["G.sw"], !m.sw["Z.sw"]))   stop(paste0(vars, " weren't stored"))
+     !m.sw["G.sw"], !m.sw["Z.sw"]))   stop(paste0("Nothing to plot:", vars, " weren't stored"))
   if(!is.logical(intervals))          stop("'intervals' must be TRUE or FALSE")
   if(!is.logical(mat))                stop("'mat' must be TRUE or FALSE")
   if(!is.logical(partial))            stop("'partial' must be TRUE or FALSE")
@@ -96,7 +96,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
   if(all(is.element(method, c("IMIFA", "OMIFA")), m.sw["G.sw"])) {
     Gs    <- seq_len(2)
     if(!missing(g))                   warning(paste0("Removed 'g'=", g ," for the ", plot.meth, " plotting method"), call.=F)
-  } else if(any(all(vars  == "scores", any(all.ind, !m.sw["P.sw"])), 
+  } else if(any(all(is.element(vars, c("scores", "alpha")), any(all.ind, vars != "scores", !m.sw["P.sw"])), 
             m.sw["G.sw"], m.sw["Z.sw"]))    {
     Gs    <- 1
   } else if(!missing(g)) {
@@ -127,7 +127,8 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
         next
       }
     }
-    if(any(all(is.element(vars, c("means", "uniquenesses")),
+    if(any(vars   == "alpha",
+           all(is.element(vars, c("means", "uniquenesses")),
                !indx),
            all(is.element(vars, c("scores", "loadings")),
                Q  == 1))) { matx <- F
@@ -223,6 +224,17 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
           if(titles) title(main=list(paste0("Trace", ifelse(all.ind, ":\n", paste0(":\nUniquenesses - ", ifelse(grp.ind, paste0("Group ", g, " - "), ""))), var.names[ind], " Variable")))
         }
       }
+      if(vars  == "alpha") {
+        plot.x <- clust$MH.alpha
+        plot(x=iter, y=plot.x$alpha.pi, ylab="Alpha", type="l", xlab="Iteration", main="")
+        if(titles) title(main=list(paste0("Trace", ifelse(all.ind, "", paste0(":\nAlpha")))))
+        if(all(intervals, ci.sw[vars])) {
+          ci.x <- plot.x$CI.alpha  
+          abline(h=plot.x$post.alpha,  col="red",  lty=2)
+          abline(h=plot.x$CI.alpha[1], col="grey", lty=2)
+          abline(h=plot.x$CI.alpha[2], col="grey", lty=2)
+        }
+      }
       if(!indx) {         ind[1] <- xind[1]
         if(facx)          ind[2] <- xind[2]
       }
@@ -303,6 +315,14 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
           if(titles) title(main=list(paste0("Density", ifelse(all.ind, ":\n", paste0(":\nUniquenesses - ", ifelse(grp.ind, paste0("Group ", g, " - "), ""))), var.names[ind], " Variable")))
           polygon(plot.d, col="black")
         }
+      }
+      if(vars  == "alpha") {
+        plot.x <- clust$MH.alpha
+        plot.d <- density(plot.x$alpha.pi)
+        plot(plot.d, main="")
+        if(titles) title(main=list(paste0("Density", ifelse(all.ind, "", paste0(":\nAlpha")))))
+        polygon(plot.d, col="black")
+        if(intervals) abline(v=plot.x$post.alpha, col="red")
       }
     }
     
@@ -432,6 +452,16 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
         if(titles) title(main=list(paste0("Posterior Mean", ifelse(all.ind, "", paste0(":\nUniquenesses", ifelse(grp.ind, paste0(" - Group ", g), ""))))))
         if(type  == "n") text(seq_along(plot.x), plot.x, var.names, cex=0.5)
       }
+      if(vars  == "alpha") {
+        plot(c(0, 1), c(0, 1), ann = F, bty = 'n', type = 'n', xaxt = 'n', yaxt = 'n')
+        if(titles) title(main=list(paste0("Summary Statistics", ifelse(all.ind, "", ":\nAlpha"))))
+        plot.x <- clust$MH.alpha[-1]
+        conf   <- attr(results, "Conf.Level")
+        digits <- options()$digits
+        text(x=0.5, y=0.5, cex = ifelse(all.ind, 1, 1.5), col = "black", adj=0.5, paste0("Posterior Mean:\n", round(plot.x$post.alpha, digits), "\n\nVariance:\n", 
+             round(plot.x$var.alpha, digits), "\n\n", 100 * conf, "% Confidence Interval:\n", "[", round(plot.x$CI.alpha[1], digits), 
+             ", ",  round(plot.x$CI.alpha[2], digits), "]\n\nAcceptance Rate:\n", round(100 * plot.x$acceptance.rate, 2), "%"))
+      }
       if(!indx) {         ind[1] <- xind[1]
         if(facx)          ind[2] <- xind[2]
       }
@@ -531,8 +561,8 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
     
     if(m.sw["Z.sw"]) {
       plot.x <- clust$uncertainty
-      col.x  <- c("black", "red")[(plot.x >= 1/G) + 1]
-      plot(plot.x, type=type, ylim=c(0, 1 - 1/G), col=col.x, ylab="Uncertainty", xlab="Observation")
+      col.x  <- c("black", "blue")[(plot.x >= 1/G) + 1]
+      plot(plot.x, type=type, ylim=c(0, 1.05 - 1/G), col=col.x, ylab="Uncertainty", xlab="Observation")
       if(titles) title(main=list("Clustering Uncertainty"))
       if(type == "n") text(x=seq_along(plot.x), y=plot.x, obs.names, col=col.x, cex=0.5)
       abline(h=1/G, lty=2, col="red")
@@ -599,10 +629,22 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
           if(all(!all.ind, titles)) title(main=list(paste0("Uniquenesses - ", ifelse(grp.ind, paste0("Group ", g, ":\n "), ""), var.names[ind], " Variable")), outer=T)
         }
       }
+      if(vars  == "alpha") {
+        plot.x <- clust$MH.alpha$alpha.pi
+        if(!partial) {
+          acf(plot.x, main="")
+          if(titles) title(main=list(paste0("ACF")))
+        }
+        if(any(!all.ind, partial)) {
+          acf(plot.x, main="", type="partial")
+          if(titles) title(main=list(paste0("PACF")))
+          if(all(!all.ind, titles)) title(main=list(paste0("Alpha")), outer=T)
+        }
+      }
     }
     if(all(all.ind, titles)) title(paste0(toupper(substr(vars, 1, 1)),
                              substr(vars, 2, nchar(vars)), 
-                             ifelse(all(grp.ind, vars != "scores"), 
+                             ifelse(all(grp.ind, !is.element(vars, c("scores", "alpha"))), 
                                     paste0(" - Group ", g), "")), outer=T)
     ifelse(msgx, readline(msg), "")
   }

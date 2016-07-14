@@ -145,5 +145,9 @@
   lapply(seq_len(res$GQ.results$G), function(g) res[[g]]$cov.est)
 
 # Metropolis Hastings 'alpha' for Dirichlet Process methods
-  
+  plot(res, "a", "a")
+  plot(res, "t", "a")
+  plot(res, "d", "a")
+  plot(res, "p", "a")
+  plot(res, "c", "a")
 ####

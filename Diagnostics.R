@@ -35,7 +35,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   conf.level     <- as.numeric(conf.level)
   if(conf.level   < 0  && 
      conf.level   > 1)            stop("'conf.level' must be a single number between 0 and 1")
-  conf.levels    <- c((1 - conf.level)/2, 1 - (1 - conf.level)/2)
+  conf.levels    <- c((1 - conf.level)/2, (1 + conf.level)/2)
   criterion      <- match.arg(criterion)
   if(all(!is.element(method, c("FA", "MFA", "OMFA", "IMFA")),
      !is.element(criterion, 
@@ -280,7 +280,6 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       var.alpha  <- var(alpha.pi)
       CI.alpha   <- quantile(alpha.pi, conf.levels)
       rate       <- sims[[G.ind]][[Q.ind]]$rate
-     #rate       <- paste0(round(100 * sims[[G.ind]][[Q.ind]]$rate, 2), "%")
       MH.alpha   <- list(alpha.pi = alpha.pi, post.alpha = post.alpha, var.alpha = var.alpha, CI.alpha = CI.alpha, acceptance.rate = rate)
       class(MH.alpha)          <- "listof"
     }
@@ -539,6 +538,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
                       if(any(err.T)) list(Error = errors), list(GQ.results = GQ.res), 
                       if(sw["f.sw"]) list(Scores = scores))
   class(result)                <- "IMIFA"
+  attr(result, "Conf.Level")   <- conf.level
   attr(result, "Method")       <- method
   if(is.element(method, c("IMFA", "IMIFA"))) {
     attr(result, "MH.step")    <- MH.step

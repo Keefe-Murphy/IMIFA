@@ -521,6 +521,7 @@ IMIFA.mcmc  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   if(is.element(method, c("IMFA", "IMIFA"))) {
     attr(imifa, 
          "MH.step")       <- MH.step
+    switches              <- c(switches, a.sw = MH.step)
     attr(imifa,
          "Gen.Slice")     <- gen.slice
   }
