@@ -521,11 +521,11 @@ IMIFA.mcmc  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   if(is.element(method, c("IMFA", "IMIFA"))) {
     attr(imifa, 
          "MH.step")       <- MH.step
-    switches              <- c(switches, a.sw = MH.step)
     attr(imifa,
          "Gen.Slice")     <- gen.slice
   }
   attr(imifa, "Store")    <- length(iters)
+  switches                <- c(switches, a.sw = ifelse(is.element(method, c("IMIFA", "IMFA")), MH.step, F))
   attr(imifa, "Switch")   <- switches
   if(!is.element(method, c("FA", "IFA", "classify"))) {
     attr(imifa, "Time")   <- lapply(list(Total = tot.time, Average = avg.time, Z.Initialisation = init.time), function(x) round(x, 2)) 
