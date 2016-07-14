@@ -205,21 +205,8 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       pies       <- sims[[G.ind]][[Q.ind]]$pi.prop[,tmp.store, drop=F]
     }
     z            <- as.matrix(sims[[G.ind]][[Q.ind]]$z.store[,tmp.store])
-    label.miss   <- missing(Labels)
-    if(!label.miss)   {
-      if(!exists(as.character(substitute(Labels)),
-          envir=.GlobalEnv))      stop(paste0("Object ", match.call()$Labels, " not found"))
-      if(length(Labels) != n.obs) stop(paste0("'Labels' must be a factor of length N=",  n.obs))
-      zlabels    <- factor(Labels, labels=seq_along(unique(Labels)))
-      levs       <- levels(zlabels)
-      lev.ind    <- length(levs) == G
-    }
     if(!label.switch) {
       z.temp     <- factor(z[,1], labels=Gseq)
-      if(!label.miss && lev.ind) {    
-        sw.lab   <- lab.switch(z.new=z.temp, z.old=zlabels, Gs=Gseq)
-        z.temp   <- sw.lab$z
-      }
       for(sl in seq_along(tmp.store)[-1])   {
         n.ind    <- if(inf.G) non.empty[[sl]] else Gseq
         Nseq     <- seq_along(n.ind)
@@ -256,12 +243,25 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     } else {
       post.pi    <- setNames(prop.table(tabulate(post.z, nbins=G)), paste0("Group ", Gseq))
     }
+    label.miss   <- missing(Labels)
     if(!label.miss) {
+      if(!exists(as.character(substitute(Labels)),
+          envir=.GlobalEnv))      stop(paste0("Object ", match.call()$Labels, " not found"))
+      if(length(Labels) != n.obs) stop(paste0("'Labels' must be a factor of length N=",  n.obs))
+      zlabels    <- factor(Labels, labels=seq_along(unique(Labels)))
+      levs       <- levels(zlabels)
       if(nlevels(post.z) == length(levs)) {
         sw.lab   <- lab.switch(z.new=post.z, z.old=zlabels, Gs=Gseq)
         post.z   <- factor(sw.lab$z)
         l.perm   <- sw.lab$z.perm
+        mus      <- mus[,l.perm,, drop=F]
+        lmats    <- lmats[,,l.perm,, drop=F]
+        psis     <- psis[,l.perm,, drop=F]
+        pi.prop  <- pi.prop[l.perm,, drop=F]
         post.pi  <- post.pi[l.perm]  
+        if(inf.Q)   {
+         Q.store <- Q.store[l.perm,]
+        }
       }
       tab        <- table(post.z, zlabels, dnn=list("Predicted", "Observed"))
       tab.stat   <- c(classAgreement(tab), classError(post.z, zlabels))
@@ -272,6 +272,9 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
         tab.stat$misclassified <- NULL
       }
       tab.stat   <- c(list(confusionMatrix = tab), tab.stat)
+      if(!label.miss && (nlevels(post.z) == length(levs))) {
+        names(tab.stat)[1]     <- "matchedConfusionMatrix"
+      }
       class(tab.stat)          <- "listof"
     }
     if(isTRUE(MH.step)) {
@@ -283,7 +286,9 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       MH.alpha   <- list(alpha.pi = alpha.pi, post.alpha = post.alpha, var.alpha = var.alpha, CI.alpha = CI.alpha, acceptance.rate = rate)
       class(MH.alpha)          <- "listof"
     }
-    cluster      <- list(post.z = post.z, post.pi = post.pi, z = z, uncertainty = uncertainty)
+    pi.prop      <- pi.prop[Gseq,, drop=F]
+    post.pi      <- post.pi[Gseq]
+    cluster      <- list(post.z = post.z, post.pi = post.pi/sum(post.pi), z = z, uncertainty = uncertainty)
     cluster      <- c(cluster, if(sw["pi.sw"]) list(pi.prop = pi.prop, var.pi = var.pi, CI.pi = CI.pi),
                       if(!label.miss) list(perf = tab.stat), if(isTRUE(MH.step)) list(MH.alpha = MH.alpha))
     attr(cluster, "Z.init")    <- attr(sims[[G.ind]], "Z.init")

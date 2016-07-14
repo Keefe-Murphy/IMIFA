@@ -17,6 +17,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
   if(!exists(deparse(substitute(results)),
              envir=.GlobalEnv))       stop(paste0("Object ", match.call()$results, " not found"))
   if(class(results) != "IMIFA")       stop(paste0("Results object of class 'IMIFA' must be supplied"))
+  source(paste(getwd(), "/IMIFA-GIT/FullConditionals.R", sep=""), local=T)
   GQ.res  <- results$GQ.results
   G       <- GQ.res$G
   Gseq    <- seq_len(G)
@@ -345,7 +346,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
       }
       if(vars  == "means") {
         plot.x <- result$post.mu
-        if(ci.sw[vars]) ci.x   <- result$CI.mu
+        if(ci.sw[vars])   ci.x   <- result$CI.mu
         plot(plot.x, type=type, ylab="Means", xlab="Variable", ylim=if(is.element(method, c("FA", "IFA"))) c(-1, 1) else if(ci.sw[vars]) c(min(ci.x[1,]), max(ci.x[2,])))
         if(all(intervals, ci.sw[vars])) plotCI(plot.x, li=ci.x[1,], ui=ci.x[2,], slty=3, scol="grey", add=T, gap=T, pch=ifelse(type == "n", NA, 16))
         if(titles) title(main=list(paste0("Posterior Mean", ifelse(all.ind, "", paste0(":\nMeans", ifelse(grp.ind, paste0(" - Group ", g), ""))))))
@@ -366,16 +367,16 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
           }
         }
         if(g.score)  { 
-          if(g.ind == 1) tmplab <- Labs
+          if(g.ind == 1)  tmplab <- Labs
           z.ind  <- as.numeric(levels(tmplab))[tmplab] == g
           plot.x <- results$Scores$post.f[z.ind,,drop=F]
           ind2   <- ifelse(any(!facx, Q <= 1), ind[2], if(Q > 1) max(2, ind[2]))
-          if(ci.sw[vars]) ci.x  <- results$Scores$CI.f[,z.ind,, drop=F]
+          if(ci.sw[vars])  ci.x  <- results$Scores$CI.f[,z.ind,, drop=F]
           Labs   <- g
         } else       {
           plot.x <- results$Scores$post.f
           ind2   <- ifelse(any(!facx, Q.max <= 1), ind[2], if(Q.max > 1) max(2, ind[2]))
-          if(ci.sw[vars]) ci.x  <- results$Scores$CI.f
+          if(ci.sw[vars])  ci.x  <- results$Scores$CI.f
         }
         col.f  <- if(is.factor(Labs)) as.numeric(levels(Labs))[Labs] else Labs
         type.f <- ifelse(any(type.x, type == "l"), "p", type)
@@ -408,7 +409,6 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
         }
         plot.x <- result$post.load
         if(is.element(load.meth, c("all", "heatmap"))) {
-          source(paste(getwd(), "/IMIFA-GIT/FullConditionals.R", sep=""), local=T)
           mcol <- mat2color(plot.x)
           plotcolors(mcol)
           if(titles) title(main=list(paste0("Posterior Mean", ifelse(all(!all.ind, !load.all), " Loadings ", " "), "Heatmap", ifelse(all(!all.ind, grp.ind, !load.all), paste0(" - Group ", g), ""))))
@@ -421,7 +421,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
           if(Q   != 1) abline(v=seq(1, Q - 1, 1) + 0.5, lty=2, lwd=1)
         }
         if(is.element(load.meth, c("all", "raw"))) {
-          if(ci.sw[vars]) ci.x   <- result$CI.load  
+          if(ci.sw[vars])  ci.x  <- result$CI.load  
           if(by.fac) {
             if(ci.sw[vars]) ci.x <- ci.x[,,ind[2]]
             plot(plot.x[,ind[2]], type=type, xaxt="n", xlab="", ylab="Loading", ylim=if(ci.sw[vars]) c(min(ci.x[1,]), max(ci.x[2,])))
@@ -446,7 +446,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
       }
       if(vars  == "uniquenesses") {
         plot.x <- result$post.psi
-        if(ci.sw[vars]) ci.x   <- result$CI.psi
+        if(ci.sw[vars])   ci.x   <- result$CI.psi
         plot(plot.x, type=type, ylab="Uniquenesses", xlab="Variable", ylim=if(ci.sw[vars]) c(min(ci.x[1,]), max(ci.x[2,])))
         if(all(intervals, ci.sw[vars])) plotCI(plot.x, li=ci.x[1,], ui=ci.x[2,], slty=3, scol="grey", add=T, gap=T, pch=ifelse(type == "n", NA, 16))
         if(titles) title(main=list(paste0("Posterior Mean", ifelse(all.ind, "", paste0(":\nUniquenesses", ifelse(grp.ind, paste0(" - Group ", g), ""))))))
@@ -569,11 +569,34 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
       if(titles) {
         legend("top", legend=paste0("1/G = 1/", G), ncol=2, lty=2, col="red", bty="n")
       }
-      if(!labelmiss) {
-        perf   <- clust$perf
+      if(any(!labelmiss, !missing(Labels))) {
+        if(!labelmiss) {
+          perf    <- clust$perf
+        } else   {
+          Labs    <- as.factor(Labels)
+          if(length(Labs) != n.obs)   stop(paste0("Labels must be a factor of length N=",  n.obs))
+          pzs     <- clust$post.z
+          if(nlevels(pzs) == nlevels(Labs)) {
+            l.sw  <- lab.switch(z.new=pzs, z.old=Labs, Gs=seq_len(G))
+            pzs   <- factor(l.sw$z)
+          }
+          tab     <- table(pzs, Labs, dnn=list("Predicted", "Observed"))
+          perf    <- c(classAgreement(tab), classError(pzs, Labs))
+          if(nrow(tab) != ncol(tab)) {
+            perf  <- perf[-seq_len(2)]
+          }
+          if(perf$errorRate == 0) {
+            perf$misclassified   <- NULL
+          }
+          perf    <- c(list(confusionMatrix = tab), perf)
+          if(nlevels(pzs)  == nlevels(Labs)) {
+            names(perf)[1] <- "matchedConfusionMatrix"
+          }
+          class(perf)      <- "listof"
+        }
         perf$errorRate     <- paste0(round(100 * perf$errorRate, 2), "%")
-          print(perf)
-      } else                          message("Nothing to print: try re-running 'tune.IMIFA()' with known cluster labels supplied")
+        print(perf)
+      } else                          message("Nothing to print: try supplying known cluster labels")
     }
   
     if(m.sw["C.sw"]) {
