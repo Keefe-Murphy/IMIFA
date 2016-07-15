@@ -3,7 +3,7 @@
 ################################
 
 plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "density", "posterior", "GQ", "trace", "Z"), 
-                           vars = c("means", "scores", "loadings", "uniquenesses"), Labels = NULL, load.meth = c("all", "heatmap", "raw"),
+                           vars = c("means", "scores", "loadings", "uniquenesses", "pi.prop", "alpha"), Labels = NULL, load.meth = c("all", "heatmap", "raw"),
                            g = NULL, fac = NULL, by.fac = T, ind = NULL, type = c("h", "n", "p", "l"), intervals = T, mat = T, partial = F, titles = T) {
 
   defpar  <- suppressWarnings(par(no.readonly = T))
@@ -49,7 +49,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
   obs.names    <- rownames(results$Scores$post.f)
   all.ind      <- plot.meth == "all"
   grp.ind      <- all(G != 1, !is.element(method, c("FA", "IFA")))
-  load.all     <- load.meth == "all"
+  load.all     <- all(load.meth == "all", vars == "loadings")
   if(grp.ind)   {
     clust      <- results$Clust
     labelmiss  <- !attr(clust, "Label.Sup")
@@ -68,7 +68,10 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
     sw.n  <- paste0(toupper(substring(plot.meth, 1, 1)), ".sw")
     m.sw[sw.n] <- T
   }
-  if(all(m.sw["Z.sw"], !grp.ind))     stop("Can't use 'Z' for 'plot.meth' as no clustering has taken place")
+  if(!grp.ind)  {
+    if(m.sw["Z.sw"])                  stop("Can't use 'Z' for 'plot.meth' as no clustering has taken place")
+    if(v.sw["pi.sw"])                 stop("Can't plot mixing proportions as no clustering has taken place")
+  }
   if(all(!m.sw["G.sw"], !m.sw["Z.sw"],
      missing(vars)))                  stop("What variable would you like to plot?")
   if(all(any(m.sw["P.sw"], all.ind),
@@ -97,7 +100,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
   if(all(is.element(method, c("IMIFA", "OMIFA")), m.sw["G.sw"])) {
     Gs    <- seq_len(2)
     if(!missing(g))                   warning(paste0("Removed 'g'=", g ," for the ", plot.meth, " plotting method"), call.=F)
-  } else if(any(all(is.element(vars, c("scores", "alpha")), any(all.ind, vars != "scores", !m.sw["P.sw"])), 
+  } else if(any(all(is.element(vars, c("scores", "pi.prop", "alpha")), any(all.ind, vars != "scores", !m.sw["P.sw"])), 
             m.sw["G.sw"], m.sw["Z.sw"]))    {
     Gs    <- 1
   } else if(!missing(g)) {
@@ -148,22 +151,27 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
       if(!facx)           ind[2] <- fac[g]
       if(length(ind) > 2)             stop("Length of plotting indices can't be greater than 2")
       if(vars  == "scores")  {
-        if(ind[1] >  n.obs)           stop(paste0("First index can't be greater than the number of observations - ",  n.obs))
+        if(ind[1] >  n.obs)           stop(paste0("First index can't be greater than the number of observations: ",  n.obs))
         if(ind[2] >  Q.max)  {        warning(paste0("Second index can't be greater than ", Q.max, ", the total number of factors", if(grp.ind) paste0(" across groups"), ".\n Try specifying a vector of fac values with maximum entries ", paste0(Qs, collapse = ", "), "."), call.=F)
         ifelse(msgx, readline(msg), "")
         next
         }
       } else {
-        if(ind[1] > n.var)            stop(paste0("First index can't be greater than the number of variables - ",  n.var))
+        if(ind[1] > n.var)            stop(paste0("First index can't be greater than the number of variables: ",  n.var))
         if(ind[2] > Q) {              warning(paste0("Second index can't be greater than ", Q, ", the number of factors", if(grp.ind) paste0(" in group ", g), ".\n Try specifying a vector of fac values with maximum entries ", paste0(Qs, collapse = ", "), "."), call.=F)
         ifelse(msgx, readline(msg), "")
         next
         }
       }
     } else   {
-      if(indx)               ind <- 1
+      if(any(vars == "alpha",
+             indx))       ind    <- 1
       if(length(ind) >  1)            stop("Length of plotting indices can't be greater than 1")
-      if(ind      > n.var)            stop(paste0("Index can't be greater than the number of variables - ", n.var))
+      if(vars  == "pi.prop") {
+        if(ind       >  G)            stop(paste0("Index can't be greater than the number of groups: ", G))
+      } else {
+        if(ind       > n.var)         stop(paste0("Index can't be greater than the number of variables: ", n.var))
+      }
     }
     
     if(m.sw["T.sw"]) {
@@ -223,6 +231,16 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
         } else   {
           plot(x=iter, y=plot.x[ind,], ylab="Uniquenesses", type="l", xlab="Iteration")
           if(titles) title(main=list(paste0("Trace", ifelse(all.ind, ":\n", paste0(":\nUniquenesses - ", ifelse(grp.ind, paste0("Group ", g, " - "), ""))), var.names[ind], " Variable")))
+        }
+      }
+      if(vars  == "pi.prop") {
+        plot.x <- clust$pi.prop
+        if(matx) {
+          matplot(t(plot.x), type="l", ylab="Mixing Proportions", xlab="Iteration")
+          if(titles) title(main=list(paste0("Trace", ifelse(all.ind, "", paste0(":\nMixing Proportions")))))
+        } else   {
+          plot(x=iter, y=plot.x[ind,], ylab="Mixing Proportions", type="l", xlab="Iteration")
+          if(titles) title(main=list(paste0("Trace", ifelse(all.ind, "", paste0(":\nMixing Proportions - Group ", ind)))))
         }
       }
       if(vars  == "alpha") {
@@ -314,6 +332,20 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
           plot.d  <- density(plot.X[ind,])
           plot(plot.d, main="")
           if(titles) title(main=list(paste0("Density", ifelse(all.ind, ":\n", paste0(":\nUniquenesses - ", ifelse(grp.ind, paste0("Group ", g, " - "), ""))), var.names[ind], " Variable")))
+          polygon(plot.d, col="black")
+        }
+      }
+      if(vars  == "pi.prop") {
+        plot.X <- clust$pi.prop
+        if(matx) {
+          plot.x  <- apply(plot.X, 1, density)
+          plot.x  <- sapply(plot.x, "[[", "y")
+          matplot(plot.x, type="l", ylab="Density")
+          if(titles) title(main=list(paste0("Density", ifelse(all.ind, "", paste0(":\nMixing Proportions")))))
+        } else   {
+          plot.d  <- density(plot.X[ind,])
+          plot(plot.d, main="")
+          if(titles) title(main=list(paste0("Density", ifelse(all.ind, "", paste0(":\nMixing Proportions - Group ", ind)))))
           polygon(plot.d, col="black")
         }
       }
@@ -451,6 +483,27 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
         if(all(intervals, ci.sw[vars])) plotCI(plot.x, li=ci.x[1,], ui=ci.x[2,], slty=3, scol="grey", add=T, gap=T, pch=ifelse(type == "n", NA, 16))
         if(titles) title(main=list(paste0("Posterior Mean", ifelse(all.ind, "", paste0(":\nUniquenesses", ifelse(grp.ind, paste0(" - Group ", g), ""))))))
         if(type  == "n") text(seq_along(plot.x), plot.x, var.names, cex=0.5)
+      }
+      if(vars  == "pi.prop") {
+        plot.x <- clust$post.pi
+        if(ci.sw[vars])   ci.x   <- clust$CI.pi
+        if(matx) {
+          if(all(intervals, ci.sw[vars])) {
+            plotCI(barplot(plot.x, ylab="Mixing Proportions", xlab="", ylim=c(0, 1)),
+                   plot.x, li=ci.x[1,], ui=ci.x[2,], slty=3, scol="red", add=T, gap=T, pch=16)
+          } else {
+            barplot(plot.x, ylab="Mixing Proportions", xlab="", ylim=c(0, 1))
+          }
+          if(titles) title(main=list(paste0("Posterior Mean", ifelse(all.ind, "", paste0(":\nMixing Proportions")))))  
+        } else {
+          if(all(intervals, ci.sw[vars])) {
+            plotCI(barplot(plot.x[ind], ylab="Mixing Proportions", xlab="", ylim=c(0, 1)),
+                   plot.x[ind], li=ci.x[1,ind], ui=ci.x[2,ind], slty=3, scol="red", add=T, gap=T, pch=16)
+          } else {
+            barplot(plot.x[ind], ylab="Mixing Proportions", xlab="Variable", ylim=c(0, 1))
+          }
+          if(titles) title(main=list(paste0("Posterior Mean", ifelse(all.ind, "", paste0(":\nMixing Proportions - Group ", ind)))))
+        }
       }
       if(vars  == "alpha") {
         plot(c(0, 1), c(0, 1), ann = F, bty = 'n', type = 'n', xaxt = 'n', yaxt = 'n')
@@ -652,6 +705,18 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
           if(all(!all.ind, titles)) title(main=list(paste0("Uniquenesses - ", ifelse(grp.ind, paste0("Group ", g, ":\n "), ""), var.names[ind], " Variable")), outer=T)
         }
       }
+      if(vars  == "pi.prop")  { 
+        plot.x <- clust$pi.prop
+        if(!partial) {
+          acf(plot.x[ind,], main="")
+          if(titles) title(main=list(paste0("ACF", ifelse(all(all.ind, matx), paste0(" - Group ", ind), ""))))
+        }
+        if(any(!all.ind, partial)) {
+          acf(plot.x[ind,], main="", type="partial")
+          if(titles) title(main=list(paste0("PACF", ifelse(all(all.ind, matx), paste0(" - Group ", ind), ""))))
+          if(all(!all.ind, titles)) title(main=list(paste0("Mixing Proportions - Group ", ind)), outer=T)
+        }
+      }
       if(vars  == "alpha") {
         plot.x <- clust$MH.alpha$alpha.pi
         if(!partial) {
@@ -665,10 +730,9 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
         }
       }
     }
-    if(all(all.ind, titles)) title(paste0(toupper(substr(vars, 1, 1)),
-                             substr(vars, 2, nchar(vars)), 
-                             ifelse(all(grp.ind, !is.element(vars, c("scores", "alpha"))), 
-                                    paste0(" - Group ", g), "")), outer=T)
+    if(all(all.ind, titles)) title(ifelse(vars != "pi.prop",paste0(toupper(substr(vars, 1, 1)), substr(vars, 2, nchar(vars)), 
+                             ifelse(all(grp.ind, !is.element(vars, c("scores", "pi.prop", "alpha"))), paste0(" - Group ", g), "")), 
+                             paste0("Mixing Proportions", ifelse(matx, "", paste0(" - Group ", ind)))), outer=T)
     ifelse(msgx, readline(msg), "")
   }
 }

@@ -140,6 +140,15 @@
   plot(res, "c", "u")
 
 # Mixing Proportions
+  plot(res, "a", "p")
+  plot(res, "a", "p", mat=F)
+  plot(res, "t", "p")
+  plot(res, "t", "p", mat=F)
+  plot(res, "d", "p")
+  plot(res, "d", "p", mat=F)
+  plot(res, "p", "p")
+  plot(res, "p", "p", mat=F)
+  plot(res, "c", "p")
   
 # Covariance Matrices
   lapply(seq_len(res$GQ.results$G), function(g) res[[g]]$cov.est)

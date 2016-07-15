@@ -288,6 +288,8 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     }
     pi.prop      <- pi.prop[Gseq,, drop=F]
     post.pi      <- post.pi[Gseq]
+    var.pi       <- var.pi[Gseq]
+    CI.pi        <- CI.pi[,Gseq]
     cluster      <- list(post.z = post.z, post.pi = post.pi/sum(post.pi), z = z, uncertainty = uncertainty)
     cluster      <- c(cluster, if(sw["pi.sw"]) list(pi.prop = pi.prop, var.pi = var.pi, CI.pi = CI.pi),
                       if(!label.miss) list(perf = tab.stat), if(isTRUE(MH.step)) list(MH.alpha = MH.alpha))
