@@ -52,6 +52,7 @@
     mu.sigma       <- 1/sigma.mu
     z              <- cluster$z
     z.temp         <- factor(z, levels=Gseq)
+    nn             <- tabulate(z, nbins=G)
     pi.alpha       <- cluster$pi.alpha
     pi.prop        <- cluster$pi.prop
     f              <- sim.f.p(N=N, Q=Q)

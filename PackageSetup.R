@@ -127,7 +127,8 @@ IMIFA.mcmc  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
         meth[1]  <- "IFA"
       } 
     }
-                                    message(paste0("Forced use of ", meth[1], " method where 'range.G' is equal to 1"))
+    if(!is.element(method, 
+                   c("FA", "IFA"))) message(paste0("Forced use of ", meth[1], " method where 'range.G' is equal to 1"))
   }
   
 # Define full conditionals, hyperparamters & Gibbs Sampler function for desired method
@@ -276,8 +277,8 @@ IMIFA.mcmc  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   mu               <- list(colMeans(dat))
   beta.x           <- missing("psi.beta")
   mu0.x            <- missing("mu.zero")
-  ad1.x            <- all(missing("alpha.d1"), is.element(method, c("MIFA", "OMIFA", "IMIFA")))
-  adk.x            <- all(missing("alpha.dk"), is.element(method, c("MIFA", "OMIFA", "IMIFA")))
+  ad1.x            <- all(missing("alpha.d1"), is.element(method, c("IFA", "MIFA", "OMIFA", "IMIFA")))
+  adk.x            <- all(missing("alpha.dk"), is.element(method, c("IFA", "MIFA", "OMIFA", "IMIFA")))
   if(all(z.init != "list", any(sw0gs))) {
     if(any(delta0g, qstar0g))       stop(paste0(names(which(sw0gs[3:4])), " can only be TRUE if z.init=list\n"))
     if(all(!mu0.x, mu0g))           stop("'mu.zero' can only be supplied for each group if z.init=list")
@@ -526,6 +527,9 @@ IMIFA.mcmc  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   }
   attr(imifa, "Store")    <- length(iters)
   switches                <- c(switches, a.sw = ifelse(is.element(method, c("IMIFA", "IMFA")), MH.step, F))
+  if(is.element(method, c("FA", "IFA"))) {
+    switches["pi.sw"]     <- F
+  }
   attr(imifa, "Switch")   <- switches
   if(!is.element(method, c("FA", "IFA", "classify"))) {
     attr(imifa, "Time")   <- lapply(list(Total = tot.time, Average = avg.time, Z.Initialisation = init.time), function(x) round(x, 2)) 

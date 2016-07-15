@@ -49,6 +49,7 @@
     l.sigma        <- 1/sigma.l 
     z              <- cluster$z
     z.temp         <- factor(z, levels=Gseq)
+    nn             <- tabulate(z, nbins=G)
     pi.alpha       <- cluster$pi.alpha
     pi.prop        <- cluster$pi.prop
     f              <- sim.f.p(N=N, Q=Q)
@@ -119,7 +120,7 @@
     # Cluster Labels
       psi          <- 1/psi.inv
       Sigma        <- lapply(Gseq, function(g) tcrossprod(as.matrix(lmat[,,g])) + diag(psi[,g]))
-      z.res        <- sim.z(data=data, mu=mu, Sigma=Sigma, G=G, pi.prop=pi.prop)
+      z.res        <- sim.z(data=data, mu=mu, Sigma=Sigma, G=G, N=N, pi.prop=pi.prop)
       z            <- z.res$z
     
     # Label Switching
