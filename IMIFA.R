@@ -63,7 +63,6 @@
 
 # Run the Gibbs Sampler
   sim  <- IMIFA.mcmc(wine, method="IMFA", range.Q=3)
- #sim  <- IMIFA.mcmc(wine, method="classify", Label=Lab)
 
 # Save / Load Simulations
   save(sim, file=paste0(getwd(), "/Simulations/", attr(sim, "Name"), 
@@ -75,8 +74,6 @@
 
 # Posterior Summaries (optional: additional 'burnin' & 'thinning', user-defined G/Q, model selection criterion)
   res <- tune.IMIFA(sim, Labels=Lab)
- #res <- tune.IMIFA(sim, G=3, Q=3, criterion="bicm", Labels=Lab)
-  res$Error
 
 # Save / Load Results
   save(res, file=paste0(getwd(), "/Simulations/", attr(res, "Name"), 
@@ -150,7 +147,8 @@
   plot(res, "p", "p", mat=F)
   plot(res, "c", "p")
   
-# Covariance Matrices
+# Covariance Matrices & Error Metrics
+  plot(res, "e")
   lapply(seq_len(res$GQ.results$G), function(g) res[[g]]$cov.est)
 
 # Metropolis Hastings 'alpha' for Dirichlet Process methods

@@ -536,9 +536,13 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   attr(GQ.res, "Supplied")     <- c(Q=Q.T, G=G.T)
   err.T                        <- unlist(lapply(Gseq, function(g) all(emp.T[g], est.T[g])))
   if(any(err.T)) {
-    errors       <- list(MSE = mean(MSE, na.rm=T), RMSE = mean(RMSE, na.rm=T), NRMSE = mean(NRMSE, na.rm=T),
-                         CVRMSE = mean(CVRMSE, na.rm=T), MAD = mean(MAD, na.rm=T))  
-    class(errors)              <- "listof"
+    errors       <- lapply(list(MSE = MSE, RMSE = RMSE, NRMSE = NRMSE, CVRMSE = CVRMSE, MAD = MAD), setNames, paste0("Group ", Gseq))
+    if(G > 1)    {
+      errors     <- c(errors, list(Averages = unlist(lapply(errors, mean, na.rm=T))))
+      class(errors)            <- "listof"
+    } else {
+      errors     <- setNames(unlist(errors), names(errors))
+    }
   }
   
   result         <- c(result, if(exists("cluster", envir=environment())) list(Clust = cluster), 

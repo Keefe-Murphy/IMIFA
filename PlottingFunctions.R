@@ -2,7 +2,7 @@
 ### IMIFA Plotting Functions ###
 ################################
 
-plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "density", "posterior", "GQ", "trace", "Z"), 
+plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "density", "errors", "posterior", "GQ", "trace", "Z"), 
                            vars = c("means", "scores", "loadings", "uniquenesses", "pi.prop", "alpha"), Labels = NULL, load.meth = c("all", "heatmap", "raw"),
                            g = NULL, fac = NULL, by.fac = T, ind = NULL, type = c("h", "n", "p", "l"), intervals = T, mat = T, partial = F, titles = T) {
 
@@ -41,7 +41,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
   load.meth    <- match.arg(load.meth)
   type.x       <- missing(type)
   type         <- match.arg(type)
-  m.sw         <- c(G.sw = F, Z.sw = F, C.sw = F, D.sw = F, P.sw = F, T.sw = F)
+  m.sw         <- c(G.sw = F, Z.sw = F, E.sw = F, C.sw = F, D.sw = F, P.sw = F, T.sw = F)
   v.sw         <- attr(results, "Switch")
   names(v.sw)  <- formals(sys.function(sys.parent()))$vars
   ci.sw        <- v.sw
@@ -56,7 +56,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
   }
   if(all.ind)   {
     if(v.sw[vars]) {
-      m.sw[-c(1,2)] <- !m.sw[-c(1,2)]
+      m.sw[-(1:3)]  <- !m.sw[-(1:3)]
       if(all(vars   == "loadings", load.all)) {
         layout(matrix(c(1, 2, 3, 4, 3, 5), nr=3, nc=2, byrow = TRUE))
       } else {
@@ -70,9 +70,9 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
   }
   if(!grp.ind)  {
     if(m.sw["Z.sw"])                  stop("Can't use 'Z' for 'plot.meth' as no clustering has taken place")
-    if(v.sw["pi.sw"])                 stop("Can't plot mixing proportions as no clustering has taken place")
+    if(vars == "pi.prop")             stop("Can't plot mixing proportions as no clustering has taken place")
   }
-  if(all(!m.sw["G.sw"], !m.sw["Z.sw"],
+  if(all(!m.sw["G.sw"], !m.sw["Z.sw"], !m.sw["E.sw"],
      missing(vars)))                  stop("What variable would you like to plot?")
   if(all(any(m.sw["P.sw"], all.ind),
      is.element(vars, c("means", "uniquenesses")),
@@ -83,8 +83,8 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
    all.ind        <- F
    m.sw["P.sw"]   <- T
   } 
-  if(all(!v.sw[vars],
-     !m.sw["G.sw"], !m.sw["Z.sw"]))   stop(paste0("Nothing to plot:", vars, " weren't stored"))
+  if(all(!v.sw[vars], !m.sw["G.sw"], 
+     !m.sw["Z.sw"],   !m.sw["E.sw"])) stop(paste0("Nothing to plot:", vars, " weren't stored"))
   if(!is.logical(intervals))          stop("'intervals' must be TRUE or FALSE")
   if(!is.logical(mat))                stop("'mat' must be TRUE or FALSE")
   if(!is.logical(partial))            stop("'partial' must be TRUE or FALSE")
@@ -101,7 +101,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
     Gs    <- seq_len(2)
     if(!missing(g))                   warning(paste0("Removed 'g'=", g ," for the ", plot.meth, " plotting method"), call.=F)
   } else if(any(all(is.element(vars, c("scores", "pi.prop", "alpha")), any(all.ind, vars != "scores", !m.sw["P.sw"])), 
-            m.sw["G.sw"], m.sw["Z.sw"]))    {
+            m.sw["G.sw"], m.sw["Z.sw"], m.sw["E.sw"])) {
     Gs    <- 1
   } else if(!missing(g)) {
     if(!is.element(method, c("FA", "IFA"))) {
@@ -650,6 +650,50 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
         perf$errorRate     <- paste0(round(100 * perf$errorRate, 2), "%")
         print(perf)
       } else                          message("Nothing to print: try supplying known cluster labels")
+    }
+    
+    if(m.sw["E.sw"]) {
+      plot.X <- results$Error
+      if(G > 1)  {
+        plot.x    <- do.call(rbind, plot.X[-length(plot.X)])
+        plot.x    <- cbind(plot.x, Averages = plot.X$Averages)
+      } else {
+        plot.x    <- plot.X
+      }
+      if(titles) {
+        layout(rbind(1, 2), heights=c(9, 1))
+        par(mar=c(3.1, 4.1, 4.1, 2.1))
+      }
+      cols   <- if(G > 1) seq_len(nrow(plot.x)) else seq_along(plot.x)
+      if(G > 1)  {
+        dens <- matrix(-1, nr=5, nc=G + 1)
+        dens[,G + 1]       <- 30
+      } else {
+        dens <- NULL
+      }
+      pl.x   <- barplot(plot.x, beside=T, col=cols, main="", ylab="Deviation", density=dens)
+      na.x   <- if(G > 1) is.na(res$Error[[1]]) else F
+      if(G > 1) points(x=apply(pl.x[,which(na.x)], 2, median), y=rep(0, sum(na.x)), pch=16, col=6)
+      if(titles) title(main=list("Error Metrics"))
+      if(titles) {
+        par(mar=c(0, 0, 0, 0))
+        plot.new()
+        ltxt <- c("MSE", "RMSE", "NRMSE", "CVRMSE", "MAD")
+        lnc  <- length(cols)
+        lcol <- cols
+        xna  <- sum(na.x) > 0
+        lpch <- rep(15, 5)
+        temp <- legend("center", legend=if(xna) c(ltxt, "Missing") else ltxt, ncol=ifelse(xna, lnc + 1, lnc), bty="n",
+                       pch=if(xna) c(lpch, max(lpch) + 1) else lpch, col=if(xna) c(lcol, length(lcol) + 1) else lcol)
+        if(xna) text(x=temp$text$x[6] - 0.015, y=temp$text$y[6] + 0.015, "__")
+      }
+      if(G > 1) {
+        avg  <- setNames(list(plot.X$Averages), "Average Error Metrics")
+        class(avg)         <- "listof"
+      } else {
+        avg  <- plot.X
+      }
+      print(avg)  
     }
   
     if(m.sw["C.sw"]) {
