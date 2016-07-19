@@ -20,6 +20,7 @@
     gnames         <- paste0("Group ", Ts)
     iternames      <- paste0("Iteration", seq_len(n.store))
     Q0             <- Q > 0
+    Q1             <- Q > 1
     if(sw["mu.sw"])  {
       mu.store     <- array(0, dim=c(P, trunc.G, n.store))
       dimnames(mu.store)   <- list(varnames, gnames, iternames)
@@ -87,7 +88,7 @@
       pi.store[,1]         <- pi.prop
       z.store[,1]          <- z
       ll.store[1]          <- sum(sim.z(data=data, mu=mu, Gseq=Gs, N=N, pi.prop=pi.prop, Sigma=lapply(Gs,
-                                  function(g) tcrossprod(as.matrix(lmat[,,g])) + diag(1/psi.inv[,g])))$log.likes)
+                                  function(g) tcrossprod(lmat[,,g]) + diag(1/psi.inv[,g])))$log.likes)
       G.store[1]           <- G
       if(MH.step)  {
         rate[1]            <- 0
@@ -123,7 +124,7 @@
     
     # Cluster Labels
       psi          <- 1/psi.inv
-      Sigma        <- lapply(Gs, function(g) tcrossprod(as.matrix(lmat[,,g])) + diag(psi[,g]))
+      Sigma        <- lapply(Gs, function(g) tcrossprod(lmat[,,g]) + diag(psi[,g]))
       z.res        <- sim.z(data=data, mu=mu, Sigma=Sigma, Gseq=Gs, N=N, pi.prop=pi.prop, slice.ind=slice.ind)
       z            <- z.res$z
       nn           <- tabulate(z, nbins=trunc.G)
@@ -134,21 +135,21 @@
       sum.data     <- lapply(Gs, function(g) colSums(data[z.ind[[g]],, drop=F]))
       sum.f        <- lapply(Gs, function(g) colSums(f[z.ind[[g]],, drop=F]))
       mu[,Gs]      <- do.call(cbind, lapply(Gs, function(g) if(nn0[g]) sim.mu(N=nn[g], mu.sigma=mu.sigma, psi.inv=psi.inv[,g], P=P, sum.data=sum.data[[g]], 
-                              sum.f=sum.f[[g]], lmat=as.matrix(lmat[,,g]), mu.zero=mu.zero) else sim.mu.p(P=P, sigma.mu=sigma.mu, mu.zero=mu.zero)))
+                              sum.f=sum.f[[g]], lmat=if(Q1) lmat[,,g] else as.matrix(lmat[,,g]), mu.zero=mu.zero) else sim.mu.p(P=P, sigma.mu=sigma.mu, mu.zero=mu.zero)))
       
     # Scores & Loadings
       c.data       <- lapply(Gs, function(g) sweep(data[z.ind[[g]],, drop=F], 2, mu[,g], FUN="-"))
       if(Q0)   {
-        f          <- do.call(rbind, lapply(Gs, function(g) if(nn0[g]) sim.score(N=nn[g], lmat=as.matrix(lmat[,,g]), 
-                              c.data=c.data[[g]], psi.inv=psi.inv[,g], Q=Q)))[obsnames,, drop=F]
+        f          <- do.call(rbind, lapply(Gs, function(g) if(nn0[g]) sim.score(N=nn[g], lmat=lmat[,,g], 
+                              c.data=c.data[[g]], psi.inv=psi.inv[,g], Q=Q, Q1=Q1)))[obsnames,, drop=F]
         FtF        <- lapply(Gs, function(g) if(nn0[g]) crossprod(f[z.ind[[g]],, drop=F]))
         lmat[,,Gs] <- array(unlist(lapply(Gs, function(g) if(nn0[g]) matrix(unlist(lapply(Ps, function(j) sim.load(l.sigma=l.sigma, Q=Q, P=P, c.data=c.data[[g]][,j],  f=f[z.ind[[g]],, drop=F], 
-                            psi.inv=psi.inv[,g][j], FtF=FtF[[g]], shrink=F)), use.names=F), nr=P, byrow=T) else sim.load.p(Q=Q, P=P, sigma.l=sigma.l, shrink=F)), use.names=F), dim=c(P, Q, G))
+                            psi.inv=psi.inv[,g][j], FtF=FtF[[g]], Q1=Q1, shrink=F)), use.names=F), nr=P, byrow=T) else sim.load.p(Q=Q, P=P, sigma.l=sigma.l, shrink=F)), use.names=F), dim=c(P, Q, G))
       }
                     
     # Uniquenesses
       psi.inv[,Gs] <- do.call(cbind, lapply(Gs, function(g) if(nn0[g]) sim.psi.i(N=nn[g], psi.alpha=psi.alpha, c.data=c.data[[g]], psi.beta=psi.beta, 
-                              P=P, f=f[z.ind[[g]],,drop=F], lmat=as.matrix(lmat[,,g])) else sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)))
+                              P=P, f=f[z.ind[[g]],, drop=F], lmat=lmat[,,g]) else sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)))
       
     # Alpha
       if(MH.step)   {

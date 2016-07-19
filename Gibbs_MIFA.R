@@ -112,6 +112,7 @@
       }
       nn           <- tabulate(z, nbins=G)
       Q0           <- Qs > 0
+      Q1           <- Qs > 1
       z.ind        <- lapply(Gseq, function(g) z == g)
       
     # Means
@@ -132,14 +133,15 @@
         for(g in Gseq) {
           Qg       <- Qs[g]
           Qgs      <- seq_len(Qg)
+          Q1g      <- Q1[g]
           nng      <- nn[g]
           c.datg   <- c.data[[g]]
           psi.ig   <- psi.inv[,g]
           if(Q0[g]) {
-            fgg            <- sim.score(N=nng, lmat=lmat[[g]], Q=Qg, 
+            fgg            <- sim.score(N=nng, lmat=lmat[[g]], Q=Qg, Q1=Q1g,
                                         c.data=c.datg, psi.inv=psi.ig)
             lmat[[g]]      <- matrix(unlist(lapply(Pseq, function(j) sim.load(Q=Qg, c.data=c.datg[,j], f=fgg, FtF=crossprod(fgg), 
-                                     P=P, psi.inv=psi.ig[j], phi=phi[[g]][j,], tau=tau[[g]])), use.names=F), nr=P, byrow=T)
+                                     P=P, Q1=Q1g, psi.inv=psi.ig[j], phi=phi[[g]][j,], tau=tau[[g]])), use.names=F), nr=P, byrow=T)
             fg[[g]][,Qgs]  <- fgg
           } else {
             lmat[[g]]      <- matrix(, nr=P, nc=0)
@@ -150,7 +152,7 @@
                   
     # Uniquenesses
       psi.inv      <- do.call(cbind, lapply(Gseq, function(g) sim.psi.i(N=nn[g], psi.alpha=psi.alpha, c.data=c.data[[g]], 
-                              psi.beta=psi.beta[,g], P=P, f=f[z.ind[[g]],seq_len(Qs[g]),drop=F], lmat=lmat[[g]])))
+                              psi.beta=psi.beta[,g], P=P, f=f[z.ind[[g]],seq_len(Qs[g]), drop=F], lmat=lmat[[g]])))
     
     # Local Shrinkage
       load.2       <- lapply(lmat, function(lg) lg * lg)

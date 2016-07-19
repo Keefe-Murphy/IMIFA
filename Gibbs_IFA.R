@@ -18,17 +18,19 @@
     varnames     <- colnames(data)
     facnames     <- paste0("Factor ", seq_len(Q))
     iternames    <- paste0("Iteration", seq_len(n.store))
+    Q0           <- Q > 0
+    Q1           <- Q > 1
     if(sw["mu.sw"])  {
       mu.store   <- matrix(0, nr=P, nc=n.store)
       dimnames(mu.store)   <- list(varnames, iternames)
     }
     if(sw["f.sw"])   {
       f.store    <- array(0, dim=c(N, Q, n.store))
-      dimnames(f.store)    <- list(obsnames, if(Q > 0) facnames, iternames)
+      dimnames(f.store)    <- list(obsnames, if(Q0) facnames, iternames)
     }
     if(sw["l.sw"])   {
       load.store <- array(0, dim=c(P, Q, n.store))
-      dimnames(load.store) <- list(varnames, if(Q > 0) facnames, iternames)
+      dimnames(load.store) <- list(varnames, if(Q0) facnames, iternames)
     }
     if(sw["psi.sw"]) {
       psi.store  <- matrix(0, nr=P, nc=n.store)
@@ -78,9 +80,9 @@
     # Scores & Loadings
       c.data     <- sweep(data, 2, mu, FUN="-")
       if(Q  > 0) {
-        f        <- sim.score(N=N, Q=Q, lmat=lmat, psi.inv=psi.inv, c.data=c.data)
+        f        <- sim.score(N=N, Q=Q, lmat=lmat, psi.inv=psi.inv, c.data=c.data, Q1=Q1)
         FtF      <- crossprod(f)
-        lmat     <- matrix(unlist(lapply(Pseq, function(j) sim.load(Q=Q, tau=tau, P=P, f=f, 
+        lmat     <- matrix(unlist(lapply(Pseq, function(j) sim.load(Q=Q, tau=tau, P=P, f=f, Q1=Q1,
                            c.data=c.data[,j], phi=phi[j,], psi.inv=psi.inv[j], FtF=FtF)), use.names=F), nr=P, byrow=T)
       } else {
         f        <- matrix(, nr=N, nc=0)
@@ -115,7 +117,7 @@
         prob     <- 1/exp(b0 + b1 * (iter - burnin))
         unif     <- runif(n=1, min=0, max=1)     
         if(unif   < prob) { # check whether to adapt or not
-          if(Q > 0) {
+          if(Q0) {
             lind <- colSums(abs(lmat) < epsilon) / P
           } else {
             lind <- 0
@@ -151,8 +153,8 @@
         cov.est  <- cov.est + Sigma/n.store
         log.like <- sum(mvdnorm(data=data, mu=mu, Sigma=Sigma, log.d=T))
         if(sw["mu.sw"])             mu.store[,new.it]              <- mu  
-        if(all(sw["f.sw"], Q > 0))  f.store[,seq_len(Q),new.it]    <- f
-        if(all(sw["l.sw"], Q > 0))  load.store[,seq_len(Q),new.it] <- lmat
+        if(all(sw["f.sw"], Q0))     f.store[,seq_len(Q),new.it]    <- f
+        if(all(sw["l.sw"], Q0))     load.store[,seq_len(Q),new.it] <- lmat
         if(sw["psi.sw"])            psi.store[,new.it]             <- psi
                                     Q.store[new.it]                <- Q
                                     ll.store[new.it]               <- log.like

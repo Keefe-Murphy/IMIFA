@@ -134,6 +134,7 @@
       nn            <- tabulate(z, nbins=trunc.G)
       nn0           <- nn > 0
       Q0            <- Qs > 0
+      Q1            <- Qs > 1
       z.ind         <- lapply(Gs, function(g) z == g)
       
     # Means
@@ -154,6 +155,7 @@
         for(g in Gs) {
           Qg        <- Qs[g]
           Qgs       <- seq_len(Qg)
+          Q1g       <- Q1[g]
           nng       <- nn[g]
           nn0g      <- nng > 0
           if(nn0g)   {
@@ -161,9 +163,9 @@
             psi.ig  <- psi.inv[,g]  
           }
           if(Q0[g])  {
-            fgg            <- if(nn0g) sim.score(N=nng, lmat=lmat[[g]], Q=Qg, c.data=c.datg, psi.inv=psi.ig)
-            lmat[[g]]      <- if(nn0g) matrix(unlist(lapply(Ps, function(j) sim.load(Q=Qg, c.data=c.datg[,j], f=fgg, FtF=crossprod(fgg), 
-                              P=P, psi.inv=psi.ig[j], phi=phi[[g]][j,], tau=tau[[g]])), use.names=F), nr=P, byrow=T) else matrix(unlist(
+            fgg            <- if(nn0g) sim.score(N=nng, lmat=lmat[[g]], Q=Qg, c.data=c.datg, psi.inv=psi.ig, Q1=Q1g)
+            lmat[[g]]      <- if(nn0g) matrix(unlist(lapply(Ps, function(j) sim.load(Q=Qg, c.data=c.datg[,j], f=fgg, FtF=crossprod(fgg), P=P,
+                              Q1=Q1g, psi.inv=psi.ig[j], phi=phi[[g]][j,], tau=tau[[g]])), use.names=F), nr=P, byrow=T) else matrix(unlist(
                               lapply(Ps, function(j) sim.load.p(Q=Qg, phi=phi[[g]][j,], tau=tau[[g]], P=P)), use.names=F), nr=P, byrow=F)
             fg[[g]][,Qgs]  <- fgg
           } else {
@@ -175,7 +177,7 @@
                     
     # Uniquenesses
       psi.inv[,Gs]  <- do.call(cbind, lapply(Gs, function(g) if(nn0[g]) sim.psi.i(N=nn[g], psi.alpha=psi.alpha, c.data=c.data[[g]], psi.beta=psi.beta, 
-                               P=P, f=f[z.ind[[g]],seq_len(Qs[g]),drop=F], lmat=lmat[[g]]) else sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)))
+                               P=P, f=f[z.ind[[g]],seq_len(Qs[g]), drop=F], lmat=lmat[[g]]) else sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)))
     
     # Local Shrinkage
       load.2        <- lapply(lmat[Gs], function(lg) lg * lg)
@@ -226,8 +228,8 @@
         }
         if(sw["psi.sw"]) psi.store[,,new.it]        <- psi
         if(sw["pi.sw"])  pi.store[,new.it]          <- pi.prop
-        if(MH.step) {    rate[new.iter]             <- MH.alpha$rate
-                         alpha.store[new.iter]      <- pi.alpha }
+        if(MH.step) {    rate[new.it]               <- MH.alpha$rate
+                         alpha.store[new.it]        <- pi.alpha }
                          z.store[,new.it]           <- z 
                          ll.store[new.it]           <- log.like
                          Q.store[,new.it]           <- Qs

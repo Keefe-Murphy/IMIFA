@@ -15,17 +15,19 @@
     varnames     <- colnames(data)
     facnames     <- paste0("Factor ", seq_len(Q))
     iternames    <- paste0("Iteration", seq_len(n.store))
+    Q0           <- Q > 0
+    Q1           <- Q > 1
     if(sw["mu.sw"])  {
       mu.store   <- matrix(0, nr=P, nc=n.store)
       dimnames(mu.store)   <- list(varnames, iternames)
     }
     if(sw["f.sw"])   {
       f.store    <- array(0, dim=c(N, Q, n.store))
-      dimnames(f.store)    <- list(obsnames, if(Q > 0) facnames, iternames)
+      dimnames(f.store)    <- list(obsnames, if(Q0) facnames, iternames)
     }
     if(sw["l.sw"])   {
       load.store <- array(0, dim=c(P, Q, n.store))
-      dimnames(load.store) <- list(varnames, if(Q > 0) facnames, iternames)
+      dimnames(load.store) <- list(varnames, if(Q0) facnames, iternames)
     }
     if(sw["psi.sw"]) {
       psi.store  <- matrix(0, nr=P, nc=n.store)
@@ -71,10 +73,10 @@
     
     # Scores & Loadings
       c.data     <- sweep(data, 2, mu, FUN="-")
-      if(Q > 0) {
-        f        <- sim.score(N=N, Q=Q, lmat=lmat, psi.inv=psi.inv, c.data=c.data)
+      if(Q0) {
+        f        <- sim.score(N=N, Q=Q, lmat=lmat, psi.inv=psi.inv, c.data=c.data, Q1=Q1)
         FtF      <- crossprod(f)
-        lmat     <- matrix(unlist(lapply(Pseq, function(j) sim.load(l.sigma=l.sigma, Q=Q, f=f, P=P,
+        lmat     <- matrix(unlist(lapply(Pseq, function(j) sim.load(l.sigma=l.sigma, Q=Q, f=f, P=P, Q1=Q1,
                            c.data=c.data[,j], psi.inv=psi.inv[j], FtF=FtF, shrink=F)), use.names=F), nr=P, byrow=T)
       }
                       
@@ -90,17 +92,17 @@
         Sigma    <- tcrossprod(lmat) + diag(psi)
         cov.est  <- cov.est + Sigma/n.store
         log.like <- sum(mvdnorm(data=data, mu=mu, Sigma=Sigma, log.d=T))
-        if(sw["mu.sw"])             mu.store[,new.it]    <- mu  
-        if(all(sw["f.sw"], Q > 0))  f.store[,,new.it]    <- f
-        if(all(sw["l.sw"], Q > 0))  load.store[,,new.it] <- lmat
-        if(sw["psi.sw"])            psi.store[,new.it]   <- psi
-                                    ll.store[new.it]     <- log.like
+        if(sw["mu.sw"])          mu.store[,new.it]    <- mu  
+        if(all(sw["f.sw"], Q0))  f.store[,,new.it]    <- f
+        if(all(sw["l.sw"], Q0))  load.store[,,new.it] <- lmat
+        if(sw["psi.sw"])         psi.store[,new.it]   <- psi
+                                 ll.store[new.it]     <- log.like
       }  
     }
-    returns   <- list(mu       = if(sw["mu.sw"])            mu.store,
-                      f        = if(all(sw["f.sw"], Q > 0)) f.store, 
-                      load     = if(all(sw["l.sw"], Q > 0)) load.store, 
-                      psi      = if(sw["psi.sw"])           psi.store,
+    returns   <- list(mu       = if(sw["mu.sw"])         mu.store,
+                      f        = if(all(sw["f.sw"], Q0)) f.store, 
+                      load     = if(all(sw["l.sw"], Q0)) load.store, 
+                      psi      = if(sw["psi.sw"])        psi.store,
                       post.mu  = post.mu,
                       post.psi = post.psi,
                       cov.emp  = cov.emp,
