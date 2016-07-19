@@ -2,4 +2,7 @@
 .Rhistory
 .RData
 .zip
-IMIFA-GIT.zip
+.gitignore
+.Rbuildignore
+pacman.Rproj
+.out
