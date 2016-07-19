@@ -467,7 +467,7 @@ IMIFA.mcmc  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(!exists(deparse(substitute(Labels)),
                envir=.GlobalEnv))   stop(paste0("Object ", match.call()$Labels, " not found"))
     Labels  <- as.factor(Labels)
-    if(length(Labels) != N)         stop(paste0("Labels must be a factor of length N=",  n.obs))
+    if(length(Labels) != N)         stop(paste0("Labels must be a factor of length N=",  N))
     range.G        <- nlevels(Labels)
     start.time     <- proc.time()
     for(g in seq_len(range.G)) {
