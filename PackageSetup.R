@@ -2,7 +2,7 @@
 ### Set-up for Keefe Murphy's IMIFA R Package ###
 #################################################
 
-packages    <- c("abind", "e1071", "gclus", "matrixStats", "mclust", "MCMCpack", "plotrix", "slam")
+packages    <- c("abind", "e1071", "gclus", "matrixStats", "mclust", "MCMCpack", "mvnfast", "plotrix", "slam")
 if(length(setdiff(packages, rownames(installed.packages()))) > 0) {
   suppressMessages(install.packages(setdiff(packages, rownames(installed.packages()))))
 }
@@ -10,7 +10,7 @@ if(length(setdiff(packages, (.packages()))) > 0) {
   suppressMessages(lapply(setdiff(packages, (.packages())), library, ch=T))
 }
 rm(packages)
-message("   ________  __________________\n  /_  __/  |/   /_  __/ ___/ _ \\  \n   / / / /|_// / / / / /__/ /_\\ \\ \n _/ /_/ /   / /_/ /_/ ___/ /___\\ \\ \n/____/_/   /_/_____/_/  /_/     \\_\\    version 1.0")
+packageStartupMessage("   ________  __________________\n  /_  __/  |/   /_  __/ ___/ _ \\  \n   / / / /|_// / / / / /__/ /_\\ \\ \n _/ /_/ /   / /_/ /_/ ___/ /___\\ \\ \n/____/_/   /_/_____/_/  /_/     \\_\\    version 1.0")
 
 IMIFA.mcmc  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA", "MFA", "IFA", "FA", "classify"), 
                         n.iters = 50000, Labels = NULL, factanal = F, range.G = NULL, range.Q = NULL, verbose = F, Q.fac = NULL,  

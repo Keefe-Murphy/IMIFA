@@ -120,7 +120,7 @@
       slice.ind     <- do.call(cbind, lapply(Gs, function(g) (u.slice < csi[g])/csi[g]))
     
     # Mixing Proportions
-      weights       <- sim.pi(pi.alpha=pi.alpha, nn=nn, inf.G=T)
+      weights       <- sim.pi(pi.alpha=pi.alpha, nn=nn, inf.G=T, len=trunc.G)
       pi.prop       <- weights$pi.prop
       if(MH.step)  {
         Vs          <- weights$Vs
@@ -198,7 +198,7 @@
                             tau=tau[[g]], sum.term=sumtermg) else sim.delta.p(alpha=alpha.d1, beta=beta.d1)
         tau[[g]]         <- cumprod(delta[[g]])
       }
-      if(Qg > 1) {
+      if(Q1[g])  {
         for(k in seq_len(Qg)[-1]) { 
           delta[[g]][k]  <- if(nn0g) sim.deltak(Q=Qg, alpha.dk=alpha.dk, delta=delta[[g]], P=P, beta.dk=beta.dk, k=k, 
                             tau=tau[[g]], sum.term=sumtermg) else sim.delta.p(alpha=alpha.dk, beta=beta.dk)

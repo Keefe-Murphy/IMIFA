@@ -79,15 +79,16 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   } 
   
   if(inf.G) {
-    G.tab        <- if(GQs > 1) lapply(apply(G.store, 1, function(x) list(table(x, dnn=NULL))), "[[", 1) else table(G.store, dnn=NULL)
-    G.prob       <- if(GQs > 1) lapply(G.tab, prop.table) else prop.table(G.tab)
-    G.mode       <- if(GQs > 1) unlist(lapply(G.tab, function(gt) as.numeric(names(gt[gt == max(gt)])[1]))) else as.numeric(names(G.tab[G.tab == max(G.tab)])[1])
-    G.med        <- if(GQs > 1) ceiling(apply(G.store, 1, median) * 2)/2 else ceiling(median(G.store) * 2)/2
+    GQ1          <- GQs > 1
+    G.tab        <- if(GQ1) lapply(apply(G.store, 1, function(x) list(table(x, dnn=NULL))), "[[", 1) else table(G.store, dnn=NULL)
+    G.prob       <- if(GQ1) lapply(G.tab, prop.table) else prop.table(G.tab)
+    G.mode       <- if(GQ1) unlist(lapply(G.tab, function(gt) as.numeric(names(gt[gt == max(gt)])[1]))) else as.numeric(names(G.tab[G.tab == max(G.tab)])[1])
+    G.med        <- if(GQ1) ceiling(apply(G.store, 1, median) * 2)/2 else ceiling(median(G.store) * 2)/2
     if(!G.T) {
       G          <- if(G.meth == "Mode") G.mode else floor(G.med)
     }
-    G.CI         <- if(GQs > 1) apply(G.store, 1, function(gs) round(quantile(gs, conf.levels))) else round(quantile(G.store, conf.levels))
-    tmp.store    <- if(GQs > 1) lapply(seq_len(GQs), function(gq) store[which(G.store[gq,] == G[gq])]) else store[which(G.store == G)]
+    G.CI         <- if(GQ1) apply(G.store, 1, function(gs) round(quantile(gs, conf.levels))) else round(quantile(G.store, conf.levels))
+    tmp.store    <- if(GQ1) lapply(seq_len(GQs), function(gq) store[which(G.store[gq,] == G[gq])]) else store[which(G.store == G)]
     GQ.temp1     <- list(G = G, G.Mode = G.mode, G.Median = G.med, 
                          G.CI = G.CI, G.Probs = G.prob, G.Counts = G.tab)
   }
@@ -120,7 +121,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       gi                 <- ifelse(G.T, G.ind, g)
       for(q in seq_len(Q.range)) {
         qi               <- ifelse(Q.T, Q.ind, q)
-        log.likes        <- if(is.element(method, c("OMFA", "IMFA")) && GQs > 1) sims[[gi]][[qi]]$ll.store[tmp.store[[qi]]] else sims[[gi]][[qi]]$ll.store[tmp.store]
+        log.likes        <- if(is.element(method, c("OMFA", "IMFA")) && GQ1) sims[[gi]][[qi]]$ll.store[tmp.store[[qi]]] else sims[[gi]][[qi]]$ll.store[tmp.store]
         ll.max           <- 2 * max(log.likes, na.rm=T)
         ll.var           <- ifelse(length(log.likes) != 1, 2 * var(log.likes, na.rm=T), 0)
         ll.mean          <- mean(log.likes, na.rm=T)
@@ -300,16 +301,17 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     z.ind        <- lapply(Gseq, function(g) post.z == g)
   }
   if(inf.Q)   {
-    Q.tab        <- lapply(apply(Q.store, 1, function(x) list(table(x, dnn=NULL))), "[[", 1)
-    Q.prob       <- lapply(Q.tab, prop.table)
-    Q.mode       <- unlist(lapply(Q.tab, function(qt) as.numeric(names(qt[qt == max(qt)])[1])))
-    Q.med        <- ceiling(apply(Q.store, 1, median) * 2)/2
+    G1           <- G > 1
+    Q.tab        <- if(G1) lapply(apply(Q.store, 1, function(x) list(table(x, dnn=NULL))), "[[", 1) else table(Q.store, dnn=NULL)
+    Q.prob       <- if(G1) lapply(Q.tab, prop.table) else prop.table(Q.tab)
+    Q.mode       <- if(G1) unlist(lapply(Q.tab, function(qt) as.numeric(names(qt[qt == max(qt)])[1]))) else as.numeric(names(Q.tab[Q.tab == max(Q.tab)])[1])
+    Q.med        <- if(G1) ceiling(apply(Q.store, 1, median) * 2)/2 else ceiling(median(Q.store) * 2)/2
     if(!Q.T)  {
       Q          <- if(Q.meth == "Mode") Q.mode else floor(Q.med)
     } else    {
       Q          <- if(G.T) Q else setNames(rep(Q, G), paste0("Group ", Gseq))
     }
-    Q.CI         <- apply(Q.store, 1, function(qs) round(quantile(qs, conf.levels)))
+    Q.CI         <- if(G1) apply(Q.store, 1, function(qs) round(quantile(qs, conf.levels))) else round(quantile(Q.store, conf.levels))
     GQ.temp4     <- list(Q = Q, Q.Mode = Q.mode, Q.Median = Q.med, 
                          Q.CI = Q.CI, Q.Probs = Q.prob, Q.Counts = Q.tab)
     if(inf.G) {
@@ -321,12 +323,12 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   }
 
 # Retrieve (unrotated) scores
-  if(all(Q == 0)) {
+  no.score       <- all(Q == 0)
+  if(no.score)   { 
     if(sw["f.sw"])                warning("Scores & loadings not stored as model has zero factors", call.=F)
     sw["f.sw"]   <- F
-    no.score     <- T
   }
-  if(sw["f.sw"])  {
+  if(sw["f.sw"]) {
     Q.max        <- max(Q) 
     Q.maxs       <- seq_len(Q.max)
     f            <- sims[[G.ind]][[Q.ind]]$f

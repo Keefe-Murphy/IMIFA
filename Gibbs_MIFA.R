@@ -135,13 +135,14 @@
           Qgs      <- seq_len(Qg)
           Q1g      <- Q1[g]
           nng      <- nn[g]
+          nn0g     <- nng > 0
           c.datg   <- c.data[[g]]
           psi.ig   <- psi.inv[,g]
           if(Q0[g]) {
-            fgg            <- sim.score(N=nng, lmat=lmat[[g]], Q=Qg, Q1=Q1g,
-                                        c.data=c.datg, psi.inv=psi.ig)
-            lmat[[g]]      <- matrix(unlist(lapply(Pseq, function(j) sim.load(Q=Qg, c.data=c.datg[,j], f=fgg, FtF=crossprod(fgg), 
-                                     P=P, Q1=Q1g, psi.inv=psi.ig[j], phi=phi[[g]][j,], tau=tau[[g]])), use.names=F), nr=P, byrow=T)
+            fgg            <- if(nn0g) sim.score(N=nng, lmat=lmat[[g]], Q=Qg, Q1=Q1g, c.data=c.datg, psi.inv=psi.ig)
+            lmat[[g]]      <- if(nn0g) matrix(unlist(lapply(Pseq, function(j) sim.load(Q=Qg, c.data=c.datg[,j], f=fgg, FtF=crossprod(fgg), P=P,
+                              Q1=Q1g, psi.inv=psi.ig[j], phi=phi[[g]][j,], tau=tau[[g]])), use.names=F), nr=P, byrow=T) else matrix(unlist(
+                              lapply(Pseq, function(j) sim.load.p(Q=Qg, phi=phi[[g]][j,], tau=tau[[g]], P=P)), use.names=F), nr=P, byrow=F)
             fg[[g]][,Qgs]  <- fgg
           } else {
             lmat[[g]]      <- matrix(, nr=P, nc=0)
@@ -168,7 +169,7 @@
                                          beta.d1=beta.d1, tau=tau[[g]], sum.term=sumtermg)
           tau[[g]]         <- cumprod(delta[[g]])
         }
-        if(Qg > 1) {
+        if(Q1[g])  {
           for(k in seq_len(Qg)[-1]) { 
             delta[[g]][k]  <- sim.deltak(Q=Qg, alpha.dk=alpha.dk[g], delta=delta[[g]], P=P,
                                          beta.dk=beta.dk, k=k, tau=tau[[g]], sum.term=sumtermg)

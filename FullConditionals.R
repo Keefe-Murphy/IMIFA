@@ -7,11 +7,7 @@
   # Means
     sim.mu      <- function(N, P, mu.sigma, psi.inv, sum.data, sum.f, lmat, mu.zero) {
       mu.omega  <- 1/(mu.sigma + N * psi.inv)
-      U.mu      <- sqrt(mu.omega)
-      z.mu      <- rnorm(P, 0, 1)
-      v.mu      <- U.mu * z.mu
-      mu.mu     <- mu.omega * (psi.inv * (sum.data - lmat %*% sum.f) + mu.sigma * mu.zero)
-        as.vector(mu.mu + v.mu)
+        as.vector(mu.omega * (psi.inv * (sum.data - lmat %*% sum.f) + mu.sigma * mu.zero) + sqrt(mu.omega) * rnorm(P))
     }
   
   # Scores
@@ -19,57 +15,57 @@
       load.psi  <- lmat * psi.inv
       U.f       <- diag(Q) + crossprod(load.psi, lmat)
       U.f       <- if(Q1) chol(U.f) else sqrt(U.f)
-      z.f       <- matrix(rnorm(Q * N, 0, 1), nr=Q, nc=N)
-      v.f       <- backsolve(U.f, z.f)
-      mu.f      <- c.data %*% (load.psi %*% chol2inv(U.f))
-        mu.f + t(v.f)
+      mu.f      <- c.data %*% (load.psi %*% if(Q1) chol2inv(U.f) else 1/(U.f * U.f))
+        mu.f + t(backsolve(U.f, matrix(rnorm(Q * N), nr=Q, nc=N)))
     }
+      
+  # sim.score   <- function(N, Q, lmat, psi.inv, c.data, Q1) {
+  #   load.psi  <- lmat * psi.inv
+  #   Prec.f    <- diag(Q) + crossprod(load.psi, lmat)
+  #   Sig.f     <- if(Q1) solve(Prec.f) else 1/Prec.f
+  #     rmvn(n=N, mu=rep(0, Q), sigma=if(Q1) Sig.f else sqrt(Sig.f), isChol=!Q1) + c.data %*% (load.psi %*% Sig.f)
+  # }
   
   # Loadings
     sim.load    <- function(l.sigma, Q, c.data, P, f, phi, tau, psi.inv, FtF, Q1, shrink = T) {
-      if(shrink) {
-        U.load  <- phi * tau * diag(Q) + psi.inv * FtF
-      } else     {
-        U.load  <- l.sigma + psi.inv * FtF
-      }
+      U.load    <- if(shrink) phi * tau * diag(Q) + psi.inv * FtF else l.sigma + psi.inv * FtF
       U.load    <- if(Q1) chol(U.load) else sqrt(U.load)
-      z.load    <- rnorm(Q, 0, 1)
-      v.load    <- backsolve(U.load, z.load)
-      mu.load   <- psi.inv * chol2inv(U.load) %*% crossprod(f, c.data)
-        as.vector(mu.load + v.load)
+      mu.load   <- psi.inv * (if(Q1) chol2inv(U.load) else 1/(U.load * U.load)) %*% crossprod(f, c.data)
+        as.vector(mu.load + backsolve(U.load, rnorm(Q, 0, 1)))
     }
+    
+  # sim.load    <- function(l.sigma, Q, c.data, P, f, phi, tau, psi.inv, FtF, Q1, shrink = T) {
+  #  Prec.load  <- if(shrink) phi * tau * diag(Q) + psi.inv * FtF else l.sigma + psi.inv * FtF
+  #  Sig.load   <- if(Q1) solve(Prec.load) else 1/Prec.load
+  #    as.vector(rmvn(1, mu=rep(0, Q), sigma=if(Q1) Sig.load else sqrt(Sig.load), isChol=!Q1)) + psi.inv * Sig.load %*% crossprod(f, c.data)
+  # }
 
   # Uniquenesses
     sim.psi.i   <- function(N, P, psi.alpha, psi.beta, c.data, f, lmat) { 
       rate.t    <- c.data - tcrossprod(f, lmat)
-      rate.t    <- colSums(rate.t * rate.t)
-        rgamma(P, shape=N/2 + psi.alpha, 
-               rate=rate.t/2 + psi.beta) 
+        rgamma(P, shape=N/2 + psi.alpha, rate=colSums(rate.t * rate.t)/2 + psi.beta) 
     }
 
   # Local Shrinkage
     sim.phi     <- function(Q, P, phi.nu, tau, load.2) {
       rate.t    <- (phi.nu + sweep(load.2, 2, tau, FUN="*"))/2
-        matrix(rgamma(P * Q, shape=1/2 + phi.nu, 
-                      rate=rate.t), nr=P, nc=Q)
+        matrix(rgamma(P * Q, shape=1/2 + phi.nu, rate=rate.t), nr=P, nc=Q)
     }
   
   # Global Shrinkage
     sim.delta1  <- function(Q, P, alpha.d1, delta, beta.d1, tau, sum.term) {
-        rgamma(1, shape=alpha.d1 + P * Q/2, 
-               rate=beta.d1 + 0.5/delta[1] * tau %*% sum.term)
+        rgamma(1, shape=alpha.d1 + P * Q/2, rate=beta.d1 + 0.5/delta[1] * tau %*% sum.term)
     }
     
     sim.deltak  <- function(Q, P, k, alpha.dk, beta.dk, delta, tau, sum.term) {
-        rgamma(1, shape=alpha.dk + P/2 * (Q - k + 1), 
-               rate=beta.dk + 0.5/delta[k] * tau[k:Q] %*% sum.term[k:Q])
+        rgamma(1, shape=alpha.dk + P/2 * (Q - k + 1), rate=beta.dk + 0.5/delta[k] * tau[k:Q] %*% sum.term[k:Q])
     }
 
   # Mixing Proportions
-    sim.pi      <- function(pi.alpha, nn, inf.G=F) {
+    sim.pi      <- function(pi.alpha, nn, inf.G=F, len) {
       if(inf.G) {
         vs      <- rbeta(length(nn), 1 + nn, pi.alpha + sum(nn) - cumsum(nn))
-        vs[length(vs)]    <- 1
+        vs[len] <- 1
           return(list(Vs = vs, pi.prop = do.call(cbind, lapply(seq_along(nn), function(t) vs[t] * prod((1 - vs[seq_len(t - 1)]))))))
       } else {
           rdirichlet(1, pi.alpha + nn)
@@ -78,7 +74,7 @@
   
   # Cluster Labels
     sim.z       <- function(data, mu, Sigma, Gseq, N, pi.prop, slice.ind=NULL) {
-      log.num   <- do.call(cbind, lapply(Gseq, function(g) mvdnorm(data, mu[,g], Sigma[[g]], log.d=T) + log(pi.prop[,g])))
+      log.num   <- do.call(cbind, lapply(Gseq, function(g) dmvn(data, mu[,g], Sigma[[g]], log=T) + log(pi.prop[,g])))
       if(!missing(slice.ind)) {
         log.num <- log.num + log(slice.ind)
       }
@@ -87,47 +83,36 @@
       for(g in Gseq[-1])      {
         lnp[,g] <- colLogSumExps(rbind(lnp[,g], lnp[,g - 1]))
       }
-      z         <- rowSums(-rexp(N) > lnp) + 1
-        return(list(z = unname(z), log.likes = log.denom))
+        return(list(z = unname(rowSums(-rexp(N) > lnp) + 1), log.likes = log.denom))
     }
 
   # Alpha
     sim.alpha   <- function(lower, upper, trunc.G, alpha, Vs) {
       alpha.new <- runif(1, lower, upper)
       a.prob    <- trunc.G * (log(alpha.new) - log(alpha)) + (alpha.new - alpha) * sum(log((1 - Vs[-trunc.G])))
-      if(a.prob >= 0 || -rexp(1) < a.prob) {
-        alpha   <- alpha.new
-        rate    <- 1
-      } else {
-        rate    <- 0
-      }
-        return(list(alpha = alpha, rate = rate))
+      accept    <- a.prob >= 0 || -rexp(1) < a.prob
+        return(list(alpha = ifelse(accept, alpha.new, alpha), rate = accept))
     }
 
 # Priors
 
   # Means
     sim.mu.p    <- function(P, sigma.mu, mu.zero) {
-      U.mu      <- sqrt(sigma.mu)
-      z.mu      <- rnorm(P, 0, 1)
-        U.mu * z.mu + mu.zero
+      sqrt(sigma.mu) * rnorm(P) + mu.zero
     }
   
   # Scores
     sim.f.p     <- function(Q, N) {
-        matrix(rnorm(N * Q, 0, 1), nr=N, nc=Q)
+        matrix(rnorm(N * Q), nr=N, nc=Q)
     }
   
   # Loadings
     sim.load.p  <- function(Q, P, sigma.l, phi, tau, shrink = T) {
       if(shrink) {
-        U.load  <- sqrt(1/(phi * tau))
-        z.load  <- rnorm(Q, 0, 1)
+        sqrt(1/(phi * tau)) * rnorm(Q)
       } else     {
-        U.load  <- sqrt(sigma.l)
-        z.load  <- matrix(rnorm(P * Q, 0, 1), nr=P, nc=Q)
+        sqrt(sigma.l) * matrix(rnorm(P * Q), nr=P, nc=Q)
       }
-        U.load * z.load
     }
   
   # Uniquenesses
@@ -148,39 +133,18 @@
   # Cluster Labels
     sim.z.p     <- function(N, prob.z) {
       ind.mat   <- rmultinom(N, size=1, prob=prob.z)
-      labs      <- which(ind.mat != 0, arr.ind=T)[,1]
-        factor(labs, levels=seq_along(prob.z))
+        factor(which(ind.mat != 0, arr.ind=T)[,1], levels=seq_along(prob.z))
     }
 
 # Other Functions
-
-  # Multivariate Normal Density
-    mvdnorm     <- function(data, mu, Sigma, log.d = T) {
-      P         <- length(mu)
-      if(all(Sigma[!diag(P)] == 0)) {
-        U.Sig   <- sqrt(Sigma)
-      } else {
-        U.Sig   <- chol(Sigma)
-      }
-      rooti     <- backsolve(U.Sig, diag(P))
-      quad      <- crossprod(rooti, t(data) - mu)
-      quads     <- colSums(quad * quad)
-      log.dens  <- - P/2 * log(2 * pi) + sum(log(diag(rooti))) - 0.5 * quads
-        if(isTRUE(log.d)) {
-          log.dens
-        } else {
-          exp(log.dens)
-        }
-    }
-  
+    
   # Uniqueness Hyperparameters
     psi.hyper   <- function(alpha, covar) {
       inv.cov   <- try(chol2inv(chol(covar)), silent=T)
       if(inherits(inv.cov, "try-error"))   {
         inv.cov <- 1/covar
       }
-      psi.beta  <- (alpha - 1)/diag(inv.cov) 
-        psi.beta
+        (alpha - 1)/diag(inv.cov) 
     }
 
   # Label Switching

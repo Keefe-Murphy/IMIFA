@@ -116,7 +116,7 @@
       slice.ind    <- do.call(cbind, lapply(Gs, function(g) (u.slice < csi[g])/csi[g]))
     
     # Mixing Proportions
-      weights      <- sim.pi(pi.alpha=pi.alpha, nn=nn, inf.G=T)
+      weights      <- sim.pi(pi.alpha=pi.alpha, nn=nn, inf.G=T, len=trunc.G)
       pi.prop      <- weights$pi.prop
       if(MH.step) {
         Vs         <- weights$Vs

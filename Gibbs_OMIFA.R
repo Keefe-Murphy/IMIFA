@@ -160,7 +160,7 @@
                               tau=tau[[g]], sum.term=sumtermg) else sim.delta.p(alpha=alpha.d1, beta=beta.d1)
           tau[[g]]         <- cumprod(delta[[g]])
         }
-        if(Qg > 1) {
+        if(Q1[g])  {
           for(k in seq_len(Qg)[-1]) { 
             delta[[g]][k]  <- if(nn0g) sim.deltak(Q=Qg, alpha.dk=alpha.dk, delta=delta[[g]], P=P, beta.dk=beta.dk, k=k, 
                               tau=tau[[g]], sum.term=sumtermg) else sim.delta.p(alpha=alpha.dk, beta=beta.dk)

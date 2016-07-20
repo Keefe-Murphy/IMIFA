@@ -18,19 +18,17 @@
     varnames     <- colnames(data)
     facnames     <- paste0("Factor ", seq_len(Q))
     iternames    <- paste0("Iteration", seq_len(n.store))
-    Q0           <- Q > 0
-    Q1           <- Q > 1
     if(sw["mu.sw"])  {
       mu.store   <- matrix(0, nr=P, nc=n.store)
       dimnames(mu.store)   <- list(varnames, iternames)
     }
     if(sw["f.sw"])   {
       f.store    <- array(0, dim=c(N, Q, n.store))
-      dimnames(f.store)    <- list(obsnames, if(Q0) facnames, iternames)
+      dimnames(f.store)    <- list(obsnames, if(Q > 0) facnames, iternames)
     }
     if(sw["l.sw"])   {
       load.store <- array(0, dim=c(P, Q, n.store))
-      dimnames(load.store) <- list(varnames, if(Q0) facnames, iternames)
+      dimnames(load.store) <- list(varnames, if(Q > 0) facnames, iternames)
     }
     if(sw["psi.sw"]) {
       psi.store  <- matrix(0, nr=P, nc=n.store)
@@ -59,7 +57,7 @@
       f.store[,,1]         <- f
       load.store[,,1]      <- lmat
       psi.store[,1]        <- 1/psi.inv
-      ll.store[1]          <- sum(mvdnorm(data=data, mu=mu, Sigma=tcrossprod(lmat) + diag(1/psi.inv), log.d=T))
+      ll.store[1]          <- sum(dmvn(X=data, mu=mu, sigma=tcrossprod(lmat) + diag(1/psi.inv), log=T))
     }
   
   # Iterate
@@ -71,6 +69,8 @@
           cat(paste0("Iteration: ", iter, "\n"))
         }
       }
+      Q0         <- Q > 0
+      Q1         <- Q > 1
       
     # Means
       sum.f      <- colSums(f)
@@ -79,7 +79,7 @@
       
     # Scores & Loadings
       c.data     <- sweep(data, 2, mu, FUN="-")
-      if(Q  > 0) {
+      if(Q0) {
         f        <- sim.score(N=N, Q=Q, lmat=lmat, psi.inv=psi.inv, c.data=c.data, Q1=Q1)
         FtF      <- crossprod(f)
         lmat     <- matrix(unlist(lapply(Pseq, function(j) sim.load(Q=Q, tau=tau, P=P, f=f, Q1=Q1,
@@ -90,8 +90,7 @@
       }          
     
     # Uniquenesses
-      psi.inv    <- sim.psi.i(N=N, P=P, psi.alpha=psi.alpha, psi.beta=psi.beta,
-                              c.data=c.data, f=f, lmat=lmat)
+      psi.inv    <- sim.psi.i(N=N, P=P, psi.alpha=psi.alpha, psi.beta=psi.beta, c.data=c.data, f=f, lmat=lmat)
     
     # Local Shrinkage
       load.2     <- lmat * lmat
@@ -99,12 +98,12 @@
           
     # Global Shrinkage
       sum.term   <- diag(crossprod(phi, load.2))
-    if(Q  > 0) {
+    if(Q0) {
       delta[1]   <- sim.delta1(Q=Q, P=P, alpha.d1=alpha.d1, delta=delta,
                                beta.d1=beta.d1, tau=tau, sum.term=sum.term)
       tau        <- cumprod(delta)  
     } 
-    if(Q  > 1) {
+    if(Q1) {
       for(k in seq_len(Q)[-1]) { 
         delta[k] <- sim.deltak(Q=Q, P=P, k=k, alpha.dk=alpha.dk, delta=delta,
                                beta.dk=beta.dk, tau=tau, sum.term=sum.term)
@@ -151,7 +150,7 @@
         post.psi <- post.psi + psi/n.store
         Sigma    <- tcrossprod(lmat) + diag(psi)
         cov.est  <- cov.est + Sigma/n.store
-        log.like <- sum(mvdnorm(data=data, mu=mu, Sigma=Sigma, log.d=T))
+        log.like <- sum(dmvn(X=data, mu=mu, sigma=Sigma, log=T))
         if(sw["mu.sw"])             mu.store[,new.it]              <- mu  
         if(all(sw["f.sw"], Q0))     f.store[,seq_len(Q),new.it]    <- f
         if(all(sw["l.sw"], Q0))     load.store[,seq_len(Q),new.it] <- lmat

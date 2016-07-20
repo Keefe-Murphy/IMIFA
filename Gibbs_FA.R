@@ -53,7 +53,7 @@
       f.store[,,1]         <- f
       load.store[,,1]      <- lmat
       psi.store[,1]        <- 1/psi.inv
-      ll.store[1]          <- sum(mvdnorm(data=data, mu=mu, Sigma=tcrossprod(lmat) + diag(1/psi.inv), log.d=T))
+      ll.store[1]          <- sum(dmvn(X=data, mu=mu, sigma=tcrossprod(lmat) + diag(1/psi.inv), log=T))
     }
   
   # Iterate
@@ -81,8 +81,7 @@
       }
                       
     # Uniquenesses
-      psi.inv    <- sim.psi.i(N=N, P=P, psi.alpha=psi.alpha, psi.beta=psi.beta,
-                              c.data=c.data, f=f, lmat=lmat)
+      psi.inv    <- sim.psi.i(N=N, P=P, psi.alpha=psi.alpha, psi.beta=psi.beta, c.data=c.data, f=f, lmat=lmat)
     
       if(is.element(iter, iters)) {
         new.it   <- which(iters == iter)  
@@ -91,7 +90,7 @@
         post.psi <- post.psi + psi/n.store
         Sigma    <- tcrossprod(lmat) + diag(psi)
         cov.est  <- cov.est + Sigma/n.store
-        log.like <- sum(mvdnorm(data=data, mu=mu, Sigma=Sigma, log.d=T))
+        log.like <- sum(dmvn(X=data, mu=mu, sigma=Sigma, log=T))
         if(sw["mu.sw"])          mu.store[,new.it]    <- mu  
         if(all(sw["f.sw"], Q0))  f.store[,,new.it]    <- f
         if(all(sw["l.sw"], Q0))  load.store[,,new.it] <- lmat
