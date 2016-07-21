@@ -19,13 +19,6 @@
         mu.f + t(backsolve(U.f, matrix(rnorm(Q * N), nr=Q, nc=N)))
     }
       
-  # sim.score   <- function(N, Q, lmat, psi.inv, c.data, Q1) {
-  #   load.psi  <- lmat * psi.inv
-  #   Prec.f    <- diag(Q) + crossprod(load.psi, lmat)
-  #   Sig.f     <- if(Q1) solve(Prec.f) else 1/Prec.f
-  #     rmvn(n=N, mu=rep(0, Q), sigma=if(Q1) Sig.f else sqrt(Sig.f), isChol=!Q1) + c.data %*% (load.psi %*% Sig.f)
-  # }
-  
   # Loadings
     sim.load    <- function(l.sigma, Q, c.data, P, f, phi, tau, psi.inv, FtF, Q1, shrink = T) {
       U.load    <- if(shrink) phi * tau * diag(Q) + psi.inv * FtF else l.sigma + psi.inv * FtF
@@ -34,12 +27,6 @@
         as.vector(mu.load + backsolve(U.load, rnorm(Q, 0, 1)))
     }
     
-  # sim.load    <- function(l.sigma, Q, c.data, P, f, phi, tau, psi.inv, FtF, Q1, shrink = T) {
-  #  Prec.load  <- if(shrink) phi * tau * diag(Q) + psi.inv * FtF else l.sigma + psi.inv * FtF
-  #  Sig.load   <- if(Q1) solve(Prec.load) else 1/Prec.load
-  #    as.vector(rmvn(1, mu=rep(0, Q), sigma=if(Q1) Sig.load else sqrt(Sig.load), isChol=!Q1)) + psi.inv * Sig.load %*% crossprod(f, c.data)
-  # }
-
   # Uniquenesses
     sim.psi.i   <- function(N, P, psi.alpha, psi.beta, c.data, f, lmat) { 
       rate.t    <- c.data - tcrossprod(f, lmat)
