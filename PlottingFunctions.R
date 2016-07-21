@@ -118,17 +118,24 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
   for(g in Gs) {
     Q     <- Qs[g]
     g.ind <- which(Gs == g)
-    msg   <- "Hit <Return> to see next plot: "
+    msg   <- "Hit <Return> to see next plot or type 'EXIT' to exit: "
     msgx  <- all(interactive(), g != max(Gs))
+    ent.exit   <- function() {
+      if(msgx) {
+        ent  <- readline(msg)
+        options(show.error.messages = F)
+        on.exit(suppressWarnings(options(defop)), add=T)
+        if(ent == "EXIT")             stop()
+      }
+    }
     result     <- results[[g]]
     if(any(all(Q  == 0, vars == "loadings"),
            all(Qs == 0, vars == "scores")))  {            
                                       warning(paste0("Can't plot ", vars, paste0(ifelse(all(vars == "loadings", G > 1), paste0(" for group ", g), "")), " as they contain no columns/factors"), call.=F)
-      if(g == G) {
+      if(g == max(Gs)) {
         break
       } else {
-        ifelse(msgx, readline(msg), "")
-        next
+        ent.exit()
       }
     }
     if(any(vars   == "alpha",
@@ -153,13 +160,13 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
       if(vars  == "scores")  {
         if(ind[1] >  n.obs)           stop(paste0("First index can't be greater than the number of observations: ",  n.obs))
         if(ind[2] >  Q.max)  {        warning(paste0("Second index can't be greater than ", Q.max, ", the total number of factors", if(grp.ind) paste0(" across groups"), ".\n Try specifying a vector of fac values with maximum entries ", paste0(Qs, collapse = ", "), "."), call.=F)
-        ifelse(msgx, readline(msg), "")
+        ent.exit()
         next
         }
       } else {
         if(ind[1] > n.var)            stop(paste0("First index can't be greater than the number of variables: ",  n.var))
         if(ind[2] > Q) {              warning(paste0("Second index can't be greater than ", Q, ", the number of factors", if(grp.ind) paste0(" in group ", g), ".\n Try specifying a vector of fac values with maximum entries ", paste0(Qs, collapse = ", "), "."), call.=F)
-        ifelse(msgx, readline(msg), "")
+        ent.exit()
         next
         }
       }
@@ -546,7 +553,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
         col.G  <- c("black", "red")[(rangeG == G) + 1]
         G.plot <- barplot(plot.G, ylab="Frequency", xaxt="n", col=col.G)
         if(titles) title(main=list("Posterior Distribution of G"))
-        axis(1, at=G.plot, labels=G.name, tick=F) 
+        axis(1, at=G.plot, labels=names(plot.G), tick=F) 
         axis(1, at=median(G.plot), labels="G", tick=F, line=1.5) 
       }
       if(all(method == "IFA", plotQ.ind)) {
@@ -781,6 +788,6 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
     if(all(all.ind, titles)) title(ifelse(vars != "pi.prop",paste0(toupper(substr(vars, 1, 1)), substr(vars, 2, nchar(vars)), 
                              ifelse(all(grp.ind, !is.element(vars, c("scores", "pi.prop", "alpha"))), paste0(" - Group ", g), "")), 
                              paste0("Mixing Proportions", ifelse(matx, "", paste0(" - Group ", ind)))), outer=T)
-    ifelse(msgx, readline(msg), "")
+    ent.exit()
   }
 }
