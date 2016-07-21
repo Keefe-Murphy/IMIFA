@@ -65,11 +65,6 @@
           cat(paste0("Iteration: ", iter, "\n"))
         }
       }
-      
-    # Means
-      sum.f      <- colSums(f)
-      mu         <- sim.mu(N=N, P=P, mu.sigma=mu.sigma, psi.inv=psi.inv,
-                           sum.data=sum.data, sum.f=sum.f, lmat=lmat, mu.zero=mu.zero)
     
     # Scores & Loadings
       c.data     <- sweep(data, 2, mu, FUN="-")
@@ -79,6 +74,10 @@
         lmat     <- matrix(unlist(lapply(Pseq, function(j) sim.load(l.sigma=l.sigma, Q=Q, f=f, P=P, Q1=Q1,
                            c.data=c.data[,j], psi.inv=psi.inv[j], FtF=FtF, shrink=F)), use.names=F), nr=P, byrow=T)
       }
+      
+    # Means
+      sum.f      <- colSums(f)
+      mu         <- sim.mu(N=N, P=P, mu.sigma=mu.sigma, psi.inv=psi.inv, sum.data=sum.data, sum.f=sum.f, lmat=lmat, mu.zero=mu.zero)
                       
     # Uniquenesses
       psi.inv    <- sim.psi.i(N=N, P=P, psi.alpha=psi.alpha, psi.beta=psi.beta, c.data=c.data, f=f, lmat=lmat)

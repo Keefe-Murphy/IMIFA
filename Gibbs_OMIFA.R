@@ -79,7 +79,7 @@
       pi.store[,1]         <- pi.prop
       z.store[,1]          <- z
       ll.store[1]          <- sum(sim.z(data=data, mu=mu, Gseq=Gseq, N=N, pi.prop=pi.prop, Sigma=lapply(Gseq,
-                                  function(g) tcrossprod(lmat[[g]]) + diag(1/psi.inv[,g])))$log.likes)
+                                  function(g) tcrossprod(lmat[[g]]) + diag(1/psi.inv[,g])), Q0=Qs > 0)$log.likes)
       Q.store[,1]          <- Qs
       G.store[1]           <- G
     }
@@ -98,48 +98,37 @@
       Q0           <- Qs > 0
       Q1           <- Qs > 1
       z.ind        <- lapply(Gseq, function(g) z == g)
-      
-    # Means
-      sum.data     <- lapply(Gseq, function(g) colSums(data[z.ind[[g]],, drop=F]))
-      sum.f        <- lapply(Gseq, function(g) colSums(f[z.ind[[g]],, drop=F]))
-      mu           <- do.call(cbind, lapply(Gseq, function(g) if(nn0[g]) sim.mu(N=nn[g], mu.sigma=mu.sigma, psi.inv=psi.inv[,g], P=P, sum.data=sum.data[[g]], 
-                              sum.f=sum.f[[g]][seq_len(Qs[g])], lmat=lmat[[g]], mu.zero=mu.zero) else sim.mu.p(P=P, sigma.mu=sigma.mu, mu.zero=mu.zero)))
+      dat.g        <- lapply(Gseq, function(g) data[z.ind[[g]],, drop=F])
     
     # Scores & Loadings
-      c.data       <- lapply(Gseq, function(g) sweep(data[z.ind[[g]],, drop=F], 2, mu[,g], FUN="-"))
-      if(!any(Q0))  {
+      c.data       <- lapply(Gseq, function(g) sweep(dat.g[[g]], 2, mu[,g], FUN="-"))
+      if(!any(Q0))    {
         f          <- matrix(, nr=N, nc=0)
+        f.tmp      <- lapply(Gseq, function(g) f[z.ind[[g]],, drop=F])
         lmat       <- lapply(Gseq, function(g) matrix(, nr=P, nc=0))
       } else {
-        fg         <- lapply(Gseq, function(g) matrix(0, nr=nn[g], nc=max(Qs)))
-        fgnames    <- lapply(Gseq, function(g) obsnames[z.ind[[g]]])
-        fg         <- mapply(function(mats, nams) {rownames(mats) <- nams; mats}, fg, fgnames, SIMPLIFY=F)
-        for(g in Gseq) {
-          Qg       <- Qs[g]
-          Qgs      <- seq_len(Qg)
-          Q1g      <- Q1[g]
-          nng      <- nn[g]
-          nn0g     <- nng > 0
-          if(nn0g)  {
-            c.datg <- c.data[[g]]
-            psi.ig <- psi.inv[,g]  
-          }
-          if(Q0[g]) {
-            fgg            <- if(nn0g) sim.score(N=nng, lmat=lmat[[g]], Q=Qg, c.data=c.datg, psi.inv=psi.ig, Q1=Q1g)
-            lmat[[g]]      <- if(nn0g) matrix(unlist(lapply(Pseq, function(j) sim.load(Q=Qg, c.data=c.datg[,j], f=fgg, FtF=crossprod(fgg), P=P,
-                              Q1=Q1g, psi.inv=psi.ig[j], phi=phi[[g]][j,], tau=tau[[g]])), use.names=F), nr=P, byrow=T) else matrix(unlist(
-                              lapply(Pseq, function(j) sim.load.p(Q=Qg, phi=phi[[g]][j,], tau=tau[[g]], P=P)), use.names=F), nr=P, byrow=F)
-            fg[[g]][,Qgs]  <- fgg
-          } else {
-            lmat[[g]]      <- matrix(, nr=P, nc=0)
-          }
+        f.tmp      <- lapply(Gseq, function(g) if(all(nn0[g], Q0[g])) sim.score(N=nn[g], lmat=lmat[[g]], Q=Qs[g], Q1=Q1[g], c.data=c.data[[g]], psi.inv=psi.inv[,g]) else matrix(, nr=ifelse(Q0[g], 0, nn[g]), nc=Qs[g]))
+        FtF        <- lapply(Gseq, function(g) if(nn0[g]) crossprod(f.tmp[[g]]))
+        lmat       <- lapply(Gseq, function(g) if(all(nn0[g], Q0[g])) matrix(unlist(lapply(Pseq, function(j) sim.load(Q=Qs[g], P=P, c.data=c.data[[g]][,j], FtF=FtF[[g]],
+                             f=f.tmp[[g]], psi.inv=psi.inv[,g][j], Q1=Q1[g], phi=phi[[g]][j,], tau=tau[[g]], shrink=T)), use.names=F), nr=P, byrow=T) else 
+                             matrix(unlist(lapply(Pseq, function(j) sim.load.p(Q=Qs[g], phi=phi[[g]][j,], tau=tau[[g]], P=P)), use.names=F), nr=P, byrow=F))
+        f.tmp      <- if(length(unique(Qs)) != 1) lapply(Gseq, function(g) cbind(f.tmp[[g]], matrix(0, nr=nn[g], nc=max(Qs) - Qs[g]))) else f.tmp
+        q0ng       <- !Q0 & nn0
+        if(any(q0ng)) {
+          f.tmp[q0ng]      <- lapply(Gseq[q0ng], function(g, x=f.tmp[[g]]) { row.names(x) <- obsnames[z.ind[[g]]]; x} )
         }
-        f          <- do.call(rbind, fg)[obsnames,, drop=F]
+        f          <- do.call(rbind, f.tmp)[obsnames,, drop=F]
       }
+      
+    # Means
+      sum.data     <- lapply(dat.g, colSums)
+      sum.f        <- lapply(f.tmp, colSums)
+      mu           <- do.call(cbind, lapply(Gseq, function(g) if(nn0[g]) sim.mu(N=nn[g], mu.sigma=mu.sigma, psi.inv=psi.inv[,g], P=P, sum.data=sum.data[[g]], 
+                              sum.f=sum.f[[g]][seq_len(Qs[g])], lmat=lmat[[g]], mu.zero=mu.zero) else sim.mu.p(P=P, sigma.mu=sigma.mu, mu.zero=mu.zero)))
                   
     # Uniquenesses
-      psi.inv      <- do.call(cbind, lapply(Gseq, function(g) if(nn0[g]) sim.psi.i(N=nn[g], psi.alpha=psi.alpha, c.data=c.data[[g]], psi.beta=psi.beta, 
-                              P=P, f=f[z.ind[[g]],seq_len(Qs[g]), drop=F], lmat=lmat[[g]]) else sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)))
+      psi.inv      <- do.call(cbind, lapply(Gseq, function(g) if(nn0[g]) sim.psi.i(N=nn[g], psi.alpha=psi.alpha, c.data=c.data[[g]], P=P, 
+                              psi.beta=psi.beta, f=f.tmp[[g]], lmat=lmat[[g]]) else sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)))
     
     # Local Shrinkage
       load.2       <- lapply(lmat, function(lg) lg * lg)
@@ -168,6 +157,15 @@
           }
         }
       }
+      
+    # Mixing Proportions
+      pi.prop      <- sim.pi(pi.alpha=pi.alpha, nn=nn)
+      
+    # Cluster Labels
+      psi          <- 1/psi.inv
+      Sigma        <- lapply(Gseq, function(g) tcrossprod(lmat[[g]]) + diag(psi[,g]))
+      z.res        <- sim.z(data=data, mu=mu, Sigma=Sigma, Gseq=Gseq, N=N, pi.prop=pi.prop, Q0=Q0)
+      z            <- z.res$z
     
     # Adaptation  
       if(all(adapt, iter > burnin)) {      
@@ -178,7 +176,7 @@
           colvec   <- lapply(lind, function(lx) lx >= prop)
           nonred   <- lapply(colvec, function(cv) which(cv == 0))
           numred   <- lapply(colvec, sum)
-          notred   <- unlist(lapply(Gseq, function(g) numred[[g]] == 0), use.names=F)
+          notred   <- unlist(lapply(Gseq, function(g) numred[[g]] == 0 && nn0[g]), use.names=F)
           Qs.old   <- Qs
           Qs       <- unlist(lapply(Gseq, function(g) if(notred[g]) Qs.old[g] + 1 else Qs.old[g] - numred[[g]]), use.names=F)
           phi      <- lapply(Gseq, function(g) if(notred[g]) cbind(phi[[g]][,seq_len(Qs.old[g])], rgamma(n=P, shape=phi.nu, rate=phi.nu)) else phi[[g]][,nonred[[g]], drop=F])
@@ -186,17 +184,20 @@
           tau      <- lapply(delta, cumprod)
           lmat     <- lapply(Gseq, function(g) if(notred[g]) cbind(lmat[[g]][,seq_len(Qs.old[g])], rnorm(n=P, mean=0, sd=sqrt(1/(phi[[g]][,Qs[g]] * tau[[g]][Qs[g]])))) else lmat[[g]][,nonred[[g]], drop=F])
           f        <- if(max(Qs) > max(Qs.old)) cbind(f[,seq_len(max(Qs.old))], rnorm(n=N, mean=0, sd=1)) else f[,seq_len(max(Qs)), drop=F]
+          Q.max    <- max(Qs[nn0])
+          if(max(Qs[!nn0], 0) > Q.max) {
+            Qs[Qs > Q.max] <- Q.max
+            Q.maxseq       <- seq_len(max(Qs))
+            for(g0 in Gseq[!nn0])    {  
+              phi[[g0]]    <- phi[[g0]][,Q.maxseq, drop=F]
+              delta[[g0]]  <- delta[[g0]][Q.maxseq, drop=F]
+              tau[[g0]]    <- tau[[g0]][Q.maxseq, drop=F]
+              lmat[[g0]]   <- lmat[[g0]][,Q.maxseq, drop=F]
+            }
+            f      <- f[,Q.maxseq, drop=F]
+          }
         }
       }
-    
-    # Mixing Proportions
-      pi.prop      <- sim.pi(pi.alpha=pi.alpha, nn=nn)
-    
-    # Cluster Labels
-      psi          <- 1/psi.inv
-      Sigma        <- lapply(Gseq, function(g) tcrossprod(lmat[[g]]) + diag(psi[,g]))
-      z.res        <- sim.z(data=data, mu=mu, Sigma=Sigma, Gseq=Gseq, N=N, pi.prop=pi.prop)
-      z            <- z.res$z
     
     # Label Switching
       switch.lab   <- lab.switch(z.new=z, z.old=z.temp, Gs=Gseq)

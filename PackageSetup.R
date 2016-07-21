@@ -145,7 +145,7 @@ IMIFA.mcmc  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(any(range.Q < 0))            stop(paste0("'range.Q' must be non-negative for the ", method, " method"))
   } else {
     if(Q.miss)        range.Q    <- min(floor(3 * log(P)), P, N - 1)
-    if(range.Q    <= 0)             stop(paste0("'range.Q' must be strictly positive for the", method, " method"))
+    if(range.Q    <= 0)             stop(paste0("'range.Q' must be strictly positive for the ", method, " method"))
   }
   range.Q   <- sort(unique(range.Q))  
   if(any(range.Q   > P))            stop(paste0("Number of factors must be less than the number of variables, ", P))

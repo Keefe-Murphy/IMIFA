@@ -123,8 +123,8 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
     result     <- results[[g]]
     if(any(all(Q  == 0, vars == "loadings"),
            all(Qs == 0, vars == "scores")))  {            
-                                      warning(paste0("Can't plot ", vars, " as they contain no columns/factors"), call.=F)
-      if(length(unique(tail(Qs, - g))) == 1) {
+                                      warning(paste0("Can't plot ", vars, paste0(ifelse(all(vars == "loadings", G > 1), paste0(" for group ", g), "")), " as they contain no columns/factors"), call.=F)
+      if(g == G) {
         break
       } else {
         ifelse(msgx, readline(msg), "")
@@ -188,7 +188,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
       if(vars  == "scores") {
         plot.X <- results$Scores$f
         if(by.fac) {
-          plot.x  <- plot.X[ind[1],,]
+          plot.x  <- if(Q > 1) plot.X[ind[1],,] else t(plot.X[ind[1],,])
         } else {
           plot.x  <- plot.X[,ind[2],]
         }
@@ -278,7 +278,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
       if(vars  == "scores") {
         plot.X <- results$Scores$f
         if(by.fac) {
-          plot.x  <- plot.X[ind[1],,]
+          plot.x  <- if(Q > 1) plot.X[ind[1],,] else t(plot.X[ind[1],,])
         } else   {
           plot.x  <- plot.X[,ind[2],]
         }
@@ -442,14 +442,18 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
         plot.x <- result$post.load
         if(is.element(load.meth, c("all", "heatmap"))) {
           mcol <- mat2color(plot.x)
-          plotcolors(mcol)
+          if(Q > 1) {
+            plotcolors(mcol)
+          } else {
+            image(z=t(plot.x[seq(n.var, 1),seq_len(Q)]), xlab="", ylab="", xaxt="n", yaxt="n")
+          }
           if(titles) title(main=list(paste0("Posterior Mean", ifelse(all(!all.ind, !load.all), " Loadings ", " "), "Heatmap", ifelse(all(!all.ind, grp.ind, !load.all), paste0(" - Group ", g), ""))))
           axis(1, line=-0.5, tick=F, at=if(Q != 1) seq_len(Q) else 0, labels=seq_len(Q))
           if(n.var < 100) {
             axis(2, cex.axis=0.5, line=-0.5, tick=F, las=1, at=seq_len(n.var), labels=substring(var.names[n.var:1], 1, 10))
           }
           box(lwd=2)
-          mtext("Factors", side=1, line=2)
+          mtext(ifelse(Q > 1, "Factors", "Factor"), side=1, line=2)
           if(Q   != 1) abline(v=seq(1, Q - 1, 1) + 0.5, lty=2, lwd=1)
         }
         if(is.element(load.meth, c("all", "raw"))) {
@@ -573,7 +577,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
           layout(rbind(1, 2), heights=c(9, 1))
           par(mar=c(3.1, 4.1, 4.1, 2.1))
         }
-        Q.plot <- barplot(plot.Q, beside=T, ylab="Frequency", xaxt="n", col=Gseq + 1)
+        Q.plot <- barplot(plot.Q, beside=T, ylab="Frequency", xaxt="n", col=Gseq + 1, space=c(0, 2))
         if(titles) title(main=list(expression('Posterior Distribution of Q'["g"])))
         axis(1, at=apply(Q.plot, 2, median), labels=colnames(plot.Q), tick=F)
         axis(1, at=median(Q.plot), labels="Q", tick=F, line=1)

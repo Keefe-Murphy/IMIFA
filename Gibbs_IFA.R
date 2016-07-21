@@ -72,11 +72,6 @@
       Q0         <- Q > 0
       Q1         <- Q > 1
       
-    # Means
-      sum.f      <- colSums(f)
-      mu         <- sim.mu(N=N, P=P, mu.sigma=mu.sigma, psi.inv=psi.inv,
-                           sum.data=sum.data, sum.f=sum.f, lmat=lmat, mu.zero=mu.zero)
-      
     # Scores & Loadings
       c.data     <- sweep(data, 2, mu, FUN="-")
       if(Q0) {
@@ -87,7 +82,11 @@
       } else {
         f        <- matrix(, nr=N, nc=0)
         lmat     <- matrix(, nr=P, nc=0)
-      }          
+      }     
+      
+    # Means
+      sum.f      <- colSums(f)
+      mu         <- sim.mu(N=N, P=P, mu.sigma=mu.sigma, psi.inv=psi.inv, sum.data=sum.data, sum.f=sum.f, lmat=lmat, mu.zero=mu.zero)
     
     # Uniquenesses
       psi.inv    <- sim.psi.i(N=N, P=P, psi.alpha=psi.alpha, psi.beta=psi.beta, c.data=c.data, f=f, lmat=lmat)

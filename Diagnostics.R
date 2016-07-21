@@ -349,7 +349,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     sw["l.sw"]   <- attr(sims, "Switch")["l.sw"]
     if(Qg == 0)  {
       if(all(sw["l.sw"],
-             !no.score))          warning(paste0("Loadings not stored as", ifelse(G > 1, paste0(" group ", g), " model"), " has zero factors"), call.=F)
+             !no.score))          warning(paste0("Loadings ", ifelse(G > 1, paste0("for group ", g, " not stored as it"), " not stored as model"), " has zero factors"), call.=F)
       sw["l.sw"] <- F
     }
     if(inf.Q) {

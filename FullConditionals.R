@@ -24,7 +24,7 @@
       U.load    <- if(shrink) phi * tau * diag(Q) + psi.inv * FtF else l.sigma + psi.inv * FtF
       U.load    <- if(Q1) chol(U.load) else sqrt(U.load)
       mu.load   <- psi.inv * (if(Q1) chol2inv(U.load) else 1/(U.load * U.load)) %*% crossprod(f, c.data)
-        as.vector(mu.load + backsolve(U.load, rnorm(Q, 0, 1)))
+        as.vector(mu.load + backsolve(U.load, rnorm(Q)))
     }
     
   # Uniquenesses
@@ -60,8 +60,8 @@
     }
   
   # Cluster Labels
-    sim.z       <- function(data, mu, Sigma, Gseq, N, pi.prop, slice.ind=NULL) {
-      log.num   <- do.call(cbind, lapply(Gseq, function(g) dmvn(data, mu[,g], Sigma[[g]], log=T) + log(pi.prop[,g])))
+    sim.z       <- function(data, mu, Sigma, Gseq, N, pi.prop, slice.ind=NULL, Q0) {
+      log.num   <- do.call(cbind, lapply(Gseq, function(g) dmvn(data, mu[,g], if(Q0[g]) Sigma[[g]] else sqrt(Sigma[[g]]), log=T, isChol=!Q0[g]) + log(pi.prop[,g])))
       if(!missing(slice.ind)) {
         log.num <- log.num + log(slice.ind)
       }
@@ -199,7 +199,7 @@
 
   # Loadings Heatmaps
     mat2color   <- function(m, colors = heat.colors(30), 
-                            byrank=FALSE, breaks=length(colors)) { 
+                            byrank=F, breaks=length(colors)) { 
       m1        <- if(byrank == T) rank(m) else m
       facs      <- cut(m1, breaks, include.lowest=TRUE)
       answer    <- colors[as.numeric(facs)]
