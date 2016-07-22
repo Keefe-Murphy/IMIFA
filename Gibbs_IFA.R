@@ -97,18 +97,18 @@
           
     # Global Shrinkage
       sum.term   <- diag(crossprod(phi, load.2))
-    if(Q0) {
-      delta[1]   <- sim.delta1(Q=Q, P=P, alpha.d1=alpha.d1, delta=delta,
+      if(Q0) {
+      delta[1]   <- sim.delta1(Q=Q, P=P, alpha.d1=alpha.d1, delta.1=delta[1],
                                beta.d1=beta.d1, tau=tau, sum.term=sum.term)
       tau        <- cumprod(delta)  
-    } 
-    if(Q1) {
-      for(k in seq_len(Q)[-1]) { 
-        delta[k] <- sim.deltak(Q=Q, P=P, k=k, alpha.dk=alpha.dk, delta=delta,
-                               beta.dk=beta.dk, tau=tau, sum.term=sum.term)
+      } 
+      if(Q1) {
+       for(k in seq_len(Q)[-1]) { 
+        delta[k] <- sim.deltak(Q=Q, P=P, k=k, alpha.dk=alpha.dk, delta.k=delta[k],
+                               beta.dk=beta.dk, tau.kq=tau[k:Q], sum.term.kq=sum.term[k:Q])
         tau      <- cumprod(delta)      
+       }
       }
-    }
     
     # Adaptation  
       if(all(adapt, iter > burnin)) {      

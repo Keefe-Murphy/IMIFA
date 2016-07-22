@@ -90,9 +90,7 @@
     if(burnin       < 1)  {
       mu.store[,,1]        <- mu
       f.store[,,1]         <- f
-      for(g in Gseq) {
-        load.store[,,g,1]  <- lmat[[g]]
-      }
+      load.store[,,,1]     <- array(unlist(lmat, use.names=F), dim=c(P, Q, G))
       psi.store[,,1]       <- 1/psi.inv
       pi.store[,1]         <- pi.prop
       z.store[,1]          <- z
@@ -132,7 +130,7 @@
         f.tmp      <- if(length(unique(Qs)) != 1) lapply(Gseq, function(g) cbind(f.tmp[[g]], matrix(0, nr=nn[g], nc=max(Qs) - Qs[g]))) else f.tmp
         q0ng       <- !Q0 & nn0
         if(any(q0ng)) {
-          f.tmp[q0ng]      <- lapply(Gseq[q0ng], function(g, x=f.tmp[[g]]) { row.names(x) <- obsnames[z.ind[[g]]]; x} )
+          f.tmp[q0ng]      <- lapply(Gseq[q0ng], function(g, x=f.tmp[[g]]) { row.names(x) <- obsnames[z.ind[[g]]]; x })
         }
         f          <- do.call(rbind, f.tmp)[obsnames,, drop=F]
       }
@@ -157,14 +155,14 @@
         Qg         <- Qs[g]
         sumtermg   <- sum.terms[[g]]
         if(Q0[g])  {
-          delta[[g]][1]    <- sim.delta1(Q=Qg, alpha.d1=alpha.d1[g], delta=delta[[g]], P=P,
+          delta[[g]][1]    <- sim.delta1(Q=Qg, alpha.d1=alpha.d1[g], delta.1=delta[[g]][1], P=P,
                                          beta.d1=beta.d1, tau=tau[[g]], sum.term=sumtermg)
           tau[[g]]         <- cumprod(delta[[g]])
         }
         if(Q1[g])  {
           for(k in seq_len(Qg)[-1]) { 
-            delta[[g]][k]  <- sim.deltak(Q=Qg, alpha.dk=alpha.dk[g], delta=delta[[g]], P=P,
-                                         beta.dk=beta.dk, k=k, tau=tau[[g]], sum.term=sumtermg)
+            delta[[g]][k]  <- sim.deltak(Q=Qg, alpha.dk=alpha.dk[g], delta.k=delta[[g]][k], P=P, k=k, 
+                                         beta.dk=beta.dk, tau.kq=tau[[g]][k:Q], sum.term.kq=sumtermg[k:Q])
             tau[[g]]       <- cumprod(delta[[g]])
           }
         }

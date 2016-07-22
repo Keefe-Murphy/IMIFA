@@ -125,7 +125,8 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
         ent  <- readline(msg)
         options(show.error.messages = F)
         on.exit(suppressWarnings(options(defop)), add=T)
-        if(ent == "EXIT")             stop()
+        if(is.element(ent, 
+           c("exit", "EXIT")))        stop()
       }
     }
     result     <- results[[g]]

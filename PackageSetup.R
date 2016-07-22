@@ -14,7 +14,7 @@ packageStartupMessage("   ________  __________________\n  /_  __/  |/   /_  __/ 
 
 IMIFA.mcmc  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA", "MFA", "IFA", "FA", "classify"), 
                         n.iters = 50000, Labels = NULL, factanal = F, range.G = NULL, range.Q = NULL, verbose = F, Q.fac = NULL,  
-                        burnin = n.iters/5, thinning = 2, centering = T, scaling = c("unit", "pareto", "none"), qstar0g = F, trunc.G = NULL, MH.lower = NULL,
+                        burnin = n.iters/5, thinning = 2, centering = T, scaling = c("unit", "pareto", "none"), trunc.G = NULL, MH.lower = NULL,
                         adapt = T, b0 = NULL, b1 = NULL, delta0g = F, prop = NULL, epsilon = NULL, sigma.mu = NULL, sigma.l = NULL, MH.step = T,
                         mu0g = F, psi0g = F, mu.zero = NULL, phi.nu = NULL, psi.alpha = NULL, psi.beta = NULL, alpha.d1 = NULL, pp = NULL, MH.upper = NULL,
                         alpha.dk = NULL, beta.d1 = NULL, beta.dk = NULL, alpha.pi = NULL, z.list = NULL, profile = F, mu.switch = T, gen.slice = F,
@@ -209,13 +209,12 @@ IMIFA.mcmc  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   if(!is.logical(mu0g))             stop("'mu0g' must be TRUE or FALSE")
   if(!is.logical(psi0g))            stop("'psi0g' must be TRUE or FALSE")
   if(!is.logical(delta0g))          stop("'delta0g' must be TRUE or FALSE")
-  if(!is.logical(qstar0g))          stop("'qstar0g' must be TRUE or FALSE")
-  sw0gs     <- c(mu0g = mu0g, psi0g = psi0g, delta0g = delta0g, qstar0g = qstar0g)
+  sw0gs     <- c(mu0g = mu0g, psi0g = psi0g, delta0g = delta0g)
   if(all(!is.element(method, c("MFA", "MIFA")), 
          any(sw0gs)))               stop(paste0(names(which(sw0gs)), " should be FALSE for the ", method, " method\n"))
   if(!is.element(method, c("FA", "IFA", "classify"))) {
     if(all(method != "MIFA",
-       any(delta0g, qstar0g)))      stop("'delta0g' and 'qstar0g' can only be TRUE for the 'MIFA' method")
+       delta0g))                    stop("'delta0g' and can only be TRUE for the 'MIFA' method")
     alpha.miss  <- missing("alpha.pi")
     if(alpha.miss)           alpha.pi      <- ifelse(is.element(method, c("OMIFA", "OMFA")), 0.5/range.G, ifelse(all(MH.step, 
                                                      is.element(method, c("IMIFA", "IMFA"))), runif(1, MH.lower, MH.upper), 1))
@@ -280,7 +279,7 @@ IMIFA.mcmc  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   ad1.x            <- all(missing("alpha.d1"), is.element(method, c("IFA", "MIFA", "OMIFA", "IMIFA")))
   adk.x            <- all(missing("alpha.dk"), is.element(method, c("IFA", "MIFA", "OMIFA", "IMIFA")))
   if(all(z.init != "list", any(sw0gs))) {
-    if(any(delta0g, qstar0g))       stop(paste0(names(which(sw0gs[3:4])), " can only be TRUE if z.init=list\n"))
+    if(delta0g)                     stop("'delta0g' can only be TRUE if z.init=list\n")
     if(all(!mu0.x, mu0g))           stop("'mu.zero' can only be supplied for each group if z.init=list")
     if(all(!beta.x, psi0g))         stop("'psi.beta' can only be supplied for each group if z.init=list")
   }
@@ -392,7 +391,8 @@ IMIFA.mcmc  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   if(any(unlist(psi.beta)   <= 0))  stop("'psi.beta' must be strictly positive")
   if(is.element(method, c("IFA", "MIFA", "IMIFA", "OMIFA"))) {
     if(any(unlist(alpha.d1) <= 0))  stop("'alpha.d1' must be strictly positive")
-    if(any(unlist(alpha.dk) <= 1))  stop("'alpha.dk' must be greater than 1")
+    if(any((unlist(alpha.dk) 
+                   <= beta.dk)))    stop(paste0(ifelse(delta0g, "all 'alpha.dk' values", "alpha.dk"), " must be greater than 'beta.dk'"))
     deltas         <- lapply(seq_along(range.G), function(g) list(alpha.d1 = alpha.d1[[g]], alpha.dk = alpha.dk[[g]]))
   }
   init.time        <- proc.time() - init.start

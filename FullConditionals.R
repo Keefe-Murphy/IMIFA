@@ -40,12 +40,12 @@
     }
   
   # Global Shrinkage
-    sim.delta1  <- function(Q, P, alpha.d1, delta, beta.d1, tau, sum.term) {
-        rgamma(1, shape=alpha.d1 + P * Q/2, rate=beta.d1 + 0.5/delta[1] * tau %*% sum.term)
+    sim.delta1  <- function(Q, P, alpha.d1, delta.1, beta.d1, tau, sum.term) {
+        rgamma(1, shape=alpha.d1 + P * Q/2, rate=beta.d1 + 0.5/delta.1 * tau %*% sum.term)
     }
     
-    sim.deltak  <- function(Q, P, k, alpha.dk, beta.dk, delta, tau, sum.term) {
-        rgamma(1, shape=alpha.dk + P/2 * (Q - k + 1), rate=beta.dk + 0.5/delta[k] * tau[k:Q] %*% sum.term[k:Q])
+    sim.deltak  <- function(Q, P, k, alpha.dk, beta.dk, delta.k, tau.kq, sum.term.kq) {
+        rgamma(1, shape=alpha.dk + P/2 * (Q - k + 1), rate=beta.dk + 0.5/delta.k * tau.kq %*% sum.term.kq)
     }
 
   # Mixing Proportions
@@ -184,10 +184,10 @@
       } else {
         if(all(is.element(len, c(1, range.G, V)))) {
           if(all(len == 1))       obj0g <- lapply(seq_along(range.G), function(g) matrix(obj0g[[g]], nr=1, nc=range.G[g]))
-          if(all(len == range.G)) obj0g <- if(switch0g) lapply(seq_along(range.G), function(g) matrix(obj0g[[g]], nr=1)) else stop(paste0(sw.name, "must be TRUE if the dimension of ", obj.name, " depends on G"))
+          if(all(len == range.G)) obj0g <- if(switch0g) lapply(seq_along(range.G), function(g) matrix(obj0g[[g]], nr=1)) else stop(paste0(sw.name, " must be TRUE if the dimension of ", obj.name, " depends on G"))
           if(all(len == V))       obj0g <- lapply(seq_along(range.G), function(g) matrix(obj0g[[g]], nr=V, nc=range.G[g]))
         } else if(!all(sapply(seq_along(range.G), function(g) is.matrix(obj0g[[g]]) && any(identical(dim(obj0g[[g]]), c(1, range.G[g])), identical(dim(obj0g[[g]]), c(V, range.G[g])))))) {
-                                           stop(paste0("Each element of ", obj.name, " must be either of length 1, P=", V, ", or it's corresponding range.G, or a matrix with P rows and it's corresponding range.G columns")) 
+                                           stop(paste0(ifelse(length(range.G) > 1, "Each element of ", ""), obj.name, " must be either of length 1, ", ifelse(P.dim, paste0("P=", V, ", or it's corresponding range.G, or a matrix with P rows and it's corresponding range.G columns"), paste0("or G=", range.G)))) 
         } else if(all(sapply(obj0g, is.matrix), !switch0g) && any(sapply(seq_along(range.G), function(g) any(dim(obj0g[[g]]) == range.G[g])))) {
                                            stop(paste0(sw.name, " must be TRUE if the dimension of ", obj.name, " depends on G"))
         }

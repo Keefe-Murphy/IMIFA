@@ -72,9 +72,7 @@
     if(burnin       < 1)  {
       mu.store[,,1]        <- mu
       f.store[,,1]         <- f
-      for(g in Gseq) {
-        load.store[,,g,1]  <- lmat[[g]]
-      }
+      load.store[,,,1]     <- array(unlist(lmat, use.names=F), dim=c(P, Q, G))
       psi.store[,,1]       <- 1/psi.inv
       pi.store[,1]         <- pi.prop
       z.store[,1]          <- z
@@ -115,7 +113,7 @@
         f.tmp      <- if(length(unique(Qs)) != 1) lapply(Gseq, function(g) cbind(f.tmp[[g]], matrix(0, nr=nn[g], nc=max(Qs) - Qs[g]))) else f.tmp
         q0ng       <- !Q0 & nn0
         if(any(q0ng)) {
-          f.tmp[q0ng]      <- lapply(Gseq[q0ng], function(g, x=f.tmp[[g]]) { row.names(x) <- obsnames[z.ind[[g]]]; x} )
+          f.tmp[q0ng]      <- lapply(Gseq[q0ng], function(g, x=f.tmp[[g]]) { row.names(x) <- obsnames[z.ind[[g]]]; x })
         }
         f          <- do.call(rbind, f.tmp)[obsnames,, drop=F]
       }
@@ -139,20 +137,19 @@
       sum.terms    <- lapply(Gseq, function(g) diag(crossprod(phi[[g]], load.2[[g]])))
       for(g in Gseq)   {
         Qg         <- Qs[g]
-        nng        <- nn[g]
         nn0g       <- nn0[g]
         if(nn0g)   {
           sumtermg <- sum.terms[[g]]  
         }
         if(Q0[g])  {
-          delta[[g]][1]    <- if(nn0g) sim.delta1(Q=Qg, alpha.d1=alpha.d1, delta=delta[[g]], P=P, beta.d1=beta.d1, 
+          delta[[g]][1]    <- if(nn0g) sim.delta1(Q=Qg, alpha.d1=alpha.d1, delta.1=delta[[g]][1], P=P, beta.d1=beta.d1, 
                               tau=tau[[g]], sum.term=sumtermg) else sim.delta.p(alpha=alpha.d1, beta=beta.d1)
           tau[[g]]         <- cumprod(delta[[g]])
         }
         if(Q1[g])  {
           for(k in seq_len(Qg)[-1]) { 
-            delta[[g]][k]  <- if(nn0g) sim.deltak(Q=Qg, alpha.dk=alpha.dk, delta=delta[[g]], P=P, beta.dk=beta.dk, k=k, 
-                              tau=tau[[g]], sum.term=sumtermg) else sim.delta.p(alpha=alpha.dk, beta=beta.dk)
+            delta[[g]][k]  <- if(nn0g) sim.deltak(Q=Qg, alpha.dk=alpha.dk, delta.k=delta[[g]][k], P=P, beta.dk=beta.dk, k=k, 
+                              tau.kq=tau[[g]][k:Q], sum.term.kq=sumtermg[k:Q]) else sim.delta.p(alpha=alpha.dk, beta=beta.dk)
             tau[[g]]       <- cumprod(delta[[g]])
           }
         }
