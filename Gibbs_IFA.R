@@ -113,7 +113,7 @@
     # Adaptation  
       if(all(adapt, iter > burnin)) {      
         prob     <- 1/exp(b0 + b1 * (iter - burnin))
-        unif     <- runif(n=1, min=0, max=1)     
+        unif     <- runif(1)     
         if(unif   < prob) { # check whether to adapt or not
           if(Q0) {
             lind <- colSums(abs(lmat) < epsilon) / P
@@ -124,7 +124,7 @@
           numred <- sum(colvec)
           if(numred == 0) { # simulate extra columns from priors
             Q       <- Q + 1
-            f       <- cbind(f, rnorm(n=N, mean=0, sd=1))         
+            f       <- cbind(f, rnorm(N))         
             phi     <- cbind(phi, rgamma(n=P, shape=phi.nu, rate=phi.nu))
             delta   <- c(delta, rgamma(n=1, shape=alpha.dk, rate=beta.dk))
             tau     <- cumprod(delta)

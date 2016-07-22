@@ -196,7 +196,7 @@
     # Adaptation  
       if(all(adapt, iter > burnin)) {      
         prob        <- 1/exp(b0 + b1 * (iter - burnin))
-        unif        <- runif(n=1, min=0, max=1)     
+        unif        <- runif(1)     
         if(unif      < prob) { 
           lind      <- lapply(Gs, function(g) if(Q0[g]) colSums(abs(lmat[[g]]) < epsilon)/P else 0)
           colvec    <- lapply(lind, function(lx) lx >= prop)
@@ -209,7 +209,7 @@
           delta[Gs] <- lapply(Gs, function(g) if(notred[g]) c(delta[[g]][seq_len(Qs.old[g])], rgamma(n=1, shape=alpha.dk, rate=beta.dk)) else delta[[g]][nonred[[g]]])  
           tau[Gs]   <- lapply(delta[Gs], cumprod)
           lmat[Gs]  <- lapply(Gs, function(g) if(notred[g]) cbind(lmat[[g]][,seq_len(Qs.old[g])], rnorm(n=P, mean=0, sd=sqrt(1/(phi[[g]][,Qs[g]] * tau[[g]][Qs[g]])))) else lmat[[g]][,nonred[[g]], drop=F])
-          f         <- if(max(Qs) > max(Qs.old)) cbind(f[,seq_len(max(Qs.old))], rnorm(n=N, mean=0, sd=1)) else f[,seq_len(max(Qs)), drop=F]
+          f         <- if(max(Qs) > max(Qs.old)) cbind(f[,seq_len(max(Qs.old))], rnorm(N)) else f[,seq_len(max(Qs)), drop=F]
           Q.max     <- max(Qs[nn0])
           if(max(Qs[!nn0], 0) > Q.max) {
             Qs[Qs > Q.max] <- Q.max
