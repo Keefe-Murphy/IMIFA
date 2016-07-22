@@ -392,7 +392,7 @@ IMIFA.mcmc  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   if(is.element(method, c("IFA", "MIFA", "IMIFA", "OMIFA"))) {
     if(any(unlist(alpha.d1) <= 0))  stop("'alpha.d1' must be strictly positive")
     if(any((unlist(alpha.dk) 
-                   <= beta.dk)))    stop(paste0(ifelse(delta0g, "all 'alpha.dk' values", "alpha.dk"), " must be greater than 'beta.dk'"))
+                   <= beta.dk)))    stop(paste0(ifelse(delta0g, "all 'alpha.dk' values", "alpha.dk"), " must be greater than 'beta.dk'=", beta.dk))
     deltas         <- lapply(seq_along(range.G), function(g) list(alpha.d1 = alpha.d1[[g]], alpha.dk = alpha.dk[[g]]))
   }
   init.time        <- proc.time() - init.start
