@@ -110,12 +110,10 @@
     
     # Slice Sampler
       csi           <- if(gen.slice) csi else pi.prop
-      w.i           <- csi[z]
-      u.slice       <- runif(N, 0, w.i)
-      Au            <- unlist(lapply(Ns, function(i) sum(u.slice[i] < pi.prop)))
-      G             <- max(Au)
+      u.slice       <- runif(N, 0, csi[z])
+      G             <- max(unlist(lapply(Ns, function(i) sum(u.slice[i] < pi.prop))))
       Gs            <- seq_len(G)
-      slice.ind     <- do.call(cbind, lapply(Gs, function(g) (u.slice < csi[g])/csi[g]))
+      slice.ind     <- do.call(cbind, lapply(Gs, function(g, x=csi[g]) (u.slice < x)/x))
     
     # Mixing Proportions
       weights       <- sim.pi(pi.alpha=pi.alpha, nn=nn, inf.G=T, len=trunc.G)
@@ -129,7 +127,7 @@
       Sigma         <- lapply(Gs, function(g) tcrossprod(lmat[[g]]) + diag(psi[,g]))
       Q0            <- Qs > 0
       Q1            <- Qs > 1
-      z.res         <- sim.z(data=data, mu=mu, Sigma=Sigma, Gseq=Gs, N=N, pi.prop=pi.prop, slice.ind=slice.ind, Q0=Q0[Gs])
+      z.res         <- sim.z(data=data, mu=mu[,Gs], Sigma=Sigma, Gseq=Gs, N=N, pi.prop=pi.prop[,Gs, drop=F], slice.ind=slice.ind, Q0=Q0[Gs])
       z             <- z.res$z
       nn            <- tabulate(z, nbins=trunc.G)
       nn0           <- nn > 0
