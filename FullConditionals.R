@@ -35,8 +35,7 @@
 
   # Local Shrinkage
     sim.phi     <- function(Q, P, phi.nu, tau, load.2) {
-      rate.t    <- (phi.nu + sweep(load.2, 2, tau, FUN="*"))/2
-        matrix(rgamma(P * Q, shape=1/2 + phi.nu, rate=rate.t), nr=P, nc=Q)
+        matrix(rgamma(P * Q, shape=1/2 + phi.nu, rate=(phi.nu + sweep(load.2, 2, tau, FUN="*"))/2), nr=P, nc=Q)
     }
   
   # Global Shrinkage
@@ -61,7 +60,7 @@
   
   # Cluster Labels
     sim.z       <- function(data, mu, Sigma, Gseq, N, pi.prop, slice.ind=NULL, Q0) {
-      log.num   <- do.call(cbind, lapply(Gseq, function(g) dmvn(data, mu[,g], if(Q0[g]) Sigma[[g]] else sqrt(Sigma[[g]]), log=T, isChol=!Q0[g]) + log(pi.prop[,g])))
+      log.num   <- do.call(cbind, lapply(Gseq, function(g, q=Q0[g]) dmvn(data, mu[,g], if(q) Sigma[[g]] else sqrt(Sigma[[g]]), log=T, isChol=!q) + log(pi.prop[,g])))
       if(!missing(slice.ind)) {
         log.num <- log.num + log(slice.ind)
       }
@@ -119,8 +118,7 @@
         
   # Cluster Labels
     sim.z.p     <- function(N, prob.z) {
-      ind.mat   <- rmultinom(N, size=1, prob=prob.z)
-        factor(which(ind.mat != 0, arr.ind=T)[,1], levels=seq_along(prob.z))
+        factor(which(rmultinom(N, size=1, prob=prob.z) != 0, arr.ind=T)[,1], levels=seq_along(prob.z))
     }
 
 # Other Functions
@@ -160,14 +158,11 @@
         z.perm  <- setNames(as.numeric(z.perm), names(z.perm))
       }
       if(length(Gs) > length(z.perm)) {
-        miss.z1 <- setdiff(Gs, names(z.perm))
-        miss.z2 <- setdiff(Gs, z.perm)
-        z.perm  <- c(z.perm, setNames(miss.z2, miss.z1))
+        z.perm  <- c(z.perm, setNames(setdiff(Gs, z.perm), setdiff(Gs, names(z.perm))))
       }
       z.names   <- as.numeric(names(z.perm))
       z.perm    <- z.perm[order(z.names)]
-      ng        <- ng[ng > 0]
-      z.sw      <- factor(z.new, labels=z.perm[seq_along(ng)])
+      z.sw      <- factor(z.new, labels=z.perm[seq_along(ng[ng > 0])])
         return(list(z = as.numeric(levels(z.sw))[z.sw], z.perm = z.perm))
     }
 
