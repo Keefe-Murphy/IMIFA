@@ -24,7 +24,7 @@
       U.load    <- if(shrink) phi * tau * diag(Q) + psi.inv * FtF else l.sigma + psi.inv * FtF
       U.load    <- if(Q1) chol(U.load) else sqrt(U.load)
       mu.load   <- psi.inv * (if(Q1) chol2inv(U.load) else 1/(U.load * U.load)) %*% crossprod(f, c.data)
-        as.vector(mu.load + backsolve(U.load, rnorm(Q)))
+        mu.load + backsolve(U.load, rnorm(Q))
     }
     
   # Uniquenesses
