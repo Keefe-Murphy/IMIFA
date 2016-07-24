@@ -110,9 +110,7 @@
     
     # Adaptation  
       if(all(adapt, iter > burnin)) {      
-        prob     <- 1/exp(b0 + b1 * (iter - burnin))
-        unif     <- runif(1)     
-        if(unif   < prob) { # check whether to adapt or not
+        if(runif(1) < 1/exp(b0 + b1 * (iter - burnin))) {
           lind   <- if(Q0) colSums(abs(lmat) < epsilon) / P else 0
           colvec <- lind >= prop
           numred <- sum(colvec)

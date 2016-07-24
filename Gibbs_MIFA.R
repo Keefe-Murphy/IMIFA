@@ -179,9 +179,7 @@
     
     # Adaptation  
       if(all(adapt, iter > burnin)) {      
-        prob       <- 1/exp(b0 + b1 * (iter - burnin))
-        unif       <- runif(1)     
-        if(unif     < prob) { 
+        if(runif(1) < 1/exp(b0 + b1 * (iter - burnin))) {
           lind     <- lapply(Gseq, function(g) if(Q0[g]) colSums(abs(lmat[[g]]) < epsilon)/P else 0)
           colvec   <- lapply(lind, function(lx) lx >= prop)
           nonred   <- lapply(colvec, function(cv) which(cv == 0))
