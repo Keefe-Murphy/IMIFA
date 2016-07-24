@@ -230,7 +230,6 @@
     if(any(Qs > Q.star))      stop(paste0("Q cannot exceed initial number of loadings columns: try increasing range.Q from ", Q.star))
       if(is.element(iter, iters))   {
         new.it      <- which(iters == iter)
-        log.like    <- sum(z.res$log.likes)
         if(sw["mu.sw"])    mu.store[,,new.it]       <- mu 
         if(all(sw["f.sw"], 
            any(Q0)))  f.store[,seq_len(max(Qs)),new.it]    <- f
@@ -244,7 +243,7 @@
         if(MH.step) {    rate[new.it]               <- MH.alpha$rate
                          alpha.store[new.it]        <- pi.alpha }
                          z.store[,new.it]           <- z 
-                         ll.store[new.it]           <- log.like
+                         ll.store[new.it]           <- sum(z.res$log.likes)
                          Q.store[,new.it]           <- Qs
                          G.store[new.it]            <- sum(nn0)
                          non.empty[[new.it]]        <- which(nn0)

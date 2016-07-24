@@ -164,7 +164,6 @@
       
       if(is.element(iter, iters))   {
         new.it     <- which(iters == iter)
-        log.like   <- sum(z.res$log.likes)
         if(sw["mu.sw"])            mu.store[,,new.it]      <- mu 
         if(all(sw["f.sw"], Q0))    f.store[,,new.it]       <- f
         if(all(sw["l.sw"], Q0))    load.store[,,,new.it]   <- lmat
@@ -173,7 +172,7 @@
         if(MH.step) {              rate[new.it]            <- MH.alpha$rate
                                    alpha.store[new.it]     <- pi.alpha }
                                    z.store[,new.it]        <- z 
-                                   ll.store[new.it]        <- log.like
+                                   ll.store[new.it]        <- sum(z.res$log.likes)
                                    G.store[new.it]         <- sum(nn0)
                                    non.empty[[new.it]]     <- which(nn0)
       } 

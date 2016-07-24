@@ -232,7 +232,6 @@
     if(any(Qs > Q.star))      stop(paste0("Q cannot exceed initial number of loadings columns: try increasing range.Q from ", Q.star))
       if(is.element(iter, iters))    {
         new.it     <- which(iters == iter)
-        log.like   <- sum(z.res$log.likes)
         if(sw["mu.sw"])    mu.store[,,new.it]       <- mu  
         if(all(sw["f.sw"], 
            any(Q0)))  f.store[,seq_len(max(Qs)),new.it]    <- f
@@ -244,7 +243,7 @@
         if(sw["psi.sw"])   psi.store[,,new.it]      <- psi
         if(sw["pi.sw"])    pi.store[,new.it]        <- pi.prop
                            z.store[,new.it]         <- z 
-                           ll.store[new.it]         <- log.like  
+                           ll.store[new.it]         <- sum(z.res$log.likes)
                            Q.store[,new.it]         <- Qs
       }
     }

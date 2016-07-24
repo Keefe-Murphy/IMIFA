@@ -87,12 +87,11 @@
         post.psi <- post.psi + psi/n.store
         Sigma    <- tcrossprod(lmat) + diag(psi)
         cov.est  <- cov.est + Sigma/n.store
-        log.like <- sum(dmvn(X=data, mu=mu, sigma=Sigma, log=T))
         if(sw["mu.sw"])          mu.store[,new.it]    <- mu  
         if(all(sw["f.sw"], Q0))  f.store[,,new.it]    <- f
         if(all(sw["l.sw"], Q0))  load.store[,,new.it] <- lmat
         if(sw["psi.sw"])         psi.store[,new.it]   <- psi
-                                 ll.store[new.it]     <- log.like
+                                 ll.store[new.it]     <- sum(dmvn(X=data, mu=mu, sigma=Sigma, log=T))
       }  
     }
     returns   <- list(mu       = if(sw["mu.sw"])         mu.store,
