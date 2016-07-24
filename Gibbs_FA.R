@@ -70,14 +70,12 @@
       c.data     <- sweep(data, 2, mu, FUN="-")
       if(Q0) {
         f        <- sim.score(N=N, Q=Q, lmat=lmat, psi.inv=psi.inv, c.data=c.data, Q1=Q1)
-        FtF      <- crossprod(f)
-        lmat     <- matrix(unlist(lapply(Pseq, function(j) sim.load(l.sigma=l.sigma, Q=Q, f=f, P=P, Q1=Q1,
-                           c.data=c.data[,j], psi.inv=psi.inv[j], FtF=FtF, shrink=F)), use.names=F), nr=P, byrow=T)
+        lmat     <- matrix(unlist(lapply(Pseq, function(j) sim.load(l.sigma=l.sigma, Q=Q, f=f, c.data=c.data[,j], 
+                           P=P, Q1=Q1, psi.inv=psi.inv[j], FtF=crossprod(f), shrink=F)), use.names=F), nr=P, byrow=T)
       }
       
     # Means
-      sum.f      <- colSums(f)
-      mu         <- sim.mu(N=N, P=P, mu.sigma=mu.sigma, psi.inv=psi.inv, sum.data=sum.data, sum.f=sum.f, lmat=lmat, mu.zero=mu.zero)
+      mu         <- sim.mu(N=N, P=P, mu.sigma=mu.sigma, psi.inv=psi.inv, sum.data=sum.data, sum.f=colSums(f), lmat=lmat, mu.zero=mu.zero)
                       
     # Uniquenesses
       psi.inv    <- sim.psi.i(N=N, P=P, psi.alpha=psi.alpha, psi.beta=psi.beta, c.data=c.data, f=f, lmat=lmat)

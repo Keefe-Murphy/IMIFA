@@ -111,8 +111,7 @@
     # Slice Sampler
       csi           <- if(gen.slice) csi else pi.prop
       u.slice       <- runif(N, 0, csi[z])
-      G             <- max(unlist(lapply(Ns, function(i) sum(u.slice[i] < pi.prop))))
-      Gs            <- seq_len(G)
+      Gs            <- seq_len(max(unlist(lapply(Ns, function(i) sum(u.slice[i] < pi.prop)))))
       slice.ind     <- do.call(cbind, lapply(Gs, function(g, x=csi[g]) (u.slice < x)/x))
     
     # Mixing Proportions
@@ -161,8 +160,8 @@
                                sum.f=sum.f[[g]][seq_len(Qs[g])], lmat=lmat[[g]], mu.zero=mu.zero) else sim.mu.p(P=P, sigma.mu=sigma.mu, mu.zero=mu.zero)))
       
     # Uniquenesses
-      psi.inv[,Gs]  <- do.call(cbind, lapply(Gs, function(g) if(nn0[g]) sim.psi.i(N=nn[g], psi.alpha=psi.alpha, c.data=c.data[[g]], P=P,
-                               psi.beta=psi.beta, f=f.tmp[[g]], lmat=lmat[[g]]) else sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)))
+      psi.inv[,Gs]  <- do.call(cbind, lapply(Gs, function(g) if(nn0[g]) sim.psi.i(N=nn[g], psi.alpha=psi.alpha, c.data=c.data[[g]], psi.beta=psi.beta, 
+                               P=P, f=f.tmp[[g]][,seq_len(Qs[g]), drop=F], lmat=lmat[[g]]) else sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)))
     
     # Local Shrinkage
       load.2        <- lapply(lmat[Gs], function(lg) lg * lg)
@@ -185,7 +184,7 @@
       if(Q1[g])  {
         for(k in seq_len(Qg)[-1]) { 
           delta[[g]][k]  <- if(nn0g) sim.deltak(Q=Qg, alpha.dk=alpha.dk, delta.k=delta[[g]][k], P=P, beta.dk=beta.dk, k=k, 
-                            tau.kq=tau[[g]][k:Q], sum.term.kq=sumtermg[k:Q]) else sim.delta.p(alpha=alpha.dk, beta=beta.dk)
+                            tau.kq=tau[[g]][k:Qg], sum.term.kq=sumtermg[k:Qg]) else sim.delta.p(alpha=alpha.dk, beta=beta.dk)
           tau[[g]]       <- cumprod(delta[[g]])
         }
       }

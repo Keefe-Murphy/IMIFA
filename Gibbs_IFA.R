@@ -76,17 +76,15 @@
       c.data     <- sweep(data, 2, mu, FUN="-")
       if(Q0) {
         f        <- sim.score(N=N, Q=Q, lmat=lmat, psi.inv=psi.inv, c.data=c.data, Q1=Q1)
-        FtF      <- crossprod(f)
-        lmat     <- matrix(unlist(lapply(Pseq, function(j) sim.load(Q=Q, tau=tau, P=P, f=f, Q1=Q1,
-                           c.data=c.data[,j], phi=phi[j,], psi.inv=psi.inv[j], FtF=FtF)), use.names=F), nr=P, byrow=T)
+        lmat     <- matrix(unlist(lapply(Pseq, function(j) sim.load(Q=Q, tau=tau, f=f, c.data=c.data[,j], P=P, 
+                           Q1=Q1, phi=phi[j,], psi.inv=psi.inv[j], FtF=crossprod(f))), use.names=F), nr=P, byrow=T)
       } else {
         f        <- matrix(, nr=N, nc=0)
         lmat     <- matrix(, nr=P, nc=0)
       }     
       
     # Means
-      sum.f      <- colSums(f)
-      mu         <- sim.mu(N=N, P=P, mu.sigma=mu.sigma, psi.inv=psi.inv, sum.data=sum.data, sum.f=sum.f, lmat=lmat, mu.zero=mu.zero)
+      mu         <- sim.mu(N=N, P=P, mu.sigma=mu.sigma, psi.inv=psi.inv, sum.data=sum.data, sum.f=colSums(f), lmat=lmat, mu.zero=mu.zero)
     
     # Uniquenesses
       psi.inv    <- sim.psi.i(N=N, P=P, psi.alpha=psi.alpha, psi.beta=psi.beta, c.data=c.data, f=f, lmat=lmat)
@@ -115,11 +113,7 @@
         prob     <- 1/exp(b0 + b1 * (iter - burnin))
         unif     <- runif(1)     
         if(unif   < prob) { # check whether to adapt or not
-          if(Q0) {
-            lind <- colSums(abs(lmat) < epsilon) / P
-          } else {
-            lind <- 0
-          }
+          lind   <- if(Q0) colSums(abs(lmat) < epsilon) / P else 0
           colvec <- lind >= prop
           numred <- sum(colvec)
           if(numred == 0) { # simulate extra columns from priors

@@ -138,9 +138,9 @@
     # Means
       sum.data     <- lapply(dat.g, colSums)
       sum.f        <- lapply(f.tmp, colSums)
-      mu           <- do.call(cbind, lapply(Gseq, function(g) sim.mu(N=nn[g], mu.sigma=mu.sigma, psi.inv=psi.inv[,g], P=P, 
-                              sum.data=sum.data[[g]], sum.f=sum.f[[g]][seq_len(Qs[g])], lmat=lmat[[g]], mu.zero=mu.zero[,g])))
-                  
+      mu           <- do.call(cbind, lapply(Gseq, function(g) if(nn0[g]) sim.mu(N=nn[g], mu.sigma=mu.sigma, psi.inv=psi.inv[,g], P=P, sum.data=sum.data[[g]], 
+                              sum.f=sum.f[[g]][seq_len(Qs[g])], lmat=lmat[[g]], mu.zero=mu.zero[,g]) else sim.mu.p(P=P, sigma.mu=sigma.mu, mu.zero=mu.zero)))            
+      
     # Uniquenesses
       psi.inv      <- do.call(cbind, lapply(Gseq, function(g) if(nn0[g]) sim.psi.i(N=nn[g], psi.alpha=psi.alpha, c.data=c.data[[g]], psi.beta=psi.beta[,g],
                               P=P, f=f.tmp[[g]][,seq_len(Qs[g]), drop=F], lmat=lmat[[g]]) else sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta[,g])))
@@ -162,7 +162,7 @@
         if(Q1[g])  {
           for(k in seq_len(Qg)[-1]) { 
             delta[[g]][k]  <- sim.deltak(Q=Qg, alpha.dk=alpha.dk[g], delta.k=delta[[g]][k], P=P, k=k, 
-                                         beta.dk=beta.dk, tau.kq=tau[[g]][k:Q], sum.term.kq=sumtermg[k:Q])
+                                         beta.dk=beta.dk, tau.kq=tau[[g]][k:Qg], sum.term.kq=sumtermg[k:Qg])
             tau[[g]]       <- cumprod(delta[[g]])
           }
         }
