@@ -208,14 +208,15 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     z            <- as.matrix(sims[[G.ind]][[Q.ind]]$z.store[,tmp.store])
     if(!label.switch) {
       z.temp     <- factor(z[,1], labels=Gseq)
-      for(sl in seq_along(tmp.store)[-1])   {
-        n.ind    <- if(inf.G) non.empty[[sl]] else Gseq
-        Nseq     <- seq_along(n.ind)
+      Nseq       <- Gseq
+      for(sl in seq_along(tmp.store)[-1]) {
+        if(inf.G) {
+          Nseq   <- seq_along(non.empty[[sl]])
+        }
         sw.lab   <- lab.switch(z.new=z[,sl], z.old=z.temp, Gs=Nseq)
         z[,sl]   <- sw.lab$z
         z.perm   <- sw.lab$z.perm
-        perm     <- identical(as.integer(z.perm), Nseq)
-        if(!perm) {
+        if(!identical(as.integer(z.perm), Nseq)) {
           if(sw["mu.sw"])  {
             mus[,Nseq,sl]      <- mus[,z.perm,sl]
           }

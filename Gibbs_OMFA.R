@@ -130,19 +130,7 @@
       Sigma        <- lapply(Gseq, function(g) tcrossprod(lmat[,,g]) + diag(psi[,g]))
       z.res        <- sim.z(data=data, mu=mu, Sigma=Sigma, Gseq=Gseq, N=N, pi.prop=pi.prop, Q0=Q0s)
       z            <- z.res$z
-    
-    # Label Switching
-      switch.lab   <- lab.switch(z.new=z, z.old=z.temp, Gs=Gseq)
-      z            <- switch.lab$z
-      z.perm       <- switch.lab$z.perm
-      perm         <- identical(as.integer(z.perm), Gseq)
-      if(!perm) {
-        mu         <- mu[,z.perm, drop=F]
-        lmat       <- lmat[,,z.perm, drop=F]
-        psi.inv    <- psi.inv[,z.perm, drop=F]
-        pi.prop    <- pi.prop[,z.perm, drop=F]
-      }
-    
+  
       if(is.element(iter, iters))   {
         new.it     <- which(iters == iter)
         if(sw["mu.sw"])            mu.store[,,new.it]      <- mu 

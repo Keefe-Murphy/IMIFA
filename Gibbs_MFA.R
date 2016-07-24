@@ -148,8 +148,7 @@
         switch.lab <- lab.switch(z.new=z, z.old=z.temp, Gs=Gseq)
         z          <- switch.lab$z
         z.perm     <- switch.lab$z.perm
-        perm       <- identical(as.integer(z.perm), Gseq)
-        if(!perm)  {
+        if(!identical(as.integer(z.perm), Gseq)) {
           mu       <- mu[,z.perm, drop=F]
           lmat     <- lmat[,,z.perm, drop=F]
           psi.inv  <- psi.inv[,z.perm, drop=F]
