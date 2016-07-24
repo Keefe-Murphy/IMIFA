@@ -7,7 +7,7 @@
   # Means
     sim.mu      <- function(N, P, mu.sigma, psi.inv, sum.data, sum.f, lmat, mu.zero) {
       mu.omega  <- 1/(mu.sigma + N * psi.inv)
-        as.vector(mu.omega * (psi.inv * (sum.data - lmat %*% sum.f) + mu.sigma * mu.zero) + sqrt(mu.omega) * rnorm(P))
+        mu.omega * (psi.inv * (sum.data - lmat %*% sum.f) + mu.sigma * mu.zero) + sqrt(mu.omega) * rnorm(P)
     }
   
   # Scores
