@@ -124,8 +124,8 @@
     # Cluster Labels
       psi           <- 1/psi.inv
       Sigma         <- lapply(Gs, function(g) tcrossprod(lmat[[g]]) + diag(psi[,g]))
-      Q0            <- Qs > 0
-      Q1            <- Qs > 1
+      Q0            <- Qs[Gs] > 0
+      Q1            <- Qs[Gs] > 1
       z.res         <- sim.z(data=data, mu=mu[,Gs], Sigma=Sigma, Gseq=Gs, N=N, pi.prop=pi.prop[,Gs, drop=F], slice.ind=slice.ind, Q0=Q0[Gs])
       z             <- z.res$z
       nn            <- tabulate(z, nbins=trunc.G)
@@ -146,7 +146,7 @@
                              f=f.tmp[[g]], psi.inv=psi.inv[,g][j], Q1=Q1[g], phi=phi[[g]][j,], tau=tau[[g]], shrink=T)), use.names=F), nr=P, byrow=T) else 
                              matrix(unlist(lapply(Ps, function(j) sim.load.p(Q=Qs[g], phi=phi[[g]][j,], tau=tau[[g]], P=P)), use.names=F), nr=P, byrow=F))
         f.tmp      <- if(length(unique(Qs)) != 1) lapply(Gs, function(g) cbind(f.tmp[[g]], matrix(0, nr=nn[g], nc=max(Qs) - Qs[g]))) else f.tmp
-        q0ng       <- !Q0 & nn0
+        q0ng       <- !Q0 & nn0[Gs]
         if(any(q0ng)) {
           f.tmp[q0ng]      <- lapply(Gs[q0ng], function(g, x=f.tmp[[g]]) { row.names(x) <- obsnames[z.ind[[g]]]; x })
         }
@@ -206,12 +206,12 @@
           Qemp      <- Qs[!nn0]
           if(Qmax    < max(Qemp, 0)) {
             Qs[Qmax  < Qs] <- Qmax
-            Q.maxseq       <- seq_len(max(Qs))
-            for(t0 in  Ts[!nn0][Qemp > Qmax]) {  
-              phi[[t0]]    <- phi[[t0]][,Q.maxseq, drop=F]
-              delta[[t0]]  <- delta[[t0]][Q.maxseq, drop=F]
-              tau[[t0]]    <- tau[[t0]][Q.maxseq, drop=F]
-              lmat[[t0]]   <- lmat[[t0]][,Q.maxseq, drop=F]
+            Q.maxseq       <- seq_len(Qmax)
+            for(t  in  Ts[!nn0][Qemp > Qmax]) {  
+              phi[[t]]     <- phi[[t]][,Q.maxseq, drop=F]
+              delta[[t]]   <- delta[[t]][Q.maxseq, drop=F]
+              tau[[t]]     <- tau[[t]][Q.maxseq, drop=F]
+              lmat[[t]]    <- lmat[[t]][,Q.maxseq, drop=F]
             }
             f       <- f[,Q.maxseq, drop=F]
           }

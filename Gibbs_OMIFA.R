@@ -180,12 +180,12 @@
           Qemp     <- Qs[!nn0]
           if(Qmax   < max(Qemp, 0)) {
             Qs[Qmax < Qs]  <- Qmax
-            Q.maxseq       <- seq_len(max(Qs))
-            for(g0 in Gseq[!nn0][Qemp > Qmax]) {  
-              phi[[g0]]    <- phi[[g0]][,Q.maxseq, drop=F]
-              delta[[g0]]  <- delta[[g0]][Q.maxseq, drop=F]
-              tau[[g0]]    <- tau[[g0]][Q.maxseq, drop=F]
-              lmat[[g0]]   <- lmat[[g0]][,Q.maxseq, drop=F]
+            Q.maxseq       <- seq_len(Qmax)
+            for(g in Gseq[!nn0][Qemp > Qmax]) {  
+              phi[[g]]     <- phi[[g]][,Q.maxseq, drop=F]
+              delta[[g]]   <- delta[[g]][Q.maxseq, drop=F]
+              tau[[g]]     <- tau[[g]][Q.maxseq, drop=F]
+              lmat[[g]]    <- lmat[[g]][,Q.maxseq, drop=F]
             }
             f      <- f[,Q.maxseq, drop=F]
           }
