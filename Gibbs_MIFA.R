@@ -151,20 +151,13 @@
     
     # Global Shrinkage
       sum.terms    <- lapply(Gseq, function(g) diag(crossprod(phi[[g]], load.2[[g]])))
-      for(g in Gseq)   {
+      for(g in Gseq)  {
         Qg         <- Qs[g]
-        sumtermg   <- sum.terms[[g]]
-        if(Q0[g])  {
-          delta[[g]][1]    <- sim.delta1(Q=Qg, alpha.d1=alpha.d1[g], delta.1=delta[[g]][1], P=P,
-                                         beta.d1=beta.d1, tau=tau[[g]], sum.term=sumtermg)
+        for(k in seq_len(Qg)) { 
+          delta[[g]][k]    <- if(k > 1) sim.deltak(alpha.dk=alpha.dk[g], beta.dk=beta.dk, delta.k=delta[[g]][k], Q=Qg, P=P, 
+                              k=k, tau.kq=tau[[g]][k:Qg], sum.term.kq=sum.terms[[g]][k:Qg]) else sim.delta1(alpha.d1=alpha.d1[g],
+                              beta.d1=beta.d1, delta.1=delta[[g]][1], Q=Qg, P=P, tau=tau[[g]], sum.term=sum.terms[[g]])
           tau[[g]]         <- cumprod(delta[[g]])
-        }
-        if(Q1[g])  {
-          for(k in seq_len(Qg)[-1]) { 
-            delta[[g]][k]  <- sim.deltak(Q=Qg, alpha.dk=alpha.dk[g], delta.k=delta[[g]][k], P=P, k=k, 
-                                         beta.dk=beta.dk, tau.kq=tau[[g]][k:Qg], sum.term.kq=sumtermg[k:Qg])
-            tau[[g]]       <- cumprod(delta[[g]])
-          }
         }
       }
       

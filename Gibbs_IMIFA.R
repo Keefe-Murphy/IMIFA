@@ -170,25 +170,22 @@
     
     # Global Shrinkage
       sum.terms    <- lapply(Gs, function(g) diag(crossprod(phi[[g]], load.2[[g]])))
-      for(g in Gs)   {
+      for(g in Gs) {
         Qg         <- Qs[g]
-        nn0g       <- nn0[g]
-        if(nn0g)   {
-          sumtermg <- sum.terms[[g]]  
-        }
-      if(Q0[g])  {
-        delta[[g]][1]    <- if(nn0g) sim.delta1(Q=Qg, alpha.d1=alpha.d1, delta.1=delta[[g]][1], P=P, beta.d1=beta.d1, 
-                            tau=tau[[g]], sum.term=sumtermg) else sim.delta.p(alpha=alpha.d1, beta=beta.d1)
-        tau[[g]]         <- cumprod(delta[[g]])
-      }
-      if(Q1[g])  {
-        for(k in seq_len(Qg)[-1]) { 
-          delta[[g]][k]  <- if(nn0g) sim.deltak(Q=Qg, alpha.dk=alpha.dk, delta.k=delta[[g]][k], P=P, beta.dk=beta.dk, k=k, 
-                            tau.kq=tau[[g]][k:Qg], sum.term.kq=sumtermg[k:Qg]) else sim.delta.p(alpha=alpha.dk, beta=beta.dk)
-          tau[[g]]       <- cumprod(delta[[g]])
+        if(nn0[g]) {
+          for(k in seq_len(Qg)) { 
+            delta[[g]][k]  <- if(k > 1) sim.deltak(alpha.dk=alpha.dk, beta.dk=beta.dk, delta.k=delta[[g]][k], Q=Qg, P=P, 
+                              k=k, tau.kq=tau[[g]][k:Qg], sum.term.kq=sum.terms[[g]][k:Qg]) else sim.delta1(alpha.d1=alpha.d1,
+                              beta.d1=beta.d1, delta.1=delta[[g]][1], Q=Qg, P=P, tau=tau[[g]], sum.term=sum.terms[[g]])
+            tau[[g]]       <- cumprod(delta[[g]])
+          }
+        } else {
+          for(k in seq_len(Qg)) { 
+            delta[[g]][k]  <- if(k > 1) sim.delta.p(alpha=alpha.dk, beta=beta.dk) else sim.delta.p(alpha=alpha.d1, beta=beta.d1)
+            tau[[g]]       <- cumprod(delta[[g]])
+          }
         }
       }
-    }
     
     # Adaptation  
       if(all(adapt, iter > burnin)) {      
