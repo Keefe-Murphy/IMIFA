@@ -241,7 +241,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       }
     }
     post.z       <- droplevels(setNames(apply(z, 1, function(x) factor(which.max(tabulate(x)), levels=Gseq)), seq_len(n.obs)))
-    uncertainty  <- 1 - apply(matrix(apply(z, 1, tabulate, nbins=G)/length(tmp.store), nr=nlevels(post.z), nc=n.obs), 2, max)
+    uncertain    <- 1 - apply(matrix(apply(z, 1, tabulate, nbins=G)/length(tmp.store), nr=nlevels(post.z), nc=n.obs), 2, max)
     if(sw["pi.sw"])    {
       pi.prop    <- pies[,seq_along(tmp.store)]
       post.pi    <- rowMeans(pi.prop, dims=1)
@@ -275,6 +275,8 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
         tab.stat$misclassified <- NULL
       }
       tab.stat   <- c(list(confusionMatrix = tab), tab.stat)
+      uncert.obs <- which(uncertain >= 1/G)
+      attr(uncertain, "Obs")   <- if(sum(uncert.obs) != 0) uncert.obs
       if(!label.miss && (nlevels(post.z) == length(levs))) {
         names(tab.stat)[1]     <- "matchedConfusionMatrix"
       }
@@ -293,7 +295,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     post.pi      <- post.pi[Gseq]
     var.pi       <- var.pi[Gseq]
     CI.pi        <- CI.pi[,Gseq]
-    cluster      <- list(post.z = post.z, post.pi = post.pi/sum(post.pi), z = z, uncertainty = uncertainty)
+    cluster      <- list(post.z = post.z, post.pi = post.pi/sum(post.pi), z = z, uncertainty = uncertain)
     cluster      <- c(cluster, if(sw["pi.sw"]) list(pi.prop = pi.prop, var.pi = var.pi, CI.pi = CI.pi),
                       if(!label.miss) list(perf = tab.stat), if(isTRUE(MH.step)) list(MH.alpha = MH.alpha))
     attr(cluster, "Z.init")    <- attr(sims[[G.ind]], "Z.init")

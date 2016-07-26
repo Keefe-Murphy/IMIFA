@@ -659,6 +659,10 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
           }
           class(perf)      <- "listof"
         }
+        uncert    <- attr(plot.x, "Obs")
+        if(!is.null(uncert)) {
+          perf    <- c(perf, list(uncertain = uncert))  
+        }
         perf$errorRate     <- paste0(round(100 * perf$errorRate, 2), "%")
         print(perf)
       } else                          message("Nothing to print: try supplying known cluster labels")
