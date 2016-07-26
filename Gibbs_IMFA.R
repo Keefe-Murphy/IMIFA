@@ -111,7 +111,7 @@
       }
     
     # Slice Sampler
-      csi          <- if(gen.slice) csi else pi.prop
+      if(!gen.slice)  csi  <- pi.prop
       u.slice      <- runif(N, 0, csi[z])
       G            <- max(unlist(lapply(Ns, function(i) sum(u.slice[i] < pi.prop))))
       Gs           <- seq_len(G)
@@ -120,9 +120,7 @@
     # Mixing Proportions
       weights      <- sim.pi(pi.alpha=pi.alpha, nn=nn, inf.G=T, len=trunc.G)
       pi.prop      <- weights$pi.prop
-      if(MH.step) {
-        Vs         <- weights$Vs
-      }
+      if(MH.step)     Vs   <- weights$Vs
     
     # Cluster Labels
       psi          <- 1/psi.inv
