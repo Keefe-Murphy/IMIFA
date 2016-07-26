@@ -78,11 +78,11 @@
     }
     l.sigma        <- l.sigma * diag(Q)
     lmat           <- array(unlist(lmat, use.names=F), dim=c(P, Q, trunc.G))
-    index          <- order(pi.prop, decreasing=TRUE)
+    index          <- order(pi.prop, decreasing=T)
     pi.prop        <- pi.prop[,index, drop=F]
-    mu             <- mu[,index, drop=FALSE]
-    lmat           <- lmat[,,index, drop=FALSE]
-    psi.inv        <- psi.inv[,index, drop=FALSE]
+    mu             <- mu[,index, drop=F]
+    lmat           <- lmat[,,index, drop=F]
+    psi.inv        <- psi.inv[,index, drop=F]
     csi            <- pp * (1 - pp)^(Ts - 1)
     if(burnin       < 1)  {
       mu.store[,,1]        <- mu
@@ -93,7 +93,7 @@
       z.store[,1]          <- z
       ll.store[1]          <- sum(sim.z(data=data, mu=mu, Gseq=Gs, N=N, pi.prop=pi.prop, Sigma=lapply(Gs,
                                   function(g) tcrossprod(lmat[,,g]) + diag(1/psi.inv[,g])), Q0=Q0s)$log.likes)
-      G.store[1]           <- G
+      G.store[1]           <- sum(nn > 0)
       if(MH.step)  {
         rate[1]            <- 0
         alpha.store[1]     <- pi.alpha 
@@ -110,6 +110,7 @@
         }
       }
     
+      
     # Slice Sampler
       if(!gen.slice)  csi  <- pi.prop
       u.slice      <- runif(N, 0, csi[z])
@@ -121,7 +122,6 @@
       weights      <- sim.pi(pi.alpha=pi.alpha, nn=nn, inf.G=T, len=trunc.G)
       pi.prop      <- weights$pi.prop
       if(MH.step)     Vs   <- weights$Vs
-    
     # Cluster Labels
       psi          <- 1/psi.inv
       Sigma        <- lapply(Gs, function(g) tcrossprod(lmat[,,g]) + diag(psi[,g]))

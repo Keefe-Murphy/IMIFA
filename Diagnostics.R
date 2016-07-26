@@ -50,7 +50,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   Q.ind          <- 1
   if(inf.G) {
     GQs          <- length(sims[[G.ind]])
-    G.store      <- matrix(unlist(lapply(seq_len(GQs), function(gq) sims[[G.ind]][[gq]]$G.store[store])), nr=GQs, nc=length(store))
+    G.store      <- matrix(unlist(lapply(seq_len(GQs), function(gq) sims[[G.ind]][[gq]]$G.store[store])), nr=GQs, nc=length(store), byrow=T)
     G.meth       <- ifelse(missing(G.meth), "Mode", match.arg(G.meth))
   }
   if(G.T)   {
@@ -75,7 +75,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     if(all(is.element(method, c("FA", "MFA")), 
        !is.element(Q, n.fac)))    stop("This Q value was not used during simulation")
     if(all(inf.Q, 
-      (Q * (n.fac - Q)) < 0))     stop(paste0("Q can't be greater than the number of factors in ", match.call()$sims))
+      (Q * (n.fac - Q))  < 0))    stop(paste0("Q can't be greater than the number of factors in ", match.call()$sims))
   } 
   
   if(inf.G)  {
@@ -157,19 +157,19 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
         G        <- n.grp[G.ind]
       }
     } 
-    G            <- ifelse(all(length(n.grp) == 1, !inf.G), n.grp, G)
+    G            <- ifelse(inf.G, G[Q.ind], ifelse(length(n.grp) == 1, n.grp, G))
     Gseq         <- seq_len(G)
     G.ind        <- ifelse(all(length(n.grp) == 1, !inf.G), which(n.grp == G), G.ind)
     GQ.temp2     <- list(AICMs = aicm, BICMs = bicm)
     if(is.element(method, c("OMFA", "IMFA")) &&
-       GQs > 1)  {
+       GQ1)      {
       tmp.store  <- tmp.store[[Q.ind]]
     }
     if(!inf.Q)   {
       Q          <- if(length(n.fac) > 1) Q     else n.fac
       Q.ind      <- if(length(n.fac) > 1) Q.ind else which(n.fac == Q)
       Q          <- setNames(rep(Q, G), paste0("Group ", Gseq))  
-      GQ.temp1   <- if(is.element(method, c("OMFA", "IMFA")) && GQs > 1) lapply(GQ.temp1, "[[", 1) else if(inf.G) GQ.temp1
+      GQ.temp1   <- if(is.element(method, c("OMFA", "IMFA")) && GQs > 1) lapply(GQ.temp1, "[[", Q.ind) else if(inf.G) GQ.temp1
       GQ.temp3   <- c(GQ.temp2, list(AIC.mcmcs = aic.mcmc, BIC.mcmcs = bic.mcmc))
       GQ.res     <- if(!is.element(method, c("OMFA", "IMFA"))) c(list(G = G, Q = Q), GQ.temp3) else c(GQ.temp1, list(Q = Q), GQ.temp3)
     }

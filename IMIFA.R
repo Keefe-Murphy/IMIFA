@@ -62,7 +62,7 @@
     cl <- attr(SimData, "Labels")
 
 # Run the Gibbs Sampler
-  sim  <- IMIFA.mcmc(wine, method="IMFA", range.Q=3)
+  sim  <- IMIFA.mcmc(wine, method="OMIFA")
 
 # Save / Load Simulations
   save(sim, file=paste0(getwd(), "/Simulations/", attr(sim, "Name"), 

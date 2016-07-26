@@ -75,11 +75,14 @@
         psi.inv[,g]        <- 1/fact$uniquenesses
       } 
     }
-    index           <- order(pi.prop, decreasing=TRUE)
+    index           <- order(pi.prop, decreasing=T)
     pi.prop         <- pi.prop[,index, drop=F]
-    mu              <- mu[,index, drop=FALSE]
+    mu              <- mu[,index, drop=F]
+    phi             <- phi[index]
+    delta           <- delta[index]
+    tau             <- tau[index]
     lmat            <- lmat[index]
-    psi.inv         <- psi.inv[,index, drop=FALSE]
+    psi.inv         <- psi.inv[,index, drop=F]
     csi             <- pp * (1 - pp)^(Ts - 1)
     if(burnin        < 1)  {
       mu.store[,,1]        <- mu
@@ -91,7 +94,7 @@
       ll.store[1]          <- sum(sim.z(data=data, mu=mu, Gseq=Gs, N=N, pi.prop=pi.prop, Sigma=lapply(Gs,
                                   function(g) tcrossprod(lmat[[g]]) + diag(1/psi.inv[,g])), Q0=Qs > 0)$log.likes)
       Q.store[,1]          <- Qs
-      G.store[1]           <- G
+      G.store[1]           <- sum(nn > 0)
       if(MH.step)  {
         rate[1]            <- 0
         alpha.store[1]     <- pi.alpha 
