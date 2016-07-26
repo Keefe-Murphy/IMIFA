@@ -188,6 +188,12 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
 # Manage Label Switching & retrieve cluster labels/mixing proportions
   if(clust.ind) {
     source(paste(getwd(), "/IMIFA-GIT/FullConditionals.R", sep=""), local=T)
+    label.miss   <- missing(Labels)
+    if(!label.miss)   {
+      if(!exists(as.character(substitute(Labels)),
+          envir=.GlobalEnv))      stop(paste0("Object ", match.call()$Labels, " not found"))
+      if(length(Labels) != n.obs) stop(paste0("'Labels' must be a factor of length N=",  n.obs))  
+    }
     if(sw["mu.sw"])   {
       mus        <- sims[[G.ind]][[Q.ind]]$mu[,,tmp.store, drop=F]                            
     }
@@ -244,11 +250,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     } else {
       post.pi    <- setNames(prop.table(tabulate(post.z, nbins=G)), paste0("Group ", Gseq))
     }
-    label.miss   <- missing(Labels)
     if(!label.miss) {
-      if(!exists(as.character(substitute(Labels)),
-          envir=.GlobalEnv))      stop(paste0("Object ", match.call()$Labels, " not found"))
-      if(length(Labels) != n.obs) stop(paste0("'Labels' must be a factor of length N=",  n.obs))
       zlabels    <- factor(Labels, labels=seq_along(unique(Labels)))
       levs       <- levels(zlabels)
       if(nlevels(post.z) == length(levs)) {
