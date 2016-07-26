@@ -78,7 +78,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       (Q * (n.fac - Q)) < 0))     stop(paste0("Q can't be greater than the number of factors in ", match.call()$sims))
   } 
   
-  if(inf.G) {
+  if(inf.G)  {
     GQ1          <- GQs > 1
     G.tab        <- if(GQ1) lapply(apply(G.store, 1, function(x) list(table(x, dnn=NULL))), "[[", 1) else table(G.store, dnn=NULL)
     G.prob       <- if(GQ1) lapply(G.tab, prop.table) else prop.table(G.tab)
@@ -107,11 +107,10 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     } else {
       dimnames(crit.mat) <- list(paste0("G", n.grp), paste0("Q", n.fac))
     }
-    if(all(!is.element(method, c("OMFA", "IMFA")),
-       inf.Q)) {
+    if(inf.Q) {
       colnames(crit.mat) <- "IFA"
     }
-    if(inf.G)  {
+    if(inf.G) {
       rownames(crit.mat) <- "IM"
     }
     aicm         <- bicm       <- 

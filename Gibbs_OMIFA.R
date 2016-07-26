@@ -91,10 +91,19 @@
           cat(paste0("Iteration: ", iter, "\n"))
         }
       }
-      nn           <- tabulate(z, nbins=G)
-      nn0          <- nn > 0
+      
+    # Mixing Proportions
+      pi.prop      <- sim.pi(pi.alpha=pi.alpha, nn=nn)
+      
+    # Cluster Labels
+      psi          <- 1/psi.inv
+      Sigma        <- lapply(Gseq, function(g) tcrossprod(lmat[[g]]) + diag(psi[,g]))
       Q0           <- Qs > 0
       Q1           <- Qs > 1
+      z.res        <- sim.z(data=data, mu=mu, Sigma=Sigma, Gseq=Gseq, N=N, pi.prop=pi.prop, Q0=Q0)
+      z            <- z.res$z
+      nn           <- tabulate(z, nbins=G)
+      nn0          <- nn > 0
       z.ind        <- lapply(Gseq, function(g) z == g)
       dat.g        <- lapply(Gseq, function(g) data[z.ind[[g]],, drop=F])
     
@@ -151,15 +160,6 @@
           }
         }
       }
-      
-    # Mixing Proportions
-      pi.prop      <- sim.pi(pi.alpha=pi.alpha, nn=nn)
-      
-    # Cluster Labels
-      psi          <- 1/psi.inv
-      Sigma        <- lapply(Gseq, function(g) tcrossprod(lmat[[g]]) + diag(psi[,g]))
-      z.res        <- sim.z(data=data, mu=mu, Sigma=Sigma, Gseq=Gseq, N=N, pi.prop=pi.prop, Q0=Q0)
-      z            <- z.res$z
     
     # Adaptation  
       if(all(adapt, iter > burnin)) {      

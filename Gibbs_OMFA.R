@@ -95,6 +95,15 @@
           cat(paste0("Iteration: ", iter, "\n"))
         }
       }
+    
+    # Mixing Proportions
+      pi.prop      <- sim.pi(pi.alpha=pi.alpha, nn=nn)
+      
+    # Cluster Labels
+      psi          <- 1/psi.inv
+      Sigma        <- lapply(Gseq, function(g) tcrossprod(lmat[,,g]) + diag(psi[,g]))
+      z.res        <- sim.z(data=data, mu=mu, Sigma=Sigma, Gseq=Gseq, N=N, pi.prop=pi.prop, Q0=Q0s)
+      z            <- z.res$z
       nn           <- tabulate(z, nbins=G)
       nn0          <- nn > 0
       z.ind        <- lapply(Gseq, function(g) z == g)
@@ -121,16 +130,7 @@
     # Uniquenesses
       psi.inv      <- do.call(cbind, lapply(Gseq, function(g) if(nn0[g]) sim.psi.i(N=nn[g], psi.alpha=psi.alpha, c.data=c.data[[g]], P=P, 
                               psi.beta=psi.beta, f=f.tmp[[g]], lmat=lmat[,,g]) else sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)))
-      
-    # Mixing Proportions
-      pi.prop      <- sim.pi(pi.alpha=pi.alpha, nn=nn)
     
-    # Cluster Labels
-      psi          <- 1/psi.inv
-      Sigma        <- lapply(Gseq, function(g) tcrossprod(lmat[,,g]) + diag(psi[,g]))
-      z.res        <- sim.z(data=data, mu=mu, Sigma=Sigma, Gseq=Gseq, N=N, pi.prop=pi.prop, Q0=Q0s)
-      z            <- z.res$z
-  
       if(is.element(iter, iters))   {
         new.it     <- which(iters == iter)
         if(sw["mu.sw"])            mu.store[,,new.it]      <- mu 
