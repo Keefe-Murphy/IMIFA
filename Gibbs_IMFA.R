@@ -153,8 +153,8 @@
                               sum.f=sum.f[[g]], lmat=if(Q1) lmat[,,g] else as.matrix(lmat[,,g]), mu.zero=mu.zero) else sim.mu.p(P=P, sigma.mu=sigma.mu, mu.zero=mu.zero)))
                     
     # Uniquenesses
-      psi.inv[,Gs] <- do.call(cbind, lapply(Gs, function(g) if(nn0[g]) sim.psi.i(N=nn[g], psi.alpha=psi.alpha, c.data=c.data[[g]], P=P, 
-                              psi.beta=psi.beta, f=f.tmp[[g]], lmat=lmat[,,g]) else sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)))
+      psi.inv[,Gs] <- do.call(cbind, lapply(Gs, function(g) if(nn0[g]) sim.psi.i(N=nn[g], psi.alpha=psi.alpha, c.data=c.data[[g]], P=P, f=f.tmp[[g]], 
+                              psi.beta=psi.beta, lmat=if(Q1) lmat[,,g] else as.matrix(lmat[,,g])) else sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)))
       
     # Alpha
       if(MH.step)   {
