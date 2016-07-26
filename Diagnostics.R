@@ -416,7 +416,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       }
       cov.emp    <- cov(dat[z.ind[[g]],, drop=F])
       dimnames(cov.emp)  <- list(varnames, varnames)
-      if(sum(z.ind[[g]]) == 0)    rm(cov.emp)
+      if(sum(z.ind[[g]]) <= 1)    rm(cov.emp)
     } else {
       post.mu    <- sims[[G.ind]][[Q.ind]]$post.mu
       post.psi   <- sims[[G.ind]][[Q.ind]]$post.psi
@@ -498,10 +498,10 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       NRMSE[g]   <- RMSE[g]/(max(cov.emp) - min(cov.emp))
       CVRMSE[g]  <- RMSE[g]/mean(cov.emp)
       MAD[g]     <- mean(abs(error))
-      if(any(all(isTRUE(scaling), cent)    && 
-                 sum(round(diag(cov.est))  != 
-                 round(diag(cov.emp)))     != 0,
-         sum(abs(post.psi - (1 - post.psi)) < 0) != 0,
+      if(any(all(scal.meth != "none", cent) && 
+                 sum(round(diag(cov.est))   != 
+                 round(diag(cov.emp)))      != 0,
+         sum(abs(post.psi  - (1 - post.psi)) < 0) != 0,
          var.exp  > 1))           warning(paste0(ifelse(G == 1, "C", paste0("Group ", g, "'s c")), "hain may not have fully converged"), call.=F)
     }
     
