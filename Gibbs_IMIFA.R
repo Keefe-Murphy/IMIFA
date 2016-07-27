@@ -47,7 +47,6 @@
     Qs              <- rep(Q, trunc.G)
     Q.store         <- matrix(0, nr=trunc.G, nc=n.store)
     G.store         <- rep(0, n.store)
-    non.empty       <- list()
     dimnames(z.store)      <- list(obsnames, iternames)
     dimnames(Q.store)      <- list(gnames, iternames)
     if(MH.step)    {
@@ -244,7 +243,6 @@
                          ll.store[new.it]           <- sum(z.res$log.likes)
                          Q.store[,new.it]           <- Qs
                          G.store[new.it]            <- sum(nn0)
-                         non.empty[[new.it]]        <- which(nn0)
       } 
     }
   
@@ -258,7 +256,6 @@
                             z.store  = z.store,
                             ll.store = ll.store,
                             Q.store  = Q.store,
-                            G.store  = G.store,
-                            nonempty = non.empty)
+                            G.store  = G.store)
     return(returns)
   }

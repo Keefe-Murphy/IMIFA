@@ -173,9 +173,6 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       GQ.temp3   <- c(GQ.temp2, list(AIC.mcmcs = aic.mcmc, BIC.mcmcs = bic.mcmc))
       GQ.res     <- if(!is.element(method, c("OMFA", "IMFA"))) c(list(G = G, Q = Q), GQ.temp3) else c(GQ.temp1, list(Q = Q), GQ.temp3)
     }
-    if(inf.G)    {
-      non.empty  <- sims[[G.ind]][[Q.ind]]$nonempty[tmp.store]
-    }
     clust.ind    <- !any(is.element(method,  c("FA", "IFA")), 
                      all(is.element(method, c("MFA", "MIFA")), G == 1))
     sw.mx        <- ifelse(clust.ind, sw["mu.sw"], T)
@@ -213,29 +210,25 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     z            <- as.matrix(sims[[G.ind]][[Q.ind]]$z.store[,tmp.store])
     if(!label.switch) {
       z.temp     <- factor(z[,1], labels=Gseq)
-      Nseq       <- Gseq
       for(sl in seq_along(tmp.store)[-1]) {
-        if(inf.G) {
-          Nseq   <- seq_along(non.empty[[sl]])
-        }
-        sw.lab   <- lab.switch(z.new=z[,sl], z.old=z.temp, Gs=Nseq)
+        sw.lab   <- lab.switch(z.new=z[,sl], z.old=z.temp, Gs=Gseq)
         z[,sl]   <- sw.lab$z
         z.perm   <- sw.lab$z.perm
-        if(!identical(as.integer(z.perm), Nseq)) {
+        if(!identical(as.integer(z.perm), Gseq)) {
           if(sw["mu.sw"])  {
-            mus[,Nseq,sl]      <- mus[,z.perm,sl]
+            mus[,Gseq,sl]      <- mus[,z.perm,sl]
           }
           if(sw["l.sw"])   {
-            lmats[,,Nseq,sl]   <- lmats[,,z.perm,sl]
+            lmats[,,Gseq,sl]   <- lmats[,,z.perm,sl]
           }
           if(sw["psi.sw"]) {
-            psis[,Nseq,sl]     <- psis[,z.perm,sl]
+            psis[,Gseq,sl]     <- psis[,z.perm,sl]
           }
           if(sw["pi.sw"])  {
-            pies[Nseq,sl]      <- pies[z.perm,sl]
+            pies[Gseq,sl]      <- pies[z.perm,sl]
           }
           if(inf.Q)        {
-            Q.store[Nseq,sl]   <- Q.store[z.perm,sl]
+            Q.store[Gseq,sl]   <- Q.store[z.perm,sl]
           }  
         }
       }
