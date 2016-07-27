@@ -115,11 +115,11 @@
       u.slice       <- runif(N, 0, csi[z])
       Gs            <- seq_len(max(unlist(lapply(Ns, function(i) sum(u.slice[i] < pi.prop)))))
       slice.ind     <- do.call(cbind, lapply(Gs, function(g, x=csi[g]) (u.slice < x)/x))
-    
     # Mixing Proportions
       weights       <- sim.pi(pi.alpha=pi.alpha, nn=nn, inf.G=T, len=trunc.G)
       pi.prop       <- weights$pi.prop
       if(MH.step)      Vs  <- weights$Vs
+      
     
     # Cluster Labels
       psi           <- 1/psi.inv
@@ -190,30 +190,30 @@
     # Adaptation  
       if(all(adapt, iter > burnin)) {      
         if(runif(1) < 1/exp(b0 + b1 * (iter - burnin))) {
-          lind      <- lapply(Gs, function(g) if(Q0[g]) colSums(abs(lmat[[g]]) < epsilon)/P else 0)
+          lind      <- lapply(Gs, function(g) if(all(Q0[g], nn0[g])) colSums(abs(lmat[[g]]) < epsilon)/P else rep(0, Qs[g]))
           colvec    <- lapply(lind, function(lx) lx >= prop)
           nonred    <- lapply(colvec, function(cv) which(cv == 0))
           numred    <- lapply(colvec, sum)
           notred    <- unlist(lapply(Gs, function(g) numred[[g]] == 0 && nn0[g]), use.names=F)
-          Qs.old    <- Qs
+          Qs.old    <- Qs[Gs]
           Qs[Gs]    <- unlist(lapply(Gs, function(g) if(notred[g]) Qs.old[g] + 1 else Qs.old[g] - numred[[g]]), use.names=F)
           phi[Gs]   <- lapply(Gs, function(g) if(notred[g]) cbind(phi[[g]][,seq_len(Qs.old[g])], rgamma(n=P, shape=phi.nu, rate=phi.nu)) else phi[[g]][,nonred[[g]], drop=F])
           delta[Gs] <- lapply(Gs, function(g) if(notred[g]) c(delta[[g]][seq_len(Qs.old[g])], rgamma(n=1, shape=alpha.dk, rate=beta.dk)) else delta[[g]][nonred[[g]]])  
           tau[Gs]   <- lapply(delta[Gs], cumprod)
           lmat[Gs]  <- lapply(Gs, function(g, Qg=Qs[g]) if(notred[g]) cbind(lmat[[g]][,seq_len(Qs.old[g])], rnorm(n=P, mean=0, sd=sqrt(1/(phi[[g]][,Qg] * tau[[g]][Qg])))) else lmat[[g]][,nonred[[g]], drop=F])
-          f         <- if(max(Qs) > max(Qs.old)) cbind(f[,seq_len(max(Qs.old))], rnorm(N)) else f[,seq_len(max(Qs)), drop=F]
-          Qmax      <- max(Qs[nn0])
           Qemp      <- Qs[!nn0]
+          Qmax      <- max(Qs[nn0])
+          Qmaxseq   <- seq_len(Qmax)
+          Qmaxold   <- max(Qs.old[nn0])
+          f         <- if(Qmax > Qmaxold) cbind(f[,seq_len(Qmaxold)], rnorm(N)) else f[,Qmaxseq, drop=F]
           if(Qmax    < max(Qemp, 0)) {
             Qs[Qmax  < Qs] <- Qmax
-            Q.maxseq       <- seq_len(Qmax)
             for(t  in  Ts[!nn0][Qemp > Qmax]) {  
-              phi[[t]]     <- phi[[t]][,Q.maxseq, drop=F]
-              delta[[t]]   <- delta[[t]][Q.maxseq, drop=F]
-              tau[[t]]     <- tau[[t]][Q.maxseq, drop=F]
-              lmat[[t]]    <- lmat[[t]][,Q.maxseq, drop=F]
+              phi[[t]]     <- phi[[t]][,Qmaxseq, drop=F]
+              delta[[t]]   <- delta[[t]][Qmaxseq, drop=F]
+              tau[[t]]     <- tau[[t]][Qmaxseq, drop=F]
+              lmat[[t]]    <- lmat[[t]][,Qmaxseq, drop=F]
             }
-            f       <- f[,Q.maxseq, drop=F]
           }
         }
       }

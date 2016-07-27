@@ -163,7 +163,7 @@
     # Adaptation  
       if(all(adapt, iter > burnin)) {      
         if(runif(1) < 1/exp(b0 + b1 * (iter - burnin))) {
-          lind     <- lapply(Gseq, function(g) if(Q0[g]) colSums(abs(lmat[[g]]) < epsilon)/P else 0)
+          lind     <- lapply(Gseq, function(g) if(all(Q0[g], nn0[g])) colSums(abs(lmat[[g]]) < epsilon)/P else rep(0, Qs[g]))
           colvec   <- lapply(lind, function(lx) lx >= prop)
           nonred   <- lapply(colvec, function(cv) which(cv == 0))
           numred   <- lapply(colvec, sum)
@@ -174,19 +174,19 @@
           delta    <- lapply(Gseq, function(g) if(notred[g]) c(delta[[g]][seq_len(Qs.old[g])], rgamma(n=1, shape=alpha.dk, rate=beta.dk)) else delta[[g]][nonred[[g]]])  
           tau      <- lapply(delta, cumprod)
           lmat     <- lapply(Gseq, function(g, Qg=Qs[g]) if(notred[g]) cbind(lmat[[g]][,seq_len(Qs.old[g])], rnorm(n=P, mean=0, sd=sqrt(1/(phi[[g]][,Qg] * tau[[g]][Qg])))) else lmat[[g]][,nonred[[g]], drop=F])
-          f        <- if(max(Qs) > max(Qs.old)) cbind(f[,seq_len(max(Qs.old))], rnorm(N)) else f[,seq_len(max(Qs)), drop=F]
-          Qmax     <- max(Qs[nn0])
           Qemp     <- Qs[!nn0]
+          Qmax     <- max(Qs[nn0])
+          Qmaxseq  <- seq_len(Qmax)
+          Qmaxold  <- max(Qs.old[nn0])
+          f        <- if(Qmax > Qmaxold) cbind(f[,seq_len(Qmaxold)], rnorm(N)) else f[,Qmaxseq, drop=F]
           if(Qmax   < max(Qemp, 0)) {
             Qs[Qmax < Qs]  <- Qmax
-            Q.maxseq       <- seq_len(Qmax)
             for(g in Gseq[!nn0][Qemp > Qmax]) {  
-              phi[[g]]     <- phi[[g]][,Q.maxseq, drop=F]
-              delta[[g]]   <- delta[[g]][Q.maxseq, drop=F]
-              tau[[g]]     <- tau[[g]][Q.maxseq, drop=F]
-              lmat[[g]]    <- lmat[[g]][,Q.maxseq, drop=F]
+              phi[[g]]     <- phi[[g]][,Qmaxseq, drop=F]
+              delta[[g]]   <- delta[[g]][Qmaxseq, drop=F]
+              tau[[g]]     <- tau[[g]][Qmaxseq, drop=F]
+              lmat[[g]]    <- lmat[[g]][,Qmaxseq, drop=F]
             }
-            f      <- f[,Q.maxseq, drop=F]
           }
         }
       }

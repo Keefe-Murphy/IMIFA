@@ -62,14 +62,14 @@
     cl <- attr(SimData, "Labels")
 
 # Run the Gibbs Sampler
-  sim  <- IMIFA.mcmc(wine, method="OMIFA")
+  sim  <- IMIFA.mcmc(wine, method="IMIFA")
 
 # Save / Load Simulations
   save(sim, file=paste0(getwd(), "/Simulations/", attr(sim, "Name"), 
                         "__Simulations_", attr(sim, "Method"), 
                         ".Rdata", sep=""))
   load(file=paste0(getwd(), "/Simulations/", "wine", 
-                   "__Simulations_", "OMIFA", 
+                   "__Simulations_", "IMIFA", 
                    ".Rdata", sep=""), envir=.GlobalEnv)
 
 # Posterior Summaries (optional: additional 'burnin' & 'thinning', user-defined G/Q, model selection criterion)
@@ -80,7 +80,7 @@
                         "__Results_", attr(res, "Method"), 
                         ".Rdata", sep=""))
   load(file=paste0(getwd(), "/Simulations/", "wine", 
-                   "__Results_", "OMIFA", 
+                   "__Results_", "IMIFA", 
                    ".Rdata", sep=""), envir=.GlobalEnv)
 
 # Model Selection Parameters
