@@ -471,7 +471,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
             plot(plot.x[,ind[2]], type=type, xaxt="n", xlab="", ylab="Loading", ylim=if(ci.sw[vars]) c(min(ci.x[1,]), max(ci.x[2,])))
             if(all(intervals, ci.sw[vars])) plotCI(plot.x[,ind[2]], li=ci.x[1,], ui=ci.x[2,], slty=3, scol="grey", add=T, gap=T, pch=ifelse(type == "n", NA, 16))
             axis(1, line=-0.5, tick=F, at=seq_len(n.var), labels=seq_len(n.var))
-            mtext("Variable #", side=1, line=2)
+            mtext("Variable #", side=1, line=2, cex=0.8)
             if(titles) title(main=list(paste0(ifelse(all(!all.ind, !load.all), paste0("Loadings - ", ifelse(grp.ind, paste0("Group ", g, " - "), "")), ""), "Factor ", ind[2])))
             if(type == "n") text(x=plot.x, var.names, cex=0.5)
           } else     {
@@ -523,7 +523,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
         plot.x <- clust$MH.alpha[-1]
         conf   <- attr(results, "Conf.Level")
         digits <- options()$digits
-        text(x=0.5, y=0.5, cex=par()$fin[2]/ifelse(all.ind, 5, 7), col="black", adj=rep(0.5, 2), paste0("Posterior Mean:\n", round(plot.x$post.alpha, digits), "\n\nVariance:\n", 
+        text(x=0.5, y=0.5, cex=par()$fin[2]/ifelse(all.ind, 4, 6), col="black", adj=rep(0.5, 2), paste0("Posterior Mean:\n", round(plot.x$post.alpha, digits), "\n\nVariance:\n", 
              round(plot.x$var.alpha, digits), "\n\n", 100 * conf, "% Confidence Interval:\n", "[", round(plot.x$CI.alpha[1], digits), 
              ", ",  round(plot.x$CI.alpha[2], digits), "]\n\nAcceptance Rate:\n", round(100 * plot.x$acceptance.rate, 2), "%"))
       }
