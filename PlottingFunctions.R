@@ -58,9 +58,9 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
     if(v.sw[vars]) {
       m.sw[-(1:3)]  <- !m.sw[-(1:3)]
       if(all(vars   == "loadings", load.all)) {
-        layout(matrix(c(1, 2, 3, 4, 3, 5), nr=3, nc=2, byrow = TRUE))
+        layout(matrix(c(1, 2, 3, 4, 3, 5), nr=3, nc=2, byrow=T))
       } else {
-        layout(matrix(c(1, 2, 3, 4), nr=2, nc=2, byrow = TRUE))
+        layout(matrix(c(1, 2, 3, 4), nr=2, nc=2, byrow=T))
       }
       par(cex=0.8, mai=c(0.7, 0.7, 0.5, 0.2), mgp=c(2, 1, 0), oma=c(0, 0, 2, 0))
     }
@@ -160,13 +160,13 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
       if(length(ind) > 2)             stop("Length of plotting indices can't be greater than 2")
       if(vars  == "scores")  {
         if(ind[1] >  n.obs)           stop(paste0("First index can't be greater than the number of observations: ",  n.obs))
-        if(ind[2] >  Q.max)  {        warning(paste0("Second index can't be greater than ", Q.max, ", the total number of factors", if(grp.ind) paste0(" across groups"), ".\n Try specifying a vector of fac values with maximum entries ", paste0(Qs, collapse = ", "), "."), call.=F)
+        if(ind[2] >  Q.max)  {        warning(paste0("Second index can't be greater than ", Q.max, ", the total number of factors", if(grp.ind) paste0(" across groups"), ".\n Try specifying a vector of fac values with maximum entries ", paste0(Qs, collapse=", "), "."), call.=F)
         ent.exit()
         next
         }
       } else {
         if(ind[1] > n.var)            stop(paste0("First index can't be greater than the number of variables: ",  n.var))
-        if(ind[2] > Q) {              warning(paste0("Second index can't be greater than ", Q, ", the number of factors", if(grp.ind) paste0(" in group ", g), ".\n Try specifying a vector of fac values with maximum entries ", paste0(Qs, collapse = ", "), "."), call.=F)
+        if(ind[2] > Q) {              warning(paste0("Second index can't be greater than ", Q, ", the number of factors", if(grp.ind) paste0(" in group ", g), ".\n Try specifying a vector of fac values with maximum entries ", paste0(Qs, collapse=", "), "."), call.=F)
         ent.exit()
         next
         }
@@ -253,7 +253,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
       }
       if(vars  == "alpha") {
         plot.x <- clust$MH.alpha
-        plot(x=iter, y=plot.x$alpha.pi, ylab="Alpha", type="l", xlab="Iteration", main="")
+        plot(plot.x$alpha.pi, ylab="Alpha", type="l", xlab="Iteration", main="")
         if(titles) title(main=list(paste0("Trace", ifelse(all.ind, "", paste0(":\nAlpha")))))
         if(all(intervals, ci.sw[vars])) {
           ci.x <- plot.x$CI.alpha  
@@ -518,12 +518,12 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
         }
       }
       if(vars  == "alpha") {
-        plot(c(0, 1), c(0, 1), ann = F, bty = 'n', type = 'n', xaxt = 'n', yaxt = 'n')
+        plot(c(0, 1), c(0, 1), ann=F, bty='n', type='n', xaxt='n', yaxt='n')
         if(titles) title(main=list(paste0("Summary Statistics", ifelse(all.ind, "", ":\nAlpha"))))
         plot.x <- clust$MH.alpha[-1]
         conf   <- attr(results, "Conf.Level")
         digits <- options()$digits
-        text(x=0.5, y=0.5, cex = ifelse(all.ind, 1, 1.5), col = "black", adj=0.5, paste0("Posterior Mean:\n", round(plot.x$post.alpha, digits), "\n\nVariance:\n", 
+        text(x=0.5, y=0.5, cex=par()$fin[2]/ifelse(all.ind, 5, 7), col="black", adj=rep(0.5, 2), paste0("Posterior Mean:\n", round(plot.x$post.alpha, digits), "\n\nVariance:\n", 
              round(plot.x$var.alpha, digits), "\n\n", 100 * conf, "% Confidence Interval:\n", "[", round(plot.x$CI.alpha[1], digits), 
              ", ",  round(plot.x$CI.alpha[2], digits), "]\n\nAcceptance Rate:\n", round(100 * plot.x$acceptance.rate, 2), "%"))
       }
