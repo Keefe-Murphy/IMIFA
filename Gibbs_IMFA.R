@@ -123,12 +123,10 @@
         psi.inv    <- psi.inv[,index, drop=F]
         csi        <- pi.prop
       }
-    # if(!gen.slice)  csi  <- pi.prop[,order(pi.prop, decreasing=T)] ### alternative 1 !?!?!
       u.slice      <- runif(N, 0, csi[z])
       G            <- max(unlist(lapply(Ns, function(i) sum(u.slice[i] < pi.prop))))
       Gs           <- seq_len(G)
       slice.ind    <- do.call(cbind, lapply(Gs, function(g, x=csi[g]) (u.slice < x)/x))
-    # slice.ind    <- do.call(cbind, lapply(Gs, function(g, x=if(gen.slice) csi[g] else csi[order(csi, decreasing=T)][g]) (u.slice < x)/x)) ### alternative 2 !?!?!
     
     # Cluster Labels
       psi          <- 1/psi.inv

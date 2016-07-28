@@ -128,11 +128,9 @@
         psi.inv     <- psi.inv[,index, drop=F]
         csi         <- pi.prop
       } 
-    # if(!gen.slice)  csi  <- pi.prop[,order(pi.prop, decreasing=T), drop=F] ### alternative 1 !?!?!
       u.slice       <- runif(N, 0, csi[z])
       Gs            <- seq_len(max(unlist(lapply(Ns, function(i) sum(u.slice[i] < pi.prop)))))
       slice.ind     <- do.call(cbind, lapply(Gs, function(g, x=csi[g]) (u.slice < x)/x))
-    # slice.ind    <- do.call(cbind, lapply(Gs, function(g, x=if(gen.slice) csi[g] else csi[order(csi, decreasing=T)][g]) (u.slice < x)/x)) ### alternative 2 !?!?!
     
     # Cluster Labels
       psi           <- 1/psi.inv
@@ -149,21 +147,21 @@
     # Scores & Loadings
       c.data        <- lapply(Gs, function(g) sweep(dat.g[[g]], 2, mu[,g], FUN="-"))
       if(!any(Q0))    {
-        f          <- matrix(, nr=N, nc=0)
-        f.tmp      <- lapply(Gs, function(g) f[z.ind[[g]],, drop=F])
-        lmat       <- lapply(Gs, function(g) matrix(, nr=P, nc=0))
+        f           <- matrix(, nr=N, nc=0)
+        f.tmp       <- lapply(Gs, function(g) f[z.ind[[g]],, drop=F])
+        lmat        <- lapply(Gs, function(g) matrix(, nr=P, nc=0))
       } else {
-        f.tmp      <- lapply(Gs, function(g) if(all(nn0[g], Q0[g])) sim.score(N=nn[g], lmat=lmat[[g]], Q=Qs[g], Q1=Q1[g], c.data=c.data[[g]], psi.inv=psi.inv[,g]) else matrix(, nr=ifelse(Q0[g], 0, nn[g]), nc=Qs[g]))
-        FtF        <- lapply(Gs, function(g) if(nn0[g]) crossprod(f.tmp[[g]]))
-        lmat[Gs]   <- lapply(Gs, function(g) if(all(nn0[g], Q0[g])) matrix(unlist(lapply(Ps, function(j) sim.load(Q=Qs[g], P=P, c.data=c.data[[g]][,j], FtF=FtF[[g]],
+        f.tmp       <- lapply(Gs, function(g) if(all(nn0[g], Q0[g])) sim.score(N=nn[g], lmat=lmat[[g]], Q=Qs[g], Q1=Q1[g], c.data=c.data[[g]], psi.inv=psi.inv[,g]) else matrix(, nr=ifelse(Q0[g], 0, nn[g]), nc=Qs[g]))
+        FtF         <- lapply(Gs, function(g) if(nn0[g]) crossprod(f.tmp[[g]]))
+        lmat[Gs]    <- lapply(Gs, function(g) if(all(nn0[g], Q0[g])) matrix(unlist(lapply(Ps, function(j) sim.load(Q=Qs[g], P=P, c.data=c.data[[g]][,j], FtF=FtF[[g]],
                              f=f.tmp[[g]], psi.inv=psi.inv[,g][j], Q1=Q1[g], phi=phi[[g]][j,], tau=tau[[g]], shrink=T)), use.names=F), nr=P, byrow=T) else 
                              matrix(unlist(lapply(Ps, function(j) sim.load.p(Q=Qs[g], phi=phi[[g]][j,], tau=tau[[g]], P=P)), use.names=F), nr=P, byrow=F))
-        f.tmp      <- if(length(unique(Qs)) != 1) lapply(Gs, function(g) cbind(f.tmp[[g]], matrix(0, nr=nn[g], nc=max(Qs) - Qs[g]))) else f.tmp
-        q0ng       <- !Q0 & nn0[Gs]
+        f.tmp       <- if(length(unique(Qs)) != 1) lapply(Gs, function(g) cbind(f.tmp[[g]], matrix(0, nr=nn[g], nc=max(Qs) - Qs[g]))) else f.tmp
+        q0ng        <- !Q0 & nn0[Gs]
         if(any(q0ng)) {
           f.tmp[q0ng]      <- lapply(Gs[q0ng], function(g, x=f.tmp[[g]]) { row.names(x) <- obsnames[z.ind[[g]]]; x })
         }
-        f          <- do.call(rbind, f.tmp)[obsnames,, drop=F]
+        f           <- do.call(rbind, f.tmp)[obsnames,, drop=F]
       }
       
     # Means
