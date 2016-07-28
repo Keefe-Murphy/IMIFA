@@ -3,14 +3,14 @@
 #################################################
 
 tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q = NULL, Q.meth = c("Mode", "Median"), G.meth = c("Mode", "Median"),
-                             criterion = c("bicm", "aicm", "bic.mcmc", "aic.mcmc"), conf.level = 0.95, Labels = NULL, recomp = F) {
+                             criterion = c("bicm", "aicm", "bic.mcmc", "aic.mcmc"), conf.level = 0.95, Labels = NULL, recomp = FALSE) {
   
-  source(paste(getwd(), "/IMIFA-GIT/FullConditionals.R", sep=""), local=T)
-  defpar         <- suppressWarnings(par(no.readonly = T))
+  source(paste(getwd(), "/IMIFA-GIT/FullConditionals.R", sep=""), local=TRUE)
+  defpar         <- suppressWarnings(par(no.readonly=TRUE))
   defopt         <- options()
   options(warn=1)
   on.exit(suppressWarnings(par(defpar)))
-  on.exit(suppressWarnings(options(defopt)), add=T)
+  on.exit(suppressWarnings(options(defopt)), add=TRUE)
   if(missing(sims))               stop("Simulations must be supplied")
   if(!exists(deparse(substitute(sims)),
              envir=.GlobalEnv))   stop(paste0("Object ", match.call()$sims, " not found"))
@@ -51,7 +51,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   Q.ind          <- 1
   if(inf.G) {
     GQs          <- length(sims[[G.ind]])
-    G.store      <- matrix(unlist(lapply(seq_len(GQs), function(gq) sims[[G.ind]][[gq]]$G.store[store])), nr=GQs, nc=length(store), byrow=T)
+    G.store      <- matrix(unlist(lapply(seq_len(GQs), function(gq) sims[[G.ind]][[gq]]$G.store[store])), nr=GQs, nc=length(store), byrow=TRUE)
     G.meth       <- ifelse(missing(G.meth), "Mode", match.arg(G.meth))
   }
   if(G.T)   {
@@ -122,9 +122,9 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       for(q in seq_len(Q.range)) {
         qi               <- ifelse(Q.T, Q.ind, q)
         log.likes        <- if(is.element(method, c("OMFA", "IMFA")) && GQ1) sims[[gi]][[qi]]$ll.store[tmp.store[[qi]]] else sims[[gi]][[qi]]$ll.store[tmp.store]
-        ll.max           <- 2 * max(log.likes, na.rm=T)
-        ll.var           <- ifelse(length(log.likes) != 1, 2 * var(log.likes, na.rm=T), 0)
-        ll.mean          <- mean(log.likes, na.rm=T)
+        ll.max           <- 2 * max(log.likes, na.rm=TRUE)
+        ll.var           <- ifelse(length(log.likes) != 1, 2 * var(log.likes, na.rm=TRUE), 0)
+        ll.mean          <- mean(log.likes, na.rm=TRUE)
         aicm[g,q]        <- ll.max - ll.var * 2
         bicm[g,q]        <- ll.max - ll.var * log.N
         if(!inf.Q) {
@@ -135,7 +135,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       }  
     }
     crit         <- get(criterion)
-    crit.max     <- which(crit == max(crit), arr.ind = T)
+    crit.max     <- which(crit == max(crit), arr.ind=TRUE)
   
   # Control for supplied values of G &/or Q
     if(!any(Q.T, G.T)) {
@@ -179,7 +179,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     sw.mx        <- ifelse(clust.ind, sw["mu.sw"], T)
     sw.px        <- ifelse(clust.ind, sw["psi.sw"], T)  
     if(inf.Q) {
-      Q.store    <- sims[[G.ind]][[Q.ind]]$Q.store[Gseq,tmp.store, drop=F]
+      Q.store    <- sims[[G.ind]][[Q.ind]]$Q.store[Gseq,tmp.store, drop=FALSE]
       Q.meth     <- ifelse(missing(Q.meth), "Mode", match.arg(Q.meth))
     }
   
@@ -192,20 +192,20 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       if(length(Labels) != n.obs) stop(paste0("'Labels' must be a factor of length N=",  n.obs))  
     }
     if(sw["mu.sw"])   {
-      mus        <- sims[[G.ind]][[Q.ind]]$mu[,,tmp.store, drop=F]                            
+      mus        <- sims[[G.ind]][[Q.ind]]$mu[,,tmp.store, drop=FALSE]                            
     }
     if(sw["l.sw"])    {
       lmats      <- sims[[G.ind]][[Q.ind]]$load
       if(!is.element(method, c("MFA", "OMFA", "IMFA"))) {
         lmats    <- as.array(lmats)
       }
-      lmats      <- lmats[,,,tmp.store, drop=F]
+      lmats      <- lmats[,,,tmp.store, drop=FALSE]
     }
     if(sw["psi.sw"])  {
-      psis       <- sims[[G.ind]][[Q.ind]]$psi[,,tmp.store, drop=F]
+      psis       <- sims[[G.ind]][[Q.ind]]$psi[,,tmp.store, drop=FALSE]
     }
     if(sw["pi.sw"])   {
-      pies       <- sims[[G.ind]][[Q.ind]]$pi.prop[,tmp.store, drop=F]
+      pies       <- sims[[G.ind]][[Q.ind]]$pi.prop[,tmp.store, drop=FALSE]
     }
     z            <- as.matrix(sims[[G.ind]][[Q.ind]]$z.store[,tmp.store])
     if(!label.switch) {
@@ -250,10 +250,10 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
         sw.lab   <- lab.switch(z.new=post.z, z.old=zlabels, Gs=Gseq)
         post.z   <- factor(sw.lab$z)
         l.perm   <- sw.lab$z.perm
-        mus      <- mus[,l.perm,, drop=F]
-        lmats    <- lmats[,,l.perm,, drop=F]
-        psis     <- psis[,l.perm,, drop=F]
-        pi.prop  <- pi.prop[l.perm,, drop=F]
+        mus      <- mus[,l.perm,, drop=FALSE]
+        lmats    <- lmats[,,l.perm,, drop=FALSE]
+        psis     <- psis[,l.perm,, drop=FALSE]
+        pi.prop  <- pi.prop[l.perm,, drop=FALSE]
         post.pi  <- post.pi[l.perm]  
         if(inf.Q)   {
          Q.store <- Q.store[l.perm,]
@@ -284,7 +284,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       MH.alpha   <- list(alpha.pi = alpha.pi, post.alpha = post.alpha, var.alpha = var.alpha, CI.alpha = CI.alpha, acceptance.rate = rate)
       class(MH.alpha)          <- "listof"
     }
-    pi.prop      <- pi.prop[Gseq,, drop=F]
+    pi.prop      <- pi.prop[Gseq,, drop=FALSE]
     index        <- order(rownames(pi.prop))
     pi.prop      <- pi.prop[index,]
     post.pi      <- post.pi[index]
@@ -324,7 +324,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
 # Retrieve (unrotated) scores
   no.score       <- all(Q == 0)
   if(no.score)   { 
-    if(sw["f.sw"])                warning("Scores & loadings not stored as model has zero factors", call.=F)
+    if(sw["f.sw"])                warning("Scores & loadings not stored as model has zero factors", call.=FALSE)
     sw["f.sw"]   <- F
   }
   if(sw["f.sw"]) {
@@ -334,7 +334,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     if(inf.Q) {
       f          <- as.array(f)
     }
-    f            <- f[,Q.maxs,tmp.store, drop=F]
+    f            <- f[,Q.maxs,tmp.store, drop=FALSE]
   }
 
 # Loop over g in G to extract other results
@@ -348,7 +348,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     sw["l.sw"]   <- attr(sims, "Switch")["l.sw"]
     if(Qg == 0)  {
       if(all(sw["l.sw"],
-             !no.score))          warning(paste0("Loadings ", ifelse(G > 1, paste0("for group ", g, " not stored as it"), " not stored as model"), " has zero factors"), call.=F)
+             !no.score))          warning(paste0("Loadings ", ifelse(G > 1, paste0("for group ", g, " not stored as it"), " not stored as model"), " has zero factors"), call.=FALSE)
       sw["l.sw"] <- F
     }
     if(inf.Q) {
@@ -361,22 +361,22 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   # Retrieve (unrotated) loadings  
     if(sw["l.sw"]) {
       if(clust.ind)  {
-        lmat     <- adrop(lmats[,Qgs,g,store, drop=F], drop=3)
-        l.temp   <- adrop(lmat[,,1, drop=F], drop=3)
+        lmat     <- adrop(lmats[,Qgs,g,store, drop=FALSE], drop=3)
+        l.temp   <- adrop(lmat[,,1, drop=FALSE], drop=3)
       }
       if(!clust.ind) {
         lmat     <- sims[[G.ind]][[Q.ind]]$load
         if(inf.Q) {
           lmat   <- as.array(lmat)
         }
-        lmat     <- lmat[,Qgs,store, drop=F]
-        l.temp   <- adrop(lmat[,,1, drop=F], drop=3)
+        lmat     <- lmat[,Qgs,store, drop=FALSE]
+        l.temp   <- adrop(lmat[,,1, drop=FALSE], drop=3)
       }
     }
   
   # Loadings matrix / identifiability / error metrics / etc.  
     if(all(sw["f.sw"], clust.ind)) {
-      fg         <- f[z.ind[[g]],Qgs,, drop=F]
+      fg         <- f[z.ind[[g]],Qgs,, drop=FALSE]
     }
     if(sw["l.sw"])      {
       for(p in seq_len(n.store)) {
@@ -407,13 +407,13 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       if(g == 1) {
         dat      <- attr(sims, "Name")
         data.x   <- exists(dat, envir=.GlobalEnv)  
-        if(!data.x)               warning(paste0("Object ", dat, " not found in .GlobalEnv: can't compute empirical covariance and error metrics"), call.=F) 
+        if(!data.x)               warning(paste0("Object ", dat, " not found in .GlobalEnv: can't compute empirical covariance and error metrics"), call.=FALSE) 
         dat      <- as.data.frame(get(dat))
         dat      <- dat[sapply(dat, is.numeric)]
         dat      <- scale(dat, center=cent, scale=scaling)
         varnames <- colnames(dat)
       }
-      cov.emp    <- cov(dat[z.ind[[g]],, drop=F])
+      cov.emp    <- cov(dat[z.ind[[g]],, drop=FALSE])
       dimnames(cov.emp)  <- list(varnames, varnames)
       if(sum(z.ind[[g]]) <= 1)    rm(cov.emp)
     } else {
@@ -462,10 +462,10 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
         }
       } else if(g == 1) {
         if(all(!sw["l.sw"], Qg  > 0, !sw["psi.sw"]))  {
-                                  warning("Loadings & Psi not stored: can't estimate Sigma and compute error metrics", call.=F)
+                                  warning("Loadings & Psi not stored: can't estimate Sigma and compute error metrics", call.=FALSE)
         } else if(all(Qg > 0,
-                  !sw["l.sw"])) { warning("Loadings not stored: can't estimate Sigma and compute error metrics", call.=F)
-        } else if(!sw["psi.sw"])  warning("Psi not stored: can't estimate Sigma and compute error metrics", call.=F)
+                  !sw["l.sw"])) { warning("Loadings not stored: can't estimate Sigma and compute error metrics", call.=FALSE)
+        } else if(!sw["psi.sw"])  warning("Psi not stored: can't estimate Sigma and compute error metrics", call.=FALSE)
       }  
     } else     {
       cov.est    <- sims[[G.ind]][[Q.ind]]$cov.est
@@ -481,10 +481,10 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
         }
       } else if(all(recomp,  g == 1)) {
         if(all(!sw["l.sw"], Qg  > 0, !sw["psi.sw"]))  {
-                                  warning("Loadings & Psi not stored: can't re-estimate Sigma", call.=F)
+                                  warning("Loadings & Psi not stored: can't re-estimate Sigma", call.=FALSE)
         } else if(all(Qg > 0,
-                  !sw["l.sw"])) { warning("Loadings not stored: can't re-estimate Sigma", call.=F)
-        } else if(!sw["psi.sw"])  warning("Psi not stored: can't re-estimate Sigma", call.=F) 
+                  !sw["l.sw"])) { warning("Loadings not stored: can't re-estimate Sigma", call.=FALSE)
+        } else if(!sw["psi.sw"])  warning("Psi not stored: can't re-estimate Sigma", call.=FALSE) 
       }
     }
     
@@ -501,7 +501,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
                  sum(round(diag(cov.est))   != 
                  round(diag(cov.emp)))      != 0,
          sum(abs(post.psi  - (1 - post.psi)) < 0) != 0,
-         var.exp  > 1))           warning(paste0(ifelse(G == 1, "C", paste0("Group ", g, "'s c")), "hain may not have fully converged"), call.=F)
+         var.exp  > 1))           warning(paste0(ifelse(G == 1, "C", paste0("Group ", g, "'s c")), "hain may not have fully converged"), call.=FALSE)
     }
     
     results      <- list(if(sw["mu.sw"])  list(means     = mu,
@@ -520,12 +520,12 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
                                 sw.px))   list(var.exp   = var.exp),
                          if(emp.T[g])     list(cov.mat   = cov.emp), 
                          if(est.T[g])     list(cov.est   = cov.est))
-    result[[g]]  <- unlist(results, recursive=F)
+    result[[g]]  <- unlist(results, recursive=FALSE)
     attr(result[[g]], "Store") <- n.store
     f.store[[g]] <- store
   }
   if(sw["f.sw"]) {
-    f            <- f[,,unique(unlist(f.store)), drop=F]
+    f            <- f[,,unique(unlist(f.store)), drop=FALSE]
     scores       <- list(f = f, post.f = rowMeans(f, dims=2), var.f = apply(f, c(1, 2), var),
                          CI.f  = apply(f, c(1, 2), function(x) quantile(x, conf.levels)))
   }
@@ -539,7 +539,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   if(any(err.T)) {
     errors       <- lapply(list(MSE = MSE, RMSE = RMSE, NRMSE = NRMSE, CVRMSE = CVRMSE, MAD = MAD), setNames, paste0("Group ", Gseq))
     if(G > 1)    {
-      errors     <- c(errors, list(Averages = unlist(lapply(errors, mean, na.rm=T))))
+      errors     <- c(errors, list(Averages = unlist(lapply(errors, mean, na.rm=TRUE))))
       class(errors)            <- "listof"
     } else {
       errors     <- setNames(unlist(errors), names(errors))

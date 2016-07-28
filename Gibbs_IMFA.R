@@ -54,15 +54,15 @@
     l.sigma        <- 1/sigma.l 
     z              <- cluster$z
     pi.alpha       <- cluster$pi.alpha
-    pi.prop        <- cbind(cluster$pi.prop, sim.pi(pi.alpha=pi.alpha, nn=rep(0, trunc.G, inf.G=T))[,-Gs, drop=F])
+    pi.prop        <- cbind(cluster$pi.prop, sim.pi(pi.alpha=pi.alpha, nn=rep(0, trunc.G, inf.G=TRUE))[,-Gs, drop=FALSE])
     nn             <- tabulate(z, nbins=trunc.G)
     mu             <- cbind(mu, do.call(cbind, lapply(seq_len(trunc.G - G), function(g) sim.mu.p(P=P, sigma.mu=sigma.mu, mu.zero=mu.zero))))
     f              <- sim.f.p(N=N, Q=Q)
-    lmat           <- lapply(Ts, function(t) sim.load.p(Q=Q, P=P, sigma.l=sigma.l, shrink=F))
+    lmat           <- lapply(Ts, function(t) sim.load.p(Q=Q, P=P, sigma.l=sigma.l, shrink=FALSE))
     psi.inv        <- do.call(cbind, lapply(Ts, function(t) sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)))
     if(Q0) {
       for(g in which(nn > 2.5 * Q))      {
-        fact       <- try(factanal(data[z == g,, drop=F], factors=Q, scores="regression", control=list(nstart=50)), silent=T)
+        fact       <- try(factanal(data[z == g,, drop=FALSE], factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
         if(!inherits(fact, "try-error")) {
           f[z == g,]       <- fact$scores
           lmat[[g]]        <- fact$loadings
@@ -71,17 +71,17 @@
       }
     } else {
       psi.tmp      <- psi.inv
-      psi.inv      <- do.call(cbind, lapply(Ts, function(t) if(nn[g] > 1) 1/apply(data[z == g,, drop=F], 2, var) else psi.tmp[,g]))
+      psi.inv      <- do.call(cbind, lapply(Ts, function(t) if(nn[g] > 1) 1/apply(data[z == g,, drop=FALSE], 2, var) else psi.tmp[,g]))
       inf.ind      <- is.infinite(psi.inv)
       psi.inv[inf.ind]     <- psi.tmp[is.infinite(psi.inv)]
     }
     l.sigma        <- l.sigma * diag(Q)
-    lmat           <- array(unlist(lmat, use.names=F), dim=c(P, Q, trunc.G))
-    index          <- order(pi.prop, decreasing=T)
-    pi.prop        <- pi.prop[,index, drop=F]
-    mu             <- mu[,index, drop=F]
-    lmat           <- lmat[,,index, drop=F]
-    psi.inv        <- psi.inv[,index, drop=F]
+    lmat           <- array(unlist(lmat, use.names=FALSE), dim=c(P, Q, trunc.G))
+    index          <- order(pi.prop, decreasing=TRUE)
+    pi.prop        <- pi.prop[,index, drop=FALSE]
+    mu             <- mu[,index, drop=FALSE]
+    lmat           <- lmat[,,index, drop=FALSE]
+    psi.inv        <- psi.inv[,index, drop=FALSE]
     csi            <- pp * (1 - pp)^(Ts - 1)
     if(burnin       < 1)  {
       mu.store[,,1]        <- mu
@@ -110,17 +110,17 @@
       }
     
     # Mixing Proportions
-      weights      <- sim.pi(pi.alpha=pi.alpha, nn=nn, inf.G=T, len=trunc.G)
+      weights      <- sim.pi(pi.alpha=pi.alpha, nn=nn, inf.G=TRUE, len=trunc.G)
       pi.prop      <- weights$pi.prop
       if(MH.step)     Vs   <- weights$Vs
       
     # Slice Sampler
       if(!gen.slice) {
-        index      <- order(pi.prop, decreasing=T)
-        pi.prop    <- pi.prop[,index, drop=F]
-        mu         <- mu[,index, drop=F]
-        lmat       <- lmat[,,index, drop=F]
-        psi.inv    <- psi.inv[,index, drop=F]
+        index      <- order(pi.prop, decreasing=TRUE)
+        pi.prop    <- pi.prop[,index, drop=FALSE]
+        mu         <- mu[,index, drop=FALSE]
+        lmat       <- lmat[,,index, drop=FALSE]
+        psi.inv    <- psi.inv[,index, drop=FALSE]
         csi        <- pi.prop
       }
       u.slice      <- runif(N, 0, csi[z])
@@ -131,23 +131,23 @@
     # Cluster Labels
       psi          <- 1/psi.inv
       Sigma        <- lapply(Gs, function(g) tcrossprod(lmat[,,g]) + diag(psi[,g]))
-      z.res        <- sim.z(data=data, mu=mu[,Gs], Sigma=Sigma, Gseq=Gs, N=N, pi.prop=pi.prop[,Gs, drop=F], slice.ind=slice.ind, Q0=Q0s[Gs])
+      z.res        <- sim.z(data=data, mu=mu[,Gs], Sigma=Sigma, Gseq=Gs, N=N, pi.prop=pi.prop[,Gs, drop=FALSE], slice.ind=slice.ind, Q0=Q0s[Gs])
       z            <- z.res$z
       nn           <- tabulate(z, nbins=trunc.G)
       nn0          <- nn > 0
       z.ind        <- lapply(Gs, function(g) z == g)
-      dat.g        <- lapply(Gs, function(g) data[z.ind[[g]],, drop=F])
+      dat.g        <- lapply(Gs, function(g) data[z.ind[[g]],, drop=FALSE])
       
     # Scores & Loadings
       c.data       <- lapply(Gs, function(g) sweep(dat.g[[g]], 2, mu[,g], FUN="-"))
       if(Q0)   {
         f.tmp      <- lapply(Gs, function(g) if(nn0[g]) sim.score(N=nn[g], lmat=lmat[,,g], Q=Q, c.data=c.data[[g]], psi.inv=psi.inv[,g], Q1=Q1) else matrix(, nr=0, nc=Q))
         FtF        <- lapply(Gs, function(g) if(nn0[g]) crossprod(f.tmp[[g]]))
-        lmat[,,Gs] <- array(unlist(lapply(Gs, function(g) if(nn0[g]) matrix(unlist(lapply(Ps, function(j) sim.load(l.sigma=l.sigma, Q=Q, P=P, c.data=c.data[[g]][,j], f=f.tmp[[g]], Q1=Q1, 
-                            psi.inv=psi.inv[,g][j], FtF=FtF[[g]], shrink=F)), use.names=F), nr=P, byrow=T) else sim.load.p(Q=Q, P=P, sigma.l=sigma.l, shrink=F)), use.names=F), dim=c(P, Q, G))
-        f          <- do.call(rbind, f.tmp)[obsnames,, drop=F]
+        lmat[,,Gs] <- array(unlist(lapply(Gs, function(g) if(nn0[g]) matrix(unlist(lapply(Ps, function(j) sim.load(l.sigma=l.sigma, Q=Q, c.data=c.data[[g]][,j], f=f.tmp[[g]], Q1=Q1, FtF=FtF[[g]], 
+                            P=P, psi.inv=psi.inv[,g][j], shrink=FALSE)), use.names=FALSE), nr=P, byrow=TRUE) else sim.load.p(Q=Q, P=P, sigma.l=sigma.l, shrink=FALSE)), use.names=FALSE), dim=c(P, Q, G))
+        f          <- do.call(rbind, f.tmp)[obsnames,, drop=FALSE]
       } else {
-        f.tmp      <- lapply(Gs, function(g) f[z.ind[[g]],, drop=F])
+        f.tmp      <- lapply(Gs, function(g) f[z.ind[[g]],, drop=FALSE])
       }
       
     # Means

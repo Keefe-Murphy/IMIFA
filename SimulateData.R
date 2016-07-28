@@ -16,7 +16,7 @@ sim.IMIFA      <- function(N = 500, G = 3, P = 25, Q = rep(5, G), nn = NULL) {
   if(missing(nn)) {
     pie        <- rdirichlet(1, rep(0.5, G))
     ind.mat    <- rmultinom(N, size=1, prob=pie)
-    labs       <- factor(which(ind.mat != 0, arr.ind=T)[,1], levels=seq_len(G))
+    labs       <- factor(which(ind.mat != 0, arr.ind=TRUE)[,1], levels=seq_len(G))
     nn         <- tabulate(labs, nbins=G)
   } else if(any(length(nn) != G, 
                 sum(nn) != N))   {       stop(paste0("nn must be a vector of length ", G, " which sums to ", N))
@@ -82,7 +82,7 @@ sim.IMIFA      <- function(N = 500, G = 3, P = 25, Q = rep(5, G), nn = NULL) {
 # Post-process data
   nn.seq        <- seq_along(nn)
   true.zlab     <- factor(rep(nn.seq, nn), labels=seq_along(nn.seq))
-  permute       <- sample(seq_len(N), N, replace=F)
+  permute       <- sample(seq_len(N), N, replace=FALSE)
   SimData       <- SimData[permute,]
   true.zlab     <- true.zlab[permute]
   dimnames(SimData)     <- list(paste0("Obs ", seq_len(N)), vnames)

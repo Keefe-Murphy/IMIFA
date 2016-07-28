@@ -4,9 +4,9 @@
 
 # Preamble
  #set.seed(1)
- #rm(list=ls(all=T))
+ #rm(list=ls(all=TRUE))
   if(getwd() != "/home/kmurphy")  {
-    wd       <- try(setwd("C:/Users/Windows/Dropbox/UCD/Claire IMIFA"), silent=T)
+    wd       <- try(setwd("C:/Users/Windows/Dropbox/UCD/Claire IMIFA"), silent=TRUE)
     if(inherits(wd, "try-error")) {
       setwd("D:/Dropbox/UCD/Claire IMIFA")
     }
@@ -28,8 +28,8 @@
     Grp      <- x10[,"Group"]
     ppm.g    <- do.call(cbind, lapply(seq_len(max(Grp)), function(g) colMeans(urine[Grp == g,])))
     matplot(ppm.g, type="l", xlab="Chemical Shift (ppm)", yaxt="n", ylab="", bty="n", xaxt="n", lwd=2, lty=1)
-    axis(1, at=seq(from=20, to=nrow(ppm.g), by=20), labels=9:1, tick=T, lwd.ticks=1, xpd=T)
-    axis(1, at=seq_len(nrow(ppm.g)), labels=FALSE, tick=T, tcl=-0.2)
+    axis(1, at=seq(from=20, to=nrow(ppm.g), by=20), labels=9:1, tick=TRUE, lwd.ticks=1, xpd=TRUE)
+    axis(1, at=seq_len(nrow(ppm.g)), labels=FALSE, tick=TRUE, tcl=-0.2)
     legend("topleft", legend=c("Control", "Epileptic"), bty="n", lty=1, col=c(1,2))  
   # Meat
     load(file=paste0(getwd(), "/Data/Meat.Rdata", sep=""), envir=.GlobalEnv)
@@ -91,11 +91,11 @@
 
 # Means
   plot(res, "a", "m")
-  plot(res, "a", "m", mat=F)
+  plot(res, "a", "m", mat=FALSE)
   plot(res, "t", "m")
-  plot(res, "t", "m", mat=F)
+  plot(res, "t", "m", mat=FALSE)
   plot(res, "d", "m")
-  plot(res, "d", "m", mat=F)
+  plot(res, "d", "m", mat=FALSE)
   do.call(rbind, lapply(seq_len(res$GQ.results$G), function(g) res[[g]]$post.mu))
   do.call(rbind, lapply(seq_len(res$GQ.results$G), function(g) res[[g]]$var.mu))
   plot(res, "p", "m")
@@ -104,21 +104,21 @@
 # Scores
   plot(res, "a", "s")
   plot(res, "a", "s", Lab)
-  plot(res, "a", "s", mat=F)
+  plot(res, "a", "s", mat=FALSE)
   plot(res, "t", "s")
-  plot(res, "t", "s", mat=F)
+  plot(res, "t", "s", mat=FALSE)
   plot(res, "d", "s")
-  plot(res, "d", "s", mat=F)
+  plot(res, "d", "s", mat=FALSE)
   plot(res, "p", "s")
   plot(res, "c", "s")
       
 # Loadings
   plot(res, "a", "l")
-  plot(res, "a", "l", mat=F)
+  plot(res, "a", "l", mat=FALSE)
   plot(res, "t", "l")
-  plot(res, "t", "l", mat=F)
+  plot(res, "t", "l", mat=FALSE)
   plot(res, "d", "l")
-  plot(res, "d", "l", mat=F)
+  plot(res, "d", "l", mat=FALSE)
   lapply(seq_len(res$GQ.results$G), function(g) res[[g]]$post.load)
   lapply(seq_len(res$GQ.results$G), function(g) res[[g]]$var.load)
   plot(res, "p", "l")
@@ -126,11 +126,11 @@
   
 # Uniquenesses
   plot(res, "a", "u")
-  plot(res, "a", "u", mat=F)
+  plot(res, "a", "u", mat=FALSE)
   plot(res, "t", "u")
-  plot(res, "t", "u", mat=F)
+  plot(res, "t", "u", mat=FALSE)
   plot(res, "d", "u")
-  plot(res, "d", "u", mat=F)
+  plot(res, "d", "u", mat=FALSE)
   do.call(rbind, lapply(seq_len(res$GQ.results$G), function(g) summary(res[[g]]$post.psi)))
   do.call(rbind, lapply(seq_len(res$GQ.results$G), function(g) res[[g]]$var.psi))
   plot(res, "p", "u")
@@ -138,13 +138,13 @@
 
 # Mixing Proportions
   plot(res, "a", "p")
-  plot(res, "a", "p", mat=F)
+  plot(res, "a", "p", mat=FALSE)
   plot(res, "t", "p")
-  plot(res, "t", "p", mat=F)
+  plot(res, "t", "p", mat=FALSE)
   plot(res, "d", "p")
-  plot(res, "d", "p", mat=F)
+  plot(res, "d", "p", mat=FALSE)
   plot(res, "p", "p")
-  plot(res, "p", "p", mat=F)
+  plot(res, "p", "p", mat=FALSE)
   plot(res, "c", "p")
   
 # Covariance Matrices & Error Metrics

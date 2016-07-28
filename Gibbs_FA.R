@@ -44,7 +44,7 @@
     mu.sigma     <- 1/sigma.mu
     l.sigma      <- 1/sigma.l
     f            <- sim.f.p(Q=Q, N=N)
-    lmat         <- sim.load.p(Q=Q, P=P, sigma.l=sigma.l, shrink=F)
+    lmat         <- sim.load.p(Q=Q, P=P, sigma.l=sigma.l, shrink=FALSE)
     psi.inv      <- sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
     l.sigma      <- l.sigma * diag(Q)
     sum.data     <- mu * N
@@ -53,7 +53,7 @@
       f.store[,,1]         <- f
       load.store[,,1]      <- lmat
       psi.store[,1]        <- 1/psi.inv
-      ll.store[1]          <- sum(dmvn(X=data, mu=mu, sigma=tcrossprod(lmat) + diag(1/psi.inv), log=T))
+      ll.store[1]          <- sum(dmvn(X=data, mu=mu, sigma=tcrossprod(lmat) + diag(1/psi.inv), log=TRUE))
     }
   
   # Iterate
@@ -70,8 +70,8 @@
       c.data     <- sweep(data, 2, mu, FUN="-")
       if(Q0) {
         f        <- sim.score(N=N, Q=Q, lmat=lmat, psi.inv=psi.inv, c.data=c.data, Q1=Q1)
-        lmat     <- matrix(unlist(lapply(Pseq, function(j) sim.load(l.sigma=l.sigma, Q=Q, f=f, c.data=c.data[,j], 
-                           P=P, Q1=Q1, psi.inv=psi.inv[j], FtF=crossprod(f), shrink=F)), use.names=F), nr=P, byrow=T)
+        lmat     <- matrix(unlist(lapply(Pseq, function(j) sim.load(l.sigma=l.sigma, Q=Q, f=f, c.data=c.data[,j], P=P, 
+                           Q1=Q1, psi.inv=psi.inv[j], FtF=crossprod(f), shrink=FALSE)), use.names=FALSE), nr=P, byrow=TRUE)
       }
       
     # Means
@@ -91,7 +91,7 @@
         if(all(sw["f.sw"], Q0))  f.store[,,new.it]    <- f
         if(all(sw["l.sw"], Q0))  load.store[,,new.it] <- lmat
         if(sw["psi.sw"])         psi.store[,new.it]   <- psi
-                                 ll.store[new.it]     <- sum(dmvn(X=data, mu=mu, sigma=Sigma, log=T))
+                                 ll.store[new.it]     <- sum(dmvn(X=data, mu=mu, sigma=Sigma, log=TRUE))
       }  
     }
     returns   <- list(mu       = if(sw["mu.sw"])         mu.store,

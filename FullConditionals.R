@@ -20,7 +20,7 @@
     }
       
   # Loadings
-    sim.load    <- function(l.sigma, Q, c.data, P, f, phi, tau, psi.inv, FtF, Q1, shrink = T) {
+    sim.load    <- function(l.sigma, Q, c.data, P, f, phi, tau, psi.inv, FtF, Q1, shrink = TRUE) {
       U.load    <- if(shrink) phi * tau * diag(Q) + psi.inv * FtF else l.sigma + psi.inv * FtF
       U.load    <- if(Q1) chol(U.load) else sqrt(U.load)
       mu.load   <- psi.inv * (if(Q1) chol2inv(U.load) else 1/(U.load * U.load)) %*% crossprod(f, c.data)
@@ -48,7 +48,7 @@
     }
 
   # Mixing Proportions
-    sim.pi      <- function(pi.alpha, nn, inf.G=F, len) {
+    sim.pi      <- function(pi.alpha, nn, inf.G = FALSE, len) {
       if(inf.G) {
         vs      <- rbeta(length(nn), 1 + nn, pi.alpha + sum(nn) - cumsum(nn))
         vs[len] <- 1
@@ -59,8 +59,8 @@
     }
   
   # Cluster Labels
-    sim.z       <- function(data, mu, Sigma, Gseq, N, pi.prop, slice.ind=NULL, Q0) {
-      log.num   <- do.call(cbind, lapply(Gseq, function(g, q=Q0[g]) dmvn(data, mu[,g], if(q) Sigma[[g]] else sqrt(Sigma[[g]]), log=T, isChol=!q) + log(pi.prop[,g])))
+    sim.z       <- function(data, mu, Sigma, Gseq, N, pi.prop, slice.ind = NULL, Q0) {
+      log.num   <- do.call(cbind, lapply(Gseq, function(g, q=Q0[g]) dmvn(data, mu[,g], if(q) Sigma[[g]] else sqrt(Sigma[[g]]), log=TRUE, isChol=!q) + log(pi.prop[,g])))
       if(!missing(slice.ind)) {
         log.num <- log.num + log(slice.ind)
       }
@@ -93,7 +93,7 @@
     }
   
   # Loadings
-    sim.load.p  <- function(Q, P, sigma.l, phi, tau, shrink = T) {
+    sim.load.p  <- function(Q, P, sigma.l, phi, tau, shrink = TRUE) {
       if(shrink) {
         sqrt(1/(phi * tau)) * rnorm(Q)
       } else     {
@@ -112,20 +112,20 @@
     }
   
   # Global Shrinkage
-    sim.delta.p <- function(Q=2, alpha, beta) {
+    sim.delta.p <- function(Q = 2, alpha, beta) {
         rgamma(n=Q - 1, shape=alpha, rate=beta)
     }
         
   # Cluster Labels
     sim.z.p     <- function(N, prob.z) {
-        factor(which(rmultinom(N, size=1, prob=prob.z) != 0, arr.ind=T)[,1], levels=seq_along(prob.z))
+        factor(which(rmultinom(N, size=1, prob=prob.z) != 0, arr.ind=TRUE)[,1], levels=seq_along(prob.z))
     }
 
 # Other Functions
     
   # Uniqueness Hyperparameters
     psi.hyper   <- function(alpha, covar) {
-      inv.cov   <- try(chol2inv(chol(covar)), silent=T)
+      inv.cov   <- try(chol2inv(chol(covar)), silent=TRUE)
       if(inherits(inv.cov, "try-error"))   {
         inv.cov <- 1/covar
       }
@@ -133,9 +133,9 @@
     }
 
   # Label Switching
-    lab.switch  <- function(z.new, z.old, Gs, ng=tabulate(z.new)) {
+    lab.switch  <- function(z.new, z.old, Gs, ng = tabulate(z.new)) {
       tab       <- table(z.new, z.old, dnn=NULL)
-      tab.tmp   <- tab[rowSums(tab) != 0,colSums(tab) != 0, drop=F]
+      tab.tmp   <- tab[rowSums(tab) != 0,colSums(tab) != 0, drop=FALSE]
       nc        <- ncol(tab.tmp)
       nr        <- nrow(tab.tmp)
       if(nc > nr) {
@@ -154,7 +154,7 @@
       } else if(nc == 1) {
         z.perm  <- setNames(as.numeric(colnames(tab.tmp)), as.numeric(colnames(tab.tmp)))
       } else {
-        z.perm  <- suppressWarnings(matchClasses(tab.tmp, method="exact", verbose=F))
+        z.perm  <- suppressWarnings(matchClasses(tab.tmp, method="exact", verbose=FALSE))
         z.perm  <- setNames(as.numeric(z.perm), names(z.perm))
       }
       if(length(Gs) > length(z.perm)) {
@@ -167,7 +167,7 @@
     }
 
   # Length Checker
-    len.check   <- function(obj0g, switch0g, P.dim=T) {
+    len.check   <- function(obj0g, switch0g, P.dim = TRUE) {
       V         <- ifelse(P.dim, P, 1)
       obj.name  <- deparse(substitute(obj0g))
       sw.name   <- deparse(substitute(switch0g))
@@ -194,8 +194,8 @@
 
   # Loadings Heatmaps
     mat2color   <- function(m, colors = dichromat(heat.colors(30)), 
-                            byrank=F, breaks=length(colors)) { 
-      m1        <- if(byrank == T) rank(m) else m
+                            byrank = FALSE, breaks = length(colors)) { 
+      m1        <- if(isTRUE(byrank)) rank(m) else m
       facs      <- cut(m1, breaks, include.lowest=TRUE)
       answer    <- colors[as.numeric(facs)]
       if(is.matrix(m)) {

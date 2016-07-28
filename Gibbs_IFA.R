@@ -50,14 +50,14 @@
     phi          <- sim.phi.p(Q=Q, P=P, phi.nu=phi.nu)
     delta        <- c(sim.delta.p(alpha=alpha.d1, beta=beta.d1), sim.delta.p(Q=Q, alpha=alpha.dk, beta=beta.dk))
     tau          <- cumprod(delta)
-    lmat         <- matrix(unlist(lapply(Pseq, function(j) sim.load.p(Q=Q, phi=phi[j,], tau=tau, P=P)), use.names=F), nr=P, byrow=T)
+    lmat         <- matrix(unlist(lapply(Pseq, function(j) sim.load.p(Q=Q, phi=phi[j,], tau=tau, P=P)), use.names=FALSE), nr=P, byrow=TRUE)
     sum.data     <- mu * N
     if(burnin     < 1) {
       mu.store[,1]         <- mu
       f.store[,,1]         <- f
       load.store[,,1]      <- lmat
       psi.store[,1]        <- 1/psi.inv
-      ll.store[1]          <- sum(dmvn(X=data, mu=mu, sigma=tcrossprod(lmat) + diag(1/psi.inv), log=T))
+      ll.store[1]          <- sum(dmvn(X=data, mu=mu, sigma=tcrossprod(lmat) + diag(1/psi.inv), log=TRUE))
     }
   
   # Iterate
@@ -76,8 +76,8 @@
       c.data     <- sweep(data, 2, mu, FUN="-")
       if(Q0) {
         f        <- sim.score(N=N, Q=Q, lmat=lmat, psi.inv=psi.inv, c.data=c.data, Q1=Q1)
-        lmat     <- matrix(unlist(lapply(Pseq, function(j) sim.load(Q=Q, tau=tau, f=f, c.data=c.data[,j], P=P, 
-                           Q1=Q1, phi=phi[j,], psi.inv=psi.inv[j], FtF=crossprod(f))), use.names=F), nr=P, byrow=T)
+        lmat     <- matrix(unlist(lapply(Pseq, function(j) sim.load(Q=Q, tau=tau, f=f, c.data=c.data[,j], P=P, Q1=Q1, 
+                           phi=phi[j,], psi.inv=psi.inv[j], FtF=crossprod(f))), use.names=FALSE), nr=P, byrow=TRUE)
       } else {
         f        <- matrix(, nr=N, nc=0)
         lmat     <- matrix(, nr=P, nc=0)
@@ -118,11 +118,11 @@
           } else          { # remove redundant columns
             nonred  <- which(colvec == 0)
             Q       <- Q - numred
-            f       <- f[,nonred, drop=F]
-            phi     <- phi[,nonred, drop=F]
+            f       <- f[,nonred, drop=FALSE]
+            phi     <- phi[,nonred, drop=FALSE]
             delta   <- delta[nonred]
             tau     <- cumprod(delta)
-            lmat    <- lmat[,nonred, drop=F]
+            lmat    <- lmat[,nonred, drop=FALSE]
           }
         }
       } 
@@ -140,7 +140,7 @@
         if(all(sw["l.sw"], Q0))     load.store[,seq_len(Q),new.it] <- lmat
         if(sw["psi.sw"])            psi.store[,new.it]             <- psi
                                     Q.store[new.it]                <- Q
-                                    ll.store[new.it]               <- sum(dmvn(X=data, mu=mu, sigma=Sigma, log=T))
+                                    ll.store[new.it]               <- sum(dmvn(X=data, mu=mu, sigma=Sigma, log=TRUE))
       }
     }
     returns      <- list(mu       = if(sw["mu.sw"])  mu.store,

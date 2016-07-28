@@ -7,7 +7,7 @@ if(length(setdiff(packages, rownames(installed.packages()))) > 0) {
   suppressMessages(install.packages(setdiff(packages, rownames(installed.packages()))))
 }
 if(length(setdiff(packages, (.packages()))) > 0) {
-  suppressMessages(lapply(setdiff(packages, (.packages())), library, ch=T))
+  suppressMessages(lapply(setdiff(packages, (.packages())), library, ch=TRUE))
 }
 rm(packages)
 packageStartupMessage("   ________  __________________\n  /_  __/  |/   /_  __/ ___/ _ \\  \n   / / / /|_// / / / / /__/ /_\\ \\ \n _/ /_/ /   / /_/ /_/ ___/ /___\\ \\ \n/____/_/   /_/_____/_/  /_/     \\_\\    version 1.0")
@@ -16,18 +16,18 @@ source(paste(getwd(), "/IMIFA-GIT/PlottingFunctions.R", sep=""))
 source(paste(getwd(), "/IMIFA-GIT/SimulateData.R", sep=""))
 
 mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA", "MFA", "IFA", "FA", "classify"), 
-                        n.iters = 50000, Labels = NULL, factanal = F, range.G = NULL, range.Q = NULL, verbose = F, Q.fac = NULL,  
-                        burnin = n.iters/5, thinning = 2, centering = T, scaling = c("unit", "pareto", "none"), trunc.G = NULL, MH.lower = NULL,
-                        adapt = T, b0 = NULL, b1 = NULL, delta0g = F, prop = NULL, epsilon = NULL, sigma.mu = NULL, sigma.l = NULL, MH.step = T,
-                        mu0g = F, psi0g = F, mu.zero = NULL, phi.nu = NULL, psi.alpha = NULL, psi.beta = NULL, alpha.d1 = NULL, pp = NULL, MH.upper = NULL,
-                        alpha.dk = NULL, beta.d1 = NULL, beta.dk = NULL, alpha.pi = NULL, z.list = NULL, profile = F, mu.switch = T, gen.slice = F,
-                        f.switch = T, load.switch = T, psi.switch = T, pi.switch = T, z.init = c("kmeans", "list", "mclust", "priors")) {
+                        n.iters = 50000, Labels = NULL, factanal = FALSE, range.G = NULL, range.Q = NULL, verbose = FALSE, Q.fac = NULL,  
+                        burnin = n.iters/5, thinning = 2, centering = TRUE, scaling = c("unit", "pareto", "none"), trunc.G = NULL, MH.lower = NULL,
+                        adapt = TRUE, b0 = NULL, b1 = NULL, delta0g = FALSE, prop = NULL, epsilon = NULL, sigma.mu = NULL, sigma.l = NULL, MH.step = TRUE,
+                        mu0g = FALSE, psi0g = FALSE, mu.zero = NULL, phi.nu = NULL, psi.alpha = NULL, psi.beta = NULL, alpha.d1 = NULL, pp = NULL, MH.upper = NULL,
+                        alpha.dk = NULL, beta.d1 = NULL, beta.dk = NULL, alpha.pi = NULL, z.list = NULL, profile = FALSE, mu.switch = TRUE, gen.slice = FALSE,
+                        f.switch = TRUE, load.switch = TRUE, psi.switch = TRUE, pi.switch = TRUE, z.init = c("kmeans", "list", "mclust", "priors")) {
   
-  defpar    <- suppressWarnings(par(no.readonly = T))
+  defpar    <- suppressWarnings(par(no.readonly=TRUE))
   defopt    <- options()
   options(warn=1)
   on.exit(suppressWarnings(par(defpar)))
-  on.exit(suppressWarnings(options(defopt)), add=T)
+  on.exit(suppressWarnings(options(defopt)), add=TRUE)
   if(method == "classification") {
     method  <- "classify"
   }
@@ -66,14 +66,14 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   
 # Manage storage switches & warnings for other function inputs
   if(!missing(mu.switch) && all(!mu.switch, !centering)) {
-                                    warning("Centering hasn't been applied - are you sure you want mu.switch=F?", call.=F)
+                                    warning("Centering hasn't been applied - are you sure you want mu.switch=FALSE?", call.=FALSE)
   }
   switches  <- c(mu.sw=mu.switch, f.sw=f.switch, l.sw=load.switch, psi.sw=psi.switch, pi.sw=pi.switch)
   if(!is.logical(switches))         stop("All logical switches must be TRUE or FALSE")
   G.x       <- missing(range.G)
   if(!is.element(method, c("MFA", "MIFA")))    {
     if(all(!G.x, is.element(method, c("FA", "IFA"))) &&  
-       any(range.G  > 1))           warning(paste0("'range.G' must be 1 for the ", method, " method"), call.=F)
+       any(range.G  > 1))           warning(paste0("'range.G' must be 1 for the ", method, " method"), call.=FALSE)
     if(is.element(method, c("OMIFA", "OMFA", "IMFA", "IMIFA"))) {
       if(G.x) {
         range.G    <- max(2, floor(2 * log(N)))
@@ -179,31 +179,31 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
      "IMFA", "OMIFA", "OMFA"))))  {
     if(all(!switches["l.sw"], 
            !switches["psi.sw"]))  {
-                                    warning("Loadings & Psi not stored: unable to estimate covariance matrix and compute error metrics", call.=F)
-    } else if(!switches["l.sw"])  { warning("Loadings not stored: unable to estimate covariance matrix and compute error metrics", call.=F)
-    } else if(!switches["psi.sw"])  warning("Psi not stored: unable to estimate covariance matrix and compute error metrics", call.=F)
+                                    warning("Loadings & Psi not stored: unable to estimate covariance matrix and compute error metrics", call.=FALSE)
+    } else if(!switches["l.sw"])  { warning("Loadings not stored: unable to estimate covariance matrix and compute error metrics", call.=FALSE)
+    } else if(!switches["psi.sw"])  warning("Psi not stored: unable to estimate covariance matrix and compute error metrics", call.=FALSE)
   }
   if(any(all(method == "MFA",  any(range.G > 1)),
          all(method == "MIFA", any(range.G > 1)), is.element(method, c("IMIFA", 
      "IMFA", "OMIFA", "OMFA"))))  {
     if(all(!switches["mu.sw"], 
            !switches["psi.sw"]))  {
-                                    warning("Means & Psi not stored: posterior mean estimates won't be available", call.=F)
-    } else if(!switches["mu.sw"]) { warning("Means not stored: posterior mean estimates won't be available", call.=F)
-    } else if(!switches["psi.sw"])  warning("Psi not stored: posterior mean estimates won't be available", call.=F)
+                                    warning("Means & Psi not stored: posterior mean estimates won't be available", call.=FALSE)
+    } else if(!switches["mu.sw"]) { warning("Means not stored: posterior mean estimates won't be available", call.=FALSE)
+    } else if(!switches["psi.sw"])  warning("Psi not stored: posterior mean estimates won't be available", call.=FALSE)
   }
   if(is.element(method, c("FA", "MFA", "OMFA", "IMFA")) && all(range.Q == 0)) {   
     if(all(switches[c("f.sw", "l.sw")]))  {
-                                    warning("Scores & Loadings not stored as model has zero factors", call.=F)
-    } else if(switches["f.sw"])   { warning("Scores not stored as model has zero factors", call.=F)
-    } else if(switches["l.sw"])   { warning("Loadings not stored as model has zero factors", call.=F)
+                                    warning("Scores & Loadings not stored as model has zero factors", call.=FALSE)
+    } else if(switches["f.sw"])   { warning("Scores not stored as model has zero factors", call.=FALSE)
+    } else if(switches["l.sw"])   { warning("Loadings not stored as model has zero factors", call.=FALSE)
     }                               
     switches[c("f.sw", "l.sw")]  <- F                              
   } else {
     if(all(!switches[c("f.sw", "l.sw")])) { 
-                                    warning("Posterior Scores & Loadings won't be available as they're not being stored", call.=F)
-    } else if(!switches["f.sw"])  { warning("Posterior Scores won't be available as they're not being stored", call.=F)
-    } else if(!switches["l.sw"])  { warning("Posterior Loadings won't be available as they're not being stored", call.=F)
+                                    warning("Posterior Scores & Loadings won't be available as they're not being stored", call.=FALSE)
+    } else if(!switches["f.sw"])  { warning("Posterior Scores won't be available as they're not being stored", call.=FALSE)
+    } else if(!switches["l.sw"])  { warning("Posterior Loadings won't be available as they're not being stored", call.=FALSE)
     }
   }
   if(all(is.element(method, c("FA", "IFA")), 
@@ -222,11 +222,11 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(alpha.miss)           alpha.pi      <- ifelse(is.element(method, c("OMIFA", "OMFA")), 0.5/range.G, ifelse(all(MH.step, 
                                                      is.element(method, c("IMIFA", "IMFA"))), runif(1, MH.lower, MH.upper), 1))
     if(all(is.element(method,  c("IMIFA", "IMFA")),
-           alpha.miss,  !MH.step))  warning("'alpha.pi' fixed at 1 rather than simulated from prior as it's not being learned via Metropolis-Hastings updates", call.=F)
+           alpha.miss,  !MH.step))  warning("'alpha.pi' fixed at 1 rather than simulated from prior as it's not being learned via Metropolis-Hastings updates", call.=FALSE)
     if(length(alpha.pi) != 1)       stop("'alpha.pi' must be specified as a scalar to ensure an exchangeable prior")
     if(alpha.pi <= 0)               stop("'alpha.pi' must be strictly positive")
     if(all(!is.element(method, c("IMFA", "IMIFA")),
-           alpha.pi  > 1))          warning("Are you sure alpha.pi should be greater than 1?", call.=F)
+           alpha.pi  > 1))          warning("Are you sure alpha.pi should be greater than 1?", call.=FALSE)
                              z.init        <- match.arg(z.init)
     if(all(is.element(method,  c("OMIFA", "OMFA")), !is.element(z.init, 
        c("list", "kmeans"))))       stop("'z.init' must be set to 'list' or 'kmeans' for the OMIFA method to ensure all groups are populated at the initialisation stage")
@@ -251,13 +251,13 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
                                     stop(paste0("'z.list' must be supplied if 'z.init' is set to 'list'")) }
   }
   if(method == "classify") {
-    source(paste(getwd(), "/IMIFA-GIT/Gibbs_", "IFA", ".R", sep=""), local=T)
+    source(paste(getwd(), "/IMIFA-GIT/Gibbs_", "IFA", ".R", sep=""), local=TRUE)
   } else {
     for(g.meth in unique(meth)) {
-      source(paste(getwd(), "/IMIFA-GIT/Gibbs_", g.meth, ".R", sep=""), local=T)
+      source(paste(getwd(), "/IMIFA-GIT/Gibbs_", g.meth, ".R", sep=""), local=TRUE)
     }
   }
-  source(paste(getwd(), "/IMIFA-GIT/FullConditionals.R", sep=""), local=T)
+  source(paste(getwd(), "/IMIFA-GIT/FullConditionals.R", sep=""), local=TRUE)
 
   imifa     <- list(list())
   Gi        <- 1
@@ -300,12 +300,12 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(ad1.x) {
       alpha.d1     <- list(2)
     } else {
-      alpha.d1     <- len.check(alpha.d1, delta0g, P.dim=F)
+      alpha.d1     <- len.check(alpha.d1, delta0g, P.dim=FALSE)
     }
     if(adk.x) {
       alpha.dk     <- list(10)
     } else {
-      alpha.dk     <- len.check(alpha.dk, delta0g, P.dim=F)
+      alpha.dk     <- len.check(alpha.dk, delta0g, P.dim=FALSE)
     }
   }
   if(!is.element(method, c("FA", "IFA"))) {
@@ -317,17 +317,17 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     for(g in seq_along(range.G)) {
       G            <- range.G[g]
       if(z.init    == "kmeans")     {
-        k.res      <- try(kmeans(dat, G, nstart=100), silent=T)
+        k.res      <- try(kmeans(dat, G, nstart=100), silent=TRUE)
         if(!inherits(k.res, "try-error"))  {
           zi[[g]]  <- as.numeric(factor(k.res$cluster, levels=seq_len(G)))
-        } else                      warning("Cannot initialise cluster labels using kmeans. Try another z.init method", call.=F)
+        } else                      warning("Cannot initialise cluster labels using kmeans. Try another z.init method", call.=FALSE)
       } else if(z.init  == "list")   {
         zi[[g]]    <- as.numeric(z.list[[g]])
       } else if(z.init  == "mclust") {
-        m.res      <- try(Mclust(dat, G), silent=T)
+        m.res      <- try(Mclust(dat, G), silent=TRUE)
         if(!inherits(m.res, "try_error"))  {
           zi[[g]]  <- as.numeric(m.res$classification)
-        } else                      warning("Cannot initialise cluster labels using mclust. Try another z.init method", call.=F)
+        } else                      warning("Cannot initialise cluster labels using mclust. Try another z.init method", call.=FALSE)
       } else {
         zips       <- rep(1, N)
         if(!is.element(method, c("IMFA", "IMIFA"))) {
@@ -338,20 +338,20 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
           }  
         } else {
           if(alpha.pi <= 1)         warning(paste0("Suggestion: increase alpha.pi from ", alpha.pi, " if initialising from the stick-breaking prior"))
-          pies     <- sim.pi(pi.alpha=alpha.pi, nn=rep(0, trunc.G), inf.G=T)
+          pies     <- sim.pi(pi.alpha=alpha.pi, nn=rep(0, trunc.G), inf.G=TRUE)
           zips     <- sim.z.p(N=N, prob.z=pies)
         }
         zi[[g]]    <- as.numeric(zips)
         rm(zips)
       }
       pi.prop[[g]] <- t(prop.table(tabulate(zi[[g]], nbins=G)))
-      mu[[g]]      <- do.call(cbind, lapply(seq_len(G), function(gg) if(pi.prop[[g]][,gg] > 0) colMeans(dat[zi[[g]] == gg,, drop=F]) else rep(0, P)))
+      mu[[g]]      <- do.call(cbind, lapply(seq_len(G), function(gg) if(pi.prop[[g]][,gg] > 0) colMeans(dat[zi[[g]] == gg,, drop=FALSE]) else rep(0, P)))
       if(mu0.x)   {
         mu.zero[[g]]    <- if(mu0g) mu[[g]] else do.call(cbind, lapply(seq_len(G), function(gg) colMeans(dat)))  
       }
       if(beta.x)  {
         if(psi0g) {
-          cov.gg   <- lapply(seq_len(G), function(gg) if(pi.prop[[g]][,gg] > 0) cov(dat[zi[[g]] == gg,, drop=F]) else cov.mat)
+          cov.gg   <- lapply(seq_len(G), function(gg) if(pi.prop[[g]][,gg] > 0) cov(dat[zi[[g]] == gg,, drop=FALSE]) else cov.mat)
           psi.beta[[g]] <- do.call(cbind, lapply(seq_len(G), function(gg) psi.hyper(psi.alpha, cov.gg[[gg]])))
         } else {
           psi.beta[[g]] <- replicate(G, temp.psi[[1]])
@@ -366,9 +366,9 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
       clust[[g]]   <- list(z = zi[[g]], pi.alpha = alpha.pi, pi.prop = pi.prop[[g]])
       if(is.element(method, c("MFA", "MIFA"))) {
         sw0g.tmp   <- sw0gs
-        if(all(G > 9, any(sw0gs))) {
+        if(all(g > 9, any(sw0gs))) {
           sw0g.tmp <- setNames(rep(F, 4), names(sw0gs))
-                                    warning(paste0(names(which(sw0gs == T)), " set to FALSE where G > 9, as 'exact' label-switching is not possible in this case\n"), call.=F)
+                                    warning(paste0(names(which(sw0gs)), " set to FALSE where G > 9, as 'exact' label-switching is not possible in this case\n"), call.=FALSE)
         }
         clust[[g]] <- append(clust[[g]], list(l.switch = sw0g.tmp))
       }

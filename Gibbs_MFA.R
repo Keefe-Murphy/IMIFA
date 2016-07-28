@@ -60,13 +60,13 @@
     psi0g          <- cluster$l.switch[2]
     label.switch   <- any(cluster$l.switch)
     f              <- sim.f.p(N=N, Q=Q)
-    lmat           <- lapply(Gseq, function(g) sim.load.p(Q=Q, P=P, sigma.l=sigma.l, shrink=F))
+    lmat           <- lapply(Gseq, function(g) sim.load.p(Q=Q, P=P, sigma.l=sigma.l, shrink=FALSE))
     psi.inv        <- do.call(cbind, lapply(Gseq, function(g) sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta[,g])))
     if(Q0) {
       fact.ind     <- nn <= 2.5 * Q
       fail.gs      <- which(fact.ind)
       for(g in which(!fact.ind)) {
-        fact       <- try(factanal(data[z == g,, drop=F], factors=Q, scores="regression", control=list(nstart=50)), silent=T)
+        fact       <- try(factanal(data[z == g,, drop=FALSE], factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
         if(!inherits(fact, "try-error")) {
           f[z == g,]       <- fact$scores
           lmat[[g]]        <- fact$loadings
@@ -81,12 +81,12 @@
     } else     {
       nn           <- tabulate(z, nbins=G)
       psi.tmp      <- psi.inv
-      psi.inv      <- do.call(cbind, lapply(Gseq, function(g) if(nn[g] > 1) 1/apply(data[z == g,, drop=F], 2, var) else psi.tmp[,g]))
+      psi.inv      <- do.call(cbind, lapply(Gseq, function(g) if(nn[g] > 1) 1/apply(data[z == g,, drop=FALSE], 2, var) else psi.tmp[,g]))
       inf.ind      <- is.infinite(psi.inv)
       psi.inv[inf.ind]     <- psi.tmp[inf.ind]
     }
     l.sigma        <- l.sigma * diag(Q)
-    lmat           <- array(unlist(lmat, use.names=F), dim=c(P, Q, G))
+    lmat           <- array(unlist(lmat, use.names=FALSE), dim=c(P, Q, G))
     if(burnin       < 1)  {
       mu.store[,,1]        <- mu
       f.store[,,1]         <- f
@@ -119,18 +119,18 @@
       nn           <- tabulate(z, nbins=G)
       nn0          <- nn > 0
       z.ind        <- lapply(Gseq, function(g) z == g)
-      dat.g        <- lapply(Gseq, function(g) data[z.ind[[g]],, drop=F])
+      dat.g        <- lapply(Gseq, function(g) data[z.ind[[g]],, drop=FALSE])
       
     # Scores & Loadings
       c.data       <- lapply(Gseq, function(g) sweep(dat.g[[g]], 2, mu[,g], FUN="-"))
       if(Q0) {
         f.tmp      <- lapply(Gseq, function(g) if(nn0[g]) sim.score(N=nn[g], lmat=lmat[,,g], Q=Q, c.data=c.data[[g]], psi.inv=psi.inv[,g], Q1=Q1) else matrix(, nr=0, nc=Q))
         FtF        <- lapply(Gseq, function(g) if(nn0[g]) crossprod(f.tmp[[g]]))
-        lmat       <- array(unlist(lapply(Gseq, function(g) if(nn0[g]) matrix(unlist(lapply(Pseq, function(j) sim.load(l.sigma=l.sigma, Q=Q, c.data=c.data[[g]][,j], 
-                            P=P, f=f.tmp[[g]], Q1=Q1, psi.inv=psi.inv[,g][j], FtF=FtF[[g]], shrink=F)), use.names=F), nr=P, byrow=T)), use.names=F), dim=c(P, Q, G))
-        f          <- do.call(rbind, f.tmp)[obsnames,, drop=F]
+        lmat       <- array(unlist(lapply(Gseq, function(g) if(nn0[g]) matrix(unlist(lapply(Pseq, function(j) sim.load(l.sigma=l.sigma, Q=Q, c.data=c.data[[g]][,j], P=P, 
+                            f=f.tmp[[g]], Q1=Q1, psi.inv=psi.inv[,g][j], FtF=FtF[[g]], shrink=FALSE)), use.names=FALSE), nr=P, byrow=TRUE)), use.names=FALSE), dim=c(P, Q, G))
+        f          <- do.call(rbind, f.tmp)[obsnames,, drop=FALSE]
       } else {
-        f.tmp      <- lapply(Gseq, function(g) f[z.ind[[g]],, drop=F])
+        f.tmp      <- lapply(Gseq, function(g) f[z.ind[[g]],, drop=FALSE])
       }
       
     # Means
@@ -149,15 +149,15 @@
         z          <- switch.lab$z
         z.perm     <- switch.lab$z.perm
         if(!identical(as.integer(z.perm), Gseq)) {
-          mu       <- mu[,z.perm, drop=F]
-          lmat     <- lmat[,,z.perm, drop=F]
-          psi.inv  <- psi.inv[,z.perm, drop=F]
-          pi.prop  <- pi.prop[,z.perm, drop=F]
+          mu       <- mu[,z.perm, drop=FALSE]
+          lmat     <- lmat[,,z.perm, drop=FALSE]
+          psi.inv  <- psi.inv[,z.perm, drop=FALSE]
+          pi.prop  <- pi.prop[,z.perm, drop=FALSE]
          if(mu0g)  {
-          mu.zero  <- mu.zero[,z.perm, drop=F]
+          mu.zero  <- mu.zero[,z.perm, drop=FALSE]
          }
          if(psi0g) {
-          psi.beta <- psi.beta[,z.perm, drop=F]
+          psi.beta <- psi.beta[,z.perm, drop=FALSE]
          }
         }
       }
