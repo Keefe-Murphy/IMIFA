@@ -5,11 +5,12 @@
 tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q = NULL, Q.meth = c("Mode", "Median"), G.meth = c("Mode", "Median"),
                              criterion = c("bicm", "aicm", "bic.mcmc", "aic.mcmc"), conf.level = 0.95, Labels = NULL, recomp = F) {
   
+  source(paste(getwd(), "/IMIFA-GIT/FullConditionals.R", sep=""), local=T)
   defpar         <- suppressWarnings(par(no.readonly = T))
-  defop          <- options()
+  defopt         <- options()
   options(warn=1)
   on.exit(suppressWarnings(par(defpar)))
-  on.exit(suppressWarnings(options(defop)), add=T)
+  on.exit(suppressWarnings(options(defopt)), add=T)
   if(missing(sims))               stop("Simulations must be supplied")
   if(!exists(deparse(substitute(sims)),
              envir=.GlobalEnv))   stop(paste0("Object ", match.call()$sims, " not found"))
@@ -184,7 +185,6 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   
 # Manage Label Switching & retrieve cluster labels/mixing proportions
   if(clust.ind) {
-    source(paste(getwd(), "/IMIFA-GIT/FullConditionals.R", sep=""), local=T)
     label.miss   <- missing(Labels)
     if(!label.miss)   {
       if(!exists(as.character(substitute(Labels)),
@@ -285,9 +285,11 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       class(MH.alpha)          <- "listof"
     }
     pi.prop      <- pi.prop[Gseq,, drop=F]
-    post.pi      <- post.pi[Gseq]
-    var.pi       <- var.pi[Gseq]
-    CI.pi        <- CI.pi[,Gseq]
+    index        <- order(rownames(pi.prop))
+    pi.prop      <- pi.prop[index,]
+    post.pi      <- post.pi[index]
+    var.pi       <- var.pi[index]
+    CI.pi        <- CI.pi[,index]
     cluster      <- list(post.z = post.z, post.pi = post.pi/sum(post.pi), z = z, uncertainty = uncertain)
     cluster      <- c(cluster, if(sw["pi.sw"]) list(pi.prop = pi.prop, var.pi = var.pi, CI.pi = CI.pi),
                       if(!label.miss) list(perf = tab.stat), if(isTRUE(MH.step)) list(MH.alpha = MH.alpha))

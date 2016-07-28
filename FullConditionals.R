@@ -193,7 +193,7 @@
     }
 
   # Loadings Heatmaps
-    mat2color   <- function(m, colors = heat.colors(30), 
+    mat2color   <- function(m, colors = dichromat(heat.colors(30)), 
                             byrank=F, breaks=length(colors)) { 
       m1        <- if(byrank == T) rank(m) else m
       facs      <- cut(m1, breaks, include.lowest=TRUE)
@@ -204,4 +204,9 @@
         colnames(answer)  <- colnames(m)
       }
         answer    
+    }
+  
+  # Colour Checker
+    areColours  <- function(cols) {
+        vapply(cols, function(X) { tryCatch(is.matrix(col2rgb(X)), error = function(e) F) }, logical(1))
     }

@@ -2,7 +2,7 @@
 ### Set-up for Keefe Murphy's IMIFA R Package ###
 #################################################
 
-packages    <- c("abind", "e1071", "gclus", "matrixStats", "mclust", "MCMCpack", "mvnfast", "plotrix", "slam")
+packages    <- c("abind", "dichromat", "e1071", "gclus", "matrixStats", "mclust", "MCMCpack", "mvnfast", "plotrix", "slam")
 if(length(setdiff(packages, rownames(installed.packages()))) > 0) {
   suppressMessages(install.packages(setdiff(packages, rownames(installed.packages()))))
 }
@@ -11,6 +11,9 @@ if(length(setdiff(packages, (.packages()))) > 0) {
 }
 rm(packages)
 packageStartupMessage("   ________  __________________\n  /_  __/  |/   /_  __/ ___/ _ \\  \n   / / / /|_// / / / / /__/ /_\\ \\ \n _/ /_/ /   / /_/ /_/ ___/ /___\\ \\ \n/____/_/   /_/_____/_/  /_/     \\_\\    version 1.0")
+source(paste(getwd(), "/IMIFA-GIT/Diagnostics.R", sep=""))
+source(paste(getwd(), "/IMIFA-GIT/PlottingFunctions.R", sep=""))
+source(paste(getwd(), "/IMIFA-GIT/SimulateData.R", sep=""))
 
 mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA", "MFA", "IFA", "FA", "classify"), 
                         n.iters = 50000, Labels = NULL, factanal = F, range.G = NULL, range.Q = NULL, verbose = F, Q.fac = NULL,  
@@ -21,10 +24,10 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
                         f.switch = T, load.switch = T, psi.switch = T, pi.switch = T, z.init = c("kmeans", "list", "mclust", "priors")) {
   
   defpar    <- suppressWarnings(par(no.readonly = T))
-  defop     <- options()
+  defopt    <- options()
   options(warn=1)
   on.exit(suppressWarnings(par(defpar)))
-  on.exit(suppressWarnings(options(defop)), add=T)
+  on.exit(suppressWarnings(options(defopt)), add=T)
   if(method == "classification") {
     method  <- "classify"
   }
@@ -562,7 +565,3 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   class(imifa)     <- "IMIFA"
   return(imifa)
 }
-
-source(paste(getwd(), "/IMIFA-GIT/Diagnostics.R", sep=""))
-source(paste(getwd(), "/IMIFA-GIT/PlottingFunctions.R", sep=""))
-source(paste(getwd(), "/IMIFA-GIT/SimulateData.R", sep=""))
