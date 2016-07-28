@@ -276,7 +276,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       class(tab.stat)          <- "listof"
     }
     if(isTRUE(MH.step)) {
-      alpha.pi   <- sims[[G.ind]][[Q.ind]]$alpha[tmp.store]
+      alpha.pi   <- sims[[G.ind]][[Q.ind]]$alpha
       post.alpha <- mean(alpha.pi)
       var.alpha  <- var(alpha.pi)
       CI.alpha   <- quantile(alpha.pi, conf.levels)

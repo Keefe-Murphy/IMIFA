@@ -12,7 +12,7 @@ if(length(setdiff(packages, (.packages()))) > 0) {
 rm(packages)
 packageStartupMessage("   ________  __________________\n  /_  __/  |/   /_  __/ ___/ _ \\  \n   / / / /|_// / / / / /__/ /_\\ \\ \n _/ /_/ /   / /_/ /_/ ___/ /___\\ \\ \n/____/_/   /_/_____/_/  /_/     \\_\\    version 1.0")
 
-IMIFA.mcmc  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA", "MFA", "IFA", "FA", "classify"), 
+mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA", "MFA", "IFA", "FA", "classify"), 
                         n.iters = 50000, Labels = NULL, factanal = F, range.G = NULL, range.Q = NULL, verbose = F, Q.fac = NULL,  
                         burnin = n.iters/5, thinning = 2, centering = T, scaling = c("unit", "pareto", "none"), trunc.G = NULL, MH.lower = NULL,
                         adapt = T, b0 = NULL, b1 = NULL, delta0g = F, prop = NULL, epsilon = NULL, sigma.mu = NULL, sigma.l = NULL, MH.step = T,
