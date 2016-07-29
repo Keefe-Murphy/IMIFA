@@ -120,7 +120,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     meth    <- rep(method, length(range.G))                               
   }
   if(any(range.G >= N))             stop(paste0("'range.G' must be less than the number of observations N=", N))
-  if(range.G[1]  == 1)  {
+  if(range.G[1]  == 1)   {
     if(is.element(meth[1], c("IMIFA", "IMFA",
        "OMIFA", "OMFA")))   {       stop("'method' must be FA or IFA for a one group model")
     } else {
@@ -152,8 +152,6 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(range.Q    <= 0)             stop(paste0("'range.Q' must be strictly positive for the ", method, " method"))
   }
   range.Q   <- sort(unique(range.Q))  
-  if(any(range.Q   > P))            stop(paste0("Number of factors must be less than the number of variables, ", P))
-  if(any(range.Q  >= N))            stop(paste0("Number of factors must be less than the number of observations, ", N))
   if(is.element(method, c("FA", "MFA", "OMFA", "IMFA"))) {
     if(missing("sigma.l"))   sigma.l       <- 1
     if(sigma.l <= 0)                stop("'sigma.l' must be strictly positive")            
@@ -175,6 +173,14 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(abs(epsilon - 
           (1 - epsilon)) < 0)       stop("'epsilon' must be a single number between 0 and 1")
   } 
+  if(any(range.Q  >= P)) {          
+    if(all(is.element(method, c("IFA", "MIFA", "OMIFA", "IMIFA")),
+       isTRUE(adapt)))   {          warning(paste0("Starting value for number of factors is not less than the number of variables, ", P), call.=FALSE)
+    } else if(any(is.element(method, c("FA", "MFA", "OMFA", "IMFA")),
+              all(is.element(method, c("IFA", "MIFA", "OMIFA", "IMIFA")), 
+                  isTRUE(!adapt)))) stop(paste0("Number of factors must be less than the number of variables, ", P))
+  } 
+  if(any(range.Q  >= N))            stop(paste0("Number of factors must be less than the number of observations, ", N))
   if(any(all(method == "MFA",  any(range.G > 1)) && any(range.Q > 0),
          all(method == "MIFA", any(range.G > 1)), is.element(method, c("IMIFA",
      "IMFA", "OMIFA", "OMFA"))))  {

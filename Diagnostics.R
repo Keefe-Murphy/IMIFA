@@ -77,10 +77,12 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
        !is.element(Q, n.fac)))    stop("This Q value was not used during simulation")
     if(all(inf.Q, 
       (Q * (n.fac - Q))  < 0))    stop(paste0("Q can't be greater than the number of factors in ", match.call()$sims))
+    if(all(inf.Q, 
+      (Q * (n.var - Q)) <= 0))    stop(paste0("Q must be less than the number of variables ", n.var))
   } 
   
   if(inf.G)  {
-    GQ1          <- GQs > 1
+    GQ1          <- GQs  > 1
     G.tab        <- if(GQ1) lapply(apply(G.store, 1, function(x) list(table(x, dnn=NULL))), "[[", 1) else table(G.store, dnn=NULL)
     G.prob       <- if(GQ1) lapply(G.tab, prop.table) else prop.table(G.tab)
     G.mode       <- if(GQ1) unlist(lapply(G.tab, function(gt) as.numeric(names(gt[gt == max(gt)])[1]))) else as.numeric(names(G.tab[G.tab == max(G.tab)])[1])
@@ -295,6 +297,9 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       var.pi     <- setNames(var.pi[Gseq],  gnames)
       CI.pi      <- setNames(CI.pi[,Gseq],  gnames)  
     }
+    if(inf.Q) {
+      rownames(Q.store)        <- gnames
+    }
     post.pi      <- setNames(post.pi[Gseq], gnames)
     cluster      <- list(post.z = post.z, post.pi = post.pi/sum(post.pi), z = z, uncertainty = uncertain)
     cluster      <- c(cluster, if(sw["pi.sw"]) list(pi.prop = pi.prop, var.pi = var.pi, CI.pi = CI.pi),
@@ -316,6 +321,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     } else    {
       Q          <- if(G.T) Q else setNames(rep(Q, G), paste0("Group ", Gseq))
     }
+    if(any(unlist(Q) >= n.var))   warning(paste0("Estimate of Q is not less than the number of variables ", n.var, ": solution may be invalid"), call.=FALSE)
     Q.CI         <- if(G1) apply(Q.store, 1, function(qs) round(quantile(qs, conf.levels))) else round(quantile(Q.store, conf.levels))
     GQ.temp4     <- list(Q = Q, Q.Mode = Q.mode, Q.Median = Q.med, 
                          Q.CI = Q.CI, Q.Probs = Q.prob, Q.Counts = Q.tab)
