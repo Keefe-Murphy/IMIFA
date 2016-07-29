@@ -10,7 +10,8 @@ if(length(setdiff(packages, (.packages()))) > 0) {
   suppressMessages(lapply(setdiff(packages, (.packages())), library, ch=TRUE))
 }
 rm(packages)
-packageStartupMessage("   ________  __________________\n  /_  __/  |/   /_  __/ ___/ _ \\  \n   / / / /|_// / / / / /__/ /_\\ \\ \n _/ /_/ /   / /_/ /_/ ___/ /___\\ \\ \n/____/_/   /_/_____/_/  /_/     \\_\\    version 1.0")
+if(!exists("mcmc.IMIFA", 
+    envir=.GlobalEnv))              packageStartupMessage("   ________  __________________\n  /_  __/  |/   /_  __/ ___/ _ \\  \n   / / / /|_// / / / / /__/ /_\\ \\ \n _/ /_/ /   / /_/ /_/ ___/ /___\\ \\ \n/____/_/   /_/_____/_/  /_/     \\_\\    version 1.0")
 source(paste(getwd(), "/IMIFA-GIT/Diagnostics.R", sep=""))
 source(paste(getwd(), "/IMIFA-GIT/PlottingFunctions.R", sep=""))
 source(paste(getwd(), "/IMIFA-GIT/SimulateData.R", sep=""))
