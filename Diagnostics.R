@@ -433,6 +433,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       }
       cov.emp    <- sims[[G.ind]][[Q.ind]]$cov.emp
     }
+    emp.T[g]     <- exists("cov.emp", envir=environment())
   
   # Compute posterior means and % variation explained
     if(sw["mu.sw"])  {
@@ -451,7 +452,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       CI.load    <- apply(lmat, c(1, 2), function(x) quantile(x, conf.levels))
       var.exp    <- sum(colSums(post.load * post.load))/n.var
       class(post.load)   <- "loadings"
-    } else   {
+    } else if(emp.T[g]) {
       var.exp    <- ifelse(sum(z.ind[[g]]) == 0, 0, max(0, (sum(diag(cov.emp)) - sum(post.psi))/n.var))
     }
   
@@ -493,9 +494,8 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
         } else if(!sw["psi.sw"])  warning("Psi not stored: can't re-estimate Sigma", call.=FALSE) 
       }
     }
-    
-    emp.T[g]     <- exists("cov.emp", envir=environment())
     est.T[g]     <- exists("cov.est", envir=environment())
+    
     if(all(emp.T[g], est.T[g])) {
       error      <- cov.emp - cov.est
       MSE[g]     <- mean(error * error)
@@ -557,6 +557,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
                       if(sw["f.sw"]) list(Scores = scores))
   class(result)                <- "IMIFA"
   attr(result, "Conf.Level")   <- conf.level
+  attr(result, "Errors")       <- any(err.T)
   attr(result, "Method")       <- method
   if(is.element(method, c("IMFA", "IMIFA"))) {
     attr(result, "MH.step")    <- MH.step

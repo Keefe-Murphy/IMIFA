@@ -179,9 +179,9 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
      "IMFA", "OMIFA", "OMFA"))))  {
     if(all(!switches["l.sw"], 
            !switches["psi.sw"]))  {
-                                    warning("Loadings & Psi not stored: unable to estimate covariance matrix and compute error metrics", call.=FALSE)
-    } else if(!switches["l.sw"])  { warning("Loadings not stored: unable to estimate covariance matrix and compute error metrics", call.=FALSE)
-    } else if(!switches["psi.sw"])  warning("Psi not stored: unable to estimate covariance matrix and compute error metrics", call.=FALSE)
+                                    warning("Loadings & Psi not stored: will be unable to estimate covariance matrix and compute error metrics", call.=FALSE)
+    } else if(!switches["l.sw"])  { warning("Loadings not stored: may be unable to estimate covariance matrix and compute error metrics", call.=FALSE)
+    } else if(!switches["psi.sw"])  warning("Psi not stored: will be unable to estimate covariance matrix and compute error metrics", call.=FALSE)
   }
   if(any(all(method == "MFA",  any(range.G > 1)),
          all(method == "MIFA", any(range.G > 1)), is.element(method, c("IMIFA", 

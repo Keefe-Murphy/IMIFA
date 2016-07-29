@@ -79,6 +79,8 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
     if(m.sw["Z.sw"])                  stop("Can't use 'Z' for 'plot.meth' as no clustering has taken place")
     if(vars == "pis")                 stop("Can't plot mixing proportions as no clustering has taken place")
   }
+  if(all(m.sw["E.sw"], 
+         !attr(results, "Errors")))   stop("Can't plot error metrics as they were not calculated due to storage switches")
   if(all(!m.sw["G.sw"], !m.sw["Z.sw"], !m.sw["E.sw"],
      missing(vars)))                  stop("What variable would you like to plot?")
   if(all(any(m.sw["P.sw"], all.ind),
