@@ -3,8 +3,8 @@
 ################################
 
 plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "density", "errors", "posterior", "GQ", "trace", "Z"), 
-                           vars = c("means", "scores", "loadings", "uniquenesses", "pis", "alpha"), Labels = NULL, load.meth = c("all", "heatmap", "raw"),
-                           g = NULL, fac = NULL, by.fac = TRUE, ind = NULL, type = c("h", "n", "p", "l"), intervals = TRUE, mat = TRUE, partial = FALSE, titles = TRUE, palette = NULL) {
+                           vars = c("means", "scores", "loadings", "uniquenesses", "pis", "alpha"), Labels = NULL, load.meth = c("all", "heatmap", "raw"), palette = NULL, g = NULL,
+                           fac = NULL, by.fac = TRUE, ind = NULL, type = c("h", "n", "p", "l"), intervals = TRUE, mat = TRUE, partial = FALSE, titles = TRUE, transparency = NULL) {
 
   source(paste(getwd(), "/IMIFA-GIT/FullConditionals.R", sep=""), local=TRUE)
   defpar  <- suppressWarnings(par(no.readonly=TRUE))
@@ -12,6 +12,13 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
   if(missing(palette))   palette <- c("#999999", "#E69F00", "#009E73", "#56B4E9", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
   if(!all(areColours(cols=palette)))  stop("Supplied colour palette contains invalid colours")
   if(length(palette) < 3)             stop("Palette must contain 3 or more colours")
+  if(missing(transparency)) {
+    transparency    <- 0.75
+  }
+  if(transparency    < 0   || 
+     transparency    > 1)             stop("'transparency' must be a single number in [0, 1]")
+  tmp.pal <- palette
+  palette <- adjustcolor(palette, alpha.f=transparency)
   palette(palette)
   grey    <- adjustcolor("#999999", alpha.f=0.3)
   defopt  <- options()
@@ -371,7 +378,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
         plot(plot.d, main="")
         if(titles) title(main=list(paste0("Density", ifelse(all.ind, "", paste0(":\nAlpha")))))
         polygon(plot.d, col=grey)
-        if(intervals) abline(v=plot.x$post.alpha, col=2)
+        if(intervals) abline(v=plot.x$post.alpha, col=2, lty=2)
       }
     }
     
@@ -508,7 +515,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
         if(ci.sw[vars])   ci.x   <- clust$CI.pi
         if(matx) {
           if(all(intervals, ci.sw[vars])) {
-            plotCI(barplot(plot.x, ylab="Mixing Proportions", xlab="", ylim=c(0, 1)),
+            plotCI(barplot(plot.x, ylab="Mixing Proportions", xlab="", col=grey, ylim=c(0, 1)),
                    plot.x, li=ci.x[1,], ui=ci.x[2,], slty=3, scol=2, add=TRUE, gap=TRUE, pch=20)
           } else {
             barplot(plot.x, ylab="Mixing Proportions", xlab="", ylim=c(0, 1))
@@ -632,14 +639,28 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
     }
     
     if(m.sw["Z.sw"]) {
+      if(type == "l")       stop("'type' cannot be 'l' for clustering uncertainty plots")
       plot.x <- clust$uncertainty
       col.x  <- c(1, 4)[(plot.x >= 1/G) + 1]
-      plot(plot.x, type=type, ylim=c(0, 1.05 - 1/G), col=col.x, ylab="Uncertainty", xlab="Observation")
-      if(titles) title(main=list("Clustering Uncertainty"))
-      if(type == "n") text(x=seq_along(plot.x), y=plot.x, obs.names, col=col.x, cex=0.5)
-      abline(h=1/G, lty=2, col=2)
+      if(type != "h") col.x[plot.x == 0] <- NA
       if(titles) {
-        legend("top", legend=paste0("1/G = 1/", G), ncol=2, lty=2, col=2, bty="n")
+        layout(rbind(1, 2), heights=c(1, 6))
+        par(mar=c(0, 4.1, 0.5, 2.1))
+        plot.new()
+        legend("center", legend=paste0("1/G = 1/", G), title="", lty=2, col=2, bty="n", y.intersp=par()$fin[2] * 5/4)
+        legend("center", legend=c(" "," "), title=expression(bold("Clustering Uncertainty")), bty='n', y.intersp=par()$fin[2] * 2/5, cex=par()$cex.main)
+        par(mar=c(5.1, 4.1, 0, 2.1))
+      }
+      plot(plot.x, type=type, ylim=c(0, 1 - 1/G), col=col.x, axes=FALSE, ylab="Uncertainty", xlab="Observation", pch=ifelse(type == "n", NA, 16))
+      rect(0, 0, n.obs, 1 - 1/G) 
+      axis(1, las=1, pos=0)
+      axis(2, las=2, pos=0)
+      lines(x=c(0, n.obs), y=c(1/G, 1/G), lty=2, col=2)
+      axis(2, at=1 - 1/G, label="1 - 1/G", las=2, line=-0.7, tick=T)
+      if(type == "n")  {
+        znam  <- obs.names
+        znam[plot.x == 0] <- ""
+        text(x=seq_along(plot.x), y=plot.x, znam, col=col.x, cex=0.5)
       }
       if(any(!labelmiss, !missing(Labels))) {
         if(!labelmiss) {
@@ -676,6 +697,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
     }
     
     if(m.sw["E.sw"]) {
+      palette(tmp.pal)
       plot.X <- results$Error
       if(G > 1)  {
         plot.x    <- do.call(rbind, plot.X[-length(plot.X)])
