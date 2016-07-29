@@ -237,9 +237,9 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     uncertain    <- 1 - apply(matrix(apply(z, 1, tabulate, nbins=G)/length(tmp.store), nr=nlevels(post.z), nc=n.obs), 2, max)
     if(sw["pi.sw"])    {
       pi.prop    <- pies[,seq_along(tmp.store)]
-      post.pi    <- rowMeans(pi.prop, dims=1)
       var.pi     <- apply(pi.prop, 1, var)
       CI.pi      <- apply(pi.prop, 1, function(x) quantile(x, conf.levels))
+      post.pi    <- rowMeans(pi.prop, dims=1)
     } else {
       post.pi    <- setNames(prop.table(tabulate(post.z, nbins=G)), paste0("Group ", Gseq))
     }
@@ -250,10 +250,14 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
         sw.lab   <- lab.switch(z.new=post.z, z.old=zlabels, Gs=Gseq)
         post.z   <- factor(sw.lab$z)
         l.perm   <- sw.lab$z.perm
-        mus      <- mus[,l.perm,, drop=FALSE]
-        lmats    <- lmats[,,l.perm,, drop=FALSE]
-        psis     <- psis[,l.perm,, drop=FALSE]
-        pi.prop  <- pi.prop[l.perm,, drop=FALSE]
+        if(sw["mu.sw"])    mus <- mus[,l.perm,, drop=FALSE]
+        if(sw["l.sw"])   lmats <- lmats[,,l.perm,, drop=FALSE]
+        if(sw["psi.sw"])  psis <- psis[,l.perm,, drop=FALSE]
+        if(sw["pi.sw"]) {
+                       pi.prop <- pi.prop[l.perm,, drop=FALSE]
+                        var.pi <- var.pi[l.perm]
+                         CI.pi <- CI.pi[,l.perm]
+        }
         post.pi  <- post.pi[l.perm]  
         if(inf.Q)   {
          Q.store <- Q.store[l.perm,]
@@ -284,12 +288,14 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       MH.alpha   <- list(alpha.pi = alpha.pi, post.alpha = post.alpha, var.alpha = var.alpha, CI.alpha = CI.alpha, acceptance.rate = rate)
       class(MH.alpha)          <- "listof"
     }
-    pi.prop      <- pi.prop[Gseq,, drop=FALSE]
-    index        <- order(rownames(pi.prop))
-    pi.prop      <- pi.prop[index,]
-    post.pi      <- post.pi[index]
-    var.pi       <- var.pi[index]
-    CI.pi        <- CI.pi[,index]
+    gnames       <- paste0("Group ", Gseq)
+    if(sw["pi.sw"])     {
+      pi.prop    <- pi.prop[Gseq,, drop=FALSE]
+      rownames(pi.prop)        <- gnames
+      var.pi     <- setNames(var.pi[Gseq],  gnames)
+      CI.pi      <- setNames(CI.pi[,Gseq],  gnames)  
+    }
+    post.pi      <- setNames(post.pi[Gseq], gnames)
     cluster      <- list(post.z = post.z, post.pi = post.pi/sum(post.pi), z = z, uncertainty = uncertain)
     cluster      <- c(cluster, if(sw["pi.sw"]) list(pi.prop = pi.prop, var.pi = var.pi, CI.pi = CI.pi),
                       if(!label.miss) list(perf = tab.stat), if(isTRUE(MH.step)) list(MH.alpha = MH.alpha))

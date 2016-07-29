@@ -3,7 +3,7 @@
 ################################
 
 plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "density", "errors", "posterior", "GQ", "trace", "Z"), 
-                           vars = c("means", "scores", "loadings", "uniquenesses", "pi.prop", "alpha"), Labels = NULL, load.meth = c("all", "heatmap", "raw"),
+                           vars = c("means", "scores", "loadings", "uniquenesses", "pis", "alpha"), Labels = NULL, load.meth = c("all", "heatmap", "raw"),
                            g = NULL, fac = NULL, by.fac = TRUE, ind = NULL, type = c("h", "n", "p", "l"), intervals = TRUE, mat = TRUE, partial = FALSE, titles = TRUE, palette = NULL) {
 
   source(paste(getwd(), "/IMIFA-GIT/FullConditionals.R", sep=""), local=TRUE)
@@ -77,7 +77,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
   }
   if(!grp.ind)  {
     if(m.sw["Z.sw"])                  stop("Can't use 'Z' for 'plot.meth' as no clustering has taken place")
-    if(vars == "pi.prop")             stop("Can't plot mixing proportions as no clustering has taken place")
+    if(vars == "pis")                 stop("Can't plot mixing proportions as no clustering has taken place")
   }
   if(all(!m.sw["G.sw"], !m.sw["Z.sw"], !m.sw["E.sw"],
      missing(vars)))                  stop("What variable would you like to plot?")
@@ -91,7 +91,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
    m.sw["P.sw"]   <- T
   } 
   if(all(!v.sw[vars], !m.sw["G.sw"], 
-     !m.sw["Z.sw"],   !m.sw["E.sw"])) stop(paste0("Nothing to plot:", vars, " weren't stored"))
+     !m.sw["Z.sw"],   !m.sw["E.sw"])) stop(paste0("Nothing to plot: ", vars, " weren't stored"))
   if(!is.logical(intervals))          stop("'intervals' must be TRUE or FALSE")
   if(!is.logical(mat))                stop("'mat' must be TRUE or FALSE")
   if(!is.logical(partial))            stop("'partial' must be TRUE or FALSE")
@@ -107,7 +107,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
   if(all(is.element(method, c("IMIFA", "OMIFA")), m.sw["G.sw"])) {
     Gs    <- seq_len(2)
     if(!missing(g))                   warning(paste0("Removed 'g'=", g ," for the ", plot.meth, " plotting method"), call.=F)
-  } else if(any(all(is.element(vars, c("scores", "pi.prop", "alpha")), any(all.ind, vars != "scores", !m.sw["P.sw"])), 
+  } else if(any(all(is.element(vars, c("scores", "pis", "alpha")), any(all.ind, vars != "scores", !m.sw["P.sw"])), 
             m.sw["G.sw"], m.sw["Z.sw"], m.sw["E.sw"])) {
     Gs    <- 1
   } else if(!missing(g)) {
@@ -182,7 +182,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
       if(any(vars == "alpha",
              indx))       ind    <- 1
       if(length(ind) >  1)            stop("Length of plotting indices can't be greater than 1")
-      if(vars  == "pi.prop") {
+      if(vars  == "pis")    {
         if(ind       >  G)            stop(paste0("Index can't be greater than the number of groups: ", G))
       } else {
         if(ind       > n.var)         stop(paste0("Index can't be greater than the number of variables: ", n.var))
@@ -248,7 +248,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
           if(titles) title(main=list(paste0("Trace", ifelse(all.ind, ":\n", paste0(":\nUniquenesses - ", ifelse(grp.ind, paste0("Group ", g, " - "), ""))), var.names[ind], " Variable")))
         }
       }
-      if(vars  == "pi.prop") {
+      if(vars  == "pis") {
         plot.x <- clust$pi.prop
         if(matx) {
           matplot(t(plot.x), type="l", ylab="Mixing Proportions", xlab="Iteration")
@@ -350,7 +350,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
           polygon(plot.d, col=lastcol)
         }
       }
-      if(vars  == "pi.prop") {
+      if(vars  == "pis") {
         plot.X <- clust$pi.prop
         if(matx) {
           plot.x  <- apply(plot.X, 1, density)
@@ -503,7 +503,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
         if(titles) title(main=list(paste0("Posterior Mean", ifelse(all.ind, "", paste0(":\nUniquenesses", ifelse(grp.ind, paste0(" - Group ", g), ""))))))
         if(type  == "n") text(seq_along(plot.x), plot.x, var.names, cex=0.5)
       }
-      if(vars  == "pi.prop") {
+      if(vars  == "pis") {
         plot.x <- clust$post.pi
         if(ci.sw[vars])   ci.x   <- clust$CI.pi
         if(matx) {
@@ -772,7 +772,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
           if(all(!all.ind, titles)) title(main=list(paste0("Uniquenesses - ", ifelse(grp.ind, paste0("Group ", g, ":\n "), ""), var.names[ind], " Variable")), outer=TRUE)
         }
       }
-      if(vars  == "pi.prop")  { 
+      if(vars  == "pis")  { 
         plot.x <- clust$pi.prop
         if(!partial) {
           acf(plot.x[ind,], main="", ci.col=2)
@@ -784,8 +784,12 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
           if(all(!all.ind, titles)) title(main=list(paste0("Mixing Proportions - Group ", ind)), outer=TRUE)
         }
       }
-      if(vars  == "alpha") {
+      if(vars  == "alpha") {          
         plot.x <- clust$MH.alpha$alpha.pi
+        if(clust$MH.alpha$acceptance.rate == 0)  {
+                                      warning(paste0("0% acceptance rate: can't plot ", ifelse(all.ind, ifelse(partial, "partial-", "auto-"), ""), "correlation function", ifelse(all.ind, "", "s")), call.=FALSE)
+          next
+        }
         if(!partial) {
           acf(plot.x, main="", ci.col=2)
           if(titles) title(main=list(paste0("ACF")))
@@ -797,8 +801,8 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
         }
       }
     }
-    if(all(all.ind, titles)) title(ifelse(vars != "pi.prop",paste0(toupper(substr(vars, 1, 1)), substr(vars, 2, nchar(vars)), 
-                             ifelse(all(grp.ind, !is.element(vars, c("scores", "pi.prop", "alpha"))), paste0(" - Group ", g), "")), 
+    if(all(all.ind, titles)) title(ifelse(vars != "pis", paste0(toupper(substr(vars, 1, 1)), substr(vars, 2, nchar(vars)), 
+                             ifelse(all(grp.ind, !is.element(vars, c("scores", "pis", "alpha"))), paste0(" - Group ", g), "")), 
                              paste0("Mixing Proportions", ifelse(matx, "", paste0(" - Group ", ind)))), outer=TRUE)
     ent.exit()
   }
