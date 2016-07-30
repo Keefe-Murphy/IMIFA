@@ -537,9 +537,16 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
         plot.x <- clust$MH.alpha[-1]
         conf   <- attr(results, "Conf.Level")
         digits <- options()$digits
-        text(x=0.5, y=0.5, cex=par()$fin[2]/ifelse(all.ind, 4, 6), col="black", adj=rep(0.5, 2), paste0("Posterior Mean:\n", round(plot.x$post.alpha, digits), "\n\nVariance:\n", 
-             round(plot.x$var.alpha, digits), "\n\n", 100 * conf, "% Confidence Interval:\n", "[", round(plot.x$CI.alpha[1], digits), 
-             ", ",  round(plot.x$CI.alpha[2], digits), "]\n\nAcceptance Rate:\n", round(100 * plot.x$acceptance.rate, 2), "%"))
+        a.cex  <- par()$fin[2]/ifelse(all.ind, 4.5, 6.5)
+        a.adj  <- rep(0.5, 2)
+        text(x=0.5, y=0.7,   cex=a.cex, col="black", adj=a.adj, expression(bold("Posterior Mean:\n")))
+        text(x=0.5, y=0.7,   cex=a.cex, col="black", adj=a.adj, bquote(.(round(plot.x$post.alpha, digits))))
+        text(x=0.5, y=0.55,  cex=a.cex, col="black", adj=a.adj, expression(bold("\nVariance:\n")))
+        text(x=0.5, y=0.55,  cex=a.cex, col="black", adj=a.adj, bquote(.(round(plot.x$var.alpha, digits))))
+        text(x=0.5, y=0.475, cex=a.cex, col="black", adj=a.adj, bquote(bold(.(100 * conf))~bold("% Confidence Interval:")))
+        text(x=0.5, y=0.4,   cex=a.cex, col="black", adj=a.adj, bquote(paste("[", .(round(plot.x$CI.alpha[1], digits)), ", ", .(round(plot.x$CI.alpha[2], digits)), "]")))
+        text(x=0.5, y=0.325, cex=a.cex, col="black", adj=a.adj, expression(bold("Acceptance Rate:")))
+        text(x=0.5, y=0.275, cex=a.cex, col="black", adj=a.adj, bquote(paste(.(round(100 * plot.x$acceptance.rate, 2)), "%")))
       }
       if(!indx) {         ind[1] <- xind[1]
         if(facx)          ind[2] <- xind[2]
