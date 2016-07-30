@@ -17,7 +17,7 @@ source(paste(getwd(), "/IMIFA-GIT/PlottingFunctions.R", sep=""))
 source(paste(getwd(), "/IMIFA-GIT/SimulateData.R", sep=""))
 
 mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA", "MFA", "IFA", "FA", "classify"), 
-                        n.iters = 50000, Labels = NULL, factanal = FALSE, range.G = NULL, range.Q = NULL, verbose = FALSE, Q.fac = NULL,  
+                        n.iters = 20000, Labels = NULL, factanal = FALSE, range.G = NULL, range.Q = NULL, verbose = FALSE, Q.fac = NULL,  
                         burnin = n.iters/5, thinning = 2, centering = TRUE, scaling = c("unit", "pareto", "none"), trunc.G = NULL, MH.lower = NULL,
                         adapt = TRUE, b0 = NULL, b1 = NULL, delta0g = FALSE, prop = NULL, epsilon = NULL, sigma.mu = NULL, sigma.l = NULL, MH.step = TRUE,
                         mu0g = FALSE, psi0g = FALSE, mu.zero = NULL, phi.nu = NULL, psi.alpha = NULL, psi.beta = NULL, alpha.d1 = NULL, pp = NULL, MH.upper = NULL,
@@ -148,7 +148,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(Q.miss)                      stop("'range.Q' must be specified") 
     if(any(range.Q < 0))            stop(paste0("'range.Q' must be non-negative for the ", method, " method"))
   } else {
-    if(Q.miss)        range.Q    <- min(floor(3 * log(P)), P, N - 1)
+    if(Q.miss)        range.Q    <- min(ifelse(P > 500, 12 + floor(log(P)), floor(3 * log(P))), P - 1, N - 1)
     if(range.Q    <= 0)             stop(paste0("'range.Q' must be strictly positive for the ", method, " method"))
   }
   range.Q   <- sort(unique(range.Q))  
