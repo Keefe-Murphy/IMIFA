@@ -238,8 +238,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(all(is.element(method,  c("OMIFA", "OMFA")), !is.element(z.init, 
        c("list", "kmeans"))))       stop("'z.init' must be set to 'list' or 'kmeans' for the OMIFA method to ensure all groups are populated at the initialisation stage")
     if(!missing(z.list))   {
-      if(!is.list(z.list))   z.list        <- list(z.list)
-                             z.list        <- lapply(z.list, as.factor)
+      if(!is.list(z.list))   z.list        <- lapply(list(z.list), as.factor)
       if(z.init != "list") { z.init        <- "list"
                                     message("'z.init' set to 'list' as 'z.list' was supplied") }
       if(length(z.list)   != length(range.G))        {
@@ -298,22 +297,10 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   } else {
     psi.beta       <- len.check(psi.beta, psi0g)
   }
-  if(mu0.x)  {
-    mu.zero        <- mu
-  } else {
-    mu.zero        <- len.check(mu.zero, mu0g)
-  }
+  mu.zero          <- if(mu0.x) mu else len.check(mu.zero, mu0g)
   if(!is.element(method, c("FA", "MFA", "OMFA", "IMFA"))) {
-    if(ad1.x) {
-      alpha.d1     <- list(2)
-    } else {
-      alpha.d1     <- len.check(alpha.d1, delta0g, P.dim=FALSE)
-    }
-    if(adk.x) {
-      alpha.dk     <- list(10)
-    } else {
-      alpha.dk     <- len.check(alpha.dk, delta0g, P.dim=FALSE)
-    }
+    alpha.d1       <- if(ad1.x) list(2)  else len.check(alpha.d1, delta0g, P.dim=FALSE)
+    alpha.dk       <- if(adk.x) list(10) else len.check(alpha.dk, delta0g, P.dim=FALSE)
   }
   if(!is.element(method, c("FA", "IFA"))) {
     if(verbose)                     cat(paste0("Initialising...\n"))
@@ -498,7 +485,6 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     print(summaryRprof())
     invisible(file.remove("Rprof.out"))
   }
-  dat.name  <- as.character(match.call()$dat)
   if(is.element(method, c("FA", "MFA", "OMFA", "IMFA")))   {
     imifa   <- lapply(seq_along(imifa), function(x) setNames(imifa[[x]], paste0(range.Q, ifelse(range.Q == 1, "Factor", "Factors"))))
   } else {
@@ -524,7 +510,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   method                  <- names(table(meth)[max(table(meth))])
   attr(imifa, "Method")   <- paste0(toupper(substr(method, 1, 1)),
                                     substr(method, 2, nchar(method)))
-  attr(imifa, "Name")     <- dat.name
+  attr(imifa, "Name")     <- as.character(match.call()$dat)
   attr(imifa, "Obs")      <- N
   attr(imifa, "Scaling")  <- scal
   attr(attr(imifa,

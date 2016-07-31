@@ -163,11 +163,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
       matx     <- mat
     }  
     if(!matx) {
-      if(vars  == "scores")   {
-        iter   <- store
-      } else {
-        iter   <- seq_len(attr(result, "Store"))
-      }
+      iter     <- if(vars == "scores") store else seq_len(attr(result, "Store"))
     }               
     if(is.element(vars, c("scores", "loadings"))) {
       if(indx)               ind <- c(1, 1)
@@ -229,11 +225,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
       }
       if(vars  == "loadings") {
         x.plot <- result$loadings
-        if(by.fac) {
-          plot.x  <- x.plot[ind[1],,]
-        } else {
-          plot.x  <- x.plot[,ind[2],]
-        }
+        plot.x <- if(by.fac) x.plot[ind[1],,] else x.plot[,ind[2],]
         if(matx) {
           matplot(t(plot.x), type="l", ylab="Loadings", xlab="Iteration")
           if(by.fac) {
@@ -287,8 +279,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
       if(vars  == "means") {
         x.plot <- result$means
         if(matx) {
-          plot.x  <- apply(x.plot, 1, density)
-          plot.x  <- sapply(plot.x, "[[", "y")
+          plot.x  <- sapply(apply(x.plot, 1, density), "[[", "y")
           matplot(plot.x, type="l", ylab="Density")
           if(titles) title(main=list(paste0("Density", ifelse(all.ind, "", paste0(":\nMeans", ifelse(grp.ind, paste0(" - Group ", g), ""))))))
         } else   {
@@ -306,8 +297,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
           plot.x  <- x.plot[,ind[2],]
         }
         if(matx) {
-          plot.x  <- apply(plot.x, 1, density)
-          plot.x  <- sapply(plot.x, "[[", "y")
+          plot.x  <- sapply(apply(plot.x, 1, density), "[[", "y")
           matplot(plot.x, type="l", ylab="Density")
           if(by.fac) {
             if(titles) title(main=list(paste0("Density", ifelse(all.ind, ":\n", ":\nScores - "), "Observation ", obs.names[ind[1]])))
@@ -323,14 +313,9 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
       }
       if(vars  == "loadings") {
         x.plot <- result$loadings
-        if(by.fac) {
-          plot.x  <- x.plot[ind[1],,]
-        } else   {
-          plot.x  <- x.plot[,ind[2],]
-        }
+        plot.x    <- if(by.fac) x.plot[ind[1],,] else x.plot[,ind[2],]
         if(matx) {
-          plot.x  <- apply(plot.x, 1, density)
-          plot.x  <- sapply(plot.x, "[[", "y")
+          plot.x  <- sapply(apply(plot.x, 1, density), "[[", "y")
           matplot(plot.x, type="l", ylab="Density")
           if(by.fac) {
             if(titles) title(main=list(paste0("Density", ifelse(all.ind, ":\n", paste0(":\nLoadings - ", ifelse(grp.ind, paste0("Group ", g, " - "), ""))), var.names[ind[1]], " Variable")))
@@ -347,8 +332,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
       if(vars  == "uniquenesses") {
         x.plot <- result$psi
         if(matx) {
-          plot.x  <- apply(x.plot, 1, density)
-          plot.x  <- sapply(plot.x, "[[", "y")
+          plot.x  <- sapply(apply(x.plot, 1, density), "[[", "y")
           matplot(plot.x, type="l", ylab="Density")
           if(titles) title(main=list(paste0("Density", ifelse(all.ind, "", paste0(":\nUniquenesses", ifelse(grp.ind, paste0(" - Group ", g), ""))))))
         } else   {
@@ -361,8 +345,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
       if(vars  == "pis") {
         x.plot <- clust$pi.prop
         if(matx) {
-          plot.x  <- apply(x.plot, 1, density)
-          plot.x  <- sapply(plot.x, "[[", "y")
+          plot.x  <- sapply(apply(x.plot, 1, density), "[[", "y")
           matplot(plot.x, type="l", ylab="Density")
           if(titles) title(main=list(paste0("Density", ifelse(all.ind, "", paste0(":\nMixing Proportions")))))
         } else   {
@@ -385,11 +368,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
     if(m.sw["P.sw"])  {
       if(is.element(vars, c("scores", "loadings"))) {
         if(indx)  {
-         if(vars  == "scores")   {
-            ind   <- c(1, min(Q.max, 2))
-         } else   {
-            ind   <- c(1, 1)
-         } 
+          ind     <- if(vars == "scores") c(1, min(Q.max, 2)) else c(1, 1)
         }
         if(!facx) {
           ind[2]  <- fac[g]
@@ -408,11 +387,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
         if(type  == "n") text(x=seq_along(plot.x), y=plot.x, var.names, cex=0.5)
       }
       if(vars  == "scores") {
-        if(grp.ind)   {
-          labs <- clust$post.z
-        } else   {
-          labs <- 1
-        }
+        labs   <- if(grp.ind) clust$post.z else 1
         if(!missing(labels)) {
           if(!exists(as.character(match.call()$labels),
               envir=.GlobalEnv)) {    warning(paste0("Object ", match.call()$labels, " not found"), call.=FALSE)
@@ -709,12 +684,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
     if(m.sw["E.sw"]) {
       palette(tmp.pal)
       x.plot <- results$Error
-      if(G > 1)  {
-        plot.x    <- do.call(rbind, x.plot[-length(x.plot)])
-        plot.x    <- cbind(plot.x, Averages = x.plot$Averages)
-      } else {
-        plot.x    <- x.plot
-      }
+      plot.x      <- if(G > 1) cbind(do.call(rbind, x.plot[-length(x.plot)]), Averages = x.plot$Averages) else x.plot
       if(titles) {
         layout(rbind(1, 2), heights=c(9, 1))
         par(mar=c(3.1, 4.1, 4.1, 2.1))
@@ -741,13 +711,9 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
         temp <- legend("center", legend=if(xna) c(ltxt, "Missing") else ltxt, ncol=ifelse(xna, lnc + 1, lnc), bty="n",
                        pch=if(xna) c(lpch, max(lpch) + 1) else lpch, col=if(xna) c(lcol, length(lcol) + 1) else lcol, cex=0.8)
         if(xna) text(x=temp$text$x[6] - 0.015, y=temp$text$y[6] + 0.015, "__")
-      }
-      if(G > 1) {
-        avg  <- setNames(list(x.plot$Averages), "Average Error Metrics")
-        class(avg)         <- "listof"
-      } else {
-        avg  <- x.plot
-      }
+      }  
+      avg    <- if(G > 1) setNames(list(x.plot$Averages), "Average Error Metrics") else x.plot
+      class(avg)           <- "listof"
       print(avg)  
     }
   

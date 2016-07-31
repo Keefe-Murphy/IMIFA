@@ -126,7 +126,6 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
         log.likes        <- if(is.element(method, c("OMFA", "IMFA")) && GQ1) sims[[gi]][[qi]]$ll.store[tmp.store[[qi]]] else sims[[gi]][[qi]]$ll.store[tmp.store]
         ll.max           <- 2 * max(log.likes, na.rm=TRUE)
         ll.var           <- ifelse(length(log.likes) != 1, 2 * var(log.likes, na.rm=TRUE), 0)
-        ll.mean          <- mean(log.likes, na.rm=TRUE)
         aicm[g,q]        <- ll.max - ll.var * 2
         bicm[g,q]        <- ll.max - ll.var * log.N
         if(!inf.Q) {
@@ -322,11 +321,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     Q.CI         <- if(G1) apply(Q.store, 1, function(qs) round(quantile(qs, conf.levels))) else round(quantile(Q.store, conf.levels))
     GQ.temp4     <- list(Q = Q, Q.Mode = Q.mode, Q.Median = Q.med, 
                          Q.CI = Q.CI, Q.Probs = Q.prob, Q.Counts = Q.tab)
-    if(inf.G) {
-      GQ.res     <- c(GQ.temp1, GQ.temp4)
-    } else    {
-      GQ.res     <- c(list(G = G), GQ.temp4)
-    }
+    GQ.res       <- if(inf.G) c(GQ.temp1, GQ.temp4) else c(list(G = G), GQ.temp4)
     GQ.res       <- c(GQ.res, GQ.temp2)
   }
 
@@ -360,11 +355,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
              !no.score))          warning(paste0("Loadings ", ifelse(G > 1, paste0("for group ", g, " not stored as it"), " not stored as model"), " has zero factors"), call.=FALSE)
       sw["l.sw"] <- FALSE
     }
-    if(inf.Q) {
-      store      <- seq_along(tmp.store)[which(Q.store[g,] >= Qg)]
-    } else    {
-      store      <- seq_along(tmp.store)
-    }
+    store        <- if(inf.Q) seq_along(tmp.store)[which(Q.store[g,] >= Qg)] else seq_along(tmp.store)
     n.store      <- length(store)
   
   # Retrieve (unrotated) loadings  
@@ -372,8 +363,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       if(clust.ind)  {
         lmat     <- adrop(lmats[,Qgs,g,store, drop=FALSE], drop=3)
         l.temp   <- adrop(lmat[,,1, drop=FALSE], drop=3)
-      }
-      if(!clust.ind) {
+      } else {
         lmat     <- sims[[G.ind]][[Q.ind]]$load
         if(inf.Q) {
           lmat   <- as.array(lmat)
@@ -462,11 +452,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   # Calculate estimated covariance matrices & compute error metrics
     if(clust.ind) {
       if(all(sw["psi.sw"], any(sw["l.sw"], Qg == 0))) {
-        if(Qg > 0)   {
-          cov.est        <- tcrossprod(post.load) + diag(post.psi)
-        } else {
-          cov.est        <- diag(post.psi)
-        }
+        cov.est  <- if(Qg > 0) tcrossprod(post.load) + diag(post.psi) else diag(post.psi)
         if(data.x)      {
           dimnames(cov.est)    <- list(varnames, varnames)
         }
@@ -482,12 +468,8 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       if(all(recomp, sw["psi.sw"], any(sw["l.sw"], Qg == 0))) {
         cov.est  <- replace(cov.est, is.numeric(cov.est), 0)
         for(r in seq_len(n.store))    {
-          if(Qg > 0) {
-            sig  <- tcrossprod(lmat[,,r]) + diag(psi[,r])
-          } else {
-            sig  <- diag(psi[,r])
-          }
-         cov.est <- cov.est + sig/n.store
+         sigma   <- if(Qg > 0) tcrossprod(lmat[,,r]) + diag(psi[,r]) else diag(psi[,r])
+         cov.est <- cov.est + sigma/n.store
         }
       } else if(all(recomp,  g == 1)) {
         if(all(!sw["l.sw"], Qg  > 0, !sw["psi.sw"]))  {

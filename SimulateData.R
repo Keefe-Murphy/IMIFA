@@ -13,45 +13,36 @@ sim.IMIFA      <- function(N = 500, G = 3, P = 25, Q = rep(5, G), nn = NULL) {
       } else if(length(Q != G))  {       stop(paste0("Q must supplied for each of the G=", G, " groups"))  
       }                                       
     }
-  if(missing(nn)) {
-    pie        <- rdirichlet(1, rep(0.5, G))
-    ind.mat    <- rmultinom(N, size=1, prob=pie)
-    labs       <- factor(which(ind.mat != 0, arr.ind=TRUE)[,1], levels=seq_len(G))
+  if(!missing(nn)) {
+    nn         <- as.integer(nn)
+    if(any(length(nn) != G, 
+           sum(nn)    !=N))              stop(paste0("nn must be an integer vector of length ", G, " which sums to ", N))
+  } else {
+    labs       <- factor(which(rmultinom(N, size=1, prob=rdirichlet(1, rep(0.5, G))) != 0, arr.ind=TRUE)[,1], levels=seq_len(G))
     nn         <- tabulate(labs, nbins=G)
-  } else if(any(length(nn) != G, 
-                sum(nn) != N))   {       stop(paste0("nn must be a vector of length ", G, " which sums to ", N))
-  }
+  } 
+
   if(sum(nn == 0) > 0) {
     nn.ind     <- which(nn == 0)
-    n.max      <- which.max(nn)
-    n.empty    <- length(nn.ind)
+    nn.max     <- which.max(nn)
     nn[nn.ind] <- nn[nn.ind] + 1
-    nn[n.max]  <- nn[n.max] - n.empty
+    nn[nn.max] <- nn[nn.max] - length(nn.ind)
   }                           
                                               
-  gnames        <- paste0("Group", seq_len(G))
   vnames        <- paste0("Var ", seq_len(P))
   simdata       <- matrix(0, nr=0, nc=P)
-  true.mu       <- setNames(vector("list", G), gnames)
-  true.l        <- setNames(vector("list", G), gnames)
-  true.psi      <- setNames(vector("list", G), gnames)
-  true.cov      <- setNames(vector("list", G), gnames)
+  true.mu       <- setNames(vector("list", G), paste0("Group", seq_len(G)))
+  true.l        <- true.mu
+  true.psi      <- true.mu
+  true.cov      <- true.mu
   
 # Simulate true parameter values
   for(g in seq_len(G)) {
     Q.g         <- Q[g]
-    u.mu        <- sqrt(abs(rnorm(P, Q.g, g)) * diag(P))
-    z.mu        <- rnorm(P, 0, 1)
-    v.mu        <- u.mu %*% z.mu
-    mu.mu       <- rnorm(P, 0, max(Q.g, 1))
-    mu.true     <- as.vector(mu.mu + v.mu)
+    mu.true     <- as.vector(rnorm(P, 0, max(Q.g, 1)) + sqrt(abs(rnorm(P, Q.g, g)) * diag(P)) %*% rnorm(P, 0, 1))
     
     if(Q.g > 0) {
-      u.load    <- sqrt(abs(rnorm(Q.g, 0, g/2)) * diag(Q.g))
-      z.load    <- matrix(rnorm(P * Q.g, 0, 1), nr=Q.g, ncol=P)
-      v.load    <- t(u.load %*% z.load)
-      mu.load   <- rnorm(Q.g, 0, Q.g/2)
-      l.true    <- mu.load + v.load
+      l.true    <- rnorm(Q.g, 0, Q.g/2) + t(sqrt(abs(rnorm(Q.g, 0, g/2)) * diag(Q.g)) %*% matrix(rnorm(P * Q.g, 0, 1), nr=Q.g, ncol=P))
     } else {
       l.true    <- matrix(, nr=P, nc=0)
     }
@@ -61,10 +52,8 @@ sim.IMIFA      <- function(N = 500, G = 3, P = 25, Q = rep(5, G), nn = NULL) {
     
   # Simulate data
     covmat      <- tcrossprod(l.true, l.true) + diag(psi.true)
-    u.om        <- if(Q.g > 0) chol(covmat) else sqrt(covmat)
-    z           <- matrix(rnorm(P * nn[g], 0, 1), nr=P, ncol=nn[g])
-    var         <- u.om %*% z
-    simdata     <- rbind(simdata, t(rep(mu.true, nn[g]) + var))
+    sigma       <- if(Q.g > 0) chol(covmat) else sqrt(covmat)
+    simdata     <- rbind(simdata, t(rep(mu.true, nn[g]) + sigma %*% matrix(rnorm(P * nn[g], 0, 1), nr=P, ncol=nn[g])))
     names(mu.true)      <- vnames
     names(psi.true)     <- vnames
     dimnames(covmat)    <- list(vnames, vnames)
@@ -77,7 +66,7 @@ sim.IMIFA      <- function(N = 500, G = 3, P = 25, Q = rep(5, G), nn = NULL) {
   
 # Post-process data
   nn.seq        <- seq_along(nn)
-  true.zlab     <- factor(rep(nn.seq, nn), labels=seq_along(nn.seq))
+  true.zlab     <- factor(rep(nn.seq, nn), labels=nn.seq)
   permute       <- sample(seq_len(N), N, replace=FALSE)
   simdata       <- simdata[permute,]
   true.zlab     <- true.zlab[permute]
