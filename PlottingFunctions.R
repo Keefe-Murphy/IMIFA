@@ -387,7 +387,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
         if(type  == "n") text(x=seq_along(plot.x), y=plot.x, var.names, cex=0.5)
       }
       if(vars  == "scores") {
-        labs   <- if(grp.ind) clust$post.z else 1
+        labs   <- if(grp.ind) clust$clustering else 1
         if(!missing(labels)) {
           if(!exists(as.character(match.call()$labels),
               envir=.GlobalEnv)) {    warning(paste0("Object ", match.call()$labels, " not found"), call.=FALSE)
@@ -650,7 +650,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
         } else   {
           labs    <- as.factor(labels)
           if(length(labs) != n.obs)   stop(paste0("'labels' must be a factor of length N=",  n.obs))
-          pzs     <- clust$post.z
+          pzs     <- clust$clustering
           if(nlevels(pzs) == nlevels(labs)) {
             l.sw  <- lab.switch(z.new=pzs, z.old=labs, Gs=seq_len(G))
             pzs   <- factor(l.sw$z)
@@ -712,8 +712,12 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
                        pch=if(xna) c(lpch, max(lpch) + 1) else lpch, col=if(xna) c(lcol, length(lcol) + 1) else lcol, cex=0.8)
         if(xna) text(x=temp$text$x[6] - 0.015, y=temp$text$y[6] + 0.015, "__")
       }  
-      avg    <- if(G > 1) setNames(list(x.plot$Averages), "Average Error Metrics") else x.plot
-      class(avg)           <- "listof"
+      if(G > 1) {
+        avg  <- setNames(list(x.plot$Averages), "Average Error Metrics") 
+        class(avg)         <- "listof"
+      } else {
+        avg  <- x.plot
+      }
       print(avg)  
     }
   

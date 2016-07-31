@@ -297,9 +297,9 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       MH.alpha   <- list(alpha.pi = alpha.pi, post.alpha = post.alpha, var.alpha = var.alpha, ci.alpha = ci.alpha, acceptance.rate = rate)
       class(MH.alpha)          <- "listof"
     }
-    cluster      <- list(post.z = post.z, post.pi = post.pi/sum(post.pi), z = z, uncertainty = uncertain)
-    cluster      <- c(cluster, if(sw["pi.sw"]) list(pi.prop = pi.prop, var.pi = var.pi, ci.pi = ci.pi),
-                      if(!label.miss) list(perf = tab.stat), if(isTRUE(MH.step)) list(MH.alpha = MH.alpha))
+    cluster      <- list(clustering = post.z, z = z, uncertainty = uncertain)
+    cluster      <- c(cluster, list(post.pi = post.pi/sum(post.pi)), if(sw["pi.sw"]) list(pi.prop = pi.prop, var.pi = var.pi, 
+                      ci.pi = ci.pi), if(!label.miss) list(perf = tab.stat), if(isTRUE(MH.step)) list(MH.alpha = MH.alpha))
     attr(cluster, "Z.init")    <- attr(sims[[G.ind]], "Z.init")
     attr(cluster, "Init.Meth") <- attr(sims, "Init.Z")
     attr(cluster, "Label.Sup") <- !label.miss
@@ -509,13 +509,13 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
                          if(sw.px)        list(post.psi  = post.psi),
                          if(any(sw["l.sw"], 
                                 sw.px))   list(var.exp   = var.exp),
-                         if(emp.T[g])     list(cov.mat   = cov.emp), 
+                         if(emp.T[g])     list(cov.emp   = cov.emp), 
                          if(est.T[g])     list(cov.est   = cov.est))
     result[[g]]  <- unlist(results, recursive=FALSE)
     attr(result[[g]], "Store") <- n.store
     f.store[[g]] <- store
   }
-  if(sw["f.sw"]) {
+  if(sw["f.sw"])   {
     f            <- f[,,unique(unlist(f.store)), drop=FALSE]
     scores       <- list(f = f, post.f = rowMeans(f, dims=2), var.f = apply(f, c(1, 2), var),
                          ci.f  = apply(f, c(1, 2), function(x) quantile(x, conf.levels)))
@@ -527,9 +527,9 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   attr(GQ.res, "Groups")       <- n.grp
   attr(GQ.res, "Supplied")     <- c(Q=Q.T, G=G.T)
   err.T                        <- unlist(lapply(Gseq, function(g) all(emp.T[g], est.T[g])))
-  if(any(err.T)) {
+  if(any(err.T))   {
     errors       <- lapply(list(MSE = mse, RMSE = rmse, NRMSE = nrmse, CVRMSE = cvrmse, MAD = mad), setNames, paste0("Group ", Gseq))
-    if(G > 1)    {
+    if(G > 1)      {
       errors     <- c(errors, list(Averages = unlist(lapply(errors, mean, na.rm=TRUE))))
       class(errors)            <- "listof"
     } else {
@@ -537,9 +537,31 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     }
   }
   
+  if(sw["mu.sw"])  {
+    post.mu      <- do.call(rbind, lapply(result, "[[", "post.mu"))
+    var.mu       <- do.call(rbind, lapply(result, "[[", "var.mu"))
+    ci.mu        <- Filter(Negate(is.null), lapply(result, "[[", "ci.mu"))  
+    means        <- list(post.mu = post.mu, var.mu = var.mu, ci.mu = ci.mu)
+  }
+  if(sw["l.sw"])   {
+    post.load    <- Filter(Negate(is.null), lapply(result, "[[", "post.load"))
+    var.load     <- Filter(Negate(is.null), lapply(result, "[[", "var.load"))
+    ci.load      <- Filter(Negate(is.null), lapply(result, "[[", "ci.load"))  
+    loads        <- list(post.load = post.load, var.load = var.load, ci.load = ci.load)
+  }
+  if(sw["psi.sw"]) {
+    post.psi     <- do.call(rbind, lapply(result, "[[", "post.psi"))
+    var.psi      <- do.call(rbind, lapply(result, "[[", "var.psi"))
+    ci.psi       <- Filter(Negate(is.null), lapply(result, "[[", "ci.psi"))  
+    psis         <- list(post.psi = post.psi, var.psi = var.psi, ci.psi = ci.psi)
+  }
   result         <- c(result, if(exists("cluster", envir=environment())) list(Clust = cluster), 
-                      if(any(err.T)) list(Error = errors), list(GQ.results = GQ.res), 
-                      if(sw["f.sw"]) list(Scores = scores))
+                      if(any(err.T))   list(Error        = errors),  list(GQ.results = GQ.res), 
+                      if(sw["mu.sw"])  list(Means        =  means),
+                      if(sw["l.sw"])   list(Loadings     =  loads),
+                      if(sw["f.sw"])   list(Scores       = scores),
+                      if(sw["psi.sw"]) list(Uniquenesses =   psis))
+                      
   class(result)                <- "IMIFA"
   attr(result, "Conf.Level")   <- conf.level
   attr(result, "Errors")       <- any(err.T)

@@ -88,6 +88,7 @@
 
 # Cluster Labels
   plot(res, "Z")
+  res$Clust$clustering
 
 # Means
   plot(res, "a", "m")
@@ -96,11 +97,25 @@
   plot(res, "t", "m", mat=FALSE)
   plot(res, "d", "m")
   plot(res, "d", "m", mat=FALSE)
-  do.call(rbind, lapply(seq_len(res$GQ.results$G), function(g) res[[g]]$post.mu))
-  do.call(rbind, lapply(seq_len(res$GQ.results$G), function(g) res[[g]]$var.mu))
   plot(res, "p", "m")
   plot(res, "c", "m")
+  res$Means$post.mu
+  res$Means$var.mu
+  res$Means$ci.mu
   
+# Loadings
+  plot(res, "a", "l")
+  plot(res, "a", "l", mat=FALSE)
+  plot(res, "t", "l")
+  plot(res, "t", "l", mat=FALSE)
+  plot(res, "d", "l")
+  plot(res, "d", "l", mat=FALSE)
+  plot(res, "p", "l")
+  plot(res, "c", "l")
+  res$Loadings$post.load
+  res$Loadings$var.load
+  res$Loadings$ci.load
+
 # Scores
   plot(res, "a", "s")
   plot(res, "a", "s", lab)
@@ -111,18 +126,9 @@
   plot(res, "d", "s", mat=FALSE)
   plot(res, "p", "s")
   plot(res, "c", "s")
-      
-# Loadings
-  plot(res, "a", "l")
-  plot(res, "a", "l", mat=FALSE)
-  plot(res, "t", "l")
-  plot(res, "t", "l", mat=FALSE)
-  plot(res, "d", "l")
-  plot(res, "d", "l", mat=FALSE)
-  lapply(seq_len(res$GQ.results$G), function(g) res[[g]]$post.load)
-  lapply(seq_len(res$GQ.results$G), function(g) res[[g]]$var.load)
-  plot(res, "p", "l")
-  plot(res, "c", "l")
+  res$Scores$post.f
+  res$Scores$var.f
+  res$Scores$ci.f
   
 # Uniquenesses
   plot(res, "a", "u")
@@ -131,10 +137,11 @@
   plot(res, "t", "u", mat=FALSE)
   plot(res, "d", "u")
   plot(res, "d", "u", mat=FALSE)
-  do.call(rbind, lapply(seq_len(res$GQ.results$G), function(g) summary(res[[g]]$post.psi)))
-  do.call(rbind, lapply(seq_len(res$GQ.results$G), function(g) res[[g]]$var.psi))
   plot(res, "p", "u")
   plot(res, "c", "u")
+  res$Uniquenesses$post.psi
+  res$Uniquenesses$var.psi
+  res$Uniquenesses$ci.psi
 
 # Mixing Proportions
   plot(res, "a", "p")
@@ -146,11 +153,13 @@
   plot(res, "p", "p")
   plot(res, "p", "p", mat=FALSE)
   plot(res, "c", "p")
+  res$Clust$post.pi
+  res$Clust$var.pi
+  res$Clust$ci.pi
   
 # Covariance Matrices & Error Metrics
   plot(res, "e")
-  lapply(seq_len(res$GQ.results$G), function(g) res[[g]]$cov.est)
-
+  
 # Metropolis Hastings 'alpha' for Dirichlet Process methods
   plot(res, "a", "a")
   plot(res, "t", "a")
