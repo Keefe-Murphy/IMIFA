@@ -272,17 +272,20 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       }
       tab        <- table(post.z, zlabels, dnn=list("Predicted", "Observed"))
       tab.stat   <- c(classAgreement(tab), classError(post.z, zlabels))
-      if(nrow(tab) != ncol(tab)) {
+      if(nrow(tab) != ncol(tab))     {
         tab.stat <- tab.stat[-seq_len(2)]
+        names(tab.stat)[4]     <- "error.rate"
+      } else {
+        names(tab.stat)[6]     <- "error.rate"
       }
-      if(tab.stat$errorRate == 0) {
+      if(tab.stat$error.rate   == 0) {
         tab.stat$misclassified <- NULL
       }
-      tab.stat   <- c(list(confusionMatrix = tab), tab.stat)
+      tab.stat   <- c(list(confusion.matrix = tab), tab.stat)
       uncert.obs <- which(uncertain >= 1/G)
       attr(uncertain, "Obs")   <- if(sum(uncert.obs) != 0) uncert.obs
       if(!label.miss && (nlevels(post.z) == length(levs))) {
-        names(tab.stat)[1]     <- "matchedConfusionMatrix"
+        names(tab.stat)[1]     <- "matched.confusion.matrix"
       }
       class(tab.stat)          <- "listof"
     }

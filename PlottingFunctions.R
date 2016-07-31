@@ -682,15 +682,18 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
           }
           tab     <- table(pzs, labs, dnn=list("Predicted", "Observed"))
           perf    <- c(classAgreement(tab), classError(pzs, labs))
-          if(nrow(tab) != ncol(tab)) {
+          if(nrow(tab) != ncol(tab))   {
             perf  <- perf[-seq_len(2)]
+            names(perf)[4]       <- "error.rate"
+          } else {
+            names(perf)[6]       <- "error.rate"
           }
-          if(perf$errorRate == 0) {
+          if(perf$error.rate     == 0) {
             perf$misclassified   <- NULL
           }
-          perf    <- c(list(confusionMatrix = tab), perf)
+          perf    <- c(list(confusion.matrix = tab), perf)
           if(nlevels(pzs)  == nlevels(labs)) {
-            names(perf)[1] <- "matchedConfusionMatrix"
+            names(perf)[1] <- "matched.confusion.matrix"
           }
           class(perf)      <- "listof"
         }
@@ -698,7 +701,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
         if(!is.null(uncert)) {
           perf    <- c(perf, list(uncertain = uncert))  
         }
-        perf$errorRate     <- paste0(round(100 * perf$errorRate, 2), "%")
+        perf$error.rate    <- paste0(round(100 * perf$error.rate, 2), "%")
         print(perf)
       } else                          message("Nothing to print: try supplying known cluster labels")
     }
