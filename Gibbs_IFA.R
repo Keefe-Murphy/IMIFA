@@ -46,7 +46,7 @@
     
     mu.sigma     <- 1/sigma.mu
     f            <- sim.f.p(Q=Q, N=N)
-    psi.inv      <- sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
+    psi.inv      <- sim.psi.i.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
     phi          <- sim.phi.p(Q=Q, P=P, phi.nu=phi.nu)
     delta        <- c(sim.delta.p(alpha=alpha.d1, beta=beta.d1), sim.delta.p(Q=Q, alpha=alpha.dk, beta=beta.dk))
     tau          <- cumprod(delta)
@@ -87,7 +87,7 @@
       mu         <- as.vector(sim.mu(N=N, P=P, mu.sigma=mu.sigma, psi.inv=psi.inv, sum.data=sum.data, sum.f=colSums(f), lmat=lmat, mu.zero=mu.zero))
     
     # Uniquenesses
-      psi.inv    <- sim.psi.i(N=N, P=P, psi.alpha=psi.alpha, psi.beta=psi.beta, c.data=c.data, f=f, lmat=lmat)
+      psi.inv    <- sim.psi.inv(N=N, P=P, psi.alpha=psi.alpha, psi.beta=psi.beta, c.data=c.data, f=f, lmat=lmat)
     
     # Local Shrinkage
       load.2     <- lmat * lmat
@@ -133,14 +133,14 @@
         psi      <- 1/psi.inv
         post.mu  <- post.mu + mu/n.store
         post.psi <- post.psi + psi/n.store
-        Sigma    <- tcrossprod(lmat) + diag(psi)
-        cov.est  <- cov.est + Sigma/n.store
+        sigma    <- tcrossprod(lmat) + diag(psi)
+        cov.est  <- cov.est + sigma/n.store
         if(sw["mu.sw"])             mu.store[,new.it]              <- mu  
         if(all(sw["f.sw"], Q0))     f.store[,seq_len(Q),new.it]    <- f
         if(all(sw["l.sw"], Q0))     load.store[,seq_len(Q),new.it] <- lmat
         if(sw["psi.sw"])            psi.store[,new.it]             <- psi
                                     Q.store[new.it]                <- Q
-                                    ll.store[new.it]               <- sum(dmvn(X=data, mu=mu, sigma=Sigma, log=TRUE))
+                                    ll.store[new.it]               <- sum(dmvn(X=data, mu=mu, sigma=sigma, log=TRUE))
       }
     }
     returns      <- list(mu       = if(sw["mu.sw"])  mu.store,

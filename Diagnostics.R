@@ -3,7 +3,7 @@
 #################################################
 
 tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q = NULL, Q.meth = c("Mode", "Median"), G.meth = c("Mode", "Median"),
-                             criterion = c("bicm", "aicm", "bic.mcmc", "aic.mcmc"), conf.level = 0.95, Labels = NULL, recomp = FALSE) {
+                             criterion = c("bicm", "aicm", "bic.mcmc", "aic.mcmc"), conf.level = 0.95, labels = NULL, recomp = FALSE) {
   
   source(paste(getwd(), "/IMIFA-GIT/FullConditionals.R", sep=""), local=TRUE)
   defpar         <- suppressWarnings(par(no.readonly=TRUE))
@@ -43,7 +43,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
      c("aicm", "bicm"))))         stop(paste0("'criterion' should be one of 'aicm' or 'bicm' for the ", method, "method"))
   if(!is.logical(recomp))         stop("'recomp' must be TRUE or FALSE")
   if(any(burnin   > 0, 
-     thinning     > 1)) recomp <- T
+     thinning     > 1)) recomp <- TRUE
   
   G.T            <- !missing(G)
   Q.T            <- !missing(Q)
@@ -187,11 +187,11 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   
 # Manage Label Switching & retrieve cluster labels/mixing proportions
   if(clust.ind) {
-    label.miss   <- missing(Labels)
+    label.miss   <- missing(labels)
     if(!label.miss)   {
-      if(!exists(as.character(substitute(Labels)),
-          envir=.GlobalEnv))      stop(paste0("Object ", match.call()$Labels, " not found"))
-      if(length(Labels) != n.obs) stop(paste0("'Labels' must be a factor of length N=",  n.obs))  
+      if(!exists(as.character(substitute(labels)),
+          envir=.GlobalEnv))      stop(paste0("Object ", match.call()$labels, " not found"))
+      if(length(labels) != n.obs) stop(paste0("'labels' must be a factor of length N=",  n.obs))  
     }
     if(sw["mu.sw"])   {
       mus        <- sims[[G.ind]][[Q.ind]]$mu[,,tmp.store, drop=FALSE]                            
@@ -240,13 +240,13 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     if(sw["pi.sw"])    {
       pi.prop    <- pies[Gseq,seq_along(tmp.store), drop=FALSE]
       var.pi     <- apply(pi.prop, 1, var)
-      CI.pi      <- apply(pi.prop, 1, function(x) quantile(x, conf.levels))
+      ci.pi      <- apply(pi.prop, 1, function(x) quantile(x, conf.levels))
       post.pi    <- rowMeans(pi.prop, dims=1)
     } else {
       post.pi    <- setNames(prop.table(tabulate(post.z, nbins=G)), paste0("Group ", Gseq))
     }
     if(!label.miss) {
-      zlabels    <- factor(Labels, labels=seq_along(unique(Labels)))
+      zlabels    <- factor(labels, labels=seq_along(unique(labels)))
       levs       <- levels(zlabels)
       if(nlevels(post.z) == length(levs)) {
         sw.lab   <- lab.switch(z.new=post.z, z.old=zlabels, Gs=Gseq)
@@ -262,8 +262,8 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
          rownames(pi.prop)     <- gnames
          pi.prop <- pi.prop[index,, drop=FALSE]
          var.pi  <- setNames(var.pi[index],  gnames[index])
-         colnames(CI.pi)       <- gnames
-         CI.pi   <- CI.pi[,index,   drop=FALSE]
+         colnames(ci.pi)       <- gnames
+         ci.pi   <- ci.pi[,index,   drop=FALSE]
         }
         if(inf.Q)   {
          rownames(Q.store)     <- gnames
@@ -290,13 +290,13 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       alpha.pi   <- sims[[G.ind]][[Q.ind]]$alpha
       post.alpha <- mean(alpha.pi)
       var.alpha  <- var(alpha.pi)
-      CI.alpha   <- quantile(alpha.pi, conf.levels)
+      ci.alpha   <- quantile(alpha.pi, conf.levels)
       rate       <- sims[[G.ind]][[Q.ind]]$rate
-      MH.alpha   <- list(alpha.pi = alpha.pi, post.alpha = post.alpha, var.alpha = var.alpha, CI.alpha = CI.alpha, acceptance.rate = rate)
+      MH.alpha   <- list(alpha.pi = alpha.pi, post.alpha = post.alpha, var.alpha = var.alpha, ci.alpha = ci.alpha, acceptance.rate = rate)
       class(MH.alpha)          <- "listof"
     }
     cluster      <- list(post.z = post.z, post.pi = post.pi/sum(post.pi), z = z, uncertainty = uncertain)
-    cluster      <- c(cluster, if(sw["pi.sw"]) list(pi.prop = pi.prop, var.pi = var.pi, CI.pi = CI.pi),
+    cluster      <- c(cluster, if(sw["pi.sw"]) list(pi.prop = pi.prop, var.pi = var.pi, ci.pi = ci.pi),
                       if(!label.miss) list(perf = tab.stat), if(isTRUE(MH.step)) list(MH.alpha = MH.alpha))
     attr(cluster, "Z.init")    <- attr(sims[[G.ind]], "Z.init")
     attr(cluster, "Init.Meth") <- attr(sims, "Init.Z")
@@ -331,7 +331,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   no.score       <- all(Q == 0)
   if(no.score)   { 
     if(sw["f.sw"])                warning("Scores & loadings not stored as model has zero factors", call.=FALSE)
-    sw["f.sw"]   <- F
+    sw["f.sw"]   <- FALSE
   }
   if(sw["f.sw"]) {
     Q.max        <- max(Q) 
@@ -346,8 +346,8 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
 # Loop over g in G to extract other results
   result         <- list(list())
   f.store        <- list()
-  MSE   <- RMSE  <- NRMSE  <- CVRMSE  <- 
-  MAD   <- emp.T <- est.T  <- rep(NA, G)
+  mse   <- rmse  <- nrmse  <- cvrmse  <- 
+  mad   <- emp.T <- est.T  <- rep(NA, G)
   for(g in Gseq) {
     Qg           <- Q[g]
     Qgs          <- seq_len(Qg)
@@ -355,7 +355,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     if(Qg == 0)  {
       if(all(sw["l.sw"],
              !no.score))          warning(paste0("Loadings ", ifelse(G > 1, paste0("for group ", g, " not stored as it"), " not stored as model"), " has zero factors"), call.=FALSE)
-      sw["l.sw"] <- F
+      sw["l.sw"] <- FALSE
     }
     if(inf.Q) {
       store      <- seq_along(tmp.store)[which(Q.store[g,] >= Qg)]
@@ -439,17 +439,17 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     if(sw["mu.sw"])  {
       post.mu    <- rowMeans(mu, dims=1)
       var.mu     <- apply(mu, 1, var)
-      CI.mu      <- apply(mu, 1, function(x) quantile(x, conf.levels))
+      ci.mu      <- apply(mu, 1, function(x) quantile(x, conf.levels))
     }
     if(sw["psi.sw"]) {
       post.psi   <- rowMeans(psi, dims=1)
       var.psi    <- apply(psi, 1, var)
-      CI.psi     <- apply(psi, 1, function(x) quantile(x, conf.levels))
+      ci.psi     <- apply(psi, 1, function(x) quantile(x, conf.levels))
     }
     if(sw["l.sw"])   { 
       post.load  <- rowMeans(lmat, dims=2)
       var.load   <- apply(lmat, c(1, 2), var)
-      CI.load    <- apply(lmat, c(1, 2), function(x) quantile(x, conf.levels))
+      ci.load    <- apply(lmat, c(1, 2), function(x) quantile(x, conf.levels))
       var.exp    <- sum(colSums(post.load * post.load))/n.var
       class(post.load)   <- "loadings"
     } else if(emp.T[g]) {
@@ -469,10 +469,10 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
         }
       } else if(g == 1) {
         if(all(!sw["l.sw"], Qg  > 0, !sw["psi.sw"]))  {
-                                  warning("Loadings & Psi not stored: can't estimate Sigma and compute error metrics", call.=FALSE)
+                                  warning("Loadings & Uniquenesses not stored: can't estimate covariance matrix and compute error metrics", call.=FALSE)
         } else if(all(Qg > 0,
-                  !sw["l.sw"])) { warning("Loadings not stored: can't estimate Sigma and compute error metrics", call.=FALSE)
-        } else if(!sw["psi.sw"])  warning("Psi not stored: can't estimate Sigma and compute error metrics", call.=FALSE)
+                  !sw["l.sw"])) { warning("Loadings not stored: can't estimate covariance matrix and compute error metrics", call.=FALSE)
+        } else if(!sw["psi.sw"])  warning("Uniquenesses not stored: can't estimate covariance matrix and compute error metrics", call.=FALSE)
       }  
     } else     {
       cov.est    <- sims[[G.ind]][[Q.ind]]$cov.est
@@ -480,29 +480,29 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
         cov.est  <- replace(cov.est, is.numeric(cov.est), 0)
         for(r in seq_len(n.store))    {
           if(Qg > 0) {
-            Sig  <- tcrossprod(lmat[,,r]) + diag(psi[,r])
+            sig  <- tcrossprod(lmat[,,r]) + diag(psi[,r])
           } else {
-            Sig  <- diag(psi[,r])
+            sig  <- diag(psi[,r])
           }
-         cov.est <- cov.est + Sig/n.store
+         cov.est <- cov.est + sig/n.store
         }
       } else if(all(recomp,  g == 1)) {
         if(all(!sw["l.sw"], Qg  > 0, !sw["psi.sw"]))  {
-                                  warning("Loadings & Psi not stored: can't re-estimate Sigma", call.=FALSE)
+                                  warning("Loadings & Uniquenesses not stored: can't re-estimate covariance matrix", call.=FALSE)
         } else if(all(Qg > 0,
-                  !sw["l.sw"])) { warning("Loadings not stored: can't re-estimate Sigma", call.=FALSE)
-        } else if(!sw["psi.sw"])  warning("Psi not stored: can't re-estimate Sigma", call.=FALSE) 
+                  !sw["l.sw"])) { warning("Loadings not stored: can't re-estimate covariance matrix", call.=FALSE)
+        } else if(!sw["psi.sw"])  warning("Uniquenesses not stored: can't re-estimate covariance matrix", call.=FALSE) 
       }
     }
     est.T[g]     <- exists("cov.est", envir=environment())
     
     if(all(emp.T[g], est.T[g])) {
       error      <- cov.emp - cov.est
-      MSE[g]     <- mean(error * error)
-      RMSE[g]    <- sqrt(MSE[g])
-      NRMSE[g]   <- RMSE[g]/(max(cov.emp) - min(cov.emp))
-      CVRMSE[g]  <- RMSE[g]/mean(cov.emp)
-      MAD[g]     <- mean(abs(error))
+      mse[g]     <- mean(error * error)
+      rmse[g]    <- sqrt(mse[g])
+      nrmse[g]   <- rmse[g]/(max(cov.emp) - min(cov.emp))
+      cvrmse[g]  <- rmse[g]/mean(cov.emp)
+      mad[g]     <- mean(abs(error))
       if(any(all(scal.meth != "none", cent) && 
                  sum(round(diag(cov.est))   != 
                  round(diag(cov.emp)))      != 0,
@@ -512,14 +512,14 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     
     results      <- list(if(sw["mu.sw"])  list(means     = mu,
                                                var.mu    = var.mu,
-                                               CI.mu     = CI.mu), 
+                                               ci.mu     = ci.mu), 
                          if(sw["l.sw"])   list(loadings  = lmat, 
                                                post.load = post.load,
                                                var.load  = var.load,
-                                               CI.load   = CI.load),
+                                               ci.load   = ci.load),
                          if(sw["psi.sw"]) list(psi       = psi,
                                                var.psi   = var.psi,
-                                               CI.psi    = CI.psi),
+                                               ci.psi    = ci.psi),
                          if(sw.mx)        list(post.mu   = post.mu), 
                          if(sw.px)        list(post.psi  = post.psi),
                          if(any(sw["l.sw"], 
@@ -533,7 +533,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   if(sw["f.sw"]) {
     f            <- f[,,unique(unlist(f.store)), drop=FALSE]
     scores       <- list(f = f, post.f = rowMeans(f, dims=2), var.f = apply(f, c(1, 2), var),
-                         CI.f  = apply(f, c(1, 2), function(x) quantile(x, conf.levels)))
+                         ci.f  = apply(f, c(1, 2), function(x) quantile(x, conf.levels)))
   }
   names(result)  <- paste0("Group", Gseq)
   class(GQ.res)                <- "listof"
@@ -543,7 +543,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   attr(GQ.res, "Supplied")     <- c(Q=Q.T, G=G.T)
   err.T                        <- unlist(lapply(Gseq, function(g) all(emp.T[g], est.T[g])))
   if(any(err.T)) {
-    errors       <- lapply(list(MSE = MSE, RMSE = RMSE, NRMSE = NRMSE, CVRMSE = CVRMSE, MAD = MAD), setNames, paste0("Group ", Gseq))
+    errors       <- lapply(list(MSE = mse, RMSE = rmse, NRMSE = nrmse, CVRMSE = cvrmse, MAD = mad), setNames, paste0("Group ", Gseq))
     if(G > 1)    {
       errors     <- c(errors, list(Averages = unlist(lapply(errors, mean, na.rm=TRUE))))
       class(errors)            <- "listof"

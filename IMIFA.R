@@ -17,15 +17,15 @@
 # Read in the data
   # Wine
     load(file=paste0(getwd(), "/Data/Wine.Rdata", sep=""), envir=.GlobalEnv)
-    Lab      <- wine[,1]
+    lab      <- wine[,1]
   # Iris
     load(file=paste0(getwd(), "/Data/Iris.Rdata", sep=""), envir=.GlobalEnv)
-    Species  <- iris[,5]
+    species  <- iris[,5]
   # Urine
     load(file=paste0(getwd(), "/Data/Epi_urine_data.Rdata", sep=""), envir=.GlobalEnv)
     ppms     <- substr(colnames(x10[,4:ncol(x10)]), 2,6); rm(x)
     urine    <- x10[,4:ncol(x10)]
-    Grp      <- x10[,"Group"]
+    grp      <- x10[,"Group"]
     ppm.g    <- do.call(cbind, lapply(seq_len(max(Grp)), function(g) colMeans(urine[Grp == g,])))
     matplot(ppm.g, type="l", xlab="Chemical Shift (ppm)", yaxt="n", ylab="", bty="n", xaxt="n", lwd=2, lty=1)
     axis(1, at=seq(from=20, to=nrow(ppm.g), by=20), labels=9:1, tick=TRUE, lwd.ticks=1, xpd=TRUE)
@@ -73,7 +73,7 @@
                    ".Rdata", sep=""), envir=.GlobalEnv)
 
 # Posterior Summaries (optional: additional 'burnin' & 'thinning', user-defined G/Q, model selection criterion)
-  res <- tune.IMIFA(sim, Labels=Lab)
+  res <- tune.IMIFA(sim, labels=lab)
 
 # Save / Load Results
   save(res, file=paste0(getwd(), "/Simulations/", attr(res, "Name"), 
@@ -103,7 +103,7 @@
   
 # Scores
   plot(res, "a", "s")
-  plot(res, "a", "s", Lab)
+  plot(res, "a", "s", lab)
   plot(res, "a", "s", mat=FALSE)
   plot(res, "t", "s")
   plot(res, "t", "s", mat=FALSE)

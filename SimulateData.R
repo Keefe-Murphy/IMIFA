@@ -31,7 +31,7 @@ sim.IMIFA      <- function(N = 500, G = 3, P = 25, Q = rep(5, G), nn = NULL) {
                                               
   gnames        <- paste0("Group", seq_len(G))
   vnames        <- paste0("Var ", seq_len(P))
-  SimData       <- matrix(0, nr=0, nc=P)
+  simdata       <- matrix(0, nr=0, nc=P)
   true.mu       <- setNames(vector("list", G), gnames)
   true.l        <- setNames(vector("list", G), gnames)
   true.psi      <- setNames(vector("list", G), gnames)
@@ -40,16 +40,16 @@ sim.IMIFA      <- function(N = 500, G = 3, P = 25, Q = rep(5, G), nn = NULL) {
 # Simulate true parameter values
   for(g in seq_len(G)) {
     Q.g         <- Q[g]
-    U.mu        <- sqrt(abs(rnorm(P, Q.g, g)) * diag(P))
+    u.mu        <- sqrt(abs(rnorm(P, Q.g, g)) * diag(P))
     z.mu        <- rnorm(P, 0, 1)
-    v.mu        <- U.mu %*% z.mu
+    v.mu        <- u.mu %*% z.mu
     mu.mu       <- rnorm(P, 0, max(Q.g, 1))
     mu.true     <- as.vector(mu.mu + v.mu)
     
     if(Q.g > 0) {
-      U.load    <- sqrt(abs(rnorm(Q.g, 0, g/2)) * diag(Q.g))
+      u.load    <- sqrt(abs(rnorm(Q.g, 0, g/2)) * diag(Q.g))
       z.load    <- matrix(rnorm(P * Q.g, 0, 1), nr=Q.g, ncol=P)
-      v.load    <- t(U.load %*% z.load)
+      v.load    <- t(u.load %*% z.load)
       mu.load   <- rnorm(Q.g, 0, Q.g/2)
       l.true    <- mu.load + v.load
     } else {
@@ -61,14 +61,10 @@ sim.IMIFA      <- function(N = 500, G = 3, P = 25, Q = rep(5, G), nn = NULL) {
     
   # Simulate data
     covmat      <- tcrossprod(l.true, l.true) + diag(psi.true)
-    if(Q.g > 0) {
-      U.om      <- chol(covmat)
-    } else {
-      U.om      <- sqrt(covmat)
-    }
+    u.om        <- if(Q.g > 0) chol(covmat) else sqrt(covmat)
     z           <- matrix(rnorm(P * nn[g], 0, 1), nr=P, ncol=nn[g])
-    var         <- U.om %*% z
-    SimData     <- rbind(SimData, t(rep(mu.true, nn[g]) + var))
+    var         <- u.om %*% z
+    simdata     <- rbind(simdata, t(rep(mu.true, nn[g]) + var))
     names(mu.true)      <- vnames
     names(psi.true)     <- vnames
     dimnames(covmat)    <- list(vnames, vnames)
@@ -83,24 +79,24 @@ sim.IMIFA      <- function(N = 500, G = 3, P = 25, Q = rep(5, G), nn = NULL) {
   nn.seq        <- seq_along(nn)
   true.zlab     <- factor(rep(nn.seq, nn), labels=seq_along(nn.seq))
   permute       <- sample(seq_len(N), N, replace=FALSE)
-  SimData       <- SimData[permute,]
+  simdata       <- simdata[permute,]
   true.zlab     <- true.zlab[permute]
-  dimnames(SimData)     <- list(paste0("Obs ", seq_len(N)), vnames)
-  SimData       <- as.data.frame(SimData)
-  attr(SimData,
+  dimnames(simdata)     <- list(paste0("Obs ", seq_len(N)), vnames)
+  simdata       <- as.data.frame(simdata)
+  attr(simdata,
        "Factors")       <- Q
-  attr(SimData,
+  attr(simdata,
        "Groups")        <- G
-  attr(SimData, 
+  attr(simdata, 
        "Means")         <- true.mu
-  attr(SimData, 
+  attr(simdata, 
        "Loadings")      <- true.l
-  attr(SimData, 
+  attr(simdata, 
        "Uniquenesses")  <- true.psi
-  attr(SimData, 
+  attr(simdata, 
        "Labels")        <- true.zlab
-  attr(SimData,
+  attr(simdata,
        "Covariance")    <- true.cov
-  class(SimData)        <- c("data.frame", "IMIFA")
-  return(SimData)
+  class(simdata)        <- c("data.frame", "IMIFA")
+  return(simdata)
 }

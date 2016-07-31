@@ -65,7 +65,7 @@
     delta           <- lapply(Ts, function(t) c(sim.delta.p(alpha=alpha.d1, beta=beta.d1), sim.delta.p(Q=Q, alpha=alpha.dk, beta=beta.dk)))
     tau             <- lapply(delta, cumprod)
     lmat            <- lapply(Ts, function(t) matrix(unlist(lapply(Ps, function(j) sim.load.p(Q=Q, phi=phi[[t]][j,], tau=tau[[t]], P=P)), use.names=FALSE), nr=P, byrow=TRUE))
-    psi.inv         <- do.call(cbind, lapply(Ts, function(t) sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)))
+    psi.inv         <- do.call(cbind, lapply(Ts, function(t) sim.psi.i.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)))
     for(g in which(nn > 2.5 * Q))      {
       fact          <- try(factanal(data[z == g,, drop=FALSE], factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
       if(!inherits(fact, "try-error")) {
@@ -90,7 +90,7 @@
       psi.store[,,1]       <- 1/psi.inv
       pi.store[,1]         <- pi.prop
       z.store[,1]          <- z
-      ll.store[1]          <- sum(sim.z(data=data, mu=mu, Gseq=Gs, N=N, pi.prop=pi.prop, Sigma=lapply(Gs,
+      ll.store[1]          <- sum(sim.z(data=data, mu=mu, Gseq=Gs, N=N, pi.prop=pi.prop, sigma=lapply(Gs,
                                   function(g) tcrossprod(lmat[[g]]) + diag(1/psi.inv[,g])), Q0=Qs > 0)$log.likes)
       Q.store[,1]          <- Qs
       G.store[1]           <- sum(nn > 0)
@@ -134,10 +134,10 @@
     
     # Cluster Labels
       psi           <- 1/psi.inv
-      Sigma         <- lapply(Gs, function(g) tcrossprod(lmat[[g]]) + diag(psi[,g]))
+      sigma         <- lapply(Gs, function(g) tcrossprod(lmat[[g]]) + diag(psi[,g]))
       Q0            <- Qs[Gs] > 0
       Q1            <- Qs[Gs] > 1
-      z.res         <- sim.z(data=data, mu=mu[,Gs], Sigma=Sigma, Gseq=Gs, N=N, pi.prop=pi.prop[,Gs, drop=FALSE], slice.ind=slice.ind, Q0=Q0[Gs])
+      z.res         <- sim.z(data=data, mu=mu[,Gs], sigma=sigma, Gseq=Gs, N=N, pi.prop=pi.prop[,Gs, drop=FALSE], slice.ind=slice.ind, Q0=Q0[Gs])
       z             <- z.res$z
       nn            <- tabulate(z, nbins=trunc.G)
       nn0           <- nn > 0
@@ -171,8 +171,8 @@
                                sum.f=sum.f[[g]][seq_len(Qs[g])], lmat=lmat[[g]], mu.zero=mu.zero) else sim.mu.p(P=P, sigma.mu=sigma.mu, mu.zero=mu.zero)))
       
     # Uniquenesses
-      psi.inv[,Gs]  <- do.call(cbind, lapply(Gs, function(g) if(nn0[g]) sim.psi.i(N=nn[g], psi.alpha=psi.alpha, c.data=c.data[[g]], psi.beta=psi.beta, 
-                               P=P, f=f.tmp[[g]][,seq_len(Qs[g]), drop=FALSE], lmat=lmat[[g]]) else sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)))
+      psi.inv[,Gs]  <- do.call(cbind, lapply(Gs, function(g) if(nn0[g]) sim.psi.inv(N=nn[g], psi.alpha=psi.alpha, c.data=c.data[[g]], psi.beta=psi.beta, 
+                               P=P, f=f.tmp[[g]][,seq_len(Qs[g]), drop=FALSE], lmat=lmat[[g]]) else sim.psi.i.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)))
     
     # Local Shrinkage
       load.2        <- lapply(lmat[Gs], function(lg) lg * lg)

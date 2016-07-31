@@ -17,7 +17,7 @@ source(paste(getwd(), "/IMIFA-GIT/PlottingFunctions.R", sep=""))
 source(paste(getwd(), "/IMIFA-GIT/SimulateData.R", sep=""))
 
 mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA", "MFA", "IFA", "FA", "classify"), 
-                        n.iters = 20000, Labels = NULL, factanal = FALSE, range.G = NULL, range.Q = NULL, verbose = FALSE, Q.fac = NULL,  
+                        n.iters = 20000, labels = NULL, factanal = FALSE, range.G = NULL, range.Q = NULL, verbose = FALSE, Q.fac = NULL,  
                         burnin = n.iters/5, thinning = 2, centering = TRUE, scaling = c("unit", "pareto", "none"), trunc.G = NULL, MH.lower = NULL,
                         adapt = TRUE, b0 = NULL, b1 = NULL, delta0g = FALSE, prop = NULL, epsilon = NULL, sigma.mu = NULL, sigma.l = NULL, MH.step = TRUE,
                         mu0g = FALSE, psi0g = FALSE, mu.zero = NULL, phi.nu = NULL, psi.alpha = NULL, psi.beta = NULL, alpha.d1 = NULL, pp = NULL, MH.upper = NULL,
@@ -59,7 +59,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
       scal  <- sqrt(scal)
     }
   } else {
-    scal    <- F
+    scal    <- FALSE
   }
   dat       <- scale(raw.dat, center=centering, scale=scal)
   N         <- nrow(dat)
@@ -186,18 +186,18 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
      "IMFA", "OMIFA", "OMFA"))))  {
     if(all(!switches["l.sw"], 
            !switches["psi.sw"]))  {
-                                    warning("Loadings & Psi not stored: will be unable to estimate covariance matrix and compute error metrics", call.=FALSE)
+                                    warning("Loadings & Uniquenesses not stored: will be unable to estimate covariance matrix and compute error metrics", call.=FALSE)
     } else if(!switches["l.sw"])  { warning("Loadings not stored: may be unable to estimate covariance matrix and compute error metrics", call.=FALSE)
-    } else if(!switches["psi.sw"])  warning("Psi not stored: will be unable to estimate covariance matrix and compute error metrics", call.=FALSE)
+    } else if(!switches["psi.sw"])  warning("Uniquenesses not stored: will be unable to estimate covariance matrix and compute error metrics", call.=FALSE)
   }
   if(any(all(method == "MFA",  any(range.G > 1)),
          all(method == "MIFA", any(range.G > 1)), is.element(method, c("IMIFA", 
      "IMFA", "OMIFA", "OMFA"))))  {
     if(all(!switches["mu.sw"], 
            !switches["psi.sw"]))  {
-                                    warning("Means & Psi not stored: posterior mean estimates won't be available", call.=FALSE)
+                                    warning("Means & Uniquenesses not stored: posterior mean estimates won't be available", call.=FALSE)
     } else if(!switches["mu.sw"]) { warning("Means not stored: posterior mean estimates won't be available", call.=FALSE)
-    } else if(!switches["psi.sw"])  warning("Psi not stored: posterior mean estimates won't be available", call.=FALSE)
+    } else if(!switches["psi.sw"])  warning("Uniquenesses not stored: posterior mean estimates won't be available", call.=FALSE)
   }
   if(is.element(method, c("FA", "MFA", "OMFA", "IMFA")) && all(range.Q == 0)) {   
     if(all(switches[c("f.sw", "l.sw")]))  {
@@ -205,7 +205,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     } else if(switches["f.sw"])   { warning("Scores not stored as model has zero factors", call.=FALSE)
     } else if(switches["l.sw"])   { warning("Loadings not stored as model has zero factors", call.=FALSE)
     }                               
-    switches[c("f.sw", "l.sw")]  <- F                              
+    switches[c("f.sw", "l.sw")]  <- FALSE                              
   } else {
     if(all(!switches[c("f.sw", "l.sw")])) { 
                                     warning("Posterior Scores & Loadings won't be available as they're not being stored", call.=FALSE)
@@ -473,15 +473,15 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
       }
     }
   } else if(method == "classify") {
-    if(missing(Labels))             stop("Data must be labelled for classification")
-    if(!exists(deparse(substitute(Labels)),
-               envir=.GlobalEnv))   stop(paste0("Object ", match.call()$Labels, " not found"))
-    Labels  <- as.factor(Labels)
-    if(length(Labels) != N)         stop(paste0("Labels must be a factor of length N=",  N))
-    range.G        <- nlevels(Labels)
+    if(missing(labels))             stop("Data must be labelled for classification")
+    if(!exists(deparse(substitute(labels)),
+               envir=.GlobalEnv))   stop(paste0("Object ", match.call()$labels, " not found"))
+    labels  <- as.factor(labels)
+    if(length(labels) != N)         stop(paste0("'labels' must be a factor of length N=",  N))
+    range.G        <- nlevels(labels)
     start.time     <- proc.time()
     for(g in seq_len(range.G)) {
-      temp.dat     <- dat[Labels == levels(Labels)[g],]
+      temp.dat     <- dat[labels == levels(labels)[g],]
       imifa[[g]]          <- list()
       imifa[[g]][[Qi]]    <- do.call(paste0("gibbs.", "IFA"),
                                      args=append(list(data = temp.dat, N = nrow(temp.dat), Q = range.Q), gibbs.arg))
@@ -491,7 +491,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   tot.time  <- proc.time() - start.time
   avg.time  <- tot.time/ifelse(method == "MFA", length(range.G) * length(range.Q),
                             ifelse(method == "MIFA", length(range.G),
-                              ifelse(method == "classify", nlevels(Labels), 
+                              ifelse(method == "classify", nlevels(labels), 
                                      length(range.Q))))
   if(profile) {
     Rprof(NULL)
@@ -538,7 +538,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   attr(imifa, "Store")    <- length(iters)
   switches                <- c(switches, a.sw = ifelse(is.element(method, c("IMIFA", "IMFA")), MH.step, F))
   if(is.element(method, c("FA", "IFA"))) {
-    switches["pi.sw"]     <- F
+    switches["pi.sw"]     <- FALSE
   }
   attr(imifa, "Switch")   <- switches
   if(!is.element(method, c("FA", "IFA", "classify"))) {
@@ -554,14 +554,10 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   if(verbose)                print(attr(imifa, "Time"))  
       
 # Vanilla 'factanal' for comparison purposes
-  if(!missing(Q.fac))    factanal <- T
+  if(!missing(Q.fac))    factanal <- TRUE
   if(factanal) {
     if(missing(Q.fac)) {
-      if(missing(range.Q)) {
-        Q.fac      <- round(sqrt(P))
-      } else {
-        Q.fac      <- max(1, max(range.Q))
-      }
+      Q.fac <- if(missing(range.Q)) round(sqrt(P)) else max(1, max(range.Q))
     }
     fac     <- try(factanal(dat, factors=Q.fac, control=list(nstart=50)))
     if(!inherits(fac, "try-error")) {

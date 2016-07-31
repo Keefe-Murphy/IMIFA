@@ -13,22 +13,22 @@
   # Scores
     sim.score   <- function(N, Q, lmat, psi.inv, c.data, Q1) {
       load.psi  <- lmat * psi.inv
-      U.f       <- diag(Q) + crossprod(load.psi, lmat)
-      U.f       <- if(Q1) chol(U.f) else sqrt(U.f)
-      mu.f      <- c.data %*% (load.psi %*% if(Q1) chol2inv(U.f) else 1/(U.f * U.f))
-        mu.f + t(backsolve(U.f, matrix(rnorm(Q * N), nr=Q, nc=N)))
+      u.f       <- diag(Q) + crossprod(load.psi, lmat)
+      u.f       <- if(Q1) chol(u.f) else sqrt(u.f)
+      mu.f      <- c.data %*% (load.psi %*% if(Q1) chol2inv(u.f) else 1/(u.f * u.f))
+        mu.f + t(backsolve(u.f, matrix(rnorm(Q * N), nr=Q, nc=N)))
     }
       
   # Loadings
     sim.load    <- function(l.sigma, Q, c.data, P, f, phi, tau, psi.inv, FtF, Q1, shrink = TRUE) {
-      U.load    <- if(shrink) phi * tau * diag(Q) + psi.inv * FtF else l.sigma + psi.inv * FtF
-      U.load    <- if(Q1) chol(U.load) else sqrt(U.load)
-      mu.load   <- psi.inv * (if(Q1) chol2inv(U.load) else 1/(U.load * U.load)) %*% crossprod(f, c.data)
-        mu.load + backsolve(U.load, rnorm(Q))
+      u.load    <- if(shrink) phi * tau * diag(Q) + psi.inv * FtF else l.sigma + psi.inv * FtF
+      u.load    <- if(Q1) chol(u.load) else sqrt(u.load)
+      mu.load   <- psi.inv * (if(Q1) chol2inv(u.load) else 1/(u.load * u.load)) %*% crossprod(f, c.data)
+        mu.load + backsolve(u.load, rnorm(Q))
     }
     
   # Uniquenesses
-    sim.psi.i   <- function(N, P, psi.alpha, psi.beta, c.data, f, lmat) { 
+    sim.psi.inv <- function(N, P, psi.alpha, psi.beta, c.data, f, lmat) { 
       rate.t    <- c.data - tcrossprod(f, lmat)
         rgamma(P, shape=N/2 + psi.alpha, rate=colSums(rate.t * rate.t)/2 + psi.beta) 
     }
@@ -50,17 +50,17 @@
   # Mixing Proportions
     sim.pi      <- function(pi.alpha, nn, inf.G = FALSE, len) {
       if(inf.G) {
-        vs      <- rbeta(length(nn), 1 + nn, pi.alpha + sum(nn) - cumsum(nn))
+        vs      <- rbeta(len, 1 + nn, pi.alpha + sum(nn) - cumsum(nn))
         vs[len] <- 1
-          return(list(Vs = vs, pi.prop = do.call(cbind, lapply(seq_along(nn), function(t) vs[t] * prod((1 - vs[seq_len(t - 1)]))))))
+          return(list(Vs = vs, pi.prop = do.call(cbind, lapply(seq_len(len), function(t) vs[t] * prod((1 - vs[seq_len(t - 1)]))))))
       } else {
           rdirichlet(1, pi.alpha + nn)
       }
     }
   
   # Cluster Labels
-    sim.z       <- function(data, mu, Sigma, Gseq, N, pi.prop, slice.ind = NULL, Q0) {
-      log.num   <- do.call(cbind, lapply(Gseq, function(g, q=Q0[g]) dmvn(data, mu[,g], if(q) Sigma[[g]] else sqrt(Sigma[[g]]), log=TRUE, isChol=!q) + log(pi.prop[,g])))
+    sim.z       <- function(data, mu, sigma, Gseq, N, pi.prop, slice.ind = NULL, Q0) {
+      log.num   <- do.call(cbind, lapply(Gseq, function(g, q=Q0[g]) dmvn(data, mu[,g], if(q) sigma[[g]] else sqrt(sigma[[g]]), log=TRUE, isChol=!q) + log(pi.prop[,g])))
       if(!missing(slice.ind)) {
         log.num <- log.num + log(slice.ind)
       }
@@ -102,7 +102,7 @@
     }
   
   # Uniquenesses
-    sim.psi.ip  <- function(P, psi.alpha, psi.beta) {
+    sim.psi.i.p <- function(P, psi.alpha, psi.beta) {
         rgamma(n=P, shape=psi.alpha, rate=psi.beta) 
     }
 
@@ -207,6 +207,6 @@
     }
   
   # Colour Checker
-    areColours  <- function(cols) {
-        vapply(cols, function(X) { tryCatch(is.matrix(col2rgb(X)), error = function(e) F) }, logical(1))
+    are.colours <- function(cols) {
+        vapply(cols, function(x) { tryCatch(is.matrix(col2rgb(x)), error = function(e) FALSE) }, logical(1))
     }
