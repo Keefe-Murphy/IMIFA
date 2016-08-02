@@ -66,13 +66,12 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   P         <- ncol(dat)
   
 # Manage storage switches & warnings for other function inputs
-  if(!missing(mu.switch) && all(!mu.switch, !centering)) {
-                                    warning("Centering hasn't been applied - are you sure you want mu.switch=FALSE?", call.=FALSE)
-  }
+  if(!missing(mu.switch) && 
+      all(!mu.switch, !centering)) warning("Centering hasn't been applied - are you sure you want mu.switch=FALSE?", call.=FALSE)
   switches  <- c(mu.sw=mu.switch, f.sw=f.switch, l.sw=load.switch, psi.sw=psi.switch, pi.sw=pi.switch)
   if(!is.logical(switches))         stop("All logical switches must be TRUE or FALSE")
   G.x       <- missing(range.G)
-  if(!is.element(method, c("MFA", "MIFA")))    {
+  if(!is.element(method, c("MFA", "MIFA")))      {
     if(all(!G.x, is.element(method, c("FA", "IFA"))) &&  
        any(range.G  > 1))           warning(paste0("'range.G' must be 1 for the ", method, " method"), call.=FALSE)
     if(is.element(method, c("OMIFA", "OMFA", "IMFA", "IMIFA"))) {
@@ -108,6 +107,13 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
         if(trunc.G  < range.G)      stop(paste0("'trunc.G' must be at least range.G=", range.G))
         if(trunc.G  > N)            stop(paste0("'trunc.G' cannot be greater than N=", N))
       }
+    } else if(method == "classify") {
+      if(missing(labels))           stop("Data must be labelled for classification")
+      if(!exists(deparse(substitute(labels)),
+                 envir=.GlobalEnv)) stop(paste0("Object ", match.call()$labels, " not found"))
+      labels       <- as.factor(labels)
+      if(length(labels) != N)       stop(paste0("'labels' must be a factor of length N=",  N)) 
+      range.G      <- nlevels(labels)
     } else {
       range.G <- 1
     }
@@ -213,7 +219,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     } else if(!switches["l.sw"])  { warning("Posterior Loadings won't be available as they're not being stored", call.=FALSE)
     }
   }
-  if(all(is.element(method, c("FA", "IFA")), 
+  if(all(is.element(method, c("FA", "IFA", "classify")), 
          !missing(z.init) || 
          !missing(z.list)))         message(paste0("z does not need to be initialised for the ", method, " method"))
   if(!is.logical(mu0g))             stop("'mu0g' must be TRUE or FALSE")
@@ -285,8 +291,8 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   mu               <- list(colMeans(dat))
   beta.x           <- missing("psi.beta")
   mu0.x            <- missing("mu.zero")
-  ad1.x            <- all(missing("alpha.d1"), is.element(method, c("IFA", "MIFA", "OMIFA", "IMIFA")))
-  adk.x            <- all(missing("alpha.dk"), is.element(method, c("IFA", "MIFA", "OMIFA", "IMIFA")))
+  ad1.x            <- all(missing("alpha.d1"), is.element(method, c("IFA", "MIFA", "OMIFA", "IMIFA", "classify")))
+  adk.x            <- all(missing("alpha.dk"), is.element(method, c("IFA", "MIFA", "OMIFA", "IMIFA", "classify")))
   if(all(z.init != "list", any(sw0gs))) {
     if(delta0g)                     stop("'delta0g' can only be TRUE if z.init=list\n")
     if(all(!mu0.x, mu0g))           stop("'mu.zero' can only be supplied for each group if z.init=list")
@@ -302,7 +308,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     alpha.d1       <- if(ad1.x) list(2)  else len.check(alpha.d1, delta0g, P.dim=FALSE)
     alpha.dk       <- if(adk.x) list(10) else len.check(alpha.dk, delta0g, P.dim=FALSE)
   }
-  if(!is.element(method, c("FA", "IFA"))) {
+  if(!is.element(method, c("FA", "IFA", "classify"))) {
     if(verbose)                     cat(paste0("Initialising...\n"))
     clust          <- list()
     pi.alpha       <- list()
@@ -459,13 +465,8 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
         }
       }
     }
-  } else if(method == "classify") {
-    if(missing(labels))             stop("Data must be labelled for classification")
-    if(!exists(deparse(substitute(labels)),
-               envir=.GlobalEnv))   stop(paste0("Object ", match.call()$labels, " not found"))
-    labels  <- as.factor(labels)
-    if(length(labels) != N)         stop(paste0("'labels' must be a factor of length N=",  N))
-    range.G        <- nlevels(labels)
+  } else if(method == "classify") { stop("'classify' method not yet implemented")
+    
     start.time     <- proc.time()
     for(g in seq_len(range.G)) {
       temp.dat     <- dat[labels == levels(labels)[g],]
