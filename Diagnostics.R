@@ -249,8 +249,11 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       levs       <- levels(zlabels)
       if(nlevels(post.z) == length(levs)) {
         sw.lab   <- lab.switch(z.new=post.z, z.old=zlabels, Gs=Gseq)
-        post.z   <- factor(sw.lab$z)
+        post.z   <- setNames(factor(sw.lab$z), names(post.z))
         l.perm   <- sw.lab$z.perm
+        z.tmp    <- apply(z, 2, function(x) factor(x, labels=l.perm))
+        z        <- apply(z.tmp, 2, function(x) as.numeric(levels(as.factor(x)))[as.numeric(x)])
+        dimnames(z)            <- dimnames(z.tmp)
         if(sw["mu.sw"])    mus <- mus[,l.perm,, drop=FALSE]
         if(sw["l.sw"])   lmats <- lmats[,,l.perm,, drop=FALSE]
         if(sw["psi.sw"])  psis <- psis[,l.perm,, drop=FALSE]
