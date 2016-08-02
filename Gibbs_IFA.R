@@ -11,6 +11,7 @@
                              adapt, prop, epsilon, ...) {    
     
   # Define & initialise variables
+    start.time   <- proc.time()
     n.iters      <- round(max(iters), -1)
     n.store      <- length(iters)
     Pseq         <- seq_len(P)
@@ -59,6 +60,7 @@
       psi.store[,1]        <- 1/psi.inv
       ll.store[1]          <- sum(dmvn(X=data, mu=mu, sigma=tcrossprod(lmat) + diag(1/psi.inv), log=TRUE))
     }
+    init.time    < proc.time() - start.time
   
   # Iterate
     for(iter in seq_len(max(iters))[-1]) { 
@@ -152,6 +154,7 @@
                          cov.emp  = cov.emp,
                          cov.est  = cov.est,
                          ll.store = ll.store,
-                         Q.store  = matrix(Q.store, nr=1))
+                         Q.store  = matrix(Q.store, nr=1),
+                         time     = init.time)
     return(returns)
   }

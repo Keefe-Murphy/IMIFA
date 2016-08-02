@@ -10,6 +10,7 @@
                                 beta.d1, beta.dk, adapt, epsilon, ...) {
         
   # Define & initialise variables
+    start.time      <- proc.time()
     n.iters         <- round(max(iters), -1)
     n.store         <- length(iters)
     Gs              <- seq_len(G)
@@ -99,6 +100,7 @@
         alpha.store[1]     <- pi.alpha 
       }
     }
+    init.time      <- proc.time() - start.time
     
   # Iterate
     for(iter in seq_len(max(iters))[-1]) { 
@@ -268,6 +270,7 @@
                             z.store  = z.store,
                             ll.store = ll.store,
                             G.store  = G.store,
-                            Q.store  = Q.store[Gmax,, drop=FALSE])
+                            Q.store  = Q.store[Gmax,, drop=FALSE],
+                            time     = init.time)
     return(returns)
   }

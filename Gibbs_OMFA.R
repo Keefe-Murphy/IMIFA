@@ -9,6 +9,7 @@
                                sw, verbose, cluster, ...) {
         
   # Define & initialise variables
+    start.time     <- proc.time()
     n.iters        <- round(max(iters), -1)
     n.store        <- length(iters)
     Gseq           <- seq_len(G)
@@ -84,6 +85,7 @@
                                   function(g) tcrossprod(lmat[,,g]) + diag(1/psi.inv[,g])), Q0=Q0s)$log.likes)
       G.store[1]           <- G
     }
+    init.time      <- proc.time() - start.time
     
   # Iterate
     for(iter in seq_len(max(iters))[-1]) { 
@@ -149,6 +151,7 @@
                            pi.prop  = if(sw["pi.sw"])         pi.store,
                            z.store  = z.store,
                            ll.store = ll.store,
-                           G.store  = G.store)
+                           G.store  = G.store,
+                           time     = init.time)
     return(returns)
   }

@@ -8,6 +8,7 @@
                              thinning, verbose, sw, sigma.l, ...) {
         
   # Define & initialise variables
+    start.time   <- proc.time()
     n.iters      <- round(max(iters), -1)
     n.store      <- length(iters)
     Pseq         <- seq_len(P)
@@ -55,6 +56,7 @@
       psi.store[,1]        <- 1/psi.inv
       ll.store[1]          <- sum(dmvn(X=data, mu=mu, sigma=tcrossprod(lmat) + diag(1/psi.inv), log=TRUE))
     }
+    init.time    <- proc.time() - start.time
   
   # Iterate
     for(iter in seq_len(max(iters))[-1]) { 
@@ -102,7 +104,8 @@
                       post.psi = post.psi,
                       cov.emp  = cov.emp,
                       cov.est  = cov.est,
-                      ll.store = ll.store)
+                      ll.store = ll.store,
+                      time     = init.time)
     attr(returns, "K")        <- P * Q - 0.5 * Q * (Q - 1) + 2 * P
     return(returns)
   }

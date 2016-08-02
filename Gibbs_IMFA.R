@@ -8,6 +8,7 @@
                                psi.alpha, psi.beta, verbose, sw, cluster, MH.upper, ...) {
         
   # Define & initialise variables
+    start.time     <- proc.time()
     n.iters        <- round(max(iters), -1)
     n.store        <- length(iters)
     Gs             <- seq_len(G)
@@ -98,6 +99,7 @@
         alpha.store[1]     <- pi.alpha 
       }
     }
+    init.time      <- proc.time() - start.time
     
   # Iterate
     for(iter in seq_len(max(iters))[-1]) { 
@@ -191,6 +193,7 @@
                            alpha    = if(MH.step)             alpha.store,
                            z.store  = z.store,
                            ll.store = ll.store,
-                           G.store  = G.store)
+                           G.store  = G.store,
+                           time     = init.time)
     return(returns)
   }

@@ -9,6 +9,7 @@
                                sw, verbose, cluster, ...) {
          
   # Define & initialise variables
+    start.time     <- proc.time()
     n.iters        <- round(max(iters), -1)
     n.store        <- length(iters)
     Gseq           <- seq_len(G)
@@ -97,6 +98,7 @@
       ll.store[1]          <- sum(sim.z(data=data, mu=mu, Gseq=Gseq, N=N, pi.prop=pi.prop, sigma=lapply(Gseq,
                                   function(g) tcrossprod(lmat[,,g]) + diag(1/psi.inv[,g])), Q0=Q0s)$log.likes)
     }
+    init.time      <- proc.time() - start.time
     
   # Iterate
     for(iter in seq_len(max(iters))[-1]) { 
@@ -179,7 +181,8 @@
                            psi      = if(sw["psi.sw"])        psi.store,
                            pi.prop  = if(sw["pi.sw"])         pi.store,
                            z.store  = z.store,
-                           ll.store = ll.store)
+                           ll.store = ll.store,
+                           time     = init.time)
     attr(returns, "K")  <- G - 1 + G * (P * Q - 0.5 * Q * (Q - 1)) + 2 * G * P
     return(returns)
   }

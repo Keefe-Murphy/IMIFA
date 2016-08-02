@@ -10,6 +10,7 @@
                                beta.d1, beta.dk, adapt, epsilon, ...) {
         
   # Define & initialise variables
+    start.time     <- proc.time()
     n.iters        <- round(max(iters), -1)
     n.store        <- length(iters)
     Gseq           <- seq_len(G)
@@ -98,6 +99,7 @@
                                   function(g) tcrossprod(lmat[[g]]) + diag(1/psi.inv[,g])), Q0=Qs > 0)$log.likes)
       Q.store[,1]          <- Qs
     }
+    init.time      <- proc.time() - start.time
     
   # Iterate
     for(iter in seq_len(max(iters))[-1]) { 
@@ -246,6 +248,7 @@
                            pi.prop  = if(sw["pi.sw"])  pi.store,
                            z.store  = z.store,
                            ll.store = ll.store,
-                           Q.store  = Q.store)
+                           Q.store  = Q.store,
+                           time     = init.time)
     return(returns)
   }
