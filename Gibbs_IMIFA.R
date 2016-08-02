@@ -257,16 +257,17 @@
       } 
     }
   
-    returns         <- list(mu       = if(sw["mu.sw"])  mu.store,
+    Gmax            <- seq_len(max(as.numeric(z.store)))
+    returns         <- list(mu       = if(sw["mu.sw"])  mu.store[,Gmax,, drop=FALSE],
                             f        = if(sw["f.sw"])   as.simple_sparse_array(f.store), 
-                            load     = if(sw["l.sw"])   as.simple_sparse_array(load.store), 
-                            psi      = if(sw["psi.sw"]) psi.store,
-                            pi.prop  = if(sw["pi.sw"])  pi.store,
+                            load     = if(sw["l.sw"])   as.simple_sparse_array(load.store[,,Gmax,, drop=FALSE]), 
+                            psi      = if(sw["psi.sw"]) psi.store[,Gmax,, drop=FALSE],
+                            pi.prop  = if(sw["pi.sw"])  pi.store[Gmax,, drop=FALSE],
                             rate     = if(MH.step)      mean(rate),
                             alpha    = if(MH.step)      alpha.store,
                             z.store  = z.store,
                             ll.store = ll.store,
-                            Q.store  = Q.store,
-                            G.store  = G.store)
+                            G.store  = G.store,
+                            Q.store  = Q.store[Gmax,, drop=FALSE])
     return(returns)
   }

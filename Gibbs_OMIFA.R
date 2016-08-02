@@ -217,7 +217,7 @@
                            pi.prop  = if(sw["pi.sw"])  pi.store,
                            z.store  = z.store,
                            ll.store = ll.store,
-                           Q.store  = Q.store,
-                           G.store  = G.store)
+                           G.store  = G.store,
+                           Q.store  = Q.store)
     return(returns)
   }
