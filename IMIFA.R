@@ -23,23 +23,23 @@
     species  <- iris[,5]
   # Urine
     load(file=paste0(getwd(), "/Data/Epi_urine_data.Rdata", sep=""), envir=.GlobalEnv)
-    ppms     <- substr(colnames(x10[,4:ncol(x10)]), 2,6); rm(x)
+    ppms     <- substr(colnames(x10[,4:ncol(x10)]), 2, 6); rm(x)
     urine    <- x10[,4:ncol(x10)]
     grp      <- x10[,"Group"]
     ppm.g    <- do.call(cbind, lapply(seq_len(max(grp)), function(g) colMeans(urine[grp == g,])))
     matplot(ppm.g, type="l", xlab="Chemical Shift (ppm)", yaxt="n", ylab="", bty="n", xaxt="n", lwd=2, lty=1)
     axis(1, at=seq(from=20, to=nrow(ppm.g), by=20), labels=9:1, tick=TRUE, lwd.ticks=1, xpd=TRUE)
     axis(1, at=seq_len(nrow(ppm.g)), labels=FALSE, tick=TRUE, tcl=-0.2)
-    legend("topleft", legend=c("Control", "Epileptic"), bty="n", lty=1, col=c(1,2))  
+    legend("topleft", legend=c("Control", "Epileptic"), bty="n", lty=1, col=c(1, 2))  
   # Meat
     load(file=paste0(getwd(), "/Data/Meat.Rdata", sep=""), envir=.GlobalEnv)
     spectra  <- t(spectra); rm(last.warning)
     # All Meats
-      matplot(t(spectra), type="l", col=c(2,1,3,4,5), xlab="Wavelength", ylab="Spectral Reflectance", main="Meat Data")
-      legend("topleft", legend=levels(factor(type)), bty="n", lty=1, col=c(2,1,3,4,5))
+      matplot(t(spectra), type="l", col=c(2, 1, 3, 4, 5), xlab="Wavelength", ylab="Spectral Reflectance", main="Meat Data")
+      legend("topleft", legend=levels(factor(type)), bty="n", lty=1, col=c(2, 1, 3, 4, 5))
     # Red vs. White
-      matplot(t(spectra), type="l", col=c(2,1,2,1,1), xlab="Wavelength", ylab="Spectral Reflectance", main="Meat Data")
-      legend("topleft", legend=c("Red Meat", "White Meat"), bty="n", lty=1, col=c(2,1))
+      matplot(t(spectra), type="l", col=c(2, 1, 2, 1, 1), xlab="Wavelength", ylab="Spectral Reflectance", main="Meat Data")
+      legend("topleft", legend=c("Red Meat", "White Meat"), bty="n", lty=1, col=c(2, 1))
   # Microarray
     load(file=paste0(getwd(), "/Data/Microarray.Rdata", sep=""), envir=.GlobalEnv)
     aliza    <- data.frame(as.factor(mydata.alizadeth$y), t(mydata.alizadeth$x)); names(aliza)[1] <- "labels"
