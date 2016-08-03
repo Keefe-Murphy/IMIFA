@@ -638,8 +638,10 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
       rect(0, 0, n.obs, 1 - 1/G) 
       axis(1, las=1, pos=0)
       axis(2, las=2, pos=0)
-      lines(x=c(0, n.obs), y=c(1/G, 1/G), lty=2, col=2)
-      axis(2, at=1 - 1/G, label="1 - 1/G", las=2, line=-0.7, tick=T)
+      if(G != 2) {
+        lines(x=c(0, n.obs), y=c(1/G, 1/G), lty=2, col=2)
+        axis(2, at=1 - 1/G, label="1 - 1/G", las=2, line=-0.7, tick=T)
+      }
       if(type == "n")  {
         znam  <- obs.names
         znam[plot.x == 0] <- ""

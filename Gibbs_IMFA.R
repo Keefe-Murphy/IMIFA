@@ -181,7 +181,6 @@
                                    G.store[new.it]         <- sum(nn0)
       } 
     }
-  
     Gmax           <- seq_len(max(as.numeric(z.store)))
     returns        <- list(mu       = if(sw["mu.sw"])         mu.store[,Gmax,, drop=FALSE],
                            f        = if(all(sw["f.sw"], Q0)) f.store, 

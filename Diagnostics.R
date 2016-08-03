@@ -1,6 +1,6 @@
-#################################################
-### Tune Parameters (Single & Shrinkage Case) ###
-#################################################
+#########################################
+### Tune Parameters & Extract Results ###
+#########################################
 
 tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q = NULL, Q.meth = c("Mode", "Median"), G.meth = c("Mode", "Median"),
                              criterion = c("bicm", "aicm", "bic.mcmc", "aic.mcmc"), conf.level = 0.95, labels = NULL, recomp = FALSE) {
@@ -49,40 +49,11 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   Q.T            <- !missing(Q)
   G.ind          <- 1
   Q.ind          <- 1
-  if(inf.G) {
+  if(inf.G)  {
     GQs          <- length(sims[[G.ind]])
+    GQ1          <- GQs > 1
     G.store      <- matrix(unlist(lapply(seq_len(GQs), function(gq) sims[[G.ind]][[gq]]$G.store[store])), nr=GQs, nc=n.store, byrow=TRUE)
     G.meth       <- ifelse(missing(G.meth), "Mode", match.arg(G.meth))
-  }
-  if(G.T)   {
-    if(!inf.G) {
-      if(!is.element(method, c("FA", "IFA"))) {
-        G.ind    <- which(n.grp == G)
-      } else if(G > 1)            message(paste0("Forced G=1 for the ", method, " method"))
-    } else if(!is.element(G, 
-              unique(G.store)))   stop("This G value was not visited during simulation")
-    if(all(is.element(method, c("MFA", "MIFA")),
-       !is.element(G, n.grp)))    stop("This G value was not used during simulation")
-  }
-  G              <- ifelse(all(G.T, !is.element(method, c("FA", "IFA"))), G, 1)
-  if(Q.T)   {
-    if(G.T) {
-      if(length(Q) == 1)     Q <- rep(Q, G)
-      if(length(Q) != G)          stop(paste0("'Q' must be supplied for each of the ", G, " groups"))
-    } else if(length(Q) != 1)     stop("'Q' must be a scalar if G=1 or G is not suppplied")
-    if(all(is.element(method, c("FA", "MFA")), !G.T)) {
-      Q.ind      <- which(n.fac == Q)
-    }
-    if(all(is.element(method, c("FA", "MFA")), 
-       !is.element(Q, n.fac)))    stop("This Q value was not used during simulation")
-    if(all(inf.Q, 
-      (Q * (n.fac - Q))  < 0))    stop(paste0("Q can't be greater than the number of factors in ", match.call()$sims))
-    if(all(inf.Q, 
-      (Q * (n.var - Q)) <= 0))    stop(paste0("Q must be less than the number of variables ", n.var))
-  } 
-  
-  if(inf.G)  {
-    GQ1          <- GQs  > 1
     G.tab        <- if(GQ1) lapply(apply(G.store, 1, function(x) list(table(x, dnn=NULL))), "[[", 1) else table(G.store, dnn=NULL)
     G.prob       <- if(GQ1) lapply(G.tab, prop.table) else prop.table(G.tab)
     G.mode       <- if(GQ1) unlist(lapply(G.tab, function(gt) as.numeric(names(gt[gt == max(gt)])[1]))) else as.numeric(names(G.tab[G.tab == max(G.tab)])[1])
@@ -91,27 +62,62 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       G          <- if(G.meth == "Mode") G.mode else floor(G.med)
     }
     G.CI         <- if(GQ1) apply(G.store, 1, function(gs) round(quantile(gs, conf.levels))) else round(quantile(G.store, conf.levels))
-    tmp.store    <- if(GQ1) lapply(seq_len(GQs), function(gq) store[which(G.store[gq,] == G[gq])]) else store[which(G.store == G)]
+  }
+  if(G.T)    {
+    if(!inf.G) {
+      if(!is.element(method, c("FA", "IFA"))) {
+        if(!is.element(G, n.grp)) stop("This 'G' value was not used during simulation")
+        G.ind    <- which(n.grp == G)
+      } else if(G > 1)            message(paste0("Forced G=1 for the ", method, " method"))
+    } else   {
+      if(all(!inf.Q, GQ1)) {
+        if(!Q.T)                  stop(paste0("'G' cannot be supplied without 'Q' for the ", method, " method if a range of Q values were explored"))
+        tmpQ     <- which(n.fac == unique(Q))
+      } else {
+        tmpQ     <- Q.ind
+      } 
+      if(length(tmpQ > 0)  && !is.element(G, 
+         unique(G.store[tmpQ,]))) stop("This 'G' value was not visited during simulation")
+    }
+  }
+  G              <- ifelse(any(inf.G, all(G.T, !is.element(method, c("FA", "IFA")))), G, 1)
+  if(Q.T)    {
+    if(G.T)  {
+      if(length(Q) == 1)     Q <- rep(Q, G)
+      if(length(Q) != G)          stop(paste0("'Q' must be supplied for each group, as a scalar or vector of length G=", G))
+    } else if(length(n.grp)    != 1 || all(!is.element(length(Q), 
+              c(1,   n.grp))))    stop("'Q' must be a scalar if G=1, 'G' is not suppplied, or a range of G values were explored")
+    if(all(is.element(method, c("FA", "MFA", "OMFA", "IMFA")))) {
+      if(length(unique(Q)) != 1)  stop(paste0("'Q' cannot vary across groups for the ", method, " method"))
+      Q          <- unique(Q)
+      if(!is.element(Q,   n.fac)) stop("This 'Q' value was not used during simulation")
+      Q.ind      <- which(n.fac == Q)
+    }
+    if(inf.Q)  {
+      if(any((Q  != 0) + (Q * 
+        (n.var - Q)   <= 0) > 1)) stop(paste0("'Q' must be less than the number of variables ", n.var))
+      Qtmp       <- if(inf.G) apply(sims[[1]][[1]]$Q.store[seq_len(G),], 1, max) else if(method == "MIFA") apply(sims[[ifelse(G.T, which(G == n.grp), G.ind)]][[1]]$Q.store, 1, max) else max(sims[[1]][[1]]$Q.store)
+      if(any(Q * (Qtmp - Q) < 0)) stop(paste0("'Q' can't be greater than the maximum number of factors stored in ", ifelse(method == "IFA", "", "any group of "), match.call()$sims))
+    }
+  } 
+  if(inf.G)  {
+    tmp.store    <- if(GQ1) lapply(seq_len(GQs), function(gq) store[which(G.store[gq,] == G[ifelse(G.T, 1, gq)])]) else store[which(G.store == G)]  
     GQ.temp1     <- list(G = G, G.Mode = G.mode, G.Median = G.med, 
                          G.CI = G.CI, G.Probs = G.prob, G.Counts = G.tab)
   }
-  
   G.range        <- ifelse(G.T, 1, length(n.grp))
   Q.range        <- ifelse(any(Q.T, all(!is.element(method, c("OMFA", "IMFA")), inf.Q)), 1, length(n.fac))
   crit.mat       <- matrix(NA, nr=G.range, nc=Q.range)
     
   # Retrieve log-likelihoods and/or tune G &/or Q according to criterion
     if(all(G.T, Q.T)) {
-      dimnames(crit.mat) <- list(paste0("G", G), paste0("Q", ifelse(length(Q) == 1, Q, "IFA")))
+      dimnames(crit.mat) <- list(paste0("G", G), ifelse(inf.Q, "IFA", paste0("Q", Q)))
     } else if(G.T)    {
-      dimnames(crit.mat) <- list(paste0("G", G), paste0("Q", n.fac))
+      dimnames(crit.mat) <- list(paste0("G", G), ifelse(inf.Q, "IFA", paste0("Q", n.fac)))
     } else if(Q.T)    {
-      dimnames(crit.mat) <- list(paste0("G", n.grp), paste0("Q", Q))
+      dimnames(crit.mat) <- list(paste0("G", n.grp), ifelse(inf.Q, "IFA", paste0("Q", Q)))
     } else {
-      dimnames(crit.mat) <- list(paste0("G", n.grp), paste0("Q", n.fac))
-    }
-    if(inf.Q) {
-      colnames(crit.mat) <- "IFA"
+      dimnames(crit.mat) <- list(paste0("G", n.grp), ifelse(inf.Q, "IFA", paste0("Q", n.fac)))
     }
     if(inf.G) {
       rownames(crit.mat) <- "IM"
@@ -129,7 +135,8 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
         aicm[g,q]        <- ll.max - ll.var * 2
         bicm[g,q]        <- ll.max - ll.var * log.N
         if(!inf.Q) {
-          K              <- if(!is.element(method, c("OMFA", "IMFA"))) attr(sims[[gi]][[qi]], "K") else G[qi] - 1 + G[qi] * (n.var * n.fac[qi] - 0.5 * n.fac[qi] * (n.fac[qi] - 1)) + 2 * G[qi] * n.var
+          qk             <- if(G.T) 1 else qi
+          K              <- if(!is.element(method, c("OMFA", "IMFA"))) attr(sims[[gi]][[qi]], "K") else G[qk] - 1 + G[qk] * (n.var * n.fac[qi] - 0.5 * n.fac[qi] * (n.fac[qi] - 1)) + 2 * G[qk] * n.var
           aic.mcmc[g,q]  <- ll.max - K * 2
           bic.mcmc[g,q]  <- ll.max - K * log.N
         }
@@ -159,7 +166,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
         G        <- n.grp[G.ind]
       }
     } 
-    G            <- ifelse(inf.G, G[Q.ind], ifelse(length(n.grp) == 1, n.grp, G))
+    G            <- ifelse(inf.G, ifelse(Q.T, G, G[Q.ind]), ifelse(length(n.grp) == 1, n.grp, G))
     Gseq         <- seq_len(G)
     G.ind        <- ifelse(all(length(n.grp) == 1, !inf.G), which(n.grp == G), G.ind)
     GQ.temp2     <- list(AICMs = aicm, BICMs = bicm)
@@ -168,10 +175,11 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       tmp.store  <- tmp.store[[Q.ind]]
     }
     if(!inf.Q)   {
-      Q          <- if(length(n.fac) > 1) Q     else n.fac
-      Q.ind      <- if(length(n.fac) > 1) Q.ind else which(n.fac == Q)
-      Q          <- setNames(rep(Q, G), paste0("Group ", Gseq))  
-      GQ.temp1   <- if(is.element(method, c("OMFA", "IMFA")) && GQs > 1) lapply(GQ.temp1, "[[", Q.ind) else if(inf.G) GQ.temp1
+      Q          <- if(length(n.fac)   > 1)  Q else  n.fac
+      Q.ind      <- if(all(!Q.T, length(n.fac) > 1)) Q.ind else which(n.fac == Q)
+      Q          <- setNames(if(length(Q) != G) rep(Q, G) else Q, paste0("Group ", Gseq))  
+      if(all(inf.G, Q.T))  GQ.temp1$G <- rep(G, GQs)
+      GQ.temp1   <- if(is.element(method, c("OMFA", "IMFA")) && GQ1) lapply(GQ.temp1, "[[", 1) else if(inf.G) GQ.temp1
       GQ.temp3   <- c(GQ.temp2, list(AIC.mcmcs = aic.mcmc, BIC.mcmcs = bic.mcmc))
       GQ.res     <- if(!is.element(method, c("OMFA", "IMFA"))) c(list(G = G, Q = Q), GQ.temp3) else c(GQ.temp1, list(Q = Q), GQ.temp3)
     }
@@ -183,6 +191,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       Q.store    <- sims[[G.ind]][[Q.ind]]$Q.store[Gseq,tmp.store, drop=FALSE]
       Q.meth     <- ifelse(missing(Q.meth), "Mode", match.arg(Q.meth))
     }
+    if(length(tmp.store) <= 1)    stop(paste0("Not enough samples stored to proceed", ifelse(any(G.T, Q.T), paste0(": try supplying different Q or G values"), "")))
   
 # Manage Label Switching & retrieve cluster labels/mixing proportions
   if(clust.ind) {
@@ -211,7 +220,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     z            <- as.matrix(sims[[G.ind]][[Q.ind]]$z.store[,tmp.store])
     if(!label.switch) {
       z.temp     <- factor(z[,1], labels=Gseq)
-      for(sl in seq_along(tmp.store)[-1]) {
+      for(sl in seq_along(tmp.store)) {
         sw.lab   <- lab.switch(z.new=z[,sl], z.old=z.temp, Gs=Gseq)
         z[,sl]   <- sw.lab$z
         z.perm   <- sw.lab$z.perm

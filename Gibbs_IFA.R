@@ -146,9 +146,10 @@
                                     ll.store[new.it]               <- sum(dmvn(X=data, mu=mu, sigma=sigma, log=TRUE))
       }
     }
+    Qmax         <- seq_len(max(Q.store))
     returns      <- list(mu       = if(sw["mu.sw"])  mu.store,
-                         f        = if(sw["f.sw"])   as.simple_sparse_array(f.store), 
-                         load     = if(sw["l.sw"])   as.simple_sparse_array(load.store), 
+                         f        = if(sw["f.sw"])   as.simple_sparse_array(f.store[,Qmax,, drop=FALSE]), 
+                         load     = if(sw["l.sw"])   as.simple_sparse_array(load.store[,Qmax,, drop=FALSE]), 
                          psi      = if(sw["psi.sw"]) psi.store,
                          post.mu  = post.mu,
                          post.psi = post.psi,

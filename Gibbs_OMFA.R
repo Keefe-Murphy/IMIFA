@@ -145,11 +145,12 @@
                                    G.store[new.it]         <- sum(nn0)
       }
     }
-    returns        <- list(mu       = if(sw["mu.sw"])         mu.store,
+    Gmax           <- seq_len(max(as.numeric(z.store)))
+    returns        <- list(mu       = if(sw["mu.sw"])         mu.store[,Gmax,, drop=FALSE],
                            f        = if(all(sw["f.sw"], Q0)) f.store, 
-                           load     = if(all(sw["l.sw"], Q0)) load.store, 
-                           psi      = if(sw["psi.sw"])        psi.store,
-                           pi.prop  = if(sw["pi.sw"])         pi.store,
+                           load     = if(all(sw["l.sw"], Q0)) load.store[,,Gmax,, drop=FALSE], 
+                           psi      = if(sw["psi.sw"])        psi.store[,Gmax,, drop=FALSE],
+                           pi.prop  = if(sw["pi.sw"])         pi.store[Gmax,, drop=FALSE],
                            z.store  = z.store,
                            ll.store = ll.store,
                            G.store  = G.store,

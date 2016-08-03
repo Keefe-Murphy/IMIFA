@@ -67,13 +67,14 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   
 # Manage storage switches & warnings for other function inputs
   if(!missing(mu.switch) && 
-      all(!mu.switch, !centering)) warning("Centering hasn't been applied - are you sure you want mu.switch=FALSE?", call.=FALSE)
+      all(!mu.switch, !centering))  warning("Centering hasn't been applied - are you sure you want mu.switch=FALSE?", call.=FALSE)
   switches  <- c(mu.sw=mu.switch, f.sw=f.switch, l.sw=load.switch, psi.sw=psi.switch, pi.sw=pi.switch)
   if(!is.logical(switches))         stop("All logical switches must be TRUE or FALSE")
   G.x       <- missing(range.G)
   if(!is.element(method, c("MFA", "MIFA")))      {
+    if(length(range.G) > 1)         stop(paste0("Only one range.G value can be specified for the ", method, " method"))
     if(all(!G.x, is.element(method, c("FA", "IFA"))) &&  
-       any(range.G  > 1))           warning(paste0("'range.G' must be 1 for the ", method, " method"), call.=FALSE)
+       range.G  > 1)                warning(paste0("'range.G' must be 1 for the ", method, " method"), call.=FALSE)
     if(is.element(method, c("OMIFA", "OMFA", "IMFA", "IMIFA"))) {
       if(G.x) {
         range.G    <- max(2, floor(2 * log(N)))
@@ -117,7 +118,6 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     } else {
       range.G <- 1
     }
-    if(length(range.G) != 1)        stop(paste0("Only one range.G value can be specified for the ", method, " method"))
     meth    <- method
   } else {
     if(G.x)                         stop("'range.G' must be specified")
@@ -270,7 +270,6 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     }
   }
   source(paste(getwd(), "/IMIFA-GIT/FullConditionals.R", sep=""), local=TRUE)
-
   imifa     <- list(list())
   Gi        <- 1
   Qi        <- 1
@@ -524,7 +523,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     attr(imifa, 
          "Label.Switch")  <- any(sw0gs)
   }
-  method                  <- names(table(meth)[max(table(meth))])
+  method                  <- names(table(meth)[which.max(table(meth))])
   attr(imifa, "Method")   <- paste0(toupper(substr(method, 1, 1)),
                                     substr(method, 2, nchar(method)))
   attr(imifa, "Name")     <- as.character(match.call()$dat)
