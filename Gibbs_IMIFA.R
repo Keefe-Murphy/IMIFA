@@ -19,6 +19,7 @@
     Ns              <- seq_len(N)
     obsnames        <- rownames(data)
     varnames        <- colnames(data)
+    colnames(data)  <- NULL
     facnames        <- paste0("Factor ", seq_len(Q))
     gnames          <- paste0("Group ", Ts)
     iternames       <- paste0("Iteration", seq_len(n.store))
@@ -58,15 +59,15 @@
     mu.sigma        <- 1/sigma.mu
     z               <- cluster$z
     pi.alpha        <- cluster$pi.alpha
-    pi.prop         <- cbind(cluster$pi.prop, sim.pi(pi.alpha=pi.alpha, nn=rep(0, trunc.G, inf.G=TRUE))[,-Gs, drop=FALSE])
+    pi.prop         <- c(cluster$pi.prop, sim.pi(pi.alpha=pi.alpha, nn=rep(0, trunc.G, inf.G=TRUE))[-Gs])
     nn              <- tabulate(z, nbins=trunc.G)
-    mu              <- cbind(mu, do.call(cbind, lapply(seq_len(trunc.G - G), function(g) sim.mu.p(P=P, sigma.mu=sigma.mu, mu.zero=mu.zero))))
+    mu              <- cbind(mu, vapply(seq_len(trunc.G - G), function(g) sim.mu.p(P=P, sigma.mu=sigma.mu, mu.zero=mu.zero), numeric(P)))
     f               <- sim.f.p(N=N, Q=Q)
     phi             <- lapply(Ts, function(t) sim.phi.p(Q=Q, P=P, phi.nu=phi.nu))
     delta           <- lapply(Ts, function(t) c(sim.delta.p(alpha=alpha.d1, beta=beta.d1), sim.delta.p(Q=Q, alpha=alpha.dk, beta=beta.dk)))
     tau             <- lapply(delta, cumprod)
     lmat            <- lapply(Ts, function(t) matrix(unlist(lapply(Ps, function(j) sim.load.p(Q=Q, phi=phi[[t]][j,], tau=tau[[t]], P=P)), use.names=FALSE), nr=P, byrow=TRUE))
-    psi.inv         <- do.call(cbind, lapply(Ts, function(t) sim.psi.i.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)))
+    psi.inv         <- vapply(Ts, function(t) sim.psi.i.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), numeric(P))
     for(g in which(nn > 2.5 * Q))      {
       fact          <- try(factanal(data[z == g,, drop=FALSE], factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
       if(!inherits(fact, "try-error")) {
@@ -76,7 +77,7 @@
       } 
     }
     index           <- order(pi.prop, decreasing=TRUE)
-    pi.prop         <- pi.prop[,index, drop=FALSE]
+    pi.prop         <- pi.prop[index]
     mu              <- mu[,index, drop=FALSE]
     phi             <- phi[index]
     delta           <- delta[index]
@@ -89,14 +90,13 @@
       f.store[,,1]         <- f
       load.store[,,,1]     <- array(unlist(lmat, use.names=FALSE), dim=c(P, Q, G))
       psi.store[,,1]       <- 1/psi.inv
-      pi.store[,1]         <- pi.prop
+      pi.store[,1]         <- pi.prop/sum(pi.prop)
       z.store[,1]          <- z
-      ll.store[1]          <- sum(sim.z(data=data, mu=mu, Gseq=Gs, N=N, pi.prop=pi.prop, sigma=lapply(Gs,
+      ll.store[1]          <- sum(sim.z(data=data, mu=mu[,Gs], Gseq=Gs, N=N, pi.prop=pi.store[Gs,1], sigma=lapply(Gs,
                                   function(g) tcrossprod(lmat[[g]]) + diag(1/psi.inv[,g])), Q0=Qs > 0)$log.likes)
       Q.store[,1]          <- Qs
       G.store[1]           <- sum(nn > 0)
       if(MH.step)  {
-        rate[1]            <- 0
         alpha.store[1]     <- pi.alpha 
       }
     }
@@ -120,7 +120,7 @@
     # Slice Sampler
       if(!gen.slice) {
         index       <- order(pi.prop, decreasing=TRUE)
-        pi.prop     <- pi.prop[,index, drop=FALSE]
+        pi.prop     <- csi <- pi.prop[index]
         mu          <- mu[,index, drop=FALSE]
         phi         <- phi[index]
         delta       <- delta[index]
@@ -128,18 +128,17 @@
         lmat        <- lmat[index]
         Qs          <- Qs[index]
         psi.inv     <- psi.inv[,index, drop=FALSE]
-        csi         <- pi.prop
       } 
       u.slice       <- runif(N, 0, csi[z])
-      Gs            <- seq_len(max(unlist(lapply(Ns, function(i) sum(u.slice[i] < pi.prop)))))
-      slice.ind     <- do.call(cbind, lapply(Gs, function(g, x=csi[g]) (u.slice < x)/x))
+      Gs            <- seq_len(max(vapply(Ns, function(i) sum(u.slice[i] < pi.prop), numeric(1))))
+      slice.ind     <- vapply(Gs, function(g, x=csi[g]) (u.slice < x)/x, numeric(N))
     
     # Cluster Labels
       psi           <- 1/psi.inv
       sigma         <- lapply(Gs, function(g) tcrossprod(lmat[[g]]) + diag(psi[,g]))
       Q0            <- Qs[Gs] > 0
       Q1            <- Qs[Gs] > 1
-      z.res         <- sim.z(data=data, mu=mu[,Gs], sigma=sigma, Gseq=Gs, N=N, pi.prop=pi.prop[,Gs, drop=FALSE], slice.ind=slice.ind, Q0=Q0[Gs])
+      z.res         <- sim.z(data=data, mu=mu[,Gs, drop=FALSE], sigma=sigma, Gseq=Gs, N=N, pi.prop=pi.prop[Gs], slice.ind=slice.ind, Q0=Q0[Gs])
       z             <- z.res$z
       nn            <- tabulate(z, nbins=trunc.G)
       nn0           <- nn > 0
@@ -169,12 +168,12 @@
     # Means
       sum.data      <- lapply(dat.g, colSums)
       sum.f         <- lapply(f.tmp, colSums)
-      mu[,Gs]       <- do.call(cbind, lapply(Gs, function(g) if(nn0[g]) sim.mu(N=nn[g], mu.sigma=mu.sigma, psi.inv=psi.inv[,g], P=P, sum.data=sum.data[[g]], 
-                               sum.f=sum.f[[g]][seq_len(Qs[g])], lmat=lmat[[g]], mu.zero=mu.zero) else sim.mu.p(P=P, sigma.mu=sigma.mu, mu.zero=mu.zero)))
+      mu[,Gs]       <- vapply(Gs, function(g) if(nn0[g]) sim.mu(N=nn[g], mu.sigma=mu.sigma, psi.inv=psi.inv[,g], P=P, sum.f=sum.f[[g]][seq_len(Qs[g])],
+                              sum.data=sum.data[[g]], lmat=lmat[[g]], mu.zero=mu.zero) else sim.mu.p(P=P, sigma.mu=sigma.mu, mu.zero=mu.zero), numeric(P))
       
     # Uniquenesses
-      psi.inv[,Gs]  <- do.call(cbind, lapply(Gs, function(g) if(nn0[g]) sim.psi.inv(N=nn[g], psi.alpha=psi.alpha, c.data=c.data[[g]], psi.beta=psi.beta, 
-                               P=P, f=f.tmp[[g]][,seq_len(Qs[g]), drop=FALSE], lmat=lmat[[g]]) else sim.psi.i.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)))
+      psi.inv[,Gs]  <- vapply(Gs, function(g) if(nn0[g]) sim.psi.inv(N=nn[g], psi.alpha=psi.alpha, c.data=c.data[[g]], psi.beta=psi.beta, lmat=lmat[[g]],
+                              P=P, f=f.tmp[[g]][,seq_len(Qs[g]), drop=FALSE]) else sim.psi.i.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), numeric(P))
     
     # Local Shrinkage
       load.2        <- lapply(lmat[Gs], function(lg) lg * lg)
@@ -207,9 +206,9 @@
           colvec    <- lapply(lind, function(lx) lx >= prop)
           nonred    <- lapply(colvec, function(cv) which(cv == 0))
           numred    <- lapply(colvec, sum)
-          notred    <- unlist(lapply(Gs, function(g) numred[[g]] == 0 && nn0[g]), use.names=FALSE)
+          notred    <- vapply(Gs, function(g) numred[[g]] == 0, logical(1))
           Qs.old    <- Qs[Gs]
-          Qs[Gs]    <- unlist(lapply(Gs, function(g) if(notred[g]) Qs.old[g] + 1 else Qs.old[g] - numred[[g]]), use.names=FALSE)
+          Qs[Gs]    <- vapply(Gs, function(g) if(notred[g]) Qs.old[g] + 1 else Qs.old[g] - numred[[g]], numeric(1))
           phi[Gs]   <- lapply(Gs, function(g) if(notred[g]) cbind(phi[[g]][,seq_len(Qs.old[g])], rgamma(n=P, shape=phi.nu, rate=phi.nu)) else phi[[g]][,nonred[[g]], drop=FALSE])
           delta[Gs] <- lapply(Gs, function(g) if(notred[g]) c(delta[[g]][seq_len(Qs.old[g])], rgamma(n=1, shape=alpha.dk, rate=beta.dk)) else delta[[g]][nonred[[g]]])  
           tau[Gs]   <- lapply(delta[Gs], cumprod)
@@ -222,9 +221,9 @@
           if(Qmax    < max(Qemp, 0)) {
             Qs[Qmax  < Qs] <- Qmax
             for(t  in  Ts[!nn0][Qemp > Qmax]) {  
-              phi[[t]]     <- phi[[t]][,Qmaxseq, drop=FALSE]
-              delta[[t]]   <- delta[[t]][Qmaxseq, drop=FALSE]
-              tau[[t]]     <- tau[[t]][Qmaxseq, drop=FALSE]
+              phi[[t]]     <- phi[[t]][,Qmaxseq,  drop=FALSE]
+              delta[[t]]   <- delta[[t]][Qmaxseq]
+              tau[[t]]     <- tau[[t]][Qmaxseq]
               lmat[[t]]    <- lmat[[t]][,Qmaxseq, drop=FALSE]
             }
           }

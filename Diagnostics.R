@@ -51,7 +51,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   Q.ind          <- 1
   if(inf.G) {
     GQs          <- length(sims[[G.ind]])
-    G.store      <- matrix(unlist(lapply(seq_len(GQs), function(gq) sims[[G.ind]][[gq]]$G.store[store])), nr=GQs, nc=length(store), byrow=TRUE)
+    G.store      <- matrix(unlist(lapply(seq_len(GQs), function(gq) sims[[G.ind]][[gq]]$G.store[store])), nr=GQs, nc=n.store, byrow=TRUE)
     G.meth       <- ifelse(missing(G.meth), "Mode", match.arg(G.meth))
   }
   if(G.T)   {
@@ -411,7 +411,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
         data.x   <- exists(dat, envir=.GlobalEnv)  
         if(!data.x)               warning(paste0("Object ", dat, " not found in .GlobalEnv: can't compute empirical covariance and error metrics"), call.=FALSE) 
         dat      <- as.data.frame(get(dat))
-        dat      <- dat[sapply(dat, is.numeric)]
+        dat      <- dat[vapply(dat, is.numeric, logical(1))]
         dat      <- scale(dat, center=cent, scale=scaling)
         varnames <- colnames(dat)
       }
@@ -529,7 +529,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   attr(GQ.res, "Factors")      <- n.fac
   attr(GQ.res, "Groups")       <- n.grp
   attr(GQ.res, "Supplied")     <- c(Q=Q.T, G=G.T)
-  err.T                        <- unlist(lapply(Gseq, function(g) all(emp.T[g], est.T[g])))
+  err.T                        <- vapply(Gseq, function(g) all(emp.T[g], est.T[g]), logical(1))
   if(any(err.T))   {
     errors       <- lapply(list(MSE = mse, RMSE = rmse, NRMSE = nrmse, CVRMSE = cvrmse, MAD = mad), setNames, paste0("Group ", Gseq))
     if(G > 1)      {
@@ -541,8 +541,8 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   }
   
   if(sw["mu.sw"])  {
-    post.mu      <- do.call(rbind, lapply(result, "[[", "post.mu"))
-    var.mu       <- do.call(rbind, lapply(result, "[[", "var.mu"))
+    post.mu      <- do.call(cbind, lapply(result, "[[", "post.mu"))
+    var.mu       <- do.call(cbind, lapply(result, "[[", "var.mu"))
     ci.mu        <- Filter(Negate(is.null), lapply(result, "[[", "ci.mu"))  
     means        <- list(post.mu = post.mu, var.mu = var.mu, ci.mu = ci.mu)
   }
@@ -553,8 +553,8 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     loads        <- list(post.load = post.load, var.load = var.load, ci.load = ci.load)
   }
   if(sw["psi.sw"]) {
-    post.psi     <- do.call(rbind, lapply(result, "[[", "post.psi"))
-    var.psi      <- do.call(rbind, lapply(result, "[[", "var.psi"))
+    post.psi     <- do.call(cbind, lapply(result, "[[", "post.psi"))
+    var.psi      <- do.call(cbind, lapply(result, "[[", "var.psi"))
     ci.psi       <- Filter(Negate(is.null), lapply(result, "[[", "ci.psi"))  
     psis         <- list(post.psi = post.psi, var.psi = var.psi, ci.psi = ci.psi)
   }

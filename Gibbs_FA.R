@@ -18,6 +18,7 @@
     iternames    <- paste0("Iteration", seq_len(n.store))
     Q0           <- Q > 0
     Q1           <- Q > 1
+    dimnames(data)         <- NULL
     if(sw["mu.sw"])  {
       mu.store   <- matrix(0, nr=P, nc=n.store)
       dimnames(mu.store)   <- list(varnames, iternames)
@@ -77,7 +78,7 @@
       }
       
     # Means
-      mu         <- as.vector(sim.mu(N=N, P=P, mu.sigma=mu.sigma, psi.inv=psi.inv, sum.data=sum.data, sum.f=colSums(f), lmat=lmat, mu.zero=mu.zero))
+      mu[]       <- sim.mu(N=N, P=P, mu.sigma=mu.sigma, psi.inv=psi.inv, sum.data=sum.data, sum.f=colSums(f), lmat=lmat, mu.zero=mu.zero)
                       
     # Uniquenesses
       psi.inv    <- sim.psi.inv(N=N, P=P, psi.alpha=psi.alpha, psi.beta=psi.beta, c.data=c.data, f=f, lmat=lmat)

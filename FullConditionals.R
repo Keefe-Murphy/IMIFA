@@ -50,9 +50,9 @@
   # Mixing Proportions
     sim.pi      <- function(pi.alpha, nn, inf.G = FALSE, len) {
       if(inf.G) {
-        vs      <- rbeta(len, 1 + nn, pi.alpha + sum(nn) - cumsum(nn))
+        vs      <- rbeta(len - 1, 1 + nn, pi.alpha + sum(nn) - cumsum(nn))
         vs[len] <- 1
-          return(list(Vs = vs, pi.prop = do.call(cbind, lapply(seq_len(len), function(t) vs[t] * prod((1 - vs[seq_len(t - 1)]))))))
+          return(list(Vs = vs, pi.prop = vapply(seq_len(len), function(t) vs[t] * prod(1 - vs[seq_len(t - 1)]), numeric(1))))
       } else {
           rdirichlet(1, pi.alpha + nn)
       }
@@ -60,7 +60,7 @@
   
   # Cluster Labels
     sim.z       <- function(data, mu, sigma, Gseq, N, pi.prop, slice.ind = NULL, Q0) {
-      log.num   <- do.call(cbind, lapply(Gseq, function(g, q=Q0[g]) dmvn(data, mu[,g], if(q) sigma[[g]] else sqrt(sigma[[g]]), log=TRUE, isChol=!q) + log(pi.prop[,g])))
+      log.num   <- vapply(Gseq, function(g, q=Q0[g]) dmvn(data, mu[,g], if(q) sigma[[g]] else sqrt(sigma[[g]]), log=TRUE, isChol=!q) + log(pi.prop[g]), numeric(N))
       if(!missing(slice.ind)) {
         log.num <- log.num + log(slice.ind)
       }
@@ -69,7 +69,7 @@
       for(g in Gseq[-1])      {
         lnp[,g] <- colLogSumExps(rbind(lnp[,g], lnp[,g - 1]))
       }
-        return(list(z = unname(rowSums(-rexp(N) > lnp) + 1), log.likes = log.denom))
+        return(list(z = rowSums(-rexp(N) > lnp) + 1, log.likes = log.denom))
     }
 
   # Alpha
@@ -173,7 +173,7 @@
       sw.name   <- deparse(substitute(switch0g))
       if(!is.list(obj0g))        obj0g  <- list(obj0g)
       if(length(obj0g) != length(range.G)) stop(paste0(obj.name, " must be a list of length ", length(range.G)))
-      len       <- sapply(obj0g, length)
+      len       <- vapply(obj0g, length, numeric(1))
       if(is.element(method, c("FA", "IFA"))) {
         if(any(!is.element(len, c(1, V)))) stop(paste0(obj.name, " must be list of length 1 containing a scalar", ifelse(P.dim, paste0(" or a vector of length P=", V), ""), " for a 1-group model"))
       } else {
@@ -181,9 +181,9 @@
           if(all(len == 1))       obj0g <- lapply(seq_along(range.G), function(g) matrix(obj0g[[g]], nr=1, nc=range.G[g]))
           if(all(len == range.G)) obj0g <- if(switch0g) lapply(seq_along(range.G), function(g) matrix(obj0g[[g]], nr=1)) else stop(paste0(sw.name, " must be TRUE if the dimension of ", obj.name, " depends on G"))
           if(all(len == V))       obj0g <- lapply(seq_along(range.G), function(g) matrix(obj0g[[g]], nr=V, nc=range.G[g]))
-        } else if(!all(sapply(seq_along(range.G), function(g) is.matrix(obj0g[[g]]) && any(identical(dim(obj0g[[g]]), c(1, range.G[g])), identical(dim(obj0g[[g]]), c(V, range.G[g])))))) {
+        } else if(!all(vapply(seq_along(range.G), function(g) is.matrix(obj0g[[g]]) && any(identical(dim(obj0g[[g]]), c(1, range.G[g])), identical(dim(obj0g[[g]]), c(V, range.G[g]))), logical(1)))) {
                                            stop(paste0(ifelse(length(range.G) > 1, "Each element of ", ""), obj.name, " must be either of length 1, ", ifelse(P.dim, paste0("P=", V, ", or it's corresponding range.G, or a matrix with P rows and it's corresponding range.G columns"), paste0("or G=", range.G)))) 
-        } else if(all(sapply(obj0g, is.matrix), !switch0g) && any(sapply(seq_along(range.G), function(g) any(dim(obj0g[[g]]) == range.G[g])))) {
+        } else if(all(vapply(obj0g, is.matrix, logical(1)), !switch0g) && any(vapply(seq_along(range.G), function(g) any(dim(obj0g[[g]]) == range.G[g]), logical(1)))) {
                                            stop(paste0(sw.name, " must be TRUE if the dimension of ", obj.name, " depends on G"))
         }
       }

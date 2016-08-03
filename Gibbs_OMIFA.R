@@ -17,6 +17,7 @@
     Pseq           <- seq_len(P)
     obsnames       <- rownames(data)
     varnames       <- colnames(data)
+    colnames(data) <- NULL
     facnames       <- paste0("Factor ", seq_len(Q))
     gnames         <- paste0("Group ", Gseq)
     iternames      <- paste0("Iteration", seq_len(n.store))
@@ -60,7 +61,7 @@
     delta          <- lapply(Gseq, function(g) c(sim.delta.p(alpha=alpha.d1, beta=beta.d1), sim.delta.p(Q=Q, alpha=alpha.dk, beta=beta.dk)))
     tau            <- lapply(delta, cumprod)
     lmat           <- lapply(Gseq, function(g) matrix(unlist(lapply(Pseq, function(j) sim.load.p(Q=Q, phi=phi[[g]][j,], tau=tau[[g]], P=P)), use.names=FALSE), nr=P, byrow=TRUE))
-    psi.inv        <- do.call(cbind, lapply(Gseq, function(g) sim.psi.i.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)))
+    psi.inv        <- vapply(Gseq, function(g) sim.psi.i.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), numeric(P))
     for(g in which(nn > 2.5 * Q))      {
       fact         <- try(factanal(data[z == g,, drop=FALSE], factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
       if(!inherits(fact, "try-error")) {
@@ -94,7 +95,7 @@
       }
       
     # Mixing Proportions
-      pi.prop      <- sim.pi(pi.alpha=pi.alpha, nn=nn)
+      pi.prop[]    <- sim.pi(pi.alpha=pi.alpha, nn=nn)
       
     # Cluster Labels
       psi          <- 1/psi.inv
@@ -131,12 +132,12 @@
     # Means
       sum.data     <- lapply(dat.g, colSums)
       sum.f        <- lapply(f.tmp, colSums)
-      mu           <- do.call(cbind, lapply(Gseq, function(g) if(nn0[g]) sim.mu(N=nn[g], mu.sigma=mu.sigma, psi.inv=psi.inv[,g], P=P, sum.data=sum.data[[g]], 
-                              sum.f=sum.f[[g]][seq_len(Qs[g])], lmat=lmat[[g]], mu.zero=mu.zero) else sim.mu.p(P=P, sigma.mu=sigma.mu, mu.zero=mu.zero)))
+      mu           <- vapply(Gseq, function(g) if(nn0[g]) sim.mu(N=nn[g], mu.sigma=mu.sigma, psi.inv=psi.inv[,g], P=P, sum.f=sum.f[[g]][seq_len(Qs[g])],
+                             sum.data=sum.data[[g]], lmat=lmat[[g]], mu.zero=mu.zero) else sim.mu.p(P=P, sigma.mu=sigma.mu, mu.zero=mu.zero), numeric(P))
                   
     # Uniquenesses
-      psi.inv      <- do.call(cbind, lapply(Gseq, function(g) if(nn0[g]) sim.psi.inv(N=nn[g], psi.alpha=psi.alpha, c.data=c.data[[g]], psi.beta=psi.beta, 
-                              P=P, f=f.tmp[[g]][,seq_len(Qs[g]), drop=FALSE], lmat=lmat[[g]]) else sim.psi.i.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)))
+      psi.inv      <- vapply(Gseq, function(g) if(nn0[g]) sim.psi.inv(N=nn[g], psi.alpha=psi.alpha, c.data=c.data[[g]], psi.beta=psi.beta, lmat=lmat[[g]],
+                             P=P, f=f.tmp[[g]][,seq_len(Qs[g]), drop=FALSE]) else sim.psi.i.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), numeric(P))
     
     # Local Shrinkage
       load.2       <- lapply(lmat, function(lg) lg * lg)
@@ -169,9 +170,9 @@
           colvec   <- lapply(lind, function(lx) lx >= prop)
           nonred   <- lapply(colvec, function(cv) which(cv == 0))
           numred   <- lapply(colvec, sum)
-          notred   <- unlist(lapply(Gseq, function(g) numred[[g]] == 0 && nn0[g]), use.names=FALSE)
+          notred   <- vapply(Gseq, function(g) numred[[g]] == 0, logical(1))
           Qs.old   <- Qs
-          Qs       <- unlist(lapply(Gseq, function(g) if(notred[g]) Qs.old[g] + 1 else Qs.old[g] - numred[[g]]), use.names=FALSE)
+          Qs       <- vapply(Gseq, function(g) if(notred[g]) Qs.old[g] + 1 else Qs.old[g] - numred[[g]], numeric(1))
           phi      <- lapply(Gseq, function(g) if(notred[g]) cbind(phi[[g]][,seq_len(Qs.old[g])], rgamma(n=P, shape=phi.nu, rate=phi.nu)) else phi[[g]][,nonred[[g]], drop=FALSE])
           delta    <- lapply(Gseq, function(g) if(notred[g]) c(delta[[g]][seq_len(Qs.old[g])], rgamma(n=1, shape=alpha.dk, rate=beta.dk)) else delta[[g]][nonred[[g]]])  
           tau      <- lapply(delta, cumprod)
@@ -184,9 +185,9 @@
           if(Qmax   < max(Qemp, 0)) {
             Qs[Qmax < Qs]  <- Qmax
             for(g in Gseq[!nn0][Qemp > Qmax]) {  
-              phi[[g]]     <- phi[[g]][,Qmaxseq, drop=FALSE]
-              delta[[g]]   <- delta[[g]][Qmaxseq, drop=FALSE]
-              tau[[g]]     <- tau[[g]][Qmaxseq, drop=FALSE]
+              phi[[g]]     <- phi[[g]][,Qmaxseq,  drop=FALSE]
+              delta[[g]]   <- delta[[g]][Qmaxseq]
+              tau[[g]]     <- tau[[g]][Qmaxseq]
               lmat[[g]]    <- lmat[[g]][,Qmaxseq, drop=FALSE]
             }
           }

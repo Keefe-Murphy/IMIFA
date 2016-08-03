@@ -52,7 +52,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   iters     <- seq(from=burnin + 1, to=n.iters, by=thinning)
   iters     <- iters[iters > 0]
   dat       <- as.data.frame(dat)
-  raw.dat   <- dat[sapply(dat, is.numeric)]
+  raw.dat   <- dat[vapply(dat, is.numeric, logical(1))]
   if(scaling != "none") {
     scal    <- apply(raw.dat, 2, sd)
     if(scaling == "pareto") {
@@ -337,22 +337,23 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
             zips   <- sim.z.p(N=N, prob.z=pies)
           }  
         } else {
-          if(alpha.pi <= 1)         warning(paste0("Suggestion: increase alpha.pi from ", alpha.pi, " if initialising from the stick-breaking prior"))
+          if(alpha.pi <= 1)         warning("Suggestion: supply a value > 1 for 'alpha.pi' if initialising labels from the stick-breaking prior")
           pies     <- sim.pi(pi.alpha=alpha.pi, nn=rep(0, trunc.G), inf.G=TRUE)
           zips     <- sim.z.p(N=N, prob.z=pies)
         }
         zi[[g]]    <- as.numeric(zips)
         rm(zips)
       }
-      pi.prop[[g]] <- t(prop.table(tabulate(zi[[g]], nbins=G)))
-      mu[[g]]      <- do.call(cbind, lapply(seq_len(G), function(gg) if(pi.prop[[g]][,gg] > 0) colMeans(dat[zi[[g]] == gg,, drop=FALSE]) else rep(0, P)))
+      nngs         <- tabulate(zi[[g]], nbins=G)
+      pi.prop[[g]] <- prop.table(nngs)
+      mu[[g]]      <- vapply(seq_len(G), function(gg) if(nngs[gg] > 0) colMeans(dat[zi[[g]] == gg,, drop=FALSE]) else rep(0, P), numeric(P))
       if(mu0.x)   {
-        mu.zero[[g]]    <- if(mu0g) mu[[g]] else do.call(cbind, lapply(seq_len(G), function(gg) colMeans(dat)))  
+        mu.zero[[g]]    <- if(mu0g) mu[[g]] else vapply(seq_len(G), function(gg) colMeans(dat), numeric(P))
       }
       if(beta.x)  {
         if(psi0g) {
-          cov.gg   <- lapply(seq_len(G), function(gg) if(pi.prop[[g]][,gg] > 0) cov(dat[zi[[g]] == gg,, drop=FALSE]) else cov.mat)
-          psi.beta[[g]] <- do.call(cbind, lapply(seq_len(G), function(gg) psi.hyper(psi.alpha, cov.gg[[gg]])))
+          cov.gg   <- lapply(seq_len(G), function(gg) if(nngs[gg] > 1) cov(dat[zi[[g]] == gg,, drop=FALSE]) else cov.mat)
+          psi.beta[[g]] <- vapply(seq_len(G), function(gg) psi.hyper(psi.alpha, cov.gg[[gg]]), numeric(P))
         } else {
           psi.beta[[g]] <- replicate(G, temp.psi[[1]])
         }
@@ -385,7 +386,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
       alpha.dk     <- list(alpha.dk[[1]][1])
     }
   } 
-  if(all(round(unlist(sapply(mu.zero, sum))) == 0)) {
+  if(all(round(vapply(mu.zero, sum, numeric(1))) == 0)) {
     mu.zero        <- lapply(mu.zero, function(x) 0)
   }
   if(any(is.na(unlist(psi.beta)))) {

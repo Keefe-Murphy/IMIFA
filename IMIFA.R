@@ -26,7 +26,7 @@
     ppms     <- substr(colnames(x10[,4:ncol(x10)]), 2, 6); rm(x)
     urine    <- x10[,4:ncol(x10)]
     grp      <- x10[,"Group"]
-    ppm.g    <- do.call(cbind, lapply(seq_len(max(grp)), function(g) colMeans(urine[grp == g,])))
+    ppm.g    <- vapply(seq_len(max(grp)), function(g) colMeans(urine[grp == g,]), numeric(ncol(urine)))
     matplot(ppm.g, type="l", xlab="Chemical Shift (ppm)", yaxt="n", ylab="", bty="n", xaxt="n", lwd=2, lty=1)
     axis(1, at=seq(from=20, to=nrow(ppm.g), by=20), labels=9:1, tick=TRUE, lwd.ticks=1, xpd=TRUE)
     axis(1, at=seq_len(nrow(ppm.g)), labels=FALSE, tick=TRUE, tcl=-0.2)
