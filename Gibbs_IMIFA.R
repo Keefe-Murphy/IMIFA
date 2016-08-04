@@ -11,7 +11,8 @@
         
   # Define & initialise variables
     start.time      <- proc.time()
-    n.iters         <- round(max(iters), -1)
+    total           <- max(iters)
+    if(verbose)        pb  <- txtProgressBar(min=0, max=total, style=3)
     n.store         <- length(iters)
     Gs              <- seq_len(G)
     Ts              <- seq_len(trunc.G)
@@ -100,17 +101,11 @@
         alpha.store[1]     <- pi.alpha 
       }
     }
-    init.time      <- proc.time() - start.time
+    init.time       <- proc.time() - start.time
     
   # Iterate
-    for(iter in seq_len(max(iters))[-1]) { 
-      if(verbose)  {
-        if(all(iter < burnin, iter %% (burnin/10) == 0)) {
-          cat(paste0("Iteration: ", iter, "\n"))
-        } else if(iter %% (n.iters/10) == 0) {
-          cat(paste0("Iteration: ", iter, "\n"))
-        }
-      }
+    for(iter in seq_len(total)[-1]) { 
+      if(verbose    && iter < burnin) setTxtProgressBar(pb, iter)
     
     # Mixing Proportions
       weights       <- sim.pi(pi.alpha=pi.alpha, nn=nn, inf.G=TRUE, len=trunc.G)
@@ -238,6 +233,7 @@
     
     if(any(Qs > Q.star))      stop(paste0("Q cannot exceed initial number of loadings columns: try increasing range.Q from ", Q.star))
       if(is.element(iter, iters))   {
+        if(verbose)    setTxtProgressBar(pb, iter)
         new.it      <- which(iters == iter)
         if(sw["mu.sw"])    mu.store[,,new.it]       <- mu 
         if(all(sw["f.sw"], 
@@ -257,6 +253,7 @@
                          G.store[new.it]            <- sum(nn0)
       } 
     }
+    close(pb)
     Gmax            <- seq_len(max(as.numeric(z.store)))
     Qmax            <- seq_len(max(Q.store))
     returns         <- list(mu       = if(sw["mu.sw"])  mu.store[,Gmax,, drop=FALSE],

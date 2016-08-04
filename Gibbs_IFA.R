@@ -12,7 +12,8 @@
     
   # Define & initialise variables
     start.time   <- proc.time()
-    n.iters      <- round(max(iters), -1)
+    total        <- max(iters)
+    if(verbose)     pb     <- txtProgressBar(min=0, max=total, style=3)
     n.store      <- length(iters)
     Pseq         <- seq_len(P)
     obsnames     <- rownames(data)
@@ -61,17 +62,11 @@
       psi.store[,1]        <- 1/psi.inv
       ll.store[1]          <- sum(dmvn(X=data, mu=mu, sigma=tcrossprod(lmat) + diag(1/psi.inv), log=TRUE))
     }
-    init.time    < proc.time() - start.time
+    init.time    <- proc.time() - start.time
   
   # Iterate
-    for(iter in seq_len(max(iters))[-1]) { 
-      if(verbose) {
-        if(all(iter < burnin, iter %% (burnin/10) == 0)) {
-          cat(paste0("Iteration: ", iter, "\n"))
-        } else if(iter %% (n.iters/10) == 0) {
-          cat(paste0("Iteration: ", iter, "\n"))
-        }
-      }
+    for(iter in seq_len(total)[-1]) { 
+      if(verbose && iter  < burnin) setTxtProgressBar(pb, iter)
       Q0         <- Q > 0
       Q1         <- Q > 1
       
@@ -131,7 +126,8 @@
       } 
     
     if(Q > Q.star)  stop(paste0("Q cannot exceed initial number of loadings columns: try increasing range.Q from ", Q.star))
-     if(is.element(iter, iters)) {
+      if(is.element(iter, iters)) {
+        if(verbose) setTxtProgressBar(pb, iter)
         new.it   <- which(iters == iter)  
         psi      <- 1/psi.inv
         post.mu  <- post.mu + mu/n.store
@@ -146,6 +142,7 @@
                                     ll.store[new.it]               <- sum(dmvn(X=data, mu=mu, sigma=sigma, log=TRUE))
       }
     }
+    close(pb)
     Qmax         <- seq_len(max(Q.store))
     returns      <- list(mu       = if(sw["mu.sw"])  mu.store,
                          f        = if(sw["f.sw"])   as.simple_sparse_array(f.store[,Qmax,, drop=FALSE]), 

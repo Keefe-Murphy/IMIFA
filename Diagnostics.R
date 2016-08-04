@@ -80,7 +80,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
          unique(G.store[tmpQ,]))) stop("This 'G' value was not visited during simulation")
     }
   }
-  G              <- ifelse(any(inf.G, all(G.T, !is.element(method, c("FA", "IFA")))), G, 1)
+  G              <- if(any(inf.G, all(G.T, !is.element(method, c("FA", "IFA"))))) G else 1
   if(Q.T)    {
     if(G.T)  {
       if(length(Q) == 1)     Q <- rep(Q, G)
@@ -111,13 +111,13 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     
   # Retrieve log-likelihoods and/or tune G &/or Q according to criterion
     if(all(G.T, Q.T)) {
-      dimnames(crit.mat) <- list(paste0("G", G), ifelse(inf.Q, "IFA", paste0("Q", Q)))
+      dimnames(crit.mat) <- list(paste0("G", G), if(inf.Q) "IFA" else paste0("Q", Q))
     } else if(G.T)    {
-      dimnames(crit.mat) <- list(paste0("G", G), ifelse(inf.Q, "IFA", paste0("Q", n.fac)))
+      dimnames(crit.mat) <- list(paste0("G", G), if(inf.Q) "IFA" else paste0("Q", n.fac))
     } else if(Q.T)    {
-      dimnames(crit.mat) <- list(paste0("G", n.grp), ifelse(inf.Q, "IFA", paste0("Q", Q)))
+      dimnames(crit.mat) <- list(paste0("G", n.grp), if(inf.Q) "IFA" else paste0("Q", Q))
     } else {
-      dimnames(crit.mat) <- list(paste0("G", n.grp), ifelse(inf.Q, "IFA", paste0("Q", n.fac)))
+      dimnames(crit.mat) <- list(paste0("G", n.grp), if(inf.Q) "IFA" else paste0("Q", n.fac))
     }
     if(inf.G) {
       rownames(crit.mat) <- "IM"
