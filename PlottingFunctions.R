@@ -632,16 +632,14 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
         plot.new()
         legend("center", legend=paste0("1/G = 1/", G), title="", lty=2, col=2, bty="n", y.intersp=par()$fin[2] * 5/4)
         legend("center", legend=c(" "," "), title=expression(bold("Clustering Uncertainty")), bty='n', y.intersp=par()$fin[2] * 2/5, cex=par()$cex.main)
-        par(mar=c(5.1, 4.1, 0, 2.1))
+        par(mar=c(5.1, 4.1, 0.5, 2.1))
       }
       plot(plot.x, type=type, ylim=c(0, 1 - 1/G), col=col.x, axes=FALSE, ylab="Uncertainty", xlab="Observation", pch=ifelse(type == "n", NA, 16))
       rect(0, 0, n.obs, 1 - 1/G) 
-      axis(1, las=1, pos=0)
-      axis(2, las=2, pos=0)
-      if(G != 2) {
-        lines(x=c(0, n.obs), y=c(1/G, 1/G), lty=2, col=2)
-        axis(2, at=1 - 1/G, label="1 - 1/G", las=2, line=-0.7, tick=T)
-      }
+      axis(1, las=1, pos=0, cex.axis=0.9)
+      axis(2, at=c(seq(from=0, to=min(1 - 1/G - 1/1000, 0.8), by=0.1), 1 - 1/G), labels=c(seq(from=0, to=min(1 - 1/G - 1/1000, 0.8), by=0.1), "1 - 1/G"), las=2, pos=0, cex.axis=0.9)
+      if(G == 2) abline(h=0.5, col=par()$bg)
+      lines(x=c(0, n.obs), y=c(1/G, 1/G), lty=2, col=2)  
       if(type == "n")  {
         znam  <- obs.names
         znam[plot.x == 0] <- ""
@@ -700,7 +698,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
         dens <- NULL
       }
       pl.x   <- barplot(plot.x, beside=TRUE, col=col.e, main="", ylab="Deviation", density=dens)
-      na.x   <- if(G > 1) is.na(res$Error[[1]]) else F
+      na.x   <- if(G > 1) is.na(results$Error[[1]]) else FALSE
       if(G > 1) points(x=apply(as.matrix(pl.x[,which(na.x)]), 2, median), y=rep(0, sum(na.x)), pch=16, col=6)
       if(titles) title(main=list("Error Metrics"))
       if(titles) {

@@ -119,12 +119,11 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
       range.G <- 1
     }
     meth    <- method
-    len.G   <- length(range.G)
   } else {
     if(G.x)                         stop("'range.G' must be specified")
     if(any(range.G  < 1))           stop("'range.G' must be strictly positive")
     range.G <- sort(unique(range.G))
-    meth    <- rep(method, len.G)                               
+    meth    <- rep(method, length(range.G))                               
   }
   if(any(range.G >= N))             stop(paste0("'range.G' must be less than the number of observations N=", N))
   if(range.G[1]  == 1)   {
@@ -159,9 +158,10 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(length(range.Q) > 1)         stop(paste0("Only one starting value for 'range.Q' can be supplied for the ", method, " method"))
     if(range.Q    <= 0)             stop(paste0("'range.Q' must be strictly positive for the ", method, " method"))
   }
-  range.Q   <- sort(unique(range.Q))  
+  range.Q   <- sort(unique(range.Q)) 
+  len.G     <- length(range.G)
   len.Q     <- length(range.Q)
-  len.GQ    <- len.G * len(Q)
+  len.GQ    <- len.G * len.Q
   if(is.element(method, c("FA", "MFA", "OMFA", "IMFA"))) {
     if(missing("sigma.l"))   sigma.l       <- 1
     if(sigma.l <= 0)                stop("'sigma.l' must be strictly positive")            
@@ -485,7 +485,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
       imifa[[g]][[Qi]]    <- do.call(paste0("gibbs.", "IFA"),
                                      args=append(list(data = temp.dat, N = nrow(temp.dat), Q = range.Q), gibbs.arg))
       fac.time     <- fac.time + imifa[[Gi]][[Qi]]$time
-      if(verbose   && g != len(G))  cat(paste0("Model ", g, " of ", len.G, " complete"), "Initialising...", sep="\n")
+      if(verbose   && g != len.G)   cat(paste0("Model ", g, " of ", len.G, " complete"), "Initialising...", sep="\n")
     }
   }
   tot.time  <- proc.time() - start.time
