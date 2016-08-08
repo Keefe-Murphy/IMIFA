@@ -244,13 +244,14 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(alpha.pi <= 0)               stop("'alpha.pi' must be strictly positive")
     if(all(!is.element(method, c("IMFA", "IMIFA")),
            alpha.pi  > 1))          warning("Are you sure alpha.pi should be greater than 1?", call.=FALSE)
+                             z.miss        <- missing(z.init)
                              z.init        <- match.arg(z.init)
     if(all(is.element(method,  c("OMIFA", "OMFA")), !is.element(z.init, 
        c("list", "kmeans"))))       stop("'z.init' must be set to 'list' or 'kmeans' for the OMIFA method to ensure all groups are populated at the initialisation stage")
     if(!missing(z.list))   {
       if(!is.list(z.list))   z.list        <- lapply(list(z.list), as.factor)
       if(z.init != "list") { z.init        <- "list"
-                                    message("'z.init' set to 'list' as 'z.list' was supplied") }
+      if(!z.miss)                   message("'z.init' set to 'list' as 'z.list' was supplied") }
       if(length(z.list)   != len.G) {
                                     stop(paste0("'z.list' must be a list of length ", len.G)) }
                              list.levels   <- lapply(z.list, nlevels)

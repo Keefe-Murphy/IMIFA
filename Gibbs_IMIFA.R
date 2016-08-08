@@ -60,7 +60,7 @@
     mu.sigma        <- 1/sigma.mu
     z               <- cluster$z
     pi.alpha        <- cluster$pi.alpha
-    pi.prop         <- c(cluster$pi.prop, sim.pi(pi.alpha=pi.alpha, nn=rep(0, trunc.G, inf.G=TRUE))[-Gs])
+    pi.prop         <- c(cluster$pi.prop, sim.pi(pi.alpha=pi.alpha, nn=rep(0, trunc.G), N=N, inf.G=TRUE, len=trunc.G)$pi.prop[-Gs])
     nn              <- tabulate(z, nbins=trunc.G)
     mu              <- cbind(mu, vapply(seq_len(trunc.G - G), function(g) sim.mu.p(P=P, sigma.mu=sigma.mu, mu.zero=mu.zero), numeric(P)))
     f               <- sim.f.p(N=N, Q=Q)
@@ -108,7 +108,7 @@
       if(verbose    && iter < burnin) setTxtProgressBar(pb, iter)
     
     # Mixing Proportions
-      weights       <- sim.pi(pi.alpha=pi.alpha, nn=nn, inf.G=TRUE, len=trunc.G)
+      weights       <- sim.pi(pi.alpha=pi.alpha, nn=nn, N=N, inf.G=TRUE, len=trunc.G)
       pi.prop       <- weights$pi.prop
       if(MH.step)      Vs  <- weights$Vs
       

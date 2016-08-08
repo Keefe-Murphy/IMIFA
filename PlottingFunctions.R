@@ -61,12 +61,13 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
   var.names    <- rownames(results[[1]]$post.load)
   obs.names    <- rownames(results$Scores$post.f)
   all.ind      <- plot.meth == "all"
-  grp.ind      <- all(G != 1, !is.element(method, c("FA", "IFA")))
+  grp.ind      <- !is.element(method, c("FA", "IFA"))
   load.all     <- all(load.meth == "all", vars == "loadings")
   if(grp.ind)   {
     clust      <- results$Clust
     labelmiss  <- !attr(clust, "Label.Sup")
   }
+  grp.ind      <- all(G != 1, grp.ind)
   if(all.ind)   {
     if(v.sw[vars]) {
       m.sw[-(1:3)]  <- !m.sw[-(1:3)]
@@ -84,7 +85,6 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
   if(!grp.ind)  {
     if(m.sw["Z.sw"])                  stop("Can't use 'Z' for 'plot.meth' as no clustering has taken place")
     if(vars == "pis")                 stop("Can't plot mixing proportions as no clustering has taken place")
-    if(vars == "alphas")              stop("Can't plot alphas as no clustering has taken place")
   }
   if(all(m.sw["E.sw"], 
          !attr(results, "Errors")))   stop("Can't plot error metrics as they were not calculated due to storage switches")
@@ -571,6 +571,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
       }  
       if(all(method != "IFA", plotQ.ind)) {
         plot.Q <- GQ.res$Q.Counts
+        plot.Q <- if(is.list(plot.Q)) plot.Q else list(plot.Q)
         Q.name <- lapply(plot.Q, names)
         rangeQ <- as.numeric(unique(unlist(Q.name, use.names=FALSE)))
         rangeQ <- seq(from=min(rangeQ), to=max(rangeQ), by=1)
