@@ -53,6 +53,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   iters     <- iters[iters > 0]
   dat       <- as.data.frame(dat)
   raw.dat   <- dat[vapply(dat, is.numeric, logical(1))]
+  if(any(is.na(raw.dat)))           stop("Missing values not allowed in data")
   if(scaling != "none") {
     scal    <- apply(raw.dat, 2, sd)
     if(scaling == "pareto") {
@@ -325,14 +326,14 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
         k.res      <- try(kmeans(dat, G, nstart=100), silent=TRUE)
         if(!inherits(k.res, "try-error"))  {
           zi[[g]]  <- as.numeric(factor(k.res$cluster, levels=seq_len(G)))
-        } else                      warning("Cannot initialise cluster labels using kmeans. Try another z.init method", call.=FALSE)
+        } else                      stop("Cannot initialise cluster labels using kmeans. Try another z.init method")
       } else if(z.init  == "list")   {
         zi[[g]]    <- as.numeric(z.list[[g]])
       } else if(z.init  == "mclust") {
         m.res      <- try(Mclust(dat, G), silent=TRUE)
         if(!inherits(m.res, "try_error"))  {
           zi[[g]]  <- as.numeric(m.res$classification)
-        } else                      warning("Cannot initialise cluster labels using mclust. Try another z.init method", call.=FALSE)
+        } else                      stop("Cannot initialise cluster labels using mclust. Try another z.init method")
       } else {
         zips       <- rep(1, N)
         if(!is.element(method, c("IMFA", "IMIFA"))) {

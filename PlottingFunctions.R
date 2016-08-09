@@ -356,7 +356,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
           polygon(plot.d, col=grey)
         }
       }
-      if(vars  == "alpha") {
+      if(vars  == "alphas") {
         plot.x <- clust$MH.alpha
         plot.d <- density(plot.x$alpha.pi)
         plot(plot.d, main="")
