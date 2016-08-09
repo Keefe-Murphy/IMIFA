@@ -22,15 +22,15 @@
     load(file=paste0(getwd(), "/Data/Iris.Rdata", sep=""), envir=.GlobalEnv)
     species  <- iris[,5]
   # Olive       (# area, region)
-    load(file=paste0(getwd(), "/Data/olive.Rdata", sep=""), envir=.GlobalEnv)
+    load(file=paste0(getwd(), "/Data/Olive.Rdata", sep=""), envir=.GlobalEnv)
     area     <- as.factor(olive$area)
     region   <- as.factor(olive$region)
     olive    <- olive[,-c(1, 2)]
     # Oils      (# oliveoillabels)
-      load(file=paste0(getwd(), "/Data/oliveoils.Rdata", sep=""), envir=.GlobalEnv)
+      load(file=paste0(getwd(), "/Data/Oliveoils.Rdata", sep=""), envir=.GlobalEnv)
       oils   <- t(oliveoils); rm(oliveoils, wavelengths, x)
   # Coffee      (# type, country)
-    load(file=paste0(getwd(), "/Data/coffee.Rdata", sep=""), envir=.GlobalEnv) 
+    load(file=paste0(getwd(), "/Data/Coffee.Rdata", sep=""), envir=.GlobalEnv) 
   # Urine       (# grp)
     load(file=paste0(getwd(), "/Data/Epi_urine_data.Rdata", sep=""), envir=.GlobalEnv)
     ppms     <- substr(colnames(x10[,4:ncol(x10)]), 2, 6); rm(x)
