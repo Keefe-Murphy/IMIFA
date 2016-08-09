@@ -15,13 +15,23 @@
   source(paste0(getwd(), "/IMIFA-GIT/PackageSetup.R", sep=""))
     
 # Read in the data
-  # Wine
+  # Wine        (# lab)
     load(file=paste0(getwd(), "/Data/Wine.Rdata", sep=""), envir=.GlobalEnv)
     lab      <- wine[,1]
-  # Iris
+  # Iris        (# species)
     load(file=paste0(getwd(), "/Data/Iris.Rdata", sep=""), envir=.GlobalEnv)
     species  <- iris[,5]
-  # Urine
+  # Olive       (# area, region)
+    load(file=paste0(getwd(), "/Data/olive.Rdata", sep=""), envir=.GlobalEnv)
+    area     <- as.factor(olive$area)
+    region   <- as.factor(olive$region)
+    olive    <- olive[,-c(1, 2)]
+    # Oils      (# oliveoillabels)
+      load(file=paste0(getwd(), "/Data/oliveoils.Rdata", sep=""), envir=.GlobalEnv)
+      oils   <- t(oliveoils); rm(oliveoils, wavelengths, x)
+  # Coffee      (# type, country)
+    load(file=paste0(getwd(), "/Data/coffee.Rdata", sep=""), envir=.GlobalEnv) 
+  # Urine       (# grp)
     load(file=paste0(getwd(), "/Data/Epi_urine_data.Rdata", sep=""), envir=.GlobalEnv)
     ppms     <- substr(colnames(x10[,4:ncol(x10)]), 2, 6); rm(x)
     urine    <- x10[,4:ncol(x10)]
@@ -31,7 +41,7 @@
     axis(1, at=seq(from=20, to=nrow(ppm.g), by=20), labels=9:1, tick=TRUE, lwd.ticks=1, xpd=TRUE)
     axis(1, at=seq_len(nrow(ppm.g)), labels=FALSE, tick=TRUE, tcl=-0.2)
     legend("topleft", legend=c("Control", "Epileptic"), bty="n", lty=1, col=c(1, 2))  
-  # Meat
+  # Meat        (# type)
     load(file=paste0(getwd(), "/Data/Meat.Rdata", sep=""), envir=.GlobalEnv)
     spectra  <- t(spectra); rm(last.warning)
     # All Meats
@@ -40,7 +50,7 @@
     # Red vs. White
       matplot(t(spectra), type="l", col=c(2, 1, 2, 1, 1), xlab="Wavelength", ylab="Spectral Reflectance", main="Meat Data")
       legend("topleft", legend=c("Red Meat", "White Meat"), bty="n", lty=1, col=c(2, 1))
-  # Microarray
+  # Microarray  (# labels)
     load(file=paste0(getwd(), "/Data/Microarray.Rdata", sep=""), envir=.GlobalEnv)
     aliza    <- data.frame(as.factor(mydata.alizadeth$y), t(mydata.alizadeth$x)); names(aliza)[1] <- "labels"
     golub    <- data.frame(as.factor(mydata.golub$y),     t(mydata.golub$x));     names(golub)[1] <- "labels"
@@ -53,9 +63,10 @@
       rm(list=remove)
   # Subjects 
     subjects <- read.csv(paste0(getwd(), "/Data/", "SubjectMarks.csv", sep=""))
-  # Cereal 
+  # Cereal      (# classes)
     cereal   <- read.csv(paste0(getwd(), "/Data/", "Cereal.csv", sep=""))
-  # Simulated data
+    classes  <- cereal$Cereals
+  # Simulated   (# classes)
    #SimData  <- sim.IMIFA(N=80, G=4, P=100, Q=c(5, 1, 4, 0), nn=c(20, 20, 20, 20))
    #save(SimData, file=paste0(getwd(),"/Data/Simulated_Data.Rdata", sep=""))
     load(file=paste0(getwd(), "/Data/Simulated_Data.Rdata", sep=""), envir=.GlobalEnv)
