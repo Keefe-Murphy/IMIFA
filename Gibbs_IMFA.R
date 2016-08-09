@@ -3,7 +3,7 @@
 #######################################################################
   
 # Gibbs Sampler Function
-  gibbs.IMFA       <- function(Q, data, iters, N, P, G, mu.zero, pp, sigma.l, MH.step,
+  gibbs.IMFA       <- function(Q, data, iters, N, P, G, mu.zero, rho, sigma.l, MH.step,
                                sigma.mu, burnin, thinning, mu, trunc.G, gen.slice, MH.lower,
                                psi.alpha, psi.beta, verbose, sw, cluster, MH.upper, ...) {
         
@@ -85,7 +85,7 @@
     mu             <- mu[,index, drop=FALSE]
     lmat           <- lmat[,,index, drop=FALSE]
     psi.inv        <- psi.inv[,index, drop=FALSE]
-    csi            <- pp * (1 - pp)^(Ts - 1)
+    ksi            <- rho * (1 - rho)^(Ts - 1)
     if(burnin       < 1)  {
       mu.store[,,1]        <- mu
       f.store[,,1]         <- f
@@ -114,15 +114,15 @@
     # Slice Sampler
       if(!gen.slice) {
         index      <- order(pi.prop, decreasing=TRUE)
-        pi.prop    <- csi  <- pi.prop[index]
+        pi.prop    <- ksi  <- pi.prop[index]
         mu         <- mu[,index, drop=FALSE]
         lmat       <- lmat[,,index, drop=FALSE]
         psi.inv    <- psi.inv[,index, drop=FALSE]
       }
-      u.slice      <- runif(N, 0, csi[z])
+      u.slice      <- runif(N, 0, ksi[z])
       G            <- max(vapply(Ns, function(i) sum(u.slice[i] < pi.prop), numeric(1)))
       Gs           <- seq_len(G)
-      slice.ind    <- vapply(Gs, function(g, x=csi[g]) (u.slice < x)/x, numeric(N))
+      slice.ind    <- vapply(Gs, function(g, x=ksi[g]) (u.slice < x)/x, numeric(N))
     
     # Cluster Labels
       psi          <- 1/psi.inv

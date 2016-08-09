@@ -20,7 +20,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
                         n.iters = 20000, labels = NULL, factanal = FALSE, range.G = NULL, range.Q = NULL, verbose = TRUE, Q.fac = NULL,  
                         burnin = n.iters/5, thinning = 2, centering = TRUE, scaling = c("unit", "pareto", "none"), trunc.G = NULL, MH.lower = NULL,
                         adapt = TRUE, b0 = NULL, b1 = NULL, delta0g = FALSE, prop = NULL, epsilon = NULL, sigma.mu = NULL, sigma.l = NULL, MH.step = TRUE,
-                        mu0g = FALSE, psi0g = FALSE, mu.zero = NULL, phi.nu = NULL, psi.alpha = NULL, psi.beta = NULL, alpha.d1 = NULL, pp = NULL, MH.upper = NULL,
+                        mu0g = FALSE, psi0g = FALSE, mu.zero = NULL, phi.nu = NULL, psi.alpha = NULL, psi.beta = NULL, alpha.d1 = NULL, rho = NULL, MH.upper = NULL,
                         alpha.dk = NULL, beta.d1 = NULL, beta.dk = NULL, alpha.pi = NULL, z.list = NULL, profile = FALSE, mu.switch = TRUE, gen.slice = FALSE,
                         f.switch = TRUE, load.switch = TRUE, psi.switch = TRUE, pi.switch = TRUE, z.init = c("kmeans", "list", "mclust", "priors")) {
   
@@ -87,8 +87,8 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
         } 
         if(!is.logical(gen.slice))  stop("'gen.slice' must be TRUE or FALSE") 
         if(!is.logical(MH.step))    stop("'MH.step' must be TRUE or FALSE") 
-        if(missing(pp)) {
-          pp       <- 0.5
+        if(missing(rho)) {
+          rho      <- 0.5
         }
         if(missing(MH.lower)) {
           MH.lower <- ifelse(N >= P, 0.5, 0)
@@ -96,8 +96,8 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
         if(missing(MH.upper)) {
           MH.upper <- range.G/2
         }
-        if(all(length(pp)  > 1,
-           pp < 0  && pp   > 1))    stop("'pp' must be a single number between 0 and 1")
+        if(all(length(rho) > 1,
+           rho < 0 && rho  > 1))    stop("'rho' must be a single number between 0 and 1")
         if(all(length(MH.lower) > 1,
            MH.lower < 0))           stop("'MH.lower' must be single number, strictly positive")
         if(all(length(MH.upper) > 1,
@@ -283,7 +283,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   gibbs.arg <- list(P = P, sigma.mu = sigma.mu, psi.alpha = psi.alpha, burnin = burnin, 
                     thinning = thinning, iters = iters, verbose = verbose, sw = switches)
   if(is.element(method, c("IMIFA", "IMFA"))) {
-    gibbs.arg      <- append(gibbs.arg, list(trunc.G = trunc.G, pp = pp, gen.slice = gen.slice, MH.step = MH.step, MH.lower = MH.lower, MH.upper = MH.upper))
+    gibbs.arg      <- append(gibbs.arg, list(trunc.G = trunc.G, rho = rho, gen.slice = gen.slice, MH.step = MH.step, MH.lower = MH.lower, MH.upper = MH.upper))
   }
   if(!is.element(method, c("FA", "MFA", "OMFA", "IMFA"))) {
     gibbs.arg      <- append(gibbs.arg, list(phi.nu = phi.nu, beta.d1 = beta.d1, beta.dk = beta.dk, 
