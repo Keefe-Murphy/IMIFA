@@ -45,11 +45,10 @@
     dimnames(cov.est)      <- dimnames(cov.emp)
     
     mu.sigma     <- 1/sigma.mu
-    l.sigma      <- 1/sigma.l
     f            <- sim.f.p(Q=Q, N=N)
     lmat         <- sim.load.p(Q=Q, P=P, sigma.l=sigma.l, shrink=FALSE)
     psi.inv      <- sim.psi.i.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
-    l.sigma      <- l.sigma * diag(Q)
+    l.sigma      <- 1/sigma.l * diag(Q)
     sum.data     <- mu * N
     if(burnin     < 1)    {
       mu.store[,1]         <- mu

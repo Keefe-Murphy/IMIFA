@@ -53,7 +53,6 @@
       mu.zero      <- matrix(0, nr=1, nc=G)
       cluster$l.switch[1]  <- F
     }
-    l.sigma        <- 1/sigma.l 
     z              <- cluster$z
     z.temp         <- factor(z, levels=Gseq)
     nn             <- tabulate(z, nbins=G)
@@ -88,7 +87,7 @@
       inf.ind      <- is.infinite(psi.inv)
       psi.inv[inf.ind]     <- psi.tmp[inf.ind]
     }
-    l.sigma        <- l.sigma * diag(Q)
+    l.sigma        <- 1/sigma.l * diag(Q)
     lmat           <- array(unlist(lmat, use.names=FALSE), dim=c(P, Q, G))
     if(burnin       < 1)  {
       mu.store[,,1]        <- mu

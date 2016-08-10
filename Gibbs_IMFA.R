@@ -54,7 +54,6 @@
       alpha.store  <- rep(0, n.store)
     }
     mu.sigma       <- 1/sigma.mu
-    l.sigma        <- 1/sigma.l 
     z              <- cluster$z
     pi.alpha       <- cluster$pi.alpha
     pi.prop        <- c(cluster$pi.prop, sim.pi(pi.alpha=pi.alpha, nn=rep(0, trunc.G), N=N, inf.G=TRUE, len=trunc.G)$pi.prop[-Gs])
@@ -78,7 +77,7 @@
       inf.ind      <- is.infinite(psi.inv)
       psi.inv[inf.ind]     <- psi.tmp[is.infinite(psi.inv)]
     }
-    l.sigma        <- l.sigma * diag(Q)
+    l.sigma        <- 1/sigma.l * diag(Q)
     lmat           <- array(unlist(lmat, use.names=FALSE), dim=c(P, Q, trunc.G))
     index          <- order(pi.prop, decreasing=TRUE)
     pi.prop        <- pi.prop[index]
