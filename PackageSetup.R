@@ -77,10 +77,11 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(all(!G.x, is.element(method, c("FA", "IFA"))) &&  
        range.G  > 1)                warning(paste0("'range.G' must be 1 for the ", method, " method"), call.=FALSE)
     if(is.element(method, c("OMIFA", "OMFA", "IMFA", "IMIFA"))) {
+      lnN          <- log(N)
       if(G.x) {
-        range.G    <- max(2, floor(2 * log(N)))
+        range.G    <- max(2, floor(2 * lnN))
       }
-      if(range.G   == 1)            stop(paste0("'range.G' should be at least greater than 1 for the ", method, " method"))
+      if(range.G    < floor(lnN))   stop(paste0("'range.G' should be at least log(N) for the ", method, " method"))
       if(is.element(method, c("IMFA", "IMIFA"))) {
         if(missing(trunc.G))  {
           trunc.G  <- ifelse(N < 100, N, 100)
