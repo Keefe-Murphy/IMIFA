@@ -3,9 +3,9 @@
 #######################################################################
   
 # Gibbs Sampler Function
-  gibbs.IMFA       <- function(Q, data, iters, N, P, G, mu.zero, rho, sigma.l, MH.step,
-                               sigma.mu, burnin, thinning, mu, trunc.G, gen.slice, MH.lower,
-                               psi.alpha, psi.beta, verbose, sw, cluster, MH.upper, ...) {
+  gibbs.IMFA       <- function(Q, data, iters, N, P, G, mu.zero, rho, sigma.l, alpha.step,
+                               hyper1, hyper2, mu, sigma.mu, burnin, thinning, trunc.G, 
+                               gen.slice, psi.alpha, psi.beta, verbose, sw, cluster, ...) {
         
   # Define & initialise variables
     start.time     <- proc.time()
@@ -49,9 +49,13 @@
     ll.store       <- rep(0, n.store)
     G.store        <- rep(0, n.store)
     dimnames(z.store)      <- list(obsnames, iternames)
+    not.fixed      <- alpha.step != "fixed"
+    if(not.fixed) {
+      alpha.store  <- rep(0, n.store)
+    }
+    MH.step        <- alpha.step == "metropolis"
     if(MH.step)   {
       rate         <- rep(0, n.store)
-      alpha.store  <- rep(0, n.store)
     }
     mu.sigma       <- 1/sigma.mu
     z              <- cluster$z
@@ -95,7 +99,7 @@
       ll.store[1]          <- sum(sim.z(data=data, mu=mu[,Gs], Gseq=Gs, N=N, pi.prop=pi.store[Gs,1], sigma=lapply(Gs,
                                   function(g) tcrossprod(lmat[,,g]) + diag(1/psi.inv[,g])), Q0=Q0s)$log.likes)
       G.store[1]           <- sum(nn > 0)
-      if(MH.step)  {
+      if(not.fixed) {
         alpha.store[1]     <- pi.alpha 
       }
     }
@@ -156,9 +160,13 @@
                              lmat=if(Q1) lmat[,,g] else as.matrix(lmat[,,g])) else sim.psi.i.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), numeric(P))
       
     # Alpha
-      if(MH.step)   {
-        MH.alpha   <- sim.alpha(lower=MH.lower, upper=MH.upper, trunc.G=trunc.G, alpha=pi.alpha, Vs=Vs) 
-        pi.alpha   <- MH.alpha$alpha
+      if(not.fixed) {
+        if(MH.step) {
+          MH.alpha <- sim.alpha.m(alpha=pi.alpha, lower=hyper1, upper=hyper2, trunc.G=trunc.G, Vs=Vs) 
+          pi.alpha <- MH.alpha$alpha  
+        } else {
+          pi.alpha <- sim.alpha.g(alpha=pi.alpha, shape=hyper1, rate=hyper2, G=G, N=N) 
+        }
       }
       
       if(is.element(iter, iters))   {
@@ -169,8 +177,8 @@
         if(all(sw["l.sw"], Q0))    load.store[,,,new.it]   <- lmat
         if(sw["psi.sw"])           psi.store[,,new.it]     <- psi
         if(sw["pi.sw"])            pi.store[,new.it]       <- pi.prop
-        if(MH.step) {              rate[new.it]            <- MH.alpha$rate
-                                   alpha.store[new.it]     <- pi.alpha }
+        if(not.fixed)              alpha.store[new.it]     <- pi.alpha
+        if(MH.step)                rate[new.it]            <- MH.alpha$rate
                                    z.store[,new.it]        <- z 
                                    ll.store[new.it]        <- sum(z.res$log.likes)
                                    G.store[new.it]         <- sum(nn0)
@@ -183,8 +191,8 @@
                            load     = if(all(sw["l.sw"], Q0)) load.store[,,Gmax,, drop=FALSE], 
                            psi      = if(sw["psi.sw"])        psi.store[,Gmax,, drop=FALSE],
                            pi.prop  = if(sw["pi.sw"])         pi.store[Gmax,, drop=FALSE],
+                           alpha    = if(not.fixed)           alpha.store,
                            rate     = if(MH.step)             mean(rate),
-                           alpha    = if(MH.step)             alpha.store,
                            z.store  = z.store,
                            ll.store = ll.store,
                            G.store  = G.store,

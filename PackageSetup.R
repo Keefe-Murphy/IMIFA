@@ -18,9 +18,9 @@ source(paste(getwd(), "/IMIFA-GIT/SimulateData.R", sep=""))
 
 mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA", "MFA", "IFA", "FA", "classify"), 
                         n.iters = 20000, labels = NULL, factanal = FALSE, range.G = NULL, range.Q = NULL, verbose = TRUE, Q.fac = NULL,  
-                        burnin = n.iters/5, thinning = 2, centering = TRUE, scaling = c("unit", "pareto", "none"), trunc.G = NULL, MH.lower = NULL,
-                        adapt = TRUE, b0 = NULL, b1 = NULL, delta0g = FALSE, prop = NULL, epsilon = NULL, sigma.mu = NULL, sigma.l = NULL, MH.step = TRUE,
-                        mu0g = FALSE, psi0g = FALSE, mu.zero = NULL, phi.nu = NULL, psi.alpha = NULL, psi.beta = NULL, alpha.d1 = NULL, rho = NULL, MH.upper = NULL,
+                        burnin = n.iters/5, thinning = 2, centering = TRUE, scaling = c("unit", "pareto", "none"), alpha.step = c("gibbs", "metropolis", "fixed"),
+                        adapt = TRUE, b0 = NULL, b1 = NULL, delta0g = FALSE, prop = NULL, epsilon = NULL, sigma.mu = NULL, sigma.l = NULL, alpha.hyper = NULL,
+                        mu0g = FALSE, psi0g = FALSE, mu.zero = NULL, phi.nu = NULL, psi.alpha = NULL, psi.beta = NULL, alpha.d1 = NULL, rho = NULL, trunc.G = NULL,
                         alpha.dk = NULL, beta.d1 = NULL, beta.dk = NULL, alpha.pi = NULL, z.list = NULL, profile = FALSE, mu.switch = TRUE, gen.slice = FALSE,
                         f.switch = TRUE, load.switch = TRUE, psi.switch = TRUE, pi.switch = TRUE, z.init = c("kmeans", "list", "mclust", "priors")) {
   
@@ -73,6 +73,12 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   if(!is.logical(switches))         stop("All logical switches must be TRUE or FALSE")
   if(N < 2)                         stop("Must have more than one observation")
   G.x       <- missing(range.G)
+  alpha.x   <- missing(alpha.step)
+  alpha.step       <- match.arg(alpha.step)
+  if(all(!is.element("IMFA", "IMIFA"), alpha.step != "fixed"))  {
+    alpha.step     <- "fixed"
+    if(!alpha.x)                    warning(paste0("'alpha.step' must be given as 'fixed' for the ", method, " method"), call.=FALSE)
+  }
   if(!is.element(method, c("MFA", "MIFA")))      {
     if(length(range.G) > 1)         stop(paste0("Only one 'range.G' value can be specified for the ", method, " method"))
     if(all(!G.x, is.element(method, c("FA", "IFA"))) &&  
@@ -84,27 +90,31 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
       }
       if(range.G    < floor(lnN))   stop(paste0("'range.G' should be at least log(N) for the ", method, " method"))
       if(is.element(method, c("IMFA", "IMIFA"))) {
-        if(missing(trunc.G))  {
-          trunc.G  <- ifelse(N < 100, N, 100)
-        } 
         if(!is.logical(gen.slice))  stop("'gen.slice' must be TRUE or FALSE") 
-        if(!is.logical(MH.step))    stop("'MH.step' must be TRUE or FALSE") 
         if(missing(rho)) {
           rho      <- 0.5
         }
-        if(missing(MH.lower)) {
-          MH.lower <- ifelse(N >= P, 0.5, 0)
-        }
-        if(missing(MH.upper)) {
-          MH.upper <- range.G/2
-        }
         if(all(length(rho) > 1,
            rho < 0 && rho  > 1))    stop("'rho' must be a single number between 0 and 1")
-        if(all(length(MH.lower) > 1,
-           MH.lower < 0))           stop("'MH.lower' must be single number, strictly positive")
-        if(all(length(MH.upper) > 1,
-           MH.upper < 1))           stop("'MH.upper' must be single number, at least 1")
-        if(MH.upper <= MH.lower)    stop(paste0("'MH.upper'(=", MH.upper, ") must be greater than 'MH.lower'(=", MH.lower, ")"))
+        if(missing(alpha.hyper))    {
+          alpha.hyper     <- if(alpha.step == "gibbs") c(2, 1) else if(alpha.step == "metropolis") c(ifelse(N >= P, 0.5, 0), range.G/2) else c(0, 0)
+        }   
+        a.len      <- length(alpha.hyper)
+        if(a.len   != 2)            stop(paste0("'alpha.hyper' must be a vector of length 2, giving the ", ifelse(alpha.step == "gibbs", "shape and rate hyperparameters of the gamma prior for alpha when alpha.step is given as 'gibbs'", ifelse(alpha.step == "metropolis", "lower and upper limits of the uniform prior/proposal for alpha when alpha.step is given as 'metropolis'")))) 
+        a.hyp.1    <- alpha.hyper[1]
+        a.hyp.2    <- alpha.hyper[2]
+        if(alpha.step == "gibbs")   {
+          if(a.hyp.1  <= 0)         stop("The shape of the gamma prior for alpha must be strictly positive")
+          if(a.hyp.2  <= 0)         stop("The rate of the gamma prior for alpha must be strictly positive")
+        }
+        if(alpha.step == "metropolis") {
+          if(a.hyp.1   < 0)         stop("The lower limit of the uniform prior/proposal for alpha must be strictly positive")
+          if(a.hyp.2   < 1)         stop("The upper limit of the uniform prior/proposal for alpha must be at least 1")
+          if(a.hyp.2  <= a.hyp.1)   stop(paste0("The upper limit (=", a.hyp.2, ") of the uniform prior/proposal for alpha must be greater than the lower limit (=", a.hyp.1, ")"))  
+        }
+        if(missing(trunc.G))  {
+          trunc.G  <- ifelse(N < 100, N, 100)
+        }
         if(length(trunc.G) > 1)     stop("'trunc.G' must be a single number")
         if(all(N    > 100, 
            trunc.G  < 100))         stop("'trunc.G' must be at least 100")
@@ -238,13 +248,13 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   if(!is.element(method, c("FA", "IFA", "classify"))) {
     if(all(method != "MIFA",
        delta0g))                    stop("'delta0g' and can only be TRUE for the 'MIFA' method")
-    alpha.miss  <- missing("alpha.pi")
-    if(alpha.miss)           alpha.pi      <- ifelse(is.element(method, c("OMIFA", "OMFA")), 0.5/range.G, ifelse(all(MH.step, 
-                                                     is.element(method, c("IMIFA", "IMFA"))), runif(1, MH.lower, MH.upper), 1))
-    if(all(is.element(method,  c("IMIFA", "IMFA")),
-           alpha.miss,  !MH.step))  warning("'alpha.pi' fixed at 1 rather than simulated from prior as it's not being learned via Metropolis-Hastings updates", call.=FALSE)
+    if(missing("alpha.pi"))  alpha.pi      <- ifelse(is.element(method, c("OMIFA", "OMFA")), 0.5/range.G, 
+                                              ifelse(alpha.step == "gibbs", rgamma(1, a.hyp.1, a.hyp.2),
+                                              ifelse(alpha.step == "metropolis", runif(1, a.hyp.1, a.hyp.2), 1)))
     if(length(alpha.pi) != 1)       stop("'alpha.pi' must be specified as a scalar to ensure an exchangeable prior")
     if(alpha.pi <= 0)               stop("'alpha.pi' must be strictly positive")
+    if(all(is.element(method,  c("IMIFA", "IMFA")),
+           alpha.step == "fixed"))  warning(paste0("'alpha.pi' fixed at ", alpha.pi, " rather than simulated from prior as it's not being learned via Gibbs/Metropolis-Hastings updates"), call.=FALSE)
     if(all(!is.element(method, c("IMFA", "IMIFA")),
            alpha.pi  > 1))          warning("Are you sure alpha.pi should be greater than 1?", call.=FALSE)
                              z.miss        <- missing(z.init)
@@ -285,7 +295,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   gibbs.arg <- list(P = P, sigma.mu = sigma.mu, psi.alpha = psi.alpha, burnin = burnin, 
                     thinning = thinning, iters = iters, verbose = verbose, sw = switches)
   if(is.element(method, c("IMIFA", "IMFA"))) {
-    gibbs.arg      <- append(gibbs.arg, list(trunc.G = trunc.G, rho = rho, gen.slice = gen.slice, MH.step = MH.step, MH.lower = MH.lower, MH.upper = MH.upper))
+    gibbs.arg      <- append(gibbs.arg, list(trunc.G = trunc.G, rho = rho, gen.slice = gen.slice, alpha.step = alpha.step, hyper1 = alpha.hyper[1], hyper2 = alpha.hyper[2]))
   }
   if(!is.element(method, c("FA", "MFA", "OMFA", "IMFA"))) {
     gibbs.arg      <- append(gibbs.arg, list(phi.nu = phi.nu, beta.d1 = beta.d1, beta.dk = beta.dk, 
@@ -541,12 +551,12 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   "Scaling"), "Method")   <- scaling
   if(is.element(method, c("IMFA", "IMIFA"))) {
     attr(imifa, 
-         "MH.step")       <- MH.step
+         "Alpha.step")    <- alpha.step
     attr(imifa,
          "Gen.Slice")     <- gen.slice
   }
   attr(imifa, "Store")    <- length(iters)
-  switches                <- c(switches, a.sw = ifelse(is.element(method, c("IMIFA", "IMFA")), MH.step, F))
+  switches                <- c(switches, a.sw = alpha.step != "fixed")
   if(is.element(method, c("FA", "IFA"))) {
     switches["pi.sw"]     <- FALSE
   }

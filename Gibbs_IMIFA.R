@@ -3,10 +3,10 @@
 #######################################################################
   
 # Gibbs Sampler Function
-  gibbs.IMIFA       <- function(Q, data, iters, N, P, G, mu.zero, rho, sigma.l, MH.step,
-                                sigma.mu, burnin, thinning, mu, trunc.G, MH.lower,
+  gibbs.IMIFA       <- function(Q, data, iters, N, P, G, mu.zero, rho, sigma.l, alpha.step,
+                                sigma.mu, burnin, thinning, mu, trunc.G, hyper1, hyper2,
                                 psi.alpha, psi.beta, verbose, gen.slice, alpha.d1,
-                                alpha.dk, sw, cluster, phi.nu, b0, b1, prop, MH.upper,
+                                alpha.dk, sw, cluster, phi.nu, b0, b1, prop, 
                                 beta.d1, beta.dk, adapt, epsilon, ...) {
         
   # Define & initialise variables
@@ -52,11 +52,14 @@
     G.store         <- rep(0, n.store)
     dimnames(z.store)      <- list(obsnames, iternames)
     dimnames(Q.store)      <- list(gnames, iternames)
-    if(MH.step)    {
-      rate          <- rep(0, n.store)
+    not.fixed       <- alpha.step != "fixed"
+    if(not.fixed) {
       alpha.store   <- rep(0, n.store)
     }
-    
+    MH.step         <- alpha.step == "metropolis"
+    if(MH.step)   {
+      rate          <- rep(0, n.store)
+    }
     mu.sigma        <- 1/sigma.mu
     z               <- cluster$z
     pi.alpha        <- cluster$pi.alpha
@@ -97,7 +100,7 @@
                                   function(g) tcrossprod(lmat[[g]]) + diag(1/psi.inv[,g])), Q0=Qs > 0)$log.likes)
       Q.store[,1]          <- Qs
       G.store[1]           <- sum(nn > 0)
-      if(MH.step)  {
+      if(not.fixed) {
         alpha.store[1]     <- pi.alpha 
       }
     }
@@ -226,9 +229,13 @@
       }
     
     # Alpha
-      if(MH.step)   {
-        MH.alpha    <- sim.alpha(lower=MH.lower, upper=MH.upper, trunc.G=trunc.G, alpha=pi.alpha, Vs=Vs) 
-        pi.alpha    <- MH.alpha$alpha
+      if(not.fixed) {
+        if(MH.step) {
+          MH.alpha  <- sim.alpha.m(alpha=pi.alpha, lower=hyper1, upper=hyper2, trunc.G=trunc.G, Vs=Vs) 
+          pi.alpha  <- MH.alpha$alpha  
+        } else {
+          pi.alpha  <- sim.alpha.g(alpha=pi.alpha, shape=hyper1, rate=hyper2, G=G, N=N) 
+        }
       }
     
     if(any(Qs > Q.star))      stop(paste0("Q cannot exceed initial number of loadings columns: try increasing range.Q from ", Q.star))
@@ -245,8 +252,8 @@
         }
         if(sw["psi.sw"]) psi.store[,,new.it]        <- psi
         if(sw["pi.sw"])  pi.store[,new.it]          <- pi.prop
-        if(MH.step) {    rate[new.it]               <- MH.alpha$rate
-                         alpha.store[new.it]        <- pi.alpha }
+        if(not.fixed)    alpha.store[new.it]        <- pi.alpha
+        if(MH.step)      rate[new.it]               <- MH.alpha$rate
                          z.store[,new.it]           <- z 
                          ll.store[new.it]           <- sum(z.res$log.likes)
                          Q.store[,new.it]           <- Qs
@@ -261,8 +268,8 @@
                             load     = if(sw["l.sw"])   as.simple_sparse_array(load.store[,Qmax,Gmax,, drop=FALSE]), 
                             psi      = if(sw["psi.sw"]) psi.store[,Gmax,, drop=FALSE],
                             pi.prop  = if(sw["pi.sw"])  pi.store[Gmax,, drop=FALSE],
+                            alpha    = if(not.fixed)    alpha.store,
                             rate     = if(MH.step)      mean(rate),
-                            alpha    = if(MH.step)      alpha.store,
                             z.store  = z.store,
                             ll.store = ll.store,
                             G.store  = G.store,

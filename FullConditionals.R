@@ -73,7 +73,14 @@
     }
 
   # Alpha
-    sim.alpha   <- function(lower, upper, trunc.G, alpha, Vs) {
+    sim.alpha.g <- function(alpha, shape, rate, G, N) {
+      shape2    <- shape + G - 1
+      rate2     <- rate - log(rbeta(1, alpha + 1, N))
+      weight    <- shape2/(shape2 + N * rate2)
+        weight * rgamma(1, shape=shape2 + 1, rate=rate2) + (1 - weight) * rgamma(1, shape=shape2, rate=rate2)
+    }
+    
+    sim.alpha.m <- function(alpha, lower, upper, trunc.G, Vs) {
       alpha.new <- runif(1, lower, upper)
       a.prob    <- trunc.G * (log(alpha.new) - log(alpha)) + (alpha.new - alpha) * sum(log((1 - Vs[-trunc.G])))
       accept    <- a.prob >= 0 || -rexp(1) < a.prob
