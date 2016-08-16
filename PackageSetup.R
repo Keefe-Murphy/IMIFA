@@ -71,6 +71,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
       all(!mu.switch, !centering))  warning("Centering hasn't been applied - are you sure you want mu.switch=FALSE?", call.=FALSE)
   switches  <- c(mu.sw=mu.switch, f.sw=f.switch, l.sw=load.switch, psi.sw=psi.switch, pi.sw=pi.switch)
   if(!is.logical(switches))         stop("All logical switches must be TRUE or FALSE")
+  if(N < 2)                         stop("Must have more than one observation")
   G.x       <- missing(range.G)
   if(!is.element(method, c("MFA", "MIFA")))      {
     if(length(range.G) > 1)         stop(paste0("Only one 'range.G' value can be specified for the ", method, " method"))
@@ -79,7 +80,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(is.element(method, c("OMIFA", "OMFA", "IMFA", "IMIFA"))) {
       lnN          <- log(N)
       if(G.x) {
-        range.G    <- max(2, floor(2 * lnN))
+        range.G    <- ifelse(N <= 51, N - 1, floor(3 * log(N)))
       }
       if(range.G    < floor(lnN))   stop(paste0("'range.G' should be at least log(N) for the ", method, " method"))
       if(is.element(method, c("IMFA", "IMIFA"))) {
