@@ -75,7 +75,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   G.x       <- missing(range.G)
   alpha.x   <- missing(alpha.step)
   alpha.step       <- match.arg(alpha.step)
-  if(all(!is.element("IMFA", "IMIFA"), alpha.step != "fixed"))  {
+  if(all(!is.element(method, c("IMFA", "IMIFA")), alpha.step != "fixed"))  {
     alpha.step     <- "fixed"
     if(!alpha.x)                    warning(paste0("'alpha.step' must be given as 'fixed' for the ", method, " method"), call.=FALSE)
   }

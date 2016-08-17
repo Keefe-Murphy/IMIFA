@@ -22,7 +22,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   tmp.store      <- store
   label.switch   <- attr(sims, "Label.Switch")
   method         <- attr(sims, "Method")
-  MH.step        <- attr(sims, "MH.step")
+  alpha.step     <- attr(sims, "Alpha.step")
   inf.G          <- is.element(method, c("IMIFA", "IMFA", "OMIFA", "OMFA"))
   inf.Q          <- !is.element(method, c("FA", "MFA", "OMFA", "IMFA"))
   n.fac          <- attr(sims, "Factors")
@@ -185,8 +185,8 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     }
     clust.ind    <- !any(is.element(method,  c("FA", "IFA")), 
                      all(is.element(method, c("MFA", "MIFA")), G == 1))
-    sw.mx        <- ifelse(clust.ind, sw["mu.sw"], T)
-    sw.px        <- ifelse(clust.ind, sw["psi.sw"], T)  
+    sw.mx        <- ifelse(clust.ind, sw["mu.sw"], TRUE)
+    sw.px        <- ifelse(clust.ind, sw["psi.sw"], TRUE)  
     if(inf.Q) {
       Q.store    <- sims[[G.ind]][[Q.ind]]$Q.store[Gseq,tmp.store, drop=FALSE]
       Q.meth     <- ifelse(missing(Q.meth), "Mode", match.arg(Q.meth))
@@ -300,18 +300,18 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       }
       class(tab.stat)          <- "listof"
     }
-    if(isTRUE(MH.step)) {
-      alpha.pi   <- sims[[G.ind]][[Q.ind]]$alpha
-      post.alpha <- mean(alpha.pi)
-      var.alpha  <- var(alpha.pi)
-      ci.alpha   <- quantile(alpha.pi, conf.levels)
-      rate       <- sims[[G.ind]][[Q.ind]]$rate
-      MH.alpha   <- list(alpha.pi = alpha.pi, post.alpha = post.alpha, var.alpha = var.alpha, ci.alpha = ci.alpha, acceptance.rate = rate)
-      class(MH.alpha)          <- "listof"
+    if(alpha.step != "fixed") {
+      alpha      <- sims[[G.ind]][[Q.ind]]$alpha
+      post.alpha <- mean(alpha)
+      var.alpha  <- var(alpha)
+      ci.alpha   <- quantile(alpha, conf.levels)
+      rate       <- ifelse(alpha.step == "metropolis", sims[[G.ind]][[Q.ind]]$rate, 1)
+      DP.alpha   <- list(alpha = alpha, post.alpha = post.alpha, var.alpha = var.alpha, ci.alpha = ci.alpha, acceptance.rate = rate)
+      class(DP.alpha)          <- "listof"
     }
     cluster      <- list(clustering = post.z, z = z, uncertainty = uncertain)
     cluster      <- c(cluster, list(post.pi = post.pi/sum(post.pi)), if(sw["pi.sw"]) list(pi.prop = pi.prop, var.pi = var.pi, 
-                      ci.pi = ci.pi), if(!label.miss) list(perf = tab.stat), if(isTRUE(MH.step)) list(MH.alpha = MH.alpha))
+                      ci.pi = ci.pi), if(!label.miss) list(perf = tab.stat), if(alpha.step != "fixed") list(DP.alpha = DP.alpha))
     attr(cluster, "Z.init")    <- attr(sims[[G.ind]], "Z.init")
     attr(cluster, "Init.Meth") <- attr(sims, "Init.Z")
     attr(cluster, "Label.Sup") <- !label.miss
@@ -579,7 +579,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   attr(result, "Errors")       <- any(err.T)
   attr(result, "Method")       <- method
   if(is.element(method, c("IMFA", "IMIFA"))) {
-    attr(result, "MH.step")    <- MH.step
+    attr(result, "Alpha.step") <- alpha.step
     attr(result, "Gen.Slice")  <- attr(sims, "Gen.Slice")
   }
   attr(result, "Name")         <- attr(sims, "Name")

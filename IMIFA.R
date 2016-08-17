@@ -171,7 +171,7 @@
 # Covariance Matrices & Error Metrics
   plot(res, "e")
   
-# Metropolis Hastings 'alpha' for Dirichlet Process methods
+# Learning 'alpha' for Dirichlet Process methods
   plot(res, "a", "a")
   plot(res, "t", "a")
   plot(res, "d", "a")

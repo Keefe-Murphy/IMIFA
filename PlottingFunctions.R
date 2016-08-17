@@ -95,9 +95,9 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
      !v.sw[vars],
      is.element(method, c("FA", "IFA")))) {  
     if(all.ind)                       warning(paste0("Can only plot posterior mean, as ", vars, " weren't stored"), call.=FALSE)
-   v.sw[vars]     <- !v.sw[vars]
-   all.ind        <- FALSE
-   m.sw["P.sw"]   <- TRUE
+    v.sw[vars]     <- !v.sw[vars]
+    all.ind        <- FALSE
+    m.sw["P.sw"]   <- TRUE
   } 
   if(all(!v.sw[vars], !m.sw["G.sw"], 
      !m.sw["Z.sw"],   !m.sw["E.sw"])) stop(paste0("Nothing to plot: ", vars, " weren't stored"))
@@ -156,8 +156,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
       }
     }
     if(any(vars   == "alphas",
-           all(is.element(vars, c("means", "uniquenesses")),
-               !indx),
+           all(is.element(vars, c("means", "uniquenesses")), !indx),
            all(is.element(vars, c("scores", "loadings")),
                Q  == 1))) { matx <- FALSE
     } else   {
@@ -260,8 +259,8 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
         }
       }
       if(vars  == "alphas") {
-        plot.x <- clust$MH.alpha
-        plot(plot.x$alpha.pi, ylab="Alpha", type="l", xlab="Iteration", main="")
+        plot.x <- clust$DP.alpha
+        plot(plot.x$alpha, ylab="Alpha", type="l", xlab="Iteration", main="")
         if(titles) title(main=list(paste0("Trace", ifelse(all.ind, "", paste0(":\nAlpha")))))
         if(all(intervals, ci.sw[vars])) {
           ci.x <- plot.x$ci.alpha  
@@ -357,8 +356,8 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
         }
       }
       if(vars  == "alphas") {
-        plot.x <- clust$MH.alpha
-        plot.d <- density(plot.x$alpha.pi)
+        plot.x <- clust$DP.alpha
+        plot.d <- density(plot.x$alpha)
         plot(plot.d, main="")
         if(titles) title(main=list(paste0("Density", ifelse(all.ind, "", paste0(":\nAlpha")))))
         polygon(plot.d, col=grey)
@@ -510,19 +509,23 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
       if(vars  == "alphas") {
         plot(c(0, 1), c(0, 1), ann=FALSE, bty='n', type='n', xaxt='n', yaxt='n')
         if(titles) title(main=list(paste0("Summary Statistics", ifelse(all.ind, "", ":\nAlpha"))))
-        plot.x <- clust$MH.alpha[-1]
+        plot.x <- clust$DP.alpha[-1]
+        a.step <- attr(results, "Alpha.step")
         conf   <- attr(results, "Conf.Level")
         digits <- options()$digits
-        a.cex  <- par()$fin[2]/5
         a.adj  <- rep(0.5, 2)
-        text(x=0.5, y=0.775, cex=a.cex, col="black", adj=a.adj, expression(bold("Posterior Mean:\n")))
-        text(x=0.5, y=0.775, cex=a.cex, col="black", adj=a.adj, bquote(.(round(plot.x$post.alpha, digits))))
-        text(x=0.5, y=0.55,  cex=a.cex, col="black", adj=a.adj, expression(bold("\nVariance:\n")))
-        text(x=0.5, y=0.55,  cex=a.cex, col="black", adj=a.adj, bquote(.(round(plot.x$var.alpha, digits))))
-        text(x=0.5, y=0.4,   cex=a.cex, col="black", adj=a.adj, bquote(bold(.(100 * conf))~bold("% Confidence Interval:")))
-        text(x=0.5, y=0.3,   cex=a.cex, col="black", adj=a.adj, bquote(paste("[", .(round(plot.x$ci.alpha[1], digits)), ", ", .(round(plot.x$ci.alpha[2], digits)), "]")))
-        text(x=0.5, y=0.175, cex=a.cex, col="black", adj=a.adj, expression(bold("Acceptance Rate:")))
-        text(x=0.5, y=0.1,   cex=a.cex, col="black", adj=a.adj, bquote(paste(.(round(100 * plot.x$acceptance.rate, 2)), "%")))
+        a.cex  <- par()$fin[2]/ifelse(a.step != "metropolis", 4.5, 5)
+        pen    <- ifelse(a.step != "metropolis", 0.125, 0)
+        text(x=0.5, y=0.775 - pen, cex=a.cex, col="black", adj=a.adj, expression(bold("Posterior Mean:\n")))
+        text(x=0.5, y=0.775 - pen, cex=a.cex, col="black", adj=a.adj, bquote(.(round(plot.x$post.alpha, digits))))
+        text(x=0.5, y=0.55  - pen, cex=a.cex, col="black", adj=a.adj, expression(bold("\nVariance:\n")))
+        text(x=0.5, y=0.55  - pen, cex=a.cex, col="black", adj=a.adj, bquote(.(round(plot.x$var.alpha, digits))))
+        text(x=0.5, y=0.4   - pen, cex=a.cex, col="black", adj=a.adj, bquote(bold(.(100 * conf))~bold("% Confidence Interval:")))
+        text(x=0.5, y=0.3   - pen, cex=a.cex, col="black", adj=a.adj, bquote(paste("[", .(round(plot.x$ci.alpha[1], digits)), ", ", .(round(plot.x$ci.alpha[2], digits)), "]")))
+        if(a.step == "metropolis") {
+          text(x=0.5, y=0.175, cex=a.cex, col="black", adj=a.adj, expression(bold("Acceptance Rate:")))
+          text(x=0.5, y=0.1,   cex=a.cex, col="black", adj=a.adj, bquote(paste(.(round(100 * plot.x$acceptance.rate, 2)), "%")))
+        }
       }
       if(!indx) {         ind[1] <- xind[1]
         if(facx)          ind[2] <- xind[2]
@@ -637,10 +640,13 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
       }
       plot(plot.x, type=type, ylim=c(0, 1 - 1/G), col=col.x, axes=FALSE, ylab="Uncertainty", xlab="Observation", pch=ifelse(type == "n", NA, 16))
       rect(0, 0, n.obs, 1 - 1/G) 
-      axis(1, las=1, pos=0, cex.axis=0.9)
-      axis(2, at=c(seq(from=0, to=min(1 - 1/G - 1/1000, 0.8), by=0.1), 1 - 1/G), labels=c(seq(from=0, to=min(1 - 1/G - 1/1000, 0.8), by=0.1), "1 - 1/G"), las=2, pos=0.29, cex.axis=0.9)
-      if(G == 2) abline(h=0.5, col=par()$bg)
+      if(G == 2) {
+        abline(h=0.5, col=par()$bg)
+        abline(v=0,   col=par()$bg)
+      }
       lines(x=c(0, n.obs), y=c(1/G, 1/G), lty=2, col=2)  
+      axis(1, las=1, pos=0, cex.axis=0.9)
+      axis(2, at=c(seq(from=0, to=min(1 - 1/G - 1/1000, 0.8), by=0.1), 1 - 1/G), labels=c(seq(from=0, to=min(1 - 1/G - 1/1000, 0.8), by=0.1), "1 - 1/G"), las=2, pos=ifelse(G == 2, 0.25, 0), cex.axis=0.9)
       if(type == "n")  {
         znam  <- obs.names
         znam[plot.x == 0] <- ""
@@ -789,8 +795,8 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
         }
       }
       if(vars  == "alphas") {          
-        plot.x <- clust$MH.alpha$alpha.pi
-        if(clust$MH.alpha$acceptance.rate == 0)  {
+        plot.x <- clust$DP.alpha$alpha
+        if(clust$DP.alpha$acceptance.rate == 0)  {
                                       warning(paste0("0% acceptance rate: can't plot ", ifelse(all.ind, ifelse(partial, "partial-", "auto-"), ""), "correlation function", ifelse(all.ind, "", "s")), call.=FALSE)
           next
         }
