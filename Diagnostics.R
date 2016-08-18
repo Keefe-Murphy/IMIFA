@@ -3,7 +3,7 @@
 #########################################
 
 tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q = NULL, Q.meth = c("Mode", "Median"), G.meth = c("Mode", "Median"),
-                             criterion = c("bicm", "aicm", "bic.mcmc", "aic.mcmc"), conf.level = 0.95, labels = NULL, recomp = FALSE) {
+                             criterion = c("bicm", "aicm", "bic.mcmc", "aic.mcmc"), conf.level = 0.95, zlabels = NULL, recomp = FALSE) {
   
   source(paste(getwd(), "/IMIFA-GIT/FullConditionals.R", sep=""), local=TRUE)
   defpar         <- suppressWarnings(par(no.readonly=TRUE))
@@ -183,7 +183,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       GQ.temp3   <- c(GQ.temp2, list(AIC.mcmcs = aic.mcmc, BIC.mcmcs = bic.mcmc))
       GQ.res     <- if(!is.element(method, c("OMFA", "IMFA"))) c(list(G = G, Q = Q), GQ.temp3) else c(GQ.temp1, list(Q = Q), GQ.temp3)
     }
-    clust.ind    <- !any(is.element(method,  c("FA", "IFA")), 
+    clust.ind    <- !any(is.element(method,   c("FA", "IFA")), 
                      all(is.element(method, c("MFA", "MIFA")), G == 1))
     sw.mx        <- ifelse(clust.ind, sw["mu.sw"], TRUE)
     sw.px        <- ifelse(clust.ind, sw["psi.sw"], TRUE)  
@@ -195,11 +195,11 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   
 # Manage Label Switching & retrieve cluster labels/mixing proportions
   if(clust.ind) {
-    label.miss   <- missing(labels)
+    label.miss   <- missing(zlabels)
     if(!label.miss)   {
-      if(!exists(as.character(substitute(labels)),
-          envir=.GlobalEnv))      stop(paste0("Object ", match.call()$labels, " not found"))
-      if(length(labels) != n.obs) stop(paste0("'labels' must be a factor of length N=",  n.obs))  
+     if(!exists(as.character(substitute(zlabels)),
+         envir=.GlobalEnv))       stop(paste0("Object ", match.call()$zlabels, " not found"))
+     if(length(zlabels) != n.obs) stop(paste0("'zlabels' must be a factor of length N=",  n.obs))  
     }
     if(sw["mu.sw"])   {
       mus        <- sims[[G.ind]][[Q.ind]]$mu[,,tmp.store, drop=FALSE]                            
@@ -254,7 +254,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       post.pi    <- setNames(prop.table(tabulate(post.z, nbins=G)), paste0("Group ", Gseq))
     }
     if(!label.miss) {
-      zlabels    <- factor(labels, labels=seq_along(unique(labels)))
+      zlabels    <- factor(zlabels, labels=seq_along(unique(zlabels)))
       levs       <- levels(zlabels)
       if(nlevels(post.z) == length(levs)) {
         sw.lab   <- lab.switch(z.new=post.z, z.old=zlabels, Gs=Gseq)

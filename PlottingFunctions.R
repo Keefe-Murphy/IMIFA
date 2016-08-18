@@ -3,7 +3,7 @@
 ################################
 
 plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "density", "errors", "posterior", "GQ", "trace", "Z"), 
-                           vars = c("means", "scores", "loadings", "uniquenesses", "pis", "alpha"), labels = NULL, load.meth = c("all", "heatmap", "raw"), palette = NULL, g = NULL,
+                           vars = c("means", "scores", "loadings", "uniquenesses", "pis", "alpha"), zlabels = NULL, load.meth = c("all", "heatmap", "raw"), palette = NULL, g = NULL,
                            fac = NULL, by.fac = TRUE, ind = NULL, type = c("h", "n", "p", "l"), intervals = TRUE, mat = TRUE, partial = FALSE, titles = TRUE, transparency = NULL) {
 
   source(paste(getwd(), "/IMIFA-GIT/FullConditionals.R", sep=""), local=TRUE)
@@ -388,12 +388,12 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
       }
       if(vars  == "scores") {
         labs   <- if(grp.ind) clust$clustering else 1
-        if(!missing(labels)) {
-          if(!exists(as.character(match.call()$labels),
-              envir=.GlobalEnv)) {    warning(paste0("Object ", match.call()$labels, " not found"), call.=FALSE)
+        if(!missing(zlabels)) {
+          if(!exists(as.character(match.call()$zlabels),
+              envir=.GlobalEnv)) {    warning(paste0("Object ", match.call()$zlabels, " not found"), call.=FALSE)
           } else {
-            labs  <- as.factor(labels)
-            if(length(labs) != n.obs) stop(paste0("'labels' must be a factor of length N=",  n.obs))
+            labs  <- as.factor(zlabels)
+            if(length(labs) != n.obs) stop(paste0("'zlabels' must be a factor of length N=",  n.obs))
           }
         }
         if(g.score)  { 
@@ -652,12 +652,12 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
         znam[plot.x == 0] <- ""
         text(x=seq_along(plot.x), y=plot.x, znam, col=col.x, cex=0.5)
       }
-      if(any(!labelmiss, !missing(labels))) {
-        if(!labelmiss) {
+      if(any(!labelmiss,  !missing(zlabels))) {
+        if(all(!labelmiss, missing(zlabels))) {
           perf    <- clust$perf
         } else   {
-          labs    <- as.factor(labels)
-          if(length(labs) != n.obs)   stop(paste0("'labels' must be a factor of length N=",  n.obs))
+          labs    <- as.factor(zlabels)
+          if(length(labs) != n.obs)   stop(paste0("'zlabels' must be a factor of length N=",  n.obs))
           pzs     <- clust$clustering
           if(nlevels(pzs) == nlevels(labs)) {
             l.sw  <- lab.switch(z.new=pzs, z.old=labs, Gs=seq_len(G))

@@ -17,7 +17,7 @@ source(paste(getwd(), "/IMIFA-GIT/PlottingFunctions.R", sep=""))
 source(paste(getwd(), "/IMIFA-GIT/SimulateData.R", sep=""))
 
 mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA", "MFA", "IFA", "FA", "classify"), 
-                        n.iters = 20000, labels = NULL, factanal = FALSE, range.G = NULL, range.Q = NULL, verbose = TRUE, Q.fac = NULL,  
+                        n.iters = 20000, zlabels = NULL, factanal = FALSE, range.G = NULL, range.Q = NULL, verbose = TRUE, Q.fac = NULL,  
                         burnin = n.iters/5, thinning = 2, centering = TRUE, scaling = c("unit", "pareto", "none"), alpha.step = c("gibbs", "metropolis", "fixed"),
                         adapt = TRUE, b0 = NULL, b1 = NULL, delta0g = FALSE, prop = NULL, epsilon = NULL, sigma.mu = NULL, sigma.l = NULL, alpha.hyper = NULL,
                         mu0g = FALSE, psi0g = FALSE, mu.zero = NULL, phi.nu = NULL, psi.alpha = NULL, psi.beta = NULL, alpha.d1 = NULL, rho = NULL, trunc.G = NULL,
@@ -122,12 +122,12 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
         if(trunc.G  > N)            stop(paste0("'trunc.G' cannot be greater than N=", N))
       }
     } else if(method == "classify") {
-      if(missing(labels))           stop("Data must be labelled for classification")
-      if(!exists(deparse(substitute(labels)),
-                 envir=.GlobalEnv)) stop(paste0("Object ", match.call()$labels, " not found"))
-      labels       <- as.factor(labels)
-      if(length(labels) != N)       stop(paste0("'labels' must be a factor of length N=",  N)) 
-      range.G      <- nlevels(labels)
+      if(missing(zlabels))          stop("Data must be labelled for classification")
+      if(!exists(deparse(substitute(zlabels)),
+                 envir=.GlobalEnv)) stop(paste0("Object ", match.call()$zlabels, " not found"))
+      zlabels      <- as.factor(zlabels)
+      if(length(zlabels) != N)      stop(paste0("'zlabels' must be a factor of length N=",  N)) 
+      range.G      <- nlevels(zlabels)
     } else {
       range.G <- 1
     }
@@ -494,7 +494,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   } else if(method == "classify") { stop("'classify' method not yet implemented")   
     start.time     <- proc.time()
     for(g in seq_len(range.G)) {
-      temp.dat     <- dat[labels == levels(labels)[g],]
+      temp.dat     <- dat[zlabels == levels(zlabels)[g],]
       imifa[[g]]          <- list()
       imifa[[g]][[Qi]]    <- do.call(paste0("gibbs.", "IFA"),
                                      args=append(list(data = temp.dat, N = nrow(temp.dat), Q = range.Q), gibbs.arg))
@@ -505,7 +505,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   tot.time  <- proc.time() - start.time
   avg.time  <- tot.time/ifelse(method == "MFA", len.GQ,
                             ifelse(method == "MIFA", len.G,
-                              ifelse(method == "classify", nlevels(labels), len.Q)))
+                              ifelse(method == "classify", nlevels(zlabels), len.Q)))
   tot.time  <- tot.time    + init.time
   init.time <- init.time   + fac.time
   for(g in length(imifa)) {
