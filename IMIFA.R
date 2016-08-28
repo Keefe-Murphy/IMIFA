@@ -84,7 +84,7 @@
                    ".Rdata", sep=""), envir=.GlobalEnv)
 
 # Posterior Summaries (optional: additional 'burnin' & 'thinning', user-defined G/Q, model selection criterion)
-  res <- tune.IMIFA(sim, labels=lab)
+  res <- tune.IMIFA(sim, zlabels=lab)
 
 # Save / Load Results
   save(res, file=paste0(getwd(), "/Simulations/", attr(res, "Name"), 

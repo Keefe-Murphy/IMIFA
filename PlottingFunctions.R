@@ -392,7 +392,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
           if(!exists(as.character(match.call()$zlabels),
               envir=.GlobalEnv)) {    warning(paste0("Object ", match.call()$zlabels, " not found"), call.=FALSE)
           } else {
-            labs  <- as.factor(zlabels)
+            labs  <- as.numeric(as.factor(zlabels))
             if(length(labs) != n.obs) stop(paste0("'zlabels' must be a factor of length N=",  n.obs))
           }
         }
@@ -646,7 +646,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
       }
       lines(x=c(0, n.obs), y=c(1/G, 1/G), lty=2, col=2)  
       axis(1, las=1, pos=0, cex.axis=0.9)
-      axis(2, at=c(seq(from=0, to=min(1 - 1/G - 1/1000, 0.8), by=0.1), 1 - 1/G), labels=c(seq(from=0, to=min(1 - 1/G - 1/1000, 0.8), by=0.1), "1 - 1/G"), las=2, pos=ifelse(G == 2, 0.25, 0), cex.axis=0.9)
+      axis(2, at=c(seq(from=0, to=min(1 - 1/G - 1/1000, 0.8), by=0.1), 1 - 1/G), labels=c(seq(from=0, to=min(1 - 1/G - 1/1000, 0.8), by=0.1), "1 - 1/G"), las=2, pos=0, cex.axis=0.9)
       if(type == "n")  {
         znam  <- obs.names
         znam[plot.x == 0] <- ""

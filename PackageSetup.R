@@ -129,7 +129,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
       if(length(zlabels) != N)      stop(paste0("'zlabels' must be a factor of length N=",  N)) 
       range.G      <- nlevels(zlabels)
     } else {
-      range.G <- 1
+      range.G      <- 1
     }
     meth    <- method
   } else {

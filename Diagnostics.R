@@ -256,7 +256,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     if(!label.miss) {
       zlabels    <- factor(zlabels, labels=seq_along(unique(zlabels)))
       levs       <- levels(zlabels)
-      if(nlevels(post.z) == length(levs)) {
+      if(length(levs) == G) {
         sw.lab   <- lab.switch(z.new=post.z, z.old=zlabels, Gs=Gseq)
         post.z   <- setNames(factor(sw.lab$z), names(post.z))
         l.perm   <- sw.lab$z.perm
@@ -295,7 +295,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       tab.stat   <- c(list(confusion.matrix = tab), tab.stat)
       uncert.obs <- which(uncertain >= 1/G)
       attr(uncertain, "Obs")   <- if(sum(uncert.obs) != 0) uncert.obs
-      if(!label.miss && (nlevels(post.z) == length(levs))) {
+      if(!label.miss && (length(levs) == G)) {
         names(tab.stat)[1]     <- "matched.confusion.matrix"
       }
       class(tab.stat)          <- "listof"
