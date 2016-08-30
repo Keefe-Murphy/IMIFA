@@ -95,7 +95,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
           rho      <- 0.25
         }
         if(all(length(rho) > 1,
-           rho < 0 && rho  > 1))    stop("'rho' must be a single number between 0 and 1")
+           rho > 1 && rho <= 0))    stop("'rho' must be a single number in the interval (0, 1]")
         if(missing(alpha.hyper))    {
           alpha.hyper     <- if(alpha.step == "gibbs") c(2, 1) else if(alpha.step == "metropolis") c(ifelse(N >= P, 0.5, 0), range.G/2) else c(0, 0)
         }   
