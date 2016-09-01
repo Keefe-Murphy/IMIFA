@@ -28,9 +28,9 @@
       mu.store     <- array(0, dim=c(P, G, n.store))
       dimnames(mu.store)   <- list(varnames, gnames, iternames)
     }
-    if(sw["f.sw"])   {
-      f.store      <- array(0, dim=c(N, Q, n.store))
-      dimnames(f.store)    <- list(obsnames, if(Q0) facnames, iternames)
+    if(sw["s.sw"])   {
+      eta.store    <- array(0, dim=c(N, Q, n.store))
+      dimnames(eta.store)  <- list(obsnames, if(Q0) facnames, iternames)
     }
     if(sw["l.sw"])   {
       load.store   <- array(0, dim=c(P, Q, G, n.store))
@@ -55,14 +55,14 @@
     nn             <- tabulate(z, nbins=G)
     pi.alpha       <- cluster$pi.alpha
     pi.prop        <- cluster$pi.prop
-    f              <- sim.f.p(N=N, Q=Q)
+    eta            <- sim.eta.p(N=N, Q=Q)
     lmat           <- lapply(Gseq, function(g) sim.load.p(Q=Q, P=P, sigma.l=sigma.l, shrink=FALSE))
     psi.inv        <- vapply(Gseq, function(g) sim.psi.i.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), numeric(P))
     if(Q0) {
       for(g in which(nn > 2.5 * Q))      {
         fact       <- try(factanal(data[z == g,, drop=FALSE], factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
         if(!inherits(fact, "try-error")) {
-          f[z == g,]       <- fact$scores
+          eta[z == g,]     <- fact$scores
           lmat[[g]]        <- fact$loadings
           psi.inv[,g]      <- 1/fact$uniquenesses
         } 
@@ -77,7 +77,7 @@
     lmat           <- array(unlist(lmat, use.names=FALSE), dim=c(P, Q, G))
     if(burnin       < 1)  {
       mu.store[,,1]        <- mu
-      f.store[,,1]         <- f
+      eta.store[,,1]       <- eta
       load.store[,,,1]     <- lmat
       psi.store[,,1]       <- 1/psi.inv
       pi.store[,1]         <- pi.prop
@@ -108,30 +108,30 @@
     # Scores & Loadings
       c.data       <- lapply(Gseq, function(g) sweep(dat.g[[g]], 2, mu[,g], FUN="-"))
       if(Q0) {
-        f.tmp      <- lapply(Gseq, function(g) if(nn0[g]) sim.score(N=nn[g], lmat=lmat[,,g], Q=Q, c.data=c.data[[g]], psi.inv=psi.inv[,g], Q1=Q1) else matrix(, nr=0, nc=Q))
-        FtF        <- lapply(Gseq, function(g) if(nn0[g]) crossprod(f.tmp[[g]]))
-        lmat       <- array(unlist(lapply(Gseq, function(g) if(nn0[g]) matrix(unlist(lapply(Pseq, function(j) sim.load(l.sigma=l.sigma, Q=Q, c.data=c.data[[g]][,j], f=f.tmp[[g]], Q1=Q1, FtF=FtF[[g]], 
+        eta.tmp    <- lapply(Gseq, function(g) if(nn0[g]) sim.score(N=nn[g], lmat=lmat[,,g], Q=Q, c.data=c.data[[g]], psi.inv=psi.inv[,g], Q1=Q1) else matrix(, nr=0, nc=Q))
+        EtE        <- lapply(Gseq, function(g) if(nn0[g]) crossprod(eta.tmp[[g]]))
+        lmat       <- array(unlist(lapply(Gseq, function(g) if(nn0[g]) matrix(unlist(lapply(Pseq, function(j) sim.load(l.sigma=l.sigma, Q=Q, c.data=c.data[[g]][,j], eta=eta.tmp[[g]], Q1=Q1, EtE=EtE[[g]], 
                             P=P, psi.inv=psi.inv[,g][j], shrink=FALSE)), use.names=FALSE), nr=P, byrow=TRUE) else sim.load.p(Q=Q, P=P, sigma.l=sigma.l, shrink=FALSE)), use.names=FALSE), dim=c(P, Q, G))
-        f          <- do.call(rbind, f.tmp)[obsnames,, drop=FALSE]
+        eta        <- do.call(rbind, eta.tmp)[obsnames,, drop=FALSE]
       } else {
-        f.tmp      <- lapply(Gseq, function(g) f[z.ind[[g]],, drop=FALSE])
+        eta.tmp    <- lapply(Gseq, function(g) eta[z.ind[[g]],, drop=FALSE])
       }
     
     # Means
       sum.data     <- lapply(dat.g, colSums)
-      sum.f        <- lapply(f.tmp, colSums)
-      mu           <- vapply(Gseq, function(g) if(nn0[g]) sim.mu(N=nn[g], mu.sigma=mu.sigma, psi.inv=psi.inv[,g], P=P, sum.data=sum.data[[g]], sum.f=sum.f[[g]], 
+      sum.eta      <- lapply(eta.tmp, colSums)
+      mu           <- vapply(Gseq, function(g) if(nn0[g]) sim.mu(N=nn[g], mu.sigma=mu.sigma, psi.inv=psi.inv[,g], P=P, sum.data=sum.data[[g]], sum.eta=sum.eta[[g]], 
                              lmat=if(Q1) lmat[,,g] else as.matrix(lmat[,,g]), mu.zero=mu.zero) else sim.mu.p(P=P, sigma.mu=sigma.mu, mu.zero=mu.zero), numeric(P))
       
     # Uniquenesses
-      psi.inv      <- vapply(Gseq, function(g) if(nn0[g]) sim.psi.inv(N=nn[g], psi.alpha=psi.alpha, c.data=c.data[[g]], f=f.tmp[[g]], psi.beta=psi.beta, 
+      psi.inv      <- vapply(Gseq, function(g) if(nn0[g]) sim.psi.inv(N=nn[g], psi.alpha=psi.alpha, c.data=c.data[[g]], eta=eta.tmp[[g]], psi.beta=psi.beta, 
                              P=P, lmat=if(Q1) lmat[,,g] else as.matrix(lmat[,,g])) else sim.psi.i.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), numeric(P))
     
       if(is.element(iter, iters))   {
         if(verbose)   setTxtProgressBar(pb, iter)
         new.it     <- which(iters == iter)
         if(sw["mu.sw"])            mu.store[,,new.it]      <- mu 
-        if(all(sw["f.sw"], Q0))    f.store[,,new.it]       <- f
+        if(all(sw["s.sw"], Q0))    eta.store[,,new.it]     <- eta
         if(all(sw["l.sw"], Q0))    load.store[,,,new.it]   <- lmat
         if(sw["psi.sw"])           psi.store[,,new.it]     <- psi
         if(sw["pi.sw"])            pi.store[,new.it]       <- pi.prop
@@ -143,7 +143,7 @@
     close(pb)
     Gmax           <- seq_len(max(as.numeric(z.store)))
     returns        <- list(mu       = if(sw["mu.sw"])         mu.store[,Gmax,, drop=FALSE],
-                           f        = if(all(sw["f.sw"], Q0)) f.store, 
+                           eta      = if(all(sw["s.sw"], Q0)) eta.store, 
                            load     = if(all(sw["l.sw"], Q0)) load.store[,,Gmax,, drop=FALSE], 
                            psi      = if(sw["psi.sw"])        psi.store[,Gmax,, drop=FALSE],
                            pi.prop  = if(sw["pi.sw"])         pi.store[Gmax,, drop=FALSE],

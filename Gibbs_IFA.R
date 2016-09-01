@@ -25,9 +25,9 @@
       mu.store   <- matrix(0, nr=P, nc=n.store)
       dimnames(mu.store)   <- list(varnames, iternames)
     }
-    if(sw["f.sw"])   {
-      f.store    <- array(0, dim=c(N, Q, n.store))
-      dimnames(f.store)    <- list(obsnames, if(Q > 0) facnames, iternames)
+    if(sw["s.sw"])   {
+      eta.store  <- array(0, dim=c(N, Q, n.store))
+      dimnames(eta.store)  <- list(obsnames, if(Q > 0) facnames, iternames)
     }
     if(sw["l.sw"])   {
       load.store <- array(0, dim=c(P, Q, n.store))
@@ -48,7 +48,7 @@
     dimnames(cov.est)      <- dimnames(cov.emp)
     
     mu.sigma     <- 1/sigma.mu
-    f            <- sim.f.p(Q=Q, N=N)
+    eta          <- sim.eta.p(Q=Q, N=N)
     psi.inv      <- sim.psi.i.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
     phi          <- sim.phi.p(Q=Q, P=P, phi.nu=phi.nu)
     delta        <- c(sim.delta.p(alpha=alpha.d1, beta=beta.d1), sim.delta.p(Q=Q, alpha=alpha.dk, beta=beta.dk))
@@ -57,7 +57,7 @@
     sum.data     <- mu * N
     if(burnin     < 1) {
       mu.store[,1]         <- mu
-      f.store[,,1]         <- f
+      eta.store[,,1]       <- eta
       load.store[,,1]      <- lmat
       psi.store[,1]        <- 1/psi.inv
       ll.store[1]          <- sum(dmvn(X=data, mu=mu, sigma=tcrossprod(lmat) + diag(1/psi.inv), log=TRUE))
@@ -73,19 +73,19 @@
     # Scores & Loadings
       c.data     <- sweep(data, 2, mu, FUN="-")
       if(Q0) {
-        f        <- sim.score(N=N, Q=Q, lmat=lmat, psi.inv=psi.inv, c.data=c.data, Q1=Q1)
-        lmat     <- matrix(unlist(lapply(Pseq, function(j) sim.load(Q=Q, tau=tau, f=f, c.data=c.data[,j], P=P, Q1=Q1, 
-                           phi=phi[j,], psi.inv=psi.inv[j], FtF=crossprod(f))), use.names=FALSE), nr=P, byrow=TRUE)
+        eta      <- sim.score(N=N, Q=Q, lmat=lmat, psi.inv=psi.inv, c.data=c.data, Q1=Q1)
+        lmat     <- matrix(unlist(lapply(Pseq, function(j) sim.load(Q=Q, tau=tau, eta=eta, c.data=c.data[,j], P=P, Q1=Q1, 
+                           phi=phi[j,], psi.inv=psi.inv[j], EtE=crossprod(eta))), use.names=FALSE), nr=P, byrow=TRUE)
       } else {
-        f        <- matrix(, nr=N, nc=0)
+        eta      <- matrix(, nr=N, nc=0)
         lmat     <- matrix(, nr=P, nc=0)
       }     
       
     # Means
-      mu[]       <- sim.mu(N=N, P=P, mu.sigma=mu.sigma, psi.inv=psi.inv, sum.data=sum.data, sum.f=colSums(f), lmat=lmat, mu.zero=mu.zero)
+      mu[]       <- sim.mu(N=N, P=P, mu.sigma=mu.sigma, psi.inv=psi.inv, sum.data=sum.data, sum.eta=colSums(eta), lmat=lmat, mu.zero=mu.zero)
     
     # Uniquenesses
-      psi.inv    <- sim.psi.inv(N=N, P=P, psi.alpha=psi.alpha, psi.beta=psi.beta, c.data=c.data, f=f, lmat=lmat)
+      psi.inv    <- sim.psi.inv(N=N, P=P, psi.alpha=psi.alpha, psi.beta=psi.beta, c.data=c.data, eta=eta, lmat=lmat)
     
     # Local Shrinkage
       load.2     <- lmat * lmat
@@ -108,7 +108,7 @@
           numred <- sum(colvec)
           if(numred == 0) { # simulate extra columns from priors
             Q       <- Q + 1
-            f       <- cbind(f, rnorm(N))         
+            eta     <- cbind(eta, rnorm(N))         
             phi     <- cbind(phi, rgamma(n=P, shape=phi.nu, rate=phi.nu))
             delta   <- c(delta, rgamma(n=1, shape=alpha.dk, rate=beta.dk))
             tau     <- cumprod(delta)
@@ -116,7 +116,7 @@
           } else          { # remove redundant columns
             nonred  <- which(colvec == 0)
             Q       <- Q - numred
-            f       <- f[,nonred, drop=FALSE]
+            eta     <- eta[,nonred, drop=FALSE]
             phi     <- phi[,nonred, drop=FALSE]
             delta   <- delta[nonred]
             tau     <- cumprod(delta)
@@ -135,7 +135,7 @@
         sigma    <- tcrossprod(lmat) + diag(psi)
         cov.est  <- cov.est + sigma/n.store
         if(sw["mu.sw"])             mu.store[,new.it]              <- mu  
-        if(all(sw["f.sw"], Q0))     f.store[,seq_len(Q),new.it]    <- f
+        if(all(sw["s.sw"], Q0))     eta.store[,seq_len(Q),new.it]  <- eta
         if(all(sw["l.sw"], Q0))     load.store[,seq_len(Q),new.it] <- lmat
         if(sw["psi.sw"])            psi.store[,new.it]             <- psi
                                     Q.store[new.it]                <- Q
@@ -145,7 +145,7 @@
     close(pb)
     Qmax         <- seq_len(max(Q.store))
     returns      <- list(mu       = if(sw["mu.sw"])  mu.store,
-                         f        = if(sw["f.sw"])   as.simple_sparse_array(f.store[,Qmax,, drop=FALSE]), 
+                         eta      = if(sw["s.sw"])   as.simple_sparse_array(eta.store[,Qmax,, drop=FALSE]), 
                          load     = if(sw["l.sw"])   as.simple_sparse_array(load.store[,Qmax,, drop=FALSE]), 
                          psi      = if(sw["psi.sw"]) psi.store,
                          post.mu  = post.mu,

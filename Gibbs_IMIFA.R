@@ -28,9 +28,9 @@
       mu.store      <- array(0, dim=c(P, trunc.G, n.store))
       dimnames(mu.store)   <- list(varnames, gnames, iternames)
     }
-    if(sw["f.sw"])   {
-      f.store       <- array(0, dim=c(N, Q, n.store))
-      dimnames(f.store)    <- list(obsnames, facnames, iternames)
+    if(sw["s.sw"])   {
+      eta.store     <- array(0, dim=c(N, Q, n.store))
+      dimnames(eta.store)  <- list(obsnames, facnames, iternames)
     }
     if(sw["l.sw"])   {
       load.store    <- array(0, dim=c(P, Q, trunc.G, n.store))
@@ -66,7 +66,7 @@
     pi.prop         <- c(cluster$pi.prop, sim.pi(pi.alpha=pi.alpha, nn=rep(0, trunc.G), N=N, inf.G=TRUE, len=trunc.G)$pi.prop[-Gs])
     nn              <- tabulate(z, nbins=trunc.G)
     mu              <- cbind(mu, vapply(seq_len(trunc.G - G), function(g) sim.mu.p(P=P, sigma.mu=sigma.mu, mu.zero=mu.zero), numeric(P)))
-    f               <- sim.f.p(N=N, Q=Q)
+    eta             <- sim.eta.p(N=N, Q=Q)
     phi             <- lapply(Ts, function(t) sim.phi.p(Q=Q, P=P, phi.nu=phi.nu))
     delta           <- lapply(Ts, function(t) c(sim.delta.p(alpha=alpha.d1, beta=beta.d1), sim.delta.p(Q=Q, alpha=alpha.dk, beta=beta.dk)))
     tau             <- lapply(delta, cumprod)
@@ -75,7 +75,7 @@
     for(g in which(nn > 2.5 * Q))      {
       fact          <- try(factanal(data[z == g,, drop=FALSE], factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
       if(!inherits(fact, "try-error")) {
-        f[z == g,]         <- fact$scores
+        eta[z == g,]       <- fact$scores
         lmat[[g]]          <- fact$loadings
         psi.inv[,g]        <- 1/fact$uniquenesses
       } 
@@ -91,7 +91,7 @@
     ksi             <- rho * (1 - rho)^(Ts - 1)
     if(burnin        < 1)  {
       mu.store[,,1]        <- mu
-      f.store[,,1]         <- f
+      eta.store[,,1]       <- eta
       load.store[,,,1]     <- array(unlist(lmat, use.names=FALSE), dim=c(P, Q, G))
       psi.store[,,1]       <- 1/psi.inv
       pi.store[,1]         <- pi.prop/sum(pi.prop)
@@ -146,32 +146,32 @@
     # Scores & Loadings
       c.data        <- lapply(Gs, function(g) sweep(dat.g[[g]], 2, mu[,g], FUN="-"))
       if(!any(Q0))    {
-        f           <- matrix(, nr=N, nc=0)
-        f.tmp       <- lapply(Gs, function(g) f[z.ind[[g]],, drop=FALSE])
+        eta         <- matrix(, nr=N, nc=0)
+        eta.tmp     <- lapply(Gs, function(g) eta[z.ind[[g]],, drop=FALSE])
         lmat        <- lapply(Gs, function(g) matrix(, nr=P, nc=0))
       } else {
-        f.tmp       <- lapply(Gs, function(g) if(all(nn0[g], Q0[g])) sim.score(N=nn[g], lmat=lmat[[g]], Q=Qs[g], Q1=Q1[g], c.data=c.data[[g]], psi.inv=psi.inv[,g]) else matrix(, nr=ifelse(Q0[g], 0, nn[g]), nc=Qs[g]))
-        FtF         <- lapply(Gs, function(g) if(nn0[g]) crossprod(f.tmp[[g]]))
-        lmat[Gs]    <- lapply(Gs, function(g) if(all(nn0[g], Q0[g])) matrix(unlist(lapply(Ps, function(j) sim.load(Q=Qs[g], P=P, c.data=c.data[[g]][,j], FtF=FtF[[g]],
-                             f=f.tmp[[g]], psi.inv=psi.inv[,g][j], Q1=Q1[g], phi=phi[[g]][j,], tau=tau[[g]], shrink=TRUE)), use.names=FALSE), nr=P, byrow=TRUE) else 
+        eta.tmp     <- lapply(Gs, function(g) if(all(nn0[g], Q0[g])) sim.score(N=nn[g], lmat=lmat[[g]], Q=Qs[g], Q1=Q1[g], c.data=c.data[[g]], psi.inv=psi.inv[,g]) else matrix(, nr=ifelse(Q0[g], 0, nn[g]), nc=Qs[g]))
+        EtE         <- lapply(Gs, function(g) if(nn0[g]) crossprod(eta.tmp[[g]]))
+        lmat[Gs]    <- lapply(Gs, function(g) if(all(nn0[g], Q0[g])) matrix(unlist(lapply(Ps, function(j) sim.load(Q=Qs[g], P=P, c.data=c.data[[g]][,j], EtE=EtE[[g]],
+                             eta=eta.tmp[[g]], psi.inv=psi.inv[,g][j], Q1=Q1[g], phi=phi[[g]][j,], tau=tau[[g]], shrink=TRUE)), use.names=FALSE), nr=P, byrow=TRUE) else 
                              matrix(unlist(lapply(Ps, function(j) sim.load.p(Q=Qs[g], phi=phi[[g]][j,], tau=tau[[g]], P=P)), use.names=FALSE), nr=P, byrow=FALSE))
-        f.tmp       <- if(length(unique(Qs)) != 1) lapply(Gs, function(g) cbind(f.tmp[[g]], matrix(0, nr=nn[g], nc=max(Qs) - Qs[g]))) else f.tmp
+        eta.tmp       <- if(length(unique(Qs)) != 1) lapply(Gs, function(g) cbind(eta.tmp[[g]], matrix(0, nr=nn[g], nc=max(Qs) - Qs[g]))) else eta.tmp
         q0ng        <- !Q0 & nn0[Gs]
         if(any(q0ng)) {
-          f.tmp[q0ng]      <- lapply(Gs[q0ng], function(g, x=f.tmp[[g]]) { row.names(x) <- obsnames[z.ind[[g]]]; x })
+          eta.tmp[q0ng]    <- lapply(Gs[q0ng], function(g, x=eta.tmp[[g]]) { row.names(x) <- obsnames[z.ind[[g]]]; x })
         }
-        f           <- do.call(rbind, f.tmp)[obsnames,, drop=FALSE]
+        eta         <- do.call(rbind, eta.tmp)[obsnames,, drop=FALSE]
       }
       
     # Means
       sum.data      <- lapply(dat.g, colSums)
-      sum.f         <- lapply(f.tmp, colSums)
-      mu[,Gs]       <- vapply(Gs, function(g) if(nn0[g]) sim.mu(N=nn[g], mu.sigma=mu.sigma, psi.inv=psi.inv[,g], P=P, sum.f=sum.f[[g]][seq_len(Qs[g])],
+      sum.eta       <- lapply(eta.tmp, colSums)
+      mu[,Gs]       <- vapply(Gs, function(g) if(nn0[g]) sim.mu(N=nn[g], mu.sigma=mu.sigma, psi.inv=psi.inv[,g], P=P, sum.eta=sum.eta[[g]][seq_len(Qs[g])],
                               sum.data=sum.data[[g]], lmat=lmat[[g]], mu.zero=mu.zero) else sim.mu.p(P=P, sigma.mu=sigma.mu, mu.zero=mu.zero), numeric(P))
       
     # Uniquenesses
       psi.inv[,Gs]  <- vapply(Gs, function(g) if(nn0[g]) sim.psi.inv(N=nn[g], psi.alpha=psi.alpha, c.data=c.data[[g]], psi.beta=psi.beta, lmat=lmat[[g]],
-                              P=P, f=f.tmp[[g]][,seq_len(Qs[g]), drop=FALSE]) else sim.psi.i.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), numeric(P))
+                              P=P, eta=eta.tmp[[g]][,seq_len(Qs[g]), drop=FALSE]) else sim.psi.i.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), numeric(P))
     
     # Local Shrinkage
       load.2        <- lapply(lmat[Gs], function(lg) lg * lg)
@@ -215,7 +215,7 @@
           Qmax      <- max(Qs[nn0])
           Qmaxseq   <- seq_len(Qmax)
           Qmaxold   <- max(Qs.old[nn0])
-          f         <- if(Qmax > Qmaxold) cbind(f[,seq_len(Qmaxold)], rnorm(N)) else f[,Qmaxseq, drop=FALSE]
+          eta       <- if(Qmax > Qmaxold) cbind(eta[,seq_len(Qmaxold)], rnorm(N)) else eta[,Qmaxseq, drop=FALSE]
           if(Qmax    < max(Qemp, 0)) {
             Qs[Qmax  < Qs] <- Qmax
             for(t  in  Ts[!nn0][Qemp > Qmax]) {  
@@ -242,12 +242,12 @@
       if(is.element(iter, iters))   {
         if(verbose)    setTxtProgressBar(pb, iter)
         new.it      <- which(iters == iter)
-        if(sw["mu.sw"])    mu.store[,,new.it]       <- mu 
-        if(all(sw["f.sw"], 
-           any(Q0)))  f.store[,seq_len(max(Qs)),new.it]    <- f
+        if(sw["mu.sw"])  mu.store[,,new.it]         <- mu  
+        if(all(sw["s.sw"], 
+           any(Q0)))   eta.store[,seq_len(max(Qs)),new.it]  <- eta 
         if(sw["l.sw"])   {
           for(g in Gs)   {
-            if(Q0[g]) load.store[,seq_len(Qs[g]),g,new.it] <- lmat[[g]]
+            if(Q0[g])  load.store[,seq_len(Qs[g]),g,new.it] <- lmat[[g]]
           }
         }
         if(sw["psi.sw"]) psi.store[,,new.it]        <- psi
@@ -264,7 +264,7 @@
     Gmax            <- seq_len(max(as.numeric(z.store)))
     Qmax            <- seq_len(max(Q.store))
     returns         <- list(mu       = if(sw["mu.sw"])  mu.store[,Gmax,, drop=FALSE],
-                            f        = if(sw["f.sw"])   as.simple_sparse_array(f.store[,Qmax,, drop=FALSE]), 
+                            eta      = if(sw["s.sw"])   as.simple_sparse_array(eta.store[,Qmax,, drop=FALSE]), 
                             load     = if(sw["l.sw"])   as.simple_sparse_array(load.store[,Qmax,Gmax,, drop=FALSE]), 
                             psi      = if(sw["psi.sw"]) psi.store[,Gmax,, drop=FALSE],
                             pi.prop  = if(sw["pi.sw"])  pi.store[Gmax,, drop=FALSE],

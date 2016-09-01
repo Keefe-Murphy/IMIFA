@@ -72,29 +72,29 @@
 	
 \section[Introduction]{Introduction}
 \subsection[Model Set-Up]{Model Set-Up}
-Let $\underline{x} = \left(x_1, x_2, \ldots, x_p\right)^T$ have mean $\underline{\mu}$ and covariance matrix $\Sigma$. The factor model states that $\underline{x}$ is linearly dependent upon a few $\left(q\ll{p}\right)$ unobservable random variables $\underline{\text{f}}_1,\underline{\text{f}}_2,\ldots,\underline{\text{f}}_q$ called \textit{common factors} and $p$ additional sources of variation $\varepsilon_1,\varepsilon_2,\ldots,\varepsilon_p$ called \textit{specific factors}, for $i=1,\ldots,N$ observations, s.t.
+Let $\underline{x} = \left(x_1, x_2, \ldots, x_p\right)^T$ have mean $\underline{\mu}$ and covariance matrix $\Sigma$. The factor model states that $\underline{x}$ is linearly dependent upon a few $\left(q\ll{p}\right)$ unobservable random variables $\underline{\eta}_i,\underline{\eta}_i,\ldots,\underline{\eta}_q$ called \textit{common factors} and $p$ additional sources of variation $\varepsilon_1,\varepsilon_2,\ldots,\varepsilon_p$ called \textit{specific factors}, for $i=1,\ldots,N$ observations, s.t.
 \newline
 
 \noindent\begin{tabular}{l l l l l l}
-& $\underline{x}_i$ & $=$ & $\underline{\mu} + \Lambda\underline{\text{f}}_i + \underline{\varepsilon}_i$&\\
+& $\underline{x}_i$ & $=$ & $\underline{\mu} + \Lambda\underline{\eta}_i + \underline{\varepsilon}_i$&\\
 	\\
 	where  & $\underline{x}_i$ & $\rightarrow$ & $\left(p \times 1\right)$ & observation vector \\
 	& $\underline{\mu}$ &  $\rightarrow$ & $\left(p \times 1\right)$  & overall mean vector \\
 	& $\Lambda$ &  $\rightarrow$ & $\left(p \times q\right)$  & loadings matrix \\
-	& $\underline{\text{f}}_i$ &  $\rightarrow$ & $\left(q \times 1\right)$  & vector of factor scores for obs $i$ \\
+	& $\underline{\eta}_i$ &  $\rightarrow$ & $\left(q \times 1\right)$  & vector of factor scores for obs $i$ \\
 	& $\underline{\varepsilon}_i$ & $\rightarrow$ & $\left(p \times 1\right)$  & vector of errors for obs $i$ \\
 \end{tabular}
 \\ \\
 $\Lambda_{jk}$ is the \textit{factor loading} of the $j$-th variable on the $k$-th factor of the $\left(p \times q\right) \Lambda$ matrix of factor loadings. If we assume the data have been centred to have column means of 0 then we have
 \begin{equation}
 \label{eq:1}
-\left(\underline{x}_i - \underline{\mu}_{}\right)_{\left(p \times 1\right)} = \underline{x}_{i_{\left(p \times 1\right)}}^\star = \Lambda_{_{\left(p \times q\right)}}\underline{\text{f}}_{i_{\left(q \times 1\right)}} + \underline{\varepsilon}_{i_{\left(p \times 1\right)}}
+\left(\underline{x}_i - \underline{\mu}_{}\right)_{\left(p \times 1\right)} = \underline{x}_{i_{\left(p \times 1\right)}}^\star = \Lambda_{_{\left(p \times q\right)}}\underline{\eta}_{i_{\left(q \times 1\right)}} + \underline{\varepsilon}_{i_{\left(p \times 1\right)}}
 \end{equation}
 
 \subsection[Assumptions]{Assumptions}
 \begin{enumerate}
 	\item $\underline{\mu}=0$
-	\item $\underline{\varepsilon}_i$ and $\underline{\text{f}}_i$ are independent: $\mathrm{Cov}\left(\underline{\text{f}}_i,\underline{\varepsilon}_i\right) = \mathrm{E}\left(\underline{\text{f}}_i\underline{\varepsilon}_i^T\right) = 0$
+	\item $\underline{\varepsilon}_i$ and $\underline{\eta}_i$ are independent: $\mathrm{Cov}\left(\underline{\eta}_i,\underline{\varepsilon}_i\right) = \mathrm{E}\left(\underline{\eta}_i\underline{\varepsilon}_i^T\right) = 0$
 	\item $\underline{\varepsilon}_i \sim\operatorname{MVN}_p\left(\underline{0},\Psi\right)$ where $\Psi = \textit{diag}\left(\psi_1,\ldots,\psi_p\right)$\\
 	\\
 	$\therefore \mathrm{E}\left(\underline{\varepsilon}_i\right) = \underline{0}$ and $ \mathrm{Cov}\left(\underline{\varepsilon}_i\right) = \begin{pmatrix}
@@ -107,9 +107,9 @@ $\Lambda_{jk}$ is the \textit{factor loading} of the $j$-th variable on the $k$-
 	\label{eq:2}
 	\therefore \underline{\varepsilon}_i \sim \operatorname{MVN}_p\left(\underline{0},\Psi\right)
 	\end{equation}
-	\item $\underline{\text{f}}_i \sim\operatorname{MVN}_q\left(\underline{0}, \mathcal{I}_q\right)$ 
+	\item $\underline{\eta}_i \sim\operatorname{MVN}_q\left(\underline{0}, \mathcal{I}_q\right)$ 
 	\\
-	$\therefore \mathrm{E}\left(\underline{\text{f}}_i\right) = \underline{0}$ and $ \mathrm{Cov}\left(\underline{\text{f}}_i\right) = \begin{pmatrix}
+	$\therefore \mathrm{E}\left(\underline{\eta}_i\right) = \underline{0}$ and $ \mathrm{Cov}\left(\underline{\eta}_i\right) = \begin{pmatrix}
 	\diagentry{1} & 0 & \ldots & 0\\
 	0 & \diagentry{1}& \ldots & 0\\
 	\vdots & \vdots & \diagentry{\ddots}& \vdots\\
@@ -117,131 +117,131 @@ $\Lambda_{jk}$ is the \textit{factor loading} of the $j$-th variable on the $k$-
 	\end{pmatrix} = \mathcal{I}_q$
 	\begin{equation}
 	\label{eq:3}
-	\therefore \underline{\text{f}}_i \sim \operatorname{MVN}_q\left(\underline{0}, \mathcal{I}_q\right)
+	\therefore \underline{\eta}_i \sim \operatorname{MVN}_q\left(\underline{0}, \mathcal{I}_q\right)
 	\end{equation}
 \end{enumerate}
 
 \section[Bayesian Framework]{Bayesian Framework}
 \subsection[Likelihood]{Likelihood}
 \begin{flalign}
-	\mathrm{E}\left(\underline{x}_i^\star\right) & = \mathrm{E}\left(\Lambda\underline{\text{f}}_i + \underline{\varepsilon}_i\right) \nonumber&\\
-	& = \Lambda\mathrm{E}\left(\underline{\text{f}}_i\right) + \mathrm{E}\left(\underline{\varepsilon}_i\right) \nonumber&\\
+	\mathrm{E}\left(\underline{x}_i^\star\right) & = \mathrm{E}\left(\Lambda\underline{\eta}_i + \underline{\varepsilon}_i\right) \nonumber&\\
+	& = \Lambda\mathrm{E}\left(\underline{\eta}_i\right) + \mathrm{E}\left(\underline{\varepsilon}_i\right) \nonumber&\\
 	& = \underline{0} \nonumber&\\
 	\label{eq:4}
 	\therefore \underline{x}_i^\star & \sim   \operatorname{MVN}_p\left(\underline{0},\Sigma\right)&\\
 	\nonumber\\
-	\mbox{Since} \hspace{2mm}  \underline{\varepsilon}_i & = \underline{x}_i^\star -\Lambda\underline{\text{f}}_i,\nonumber&\\
+	\mbox{Since} \hspace{2mm}  \underline{\varepsilon}_i & = \underline{x}_i^\star -\Lambda\underline{\eta}_i,\nonumber&\\
 	\Sigma & = \mathrm{Cov}\left(x_i\right)\nonumber&\\
 	& = \mathrm{E}\left[\left(\underline{x}_i-\underline{\mu}_i\right)\left(\underline{x}_i-\underline{\mu}_i\right)^T\right]\nonumber&\\
 	& = \mathrm{E}\left[\underline{x}_i^\star \underline{x}_i^{\star^{T}}\right]\nonumber&\\
-	& =  \mathrm{E}\left[\left(\Lambda\underline{\text{f}}_i+\underline{\varepsilon}_i\right)\left(\Lambda\underline{\text{f}}_i+\underline{\varepsilon}_i\right)^T\right]\nonumber&\\
-	& =  \mathrm{E}\left[\left(\Lambda\underline{\text{f}}_i\right) +
-	\underline{\varepsilon}_i\left(\Lambda\underline{\text{f}}_i\right)^T + \left(\Lambda\underline{\text{f}}_i\right)\underline{\varepsilon}_i^T + \underline{\varepsilon}_i\underline{\varepsilon}_i^T\right]\nonumber&\\
-	& = \Lambda\mathrm{E}\left(\underline{\text{f}}_i\underline{\text{f}}_i^T\right)\Lambda^T + \mathrm{E}\left(\underline{\varepsilon}_i\underline{\text{f}}_i^T\right)\Lambda^T + \Lambda\mathrm{E}\left(\underline{\text{f}}_i\underline{\varepsilon}_i^T\right) + \mathrm{E}\left(\underline{\varepsilon}_i\underline{\varepsilon}_i^T\right)\nonumber&\\
+	& =  \mathrm{E}\left[\left(\Lambda\underline{\eta}_i+\underline{\varepsilon}_i\right)\left(\Lambda\underline{\eta}_i+\underline{\varepsilon}_i\right)^T\right]\nonumber&\\
+	& =  \mathrm{E}\left[\left(\Lambda\underline{\eta}_i\right) +
+	\underline{\varepsilon}_i\left(\Lambda\underline{\eta}_i\right)^T + \left(\Lambda\underline{\eta}_i\right)\underline{\varepsilon}_i^T + \underline{\varepsilon}_i\underline{\varepsilon}_i^T\right]\nonumber&\\
+	& = \Lambda\mathrm{E}\left(\underline{\eta}_i\underline{\eta}_i^T\right)\Lambda^T + \mathrm{E}\left(\underline{\varepsilon}_i\underline{\eta}_i^T\right)\Lambda^T + \Lambda\mathrm{E}\left(\underline{\eta}_i\underline{\varepsilon}_i^T\right) + \mathrm{E}\left(\underline{\varepsilon}_i\underline{\varepsilon}_i^T\right)\nonumber&\\
 	& = \Lambda\Lambda^T + \Psi \nonumber&\\
 	\label{eq:5} \therefore \underline{x}_i^\star & \sim  \operatorname{MVN}_p\left(\underline{0},\Lambda\Lambda^T + \Psi\right)&\\
 	\nonumber\\
-	\mathrm{E}\left(\underline{x}_i^\star \given \underline{\text{f}}_i\right) & = \mathrm{E}\left(\Lambda\underline{\text{f}}_i + \underline{\varepsilon}_i \given \underline{\text{f}}_i\right)\nonumber\\
-	& =	\Lambda\mathrm{E}\left(\underline{\text{f}}_i \given \underline{\text{f}}_i\right) + \mathrm{E}\left(\underline{\varepsilon}_i \given \underline{\text{f}}_i\right)\nonumber&\\
-	& = \Lambda\underline{\text{f}}_i\nonumber&\\
-	\mathrm{Cov}\left(\underline{x}_i^\star \given \underline{\text{f}}_i\right) & = \mathrm{E}\left[\left(\underline{x}_i^\star - \Lambda\underline{\text{f}}_i\right)\left(\underline{x}_i^\star - \Lambda\underline{\text{f}}_i\right)^T \given \underline{\text{f}}_i\right]\nonumber&\\
-	& = \mathrm{E}\left(\underline{\varepsilon}_i\underline{\varepsilon}_i^T \given \underline{\text{f}}_i\right)\nonumber&\\
+	\mathrm{E}\left(\underline{x}_i^\star \given \underline{\eta}_i\right) & = \mathrm{E}\left(\Lambda\underline{\eta}_i + \underline{\varepsilon}_i \given \underline{\eta}_i\right)\nonumber\\
+	& =	\Lambda\mathrm{E}\left(\underline{\eta}_i \given \underline{\eta}_i\right) + \mathrm{E}\left(\underline{\varepsilon}_i \given \underline{\eta}_i\right)\nonumber&\\
+	& = \Lambda\underline{\eta}_i\nonumber&\\
+	\mathrm{Cov}\left(\underline{x}_i^\star \given \underline{\eta}_i\right) & = \mathrm{E}\left[\left(\underline{x}_i^\star - \Lambda\underline{\eta}_i\right)\left(\underline{x}_i^\star - \Lambda\underline{\eta}_i\right)^T \given \underline{\eta}_i\right]\nonumber&\\
+	& = \mathrm{E}\left(\underline{\varepsilon}_i\underline{\varepsilon}_i^T \given \underline{\eta}_i\right)\nonumber&\\
 	& = \Psi\nonumber&\\
-	\label{eq:6} \therefore \underline{x}_i^\star \given \underline{\text{f}}_i & \sim  \operatorname{MVN}_p\left(\Lambda\underline{\text{f}}_i,\Psi\right)&\\
+	\label{eq:6} \therefore \underline{x}_i^\star \given \underline{\eta}_i & \sim  \operatorname{MVN}_p\left(\Lambda\underline{\eta}_i,\Psi\right)&\\
 	\intertext{The density of the data is then given by:}
 	\label{eq:7}\mathrm{P}\left(\underline{x}_i^\star 
-	\given \underline{\text{f}}_i, \Lambda,\Psi\right) & = \left(2\pi\right)^{-\frac{p}{2}} 
-	\given\Psi\given^{-\frac{1}{2}} \exp\left(-\frac{1}{2}\sum_{i=1}^{N}\left(\underline{x}_i^\star - \Lambda\underline{\text{f}}_i\right)^T\Psi^{-1}\left(\underline{x}_i^\star - \Lambda\underline{\text{f}}_i\right)\right)&\\
-	& \propto \given\Psi\given^{-\frac{1}{2}} \exp\left(-\frac{1}{2}\mathrm{tr}\left[\Psi^{-1}\left(X - \text{F}\Lambda\right)^T\left(X - \text{F}\Lambda\right)\right]\right)\nonumber&\\
+	\given \underline{\eta}_i, \Lambda,\Psi\right) & = \left(2\pi\right)^{-\frac{p}{2}} 
+	\given\Psi\given^{-\frac{1}{2}} \exp\left(-\frac{1}{2}\sum_{i=1}^{N}\left(\underline{x}_i^\star - \Lambda\underline{\eta}_i\right)^T\Psi^{-1}\left(\underline{x}_i^\star - \Lambda\underline{\eta}_i\right)\right)&\\
+	& \propto \given\Psi\given^{-\frac{1}{2}} \exp\left(-\frac{1}{2}\mathrm{tr}\left[\Psi^{-1}\left(X - \eta\Lambda\right)^T\left(X - \eta\Lambda\right)\right]\right)\nonumber&\\
 	\mbox{where} \hspace{2mm} \Lambda_{\left(p \times q\right)} & = \begin{pmatrix}
 	\diagentry{\lambda_{11}} & \lambda_{12} & \ldots & \lambda_{1q}\\
 	\lambda_{21} & \diagentry{\lambda_{22}}& \ldots & \lambda_{2q}\\
 	\vdots & \vdots & \diagentry{\ddots}& \vdots\\
 	\lambda_{p1} & \lambda_{p2} & \ldots & \diagentry{\lambda_{pq}}
 	\end{pmatrix}\nonumber&\\
-	\& \hspace{2mm} \text{F}_{\left(n \times q\right)} & = \begin{pmatrix}
-	\diagentry{f_{11}} & f_{12} & \ldots & f_{1q}\\
-	f_{21} & \diagentry{f_{22}}& \ldots & f_{2q}\\
+	\& \hspace{2mm} \eta_{\left(n \times q\right)} & = \begin{pmatrix}
+	\diagentry{\eta_{11}} & \eta_{12} & \ldots & \eta_{1q}\\
+	\eta_{21} & \diagentry{\eta_{22}}& \ldots & \eta_{2q}\\
 	\vdots & \vdots & \diagentry{\ddots}& \vdots\\
-	f_{n1} & f_{n2} & \ldots & \diagentry{f_{nq}}
-	\end{pmatrix} \& \hspace{2mm}\underline{\text{f}}_i \hspace{2mm} 
-	\mbox{is a column vector containing the entries of row $i$ of F}\nonumber&
+	\eta_{n1} & \eta_{n2} & \ldots & \diagentry{\eta_{nq}}
+	\end{pmatrix} \& \hspace{2mm}\underline{\eta}_i \hspace{2mm} 
+	\mbox{is a column vector containing the entries of row $i$ of $\eta$}\nonumber&
 \end{flalign}
 
 \subsection[Posterior Set-Up]{Posterior Set-Up}
 \begin{flalign}
 	\mbox{Likelihood} \hspace{2mm} &= \prod_{i=1}^N\mathrm{P}\left(\underline{x}_i^\star \given \theta\right)\nonumber &\\
-	&= \prod_{i=1}^N\mathrm{P}\left(\underline{x}_i^\star \given \underline{\text{f}}_i, \Lambda,\Psi\right)\nonumber&\\
+	&= \prod_{i=1}^N\mathrm{P}\left(\underline{x}_i^\star \given \underline{\eta}_i, \Lambda,\Psi\right)\nonumber&\\
 	\label{eq:8}
-	\mbox{where}~\mathrm{P}\left(\underline{x}_i^\star \given \underline{\text{f}}_i, \Lambda,\Psi\right) &\sim  \operatorname{MVN}_p\left(\Lambda\underline{\text{f}}_i,\Psi\right)&\\
+	\mbox{where}~\mathrm{P}\left(\underline{x}_i^\star \given \underline{\eta}_i, \Lambda,\Psi\right) &\sim  \operatorname{MVN}_p\left(\Lambda\underline{\eta}_i,\Psi\right)&\\
 	\mbox{Prior} \hspace{2mm}&=\mathrm{P}\left(\theta\right)\nonumber&\\
-	 &= \mathrm{P}\left(\text{F}\right)\mathrm{P}\left(\Lambda\right)\mathrm{P}\left(\Psi\right)\nonumber &\\
+	 &= \mathrm{P}\left(\eta\right)\mathrm{P}\left(\Lambda\right)\mathrm{P}\left(\Psi\right)\nonumber &\\
 	 \mbox{Posterior} \hspace{2mm} &= \mbox{Likelihood} \times \mbox{Prior}&\nonumber\\
-	 \therefore \mathrm{P}\left(\text{F}, \Lambda,\Psi
+	 \therefore \mathrm{P}\left(\eta, \Lambda,\Psi
 	  \given X^\star\right) 
-	  &\propto \mathcal{L}\left(X^\star \given \text{F}, \Lambda, \Psi\right) \mathrm{P}\left(\text{F}\right)\mathrm{P}\left(\Lambda\right)\mathrm{P}\left(\Psi\right)\nonumber&\\
-	  &\label{eq:9}\propto \left[\prod_{i=1}^{N}\mathrm{P}\left(\underline{x}_i^\star \given \underline{\text{f}}_i, \Lambda,\Psi\right)\right]
-	  \left[\prod_{i=1}^{N}\mathrm{P}\left(\underline{\text{f}}_i\right)\right] \left[\prod_{j=1}^{p}\mathrm{P}\left(\underline{\Lambda}_j\right)\right]\left[\prod_{j=1}^{p}\mathrm{P}\left(\psi_j\right)\right]&
+	  &\propto \mathcal{L}\left(X^\star \given \eta, \Lambda, \Psi\right) \mathrm{P}\left(\eta\right)\mathrm{P}\left(\Lambda\right)\mathrm{P}\left(\Psi\right)\nonumber&\\
+	  &\label{eq:9}\propto \left[\prod_{i=1}^{N}\mathrm{P}\left(\underline{x}_i^\star \given \underline{\eta}_i, \Lambda,\Psi\right)\right]
+	  \left[\prod_{i=1}^{N}\mathrm{P}\left(\underline{\eta}_i\right)\right] \left[\prod_{j=1}^{p}\mathrm{P}\left(\underline{\Lambda}_j\right)\right]\left[\prod_{j=1}^{p}\mathrm{P}\left(\psi_j\right)\right]&
 	 \end{flalign}
 	 
 Later on, especially as we move into the mixture case, it will be necessary to undo the centering, thereby removing the $^\star$ on $\underline{x}_i^\star$,  and reintroduce $\underline{\mu}$. This will necessitate multiplying the quantity in \eqref{eq:9} by $\mathrm{P}\left(\underline{\mu}\right)$. However, we will proceed to derive the full conditionals we need for Gibbs Sampling using the centered notation for now as adjusting for $\underline{\mu}$ afterwards will be trivial.
 \section[Sampling from the Full Conditionals]{Sampling from the Full Conditionals}
-\subsection[Factor Scores]{Factor Scores - $\underline{\text{f}}_i$}
+\subsection[Factor Scores]{Factor Scores - $\underline{\eta}_i$}
 \begin{flalign}
-\underline{\text{f}}_i &\sim\operatorname{MVN}_q\left(\underline{0}, \mathcal{I}_q\right)\nonumber&\\
-\label{eq:10}& = \left(2\pi\right)^{-\frac{q}{2}}\exp\left(-\frac{1}{2}\underline{\text{f}}_i^T\underline{\text{f}}_i\right)&
+\underline{\eta}_i &\sim\operatorname{MVN}_q\left(\underline{0}, \mathcal{I}_q\right)\nonumber&\\
+\label{eq:10}& = \left(2\pi\right)^{-\frac{q}{2}}\exp\left(-\frac{1}{2}\underline{\eta}_i^T\underline{\eta}_i\right)&
 \end{flalign}
-To obtain the full conditional for $\underline{\text{f}}_i$ we can multiply the likelihood by the prior in \eqref{eq:10} s.t.
+To obtain the full conditional for $\underline{\eta}_i$ we can multiply the likelihood by the prior in \eqref{eq:10} s.t.
 \begin{flalign}
-\mathrm{P}\left(\underline{\text{f}}_i \given , \underline{x}_i^\star,\Lambda,\Psi\right) &\sim \mathrm{P}\left(\underline{x}_i^\star \given \underline{\text{f}}_i, \Lambda,\Psi\right)\mathrm{P}\left(\underline{\text{f}}_i\right)\nonumber&\\
-& \propto \exp\left(-\frac{1}{2}\left[\left(\underline{x}_i^\star - \Lambda\underline{\text{f}}_i\right)^T\Psi^{-1}\left(\underline{x}_i^\star - \Lambda\underline{\text{f}}_i\right) + \underline{\text{f}}_i^T\underline{\text{f}}_i\right]\right)\nonumber&\\
-& \propto \exp\left(-\frac{1}{2}\left[-\underline{x}_i^{\star^ {T}}\Psi^{-1}\Lambda\underline{\text{f}}_i 
-	  - \left(\Lambda\underline{\text{f}}_i\right)^T\Psi^{-1}\underline{x}_i^\star 
-	  + \left(\Lambda\underline{\text{f}}_i\right)^T\Psi^{-1}\left(\Lambda\underline{\text{f}}_i\right)
-	  + \underline{\text{f}}_i^T\underline{\text{f}}_i\right]\right)\nonumber&\\
+\mathrm{P}\left(\underline{\eta}_i \given , \underline{x}_i^\star,\Lambda,\Psi\right) &\sim \mathrm{P}\left(\underline{x}_i^\star \given \underline{\eta}_i, \Lambda,\Psi\right)\mathrm{P}\left(\underline{\eta}_i\right)\nonumber&\\
+& \propto \exp\left(-\frac{1}{2}\left[\left(\underline{x}_i^\star - \Lambda\underline{\eta}_i\right)^T\Psi^{-1}\left(\underline{x}_i^\star - \Lambda\underline{\eta}_i\right) + \underline{\eta}_i^T\underline{\eta}_i\right]\right)\nonumber&\\
+& \propto \exp\left(-\frac{1}{2}\left[-\underline{x}_i^{\star^ {T}}\Psi^{-1}\Lambda\underline{\eta}_i 
+	  - \left(\Lambda\underline{\eta}_i\right)^T\Psi^{-1}\underline{x}_i^\star 
+	  + \left(\Lambda\underline{\eta}_i\right)^T\Psi^{-1}\left(\Lambda\underline{\eta}_i\right)
+	  + \underline{\eta}_i^T\underline{\eta}_i\right]\right)\nonumber&\\
 \label{eq:11}& \propto \exp\left(-\frac{1}{2}
-	  \left\{\underline{\text{f}}_i^T\left[\mathcal{I}_q + \Lambda^T\Psi^{-1}\Lambda\right]\underline{\text{f}}_i\right\} + \underline{x}_i^{\star^ {T}}\Psi^{-1}\Lambda\underline{\text{f}}_i \right)&\\
+	  \left\{\underline{\eta}_i^T\left[\mathcal{I}_q + \Lambda^T\Psi^{-1}\Lambda\right]\underline{\eta}_i\right\} + \underline{x}_i^{\star^ {T}}\Psi^{-1}\Lambda\underline{\eta}_i \right)&\\
 	  \intertext{As this is the product of two $\operatorname{MVN}$ distributions we can expect the result to also be $\operatorname{MVN}$.\newline Typically,}
 	  \operatorname{MVN}\left(\mu,\Sigma\right) & \propto \exp\left(-\frac{1}{2}\left(\underline{x}-\underline{\mu}\right)^T\Sigma^{-1}\left(\underline{x}-\underline{\mu}\right)\right)\nonumber&\\
 & = \exp\left(-\frac{1}{2}\left(\underline{x}^T\Sigma^{-1}\underline{x} -2\underline{\mu}^T\Sigma^{-1}\underline{x} + \underline{\mu}^T\underline{\Sigma}^{-1}\underline{\mu}\right)\right)\nonumber&
 \label{eq:12}\intertext{We can identify the $\mu$ and $\Sigma^{-1}$ terms from \eqref{eq:11} above to yield} 
-\mathrm{P}\left(\underline{\text{f}}_i \given \underline{x}_i^\star,\Lambda,\Psi\right) &\sim  \operatorname{MVN}_q\left(\left[\mathcal{I}_q + \Lambda^T\Psi^{-1}\Lambda\right]^{-1}\Lambda^T\Psi^{-1}\underline{x}_i^\star,\left[\mathcal{I}_q + \Lambda^T\Psi^{-1}\Lambda\right]^{-1}\right)&
+\mathrm{P}\left(\underline{\eta}_i \given \underline{x}_i^\star,\Lambda,\Psi\right) &\sim  \operatorname{MVN}_q\left(\left[\mathcal{I}_q + \Lambda^T\Psi^{-1}\Lambda\right]^{-1}\Lambda^T\Psi^{-1}\underline{x}_i^\star,\left[\mathcal{I}_q + \Lambda^T\Psi^{-1}\Lambda\right]^{-1}\right)&
 \end{flalign}
 \noindent However, we can reintroduce $\underline{\mu}$ and save on computational time if we implement the algorithm of \citet{GMRFbook}\footnote{To sample $x\sim\operatorname{N}\left(\mu, \Omega^{-1}\right)$, find a matrix $U$ -- non-unique, and square or `tall' -- via Cholesky Decomposition s.t. $U^TU=\Omega$, sample from $z\sim\operatorname{N}\left(0, 1\right)$, then backsolve $L^Tv = Uv = z$ s.t $x=\mu+v=\mu+L^{-T}z=\mu+U^{-1}z.$ Then$\colon$\begin{itemize}\item $\mathrm{E}\left(x\right)= \mu + U^{-1}\mathrm{E}\left(z\right)=\mu$\item $\mathrm{Cov}\left(x,x\right)=\mathrm{Cov}\left(L^{-T},z\right)=\left(L^TL\right)^{-1}=\Omega^{-1}$\end{itemize}}. In fact, we can extend this to block update the scores, thereby obviating the need to loop over $i$:
 \begin{itemize}
-	\item Calculate $\Omega_F = \mathcal{I}_q + \Lambda^T\Psi^{-1}\Lambda$
-	\item Compute the Cholesky Factorization $\Omega_F = U^TU$.
+	\item Calculate $\Omega_\eta = \mathcal{I}_q + \Lambda^T\Psi^{-1}\Lambda$
+	\item Compute the Cholesky Factorization $\Omega_\eta = U^TU$.
 	\item Sample $\underline{z} \sim \operatorname{MVN}_q\left(\underline{0}, \mathcal{I}_q\right)~N$ times.
 	\item Backsolve $U\underline{v} = \underline{z}^T$.
-	\item Compute $\Omega_F^{-1}$ from $U$.
-	\Item $\mbox{Return}~\left(\Omega_F^{-1}\Lambda^T\Psi^{-1}\left(C_n\underline{\mu}X\right)^T + \underline{v}\right)^T$\newline where $C_n = \mathcal{I}_n - \frac{1}{n}\mathcal{O} $ and $\mathcal{O}$ is an $N\times N$ matrix of all $1$'s. \label{eq:13}
+	\item Compute $\Omega_\eta^{-1}$ from $U$.
+	\Item $\mbox{Return}~\left(\Omega_\eta^{-1}\Lambda^T\Psi^{-1}\left(C_n\underline{\mu}X\right)^T + \underline{v}\right)^T$\newline where $C_n = \mathcal{I}_n - \frac{1}{n}\mathcal{O} $ and $\mathcal{O}$ is an $N\times N$ matrix of all $1$'s. \label{eq:13}
 	\end{itemize}
 
 \subsection[Loadings Matrix]{Loadings Matrix - $\Lambda$}
 \label{Loadings_Section}A Gaussian distribution is a conjugate prior for $\Lambda$, implying an $\operatorname{MVN}_q$ distribution prior for each row $\underline{\Lambda}_j$ of $\Lambda$ s.t. $\underline{\Lambda}_j \sim \operatorname{MVN}_q\left(\underline{0},\Sigma_{\lambda}\right)$ where $\Sigma_{\lambda}$ is a diagonal covariance matrix. As above, we can expect the result of the product of two $\operatorname{MVN}_q$ distributions to itself be distributed this way.
 \begin{flalign}
-\mathrm{P}\left(\underline{\Lambda}_j\given X^\star,\text{F},\Psi\right) &\sim \mathrm{P}\left(X^\star \given \text{F}, \underline{\Lambda}_j,\Psi\right)\mathrm{P}\left(\underline{\Lambda}_j\given\Sigma_{\lambda}\right)\nonumber&\\
-& \propto \exp\left(-\frac{1}{2}\sum_{i=1}^{N}\left(\underline{x}_i^\star - \underline{\Lambda}_j\underline{\text{f}}_i\right)^T\psi_j^{-1}\left(\underline{x}_i^\star - \underline{\Lambda}_j\underline{\text{f}}_i\right)\right)\exp\left(-\frac{1}{2}\left(\underline{\Lambda}_j^T\Sigma_{\lambda}^{-1}\underline{\Lambda}_j\right)\right) \nonumber&\\
-& \propto \exp\left(-\frac{1}{2}\sum_{i=1}^{N}\left[- 2\underline{x}_i^{\star^{T}}\psi_j^{-1}\left(\underline{\Lambda}_j\underline{\text{f}}_i\right) + \left(\underline{\Lambda}_j\underline{\text{f}}_i\right)^T\psi_j^{-1}\left(\underline{\Lambda}_j\underline{\text{f}}_i\right) + \underline{\Lambda}_j^T\Sigma_{\lambda}^{-1}
+\mathrm{P}\left(\underline{\Lambda}_j\given X^\star,\eta,\Psi\right) &\sim \mathrm{P}\left(X^\star \given \eta, \underline{\Lambda}_j,\Psi\right)\mathrm{P}\left(\underline{\Lambda}_j\given\Sigma_{\lambda}\right)\nonumber&\\
+& \propto \exp\left(-\frac{1}{2}\sum_{i=1}^{N}\left(\underline{x}_i^\star - \underline{\Lambda}_j\underline{\eta}_i\right)^T\psi_j^{-1}\left(\underline{x}_i^\star - \underline{\Lambda}_j\underline{\eta}_i\right)\right)\exp\left(-\frac{1}{2}\left(\underline{\Lambda}_j^T\Sigma_{\lambda}^{-1}\underline{\Lambda}_j\right)\right) \nonumber&\\
+& \propto \exp\left(-\frac{1}{2}\sum_{i=1}^{N}\left[- 2\underline{x}_i^{\star^{T}}\psi_j^{-1}\left(\underline{\Lambda}_j\underline{\eta}_i\right) + \left(\underline{\Lambda}_j\underline{\eta}_i\right)^T\psi_j^{-1}\left(\underline{\Lambda}_j\underline{\eta}_i\right) + \underline{\Lambda}_j^T\Sigma_{\lambda}^{-1}
 \underline{\Lambda}_j\right]\right)\nonumber&\\
-& \propto \exp\left(\underline{\Lambda}_j\psi_j^{-1}\sum_{i=1}^{N}x_{ij}^{\star^{T}}\underline{\text{f}}_i - \frac{1}{2}\underline{\Lambda}_j^T\left[\sum_{i=1}^{N}\psi_j^{-1}\underline{\text{f}}_i^T\underline{\text{f}}_i\right]\underline{\Lambda}_j -\frac{1}{2} \underline{\Lambda}_j^T\Sigma_{\lambda}^{-1}\underline{\Lambda}_j\right)\nonumber&\\
-\label{eq:14}& \propto \exp\left(\underline{\Lambda}_j\left[\text{F}^T\psi_j^{-1}\underline{x}^{j^\star}\right] - \frac{1}{2}\underline{\Lambda}_j^T\left[\Sigma_{\lambda}^{-1} + \psi_j^{-1}\text{F}^T\text{F}\right]\underline{\Lambda}_j\right)&
+& \propto \exp\left(\underline{\Lambda}_j\psi_j^{-1}\sum_{i=1}^{N}x_{ij}^{\star^{T}}\underline{\eta}_i - \frac{1}{2}\underline{\Lambda}_j^T\left[\sum_{i=1}^{N}\psi_j^{-1}\underline{\eta}_i^T\underline{\eta}_i\right]\underline{\Lambda}_j -\frac{1}{2} \underline{\Lambda}_j^T\Sigma_{\lambda}^{-1}\underline{\Lambda}_j\right)\nonumber&\\
+\label{eq:14}& \propto \exp\left(\underline{\Lambda}_j\left[\eta^T\psi_j^{-1}\underline{x}^{j^\star}\right] - \frac{1}{2}\underline{\Lambda}_j^T\left[\Sigma_{\lambda}^{-1} + \psi_j^{-1}\eta^T\eta\right]\underline{\Lambda}_j\right)&
 \end{flalign}
 where $\underline{x}^{j^\star}$ is an $N$-vector containing the elements of the $j$-th column of $X^\star$.
 \begin{equation}
 \begin{split}
-	\therefore \mathrm{P}\left(\underline{\Lambda}_j\given X^\star,\text{F},\Psi\right) &\sim&\hspace{-3mm} \operatorname{MVN}_q\Big(\left[\Sigma_{\lambda}^{-1} + \psi_j^{-1}\text{F}^T\text{F}\right]^{-1}\text{F}^T\psi_j^{-1}\underline{x}^{j^\star},\\&&\left[\Sigma_{\lambda}^{-1} + \psi_j^{-1}\text{F}^T\text{F}\right]^{-1}\Big)&\label{eq:15}
+	\therefore \mathrm{P}\left(\underline{\Lambda}_j\given X^\star,\eta,\Psi\right) &\sim&\hspace{-3mm} \operatorname{MVN}_q\Big(\left[\Sigma_{\lambda}^{-1} + \psi_j^{-1}\eta^T\eta\right]^{-1}\eta^T\psi_j^{-1}\underline{x}^{j^\star},\\&&\left[\Sigma_{\lambda}^{-1} + \psi_j^{-1}\eta^T\eta\right]^{-1}\Big)&\label{eq:15}
 \end{split}
 \end{equation}
 \newpage
 \noindent However, we can reintroduce $\underline{\mu}$ and save on computational time, as before, if we:
 \begin{itemize}
-	\item Calculate $\Omega_{\lambda_j} = \Sigma_{\lambda}^{-1} + \psi_j^{-1}\text{F}^T\text{F}$.
+	\item Calculate $\Omega_{\lambda_j} = \Sigma_{\lambda}^{-1} + \psi_j^{-1}\eta^T\eta$.
 	\item Compute the Cholesky Factorization $\Omega_{\lambda_j} = U^TU$.
 	\item Sample $\underline{z} \sim \operatorname{MVN}_q\left(\underline{0}, \mathcal{I}_q\right)$.
 	\item Back-solve $U\underline{v} = \underline{z}$.
 	\item Compute $\Omega_{\lambda_j}^{-1}$ from $U$.
-	\Item $\mbox{Return}~\Omega_{\lambda_j}^{-1}\text{F}^T\psi_j^{-1}\left(\underline{x}^{j} - \underline{1}\mu_j\right) + \underline{v}$\newline
+	\Item $\mbox{Return}~\Omega_{\lambda_j}^{-1}\eta^T\psi_j^{-1}\left(\underline{x}^{j} - \underline{1}\mu_j\right) + \underline{v}$\newline
 	where $\underline{1}$ is an $N$-vector of all $1$'s. \label{eq:16}
 \end{itemize}
 
@@ -257,27 +257,27 @@ $\mathrm{V}^{-1} \sim \operatorname{Wish}_p\left(\nu, \Sigma\right)~\mbox{when}~
 \shortintertext{This suggests the prior for $\Psi^{-1}$ is a product of $p \hspace{2mm} \operatorname{Ga}\left(\alpha,\beta\right)$ distributions. We choose hyperparameters as per \cite{Fruhwirth-Schnatter2010-II}, by bounding each $\psi_j$ away from zero in such a way that Heywood problems are avoided.}
 \therefore \mathrm{P}\left(\Psi^{-1} \given \alpha, \beta \right) & = \prod_{j=1}^{p}\mathrm{P}\left(\psi_j^{-1} \given \alpha, \beta \right)&\nonumber \\
 & \propto \prod_{j=1}^{p} \left(\psi_j^{-1}\right)^{\alpha - 1}\exp\left(- \beta\psi_j^{-1}\right)\nonumber&\\
-\therefore \mathrm{P}\left(\Psi^{-1}\given X^\star, \text{F}, \Lambda\right) &\propto \mathrm{P}\left(X^\star \given \text{F},\Lambda\right)\mathrm{P}\left(\Psi^{-1} \given \alpha,\beta\right) \nonumber&\\
+\therefore \mathrm{P}\left(\Psi^{-1}\given X^\star, \eta, \Lambda\right) &\propto \mathrm{P}\left(X^\star \given \eta,\Lambda\right)\mathrm{P}\left(\Psi^{-1} \given \alpha,\beta\right) \nonumber&\\
 &\propto \prod_{j=1}^{p}\left(\psi_j^{-1}\right)^{\frac{N}{2}}\exp\left(-\frac{\mathcal{S}_j^\star}{2}\psi_j^{-1}\right)\prod_{j=1}^{p}\left(\psi_j^{-1}\right)^{\alpha - 1}\exp\left(-\beta\psi_j^{-1}\right)\nonumber&\\
 & \propto \prod_{j=1}^{p}\left(\psi_j^{-1}\right)^{\frac{N}{2} + \alpha - 1}\exp\left(-\bigg(\frac{\mathcal{S}_j^\star}{2} + \beta\bigg)\psi_j^{-1}\right)\label{eq:17}\\
-\mbox{where} \hspace{2mm}\mathcal{S}_j^\star &=  \sum_{i=1}^{N}\left(x_{ij} - \underline{\Lambda}_j\underline{\text{f}}_i\right)^2\nonumber 
+\mbox{where} \hspace{2mm}\mathcal{S}_j^\star &=  \sum_{i=1}^{N}\left(x_{ij} - \underline{\Lambda}_j\underline{\eta}_i\right)^2\nonumber 
 \shortintertext{However, we can reintroduce $\underline{\mu}$ at this stage by rewriting:}
-\mathcal{S}_j &=  \sum_{i=1}^{N}\left(x_{ij} - \mu_j - \underline{\Lambda}_j\underline{\text{f}}_i\right)^2 \nonumber&
+\mathcal{S}_j &=  \sum_{i=1}^{N}\left(x_{ij} - \mu_j - \underline{\Lambda}_j\underline{\eta}_i\right)^2 \nonumber&
 \shortintertext{Thus the posterior distribution of each $\psi_j^{-1}$ is given by:}
 \mathrm{P}\left(\psi_j^{-1}\given X,F,\Lambda\right) & \sim \operatorname{Ga}\left(\alpha + \frac{N}{2},\beta + \frac{S_j}{2}\right)&\label{eq:18}
 \end{flalign}
 \subsection[Reintroducing $\mu$]{Reintroducing $\underline{\mu}$}
 We've already seen from \eqref{eq:13}, \eqref{eq:16} and \eqref{eq:18} that reintroducing $\mu$ to the other full conditionals is trivial. All that remains is to specify the conjugate Gaussian prior for $\mu$ itself, and to derive its full conditional. This implies an $\operatorname{MVN}_p$ distribution prior s.t. $\underline{\mu} \sim \operatorname{MVN}_p\left(\underline{\tilde{\mu}}, \Sigma_{\mu}\right)$ where $\Sigma_{\mu}$ is a diagonal covariance matrix, typically the diagonal of the data covariance matrix, and $\underline{\tilde{\mu}}$ is a vector of prior mean means, typically the sample mean for each group. As above, we can expect the result of the product of two $\operatorname{MVN}_p$ distributions to itself be distributed this way.
 \begin{flalign}
-\mathrm{P}\left(\underline{\mu}\given X,\text{F},\Psi, \Lambda\right)
-& \propto  \exp\left(-\frac{1}{2}\sum_{i=1}^{N}\left(\underline{x}_i - \underline{\mu} - \Lambda\underline{\text{f}}_i\right)^T\Psi^{-1}\left(\underline{x}_i - \underline{\mu} - \Lambda\underline{\text{f}}_i\right)\right)\exp\left(-\frac{1}{2}\left(\underline{\mu} - \underline{\tilde{\mu}}\right)^T\Sigma_{\mu}^{-1}\left(\underline{\mu} - \underline{\tilde{\mu}}\right)\right) \nonumber&\\
-& \propto \exp\left(-\frac{1}{2}\bigg(\sum_{i=1}^{N}\left[-2 \underline{x}_i^T\Psi^{-1}\underline{\mu} + 2\left(\Lambda\underline{\text{f}}_i\right)^T\Psi^{-1}\underline{\mu}  + \underline{\mu}^T\Psi^{-1}\underline{\mu}\right] +\underline{\mu}^T \Sigma_{\mu}^{-1}\underline{\mu} - 2\underline{\tilde{\mu}}^T\Sigma_{\mu}^{-1}\underline{\mu}\bigg)\right)\nonumber&\\
-& \propto  \exp\left(\sum_{i=1}^{N}\underline{x}_i^T\Psi^{-1}\underline{\mu} -\sum_{i=1}^{N}\left(\Lambda\underline{\text{f}}_i\right)^T\Psi^{-1}\underline{\mu} -\frac{1}{2}\left[\underline{\mu}^T\left(\Sigma_{\mu}^{-1} + N\Psi^{-1}\right)\underline{\mu}\right] + \underline{\tilde{\mu}}^T\Sigma_{\mu}^{-1}\underline{\mu}\right)\nonumber&
+\mathrm{P}\left(\underline{\mu}\given X,\eta,\Psi, \Lambda\right)
+& \propto  \exp\left(-\frac{1}{2}\sum_{i=1}^{N}\left(\underline{x}_i - \underline{\mu} - \Lambda\underline{\eta}_i\right)^T\Psi^{-1}\left(\underline{x}_i - \underline{\mu} - \Lambda\underline{\eta}_i\right)\right)\exp\left(-\frac{1}{2}\left(\underline{\mu} - \underline{\tilde{\mu}}\right)^T\Sigma_{\mu}^{-1}\left(\underline{\mu} - \underline{\tilde{\mu}}\right)\right) \nonumber&\\
+& \propto \exp\left(-\frac{1}{2}\bigg(\sum_{i=1}^{N}\left[-2 \underline{x}_i^T\Psi^{-1}\underline{\mu} + 2\left(\Lambda\underline{\eta}_i\right)^T\Psi^{-1}\underline{\mu}  + \underline{\mu}^T\Psi^{-1}\underline{\mu}\right] +\underline{\mu}^T \Sigma_{\mu}^{-1}\underline{\mu} - 2\underline{\tilde{\mu}}^T\Sigma_{\mu}^{-1}\underline{\mu}\bigg)\right)\nonumber&\\
+& \propto  \exp\left(\sum_{i=1}^{N}\underline{x}_i^T\Psi^{-1}\underline{\mu} -\sum_{i=1}^{N}\left(\Lambda\underline{\eta}_i\right)^T\Psi^{-1}\underline{\mu} -\frac{1}{2}\left[\underline{\mu}^T\left(\Sigma_{\mu}^{-1} + N\Psi^{-1}\right)\underline{\mu}\right] + \underline{\tilde{\mu}}^T\Sigma_{\mu}^{-1}\underline{\mu}\right)\nonumber&
 \end{flalign}
 \vspace{-5mm}
 \begin{equation}
 	\begin{split}
-	\therefore \mathrm{P}\left(\underline{\mu}\given X,\text{F},\Psi,\Lambda\right)&\sim&\hspace{-3mm}\operatorname{MVN}_p\Bigg(\left[\Sigma_{\mu}^{-1} + N\Psi^{-1}\right]^{-1}\Big(\Psi^{-1}\big(\sum_{i=1}^{N}\underline{x}_i - \sum_{i=1}^{N}\Lambda\underline{\text{f}}_i\big) + \Sigma_{\mu}^{-1}\underline{\tilde{\mu}}\Big), \\&& \left[\Sigma_{\mu}^{-1} + N\Psi^{-1}\right]^{-1}\Bigg)\label{eq:19}
+	\therefore \mathrm{P}\left(\underline{\mu}\given X,\eta,\Psi,\Lambda\right)&\sim&\hspace{-3mm}\operatorname{MVN}_p\Bigg(\left[\Sigma_{\mu}^{-1} + N\Psi^{-1}\right]^{-1}\Big(\Psi^{-1}\big(\sum_{i=1}^{N}\underline{x}_i - \sum_{i=1}^{N}\Lambda\underline{\eta}_i\big) + \Sigma_{\mu}^{-1}\underline{\tilde{\mu}}\Big), \\&& \left[\Sigma_{\mu}^{-1} + N\Psi^{-1}\right]^{-1}\Bigg)\label{eq:19}
 	\end{split}
 \end{equation}
 \noindent However, we can save on computational time, as before, if we:
@@ -287,7 +287,7 @@ We've already seen from \eqref{eq:13}, \eqref{eq:16} and \eqref{eq:18} that rein
 	\item $\Omega_{\mu}^{-1} = U^TU$ can be obtained by taking the square root of $\Omega_{\mu}$ since this matrix is diagonal.
 	\item Sample $\underline{z} \sim \operatorname{MVN}_p\left(\underline{0}, \mathcal{I}_p\right)$.
 	\item Compute $\underline{v} = U^T\underline{z}$.
-	\Item $\mbox{Return}~\Omega_{\mu}^{-1}\Big(\Psi^{-1}\big(\sum_{i=1}^{N}\underline{x}_i - \sum_{i=1}^{N}\Lambda\underline{\text{f}}_i\big) + \Sigma_{\mu}^{-1}\underline{\tilde{\mu}}\Big) + \underline{v}$.
+	\Item $\mbox{Return}~\Omega_{\mu}^{-1}\Big(\Psi^{-1}\big(\sum_{i=1}^{N}\underline{x}_i - \sum_{i=1}^{N}\Lambda\underline{\eta}_i\big) + \Sigma_{\mu}^{-1}\underline{\tilde{\mu}}\Big) + \underline{v}$.
 	\label{eq:20}
 \end{itemize}
 
@@ -303,17 +303,17 @@ We've already seen from \eqref{eq:13}, \eqref{eq:16} and \eqref{eq:18} that rein
 	\begin{alignat*}{7}
 	\intertext{\num Choose hyperparameters $\Sigma_{\mu}, \Sigma_{\lambda}, \alpha, \mbox{and}~ \beta$, select $q$ and initialise $\underline{\tilde{\mu}}$.}
 	\num& \mbox{Initalise:} \quad& &\underline{\mu}^{\left(0\right)} &~\sim~& \operatorname{MVN}_p\left(\underline{\tilde{\mu}}, \Sigma_{\mu}\right) &\\
-	&\quad& &\underline{\text{f}}_i^{\left(0\right)} &~\sim~&\operatorname{MVN}_q\left(\underline{0},\mathcal{I}_q\right)~\quad\hspace{1.5mm}\forall~i = 1,\ldots,N&\\
+	&\quad& &\underline{\eta}_i^{\left(0\right)} &~\sim~&\operatorname{MVN}_q\left(\underline{0},\mathcal{I}_q\right)~\quad\hspace{1.5mm}\forall~i = 1,\ldots,N&\\
 	&\quad& &\underline{\Lambda}_j^{\left(0\right)} &~\sim~&\operatorname{MVN}_q\left(\underline{0},\Sigma_{\lambda}\right)~\quad\forall~j = 1,\ldots,p&\\
 	&\quad& &\psi_j^{-1^{\left(0\right)}} &~\sim~& \operatorname{Ga}\left(\alpha,\beta\right)~\quad\hspace{8mm}\forall~j = 1,\ldots,p
 	\intertext{\num For $t = 1, \ldots, T$, using the routines specified in \eqref{eq:13}, \eqref{eq:16}, \eqref{eq:18} and \eqref{eq:20}$\colon$}
 	&\quad& \alphloop&\Omega_{\mu}^{\left(t\right)} &~=~& \Sigma_{\mu}^{-1} + N\Psi^{-1^{\left(t-1\right)}}&\\
-	&\quad& &\underline{\mu}^{\left(t\right)} &~\sim~& \operatorname{MVN}_p\left(\Omega_{\mu}^{-1^{\left(t\right)}}\Big(\Psi^{-1}\big(\sum_{i=1}^{N}\underline{x}_i - \sum_{i=1}^{N}\Lambda\underline{\text{f}}_i\big) + \Sigma_{\mu}^{-1}\underline{\tilde{\mu}}\Big),\Omega_{\mu}^{-1^{\left(t\right)}}\right)&\\
-	&\quad& \alphloop&\Omega_F^{\left(t\right)} &~=~&\mathcal{I}_q + \Lambda^{T^{\left(t-1\right)}}\Psi^{-1^{\left(t-1\right)}}\Lambda^{\left(t-1\right)}&\\
-		&\quad & & \underline{\text{f}}_i^{\left(t\right)} &~\sim~& \operatorname{MVN}_q\left(\Omega_F^{-1^{\left(t\right)}}\Lambda^{T^{\left(t-1\right)}}\Psi^{-1^{\left(t-1\right)}}\left(\underline{x}_i -\underline{\mu}^{\left(t\right)}\right),\Omega_F^{-1^{\left(t\right)}}\right)&\\
+	&\quad& &\underline{\mu}^{\left(t\right)} &~\sim~& \operatorname{MVN}_p\left(\Omega_{\mu}^{-1^{\left(t\right)}}\Big(\Psi^{-1}\big(\sum_{i=1}^{N}\underline{x}_i - \sum_{i=1}^{N}\Lambda\underline{\eta}_i\big) + \Sigma_{\mu}^{-1}\underline{\tilde{\mu}}\Big),\Omega_{\mu}^{-1^{\left(t\right)}}\right)&\\
+	&\quad& \alphloop&\Omega_\eta^{\left(t\right)} &~=~&\mathcal{I}_q + \Lambda^{T^{\left(t-1\right)}}\Psi^{-1^{\left(t-1\right)}}\Lambda^{\left(t-1\right)}&\\
+		&\quad & & \underline{\eta}_i^{\left(t\right)} &~\sim~& \operatorname{MVN}_q\left(\Omega_\eta^{-1^{\left(t\right)}}\Lambda^{T^{\left(t-1\right)}}\Psi^{-1^{\left(t-1\right)}}\left(\underline{x}_i -\underline{\mu}^{\left(t\right)}\right),\Omega_\eta^{-1^{\left(t\right)}}\right)&\\
 	&\quad &\alphloop &\mbox{For}~j &~=~& 1, \ldots, p&\\
-	&\quad & \bullet~&\Omega_{\lambda_j}^{\left(t\right)} &~=~& \Sigma_{\lambda}^{-1} + \psi_j^{-1^{\left(t-1\right)}}\text{F}^{T^{\left(t\right)}}\text{F}^{\left(t\right)}&\\
-	&\quad & &  \underline{\Lambda}_j^{\left(t\right)} &~\sim~& \operatorname{MVN}_q\left(\Omega_{\lambda_j}^{-1^{\left(t\right)}}\text{F}^{T^{\left(t\right)}}\psi_j^{-1^{\left(t-1\right)}}\left(\underline{x}^j -\underline{1}\mu_j^{\left(t\right)}\right),\Omega_{\lambda_j}^{-1^{\left(t\right)}}\right)&\\
+	&\quad & \bullet~&\Omega_{\lambda_j}^{\left(t\right)} &~=~& \Sigma_{\lambda}^{-1} + \psi_j^{-1^{\left(t-1\right)}}\eta^{T^{\left(t\right)}}\eta^{\left(t\right)}&\\
+	&\quad & &  \underline{\Lambda}_j^{\left(t\right)} &~\sim~& \operatorname{MVN}_q\left(\Omega_{\lambda_j}^{-1^{\left(t\right)}}\eta^{T^{\left(t\right)}}\psi_j^{-1^{\left(t-1\right)}}\left(\underline{x}^j -\underline{1}\mu_j^{\left(t\right)}\right),\Omega_{\lambda_j}^{-1^{\left(t\right)}}\right)&\\
 	&\quad &\bullet~&  \psi_j^{-1^{\left(t\right)}} &~\sim~& \operatorname{Ga}\left(\alpha + \frac{N}{2},\beta + \frac{S_j^{\left(t\right)}}{2}\right)
 	\intertext{\num Disregard the first $\operatorname{B}$ burn-in iterations and thin every $\operatorname{K}$-th iteration.}
 	\intertext{\num Calculate the log-likelihood for each remaining sample. Then, using the largest value observed across these draws, BIC-MCMC, as defined by \citet{Fruhwirth-Schnatter2011}, is determined by $2\ln\hat{\mathcal{L}} - k\ln\left(N\right)$, where $k = pq -\frac{q\left(q-1\right)}{2} + 2p$ is the effective number of parameters in the model. When choosing between competing models, the one with the highest BIC-MCMC is preferred. Alternatively, AIC-MCMC, or the BICM and AICM of \cite{Raftery2007} can be used.}&
@@ -324,11 +324,11 @@ We've already seen from \eqref{eq:13}, \eqref{eq:16} and \eqref{eq:18} that rein
 \subsection[Issues Around Identifiability]{Issues Around Identifiability}
 	Most covariance matrices $\Sigma$ cannot be uniquely factored as $\Lambda\Lambda^T + \Psi$ where $q \ll{p}$. Let $T$ be any $q\times q$ orthogonal matrix such that $TT^T = \mathcal{I}_q$. Then$\colon$ 
 	\begin{flalign}
-	\underline{x}_i- \underline{\mu} &= \Lambda\underline{\text{f}}_i + \underline{\varepsilon}_i\nonumber&\\
-	&= \Lambda TT^T\underline{\text{f}}_i + \underline{\varepsilon}_i\nonumber&\\
-	&= \Lambda^\star\underline{\text{f}}_i^\star + \underline{\varepsilon}_i\nonumber
-	\intertext{where $\Lambda^\star = \Lambda T$ and $\underline{\text{f}}_i^\star = T^T\underline{\text{f}}_i$.
-	It follows that $\mathrm{E}\left(\underline{\text{f}}_i^\star\right) = \underline{0}$ and $\mathrm{Cov}\left(\underline{\text{f}}_i^\star\right) = \mathcal{I}_q$.
+	\underline{x}_i- \underline{\mu} &= \Lambda\underline{\eta}_i + \underline{\varepsilon}_i\nonumber&\\
+	&= \Lambda TT^T\underline{\eta}_i + \underline{\varepsilon}_i\nonumber&\\
+	&= \Lambda^\star\underline{\eta}_i^\star + \underline{\varepsilon}_i\nonumber
+	\intertext{where $\Lambda^\star = \Lambda T$ and $\underline{\eta}_i^\star = T^T\underline{\eta}_i$.
+	It follows that $\mathrm{E}\left(\underline{\eta}_i^\star\right) = \underline{0}$ and $\mathrm{Cov}\left(\underline{\eta}_i^\star\right) = \mathcal{I}_q$.
 	Thus it is impossible, given the data $X$, to distinguish between $\Lambda$ and $\Lambda^\star$ since they both generate the same covariance matrix $\Sigma\colon$}
 	\Sigma &= \Lambda\Lambda^T + \Psi\nonumber&\\
 	&= \Lambda TT^T\Lambda^T + \Psi\nonumber&\\
@@ -352,13 +352,13 @@ The exact specification of this shrinkage-type prior allows the degree of shrink
 \noindent where $\delta_h \left(h=1,\ldots,\infty\right)$ are independent, $\tau_k$ is a \textit{global} shrinkage parameter for the $k$-th column and the $\phi_{jk}$s are \textit{local} shrinkage parameters for the elements in the $k$-th column. The $\tau_k$s are stochastically increasing under the restriction $\alpha_k > 1$, which favours more shrinkage as the column index increases. Typically $\beta_1 = \beta_k = 1$.
 
 \subsection[Defining new MGP Full Conditionals]{Defining new MGP Full Conditionals}
-We propose a Gibbs sampler for posterior computation, much like the one above, after truncating the loadings matrix to have $q^\star \ll p$ columns. An adaptive strategy for inference on the truncation level $q^\star$ is described in \ref{Adapt_Section}. For now, let's focus on the new full conditionals for the loadings matrix, global shrinkages, and local shrinkages which need to be derived in order to implement this. Once again, these parameters are initialised according to their priors. The other full conditionals are exactly as before, with just a small adjustment to the factor scores to allow for the truncation to $q^\star$ columns, i.e. $\mathrm{P}\left(\underline{\text{f}}_i \given \mbox{---}\right) \sim  \operatorname{MVN}_{q^\star}\left(\left[\mathcal{I}_{q^\star} + \Lambda^T_{q^\star}\Psi^{-1}\Lambda_{q^\star}\right]^{-1}\Lambda^T\Psi^{-1}\underline{x}_i - \underline{\mu},\left[\mathcal{I}_{q^\star} + \Lambda^T_{q^\star}\Psi^{-1}\Lambda_{q^\star}\right]^{-1}\right)$
+We propose a Gibbs sampler for posterior computation, much like the one above, after truncating the loadings matrix to have $q^\star \ll p$ columns. An adaptive strategy for inference on the truncation level $q^\star$ is described in \ref{Adapt_Section}. For now, let's focus on the new full conditionals for the loadings matrix, global shrinkages, and local shrinkages which need to be derived in order to implement this. Once again, these parameters are initialised according to their priors. The other full conditionals are exactly as before, with just a small adjustment to the factor scores to allow for the truncation to $q^\star$ columns, i.e. $\mathrm{P}\left(\underline{\eta}_i \given \mbox{---}\right) \sim  \operatorname{MVN}_{q^\star}\left(\left[\mathcal{I}_{q^\star} + \Lambda^T_{q^\star}\Psi^{-1}\Lambda_{q^\star}\right]^{-1}\Lambda^T\Psi^{-1}\underline{x}_i - \underline{\mu},\left[\mathcal{I}_{q^\star} + \Lambda^T_{q^\star}\Psi^{-1}\Lambda_{q^\star}\right]^{-1}\right)$
 
 \subsubsection[Loadings Matrix]{Loadings Matrix - $\Lambda$}
 Incorporating the new prior \eqref{eq:21}, and following the same steps as \ref{Loadings_Section} above, it's trivial to show that the $\Lambda_j$s now have independent conditionally conjugate posteriors given by$\colon$
 \begin{equation}
-\mathrm{P}\left(\Lambda_j\given \mbox{---}\right) \sim \operatorname{MVN}_{q^\star}\left(\left[\mathrm{D}_j^{-1} + \psi_j^{-1}\text{F}^T\text{F}\right]^{-1}\text{F}^T\psi_j^{-1}\underline{x}^{j^\star},\left[\mathrm{D}_j^{-1} + \psi_j^{-1}\text{F}^T\text{F}\right]^{-1}\right)\label{eq:24}\end{equation}
-\noindent However, we can reintroduce $\underline{\mu}$ and save on computational time, as before, if we follow the routine given in \eqref{eq:16}, with $\Omega_{\lambda_j} = \mathrm{D}_j^{-1} + \psi_j^{-1}\text{F}^T\text{F}$.
+\mathrm{P}\left(\Lambda_j\given \mbox{---}\right) \sim \operatorname{MVN}_{q^\star}\left(\left[\mathrm{D}_j^{-1} + \psi_j^{-1}\eta^T\eta\right]^{-1}\eta^T\psi_j^{-1}\underline{x}^{j^\star},\left[\mathrm{D}_j^{-1} + \psi_j^{-1}\eta^T\eta\right]^{-1}\right)\label{eq:24}\end{equation}
+\noindent However, we can reintroduce $\underline{\mu}$ and save on computational time, as before, if we follow the routine given in \eqref{eq:16}, with $\Omega_{\lambda_j} = \mathrm{D}_j^{-1} + \psi_j^{-1}\eta^T\eta$.
 
 
 \subsubsection[Local Shrinkage]{Local Shrinkage -- $\phi_{jk}$}
@@ -461,7 +461,7 @@ p_g &=~\mathrm{P}\left(\underline{z}_{ig}=1\given\underline{x}_i,\gamma\right) =
 	\item Initialise, $\forall~g=1,\ldots,G\colon$
 		\begin{flalign}
 	\underline{\mu}_g^{\left(0\right)} &\sim \operatorname{MVN}_p\left(\underline{\tilde{\mu}}_g, \Sigma_{\mu}\right) &\nonumber\\
-	\underline{\text{f}}_{i}^{\left(0\right)} &\sim\operatorname{MVN}_{q_g^\star}\left(\underline{0},\mathcal{I}_{q_g^\star}\right)~\quad\forall~i = 1,\ldots,N&\nonumber\\
+	\underline{\eta}_{i}^{\left(0\right)} &\sim\operatorname{MVN}_{q_g^\star}\left(\underline{0},\mathcal{I}_{q_g^\star}\right)~\quad\forall~i = 1,\ldots,N&\nonumber\\
 	\underline{\Lambda}_{jg}^{\left(0\right)} &\sim\operatorname{MVN}_{q_g^\star}\left(\underline{0},\Sigma_{\lambda}\right)~\quad\hspace{0.5mm}\forall~j = 1,\ldots,p&\nonumber\\
 	\psi_{jg}^{-1^{\left(0\right)}} &\sim \operatorname{Ga}\left(\alpha,\beta\right)~\quad\quad\hspace{6mm}\forall~j = 1,\ldots,p&\nonumber\\
 	\phi_{jkg}^{\left(0\right)} &\sim \operatorname{Ga}\left(\nu,\nu\right)~\quad\quad\hspace{6.5mm}\forall~j = 1,\ldots,p\quad\mbox{and}\quad k=1,\ldots,q_g^\star\nonumber\\
@@ -471,12 +471,12 @@ p_g &=~\mathrm{P}\left(\underline{z}_{ig}=1\given\underline{x}_i,\gamma\right) =
 	\item For $g = 1,\ldots,G$, sample other parameters as before, but this time from their \textit{group specific} full conditionals$\colon$
 	\begin{alignat*}{4}
 		\alphloop&\Omega_{\mu_g}^{\left(t\right)} &=&~\Sigma_{\mu}^{-1} + n_g\Psi_g^{-1^{\left(t-1\right)}}\\
-		&\underline{\mu}_g^{\left(t\right)} &\sim&~\operatorname{MVN}_p\left(\Omega_{\mu_g}^{-1^{\left(t\right)}}\Big(\Psi_g^{-1^{\left(t-1\right)}}\big(\sum_{i\colon z_{ig} = 1}\underline{x}_i - \sum_{i\colon z_{ig} = 1}\Lambda_g^{\left(t-1\right)}\underline{\text{f}}_i^{\left(t-1\right)}\big) + \Sigma_{\mu}^{-1}\underline{\tilde{\mu}}_g\Big),\Omega_{\mu_g}^{-1^{\left(t\right)}}\right)\\
-		\alphloop&\Omega_{F_g}^{\left(t\right)} &=&~\mathcal{I}_{q_g^\star} + \Lambda_g^{T^{\left(t-1\right)}}\Psi_g^{-1^{\left(t-1\right)}}\Lambda_g^{\left(t-1\right)}\\
-		&\underline{\text{f}}_{i\colon z_{ig} = 1}^{\left(t\right)}~&\sim&~\operatorname{MVN}_q\left(\Omega_{F_g}^{-1^{\left(t\right)}}\Lambda_g^{T^{\left(t-1\right)}}\Psi_g^{-1^{\left(t-1\right)}}\left(\underline{x}_{i\colon z_{ig} = 1} -\underline{\mu}_g^{\left(t\right)}\right),\Omega_{F_g}^{-1^{\left(t\right)}}\right)\\
+		&\underline{\mu}_g^{\left(t\right)} &\sim&~\operatorname{MVN}_p\left(\Omega_{\mu_g}^{-1^{\left(t\right)}}\Big(\Psi_g^{-1^{\left(t-1\right)}}\big(\sum_{i\colon z_{ig} = 1}\underline{x}_i - \sum_{i\colon z_{ig} = 1}\Lambda_g^{\left(t-1\right)}\underline{\eta}_i^{\left(t-1\right)}\big) + \Sigma_{\mu}^{-1}\underline{\tilde{\mu}}_g\Big),\Omega_{\mu_g}^{-1^{\left(t\right)}}\right)\\
+		\alphloop&\Omega_{\eta_g}^{\left(t\right)} &=&~\mathcal{I}_{q_g^\star} + \Lambda_g^{T^{\left(t-1\right)}}\Psi_g^{-1^{\left(t-1\right)}}\Lambda_g^{\left(t-1\right)}\\
+		&\underline{\eta}_{i\colon z_{ig} = 1}^{\left(t\right)}~&\sim&~\operatorname{MVN}_q\left(\Omega_{\eta_g}^{-1^{\left(t\right)}}\Lambda_g^{T^{\left(t-1\right)}}\Psi_g^{-1^{\left(t-1\right)}}\left(\underline{x}_{i\colon z_{ig} = 1} -\underline{\mu}_g^{\left(t\right)}\right),\Omega_{\eta_g}^{-1^{\left(t\right)}}\right)\\
 		\alphloop &\mbox{For}~j &=& 1, \ldots, p\\
-		\bullet~&\Omega_{\lambda_{jg}}^{\left(t\right)} &=& \mathrm{D}_j^{-1} + \psi_{jg}^{-1^{\left(t-1\right)}}\text{F}_{i\colon z_{ig} = 1}^{T^{\left(t\right)}}\text{F}_{i\colon z_{ig} = 1}^{\left(t\right)}\\
-		&  \underline{\Lambda}_{jg}^{\left(t\right)} &\sim& \operatorname{MVN}_{q_g^\star}\left(\Omega_{\lambda_{jg}}^{-1^{\left(t\right)}}\text{F}_{i\colon z_{ig} = 1}^{T^{\left(t\right)}}\psi_{jg}^{-1^{\left(t-1\right)}}\left(\underline{x}_{i\colon z_{ig} = 1}^j -\underline{1}\mu_{jg}^{\left(t\right)}\right),\Omega_{\lambda_{jg}}^{-1^{\left(t\right)}}\right)\\
+		\bullet~&\Omega_{\lambda_{jg}}^{\left(t\right)} &=& \mathrm{D}_j^{-1} + \psi_{jg}^{-1^{\left(t-1\right)}}\eta_{i\colon z_{ig} = 1}^{T^{\left(t\right)}}\eta_{i\colon z_{ig} = 1}^{\left(t\right)}\\
+		&  \underline{\Lambda}_{jg}^{\left(t\right)} &\sim& \operatorname{MVN}_{q_g^\star}\left(\Omega_{\lambda_{jg}}^{-1^{\left(t\right)}}\eta_{i\colon z_{ig} = 1}^{T^{\left(t\right)}}\psi_{jg}^{-1^{\left(t-1\right)}}\left(\underline{x}_{i\colon z_{ig} = 1}^j -\underline{1}\mu_{jg}^{\left(t\right)}\right),\Omega_{\lambda_{jg}}^{-1^{\left(t\right)}}\right)\\
 		\bullet~&  \psi_{jg}^{-1^{\left(t\right)}} &\sim& \operatorname{Ga}\left(\alpha + \frac{n_g}{2},\beta + \frac{S_{jg}^{\left(t\right)}}{2}\right)\\
 		\bullet~& \phi_{jkg}^{\left(t\right)} &\sim& \operatorname{Ga}\left(\nu + \frac{1}{2},\nu+\frac{\tau_{kg}^{\left(t-1\right)}\lambda_{jkg}^{2^{\left(t\right)}}}{2}\right)\quad\forall~k=1,\ldots,q_g^\star\\
 		\alphloop&\delta_{1g}^{\left(t\right)} &\sim& \operatorname{Ga}\left(\alpha_1 + \frac{pq_g^\star}{2},\beta_1 + \frac{1}{2}\sum_{h=1}^{q_g^\star}\tau_{hg}^{\left(1\right)^{\left(t-1\right)}}\sum_{j=1}^p\lambda_{jhg}^{2^{\left(t\right)}}\phi_{jhg}^{\left(t\right)}\right)\\

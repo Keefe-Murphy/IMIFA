@@ -340,22 +340,22 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
 # Retrieve (unrotated) scores
   no.score       <- all(Q == 0)
   if(no.score)   { 
-    if(sw["f.sw"])                warning("Scores & loadings not stored as model has zero factors", call.=FALSE)
-    sw["f.sw"]   <- FALSE
+    if(sw["z"])                warning("Scores & loadings not stored as model has zero factors", call.=FALSE)
+    sw["s.sw"]   <- FALSE
   }
-  if(sw["f.sw"]) {
+  if(sw["s.sw"]) {
     Q.max        <- max(Q) 
     Q.maxs       <- seq_len(Q.max)
-    f            <- sims[[G.ind]][[Q.ind]]$f
+    eta          <- sims[[G.ind]][[Q.ind]]$eta
     if(inf.Q) {
-      f          <- as.array(f)
+      eta        <- as.array(eta)
     }
-    f            <- f[,Q.maxs,tmp.store, drop=FALSE]
+    eta          <- eta[,Q.maxs,tmp.store, drop=FALSE]
   }
 
 # Loop over g in G to extract other results
   result         <- list(list())
-  f.store        <- list()
+  e.store        <- list()
   mse   <- rmse  <- nrmse  <- cvrmse  <- 
   mad   <- emp.T <- est.T  <- rep(NA, G)
   for(g in Gseq) {
@@ -386,25 +386,25 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     }
   
   # Loadings matrix / identifiability / error metrics / etc.  
-    if(all(sw["f.sw"], clust.ind)) {
-      fg         <- f[z.ind[[g]],Qgs,, drop=FALSE]
+    if(all(sw["s.sw"], clust.ind)) {
+      etag       <- eta[z.ind[[g]],Qgs,, drop=FALSE]
     }
     if(sw["l.sw"])      {
-      for(p in seq_len(n.store)) {
-        pf               <- store[p]
-        rot              <- procrustes(X=as.matrix(lmat[,,p]), Xstar=l.temp)$R
-        lmat[,,p]        <- lmat[,,p] %*% rot
-        if(sw["f.sw"])  {
+      for(p in seq_len(n.store))   {
+        p2                 <- store[p]
+        rot                <- procrustes(X=as.matrix(lmat[,,p]), Xstar=l.temp)$R
+        lmat[,,p]          <- lmat[,,p]  %*% rot
+        if(sw["s.sw"])  {
           if(clust.ind) {
-            fg[,,pf]     <- fg[,,pf]  %*% rot
+            etag[,,p2]     <- etag[,,p2] %*% rot
           } else {
-            f[,,pf]      <- f[,,pf]   %*% rot
+            eta[,,p2]      <- eta[,,p2]  %*% rot
           }
         }  
       }
     }
-    if(all(sw["f.sw"], clust.ind)) {
-      f[z.ind[[g]],Qgs,] <- fg
+    if(all(sw["s.sw"], clust.ind)) {
+      eta[z.ind[[g]],Qgs,] <- etag
     }
   
   # Retrieve means, uniquenesses & empirical covariance matrix
@@ -525,12 +525,12 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
                          if(est.T[g])     list(cov.est   = cov.est))
     result[[g]]  <- unlist(results, recursive=FALSE)
     attr(result[[g]], "Store") <- n.store
-    f.store[[g]] <- store
+    e.store[[g]] <- store
   }
-  if(sw["f.sw"])   {
-    f            <- f[,,unique(unlist(f.store)), drop=FALSE]
-    scores       <- list(f = f, post.f = rowMeans(f, dims=2), var.f = apply(f, c(1, 2), var),
-                         ci.f  = apply(f, c(1, 2), function(x) quantile(x, conf.levels)))
+  if(sw["s.sw"])   {
+    eta          <- eta[,,unique(unlist(e.store)), drop=FALSE]
+    scores       <- list(eta = eta, post.eta = rowMeans(eta, dims=2), var.eta = apply(eta, c(1, 2), var),
+                         ci.eta  = apply(eta, c(1, 2), function(x) quantile(x, conf.levels)))
   }
   names(result)  <- paste0("Group", Gseq)
   class(GQ.res)                <- "listof"
@@ -571,7 +571,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
                       if(any(err.T))   list(Error        = errors),  list(GQ.results = GQ.res), 
                       if(sw["mu.sw"])  list(Means        =  means),
                       if(sw["l.sw"])   list(Loadings     =  loads),
-                      if(sw["f.sw"])   list(Scores       = scores),
+                      if(sw["s.sw"])   list(Scores       = scores),
                       if(sw["psi.sw"]) list(Uniquenesses =   psis))
                       
   class(result)                <- "IMIFA"

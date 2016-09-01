@@ -22,7 +22,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
                         adapt = TRUE, b0 = NULL, b1 = NULL, delta0g = FALSE, prop = NULL, epsilon = NULL, sigma.mu = NULL, sigma.l = NULL, alpha.hyper = NULL,
                         mu0g = FALSE, psi0g = FALSE, mu.zero = NULL, phi.nu = NULL, psi.alpha = NULL, psi.beta = NULL, alpha.d1 = NULL, rho = NULL, trunc.G = NULL,
                         alpha.dk = NULL, beta.d1 = NULL, beta.dk = NULL, alpha.pi = NULL, z.list = NULL, profile = FALSE, mu.switch = TRUE, gen.slice = FALSE,
-                        f.switch = TRUE, load.switch = TRUE, psi.switch = TRUE, pi.switch = TRUE, z.init = c("kmeans", "list", "mclust", "priors")) {
+                        score.switch = TRUE, load.switch = TRUE, psi.switch = TRUE, pi.switch = TRUE, z.init = c("kmeans", "list", "mclust", "priors")) {
   
   defpar    <- suppressWarnings(par(no.readonly=TRUE))
   defopt    <- options()
@@ -69,7 +69,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
 # Manage storage switches & warnings for other function inputs
   if(!missing(mu.switch) && 
       all(!mu.switch, !centering))  warning("Centering hasn't been applied - are you sure you want mu.switch=FALSE?", call.=FALSE)
-  switches  <- c(mu.sw=mu.switch, f.sw=f.switch, l.sw=load.switch, psi.sw=psi.switch, pi.sw=pi.switch)
+  switches  <- c(mu.sw=mu.switch, s.sw=score.switch, l.sw=load.switch, psi.sw=psi.switch, pi.sw=pi.switch)
   if(!is.logical(switches))         stop("All logical switches must be TRUE or FALSE")
   if(N < 2)                         stop("Must have more than one observation")
   G.x       <- missing(range.G)
@@ -88,7 +88,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
       if(G.x) {
         range.G    <- ifelse(N <= 51, N - 1, floor(3 * log(N)))
       }
-      if(range.G    < floor(lnN))   stop(paste0("'range.G' should be at least log(N) for the ", method, " method"))
+      if(range.G    < floor(lnN))   stop(paste0("'range.G' should be at least log(N) (=log(", N, "))", " for the ", method, " method"))
       if(is.element(method, c("IMFA", "IMIFA"))) {
         if(!is.logical(gen.slice))  stop("'gen.slice' must be TRUE or FALSE") 
         if(missing(rho)) {
@@ -223,16 +223,16 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     } else if(!switches["psi.sw"])  warning("Uniquenesses not stored: posterior mean estimates won't be available", call.=FALSE)
   }
   if(is.element(method, c("FA", "MFA", "OMFA", "IMFA")) && all(range.Q == 0)) {   
-    if(all(switches[c("f.sw", "l.sw")]))  {
+    if(all(switches[c("s.sw", "l.sw")]))  {
                                     warning("Scores & Loadings not stored as model has zero factors", call.=FALSE)
-    } else if(switches["f.sw"])   { warning("Scores not stored as model has zero factors", call.=FALSE)
+    } else if(switches["s.sw"])   { warning("Scores not stored as model has zero factors", call.=FALSE)
     } else if(switches["l.sw"])   { warning("Loadings not stored as model has zero factors", call.=FALSE)
     }                               
-    switches[c("f.sw", "l.sw")]  <- FALSE                              
+    switches[c("s.sw", "l.sw")]  <- FALSE                              
   } else {
-    if(all(!switches[c("f.sw", "l.sw")])) { 
+    if(all(!switches[c("s.sw", "l.sw")])) { 
                                     warning("Posterior Scores & Loadings won't be available as they're not being stored", call.=FALSE)
-    } else if(!switches["f.sw"])  { warning("Posterior Scores won't be available as they're not being stored", call.=FALSE)
+    } else if(!switches["s.sw"])  { warning("Posterior Scores won't be available as they're not being stored", call.=FALSE)
     } else if(!switches["l.sw"])  { warning("Posterior Loadings won't be available as they're not being stored", call.=FALSE)
     }
   }
@@ -386,7 +386,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
       if(is.element(method, c("MFA", "MIFA"))) {
         sw0g.tmp   <- sw0gs
         if(all(g > 9, any(sw0gs))) {
-          sw0g.tmp <- setNames(rep(F, 4), names(sw0gs))
+          sw0g.tmp <- setNames(rep(FALSE, 4), names(sw0gs))
                                     warning(paste0(names(which(sw0gs)), " set to FALSE where G > 9, as 'exact' label-switching is not possible in this case\n"), call.=FALSE)
         }
         clust[[g]] <- append(clust[[g]], list(l.switch = sw0g.tmp))

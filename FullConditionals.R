@@ -5,31 +5,31 @@
 # Full Conditionals
 
   # Means
-    sim.mu      <- function(N, P, mu.sigma, psi.inv, sum.data, sum.f, lmat, mu.zero) {
+    sim.mu      <- function(N, P, mu.sigma, psi.inv, sum.data, sum.eta, lmat, mu.zero) {
       mu.omega  <- 1/(mu.sigma + N * psi.inv)
-        mu.omega * (psi.inv * (sum.data - lmat %*% sum.f) + mu.sigma * mu.zero) + sqrt(mu.omega) * rnorm(P)
+        mu.omega * (psi.inv * (sum.data - lmat %*% sum.eta) + mu.sigma * mu.zero) + sqrt(mu.omega) * rnorm(P)
     }
   
   # Scores
     sim.score   <- function(N, Q, lmat, psi.inv, c.data, Q1) {
       load.psi  <- lmat * psi.inv
-      u.f       <- diag(Q) + crossprod(load.psi, lmat)
-      u.f       <- if(Q1) chol(u.f) else sqrt(u.f)
-      mu.f      <- c.data %*% (load.psi %*% if(Q1) chol2inv(u.f) else 1/(u.f * u.f))
-        mu.f + t(backsolve(u.f, matrix(rnorm(Q * N), nr=Q, nc=N)))
+      u.eta     <- diag(Q) + crossprod(load.psi, lmat)
+      u.eta     <- if(Q1) chol(u.eta) else sqrt(u.eta)
+      mu.eta    <- c.data %*% (load.psi %*% if(Q1) chol2inv(u.eta) else 1/(u.eta * u.eta))
+        mu.eta + t(backsolve(u.eta, matrix(rnorm(Q * N), nr=Q, nc=N)))
     }
       
   # Loadings
-    sim.load    <- function(l.sigma, Q, c.data, P, f, phi, tau, psi.inv, FtF, Q1, shrink = TRUE) {
-      u.load    <- if(shrink) phi * tau * diag(Q) + psi.inv * FtF else l.sigma + psi.inv * FtF
+    sim.load    <- function(l.sigma, Q, c.data, P, eta, phi, tau, psi.inv, EtE, Q1, shrink = TRUE) {
+      u.load    <- if(shrink) phi * tau * diag(Q) + psi.inv * EtE else l.sigma + psi.inv * EtE
       u.load    <- if(Q1) chol(u.load) else sqrt(u.load)
-      mu.load   <- psi.inv * (if(Q1) chol2inv(u.load) else 1/(u.load * u.load)) %*% crossprod(f, c.data)
+      mu.load   <- psi.inv * (if(Q1) chol2inv(u.load) else 1/(u.load * u.load)) %*% crossprod(eta, c.data)
         mu.load + backsolve(u.load, rnorm(Q))
     }
     
   # Uniquenesses
-    sim.psi.inv <- function(N, P, psi.alpha, psi.beta, c.data, f, lmat) { 
-      rate.t    <- c.data - tcrossprod(f, lmat)
+    sim.psi.inv <- function(N, P, psi.alpha, psi.beta, c.data, eta, lmat) { 
+      rate.t    <- c.data - tcrossprod(eta, lmat)
         rgamma(P, shape=N/2 + psi.alpha, rate=colSums(rate.t * rate.t)/2 + psi.beta) 
     }
 
@@ -95,7 +95,7 @@
     }
   
   # Scores
-    sim.f.p     <- function(Q, N) {
+    sim.eta.p   <- function(Q, N) {
         matrix(rnorm(N * Q), nr=N, nc=Q)
     }
   

@@ -137,9 +137,9 @@
   plot(res, "d", "s", mat=FALSE)
   plot(res, "p", "s")
   plot(res, "c", "s")
-  res$Scores$post.f
-  res$Scores$var.f
-  res$Scores$ci.f
+  res$Scores$post.eta
+  res$Scores$var.eta
+  res$Scores$ci.eta
   
 # Uniquenesses
   plot(res, "a", "u")
