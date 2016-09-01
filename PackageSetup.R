@@ -174,7 +174,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   range.Q   <- sort(unique(range.Q)) 
   len.G     <- length(range.G)
   len.Q     <- length(range.Q)
-  len.GQ    <- len.G * len.Q
+  len.X     <- len.G * len.Q
   if(is.element(method, c("FA", "MFA", "OMFA", "IMFA"))) {
     if(missing("sigma.l"))   sigma.l       <- 1
     if(sigma.l <= 0)                stop("'sigma.l' must be strictly positive")            
@@ -291,7 +291,6 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   imifa     <- list(list())
   Gi        <- 1
   Qi        <- 1
-  len.GQ    <- len.G * len.Q
   gibbs.arg <- list(P = P, sigma.mu = sigma.mu, psi.alpha = psi.alpha, burnin = burnin, 
                     thinning = thinning, iters = iters, verbose = verbose, sw = switches)
   if(is.element(method, c("IMIFA", "IMFA"))) {
@@ -427,7 +426,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
       if(meth[Gi]  != "MIFA") {
         gibbs.arg  <- append(temp.args, deltas[[Gi]])
       }
-        imifa[[Gi]][[Qi]] <- do.call(paste0("gibbs.", meth[Gi]),                          
+      imifa[[Gi]][[Qi]]   <- do.call(paste0("gibbs.", meth[Gi]),                          
                                      args=append(list(data = dat, N = N, G = range.G, Q = range.Q, mu = mu[[Gi]], mu.zero = mu.zero[[Gi]],
                                                       psi.beta = psi.beta[[Gi]], cluster = if(meth[Gi] != "IFA") clust[[Gi]]), gibbs.arg))
       fac.time     <- fac.time + imifa[[Gi]][[Qi]]$time
@@ -443,13 +442,13 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
                                      args=append(list(data = dat, N = N, G = g, Q = range.Q, mu = mu[[Gi]], mu.zero = mu.zero[[Gi]],
                                                       psi.beta = psi.beta[[Gi]], cluster = if(meth[Gi] == "MIFA") clust[[Gi]]), gibbs.arg))
         fac.time   <- fac.time + imifa[[Gi]][[Qi]]$time
-        if(verbose && Gi != len.G)  cat(paste0("Model ", Gi, " of ", len.G, " complete"), "Initialising...", sep="\n")
+        if(verbose && Gi  != len.G) cat(paste0("Model ", Gi, " of ", len.G, " complete"), "Initialising...", sep="\n")
       }
     }
   } else if(is.element(method, c("FA", "MFA", "OMFA", "IMFA")))   {
     if(all(len.G == 1, len.Q == 1)) {
       start.time   <- proc.time()
-        imifa[[Gi]][[Qi]] <- do.call(paste0("gibbs.", meth[Gi]), 
+      imifa[[Gi]][[Qi]]   <- do.call(paste0("gibbs.", meth[Gi]), 
                                      args=append(list(data = dat, N = N, G = range.G, Q = range.Q, mu = mu[[Gi]], mu.zero = mu.zero[[Gi]],
                                                       psi.beta = psi.beta[[Gi]], cluster = if(meth[Gi] != "FA") clust[[Gi]]), gibbs.arg))
       fac.time     <- fac.time + imifa[[Gi]][[Qi]]$time
@@ -461,7 +460,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
                                      args=append(list(data = dat, N = N, G = range.G, Q = q, mu = mu[[Gi]], mu.zero = mu.zero[[Gi]],
                                                       psi.beta = psi.beta[[Gi]], cluster = if(meth[Gi] != "FA") clust[[Gi]]), gibbs.arg))
         fac.time   <- fac.time + imifa[[Gi]][[Qi]]$time
-        if(verbose && Qi != len.Q)  cat(paste0("Model ", Qi, " of ", len.Q, " complete"), "Initialising...", sep="\n")
+        if(verbose && Qi  != len.Q) cat(paste0("Model ", Qi, " of ", len.Q, " complete"), "Initialising...", sep="\n")
       }
     } else if(len.Q == 1) {
       start.time   <- proc.time()
@@ -472,7 +471,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
                                      args=append(list(data = dat, N = N, G = g, Q = range.Q, mu = mu[[Gi]], mu.zero = mu.zero[[Gi]],
                                                       psi.beta = psi.beta[[Gi]], cluster = if(meth[Gi] != "FA") clust[[Gi]]), gibbs.arg))
         fac.time   <- fac.time + imifa[[Gi]][[Qi]]$time
-        if(verbose && Gi != len.G)  cat(paste0("Model ", Gi, " of ", len.G, " complete"), "Initialising...", sep="\n")
+        if(verbose && Gi  != len.G) cat(paste0("Model ", Gi, " of ", len.G, " complete"), "Initialising...", sep="\n")
       }
     } else {
       mi           <- 0
@@ -487,7 +486,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
                                                       psi.beta = psi.beta[[Gi]], cluster = if(meth[Gi] != "FA") clust[[Gi]]), gibbs.arg))
         mi         <- mi + 1
         fac.time   <- fac.time + imifa[[Gi]][[Qi]]$time
-        if(verbose && mi != len.GQ) cat(paste0("Model ", mi, " of ", len.GQ, " complete"), "Initialising...", sep="\n")
+        if(verbose && mi  != len.X) cat(paste0("Model ", mi, " of ", len.X, " complete"), "Initialising...", sep="\n")
         }
       }
     }
@@ -499,11 +498,11 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
       imifa[[g]][[Qi]]    <- do.call(paste0("gibbs.", "IFA"),
                                      args=append(list(data = temp.dat, N = nrow(temp.dat), Q = range.Q), gibbs.arg))
       fac.time     <- fac.time + imifa[[Gi]][[Qi]]$time
-      if(verbose   && g != len.G)   cat(paste0("Model ", g, " of ", len.G, " complete"), "Initialising...", sep="\n")
+      if(verbose   && g   != len.G) cat(paste0("Model ", g, " of ", len.G, " complete"), "Initialising...", sep="\n")
     }
   }
   tot.time  <- proc.time() - start.time
-  avg.time  <- tot.time/ifelse(method == "MFA", len.GQ,
+  avg.time  <- tot.time/ifelse(method == "MFA", len.X,
                             ifelse(method == "MIFA", len.G,
                               ifelse(method == "classify", nlevels(zlabels), len.Q)))
   tot.time  <- tot.time    + init.time
@@ -532,9 +531,13 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   }
   gnames    <- paste0(range.G, ifelse(range.G == 1, "Group", "Groups"))
   names(imifa)            <- gnames
+  attr(imifa, 
+       "Alpha.step")      <- alpha.step
   attr(imifa, "Center")   <- centering
   attr(imifa, "Date")     <- format(Sys.Date(), "%d-%b-%Y")
   attr(imifa, "Factors")  <- range.Q
+  attr(imifa, 
+       "Gen.Slice")       <- all(is.element(method, c("IMFA", "IMIFA")), gen.slice)
   attr(imifa, "Groups")   <- range.G
   if(!is.element(method, c("FA", "IFA"))) {
     attr(imifa, "Init.Z") <- z.init
@@ -549,12 +552,6 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   attr(imifa, "Scaling")  <- scal
   attr(attr(imifa,
   "Scaling"), "Method")   <- scaling
-  if(is.element(method, c("IMFA", "IMIFA"))) {
-    attr(imifa, 
-         "Alpha.step")    <- alpha.step
-    attr(imifa,
-         "Gen.Slice")     <- gen.slice
-  }
   attr(imifa, "Store")    <- length(iters)
   switches                <- c(switches, a.sw = alpha.step != "fixed")
   if(is.element(method, c("FA", "IFA"))) {

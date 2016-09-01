@@ -340,7 +340,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
 # Retrieve (unrotated) scores
   no.score       <- all(Q == 0)
   if(no.score)   { 
-    if(sw["z"])                warning("Scores & loadings not stored as model has zero factors", call.=FALSE)
+    if(sw["s.sw"])                warning("Scores & loadings not stored as model has zero factors", call.=FALSE)
     sw["s.sw"]   <- FALSE
   }
   if(sw["s.sw"]) {
@@ -549,6 +549,20 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     }
   }
   
+  if(is.element(method,
+     c("FA", "IFA")))             message(paste0("The chosen model has ", Q, " factor", ifelse(Q == 1, "", "s")))
+  if(is.element(method, 
+     c("MFA", "OMFA", "IMFA")))   message(paste0("The chosen model has ", G, " group", ifelse(G == 1, " with ", "s, each with "), unique(Q), " factor", ifelse(unique(Q) == 1, "", "s")))
+  if(is.element(method, 
+     c("MIFA", "OMIFA", "IMIFA"))) {
+    Q.msg        <- NULL 
+    for(i in seq_along(Q[-length(Q)])) {
+      Q.msg      <- c(Q.msg, (paste0(Q[i], ", ")))
+    } 
+    Q.msg        <- if(length(Q) > 1) paste(c(Q.msg, paste0("and ", Q[length(Q)])), sep="", collapse="") else Q
+                                  message(cat("The chosen model has ", G, " group", ifelse(G == 1, " with ", "s, with "), Q.msg, " factor", ifelse(G == 1 && Q == 1, "", paste0("s", ifelse(G == 1, "", ", respectively"))), sep=""))
+  }  
+
   if(sw["mu.sw"])  {
     post.mu      <- do.call(cbind, lapply(result, "[[", "post.mu"))
     var.mu       <- do.call(cbind, lapply(result, "[[", "var.mu"))
