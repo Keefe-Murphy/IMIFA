@@ -10,7 +10,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
   defpar  <- suppressWarnings(par(no.readonly=TRUE))
   defpar$new   <- FALSE
   if(missing(palette))   palette <- c("#999999", "#E69F00", "#009E73", "#56B4E9", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
-  if(!all(are.colours(cols=palette))) stop("Supplied colour palette contains invalid colours")
+  if(!all(are.cols(cols=palette)))    stop("Supplied colour palette contains invalid colours")
   if(length(palette) < 3)             stop("Palette must contain 3 or more colours")
   if(missing(transparency)) {
     transparency    <- 0.75
@@ -439,7 +439,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
         plot.x <- result$post.load
         if(is.element(load.meth, c("all", "heatmap"))) {
           if(Q > 1) {
-            plotcolors(mat2color(plot.x))
+            plotcolors(mat2cols(plot.x))
           } else {
             image(z=t(plot.x[seq(n.var, 1),seq_len(Q)]), xlab="", ylab="", xaxt="n", yaxt="n", col=dichromat(heat.colors(30)))
           }
