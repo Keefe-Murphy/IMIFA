@@ -243,8 +243,10 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
         }
       }
     }
-    post.z       <- droplevels(setNames(apply(z, 1, function(x) factor(which.max(tabulate(x)), levels=Gseq)), seq_len(n.obs)))
-    uncertain    <- 1 - apply(matrix(apply(z, 1, tabulate, nbins=nlevels(post.z))/length(tmp.store), nr=nlevels(post.z), nc=n.obs), 2, max)
+    post.z       <- apply(z, 1, function(x) factor(which.max(tabulate(x)), levels=Gseq))
+    if(nlevels(droplevels(post.z)) !=
+       nlevels(post.z))           warning("Empty group exists in modal clustering: examine trace plots and try supplying a lower G value to tune.imifa() or re-running the model", call.=FALSE)
+    uncertain    <- 1 - apply(matrix(apply(z, 1, tabulate, nbins=G)/length(tmp.store), nr=G, nc=n.obs), 2, max)
     if(sw["pi.sw"])    {
       pi.prop    <- pies[Gseq,seq_along(tmp.store), drop=FALSE]
       var.pi     <- apply(pi.prop, 1, var)
