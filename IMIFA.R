@@ -18,6 +18,9 @@
   # Wine        (# lab)
     load(file=paste0(getwd(), "/Data/Wine.Rdata", sep=""), envir=.GlobalEnv)
     lab      <- wine[,1]
+    # 13 Variable Version [% wine13]
+      load(file=paste0(getwd(), "/Data/Wine13.Rdata", sep=""), envir=.GlobalEnv)
+      lab    <- wine13[,1]
   # Iris        (# species)
     load(file=paste0(getwd(), "/Data/Iris.Rdata", sep=""), envir=.GlobalEnv)
     species  <- iris[,5]
@@ -29,9 +32,9 @@
     # Oils      (# oliveoillabels)
       load(file=paste0(getwd(), "/Data/Oliveoils.Rdata", sep=""), envir=.GlobalEnv)
       oils   <- t(oliveoils); rm(oliveoils, wavelengths, x)
-  # Coffee      (# type, country)
+  # Coffee      (# type, country) [% coffee]
     load(file=paste0(getwd(), "/Data/Coffee.Rdata", sep=""), envir=.GlobalEnv) 
-  # Urine       (# grp) [# pareto scaling]
+  # Urine       (# grp) {n.b. pareto scaling}
     load(file=paste0(getwd(), "/Data/Epi_urine_data.Rdata", sep=""), envir=.GlobalEnv)
     ppms     <- substr(colnames(x10[,4:ncol(x10)]), 2, 6); rm(x)
     urine    <- x10[,4:ncol(x10)]
