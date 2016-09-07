@@ -3,11 +3,10 @@
 #######################################################################
   
 # Gibbs Sampler Function
-  gibbs.IMIFA       <- function(Q, data, iters, N, P, G, mu.zero, rho, sigma.l, alpha.step,
-                                sigma.mu, burnin, thinning, mu, trunc.G, hyper1, hyper2,
-                                psi.alpha, psi.beta, verbose, gen.slice, alpha.d1,
-                                alpha.dk, sw, cluster, phi.nu, b0, b1, prop, 
-                                beta.d1, beta.dk, adapt, epsilon, ...) {
+  gibbs.IMIFA       <- function(Q, data, iters, N, P, G, mu.zero, rho, sigma.l, alpha.step, mu, sw, 
+                                sigma.mu, burnin, thinning, trunc.G, a.hyper, psi.alpha, psi.beta, 
+                                verbose, gen.slice, alpha.d1, discount, alpha.dk, cluster, b0, b1,
+                                phi.nu, prop, d.hyper, beta.d1, beta.dk, adapt, epsilon, learn.d, ...) {
         
   # Define & initialise variables
     start.time      <- proc.time()
@@ -55,6 +54,13 @@
     not.fixed       <- alpha.step != "fixed"
     if(not.fixed) {
       alpha.store   <- rep(0, n.store)
+      alpha.shape   <- a.hyper[1]
+      alpha.rate    <- a.hyper[2]
+    }
+    if(learn.d)   {
+      d.store       <- rep(0, n.store)
+      d.shape1      <- d.hyper[1]
+      d.shape2      <- d.hyper[2]
     }
     MH.step         <- alpha.step == "metropolis"
     if(MH.step)   {
@@ -63,7 +69,7 @@
     mu.sigma        <- 1/sigma.mu
     z               <- cluster$z
     pi.alpha        <- cluster$pi.alpha
-    pi.prop         <- c(cluster$pi.prop, sim.pi(pi.alpha=pi.alpha, nn=rep(0, trunc.G), N=N, inf.G=TRUE, len=trunc.G)$pi.prop[-Gs])
+    pi.prop         <- c(cluster$pi.prop, sim.pi(pi.alpha=pi.alpha, nn=rep(0, trunc.G), N=N, inf.G=TRUE, len=trunc.G, discount=discount)$pi.prop[-Gs])
     nn              <- tabulate(z, nbins=trunc.G)
     mu              <- cbind(mu, vapply(seq_len(trunc.G - G), function(g) sim.mu.p(P=P, sigma.mu=sigma.mu, mu.zero=mu.zero), numeric(P)))
     eta             <- sim.eta.p(N=N, Q=Q)
@@ -103,6 +109,9 @@
       if(not.fixed) {
         alpha.store[1]     <- pi.alpha 
       }
+      if(learn.d)   {
+        d.store[1]         <- discount
+      }
     }
     init.time       <- proc.time() - start.time
     
@@ -111,7 +120,7 @@
       if(verbose    && iter < burnin) setTxtProgressBar(pb, iter)
     
     # Mixing Proportions
-      weights       <- sim.pi(pi.alpha=pi.alpha, nn=nn, N=N, inf.G=TRUE, len=trunc.G)
+      weights       <- sim.pi(pi.alpha=pi.alpha, nn=nn, N=N, inf.G=TRUE, len=trunc.G, discount=discount)
       pi.prop       <- weights$pi.prop
       if(MH.step)      Vs  <- weights$Vs
       
@@ -231,10 +240,10 @@
     # Alpha
       if(not.fixed) {
         if(MH.step) {
-          MH.alpha  <- sim.alpha.m(alpha=pi.alpha, lower=hyper1, upper=hyper2, trunc.G=trunc.G, Vs=Vs) 
+          MH.alpha  <- sim.alpha.m(alpha=pi.alpha, lower=alpha.shape, upper=alpha.rate, trunc.G=trunc.G, Vs=Vs, discount=discount) 
           pi.alpha  <- MH.alpha$alpha  
         } else {
-          pi.alpha  <- sim.alpha.g(alpha=pi.alpha, shape=hyper1, rate=hyper2, G=G, N=N) 
+          pi.alpha  <- sim.alpha.g(alpha=pi.alpha, shape=alpha.shape, rate=alpha.rate, G=G, N=N, discount=discount) 
         }
       }
     
@@ -253,6 +262,7 @@
         if(sw["psi.sw"]) psi.store[,,new.it]        <- psi
         if(sw["pi.sw"])  pi.store[,new.it]          <- pi.prop
         if(not.fixed)    alpha.store[new.it]        <- pi.alpha
+        if(learn.d)      d.store[new.it]            <- discount
         if(MH.step)      rate[new.it]               <- MH.alpha$rate
                          z.store[,new.it]           <- z 
                          ll.store[new.it]           <- sum(z.res$log.likes)
@@ -269,6 +279,7 @@
                             psi      = if(sw["psi.sw"]) psi.store[,Gmax,, drop=FALSE],
                             pi.prop  = if(sw["pi.sw"])  pi.store[Gmax,, drop=FALSE],
                             alpha    = if(not.fixed)    alpha.store,
+                            discount = if(learn.d)      discount,
                             rate     = if(MH.step)      mean(rate),
                             z.store  = z.store,
                             ll.store = ll.store,

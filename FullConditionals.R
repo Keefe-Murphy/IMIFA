@@ -48,9 +48,9 @@
     }
 
   # Mixing Proportions
-    sim.pi      <- function(pi.alpha, nn, N, inf.G = FALSE, len) {
+    sim.pi      <- function(pi.alpha, nn, N, inf.G = FALSE, len, discount) {
       if(inf.G) {
-        vs      <- rbeta(len - 1, 1 + nn, pi.alpha + N - cumsum(nn))
+        vs      <- if(discount == 0) rbeta(len - 1, 1 + nn, pi.alpha + N - cumsum(nn)) else rbeta(len - 1, 1 - discount + nn, pi.alpha + seq_along(nn) * discount + N - cumsum(nn))
         vs[len] <- 1
           return(list(Vs = vs, pi.prop = vapply(seq_len(len), function(t) vs[t] * prod(1 - vs[seq_len(t - 1)]), numeric(1))))
       } else {
@@ -73,18 +73,19 @@
     }
 
   # Alpha
-    sim.alpha.g <- function(alpha, shape, rate, G, N) {
+    sim.alpha.g <- function(alpha, shape, rate, G, N, discount) {
       shape2    <- shape + G - 1
-      rate2     <- rate - log(rbeta(1, alpha + 1, N))
+      rate2     <- rate - log(rbeta(1, alpha + discount + 1, N))
       weight    <- shape2/(shape2 + N * rate2)
-        weight * rgamma(1, shape=shape2 + 1, rate=rate2) + (1 - weight) * rgamma(1, shape=shape2, rate=rate2)
+        weight * rgamma(1, shape=shape2 + 1, rate=rate2) + (1 - weight) * rgamma(1, shape=shape2, rate=rate2) - discount
     }
     
-    sim.alpha.m <- function(alpha, lower, upper, trunc.G, Vs) {
-      alpha.new <- runif(1, lower, upper)
-      a.prob    <- trunc.G * (log(alpha.new) - log(alpha)) + (alpha.new - alpha) * sum(log((1 - Vs[-trunc.G])))
-      accept    <- a.prob >= 0 || -rexp(1) < a.prob
-        return(list(alpha = ifelse(accept, alpha.new, alpha), rate = accept))
+    sim.alpha.m <- function(alpha, lower, upper, trunc.G, Vs, discount) {
+      alpha.old <- alpha + discount
+      alpha.new <- runif(1, lower, upper) + discount
+      a.prob    <- trunc.G * (log(alpha.new) - log(alpha.old)) + (alpha.new - alpha.old) * sum(log((1 - Vs[-trunc.G])))
+      accept    <- a.prob >= 0 || - rexp(1)  < a.prob
+        return(list(alpha  = ifelse(accept, alpha.new, alpha.old) - discount, rate = accept))
     }
 
 # Priors

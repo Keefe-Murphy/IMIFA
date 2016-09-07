@@ -17,9 +17,9 @@ source(paste(getwd(), "/IMIFA-GIT/PlottingFunctions.R", sep=""))
 source(paste(getwd(), "/IMIFA-GIT/SimulateData.R", sep=""))
 
 mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA", "MFA", "IFA", "FA", "classify"), 
-                        n.iters = 20000, zlabels = NULL, factanal = FALSE, range.G = NULL, range.Q = NULL, verbose = TRUE, Q.fac = NULL,  
-                        burnin = n.iters/5, thinning = 2, centering = TRUE, scaling = c("unit", "pareto", "none"), alpha.step = c("gibbs", "metropolis", "fixed"),
-                        adapt = TRUE, b0 = NULL, b1 = NULL, delta0g = FALSE, prop = NULL, epsilon = NULL, sigma.mu = NULL, sigma.l = NULL, alpha.hyper = NULL,
+                        n.iters = 20000, zlabels = NULL, factanal = FALSE, range.G = NULL, range.Q = NULL, verbose = TRUE, Q.fac = NULL, discount = NULL, 
+                        burnin = n.iters/5, thinning = 2, centering = TRUE, scaling = c("unit", "pareto", "none"), alpha.step = c("gibbs", "metropolis", "fixed"), learn.d = FALSE,
+                        adapt = TRUE, b0 = NULL, b1 = NULL, delta0g = FALSE, prop = NULL, epsilon = NULL, sigma.mu = NULL, sigma.l = NULL, alpha.hyper = NULL, d.hyper = NULL,
                         mu0g = FALSE, psi0g = FALSE, mu.zero = NULL, phi.nu = NULL, psi.alpha = NULL, psi.beta = NULL, alpha.d1 = NULL, rho = NULL, trunc.G = NULL,
                         alpha.dk = NULL, beta.d1 = NULL, beta.dk = NULL, alpha.pi = NULL, z.list = NULL, profile = FALSE, mu.switch = TRUE, gen.slice = FALSE,
                         score.switch = TRUE, load.switch = TRUE, psi.switch = TRUE, pi.switch = TRUE, z.init = c("kmeans", "list", "mclust", "priors")) {
@@ -75,6 +75,13 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   G.x       <- missing(range.G)
   alpha.x   <- missing(alpha.step)
   alpha.step       <- match.arg(alpha.step)
+  if(!is.logical(learn.d))          stop("'learn.d' must be TRUE or FALSE")
+  if(learn.d)                       stop("Pitman-Yor discount hyperparameter must remain fixed; learning not yet implemented")
+  if(missing(d.hyper))       d.hyper       <- c(1, 1)
+  if(any(d.hyper   <= 0))           stop("'Discount Beta prior hyperparameters must be strictly positive")
+  discount         <- ifelse(missing(discount), ifelse(learn.d, rbeta(1, d.hyper[1], d.hyper[2]), 0), discount)
+  if(discount       < 0 || 
+     discount      >= 1)            stop("'discount' must lie in the interval [0, 1)")
   if(all(!is.element(method, c("IMFA", "IMIFA")), alpha.step != "fixed"))  {
     alpha.step     <- "fixed"
     if(!alpha.x)                    warning(paste0("'alpha.step' must be given as 'fixed' for the ", method, " method"), call.=FALSE)
@@ -97,7 +104,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
         if(all(length(rho) > 1,
            rho > 1 && rho <= 0))    stop("'rho' must be a single number in the interval (0, 1]")
         if(missing(alpha.hyper))    {
-          alpha.hyper     <- if(alpha.step == "gibbs") c(2, 1) else if(alpha.step == "metropolis") c(ifelse(N >= P, 0.5, 0), range.G/2) else c(0, 0)
+          alpha.hyper     <- if(alpha.step == "gibbs") c(2, 1) else if(alpha.step == "metropolis") c(- discount, range.G/2) else c(0, 0)
         }   
         a.len      <- length(alpha.hyper)
         if(a.len   != 2)            stop(paste0("'alpha.hyper' must be a vector of length 2, giving the ", ifelse(alpha.step == "gibbs", "shape and rate hyperparameters of the gamma prior for alpha when alpha.step is given as 'gibbs'", ifelse(alpha.step == "metropolis", "lower and upper limits of the uniform prior/proposal for alpha when alpha.step is given as 'metropolis'")))) 
@@ -108,7 +115,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
           if(a.hyp.2  <= 0)         stop("The rate of the gamma prior for alpha must be strictly positive")
         }
         if(alpha.step == "metropolis") {
-          if(a.hyp.1   < 0)         stop("The lower limit of the uniform prior/proposal for alpha must be strictly positive")
+          if(a.hyp.1   < -discount) stop(paste0("The lower limit of the uniform prior/proposal for alpha must be ", ifelse(discount == 0, "strictly positive", paste0("greater than -discount (=", - discount, ")"))))
           if(a.hyp.2   < 1)         stop("The upper limit of the uniform prior/proposal for alpha must be at least 1")
           if(a.hyp.2  <= a.hyp.1)   stop(paste0("The upper limit (=", a.hyp.2, ") of the uniform prior/proposal for alpha must be greater than the lower limit (=", a.hyp.1, ")"))  
         }
@@ -249,10 +256,10 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(all(method != "MIFA",
        delta0g))                    stop("'delta0g' and can only be TRUE for the 'MIFA' method")
     if(missing("alpha.pi"))  alpha.pi      <- ifelse(is.element(method, c("OMIFA", "OMFA")), 0.5/range.G, 
-                                              ifelse(alpha.step == "gibbs", rgamma(1, a.hyp.1, a.hyp.2),
+                                              ifelse(alpha.step == "gibbs", rgamma(1, a.hyp.1, a.hyp.2) - discount,
                                               ifelse(alpha.step == "metropolis", runif(1, a.hyp.1, a.hyp.2), 1)))
     if(length(alpha.pi) != 1)       stop("'alpha.pi' must be specified as a scalar to ensure an exchangeable prior")
-    if(alpha.pi <= 0)               stop("'alpha.pi' must be strictly positive")
+    if(alpha.pi <= - discount)      stop(paste0("'alpha.pi' must be ", ifelse(discount != 0, paste0("greater than -discount (i.e. > ", - discount, ")"), "strictly positive")))
     if(all(is.element(method,  c("IMIFA", "IMFA")),
            alpha.step == "fixed"))  warning(paste0("'alpha.pi' fixed at ", alpha.pi, " rather than simulated from prior as it's not being learned via Gibbs/Metropolis-Hastings updates"), call.=FALSE)
     if(all(!is.element(method, c("IMFA", "IMIFA")),
@@ -294,7 +301,8 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   gibbs.arg <- list(P = P, sigma.mu = sigma.mu, psi.alpha = psi.alpha, burnin = burnin, 
                     thinning = thinning, iters = iters, verbose = verbose, sw = switches)
   if(is.element(method, c("IMIFA", "IMFA"))) {
-    gibbs.arg      <- append(gibbs.arg, list(trunc.G = trunc.G, rho = rho, gen.slice = gen.slice, alpha.step = alpha.step, hyper1 = alpha.hyper[1], hyper2 = alpha.hyper[2]))
+    gibbs.arg      <- append(gibbs.arg, list(trunc.G = trunc.G, rho = rho, gen.slice = gen.slice, alpha.step = alpha.step, 
+                                             a.hyper = alpha.hyper, discount = discount, d.hyper = d.hyper, learn.d = learn.d))
   }
   if(!is.element(method, c("FA", "MFA", "OMFA", "IMFA"))) {
     gibbs.arg      <- append(gibbs.arg, list(phi.nu = phi.nu, beta.d1 = beta.d1, beta.dk = beta.dk, 
