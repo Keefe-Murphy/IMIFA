@@ -100,7 +100,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
     m.sw["P.sw"]   <- TRUE
   } 
   if(all(!v.sw[vars], !m.sw["G.sw"], 
-     !m.sw["Z.sw"],   !m.sw["E.sw"])) stop(paste0("Nothing to plot: ", vars, ifelse(vars == "alpha", " wasn't", " weren't"), " stored"))
+     !m.sw["Z.sw"],   !m.sw["E.sw"])) stop(paste0("Nothing to plot: ", vars, ifelse(vars == "alpha", paste0(" was fixed at ", attr(results, "Alpha")), " weren't stored")))
   if(!is.logical(intervals))          stop("'intervals' must be TRUE or FALSE")
   if(!is.logical(mat))                stop("'mat' must be TRUE or FALSE")
   if(!is.logical(partial))            stop("'partial' must be TRUE or FALSE")

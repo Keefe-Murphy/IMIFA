@@ -261,7 +261,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(length(alpha.pi) != 1)       stop("'alpha.pi' must be specified as a scalar to ensure an exchangeable prior")
     if(alpha.pi <= - discount)      stop(paste0("'alpha.pi' must be ", ifelse(discount != 0, paste0("greater than -discount (i.e. > ", - discount, ")"), "strictly positive")))
     if(all(is.element(method,  c("IMIFA", "IMFA")),
-           alpha.step == "fixed"))  warning(paste0("'alpha.pi' fixed at ", alpha.pi, " rather than simulated from prior as it's not being learned via Gibbs/Metropolis-Hastings updates"), call.=FALSE)
+           alpha.step == "fixed"))  warning(paste0("'alpha.pi' fixed at ", alpha.pi, " as it's not being learned via Gibbs/Metropolis-Hastings updates"), call.=FALSE)
     if(all(!is.element(method, c("IMFA", "IMIFA")),
            alpha.pi  > 1))          warning("Are you sure alpha.pi should be greater than 1?", call.=FALSE)
                              z.miss        <- missing(z.init)
@@ -541,8 +541,12 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   names(imifa)            <- gnames
   attr(imifa, 
        "Alpha.step")      <- alpha.step
+  attr(imifa, "Alpha")    <- if(alpha.step == "fixed") alpha.pi
   attr(imifa, "Center")   <- centering
   attr(imifa, "Date")     <- format(Sys.Date(), "%d-%b-%Y")
+  attr(imifa,
+       "Disc.step")       <- learn.d
+  attr(imifa, "Discount") <- if(!learn.d) discount
   attr(imifa, "Factors")  <- range.Q
   attr(imifa, 
        "Gen.Slice")       <- all(is.element(method, c("IMFA", "IMIFA")), gen.slice)

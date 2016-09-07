@@ -23,6 +23,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   label.switch   <- attr(sims, "Label.Switch")
   method         <- attr(sims, "Method")
   alpha.step     <- attr(sims, "Alpha.step")
+  learn.d        <- attr(sims, "Disc.step")
   inf.G          <- is.element(method, c("IMIFA", "IMFA", "OMIFA", "OMFA"))
   inf.Q          <- !is.element(method, c("FA", "MFA", "OMFA", "IMFA"))
   n.fac          <- attr(sims, "Factors")
@@ -596,6 +597,9 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   attr(result, "Method")       <- method
   if(is.element(method, c("IMFA", "IMIFA"))) {
     attr(result, "Alpha.step") <- alpha.step
+    attr(result, "Alpha")      <- if(alpha.step == "fixed") attr(sims, "Alpha")
+    attr(result, "Disc.step")  <- learn.d
+    attr(result, "Discount")   <- if(!learn.d) attr(sims, "Discount")
     attr(result, "Gen.Slice")  <- attr(sims, "Gen.Slice")
   }
   attr(result, "Name")         <- attr(sims, "Name")
