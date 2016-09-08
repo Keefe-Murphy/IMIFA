@@ -53,7 +53,7 @@
     # Red vs. White
       matplot(t(spectra), type="l", col=c(2, 1, 2, 1, 1), xlab="Wavelength", ylab="Spectral Reflectance", main="Meat Data")
       legend("topleft", legend=c("Red Meat", "White Meat"), bty="n", lty=1, col=c(2, 1))
-  # Microarray  (# labels)
+  # Microarray  (# x$labels)
     load(file=paste0(getwd(), "/Data/Microarray.Rdata", sep=""), envir=.GlobalEnv)
     aliza    <- data.frame(as.factor(mydata.alizadeth$y), t(mydata.alizadeth$x)); names(aliza)[1] <- "labels"
     golub    <- data.frame(as.factor(mydata.golub$y),     t(mydata.golub$x));     names(golub)[1] <- "labels"
