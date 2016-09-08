@@ -816,3 +816,23 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
     ent.exit()
   }
 }
+
+# Loadings Heatmaps
+  mat2cols     <- function(m, cols = dichromat(heat.colors(30)), 
+                           byrank = FALSE, breaks = length(cols)) { 
+    m1         <- if(isTRUE(byrank)) rank(m) else m
+    facs       <- cut(m1, breaks, include.lowest=TRUE)
+    answer     <- cols[as.numeric(facs)]
+    if(is.matrix(m)) {
+      answer   <- matrix(answer, nrow(m), ncol(m))
+      rownames(answer)  <- rownames(m)
+      colnames(answer)  <- colnames(m)
+    }
+    answer    
+  }
+
+# Colour Checker
+  are.cols     <- function(cols) {
+    vapply(cols, function(x) { tryCatch(is.matrix(col2rgb(x)), error = function(e) FALSE) }, logical(1))
+  }
+#

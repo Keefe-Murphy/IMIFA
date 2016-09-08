@@ -200,21 +200,14 @@
         obj0g
     }
 
-  # Loadings Heatmaps
-    mat2cols    <- function(m, cols = dichromat(heat.colors(30)), 
-                            byrank = FALSE, breaks = length(cols)) { 
-      m1        <- if(isTRUE(byrank)) rank(m) else m
-      facs      <- cut(m1, breaks, include.lowest=TRUE)
-      answer    <- cols[as.numeric(facs)]
-      if(is.matrix(m)) {
-        answer  <- matrix(answer, nrow(m), ncol(m))
-        rownames(answer)  <- rownames(m)
-        colnames(answer)  <- colnames(m)
+  # Moments of Dirichlet / Pitman-Yor Processes
+    G.expected  <- function(N, alpha, discount=0) {
+      if(discount  < 0  ||
+         discount >= 1)       stop("Invalid discount value")
+      if(alpha   < -discount) stop("Invalid alpha value")
+      if(discount == 0) {
+        sum(alpha/(alpha + seq_len(N) - 1))
+      } else {
+        as.numeric(pochMpfr(alpha + discount, N)/(discount * pochMpfr(alpha + 1, N - 1)) - alpha/discount)
       }
-        answer    
-    }
-  
-  # Colour Checker
-    are.cols    <- function(cols) {
-        vapply(cols, function(x) { tryCatch(is.matrix(col2rgb(x)), error = function(e) FALSE) }, logical(1))
     }
