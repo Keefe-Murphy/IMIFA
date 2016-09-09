@@ -52,8 +52,13 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   iters     <- seq(from=burnin + 1, to=n.iters, by=thinning)
   iters     <- iters[iters > 0]
   dat       <- as.data.frame(dat)
-  raw.dat   <- dat[vapply(dat, is.numeric, logical(1))]
-  if(any(is.na(raw.dat)))           stop("Missing values not allowed in data")
+  num.check <- vapply(dat, is.numeric, logical(1))
+  if(sum(num.check) != ncol(dat)) { message("Non-numeric columns removed")
+    raw.dat <- dat[num.check]
+  }
+  if(any(is.na(raw.dat))) {         message("Rows with missing values removed from data")
+    raw.dat <- raw.dat[complete.cases(raw.dat),]
+  }          
   if(scaling != "none") {
     scal    <- apply(raw.dat, 2, sd)
     if(scaling == "pareto") {
@@ -123,8 +128,8 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
           trunc.G  <- ifelse(N < 100, N, 100)
         }
         if(length(trunc.G) > 1)     stop("'trunc.G' must be a single number")
-        if(all(N    > 100, 
-           trunc.G  < 100))         stop("'trunc.G' must be at least 100")
+        if(ifelse(N > 100, trunc.G < 100,
+                  trunc.G  < N))    warning(paste0("'trunc.G' should only be less than min(N=", N, ", 100) for practical reasons in heavy computational/memory burden cases"), call.=FALSE)
         if(trunc.G  < range.G)      stop(paste0("'trunc.G' must be at least range.G=", range.G))
         if(trunc.G  > N)            stop(paste0("'trunc.G' cannot be greater than N=", N))
       }
