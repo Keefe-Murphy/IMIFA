@@ -202,6 +202,8 @@
 
   # Moments of Dirichlet / Pitman-Yor Processes
     G.expected  <- Vectorize(function(N, alpha, discount=0) {
+      if(!all(is.numeric(N), is.numeric(discount), 
+         is.numeric(alpha)))      stop("All inputs must be numeric")
       if(discount  < 0  ||
          discount >= 1)       stop("Invalid discount value")
       if(alpha   < -discount) stop("Invalid alpha value")
