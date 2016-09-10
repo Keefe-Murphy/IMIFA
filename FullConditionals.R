@@ -201,7 +201,7 @@
     }
 
   # Moments of Dirichlet / Pitman-Yor Processes
-    G.expected  <- function(N, alpha, discount=0) {
+    G.expected  <- Vectorize(function(N, alpha, discount=0) {
       if(discount  < 0  ||
          discount >= 1)       stop("Invalid discount value")
       if(alpha   < -discount) stop("Invalid alpha value")
@@ -210,4 +210,4 @@
       } else {
         as.numeric(pochMpfr(alpha + discount, N)/(discount * pochMpfr(alpha + 1, N - 1)) - alpha/discount)
       }
-    }
+    })
