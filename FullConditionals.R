@@ -211,9 +211,29 @@
          discount >= 1)       stop("Invalid discount value")
       if(alpha   < -discount) stop("Invalid alpha value")
       if(discount == 0) {
-        sum(alpha/(alpha + seq_len(N) - 1))
+        alpha * (digamma(alpha + N) - digamma(alpha))
       } else {
-        as.numeric(pochMpfr(alpha + discount, N)/(discount * pochMpfr(alpha + 1, N - 1)) - alpha/discount)
+        asNumeric(alpha/discount * pochMpfr(alpha + discount, N)/pochMpfr(alpha, N) - alpha/discount)
+      }
+    })
+
+    G.variance  <- Vectorize(function(N, alpha, discount = 0) {
+      suppressMessages(library(Rmpfr))
+      on.exit(detach.pkg(Rmpfr))
+      on.exit(detach.pkg(gmp), add=TRUE)
+      if(!all(is.numeric(N), is.numeric(discount), 
+         is.numeric(alpha)))  stop("All inputs must be numeric")
+      if(discount  < 0  ||
+         discount >= 1)       stop("Invalid discount value")
+      if(alpha   < -discount) stop("Invalid alpha value")
+      if(discount == 0) {
+        alpha * (digamma(alpha + N) - digamma(alpha)) + (alpha^2) * (trigamma(alpha + N) - trigamma(alpha))
+      } else {
+        sum.ad  <- alpha + discount
+        poch.a  <- pochMpfr(alpha, N)
+        poch.ad <- pochMpfr(sum.ad, N)
+        subterm <- alpha/discount * poch.ad/poch.a
+        asNumeric((alpha * sum.ad)/discount^2 * pochMpfr(sum.ad + discount, N)/poch.a - subterm - subterm^2)
       }
     })
 
