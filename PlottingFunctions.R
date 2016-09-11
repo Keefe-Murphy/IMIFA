@@ -25,6 +25,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
   options(warn=1)
   suppressWarnings(par(cex.axis=0.8, new=FALSE))
   on.exit(suppressWarnings(par(defpar)))
+  on.exit(do.call("clip", as.list(defpar$usr)), add=TRUE)
   on.exit(palette("default"), add=TRUE)
   on.exit(suppressWarnings(options(defopt)), add=TRUE)
   if(missing(results))                stop("Results must be supplied")
@@ -361,7 +362,11 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
         plot(plot.d, main="", ylab="")
         if(titles) title(main=list(paste0("Density", ifelse(all.ind, "", paste0(":\nAlpha")))))
         polygon(plot.d, col=grey)
-        if(intervals) abline(v=plot.x$post.alpha, col=2, lty=2)
+        if(intervals) {
+          avg  <- plot.x$post.alpha
+          clip(avg, avg, 0, plot.d$y[which.min(abs(plot.d$x - avg))])
+          abline(v=avg, col=2, lty=2)
+        }
       }
     }
     

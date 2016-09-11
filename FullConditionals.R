@@ -201,9 +201,12 @@
     }
 
   # Moments of Dirichlet / Pitman-Yor Processes
-    G.expected  <- Vectorize(function(N, alpha, discount=0) {
+    G.expected  <- Vectorize(function(N, alpha, discount = 0) {
+      suppressMessages(library(Rmpfr))
+      on.exit(detach.pkg(Rmpfr))
+      on.exit(detach.pkg(gmp), add=TRUE)
       if(!all(is.numeric(N), is.numeric(discount), 
-         is.numeric(alpha)))      stop("All inputs must be numeric")
+         is.numeric(alpha)))  stop("All inputs must be numeric")
       if(discount  < 0  ||
          discount >= 1)       stop("Invalid discount value")
       if(alpha   < -discount) stop("Invalid alpha value")
@@ -213,3 +216,14 @@
         as.numeric(pochMpfr(alpha + discount, N)/(discount * pochMpfr(alpha + 1, N - 1)) - alpha/discount)
       }
     })
+
+  # Detach packages
+    detach.pkg  <- function(pkg, character.only = FALSE) {
+      if(!character.only) {
+        pkg     <- deparse(substitute(pkg))
+      }
+      searches  <- paste("package", pkg, sep = ":")
+      while(searches %in% search()) {
+        detach(searches, unload = TRUE, character.only = TRUE)
+      }
+    }
