@@ -2,13 +2,14 @@
 ### IMIFA Plotting Functions ###
 ################################
 
-plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "density", "errors", "posterior", "GQ", "trace", "Z"), 
-                           vars = c("means", "scores", "loadings", "uniquenesses", "pis", "alpha"), zlabels = NULL, load.meth = c("all", "heatmap", "raw"), palette = NULL, g = NULL,
-                           fac = NULL, by.fac = TRUE, ind = NULL, type = c("h", "n", "p", "l"), intervals = TRUE, mat = TRUE, partial = FALSE, titles = TRUE, transparency = NULL) {
+plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlation", "density", "errors", "posterior", "GQ", "trace", "Z"), 
+                                vars = c("means", "scores", "loadings", "uniquenesses", "pis", "alpha"), zlabels = NULL, load.meth = c("all", "heatmap", "raw"), palette = NULL, g = NULL,
+                                fac = NULL, by.fac = TRUE, ind = NULL, type = c("h", "n", "p", "l"), intervals = TRUE, mat = TRUE, partial = FALSE, titles = TRUE, transparency = NULL) {
 
   source(paste(getwd(), "/IMIFA-GIT/FullConditionals.R", sep=""), local=TRUE)
   defpar  <- suppressWarnings(par(no.readonly=TRUE))
-  defpar$new   <- FALSE
+  defpar$new        <- FALSE
+  dev.off()
   if(missing(palette))   palette <- c("#999999", "#E69F00", "#009E73", "#56B4E9", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
   if(!all(are.cols(cols=palette)))    stop("Supplied colour palette contains invalid colours")
   if(length(palette) < 3)             stop("Palette must contain 3 or more colours")
@@ -114,11 +115,10 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
     if(length(fac) != G)              stop(paste0("'fac' must be supplied for each of the ", G, " groups"))
   }
   g.score <- all(grp.ind, !all.ind, vars == "scores")
-  if(all(is.element(method, c("IMIFA", "OMIFA")), m.sw["G.sw"])) {
-    Gs    <- seq_len(2)
-    if(!missing(g))                   warning(paste0("Removed 'g'=", g ," for the ", plot.meth, " plotting method"), call.=FALSE)
+  if(any(all(is.element(method, c("IMIFA", "OMIFA")), m.sw["G.sw"]), m.sw["Z.sw"])) {
+    Gs    <- if(missing(g)) seq_len(2) else ifelse(g <=2, g, stop("Invalid 'g' value"))
   } else if(any(all(is.element(vars, c("scores", "pis", "alpha")), any(all.ind, vars != "scores", !m.sw["P.sw"])), 
-            m.sw["G.sw"], m.sw["Z.sw"], m.sw["E.sw"])) {
+            m.sw["G.sw"], m.sw["E.sw"])) {
     Gs    <- 1
   } else if(!missing(g)) {
     if(!is.element(method, c("FA", "IFA"))) {
@@ -630,67 +630,86 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
     }
     
     if(m.sw["Z.sw"]) {
-      if(type == "l")       stop("'type' cannot be 'l' for clustering uncertainty plots")
+      if(type == "l")                 stop("'type' cannot be 'l' for clustering uncertainty plots")
       plot.x <- clust$uncertainty
-      col.x  <- c(1, 4)[(plot.x >= 1/G) + 1]
-      if(type != "h") col.x[plot.x == 0] <- NA
-      if(titles) {
-        layout(rbind(1, 2), heights=c(1, 6))
-        par(mar=c(0, 4.1, 0.5, 2.1))
-        plot.new()
-        legend("center", legend=paste0("1/G = 1/", G), title="", lty=2, col=2, bty="n", y.intersp=par()$fin[2] * 5/4)
-        legend("center", legend=c(" "," "), title=expression(bold("Clustering Uncertainty")), bty='n', y.intersp=par()$fin[2] * 2/5, cex=par()$cex.main)
-        par(mar=c(5.1, 4.1, 0.5, 2.1))
-      }
-      plot(plot.x, type=type, ylim=c(0, 1 - 1/G), col=col.x, axes=FALSE, ylab="Uncertainty", xlab="Observation", pch=ifelse(type == "n", NA, 16))
-      rect(0, 0, n.obs, 1 - 1/G) 
-      if(G == 2) {
-        abline(h=0.5, col=par()$bg)
-        abline(v=0,   col=par()$bg)
-      }
-      lines(x=c(0, n.obs), y=c(1/G, 1/G), lty=2, col=2)  
-      axis(1, las=1, pos=0, cex.axis=0.9)
-      axis(2, at=c(seq(from=0, to=min(1 - 1/G - 1/1000, 0.8), by=0.1), 1 - 1/G), labels=c(seq(from=0, to=min(1 - 1/G - 1/1000, 0.8), by=0.1), "1 - 1/G"), las=2, pos=0, cex.axis=0.9)
-      if(type == "n")  {
-        znam  <- obs.names
-        znam[plot.x == 0] <- ""
-        text(x=seq_along(plot.x), y=plot.x, znam, col=col.x, cex=0.5)
-      }
-      if(any(!labelmiss,  !missing(zlabels))) {
-        if(all(!labelmiss, missing(zlabels))) {
-          perf    <- clust$perf
-        } else   {
-          labs    <- as.factor(zlabels)
-          if(length(labs) != n.obs)   stop(paste0("'zlabels' must be a factor of length N=",  n.obs))
-          pzs     <- clust$clustering
-          if(nlevels(pzs) == nlevels(labs)) {
-            l.sw  <- lab.switch(z.new=pzs, z.old=labs, Gs=seq_len(G))
-            pzs   <- factor(l.sw$z)
-          }
-          tab     <- table(pzs, labs, dnn=list("Predicted", "Observed"))
-          perf    <- c(classAgreement(tab), classError(pzs, labs))
-          if(nrow(tab) != ncol(tab))   {
-            perf  <- perf[-seq_len(2)]
-            names(perf)[4]       <- "error.rate"
-          } else {
-            names(perf)[6]       <- "error.rate"
-          }
-          if(perf$error.rate     == 0) {
-            perf$misclassified   <- NULL
-          }
-          perf    <- c(list(confusion.matrix = tab), perf)
-          if(nlevels(pzs)  == nlevels(labs)) {
-            names(perf)[1] <- "matched.confusion.matrix"
-          }
-          class(perf)      <- "listof"
+      if(g == 1) {
+        col.x  <- c(1, 4)[(plot.x >= 1/G) + 1]
+        if(type != "h") col.x[plot.x == 0] <- NA
+        if(titles) {
+          layout(rbind(1, 2), heights=c(1, 6))
+          par(mar=c(0, 4.1, 0.5, 2.1))
+          plot.new()
+          legend("center", legend=bquote(1/G == 1/.(G)), title="", lty=2, col=2, bty="n", y.intersp=par()$fin[2] * 5/4)
+          legend("center", legend=c(" "," "), title=expression(bold("Clustering Uncertainty")), bty='n', y.intersp=par()$fin[2] * 2/5, cex=par()$cex.main)
+          par(mar=c(5.1, 4.1, 0.5, 2.1))
         }
-        uncert    <- attr(plot.x, "Obs")
-        if(!is.null(uncert)) {
-          perf    <- c(perf, list(uncertain = uncert))  
+        plot(plot.x, type=type, ylim=c(0, 1 - 1/G), col=col.x, axes=FALSE, ylab="Uncertainty", xlab="Observation", pch=ifelse(type == "n", NA, 16))
+        rect(0, 0, n.obs, 1 - 1/G) 
+        if(G == 2) {
+          abline(h=0.5, col=par()$bg)
+          abline(v=0,   col=par()$bg)
         }
-        perf$error.rate    <- paste0(round(100 * perf$error.rate, 2), "%")
-        print(perf)
-      } else                          message("Nothing to print: try supplying known cluster labels")
+        lines(x=c(0, n.obs), y=c(1/G, 1/G), lty=2, col=2)  
+        axis(1, las=1, pos=0, cex.axis=0.9)
+        axis(2, at=c(seq(from=0, to=min(1 - 1/G - 1/1000, 0.8), by=0.1), 1 - 1/G), labels=c(seq(from=0, to=min(1 - 1/G - 1/1000, 0.8), by=0.1), "1 - 1/G"), las=2, pos=0, cex.axis=0.9)
+        if(type == "n")  {
+          znam  <- obs.names
+          znam[plot.x == 0] <- ""
+          text(x=seq_along(plot.x), y=plot.x, znam, col=col.x, cex=0.5)
+        }
+      } else {
+        if(titles) {
+          layout(rbind(1, 2), heights=c(1, 6))
+          par(mar=c(0, 4.1, 0.5, 2.1))
+          plot.new()
+          legend("center", legend=bquote({NA >= 1/G} == 1/.(G)), title="", pch=15, col=4, bty="n", y.intersp=par()$fin[2] * 5/4)
+          legend("center", legend=c(" "," "), title=expression(bold("Clustering Uncertainty")), bty='n', y.intersp=par()$fin[2] * 2/5, cex=par()$cex.main)
+          par(mar=c(5.1, 4.1, 0.5, 2.1))
+        }
+        x.plot  <- hist(plot.x, plot=FALSE)
+        breaks  <- x.plot$breaks
+        cols    <- 3 + (x.plot$breaks > 1/G)
+        cols[cols == 3] <- grey
+        plot(x.plot, main="", xlab="Uncertainties", xlim=c(0, 1 - 1/G), col=cols, xaxt="n")
+        axis(1, at=c(breaks[round(breaks, 1) < 0.8], 1 - 1/G), labels=c(breaks[round(breaks, 1) < 0.8], "1 - 1/G"), las=2, pos=0, cex.axis=0.9)
+      }
+      if(g == min(Gs)) {
+        if(any(!labelmiss,  !missing(zlabels))) {
+          if(all(!labelmiss, missing(zlabels))) {
+           prf  <- clust$perf
+          } else   {
+           labs <- as.factor(zlabels)
+           if(length(labs) != n.obs)  stop(paste0("'zlabels' must be a factor of length N=",  n.obs))
+           pzs  <- clust$clustering
+           if(nlevels(pzs) == nlevels(labs)) {
+            lsw <- lab.switch(z.new=pzs, z.old=labs, Gs=seq_len(G))
+            pzs <- factor(lsw$z)
+           }
+           tab  <- table(pzs, labs, dnn=list("Predicted", "Observed"))
+           prf  <- c(classAgreement(tab), classError(pzs, labs))
+           if(nrow(tab) != ncol(tab))   {
+            prf <- prf[-seq_len(2)]
+            names(prf)[4]        <- "error.rate"
+           } else {
+            names(prf)[6]        <- "error.rate"
+           }
+           if(prf$error.rate     == 0) {
+            prf$misclassified    <- NULL
+           }
+           prf  <- c(list(confusion.matrix = tab), prf)
+           if(nlevels(pzs)  == nlevels(labs)) {
+            names(prf)[1]  <- "matched.confusion.matrix"
+           }
+           class(prf)      <- "listof"
+          }
+          ucert <- attr(plot.x, "Obs")
+          if(!is.null(ucert)) {
+           prf  <- c(prf, list(uncertain = ucert))  
+          }
+          prf$error.rate   <- paste0(round(100 * prf$error.rate, 2), "%")
+          print(prf)
+        } else                        message("Nothing to print: try supplying known cluster labels")
+      }
     }
     
     if(m.sw["E.sw"]) {
