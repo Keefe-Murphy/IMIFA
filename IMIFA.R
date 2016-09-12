@@ -77,6 +77,7 @@
 
 # Run the Gibbs Sampler
   sim  <- mcmc.IMIFA(wine, method="IMIFA")
+  summary(sim)
 
 # Save / Load Simulations
   save(sim, file=paste0(getwd(), "/Simulations/", attr(sim, "Name"), 
@@ -88,6 +89,7 @@
 
 # Posterior Summaries (optional: additional 'burnin' & 'thinning', user-defined G/Q, model selection criterion)
   res <- tune.IMIFA(sim, zlabels=lab)
+  summary(res)
 
 # Save / Load Results
   save(res, file=paste0(getwd(), "/Simulations/", attr(res, "Name"), 
@@ -105,26 +107,30 @@
   res$Clust$clustering
 
 # Means
+  plot(res, "p", "m")
   plot(res, "a", "m")
   plot(res, "a", "m", mat=FALSE)
   plot(res, "t", "m")
   plot(res, "t", "m", mat=FALSE)
   plot(res, "d", "m")
   plot(res, "d", "m", mat=FALSE)
-  plot(res, "p", "m")
+  plot(res, "m", "m")
   plot(res, "c", "m")
   res$Means$post.mu
   res$Means$var.mu
   res$Means$ci.mu
   
 # Loadings
+  plot(res, "p", "l")
   plot(res, "a", "l")
   plot(res, "a", "l", mat=FALSE)
+  plot(res, "a", "l", load.meth="raw")
   plot(res, "t", "l")
   plot(res, "t", "l", mat=FALSE)
   plot(res, "d", "l")
   plot(res, "d", "l", mat=FALSE)
-  plot(res, "p", "l")
+  plot(res, "m", "l")
+  plot(res, "m", "l", load.meth="raw")
   plot(res, "c", "l")
   res$Loadings$post.load
   res$Loadings$var.load
@@ -138,20 +144,21 @@
   plot(res, "t", "s", mat=FALSE)
   plot(res, "d", "s")
   plot(res, "d", "s", mat=FALSE)
-  plot(res, "p", "s")
+  plot(res, "m", "s")
   plot(res, "c", "s")
   res$Scores$post.eta
   res$Scores$var.eta
   res$Scores$ci.eta
   
 # Uniquenesses
+  plot(res, "p", "u")
   plot(res, "a", "u")
   plot(res, "a", "u", mat=FALSE)
   plot(res, "t", "u")
   plot(res, "t", "u", mat=FALSE)
   plot(res, "d", "u")
   plot(res, "d", "u", mat=FALSE)
-  plot(res, "p", "u")
+  plot(res, "m", "u")
   plot(res, "c", "u")
   res$Uniquenesses$post.psi
   res$Uniquenesses$var.psi
@@ -164,8 +171,8 @@
   plot(res, "t", "p", mat=FALSE)
   plot(res, "d", "p")
   plot(res, "d", "p", mat=FALSE)
-  plot(res, "p", "p")
-  plot(res, "p", "p", mat=FALSE)
+  plot(res, "m", "p")
+  plot(res, "m", "p", mat=FALSE)
   plot(res, "c", "p")
   res$Clust$post.pi
   res$Clust$var.pi
@@ -178,6 +185,6 @@
   plot(res, "a", "a")
   plot(res, "t", "a")
   plot(res, "d", "a")
-  plot(res, "p", "a")
+  plot(res, "m", "a")
   plot(res, "c", "a")
 ####
