@@ -31,7 +31,7 @@ plot.IMIFA     <- function(results = NULL, plot.meth = c("all", "correlation", "
   if(missing(results))                stop("Results must be supplied")
   if(!exists(deparse(substitute(results)),
              envir=.GlobalEnv))       stop(paste0("Object ", match.call()$results, " not found"))
-  if(class(results) != "IMIFA")       stop(paste0("Results object of class 'IMIFA' must be supplied"))
+  if(class(results) != "Tuned_IMIFA") stop(paste0("Results object of class 'Tuned_IMIFA' must be supplied"))
   GQ.res  <- results$GQ.results
   G       <- GQ.res$G
   Gseq    <- seq_len(G)

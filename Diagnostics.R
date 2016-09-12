@@ -552,20 +552,19 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     }
   }
   
-  if(is.element(method,
-     c("FA", "IFA")))             message(paste0("The chosen model has ", Q, " factor", ifelse(Q == 1, "", "s")))
-  if(is.element(method, 
-     c("MFA", "OMFA", "IMFA")))   message(paste0("The chosen model has ", G, " group", ifelse(G == 1, " with ", "s, each with "), unique(Q), " factor", ifelse(unique(Q) == 1, "", "s")))
-  if(is.element(method, 
-     c("MIFA", "OMIFA", "IMIFA"))) {
+  if(is.element(method, c("FA", "IFA")))  {
+    msg          <- paste0("The chosen ", method, " model has ", Q, " factor", ifelse(Q == 1, "", "s"))
+  } else if(is.element(method, c("MFA", "OMFA", "IMFA"))) {
+    msg          <- paste0("The chosen ", method, " model has ", G, " group", ifelse(G == 1, " with ", "s, each with "), unique(Q), " factor", ifelse(unique(Q) == 1, "", "s"))
+  } else {
     Q.msg        <- NULL 
     for(i in seq_along(Q[-length(Q)])) {
-      Q.msg      <- c(Q.msg, (paste0(Q[i], ", ")))
+      Q.msg      <- c(Q.msg, (paste0(Q[i], ifelse(i + 1 < length(Q), ", ", " "))))
     } 
     Q.msg        <- if(length(Q) > 1) paste(c(Q.msg, paste0("and ", Q[length(Q)])), sep="", collapse="") else Q
-                                  message(cat("The chosen model has ", G, " group", ifelse(G == 1, " with ", "s, with "), Q.msg, " factor", ifelse(G == 1 && Q == 1, "", paste0("s", ifelse(G == 1, "", ", respectively"))), sep=""))
-  }  
-
+    msg          <- paste0("The chosen ", method, " model has ", G, " group", ifelse(G == 1, " with ", "s, with "), Q.msg, " factor", ifelse(G == 1 && Q == 1, "", paste0("s", ifelse(G == 1, "", ", respectively"))), sep="")
+  }                               
+                                  message(msg)
   if(sw["mu.sw"])  {
     post.mu      <- do.call(cbind, lapply(result, "[[", "post.mu"))
     var.mu       <- do.call(cbind, lapply(result, "[[", "var.mu"))
@@ -591,7 +590,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
                       if(sw["s.sw"])   list(Scores       = scores),
                       if(sw["psi.sw"]) list(Uniquenesses =   psis))
                       
-  class(result)                <- "IMIFA"
+  class(result)                <- "Tuned_IMIFA"
   attr(result, "Conf.Level")   <- conf.level
   attr(result, "Errors")       <- any(err.T)
   attr(result, "Method")       <- method
@@ -602,6 +601,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     attr(result, "Discount")   <- if(!learn.d) attr(sims, "Discount")
     attr(result, "Gen.Slice")  <- attr(sims, "Gen.Slice")
   }
+  attr(result, "Message")      <- msg
   attr(result, "Name")         <- attr(sims, "Name")
   attr(result, "Obs")          <- n.obs
   attr(result, "Store")        <- tmp.store

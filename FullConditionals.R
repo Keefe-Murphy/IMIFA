@@ -214,9 +214,9 @@
          discount >= 1)       stop("Invalid discount value")
       if(alpha   < -discount) stop("Invalid alpha value")
       if(discount == 0) {
-        alpha * (digamma(alpha + N) - digamma(alpha))
+          alpha * (digamma(alpha + N) - digamma(alpha))
       } else {
-        asNumeric(alpha/discount * pochMpfr(alpha + discount, N)/pochMpfr(alpha, N) - alpha/discount)
+          asNumeric(alpha/discount * pochMpfr(alpha + discount, N)/pochMpfr(alpha, N) - alpha/discount)
       }
     })
 
@@ -233,13 +233,13 @@
          discount >= 1)       stop("Invalid discount value")
       if(alpha   < -discount) stop("Invalid alpha value")
       if(discount == 0) {
-        alpha * (digamma(alpha + N) - digamma(alpha)) + (alpha^2) * (trigamma(alpha + N) - trigamma(alpha))
+          alpha * (digamma(alpha + N) - digamma(alpha)) + (alpha^2) * (trigamma(alpha + N) - trigamma(alpha))
       } else {
         sum.ad  <- alpha + discount
         poch.a  <- pochMpfr(alpha, N)
         poch.ad <- pochMpfr(sum.ad, N)
         subterm <- alpha/discount * poch.ad/poch.a
-        asNumeric((alpha * sum.ad)/discount^2 * pochMpfr(sum.ad + discount, N)/poch.a - subterm - subterm^2)
+          asNumeric((alpha * sum.ad)/discount^2 * pochMpfr(sum.ad + discount, N)/poch.a - subterm - subterm^2)
       }
     })
 
@@ -252,4 +252,38 @@
       while(searches %in% search()) {
         detach(searches, unload=TRUE, character.only=TRUE)
       }
+    }
+    
+  # Print functions
+    print.IMIFA <- summary.IMIFA <- function(imifa) {
+      meth      <- attr(imifa, "Method")
+      name      <- attr(imifa, "Name")
+      fac       <- attr(imifa, "Factors")
+      grp       <- attr(imifa, "Groups")
+      Q.msg     <- NULL 
+      G.msg     <- NULL
+      for(i in seq_along(fac[-length(fac)])) {
+        Q.msg   <- c(Q.msg, (paste0(fac[i], ifelse(i + 1 < length(fac), ", ", " "))))
+      }
+      Q.msg     <- if(length(fac) > 1) paste(c(Q.msg, paste0("and ", fac[length(fac)])), sep="", collapse="") else fac
+      Q.msg     <- paste0(" with ", Q.msg, " factor", ifelse(length(fac) == 1, "", "s"))
+      for(i in seq_along(grp[-length(grp)])) {
+        G.msg   <- c(G.msg, (paste0(grp[i], " ")))
+      }
+      G.msg     <- if(length(grp) > 1) paste(c(G.msg, paste0("and ", grp[length(grp)])), sep="", collapse="") else grp
+      G.msg     <- paste0(" with ", G.msg, " group", ifelse(length(grp) == 1, "", "s"))
+      if(is.element(meth, c("FA", "OMFA", "IMFA"))) {
+        msg     <- Q.msg
+      } else if(meth == "MFA")  {
+        msg     <- paste0(G.msg, " and", Q.msg)
+      } else if(meth == "MIFA") {
+        msg     <- G.msg
+      } else {
+        msg     <- NULL
+      }
+        cat(paste0(meth, " simulations for '", name, "' dataset", msg, " to be passed to tune.IMIFA()"))
+    }
+    
+    print.Tuned_IMIFA <- summary.Tuned_IMIFA <- function(res) {
+        cat(attr(res, "Message"))
     }
