@@ -68,12 +68,13 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     scal    <- FALSE
   }
   dat       <- scale(raw.dat, center=centering, scale=scal)
+  centered  <- any(centering, round(colSums(dat)) == 0)
   N         <- nrow(dat)
   P         <- ncol(dat)
   
 # Manage storage switches & warnings for other function inputs
   if(!missing(mu.switch) && 
-      all(!mu.switch, !centering))  warning("Centering hasn't been applied - are you sure you want mu.switch=FALSE?", call.=FALSE)
+      all(!mu.switch, !centered))   warning("Centering hasn't been applied - are you sure you want mu.switch=FALSE?", call.=FALSE)
   switches  <- c(mu.sw=mu.switch, s.sw=score.switch, l.sw=load.switch, psi.sw=psi.switch, pi.sw=pi.switch)
   if(!is.logical(switches))         stop("All logical switches must be TRUE or FALSE")
   if(N < 2)                         stop("Must have more than one observation")
@@ -204,7 +205,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(b1 <= 0)                     stop("'b1' must be strictly positive to ensure adaptation probability decreases")
     if(missing("prop"))      prop          <- 3/4
     if(abs(prop - (1 - prop)) < 0)  stop("'prop' must be a single number between 0 and 1")
-    if(missing("epsilon"))   epsilon       <- ifelse(centering, 0.1, 0.005)
+    if(missing("epsilon"))   epsilon       <- ifelse(centered, 0.1, 0.01)
     if(abs(epsilon - 
           (1 - epsilon)) < 0)       stop("'epsilon' must be a single number between 0 and 1")
   } 
@@ -547,7 +548,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   attr(imifa, 
        "Alpha.step")      <- alpha.step
   attr(imifa, "Alpha")    <- if(alpha.step == "fixed") alpha.pi
-  attr(imifa, "Center")   <- centering
+  attr(imifa, "Center")   <- centered
   attr(imifa, "Date")     <- format(Sys.Date(), "%d-%b-%Y")
   attr(imifa,
        "Disc.step")       <- learn.d
