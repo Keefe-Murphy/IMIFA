@@ -103,7 +103,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   } 
   if(inf.G)  {
     tmp.store    <- if(GQ1) lapply(seq_len(GQs), function(gq) store[which(G.store[gq,] == G[ifelse(G.T, 1, gq)])]) else store[which(G.store == G)]  
-    GQ.temp1     <- list(G = G, G.Mode = G.mode, G.Median = G.med, 
+    GQ.temp1     <- list(G = G, G.Mode = G.mode, G.Median = G.med, Stored.G = G.store,
                          G.CI = G.CI, G.Probs = G.prob, G.Counts = G.tab)
   }
   G.range        <- ifelse(G.T, 1, length(n.grp))
@@ -120,8 +120,10 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     } else {
       dimnames(crit.mat) <- list(paste0("G", n.grp), if(inf.Q) "IFA" else paste0("Q", n.fac))
     }
-    if(inf.G) {
+    if(is.element(method, c("IMFA", "IMIFA"))) {
       rownames(crit.mat) <- "IM"
+    } else if(is.element(method, c("OMFA", "OMIFA"))) {
+      rownames(crit.mat) <- "OM"
     }
     aicm         <- bicm       <- 
     aic.mcmc     <- bic.mcmc   <- crit.mat
@@ -334,7 +336,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     }
     if(any(unlist(Q) >= n.var))   warning(paste0("Estimate of Q is not less than the number of variables ", n.var, ": solution may be invalid"), call.=FALSE)
     Q.CI         <- if(G1) apply(Q.store, 1, function(qs) round(quantile(qs, conf.levels))) else round(quantile(Q.store, conf.levels))
-    GQ.temp4     <- list(Q = Q, Q.Mode = Q.mode, Q.Median = Q.med, 
+    GQ.temp4     <- list(Q = Q, Q.Mode = Q.mode, Q.Median = Q.med, Stored.Q = Q.store,
                          Q.CI = Q.CI, Q.Probs = Q.prob, Q.Counts = Q.tab)
     GQ.res       <- if(inf.G) c(GQ.temp1, GQ.temp4) else c(list(G = G), GQ.temp4)
     GQ.res       <- c(GQ.res, GQ.temp2)
@@ -552,19 +554,6 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     }
   }
   
-  if(is.element(method, c("FA", "IFA")))  {
-    msg          <- paste0("The chosen ", method, " model has ", Q, " factor", ifelse(Q == 1, "", "s"))
-  } else if(is.element(method, c("MFA", "OMFA", "IMFA"))) {
-    msg          <- paste0("The chosen ", method, " model has ", G, " group", ifelse(G == 1, " with ", "s, each with "), unique(Q), " factor", ifelse(unique(Q) == 1, "", "s"))
-  } else {
-    Q.msg        <- NULL 
-    for(i in seq_along(Q[-length(Q)])) {
-      Q.msg      <- c(Q.msg, (paste0(Q[i], ifelse(i + 1 < length(Q), ", ", " "))))
-    } 
-    Q.msg        <- if(length(Q) > 1) paste(c(Q.msg, paste0("and ", Q[length(Q)])), sep="", collapse="") else Q
-    msg          <- paste0("The chosen ", method, " model has ", G, " group", ifelse(G == 1, " with ", "s, with "), Q.msg, " factor", ifelse(G == 1 && Q == 1, "", paste0("s", ifelse(G == 1, "", ", respectively"))), sep="")
-  }                               
-                                  message(msg)
   if(sw["mu.sw"])  {
     post.mu      <- do.call(cbind, lapply(result, "[[", "post.mu"))
     var.mu       <- do.call(cbind, lapply(result, "[[", "var.mu"))
@@ -601,11 +590,11 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     attr(result, "Discount")   <- if(!learn.d) attr(sims, "Discount")
     attr(result, "Gen.Slice")  <- attr(sims, "Gen.Slice")
   }
-  attr(result, "Message")      <- msg
   attr(result, "Name")         <- attr(sims, "Name")
   attr(result, "Obs")          <- n.obs
   attr(result, "Store")        <- tmp.store
   attr(result, "Switch")       <- sw
   attr(result, "Vars")         <- n.var
+  cat(print(result))
   return(result)
 }

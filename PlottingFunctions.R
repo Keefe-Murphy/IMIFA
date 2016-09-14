@@ -510,17 +510,17 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
         conf   <- attr(results, "Conf.Level")
         digits <- options()$digits
         a.adj  <- rep(0.5, 2)
-        a.cex  <- par()$fin[2]/ifelse(a.step != "metropolis", 4.5, 5)
+        a.cex  <- par()$fin[2]/ifelse(a.step != "metropolis", 4, 5)
         pen    <- ifelse(a.step != "metropolis", 0.125, 0)
-        text(x=0.5, y=0.775 - pen, cex=a.cex, col="black", adj=a.adj, expression(bold("Posterior Mean:\n")))
-        text(x=0.5, y=0.775 - pen, cex=a.cex, col="black", adj=a.adj, bquote(.(round(plot.x$post.alpha, digits))))
-        text(x=0.5, y=0.55  - pen, cex=a.cex, col="black", adj=a.adj, expression(bold("\nVariance:\n")))
-        text(x=0.5, y=0.55  - pen, cex=a.cex, col="black", adj=a.adj, bquote(.(round(plot.x$var.alpha, digits))))
-        text(x=0.5, y=0.4   - pen, cex=a.cex, col="black", adj=a.adj, bquote(bold(.(100 * conf))~bold("% Confidence Interval:")))
-        text(x=0.5, y=0.3   - pen, cex=a.cex, col="black", adj=a.adj, bquote(paste("[", .(round(plot.x$ci.alpha[1], digits)), ", ", .(round(plot.x$ci.alpha[2], digits)), "]")))
+        text(x=0.5, y=0.85 - pen, cex=a.cex, col="black", adj=a.adj, expression(bold("Posterior Mean:\n")))
+        text(x=0.5, y=0.85 - pen, cex=a.cex, col="black", adj=a.adj, bquote(.(round(plot.x$post.alpha, digits))))
+        text(x=0.5, y=0.57 - pen, cex=a.cex, col="black", adj=a.adj, expression(bold("\nVariance:\n")))
+        text(x=0.5, y=0.57 - pen, cex=a.cex, col="black", adj=a.adj, bquote(.(round(plot.x$var.alpha, digits))))
+        text(x=0.5, y=0.4  - pen, cex=a.cex, col="black", adj=a.adj, bquote(bold(.(100 * conf))~bold("% Confidence Interval:")))
+        text(x=0.5, y=0.28 - pen, cex=a.cex, col="black", adj=a.adj, bquote(paste("[", .(round(plot.x$ci.alpha[1], digits)), ", ", .(round(plot.x$ci.alpha[2], digits)), "]")))
         if(a.step == "metropolis") {
-          text(x=0.5, y=0.175, cex=a.cex, col="black", adj=a.adj, expression(bold("Acceptance Rate:")))
-          text(x=0.5, y=0.1,   cex=a.cex, col="black", adj=a.adj, bquote(paste(.(round(100 * plot.x$acceptance.rate, 2)), "%")))
+          text(x=0.5, y=0.17, cex=a.cex, col="black", adj=a.adj, expression(bold("Acceptance Rate:")))
+          text(x=0.5, y=0.1,  cex=a.cex, col="black", adj=a.adj, bquote(paste(.(round(100 * plot.x$acceptance.rate, 2)), "%")))
         }
       }
       if(!indx) {         ind[1] <- xind[1]
@@ -601,10 +601,14 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
       }
       if(!any(plotQ.ind, plotG.ind))  message("Nothing to plot")
       if(is.element(method, c("IMIFA", "OMIFA"))) {
+        gq.nam <- substring(names(GQ.res), 1, 1)
         if(g == 1) {
-          print(GQ.res[substring(names(GQ.res), 1, 1) == "G"])
+          print(GQ.res[gq.nam == "G"])
         } else {
-          print(GQ.res[substring(names(GQ.res), 1, 1) != "G"])
+          print(GQ.res[gq.nam == "Q"])
+        }
+        if(g == max(Gs)) {
+          print(GQ.res[gq.nam != "G" & gq.nam != "Q" & gq.nam != "S"])
         }
       } else if(is.element(method, c("MFA", "MIFA", "OMFA", "IMFA"))) {
           print(GQ.res)

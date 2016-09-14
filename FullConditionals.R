@@ -260,30 +260,53 @@
       name      <- attr(imifa, "Name")
       fac       <- attr(imifa, "Factors")
       grp       <- attr(imifa, "Groups")
-      Q.msg     <- NULL 
-      G.msg     <- NULL
+      Qmsg      <- Gmsg <- msg   <- NULL 
       for(i in seq_along(fac[-length(fac)])) {
-        Q.msg   <- c(Q.msg, (paste0(fac[i], ifelse(i + 1 < length(fac), ", ", " "))))
+        Qmsg    <- c(Qmsg, (paste0(fac[i], ifelse(i + 1 < length(fac), ", ", " "))))
       }
-      Q.msg     <- if(length(fac) > 1) paste(c(Q.msg, paste0("and ", fac[length(fac)])), sep="", collapse="") else fac
-      Q.msg     <- paste0(" with ", Q.msg, " factor", ifelse(length(fac) == 1, "", "s"))
       for(i in seq_along(grp[-length(grp)])) {
-        G.msg   <- c(G.msg, (paste0(grp[i], " ")))
+        Gmsg    <- c(Gmsg, (paste0(grp[i], " ")))
       }
-      G.msg     <- if(length(grp) > 1) paste(c(G.msg, paste0("and ", grp[length(grp)])), sep="", collapse="") else grp
-      G.msg     <- paste0(" with ", G.msg, " group", ifelse(length(grp) == 1, "", "s"))
+      Qmsg      <- if(length(fac) > 1) paste(c(Qmsg, paste0("and ", fac[length(fac)])), sep="", collapse="") else fac
+      Gmsg      <- if(length(grp) > 1) paste(c(Gmsg, paste0("and ", grp[length(grp)])), sep="", collapse="") else grp
+      Qmsg      <- paste0(" with ", Qmsg, " factor", ifelse(length(fac) == 1, "", "s"))
+      Gmsg      <- paste0(" with ", Gmsg, " group", ifelse(length(grp) == 1, "", "s"))
       if(is.element(meth, c("FA", "OMFA", "IMFA"))) {
-        msg     <- Q.msg
+        msg     <- Qmsg
       } else if(meth == "MFA")  {
-        msg     <- paste0(G.msg, " and", Q.msg)
+        msg     <- paste0(Gmsg, " and", Qmsg)
       } else if(meth == "MIFA") {
-        msg     <- G.msg
-      } else {
-        msg     <- NULL
-      }
-        cat(paste0(meth, " simulations for '", name, "' dataset", msg, " to be passed to tune.IMIFA()"))
+        msg     <- Gmsg
+      } 
+        cat(paste0(meth, " simulations for '", name, "' dataset", msg, " to be passed to tune.IMIFA(...)"))
     }
     
-    print.Tuned_IMIFA <- summary.Tuned_IMIFA <- function(res) {
-        cat(attr(res, "Message"))
+    print.Tuned_IMIFA   <- function(res) {
+      method    <- attr(res, "Method")
+      G         <- res$GQ.results$G
+      Q         <- res$GQ.results$Q
+      if(is.element(method, c("FA", "IFA")))  {
+        msg     <- paste0("The chosen ", method, " model has ", Q, " factor", ifelse(Q == 1, "", "s"))
+      } else if(is.element(method, c("MFA", "OMFA", "IMFA"))) {
+        msg     <- paste0("The chosen ", method, " model has ", G, " group", ifelse(G == 1, " with ", "s, each with "), unique(Q), " factor", ifelse(unique(Q) == 1, "", "s"))
+      } else {
+        Q.msg   <- NULL 
+        for(i in seq_along(Q[-length(Q)])) {
+          Q.msg <- c(Q.msg, (paste0(Q[i], ifelse(i + 1 < length(Q), ", ", " "))))
+        } 
+        Q.msg   <- if(length(Q) > 1) paste(c(Q.msg, paste0("and ", Q[length(Q)])), sep="", collapse="") else Q
+        msg     <- paste0("The chosen ", method, " model has ", G, " group", ifelse(G == 1, " with ", "s, with "), Q.msg, " factor", ifelse(G == 1 && Q == 1, "", paste0("s", ifelse(G == 1, "", " respectively"))), sep="")
+      }               
+        cat(msg)
+    }
+  
+    summary.Tuned_IMIFA <- function(res) {
+      criterion <- unlist(strsplit(toupper(attr(res$GQ.results, "Criterion")), "[.]"))
+      criterion <- ifelse(length(criterion) > 1, paste0(criterion[1], ".", tolower(criterion[2])), criterion)
+      crit.mat  <- res$GQ.results[[paste0(criterion, "s")]]
+      msg       <- NULL
+      if(any(dim(crit.mat) > 1)) {
+        msg     <- paste0(", and ", ifelse(substr(criterion, 1, 1) == "A", "an ", "a "),  criterion, " of ", round(max(crit.mat), 2))  
+      }
+        cat(paste0(capture.output(print(res)), msg))
     }
