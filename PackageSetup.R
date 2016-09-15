@@ -21,7 +21,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
                         burnin = n.iters/5, thinning = 2, centering = TRUE, scaling = c("unit", "pareto", "none"), alpha.step = c("gibbs", "metropolis", "fixed"), learn.d = FALSE,
                         adapt = TRUE, b0 = NULL, b1 = NULL, delta0g = FALSE, prop = NULL, epsilon = NULL, sigma.mu = NULL, sigma.l = NULL, alpha.hyper = NULL, d.hyper = NULL,
                         mu0g = FALSE, psi0g = FALSE, mu.zero = NULL, phi.nu = NULL, psi.alpha = NULL, psi.beta = NULL, alpha.d1 = NULL, rho = NULL, trunc.G = NULL,
-                        alpha.dk = NULL, beta.d1 = NULL, beta.dk = NULL, alpha.pi = NULL, z.list = NULL, profile = FALSE, mu.switch = TRUE, gen.slice = FALSE,
+                        alpha.dk = NULL, beta.d1 = NULL, beta.dk = NULL, alpha = NULL, z.list = NULL, profile = FALSE, mu.switch = TRUE, gen.slice = FALSE,
                         score.switch = TRUE, load.switch = TRUE, psi.switch = TRUE, pi.switch = TRUE, z.init = c("kmeans", "list", "mclust", "priors")) {
   
   defpar    <- suppressWarnings(par(no.readonly=TRUE))
@@ -264,15 +264,15 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   if(!is.element(method, c("FA", "IFA", "classify"))) {
     if(all(method != "MIFA",
        delta0g))                    stop("'delta0g' and can only be TRUE for the 'MIFA' method")
-    if(missing("alpha.pi"))  alpha.pi      <- ifelse(is.element(method, c("OMIFA", "OMFA")), 0.5/range.G, 
+    if(missing("alpha"))     alpha         <- ifelse(is.element(method, c("OMIFA", "OMFA")), 0.5/range.G, 
                                               ifelse(alpha.step == "gibbs", rgamma(1, a.hyp.1, a.hyp.2) - discount,
                                               ifelse(alpha.step == "metropolis", runif(1, a.hyp.1, a.hyp.2), 1)))
-    if(length(alpha.pi) != 1)       stop("'alpha.pi' must be specified as a scalar to ensure an exchangeable prior")
-    if(alpha.pi <= - discount)      stop(paste0("'alpha.pi' must be ", ifelse(discount != 0, paste0("greater than -discount (i.e. > ", - discount, ")"), "strictly positive")))
+    if(length(alpha) != 1)          stop("'alpha' must be specified as a scalar to ensure an exchangeable prior")
+    if(alpha <= -discount)          stop(paste0("'alpha' must be ", ifelse(discount != 0, paste0("greater than -discount (i.e. > ", - discount, ")"), "strictly positive")))
     if(all(is.element(method,  c("IMIFA", "IMFA")),
-           alpha.step == "fixed"))  warning(paste0("'alpha.pi' fixed at ", alpha.pi, " as it's not being learned via Gibbs/Metropolis-Hastings updates"), call.=FALSE)
+       alpha.step == "fixed"))      warning(paste0("'alpha' fixed at ", alpha, " as it's not being learned via Gibbs/Metropolis-Hastings updates"), call.=FALSE)
     if(all(!is.element(method, c("IMFA", "IMIFA")),
-           alpha.pi  > 1))          warning("Are you sure alpha.pi should be greater than 1?", call.=FALSE)
+           alpha   > 1))            warning("Are you sure alpha should be greater than 1?", call.=FALSE)
                              z.miss        <- missing(z.init)
                              z.init        <- match.arg(z.init)
     if(all(is.element(method,  c("OMIFA", "OMFA")), !is.element(z.init, 
@@ -367,12 +367,12 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
         if(!is.element(method, c("IMFA", "IMIFA"))) {
           while(all(length(unique(zips)) != G,
                 any(prop.table(tabulate(zips, nbins=G)) < 1/G^2))) {
-            pies   <- sim.pi(pi.alpha=rep(alpha.pi, G), nn=0)
+            pies   <- sim.pi(pi.alpha=rep(alpha, G), nn=0)
             zips   <- sim.z.p(N=N, prob.z=pies)
           }  
         } else {
-          if(alpha.pi <= 1)         warning("Suggestion: supply a value > 1 for 'alpha.pi' if initialising labels from the stick-breaking prior")
-          pies     <- sim.pi(pi.alpha=alpha.pi, nn=rep(0, trunc.G), inf.G=TRUE)
+          if(alpha <= 1)            warning("Suggestion: supply a value > 1 for 'alpha' if initialising labels from the stick-breaking prior")
+          pies     <- sim.pi(pi.alpha=alpha, nn=rep(0, trunc.G), inf.G=TRUE)
           zips     <- sim.z.p(N=N, prob.z=pies)
         }
         zi[[g]]    <- as.numeric(zips)
@@ -398,7 +398,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
       if(adk.x)   {
         alpha.dk[[g]]   <- rep(unlist(alpha.dk), G)
       }
-      clust[[g]]   <- list(z = zi[[g]], pi.alpha = alpha.pi, pi.prop = pi.prop[[g]])
+      clust[[g]]   <- list(z = zi[[g]], pi.alpha = alpha, pi.prop = pi.prop[[g]])
       if(is.element(method, c("MFA", "MIFA"))) {
         sw0g.tmp   <- sw0gs
         if(all(g > 9, any(sw0gs))) {
@@ -550,7 +550,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   names(imifa)            <- gnames
   attr(imifa, 
        "Alpha.step")      <- alpha.step
-  attr(imifa, "Alpha")    <- if(alpha.step == "fixed") alpha.pi
+  attr(imifa, "Alpha")    <- if(alpha.step == "fixed") alpha
   attr(imifa, "Center")   <- centered
   attr(imifa, "Date")     <- format(Sys.Date(), "%d-%b-%Y")
   attr(imifa,
