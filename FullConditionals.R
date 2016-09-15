@@ -140,6 +140,16 @@
         (alpha - 1)/diag(inv.cov) 
     }
 
+  # Alpha Shifted Gamma Hyperparameters
+    shift.gamma <- function(shape, rate, shift = 0, param = c("rate", "scale")) {
+      param     <- match.arg(param)
+      var       <- shape/rate^2
+      exp       <- var * rate + shift
+      rate      <- exp/var
+      shape     <- rate * exp
+        c(shape, ifelse(param == "rate", rate, 1/rate))
+    }
+
   # Label Switching
     lab.switch  <- function(z.new, z.old, Gs, ng = tabulate(z.new)) {
       tab       <- table(z.new, z.old, dnn=NULL)

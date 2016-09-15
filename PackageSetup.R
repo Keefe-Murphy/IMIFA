@@ -111,7 +111,10 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
            rho > 1 && rho <= 0))    stop("'rho' must be a single number in the interval (0, 1]")
         if(missing(alpha.hyper))    {
           alpha.hyper     <- if(alpha.step == "gibbs") c(2, 1) else if(alpha.step == "metropolis") c(- discount, range.G/2) else c(0, 0)
-        }   
+        }
+        if(discount > 0) {
+          alpha.hyper     <- shift.gamma(shape=alpha.hyper[1], rate=alpha.hyper[2], shift=discount)
+        }
         a.len      <- length(alpha.hyper)
         if(a.len   != 2)            stop(paste0("'alpha.hyper' must be a vector of length 2, giving the ", ifelse(alpha.step == "gibbs", "shape and rate hyperparameters of the gamma prior for alpha when alpha.step is given as 'gibbs'", ifelse(alpha.step == "metropolis", "lower and upper limits of the uniform prior/proposal for alpha when alpha.step is given as 'metropolis'")))) 
         a.hyp.1    <- alpha.hyper[1]
