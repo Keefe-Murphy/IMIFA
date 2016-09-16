@@ -7,12 +7,9 @@
  #rm(list=ls(all=TRUE))
   if(getwd() != "/home/kmurphy")  {
     wd       <- try(setwd("C:/Users/Windows/Dropbox/UCD/Claire IMIFA"), silent=TRUE)
-    if(inherits(wd, "try-error")) {
-      setwd("D:/Dropbox/UCD/Claire IMIFA")
-    }
-    rm(wd)
+    if(inherits(wd, "try-error")) setwd("D:/Dropbox/UCD/Claire IMIFA"); rm(wd)
   }
-  source(paste0(getwd(), "/IMIFA-GIT/PackageSetup.R", sep=""))
+  source(paste0(getwd(), "/IMIFA-GIT/PackageSetup.R"))
     
 # Read in the data
   # Wine        (# lab)

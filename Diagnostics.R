@@ -5,7 +5,6 @@
 tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q = NULL, Q.meth = c("Mode", "Median"), G.meth = c("Mode", "Median"),
                              criterion = c("bicm", "aicm", "bic.mcmc", "aic.mcmc"), conf.level = 0.95, zlabels = NULL, recomp = FALSE) {
   
-  source(paste(getwd(), "/IMIFA-GIT/FullConditionals.R", sep=""), local=TRUE)
   defpar         <- suppressWarnings(par(no.readonly=TRUE))
   defopt         <- options()
   options(warn=1)
