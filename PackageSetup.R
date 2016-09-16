@@ -14,7 +14,8 @@ if(!("IMIFA.env"  %in% search())) packageStartupMessage("   ________  __________
 while("IMIFA.env" %in% search())  detach("IMIFA.env")
 IMIFA.env <- new.env()
 source(paste0(getwd(),   "/IMIFA-GIT/Diagnostics.R"),       local=IMIFA.env) 
-source(paste0(getwd(),   "/IMIFA-GIT/FullConditionals.R"),  local=IMIFA.env) 
+source(paste0(getwd(),   "/IMIFA-GIT/FullConditionals.R"),  local=IMIFA.env)
+source(paste0(getwd(),   "/IMIFA-GIT/MainFunction.R"),      local=IMIFA.env)
 source(paste0(getwd(),   "/IMIFA-GIT/PlottingFunctions.R"), local=IMIFA.env) 
 source(paste0(getwd(),   "/IMIFA-GIT/SimulateData.R"),      local=IMIFA.env) 
 for(meth in c("FA",   "IFA",   "MFA",  "MIFA", 

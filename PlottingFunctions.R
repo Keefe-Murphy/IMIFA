@@ -638,7 +638,7 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
           layout(rbind(1, 2), heights=c(1, 6))
           par(mar=c(0, 4.1, 0.5, 2.1))
           plot.new()
-          legend("center", legend=bquote(1/G == 1/.(G)), title="", lty=2, col=2, bty="n", y.intersp=par()$fin[2] * 5/4)
+          legend("center", legend=bquote(1/G == 1/.(G)), title="", lty=2, col=2, bty="n", y.intersp=par()$fin[2] * 7/5)
           legend("center", legend=c(" "," "), title=expression(bold("Clustering Uncertainty")), bty='n', y.intersp=par()$fin[2] * 2/5, cex=par()$cex.main)
           par(mar=c(5.1, 4.1, 0.5, 2.1))
         }
@@ -661,13 +661,13 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
           layout(rbind(1, 2), heights=c(1, 6))
           par(mar=c(0, 4.1, 0.5, 2.1))
           plot.new()
-          legend("center", legend=bquote({NA >= 1/G} == 1/.(G)), title="", pch=15, col=4, bty="n", y.intersp=par()$fin[2] * 5/4)
+          legend("center", legend=bquote({NA >= 1/G} == 1/.(G)), title="", pch=15, col=4, bty="n", y.intersp=par()$fin[2] * 7/5)
           legend("center", legend=c(" "," "), title=expression(bold("Clustering Uncertainty")), bty='n', y.intersp=par()$fin[2] * 2/5, cex=par()$cex.main)
           par(mar=c(5.1, 4.1, 0.5, 2.1))
         }
         x.plot  <- hist(plot.x, plot=FALSE)
         breaks  <- x.plot$breaks
-        cols    <- 3 + (x.plot$breaks > 1/G)
+        cols    <- 3 + (x.plot$breaks >= 1/G)
         cols[cols == 3] <- grey
         plot(x.plot, main="", xlab="Uncertainties", xlim=c(0, 1 - 1/G), col=cols, xaxt="n")
         axis(1, at=c(breaks[round(breaks, 1) < 0.8], 1 - 1/G), labels=c(breaks[round(breaks, 1) < 0.8], "1 - 1/G"), las=2, pos=0, cex.axis=0.9)
