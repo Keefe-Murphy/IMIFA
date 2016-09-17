@@ -50,17 +50,18 @@
     # Red vs. White
       matplot(t(spectra), type="l", col=c(2, 1, 2, 1, 1), xlab="Wavelength", ylab="Spectral Reflectance", main="Meat Data")
       legend("topleft", legend=c("Red Meat", "White Meat"), bty="n", lty=1, col=c(2, 1))
-  # Microarray  (# x$labels)
+  # Microarray  (# labels)
     load(file=paste0(getwd(), "/Data/Microarray.Rdata", sep=""), envir=.GlobalEnv)
-    aliza    <- data.frame(as.factor(mydata.alizadeth$y), t(mydata.alizadeth$x)); names(aliza)[1] <- "labels"
-    golub    <- data.frame(as.factor(mydata.golub$y),     t(mydata.golub$x));     names(golub)[1] <- "labels"
-    khan     <- data.frame(as.factor(mydata.khan$y),      t(mydata.khan$x));       names(khan)[1] <- "labels"
-    mammary  <- data.frame(as.factor(mydata.mammary$y),   t(mydata.mammary$x)); names(mammary)[1] <- "labels"
+    aliza    <- data.frame(as.factor(mydata.alizadeth$y), t(mydata.alizadeth$x))
+    golub    <- data.frame(as.factor(mydata.golub$y),     t(mydata.golub$x))
+    khan     <- data.frame(as.factor(mydata.khan$y),      t(mydata.khan$x))
+    mammary  <- data.frame(as.factor(mydata.mammary$y),   t(mydata.mammary$x))
     # Remove 'mydata.' objects
       remove <- ls()
       remove <- c(remove[grepl("^mydata.", remove)], "remove")
-     #remove <- c(remove, setdiff(c("aliza", "golub", "khan", "mammary"), "khan"))
-      rm(list=remove)
+     #remove <- c(remove, setdiff(c("aliza", "golub", "khan", "mammary"), "aliza"))
+      rm(list = remove)
+      labels <- aliza[1]
   # Subjects 
     subjects <- read.csv(paste0(getwd(), "/Data/", "SubjectMarks.csv", sep=""))
   # Cereal      (# classes)

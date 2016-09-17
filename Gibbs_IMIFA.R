@@ -98,7 +98,7 @@
     if(burnin        < 1)  {
       mu.store[,,1]        <- mu
       eta.store[,,1]       <- eta
-      load.store[,,,1]     <- array(unlist(lmat, use.names=FALSE), dim=c(P, Q, G))
+      load.store[,,,1]     <- array(unlist(lmat, use.names=FALSE), dim=c(P, Q, trunc.G))
       psi.store[,,1]       <- 1/psi.inv
       pi.store[,1]         <- pi.prop/sum(pi.prop)
       z.store[,1]          <- z

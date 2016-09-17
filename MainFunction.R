@@ -42,6 +42,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   if(sum(num.check) != ncol(dat)) { message("Non-numeric columns removed")
     raw.dat <- dat[num.check]
   }
+  if(length(iters)  <= 1)           stop("Run a longer chain!")
   if(any(is.na(raw.dat))) {         message("Rows with missing values removed from data")
     raw.dat <- raw.dat[complete.cases(raw.dat),]
   }          

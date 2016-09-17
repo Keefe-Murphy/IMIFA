@@ -769,7 +769,7 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
         lpch <- rep(15, 5)
         temp <- legend("center", legend=if(xna) c(ltxt, "Missing") else ltxt, ncol=ifelse(xna, lnc + 1, lnc), bty="n",
                        pch=if(xna) c(lpch, max(lpch) + 1) else lpch, col=if(xna) c(lcol, length(lcol) + 1) else lcol, cex=0.8)
-        if(xna) text(x=temp$text$x[6] - 0.015, y=temp$text$y[6] + 0.015, "__")
+        if(xna) text(x=temp$text$x[6] - 0.025, y=temp$text$y[6] + 0.015, "__")
       }  
       if(G > 1) {
         avg  <- setNames(list(x.plot$Averages), "Average Error Metrics") 
