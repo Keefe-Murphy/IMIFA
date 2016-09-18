@@ -37,10 +37,10 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   n.iters   <- max(burnin + 1, as.integer(n.iters))
   iters     <- seq(from=burnin + 1, to=n.iters, by=thinning)
   iters     <- iters[iters > 0]
-  dat       <- as.data.frame(dat)
-  num.check <- vapply(dat, is.numeric, logical(1))
+  raw.dat   <- as.data.frame(dat)
+  num.check <- vapply(raw.dat, is.numeric, logical(1))
   if(sum(num.check) != ncol(dat)) { message("Non-numeric columns removed")
-    raw.dat <- dat[num.check]
+    raw.dat <- raw.dat[num.check]
   }
   if(length(iters)  <= 1)           stop("Run a longer chain!")
   if(any(is.na(raw.dat))) {         message("Rows with missing values removed from data")
