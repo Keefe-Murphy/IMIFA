@@ -95,6 +95,8 @@
     lmat            <- lmat[index]
     psi.inv         <- psi.inv[,index, drop=FALSE]
     ksi             <- rho * (1 - rho)^(Ts - 1)
+    k.x             <- .Machine$double.xmin
+    ksi[ksi < k.x]  <- k.x
     if(burnin        < 1)  {
       mu.store[,,1]        <- mu
       eta.store[,,1]       <- eta
@@ -135,7 +137,8 @@
         lmat        <- lmat[index]
         Qs          <- Qs[index]
         psi.inv     <- psi.inv[,index, drop=FALSE]
-      } 
+        ksi[ksi < k.x]     <- k.x
+      }
       u.slice       <- runif(N, 0, ksi[z])
       Gs            <- seq_len(max(vapply(Ns, function(i) sum(u.slice[i] < pi.prop), numeric(1))))
       slice.ind     <- vapply(Gs, function(g, x=ksi[g]) (u.slice < x)/x, numeric(N))
@@ -164,7 +167,7 @@
         lmat[Gs]    <- lapply(Gs, function(g) if(all(nn0[g], Q0[g])) matrix(unlist(lapply(Ps, function(j) sim.load(Q=Qs[g], P=P, c.data=c.data[[g]][,j], EtE=EtE[[g]],
                              eta=eta.tmp[[g]], psi.inv=psi.inv[,g][j], Q1=Q1[g], phi=phi[[g]][j,], tau=tau[[g]], shrink=TRUE)), use.names=FALSE), nr=P, byrow=TRUE) else 
                              matrix(unlist(lapply(Ps, function(j) sim.load.p(Q=Qs[g], phi=phi[[g]][j,], tau=tau[[g]], P=P)), use.names=FALSE), nr=P, byrow=FALSE))
-        eta.tmp       <- if(length(unique(Qs)) != 1) lapply(Gs, function(g) cbind(eta.tmp[[g]], matrix(0, nr=nn[g], nc=max(Qs) - Qs[g]))) else eta.tmp
+        eta.tmp     <- if(length(unique(Qs)) != 1) lapply(Gs, function(g) cbind(eta.tmp[[g]], matrix(0, nr=nn[g], nc=max(Qs) - Qs[g]))) else eta.tmp
         q0ng        <- !Q0 & nn0[Gs]
         if(any(q0ng)) {
           eta.tmp[q0ng]    <- lapply(Gs[q0ng], function(g, x=eta.tmp[[g]]) { row.names(x) <- obsnames[z.ind[[g]]]; x })

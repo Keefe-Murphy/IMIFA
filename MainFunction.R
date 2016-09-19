@@ -314,12 +314,12 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   if(beta.x) {
     psi.beta       <- temp.psi <- list(psi.hyper(psi.alpha, cov.mat))
   } else {
-    psi.beta       <- len.check(psi.beta, psi0g)
+    psi.beta       <- len.check(psi.beta, psi0g, method, P, range.G)
   }
-  mu.zero          <- if(mu0.x) mu else len.check(mu.zero, mu0g)
+  mu.zero          <- if(mu0.x) mu else len.check(mu.zero, mu0g, method, P, range.G)
   if(!is.element(method, c("FA", "MFA", "OMFA", "IMFA"))) {
-    alpha.d1       <- if(ad1.x) list(2)  else len.check(alpha.d1, delta0g, P.dim=FALSE)
-    alpha.dk       <- if(adk.x) list(10) else len.check(alpha.dk, delta0g, P.dim=FALSE)
+    alpha.d1       <- if(ad1.x) list(2)  else len.check(alpha.d1, delta0g, method, P, range.G, P.dim=FALSE)
+    alpha.dk       <- if(adk.x) list(10) else len.check(alpha.dk, delta0g, method, P, range.G, P.dim=FALSE)
   }
   if(!is.element(method, c("FA", "IFA", "classify"))) {
     if(verbose)                     cat(paste0("Initialising...\n"))

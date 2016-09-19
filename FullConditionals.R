@@ -185,7 +185,7 @@
     }
 
   # Length Checker
-    len.check   <- function(obj0g, switch0g, P.dim = TRUE) {
+    len.check   <- function(obj0g, switch0g, method, P, range.G, P.dim = TRUE) {
       V         <- ifelse(P.dim, P, 1)
       obj.name  <- deparse(substitute(obj0g))
       sw.name   <- deparse(substitute(switch0g))

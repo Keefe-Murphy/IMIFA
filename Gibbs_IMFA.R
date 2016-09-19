@@ -96,6 +96,8 @@
     lmat           <- lmat[,,index, drop=FALSE]
     psi.inv        <- psi.inv[,index, drop=FALSE]
     ksi            <- rho * (1 - rho)^(Ts - 1)
+    k.x            <- .Machine$double.xmin
+    ksi[ksi < k.x] <- k.x
     if(burnin       < 1)  {
       mu.store[,,1]        <- mu
       eta.store[,,1]       <- eta
@@ -131,6 +133,7 @@
         mu         <- mu[,index, drop=FALSE]
         lmat       <- lmat[,,index, drop=FALSE]
         psi.inv    <- psi.inv[,index, drop=FALSE]
+        ksi[ksi < k.x]     <- k.x
       }
       u.slice      <- runif(N, 0, ksi[z])
       G            <- max(vapply(Ns, function(i) sum(u.slice[i] < pi.prop), numeric(1)))
