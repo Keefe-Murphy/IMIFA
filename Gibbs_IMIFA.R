@@ -160,7 +160,7 @@
       if(!any(Q0))    {
         eta         <- matrix(, nr=N, nc=0)
         eta.tmp     <- lapply(Gs, function(g) eta[z.ind[[g]],, drop=FALSE])
-        lmat        <- lapply(Gs, function(g) matrix(, nr=P, nc=0))
+        lmat[Gs]    <- lapply(Gs, function(g) matrix(, nr=P, nc=0))
       } else {
         eta.tmp     <- lapply(Gs, function(g) if(all(nn0[g], Q0[g])) sim.score(N=nn[g], lmat=lmat[[g]], Q=Qs[g], Q1=Q1[g], c.data=c.data[[g]], psi.inv=psi.inv[,g]) else matrix(, nr=ifelse(Q0[g], 0, nn[g]), nc=Qs[g]))
         EtE         <- lapply(Gs, function(g) if(nn0[g]) crossprod(eta.tmp[[g]]))

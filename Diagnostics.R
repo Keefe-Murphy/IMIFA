@@ -96,7 +96,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     if(inf.Q)  {
       if(any((Q  != 0) + (Q * 
         (n.var - Q)   <= 0) > 1)) stop(paste0("'Q' must be less than the number of variables ", n.var))
-      Qtmp       <- if(inf.G) apply(sims[[1]][[1]]$Q.store[seq_len(G),], 1, max) else if(method == "MIFA") apply(sims[[ifelse(G.T, which(G == n.grp), G.ind)]][[1]]$Q.store, 1, max) else max(sims[[1]][[1]]$Q.store)
+      Qtmp       <- if(inf.G) apply(sims[[1]][[1]]$Q.store[seq_len(G),, drop=FALSE], 1, max) else if(method == "MIFA") apply(sims[[ifelse(G.T, which(G == n.grp), G.ind)]][[1]]$Q.store, 1, max) else max(sims[[1]][[1]]$Q.store)
       if(any(Q * (Qtmp - Q) < 0)) stop(paste0("'Q' can't be greater than the maximum number of factors stored in ", ifelse(method == "IFA", "", "any group of "), match.call()$sims))
     }
   } 
@@ -181,7 +181,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       Q.ind      <- if(all(!Q.T, length(n.fac) > 1)) Q.ind else which(n.fac == Q)
       Q          <- setNames(if(length(Q) != G) rep(Q, G) else Q, paste0("Group ", Gseq))  
       if(all(inf.G, Q.T))  GQ.temp1$G <- rep(G, GQs)
-      GQ.temp1   <- if(is.element(method, c("OMFA", "IMFA")) && GQ1) lapply(GQ.temp1, "[[", 1) else if(inf.G) GQ.temp1
+      GQ.temp1   <- if(is.element(method, c("OMFA", "IMFA")) && GQ1) lapply(GQ.temp1, "[[", Q.ind) else if(inf.G) GQ.temp1
       GQ.temp3   <- c(GQ.temp2, list(AIC.mcmcs = aic.mcmc, BIC.mcmcs = bic.mcmc))
       GQ.res     <- if(!is.element(method, c("OMFA", "IMFA"))) c(list(G = G, Q = Q), GQ.temp3) else c(GQ.temp1, list(Q = Q), GQ.temp3)
     }
@@ -221,7 +221,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     }
     z            <- as.matrix(sims[[G.ind]][[Q.ind]]$z.store[,tmp.store])
     if(!label.switch) {
-      z.temp     <- factor(z[,1], labels=Gseq)
+      z.temp     <- factor(z[,1], levels=Gseq)
       for(sl in seq_along(tmp.store)) {
         sw.lab   <- lab.switch(z.new=z[,sl], z.old=z.temp, Gs=Gseq)
         z[,sl]   <- sw.lab$z
@@ -264,7 +264,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
         sw.lab   <- lab.switch(z.new=post.z, z.old=zlabels, Gs=Gseq)
         post.z   <- setNames(factor(sw.lab$z), names(post.z))
         l.perm   <- sw.lab$z.perm
-        z.tmp    <- apply(z, 2, function(x) factor(x, labels=l.perm))
+        z.tmp    <- apply(z, 2, function(x) factor(x, levels=l.perm))
         z        <- apply(z.tmp, 2, function(x) as.numeric(levels(as.factor(x)))[as.numeric(x)])
         dimnames(z)            <- dimnames(z.tmp)
         if(sw["mu.sw"])    mus <- mus[,l.perm,, drop=FALSE]
