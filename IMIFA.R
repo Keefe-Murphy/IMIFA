@@ -101,7 +101,7 @@
   plot(res, "GQ") 
 
 # Cluster Labels
-  plot(res, "Z")
+  plot(res, "z")
   res$Clust$clustering
 
 # Means

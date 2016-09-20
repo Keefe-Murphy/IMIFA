@@ -275,7 +275,7 @@
         Qmsg    <- c(Qmsg, (paste0(fac[i], ifelse(i + 1 < length(fac), ", ", " "))))
       }
       for(i in seq_along(grp[-length(grp)])) {
-        Gmsg    <- c(Gmsg, (paste0(grp[i], " ")))
+        Gmsg    <- c(Gmsg, (paste0(grp[i], ifelse(i + 1 < length(grp), ", ", " "))))
       }
       Qmsg      <- if(length(fac) > 1) paste(c(Qmsg, paste0("and ", fac[length(fac)])), sep="", collapse="") else fac
       Gmsg      <- if(length(grp) > 1) paste(c(Gmsg, paste0("and ", grp[length(grp)])), sep="", collapse="") else grp
@@ -288,7 +288,7 @@
       } else if(meth == "MIFA") {
         msg     <- Gmsg
       } 
-        cat(paste0(meth, " simulations for '", name, "' dataset", msg, " to be passed to tune.IMIFA(...)"))
+        cat(paste0(meth, " simulations for '", name, "' dataset", msg, " to be passed to tune.IMIFA(...)\n"))
     }
     
     print.Tuned_IMIFA   <- function(res) {
@@ -305,7 +305,7 @@
           Q.msg <- c(Q.msg, (paste0(Q[i], ifelse(i + 1 < length(Q), ", ", " "))))
         } 
         Q.msg   <- if(length(Q) > 1) paste(c(Q.msg, paste0("and ", Q[length(Q)])), sep="", collapse="") else Q
-        msg     <- paste0("The chosen ", method, " model has ", G, " group", ifelse(G == 1, " with ", "s, with "), Q.msg, " factor", ifelse(G == 1 && Q == 1, "", paste0("s", ifelse(G == 1, "", " respectively"))), sep="")
+        msg     <- paste0("The chosen ", method, " model has ", G, " group", ifelse(G == 1, " with ", "s, with "), Q.msg, " factor", ifelse(G == 1 && Q == 1, "\n", paste0("s", ifelse(G == 1, "\n", " respectively\n"))), sep="")
       }               
         cat(msg)
     }
@@ -316,7 +316,7 @@
       crit.mat  <- res$GQ.results[[paste0(criterion, "s")]]
       msg       <- NULL
       if(any(dim(crit.mat) > 1)) {
-        msg     <- paste0(", and ", ifelse(substr(criterion, 1, 1) == "A", "an ", "a "),  criterion, " of ", round(max(crit.mat), 2))  
+        msg     <- paste0(", and ", ifelse(substr(criterion, 1, 1) == "A", "an ", "a "),  criterion, " of ", round(max(crit.mat), 2), "\n")  
       }
         cat(paste0(capture.output(print(res)), msg))
     }

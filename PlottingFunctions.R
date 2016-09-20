@@ -2,7 +2,7 @@
 ### IMIFA Plotting Functions ###
 ################################
 
-plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlation", "density", "errors", "GQ", "mean", "parallel.coord", "trace", "Z"), 
+plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlation", "density", "errors", "GQ", "means", "parallel.coords", "trace", "zlabels"), 
                                 vars = c("means", "scores", "loadings", "uniquenesses", "pis", "alpha"), zlabels = NULL, load.meth = c("heatmap", "raw"), palette = NULL, g = NULL, 
                                 fac = NULL, by.fac = TRUE, ind = NULL, type = c("h", "n", "p", "l"), intervals = TRUE, mat = TRUE, partial = FALSE, titles = TRUE, transparency = NULL) {
 
