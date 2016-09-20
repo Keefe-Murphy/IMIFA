@@ -200,7 +200,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(adapt.at < 0 ||
        adapt.at > burnin)           stop("'adapt.at' must be a single number in the interval [0, burnin]")
     if(epsilon <= 0 ||
-       epsilon <= 1)                stop("'epsilon' must be a single number in the interval (0, 1)")
+       epsilon >= 1)                stop("'epsilon' must be a single number in the interval (0, 1)")
   } 
   if(any(range.Q  >= P)) {          
     if(all(is.element(method, c("IFA", "MIFA", "OMIFA", "IMIFA")),

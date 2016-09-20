@@ -221,7 +221,10 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     }
     z            <- as.matrix(sims[[G.ind]][[Q.ind]]$z.store[,tmp.store])
     if(!label.switch) {
-      z.temp     <- factor(z[,1], levels=Gseq)
+      z.temp     <- try(factor(z[,1], labels=Gseq), silent=TRUE)
+      if(inherits(z.temp, "try-error")) {
+        z.temp   <- factor(z[,1], levels=Gseq)
+      }
       for(sl in seq_along(tmp.store)) {
         sw.lab   <- lab.switch(z.new=z[,sl], z.old=z.temp, Gs=Gseq)
         z[,sl]   <- sw.lab$z
