@@ -5,9 +5,9 @@
 # Gibbs Sampler Function
   gibbs.MIFA       <- function(Q, data, iters, N, P, G, mu.zero,
                                sigma.mu, burnin, thinning, mu,
-                               psi.alpha, psi.beta, verbose, 
+                               psi.alpha, psi.beta, verbose, adapt,
                                sw, cluster, phi.nu, b0, b1, prop,
-                               beta.d1, beta.dk, adapt, epsilon, ...) {
+                               beta.d1, beta.dk, adapt.at, epsilon, ...) {
         
   # Define & initialise variables
     start.time     <- proc.time()
@@ -169,8 +169,8 @@
       }
     
     # Adaptation  
-      if(all(adapt, iter > burnin)) {      
-        if(runif(1) < 1/exp(b0 + b1 * (iter - burnin))) {
+      if(all(adapt, iter > adapt.at)) {      
+        if(runif(1) < 1/exp(b0 + b1 * (iter - adapt.at))) {
           lind     <- lapply(Gseq, function(g) if(Q0[g]) colSums(abs(lmat[[g]]) < epsilon)/P else 0)
           colvec   <- lapply(lind, function(lx) lx >= prop)
           nonred   <- lapply(colvec, function(cv) which(cv == 0))

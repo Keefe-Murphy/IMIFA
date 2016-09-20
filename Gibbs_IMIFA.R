@@ -5,8 +5,8 @@
 # Gibbs Sampler Function
   gibbs.IMIFA       <- function(Q, data, iters, N, P, G, mu.zero, rho, sigma.l, alpha.step, mu, sw, 
                                 sigma.mu, burnin, thinning, trunc.G, a.hyper, psi.alpha, psi.beta, 
-                                verbose, gen.slice, alpha.d1, discount, alpha.dk, cluster, b0, b1,
-                                phi.nu, prop, d.hyper, beta.d1, beta.dk, adapt, epsilon, learn.d, ...) {
+                                verbose, gen.slice, alpha.d1, discount, alpha.dk, cluster, b0, b1, adapt,
+                                phi.nu, prop, d.hyper, beta.d1, beta.dk, adapt.at, epsilon, learn.d, ...) {
         
   # Define & initialise variables
     start.time      <- proc.time()
@@ -210,8 +210,8 @@
       }
     
     # Adaptation  
-      if(all(adapt, iter > burnin)) {      
-        if(runif(1) < 1/exp(b0 + b1 * (iter - burnin))) {
+      if(all(adapt, iter > adapt.at)) {      
+        if(runif(1)  < 1/exp(b0 + b1 * (iter - adapt.at))) {
           lind      <- lapply(Gs, function(g) if(all(Q0[g], nn0[g])) colSums(abs(lmat[[g]]) < epsilon)/P else rep(0, Qs[g]))
           colvec    <- lapply(lind, function(lx) lx >= prop)
           nonred    <- lapply(colvec, function(cv) which(cv == 0))

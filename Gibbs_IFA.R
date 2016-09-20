@@ -7,8 +7,8 @@
                              psi.alpha, psi.beta, burnin, mu,
                              thinning, verbose, sw, mu.zero,
                              phi.nu, alpha.d1, alpha.dk, 
-                             beta.d1, beta.dk, b0, b1,
-                             adapt, prop, epsilon, ...) {    
+                             beta.d1, beta.dk, b0, b1, adapt,
+                             adapt.at, prop, epsilon, ...) {    
     
   # Define & initialise variables
     start.time   <- proc.time()
@@ -101,8 +101,8 @@
       }
     
     # Adaptation  
-      if(all(adapt, iter > burnin)) {      
-        if(runif(1) < 1/exp(b0 + b1 * (iter - burnin))) {
+      if(all(adapt, iter > adapt.at)) {      
+        if(runif(1)  < 1/exp(b0 + b1 * (iter - adapt.at))) {
           lind   <- if(Q0) colSums(abs(lmat) < epsilon) / P else 0
           colvec <- lind >= prop
           numred <- sum(colvec)

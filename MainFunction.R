@@ -7,7 +7,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
                         burnin = n.iters/5, thinning = 2, centering = TRUE, scaling = c("unit", "pareto", "none"), alpha.step = c("gibbs", "metropolis", "fixed"), learn.d = FALSE,
                         adapt = TRUE, b0 = NULL, b1 = NULL, delta0g = FALSE, prop = NULL, epsilon = NULL, sigma.mu = NULL, sigma.l = NULL, alpha.hyper = NULL, d.hyper = NULL,
                         mu0g = FALSE, psi0g = FALSE, mu.zero = NULL, phi.nu = NULL, psi.alpha = NULL, psi.beta = NULL, alpha.d1 = NULL, rho = NULL, trunc.G = NULL,
-                        alpha.dk = NULL, beta.d1 = NULL, beta.dk = NULL, alpha = NULL, z.list = NULL, profile = FALSE, mu.switch = TRUE, gen.slice = FALSE,
+                        alpha.dk = NULL, beta.d1 = NULL, beta.dk = NULL, alpha = NULL, z.list = NULL, profile = FALSE, mu.switch = TRUE, gen.slice = FALSE, adapt.at = NULL,
                         score.switch = TRUE, load.switch = TRUE, psi.switch = TRUE, pi.switch = TRUE, z.init = c("kmeans", "list", "mclust", "priors")) {
   
   defpar    <- suppressWarnings(par(no.readonly=TRUE))
@@ -195,9 +195,12 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(b1 <= 0)                     stop("'b1' must be strictly positive to ensure adaptation probability decreases")
     if(missing("prop"))      prop          <- 3/4
     if(abs(prop - (1 - prop)) < 0)  stop("'prop' must be a single number between 0 and 1")
+    if(missing("adapt.at"))  adapt.at      <- burnin
     if(missing("epsilon"))   epsilon       <- ifelse(centered, 0.1, 0.01)
-    if(abs(epsilon - 
-          (1 - epsilon)) < 0)       stop("'epsilon' must be a single number between 0 and 1")
+    if(adapt.at < 0 ||
+       adapt.at > burnin)           stop("'adapt.at' must be a single number in the interval [0, burnin]")
+    if(epsilon <= 0 ||
+       epsilon <= 1)                stop("'epsilon' must be a single number in the interval (0, 1)")
   } 
   if(any(range.Q  >= P)) {          
     if(all(is.element(method, c("IFA", "MIFA", "OMIFA", "IMIFA")),
@@ -293,8 +296,8 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
                                              a.hyper = alpha.hyper, discount = discount, d.hyper = d.hyper, learn.d = learn.d))
   }
   if(!is.element(method, c("FA", "MFA", "OMFA", "IMFA"))) {
-    gibbs.arg      <- append(gibbs.arg, list(phi.nu = phi.nu, beta.d1 = beta.d1, beta.dk = beta.dk, 
-                                             adapt = adapt, b0 = b0, b1 = b1, prop = prop, epsilon = epsilon))
+    gibbs.arg      <- append(gibbs.arg, list(phi.nu = phi.nu, beta.d1 = beta.d1, beta.dk = beta.dk, adapt = adapt,
+                                             adapt.at = adapt.at, b0 = b0, b1 = b1, prop = prop, epsilon = epsilon))
     temp.args      <- gibbs.arg
   } else {
     gibbs.arg      <- append(gibbs.arg, list(sigma.l = sigma.l))
