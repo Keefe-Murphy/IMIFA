@@ -92,7 +92,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
       if(is.element(method, c("IMFA", "IMIFA"))) {
         if(!is.logical(gen.slice))  stop("'gen.slice' must be TRUE or FALSE") 
         if(missing(rho)) {
-          rho      <- 0.25
+          rho      <- 0.75
         }
         if(all(length(rho) > 1,
            rho > 1 && rho <= 0))    stop("'rho' must be a single number in the interval (0, 1]")

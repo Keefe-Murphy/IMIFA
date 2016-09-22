@@ -670,7 +670,7 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
         cols    <- 3 + (x.plot$breaks >= 1/G)
         cols[cols == 3] <- grey
         plot(x.plot, main="", xlab="Uncertainties", xlim=c(0, 1 - 1/G), col=cols, xaxt="n")
-        axis(1, at=c(breaks[round(breaks, 1) < 0.8], 1 - 1/G), labels=c(breaks[round(breaks, 1) < 0.8], "1 - 1/G"), las=2, pos=0, cex.axis=0.9)
+        axis(1, at=c(breaks[round(breaks, 1) < min(0.8, 1 - 1/G)], 1 - 1/G), labels=c(breaks[round(breaks, 1) < min(0.8, 1 - 1/G)], "1 - 1/G"), las=2, pos=0, cex.axis=0.9)
       }
       if(g == min(Gs)) {
         if(any(!labelmiss,  !missing(zlabels))) {

@@ -95,7 +95,7 @@
     mu             <- mu[,index, drop=FALSE]
     lmat           <- lmat[,,index, drop=FALSE]
     psi.inv        <- psi.inv[,index, drop=FALSE]
-    ksi            <- rho * (1 - rho)^(Ts - 1)
+    ksi            <- (1 - rho) * rho^(Ts - 1)
     k.x            <- .Machine$double.xmin
     ksi[ksi < k.x] <- k.x
     if(burnin       < 1)  {
