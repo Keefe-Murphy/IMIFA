@@ -102,7 +102,7 @@
 
 # Cluster Labels
   plot(res, "z")
-  res$Clust$clustering
+  res$Clust$map
 
 # Means
   plot(res, "p", "m")

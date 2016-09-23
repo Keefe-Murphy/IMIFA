@@ -390,7 +390,7 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
         if(type  == "n") text(x=seq_along(plot.x), y=plot.x, var.names, cex=0.5)
       }
       if(vars  == "scores") {
-        labs   <- if(grp.ind) clust$clustering else 1
+        labs   <- if(grp.ind) clust$map else 1
         if(!missing(zlabels)) {
           if(!exists(as.character(match.call()$zlabels),
               envir=.GlobalEnv)) {    warning(paste0("Object ", match.call()$zlabels, " not found"), call.=FALSE)
@@ -679,7 +679,7 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
           } else   {
            labs <- as.factor(zlabels)
            if(length(labs) != n.obs)  stop(paste0("'zlabels' must be a factor of length N=",  n.obs))
-           pzs  <- clust$clustering
+           pzs  <- clust$map
            if(nlevels(pzs) == nlevels(labs)) {
             lsw <- lab.switch(z.new=pzs, z.old=labs, Gs=seq_len(G))
             pzs <- factor(lsw$z)

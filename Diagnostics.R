@@ -316,7 +316,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       DP.alpha   <- list(alpha = alpha, post.alpha = post.alpha, var.alpha = var.alpha, ci.alpha = ci.alpha, acceptance.rate = rate)
       class(DP.alpha)          <- "listof"
     }
-    cluster      <- list(clustering = post.z, z = z, uncertainty = uncertain)
+    cluster      <- list(map = post.z, z = z, uncertainty = uncertain)
     cluster      <- c(cluster, list(post.pi = post.pi/sum(post.pi)), if(sw["pi.sw"]) list(pi.prop = pi.prop, var.pi = var.pi, 
                       ci.pi = ci.pi), if(!label.miss) list(perf = tab.stat), if(alpha.step != "fixed") list(DP.alpha = DP.alpha))
     attr(cluster, "Z.init")    <- attr(sims[[G.ind]], "Z.init")
