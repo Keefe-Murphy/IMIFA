@@ -48,7 +48,7 @@
     eta          <- sim.eta.p(Q=Q, N=N)
     lmat         <- sim.load.p(Q=Q, P=P, sigma.l=sigma.l, shrink=FALSE)
     psi.inv      <- sim.psi.i.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
-    l.sigma      <- 1/sigma.l * diag(Q)
+    l.sigma      <- diag(1/sigma.l, Q)
     sum.data     <- mu * N
     if(burnin     < 1)    {
       mu.store[,1]         <- mu

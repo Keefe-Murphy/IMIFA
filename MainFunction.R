@@ -7,7 +7,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
                         burnin = n.iters/5, thinning = 2, centering = TRUE, scaling = c("unit", "pareto", "none"), alpha.step = c("gibbs", "metropolis", "fixed"), learn.d = FALSE,
                         adapt = TRUE, b0 = NULL, b1 = NULL, delta0g = FALSE, prop = NULL, epsilon = NULL, sigma.mu = NULL, sigma.l = NULL, alpha.hyper = NULL, d.hyper = NULL,
                         mu0g = FALSE, psi0g = FALSE, mu.zero = NULL, phi.nu = NULL, psi.alpha = NULL, psi.beta = NULL, alpha.d1 = NULL, rho = NULL, trunc.G = NULL,
-                        alpha.dk = NULL, beta.d1 = NULL, beta.dk = NULL, alpha = NULL, z.list = NULL, profile = FALSE, mu.switch = TRUE, gen.slice = FALSE, adapt.at = NULL,
+                        alpha.dk = NULL, beta.d1 = NULL, beta.dk = NULL, alpha = NULL, z.list = NULL, profile = FALSE, mu.switch = TRUE, gen.slice = TRUE, adapt.at = NULL,
                         score.switch = TRUE, load.switch = TRUE, psi.switch = TRUE, pi.switch = TRUE, z.init = c("kmeans", "list", "mclust", "priors")) {
   
   defpar    <- suppressWarnings(par(no.readonly=TRUE))
@@ -195,7 +195,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(b1 <= 0)                     stop("'b1' must be strictly positive to ensure adaptation probability decreases")
     if(missing("prop"))      prop          <- 3/4
     if(abs(prop - (1 - prop)) < 0)  stop("'prop' must be a single number between 0 and 1")
-    if(missing("adapt.at"))  adapt.at      <- burnin
+    if(missing("adapt.at"))  adapt.at      <- ifelse(is.element(method, c("IFA", "MIFA")), burnin, 0)
     if(missing("epsilon"))   epsilon       <- ifelse(centered, 0.1, 0.01)
     if(adapt.at < 0 ||
        adapt.at > burnin)           stop("'adapt.at' must be a single number in the interval [0, burnin]")
@@ -321,7 +321,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   }
   mu.zero          <- if(mu0.x) mu else len.check(mu.zero, mu0g, method, P, range.G)
   if(!is.element(method, c("FA", "MFA", "OMFA", "IMFA"))) {
-    alpha.d1       <- if(ad1.x) list(2)  else len.check(alpha.d1, delta0g, method, P, range.G, P.dim=FALSE)
+    alpha.d1       <- if(ad1.x) list(5)  else len.check(alpha.d1, delta0g, method, P, range.G, P.dim=FALSE)
     alpha.dk       <- if(adk.x) list(10) else len.check(alpha.dk, delta0g, method, P, range.G, P.dim=FALSE)
   }
   if(!is.element(method, c("FA", "IFA", "classify"))) {

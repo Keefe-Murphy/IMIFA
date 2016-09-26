@@ -102,7 +102,7 @@
     
     # Adaptation  
       if(all(adapt, iter > adapt.at)) {      
-        if(runif(1)  < 1/exp(b0 + b1 * (iter - adapt.at))) {
+        if(runif(1)  < ifelse(iter < burnin, 0.5, 1/exp(b0 + b1 * (iter - adapt.at)))) {
           lind   <- if(Q0) colSums(abs(lmat) < epsilon) / P else 0
           colvec <- lind >= prop
           numred <- sum(colvec)

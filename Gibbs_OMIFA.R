@@ -160,7 +160,7 @@
     
     # Adaptation  
       if(all(adapt, iter > adapt.at)) {      
-        if(runif(1) < 1/exp(b0 + b1 * (iter - adapt.at))) {
+        if(runif(1) < ifelse(iter < burnin, 0.5, 1/exp(b0 + b1 * (iter - adapt.at)))) {
           lind     <- lapply(Gseq, function(g) if(all(Q0[g], nn0[g])) colSums(abs(lmat[[g]]) < epsilon)/P else rep(0, Qs[g]))
           colvec   <- lapply(lind, function(lx) lx >= prop)
           nonred   <- lapply(colvec, function(cv) which(cv == 0))

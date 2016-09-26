@@ -21,7 +21,7 @@
       
   # Loadings
     sim.load    <- function(l.sigma, Q, c.data, P, eta, phi, tau, psi.inv, EtE, Q1, shrink = TRUE) {
-      u.load    <- if(shrink) phi * tau * diag(Q) + psi.inv * EtE else l.sigma + psi.inv * EtE
+      u.load    <- if(shrink) diag(phi * tau, Q) + psi.inv * EtE else l.sigma + psi.inv * EtE
       u.load    <- if(Q1) chol(u.load) else sqrt(u.load)
       mu.load   <- psi.inv * (if(Q1) chol2inv(u.load) else 1/(u.load * u.load)) %*% crossprod(eta, c.data)
         mu.load + backsolve(u.load, rnorm(Q))

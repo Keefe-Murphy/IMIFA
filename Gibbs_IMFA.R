@@ -88,7 +88,7 @@
       inf.ind      <- is.infinite(psi.inv)
       psi.inv[inf.ind]     <- psi.tmp[is.infinite(psi.inv)]
     }
-    l.sigma        <- 1/sigma.l * diag(Q)
+    l.sigma        <- diag(1/sigma.l, Q)
     lmat           <- array(unlist(lmat, use.names=FALSE), dim=c(P, Q, trunc.G))
     index          <- order(pi.prop, decreasing=TRUE)
     pi.prop        <- pi.prop[index]

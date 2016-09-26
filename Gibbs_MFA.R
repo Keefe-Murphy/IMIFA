@@ -87,7 +87,7 @@
       inf.ind      <- is.infinite(psi.inv)
       psi.inv[inf.ind]     <- psi.tmp[inf.ind]
     }
-    l.sigma        <- 1/sigma.l * diag(Q)
+    l.sigma        <- diag(1/sigma.l, Q)
     lmat           <- array(unlist(lmat, use.names=FALSE), dim=c(P, Q, G))
     if(burnin       < 1)  {
       mu.store[,,1]        <- mu
