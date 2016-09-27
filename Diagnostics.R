@@ -3,7 +3,7 @@
 #########################################
 
 tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q = NULL, Q.meth = c("Mode", "Median"), G.meth = c("Mode", "Median"),
-                             criterion = c("bicm", "aicm", "bic.mcmc", "aic.mcmc"), conf.level = 0.95, zlabels = NULL, recomp = FALSE) {
+                             criterion = c("bicm", "aicm", "bic.mcmc", "aic.mcmc", "log.iLLH"), conf.level = 0.95, zlabels = NULL, recomp = FALSE) {
   
   defpar         <- suppressWarnings(par(no.readonly=TRUE))
   defopt         <- options()
@@ -39,8 +39,8 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   conf.levels    <- c((1 - conf.level)/2, (1 + conf.level)/2)
   criterion      <- match.arg(criterion)
   if(all(!is.element(method, c("FA", "MFA", "OMFA", "IMFA")),
-     !is.element(criterion, 
-     c("aicm", "bicm"))))         stop(paste0("'criterion' should be one of 'aicm' or 'bicm' for the ", method, "method"))
+     !is.element(criterion, c("log.iLLH", 
+     "aicm", "bicm"))))           stop(paste0("'criterion' should be one of 'aicm', 'bicm' or 'log.iLLH' for the ", method, " method"))
   if(!is.logical(recomp))         stop("'recomp' must be TRUE or FALSE")
   if(any(burnin   > 0, 
      thinning     > 1)) recomp <- TRUE
@@ -124,7 +124,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     } else if(is.element(method, c("OMFA", "OMIFA"))) {
       rownames(crit.mat) <- "OM"
     }
-    aicm         <- bicm       <- 
+    aicm         <- bicm       <- log.iLLH <- 
     aic.mcmc     <- bic.mcmc   <- crit.mat
     log.N        <- log(n.obs)
     for(g in seq_len(G.range))   { 
@@ -136,6 +136,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
         ll.var           <- ifelse(length(log.likes) != 1, 2 * var(log.likes, na.rm=TRUE), 0)
         aicm[g,q]        <- ll.max - ll.var * 2
         bicm[g,q]        <- ll.max - ll.var * log.N
+        log.iLLH[g,q]    <- mean(log.likes, na.rm=TRUE) - ll.var * (log.N - 1)
         if(!inf.Q) {
           qk             <- if(G.T) 1 else qi
           K              <- if(!is.element(method, c("OMFA", "IMFA"))) attr(sims[[gi]][[qi]], "K") else G[qk] - 1 + G[qk] * (n.var * n.fac[qi] - 0.5 * n.fac[qi] * (n.fac[qi] - 1)) + 2 * G[qk] * n.var
@@ -171,7 +172,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     G            <- ifelse(inf.G, ifelse(Q.T, G, G[Q.ind]), ifelse(length(n.grp) == 1, n.grp, G))
     Gseq         <- seq_len(G)
     G.ind        <- ifelse(all(length(n.grp) == 1, !inf.G), which(n.grp == G), G.ind)
-    GQ.temp2     <- list(AICMs = aicm, BICMs = bicm)
+    GQ.temp2     <- list(AICMs = aicm, BICMs = bicm, LogIntegratedLikelihoods = log.iLLH)
     if(is.element(method, c("OMFA", "IMFA")) &&
        GQ1)      {
       tmp.store  <- tmp.store[[Q.ind]]
@@ -582,12 +583,12 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
                       if(sw["psi.sw"]) list(Uniquenesses =   psis))
                       
   class(result)                <- "Tuned_IMIFA"
+  attr(result, "Alpha")        <- if(alpha.step == "fixed") attr(sims, "Alpha")
   attr(result, "Conf.Level")   <- conf.level
   attr(result, "Errors")       <- any(err.T)
   attr(result, "Method")       <- method
   if(is.element(method, c("IMFA", "IMIFA"))) {
     attr(result, "Alpha.step") <- alpha.step
-    attr(result, "Alpha")      <- if(alpha.step == "fixed") attr(sims, "Alpha")
     attr(result, "Disc.step")  <- learn.d
     attr(result, "Discount")   <- if(!learn.d) attr(sims, "Discount")
     attr(result, "Gen.Slice")  <- attr(sims, "Gen.Slice")

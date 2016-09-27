@@ -312,7 +312,7 @@
   
     summary.Tuned_IMIFA <- function(res) {
       criterion <- unlist(strsplit(toupper(attr(res$GQ.results, "Criterion")), "[.]"))
-      criterion <- ifelse(length(criterion) > 1, paste0(criterion[1], ".", tolower(criterion[2])), criterion)
+      criterion <- ifelse(length(criterion) > 1, ifelse(criterion[1] != "LOG", paste0(criterion[1], ".", tolower(criterion[2])), "LogIntegratedLikelihood"), criterion)
       crit.mat  <- res$GQ.results[[paste0(criterion, "s")]]
       msg       <- NULL
       if(any(dim(crit.mat) > 1)) {

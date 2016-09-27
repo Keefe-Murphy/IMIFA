@@ -533,6 +533,7 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
       plotQ.ind  <- any(any(g > 1, is.element(method, c("IFA", "MIFA"))), all(is.element(method, c("IMIFA", "OMIFA")), g != 1))
       aicm       <- round(GQ.res$AICM, 2)
       bicm       <- round(GQ.res$BICM, 2)
+      log.iLLH   <- round(GQ.res$LogIntegratedLikelihoods, 2)
       if(is.element(method, c("FA", "MFA", "OMFA", "IMFA"))) {
         aic.mcmc <- round(GQ.res$AIC.mcmc, 2)
         bic.mcmc <- round(GQ.res$BIC.mcmc, 2)
@@ -599,8 +600,8 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
         }
       }
       if(!any(plotQ.ind, plotG.ind))  message("Nothing to plot")
+      gq.nam <- substring(names(GQ.res), 1, 1)
       if(is.element(method, c("IMIFA", "OMIFA"))) {
-        gq.nam <- substring(names(GQ.res), 1, 1)
         if(g == 1) {
           print(GQ.res[gq.nam == "G"])
         } else {
@@ -610,13 +611,13 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
           print(GQ.res[gq.nam != "G" & gq.nam != "Q" & gq.nam != "S"])
         }
       } else if(is.element(method, c("MFA", "MIFA", "OMFA", "IMFA"))) {
-          print(GQ.res)
+          print(GQ.res[gq.nam != "S"])
       } else if(method == "IFA") {
-          print(tail(GQ.res, -1))
+          print(tail(GQ.res[gq.nam != "S"], -1))
       } else   {
           cat(paste0("Q = ", Q, "\n"))
       }
-      if(any(nrow(bicm) > 1, ncol(bicm) > 1)) {
+      if(any(dim(bicm) > 1)) {
         G.ind  <- ifelse(any(G.supp, !is.element(method, c("MFA", "MIFA"))), 1, which(n.grp == G))
         Q.ind  <- ifelse(any(Q.supp, !is.element(method, c("FA", "MFA"))),   1, which(n.fac == Q))
           cat(paste0("AICM = ", aicm[G.ind,Q.ind], "\n"))
@@ -625,6 +626,7 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
           cat(paste0("AIC.mcmc = ", aic.mcmc[G.ind,Q.ind], "\n"))
           cat(paste0("BIC.mcmc = ", bic.mcmc[G.ind,Q.ind], "\n"))
         }
+        cat(paste0("Log Integrated Likelihood = ", log.iLLH[G.ind,Q.ind], "\n"))
       }
     }
     
@@ -720,7 +722,7 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
         layout(rbind(1, 2), heights=c(9, 1))
         par(mar=c(3.1, 4.1, 4.1, 2.1))
       }
-      matplot(seq_len(n.var), plot.x, type="p", col=if(vars == "loadings") seq_len(Q) + 1 else seq_len(n.grp) + 1, pch=15, xlab="Variable", ylab=paste0("Standardised ", varnam), axes=FALSE, main=paste0("Parallel Coordinates: ", varnam, ifelse(all(grp.ind, vars == "loadings"), paste0("\n Group ", g), "")))
+      matplot(seq_len(n.var), plot.x, type="p", col=if(vars == "loadings") seq_len(Q) + 1 else seq_len(G) + 1, pch=15, xlab="Variable", ylab=paste0("Standardised ", varnam), axes=FALSE, main=paste0("Parallel Coordinates: ", varnam, ifelse(all(grp.ind, vars == "loadings"), paste0("\n Group ", g), "")))
       axis(1, at=seq_len(n.var), labels=if(titles) rownames(plot.x), cex.axis=0.5)
       for(i in seq_len(n.var)) {
         lines(c(i, i), c(0, 1), col=grey)
