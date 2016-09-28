@@ -61,7 +61,8 @@
       remove <- c(remove[grepl("^mydata.", remove)], "remove")
      #remove <- c(remove, setdiff(c("aliza", "golub", "khan", "mammary"), "golub"))
       rm(list = remove)
-      labels <- golub[1]
+      labels <- as.factor(as.matrix(golub[1]))
+     #G2levs <- ifelse(labels == "AML", "AML", "ALL")
   # Subjects 
     subjects <- read.csv(paste0(getwd(), "/Data/", "SubjectMarks.csv", sep=""))
   # Cereal      (# classes)
