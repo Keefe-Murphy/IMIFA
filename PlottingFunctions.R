@@ -599,7 +599,7 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
           legend("center", legend=ltxt, ncol=if(G > 5) ceiling(G/2) else G, bty="n", pch=15, col=lcol, cex=max(0.7, 1 - 0.03 * G))
         }
       }
-      if(!any(plotQ.ind, plotG.ind))  message("Nothing to plot")
+      if(!any(plotQ.ind, plotG.ind))  message("Nothing to plot")      
       gq.nam <- substring(names(GQ.res), 1, 1)
       if(is.element(method, c("IMIFA", "OMIFA"))) {
         if(g == 1) {
@@ -628,6 +628,8 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
         }
         cat(paste0("Log Integrated Likelihood = ", log.iLLH[G.ind,Q.ind], "\n"))
       }
+      if(all(plotQ.ind, 
+             attr(GQ.res, "Q.big")))  warning("Q had to be prevented from exceeding its initial value.\n Consider re-running the model with a higher value for 'range.Q'", call.=FALSE)
     }
     
     if(m.sw["Z.sw"]) {

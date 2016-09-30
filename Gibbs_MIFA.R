@@ -12,7 +12,7 @@
   # Define & initialise variables
     start.time     <- proc.time()
     total          <- max(iters)
-    if(verbose)       pb   <- txtProgressBar(min=0, max=total, style=3)
+    if(verbose)       pb    <- txtProgressBar(min=0, max=total, style=3)
     n.store        <- length(iters)
     Gseq           <- seq_len(G)
     Pseq           <- seq_len(P)
@@ -24,36 +24,37 @@
     iternames      <- paste0("Iteration", seq_len(n.store))
     if(sw["mu.sw"])  {
       mu.store     <- array(0, dim=c(P, G, n.store))
-      dimnames(mu.store)   <- list(varnames, gnames, iternames)
+      dimnames(mu.store)    <- list(varnames, gnames, iternames)
     }
     if(sw["s.sw"])   {
       eta.store    <- array(0, dim=c(N, Q, n.store))
-      dimnames(eta.store)  <- list(obsnames, if(Q > 0) facnames, iternames)
+      dimnames(eta.store)   <- list(obsnames, if(Q > 0) facnames, iternames)
     }
     if(sw["l.sw"])   {
       load.store   <- array(0, dim=c(P, Q, G, n.store))
-      dimnames(load.store) <- list(varnames, if(Q > 0) facnames, gnames, iternames)
+      dimnames(load.store)  <- list(varnames, if(Q > 0) facnames, gnames, iternames)
     }
     if(sw["psi.sw"]) {
       psi.store    <- array(0, dim=c(P, G, n.store))
-      dimnames(psi.store)  <- list(varnames, gnames, iternames)
+      dimnames(psi.store)   <- list(varnames, gnames, iternames)
     }
     if(sw["pi.sw"])  {
       pi.store     <- matrix(0, nr=G, nc=n.store)
-      dimnames(pi.store)   <- list(gnames, iternames)
+      dimnames(pi.store)    <- list(gnames, iternames)
     }
     z.store        <- matrix(0, nr=N, nc=n.store)
     ll.store       <- rep(0, n.store)
     Q.star         <- Q
     Qs             <- rep(Q, G)
     Q.store        <- matrix(0, nr=G, nc=n.store)
-    dimnames(z.store)      <- list(obsnames, iternames)
-    dimnames(Q.store)      <- list(gnames, iternames)
+    Q.large        <- Q.big <- Q.bigs <- FALSE
+    dimnames(z.store)       <- list(obsnames, iternames)
+    dimnames(Q.store)       <- list(gnames, iternames)
     
     mu.sigma       <- 1/sigma.mu
     if(all(mu.zero == 0)) {
       mu.zero      <- matrix(0, nr=1, nc=G)
-      cluster$l.switch[1]  <- FALSE
+      cluster$l.switch[1]   <- FALSE
     }
     z              <- cluster$z
     z.temp         <- factor(z, levels=Gseq)
@@ -80,9 +81,9 @@
     for(g in which(!fact.ind)) {
       fact         <- try(factanal(data[z == g,, drop=FALSE], factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
       if(!inherits(fact, "try-error")) {
-        eta[z == g,]       <- fact$scores
-        lmat[[g]]          <- fact$loadings
-        psi.inv[,g]        <- 1/fact$uniquenesses
+        eta[z == g,]        <- fact$scores
+        lmat[[g]]           <- fact$loadings
+        psi.inv[,g]         <- 1/fact$uniquenesses
       } else  {
         fail.gs    <- c(fail.gs, g)
       }               
@@ -91,21 +92,21 @@
     len.fail       <- length(fail.gs)
     if(len.fail     > 0)      message(paste0("Parameters of the following group", ifelse(len.fail > 2, "s ", " "), "were initialised by simulation from priors, not factanal: ", ifelse(len.fail > 1, paste0(paste0(fail.gs[-len.fail], sep="", collapse=", "), " and ", fail.gs[len.fail]), fail.gs), " - G=", G, ", Q=", Q))
     if(burnin       < 1)  {
-      mu.store[,,1]        <- mu
-      eta.store[,,1]       <- eta
-      load.store[,,,1]     <- array(unlist(lmat, use.names=FALSE), dim=c(P, Q, G))
-      psi.store[,,1]       <- 1/psi.inv
-      pi.store[,1]         <- pi.prop
-      z.store[,1]          <- z
-      ll.store[1]          <- sum(sim.z(data=data, mu=mu, Gseq=Gseq, N=N, pi.prop=pi.prop, sigma=lapply(Gseq,
-                                  function(g) tcrossprod(lmat[[g]]) + diag(1/psi.inv[,g])), Q0=Qs > 0)$log.likes)
-      Q.store[,1]          <- Qs
+      mu.store[,,1]         <- mu
+      eta.store[,,1]        <- eta
+      load.store[,,,1]      <- array(unlist(lmat, use.names=FALSE), dim=c(P, Q, G))
+      psi.store[,,1]        <- 1/psi.inv
+      pi.store[,1]          <- pi.prop
+      z.store[,1]           <- z
+      ll.store[1]           <- sum(sim.z(data=data, mu=mu, Gseq=Gseq, N=N, pi.prop=pi.prop, sigma=lapply(Gseq,
+                                   function(g) tcrossprod(lmat[[g]]) + diag(1/psi.inv[,g])), Q0=Qs > 0)$log.likes)
+      Q.store[,1]           <- Qs
     }
     init.time      <- proc.time() - start.time
     
   # Iterate
     for(iter in seq_len(total)[-1]) { 
-      if(verbose   && iter  < burnin) setTxtProgressBar(pb, iter)
+      if(verbose   && iter   < burnin) setTxtProgressBar(pb, iter)
       
     # Mixing Proportions
       pi.prop[]    <- sim.pi(pi.alpha=pi.alpha, nn=nn)
@@ -137,7 +138,7 @@
         eta.tmp    <- if(length(unique(Qs)) != 1) lapply(Gseq, function(g) cbind(eta.tmp[[g]], matrix(0, nr=nn[g], nc=max(Qs) - Qs[g]))) else eta.tmp
         q0ng       <- !Q0 & nn0
         if(any(q0ng)) {
-          eta.tmp[q0ng]    <- lapply(Gseq[q0ng], function(g, x=eta.tmp[[g]]) { row.names(x) <- obsnames[z.ind[[g]]]; x })
+          eta.tmp[q0ng]     <- lapply(Gseq[q0ng], function(g, x=eta.tmp[[g]]) { row.names(x) <- obsnames[z.ind[[g]]]; x })
         }
         eta        <- do.call(rbind, eta.tmp)[obsnames,, drop=FALSE]
       }
@@ -161,10 +162,10 @@
       for(g in Gseq)  {
         Qg         <- Qs[g]
         for(k in seq_len(Qg)) { 
-          delta[[g]][k]    <- if(k > 1) sim.deltak(alpha.dk=alpha.dk[g], beta.dk=beta.dk, delta.k=delta[[g]][k], Q=Qg, P=P, 
-                              k=k, tau.kq=tau[[g]][k:Qg], sum.term.kq=sum.terms[[g]][k:Qg]) else sim.delta1(alpha.d1=alpha.d1[g],
-                              beta.d1=beta.d1, delta.1=delta[[g]][1], Q=Qg, P=P, tau=tau[[g]], sum.term=sum.terms[[g]])
-          tau[[g]]         <- cumprod(delta[[g]])
+          delta[[g]][k]     <- if(k > 1) sim.deltak(alpha.dk=alpha.dk[g], beta.dk=beta.dk, delta.k=delta[[g]][k], Q=Qg, P=P, 
+                               k=k, tau.kq=tau[[g]][k:Qg], sum.term.kq=sum.terms[[g]][k:Qg]) else sim.delta1(alpha.d1=alpha.d1[g],
+                               beta.d1=beta.d1, delta.1=delta[[g]][1], Q=Qg, P=P, tau=tau[[g]], sum.term=sum.terms[[g]])
+          tau[[g]]          <- cumprod(delta[[g]])
         }
       }
     
@@ -178,11 +179,17 @@
           notred   <- vapply(Gseq, function(g) numred[[g]] == 0, logical(1))
           Qs.old   <- Qs
           Qs       <- vapply(Gseq, function(g) if(notred[g]) Qs.old[g] + 1 else Qs.old[g] - numred[[g]], numeric(1))
+          Q.big    <- Qs > Q.star
+          Q.bigs   <- any(Q.big)
+          if(Q.bigs) {
+            Qs[Q.big]       <- Q.star
+            notred          <- notred & Q.big
+          }
           phi      <- lapply(Gseq, function(g) if(notred[g]) cbind(phi[[g]][,seq_len(Qs.old[g])], rgamma(n=P, shape=phi.nu, rate=phi.nu)) else phi[[g]][,nonred[[g]], drop=FALSE])
           delta    <- lapply(Gseq, function(g) if(notred[g]) c(delta[[g]][seq_len(Qs.old[g])], rgamma(n=1, shape=alpha.dk[g], rate=beta.dk)) else delta[[g]][nonred[[g]]])  
           tau      <- lapply(delta, cumprod)
           lmat     <- lapply(Gseq, function(g, Qg=Qs[g]) if(notred[g]) cbind(lmat[[g]][,seq_len(Qs.old[g])], rnorm(n=P, mean=0, sd=sqrt(1/(phi[[g]][,Qg] * tau[[g]][Qg])))) else lmat[[g]][,nonred[[g]], drop=FALSE])
-          eta      <- if(max(Qs) > max(Qs.old)) cbind(eta[,seq_len(max(Qs.old))], rnorm(N)) else eta[,seq_len(max(Qs)), drop=FALSE]
+          eta      <- if(all(max(Qs) > max(Qs.old), !Q.bigs)) cbind(eta[,seq_len(max(Qs.old))], rnorm(N)) else eta[,seq_len(max(Qs)), drop=FALSE]
         }
       }
     
@@ -219,8 +226,10 @@
         }
       }
       
-    if(any(Qs > Q.star))      stop(paste0("Q cannot exceed initial number of loadings columns: try increasing range.Q from ", Q.star))
-      if(is.element(iter, iters))    {
+      if(Q.bigs && !Q.large && iter > burnin) {        warning(paste0("Q has exceeded initial number of loadings columns since burnin: consider increasing range.Q from ", Q.star), call.=FALSE)
+        Q.large    <- TRUE
+      }
+      if(is.element(iter, iters))   {
         if(verbose)   setTxtProgressBar(pb, iter)
         new.it     <- which(iters == iter)
         if(sw["mu.sw"])    mu.store[,,new.it]       <- mu  
@@ -249,5 +258,6 @@
                            ll.store = ll.store,
                            Q.store  = Q.store,
                            time     = init.time)
+    attr(returns, "Q.big")  <- Q.large
     return(returns)
   }

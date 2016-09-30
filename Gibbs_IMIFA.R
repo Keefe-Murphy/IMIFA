@@ -11,7 +11,7 @@
   # Define & initialise variables
     start.time      <- proc.time()
     total           <- max(iters)
-    if(verbose)        pb  <- txtProgressBar(min=0, max=total, style=3)
+    if(verbose)        pb    <- txtProgressBar(min=0, max=total, style=3)
     n.store         <- length(iters)
     Gs              <- seq_len(G)
     Ts              <- seq_len(trunc.G)
@@ -25,32 +25,33 @@
     iternames       <- paste0("Iteration", seq_len(n.store))
     if(sw["mu.sw"])  {
       mu.store      <- array(0, dim=c(P, trunc.G, n.store))
-      dimnames(mu.store)   <- list(varnames, gnames, iternames)
+      dimnames(mu.store)     <- list(varnames, gnames, iternames)
     }
     if(sw["s.sw"])   {
       eta.store     <- array(0, dim=c(N, Q, n.store))
-      dimnames(eta.store)  <- list(obsnames, facnames, iternames)
+      dimnames(eta.store)    <- list(obsnames, facnames, iternames)
     }
     if(sw["l.sw"])   {
       load.store    <- array(0, dim=c(P, Q, trunc.G, n.store))
-      dimnames(load.store) <- list(varnames, facnames, gnames, iternames)
+      dimnames(load.store)   <- list(varnames, facnames, gnames, iternames)
     }
     if(sw["psi.sw"]) {
       psi.store     <- array(0, dim=c(P, trunc.G, n.store))
-      dimnames(psi.store)  <- list(varnames, gnames, iternames)
+      dimnames(psi.store)    <- list(varnames, gnames, iternames)
     }
     if(sw["pi.sw"])  {
       pi.store      <- matrix(0, nr=trunc.G, nc=n.store)
-      dimnames(pi.store)   <- list(gnames, iternames)
+      dimnames(pi.store)     <- list(gnames, iternames)
     }
     z.store         <- matrix(0, nr=N, nc=n.store)
     ll.store        <- rep(0, n.store)
     Q.star          <- Q
     Qs              <- rep(Q, trunc.G)
     Q.store         <- matrix(0, nr=trunc.G, nc=n.store)
+    Q.large         <- Q.big <- Q.bigs <- FALSE
     G.store         <- rep(0, n.store)
-    dimnames(z.store)      <- list(obsnames, iternames)
-    dimnames(Q.store)      <- list(gnames, iternames)
+    dimnames(z.store)        <- list(obsnames, iternames)
+    dimnames(Q.store)        <- list(gnames, iternames)
     not.fixed       <- alpha.step != "fixed"
     if(not.fixed) {
       alpha.store   <- rep(0, n.store)
@@ -82,9 +83,9 @@
     for(g in which(nn > 2.5 * Q))      {
       fact          <- try(factanal(data[z == g,, drop=FALSE], factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
       if(!inherits(fact, "try-error")) {
-        eta[z == g,]       <- fact$scores
-        lmat[[g]]          <- fact$loadings
-        psi.inv[,g]        <- 1/fact$uniquenesses
+        eta[z == g,]         <- fact$scores
+        lmat[[g]]            <- fact$loadings
+        psi.inv[,g]          <- 1/fact$uniquenesses
       } 
     }
     index           <- order(pi.prop, decreasing=TRUE)
@@ -99,33 +100,33 @@
     k.x             <- .Machine$double.xmin
     ksi[ksi < k.x]  <- k.x
     if(burnin        < 1)  {
-      mu.store[,,1]        <- mu
-      eta.store[,,1]       <- eta
-      load.store[,,,1]     <- array(unlist(lmat, use.names=FALSE), dim=c(P, Q, trunc.G))
-      psi.store[,,1]       <- 1/psi.inv
-      pi.store[,1]         <- pi.prop/sum(pi.prop)
-      z.store[,1]          <- z
-      ll.store[1]          <- sum(sim.z(data=data, mu=mu[,Gs], Gseq=Gs, N=N, pi.prop=pi.store[Gs,1], sigma=lapply(Gs,
-                                  function(g) tcrossprod(lmat[[g]]) + diag(1/psi.inv[,g])), Q0=Qs > 0)$log.likes)
-      Q.store[,1]          <- Qs
-      G.store[1]           <- sum(nn > 0)
+      mu.store[,,1]          <- mu
+      eta.store[,,1]         <- eta
+      load.store[,,,1]       <- array(unlist(lmat, use.names=FALSE), dim=c(P, Q, trunc.G))
+      psi.store[,,1]         <- 1/psi.inv
+      pi.store[,1]           <- pi.prop/sum(pi.prop)
+      z.store[,1]            <- z
+      ll.store[1]            <- sum(sim.z(data=data, mu=mu[,Gs], Gseq=Gs, N=N, pi.prop=pi.store[Gs,1], sigma=lapply(Gs,
+                                    function(g) tcrossprod(lmat[[g]]) + diag(1/psi.inv[,g])), Q0=Qs > 0)$log.likes)
+      Q.store[,1]            <- Qs
+      G.store[1]             <- sum(nn > 0)
       if(not.fixed) {
-        alpha.store[1]     <- pi.alpha 
+        alpha.store[1]       <- pi.alpha 
       }
       if(learn.d)   {
-        d.store[1]         <- discount
+        d.store[1]           <- discount
       }
     }
     init.time       <- proc.time() - start.time
     
   # Iterate
     for(iter in seq_len(total)[-1]) { 
-      if(verbose    && iter < burnin) setTxtProgressBar(pb, iter)
+      if(verbose    && iter   < burnin) setTxtProgressBar(pb, iter)
     
     # Mixing Proportions
       weights       <- sim.pi(pi.alpha=pi.alpha, nn=nn, N=N, inf.G=TRUE, len=trunc.G, discount=discount)
       pi.prop       <- weights$pi.prop
-      if(MH.step)      Vs  <- weights$Vs
+      Vs            <- weights$Vs
       
     # Slice Sampler
       if(!gen.slice) {
@@ -138,7 +139,7 @@
         lmat        <- lmat[index]
         Qs          <- Qs[index]
         psi.inv     <- psi.inv[,index, drop=FALSE]
-        ksi[ksi < k.x]     <- k.x
+        ksi[ksi < k.x]       <- k.x
       }
       u.slice       <- runif(N, 0, ksi[z])
       Gs            <- seq_len(max(vapply(Ns, function(i) sum(u.slice[i] < pi.prop), numeric(1))))
@@ -171,7 +172,7 @@
         eta.tmp     <- if(length(unique(Qs)) != 1) lapply(Gs, function(g) cbind(eta.tmp[[g]], matrix(0, nr=nn[g], nc=max(Qs) - Qs[g]))) else eta.tmp
         q0ng        <- !Q0 & nn0[Gs]
         if(any(q0ng)) {
-          eta.tmp[q0ng]    <- lapply(Gs[q0ng], function(g, x=eta.tmp[[g]]) { row.names(x) <- obsnames[z.ind[[g]]]; x })
+          eta.tmp[q0ng]      <- lapply(Gs[q0ng], function(g, x=eta.tmp[[g]]) { row.names(x) <- obsnames[z.ind[[g]]]; x })
         }
         eta         <- do.call(rbind, eta.tmp)[obsnames,, drop=FALSE]
       }
@@ -197,15 +198,15 @@
         Qg         <- Qs[g]
         if(nn0[g]) {
           for(k in seq_len(Qg)) { 
-            delta[[g]][k]  <- if(k > 1) sim.deltak(alpha.dk=alpha.dk, beta.dk=beta.dk, delta.k=delta[[g]][k], Q=Qg, P=P, 
-                              k=k, tau.kq=tau[[g]][k:Qg], sum.term.kq=sum.terms[[g]][k:Qg]) else sim.delta1(alpha.d1=alpha.d1,
-                              beta.d1=beta.d1, delta.1=delta[[g]][1], Q=Qg, P=P, tau=tau[[g]], sum.term=sum.terms[[g]])
-            tau[[g]]       <- cumprod(delta[[g]])
+            delta[[g]][k]    <- if(k > 1) sim.deltak(alpha.dk=alpha.dk, beta.dk=beta.dk, delta.k=delta[[g]][k], Q=Qg, P=P, 
+                                k=k, tau.kq=tau[[g]][k:Qg], sum.term.kq=sum.terms[[g]][k:Qg]) else sim.delta1(alpha.d1=alpha.d1,
+                                beta.d1=beta.d1, delta.1=delta[[g]][1], Q=Qg, P=P, tau=tau[[g]], sum.term=sum.terms[[g]])
+            tau[[g]]         <- cumprod(delta[[g]])
           }
         } else {
           for(k in seq_len(Qg)) { 
-            delta[[g]][k]  <- if(k > 1) sim.delta.p(alpha=alpha.dk, beta=beta.dk) else sim.delta.p(alpha=alpha.d1, beta=beta.d1)
-            tau[[g]]       <- cumprod(delta[[g]])
+            delta[[g]][k]    <- if(k > 1) sim.delta.p(alpha=alpha.dk, beta=beta.dk) else sim.delta.p(alpha=alpha.d1, beta=beta.d1)
+            tau[[g]]         <- cumprod(delta[[g]])
           }
         }
       }
@@ -220,6 +221,12 @@
           notred    <- vapply(Gs, function(g) numred[[g]] == 0, logical(1))
           Qs.old    <- Qs[Gs]
           Qs[Gs]    <- vapply(Gs, function(g) if(notred[g]) Qs.old[g] + 1 else Qs.old[g] - numred[[g]], numeric(1))
+          Q.big     <- Qs[Gs] > Q.star
+          Q.bigs    <- any(Q.big)
+          if(Q.bigs) {
+            Qs[Gs][Q.big]    <- Q.star
+            notred           <- notred & Q.big
+          }
           phi[Gs]   <- lapply(Gs, function(g) if(notred[g]) cbind(phi[[g]][,seq_len(Qs.old[g])], rgamma(n=P, shape=phi.nu, rate=phi.nu)) else phi[[g]][,nonred[[g]], drop=FALSE])
           delta[Gs] <- lapply(Gs, function(g) if(notred[g]) c(delta[[g]][seq_len(Qs.old[g])], rgamma(n=1, shape=alpha.dk, rate=beta.dk)) else delta[[g]][nonred[[g]]])  
           tau[Gs]   <- lapply(delta[Gs], cumprod)
@@ -228,14 +235,14 @@
           Qmax      <- max(Qs[nn0])
           Qmaxseq   <- seq_len(Qmax)
           Qmaxold   <- max(Qs.old[nn0])
-          eta       <- if(Qmax > Qmaxold) cbind(eta[,seq_len(Qmaxold)], rnorm(N)) else eta[,Qmaxseq, drop=FALSE]
+          eta       <- if(all(Qmax > Qmaxold, !Q.bigs)) cbind(eta[,seq_len(Qmaxold)], rnorm(N)) else eta[,Qmaxseq, drop=FALSE]
           if(Qmax    < max(Qemp, 0)) {
-            Qs[Qmax  < Qs] <- Qmax
+            Qs[Qmax  < Qs]   <- Qmax
             for(t  in  Ts[!nn0][Qemp > Qmax]) {  
-              phi[[t]]     <- phi[[t]][,Qmaxseq,  drop=FALSE]
-              delta[[t]]   <- delta[[t]][Qmaxseq]
-              tau[[t]]     <- tau[[t]][Qmaxseq]
-              lmat[[t]]    <- lmat[[t]][,Qmaxseq, drop=FALSE]
+              phi[[t]]       <- phi[[t]][,Qmaxseq,  drop=FALSE]
+              delta[[t]]     <- delta[[t]][Qmaxseq]
+              tau[[t]]       <- tau[[t]][Qmaxseq]
+              lmat[[t]]      <- lmat[[t]][,Qmaxseq, drop=FALSE]
             }
           }
         }
@@ -258,7 +265,9 @@
       move2         <- label.move2(nn.ind=nn.ind, Vs=Vs, nn=nn, z=z)
       z             <- move2$zs
     
-    if(any(Qs > Q.star))      stop(paste0("Q cannot exceed initial number of loadings columns: try increasing range.Q from ", Q.star))
+      if(Q.bigs && !Q.large && iter > burnin) {        warning(paste0("Q has exceeded initial number of loadings columns since burnin: consider increasing range.Q from ", Q.star), call.=FALSE)
+        Q.large     <- TRUE
+      }
       if(is.element(iter, iters))   {
         if(verbose)    setTxtProgressBar(pb, iter)
         new.it      <- which(iters == iter)
@@ -299,5 +308,6 @@
                             G.store  = G.store,
                             Q.store  = Q.store[Gmax,, drop=FALSE],
                             time     = init.time)
+    attr(returns, "Q.big")   <- Q.large
     return(returns)
   }

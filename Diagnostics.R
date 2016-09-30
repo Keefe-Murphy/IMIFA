@@ -346,6 +346,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
                          Q.CI = Q.CI, Q.Probs = Q.prob, Q.Counts = Q.tab)
     GQ.res       <- if(inf.G) c(GQ.temp1, GQ.temp4) else c(list(G = G), GQ.temp4)
     GQ.res       <- c(GQ.res, GQ.temp2)
+    attr(GQ.res, "Q.big") <- attr(sims[[G.ind]][[Q.ind]], "Q.big")
   }
 
 # Retrieve (unrotated) scores

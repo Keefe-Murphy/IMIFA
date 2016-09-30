@@ -75,7 +75,7 @@
     classes  <- attr(SimData, "Labels")
 
 # Run the Gibbs Sampler
-  sim  <- mcmc.IMIFA(wine, method="IMIFA")
+  sim        <- mcmc.IMIFA(wine, method="IMIFA")
   summary(sim)
 
 # Save / Load Simulations
@@ -87,7 +87,7 @@
                    ".Rdata", sep=""), envir=.GlobalEnv)
 
 # Posterior Summaries (optional: additional 'burnin' & 'thinning', user-defined G/Q, model selection criterion)
-  res <- tune.IMIFA(sim, zlabels=lab)
+  res        <- tune.IMIFA(sim, zlabels=lab)
   summary(res)
 
 # Save / Load Results

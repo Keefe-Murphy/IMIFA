@@ -44,6 +44,7 @@
     ll.store     <- rep(0, n.store)
     Q.star       <- Q
     Q.store      <- setNames(rep(0, n.store), iternames)
+    Q.large      <- Q.big  <- FALSE
     dimnames(cov.emp)      <- list(varnames, varnames)
     dimnames(cov.est)      <- dimnames(cov.emp)
     
@@ -108,11 +109,16 @@
           numred <- sum(colvec)
           if(numred == 0) { # simulate extra columns from priors
             Q       <- Q + 1
-            eta     <- cbind(eta, rnorm(N))         
-            phi     <- cbind(phi, rgamma(n=P, shape=phi.nu, rate=phi.nu))
-            delta   <- c(delta, rgamma(n=1, shape=alpha.dk, rate=beta.dk))
-            tau     <- cumprod(delta)
-            lmat    <- cbind(lmat, rnorm(n=P, mean=0, sd=sqrt(1/(phi[,Q] * tau[Q]))))
+            Q.big   <- Q > Q.star
+            if(Q.big) {
+              Q     <- Q.star
+            } else {
+              eta   <- cbind(eta, rnorm(N))         
+              phi   <- cbind(phi, rgamma(n=P, shape=phi.nu, rate=phi.nu))
+              delta <- c(delta, rgamma(n=1, shape=alpha.dk, rate=beta.dk))
+              tau   <- cumprod(delta)
+              lmat  <- cbind(lmat, rnorm(n=P, mean=0, sd=sqrt(1/(phi[,Q] * tau[Q]))))  
+            }
           } else          { # remove redundant columns
             nonred  <- which(colvec == 0)
             Q       <- Q - numred
@@ -125,8 +131,10 @@
         }
       } 
     
-    if(Q > Q.star)  stop(paste0("Q cannot exceed initial number of loadings columns: try increasing range.Q from ", Q.star))
-      if(is.element(iter, iters)) {
+      if(Q.big && !Q.large && iter > burnin) {       warning(paste0("Q has exceeded initial number of loadings columns since burnin: consider increasing range.Q from ", Q.star), call.=FALSE)
+        Q.large  <- TRUE
+      }
+      if(is.element(iter, iters))  {
         if(verbose) setTxtProgressBar(pb, iter)
         new.it   <- which(iters == iter)  
         psi      <- 1/psi.inv
@@ -155,5 +163,6 @@
                          ll.store = ll.store,
                          Q.store  = matrix(Q.store, nr=1),
                          time     = init.time)
+    attr(returns, "Q.big") <- Q.large
     return(returns)
   }
