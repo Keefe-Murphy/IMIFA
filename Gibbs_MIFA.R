@@ -16,6 +16,7 @@
     n.store        <- length(iters)
     Gseq           <- seq_len(G)
     Pseq           <- seq_len(P)
+    Nseq           <- seq_len(N)
     obsnames       <- rownames(data)
     varnames       <- colnames(data)
     colnames(data) <- NULL
@@ -120,7 +121,7 @@
       z            <- z.res$z
       nn           <- tabulate(z, nbins=G)
       nn0          <- nn > 0
-      z.ind        <- lapply(Gseq, function(g) z == g)
+      z.ind        <- lapply(Gseq, function(g) Nseq[z == g])
       dat.g        <- lapply(Gseq, function(g) data[z.ind[[g]],, drop=FALSE])
     
     # Scores & Loadings

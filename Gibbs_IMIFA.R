@@ -97,8 +97,8 @@
     lmat            <- lmat[index]
     psi.inv         <- psi.inv[,index, drop=FALSE]
     ksi             <- (1 - rho) * rho^(Ts - 1)
-    k.x             <- .Machine$double.xmin
-    ksi[ksi < k.x]  <- k.x
+    log.ksi         <- log(ksi)
+    slice.logs      <- c(- Inf, 0)
     if(burnin        < 1)  {
       mu.store[,,1]          <- mu
       eta.store[,,1]         <- eta
@@ -139,22 +139,22 @@
         lmat        <- lmat[index]
         Qs          <- Qs[index]
         psi.inv     <- psi.inv[,index, drop=FALSE]
-        ksi[ksi < k.x]       <- k.x
+        log.ksi     <- log(ksi)
       }
       u.slice       <- runif(N, 0, ksi[z])
       Gs            <- seq_len(max(vapply(Ns, function(i) sum(u.slice[i] < pi.prop), numeric(1))))
-      slice.ind     <- vapply(Gs, function(g, x=ksi[g]) (u.slice < x)/x, numeric(N))
+      logslice.ind  <- vapply(Gs, function(g) slice.logs[1 + (u.slice < ksi[g])] - log.ksi[g], numeric(N))
     
     # Cluster Labels
       psi           <- 1/psi.inv
       sigma         <- lapply(Gs, function(g) tcrossprod(lmat[[g]]) + diag(psi[,g]))
       Q0            <- Qs[Gs] > 0
       Q1            <- Qs[Gs] > 1
-      z.res         <- sim.z(data=data, mu=mu[,Gs, drop=FALSE], sigma=sigma, Gseq=Gs, N=N, pi.prop=pi.prop[Gs], slice.ind=slice.ind, Q0=Q0[Gs])
+      z.res         <- sim.z(data=data, mu=mu[,Gs, drop=FALSE], sigma=sigma, Gseq=Gs, N=N, pi.prop=pi.prop[Gs], log.slice.ind=logslice.ind, Q0=Q0[Gs])
       z             <- z.res$z
       nn            <- tabulate(z, nbins=trunc.G)
       nn0           <- nn > 0
-      z.ind         <- lapply(Gs, function(g) z == g)
+      z.ind         <- lapply(Gs, function(g) Ns[z == g])
       dat.g         <- lapply(Gs, function(g) data[z.ind[[g]],, drop=FALSE])
       
     # Scores & Loadings

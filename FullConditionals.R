@@ -59,10 +59,10 @@
     }
   
   # Cluster Labels
-    sim.z       <- function(data, mu, sigma, Gseq, N, pi.prop, slice.ind = NULL, Q0) {
+    sim.z       <- function(data, mu, sigma, Gseq, N, pi.prop, log.slice.ind = NULL, Q0) {
       log.num   <- vapply(Gseq, function(g, q=Q0[g]) dmvn(data, mu[,g], if(q) sigma[[g]] else sqrt(sigma[[g]]), log=TRUE, isChol=!q) + log(pi.prop[g]), numeric(N))
-      if(!missing(slice.ind)) {
-        log.num <- log.num + log(slice.ind)
+      if(!missing(log.slice.ind)) {
+        log.num <- log.num + log.slice.ind
       }
       log.denom <- rowLogSumExps(log.num)
       lnp       <- sweep(log.num, 1, log.denom, FUN="-")
