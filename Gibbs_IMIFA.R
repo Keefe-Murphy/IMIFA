@@ -66,6 +66,7 @@
     if(MH.step)   {
       rate          <- rep(0, n.store)
     }
+    lab.rate        <- matrix(0, nr=2, nc=n.store)
     mu.sigma        <- 1/sigma.mu
     z               <- cluster$z
     pi.alpha        <- cluster$pi.alpha
@@ -250,6 +251,13 @@
         }
       }
     
+    # Label Switching
+      nn.ind        <- which(nn0)
+      move1         <- label.move1(nn.ind=nn.ind, pi.prop=pi.prop, nn=nn, z=z)
+      z             <- move1$zs      
+      move2         <- label.move2(nn.ind=nn.ind, Vs=Vs, nn=nn, z=z)
+      z             <- move2$zs
+    
     if(any(Qs > Q.star))      stop(paste0("Q cannot exceed initial number of loadings columns: try increasing range.Q from ", Q.star))
       if(is.element(iter, iters))   {
         if(verbose)    setTxtProgressBar(pb, iter)
@@ -267,6 +275,7 @@
         if(not.fixed)    alpha.store[new.it]        <- pi.alpha
         if(learn.d)      d.store[new.it]            <- discount
         if(MH.step)      rate[new.it]               <- MH.alpha$rate
+                         lab.rate[,new.it]          <- c(move1$rate1, move2$rate2)
                          z.store[,new.it]           <- z 
                          ll.store[new.it]           <- sum(z.res$log.likes)
                          Q.store[,new.it]           <- Qs
@@ -284,6 +293,7 @@
                             alpha    = if(not.fixed)    alpha.store,
                             discount = if(learn.d)      discount,
                             rate     = if(MH.step)      mean(rate),
+                            lab.rate = setNames(apply(lab.rate, 1, mean), c("Move1", "Move2")),
                             z.store  = z.store,
                             ll.store = ll.store,
                             G.store  = G.store,

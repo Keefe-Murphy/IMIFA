@@ -183,6 +183,38 @@
       z.sw      <- factor(z.new, labels=z.perm[seq_along(ng[ng > 0])])
         return(list(z = as.numeric(levels(z.sw))[z.sw], z.perm = z.perm))
     }
+    
+    # Move 1
+    label.move1 <- function(nn.ind, pi.prop, nn, z) {
+      sw        <- sample(nn.ind, 2)
+      pis       <- pi.prop[sw]
+      nns       <- nn[sw]
+      a.prob    <- (nns[1] - nns[2]) * (log(pis[1]) - log(pis[2]))
+      accept    <- a.prob >= 0 || - rexp(1) < a.prob
+      if(accept) {
+        z[z == sw[1]]  <- NA
+        z[z == sw[2]]  <- sw[1]
+        z[is.na(z)]    <- sw[2]
+      }  
+      return(list(rate1 = accept, zs = z))
+    }
+    
+    # Move 2
+    label.move2 <- function(nn.ind, Vs, nn, z) {
+      sw        <- sample(nn.ind, 1)
+      nn.x      <- which(nn.ind == sw)
+      sw        <- c(sw, max(nn.ind[nn.x + 1], nn.ind[nn.x - 1], na.rm=TRUE))
+      nns       <- nn[sw]
+      Vsw       <- Vs[sw]
+      a.prob    <- nns[1] * log(1 - Vsw[1]) - nns[2] * log(1 - Vsw[2])
+      accept    <- a.prob >= 0 || - rexp(1) < a.prob
+      if(accept) {
+        z[z == sw[1]]  <- NA
+        z[z == sw[2]]  <- sw[1]
+        z[is.na(z)]    <- sw[2]
+      }
+      return(list(rate2 = accept, zs = z))
+    }
 
   # Length Checker
     len.check   <- function(obj0g, switch0g, method, P, range.G, P.dim = TRUE) {

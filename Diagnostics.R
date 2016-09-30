@@ -318,8 +318,11 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       class(DP.alpha)          <- "listof"
     }
     cluster      <- list(map = post.z, z = z, uncertainty = uncertain)
-    cluster      <- c(cluster, list(post.pi = post.pi/sum(post.pi)), if(sw["pi.sw"]) list(pi.prop = pi.prop, var.pi = var.pi, 
-                      ci.pi = ci.pi), if(!label.miss) list(perf = tab.stat), if(alpha.step != "fixed") list(DP.alpha = DP.alpha))
+    cluster      <- c(cluster, list(post.pi = post.pi/sum(post.pi)), 
+                      if(sw["pi.sw"]) list(pi.prop = pi.prop, var.pi = var.pi, ci.pi = ci.pi),
+                      if(!label.miss) list(perf = tab.stat), 
+                      if(alpha.step != "fixed") list(DP.alpha = DP.alpha),
+                      if(is.element(method, c("IMFA", "IMIFA"))) list(lab.rate = sims[[G.ind]][[Q.ind]]$lab.rate))
     attr(cluster, "Z.init")    <- attr(sims[[G.ind]], "Z.init")
     attr(cluster, "Init.Meth") <- attr(sims, "Init.Z")
     attr(cluster, "Label.Sup") <- !label.miss
