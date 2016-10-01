@@ -210,6 +210,7 @@
          tau       <- tau[z.perm]
          psi.inv   <- psi.inv[,z.perm, drop=FALSE]
          pi.prop   <- pi.prop[z.perm]
+         nn        <- nn[z.perm]
          if(mu0g)        {
           mu.zero  <- mu.zero[,z.perm, drop=FALSE]
          }

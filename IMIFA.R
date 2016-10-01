@@ -105,6 +105,7 @@
 # Cluster Labels
   plot(res, "z")
   res$Clust$map
+  res$Clust$lab.rate
 
 # Means
   plot(res, "p", "m")

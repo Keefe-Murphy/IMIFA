@@ -185,35 +185,23 @@
     }
     
     # Move 1
-    label.move1 <- function(nn.ind, pi.prop, nn, z) {
+    label.move1 <- function(nn.ind, pi.prop, nn) {
       sw        <- sample(nn.ind, 2)
       pis       <- pi.prop[sw]
       nns       <- nn[sw]
-      a.prob    <- (nns[1] - nns[2]) * (log(pis[1]) - log(pis[2]))
-      accept    <- a.prob >= 0 || - rexp(1) < a.prob
-      if(accept) {
-        z[z == sw[1]]  <- NA
-        z[z == sw[2]]  <- sw[1]
-        z[is.na(z)]    <- sw[2]
-      }  
-      return(list(rate1 = accept, zs = z))
+      a.prob    <- (nns[1] - nns[2]) * (log(pis[1]) - log(pis[2])) 
+        return(list(rate1 = a.prob >= 0 || - rexp(1) < a.prob, sw = sw))
     }
     
     # Move 2
-    label.move2 <- function(nn.ind, Vs, nn, z) {
+    label.move2 <- function(nn.ind, Vs, nn) {
       sw        <- sample(nn.ind, 1)
       nn.x      <- which(nn.ind == sw)
       sw        <- c(sw, max(nn.ind[nn.x + 1], nn.ind[nn.x - 1], na.rm=TRUE))
       nns       <- nn[sw]
       Vsw       <- Vs[sw]
       a.prob    <- nns[1] * log(1 - Vsw[1]) - nns[2] * log(1 - Vsw[2])
-      accept    <- a.prob >= 0 || - rexp(1) < a.prob
-      if(accept) {
-        z[z == sw[1]]  <- NA
-        z[z == sw[2]]  <- sw[1]
-        z[is.na(z)]    <- sw[2]
-      }
-      return(list(rate2 = accept, zs = z))
+        return(list(rate2 = a.prob >= 0 || - rexp(1) < a.prob, sw = sw))
     }
 
   # Length Checker

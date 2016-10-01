@@ -195,9 +195,9 @@
                        tau=tau[[g]], load.2=load.2[[g]]) else sim.phi.p(Q=Qs[g], P=P, phi.nu=phi.nu))
     
     # Global Shrinkage
-      sum.terms    <- lapply(Gs, function(g) diag(crossprod(phi[[g]], load.2[[g]])))
+      sum.terms     <- lapply(Gs, function(g) diag(crossprod(phi[[g]], load.2[[g]])))
       for(g in Gs) {
-        Qg         <- Qs[g]
+        Qg          <- Qs[g]
         if(nn0[g]) {
           for(k in seq_len(Qg)) { 
             delta[[g]][k]    <- if(k > 1) sim.deltak(alpha.dk=alpha.dk, beta.dk=beta.dk, delta.k=delta[[g]][k], Q=Qg, P=P, 
@@ -264,10 +264,45 @@
       G.non         <- sum(nn0)
       if(DP.lab.sw  && G.non > 1) {
         nn.ind      <- which(nn0)
-        move1       <- label.move1(nn.ind=nn.ind, pi.prop=pi.prop, nn=nn, z=z)
-        z           <- move1$zs
-        move2       <- label.move2(nn.ind=nn.ind, Vs=Vs, nn=nn, z=z)
-        z           <- move2$zs 
+        move1       <- label.move1(nn.ind=nn.ind, pi.prop=pi.prop, nn=nn)
+        accept1     <- move1$rate1
+        if(accept1) {
+          sw1       <- move1$sw
+          sw1x      <- c(sw1[2], sw1[1])
+          nn[sw1]   <- nn[sw1x]
+          nn0[sw1]  <- nn0[sw1x]
+          nn.ind    <- which(nn0)
+          Vs[sw1]   <- Vs[sw1x]
+          mu[,sw1]  <- mu[,sw1x, drop=FALSE]
+          phi[sw1]  <- phi[sw1x]
+          tau[sw1]  <- tau[sw1x]
+          Qs[sw1]   <- Qs[sw1x]
+          lmat[sw1] <- lmat[sw1x]
+          delta[sw1]         <- delta[sw1x]
+          psi.inv[,sw1]      <- psi.inv[,sw1x, drop=FALSE]
+          pi.prop[sw1]       <- pi.prop[sw1x]
+          z[z == sw1[1]]     <- NA
+          z[z == sw1[2]]     <- sw1[1]
+          z[is.na(z)]        <- sw1[2]
+        } 
+        move2       <- label.move2(nn.ind=nn.ind, Vs=Vs, nn=nn)
+        accept2     <- move2$rate2
+        if(accept2) {
+          sw2       <- move2$sw
+          sw2x      <- c(sw2[2], sw2[1])
+          nn[sw2]   <- nn[sw2x]
+          mu[,sw2]  <- mu[,sw2x, drop=FALSE]
+          phi[sw2]  <- phi[sw2x]
+          tau[sw2]  <- tau[sw2x]
+          Qs[sw2]   <- Qs[sw2x]
+          lmat[sw2] <- lmat[sw2x]
+          delta[sw2]         <- delta[sw2x]
+          psi.inv[,sw2]      <- psi.inv[,sw2x, drop=FALSE]
+          pi.prop[sw2]       <- pi.prop[sw2x]
+          z[z == sw2[1]]     <- NA
+          z[z == sw2[2]]     <- sw2[1]
+          z[is.na(z)]        <- sw2[2]
+        }
       }
     
       if(Q.bigs && !Q.large && iter > burnin) {        warning(paste0("Q has exceeded initial number of loadings columns since burnin: consider increasing range.Q from ", Q.star), call.=FALSE)
@@ -289,7 +324,7 @@
         if(not.fixed)    alpha.store[new.it]        <- pi.alpha
         if(learn.d)      d.store[new.it]            <- discount
         if(MH.step)      rate[new.it]               <- MH.alpha$rate
-        if(DP.lab.sw)    lab.rate[,new.it]          <- c(move1$rate1, move2$rate2)
+        if(DP.lab.sw)    lab.rate[,new.it]          <- c(accept1, accept2)
                          z.store[,new.it]           <- z 
                          ll.store[new.it]           <- sum(z.res$log.likes)
                          Q.store[,new.it]           <- Qs
