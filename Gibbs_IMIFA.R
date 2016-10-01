@@ -142,7 +142,7 @@
         log.ksi     <- log(ksi)
       }
       u.slice       <- runif(N, 0, ksi[z])
-      Gs            <- seq_len(max(vapply(Ns, function(i) sum(u.slice[i] < pi.prop), numeric(1))))
+      Gs            <- seq_len(max(1, vapply(Ns, function(i) sum(u.slice[i] < pi.prop), numeric(1))))
       logslice.ind  <- vapply(Gs, function(g) slice.logs[1 + (u.slice < ksi[g])] - log.ksi[g], numeric(N))
     
     # Cluster Labels
@@ -225,7 +225,7 @@
           Q.bigs    <- any(Q.big)
           if(Q.bigs) {
             Qs[Gs][Q.big]    <- Q.star
-            notred           <- notred & Q.big
+            notred           <- notred & !Q.big
           }
           phi[Gs]   <- lapply(Gs, function(g) if(notred[g]) cbind(phi[[g]][,seq_len(Qs.old[g])], rgamma(n=P, shape=phi.nu, rate=phi.nu)) else phi[[g]][,nonred[[g]], drop=FALSE])
           delta[Gs] <- lapply(Gs, function(g) if(notred[g]) c(delta[[g]][seq_len(Qs.old[g])], rgamma(n=1, shape=alpha.dk, rate=beta.dk)) else delta[[g]][nonred[[g]]])  

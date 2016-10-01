@@ -5,6 +5,7 @@
 # Preamble
  #set.seed(1)
  #rm(list=ls(all=TRUE))
+ #while("IMIFA.env" %in% search()) detach("IMIFA.env")
   if(getwd() != "/home/kmurphy")  {
     wd       <- try(setwd("C:/Users/Windows/Dropbox/UCD/Claire IMIFA"), silent=TRUE)
     if(inherits(wd, "try-error")) setwd("D:/Dropbox/UCD/Claire IMIFA"); rm(wd)

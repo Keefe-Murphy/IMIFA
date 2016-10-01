@@ -184,7 +184,7 @@
           Q.bigs   <- any(Q.big)
           if(Q.bigs) {
             Qs[Q.big]       <- Q.star
-            notred          <- notred & Q.big
+            notred          <- notred & !Q.big
           }
           phi      <- lapply(Gseq, function(g) if(notred[g]) cbind(phi[[g]][,seq_len(Qs.old[g])], rgamma(n=P, shape=phi.nu, rate=phi.nu)) else phi[[g]][,nonred[[g]], drop=FALSE])
           delta    <- lapply(Gseq, function(g) if(notred[g]) c(delta[[g]][seq_len(Qs.old[g])], rgamma(n=1, shape=alpha.dk[g], rate=beta.dk)) else delta[[g]][nonred[[g]]])  
