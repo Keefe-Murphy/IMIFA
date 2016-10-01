@@ -259,11 +259,14 @@
       }
     
     # Label Switching
-      nn.ind        <- which(nn0)
-      move1         <- label.move1(nn.ind=nn.ind, pi.prop=pi.prop, nn=nn, z=z)
-      z             <- move1$zs      
-      move2         <- label.move2(nn.ind=nn.ind, Vs=Vs, nn=nn, z=z)
-      z             <- move2$zs
+      G.non         <- sum(nn0)
+      if(G.non > 1) {
+        nn.ind      <- which(nn0)
+        move1       <- label.move1(nn.ind=nn.ind, pi.prop=pi.prop, nn=nn, z=z)
+        z           <- move1$zs
+        move2       <- label.move2(nn.ind=nn.ind, Vs=Vs, nn=nn, z=z)
+        z           <- move2$zs 
+      }
     
       if(Q.bigs && !Q.large && iter > burnin) {        warning(paste0("Q has exceeded initial number of loadings columns since burnin: consider increasing range.Q from ", Q.star), call.=FALSE)
         Q.large     <- TRUE
@@ -288,7 +291,7 @@
                          z.store[,new.it]           <- z 
                          ll.store[new.it]           <- sum(z.res$log.likes)
                          Q.store[,new.it]           <- Qs
-                         G.store[new.it]            <- sum(nn0)
+                         G.store[new.it]            <- G.non
       } 
     }
     close(pb)
