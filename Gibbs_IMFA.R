@@ -5,7 +5,7 @@
 # Gibbs Sampler Function
   gibbs.IMFA       <- function(Q, data, iters, N, P, G, mu.zero, rho, sigma.l, alpha.step, discount,
                                a.hyper, mu, sigma.mu, burnin, thinning, trunc.G, d.hyper, learn.d,
-                               gen.slice, psi.alpha, psi.beta, verbose, sw, cluster, ...) {
+                               gen.slice, psi.alpha, psi.beta, verbose, sw, cluster, DP.lab.sw, ...) {
         
   # Define & initialise variables
     start.time     <- proc.time()
@@ -64,7 +64,9 @@
     if(MH.step)   {
       rate         <- rep(0, n.store)
     }
-    lab.rate       <- matrix(0, nr=2, nc=n.store)
+    if(DP.lab.sw) {
+      lab.rate     <- matrix(0, nr=2, nc=n.store)  
+    }
     mu.sigma       <- 1/sigma.mu
     z              <- cluster$z
     pi.alpha       <- cluster$pi.alpha
@@ -185,7 +187,7 @@
       
     # Label Switching
       G.non        <- sum(nn0)
-      if(G.non > 1) {
+      if(DP.lab.sw && G.non > 1)  { 
         nn.ind     <- which(nn0)
         move1      <- label.move1(nn.ind=nn.ind, pi.prop=pi.prop, nn=nn, z=z)
         z          <- move1$zs
@@ -193,7 +195,7 @@
         z          <- move2$zs 
       }
       
-      if(is.element(iter, iters))   {
+      if(is.element(iter, iters)) {
         if(verbose)   setTxtProgressBar(pb, iter)
         new.it     <- which(iters == iter)
         if(sw["mu.sw"])            mu.store[,,new.it]      <- mu 
@@ -204,7 +206,7 @@
         if(not.fixed)              alpha.store[new.it]     <- pi.alpha
         if(learn.d)                d.store[new.it]         <- discount
         if(MH.step)                rate[new.it]            <- MH.alpha$rate
-                                   lab.rate[,new.it]       <- c(move1$rate, move2$rate)
+        if(DP.lab.sw)              lab.rate[,new.it]       <- c(move1$rate, move2$rate)
                                    z.store[,new.it]        <- z 
                                    ll.store[new.it]        <- sum(z.res$log.likes)
                                    G.store[new.it]         <- G.non
@@ -220,7 +222,7 @@
                            alpha    = if(not.fixed)           alpha.store,
                            discount = if(learn.d)             d.store,
                            rate     = if(MH.step)             mean(rate),
-                           lab.rate = setNames(apply(lab.rate, 1, mean), c("Move1", "Move2")),
+                           lab.rate = if(DP.lab.sw)           setNames(apply(lab.rate, 1, mean), c("Move1", "Move2")),
                            z.store  = z.store,
                            ll.store = ll.store,
                            G.store  = G.store,
