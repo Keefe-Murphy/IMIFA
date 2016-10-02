@@ -144,7 +144,7 @@
         log.ksi     <- log(ksi)
       }
       u.slice       <- runif(N, 0, ksi[z])
-      Gs            <- seq_len(max(1, vapply(Ns, function(i) sum(u.slice[i] < pi.prop), numeric(1))))
+      Gs            <- seq_len(max(1, vapply(Ns, function(i) sum(u.slice[i] < ksi), numeric(1))))
       logslice.ind  <- vapply(Gs, function(g) slice.logs[1 + (u.slice < ksi[g])] - log.ksi[g], numeric(N))
     
     # Cluster Labels
