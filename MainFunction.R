@@ -3,7 +3,7 @@
 ########################################################
 
 mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA", "MFA", "IFA", "FA", "classify"), 
-                        n.iters = 20000, zlabels = NULL, factanal = FALSE, range.G = NULL, range.Q = NULL, verbose = TRUE, Q.fac = NULL, discount = NULL, DP.lab.sw = TRUE,
+                        n.iters = 25000, zlabels = NULL, factanal = FALSE, range.G = NULL, range.Q = NULL, verbose = TRUE, Q.fac = NULL, discount = NULL, DP.lab.sw = TRUE,
                         burnin = n.iters/5, thinning = 2, centering = TRUE, scaling = c("unit", "pareto", "none"), alpha.step = c("gibbs", "metropolis", "fixed"), learn.d = FALSE,
                         adapt = TRUE, b0 = NULL, b1 = NULL, delta0g = FALSE, prop = NULL, epsilon = NULL, sigma.mu = NULL, sigma.l = NULL, alpha.hyper = NULL, d.hyper = NULL,
                         mu0g = FALSE, psi0g = FALSE, mu.zero = NULL, phi.nu = NULL, psi.alpha = NULL, psi.beta = NULL, alpha.d1 = NULL, rho = NULL, trunc.G = NULL, 
@@ -334,7 +334,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     for(g in seq_along(range.G)) {
       G            <- range.G[g]
       if(z.init    == "kmeans")     {
-        k.res      <- try(kmeans(dat, G, nstart=100), silent=TRUE)
+        k.res      <- try(suppressWarnings(kmeans(dat, centers=G, iter.max=20, nstart=100)), silent=TRUE)
         if(!inherits(k.res, "try-error"))  {
           zi[[g]]  <- as.numeric(factor(k.res$cluster, levels=seq_len(G)))
         } else                      stop("Cannot initialise cluster labels using kmeans. Try another z.init method")
