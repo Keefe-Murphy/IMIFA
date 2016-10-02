@@ -725,10 +725,10 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
         par(mar=c(3.1, 4.1, 4.1, 2.1))
       }
       matplot(seq_len(n.var), plot.x, type="p", col=if(vars == "loadings") seq_len(Q) + 1 else seq_len(G) + 1, pch=15, xlab="Variable", ylab=paste0("Standardised ", varnam), axes=FALSE, main=paste0("Parallel Coordinates: ", varnam, ifelse(all(grp.ind, vars == "loadings"), paste0("\n Group ", g), "")))
-      axis(1, at=seq_len(n.var), labels=if(titles) rownames(plot.x), cex.axis=0.5)
-      for(i in seq_len(n.var)) {
+      axis(1, at=seq_len(n.var), labels=if(titles && n.var < 100) rownames(plot.x) else rep("", n.var), cex.axis=0.5, tick=FALSE)
+      for(i in seq_len(n.var))    {
         lines(c(i, i), c(0, 1), col=grey)
-        if(titles) { 
+        if(titles && n.var < 100) { 
           text(c(i, i), c(0, 1), labels=format(x.plot[,i], digits=3), xpd=NA, offset=0.3, pos=c(1, 3), cex=0.5)
         }
       }
