@@ -173,23 +173,23 @@
     # Adaptation  
       if(all(adapt, iter > adapt.at)) {      
         if(runif(1) < ifelse(iter < burnin, 0.5, 1/exp(b0 + b1 * (iter - adapt.at)))) {
-          lind     <- lapply(Gseq, function(g) if(Q0[g]) colSums(abs(lmat[[g]]) < epsilon)/P else 0)
-          colvec   <- lapply(lind, function(lx) lx >= prop)
-          nonred   <- lapply(colvec, function(cv) which(cv == 0))
-          numred   <- lapply(colvec, sum)
-          notred   <- vapply(Gseq, function(g) numred[[g]] == 0, logical(1))
+          lind     <- lapply(Gseq,   function(g) if(Q0[g]) colSums(abs(lmat[[g]]) < epsilon)/P else 0)
+          colvec   <- lapply(lind,   function(l) l >= prop)
+          nonred   <- lapply(colvec, function(v) which(v == 0))
+          numred   <- vapply(colvec, sum, numeric(1))
+          notred   <- numred == 0
           Qs.old   <- Qs
-          Qs       <- vapply(Gseq, function(g) if(notred[g]) Qs.old[g] + 1 else Qs.old[g] - numred[[g]], numeric(1))
+          Qs       <- vapply(Gseq,   function(g) if(notred[g]) Qs.old[g] + 1 else Qs.old[g] - numred[g], numeric(1))
           Q.big    <- Qs > Q.star
           Q.bigs   <- any(Q.big)
           if(Q.bigs) {
+            notred <- notred & !Q.big
             Qs[Q.big]       <- Q.star
-            notred          <- notred & !Q.big
           }
-          phi      <- lapply(Gseq, function(g) if(notred[g]) cbind(phi[[g]][,seq_len(Qs.old[g])], rgamma(n=P, shape=phi.nu, rate=phi.nu)) else phi[[g]][,nonred[[g]], drop=FALSE])
-          delta    <- lapply(Gseq, function(g) if(notred[g]) c(delta[[g]][seq_len(Qs.old[g])], rgamma(n=1, shape=alpha.dk[g], rate=beta.dk)) else delta[[g]][nonred[[g]]])  
+          phi      <- lapply(Gseq, function(g)   if(notred[g]) cbind(phi[[g]][,seq_len(Qs.old[g])], rgamma(n=P, shape=phi.nu, rate=phi.nu)) else phi[[g]][,nonred[[g]], drop=FALSE])
+          delta    <- lapply(Gseq, function(g)   if(notred[g]) c(delta[[g]][seq_len(Qs.old[g])], rgamma(n=1, shape=alpha.dk[g], rate=beta.dk)) else delta[[g]][nonred[[g]]])  
           tau      <- lapply(delta, cumprod)
-          lmat     <- lapply(Gseq, function(g, Qg=Qs[g]) if(notred[g]) cbind(lmat[[g]][,seq_len(Qs.old[g])], rnorm(n=P, mean=0, sd=sqrt(1/(phi[[g]][,Qg] * tau[[g]][Qg])))) else lmat[[g]][,nonred[[g]], drop=FALSE])
+          lmat     <- lapply(Gseq, function(g)   if(notred[g]) cbind(lmat[[g]][,seq_len(Qs.old[g])], rnorm(n=P, mean=0, sd=sqrt(1/(phi[[g]][,Qs[g]] * tau[[g]][Qs[g]])))) else lmat[[g]][,nonred[[g]], drop=FALSE])
           eta      <- if(all(max(Qs) > max(Qs.old), !Q.bigs)) cbind(eta[,seq_len(max(Qs.old))], rnorm(N)) else eta[,seq_len(max(Qs)), drop=FALSE]
         }
       }

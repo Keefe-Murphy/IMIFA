@@ -86,9 +86,9 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(is.element(method, c("OMIFA", "OMFA", "IMFA", "IMIFA"))) {
       lnN          <- log(N)
       if(G.x) {
-        range.G    <- ifelse(N <= 51, N - 1, max(50, floor(5 * log(N))))
+        range.G    <- ifelse(N <= 51, N - 1, max(20, ceiling(3 * log(N))))
       }
-      if(range.G    < floor(lnN))   stop(paste0("'range.G' should be at least log(N) (=log(", N, "))", " for the ", method, " method"))
+      if(range.G    < ceiling(lnN)) stop(paste0("'range.G' should be at least log(N) (=log(", N, "))", " for the ", method, " method"))
       if(is.element(method, c("IMFA", "IMIFA"))) {
         if(!is.logical(gen.slice))  stop("'gen.slice' must be TRUE or FALSE")
         if(!is.logical(DP.lab.sw))  stop("'DP.lab.sw' must be TRUE or FALSE")
