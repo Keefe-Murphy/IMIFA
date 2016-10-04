@@ -7,7 +7,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
                         burnin = n.iters/5, thinning = 2, centering = TRUE, scaling = c("unit", "pareto", "none"), alpha.step = c("gibbs", "metropolis", "fixed"), learn.d = FALSE,
                         adapt = TRUE, b0 = NULL, b1 = NULL, delta0g = FALSE, prop = NULL, epsilon = NULL, sigma.mu = NULL, sigma.l = NULL, alpha.hyper = NULL, d.hyper = NULL,
                         mu0g = FALSE, psi0g = FALSE, mu.zero = NULL, phi.nu = NULL, psi.alpha = NULL, psi.beta = NULL, alpha.d1 = NULL, rho = NULL, trunc.G = NULL, 
-                        alpha.dk = NULL, beta.d1 = NULL, beta.dk = NULL, alpha = NULL, z.list = NULL, profile = FALSE, mu.switch = TRUE, gen.slice = TRUE, adapt.at = NULL,
+                        alpha.dk = NULL, beta.d1 = NULL, beta.dk = NULL, alpha = NULL, z.list = NULL, profile = FALSE, mu.switch = TRUE, ind.slice = TRUE, adapt.at = NULL,
                         score.switch = TRUE, load.switch = TRUE, psi.switch = TRUE, pi.switch = TRUE, z.init = c("kmeans", "list", "mclust", "priors")) {
   
   defpar    <- suppressWarnings(par(no.readonly=TRUE))
@@ -90,7 +90,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
       }
       if(range.G    < ceiling(lnN)) stop(paste0("'range.G' should be at least log(N) (=log(", N, "))", " for the ", method, " method"))
       if(is.element(method, c("IMFA", "IMIFA"))) {
-        if(!is.logical(gen.slice))  stop("'gen.slice' must be TRUE or FALSE")
+        if(!is.logical(ind.slice))  stop("'ind.slice' must be TRUE or FALSE")
         if(!is.logical(DP.lab.sw))  stop("'DP.lab.sw' must be TRUE or FALSE")
         if(missing(rho)) {
           rho      <- 0.75
@@ -295,7 +295,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   gibbs.arg <- list(P = P, sigma.mu = sigma.mu, psi.alpha = psi.alpha, burnin = burnin, 
                     thinning = thinning, iters = iters, verbose = verbose, sw = switches)
   if(is.element(method, c("IMIFA", "IMFA"))) {
-    gibbs.arg      <- append(gibbs.arg, list(trunc.G = trunc.G, rho = rho, gen.slice = gen.slice, alpha.step = alpha.step, learn.d = learn.d, 
+    gibbs.arg      <- append(gibbs.arg, list(trunc.G = trunc.G, rho = rho, ind.slice = ind.slice, alpha.step = alpha.step, learn.d = learn.d, 
                                              DP.lab.sw = DP.lab.sw, a.hyper = alpha.hyper, discount = discount, d.hyper = d.hyper))
   }
   if(!is.element(method, c("FA", "MFA", "OMFA", "IMFA"))) {
@@ -543,7 +543,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   attr(imifa, "Discount") <- if(!learn.d) discount
   attr(imifa, "Factors")  <- range.Q
   attr(imifa, 
-       "Gen.Slice")       <- all(is.element(method, c("IMFA", "IMIFA")), gen.slice)
+       "Ind.Slice")       <- all(is.element(method, c("IMFA", "IMIFA")), ind.slice)
   attr(imifa, "Groups")   <- range.G
   if(!is.element(method, c("FA", "IFA"))) {
     attr(imifa, "Init.Z") <- z.init

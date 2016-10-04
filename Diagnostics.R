@@ -595,7 +595,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     attr(result, "Alpha.step") <- alpha.step
     attr(result, "Disc.step")  <- learn.d
     attr(result, "Discount")   <- if(!learn.d) attr(sims, "Discount")
-    attr(result, "Gen.Slice")  <- attr(sims, "Gen.Slice")
+    attr(result, "Ind.Slice")  <- attr(sims, "Ind.Slice")
   }
   attr(result, "Name")         <- attr(sims, "Name")
   attr(result, "Obs")          <- n.obs

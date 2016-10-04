@@ -5,7 +5,7 @@
 # Gibbs Sampler Function
   gibbs.IMFA        <- function(Q, data, iters, N, P, G, mu.zero, rho, sigma.l, alpha.step, discount,
                                 a.hyper, mu, sigma.mu, burnin, thinning, trunc.G, d.hyper, learn.d,
-                                gen.slice, psi.alpha, psi.beta, verbose, sw, cluster, DP.lab.sw, ...) {
+                                ind.slice, psi.alpha, psi.beta, verbose, sw, cluster, DP.lab.sw, ...) {
         
   # Define & initialise variables
     start.time      <- proc.time()
@@ -130,7 +130,7 @@
       Vs            <- weights$Vs
       
     # Slice Sampler
-      if(!gen.slice) {
+      if(!ind.slice) {
         index       <- order(pi.prop, decreasing=TRUE)
         pi.prop     <- ksi  <- pi.prop[index]
         mu          <- mu[,index, drop=FALSE]
