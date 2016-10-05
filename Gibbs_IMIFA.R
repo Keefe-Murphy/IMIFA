@@ -224,22 +224,23 @@
           notred     <- numred == 0
           ng.ind     <- seq_along(nn.ind)
           Qs.old     <- Qs[nn0]
-          Qs[nn0]    <- Q.pop <- vapply(ng.ind, function(h) if(notred[h]) Qs.old[h] + 1 else Qs.old[h] - numred[h], numeric(1))
-          Q.big      <- Q.pop  > Q.star
+          Qs[nn0]    <- vapply(ng.ind, function(h) if(notred[h]) Qs.old[h] + 1 else Qs.old[h] - numred[h], numeric(1))
+          Q.big      <- Qs[nn0] > Q.star
           Q.bigs     <- any(Q.big)
           if(Q.bigs) {
             notred   <- notred & !Q.big
-            Qs[Q.big]         <- Q.star
+            Qs[nn0][Q.big]    <- Q.star
           }
           phi[nn0]   <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) cbind(phi[[g]][,seq_len(Qs.old[h])], rgamma(n=P, shape=phi.nu, rate=phi.nu)) else phi[[g]][,nonred[[h]], drop=FALSE])
           delta[nn0] <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) c(delta[[g]][seq_len(Qs.old[h])], rgamma(n=1, shape=alpha.dk, rate=beta.dk)) else delta[[g]][nonred[[h]]])  
           tau[nn0]   <- lapply(delta[nn.ind], cumprod)
           lmat[nn0]  <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) cbind(lmat[[g]][,seq_len(Qs.old[h])], rnorm(n=P, mean=0, sd=sqrt(1/(phi[[g]][,Qs[g]] * tau[[g]][Qs[g]])))) else lmat[[g]][,nonred[[h]], drop=FALSE])
           Qemp       <- Qs[!nn0]
-          Qmax       <- max(Q.pop)
+          Fmax       <- max(Qs[nn0])
+          Qmax       <- max(Qs[nn0][!Q.big])
           Qmaxseq    <- seq_len(Qmax)
           Qmaxold    <- max(Qs.old)
-          eta        <- if(all(Qmax > Qmaxold, !Q.bigs)) cbind(eta[,seq_len(Qmaxold)], rnorm(N)) else eta[,Qmaxseq, drop=FALSE]
+          eta        <- if(all(Fmax > Qmaxold, !Q.bigs)) cbind(eta[,seq_len(Qmaxold)], rnorm(N)) else eta[,seq_len(Fmax), drop=FALSE]
           if(Qmax     < max(Qemp, 0)) {
             Qs[Qmax   < Qs]   <- Qmax
             for(t in Ts[!nn0][Qemp > Qmax]) {  
