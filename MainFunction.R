@@ -142,9 +142,9 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     range.G <- sort(unique(range.G))
     meth    <- rep(method, length(range.G))                               
   }
-  3alpha    <- 3 * alpha
+  alpha3    <- 3 * alpha
   if(any(range.G >= N))             stop(paste0("'range.G' must be less than the number of observations N=", N))
-  if(any(range.G  > 3alpha * lnN))  warning(paste0("'range.G' MUCH greater than log(N) (=log(", N, ")):\n Empty clusters are likely, consider running an overfitted or infinite mixture"), call.=FALSE)
+  if(any(range.G  > alpha3 * lnN))  warning(paste0("'range.G' MUCH greater than log(N) (=log(", N, ")):\n Empty clusters are likely, consider running an overfitted or infinite mixture"), call.=FALSE)
   if(range.G[1]  == 1)   {
     if(is.element(meth[1], c("IMIFA", "IMFA",
        "OMIFA", "OMFA")))   {       stop("'method' must be FA or IFA for a one group model")

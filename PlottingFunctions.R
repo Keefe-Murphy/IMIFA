@@ -891,4 +891,41 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
   are.cols     <- function(cols) {
     vapply(cols, function(x) { tryCatch(is.matrix(col2rgb(x)), error = function(e) FALSE) }, logical(1))
   }
+
+# Prior No. Groups (DP & PY)
+  G.prior      <- function(N, alpha, discount = 0, add = FALSE, avg = FALSE, col = "black", ...) {
+    if(length(setdiff(c("Rmpfr", "gmp"), rownames(installed.packages()))) > 0) {
+      suppressMessages(install.packages(setdiff(c("Rmpfr", "gmp"), rownames(installed.packages()))))
+    }
+    suppressMessages(library(Rmpfr))
+    on.exit(detach.pkg(Rmpfr))
+    on.exit(detach.pkg(gmp), add=TRUE)
+    on.exit(do.call("clip", as.list(par("usr"))), add=TRUE)
+    if(!all(is.numeric(discount), is.numeric(alpha), 
+            is.numeric(N)))           stop("All inputs must be numeric")
+    if(discount  < 0  ||
+       discount >= 1)                 stop("Invalid discount value")
+    if(alpha    < -discount)          stop("Invalid alpha value")
+    if(!is.logical(add))              stop("'add' must be TRUE or FALSE")
+    if(!is.logical(avg))              stop("'add' must be TRUE or FALSE")
+    tmp        <- if(discount == 0) alpha^seq_len(N)/pochMpfr(alpha, N) else (alpha + c(0, seq_len(N - 1)) * discount)^seq_len(N)/(pochMpfr(alpha + 1, N - 1) * discount^seq_len(N))
+    if(discount == 0) {
+      res      <- abs(Stirling1.all(N) * tmp)
+    } else                            stop("Plotting with non-zero discount not yet implemented\nTry supplying the same arguments to G.expected() or G.variance()")
+    res        <- res/sum(res)
+    max.res    <- max(asNumeric(res))
+    if(add) {
+      if(!are.cols(col))              stop("Supplied 'col' is not a valid colour")
+      if(dev.cur() == 1)              stop("No plot exists to add to")
+      lines(x=seq_len(N), y=res, type="l", col=col, ...)
+    } else  {
+      plot(x=seq_len(N), y=res, type="l", col=col, ...)
+    }
+    if(avg) {
+      exp.g    <- G.expected(N, alpha, discount)
+      clip(exp.g, exp.g, 0, max.res)
+      abline(v=exp.g, lty=2, col=col)  
+        cat(paste0("E(G) = ", round(exp.g, options()$digits)))
+    }
+  }
 #
