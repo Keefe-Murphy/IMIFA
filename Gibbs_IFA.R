@@ -104,11 +104,10 @@
     # Adaptation  
       if(all(adapt, iter > adapt.at)) {      
         if(runif(1)  < ifelse(iter < burnin, 0.5, 1/exp(b0 + b1 * (iter - adapt.at)))) {
-          lind   <- if(Q0) colSums(abs(lmat) < epsilon) / P else 0
-          colvec <- lind >= prop
+          colvec <- (if(Q0) colSums(abs(lmat) < epsilon) / P else 0) >= prop
           numred <- sum(colvec)
           if(numred == 0) { # simulate extra columns from priors
-            Q       <- Q + 1
+            Q    <- Q + 1
             Q.big   <- Q > Q.star
             if(Q.big) {
               Q     <- Q.star

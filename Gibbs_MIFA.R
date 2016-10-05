@@ -173,8 +173,7 @@
     # Adaptation  
       if(all(adapt, iter > adapt.at)) {      
         if(runif(1) < ifelse(iter < burnin, 0.5, 1/exp(b0 + b1 * (iter - adapt.at)))) {
-          lind     <- lapply(Gseq,   function(g) if(Q0[g]) colSums(abs(lmat[[g]]) < epsilon)/P else 0)
-          colvec   <- lapply(lind,   function(l) l >= prop)
+          colvec   <- lapply(Gseq,   function(g) (if(Q0[g]) colSums(abs(lmat[[g]]) < epsilon)/P else 0) >= prop)
           nonred   <- lapply(colvec, function(v) which(v == 0))
           numred   <- vapply(colvec, sum, numeric(1))
           notred   <- numred == 0

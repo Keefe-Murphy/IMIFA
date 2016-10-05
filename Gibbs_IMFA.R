@@ -202,9 +202,9 @@
           lmat[sw1]         <- lmat[sw1x]
           psi.inv[,sw1]     <- psi.inv[,sw1x, drop=FALSE]
           pi.prop[sw1]      <- pi.prop[sw1x]
-          z[z == sw1[1]]    <- NA
+          zsw1      <- z == sw1[1]
           z[z == sw1[2]]    <- sw1[1]
-          z[is.na(z)]       <- sw1[2]
+          z[zsw1]   <- sw1[2]            
         } 
         move2       <- label.move2(nn.ind=nn.ind, Vs=Vs, nn=nn)
         accept2     <- move2$rate2
@@ -216,9 +216,9 @@
           lmat[sw2]         <- lmat[sw2x]
           psi.inv[,sw2]     <- psi.inv[,sw2x, drop=FALSE]
           pi.prop[sw2]      <- pi.prop[sw2x]
-          z[z == sw2[1]]    <- NA
+          zsw2      <- z == sw2[1]
           z[z == sw2[2]]    <- sw2[1]
-          z[is.na(z)]       <- sw2[2]
+          z[zsw2]   <- sw2[2]            
         }
       }
       

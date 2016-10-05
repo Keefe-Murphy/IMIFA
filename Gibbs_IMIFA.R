@@ -217,8 +217,7 @@
     # Adaptation  
       if(all(adapt, iter > adapt.at)) {      
         if(runif(1)   < ifelse(iter < burnin, 0.5, 1/exp(b0 + b1 * (iter - adapt.at)))) {
-          lind       <- lapply(nn.ind, function(g) if(Q0[g]) colSums(abs(lmat[[g]]) < epsilon)/P else 0)
-          colvec     <- lapply(lind,   function(l) l >= prop)
+          colvec     <- lapply(Gseq,   function(g) (if(Q0[g]) colSums(abs(lmat[[g]]) < epsilon)/P else 0) >= prop)
           nonred     <- lapply(colvec, function(v) which(v == 0))
           numred     <- vapply(colvec, sum, numeric(1))
           notred     <- numred == 0
@@ -283,9 +282,9 @@
           delta[sw1]          <- delta[sw1x]
           psi.inv[,sw1]       <- psi.inv[,sw1x, drop=FALSE]
           pi.prop[sw1]        <- pi.prop[sw1x]
-          z[z == sw1[1]]      <- NA
+          zsw1       <- z == sw1[1]
           z[z == sw1[2]]      <- sw1[1]
-          z[is.na(z)]         <- sw1[2]
+          z[zsw1]    <- sw1[2]            
         } 
         move2        <- label.move2(nn.ind=nn.ind, Vs=Vs, nn=nn)
         accept2      <- move2$rate2
@@ -301,9 +300,9 @@
           delta[sw2]          <- delta[sw2x]
           psi.inv[,sw2]       <- psi.inv[,sw2x, drop=FALSE]
           pi.prop[sw2]        <- pi.prop[sw2x]
-          z[z == sw2[1]]      <- NA
+          zsw2       <- z == sw2[1]
           z[z == sw2[2]]      <- sw2[1]
-          z[is.na(z)]         <- sw2[2]
+          z[zsw2]    <- sw2[2]            
         }
       }
     
