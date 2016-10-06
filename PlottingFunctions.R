@@ -628,6 +628,8 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
         }
         cat(paste0("Log Integrated Likelihood = ", log.iLLH[G.ind,Q.ind], "\n"))
       }
+      if(all(plotG.ind, 
+             attr(GQ.res, "G.big")))  warning("G had to be prevented from exceeding the maximum allowable number of groups.\n Consider re-running the model with a higher value for 'trunc.G'", call.=FALSE)
       if(all(plotQ.ind, 
              attr(GQ.res, "Q.big")))  warning("Q had to be prevented from exceeding its initial value.\n Consider re-running the model with a higher value for 'range.Q'", call.=FALSE)
     }

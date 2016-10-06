@@ -47,6 +47,7 @@
     }
     z.store         <- matrix(0, nr=N, nc=n.store)
     ll.store        <- rep(0, n.store)
+    G.large         <- FALSE
     G.store         <- rep(0, n.store)
     dimnames(z.store)       <- list(obsnames, iternames)
     not.fixed       <- alpha.step != "fixed"
@@ -140,6 +141,12 @@
       }
       u.slice       <- runif(N, 0, ksi[z])
       G             <- max(1, vapply(Ns, function(i) sum(u.slice[i] < ksi), numeric(1)))
+      if(G > trunc.G) {
+        G           <- trunc.G
+        if(!G.large)  {        warning(paste0("G has exceeded maximum allowable number of groups: consider increasing trunc.G from ", trunc.G), call.=FALSE)
+          G.large   <- TRUE
+        }
+      }          
       Gs            <- seq_len(G)
       log.slice.ind <- vapply(Gs, function(g) slice.logs[1 + (u.slice < ksi[g])] - log.ksi[g], numeric(N))
     
@@ -162,7 +169,7 @@
         lmat[,,Gs]  <- array(unlist(lapply(Gs, function(g) if(nn0[g]) matrix(unlist(lapply(Ps, function(j) sim.load(l.sigma=l.sigma, Q=Q, c.data=c.data[[g]][,j], eta=eta.tmp[[g]], Q1=Q1, EtE=EtE[[g]], 
                              P=P, psi.inv=psi.inv[,g][j], shrink=FALSE)), use.names=FALSE), nr=P, byrow=TRUE) else sim.load.p(Q=Q, P=P, sigma.l=sigma.l, shrink=FALSE)), use.names=FALSE), dim=c(P, Q, G))
         eta         <- do.call(rbind, eta.tmp)[obsnames,, drop=FALSE]
-      } else {
+      } else   {
         eta.tmp     <- lapply(Gs, function(g) eta[z.ind[[g]],, drop=FALSE])
       }
       
@@ -254,5 +261,6 @@
                             ll.store = ll.store,
                             G.store  = G.store,
                             time     = init.time)
+    attr(returns, "G.big")  <- G.large
     return(returns)
   }

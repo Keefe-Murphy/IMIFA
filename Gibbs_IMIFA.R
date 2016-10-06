@@ -49,6 +49,7 @@
     Qs               <- rep(Q, trunc.G)
     Q.store          <- matrix(0, nr=trunc.G, nc=n.store)
     Q.large          <- Q.big <- Q.bigs <- FALSE
+    G.large          <- FALSE
     G.store          <- rep(0, n.store)
     dimnames(z.store)         <- list(obsnames, iternames)
     dimnames(Q.store)         <- list(gnames, iternames)
@@ -144,7 +145,14 @@
         log.ksi      <- log(ksi)
       }
       u.slice        <- runif(N, 0, ksi[z])
-      Gs             <- seq_len(max(1, vapply(Ns, function(i) sum(u.slice[i] < ksi), numeric(1))))
+      G              <- max(1, vapply(Ns, function(i) sum(u.slice[i] < ksi), numeric(1)))
+      if(G > trunc.G) {
+        G            <- trunc.G
+        if(!G.large)  {          warning(paste0("G has exceeded maximum allowable number of groups: consider increasing trunc.G from ", trunc.G), call.=FALSE)
+          G.large    <- TRUE
+        }
+      }  
+      Gs             <- seq_len(G)
       log.slice.ind  <- vapply(Gs, function(g) slice.logs[1 + (u.slice < ksi[g])] - log.ksi[g], numeric(N))
     
     # Cluster Labels
@@ -349,6 +357,7 @@
                              G.store  = G.store,
                              Q.store  = Q.store[Gmax,, drop=FALSE],
                              time     = init.time)
+    attr(returns, "G.big")    <- G.large
     attr(returns, "Q.big")    <- Q.large
     return(returns)
   }
