@@ -901,9 +901,11 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
     if(length(setdiff("Rmpfr", rownames(installed.packages()))) > 0) {
                                       stop("'Rmpfr' package not installed")
     }
-    suppressMessages(library(Rmpfr))
-    on.exit(detach.pkg(Rmpfr))
-    on.exit(detach.pkg(gmp), add=TRUE)
+    if(length(setdiff("Rmpfr", (.packages()))) > 0) {
+      suppressMessages(library(Rmpfr))
+      on.exit(detach.pkg(Rmpfr))
+      on.exit(detach.pkg(gmp), add=TRUE)  
+    }
     on.exit(do.call("clip", as.list(par("usr"))), add=TRUE)
     if(!all(is.numeric(discount), is.numeric(alpha), 
             is.numeric(N)))           stop("All inputs must be numeric")
@@ -912,7 +914,9 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
     if(alpha    < -discount)          stop("Invalid alpha value")
     if(!is.logical(add))              stop("'add' must be TRUE or FALSE")
     if(!is.logical(avg))              stop("'add' must be TRUE or FALSE")
-    tmp        <- if(discount == 0) alpha^seq_len(N)/pochMpfr(alpha, N) else (alpha + c(0, seq_len(N - 1)) * discount)^seq_len(N)/(pochMpfr(alpha + 1, N - 1) * discount^seq_len(N))
+    tmp        <- if(discount == 0) alpha^seq_len(N)/pochMpfr(alpha, N) else {
+                  exp(unlist(vapply(seq_len(N), function(Gs=seq_len(i), x=0) { for(g in Gs) {
+                    x <- x + log(alpha + g * discount) }; x}, numeric(1))) - log(pochMpfr(alpha + 1, N - 1))) / discount^seq_len(N) }
     if(discount == 0) {
       res      <- abs(Stirling1.all(N) * tmp)
     } else                            stop("Plotting with non-zero discount not yet implemented\nTry supplying the same arguments to G.expected() or G.variance()")
@@ -923,7 +927,7 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
       if(dev.cur() == 1)              stop("No plot exists to add to")
       lines(x=seq_len(N), y=res, type="l", col=col, ...)
     } else  {
-      plot(x=seq_len(N), y=res, type="l", col=col, ...)
+      plot(x=seq_len(N), y=res, type="l",  col=col, ...)
     }
     if(avg) {
       exp.g    <- G.expected(N, alpha, discount)

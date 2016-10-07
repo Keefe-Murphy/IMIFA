@@ -233,9 +233,11 @@
       if(length(setdiff("Rmpfr", rownames(installed.packages()))) > 0) {
                               stop("'Rmpfr' package not installed")
       }
-      suppressMessages(library(Rmpfr))
-      on.exit(detach.pkg(Rmpfr))
-      on.exit(detach.pkg(gmp), add=TRUE)
+      if(length(setdiff("Rmpfr", (.packages()))) > 0) {
+        suppressMessages(library(Rmpfr))
+        on.exit(detach.pkg(Rmpfr))
+        on.exit(detach.pkg(gmp), add=TRUE)  
+      }
       if(!all(is.numeric(N), is.numeric(discount), 
          is.numeric(alpha)))  stop("All inputs must be numeric")
       if(discount  < 0  ||
@@ -252,9 +254,11 @@
       if(length(setdiff("Rmpfr", rownames(installed.packages()))) > 0) {
                               stop("'Rmpfr' package not installed")
       }
-      suppressMessages(library(Rmpfr))
-      on.exit(detach.pkg(Rmpfr))
-      on.exit(detach.pkg(gmp), add=TRUE)
+      if(length(setdiff("Rmpfr", (.packages()))) > 0) {
+        suppressMessages(library(Rmpfr))
+        on.exit(detach.pkg(Rmpfr))
+        on.exit(detach.pkg(gmp), add=TRUE)  
+      }
       if(!all(is.numeric(N), is.numeric(discount), 
          is.numeric(alpha)))  stop("All inputs must be numeric")
       if(discount  < 0  ||
