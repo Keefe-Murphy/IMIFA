@@ -106,19 +106,21 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
   if(!is.logical(titles))             stop("'titles' must be TRUE or FALSE")
   indx    <- missing(ind)
   facx    <- missing(fac)
+  gx      <- missing(g)
   if(!indx)                 xind <- ind
   if(!facx) {
-    if(length(fac) == 1)     fac <- rep(fac, G)
-    if(length(fac) != G)              stop(paste0("'fac' must be supplied for each of the ", G, " groups"))
+    flen  <- length(fac)
+    if(flen == 1 && gx)      fac <- rep(fac, G)
+    if(flen != G && gx)               stop(paste0("'fac' must be supplied for each of the ", G, " groups"))
   }
   g.score <- all(grp.ind, !all.ind, vars == "scores")
   if(any(all(is.element(method, c("IMIFA", "OMIFA")), m.sw["G.sw"]), m.sw["Z.sw"])) {
-    Gs    <- if(missing(g)) seq_len(2) else ifelse(g <= 2, g, 
+    Gs    <- if(gx) seq_len(2) else ifelse(g <= 2, g, 
                                       stop("Invalid 'g' value"))
   } else if(any(all(is.element(vars, c("scores", "pis", "alpha")), any(all.ind, vars != "scores", !m.sw["M.sw"])), 
             m.sw["G.sw"], all(m.sw["P.sw"], vars != "loadings"), m.sw["E.sw"])) {
     Gs    <- 1
-  } else if(!missing(g)) {
+  } else if(!gx) {
     if(!is.element(method, c("FA", "IFA"))) {
       if(!is.element(g, Gseq))        stop("This g value was not used during simulation")
       Gs  <- g
