@@ -230,8 +230,8 @@
 
   # Moments of Dirichlet / Pitman-Yor Processes
     G.expected  <- Vectorize(function(N, alpha, discount = 0) {
-      if(length(setdiff(c("Rmpfr", "gmp"), rownames(installed.packages()))) > 0) {
-        suppressMessages(install.packages(setdiff(c("Rmpfr", "gmp"), rownames(installed.packages()))))
+      if(length(setdiff("Rmpfr", rownames(installed.packages()))) > 0) {
+                              stop("'Rmpfr' package not installed")
       }
       suppressMessages(library(Rmpfr))
       on.exit(detach.pkg(Rmpfr))
@@ -249,8 +249,8 @@
     })
 
     G.variance  <- Vectorize(function(N, alpha, discount = 0) {
-      if(length(setdiff(c("Rmpfr", "gmp"), rownames(installed.packages()))) > 0) {
-        suppressMessages(install.packages(setdiff(c("Rmpfr", "gmp"), rownames(installed.packages()))))
+      if(length(setdiff("Rmpfr", rownames(installed.packages()))) > 0) {
+                              stop("'Rmpfr' package not installed")
       }
       suppressMessages(library(Rmpfr))
       on.exit(detach.pkg(Rmpfr))

@@ -898,8 +898,8 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
 
 # Prior No. Groups (DP & PY)
   G.prior      <- function(N, alpha, discount = 0, add = FALSE, avg = FALSE, col = "black", ...) {
-    if(length(setdiff(c("Rmpfr", "gmp"), rownames(installed.packages()))) > 0) {
-      suppressMessages(install.packages(setdiff(c("Rmpfr", "gmp"), rownames(installed.packages()))))
+    if(length(setdiff("Rmpfr", rownames(installed.packages()))) > 0) {
+                                      stop("'Rmpfr' package not installed")
     }
     suppressMessages(library(Rmpfr))
     on.exit(detach.pkg(Rmpfr))
