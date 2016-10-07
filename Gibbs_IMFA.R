@@ -206,7 +206,7 @@
           nn.ind    <- which(nn0)
           Vs[sw1]   <- Vs[sw1x]
           mu[,sw1]  <- mu[,sw1x, drop=FALSE]
-          lmat[sw1]         <- lmat[sw1x]
+          lmat[,,sw1]       <- lmat[,,sw1x,   drop=FALSE]
           psi.inv[,sw1]     <- psi.inv[,sw1x, drop=FALSE]
           pi.prop[sw1]      <- pi.prop[sw1x]
           zsw1      <- z == sw1[1]
@@ -220,7 +220,7 @@
           sw2x      <- c(sw2[2], sw2[1])
           nn[sw2]   <- nn[sw2x]
           mu[,sw2]  <- mu[,sw2x, drop=FALSE]
-          lmat[sw2]         <- lmat[sw2x]
+          lmat[,,sw2]       <- lmat[,,sw2x,   drop=FALSE]
           psi.inv[,sw2]     <- psi.inv[,sw2x, drop=FALSE]
           pi.prop[sw2]      <- pi.prop[sw2x]
           zsw2      <- z == sw2[1]
