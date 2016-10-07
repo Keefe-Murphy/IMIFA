@@ -927,7 +927,7 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
       if(dev.cur() == 1)              stop("No plot exists to add to")
       lines(x=seq_len(N), y=res, type="l", col=col, ...)
     } else  {
-      plot(x=seq_len(N), y=res, type="l",  col=col, ...)
+      plot(x=seq_len(N),  y=res, type="l", col=col, ...)
     }
     if(avg) {
       exp.g    <- G.expected(N, alpha, discount)
