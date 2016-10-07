@@ -357,13 +357,11 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     sw["s.sw"]   <- FALSE
   }
   if(sw["s.sw"]) {
-    Q.max        <- max(Q) 
-    Q.maxs       <- seq_len(Q.max)
     eta          <- sims[[G.ind]][[Q.ind]]$eta
     if(inf.Q) {
       eta        <- as.array(eta)
     }
-    eta          <- eta[,Q.maxs,tmp.store, drop=FALSE]
+    eta          <- eta[,,tmp.store, drop=FALSE]
   }
 
 # Loop over g in G to extract other results
@@ -386,21 +384,21 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   # Retrieve (unrotated) loadings  
     if(sw["l.sw"]) {
       if(clust.ind)  {
-        lmat     <- adrop(lmats[,Qgs,g,store, drop=FALSE], drop=3)
+        lmat     <- adrop(lmats[,,g,store, drop=FALSE], drop=3)
         l.temp   <- adrop(lmat[,,1, drop=FALSE], drop=3)
       } else {
         lmat     <- sims[[G.ind]][[Q.ind]]$load
         if(inf.Q) {
           lmat   <- as.array(lmat)
         }
-        lmat     <- lmat[,Qgs,store, drop=FALSE]
+        lmat     <- lmat[,,store, drop=FALSE]
         l.temp   <- adrop(lmat[,,1, drop=FALSE], drop=3)
       }
     }
   
   # Loadings matrix / identifiability / error metrics / etc.  
     if(all(sw["s.sw"], clust.ind)) {
-      etag       <- eta[z.ind[[g]],Qgs,, drop=FALSE]
+      etag       <- eta[z.ind[[g]],,, drop=FALSE]
     }
     if(sw["l.sw"])      {
       for(p in seq_len(n.store))   {
@@ -417,7 +415,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       }
     }
     if(all(sw["s.sw"], clust.ind)) {
-      eta[z.ind[[g]],Qgs,] <- etag
+      eta[z.ind[[g]],,]    <- etag
     }
   
   # Retrieve means, uniquenesses & empirical covariance matrix
@@ -465,6 +463,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       ci.psi     <- apply(psi, 1, function(x) quantile(x, conf.levels))
     }
     if(sw["l.sw"])   { 
+      lmat       <- lmat[,Qgs,, drop=FALSE]
       post.load  <- rowMeans(lmat, dims=2)
       var.load   <- apply(lmat, c(1, 2), var)
       ci.load    <- apply(lmat, c(1, 2), function(x) quantile(x, conf.levels))
@@ -541,7 +540,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     e.store[[g]] <- store
   }
   if(sw["s.sw"])   {
-    eta          <- eta[,,unique(unlist(e.store)), drop=FALSE]
+    eta          <- eta[,seq_len(max(Q)),unique(unlist(e.store)), drop=FALSE]
     scores       <- list(eta = eta, post.eta = rowMeans(eta, dims=2), var.eta = apply(eta, c(1, 2), var),
                          ci.eta  = apply(eta, c(1, 2), function(x) quantile(x, conf.levels)))
   }
@@ -561,7 +560,6 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       errors     <- setNames(unlist(errors), names(errors))
     }
   }
-  
   if(sw["mu.sw"])  {
     post.mu      <- do.call(cbind, lapply(result, "[[", "post.mu"))
     var.mu       <- do.call(cbind, lapply(result, "[[", "var.mu"))
