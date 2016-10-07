@@ -925,9 +925,9 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
     if(add) {
       if(!are.cols(col))              stop("Supplied 'col' is not a valid colour")
       if(dev.cur() == 1)              stop("No plot exists to add to")
-      lines(x=seq_len(N), y=res, type="l", col=col, ...)
+        lines(x=c(0, seq_len(N)), y=new("mpfr", c(mpfr(0, getPrec(res)[1]), res)), type="l", col=col, ...)
     } else  {
-      plot(x=seq_len(N),  y=res, type="l", col=col, ...)
+        plot(x=c(0,  seq_len(N)), y=new("mpfr", c(mpfr(0, getPrec(res)[1]), res)), type="l", col=col, ...)
     }
     if(avg) {
       exp.g    <- G.expected(N, alpha, discount)
