@@ -897,7 +897,8 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
   }
 
 # Prior No. Groups (DP & PY)
-  G.prior      <- function(N, alpha, discount = 0, add = FALSE, avg = FALSE, col = "black", ...) {
+  G.prior      <- function(N, alpha, discount = 0, plot = TRUE, 
+                           avg = FALSE, col = "black", ...) {
     if(length(setdiff("Rmpfr", rownames(installed.packages()))) > 0) {
                                       stop("'Rmpfr' package not installed")
     }
@@ -907,33 +908,57 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
       on.exit(detach.pkg(gmp), add=TRUE)  
     }
     on.exit(do.call("clip", as.list(par("usr"))), add=TRUE)
+    if(any(c(length(N), length(plot),
+             length(avg)) > 1))       stop("Arguments 'N', 'plot', 'add', and 'avg' must be strictly of length 1")
+    max.len    <- max(length(alpha),  length(discount))
+    if(!is.element(length(alpha),
+       c(1, max.len)))                stop("'alpha' must be of length 1 or length(discount)")
+    if(!is.element(length(discount),
+       c(1, max.len)))                stop("'discount' must be of length 1 or length(alpha)")
     if(!all(is.numeric(discount), is.numeric(alpha), 
             is.numeric(N)))           stop("All inputs must be numeric")
-    if(discount  < 0  ||
-       discount >= 1)                 stop("Invalid discount value")
-    if(alpha    < -discount)          stop("Invalid alpha value")
-    if(!is.logical(add))              stop("'add' must be TRUE or FALSE")
-    if(!is.logical(avg))              stop("'add' must be TRUE or FALSE")
-    tmp        <- if(discount == 0) alpha^seq_len(N)/pochMpfr(alpha, N) else {
-                  exp(unlist(vapply(seq_len(N), function(Gs=seq_len(i), x=0) { for(g in Gs) {
-                    x <- x + log(alpha + g * discount) }; x}, numeric(1))) - log(pochMpfr(alpha + 1, N - 1))) / discount^seq_len(N) }
-    if(discount == 0) {
-      res      <- abs(Stirling1.all(N) * tmp)
-    } else                            stop("Plotting with non-zero discount not yet implemented\nTry supplying the same arguments to G.expected() or G.variance()")
-    res        <- res/sum(res)
-    max.res    <- max(asNumeric(res))
-    if(add) {
-      if(!are.cols(col))              stop("Supplied 'col' is not a valid colour")
-      if(dev.cur() == 1)              stop("No plot exists to add to")
-        lines(x=c(0, seq_len(N)), y=new("mpfr", c(mpfr(0, getPrec(res)[1]), res)), type="l", col=col, ...)
-    } else  {
-        plot(x=c(0,  seq_len(N)), y=new("mpfr", c(mpfr(0, getPrec(res)[1]), res)), type="l", col=col, ...)
+    if(any(discount < 0 |
+       discount >= 1))                stop("'discount' must lie in the interval [0,1)")
+    if(any(alpha < -discount))        stop("'alpha' must be strictly greater than -discount")
+    if(missing(col))    {
+      col      <- c("#999999", "#E69F00", "#009E73", "#56B4E9", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+    }   
+    if(!all(are.cols(col)))           stop("Supplied 'col' is not a valid colour")
+    if(!is.logical(avg))              stop("'avg' must be TRUE or FALSE")
+    if(!is.logical(plot))             stop("'plot' must be TRUE or FALSE")
+    if(length(alpha)    != max.len) {
+      alpha    <- rep(alpha,    max.len)
     }
-    if(avg) {
+    if(length(discount) != max.len) {
+      discount <- rep(discount, max.len)
+    }
+    rx         <- matrix(0, nr=N + 1, nc=max.len)
+    for(i in seq_len(max.len))      {
+      tmp      <- if(discount[i] == 0) alpha[i]^seq_len(N)/pochMpfr(alpha[i], N) else {
+                  exp(unlist(vapply(seq_len(N), function(Gs=seq_len(k), x=0) { for(g in Gs) {
+                    x <- x + log(alpha[i] + g * discount[i]) }; x}, numeric(1))) - 
+                           log(pochMpfr(alpha[i] + 1, N - 1))) / discount[i]^seq_len(N) }
+      if(discount[i]  == 0) {
+        rx[,i] <- c(0, asNumeric(abs(Stirling1.all(N) * tmp)))
+      } else                          stop("Plotting with non-zero discount not yet implemented\nTry supplying the same arguments to G.expected() or G.variance()")
+    }
+    rx         <- scale(rx, center=FALSE, scale=colSums(rx))
+    max.rx     <- apply(rx, 2, max)
+    if(plot)   {
+      matplot(x=c(0, seq_len(N)), y=rx, type="l", col=col, lty=1, xlab="Groups", 
+              ylab="Density", main=paste0("Prior Distribution of G\nN=", N), ...)
+    }
+    if(avg)    {
       exp.g    <- G.expected(N, alpha, discount)
-      clip(exp.g, exp.g, 0, max.res)
-      abline(v=exp.g, lty=2, col=col)  
-        cat(paste0("E(G) = ", round(exp.g, options()$digits)))
+      cat("\t");  cat(paste("E(G) = ", round(exp.g, options()$digits), "\n"))  
+      if(plot) {
+        col    <- rep(col, max.len)
+        for(i in seq_len(max.len))  {
+          clip(exp.g[i], exp.g[i], 0, max.rx[i])
+          abline(v=exp.g[i],  lty=2, col=col[i])  
+        }
+      }
     }
+      invisible(rx)
   }
 #
