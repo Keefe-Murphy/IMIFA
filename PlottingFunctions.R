@@ -907,6 +907,12 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
       on.exit(detach.pkg(Rmpfr))
       on.exit(detach.pkg(gmp), add=TRUE)  
     }
+    if(missing(col))    {
+      col      <- c("#999999", "#E69F00", "#009E73", "#56B4E9", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+    }   
+    if(!all(are.cols(col)))           stop("Supplied colour palette contains invalid colours")
+    palette(col)
+    on.exit(palette("default"), add=TRUE)
     on.exit(do.call("clip", as.list(par("usr"))), add=TRUE)
     if(any(c(length(N), length(plot),
              length(avg)) > 1))       stop("Arguments 'N', 'plot', 'add', and 'avg' must be strictly of length 1")
@@ -920,10 +926,6 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
     if(any(discount < 0 |
        discount >= 1))                stop("'discount' must lie in the interval [0,1)")
     if(any(alpha < -discount))        stop("'alpha' must be strictly greater than -discount")
-    if(missing(col))    {
-      col      <- c("#999999", "#E69F00", "#009E73", "#56B4E9", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
-    }   
-    if(!all(are.cols(col)))           stop("Supplied 'col' is not a valid colour")
     if(!is.logical(avg))              stop("'avg' must be TRUE or FALSE")
     if(!is.logical(plot))             stop("'plot' must be TRUE or FALSE")
     if(length(alpha)    != max.len) {
@@ -952,10 +954,9 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
       exp.g    <- G.expected(N, alpha, discount)
       cat("\t");  cat(paste("E(G) = ", round(exp.g, options()$digits), "\n"))  
       if(plot) {
-        col    <- rep(col, max.len)
         for(i in seq_len(max.len))  {
           clip(exp.g[i], exp.g[i], 0, max.rx[i])
-          abline(v=exp.g[i],  lty=2, col=col[i])  
+          abline(v=exp.g[i], lty=2, col=i)  
         }
       }
     }
