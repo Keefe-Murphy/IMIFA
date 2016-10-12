@@ -933,9 +933,9 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
     rx         <- matrix(0, nr=N + 1, nc=max.len)
     for(i in seq_len(max.len))      {
       tmp      <- if(discount[i] == 0) alpha[i]^seq_len(N)/pochMpfr(alpha[i], N) else {
-                  exp(unlist(vapply(seq_len(N), function(Gs=seq_len(k), x=0) { for(g in Gs) {
+                  exp(unlist(vapply(seq_len(N), function(Gs=seq_len(k - 1), x=0) { for(g in Gs) {
                     x <- x + log(alpha[i] + g * discount[i]) }; x}, numeric(1))) - 
-                           log(pochMpfr(alpha[i] + 1, N - 1))) / discount[i]^seq_len(N) }
+                         log(pochMpfr(alpha[i] + 1, N - 1))) / discount[i]^seq_len(N) }
       if(discount[i]  == 0) {
         rx[,i] <- c(0, asNumeric(abs(Stirling1.all(N) * tmp)))
       } else                          stop("Plotting with non-zero discount not yet implemented\nTry supplying the same arguments to G.expected() or G.variance()")
@@ -948,7 +948,7 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
     }
     if(avg)    {
       exp.g    <- G.expected(N, alpha, discount)
-      cat("\t");  cat(paste("E(G) = ", round(exp.g, options()$digits), "\n"))  
+      cat("\t");  cat(paste("E(G) = ", signif(exp.g, options()$digits), "\n"))  
       if(plot) {
         for(i in seq_len(max.len))  {
           clip(exp.g[i], exp.g[i], 0, max.rx[i])
