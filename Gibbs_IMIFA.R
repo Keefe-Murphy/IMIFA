@@ -49,7 +49,6 @@
     Qs               <- rep(Q, trunc.G)
     Q.store          <- matrix(0, nr=trunc.G, nc=n.store)
     Q.large          <- Q.big <- Q.bigs <- FALSE
-    G.large          <- FALSE
     G.store          <- rep(0, n.store)
     dimnames(z.store)         <- list(obsnames, iternames)
     dimnames(Q.store)         <- list(gnames, iternames)
@@ -99,6 +98,12 @@
     tau              <- tau[index]
     lmat             <- lmat[index]
     psi.inv          <- psi.inv[,index, drop=FALSE]
+    nn               <- nn[index]
+    nn0              <- nn > 0
+    nn.ind           <- which(nn0)
+    G.non            <- sum(nn0)
+    z                <- factor(z, labels=match(nn.ind, index))
+    z                <- as.numeric(levels(z))[z]
     ksi              <- (1 - rho) * rho^(Ts - 1)
     log.ksi          <- log(ksi)
     slice.logs       <- c(- Inf, 0)
@@ -112,7 +117,7 @@
       ll.store[1]             <- sum(sim.z(data=data, mu=mu[,Gs], Gseq=Gs, N=N, pi.prop=pi.store[Gs,1], sigma=lapply(Gs,
                                      function(g) tcrossprod(lmat[[g]]) + diag(1/psi.inv[,g])), Q0=Qs > 0)$log.likes)
       Q.store[,1]             <- Qs
-      G.store[1]              <- sum(nn > 0)
+      G.store[1]              <- G.non
       if(not.fixed) {
         alpha.store[1]        <- pi.alpha 
       }
@@ -131,28 +136,25 @@
       pi.prop        <- weights$pi.prop
       Vs             <- weights$Vs
       
-    # Slice Sampler
+    # Re-ordering & Slice Sampler
+      index          <- order(pi.prop, decreasing=TRUE)
+      pi.prop        <- pi.prop[index]
+      Vs             <- Vs[index]
+      mu             <- mu[,index, drop=FALSE]
+      phi            <- phi[index]
+      delta          <- delta[index]
+      tau            <- tau[index]
+      lmat           <- lmat[index]
+      Qs             <- Qs[index]
+      psi.inv        <- psi.inv[,index, drop=FALSE]
+      z              <- factor(z, labels=match(nn.ind, index))
+      z              <- as.numeric(levels(z))[z]
       if(!ind.slice) {
-        index        <- order(pi.prop, decreasing=TRUE)
-        pi.prop      <- ksi   <- pi.prop[index]
-        mu           <- mu[,index, drop=FALSE]
-        phi          <- phi[index]
-        delta        <- delta[index]
-        tau          <- tau[index]
-        lmat         <- lmat[index]
-        Qs           <- Qs[index]
-        psi.inv      <- psi.inv[,index, drop=FALSE]
+        ksi          <- pi.prop
         log.ksi      <- log(ksi)
-      }
-      u.slice        <- runif(N, 0, ksi[z])
-      G              <- max(1, vapply(Ns, function(i) sum(u.slice[i] < ksi), numeric(1)))
-      if(G > trunc.G) {
-        G            <- trunc.G
-        if(!G.large)  {          warning(paste0("G has exceeded maximum allowable number of groups: consider increasing trunc.G from ", trunc.G), call.=FALSE)
-          G.large    <- TRUE
-        }
       }  
-      Gs             <- seq_len(G)
+      u.slice        <- runif(N, 0, ksi[z])
+      Gs             <- seq_len(max(1, vapply(Ns, function(i) sum(u.slice[i] < ksi), numeric(1))))
       log.slice.ind  <- vapply(Gs, function(g) slice.logs[1 + (u.slice < ksi[g])] - log.ksi[g], numeric(N))
     
     # Cluster Labels
@@ -300,6 +302,8 @@
           sw2        <- move2$sw
           sw2x       <- c(sw2[2], sw2[1])
           nn[sw2]    <- nn[sw2x]
+          nn0[sw2]   <- nn0[sw2x]
+          nn.ind     <- which(nn0)
           mu[,sw2]   <- mu[,sw2x, drop=FALSE]
           phi[sw2]   <- phi[sw2x]
           tau[sw2]   <- tau[sw2x]
@@ -357,7 +361,6 @@
                              G.store  = G.store,
                              Q.store  = Q.store[Gmax,, drop=FALSE],
                              time     = init.time)
-    attr(returns, "G.big")    <- G.large
     attr(returns, "Q.big")    <- Q.large
     return(returns)
   }
