@@ -82,23 +82,19 @@
 
 # Save / Load Simulations
   save(sim, file=paste0(getwd(), "/Simulations/", attr(sim, "Name"), 
-                        "__Simulations_", attr(sim, "Method"), 
-                        ".Rdata", sep=""))
+                        "__Simulations_", attr(sim, "Method"), ".Rdata"))
   load(file=paste0(getwd(), "/Simulations/", "wine", 
-                   "__Simulations_", "IMIFA", 
-                   ".Rdata", sep=""), envir=.GlobalEnv)
-
+                   "__Simulations_", "IMIFA", ".Rdata"), envir=.GlobalEnv)
+                        
 # Posterior Summaries (optional: additional 'burnin' & 'thinning', user-defined G/Q, model selection criterion)
   res        <- tune.IMIFA(sim, zlabels=lab)
   summary(res)
 
 # Save / Load Results
   save(res, file=paste0(getwd(), "/Simulations/", attr(res, "Name"), 
-                        "__Results_", attr(res, "Method"), 
-                        ".Rdata", sep=""))
+                        "__Simulations_", attr(res, "Method"), ".Rdata"))
   load(file=paste0(getwd(), "/Simulations/", "wine", 
-                   "__Results_", "IMIFA", 
-                   ".Rdata", sep=""), envir=.GlobalEnv)
+                   "__Simulations_", "IMIFA", ".Rdata"), envir=.GlobalEnv)
 
 # Model Selection Parameters
   plot(res, "GQ") 
