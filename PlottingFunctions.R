@@ -909,7 +909,7 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
     on.exit(palette("default"), add=TRUE)
     on.exit(do.call("clip", as.list(par("usr"))), add=TRUE)
     if(any(c(length(N), length(plot),
-             length(avg)) > 1))       stop("Arguments 'N', 'plot', 'add', and 'avg' must be strictly of length 1")
+             length(avg)) > 1))       stop("Arguments 'N', 'plot', and 'avg' must be strictly of length 1")
     max.len    <- max(length(alpha),  length(discount))
     if(!is.element(length(alpha),
        c(1, max.len)))                stop("'alpha' must be of length 1 or length(discount)")

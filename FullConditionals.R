@@ -230,34 +230,32 @@
   # Moments of Dirichlet / Pitman-Yor Processes
     G.expected  <- Vectorize(function(N, alpha, discount = 0) {
       if(!all(is.numeric(N), is.numeric(discount), 
-         is.numeric(alpha)))  stop("All inputs must be numeric")
-      if(discount  < 0  ||
-         discount >= 1)       stop("Invalid discount value")
-      if(alpha   < -discount) stop("Invalid alpha value")
+         is.numeric(alpha)))               stop("All inputs must be numeric")
+      if(discount  < 0  || discount >= 1)  stop("Invalid discount value")
+      if(alpha   < - discount)             stop("Invalid alpha value")
       if(discount == 0) {
           alpha * (digamma(alpha + N) - digamma(alpha))
       } else {
         if(suppressMessages(require(Rmpfr))) {
           on.exit(detach.pkg(Rmpfr))
           on.exit(detach.pkg(gmp), add=TRUE)  
-        } else                stop("'Rmpfr' package not installed")
+        } else                             stop("'Rmpfr' package not installed")
           asNumeric(alpha/discount * pochMpfr(alpha + discount, N)/pochMpfr(alpha, N) - alpha/discount)
       }
     })
 
     G.variance  <- Vectorize(function(N, alpha, discount = 0) {
       if(!all(is.numeric(N), is.numeric(discount), 
-         is.numeric(alpha)))  stop("All inputs must be numeric")
-      if(discount  < 0  ||
-         discount >= 1)       stop("Invalid discount value")
-      if(alpha   < -discount) stop("Invalid alpha value")
+         is.numeric(alpha)))               stop("All inputs must be numeric")
+      if(discount  < 0  || discount >= 1)  stop("Invalid discount value")
+      if(alpha   < - discount)             stop("Invalid alpha value")
       if(discount == 0) {
           alpha * (digamma(alpha + N) - digamma(alpha)) + (alpha^2) * (trigamma(alpha + N) - trigamma(alpha))
       } else {
         if(suppressMessages(require(Rmpfr))) {
           on.exit(detach.pkg(Rmpfr))
           on.exit(detach.pkg(gmp), add=TRUE)  
-        } else                stop("'Rmpfr' package not installed")
+        } else                             stop("'Rmpfr' package not installed")
         sum.ad  <- alpha + discount
         poch.a  <- pochMpfr(alpha, N)
         poch.ad <- pochMpfr(sum.ad, N)
