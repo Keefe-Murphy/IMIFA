@@ -204,6 +204,7 @@
   # Length Checker
     len.check   <- function(obj0g, switch0g, method, P, range.G, P.dim = TRUE) {
       V         <- ifelse(P.dim, P, 1)
+      rGseq     <- seq_along(range.G)
       obj.name  <- deparse(substitute(obj0g))
       sw.name   <- deparse(substitute(switch0g))
       if(!is.list(obj0g))        obj0g  <- list(obj0g)
@@ -213,12 +214,11 @@
         if(any(!is.element(len, c(1, V)))) stop(paste0(obj.name, " must be list of length 1 containing a scalar", ifelse(P.dim, paste0(" or a vector of length P=", V), ""), " for a 1-group model"))
       } else {
         if(all(is.element(len, c(1, range.G, V)))) {
-          if(all(len == 1))       obj0g <- lapply(seq_along(range.G), function(g) matrix(obj0g[[g]], nr=1, nc=range.G[g]))
-          if(all(len == range.G)) obj0g <- if(switch0g) lapply(seq_along(range.G), function(g) matrix(obj0g[[g]], nr=1)) else stop(paste0(sw.name, " must be TRUE if the dimension of ", obj.name, " depends on G"))
-          if(all(len == V))       obj0g <- lapply(seq_along(range.G), function(g) matrix(obj0g[[g]], nr=V, nc=range.G[g]))
-        } else if(!all(vapply(seq_along(range.G), function(g) is.matrix(obj0g[[g]]) && any(identical(dim(obj0g[[g]]), c(1, range.G[g])), identical(dim(obj0g[[g]]), c(V, range.G[g]))), logical(1)))) {
+          if(all(len == range.G)) obj0g <- if(switch0g) lapply(rGseq, function(g) matrix(obj0g[[g]], nr=1))    else stop(paste0(sw.name, " must be TRUE if the dimension of ", obj.name, " depends on G"))
+          if(all(len == V))       obj0g <- if(V == 1)   lapply(rGseq, function(g) rep(obj0g[[g]], range.G[g])) else lapply(rGseq, function(g) matrix(obj0g[[g]], nr=V, nc=range.G[g]))
+        } else if(!all(vapply(rGseq, function(g) is.matrix(obj0g[[g]]) && any(identical(dim(obj0g[[g]]), c(1, range.G[g])), identical(dim(obj0g[[g]]), c(V, range.G[g]))), logical(1)))) {
                                            stop(paste0(ifelse(length(range.G) > 1, "Each element of ", ""), obj.name, " must be either of length 1, ", ifelse(P.dim, paste0("P=", V, ", or it's corresponding range.G, or a matrix with P rows and it's corresponding range.G columns"), paste0("or G=", range.G)))) 
-        } else if(all(vapply(obj0g, is.matrix, logical(1)), !switch0g) && any(vapply(seq_along(range.G), function(g) any(dim(obj0g[[g]]) == range.G[g]), logical(1)))) {
+        } else if(all(vapply(obj0g, is.matrix, logical(1)), !switch0g) && any(vapply(rGseq, function(g) any(dim(obj0g[[g]]) == range.G[g]), logical(1)))) {
                                            stop(paste0(sw.name, " must be TRUE if the dimension of ", obj.name, " depends on G"))
         }
       }
