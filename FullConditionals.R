@@ -43,8 +43,8 @@
         rgamma(1, shape=alpha.d1 + P * Q/2, rate=beta.d1 + 0.5/delta.1 * tau %*% sum.term)
     }
     
-    sim.deltak  <- function(Q, P, k, alpha.dk, beta.dk, delta.k, tau.kq, sum.term.kq) {
-        rgamma(1, shape=alpha.dk + P/2 * (Q - k + 1), rate=beta.dk + 0.5/delta.k * tau.kq %*% sum.term.kq)
+    sim.deltak  <- function(Q, P, k, alpha.d2, beta.d2, delta.k, tau.kq, sum.term.kq) {
+        rgamma(1, shape=alpha.d2 + P/2 * (Q - k + 1), rate=beta.d2 + 0.5/delta.k * tau.kq %*% sum.term.kq)
     }
 
   # Mixing Proportions

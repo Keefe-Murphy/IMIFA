@@ -6,8 +6,8 @@
   gibbs.IFA      <- function(Q, data, iters, N, P, sigma.mu, 
                              psi.alpha, psi.beta, burnin, mu,
                              thinning, verbose, sw, mu.zero,
-                             phi.nu, alpha.d1, alpha.dk, 
-                             beta.d1, beta.dk, b0, b1, adapt,
+                             phi.nu, alpha.d1, alpha.d2, 
+                             beta.d1, beta.d2, b0, b1, adapt,
                              adapt.at, prop, epsilon, ...) {    
     
   # Define & initialise variables
@@ -52,7 +52,7 @@
     eta          <- sim.eta.p(Q=Q, N=N)
     psi.inv      <- sim.psi.i.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
     phi          <- sim.phi.p(Q=Q, P=P, phi.nu=phi.nu)
-    delta        <- c(sim.delta.p(alpha=alpha.d1, beta=beta.d1), sim.delta.p(Q=Q, alpha=alpha.dk, beta=beta.dk))
+    delta        <- c(sim.delta.p(alpha=alpha.d1, beta=beta.d1), sim.delta.p(Q=Q, alpha=alpha.d2, beta=beta.d2))
     tau          <- cumprod(delta)
     lmat         <- matrix(unlist(lapply(Pseq, function(j) sim.load.p(Q=Q, phi=phi[j,], tau=tau, P=P)), use.names=FALSE), nr=P, byrow=TRUE)
     sum.data     <- mu * N
@@ -95,7 +95,7 @@
     # Global Shrinkage
       sum.term   <- diag(crossprod(phi, load.2))
       for(k in seq_len(Q)) { 
-        delta[k] <- if(k < 1) sim.deltak(alpha.dk=alpha.dk, beta.dk=beta.dk, delta.k=delta[k], Q=Q, P=P, 
+        delta[k] <- if(k < 1) sim.deltak(alpha.d2=alpha.d2, beta.d2=beta.d2, delta.k=delta[k], Q=Q, P=P, 
                     k=k, tau.kq=tau[k:Q], sum.term.kq=sum.term[k:Q]) else sim.delta1(alpha.d1=alpha.d1, 
                     beta.d1=beta.d1, delta.1=delta[1], Q=Q, P=P, tau=tau, sum.term=sum.term)
         tau      <- cumprod(delta)      
@@ -114,7 +114,7 @@
             } else {
               eta   <- cbind(eta, rnorm(N))         
               phi   <- cbind(phi, rgamma(n=P, shape=phi.nu, rate=phi.nu))
-              delta <- c(delta, rgamma(n=1, shape=alpha.dk, rate=beta.dk))
+              delta <- c(delta, rgamma(n=1, shape=alpha.d2, rate=beta.d2))
               tau   <- cumprod(delta)
               lmat  <- cbind(lmat, rnorm(n=P, mean=0, sd=sqrt(1/(phi[,Q] * tau[Q]))))  
             }

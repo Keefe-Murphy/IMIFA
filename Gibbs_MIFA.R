@@ -7,7 +7,7 @@
                                sigma.mu, burnin, thinning, mu,
                                psi.alpha, psi.beta, verbose, adapt,
                                sw, cluster, phi.nu, b0, b1, prop,
-                               beta.d1, beta.dk, adapt.at, epsilon, ...) {
+                               beta.d1, beta.d2, adapt.at, epsilon, ...) {
         
   # Define & initialise variables
     start.time     <- proc.time()
@@ -63,9 +63,9 @@
     pi.alpha       <- cluster$pi.alpha
     pi.prop        <- cluster$pi.prop
     alpha.d1       <- cluster$alpha.d1
-    alpha.dk       <- cluster$alpha.dk
+    alpha.d2       <- cluster$alpha.d2
     ad1.x          <- length(unique(alpha.d1)) == 1
-    adk.x          <- length(unique(alpha.dk)) == 1
+    adk.x          <- length(unique(alpha.d2)) == 1
     mu0g           <- cluster$l.switch[1]
     psi0g          <- cluster$l.switch[2]
     delta0g        <- cluster$l.switch[3]
@@ -73,7 +73,7 @@
     label.switch   <- any(cluster$l.switch)
     eta            <- sim.eta.p(N=N, Q=Q)
     phi            <- lapply(Gseq, function(g) sim.phi.p(Q=Q, P=P, phi.nu=phi.nu))
-    delta          <- lapply(Gseq, function(g) c(sim.delta.p(alpha=alpha.d1[g], beta=beta.d1), sim.delta.p(Q=Q, alpha=alpha.dk[g], beta=beta.dk)))
+    delta          <- lapply(Gseq, function(g) c(sim.delta.p(alpha=alpha.d1[g], beta=beta.d1), sim.delta.p(Q=Q, alpha=alpha.d2[g], beta=beta.d2)))
     tau            <- lapply(delta, cumprod)
     lmat           <- lapply(Gseq, function(g) matrix(unlist(lapply(Pseq, function(j) sim.load.p(Q=Q, phi=phi[[g]][j,], tau=tau[[g]], P=P)), use.names=FALSE), nr=P, byrow=TRUE))
     psi.inv        <- vapply(Gseq, function(g) sim.psi.i.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta[,g]), numeric(P))
@@ -163,7 +163,7 @@
       for(g in Gseq)  {
         Qg         <- Qs[g]
         for(k in seq_len(Qg)) { 
-          delta[[g]][k]     <- if(k > 1) sim.deltak(alpha.dk=alpha.dk[g], beta.dk=beta.dk, delta.k=delta[[g]][k], Q=Qg, P=P, 
+          delta[[g]][k]     <- if(k > 1) sim.deltak(alpha.d2=alpha.d2[g], beta.d2=beta.d2, delta.k=delta[[g]][k], Q=Qg, P=P, 
                                k=k, tau.kq=tau[[g]][k:Qg], sum.term.kq=sum.terms[[g]][k:Qg]) else sim.delta1(alpha.d1=alpha.d1[g],
                                beta.d1=beta.d1, delta.1=delta[[g]][1], Q=Qg, P=P, tau=tau[[g]], sum.term=sum.terms[[g]])
           tau[[g]]          <- cumprod(delta[[g]])
@@ -186,7 +186,7 @@
             Qs[Q.big]       <- Q.star
           }
           phi      <- lapply(Gseq, function(g)   if(notred[g]) cbind(phi[[g]][,seq_len(Qs.old[g])], rgamma(n=P, shape=phi.nu, rate=phi.nu)) else phi[[g]][,nonred[[g]], drop=FALSE])
-          delta    <- lapply(Gseq, function(g)   if(notred[g]) c(delta[[g]][seq_len(Qs.old[g])], rgamma(n=1, shape=alpha.dk[g], rate=beta.dk)) else delta[[g]][nonred[[g]]])  
+          delta    <- lapply(Gseq, function(g)   if(notred[g]) c(delta[[g]][seq_len(Qs.old[g])], rgamma(n=1, shape=alpha.d2[g], rate=beta.d2)) else delta[[g]][nonred[[g]]])  
           tau      <- lapply(delta, cumprod)
           lmat     <- lapply(Gseq, function(g)   if(notred[g]) cbind(lmat[[g]][,seq_len(Qs.old[g])], rnorm(n=P, mean=0, sd=sqrt(1/(phi[[g]][,Qs[g]] * tau[[g]][Qs[g]])))) else lmat[[g]][,nonred[[g]], drop=FALSE])
           eta      <- if(all(max(Qs) > max(Qs.old), !Q.bigs)) cbind(eta[,seq_len(max(Qs.old))], rnorm(N)) else eta[,seq_len(max(Qs)), drop=FALSE]
@@ -222,7 +222,7 @@
          }
          if(all(delta0g, 
                 !adk.x)) {
-          alpha.dk <- alpha.dk[z.perm]
+          alpha.d2 <- alpha.d2[z.perm]
          } 
         }
       }

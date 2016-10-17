@@ -7,7 +7,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
                         burnin = n.iters/5, thinning = 2, centering = TRUE, scaling = c("unit", "pareto", "none"), alpha.step = c("gibbs", "metropolis", "fixed"), learn.d = FALSE,
                         adapt = TRUE, b0 = NULL, b1 = NULL, delta0g = FALSE, prop = NULL, epsilon = NULL, sigma.mu = NULL, sigma.l = NULL, alpha.hyper = NULL, d.hyper = NULL,
                         mu0g = FALSE, psi0g = FALSE, mu.zero = NULL, phi.nu = NULL, psi.alpha = NULL, psi.beta = NULL, alpha.d1 = NULL, rho = NULL, trunc.G = NULL, 
-                        alpha.dk = NULL, beta.d1 = NULL, beta.dk = NULL, alpha = NULL, z.list = NULL, profile = FALSE, mu.switch = TRUE, ind.slice = TRUE, adapt.at = NULL,
+                        alpha.d2 = NULL, beta.d1 = NULL, beta.d2 = NULL, alpha = NULL, z.list = NULL, profile = FALSE, mu.switch = TRUE, ind.slice = TRUE, adapt.at = NULL,
                         score.switch = TRUE, load.switch = TRUE, psi.switch = TRUE, pi.switch = TRUE, z.init = c("kmeans", "list", "mclust", "priors")) {
   
   defpar    <- suppressWarnings(par(no.readonly=TRUE))
@@ -189,9 +189,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(missing("phi.nu"))    phi.nu        <- 1.5
     if(phi.nu  <= 0)                stop("'phi.nu' must be strictly positive")
     if(missing("beta.d1"))   beta.d1       <- 1
-    if(beta.d1 <= 0)                stop("'beta.d1' must be strictly positive")
-    if(missing("beta.dk"))   beta.dk       <- 1
-    if(beta.dk <= 0)                stop("'beta.dk' must be strictly positive")
+    if(missing("beta.d2"))   beta.d2       <- 1
     if(missing("b0"))        b0            <- 0.1
     if(b0  < 0)                     stop("'b0' must be positive to ensure valid adaptation probability")
     if(missing("b1"))        b1            <- 0.00005
@@ -299,7 +297,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
                                              DP.lab.sw = DP.lab.sw, a.hyper = alpha.hyper, discount = discount, d.hyper = d.hyper))
   }
   if(!is.element(method, c("FA", "MFA", "OMFA", "IMFA"))) {
-    gibbs.arg      <- append(gibbs.arg, list(phi.nu = phi.nu, beta.d1 = beta.d1, beta.dk = beta.dk, adapt = adapt,
+    gibbs.arg      <- append(gibbs.arg, list(phi.nu = phi.nu, beta.d1 = beta.d1, beta.d2 = beta.d2, adapt = adapt,
                                              adapt.at = adapt.at, b0 = b0, b1 = b1, prop = prop, epsilon = epsilon))
     temp.args      <- gibbs.arg
   } else {
@@ -311,7 +309,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   beta.x           <- missing("psi.beta")
   mu0.x            <- missing("mu.zero")
   ad1.x            <- all(missing("alpha.d1"), is.element(method, c("IFA", "MIFA", "OMIFA", "IMIFA", "classify")))
-  adk.x            <- all(missing("alpha.dk"), is.element(method, c("IFA", "MIFA", "OMIFA", "IMIFA", "classify")))
+  adk.x            <- all(missing("alpha.d2"), is.element(method, c("IFA", "MIFA", "OMIFA", "IMIFA", "classify")))
   if(all(z.init != "list", any(sw0gs))) {
     if(delta0g)                     stop("'delta0g' can only be TRUE if z.init=list\n")
     if(all(!mu0.x, mu0g))           stop("'mu.zero' can only be supplied for each group if z.init=list")
@@ -325,7 +323,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   mu.zero          <- if(mu0.x) mu else len.check(mu.zero, mu0g, method, P, range.G)
   if(!is.element(method, c("FA", "MFA", "OMFA", "IMFA"))) {
     alpha.d1       <- if(ad1.x) list(5)  else len.check(alpha.d1, delta0g, method, P, range.G, P.dim=FALSE)
-    alpha.dk       <- if(adk.x) list(10) else len.check(alpha.dk, delta0g, method, P, range.G, P.dim=FALSE)
+    alpha.d2       <- if(adk.x) list(10) else len.check(alpha.d2, delta0g, method, P, range.G, P.dim=FALSE)
   }
   if(!is.element(method, c("FA", "IFA", "classify"))) {
     if(verbose)                     cat(paste0("Initialising...\n"))
@@ -381,7 +379,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
         alpha.d1[[g]]   <- rep(unlist(alpha.d1), G)
       }
       if(adk.x)   {
-        alpha.dk[[g]]   <- rep(unlist(alpha.dk), G)
+        alpha.d2[[g]]   <- rep(unlist(alpha.d2), G)
       }
       clust[[g]]   <- list(z = zi[[g]], pi.alpha = alpha, pi.prop = pi.prop[[g]])
       if(is.element(method, c("MFA", "MIFA"))) {
@@ -393,7 +391,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
         clust[[g]] <- append(clust[[g]], list(l.switch = sw0g.tmp))
       }
       if(method == "MIFA") {
-        clust[[g]] <- append(clust[[g]], list(alpha.d1 = alpha.d1[[g]], alpha.dk = alpha.dk[[g]]))
+        clust[[g]] <- append(clust[[g]], list(alpha.d1 = alpha.d1[[g]], alpha.d2 = alpha.d2[[g]]))
       }
     }
   }
@@ -402,7 +400,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     psi.beta       <- list(psi.beta[[1]][,1])
     if(!is.element(method, c("OMFA", "IMFA"))) {
       alpha.d1     <- list(alpha.d1[[1]][1])
-      alpha.dk     <- list(alpha.dk[[1]][1])
+      alpha.d2     <- list(alpha.d2[[1]][1])
     }
   } 
   if(all(round(vapply(mu.zero, sum, numeric(1))) == 0)) {
@@ -413,9 +411,9 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   }
   if(any(unlist(psi.beta)   <= 0))  stop("'psi.beta' must be strictly positive")
   if(is.element(method, c("IFA", "MIFA", "IMIFA", "OMIFA"))) {
-    if(!all(MGP.check(unlist(alpha.d1), unlist(alpha.dk), unique(range.Q),
-            beta.d1, beta.dk)))     stop("Invalid shrinkage hyperparameter values will not encourage loadings column removal.\n Try using the MGP.check() function in advance.")
-    deltas         <- lapply(seq_along(range.G), function(g) list(alpha.d1 = alpha.d1[[g]], alpha.dk = alpha.dk[[g]]))
+    if(!all(MGP.check(unlist(alpha.d1), unlist(alpha.d2), unique(range.Q),
+            beta.d1, beta.d2)))     stop("Invalid shrinkage hyperparameter values will not encourage loadings column removal.\n Try using the MGP.check() function in advance.")
+    deltas         <- lapply(seq_along(range.G), function(g) list(alpha.d1 = alpha.d1[[g]], alpha.d2 = alpha.d2[[g]]))
   }
   init.time        <- proc.time() - init.start
   fac.time         <- 0
