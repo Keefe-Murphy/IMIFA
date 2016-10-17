@@ -251,8 +251,8 @@
           Qmaxold    <- max(Qs.old)
           eta        <- if(all(Fmax > Qmaxold, !Q.bigs)) cbind(eta[,seq_len(Qmaxold)], rnorm(N)) else eta[,seq_len(Fmax), drop=FALSE]
           if(Qmax     < max(Qemp, 0)) {
-            Qs[Qmax   < Qs]   <- Qmax
-            for(t in Ts[!nn0][Qemp > Qmax]) {  
+            Qs[Qmax   < Qs & !nn0] <- Qmax
+            for(t in Ts[!nn0][Qemp  > Qmax]) {  
               phi[[t]]        <- phi[[t]][,Qmaxseq,  drop=FALSE]
               delta[[t]]      <- delta[[t]][Qmaxseq]
               tau[[t]]        <- tau[[t]][Qmaxseq]

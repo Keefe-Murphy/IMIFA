@@ -186,9 +186,9 @@
           Qmax       <- max(Qs[nn0][!Q.big])
           Qmaxseq    <- seq_len(Qmax)
           Qmaxold    <- max(Qs.old)
-          eta        <- if(all(Fmax > Qmaxold, !Q.bigs)) cbind(eta[,seq_len(Qmaxold)], rnorm(N)) else eta[,seq_len(Fmax), drop=FALSE]
+          eta        <- if(all(Fmax  > Qmaxold, !Q.bigs)) cbind(eta[,seq_len(Qmaxold)], rnorm(N)) else eta[,seq_len(Fmax), drop=FALSE]
           if(Qmax     < max(Qemp, 0)) {
-            Qs[Qmax   < Qs]   <- Qmax
+            Qs[Qmax   < Qs & !nn0]  <- Qmax
             for(g in Gseq[!nn0][Qemp > Qmax]) {  
               phi[[g]]        <- phi[[g]][,Qmaxseq,  drop=FALSE]
               delta[[g]]      <- delta[[g]][Qmaxseq]
