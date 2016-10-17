@@ -413,9 +413,8 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   }
   if(any(unlist(psi.beta)   <= 0))  stop("'psi.beta' must be strictly positive")
   if(is.element(method, c("IFA", "MIFA", "IMIFA", "OMIFA"))) {
-    if(any(unlist(alpha.d1) <= 0))  stop("'alpha.d1' must be strictly positive")
-    if(any((unlist(alpha.dk) 
-                   <= beta.dk)))    stop(paste0(ifelse(delta0g, "all 'alpha.dk' values", "alpha.dk"), " must be greater than 'beta.dk'=", beta.dk))
+    if(!all(MGP.check(unlist(alpha.d1), unlist(alpha.dk), unique(range.Q),
+            beta.d1, beta.dk)))     stop("Invalid shrinkage hyperparameter values will not encourage loadings column removal.\n Try using the MGP.check() function in advance.")
     deltas         <- lapply(seq_along(range.G), function(g) list(alpha.d1 = alpha.d1[[g]], alpha.dk = alpha.dk[[g]]))
   }
   init.time        <- proc.time() - init.start
