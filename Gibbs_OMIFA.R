@@ -183,7 +183,7 @@
           lmat[nn0]  <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) cbind(lmat[[g]][,seq_len(Qs.old[h])], rnorm(n=P, mean=0, sd=sqrt(1/(phi[[g]][,Qs[g]] * tau[[g]][Qs[g]])))) else lmat[[g]][,nonred[[h]], drop=FALSE])
           Qemp       <- Qs[!nn0]
           Fmax       <- max(Qs[nn0])
-          Qmax       <- max(Qs[nn0][!Q.big])
+          Qmax       <- ifelse(all(Q.big), Fmax, max(Qs[nn0][!Q.big]))
           Qmaxseq    <- seq_len(Qmax)
           Qmaxold    <- max(Qs.old)
           eta        <- if(all(Fmax  > Qmaxold, !Q.bigs)) cbind(eta[,seq_len(Qmaxold)], rnorm(N)) else eta[,seq_len(Fmax), drop=FALSE]
