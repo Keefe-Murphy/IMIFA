@@ -150,19 +150,19 @@
     }
     
   # Check Shrinkage Hyperparemeters
-    MGP.check   <- Vectorize(function(ad1, adk, Q, bd1 = 1, bdk = 1, inverse = TRUE) {
+    MGP.check   <- Vectorize(function(ad1, ad2, Q, bd1 = 1, bd2 = 1, inverse = TRUE) {
       args      <- as.list(match.call())
-      if(any(c(ad1, adk, bd1, bdk) <= 0))  stop("All shrinkage hyperparameter values must be strictly positive")
-      if(any(ad1 < bd1, adk < bdk))        stop("Shrinkage alpha parameters must be greater than associated shrinkage beta parameters")
-      if(adk/bdk <= ad1/bd1)               stop("Shrinkage in column k must be strictly greater than shrinkage in column 1")
+      if(any(c(ad1, ad2, bd1, bd2) <= 0))  stop("All shrinkage hyperparameter values must be strictly positive")
+      if(any(ad1 < bd1, ad2 < bd2))        stop("Shrinkage alpha parameters must be greater than associated shrinkage beta parameters")
+      if(ad2/bd2 <= ad1/bd1)               stop("Shrinkage in column k must be strictly greater than shrinkage in column 1")
       if(inverse) {
         ad1     <- ifelse(ad1 == 1, ad1 + .Machine$double.eps, ad1)
-        adk     <- ifelse(adk == 1, adk + .Machine$double.eps, adk)
-          is.unsorted(bd1/(ad1 - 1) * (bdk/(adk - 1))^(seq_len(Q) - 1))
+        ad2     <- ifelse(ad2 == 1, ad2 + .Machine$double.eps, ad2)
+          is.unsorted(bd1/(ad1 - 1) * (bd2/(ad2 - 1))^(seq_len(Q) - 1))
       } else {
-          !is.unsorted(ad1/bd1 * (adk/bdk)^(seq_len(Q) - 1))
+          !is.unsorted(ad1/bd1 * (ad2/bd2)^(seq_len(Q) - 1))
       }
-    }, vectorize.args = c("ad1", "adk", "bd1", "bdk"))
+    }, vectorize.args = c("ad1", "ad2", "bd1", "bd2"))
 
   # Label Switching
     lab.switch  <- function(z.new, z.old, Gs, ng = tabulate(z.new)) {
