@@ -149,7 +149,7 @@
         log.ksi     <- log(ksi)
       }
       u.slice       <- runif(N, 0, ksi[z])
-      G             <- vapply(Ns, function(i) sum(u.slice[i] < ksi), numeric(1))
+      G             <- max(vapply(Ns, function(i) sum(u.slice[i] < ksi), numeric(1)))
       Gs            <- seq_len(G)
       log.slice.ind <- vapply(Gs, function(g) slice.logs[1 + (u.slice < ksi[g])] - log.ksi[g], numeric(N))
     
