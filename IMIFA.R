@@ -92,9 +92,9 @@
 
 # Save / Load Results
   save(res, file=paste0(getwd(), "/Simulations/", attr(res, "Name"), 
-                        "__Simulations_", attr(res, "Method"), ".Rdata"))
+                        "__Results_", attr(res, "Method"), ".Rdata"))
   load(file=paste0(getwd(), "/Simulations/", "wine", 
-                   "__Simulations_", "IMIFA", ".Rdata"), envir=.GlobalEnv)
+                   "__Results_", "IMIFA", ".Rdata"), envir=.GlobalEnv)
 
 # Model Selection Parameters
   plot(res, "GQ") 
