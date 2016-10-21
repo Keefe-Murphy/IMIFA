@@ -7,8 +7,8 @@
  #rm(list=ls(all=TRUE))
  #while("IMIFA.env" %in% search()) detach("IMIFA.env")
   if(getwd() != "/home/kmurphy")  {
-    wd       <- try(setwd("C:/Users/Windows/Google Drive/Claire IMIFA"), silent=TRUE)
-    if(inherits(wd, "try-error")) setwd("D:/Google Drive/Claire IMIFA"); rm(wd)
+    wd       <- try(setwd("C:/Users/Windows/Dropbox/UCD/Claire IMIFA"), silent=TRUE)
+    if(inherits(wd, "try-error")) setwd("D:/Dropbox/UCD/Claire IMIFA"); rm(wd)
   }
   source(paste0(getwd(), "/IMIFA-GIT/PackageSetup.R"))
     
