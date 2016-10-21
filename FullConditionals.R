@@ -152,9 +152,11 @@
   # Check Shrinkage Hyperparemeters
     MGP.check   <- Vectorize(function(ad1, ad2, Q, bd1 = 1, bd2 = 1, inverse = TRUE) {
       args      <- as.list(match.call())
-      if(any(c(ad1, ad2, bd1, bd2) <= 0))  stop("All shrinkage hyperparameter values must be strictly positive")
-      if(any(ad1 < bd1, ad2 < bd2))        stop("Shrinkage alpha parameters must be greater than associated shrinkage beta parameters")
+      if(any(c(ad1, ad2)  < 1))            stop("All shrinkage shape hyperparameter values must be at least 1")
+      if(any(c(bd1, bd2) <= 0))            stop("All shrinkage rate hyperparameter values must be strictly positive")
+      if(any(ad1 < bd1, ad2 < bd2))        stop("Shrinkage shape hyperparameters must be greater than associated shrinkage rate hyperparameters")
       if(ad2/bd2 <= ad1/bd1)               stop("Shrinkage in column k must be strictly greater than shrinkage in column 1")
+      if(any(length(Q) > 1, Q < 2))        stop("Q must be single value, greater than or equal to 2")
       if(inverse) {
         ad1     <- ifelse(ad1 == 1, ad1 + .Machine$double.eps, ad1)
         ad2     <- ifelse(ad2 == 1, ad2 + .Machine$double.eps, ad2)
