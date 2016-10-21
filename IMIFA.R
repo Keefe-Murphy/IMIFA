@@ -73,7 +73,7 @@
   # Simulated   (# classes)
    #SimData  <- sim.IMIFA(N=80, G=4, P=100, Q=c(5, 1, 4, 0), nn=c(20, 20, 20, 20))
    #save(SimData, file=paste0(getwd(),"/Data/Simulated_Data.Rdata", sep=""))
-    load(file=paste0(getwd(), "/Data/Simulated_Data.Rdata", sep=""), envir=.GlobalEnv)
+    load(file=paste0(getwd(), "/Data/Simulated Data/Replication 1/Simulated_DataN25P50.Rdata", sep=""), envir=.GlobalEnv)
     classes  <- attr(SimData, "Labels")
 
 # Run the Gibbs Sampler
