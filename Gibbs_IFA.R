@@ -95,7 +95,7 @@
     # Global Shrinkage
       sum.term   <- diag(crossprod(phi, load.2))
       for(k in seq_len(Q)) { 
-        delta[k] <- if(k < 1) sim.deltak(alpha.d2=alpha.d2, beta.d2=beta.d2, delta.k=delta[k], Q=Q, P=P, 
+        delta[k] <- if(k > 1) sim.deltak(alpha.d2=alpha.d2, beta.d2=beta.d2, delta.k=delta[k], Q=Q, P=P, 
                     k=k, tau.kq=tau[k:Q], sum.term.kq=sum.term[k:Q]) else sim.delta1(alpha.d1=alpha.d1, 
                     beta.d1=beta.d1, delta.1=delta[1], Q=Q, P=P, tau=tau, sum.term=sum.term)
         tau      <- cumprod(delta)      

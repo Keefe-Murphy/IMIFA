@@ -173,9 +173,14 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(Q.miss)                      stop("'range.Q' must be specified") 
     if(any(range.Q < 0))            stop(paste0("'range.Q' must be non-negative for the ", method, " method"))
   } else {
-    if(Q.miss)        range.Q    <- min(ifelse(P > 500, 12 + floor(log(P)), floor(3 * log(P))), P - 1, N - 1)
+    Q.min   <- min(ceiling(log(P)), ceiling(log(N)))
+    Q.max   <- min(P - 1, N - 1)
+    if(!is.logical(adapt))          stop("'adapt' must be TRUE or FALSE") 
+    if(Q.miss)        range.Q    <- min(ifelse(P > 500, 12 + floor(log(P)), floor(3 * log(P))), Q.max)
     if(length(range.Q) > 1)         stop(paste0("Only one starting value for 'range.Q' can be supplied for the ", method, " method"))
     if(range.Q    <= 0)             stop(paste0("'range.Q' must be strictly positive for the ", method, " method"))
+    if(range.Q > Q.max)             stop("range.Q is too large relative to the number of observations and variables")
+    if(all(adapt, range.Q < Q.min)) stop(paste0("'range.Q' must be at least min(log(P), log(N)) for the ", method, " method when 'adapt' is TRUE"))
   }
   range.Q   <- sort(unique(range.Q)) 
   len.G     <- length(range.G)
@@ -185,7 +190,6 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(missing("sigma.l"))   sigma.l       <- 1
     if(sigma.l <= 0)                stop("'sigma.l' must be strictly positive")            
   } else {            
-    if(!is.logical(adapt))          stop("'adapt' must be TRUE or FALSE") 
     if(missing("phi.nu"))    phi.nu        <- 1.5
     if(phi.nu  <= 0)                stop("'phi.nu' must be strictly positive")
     if(missing("beta.d1"))   beta.d1       <- 1
