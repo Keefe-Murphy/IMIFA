@@ -22,9 +22,9 @@
     facnames       <- paste0("Factor ", seq_len(Q))
     gnames         <- paste0("Group ", Gseq)
     iternames      <- paste0("Iteration", seq_len(n.store))
-    Q0             <- Q > 0
+    Q0             <- Q  > 0
     Q0s            <- rep(Q0, G)
-    Q1             <- Q > 1
+    Q1             <- Q == 1
     if(sw["mu.sw"])  {
       mu.store     <- array(0, dim=c(P, G, n.store))
       dimnames(mu.store)   <- list(varnames, gnames, iternames)
@@ -135,11 +135,11 @@
       sum.data     <- lapply(dat.g, colSums)
       sum.eta      <- lapply(eta.tmp, colSums)
       mu           <- vapply(Gseq, function(g) sim.mu(N=nn[g], mu.sigma=mu.sigma, psi.inv=psi.inv[,g], sum.eta=sum.eta[[g]], P=P, 
-                             sum.data=sum.data[[g]], lmat=if(Q1) lmat[,,g] else as.matrix(lmat[,,g]), mu.zero=mu.zero[,g]), numeric(P))
+                             sum.data=sum.data[[g]], lmat=if(Q1) as.matrix(lmat[,,g]) else lmat[,,g], mu.zero=mu.zero[,g]), numeric(P))
       
     # Uniquenesses
       psi.inv      <- vapply(Gseq, function(g) if(nn0[g]) sim.psi.inv(N=nn[g], psi.alpha=psi.alpha, c.data=c.data[[g]], eta=eta.tmp[[g]], psi.beta=psi.beta[,g],
-                             P=P, lmat=if(Q1) lmat[,,g] else as.matrix(lmat[,,g])) else sim.psi.i.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta[,g]), numeric(P))
+                             P=P, lmat=if(Q1) as.matrix(lmat[,,g]) else lmat[,,g]) else sim.psi.i.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta[,g]), numeric(P))
     
     # Label Switching
       if(label.switch) {

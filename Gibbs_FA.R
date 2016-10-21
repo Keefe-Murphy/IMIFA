@@ -17,8 +17,8 @@
     varnames     <- colnames(data)
     facnames     <- paste0("Factor ", seq_len(Q))
     iternames    <- paste0("Iteration", seq_len(n.store))
-    Q0           <- Q > 0
-    Q1           <- Q > 1
+    Q0           <- Q  > 0
+    Q1           <- Q == 1
     dimnames(data)         <- NULL
     if(sw["mu.sw"])  {
       mu.store   <- matrix(0, nr=P, nc=n.store)

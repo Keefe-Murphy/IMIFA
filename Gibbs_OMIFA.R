@@ -97,12 +97,12 @@
     # Cluster Labels
       psi            <- 1/psi.inv
       sigma          <- lapply(Gseq, function(g) tcrossprod(lmat[[g]]) + diag(psi[,g]))
-      Q0             <- Qs > 0
-      Q1             <- Qs > 1
+      Q0             <- Qs  > 0
+      Q1             <- Qs == 1
       z.res          <- sim.z(data=data, mu=mu, sigma=sigma, Gseq=Gseq, N=N, pi.prop=pi.prop, Q0=Q0)
       z              <- z.res$z
       nn             <- tabulate(z, nbins=G)
-      nn0            <- nn > 0
+      nn0            <- nn  > 0
       nn.ind         <- which(nn0)
       z.ind          <- lapply(Gseq, function(g) Nseq[z == g])
       dat.g          <- lapply(Gseq, function(g) data[z.ind[[g]],, drop=FALSE])
@@ -146,16 +146,17 @@
       sum.terms      <- lapply(Gseq, function(g) diag(crossprod(phi[[g]], load.2[[g]])))
       for(g in Gseq) {
         Qg           <- Qs[g]
+        Q1g          <- Q1[g]
         if(nn0[g])   {
           for(k in seq_len(Qg)) { 
-            delta[[g]][k]     <- if(k > 1) sim.deltak(alpha.d2=alpha.d2, beta.d2=beta.d2, delta.k=delta[[g]][k], Q=Qg, P=P, 
-                                 k=k, tau.kq=tau[[g]][k:Qg], sum.term.kq=sum.terms[[g]][k:Qg]) else sim.delta1(alpha.d1=alpha.d1,
-                                 beta.d1=beta.d1, delta.1=delta[[g]][1], Q=Qg, P=P, tau=tau[[g]], sum.term=sum.terms[[g]])
+            delta[[g]][k]     <- if(k > 1) sim.deltak(alpha.d2=alpha.d2, beta.d2=beta.d2, delta.k=delta[[g]][k], tau.kq=tau[[g]][k:Qg], P=P, 
+                                 Q=Qg, k=k, sum.term.kq=sum.terms[[g]][k:Qg]) else sim.delta1(Q=Qg, P=P, tau=tau[[g]], sum.term=sum.terms[[g]],
+                                 alpha.d1=ifelse(Q1g, alpha.d2, alpha.d1), beta.d1=ifelse(Q1g, beta.d2, beta.d1), delta.1=delta[[g]][1])
             tau[[g]]          <- cumprod(delta[[g]])
           }
         } else {
           for(k in seq_len(Qg)) { 
-            delta[[g]][k]     <- if(k > 1) sim.delta.p(alpha=alpha.d2, beta=beta.d2) else sim.delta.p(alpha=alpha.d1, beta=beta.d1)
+            delta[[g]][k]     <- if(k > 1) sim.delta.p(alpha=alpha.d2, beta=beta.d2) else sim.delta.p(alpha=ifelse(Q1g, alpha.d2, alpha.d1), beta=ifelse(Q1g, beta.d2, beta.d1))
             tau[[g]]          <- cumprod(delta[[g]])
           }
         }

@@ -68,8 +68,8 @@
   # Iterate
     for(iter in seq_len(total)[-1]) { 
       if(verbose && iter  < burnin) setTxtProgressBar(pb, iter)
-      Q0         <- Q > 0
-      Q1         <- Q > 1
+      Q0         <- Q  > 0
+      Q1         <- Q == 1
       
     # Scores & Loadings
       c.data     <- sweep(data, 2, mu, FUN="-")
@@ -95,9 +95,9 @@
     # Global Shrinkage
       sum.term   <- diag(crossprod(phi, load.2))
       for(k in seq_len(Q)) { 
-        delta[k] <- if(k > 1) sim.deltak(alpha.d2=alpha.d2, beta.d2=beta.d2, delta.k=delta[k], Q=Q, P=P, 
-                    k=k, tau.kq=tau[k:Q], sum.term.kq=sum.term[k:Q]) else sim.delta1(alpha.d1=alpha.d1, 
-                    beta.d1=beta.d1, delta.1=delta[1], Q=Q, P=P, tau=tau, sum.term=sum.term)
+        delta[k] <- if(k > 1) sim.deltak(alpha.d2=alpha.d2, beta.d2=beta.d2, delta.k=delta[k], Q=Q, P=P, k=k,
+                    tau.kq=tau[k:Q], sum.term.kq=sum.term[k:Q]) else sim.delta1(Q=Q, P=P, tau=tau, sum.term=sum.term,
+                    alpha.d1=ifelse(Q1, alpha.d2, alpha.d1), beta.d1=ifelse(Q1, beta.d2, beta.d1), delta.1=delta[1])
         tau      <- cumprod(delta)      
       }
     

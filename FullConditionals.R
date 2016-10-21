@@ -14,16 +14,16 @@
     sim.score   <- function(N, Q, lmat, psi.inv, c.data, Q1) {
       load.psi  <- lmat * psi.inv
       u.eta     <- diag(Q) + crossprod(load.psi, lmat)
-      u.eta     <- if(Q1) chol(u.eta) else sqrt(u.eta)
-      mu.eta    <- c.data %*% (load.psi %*% if(Q1) chol2inv(u.eta) else 1/(u.eta * u.eta))
+      u.eta     <- if(Q1) sqrt(u.eta) else chol(u.eta)
+      mu.eta    <- c.data %*% (load.psi %*% if(Q1) 1/(u.eta * u.eta) else chol2inv(u.eta))
         mu.eta + t(backsolve(u.eta, matrix(rnorm(Q * N), nr=Q, nc=N)))
     }
       
   # Loadings
     sim.load    <- function(l.sigma, Q, c.data, P, eta, phi, tau, psi.inv, EtE, Q1, shrink = TRUE) {
       u.load    <- if(shrink) diag(phi * tau, Q) + psi.inv * EtE else l.sigma + psi.inv * EtE
-      u.load    <- if(Q1) chol(u.load) else sqrt(u.load)
-      mu.load   <- psi.inv * (if(Q1) chol2inv(u.load) else 1/(u.load * u.load)) %*% crossprod(eta, c.data)
+      u.load    <- if(Q1) sqrt(u.load) else chol(u.load)
+      mu.load   <- psi.inv * (if(Q1) 1/(u.load * u.load) else chol2inv(u.load)) %*% crossprod(eta, c.data)
         mu.load + backsolve(u.load, rnorm(Q))
     }
     
