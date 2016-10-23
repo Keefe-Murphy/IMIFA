@@ -21,7 +21,7 @@ sim.IMIFA      <- function(N = 300, G = 3, P = 50, Q = rep(4, G), pis = rep(1/G,
   Pseq         <- seq_len(P)
   nnames       <- paste0("Obs ", Nseq) 
   vnames       <- paste0("Var ", Pseq)
-  if(!missing(nn) && missing(pi.prop)) {
+  if(!missing(nn) && missing(pis))     {
     nn         <- as.integer(nn)
     if(any(nn  == 0))                    stop("All 'nn' values be strictly positive; simulating empty groups not allowed")
     if(any(length(nn)  != G, 

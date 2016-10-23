@@ -326,8 +326,8 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   }
   mu.zero          <- if(mu0.x) mu else len.check(mu.zero, mu0g, method, P, range.G)
   if(!is.element(method, c("FA", "MFA", "OMFA", "IMFA"))) {
-    alpha.d1       <- if(ad1.x) list(5)  else len.check(alpha.d1, delta0g, method, P, range.G, P.dim=FALSE)
-    alpha.d2       <- if(adk.x) list(10) else len.check(alpha.d2, delta0g, method, P, range.G, P.dim=FALSE)
+    alpha.d1       <- if(ad1.x) list(3) else len.check(alpha.d1, delta0g, method, P, range.G, P.dim=FALSE)
+    alpha.d2       <- if(adk.x) list(6) else len.check(alpha.d2, delta0g, method, P, range.G, P.dim=FALSE)
   }
   if(!is.element(method, c("FA", "IFA", "classify"))) {
     if(verbose)                     cat(paste0("Initialising...\n"))
