@@ -49,6 +49,7 @@
     Qs               <- rep(Q, trunc.G)
     Q.store          <- matrix(0, nr=trunc.G, nc=n.store)
     Q.large          <- Q.big <- Q.bigs <- FALSE
+    err.z            <- z.err <- FALSE
     G.store          <- rep(0, n.store)
     dimnames(z.store)         <- list(obsnames, iternames)
     dimnames(Q.store)         <- list(gnames, iternames)
@@ -114,8 +115,8 @@
       psi.store[,,1]          <- 1/psi.inv
       pi.store[,1]            <- pi.prop/sum(pi.prop)
       z.store[,1]             <- z
-      ll.store[1]             <- sum(sim.z(data=data, mu=mu[,Gs], Gseq=Gs, N=N, pi.prop=pi.store[Gs,1], sigma=lapply(Gs,
-                                     function(g) tcrossprod(lmat[[g]]) + diag(1/psi.inv[,g])), Q0=Qs > 0)$log.likes)
+      ll.store[1]             <- sum(sim.z(data=data, mu=mu[,Gs], Gseq=Gs, N=N, pi.prop=pi.store[Gs,1], sigma=lapply(Gs, function(g)
+                                           make.positive.definite(tcrossprod(lmat[[g]]) + diag(1/psi.inv[,g]))), Q0=Qs > 0)$log.likes)
       Q.store[,1]             <- Qs
       G.store[1]              <- G.non
       if(not.fixed) {
@@ -163,7 +164,12 @@
       Qgs            <- Qs[Gs]
       Q0             <- Qgs  > 0
       Q1             <- Qgs == 1
-      z.res          <- sim.z(data=data, mu=mu[,Gs, drop=FALSE], sigma=sigma, Gseq=Gs, N=N, pi.prop=pi.prop[Gs], log.slice.ind=log.slice.ind, Q0=Q0[Gs])
+      z.log          <- capture.output({ z.res <- try(sim.z(data=data, mu=mu[,Gs, drop=FALSE], sigma=sigma, Gseq=Gs, N=N, pi.prop=pi.prop[Gs], log.slice.ind=log.slice.ind, Q0=Q0[Gs]), silent=TRUE) })
+      z.err          <- inherits(z.res, "try-error")
+      if(z.err) {
+        sigma        <- lapply(sigma, make.positive.definite)
+        z.res        <- sim.z(data=data, mu=mu[,Gs, drop=FALSE], sigma=sigma, Gseq=Gs, N=N, pi.prop=pi.prop[Gs], log.slice.ind=log.slice.ind, Q0=Q0[Gs])
+      }
       z              <- z.res$z
       nn             <- tabulate(z, nbins=trunc.G)
       nn0            <- nn   > 0
@@ -322,6 +328,9 @@
     
       if(Q.bigs && !Q.large   && iter > burnin) {        warning(paste0("Q has exceeded initial number of loadings columns since burnin: consider increasing range.Q from ", Q.star), call.=FALSE)
         Q.large      <- TRUE
+      }
+      if(z.err  && !err.z) {                             warning("Algorithm may slow due to corrections for Choleski decompositions of non-positive-definite covariance matrices", call.=FALSE)
+        err.z        <- TRUE
       }
       if(is.element(iter, iters)) {
         if(verbose)     setTxtProgressBar(pb, iter)

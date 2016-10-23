@@ -47,6 +47,7 @@
     }
     z.store         <- matrix(0, nr=N, nc=n.store)
     ll.store        <- rep(0, n.store)
+    err.z           <- zerr <- FALSE
     G.store         <- rep(0, n.store)
     dimnames(z.store)       <- list(obsnames, iternames)
     not.fixed       <- alpha.step != "fixed"
@@ -114,8 +115,8 @@
       psi.store[,,1]        <- 1/psi.inv
       pi.store[,1]          <- pi.prop/sum(pi.prop)
       z.store[,1]           <- z
-      ll.store[1]           <- sum(sim.z(data=data, mu=mu[,Gs], Gseq=Gs, N=N, pi.prop=pi.store[Gs,1], sigma=lapply(Gs,
-                                   function(g) tcrossprod(lmat[,,g]) + diag(1/psi.inv[,g])), Q0=Q0s)$log.likes)
+      ll.store[1]           <- sum(sim.z(data=data, mu=mu[,Gs], Gseq=Gs, N=N, pi.prop=pi.store[Gs,1], sigma=lapply(Gs, function(g)
+                                         make.positive.definite(tcrossprod(lmat[,,g]) + diag(1/psi.inv[,g]))), Q0=Q0s)$log.likes)
       G.store[1]            <- G.non
       if(not.fixed) {
         alpha.store[1]      <- pi.alpha 
@@ -156,7 +157,12 @@
     # Cluster Labels
       psi           <- 1/psi.inv
       sigma         <- lapply(Gs, function(g) tcrossprod(lmat[,,g]) + diag(psi[,g]))
-      z.res         <- sim.z(data=data, mu=mu[,Gs, drop=FALSE], sigma=sigma, Gseq=Gs, N=N, pi.prop=pi.prop[Gs], log.slice.ind=log.slice.ind, Q0=Q0s[Gs])
+      z.log         <- capture.output({ z.res <- try(sim.z(data=data, mu=mu[,Gs, drop=FALSE], sigma=sigma, Gseq=Gs, N=N, pi.prop=pi.prop[Gs], log.slice.ind=log.slice.ind, Q0=Q0s[Gs]), silent=TRUE) })
+      zerr          <- inherits(z.res, "try-error")
+      if(zerr) {
+        sigma       <- lapply(sigma, make.positive.definite)
+        z.res       <- sim.z(data=data, mu=mu[,Gs, drop=FALSE], sigma=sigma, Gseq=Gs, N=N, pi.prop=pi.prop[Gs], log.slice.ind=log.slice.ind, Q0=Q0s[Gs])
+      }
       z             <- z.res$z
       nn            <- tabulate(z, nbins=trunc.G)
       nn0           <- nn > 0
@@ -232,6 +238,9 @@
           z[z == sw2[2]]    <- sw2[1]
           z[zsw2]   <- sw2[2]            
         }
+      }
+      if(zerr && !err.z) {     warning("Algorithm may slow due to corrections for Choleski decompositions of non-positive-definite covariance matrices", call.=FALSE)
+        err.z       <- TRUE
       }
       
       if(is.element(iter, iters)) {

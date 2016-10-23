@@ -46,6 +46,7 @@
       dimnames(pi.store)   <- list(gnames, iternames)
     }
     z.store        <- matrix(0, nr=N, nc=n.store)
+    err.z          <- zerr <- FALSE
     dimnames(z.store)      <- list(obsnames, iternames)
     ll.store       <- rep(0, n.store)
     
@@ -97,8 +98,8 @@
       psi.store[,,1]       <- 1/psi.inv
       pi.store[,1]         <- pi.prop
       z.store[,1]          <- z
-      ll.store[1]          <- sum(sim.z(data=data, mu=mu, Gseq=Gseq, N=N, pi.prop=pi.prop, sigma=lapply(Gseq,
-                                  function(g) tcrossprod(lmat[,,g]) + diag(1/psi.inv[,g])), Q0=Q0s)$log.likes)
+      ll.store[1]          <- sum(sim.z(data=data, mu=mu, Gseq=Gseq, N=N, pi.prop=pi.prop, sigma=lapply(Gseq, function(g) 
+                                        make.positive.definite(tcrossprod(lmat[,,g]) + diag(1/psi.inv[,g]))), Q0=Q0s)$log.likes)
     }
     init.time      <- proc.time() - start.time
     
@@ -112,7 +113,12 @@
     # Cluster Labels
       psi          <- 1/psi.inv
       sigma        <- lapply(Gseq, function(g) tcrossprod(lmat[,,g]) + diag(psi[,g]))
-      z.res        <- sim.z(data=data, mu=mu, sigma=sigma, Gseq=Gseq, N=N, pi.prop=pi.prop, Q0=Q0s)
+      z.log        <- capture.output({ z.res <- sim.z(data=data, mu=mu, sigma=sigma, Gseq=Gseq, N=N, pi.prop=pi.prop, Q0=Q0s) })
+      zerr         <- inherits(z.res, "try-error")
+      if(zerr) {
+        sigma      <- lapply(sigma, make.positive.definite)
+        z.res      <- sim.z(data=data, mu=mu, sigma=sigma, Gseq=Gseq, N=N, pi.prop=pi.prop, Q0=Q0s)
+      }
       z            <- z.res$z
       nn           <- tabulate(z, nbins=G)
       nn0          <- nn > 0
@@ -161,6 +167,9 @@
         }
       }
       
+      if(zerr && !err.z) {                                    warning("Algorithm may slow due to corrections for Choleski decompositions of non-positive-definite covariance matrices", call.=FALSE)
+        err.z      <- TRUE
+      }
       if(is.element(iter, iters))  {
         if(verbose)   setTxtProgressBar(pb, iter)
         new.it     <- which(iters == iter)

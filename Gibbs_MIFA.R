@@ -49,6 +49,7 @@
     Qs             <- rep(Q, G)
     Q.store        <- matrix(0, nr=G, nc=n.store)
     Q.large        <- Q.big <- Q.bigs <- FALSE
+    err.z          <- z.err <- FALSE
     dimnames(z.store)       <- list(obsnames, iternames)
     dimnames(Q.store)       <- list(gnames, iternames)
     
@@ -99,8 +100,8 @@
       psi.store[,,1]        <- 1/psi.inv
       pi.store[,1]          <- pi.prop
       z.store[,1]           <- z
-      ll.store[1]           <- sum(sim.z(data=data, mu=mu, Gseq=Gseq, N=N, pi.prop=pi.prop, sigma=lapply(Gseq,
-                                   function(g) tcrossprod(lmat[[g]]) + diag(1/psi.inv[,g])), Q0=Qs > 0)$log.likes)
+      ll.store[1]           <- sum(sim.z(data=data, mu=mu, Gseq=Gseq, N=N, pi.prop=pi.prop, sigma=lapply(Gseq, function(g) 
+                                         make.positive.definite(tcrossprod(lmat[[g]]) + diag(1/psi.inv[,g]))), Q0=Qs > 0)$log.likes)
       Q.store[,1]           <- Qs
     }
     init.time      <- proc.time() - start.time
@@ -117,7 +118,12 @@
       sigma        <- lapply(Gseq, function(g) tcrossprod(lmat[[g]]) + diag(psi[,g]))
       Q0           <- Qs  > 0
       Q1           <- Qs == 1
-      z.res        <- sim.z(data=data, mu=mu, sigma=sigma, Gseq=Gseq, N=N, pi.prop=pi.prop, Q0=Q0)
+      z.log        <- capture.output({ z.res <- sim.z(data=data, mu=mu, sigma=sigma, Gseq=Gseq, N=N, pi.prop=pi.prop, Q0=Q0) })
+      z.err        <- inherits(z.res, "try-error")
+      if(z.err) {
+        sigma      <- lapply(sigma, make.positive.definite)
+        z.res      <- sim.z(data=data, mu=mu, sigma=sigma, Gseq=Gseq, N=N, pi.prop=pi.prop, Q0=Q0)
+      }
       z            <- z.res$z
       nn           <- tabulate(z, nbins=G)
       nn0          <- nn  > 0
@@ -230,6 +236,9 @@
       
       if(Q.bigs && !Q.large && iter > burnin) {        warning(paste0("Q has exceeded initial number of loadings columns since burnin: consider increasing range.Q from ", Q.star), call.=FALSE)
         Q.large    <- TRUE
+      }
+      if(z.err  && !err.z) {                           warning("Algorithm may slow due to corrections for Choleski decompositions of non-positive-definite covariance matrices", call.=FALSE)
+        err.z      <- TRUE
       }
       if(is.element(iter, iters))   {
         if(verbose)   setTxtProgressBar(pb, iter)

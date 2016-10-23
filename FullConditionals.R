@@ -59,7 +59,7 @@
   
   # Cluster Labels
     sim.z       <- function(data, mu, sigma, Gseq, N, pi.prop, log.slice.ind = NULL, Q0) {
-      log.num   <- vapply(Gseq, function(g, q=Q0[g]) dmvn(data, mu[,g], if(q) sigma[[g]] else sqrt(sigma[[g]]), log=TRUE, isChol=!q) + log(pi.prop[g]), numeric(N))
+      log.num   <- vapply(Gseq, function(g, Q=Q0[g]) dmvn(data, mu[,g], if(Q) sigma[[g]] else sqrt(sigma[[g]]), log=TRUE, isChol=!Q) + log(pi.prop[g]), numeric(N))
       if(!missing(log.slice.ind)) {
         log.num <- log.num + log.slice.ind
       }

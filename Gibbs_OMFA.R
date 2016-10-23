@@ -47,6 +47,7 @@
     }
     z.store        <- matrix(0, nr=N, nc=n.store)
     ll.store       <- rep(0, n.store)
+    err.z          <- zerr <- FALSE
     G.store        <- rep(0, n.store)
     dimnames(z.store)      <- list(obsnames, iternames)
     
@@ -83,8 +84,8 @@
       psi.store[,,1]       <- 1/psi.inv
       pi.store[,1]         <- pi.prop
       z.store[,1]          <- z
-      ll.store[1]          <- sum(sim.z(data=data, mu=mu, Gseq=Gseq, N=N, pi.prop=pi.prop, sigma=lapply(Gseq,
-                                  function(g) tcrossprod(lmat[,,g]) + diag(1/psi.inv[,g])), Q0=Q0s)$log.likes)
+      ll.store[1]          <- sum(sim.z(data=data, mu=mu, Gseq=Gseq, N=N, pi.prop=pi.prop, sigma=lapply(Gseq, function(g) 
+                                        make.positive.definite(tcrossprod(lmat[,,g]) + diag(1/psi.inv[,g]))), Q0=Q0s)$log.likes)
       G.store[1]           <- G
     }
     init.time      <- proc.time() - start.time
@@ -99,7 +100,12 @@
     # Cluster Labels
       psi          <- 1/psi.inv
       sigma        <- lapply(Gseq, function(g) tcrossprod(lmat[,,g]) + diag(psi[,g]))
-      z.res        <- sim.z(data=data, mu=mu, sigma=sigma, Gseq=Gseq, N=N, pi.prop=pi.prop, Q0=Q0s)
+      z.log        <- capture.output({ z.res <- sim.z(data=data, mu=mu, sigma=sigma, Gseq=Gseq, N=N, pi.prop=pi.prop, Q0=Q0s) })
+      zerr         <- inherits(z.res, "try-error")
+      if(zerr) {
+        sigma      <- lapply(sigma, make.positive.definite)
+        z.res      <- sim.z(data=data, mu=mu, sigma=sigma, Gseq=Gseq, N=N, pi.prop=pi.prop, Q0=Q0s)
+      }
       z            <- z.res$z
       nn           <- tabulate(z, nbins=G)
       nn0          <- nn > 0
@@ -128,6 +134,9 @@
       psi.inv      <- vapply(Gseq, function(g) if(nn0[g]) sim.psi.inv(N=nn[g], psi.alpha=psi.alpha, c.data=c.data[[g]], eta=eta.tmp[[g]], psi.beta=psi.beta, 
                              P=P, lmat=if(Q1) as.matrix(lmat[,,g]) else lmat[,,g]) else sim.psi.i.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), numeric(P))
     
+      if(zerr && !err.z) {                                    warning("Algorithm may slow due to corrections for Choleski decompositions of non-positive-definite covariance matrices", call.=FALSE)
+        err.z      <- TRUE
+      }
       if(is.element(iter, iters))   {
         if(verbose)   setTxtProgressBar(pb, iter)
         new.it     <- which(iters == iter)
