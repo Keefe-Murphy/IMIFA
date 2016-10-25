@@ -169,17 +169,15 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   if(missing("psi.alpha"))   psi.alpha     <- 2.5
   if(psi.alpha <= 0)                stop("'psi.alpha' must be strictly positive")
   Q.miss    <- missing(range.Q)
+  Q.min     <- min(ceiling(log(P)), ceiling(log(N)))
   if(is.element(method, c("FA", "MFA", "OMFA", "IMFA"))) {
     if(Q.miss)                      stop("'range.Q' must be specified") 
     if(any(range.Q < 0))            stop(paste0("'range.Q' must be non-negative for the ", method, " method"))
   } else {
-    Q.min   <- min(ceiling(log(P)), ceiling(log(N)))
-    Q.max   <- min(P - 1, N - 1)
-    if(!is.logical(adapt))          stop("'adapt' must be TRUE or FALSE") 
     if(Q.miss)        range.Q    <- min(ifelse(P > 500, 12 + floor(log(P)), floor(3 * log(P))), Q.max)
+    if(!is.logical(adapt))          stop("'adapt' must be TRUE or FALSE") 
     if(length(range.Q) > 1)         stop(paste0("Only one starting value for 'range.Q' can be supplied for the ", method, " method"))
     if(range.Q    <= 0)             stop(paste0("'range.Q' must be strictly positive for the ", method, " method"))
-    if(range.Q > Q.max)             stop("range.Q is too large relative to the number of observations and variables")
     if(all(adapt, range.Q < Q.min)) stop(paste0("'range.Q' must be at least min(log(P), log(N)) for the ", method, " method when 'adapt' is TRUE"))
   }
   range.Q   <- sort(unique(range.Q)) 
