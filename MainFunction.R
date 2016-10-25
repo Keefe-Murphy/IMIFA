@@ -174,7 +174,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(Q.miss)                      stop("'range.Q' must be specified") 
     if(any(range.Q < 0))            stop(paste0("'range.Q' must be non-negative for the ", method, " method"))
   } else {
-    if(Q.miss)        range.Q    <- min(ifelse(P > 500, 12 + floor(log(P)), floor(3 * log(P))), Q.max)
+    if(Q.miss)        range.Q    <- min(ifelse(P > 500, 12 + floor(log(P)), floor(3 * log(P))), N - 1)
     if(!is.logical(adapt))          stop("'adapt' must be TRUE or FALSE") 
     if(length(range.Q) > 1)         stop(paste0("Only one starting value for 'range.Q' can be supplied for the ", method, " method"))
     if(range.Q    <= 0)             stop(paste0("'range.Q' must be strictly positive for the ", method, " method"))
