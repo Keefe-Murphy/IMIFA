@@ -340,7 +340,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     } else    {
       Q          <- if(G.T) Q else setNames(rep(Q, G), paste0("Group ", Gseq))
     }
-    if(any(unlist(Q) >= n.var))   warning(paste0("Estimate of Q is not less than the number of variables ", n.var, ": solution may be invalid"), call.=FALSE)
+    if(any(unlist(Q) >= n.var))   warning(paste0("Estimate of Q is not less than the number of variables, ", n.var, ": solution may be invalid"), call.=FALSE)
     Q.CI         <- if(G1) apply(Q.store, 1, function(qs) round(quantile(qs, conf.levels))) else round(quantile(Q.store, conf.levels))
     GQ.temp4     <- list(Q = Q, Q.Mode = Q.mode, Q.Median = Q.med, Stored.Q = Q.store,
                          Q.CI = Q.CI, Q.Probs = Q.prob, Q.Counts = Q.tab)
