@@ -2,13 +2,12 @@
 ### Main Function for Keefe Murphy's IMIFA R Package ###
 ########################################################
 
-mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA", "MFA", "IFA", "FA", "classify"), 
-                        n.iters = 25000, zlabels = NULL, factanal = FALSE, range.G = NULL, range.Q = NULL, verbose = TRUE, Q.fac = NULL, discount = NULL, DP.lab.sw = TRUE,
-                        burnin = n.iters/5, thinning = 2, centering = TRUE, scaling = c("unit", "pareto", "none"), alpha.step = c("gibbs", "metropolis", "fixed"), learn.d = FALSE,
-                        adapt = TRUE, b0 = NULL, b1 = NULL, delta0g = FALSE, prop = NULL, epsilon = NULL, sigma.mu = NULL, sigma.l = NULL, alpha.hyper = NULL, d.hyper = NULL,
-                        mu0g = FALSE, psi0g = FALSE, mu.zero = NULL, phi.nu = NULL, psi.alpha = NULL, psi.beta = NULL, alpha.d1 = NULL, rho = NULL, trunc.G = NULL, 
-                        alpha.d2 = NULL, beta.d1 = NULL, beta.d2 = NULL, alpha = NULL, z.list = NULL, profile = FALSE, mu.switch = TRUE, ind.slice = TRUE, adapt.at = NULL,
-                        score.switch = TRUE, load.switch = TRUE, psi.switch = TRUE, pi.switch = TRUE, z.init = c("kmeans", "list", "mclust", "priors")) {
+mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA", "MFA", "IFA", "FA", "classify"), n.iters = 25000, range.G = NULL, range.Q = NULL,
+                        burnin = n.iters/5, thinning = 2, centering = TRUE, scaling = c("unit", "pareto", "none"), mu.zero = NULL, sigma.mu = NULL, sigma.l = NULL, alpha = NULL, 
+                        z.list = NULL, z.init = c("kmeans", "list", "mclust", "priors"), psi.alpha = NULL, psi.beta = NULL, adapt = TRUE, b0 = NULL, b1 = NULL, prop = NULL, epsilon = NULL, 
+                        phi.nu = NULL,  alpha.d1 = NULL, alpha.d2 = NULL, adapt.at = NULL, beta.d1 = NULL, beta.d2 = NULL, alpha.step = c("gibbs", "metropolis", "fixed"), alpha.hyper = NULL, 
+                        ind.slice = TRUE, rho = NULL, DP.lab.sw = TRUE, trunc.G = NULL, profile = FALSE, verbose = TRUE, discount = NULL, learn.d = FALSE, d.hyper = NULL, mu0g = FALSE, 
+                        psi0g = FALSE, delta0g = FALSE, mu.switch = TRUE, score.switch = TRUE, load.switch = TRUE, psi.switch = TRUE, pi.switch = TRUE, factanal = FALSE, Q.fac = NULL) {
   
   defpar    <- suppressWarnings(par(no.readonly=TRUE))
   defopt    <- options()
@@ -24,7 +23,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   }
   scaling   <- match.arg(scaling)
   if(missing(dat))                  stop("Dataset must be supplied")
-  if(!exists(deparse(substitute(dat)),
+  if(!exists(gsub("\\[.*", "", deparse(substitute(dat))),
              envir=.GlobalEnv))     stop(paste0("Object ", match.call()$dat, " not found"))
   if(!is.logical(factanal))         stop("'factanal' must be TRUE or FALSE")
   if(!is.logical(centering))        stop("'centering' must be TRUE or FALSE")
@@ -34,6 +33,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
 # Remove non-numeric columns & apply centering & scaling if necessary 
   burnin    <- as.integer(burnin)
   thinning  <- as.integer(thinning)
+  if(!is.numeric(n.iters))          stop("'n.iters' must be numeric")
   n.iters   <- max(burnin + 1, as.integer(n.iters))
   iters     <- seq(from=burnin + 1, to=n.iters, by=thinning)
   iters     <- iters[iters > 0]
@@ -126,12 +126,21 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
         if(trunc.G  > N)            stop(paste0("'trunc.G' cannot be greater than N=", N))
       }
     } else if(method == "classify") {
-      if(missing(zlabels))          stop("Data must be labelled for classification")
-      if(!exists(deparse(substitute(zlabels)),
-                 envir=.GlobalEnv)) stop(paste0("Object ", match.call()$zlabels, " not found"))
-      zlabels      <- as.factor(zlabels)
-      if(length(zlabels) != N)      stop(paste0("'zlabels' must be a factor of length N=",  N)) 
-      range.G      <- nlevels(zlabels)
+      if(!missing(z.init) && 
+         z.init != "list") {        stop("'z.init' must be set to 'list' for classification")
+      } else z.init       <- "list"
+      if(missing(z.list))           stop("Data labels must be supplied via 'z.list' for classification")
+      if(!exists(gsub("\\[.*", "", deparse(substitute(z.list))),
+                 envir=.GlobalEnv)) stop(paste0("Object ", match.call()$z.list, " not found"))
+      z.list       <- as.factor(z.list)
+      if(length(z.list)  != N)      stop(paste0("'zlabels' must be a factor of length N=",  N)) 
+      levs         <- nlevels(z.list)
+      if(!missing(range.G) && any(length(range.G > 1), 
+             range.G   != levs)) {  warning("Forced 'range.G' equal to the number of levels in 'zlabels' for the 'classify' method")
+      }
+      range.G      <- levs
+      zlabels      <- z.list
+      z.list       <- list(z.list)
     } else {
       range.G      <- 1
     }
@@ -181,7 +190,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(all(adapt, range.Q < Q.min)) stop(paste0("'range.Q' must be at least min(log(P), log(N)) for the ", method, " method when 'adapt' is TRUE"))
   }
   range.Q   <- sort(unique(range.Q)) 
-  len.G     <- length(range.G)
+  len.G     <- ifelse(method == "classify", range.G, length(range.G))
   len.Q     <- length(range.Q)
   len.X     <- len.G * len.Q
   if(is.element(method, c("FA", "MFA", "OMFA", "IMFA"))) {
@@ -199,7 +208,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(missing("prop"))      prop          <- 3/4
     if(abs(prop - (1 - prop)) < 0)  stop("'prop' must be a single number between 0 and 1")
     if(missing("adapt.at"))  adapt.at      <- ifelse(is.element(method, c("IFA", "MIFA")), burnin, 0)
-    if(missing("epsilon"))   epsilon       <- ifelse(centered, 0.1, 0.01)
+    if(missing("epsilon"))   epsilon       <- ifelse(centered, 0.1, 0.05)
     if(adapt.at < 0 ||
        adapt.at > burnin)           stop("'adapt.at' must be a single number in the interval [0, burnin]")
     if(epsilon <= 0 ||
@@ -245,18 +254,21 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     } else if(!switches["l.sw"])  { warning("Posterior Loadings won't be available as they're not being stored", call.=FALSE)
     }
   }
-  if(all(is.element(method, c("FA", "IFA", "classify")), 
+  if(all(is.element(method, c("FA", "IFA")), 
          !missing(z.init) || 
          !missing(z.list)))         message(paste0("z does not need to be initialised for the ", method, " method"))
-  if(!is.logical(mu0g))             stop("'mu0g' must be TRUE or FALSE")
-  if(!is.logical(psi0g))            stop("'psi0g' must be TRUE or FALSE")
-  if(!is.logical(delta0g))          stop("'delta0g' must be TRUE or FALSE")
+  if(is.element(method, c("MFA", "MIFA", "classify"))) {
+    if(!is.logical(mu0g))           stop("'mu0g' must be TRUE or FALSE")
+    if(!is.logical(psi0g))          stop("'psi0g' must be TRUE or FALSE")
+    if(!is.logical(delta0g))        stop("'delta0g' must be TRUE or FALSE")  
+    if(all(method == "MFA",
+           delta0g))                stop("'delta0g' cannot be TRUE for the 'MFA' method")
+    if(method == "classify") mu0g          <- TRUE
+  }
   sw0gs     <- c(mu0g = mu0g, psi0g = psi0g, delta0g = delta0g)
-  if(all(!is.element(method, c("MFA", "MIFA")), 
+  if(all(!is.element(method, c("MFA", "MIFA", "classify")), 
          any(sw0gs)))               stop(paste0(names(which(sw0gs)), " should be FALSE for the ", method, " method\n"))
   if(!is.element(method, c("FA", "IFA", "classify"))) {
-    if(all(method != "MIFA",
-       delta0g))                    stop("'delta0g' and can only be TRUE for the 'MIFA' method")
     if(missing("alpha"))     alpha         <- ifelse(is.element(method, c("OMIFA", "OMFA")), 0.5/range.G, 
                                               ifelse(alpha.step == "gibbs", rgamma(1, a.hyp.1, a.hyp.2) - discount,
                                               ifelse(alpha.step == "metropolis", runif(1, a.hyp.1, a.hyp.2), 1)))
@@ -269,7 +281,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
                              z.miss        <- missing(z.init)
                              z.init        <- match.arg(z.init)
     if(all(is.element(method,  c("OMIFA", "OMFA")), !is.element(z.init, 
-       c("list", "kmeans"))))       stop("'z.init' must be set to 'list' or 'kmeans' for the OMIFA method to ensure all groups are populated at the initialisation stage")
+       c("list", "kmeans"))))       stop(paste0("'z.init' must be set to 'list' or 'kmeans' for the ", method, " method to ensure all groups are populated at the initialisation stage"))
     if(!missing(z.list))   {
       if(!is.list(z.list))   z.list        <- lapply(list(z.list), as.factor)
       if(z.init != "list") { z.init        <- "list"
@@ -327,7 +339,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     alpha.d1       <- if(ad1.x) list(3) else len.check(alpha.d1, delta0g, method, P, range.G, P.dim=FALSE)
     alpha.d2       <- if(adk.x) list(6) else len.check(alpha.d2, delta0g, method, P, range.G, P.dim=FALSE)
   }
-  if(!is.element(method, c("FA", "IFA", "classify"))) {
+  if(!is.element(method, c("FA", "IFA"))) {
     if(verbose)                     cat(paste0("Initialising...\n"))
     clust          <- list()
     pi.alpha       <- list()
@@ -392,7 +404,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
         }
         clust[[g]] <- append(clust[[g]], list(l.switch = sw0g.tmp))
       }
-      if(method == "MIFA") {
+      if(is.element(method, c("classify", "MIFA"))) {
         clust[[g]] <- append(clust[[g]], list(alpha.d1 = alpha.d1[[g]], alpha.d2 = alpha.d2[[g]]))
       }
     }
@@ -406,13 +418,13 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     }
   } 
   if(all(round(vapply(mu.zero, sum, numeric(1))) == 0)) {
-    mu.zero        <- lapply(mu.zero, function(x) 0)
+    mu.zero        <- if(method == "classify") matrix(0, nr=1, nc=range.G) else lapply(mu.zero, function(x) 0)
   }
   if(any(is.na(unlist(psi.beta)))) {
     psi.beta       <- lapply(psi.beta, function(x) replace(x, is.na(x), 0))
   }
   if(any(unlist(psi.beta)   <= 0))  stop("'psi.beta' must be strictly positive")
-  if(is.element(method, c("IFA", "MIFA", "IMIFA", "OMIFA"))) {
+  if(is.element(method, c("classify", "IFA", "MIFA", "IMIFA", "OMIFA"))) {
     if(!all(MGP.check(unlist(alpha.d1), unlist(alpha.d2), unique(range.Q),
             beta.d1, beta.d2)))     stop("Invalid shrinkage hyperparameter values will not encourage loadings column removal.\n Try using the MGP.check() function in advance.")
     deltas         <- lapply(seq_along(range.G), function(g) list(alpha.d1 = alpha.d1[[g]], alpha.d2 = alpha.d2[[g]]))
@@ -496,16 +508,18 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     for(g in seq_len(range.G)) {
       temp.dat     <- dat[zlabels == levels(zlabels)[g],]
       imifa[[g]]          <- list()
+      gibbs.arg    <- append(temp.args, lapply(deltas[[Gi]], "[[", g))
       imifa[[g]][[Qi]]    <- do.call(paste0("gibbs.", "IFA"),
-                                     args=append(list(data = temp.dat, N = nrow(temp.dat), Q = range.Q), gibbs.arg))
-      fac.time     <- fac.time + imifa[[Gi]][[Qi]]$time
+                                     args=append(list(data = temp.dat, N = nrow(temp.dat), mu = mu[[Gi]][,g], mu.zero = mu.zero[[Gi]][,g],
+                                                      Q = range.Q, psi.beta = psi.beta[[Gi]][,g]), gibbs.arg))
+      fac.time     <- fac.time + imifa[[g]][[Qi]]$time
       if(verbose   && g   != len.G) cat(paste0("Model ", g, " of ", len.G, " complete"), "Initialising...", sep="\n")
     }
   }
   tot.time  <- proc.time() - start.time
   avg.time  <- tot.time/ifelse(method == "MFA", len.X,
-                            ifelse(method == "MIFA", len.G,
-                              ifelse(method == "classify", nlevels(zlabels), len.Q)))
+                           ifelse(method == "MIFA", len.G,
+                             ifelse(method == "classify", range.G, len.Q)))
   tot.time  <- tot.time    + init.time
   init.time <- init.time   + fac.time
   for(g in length(imifa)) {
@@ -530,11 +544,15 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
            "Z.init")      <- factor(zi[[g]], levels=seq_len(range.G[g]))
     }
   }
-  gnames    <- paste0(range.G, ifelse(range.G == 1, "Group", "Groups"))
+  gnames    <- if(method  == "classify") paste0("Group ", seq_len(range.G)) else paste0(range.G, ifelse(range.G == 1, "Group", "Groups"))
   names(imifa)            <- gnames
   attr(imifa, 
        "Alpha.step")      <- alpha.step
   attr(imifa, "Alpha")    <- if(alpha.step == "fixed") alpha
+  if(method == "classify") {
+    attr(imifa,
+         "Class.Props")   <- tabulate(z.list[[1]], range.G)/N
+  }
   attr(imifa, "Center")   <- centered
   attr(imifa, "Date")     <- format(Sys.Date(), "%d-%b-%Y")
   attr(imifa,
