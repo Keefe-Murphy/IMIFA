@@ -6,7 +6,7 @@
   gibbs.OMIFA        <- function(Q, data, iters, N, P, G, mu.zero,
                                  sigma.mu, burnin, thinning, mu, adapt,
                                  psi.alpha, psi.beta, verbose, alpha.d1,
-                                 alpha.d2, sw, cluster, phi.nu, b0, b1, prop,
+                                 alpha.d2, sw, cluster, nu, b0, b1, prop,
                                  beta.d1, beta.d2, adapt.at, epsilon, ...) {
         
   # Define & initialise variables
@@ -61,7 +61,7 @@
     pi.alpha         <- cluster$pi.alpha
     pi.prop          <- cluster$pi.prop
     eta              <- sim.eta.p(N=N, Q=Q)
-    phi              <- lapply(Gseq, function(g) sim.phi.p(Q=Q, P=P, phi.nu=phi.nu))
+    phi              <- lapply(Gseq, function(g) sim.phi.p(Q=Q, P=P, nu=nu))
     delta            <- lapply(Gseq, function(g) c(sim.delta.p(alpha=alpha.d1, beta=beta.d1), sim.delta.p(Q=Q, alpha=alpha.d2, beta=beta.d2)))
     tau              <- lapply(delta, cumprod)
     lmat             <- lapply(Gseq, function(g) matrix(unlist(lapply(Pseq, function(j) sim.load.p(Q=Q, phi=phi[[g]][j,], tau=tau[[g]], P=P)), use.names=FALSE), nr=P, byrow=TRUE))
@@ -145,8 +145,8 @@
     
     # Local Shrinkage
       load.2         <- lapply(lmat, function(lg) lg * lg)
-      phi            <- lapply(Gseq, function(g) if(nn0[g]) sim.phi(Q=Qs[g], P=P, phi.nu=phi.nu, 
-                        tau=tau[[g]], load.2=load.2[[g]]) else sim.phi.p(Q=Qs[g], P=P, phi.nu=phi.nu))
+      phi            <- lapply(Gseq, function(g) if(nn0[g]) sim.phi(Q=Qs[g], P=P, nu=nu, 
+                        tau=tau[[g]], load.2=load.2[[g]]) else sim.phi.p(Q=Qs[g], P=P, nu=nu))
     
     # Global Shrinkage
       sum.terms      <- lapply(Gseq, function(g) diag(crossprod(phi[[g]], load.2[[g]])))
@@ -184,7 +184,7 @@
             notred   <- notred & !Q.big
             Qs[nn0][Q.big]    <- Q.star
           }
-          phi[nn0]   <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) cbind(phi[[g]][,seq_len(Qs.old[h])], rgamma(n=P, shape=phi.nu, rate=phi.nu)) else phi[[g]][,nonred[[h]], drop=FALSE])
+          phi[nn0]   <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) cbind(phi[[g]][,seq_len(Qs.old[h])], rgamma(n=P, shape=nu, rate=nu)) else phi[[g]][,nonred[[h]], drop=FALSE])
           delta[nn0] <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) c(delta[[g]][seq_len(Qs.old[h])], rgamma(n=1, shape=alpha.d2, rate=beta.d2)) else delta[[g]][nonred[[h]]])  
           tau[nn0]   <- lapply(delta[nn.ind], cumprod)
           lmat[nn0]  <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) cbind(lmat[[g]][,seq_len(Qs.old[h])], rnorm(n=P, mean=0, sd=sqrt(1/(phi[[g]][,Qs[g]] * tau[[g]][Qs[g]])))) else lmat[[g]][,nonred[[h]], drop=FALSE])

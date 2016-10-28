@@ -34,8 +34,8 @@
     }
 
   # Local Shrinkage
-    sim.phi     <- function(Q, P, phi.nu, tau, load.2) {
-        matrix(rgamma(P * Q, shape=1/2 + phi.nu, rate=(phi.nu + sweep(load.2, 2, tau, FUN="*"))/2), nr=P, nc=Q)
+    sim.phi     <- function(Q, P, nu, tau, load.2) {
+        matrix(rgamma(P * Q, shape=1/2 + nu, rate=(nu + sweep(load.2, 2, tau, FUN="*"))/2), nr=P, nc=Q)
     }
   
   # Global Shrinkage
@@ -114,8 +114,8 @@
     }
 
   # Local Shrinkage
-    sim.phi.p   <- function(Q, P, phi.nu) {
-        matrix(rgamma(n=P * Q, shape=phi.nu, rate=phi.nu), nr=P, nc=Q)
+    sim.phi.p   <- function(Q, P, nu) {
+        matrix(rgamma(n=P * Q, shape=nu, rate=nu), nr=P, nc=Q)
     }
   
   # Global Shrinkage
@@ -156,11 +156,11 @@
       if(any(c(bd1, bd2) <= 0))            stop("All shrinkage rate hyperparameter values must be strictly positive")
       if(any(ad1 < bd1, ad2 < bd2))        stop("Shrinkage shape hyperparameters must be greater than associated shrinkage rate hyperparameters")
       if(ad2/bd2 <= ad1/bd1)               stop("Shrinkage in column k must be strictly greater than shrinkage in column 1")
-      if(any(length(Q) > 1, Q < 2))        stop("Q must be single value, greater than or equal to 2")
+      if(any(length(Q) > 1, Q  < 2))       stop("Q must be single value, greater than or equal to 2")
       if(inverse) {
         ad1     <- ifelse(ad1 == 1, ad1 + .Machine$double.eps, ad1)
         ad2     <- ifelse(ad2 == 1, ad2 + .Machine$double.eps, ad2)
-          is.unsorted(bd1/(ad1 - 1) * (bd2/(ad2 - 1))^(seq_len(Q) - 1))
+          any(bd2/(ad2 - 1)   >= 1, is.unsorted(bd1/(ad1 - 1) * (bd2/(ad2 - 1))^(seq_len(Q) - 1)))
       } else {
           !is.unsorted(ad1/bd1 * (ad2/bd2)^(seq_len(Q) - 1))
       }

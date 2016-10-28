@@ -3,11 +3,10 @@
 ################################################################
   
 # Gibbs Sampler Function
-  gibbs.MIFA       <- function(Q, data, iters, N, P, G, mu.zero,
-                               sigma.mu, burnin, thinning, mu,
-                               psi.alpha, psi.beta, verbose, adapt,
-                               sw, cluster, phi.nu, b0, b1, prop,
-                               beta.d1, beta.d2, adapt.at, epsilon, ...) {
+  gibbs.MIFA       <- function(Q, data, iters, N, P, G, sw, mu, mu.zero,
+                               sigma.mu, burnin, thinning, verbose, nu,
+                               psi.alpha, psi.beta, adapt, adapt.at, prop,
+                               cluster, b0, b1, beta.d1, beta.d2, epsilon, ...) {
         
   # Define & initialise variables
     start.time     <- proc.time()
@@ -73,7 +72,7 @@
     qstar0g        <- cluster$l.switch[4]
     label.switch   <- any(cluster$l.switch)
     eta            <- sim.eta.p(N=N, Q=Q)
-    phi            <- lapply(Gseq, function(g) sim.phi.p(Q=Q, P=P, phi.nu=phi.nu))
+    phi            <- lapply(Gseq, function(g) sim.phi.p(Q=Q, P=P, nu=nu))
     delta          <- lapply(Gseq, function(g) c(sim.delta.p(alpha=alpha.d1[g], beta=beta.d1), sim.delta.p(Q=Q, alpha=alpha.d2[g], beta=beta.d2)))
     tau            <- lapply(delta, cumprod)
     lmat           <- lapply(Gseq, function(g) matrix(unlist(lapply(Pseq, function(j) sim.load.p(Q=Q, phi=phi[[g]][j,], tau=tau[[g]], P=P)), use.names=FALSE), nr=P, byrow=TRUE))
@@ -162,7 +161,7 @@
     
     # Local Shrinkage
       load.2       <- lapply(lmat, function(lg) lg * lg)
-      phi          <- lapply(Gseq, function(g) sim.phi(Q=Qs[g], P=P, phi.nu=phi.nu, tau=tau[[g]], load.2=load.2[[g]]))
+      phi          <- lapply(Gseq, function(g) sim.phi(Q=Qs[g], P=P, nu=nu, tau=tau[[g]], load.2=load.2[[g]]))
     
     # Global Shrinkage
       sum.terms    <- lapply(Gseq, function(g) diag(crossprod(phi[[g]], load.2[[g]])))
@@ -192,7 +191,7 @@
             notred <- notred & !Q.big
             Qs[Q.big]       <- Q.star
           }
-          phi      <- lapply(Gseq, function(g)   if(notred[g]) cbind(phi[[g]][,seq_len(Qs.old[g])], rgamma(n=P, shape=phi.nu, rate=phi.nu)) else phi[[g]][,nonred[[g]], drop=FALSE])
+          phi      <- lapply(Gseq, function(g)   if(notred[g]) cbind(phi[[g]][,seq_len(Qs.old[g])], rgamma(n=P, shape=nu, rate=nu)) else phi[[g]][,nonred[[g]], drop=FALSE])
           delta    <- lapply(Gseq, function(g)   if(notred[g]) c(delta[[g]][seq_len(Qs.old[g])], rgamma(n=1, shape=alpha.d2[g], rate=beta.d2)) else delta[[g]][nonred[[g]]])  
           tau      <- lapply(delta, cumprod)
           lmat     <- lapply(Gseq, function(g)   if(notred[g]) cbind(lmat[[g]][,seq_len(Qs.old[g])], rnorm(n=P, mean=0, sd=sqrt(1/(phi[[g]][,Qs[g]] * tau[[g]][Qs[g]])))) else lmat[[g]][,nonred[[g]], drop=FALSE])
