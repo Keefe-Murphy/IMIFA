@@ -43,26 +43,30 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     raw.dat <- raw.dat[num.check]
   }
   if(length(iters)  <= 1)           stop("Run a longer chain!")
-  if(any(is.na(raw.dat))) {         message("Rows with missing values removed from data")
+  if(any(is.na(raw.dat)))  {        message("Rows with missing values removed from data")
     raw.dat <- raw.dat[complete.cases(raw.dat),]
   }          
-  if(scaling != "none") {
-    scal    <- apply(raw.dat, 2, sd)
-    if(scaling == "pareto") {
-      scal  <- sqrt(scal)
+  if(method != "classify") {
+    if(scaling   != "none")   {
+      scal  <- apply(raw.dat, 2, sd)
+      if(scaling == "pareto") {
+       scal <- sqrt(scal)
+      }
+    } else {
+      scal  <- FALSE
     }
-  } else {
-    scal    <- FALSE
+    dat     <- scale(raw.dat, center=centering, scale=scal)
+  } else   {
+    dat     <- raw.dat
   }
-  dat       <- scale(raw.dat, center=centering, scale=scal)
-  centered  <- any(centering, round(colSums(dat)) == 0)
+  centered  <- if(method == "classify") round(colSums(dat)) == 0 else any(centering, round(colSums(dat)) == 0)
   N         <- nrow(dat)
   P         <- ncol(dat)
   lnN       <- log(N)
   
 # Manage storage switches & warnings for other function inputs
-  if(!missing(mu.switch) && 
-      all(!mu.switch, !centered))   warning("Centering hasn't been applied - are you sure you want mu.switch=FALSE?", call.=FALSE)
+  if(!missing(mu.switch) && all(!mu.switch, ifelse(method == "classify", 
+     !centering, !centered)))       warning("Centering hasn't been applied - are you sure you want mu.switch=FALSE?", call.=FALSE)
   switches  <- c(mu.sw=mu.switch, s.sw=score.switch, l.sw=load.switch, psi.sw=psi.switch, pi.sw=pi.switch)
   if(!is.logical(switches))         stop("All logical switches must be TRUE or FALSE")
   if(N < 2)                         stop("Must have more than one observation")
@@ -208,7 +212,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(missing("prop"))      prop          <- 3/4
     if(abs(prop - (1 - prop)) < 0)  stop("'prop' must be a single number between 0 and 1")
     if(missing("adapt.at"))  adapt.at      <- ifelse(is.element(method, c("IFA", "MIFA")), burnin, 0)
-    if(missing("epsilon"))   epsilon       <- ifelse(centered, 0.1, 0.05)
+    if(missing("epsilon"))   epsilon       <- ifelse(any(centered, centering), 0.1, 0.05)
     if(adapt.at < 0 ||
        adapt.at > burnin)           stop("'adapt.at' must be a single number in the interval [0, burnin]")
     if(epsilon <= 0 ||
@@ -505,12 +509,22 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     }
   } else if(method == "classify") { stop("'classify' method not yet implemented")   
     start.time     <- proc.time()
-    for(g in seq_len(range.G)) {
-      temp.dat     <- dat[zlabels == levels(zlabels)[g],]
+    if(centered)                    warning("Data supplied is globally centered, are you sure?", call.=FALSE)
+    for(g in seq_len(range.G))  {
+      tmp.dat      <- raw.dat[zlabels == levels(zlabels)[g],]
+      if(scaling   != "none")   {
+        scal  <- apply(tmp.dat, 2, sd)
+        if(scaling == "pareto") {
+         scal <- sqrt(scal)
+        }
+      } else {
+        scal  <- FALSE
+      }
+      tmp.dat <- scale(tmp.dat, center=centering, scale=scal)
       imifa[[g]]          <- list()
       gibbs.arg    <- append(temp.args, lapply(deltas[[Gi]], "[[", g))
       imifa[[g]][[Qi]]    <- do.call(paste0("gibbs.", "IFA"),
-                                     args=append(list(data = temp.dat, N = nrow(temp.dat), mu = mu[[Gi]][,g], mu.zero = mu.zero[[Gi]][,g],
+                                     args=append(list(data = tmp.dat, N = nrow(tmp.dat), mu = mu[[Gi]][,g], mu.zero = mu.zero[[Gi]][,g],
                                                       Q = range.Q, psi.beta = psi.beta[[Gi]][,g]), gibbs.arg))
       fac.time     <- fac.time + imifa[[g]][[Qi]]$time
       if(verbose   && g   != len.G) cat(paste0("Model ", g, " of ", len.G, " complete"), "Initialising...", sep="\n")
@@ -553,7 +567,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     attr(imifa,
          "Class.Props")   <- tabulate(z.list[[1]], range.G)/N
   }
-  attr(imifa, "Center")   <- centered
+  attr(imifa, "Center")   <- any(centered, centering)
   attr(imifa, "Date")     <- format(Sys.Date(), "%d-%b-%Y")
   attr(imifa,
        "Disc.step")       <- learn.d
