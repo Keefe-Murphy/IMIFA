@@ -77,6 +77,20 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
     sw.n  <- paste0(toupper(substring(plot.meth, 1, 1)), ".sw")
     m.sw[sw.n] <- TRUE
   }
+  z.miss  <- missing(zlabels)
+  if(!z.miss) {
+    z.nam <- gsub("[[:space:]]", "", deparse(substitute(zlabels)))
+    nam.z <- gsub("\\[.*", "", z.nam)
+    nam.x <- gsub(".*\\[(.*)\\].*", "\\1)", z.nam)
+    ptrn  <- c("(", ")")
+    if(!exists(nam.z,
+               envir=.GlobalEnv))     stop(paste0("Object ", match.call()$zlabels, " not found"))
+    if(any(unlist(vapply(seq_along(ptrn), function(p) grepl(ptrn[p], nam.z, fixed=TRUE), logical(1))), 
+           !identical(z.nam,   nam.z) && (any(grepl("[[:alpha:]]", gsub('c', '', nam.x))) || grepl(":",
+           nam.x, fixed=TRUE))))      stop("Extremely inadvisable to supply 'zlabels' subsetted by any means other than row/column numbers or c() indexing: best to create new object")
+    labs  <- as.numeric(as.factor(zlabels))
+    if(length(labs) != n.obs)         stop(paste0("'zlabels' must be a factor of length N=",  n.obs))
+  }
   if(m.sw["P.sw"]) {
     if(!is.element(vars, c("means",
        "loadings", "uniquenesses")))  stop("Can only plot parallel coordinates for means, loadings or uniquenesses")
@@ -393,14 +407,6 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
       }
       if(vars  == "scores") {
         labs   <- if(grp.ind) clust$map else 1
-        if(!missing(zlabels)) {
-          if(!exists(as.character(match.call()$zlabels),
-              envir=.GlobalEnv)) {    warning(paste0("Object ", match.call()$zlabels, " not found"), call.=FALSE)
-          } else {
-            labs  <- as.numeric(as.factor(zlabels))
-            if(length(labs) != n.obs) stop(paste0("'zlabels' must be a factor of length N=",  n.obs))
-          }
-        }
         if(g.score)  { 
           if(g.ind == 1)  tmplab <- labs
           z.ind  <- as.numeric(levels(tmplab))[tmplab] == g
@@ -679,12 +685,10 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
         axis(1, at=c(breaks[round(breaks, 1) < min(0.8, 1 - 1/G)], 1 - 1/G), labels=c(breaks[round(breaks, 1) < min(0.8, 1 - 1/G)], "1 - 1/G"), las=2, pos=0, cex.axis=0.9)
       }
       if(g == min(Gs)) {
-        if(any(!labelmiss,  !missing(zlabels))) {
-          if(all(!labelmiss, missing(zlabels))) {
+        if(any(!labelmiss,  !z.miss)) {
+          if(all(!labelmiss, z.miss)) {
            prf  <- clust$perf
           } else   {
-           labs <- as.factor(zlabels)
-           if(length(labs) != n.obs)  stop(paste0("'zlabels' must be a factor of length N=",  n.obs))
            pzs  <- clust$map
            if(nlevels(pzs) == nlevels(labs)) {
             lsw <- lab.switch(z.new=pzs, z.old=labs, Gs=seq_len(G))

@@ -2,7 +2,7 @@
 ### Tune Parameters & Extract Results ###
 #########################################
 
-tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q = NULL, Q.meth = c("Mode", "Median"), G.meth = c("Mode", "Median"),
+tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q = NULL, Q.meth = c("Mode", "Median"), G.meth = c("Mode", "Median"), dat = NULL,
                              criterion = c("bicm", "aicm", "bic.mcmc", "aic.mcmc", "log.iLLH"), conf.level = 0.95, zlabels = NULL, recomp = FALSE) {
   
   defpar         <- suppressWarnings(par(no.readonly=TRUE))
@@ -188,20 +188,59 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     }
     clust.ind    <- !any(is.element(method,   c("FA", "IFA")), 
                      all(is.element(method, c("MFA", "MIFA")), G == 1))
-    sw.mx        <- ifelse(clust.ind, sw["mu.sw"], TRUE)
+    sw.mx        <- ifelse(clust.ind, sw["mu.sw"],  TRUE)
     sw.px        <- ifelse(clust.ind, sw["psi.sw"], TRUE)  
     if(inf.Q) {
       Q.store    <- sims[[G.ind]][[Q.ind]]$Q.store[Gseq,tmp.store, drop=FALSE]
       Q.meth     <- ifelse(missing(Q.meth), "Mode", match.arg(Q.meth))
     }
     if(length(tmp.store) <= 1)    stop(paste0("Not enough samples stored to proceed", ifelse(any(G.T, Q.T), paste0(": try supplying different Q or G values"), "")))
+    
+  # Retrieve dataset
+    dat.nam      <- gsub("[[:space:]]", "", ifelse(missing(dat), attr(sims, "Name"), deparse(substitute(dat))))
+    nam.dat      <- gsub("\\[.*", "", dat.nam)
+    data.x       <- exists(nam.dat, envir=.GlobalEnv) 
+    pattern      <- c("(", ")")
+    if(!data.x) {                 warning(paste0("Object ", nam.dat, " not found in .GlobalEnv: can't compute empirical covariance and error metrics"), call.=FALSE) 
+    } else      {
+      dat        <- as.data.frame(get(nam.dat))
+      nam.x      <- gsub(".*\\[(.*)\\].*", "(\\1)",  dat.nam)
+      if(any(unlist(vapply(seq_along(pattern), function(p) grepl(pattern[p], nam.dat, fixed=TRUE), logical(1))), 
+         !identical(dat.nam, nam.dat) && (any(grepl("[[:alpha:]]", gsub('c', '', nam.x))) || grepl(":", 
+         nam.x, fixed=TRUE)))) {  warning("Extremely inadvisable to supply 'dat' subsetted by any means other than row/column numbers or c() indexing:\n can't compute empirical covariance and error metrics, best to create new data object", call.=FALSE)
+      } else  {
+        spl.ind          <- if(grepl("(,", nam.x, fixed=TRUE)) sapply(gregexpr("\\(,", nam.x), head, 1) else sapply(gregexpr("\\)", nam.x), head, 1)
+        spl.tmp          <- c(substring(nam.x, 1, spl.ind), substring(nam.x, spl.ind + 2, nchar(nam.x)))
+        neg.r            <- grepl("-", spl.tmp[1], fixed=TRUE) || grepl("!", spl.tmp[1], fixed=TRUE)
+        neg.c            <- grepl("-", spl.tmp[2], fixed=TRUE) || grepl("!", spl.tmp[2], fixed=TRUE)
+        rowx             <- as.numeric(unlist(strsplit(gsub('\\(', '', gsub(',', '', unlist(regmatches(spl.tmp[1], gregexpr('\\(?[0-9,.]+', spl.tmp[1]))))), '')))
+        rowx             <- if(sum(rowx) == 0) seq_len(nrow(dat)) else rowx
+        colseq           <- ifelse(neg.c, -1, 1) * as.numeric(unlist(strsplit(gsub('\\(', '', gsub(',', '', unlist(regmatches(spl.tmp[2], gregexpr('\\(?[0-9,.]+', spl.tmp[2]))))), '')))
+        rowseq           <- rep(neg.r, nrow(dat)) 
+        rowseq[rowx]     <- !rowseq[rowx]
+        dat              <- subset(dat, select=if(sum(colseq) == 0) seq_len(ncol(dat)) else colseq, subset=rowseq, drop=!grepl("drop=F", dat.nam))
+      }
+      dat        <- dat[complete.cases(dat),]
+      dat        <- dat[vapply(dat, is.numeric, logical(1))]
+      dat        <- scale(dat, center=cent, scale=scaling)
+      varnames   <- colnames(dat)
+      if(!identical(dim(dat), 
+         c(n.obs, n.var)))        warning("Dimensions of data don't match those in the dataset supplied to mcmc.IMIFA():\n be careful using subsetted data, best to create new object", call.=FALSE)
+      n.obs      <- nrow(dat)
+    }
   
 # Manage Label Switching & retrieve cluster labels/mixing proportions
   if(clust.ind) {
     label.miss   <- missing(zlabels)
     if(!label.miss)   {
-     if(!exists(as.character(substitute(zlabels)),
+      z.nam      <- gsub("[[:space:]]", "", deparse(substitute(zlabels)))
+      nam.z      <- gsub("\\[.*", "", z.nam)
+      nam.zx     <- gsub(".*\\[(.*)\\].*", "\\1)",   z.nam)
+      if(!exists(nam.z,
          envir=.GlobalEnv))       stop(paste0("Object ", match.call()$zlabels, " not found"))
+      if(any(unlist(vapply(seq_along(pattern), function(p) grepl(pattern[p], nam.z,   fixed=TRUE), logical(1))), 
+         !identical(z.nam,   nam.z)   && (any(grepl("[[:alpha:]]", gsub('c', '', nam.zx))) || grepl(":",
+         nam.zx, fixed=TRUE))))   stop("Extremely inadvisable to supply 'zlabels' subsetted by any means other than row/column numbers or c() indexing: best to create new object")
      if(length(zlabels) != n.obs) stop(paste0("'zlabels' must be a factor of length N=",  n.obs))  
     }
     if(sw["mu.sw"])   {
@@ -425,18 +464,11 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       if(sw["psi.sw"]) {
         psi      <- as.matrix(psis[,g,store])
       }
-      if(g == 1) {
-        dat      <- attr(sims, "Name")
-        data.x   <- exists(dat, envir=.GlobalEnv)  
-        if(!data.x)               warning(paste0("Object ", dat, " not found in .GlobalEnv: can't compute empirical covariance and error metrics"), call.=FALSE) 
-        dat      <- as.data.frame(get(dat))
-        dat      <- dat[vapply(dat, is.numeric, logical(1))]
-        dat      <- scale(dat, center=cent, scale=scaling)
-        varnames <- colnames(dat)
-      }
-      cov.emp    <- cov(dat[z.ind[[g]],, drop=FALSE])
-      dimnames(cov.emp)  <- list(varnames, varnames)
-      if(sum(z.ind[[g]]) <= 1)    rm(cov.emp)
+      if(data.x) {
+        cov.emp  <- cov(dat[z.ind[[g]],, drop=FALSE])
+        dimnames(cov.emp)  <- list(varnames, varnames)  
+        if(sum(z.ind[[g]]) <= 1)  rm(cov.emp)
+      }  
     } else {
       post.mu    <- sims[[G.ind]][[Q.ind]]$post.mu
       post.psi   <- sims[[G.ind]][[Q.ind]]$post.psi

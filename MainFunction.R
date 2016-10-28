@@ -23,8 +23,32 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   }
   scaling   <- match.arg(scaling)
   if(missing(dat))                  stop("Dataset must be supplied")
-  if(!exists(gsub("\\[.*", "", deparse(substitute(dat))),
-             envir=.GlobalEnv))     stop(paste0("Object ", match.call()$dat, " not found"))
+  dat.nam   <- gsub("[[:space:]]", "", deparse(substitute(dat)))
+  nam.dat   <- gsub("\\[.*", "", dat.nam)
+  pattern   <- c("(", ")")
+  nam.x     <- gsub(".*\\[(.*)\\].*", "\\1)", dat.nam)
+  if(!exists(nam.dat,
+     envir=.GlobalEnv))             stop(paste0("Object ", match.call()$dat, " not found"))
+  if(any(unlist(vapply(seq_along(pattern), function(p) grepl(pattern[p], nam.dat, fixed=TRUE), logical(1))), 
+         !identical(dat.nam, nam.dat) && (any(grepl("[[:alpha:]]", gsub('c', '',  nam.x))) || grepl(":", 
+         nam.x,    fixed=TRUE))))   stop("Extremely inadvisable to supply 'dat' subsetted by any means other than row/column numbers or c() indexing: best to create new data object")
+  zin.miss  <- missing(z.init)
+  zli.miss  <- missing(z.list)
+  if(!zli.miss) {
+    z.nam   <- gsub("[[:space:]]", "", deparse(substitute(z.list)))
+    nam.z   <- gsub("\\[.*", "", z.nam)
+    nam.zx  <- gsub(".*\\[(.*)\\].*", "\\1)",   z.nam)
+    if(!exists(nam.z,
+               envir=.GlobalEnv))   stop(paste0("Object ", match.call()$z.list, " not found"))
+    if(any(unlist(vapply(seq_along(pattern), function(p) grepl(pattern[p], nam.z,   fixed=TRUE), logical(1))), 
+           !identical(z.nam,   nam.z) && (any(grepl("[[:alpha:]]", gsub('c', '', nam.zx))) || grepl(":",
+           nam.zx, fixed=TRUE))))   stop("Extremely inadvisable to supply 'z.list' subsetted by any means other than row/column numbers or c() indexing: best to create new object")
+    if(!is.list(z.list))     z.list        <- lapply(list(z.list), as.factor)
+    if(!zin.miss &&
+        z.init  != "list") { z.init        <- "list"
+                                    message("'z.init' set to 'list' as 'z.list' was supplied") 
+    }                
+  }
   if(!is.logical(factanal))         stop("'factanal' must be TRUE or FALSE")
   if(!is.logical(centering))        stop("'centering' must be TRUE or FALSE")
   if(!is.logical(verbose))          stop("'verbose' must be TRUE or FALSE")
@@ -130,21 +154,18 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
         if(trunc.G  > N)            stop(paste0("'trunc.G' cannot be greater than N=", N))
       }
     } else if(method == "classify") {
-      if(!missing(z.init) && 
-         z.init != "list") {        stop("'z.init' must be set to 'list' for classification")
+      if(!zin.miss && 
+         z.init    != "list") {     stop("'z.init' must be set to 'list' for classification")
       } else z.init       <- "list"
-      if(missing(z.list))           stop("Data labels must be supplied via 'z.list' for classification")
-      if(!exists(gsub("\\[.*", "", deparse(substitute(z.list))),
-                 envir=.GlobalEnv)) stop(paste0("Object ", match.call()$z.list, " not found"))
-      z.list       <- as.factor(z.list)
-      if(length(z.list)  != N)      stop(paste0("'zlabels' must be a factor of length N=",  N)) 
+      if(zli.miss)                  stop("Data labels must be supplied via 'z.list' for classification")
       levs         <- nlevels(z.list)
+      if(length(z.list)    > 1)     stop("Only one set of labels can be supplied via 'z.list'")
+      zlabels      <- unlist(z.list)
+      if(length(zlabels)  != N)     stop(paste0("'z.list' must be a factor of length N=",  N)) 
       if(!missing(range.G) && any(length(range.G > 1), 
-             range.G   != levs)) {  warning("Forced 'range.G' equal to the number of levels in 'zlabels' for the 'classify' method")
+          range.G  != levs))   {    warning("Forced 'range.G' equal to the number of levels in 'zlabels' for the 'classify' method")
       }
       range.G      <- levs
-      zlabels      <- z.list
-      z.list       <- list(z.list)
     } else {
       range.G      <- 1
     }
@@ -259,8 +280,8 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     }
   }
   if(all(is.element(method, c("FA", "IFA")), 
-         !missing(z.init) || 
-         !missing(z.list)))         message(paste0("z does not need to be initialised for the ", method, " method"))
+         !zin.miss || 
+         !zli.miss))                message(paste0("z does not need to be initialised for the ", method, " method"))
   if(is.element(method, c("MFA", "MIFA", "classify"))) {
     if(!is.logical(mu0g))           stop("'mu0g' must be TRUE or FALSE")
     if(!is.logical(psi0g))          stop("'psi0g' must be TRUE or FALSE")
@@ -282,27 +303,23 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
        alpha.step == "fixed"))      warning(paste0("'alpha' fixed at ", alpha, " as it's not being learned via Gibbs/Metropolis-Hastings updates"), call.=FALSE)
     if(all(!is.element(method, c("IMFA", "IMIFA")),
            alpha   > 1))            warning("Are you sure alpha should be greater than 1?", call.=FALSE)
-                             z.miss        <- missing(z.init)
                              z.init        <- match.arg(z.init)
     if(all(is.element(method,  c("OMIFA", "OMFA")), !is.element(z.init, 
        c("list", "kmeans"))))       stop(paste0("'z.init' must be set to 'list' or 'kmeans' for the ", method, " method to ensure all groups are populated at the initialisation stage"))
-    if(!missing(z.list))   {
-      if(!is.list(z.list))   z.list        <- lapply(list(z.list), as.factor)
-      if(z.init != "list") { z.init        <- "list"
-      if(!z.miss)                   message("'z.init' set to 'list' as 'z.list' was supplied") }
+    if(!zli.miss) {
       if(length(z.list)   != len.G) {
-                                    stop(paste0("'z.list' must be a list of length ", len.G)) }
+                                    stop(paste0("'z.list' must be a list of length ", len.G))  }
                              list.levels   <- lapply(z.list, nlevels)
-      if(!all(list.levels == range.G))               {
+      if(!all(list.levels == range.G))            {
         if(!is.element(method, c("IMIFA", 
-                       "IMFA", "OMIFA", "OMFA")))    {
+                       "IMFA", "OMIFA", "OMFA"))) {
                                     stop(paste0("Each element of 'z.list' must have the same number of levels as 'range.G'")) 
-        } else                      stop(paste0("Only ", list.levels, " groups are populated according to z.list, but 'range.G' has been set to ", range.G, ".\n  Reset range.G to this value to avoid redunandtly carrying around empty groups"))
+        } else                      stop(paste0("Only ", list.levels, " groups are populated according to z.list, but 'range.G' has been set to ", range.G, ":\n  Reset range.G to this value to avoid redunandtly carrying around empty groups or supply a list with ", range.G, " levels"))
       }
-      if(!all(lapply(z.list, length)    == N))       {
+      if(!all(lapply(z.list, length) == N)) {
                                     stop(paste0("Each element of 'z.list' must be a vector of length N=", N)) }
     }
-    if(all(missing(z.list),  z.init     == "list"))  {
+    if(all(zli.miss, z.init == "list"))     {
                                     stop(paste0("'z.list' must be supplied if 'z.init' is set to 'list'")) }
   }
   imifa     <- list(list())
@@ -584,7 +601,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   method                  <- names(table(meth)[which.max(table(meth))])
   attr(imifa, "Method")   <- paste0(toupper(substr(method, 1, 1)),
                                     substr(method, 2, nchar(method)))
-  attr(imifa, "Name")     <- as.character(match.call()$dat)
+  attr(imifa, "Name")     <- dat.nam
   attr(imifa, "Obs")      <- N
   attr(imifa, "Scaling")  <- scal
   attr(attr(imifa,
