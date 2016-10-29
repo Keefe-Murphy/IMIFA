@@ -65,7 +65,7 @@
   
   # Iterate
     for(iter in seq_len(total)[-1]) { 
-      if(verbose && iter  < burnin) setTxtProgressBar(pb, iter)
+      if(verbose && iter    < burnin) setTxtProgressBar(pb, iter)
       Q0         <- Q  > 0
       Q1         <- Q == 1
       

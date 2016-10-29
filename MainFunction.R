@@ -201,7 +201,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   if(scaling == "unit")      sigma.mu      <- sigma.mu[1]
   if(any(sigma.mu  <= 0))           stop("'sigma.mu' must be strictly positive")
   if(missing("psi.alpha"))   psi.alpha     <- 2.5
-  if(psi.alpha <= 0)                stop("'psi.alpha' must be strictly positive")
+  if(psi.alpha     <= 1)            stop("'psi.alpha' must be strictly greater than 1 in order to bound uniquenesses away from zero")
   Q.miss    <- missing(range.Q)
   Q.min     <- min(ceiling(log(P)), ceiling(log(N)))
   if(is.element(method, c("FA", "MFA", "OMFA", "IMFA"))) {
