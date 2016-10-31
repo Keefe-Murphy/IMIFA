@@ -260,7 +260,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(missing("prop"))      prop          <- 3/4
     if(missing("adapt.at"))  adapt.at      <- ifelse(is.element(method, c("IFA", "MIFA")), burnin, 0)
     if(missing("epsilon"))   epsilon       <- ifelse(any(centered, centering), 0.1, 0.05)
-    if(any(length(prop)    != 1, length(adapt.at != 1),
+    if(any(length(prop)    != 1, length(adapt.at) != 1,
            length(epsilon) != 1))   stop("'prop', 'adapt.at', and 'epsilon' must all be of length 1")
     if(any(!is.numeric(prop), !is.numeric(adapt.at),
            !is.numeric(epsilon)))   stop("'prop', 'adapt.at', and 'epsilon' must all be numeric")
