@@ -90,7 +90,7 @@
 # Priors
 
   # Means
-    sim.mu.p    <- function(P, sigma.mu, mu.zero) {
+    sim.mu.p    <- function(P, mu.zero, sigma.mu) {
       sqrt(sigma.mu) * rnorm(P) + mu.zero
     }
   

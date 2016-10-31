@@ -76,8 +76,8 @@
         lmat     <- matrix(unlist(lapply(Pseq, function(j) sim.load(Q=Q, tau=tau, eta=eta, c.data=c.data[,j], P=P, Q1=Q1, 
                            phi=phi[j,], psi.inv=psi.inv[j], EtE=crossprod(eta))), use.names=FALSE), nr=P, byrow=TRUE)
       } else {
-        eta      <- base::matrix(, nr=N, nc=0)
-        lmat     <- base::matrix(, nr=P, nc=0)
+        eta      <- base::matrix(0, nr=N, nc=0)
+        lmat     <- base::matrix(0, nr=P, nc=0)
       }     
       
     # Means

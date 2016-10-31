@@ -180,11 +180,11 @@
     # Scores & Loadings
       c.data         <- lapply(Gs, function(g) sweep(dat.g[[g]], 2, mu[,g], FUN="-"))
       if(!any(Q0))    {
-        eta          <- base::matrix(, nr=N, nc=0)
+        eta          <- base::matrix(0, nr=N, nc=0)
         eta.tmp      <- lapply(Gs, function(g) eta[z.ind[[g]],, drop=FALSE])
-        lmat[Gs]     <- lapply(Gs, function(g) base::matrix(, nr=P, nc=0))
+        lmat[Gs]     <- lapply(Gs, function(g) base::matrix(0, nr=P, nc=0))
       } else {
-        eta.tmp      <- lapply(Gs, function(g) if(all(nn0[g], Q0[g])) sim.score(N=nn[g], lmat=lmat[[g]], Q=Qs[g], Q1=Q1[g], c.data=c.data[[g]], psi.inv=psi.inv[,g]) else base::matrix(, nr=ifelse(Q0[g], 0, nn[g]), nc=Qs[g]))
+        eta.tmp      <- lapply(Gs, function(g) if(all(nn0[g], Q0[g])) sim.score(N=nn[g], lmat=lmat[[g]], Q=Qs[g], Q1=Q1[g], c.data=c.data[[g]], psi.inv=psi.inv[,g]) else base::matrix(0, nr=ifelse(Q0[g], 0, nn[g]), nc=Qs[g]))
         EtE          <- lapply(Gs, function(g) if(nn0[g]) crossprod(eta.tmp[[g]]))
         lmat[Gs]     <- lapply(Gs, function(g) if(all(nn0[g], Q0[g])) matrix(unlist(lapply(Ps, function(j) sim.load(Q=Qs[g], P=P, c.data=c.data[[g]][,j], EtE=EtE[[g]],
                                eta=eta.tmp[[g]], psi.inv=psi.inv[,g][j], Q1=Q1[g], phi=phi[[g]][j,], tau=tau[[g]], shrink=TRUE)), use.names=FALSE), nr=P, byrow=TRUE) else 

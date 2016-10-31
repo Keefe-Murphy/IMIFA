@@ -39,7 +39,7 @@ sim.IMIFA      <- function(N = 300L, G = 3L, P = 50L, Q = rep(4L, G), pis = rep(
            !is.numeric(pis)))            stop(paste0("'pis' must be a numeric vector of length G=", G, " which sums to ", 1))
     nn         <- rep(0,  G)
     while(any(nn < floor(N/(G * G))))  {
-      labs     <- factor(which(rmultinom(N, size=1, prob=pis) != 0, arr.ind=TRUE)[,1], levels=Gseq)
+      labs     <- sim.z.p(N=N, prob.z=pis)
       nn       <- tabulate(labs, nbins=G)  
     }
   } 
@@ -55,15 +55,14 @@ sim.IMIFA      <- function(N = 300L, G = 3L, P = 50L, Q = rep(4L, G), pis = rep(
   true.zlab    <- factor(rep(nn.seq, nn), labels=nn.seq)
   if(method == "conditional") {
     Q.max      <- max(Q)
-    eta.true   <- matrix(rnorm(N * Q.max, 0, 1), nr=N, nc=Q.max) 
-    dimnames(eta.true) <- list(nnames, paste0("Factor ", seq_len(Q.max)))
+    eta.true   <- sim.eta.p(Q=Q.max, N=N)
   }
   for(g in Gseq) {
     Q.g        <- Q[g]
     N.g        <- nn[g]
-    mu.true    <- rnorm(P, rnorm(P, sample(-5:5, P, replace=TRUE), 1), 2)
-    l.true     <- if(Q.g > 0) matrix(rnorm(P * Q.g, 0, 1), nr=P, nc=Q.g) else base::matrix(, nr=P, nc=0)
-    psi.true   <- runif(P, 0, 0.5)
+    mu.true    <- sim.mu.p(P=P, mu.zero=sample(-1:1, 1), sigma.mu=1)
+    l.true     <- sim.load.p(Q=Q, P=P, sigma.l=1, shrink=FALSE)
+    psi.true   <- runif(P, 0, 1)
     
   # Simulate data
     covmat     <- diag(psi.true) + (if(method == "marginal") tcrossprod(l.true) else 0)
@@ -92,16 +91,17 @@ sim.IMIFA      <- function(N = 300L, G = 3L, P = 50L, Q = rep(4L, G), pis = rep(
   attr(simdata,
        "Groups")       <- G
   attr(simdata, 
-       "Means")        <- true.mu
+       "Means")        <- do.call(cbind, true.mu)
   if(method == "conditional") {
     eta.true   <- eta.true[permute,, drop=FALSE]
+    dimnames(eta.true) <- list(nnames, paste0("Factor ", seq_len(Q.max)))
     attr(simdata,
          "Scores")     <- eta.true
   }
   attr(simdata, 
        "Loadings")     <- true.l
   attr(simdata, 
-       "Uniquenesses") <- true.psi
+       "Uniquenesses") <- do.call(cbind, true.psi)
   attr(simdata, 
        "Labels")       <- true.zlab
   attr(simdata,
