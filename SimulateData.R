@@ -2,10 +2,16 @@
 ### Simulate Data (Single & Shrinkage Case) ###
 ###############################################
 
-sim.IMIFA      <- function(N = 300, G = 3, P = 50, Q = rep(4, G), pis = rep(1/G, G), 
+sim.IMIFA      <- function(N = 300L, G = 3L, P = 50L, Q = rep(4L, G), pis = rep(1/G, G), 
                            nn = NULL, method = c("conditional", "marginal")) {
   
+  N            <- as.integer(N)
+  G            <- as.integer(G)
+  P            <- as.integer(P)
+  Q            <- as.integer(Q)
   if(any(N  < 0, P  < 0, Q < 0, G <= 0)) stop("'N', 'P', and 'Q' must be strictly non-negative and 'G' must be strictly positive")
+  if(any(length(N) != 1, length(G) != 1,
+         length(P) != 1))                stop("'N', 'P', and 'G' must be of length 1")
   if(any(N  < 2, N <= G))                stop("Must simulate more than one data-point and the number of groups cannot exceed N")
   if(any(Q >= P, Q >= N - 1))            stop(paste0("Cannot generate this many factors relative to N=", N, " and P=", P))
   if(length(Q) != G) {                   
@@ -25,10 +31,12 @@ sim.IMIFA      <- function(N = 300, G = 3, P = 50, Q = rep(4, G), pis = rep(1/G,
     nn         <- as.integer(nn)
     if(any(nn  == 0))                    stop("All 'nn' values be strictly positive; simulating empty groups not allowed")
     if(any(length(nn)  != G, 
-           sum(nn)     != N))            stop(paste0("'nn' must be an integer vector of length G=", G, " which sums to N=", N))
+           sum(nn)     != N,
+           !is.integer(nn)))             stop(paste0("'nn' must be an integer vector of length G=", G, " which sums to N=", N))
   } else {
     if(any(length(pis) != G,
-           sum(pis)    != 1))            stop(paste0("'pis' must be a vector of length G=", G, " which sums to ", 1))
+           sum(pis)    != 1,
+           !is.numeric(pis)))            stop(paste0("'pis' must be a numeric vector of length G=", G, " which sums to ", 1))
     nn         <- rep(0,  G)
     while(any(nn < floor(N/(G * G))))  {
       labs     <- factor(which(rmultinom(N, size=1, prob=pis) != 0, arr.ind=TRUE)[,1], levels=Gseq)

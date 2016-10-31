@@ -2,7 +2,7 @@
 ### Tune Parameters & Extract Results ###
 #########################################
 
-tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q = NULL, Q.meth = c("Mode", "Median"), G.meth = c("Mode", "Median"), dat = NULL,
+tune.IMIFA       <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, Q = NULL, Q.meth = c("Mode", "Median"), G.meth = c("Mode", "Median"), dat = NULL,
                              criterion = c("bicm", "aicm", "bic.mcmc", "aic.mcmc", "log.iLLH"), conf.level = 0.95, zlabels = NULL, recomp = FALSE) {
   
   defpar         <- suppressWarnings(par(no.readonly=TRUE))
@@ -12,10 +12,12 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   on.exit(suppressWarnings(options(defopt)), add=TRUE)
   if(missing(sims))               stop("Simulations must be supplied")
   if(!exists(deparse(substitute(sims)),
-             envir=.GlobalEnv))   stop(paste0("Object ", match.call()$sims, " not found"))
+             envir=.GlobalEnv))   stop(paste0("Object ", match.call()$sims, " not found\n"))
   if(class(sims) != "IMIFA")      stop(paste0("Simulations object of class 'IMIFA' must be supplied"))
   burnin         <- as.integer(burnin)
   thinning       <- as.integer(thinning)
+  if(any(c(length(thinning),
+           length(burnin)) > 1))  stop("'burnin' and 'thinning' must be of length 1") 
   store          <- seq(from=burnin + 1, to=attr(sims, "Store"), by=thinning)
   n.store        <- length(store)
   tmp.store      <- store
@@ -34,14 +36,17 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   scaling        <- attr(sims, "Scaling")
   scal.meth      <- attr(scaling, "Method")
   conf.level     <- as.numeric(conf.level)
-  if(conf.level  <= 0   || 
-     conf.level  >= 1)            stop("'conf.level' must be a single number between 0 and 1")
+  if(any(length(conf.level) != 1, 
+     !is.numeric(conf.level),
+     (conf.level <= 0   || 
+      conf.level >= 1)))          stop("'conf.level' must be a single number between 0 and 1")
   conf.levels    <- c((1 - conf.level)/2, (1 + conf.level)/2)
   criterion      <- match.arg(criterion)
   if(all(!is.element(method, c("FA", "MFA", "OMFA", "IMFA")),
-     !is.element(criterion, c("log.iLLH", 
+     !is.element(criterion,  c("log.iLLH", 
      "aicm", "bicm"))))           stop(paste0("'criterion' should be one of 'aicm', 'bicm' or 'log.iLLH' for the ", method, " method"))
-  if(!is.logical(recomp))         stop("'recomp' must be TRUE or FALSE")
+  if(any(!is.logical(recomp),
+         length(recomp) != 1))    stop("'recomp' must be TRUE or FALSE")
   if(any(burnin   > 0, 
      thinning     > 1)) recomp <- TRUE
   
@@ -64,6 +69,8 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
     G.CI         <- if(GQ1) apply(G.store, 1, function(gs) round(quantile(gs, conf.levels))) else round(quantile(G.store, conf.levels))
   }
   if(G.T)    {
+    if(any(length(G) != 1,
+           !is.integer(G)))       stop("'G' must be an integer of length 1")
     if(!inf.G) {
       if(!is.element(method, c("FA", "IFA"))) {
         if(!is.element(G, n.grp)) stop("This 'G' value was not used during simulation")
@@ -82,6 +89,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
   }
   G              <- if(any(inf.G, all(G.T, !is.element(method, c("FA", "IFA"))))) G else 1
   if(Q.T)    {
+    if(!is.integer(Q))            stop("'Q' must of integer type")
     if(G.T)  {
       if(length(Q) == 1)     Q <- rep(Q, G)
       if(length(Q) != G)          stop(paste0("'Q' must be supplied for each group, as a scalar or vector of length G=", G))
@@ -237,7 +245,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0, thinning = 1, G = NULL, Q 
       nam.z      <- gsub("\\[.*", "", z.nam)
       nam.zx     <- gsub(".*\\[(.*)\\].*", "\\1)",   z.nam)
       if(!exists(nam.z,
-         envir=.GlobalEnv))       stop(paste0("Object ", match.call()$zlabels, " not found"))
+         envir=.GlobalEnv))       stop(paste0("Object ", match.call()$zlabels, " not found\n"))
       if(any(unlist(vapply(seq_along(pattern), function(p) grepl(pattern[p], nam.z,   fixed=TRUE), logical(1))), 
          !identical(z.nam,   nam.z)   && (any(grepl("[[:alpha:]]", gsub('c', '', nam.zx))) || grepl(":",
          nam.zx, fixed=TRUE))))   stop("Extremely inadvisable to supply 'zlabels' subsetted by any means other than row/column numbers or c() indexing: best to create new object")

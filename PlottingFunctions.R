@@ -14,8 +14,10 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
   if(missing(transparency)) {
     transparency    <- 0.75
   }
-  if(transparency    < 0   || 
-     transparency    > 1)             stop("'transparency' must be a single number in [0, 1]")
+  if(length(transparency) != 1 && 
+     any(!is.numeric(transparency),
+     (transparency   < 0  || 
+     transparency    > 1)))           stop("'transparency' must be a single number in [0, 1]")
   tmp.pal <- palette
   palette <- adjustcolor(palette, alpha.f=transparency)
   palette(palette)
@@ -29,7 +31,7 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
   on.exit(suppressWarnings(options(defopt)), add=TRUE)
   if(missing(results))                stop("Results must be supplied")
   if(!exists(deparse(substitute(results)),
-             envir=.GlobalEnv))       stop(paste0("Object ", match.call()$results, " not found"))
+             envir=.GlobalEnv))       stop(paste0("Object ", match.call()$results, " not found\n"))
   if(class(results) != "Tuned_IMIFA") stop(paste0("Results object of class 'Tuned_IMIFA' must be supplied"))
   GQ.res  <- results$GQ.results
   G       <- GQ.res$G
@@ -84,7 +86,7 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
     nam.x <- gsub(".*\\[(.*)\\].*", "\\1)", z.nam)
     ptrn  <- c("(", ")")
     if(!exists(nam.z,
-               envir=.GlobalEnv))     stop(paste0("Object ", match.call()$zlabels, " not found"))
+               envir=.GlobalEnv))     stop(paste0("Object ", match.call()$zlabels, " not found\n"))
     if(any(unlist(vapply(seq_along(ptrn), function(p) grepl(ptrn[p], nam.z, fixed=TRUE), logical(1))), 
            !identical(z.nam,   nam.z) && (any(grepl("[[:alpha:]]", gsub('c', '', nam.x))) || grepl(":",
            nam.x, fixed=TRUE))))      stop("Extremely inadvisable to supply 'zlabels' subsetted by any means other than row/column numbers or c() indexing: best to create new object")
@@ -114,10 +116,16 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
   } 
   if(all(!v.sw[vars], !m.sw["G.sw"], 
      !m.sw["Z.sw"],   !m.sw["E.sw"])) stop(paste0("Nothing to plot: ", vars, ifelse(vars == "alpha", paste0(" was fixed at ", attr(results, "Alpha")), " weren't stored")))
-  if(!is.logical(intervals))          stop("'intervals' must be TRUE or FALSE")
-  if(!is.logical(mat))                stop("'mat' must be TRUE or FALSE")
-  if(!is.logical(partial))            stop("'partial' must be TRUE or FALSE")
-  if(!is.logical(titles))             stop("'titles' must be TRUE or FALSE")
+  if(any(!is.logical(intervals),
+         length(intervals) != 1))     stop("'intervals' must be TRUE or FALSE")
+  if(any(!is.logical(mat),
+         length(mat)       != 1))     stop("'mat' must be TRUE or FALSE")
+  if(any(!is.logical(partial),
+         length(partial)   != 1))     stop("'partial' must be TRUE or FALSE")
+  if(any(!is.logical(titles),
+         length(titles)    != 1))     stop("'titles' must be TRUE or FALSE")
+  if(any(!is.logical(by.fac),
+         length(by.fac)    != 1))     stop("'by.fac' must be TRUE or FALSE")
   indx    <- missing(ind)
   facx    <- missing(fac)
   gx      <- missing(g)
@@ -128,6 +136,8 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
     if(flen != G && gx)               stop(paste0("'fac' must be supplied for each of the ", G, " groups"))
   }
   g.score <- all(grp.ind, !all.ind, vars == "scores")
+  if(!gx  && any(length(g) != 1, 
+                 !is.numeric(g)))     stop("If 'g' is supplied it must be of length 1")
   if(any(all(is.element(method, c("IMIFA", "OMIFA")), m.sw["G.sw"]), m.sw["Z.sw"])) {
     Gs    <- if(gx) seq_len(2) else ifelse(g <= 2, g, 
                                       stop("Invalid 'g' value"))

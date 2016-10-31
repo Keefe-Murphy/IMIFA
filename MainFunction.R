@@ -2,8 +2,8 @@
 ### Main Function for Keefe Murphy's IMIFA R Package ###
 ########################################################
 
-mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA", "MFA", "IFA", "FA", "classify"), n.iters = 25000, range.G = NULL, range.Q = NULL,
-                        burnin = n.iters/5, thinning = 2, centering = TRUE, scaling = c("unit", "pareto", "none"), mu.zero = NULL, sigma.mu = NULL, sigma.l = NULL, alpha = NULL, 
+mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA", "MFA", "IFA", "FA", "classify"), n.iters = 25000L, range.G = NULL, range.Q = NULL,
+                        burnin = n.iters/5, thinning = 2L, centering = TRUE, scaling = c("unit", "pareto", "none"), mu.zero = NULL, sigma.mu = NULL, sigma.l = NULL, alpha = NULL, 
                         z.list = NULL, z.init = c("kmeans", "list", "mclust", "priors"), psi.alpha = NULL, psi.beta = NULL, adapt = TRUE, b0 = NULL, b1 = NULL, prop = NULL, epsilon = NULL, 
                         nu = NULL,  alpha.d1 = NULL, alpha.d2 = NULL, adapt.at = NULL, beta.d1 = NULL, beta.d2 = NULL, alpha.step = c("gibbs", "metropolis", "fixed"), alpha.hyper = NULL, 
                         ind.slice = TRUE, rho = NULL, DP.lab.sw = TRUE, trunc.G = NULL, profile = FALSE, verbose = TRUE, discount = NULL, learn.d = FALSE, d.hyper = NULL, mu0g = FALSE, 
@@ -14,13 +14,10 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   options(warn=1)
   on.exit(suppressWarnings(par(defpar)))
   on.exit(suppressWarnings(options(defopt)), add=TRUE)
-  if(method == "classification") {
+  if(!missing(method) && method == "classification") {
     method  <- "classify"
   }
   method    <- match.arg(method)
-  if(is.logical(scaling) && !scaling) {
-    scaling <- "none"
-  }
   scaling   <- match.arg(scaling)
   if(missing(dat))                  stop("Dataset must be supplied")
   dat.nam   <- gsub("[[:space:]]", "", deparse(substitute(dat)))
@@ -28,7 +25,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   pattern   <- c("(", ")")
   nam.x     <- gsub(".*\\[(.*)\\].*", "\\1)", dat.nam)
   if(!exists(nam.dat,
-     envir=.GlobalEnv))             stop(paste0("Object ", match.call()$dat, " not found"))
+     envir=.GlobalEnv))             stop(paste0("Object ", match.call()$dat, " not found\n"))
   if(any(unlist(vapply(seq_along(pattern), function(p) grepl(pattern[p], nam.dat, fixed=TRUE), logical(1))), 
          !identical(dat.nam, nam.dat) && (any(grepl("[[:alpha:]]", gsub('c', '',  nam.x))) || grepl(":", 
          nam.x,    fixed=TRUE))))   stop("Extremely inadvisable to supply 'dat' subsetted by any means other than row/column numbers or c() indexing: best to create new data object")
@@ -39,7 +36,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     nam.z   <- gsub("\\[.*", "", z.nam)
     nam.zx  <- gsub(".*\\[(.*)\\].*", "\\1)",   z.nam)
     if(!exists(nam.z,
-               envir=.GlobalEnv))   stop(paste0("Object ", match.call()$z.list, " not found"))
+               envir=.GlobalEnv))   stop(paste0("Object ", match.call()$z.list, " not found\n"))
     if(any(unlist(vapply(seq_along(pattern), function(p) grepl(pattern[p], nam.z,   fixed=TRUE), logical(1))), 
            !identical(z.nam,   nam.z) && (any(grepl("[[:alpha:]]", gsub('c', '', nam.zx))) || grepl(":",
            nam.zx, fixed=TRUE))))   stop("Extremely inadvisable to supply 'z.list' subsetted by any means other than row/column numbers or c() indexing: best to create new object")
@@ -49,15 +46,25 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
                                     message("'z.init' set to 'list' as 'z.list' was supplied") 
     }                
   }
-  if(!is.logical(factanal))         stop("'factanal' must be TRUE or FALSE")
-  if(!is.logical(centering))        stop("'centering' must be TRUE or FALSE")
-  if(!is.logical(verbose))          stop("'verbose' must be TRUE or FALSE")
-  if(!is.logical(profile))          stop("'profile' must be TRUE or FALSE")
+  if(any(!is.logical(centering),
+         length(centering) != 1))   stop("'centering' must be TRUE or FALSE")
+  if(any(!is.logical(factanal),
+         length(factanal)  != 1))   stop("'factanal' must be TRUE or FALSE")
+  if(any(!is.logical(profile),
+         length(profile)   != 1))   stop("'profile' must be TRUE or FALSE")
+  if(any(!is.logical(verbose),
+         length(verbose)   != 1))   stop("'verbose' must be TRUE or FALSE")
   
 # Remove non-numeric columns & apply centering & scaling if necessary 
   burnin    <- as.integer(burnin)
   thinning  <- as.integer(thinning)
-  if(!is.numeric(n.iters))          stop("'n.iters' must be numeric")
+  n.iters   <- as.integer(n.iters)
+  if(any(!is.integer(burnin),
+         length(burnin)   != 1))    stop("'burnin' must be a single integer")
+  if(any(!is.integer(thinning),
+         length(thinning) != 1))    stop("'thinning' must be a single integer")
+  if(any(!is.integer(n.iters),
+         length(n.iters)  != 1))    stop("'n.iters' must be a single integer")
   n.iters   <- max(burnin + 1, as.integer(n.iters))
   iters     <- seq(from=burnin + 1, to=n.iters, by=thinning)
   iters     <- iters[iters > 0]
@@ -92,16 +99,21 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   if(!missing(mu.switch) && all(!mu.switch, ifelse(method == "classify", 
      !centering, !centered)))       warning("Centering hasn't been applied - are you sure you want mu.switch=FALSE?", call.=FALSE)
   switches  <- c(mu.sw=mu.switch, s.sw=score.switch, l.sw=load.switch, psi.sw=psi.switch, pi.sw=pi.switch)
-  if(!is.logical(switches))         stop("All logical switches must be TRUE or FALSE")
+  if(any(length(switches) != 5,
+         !is.logical(switches)))    stop("All logical parameter storage switches must be TRUE or FALSE")
   if(N < 2)                         stop("Must have more than one observation")
   G.x       <- missing(range.G)
   alpha.x   <- missing(alpha.step)
   alpha.step       <- match.arg(alpha.step)
-  if(!is.logical(learn.d))          stop("'learn.d' must be TRUE or FALSE")
-  if(learn.d)                       stop("Pitman-Yor discount hyperparameter must remain fixed; learning not yet implemented")
+  if(any(!is.logical(learn.d),
+         length(learn.d)  != 1))    stop("'learn.d' must be TRUE or FALSE")
+  if(isTRUE(learn.d))               stop("Pitman-Yor discount hyperparameter must remain fixed; learning not yet implemented")
   if(missing(d.hyper))       d.hyper       <- c(1, 1)
+  if(length(d.hyper)  != 2)         stop("d.hyper' must be a vector of length 2")
   if(any(d.hyper   <= 0))           stop("'Discount Beta prior hyperparameters must be strictly positive")
   discount         <- ifelse(missing(discount), ifelse(learn.d, rbeta(1, d.hyper[1], d.hyper[2]), 0), discount)
+  if(any(!is.numeric(discount),
+         length(discount) != 1))    stop("'discount' must be a single number")
   if(discount       < 0 || 
      discount      >= 1)            stop("'discount' must lie in the interval [0, 1)")
   if(all(!is.element(method, c("IMFA", "IMIFA")), alpha.step != "fixed"))  {
@@ -118,8 +130,10 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
       }
       if(range.G    < ceiling(lnN)) stop(paste0("'range.G' should be at least log(N) (=log(", N, "))", " for the ", method, " method"))
       if(is.element(method, c("IMFA", "IMIFA"))) {
-        if(!is.logical(ind.slice))  stop("'ind.slice' must be TRUE or FALSE")
-        if(!is.logical(DP.lab.sw))  stop("'DP.lab.sw' must be TRUE or FALSE")
+        if(any(!is.logical(ind.slice),
+           length(ind.slice) != 1)) stop("'ind.slice' must be TRUE or FALSE")
+        if(any(!is.logical(DP.lab.sw),
+           length(DP.lab.sw) != 1)) stop("'DP.lab.sw' must be TRUE or FALSE")
         if(missing(rho)) {
           rho      <- 0.75
         }
@@ -197,11 +211,15 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
 # Define full conditionals, hyperparamters & Gibbs Sampler function for desired method
   cov.mat          <- var(dat)
   if(is.null(rownames(dat))) rownames(dat) <- seq_len(N)
-  if(missing("sigma.mu"))    sigma.mu      <- diag(cov.mat)
+  sigmu.miss       <- missing("sigma.mu")
+  if(sigmu.miss)             sigma.mu      <- diag(cov.mat)
   if(scaling == "unit")      sigma.mu      <- sigma.mu[1]
-  if(any(sigma.mu  <= 0))           stop("'sigma.mu' must be strictly positive")
+  if(any(sigma.mu  <= 0, !is.numeric(sigma.mu),
+     !is.element(length(sigma.mu),
+     c(1, P))))                     stop(paste0("'sigma.mu' must be strictly positive, and of length 1 or P=", P))
   if(missing("psi.alpha"))   psi.alpha     <- 2.5
-  if(psi.alpha     <= 1)            stop("'psi.alpha' must be strictly greater than 1 in order to bound uniquenesses away from zero")
+  if(any(psi.alpha <= 1, !is.numeric(psi.alpha),
+     length(psi.alpha) != 1))       stop("'psi.alpha' must be a single number strictly greater than 1 in order to bound uniquenesses away from zero")
   Q.miss    <- missing(range.Q)
   Q.min     <- min(ceiling(log(P)), ceiling(log(N)))
   if(is.element(method, c("FA", "MFA", "OMFA", "IMFA"))) {
@@ -209,7 +227,8 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(any(range.Q < 0))            stop(paste0("'range.Q' must be non-negative for the ", method, " method"))
   } else {
     if(Q.miss)        range.Q    <- min(ifelse(P > 500, 12 + floor(log(P)), floor(3 * log(P))), N - 1)
-    if(!is.logical(adapt))          stop("'adapt' must be TRUE or FALSE") 
+    if(any(!is.logical(adapt),
+           length(adapt) != 1))     stop("'adapt' must be TRUE or FALSE") 
     if(length(range.Q) > 1)         stop(paste0("Only one starting value for 'range.Q' can be supplied for the ", method, " method"))
     if(range.Q    <= 0)             stop(paste0("'range.Q' must be strictly positive for the ", method, " method"))
     if(all(adapt, range.Q < Q.min)) stop(paste0("'range.Q' must be at least min(log(P), log(N)) for the ", method, " method when 'adapt' is TRUE"))
@@ -220,24 +239,36 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   len.X     <- len.G * len.Q
   if(is.element(method, c("FA", "MFA", "OMFA", "IMFA"))) {
     if(missing("sigma.l"))   sigma.l       <- 1
-    if(sigma.l <= 0)                stop("'sigma.l' must be strictly positive")            
+    if(any(sigma.l <= 0, !is.numeric(sigma.l),
+           length(sigma.l) != 1))   stop("'sigma.l' must be a single strictly positive number")            
   } else {            
     if(missing("nu"))        nu            <- 1.5
-    if(nu <= 1)                     stop("'nu' must be strictly greater than 1")
+    if(any(nu <= 1, !is.numeric(nu),
+           length(nu) != 1))        stop("'nu' must be a single number strictly greater than 1")
     if(missing("beta.d1"))   beta.d1       <- 1
     if(missing("beta.d2"))   beta.d2       <- 1
+    if(any(!is.numeric(beta.d1),
+           !is.numeric(beta.d1),
+           length(beta.d1) != 1,
+           length(beta.d2) != 1))   stop("'beta.d1' and 'beta.d2' must both be numberic and of length 1")
     if(missing("b0"))        b0            <- 0.1
-    if(b0  < 0)                     stop("'b0' must be positive to ensure valid adaptation probability")
+    if(any(length(b0) != 1, !is.numeric(b0),
+           b0  < 0))                stop("'b0' must be a single positive scalar to ensure valid adaptation probability")
     if(missing("b1"))        b1            <- 0.00005
-    if(b1 <= 0)                     stop("'b1' must be strictly positive to ensure adaptation probability decreases")
+    if(any(length(b1) != 1, !is.numeric(b1),
+           b1 <= 0))                stop("'b1' must be a single strictly positive scalar to ensure adaptation probability decreases")
     if(missing("prop"))      prop          <- 3/4
-    if(abs(prop - (1 - prop)) < 0)  stop("'prop' must be a single number between 0 and 1")
     if(missing("adapt.at"))  adapt.at      <- ifelse(is.element(method, c("IFA", "MIFA")), burnin, 0)
     if(missing("epsilon"))   epsilon       <- ifelse(any(centered, centering), 0.1, 0.05)
+    if(any(length(prop)    != 1, length(adapt.at != 1),
+           length(epsilon) != 1))   stop("'prop', 'adapt.at', and 'epsilon' must all be of length 1")
+    if(any(!is.numeric(prop), !is.numeric(adapt.at),
+           !is.numeric(epsilon)))   stop("'prop', 'adapt.at', and 'epsilon' must all be numeric")
+    if(abs(prop - (1 - prop)) < 0)  stop("'prop' must be lie in the interval (0, 1)")
     if(adapt.at < 0 ||
-       adapt.at > burnin)           stop("'adapt.at' must be a single number in the interval [0, burnin]")
+       adapt.at > burnin)           stop("'adapt.at' must be lie in the interval [0, burnin]")
     if(epsilon <= 0 ||
-       epsilon >= 1)                stop("'epsilon' must be a single number in the interval (0, 1)")
+       epsilon >= 1)                stop("'epsilon' must be lie in the interval (0, 1)")
   } 
   if(any(range.Q  >= P)) {          
     if(all(is.element(method, c("IFA", "MIFA", "OMIFA", "IMIFA")),
@@ -283,9 +314,12 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
          !zin.miss || 
          !zli.miss))                message(paste0("z does not need to be initialised for the ", method, " method"))
   if(is.element(method, c("MFA", "MIFA", "classify"))) {
-    if(!is.logical(mu0g))           stop("'mu0g' must be TRUE or FALSE")
-    if(!is.logical(psi0g))          stop("'psi0g' must be TRUE or FALSE")
-    if(!is.logical(delta0g))        stop("'delta0g' must be TRUE or FALSE")  
+    if(any(!is.logical(mu0g),
+           length(mu0g)    != 1))   stop("'mu0g' must be TRUE or FALSE")
+    if(any(!is.logical(delta0g),
+           length(delta0g) != 1))   stop("'delta0g' must be TRUE or FALSE")
+    if(any(!is.logical(psi0g),
+           length(psi0g)   != 1))   stop("'psi0g' must be TRUE or FALSE")
     if(all(method == "MFA",
            delta0g))                stop("'delta0g' cannot be TRUE for the 'MFA' method")
     if(method == "classify") mu0g          <- TRUE
@@ -538,6 +572,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
         scal  <- FALSE
       }
       tmp.dat <- scale(tmp.dat, center=centering, scale=scal)
+      if(sigmu.miss)   gibbs.arg$sigma.mu  <- cov(tmp.dat)
       imifa[[g]]          <- list()
       gibbs.arg    <- append(temp.args, lapply(deltas[[Gi]], "[[", g))
       imifa[[g]][[Qi]]    <- do.call(paste0("gibbs.", "IFA"),
@@ -626,11 +661,14 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   if(verbose)                print(attr(imifa, "Time"))  
       
 # Vanilla 'factanal' for comparison purposes
-  if(!missing(Q.fac))    factanal <- TRUE
+  miss.Q    <- missing(Q.fac)
+  if(!miss.Q)  factanal   <- TRUE
   if(factanal) {
-    if(missing(Q.fac)) {
-      Q.fac <- if(missing(range.Q)) round(sqrt(P)) else max(1, max(range.Q))
+    if(miss.Q) {
+      Q.fac <- if(Q.miss) round(sqrt(P)) else max(1, max(range.Q))
     }
+    Q.fac   <- as.integer(Q.fac)
+    if(length(Q.fac) != 1)          stop("'Q.fac' must be of length 1")
     fac     <- try(factanal(dat, factors=Q.fac, control=list(nstart=50)))
     if(!inherits(fac, "try-error")) {
       imifa <- append(imifa, list(fac = fac))
