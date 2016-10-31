@@ -242,7 +242,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(any(sigma.l <= 0, !is.numeric(sigma.l),
            length(sigma.l) != 1))   stop("'sigma.l' must be a single strictly positive number")            
   } else {            
-    if(missing("nu"))        nu            <- 1.5
+    if(missing("nu"))        nu            <- 2
     if(any(nu <= 1, !is.numeric(nu),
            length(nu) != 1))        stop("'nu' must be a single number strictly greater than 1")
     if(missing("beta.d1"))   beta.d1       <- 1
@@ -257,7 +257,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(missing("b1"))        b1            <- 0.00005
     if(any(length(b1) != 1, !is.numeric(b1),
            b1 <= 0))                stop("'b1' must be a single strictly positive scalar to ensure adaptation probability decreases")
-    if(missing("prop"))      prop          <- 3/4
+    if(missing("prop"))      prop          <- floor(0.7 * P)/P
     if(missing("adapt.at"))  adapt.at      <- ifelse(is.element(method, c("IFA", "MIFA")), burnin, 0)
     if(missing("epsilon"))   epsilon       <- ifelse(any(centered, centering), 0.1, 0.05)
     if(any(length(prop)    != 1, length(adapt.at) != 1,
@@ -391,8 +391,8 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   }
   mu.zero          <- if(mu0.x) mu else len.check(mu.zero, mu0g, method, P, range.G)
   if(!is.element(method, c("FA", "MFA", "OMFA", "IMFA"))) {
-    alpha.d1       <- if(ad1.x) list(3) else len.check(alpha.d1, delta0g, method, P, range.G, P.dim=FALSE)
-    alpha.d2       <- if(adk.x) list(6) else len.check(alpha.d2, delta0g, method, P, range.G, P.dim=FALSE)
+    alpha.d1       <- if(ad1.x) list(4) else len.check(alpha.d1, delta0g, method, P, range.G, P.dim=FALSE)
+    alpha.d2       <- if(adk.x) list(8) else len.check(alpha.d2, delta0g, method, P, range.G, P.dim=FALSE)
   }
   if(!is.element(method, c("FA", "IFA"))) {
     if(verbose)                     cat(paste0("Initialising...\n"))
