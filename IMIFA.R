@@ -25,6 +25,7 @@
   # Olive       (# area, region)
     load(file=paste0(getwd(), "/Data/Olive.Rdata", sep=""), envir=.GlobalEnv)
     area     <- as.factor(olive$area)
+    cinzia   <- ifelse(olive$region < 5, 1, ifelse(olive$region < 7, 2, ifelse(olive$region == 9, 4, 3)))
     region   <- as.factor(olive$region)
     olive    <- olive[,-c(1, 2)]
     # Oils      (# oliveoillabels)

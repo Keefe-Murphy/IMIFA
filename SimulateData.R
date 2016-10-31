@@ -45,14 +45,13 @@ sim.IMIFA      <- function(N = 300L, G = 3L, P = 50L, Q = rep(4L, G), pis = rep(
   } 
                                          
   simdata      <- matrix(0, nr=0, nc=P)
-  nn.seq       <- seq_along(nn)
   true.mu      <- setNames(vector("list", G), paste0("Group", Gseq))
   true.l       <- true.mu
   true.psi     <- true.mu
   true.cov     <- true.mu
   
 # Simulate true parameter values
-  true.zlab    <- factor(rep(nn.seq, nn), labels=nn.seq)
+  true.zlab    <- factor(rep(Gseq, nn), labels=Gseq)
   if(method == "conditional") {
     Q.max      <- max(Q)
     eta.true   <- sim.eta.p(Q=Q.max, N=N)
@@ -61,7 +60,7 @@ sim.IMIFA      <- function(N = 300L, G = 3L, P = 50L, Q = rep(4L, G), pis = rep(
     Q.g        <- Q[g]
     N.g        <- nn[g]
     mu.true    <- sim.mu.p(P=P, mu.zero=sample(-1:1, 1), sigma.mu=1)
-    l.true     <- sim.load.p(Q=Q, P=P, sigma.l=1, shrink=FALSE)
+    l.true     <- sim.load.p(Q=Q.g, P=P, sigma.l=1, shrink=FALSE)
     psi.true   <- runif(P, 0, 1)
     
   # Simulate data
