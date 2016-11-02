@@ -129,13 +129,18 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
   indx    <- missing(ind)
   facx    <- missing(fac)
   gx      <- missing(g)
-  if(!indx)                 xind <- ind
+  if(!indx) {
+    ind   <- as.integer(ind)
+    xind  <- ind
+  }                
   if(!facx) {
+    fac   <- as.integer(fac)
     flen  <- length(fac)
     if(flen == 1 && gx)      fac <- rep(fac, G)
     if(flen != G && gx)               stop(paste0("'fac' must be supplied for each of the ", G, " groups"))
   }
   g.score <- all(grp.ind, !all.ind, vars == "scores")
+  if(!gx)                      g <- as.integer(g)
   if(!gx  && any(length(g) != 1, 
                  !is.numeric(g)))     stop("If 'g' is supplied it must be of length 1")
   if(any(all(is.element(method, c("IMIFA", "OMIFA")), m.sw["G.sw"]), m.sw["Z.sw"])) {

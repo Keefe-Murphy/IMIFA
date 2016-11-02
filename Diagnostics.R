@@ -69,6 +69,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, 
     G.CI         <- if(GQ1) apply(G.store, 1, function(gs) round(quantile(gs, conf.levels))) else round(quantile(G.store, conf.levels))
   }
   if(G.T)    {
+    G            <- as.integer(G)
     if(any(length(G) != 1,
            !is.integer(G)))       stop("'G' must be an integer of length 1")
     if(!inf.G) {
@@ -89,6 +90,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, 
   }
   G              <- if(any(inf.G, all(G.T, !is.element(method, c("FA", "IFA"))))) G else 1
   if(Q.T)    {
+    Q            <- as.integer(Q)
     if(!is.integer(Q))            stop("'Q' must of integer type")
     if(G.T)  {
       if(length(Q) == 1)     Q <- rep(Q, G)
