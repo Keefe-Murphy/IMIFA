@@ -41,7 +41,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
            !identical(z.nam,   nam.z) && (any(grepl("[[:alpha:]]", gsub('c', '', nam.zx))) || grepl(":",
            nam.zx, fixed=TRUE))))   stop("Extremely inadvisable to supply 'z.list' subsetted by any means other than row/column numbers or c() indexing: best to create new object")
     if(!is.list(z.list))     z.list        <- lapply(list(z.list), as.factor)
-    if(!zin.miss &&
+    if(zin.miss &&
         z.init  != "list") { z.init        <- "list"
                                     message("'z.init' set to 'list' as 'z.list' was supplied") 
     }                
@@ -465,8 +465,8 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     }
   }
   if(is.element(method, c("IMIFA", "IMFA", "OMIFA", "OMFA"))) {
-    mu.zero        <- list(mu.zero[[1]][,1])
-    psi.beta       <- list(psi.beta[[1]][,1])
+    mu.zero        <- if(all(lapply(mu.zero,  length)  == 1)) list(mu.zero[[1]])  else list(mu.zero[[1]][,1])
+    psi.beta       <- if(all(lapply(psi.beta, length)  == 1)) list(psi.beta[[1]]) else list(psi.beta[[1]][,1])
     if(!is.element(method, c("OMFA", "IMFA"))) {
       alpha.d1     <- list(alpha.d1[[1]][1])
       alpha.d2     <- list(alpha.d2[[1]][1])

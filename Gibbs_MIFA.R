@@ -57,6 +57,12 @@
       mu.zero      <- matrix(0, nr=1, nc=G)
       cluster$l.switch[1]   <- FALSE
     }
+    if(length(mu.zero)  == 1) {
+      mu.zero      <- matrix(mu.zero,  nr=1, nc=G)
+    }
+    if(length(psi.beta) == 1) {
+      psi.beta     <- matrix(psi.beta, nr=1, nc=G)
+    }
     z              <- cluster$z
     z.temp         <- factor(z, levels=Gseq)
     nn             <- tabulate(z, nbins=G)
