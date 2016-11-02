@@ -132,7 +132,7 @@
     
   # Uniqueness Hyperparameters
     psi.hyper   <- function(alpha, covar) {
-      inv.cov   <- try(chol2inv(chol(covar)), silent=TRUE)
+      inv.cov   <- try(solve(covar), silent=TRUE)
       if(inherits(inv.cov, "try-error"))  {
         inv.cov <- 1/covar
       }
