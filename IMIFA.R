@@ -7,34 +7,41 @@
  #rm(list=ls(all=TRUE))
  #while("IMIFA.env" %in% search()) detach("IMIFA.env")
   if(getwd() != "/home/kmurphy")  {
-    wd       <- try(setwd("C:/Users/Windows/Dropbox/UCD/Claire IMIFA"), silent=TRUE)
-    if(inherits(wd, "try-error")) setwd("D:/Dropbox/UCD/Claire IMIFA"); rm(wd)
+    wd       <- try(setwd("C:/Users/Windows/Documents/"), silent=TRUE)
+    if(inherits(wd, "try-error")) { 
+      setwd("D:/Documents"); rm(wd)
+      datdir <- "D:/Dropbox/UCD/IMIFA"
+    } else {
+      datdir <- "C:/Users/Windows/Dropbox/UCD/IMIFA"
+    }
+  } else   {
+    datdir   <- getwd()
   }
   source(paste0(getwd(), "/IMIFA-GIT/PackageSetup.R"))
     
 # Read in the data
   # Wine        (# lab)
-    load(file=paste0(getwd(), "/Data/Wine.Rdata", sep=""), envir=.GlobalEnv)
+    load(file=paste0(datdir, "/Data/Wine.Rdata", sep=""), envir=.GlobalEnv)
     lab      <- wine[,1]
     # 13 Variable Version [% wine13]
-      load(file=paste0(getwd(), "/Data/Wine13.Rdata", sep=""), envir=.GlobalEnv)
+      load(file=paste0(datdir, "/Data/Wine13.Rdata", sep=""), envir=.GlobalEnv)
       lab    <- wine13[,1]
   # Iris        (# species)
-    load(file=paste0(getwd(), "/Data/Iris.Rdata", sep=""), envir=.GlobalEnv)
+    load(file=paste0(datdir, "/Data/Iris.Rdata", sep=""), envir=.GlobalEnv)
     species  <- iris[,5]
   # Olive       (# area, region)
-    load(file=paste0(getwd(), "/Data/Olive.Rdata", sep=""), envir=.GlobalEnv)
+    load(file=paste0(datdir, "/Data/Olive.Rdata", sep=""), envir=.GlobalEnv)
     area     <- as.factor(olive$area)
     cinzia   <- ifelse(olive$region < 5, 1, ifelse(olive$region < 7, 2, ifelse(olive$region == 9, 4, 3)))
     region   <- as.factor(olive$region)
     olive    <- olive[,-c(1, 2)]
     # Oils      (# oliveoillabels)
-      load(file=paste0(getwd(), "/Data/Oliveoils.Rdata", sep=""), envir=.GlobalEnv)
+      load(file=paste0(datdir, "/Data/Oliveoils.Rdata", sep=""), envir=.GlobalEnv)
       oils   <- t(oliveoils); rm(oliveoils, wavelengths, x)
   # Coffee      (# type, country) [% coffee]
-    load(file=paste0(getwd(), "/Data/Coffee.Rdata", sep=""), envir=.GlobalEnv) 
+    load(file=paste0(datdir, "/Data/Coffee.Rdata", sep=""), envir=.GlobalEnv) 
   # Urine       (# grp) {n.b. pareto scaling}
-    load(file=paste0(getwd(), "/Data/Epi_urine_data.Rdata", sep=""), envir=.GlobalEnv)
+    load(file=paste0(datdir, "/Data/Epi_urine_data.Rdata", sep=""), envir=.GlobalEnv)
     ppms     <- substr(colnames(x10[,4:ncol(x10)]), 2, 6); rm(x)
     urine    <- x10[,4:ncol(x10)]
     grp      <- x10[,"Group"]
@@ -44,7 +51,7 @@
     axis(1, at=seq_len(nrow(ppm.g)), labels=FALSE, tick=TRUE, tcl=-0.2)
     legend("topleft", legend=c("Control", "Epileptic"), bty="n", lty=1, col=c(1, 2))  
   # Meat        (# type)
-    load(file=paste0(getwd(), "/Data/Meat.Rdata", sep=""), envir=.GlobalEnv)
+    load(file=paste0(datdir, "/Data/Meat.Rdata", sep=""), envir=.GlobalEnv)
     spectra  <- t(spectra); rm(last.warning)
     # All Meats
       matplot(t(spectra), type="l", col=c(2, 1, 3, 4, 5), xlab="Wavelength", ylab="Spectral Reflectance", main="Meat Data")
@@ -53,7 +60,7 @@
       matplot(t(spectra), type="l", col=c(2, 1, 2, 1, 1), xlab="Wavelength", ylab="Spectral Reflectance", main="Meat Data")
       legend("topleft", legend=c("Red Meat", "White Meat"), bty="n", lty=1, col=c(2, 1))
   # Microarray  (# labels)
-    load(file=paste0(getwd(), "/Data/Microarray.Rdata", sep=""), envir=.GlobalEnv)
+    load(file=paste0(datdir, "/Data/Microarray.Rdata", sep=""), envir=.GlobalEnv)
     aliza    <- data.frame(labels = as.factor(mydata.alizadeth$y), t(mydata.alizadeth$x))
     alon     <- data.frame(labels = as.factor(mydata.alon$y),        mydata.alon$x)
     golub    <- data.frame(labels = as.factor(mydata.golub$y),     t(mydata.golub$x))
@@ -67,14 +74,14 @@
       labels <- as.factor(as.matrix(golub[1]))
      #G2levs <- ifelse(labels == "AML", "AML", "ALL")
   # Subjects 
-    subjects <- read.csv(paste0(getwd(), "/Data/", "SubjectMarks.csv", sep=""))
+    subjects <- read.csv(paste0(datdir, "/Data/", "SubjectMarks.csv", sep=""))
   # Cereal      (# classes)
-    cereal   <- read.csv(paste0(getwd(), "/Data/", "Cereal.csv", sep=""))
+    cereal   <- read.csv(paste0(datdir, "/Data/", "Cereal.csv", sep=""))
     classes  <- cereal$Cereals
   # Simulated   (# classes)
    #SimData  <- sim.IMIFA(N=80, G=4, P=100, Q=c(5, 1, 4, 0), nn=c(20, 20, 20, 20))
-   #save(SimData, file=paste0(getwd(),"/Data/Simulated_Data.Rdata", sep=""))
-    load(file=paste0(getwd(), "/Data/Simulated Data/Replication 1/Simulated_DataN25P50.Rdata", sep=""), envir=.GlobalEnv)
+   #save(SimData, file=paste0(datdir,"/Data/Simulated_Data.Rdata", sep=""))
+    load(file=paste0(datdir, "/Data/Simulated Data/Replication 1/Simulated_DataN25P50.Rdata", sep=""), envir=.GlobalEnv)
     classes  <- attr(SimData, "Labels")
 
 # Run the Gibbs Sampler
@@ -82,9 +89,9 @@
   summary(sim)
 
 # Save / Load Simulations
-  save(sim, file=paste0(getwd(), "/Simulations/", attr(sim, "Name"), 
+  save(sim, file=paste0(datdir, "/Simulations/", attr(sim, "Name"), 
                         "__Simulations_", attr(sim, "Method"), ".Rdata"))
-  load(file=paste0(getwd(), "/Simulations/", "wine", 
+  load(file=paste0(datdir, "/Simulations/", "wine", 
                    "__Simulations_", "IMIFA", ".Rdata"), envir=.GlobalEnv)
                         
 # Posterior Summaries (optional: additional 'burnin' & 'thinning', user-defined G/Q, model selection criterion)
@@ -92,9 +99,9 @@
   summary(res)
 
 # Save / Load Results
-  save(res, file=paste0(getwd(), "/Simulations/", attr(res, "Name"), 
+  save(res, file=paste0(datdir, "/Simulations/", attr(res, "Name"), 
                         "__Results_", attr(res, "Method"), ".Rdata"))
-  load(file=paste0(getwd(), "/Simulations/", "wine", 
+  load(file=paste0(datdir, "/Simulations/", "wine", 
                    "__Results_", "IMIFA", ".Rdata"), envir=.GlobalEnv)
 
 # Model Selection Parameters
