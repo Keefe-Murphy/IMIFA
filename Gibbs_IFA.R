@@ -6,7 +6,7 @@
   gibbs.IFA      <- function(Q, data, iters, N, P, sigma.mu, sw, mu, prop, 
                              psi.alpha, psi.beta, burnin, thinning, verbose,
                              epsilon, mu.zero, nu, adapt, adapt.at, b0, b1,
-                             alpha.d1, alpha.d2, beta.d1, beta.d2, ...) {    
+                             alpha.d1, alpha.d2, beta.d1, beta.d2, nuplus1, ...) {    
     
   # Define & initialise variables
     start.time   <- proc.time()
@@ -49,7 +49,7 @@
     mu.sigma     <- 1/sigma.mu
     eta          <- sim.eta.p(Q=Q, N=N)
     psi.inv      <- sim.psi.i.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
-    phi          <- sim.phi.p(Q=Q, P=P, nu=nu)
+    phi          <- sim.phi.p(Q=Q, P=P, nu=nu, plus1=nuplus1)
     delta        <- c(sim.delta.p(alpha=alpha.d1, beta=beta.d1), sim.delta.p(Q=Q, alpha=alpha.d2, beta=beta.d2))
     tau          <- cumprod(delta)
     lmat         <- matrix(unlist(lapply(Pseq, function(j) sim.load.p(Q=Q, phi=phi[j,], tau=tau, P=P)), use.names=FALSE), nr=P, byrow=TRUE)
@@ -88,7 +88,7 @@
     
     # Local Shrinkage
       load.2     <- lmat * lmat
-      phi        <- sim.phi(Q=Q, P=P, nu=nu, tau=tau, load.2=load.2)
+      phi        <- sim.phi(Q=Q, P=P, nu=nu, tau=tau, load.2=load.2, plus1=nuplus1)
           
     # Global Shrinkage
       sum.term   <- diag(crossprod(phi, load.2))

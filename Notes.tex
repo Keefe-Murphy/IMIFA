@@ -48,8 +48,10 @@
 \author[1, 2]{Keefe Murphy}
 \author[1, 2]{Dr. Claire Gormley}
 \author[1, 2]{Prof. Brendan Murphy}
+\author[3]{Dr. Cinzia Viroli}
 \affil[1]{School of Mathematics and Statistics, UCD}
 \affil[2]{Insight Centre for Data Analytics, UCD}
+\affil[3]{Department of Statistical Sciences, Bologna}
 %\renewcommand\Authands{ and }
 
 \date{}
@@ -347,9 +349,9 @@ The exact specification of this shrinkage-type prior allows the degree of shrink
 \mbox{where}\quad\mathrm{D}_j^{-1} &= \operatorname{diag}\left(\phi_{j1}\tau_1,\ldots,\phi_{jq^\star}\tau_{q^\star}\right)\nonumber&\\
 \vspace{2mm}\phi_{jk} &\sim \operatorname{Ga}\left(\nu,\nu\right)\label{eq:22}&\\
 \vspace{2mm}\tau_k &= \prod_{h=1}^k \delta_h\nonumber&\\
-\delta_1 &\sim \operatorname{Ga}\left(\alpha_1,\beta_1\right), \quad\delta_h \sim \operatorname{Ga}\left(\alpha_k,\beta_k\right), \quad h \geq 2\label{eq:23}&
+\delta_1 &\sim \operatorname{Ga}\left(\alpha_1,\beta_1\right), \quad\delta_h \sim \operatorname{Ga}\left(\alpha_2,\beta_2\right), \quad h \geq 2\label{eq:23}&
 \end{flalign}
-\noindent where $\delta_h \left(h=1,\ldots,\infty\right)$ are independent, $\tau_k$ is a \textit{global} shrinkage parameter for the $k$-th column and the $\phi_{jk}$s are \textit{local} shrinkage parameters for the elements in the $k$-th column. The $\tau_k$s are stochastically increasing under the restriction $\alpha_k > 1$, which favours more shrinkage as the column index increases. Typically $\beta_1 = \beta_k = 1$.
+\noindent where $\delta_h \left(h=1,\ldots,\infty\right)$ are independent, $\tau_k$ is a \textit{global} shrinkage parameter for the $k$-th column and the $\phi_{jk}$s are \textit{local} shrinkage parameters for the elements in the $k$-th column. The $\tau_k$s are stochastically increasing under the restriction $\alpha_2 > \beta_2 + 1$, which favours more shrinkage as the column index increases. Typically $\beta_1 = \beta_2 = 1$. However, we find it useful to consider an alternative reparameterisation of the local shrinkage prior via $\phi_{jk}\sim\operatorname{Ga}\left(\nu + 1, \nu\right)$, s.t. the induced inverse-gamma prior on each $\phi_{jk}^{-1}$ is non-informative in the sense that it has expectation 1.
 
 \subsection[Defining new MGP Full Conditionals]{Defining new MGP Full Conditionals}
 We propose a Gibbs sampler for posterior computation, much like the one above, after truncating the loadings matrix to have $q^\star \ll p$ columns. An adaptive strategy for inference on the truncation level $q^\star$ is described in \ref{Adapt_Section}. For now, let's focus on the new full conditionals for the loadings matrix, global shrinkages, and local shrinkages which need to be derived in order to implement this. Once again, these parameters are initialised according to their priors. The other full conditionals are exactly as before, with just a small adjustment to the factor scores to allow for the truncation to $q^\star$ columns, i.e. $\mathrm{P}\left(\underline{\eta}_i \given \mbox{---}\right) \sim  \operatorname{MVN}_{q^\star}\left(\left[\mathcal{I}_{q^\star} + \Lambda^T_{q^\star}\Psi^{-1}\Lambda_{q^\star}\right]^{-1}\Lambda^T\Psi^{-1}\underline{x}_i - \underline{\mu},\left[\mathcal{I}_{q^\star} + \Lambda^T_{q^\star}\Psi^{-1}\Lambda_{q^\star}\right]^{-1}\right)$
@@ -362,14 +364,14 @@ Incorporating the new prior \eqref{eq:21}, and following the same steps as \ref{
 
 
 \subsubsection[Local Shrinkage]{Local Shrinkage -- $\phi_{jk}$}
-Using the conditional prior in \eqref{eq:21} and the prior for $\phi_{jk}$ in \eqref{eq:22} we can derive the full conditional for the local shrinkage parameter as follows$\colon$
+Using the conditional prior in \eqref{eq:21} and the reparameterised version of \eqref{eq:22}, the prior for $\phi_{jk}$, we can derive the full conditional for the local shrinkage parameter as follows$\colon$
 \begin{flalign}
 \mathrm{P}\left(\phi_{jk} \given \mbox{---}\right) &\propto \mathrm{P}\left(\lambda_{jk} \given \phi_{jk},\tau_k\right)\mathrm{P}\left(\phi_{jk}\right)\nonumber\\
-&\propto \frac{\phi_{jk}^{\nicefrac{1}{2}}\tau_k^{\nicefrac{1}{2}}}{\sqrt{2\pi}}\exp\left\{-\frac{1}{2}\lambda_{jk}^2\phi_{jk}\tau_k\right\}\phi_{jk}^{\nu-1}\exp\left\{-\nu\phi_{jk}\right\}\nonumber\\
-&\propto \phi_{jk}^{\nicefrac{1}{2}}\phi_{jk}^{\nu-1}\exp\left\{\left(-\frac{1}{2}\lambda_{jk}^2\tau_k - \nu\right)\phi_{jk}\right\}\nonumber\\
-&\propto \phi_{jk}^{\nu-\nicefrac{1}{2}}\exp\left\{-\frac{1}{2}\left(2\nu + \lambda_{jk}^2\tau_k\right)\phi_{jk}\right\}\nonumber
+&\propto \frac{\phi_{jk}^{\nicefrac{1}{2}}\tau_k^{\nicefrac{1}{2}}}{\sqrt{2\pi}}\exp\left\{-\frac{1}{2}\lambda_{jk}^2\phi_{jk}\tau_k\right\}\phi_{jk}^{\nu}\exp\left\{-\nu\phi_{jk}\right\}\nonumber\\
+&\propto \phi_{jk}^{\nicefrac{1}{2}}\phi_{jk}^{\nu}\exp\left\{\left(-\frac{1}{2}\lambda_{jk}^2\tau_k - \nu\right)\phi_{jk}\right\}\nonumber\\
+&\propto \phi_{jk}^{\nu + \nicefrac{1}{2}}\exp\left\{-\frac{1}{2}\left(2\nu + \lambda_{jk}^2\tau_k\right)\phi_{jk}\right\}\nonumber
 \intertext{Thus the full conditional for each $\phi_{jk}$ is given by$\colon$}
-\mathrm{P}\left(\phi_{jk}\given \mbox{---}\right) &\sim \operatorname{Ga}\left(\nu + \frac{1}{2},\nu + \frac{\tau_k\lambda_{jk}^2}{2}\right)\label{eq:26}
+\mathrm{P}\left(\phi_{jk}\given \mbox{---}\right) &\sim \operatorname{Ga}\left(\nu + \frac{3}{2},\nu + \frac{\tau_k\lambda_{jk}^2}{2}\right)\label{eq:26}
 \end{flalign}
 
 \subsubsection[Global Shrinkage]{Global Shrinkage -- $\tau_k$}
@@ -385,10 +387,10 @@ Using the conditional prior in \eqref{eq:21} and the prior for $\tau_k$ in \eqre
 \therefore \mathrm{P}\left(\delta_1\given\mbox{---}\right)& \sim \operatorname{Ga}\left(\alpha_1 + \frac{pq^\star}{2}, \beta_1 + \frac{1}{2}\sum_{h=1}^{q^\star}\tau_h^{\left(1\right)}\sum_{j=1}^p\lambda_{jh}^2\phi_{jh}\right)\label{eq:28}
 \end{flalign}
 \begin{flalign}
-\mathrm{P}\left(\delta_k \given \mbox{---}\right) & \propto \prod_{j=1}^{p}\prod_{k=1}^{q^\star}\operatorname{N}\left(\lambda_{jk}\given 0, \phi_{jk}^{-1}\tau_k^{-1}\right) \times \operatorname{Ga}\left(\delta_k \given \alpha_k, \beta_k\right)\nonumber\\
-&\propto \left(\phi_{j1}\delta_1\right)^{\nicefrac{p}{2}}\exp\left(-\frac{1}{2}\sum_{j=1}^p\lambda_{j1}^2\phi_{j1}\delta_1\right)\times\ldots\times\left(\phi_{jq^\star}\delta_1\delta_2\ldots\delta_{q^\star}\right)^{\nicefrac{p}{2}}\exp\left(-\frac{1}{2}\sum_{j=1}^p\lambda_{jq^\star}^2\phi_{jq^\star}\delta_1\delta_2\ldots\delta_{q^\star}\right)\nonumber\\&\hspace{134mm}\times \delta_k^{\alpha_k-1}\exp\left(-\beta_k\delta_k\right)\nonumber\\
-&\propto \delta_k^{\nicefrac{p}{2}\left(q^\star - k + 1\right) + \alpha_k - 1}\exp\left(-\frac{\delta_k}{2}\left(\sum_{h=k}^{q^\star}\tau_h^{\left(k\right)}\sum_{j=1}^p\lambda_{jh}^2\phi_{jh} + 2\beta_k\right)\right)\nonumber\\
-\therefore \mathrm{P}\left(\delta_k\given \mbox{---}\right) &\sim \operatorname{Ga}\left(\alpha_k + \frac{p}{2}\left(q^\star - k + 1\right),\beta_k +\frac{1}{2}\sum_{h=k}^{q^\star}\tau_h^{\left(k\right)}\sum_{j=1}^p\lambda_{jh}^2\phi_{jh}\right)\label{eq:29}
+\mathrm{P}\left(\delta_k \given \mbox{---}\right) & \propto \prod_{j=1}^{p}\prod_{k=1}^{q^\star}\operatorname{N}\left(\lambda_{jk}\given 0, \phi_{jk}^{-1}\tau_k^{-1}\right) \times \operatorname{Ga}\left(\delta_k \given \alpha_2, \beta_2\right)\nonumber\\
+&\propto \left(\phi_{j1}\delta_1\right)^{\nicefrac{p}{2}}\exp\left(-\frac{1}{2}\sum_{j=1}^p\lambda_{j1}^2\phi_{j1}\delta_1\right)\times\ldots\times\left(\phi_{jq^\star}\delta_1\delta_2\ldots\delta_{q^\star}\right)^{\nicefrac{p}{2}}\exp\left(-\frac{1}{2}\sum_{j=1}^p\lambda_{jq^\star}^2\phi_{jq^\star}\delta_1\delta_2\ldots\delta_{q^\star}\right)\nonumber\\&\hspace{134mm}\times \delta_k^{\alpha_2-1}\exp\left(-\beta_2\delta_k\right)\nonumber\\
+&\propto \delta_k^{\nicefrac{p}{2}\left(q^\star - k + 1\right) + \alpha_2 - 1}\exp\left(-\frac{\delta_k}{2}\left(\sum_{h=k}^{q^\star}\tau_h^{\left(k\right)}\sum_{j=1}^p\lambda_{jh}^2\phi_{jh} + 2\beta_2\right)\right)\nonumber\\
+\therefore \mathrm{P}\left(\delta_k\given \mbox{---}\right) &\sim \operatorname{Ga}\left(\alpha_2 + \frac{p}{2}\left(q^\star - k + 1\right),\beta_2 +\frac{1}{2}\sum_{h=k}^{q^\star}\tau_h^{\left(k\right)}\sum_{j=1}^p\lambda_{jh}^2\phi_{jh}\right)\label{eq:29}
 \end{flalign}
 \subsection[Adaptive Step]{Adaptive Step}
 \label{Adapt_Section}
@@ -464,8 +466,8 @@ p_g &=~\mathrm{P}\left(\underline{z}_{ig}=1\given\underline{x}_i,\gamma\right) =
 	\underline{\eta}_{i}^{\left(0\right)} &\sim\operatorname{MVN}_{q_g^\star}\left(\underline{0},\mathcal{I}_{q_g^\star}\right)~\quad\forall~i = 1,\ldots,N&\nonumber\\
 	\underline{\Lambda}_{jg}^{\left(0\right)} &\sim\operatorname{MVN}_{q_g^\star}\left(\underline{0},\Sigma_{\lambda}\right)~\quad\hspace{0.5mm}\forall~j = 1,\ldots,p&\nonumber\\
 	\psi_{jg}^{-1^{\left(0\right)}} &\sim \operatorname{Ga}\left(\alpha,\beta\right)~\quad\quad\hspace{6mm}\forall~j = 1,\ldots,p&\nonumber\\
-	\phi_{jkg}^{\left(0\right)} &\sim \operatorname{Ga}\left(\nu,\nu\right)~\quad\quad\hspace{6.5mm}\forall~j = 1,\ldots,p\quad\mbox{and}\quad k=1,\ldots,q_g^\star\nonumber\\
-	\delta_{1g}^{\left(0\right)} &\sim \operatorname{Ga}\left(\alpha_1,\beta_1\right),\quad\delta_{hg}^{\left(0\right)} \sim \operatorname{Ga}\left(\alpha_k,\beta_k\right),\quad h\geq 2\nonumber\\
+	\phi_{jkg}^{\left(0\right)} &\sim \operatorname{Ga}\left(\nu + 1,\nu\right)~\quad\quad\hspace{6.5mm}\forall~j = 1,\ldots,p\quad\mbox{and}\quad k=1,\ldots,q_g^\star\nonumber\\
+	\delta_{1g}^{\left(0\right)} &\sim \operatorname{Ga}\left(\alpha_1,\beta_1\right),\quad\delta_{hg}^{\left(0\right)} \sim \operatorname{Ga}\left(\alpha_2,\beta_2\right),\quad h\geq 2\nonumber\\
 	\tau_{kg}^{\left(0\right)} &= \prod_{h=1}^{k}\delta_{hg}^{\left(0\right)}\quad\hspace{16.2mm}\forall~k=1,\ldots,q_g^\star\nonumber
 		\end{flalign}
 	\item For $g = 1,\ldots,G$, sample other parameters as before, but this time from their \textit{group specific} full conditionals$\colon$
@@ -478,9 +480,9 @@ p_g &=~\mathrm{P}\left(\underline{z}_{ig}=1\given\underline{x}_i,\gamma\right) =
 		\bullet~&\Omega_{\lambda_{jg}}^{\left(t\right)} &=& \mathrm{D}_j^{-1} + \psi_{jg}^{-1^{\left(t-1\right)}}\eta_{i\colon z_{ig} = 1}^{T^{\left(t\right)}}\eta_{i\colon z_{ig} = 1}^{\left(t\right)}\\
 		&  \underline{\Lambda}_{jg}^{\left(t\right)} &\sim& \operatorname{MVN}_{q_g^\star}\left(\Omega_{\lambda_{jg}}^{-1^{\left(t\right)}}\eta_{i\colon z_{ig} = 1}^{T^{\left(t\right)}}\psi_{jg}^{-1^{\left(t-1\right)}}\left(\underline{x}_{i\colon z_{ig} = 1}^j -\underline{1}\mu_{jg}^{\left(t\right)}\right),\Omega_{\lambda_{jg}}^{-1^{\left(t\right)}}\right)\\
 		\bullet~&  \psi_{jg}^{-1^{\left(t\right)}} &\sim& \operatorname{Ga}\left(\alpha + \frac{n_g}{2},\beta + \frac{S_{jg}^{\left(t\right)}}{2}\right)\\
-		\bullet~& \phi_{jkg}^{\left(t\right)} &\sim& \operatorname{Ga}\left(\nu + \frac{1}{2},\nu+\frac{\tau_{kg}^{\left(t-1\right)}\lambda_{jkg}^{2^{\left(t\right)}}}{2}\right)\quad\forall~k=1,\ldots,q_g^\star\\
+		\bullet~& \phi_{jkg}^{\left(t\right)} &\sim& \operatorname{Ga}\left(\nu + \frac{3}{2},\nu+\frac{\tau_{kg}^{\left(t-1\right)}\lambda_{jkg}^{2^{\left(t\right)}}}{2}\right)\quad\forall~k=1,\ldots,q_g^\star\\
 		\alphloop&\delta_{1g}^{\left(t\right)} &\sim& \operatorname{Ga}\left(\alpha_1 + \frac{pq_g^\star}{2},\beta_1 + \frac{1}{2}\sum_{h=1}^{q_g^\star}\tau_{hg}^{\left(1\right)^{\left(t-1\right)}}\sum_{j=1}^p\lambda_{jhg}^{2^{\left(t\right)}}\phi_{jhg}^{\left(t\right)}\right)\\
-		&\delta_{hg}^{\left(t\right)} &\sim& \operatorname{Ga}\left(\alpha_k + \frac{p}{2}\left(q_g^\star-k+1\right), \beta_k + \frac{1}{2}\sum_{h=k}^{q_g^\star}\tau_{hg}^{\left(k\right)^{\left(t\right)}}\sum_{j=1}^p\lambda_{jhg}^{2^{\left(t-1\right)}}\phi_{jhg}^{\left(t\right)}\right),\quad h\geq 2\\
+		&\delta_{hg}^{\left(t\right)} &\sim& \operatorname{Ga}\left(\alpha_2 + \frac{p}{2}\left(q_g^\star-k+1\right), \beta_2 + \frac{1}{2}\sum_{h=k}^{q_g^\star}\tau_{hg}^{\left(k\right)^{\left(t\right)}}\sum_{j=1}^p\lambda_{jhg}^{2^{\left(t-1\right)}}\phi_{jhg}^{\left(t\right)}\right),\quad h\geq 2\\
 		&\tau_{kg}^{\left(t\right)} &=& \prod_{h=1}^{k}\delta_{hg}^{\left(t\right)}\quad\hspace{38mm}\forall~k=1,\ldots,q_g^\star\nonumber
 		\end{alignat*}
 	\item Re-compute $\underline{n}$ and sample $\underline{\pi}$ from $\operatorname{Dir}\left(\underline{\alpha} + \underline{n}\right)$.

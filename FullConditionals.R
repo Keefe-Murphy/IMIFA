@@ -34,8 +34,8 @@
     }
 
   # Local Shrinkage
-    sim.phi     <- function(Q, P, nu, tau, load.2) {
-        matrix(rgamma(P * Q, shape=1/2 + nu, rate=(nu + sweep(load.2, 2, tau, FUN="*"))/2), nr=P, nc=Q)
+    sim.phi     <- function(Q, P, nu, tau, load.2, plus1) {
+        matrix(rgamma(P * Q, shape=1/2 + nu + plus1, rate=(nu + sweep(load.2, 2, tau, FUN="*"))/2), nr=P, nc=Q)
     }
   
   # Global Shrinkage
@@ -114,8 +114,8 @@
     }
 
   # Local Shrinkage
-    sim.phi.p   <- function(Q, P, nu) {
-        matrix(rgamma(n=P * Q, shape=nu, rate=nu), nr=P, nc=Q)
+    sim.phi.p   <- function(Q, P, nu, plus1) {
+        matrix(rgamma(n=P * Q, shape=nu + plus1, rate=nu), nr=P, nc=Q)
     }
   
   # Global Shrinkage
@@ -150,21 +150,34 @@
     }
     
   # Check Shrinkage Hyperparemeters
-    MGP.check   <- Vectorize(function(ad1, ad2, Q, bd1 = 1, bd2 = 1, inverse = TRUE) {
+    MGP.check   <- Vectorize(function(ad1, ad2, Q, nu, bd1 = 1, bd2 = 1, plus1 = TRUE, inverse = TRUE) {
       args      <- as.list(match.call())
+      if(any(!is.logical(plus1),
+             length(plus1)    != 1))       stop("'plus1' must be TRUE or FALSE")
+      if(any(!is.logical(inverse),
+             length(inverse)  != 1))       stop("'inverse' must be TRUE or FALSE")
+      if(any(length(Q) > 1, Q  < 2))       stop("Q must be single value, greater than or equal to 2")
+      if(any(nu <= !plus1, 
+             !is.numeric(nu)))             stop(paste0("'nu' must be a single ", ifelse(plus1, 
+                                                "strictly positive number for the Ga(nu + 1, nu) parameterisation", 
+                                                "number strictly greater than 1 for the Ga(nu, nu) parameterisation")))
       if(any(c(ad1, ad2)  < 1))            stop("All shrinkage shape hyperparameter values must be at least 1")
       if(any(c(bd1, bd2) <= 0))            stop("All shrinkage rate hyperparameter values must be strictly positive")
-      if(any(ad1 < bd1, ad2 < bd2))        stop("Shrinkage shape hyperparameters must be greater than associated shrinkage rate hyperparameters")
-      if(ad2/bd2 <= ad1/bd1)               stop("Shrinkage in column k must be strictly greater than shrinkage in column 1")
-      if(any(length(Q) > 1, Q  < 2))       stop("Q must be single value, greater than or equal to 2")
+      if(any(ad1 < bd1, ad2 < bd2))        warning("Shrinkage shape hyperparameters should be greater than associated shrinkage rate hyperparameters", call.=FALSE)
+      if(bd2/(ad2 - 1)   >= bd1/(ad1 - 1)) warning("Shrinkage in column k should be greater than shrinkage in column 1", call.=FALSE)
+      rate      <- nu
+      shape     <- ifelse(plus1, rate + 1, rate)
       if(inverse) {
         ad1     <- ifelse(ad1 == 1, ad1 + .Machine$double.eps, ad1)
         ad2     <- ifelse(ad2 == 1, ad2 + .Machine$double.eps, ad2)
-          any(bd2/(ad2 - 1)   >= 1, is.unsorted(bd1/(ad1 - 1) * (bd2/(ad2 - 1))^(seq_len(Q) - 1)))
+        exp.seq <- rate/(shape - 1) * bd1/(ad1 - 1) * (bd2/(ad2 - 1))^(seq_len(Q) - 1)
+        check   <- is.unsorted(exp.seq)
       } else {
-          !is.unsorted(ad1/bd1 * (ad2/bd2)^(seq_len(Q) - 1))
+        exp.seq <- shape/rate * ad1/bd1 * (ad2/bd2)^(seq_len(Q) - 1)
+        check   <- !is.unsorted(exp.seq)
       }
-    }, vectorize.args = c("ad1", "ad2", "bd1", "bd2"))
+        return(list(expectation = exp.seq, valid = check))
+    }, vectorize.args = c("ad1", "ad2", "nu", "bd1", "bd2"), SIMPLIFY=FALSE)
 
   # Label Switching
     lab.switch  <- function(z.new, z.old, Gs, ng = tabulate(z.new)) {

@@ -2,10 +2,10 @@
 ### Main Function for Keefe Murphy's IMIFA R Package ###
 ########################################################
 
-mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA", "MFA", "IFA", "FA", "classify"), n.iters = 25000L, range.G = NULL, range.Q = NULL,
-                        burnin = n.iters/5, thinning = 2L, centering = TRUE, scaling = c("unit", "pareto", "none"), mu.zero = NULL, sigma.mu = NULL, sigma.l = NULL, alpha = NULL, 
-                        z.list = NULL, z.init = c("kmeans", "list", "mclust", "priors"), psi.alpha = NULL, psi.beta = NULL, adapt = TRUE, b0 = NULL, b1 = NULL, prop = NULL, epsilon = NULL, 
-                        nu = NULL,  alpha.d1 = NULL, alpha.d2 = NULL, adapt.at = NULL, beta.d1 = NULL, beta.d2 = NULL, alpha.step = c("gibbs", "metropolis", "fixed"), alpha.hyper = NULL, 
+mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA", "MFA", "IFA", "FA", "classify"), n.iters = 25000L, range.G = NULL, range.Q = NULL, thinning = 2L, 
+                        burnin = n.iters/5, centering = TRUE, scaling = c("unit", "pareto", "none"), mu.zero = NULL, sigma.mu = NULL, sigma.l = NULL, alpha = NULL, z.list = NULL, 
+                        z.init = c("kmeans", "list", "mclust", "priors"), psi.alpha = NULL, psi.beta = NULL, adapt = TRUE, b0 = NULL, b1 = NULL, prop = NULL, epsilon = NULL, nu = NULL,  
+                        nuplus1 = TRUE, alpha.d1 = NULL, alpha.d2 = NULL, adapt.at = NULL, beta.d1 = NULL, beta.d2 = NULL, alpha.step = c("gibbs", "metropolis", "fixed"), alpha.hyper = NULL, 
                         ind.slice = TRUE, rho = NULL, DP.lab.sw = TRUE, trunc.G = NULL, profile = FALSE, verbose = TRUE, discount = NULL, learn.d = FALSE, d.hyper = NULL, mu0g = FALSE, 
                         psi0g = FALSE, delta0g = FALSE, mu.switch = TRUE, score.switch = TRUE, load.switch = TRUE, psi.switch = TRUE, pi.switch = TRUE, factanal = FALSE, Q.fac = NULL) {
   
@@ -50,6 +50,8 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
          length(centering) != 1))   stop("'centering' must be TRUE or FALSE")
   if(any(!is.logical(factanal),
          length(factanal)  != 1))   stop("'factanal' must be TRUE or FALSE")
+  if(any(!is.logical(nuplus1),
+         length(nuplus1)   != 1))   stop("'nuplus1' must be TRUE or FALSE")
   if(any(!is.logical(profile),
          length(profile)   != 1))   stop("'profile' must be TRUE or FALSE")
   if(any(!is.logical(verbose),
@@ -243,8 +245,8 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
            length(sigma.l) != 1))   stop("'sigma.l' must be a single strictly positive number")            
   } else {            
     if(missing("nu"))        nu            <- 2
-    if(any(nu <= 1, !is.numeric(nu),
-           length(nu) != 1))        stop("'nu' must be a single number strictly greater than 1")
+    if(any(nu <= !nuplus1, !is.numeric(nu),
+           length(nu) != 1))        stop(paste0("'nu' must be a single ", ifelse(nuplus1, "strictly positive number for the Ga(nu + 1, nu) parameterisation", "number strictly greater than 1 for the Ga(nu, nu) parameterisation")))
     if(missing("beta.d1"))   beta.d1       <- 1
     if(missing("beta.d2"))   beta.d2       <- 1
     if(any(!is.numeric(beta.d1),
@@ -367,8 +369,8 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
                                              DP.lab.sw = DP.lab.sw, a.hyper = alpha.hyper, discount = discount, d.hyper = d.hyper))
   }
   if(!is.element(method, c("FA", "MFA", "OMFA", "IMFA"))) {
-    gibbs.arg      <- append(gibbs.arg, list(nu = nu, beta.d1 = beta.d1, beta.d2 = beta.d2, adapt.at = adapt.at,
-                                             adapt = adapt, b0 = b0, b1 = b1, prop = prop, epsilon = epsilon))
+    gibbs.arg      <- append(gibbs.arg, list(nu = nu, beta.d1 = beta.d1, beta.d2 = beta.d2, adapt.at = adapt.at, adapt = adapt, 
+                                             nuplus1 = nuplus1, b0 = b0, b1 = b1, prop = prop, epsilon = epsilon))
     temp.args      <- gibbs.arg
   } else {
     gibbs.arg      <- append(gibbs.arg, list(sigma.l = sigma.l))
@@ -392,8 +394,8 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   }
   mu.zero          <- if(mu0.x) mu else len.check(mu.zero, mu0g, method, P, range.G)
   if(!is.element(method, c("FA", "MFA", "OMFA", "IMFA"))) {
-    alpha.d1       <- if(ad1.x) list(4) else len.check(alpha.d1, delta0g, method, P, range.G, P.dim=FALSE)
-    alpha.d2       <- if(adk.x) list(8) else len.check(alpha.d2, delta0g, method, P, range.G, P.dim=FALSE)
+    alpha.d1       <- if(ad1.x) list(3) else len.check(alpha.d1, delta0g, method, P, range.G, P.dim=FALSE)
+    alpha.d2       <- if(adk.x) list(6) else len.check(alpha.d2, delta0g, method, P, range.G, P.dim=FALSE)
   }
   if(!is.element(method, c("FA", "IFA"))) {
     if(verbose)                     cat(paste0("Initialising...\n"))
@@ -481,8 +483,8 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   }
   if(any(unlist(psi.beta)   <= 0))  stop("'psi.beta' must be strictly positive")
   if(is.element(method, c("classify", "IFA", "MIFA", "IMIFA", "OMIFA"))) {
-    if(!all(MGP.check(unlist(alpha.d1), unlist(alpha.d2), unique(range.Q),
-            beta.d1, beta.d2)))     stop("Invalid shrinkage hyperparameter values will not encourage loadings column removal.\n Try using the MGP.check() function in advance.")
+    if(!all(MGP.check(unlist(alpha.d1), unlist(alpha.d2), unique(range.Q), nu, beta.d1, beta.d2, 
+        plus1=nuplus1)[[1]]$valid)) stop("Invalid shrinkage hyperparameter values will not encourage loadings column removal.\n Try using the MGP.check() function in advance to ensure cumulative shrinkage property holds.")
     deltas         <- lapply(seq_along(range.G), function(g) list(alpha.d1 = alpha.d1[[g]], alpha.d2 = alpha.d2[[g]]))
   }
   init.time        <- proc.time() - init.start
