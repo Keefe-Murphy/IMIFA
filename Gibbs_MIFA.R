@@ -197,7 +197,7 @@
             notred <- notred & !Q.big
             Qs[Q.big]       <- Q.star
           }
-          phi      <- lapply(Gseq, function(g)   if(notred[g]) cbind(phi[[g]][,seq_len(Qs.old[g])], rgamma(n=P, shape=nu, rate=nu)) else phi[[g]][,nonred[[g]], drop=FALSE])
+          phi      <- lapply(Gseq, function(g)   if(notred[g]) cbind(phi[[g]][,seq_len(Qs.old[g])], rgamma(n=P, shape=nu + nuplus1, rate=nu)) else phi[[g]][,nonred[[g]], drop=FALSE])
           delta    <- lapply(Gseq, function(g)   if(notred[g]) c(delta[[g]][seq_len(Qs.old[g])], rgamma(n=1, shape=alpha.d2[g], rate=beta.d2)) else delta[[g]][nonred[[g]]])  
           tau      <- lapply(delta, cumprod)
           lmat     <- lapply(Gseq, function(g)   if(notred[g]) cbind(lmat[[g]][,seq_len(Qs.old[g])], rnorm(n=P, mean=0, sd=sqrt(1/(phi[[g]][,Qs[g]] * tau[[g]][Qs[g]])))) else lmat[[g]][,nonred[[g]], drop=FALSE])

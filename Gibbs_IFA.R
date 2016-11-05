@@ -111,7 +111,7 @@
               Q     <- Q.star
             } else {
               eta   <- cbind(eta, rnorm(N))         
-              phi   <- cbind(phi, rgamma(n=P, shape=nu, rate=nu))
+              phi   <- cbind(phi, rgamma(n=P, shape=nu + nuplus1, rate=nu))
               delta <- c(delta, rgamma(n=1, shape=alpha.d2, rate=beta.d2))
               tau   <- cumprod(delta)
               lmat  <- cbind(lmat, rnorm(n=P, mean=0, sd=sqrt(1/(phi[,Q] * tau[Q]))))  

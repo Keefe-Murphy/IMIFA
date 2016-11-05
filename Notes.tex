@@ -51,7 +51,7 @@
 \author[3]{Dr. Cinzia Viroli}
 \affil[1]{School of Mathematics and Statistics, UCD}
 \affil[2]{Insight Centre for Data Analytics, UCD}
-\affil[3]{Department of Statistical Sciences, Bologna}
+\affil[3]{Department of Statistical Sciences, University of Bologna}
 %\renewcommand\Authands{ and }
 
 \date{}
@@ -257,16 +257,16 @@ $\mathrm{V}^{-1} \sim \operatorname{Wish}_p\left(\nu, \Sigma\right)~\mbox{when}~
 \shortintertext{Since $\Psi$ is a diagonal matrix$\colon$}
 \mathrm{P}\left(\Psi^{-1}\right) & \propto \prod_{j=1}^{p}\given\psi_j^{-1}\given^{\frac{N}{2}}\exp\left(-\frac{1}{2}\mathrm{tr}\left(\mathcal{S}_j^\star\psi_j^{-1}\right)\right)\nonumber
 \shortintertext{This suggests the prior for $\Psi^{-1}$ is a product of $p \hspace{2mm} \operatorname{Ga}\left(\alpha,\beta\right)$ distributions. We choose hyperparameters as per \cite{Fruhwirth-Schnatter2010-II}, by bounding each $\psi_j$ away from zero in such a way that Heywood problems are avoided.}
-\therefore \mathrm{P}\left(\Psi^{-1} \given \alpha, \beta \right) & = \prod_{j=1}^{p}\mathrm{P}\left(\psi_j^{-1} \given \alpha, \beta \right)&\nonumber \\
-& \propto \prod_{j=1}^{p} \left(\psi_j^{-1}\right)^{\alpha - 1}\exp\left(- \beta\psi_j^{-1}\right)\nonumber&\\
-\therefore \mathrm{P}\left(\Psi^{-1}\given X^\star, \eta, \Lambda\right) &\propto \mathrm{P}\left(X^\star \given \eta,\Lambda\right)\mathrm{P}\left(\Psi^{-1} \given \alpha,\beta\right) \nonumber&\\
-&\propto \prod_{j=1}^{p}\left(\psi_j^{-1}\right)^{\frac{N}{2}}\exp\left(-\frac{\mathcal{S}_j^\star}{2}\psi_j^{-1}\right)\prod_{j=1}^{p}\left(\psi_j^{-1}\right)^{\alpha - 1}\exp\left(-\beta\psi_j^{-1}\right)\nonumber&\\
-& \propto \prod_{j=1}^{p}\left(\psi_j^{-1}\right)^{\frac{N}{2} + \alpha - 1}\exp\left(-\bigg(\frac{\mathcal{S}_j^\star}{2} + \beta\bigg)\psi_j^{-1}\right)\label{eq:17}\\
+\therefore \mathrm{P}\left(\Psi^{-1} \given \alpha, \beta_j \right) & = \prod_{j=1}^{p}\mathrm{P}\left(\psi_j^{-1} \given \alpha, \beta_j \right)&\nonumber \\
+& \propto \prod_{j=1}^{p} \left(\psi_j^{-1}\right)^{\alpha - 1}\exp\left(- \beta_j\psi_j^{-1}\right)\nonumber&\\
+\therefore \mathrm{P}\left(\Psi^{-1}\given X^\star, \eta, \Lambda\right) &\propto \mathrm{P}\left(X^\star \given \eta,\Lambda\right)\mathrm{P}\left(\Psi^{-1} \given \alpha,\beta_j\right) \nonumber&\\
+&\propto \prod_{j=1}^{p}\left(\psi_j^{-1}\right)^{\frac{N}{2}}\exp\left(-\frac{\mathcal{S}_j^\star}{2}\psi_j^{-1}\right)\prod_{j=1}^{p}\left(\psi_j^{-1}\right)^{\alpha - 1}\exp\left(-\beta_j\psi_j^{-1}\right)\nonumber&\\
+& \propto \prod_{j=1}^{p}\left(\psi_j^{-1}\right)^{\frac{N}{2} + \alpha - 1}\exp\left(-\bigg(\frac{\mathcal{S}_j^\star}{2} + \beta_j\bigg)\psi_j^{-1}\right)\label{eq:17}\\
 \mbox{where} \hspace{2mm}\mathcal{S}_j^\star &=  \sum_{i=1}^{N}\left(x_{ij} - \underline{\Lambda}_j\underline{\eta}_i\right)^2\nonumber 
 \shortintertext{However, we can reintroduce $\underline{\mu}$ at this stage by rewriting:}
 \mathcal{S}_j &=  \sum_{i=1}^{N}\left(x_{ij} - \mu_j - \underline{\Lambda}_j\underline{\eta}_i\right)^2 \nonumber&
 \shortintertext{Thus the posterior distribution of each $\psi_j^{-1}$ is given by:}
-\mathrm{P}\left(\psi_j^{-1}\given X,F,\Lambda\right) & \sim \operatorname{Ga}\left(\alpha + \frac{N}{2},\beta + \frac{S_j}{2}\right)&\label{eq:18}
+\mathrm{P}\left(\psi_j^{-1}\given X,F,\Lambda\right) & \sim \operatorname{Ga}\left(\alpha + \frac{N}{2},\beta_j + \frac{S_j}{2}\right)&\label{eq:18}
 \end{flalign}
 \subsection[Reintroducing $\mu$]{Reintroducing $\underline{\mu}$}
 We've already seen from \eqref{eq:13}, \eqref{eq:16} and \eqref{eq:18} that reintroducing $\mu$ to the other full conditionals is trivial. All that remains is to specify the conjugate Gaussian prior for $\mu$ itself, and to derive its full conditional. This implies an $\operatorname{MVN}_p$ distribution prior s.t. $\underline{\mu} \sim \operatorname{MVN}_p\left(\underline{\tilde{\mu}}, \Sigma_{\mu}\right)$ where $\Sigma_{\mu}$ is a diagonal covariance matrix, typically the diagonal of the data covariance matrix, and $\underline{\tilde{\mu}}$ is a vector of prior mean means, typically the sample mean for each group. As above, we can expect the result of the product of two $\operatorname{MVN}_p$ distributions to itself be distributed this way.
@@ -307,7 +307,7 @@ We've already seen from \eqref{eq:13}, \eqref{eq:16} and \eqref{eq:18} that rein
 	\num& \mbox{Initalise:} \quad& &\underline{\mu}^{\left(0\right)} &~\sim~& \operatorname{MVN}_p\left(\underline{\tilde{\mu}}, \Sigma_{\mu}\right) &\\
 	&\quad& &\underline{\eta}_i^{\left(0\right)} &~\sim~&\operatorname{MVN}_q\left(\underline{0},\mathcal{I}_q\right)~\quad\hspace{1.5mm}\forall~i = 1,\ldots,N&\\
 	&\quad& &\underline{\Lambda}_j^{\left(0\right)} &~\sim~&\operatorname{MVN}_q\left(\underline{0},\Sigma_{\lambda}\right)~\quad\forall~j = 1,\ldots,p&\\
-	&\quad& &\psi_j^{-1^{\left(0\right)}} &~\sim~& \operatorname{Ga}\left(\alpha,\beta\right)~\quad\hspace{8mm}\forall~j = 1,\ldots,p
+	&\quad& &\psi_j^{-1^{\left(0\right)}} &~\sim~& \operatorname{Ga}\left(\alpha,\beta_j\right)~\quad\hspace{8mm}\forall~j = 1,\ldots,p
 	\intertext{\num For $t = 1, \ldots, T$, using the routines specified in \eqref{eq:13}, \eqref{eq:16}, \eqref{eq:18} and \eqref{eq:20}$\colon$}
 	&\quad& \alphloop&\Omega_{\mu}^{\left(t\right)} &~=~& \Sigma_{\mu}^{-1} + N\Psi^{-1^{\left(t-1\right)}}&\\
 	&\quad& &\underline{\mu}^{\left(t\right)} &~\sim~& \operatorname{MVN}_p\left(\Omega_{\mu}^{-1^{\left(t\right)}}\Big(\Psi^{-1}\big(\sum_{i=1}^{N}\underline{x}_i - \sum_{i=1}^{N}\Lambda\underline{\eta}_i\big) + \Sigma_{\mu}^{-1}\underline{\tilde{\mu}}\Big),\Omega_{\mu}^{-1^{\left(t\right)}}\right)&\\
@@ -316,7 +316,7 @@ We've already seen from \eqref{eq:13}, \eqref{eq:16} and \eqref{eq:18} that rein
 	&\quad &\alphloop &\mbox{For}~j &~=~& 1, \ldots, p&\\
 	&\quad & \bullet~&\Omega_{\lambda_j}^{\left(t\right)} &~=~& \Sigma_{\lambda}^{-1} + \psi_j^{-1^{\left(t-1\right)}}\eta^{T^{\left(t\right)}}\eta^{\left(t\right)}&\\
 	&\quad & &  \underline{\Lambda}_j^{\left(t\right)} &~\sim~& \operatorname{MVN}_q\left(\Omega_{\lambda_j}^{-1^{\left(t\right)}}\eta^{T^{\left(t\right)}}\psi_j^{-1^{\left(t-1\right)}}\left(\underline{x}^j -\underline{1}\mu_j^{\left(t\right)}\right),\Omega_{\lambda_j}^{-1^{\left(t\right)}}\right)&\\
-	&\quad &\bullet~&  \psi_j^{-1^{\left(t\right)}} &~\sim~& \operatorname{Ga}\left(\alpha + \frac{N}{2},\beta + \frac{S_j^{\left(t\right)}}{2}\right)
+	&\quad &\bullet~&  \psi_j^{-1^{\left(t\right)}} &~\sim~& \operatorname{Ga}\left(\alpha + \frac{N}{2},\beta_j + \frac{S_j^{\left(t\right)}}{2}\right)
 	\intertext{\num Disregard the first $\operatorname{B}$ burn-in iterations and thin every $\operatorname{K}$-th iteration.}
 	\intertext{\num Calculate the log-likelihood for each remaining sample. Then, using the largest value observed across these draws, BIC-MCMC, as defined by \citet{Fruhwirth-Schnatter2011}, is determined by $2\ln\hat{\mathcal{L}} - k\ln\left(N\right)$, where $k = pq -\frac{q\left(q-1\right)}{2} + 2p$ is the effective number of parameters in the model. When choosing between competing models, the one with the highest BIC-MCMC is preferred. Alternatively, AIC-MCMC, or the BICM and AICM of \cite{Raftery2007} can be used.}&
 	\end{alignat*}	
@@ -464,11 +464,11 @@ p_g &=~\mathrm{P}\left(\underline{z}_{ig}=1\given\underline{x}_i,\gamma\right) =
 		\begin{flalign}
 	\underline{\mu}_g^{\left(0\right)} &\sim \operatorname{MVN}_p\left(\underline{\tilde{\mu}}_g, \Sigma_{\mu}\right) &\nonumber\\
 	\underline{\eta}_{i}^{\left(0\right)} &\sim\operatorname{MVN}_{q_g^\star}\left(\underline{0},\mathcal{I}_{q_g^\star}\right)~\quad\forall~i = 1,\ldots,N&\nonumber\\
-	\underline{\Lambda}_{jg}^{\left(0\right)} &\sim\operatorname{MVN}_{q_g^\star}\left(\underline{0},\Sigma_{\lambda}\right)~\quad\hspace{0.5mm}\forall~j = 1,\ldots,p&\nonumber\\
-	\psi_{jg}^{-1^{\left(0\right)}} &\sim \operatorname{Ga}\left(\alpha,\beta\right)~\quad\quad\hspace{6mm}\forall~j = 1,\ldots,p&\nonumber\\
-	\phi_{jkg}^{\left(0\right)} &\sim \operatorname{Ga}\left(\nu + 1,\nu\right)~\quad\quad\hspace{6.5mm}\forall~j = 1,\ldots,p\quad\mbox{and}\quad k=1,\ldots,q_g^\star\nonumber\\
-	\delta_{1g}^{\left(0\right)} &\sim \operatorname{Ga}\left(\alpha_1,\beta_1\right),\quad\delta_{hg}^{\left(0\right)} \sim \operatorname{Ga}\left(\alpha_2,\beta_2\right),\quad h\geq 2\nonumber\\
-	\tau_{kg}^{\left(0\right)} &= \prod_{h=1}^{k}\delta_{hg}^{\left(0\right)}\quad\hspace{16.2mm}\forall~k=1,\ldots,q_g^\star\nonumber
+	\underline{\Lambda}_{jg}^{\left(0\right)} &\sim\operatorname{MVN}_{q_g^\star}\left(\underline{0},\Sigma_{\lambda}\right)~\quad\hspace{1.5mm}\forall~j = 1,\ldots,p&\nonumber\\
+	\psi_{jg}^{-1^{\left(0\right)}} &\sim \operatorname{Ga}\left(\alpha,\beta_j\right)~\quad\quad\hspace{5mm}\forall~j = 1,\ldots,p&\nonumber\\
+	\phi_{jkg}^{\left(0\right)} &\sim \operatorname{Ga}\left(\nu + 1,\nu\right)~\qquad\forall~j = 1,\ldots,p\quad\mbox{and}\quad k=1,\ldots,q_g^\star\nonumber\\
+	\delta_{1g}^{\left(0\right)} &\sim \operatorname{Ga}\left(\alpha_1,\beta_1\right),\hspace{3mm}\delta_{hg}^{\left(0\right)} \sim \operatorname{Ga}\left(\alpha_2,\beta_2\right),\quad h\geq 2\nonumber\\
+	\tau_{kg}^{\left(0\right)} &= \prod_{h=1}^{k}\delta_{hg}^{\left(0\right)}\quad\hspace{17mm}\forall~k=1,\ldots,q_g^\star\nonumber
 		\end{flalign}
 	\item For $g = 1,\ldots,G$, sample other parameters as before, but this time from their \textit{group specific} full conditionals$\colon$
 	\begin{alignat*}{4}
@@ -479,7 +479,7 @@ p_g &=~\mathrm{P}\left(\underline{z}_{ig}=1\given\underline{x}_i,\gamma\right) =
 		\alphloop &\mbox{For}~j &=& 1, \ldots, p\\
 		\bullet~&\Omega_{\lambda_{jg}}^{\left(t\right)} &=& \mathrm{D}_j^{-1} + \psi_{jg}^{-1^{\left(t-1\right)}}\eta_{i\colon z_{ig} = 1}^{T^{\left(t\right)}}\eta_{i\colon z_{ig} = 1}^{\left(t\right)}\\
 		&  \underline{\Lambda}_{jg}^{\left(t\right)} &\sim& \operatorname{MVN}_{q_g^\star}\left(\Omega_{\lambda_{jg}}^{-1^{\left(t\right)}}\eta_{i\colon z_{ig} = 1}^{T^{\left(t\right)}}\psi_{jg}^{-1^{\left(t-1\right)}}\left(\underline{x}_{i\colon z_{ig} = 1}^j -\underline{1}\mu_{jg}^{\left(t\right)}\right),\Omega_{\lambda_{jg}}^{-1^{\left(t\right)}}\right)\\
-		\bullet~&  \psi_{jg}^{-1^{\left(t\right)}} &\sim& \operatorname{Ga}\left(\alpha + \frac{n_g}{2},\beta + \frac{S_{jg}^{\left(t\right)}}{2}\right)\\
+		\bullet~&  \psi_{jg}^{-1^{\left(t\right)}} &\sim& \operatorname{Ga}\left(\alpha + \frac{n_g}{2},\beta_j + \frac{S_{jg}^{\left(t\right)}}{2}\right)\\
 		\bullet~& \phi_{jkg}^{\left(t\right)} &\sim& \operatorname{Ga}\left(\nu + \frac{3}{2},\nu+\frac{\tau_{kg}^{\left(t-1\right)}\lambda_{jkg}^{2^{\left(t\right)}}}{2}\right)\quad\forall~k=1,\ldots,q_g^\star\\
 		\alphloop&\delta_{1g}^{\left(t\right)} &\sim& \operatorname{Ga}\left(\alpha_1 + \frac{pq_g^\star}{2},\beta_1 + \frac{1}{2}\sum_{h=1}^{q_g^\star}\tau_{hg}^{\left(1\right)^{\left(t-1\right)}}\sum_{j=1}^p\lambda_{jhg}^{2^{\left(t\right)}}\phi_{jhg}^{\left(t\right)}\right)\\
 		&\delta_{hg}^{\left(t\right)} &\sim& \operatorname{Ga}\left(\alpha_2 + \frac{p}{2}\left(q_g^\star-k+1\right), \beta_2 + \frac{1}{2}\sum_{h=k}^{q_g^\star}\tau_{hg}^{\left(k\right)^{\left(t\right)}}\sum_{j=1}^p\lambda_{jhg}^{2^{\left(t-1\right)}}\phi_{jhg}^{\left(t\right)}\right),\quad h\geq 2\\

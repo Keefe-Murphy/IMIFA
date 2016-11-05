@@ -640,6 +640,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   attr(imifa, "Method")   <- paste0(toupper(substr(method, 1, 1)),
                                     substr(method, 2, nchar(method)))
   attr(imifa, "Name")     <- dat.nam
+  attr(imifa, "Nuplus1")  <- all(is.element(method, c("IFA", "MIFA", "OMIFA", "IMIFA")), nuplus1)
   attr(imifa, "Obs")      <- N
   attr(imifa, "Scaling")  <- scal
   attr(attr(imifa,
