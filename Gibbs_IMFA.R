@@ -77,8 +77,8 @@
     eta             <- sim.eta.p(N=N, Q=Q)
     lmat            <- lapply(Ts, function(t) sim.load.p(Q=Q, P=P, sigma.l=sigma.l, shrink=FALSE))
     psi.inv         <- vapply(Ts, function(t) sim.psi.i.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), numeric(P))
-    if(Q0) {
-      for(g in which(nn > 2.5 * Q))      {
+    if(Q0 && Q   < P - sqrt(P + Q)) {
+      for(g in which(nn      > P))  {
         fact        <- try(factanal(data[z == g,, drop=FALSE], factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
         if(!inherits(fact, "try-error")) {
           eta[z == g,]      <- fact$scores

@@ -115,7 +115,7 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
     m.sw["M.sw"]   <- TRUE
   } 
   if(all(!v.sw[vars], !m.sw["G.sw"], 
-     !m.sw["Z.sw"],   !m.sw["E.sw"])) stop(paste0("Nothing to plot: ", vars, ifelse(vars == "alpha", paste0(" was fixed at ", attr(results, "Alpha")), " weren't stored")))
+     !m.sw["Z.sw"],   !m.sw["E.sw"])) stop(paste0("Nothing to plot: ", vars, ifelse(vars == "alpha", ifelse(is.element(method, c("FA", "IFA")), paste0(" not used for the ", method, " method"), paste0(" was fixed at ", attr(results, "Alpha"))), " weren't stored")))
   if(any(!is.logical(intervals),
          length(intervals) != 1))     stop("'intervals' must be TRUE or FALSE")
   if(any(!is.logical(mat),
@@ -528,7 +528,7 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
         plot(c(0, 1), c(0, 1), ann=FALSE, bty='n', type='n', xaxt='n', yaxt='n')
         if(titles) title(main=list(paste0("Summary Statistics", ifelse(all.ind, "", ":\nAlpha"))))
         plot.x <- clust$DP.alpha[-1]
-        a.step <- attr(results, "Alpha.step")
+        a.step <- attr(results, "Alph.step")
         conf   <- attr(results, "Conf.Level")
         digits <- options()$digits
         a.adj  <- rep(0.5, 2)

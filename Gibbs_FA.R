@@ -48,6 +48,19 @@
     eta          <- sim.eta.p(Q=Q, N=N)
     lmat         <- sim.load.p(Q=Q, P=P, sigma.l=sigma.l, shrink=FALSE)
     psi.inv      <- sim.psi.i.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
+    if(all(Q0, Q  < P - sqrt(P + Q), N > P)) {
+      fact       <- try(factanal(data, factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
+      if(!inherits(fact, "try-error")) {
+        eta      <- fact$scores
+        lmat     <- fact$loadings
+        psi.inv  <- 1/fact$uniquenesses
+      }
+    } else {
+      psi.tmp    <- psi.inv
+      psi.inv    <- 1/apply(data, 2, var)
+      inf.ind    <- is.infinite(psi.inv)
+      psi.inv[inf.ind]     <- psi.tmp[inf.ind]
+    }
     l.sigma      <- diag(1/sigma.l, Q)
     sum.data     <- mu * N
     if(burnin     < 1)    {

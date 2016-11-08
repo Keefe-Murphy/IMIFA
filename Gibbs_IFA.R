@@ -48,11 +48,24 @@
     
     mu.sigma     <- 1/sigma.mu
     eta          <- sim.eta.p(Q=Q, N=N)
-    psi.inv      <- sim.psi.i.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
     phi          <- sim.phi.p(Q=Q, P=P, nu=nu, plus1=nuplus1)
     delta        <- c(sim.delta.p(alpha=alpha.d1, beta=beta.d1), sim.delta.p(Q=Q, alpha=alpha.d2, beta=beta.d2))
     tau          <- cumprod(delta)
     lmat         <- matrix(unlist(lapply(Pseq, function(j) sim.load.p(Q=Q, phi=phi[j,], tau=tau, P=P)), use.names=FALSE), nr=P, byrow=TRUE)
+    psi.inv      <- sim.psi.i.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
+    if(all(Q  < P - sqrt(P + Q), N > P)) {
+      fact       <- try(factanal(data, factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
+      if(!inherits(fact, "try-error"))   {
+        eta      <- fact$scores
+        lmat     <- fact$loadings
+        psi.inv  <- 1/fact$uniquenesses
+      }
+    } else {
+      psi.tmp    <- psi.inv
+      psi.inv    <- 1/apply(data, 2, var)
+      inf.ind    <- is.infinite(psi.inv)
+      psi.inv[inf.ind]     <- psi.tmp[inf.ind]
+    }
     sum.data     <- mu * N
     if(burnin     < 1) {
       mu.store[,1]         <- mu

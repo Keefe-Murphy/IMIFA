@@ -272,7 +272,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(epsilon <= 0 ||
        epsilon >= 1)                stop("'epsilon' must be lie in the interval (0, 1)")
   } 
-  Q.warn       <- min(N - 1, P + 3/2 - sqrt(2 * P + 9/4))
+  Q.warn       <- floor(min(N - 1, P - sqrt(P + range.Q), P + 3/2 - sqrt(2 * P + 9/4)))
   if(any(range.Q  >= P)) {          
     if(all(is.element(method, c("IFA", "MIFA", "OMIFA", "IMIFA")),
        isTRUE(adapt)))   {          warning(paste0("Starting value for number of factors is not less than the number of variables, ", P, ":\n Suggested upper bound = ", Q.warn), call.=FALSE)
@@ -616,7 +616,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   gnames    <- if(method  == "classify") paste0("Group ", seq_len(range.G)) else paste0(range.G, ifelse(range.G == 1, "Group", "Groups"))
   names(imifa)            <- gnames
   attr(imifa, 
-       "Alpha.step")      <- alpha.step
+       "Alph.step")       <- alpha.step
   attr(imifa, "Alpha")    <- if(alpha.step == "fixed") alpha
   if(method == "classify") {
     attr(imifa,

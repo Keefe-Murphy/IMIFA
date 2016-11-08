@@ -72,10 +72,10 @@
     eta            <- sim.eta.p(N=N, Q=Q)
     lmat           <- lapply(Gseq, function(g) sim.load.p(Q=Q, P=P, sigma.l=sigma.l, shrink=FALSE))
     psi.inv        <- vapply(Gseq, function(g) sim.psi.i.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta[,g]), numeric(P))
-    if(Q0) {
-      fact.ind     <- nn <= 2.5 * Q
+    if(Q0 && Q  < P - sqrt(P + Q)) {
+      fact.ind     <- nn   <= P
       fail.gs      <- which(fact.ind)
-      for(g in which(!fact.ind)) {
+      for(g in which(!fact.ind))   {
         fact       <- try(factanal(data[z == g,, drop=FALSE], factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
         if(!inherits(fact, "try-error")) {
           eta[z == g,]     <- fact$scores
