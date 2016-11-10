@@ -272,7 +272,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(epsilon <= 0 ||
        epsilon >= 1)                stop("'epsilon' must be lie in the interval (0, 1)")
   } 
-  Q.warn       <- floor(min(N - 1, P - sqrt(P + range.Q), P + 3/2 - sqrt(2 * P + 9/4)))
+  Q.warn       <- floor(min(N - 1, P + 3/2 - sqrt(2 * P + 9/4)))
   if(any(range.Q  >= P)) {          
     if(all(is.element(method, c("IFA", "MIFA", "OMIFA", "IMIFA")),
        isTRUE(adapt)))   {          warning(paste0("Starting value for number of factors is not less than the number of variables, ", P, ":\n Suggested upper bound = ", Q.warn), call.=FALSE)

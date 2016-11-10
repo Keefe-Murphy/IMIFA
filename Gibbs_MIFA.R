@@ -83,21 +83,28 @@
     tau            <- lapply(delta, cumprod)
     lmat           <- lapply(Gseq, function(g) matrix(unlist(lapply(Pseq, function(j) sim.load.p(Q=Q, phi=phi[[g]][j,], tau=tau[[g]], P=P)), use.names=FALSE), nr=P, byrow=TRUE))
     psi.inv        <- vapply(Gseq, function(g) sim.psi.i.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta[,g]), numeric(P))
-    fact.ind       <- nn    <= P
-    fail.gs        <- which(fact.ind)
-    for(g in which(!fact.ind)) {
-      fact         <- try(factanal(data[z == g,, drop=FALSE], factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
-      if(!inherits(fact, "try-error")) {
-        eta[z == g,]        <- fact$scores
-        lmat[[g]]           <- fact$loadings
-        psi.inv[,g]         <- 1/fact$uniquenesses
-      } else  {
-        fail.gs    <- c(fail.gs, g)
-      }               
+    if(Q0 && Q  < P - sqrt(P + Q)) {
+      fact.ind     <- nn    <= P
+      fail.gs      <- which(fact.ind)
+      for(g in which(!fact.ind))   {
+        fact       <- try(factanal(data[z == g,, drop=FALSE], factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
+        if(!inherits(fact, "try-error")) {
+          eta[z == g,]      <- fact$scores
+          lmat[[g]]         <- fact$loadings
+          psi.inv[,g]       <- 1/fact$uniquenesses
+        } else  {
+          fail.gs  <- c(fail.gs, g)
+        }               
+      }
+      fail.gs      <- fail.gs[order(fail.gs)]
+      len.fail     <- length(fail.gs)
+      if(len.fail   > 0)       message(paste0("Parameters of the following group", ifelse(len.fail > 2, "s ", " "), "were initialised by simulation from priors, not factanal: ", ifelse(len.fail > 1, paste0(paste0(fail.gs[-len.fail], sep="", collapse=", "), " and ", fail.gs[len.fail]), fail.gs), " - G=", G, ", Q=", Q))
+    } else     {
+      psi.tmp      <- psi.inv
+      psi.inv      <- vapply(Gseq, function(g) if(nn[g] > 1) 1/apply(data[z == g,, drop=FALSE], 2, var) else psi.tmp[,g], numeric(P))
+      inf.ind      <- is.infinite(psi.inv)
+      psi.inv[inf.ind]      <- psi.tmp[inf.ind]
     }
-    fail.gs        <- fail.gs[order(fail.gs)]
-    len.fail       <- length(fail.gs)
-    if(len.fail     > 0)      message(paste0("Parameters of the following group", ifelse(len.fail > 2, "s ", " "), "were initialised by simulation from priors, not factanal: ", ifelse(len.fail > 1, paste0(paste0(fail.gs[-len.fail], sep="", collapse=", "), " and ", fail.gs[len.fail]), fail.gs), " - G=", G, ", Q=", Q))
     if(burnin       < 1)  {
       mu.store[,,1]         <- mu
       eta.store[,,1]        <- eta

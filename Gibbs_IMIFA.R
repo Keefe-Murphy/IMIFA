@@ -83,13 +83,20 @@
     tau              <- lapply(delta, cumprod)
     lmat             <- lapply(Ts, function(t) matrix(unlist(lapply(Ps, function(j) sim.load.p(Q=Q, phi=phi[[t]][j,], tau=tau[[t]], P=P)), use.names=FALSE), nr=P, byrow=TRUE))
     psi.inv          <- vapply(Ts, function(t) sim.psi.i.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), numeric(P))
-    for(g in which(nn > P)) {
-      fact           <- try(factanal(data[z == g,, drop=FALSE], factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
-      if(!inherits(fact, "try-error")) {
-        eta[z == g,]          <- fact$scores
-        lmat[[g]]             <- fact$loadings
-        psi.inv[,g]           <- 1/fact$uniquenesses
-      } 
+    if(Q0 && Q <   P  - sqrt(P + Q)) {
+      for(g in which(nn        > P)) {
+        fact         <- try(factanal(data[z == g,, drop=FALSE], factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
+        if(!inherits(fact, "try-error")) {
+          eta[z == g,]        <- fact$scores
+          lmat[[g]]           <- fact$loadings
+          psi.inv[,g]         <- 1/fact$uniquenesses
+        } 
+      }
+    } else {
+      psi.tmp        <- psi.inv
+      psi.inv        <- vapply(Ts, function(t) if(nn[t] > 1) 1/apply(data[z == t,, drop=FALSE], 2, var) else psi.tmp[,t], numeric(P))
+      inf.ind        <- is.infinite(psi.inv)
+      psi.inv[inf.ind]        <- psi.tmp[is.infinite(psi.inv)]
     }
     index            <- order(pi.prop, decreasing=TRUE)
     pi.prop          <- pi.prop[index]

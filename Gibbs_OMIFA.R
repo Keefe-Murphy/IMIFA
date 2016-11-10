@@ -65,13 +65,20 @@
     tau              <- lapply(delta, cumprod)
     lmat             <- lapply(Gseq, function(g) matrix(unlist(lapply(Pseq, function(j) sim.load.p(Q=Q, phi=phi[[g]][j,], tau=tau[[g]], P=P)), use.names=FALSE), nr=P, byrow=TRUE))
     psi.inv          <- vapply(Gseq, function(g) sim.psi.i.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), numeric(P))
-    for(g in which(nn > P)) {
-      fact           <- try(factanal(data[z == g,, drop=FALSE], factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
-      if(!inherits(fact, "try-error")) {
-        eta[z == g,]          <- fact$scores
-        lmat[[g]]             <- fact$loadings
-        psi.inv[,g]           <- 1/fact$uniquenesses
+    if(Q0 && Q   < P  - sqrt(P + Q)) {
+      for(g in which(nn        > P)) {
+        fact         <- try(factanal(data[z == g,, drop=FALSE], factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
+        if(!inherits(fact, "try-error")) {
+          eta[z == g,]        <- fact$scores
+          lmat[[g]]           <- fact$loadings
+          psi.inv[,g]         <- 1/fact$uniquenesses
+        }
       }
+    } else {
+      psi.tmp        <- psi.inv
+      psi.inv        <- vapply(Gseq, function(g) if(nn[g] > 1) 1/apply(data[z == g,, drop=FALSE], 2, var) else psi.tmp[,g], numeric(P))
+      inf.ind        <- is.infinite(psi.inv)
+      psi.inv[inf.ind]        <- psi.tmp[inf.ind]
     }
     if(burnin         < 1)  {
       mu.store[,,1]           <- mu
