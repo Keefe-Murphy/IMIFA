@@ -94,9 +94,9 @@
       }
     } else {
       psi.tmp        <- psi.inv
-      psi.inv        <- vapply(Ts, function(t) if(nn[t] > 1) 1/apply(data[z == t,, drop=FALSE], 2, var) else psi.tmp[,t], numeric(P))
+      psi.inv[,Gs]   <- vapply(Gs, function(g) if(nn[g] > 1) 1/apply(data[z == g,, drop=FALSE], 2, var) else psi.tmp[,g], numeric(P))
       inf.ind        <- is.infinite(psi.inv)
-      psi.inv[inf.ind]        <- psi.tmp[is.infinite(psi.inv)]
+      psi.inv[inf.ind]        <- psi.tmp[inf.ind]
     }
     index            <- order(pi.prop, decreasing=TRUE)
     pi.prop          <- pi.prop[index]
