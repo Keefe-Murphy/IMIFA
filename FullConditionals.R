@@ -48,7 +48,7 @@
     }
 
   # Mixing Proportions
-    sim.pi      <- function(pi.alpha, nn, N, inf.G = FALSE, len, discount) {
+    sim.pi      <- function(pi.alpha, nn, N = sum(nn), inf.G = FALSE, len, discount = 0) {
       if(inf.G) {
         vs      <- if(discount == 0) rbeta(len, 1 + nn, pi.alpha + N - cumsum(nn)) else rbeta(len, 1 - discount + nn, pi.alpha + seq_along(nn) * discount + N - cumsum(nn))
           return(list(Vs = vs, pi.prop = vapply(seq_len(len), function(t) vs[t] * prod(1 - vs[seq_len(t - 1)]), numeric(1))))

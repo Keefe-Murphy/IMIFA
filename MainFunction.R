@@ -427,7 +427,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
           }  
         } else {
           if(alpha <= 1)            warning("Suggestion: supply a value > 1 for 'alpha' if initialising labels from the stick-breaking prior")
-          pies     <- sim.pi(pi.alpha=alpha, nn=rep(0, trunc.G), inf.G=TRUE)
+          pies     <- sim.pi(pi.alpha=alpha, nn=rep(0, trunc.G), inf.G=TRUE, discount=discount, len=trunc.G)$pi.prop
           zips     <- sim.z.p(N=N, prob.z=pies)
         }
         zi[[g]]    <- as.numeric(zips)
