@@ -224,11 +224,11 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, 
         neg.r            <- grepl("-", spl.tmp[1], fixed=TRUE) || grepl("!", spl.tmp[1], fixed=TRUE)
         neg.c            <- grepl("-", spl.tmp[2], fixed=TRUE) || grepl("!", spl.tmp[2], fixed=TRUE)
         rowx             <- as.numeric(unlist(strsplit(gsub('\\(', '', gsub(',', '', unlist(regmatches(spl.tmp[1], gregexpr('\\(?[0-9,.]+', spl.tmp[1]))))), '')))
-        rowx             <- if(sum(rowx) == 0) seq_len(nrow(dat)) else rowx
+        rowx             <- if(any(spl.ind <= 0, sum(rowx) == 0)) seq_len(nrow(dat)) else rowx
         colseq           <- ifelse(neg.c, -1, 1) * as.numeric(unlist(strsplit(gsub('\\(', '', gsub(',', '', unlist(regmatches(spl.tmp[2], gregexpr('\\(?[0-9,.]+', spl.tmp[2]))))), '')))
         rowseq           <- rep(neg.r, nrow(dat)) 
         rowseq[rowx]     <- !rowseq[rowx]
-        dat              <- subset(dat, select=if(sum(colseq) == 0) seq_len(ncol(dat)) else colseq, subset=rowseq, drop=!grepl("drop=F", dat.nam))
+        dat              <- subset(dat, select=if(any(spl.ind <= 0, sum(colseq) == 0)) seq_len(ncol(dat)) else colseq, subset=rowseq, drop=!grepl("drop=F", dat.nam))
       }
       dat        <- dat[complete.cases(dat),]
       dat        <- dat[vapply(dat, is.numeric, logical(1))]
