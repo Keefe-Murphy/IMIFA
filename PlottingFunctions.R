@@ -193,7 +193,7 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
       matx     <- mat
     }  
     if(!matx) {
-      iter     <- if(vars == "scores") store else seq_len(attr(result, "Store"))
+      iter     <- if(vars == "scores") seq_along(attr(results$Score, "Eta.store")) else if(vars == "pis") seq_along(store) else seq_len(attr(result, "Store"))
     }               
     if(is.element(vars, c("scores", "loadings"))) {
       if(indx)               ind <- c(1, 1)
@@ -237,7 +237,7 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
       if(vars  == "scores") {
         x.plot <- results$Scores$eta
         if(by.fac) {
-          plot.x  <- if(Q > 1) x.plot[ind[1],,] else t(x.plot[ind[1],,])
+          plot.x  <- if(Q.max > 1) x.plot[ind[1],,] else t(x.plot[ind[1],,])
         } else {
           plot.x  <- x.plot[,ind[2],]
         }

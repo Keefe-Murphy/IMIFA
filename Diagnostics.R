@@ -581,9 +581,11 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, 
     e.store[[g]] <- store
   }
   if(sw["s.sw"])   {
-    eta          <- eta[,seq_len(max(Q)),unique(unlist(e.store)), drop=FALSE]
+    eta.store    <- unique(unlist(e.store))
+    eta          <- eta[,seq_len(max(Q)),eta.store, drop=FALSE]
     scores       <- list(eta = eta, post.eta = rowMeans(eta, dims=2), var.eta = apply(eta, c(1, 2), var),
                          ci.eta  = apply(eta, c(1, 2), function(x) quantile(x, conf.levels)))
+    attr(scores, "Eta.store")  <- eta.store
   }
   names(result)  <- paste0("Group", Gseq)
   class(GQ.res)                <- "listof"
