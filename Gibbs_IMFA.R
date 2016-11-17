@@ -47,6 +47,7 @@
     }
     z.store         <- matrix(0, nr=N, nc=n.store)
     ll.store        <- rep(0, n.store)
+    acc1            <- acc2 <- FALSE
     err.z           <- zerr <- FALSE
     G.store         <- rep(0, n.store)
     dimnames(z.store)       <- list(obsnames, iternames)
@@ -206,8 +207,8 @@
       G.non         <- sum(nn0)
       if(DP.lab.sw  && G.non > 1)  {
         move1       <- label.move1(nn.ind=nn.ind, pi.prop=pi.prop, nn=nn)
-        accept1     <- move1$rate1
-        if(accept1) {
+        acc1        <- move1$rate1
+        if(acc1)    {
           sw1       <- move1$sw
           sw1x      <- c(sw1[2], sw1[1])
           nn[sw1]   <- nn[sw1x]
@@ -223,8 +224,8 @@
           z[zsw1]   <- sw1[2]            
         } 
         move2       <- label.move2(nn.ind=nn.ind, Vs=Vs, nn=nn)
-        accept2     <- move2$rate2
-        if(accept2) {
+        acc2        <- move2$rate2
+        if(acc2)    {
           sw2       <- move2$sw
           sw2x      <- c(sw2[2], sw2[1])
           nn[sw2]   <- nn[sw2x]
@@ -254,7 +255,7 @@
         if(not.fixed)                 alpha.store[new.it]   <- pi.alpha
         if(learn.d)                   d.store[new.it]       <- discount
         if(MH.step)                   rate[new.it]          <- MH.alpha$rate
-        if(DP.lab.sw)                 lab.rate[,new.it]     <- c(accept1, accept2)
+        if(DP.lab.sw)                 lab.rate[,new.it]     <- c(acc1, acc2)
                                       z.store[,new.it]      <- z 
                                       ll.store[new.it]      <- sum(z.res$log.likes)
                                       G.store[new.it]       <- G.non
