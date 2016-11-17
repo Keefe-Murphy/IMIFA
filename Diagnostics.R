@@ -95,7 +95,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, 
     if(G.T)  {
       if(length(Q) == 1)     Q <- rep(Q, G)
       if(length(Q) != G)          stop(paste0("'Q' must be supplied for each group, as a scalar or vector of length G=", G))
-    } else if(length(n.grp)    != 1 || all(!is.element(length(Q), 
+    } else if(length(n.grp)    != 1 && all(!is.element(length(Q), 
               c(1,   n.grp))))    stop("'Q' must be a scalar if G=1, 'G' is not suppplied, or a range of G values were explored")
     if(all(is.element(method, c("FA", "MFA", "OMFA", "IMFA")))) {
       if(length(unique(Q)) != 1)  stop(paste0("'Q' cannot vary across groups for the ", method, " method"))
