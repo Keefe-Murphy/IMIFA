@@ -179,7 +179,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, 
         G        <- n.grp[G.ind]
       }
     } 
-    G            <- ifelse(inf.G, ifelse(Q.T, G, G[Q.ind]), ifelse(length(n.grp) == 1, n.grp, G))
+    G            <- ifelse(inf.G, ifelse(G.T, G, G[Q.ind]), ifelse(length(n.grp) == 1, n.grp, G))
     Gseq         <- seq_len(G)
     G.ind        <- ifelse(all(length(n.grp) == 1, !inf.G), which(n.grp == G), G.ind)
     GQ.temp2     <- list(AICMs = aicm, BICMs = bicm, LogIntegratedLikelihoods = log.iLLH)
