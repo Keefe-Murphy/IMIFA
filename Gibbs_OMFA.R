@@ -55,6 +55,7 @@
     z              <- cluster$z
     z.temp         <- factor(z, levels=Gseq)
     nn             <- tabulate(z, nbins=G)
+    nn.ind         <- which(nn > 0)
     pi.alpha       <- cluster$pi.alpha
     pi.prop        <- cluster$pi.prop
     eta            <- sim.eta.p(N=N, Q=Q)
@@ -77,6 +78,13 @@
     }
     l.sigma        <- diag(1/sigma.l, Q)
     lmat           <- array(unlist(lmat, use.names=FALSE), dim=c(P, Q, G))
+    index          <- order(nn, decreasing=TRUE)
+    pi.prop        <- pi.prop[index]
+    mu             <- mu[,index, drop=FALSE]
+    lmat           <- lmat[,,index, drop=FALSE]
+    psi.inv        <- psi.inv[,index, drop=FALSE]
+    z              <- factor(z, labels=match(nn.ind, index))
+    z              <- as.numeric(levels(z))[z]
     if(burnin       < 1)  {
       mu.store[,,1]        <- mu
       eta.store[,,1]       <- eta
@@ -94,8 +102,15 @@
     for(iter in seq_len(total)[-1]) { 
       if(verbose   && iter  < burnin) setTxtProgressBar(pb, iter)
       
-    # Mixing Proportions
+    # Mixing Proportions & Re-ordering
       pi.prop[]    <- sim.pi(pi.alpha=pi.alpha, nn=nn)
+      index        <- order(nn, decreasing=TRUE)
+      pi.prop      <- pi.prop[index]
+      mu           <- mu[,index, drop=FALSE]
+      lmat         <- lmat[,,index, drop=FALSE]
+      psi.inv      <- psi.inv[,index, drop=FALSE]
+      z            <- factor(z, labels=match(nn.ind, index))
+      z            <- as.numeric(levels(z))[z]
       
     # Cluster Labels
       psi          <- 1/psi.inv

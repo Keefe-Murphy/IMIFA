@@ -4,7 +4,7 @@
 
 mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA", "MFA", "IFA", "FA", "classify"), n.iters = 25000L, range.G = NULL, range.Q = NULL, thinning = 2L, 
                         burnin = n.iters/5, centering = TRUE, scaling = c("unit", "pareto", "none"), mu.zero = NULL, sigma.mu = NULL, sigma.l = NULL, alpha = NULL, z.list = NULL, 
-                        z.init = c("kmeans", "list", "mclust", "priors"), psi.alpha = NULL, psi.beta = NULL, adapt = TRUE, b0 = NULL, b1 = NULL, prop = NULL, epsilon = NULL, nu = NULL,  
+                        z.init = c("mclust", "kmeans", "list", "priors"), psi.alpha = NULL, psi.beta = NULL, adapt = TRUE, b0 = NULL, b1 = NULL, prop = NULL, epsilon = NULL, nu = NULL,  
                         nuplus1 = TRUE, alpha.d1 = NULL, alpha.d2 = NULL, adapt.at = NULL, beta.d1 = NULL, beta.d2 = NULL, alpha.step = c("gibbs", "metropolis", "fixed"), alpha.hyper = NULL, 
                         ind.slice = TRUE, rho = NULL, DP.lab.sw = TRUE, trunc.G = NULL, profile = FALSE, verbose = TRUE, discount = NULL, learn.d = FALSE, d.hyper = NULL, mu0g = FALSE, 
                         psi0g = FALSE, delta0g = FALSE, mu.switch = TRUE, score.switch = TRUE, load.switch = TRUE, psi.switch = TRUE, pi.switch = TRUE, factanal = FALSE, Q.fac = NULL) {
@@ -128,7 +128,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
        range.G  > 1)                warning(paste0("'range.G' must be 1 for the ", method, " method"), call.=FALSE)
     if(is.element(method, c("OMIFA", "OMFA", "IMFA", "IMIFA"))) {
       if(G.x) {
-        range.G    <- ifelse(N <= 51, N - 1, max(20, ceiling(3 * log(N))))
+        range.G    <- ifelse(N <= 51, N - 1, max(25, ceiling(3 * log(N))))
       }
       if(range.G    < ceiling(lnN)) stop(paste0("'range.G' should be at least log(N) (=log(", N, "))", " for the ", method, " method"))
       if(is.element(method, c("IMFA", "IMIFA"))) {
@@ -341,8 +341,8 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(all(!is.element(method, c("IMFA", "IMIFA")),
            alpha   > 1))            warning("Are you sure alpha should be greater than 1?", call.=FALSE)
                              z.init        <- match.arg(z.init)
-    if(all(is.element(method,  c("OMIFA", "OMFA")), !is.element(z.init, 
-       c("list", "kmeans"))))       stop(paste0("'z.init' must be set to 'list' or 'kmeans' for the ", method, " method to ensure all groups are populated at the initialisation stage"))
+    if(all(is.element(method,  c("OMIFA", "OMFA")), is.element(z.init, 
+       "priors")))                  stop(paste0("'z.init' cannot be set to 'priors' for the ", method, " method to ensure all groups are populated at the initialisation stage"))
     if(!zli.miss) {
       if(length(z.list)   != len.G) {
                                     stop(paste0("'z.list' must be a list of length ", len.G))  }
@@ -426,7 +426,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
             zips   <- sim.z.p(N=N, prob.z=pies)
           }  
         } else {
-          if(alpha <= 1)            warning("Suggestion: supply a value > 1 for 'alpha' if initialising labels from the stick-breaking prior")
+          if(alpha <= 1)            stop("Supply a value > 1 for 'alpha' if initialising labels from the stick-breaking prior")
           pies     <- sim.pi(pi.alpha=alpha, nn=rep(0, trunc.G), inf.G=TRUE, discount=discount, len=trunc.G)$pi.prop
           zips     <- sim.z.p(N=N, prob.z=pies)
         }
