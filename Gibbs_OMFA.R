@@ -124,6 +124,7 @@
       z            <- z.res$z
       nn           <- tabulate(z, nbins=G)
       nn0          <- nn > 0
+      nn.ind       <- which(nn0)
       z.ind        <- lapply(Gseq, function(g) Nseq[z == g])
       dat.g        <- lapply(Gseq, function(g) data[z.ind[[g]],, drop=FALSE])
       
