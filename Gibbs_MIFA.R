@@ -130,7 +130,7 @@
       sigma        <- lapply(Gseq, function(g) tcrossprod(lmat[[g]]) + diag(psi[,g]))
       Q0           <- Qs  > 0
       Q1           <- Qs == 1
-      z.log        <- capture.output({ z.res <- sim.z(data=data, mu=mu, sigma=sigma, Gseq=Gseq, N=N, pi.prop=pi.prop, Q0=Q0) })
+      z.log        <- capture.output({ z.res <- try(sim.z(data=data, mu=mu, sigma=sigma, Gseq=Gseq, N=N, pi.prop=pi.prop, Q0=Q0), silent=TRUE) })
       z.err        <- inherits(z.res, "try-error")
       if(z.err) {
         sigma      <- lapply(sigma, make.positive.definite)
