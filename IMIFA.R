@@ -53,12 +53,14 @@
   # Meat        (# type)
     load(file=paste0(datdir, "/Data/Meat.Rdata", sep=""), envir=.GlobalEnv)
     spectra  <- t(spectra); rm(last.warning)
+    meat.col <- as.numeric(as.factor(type))
     # All Meats
-      matplot(t(spectra), type="l", col=c(2, 1, 3, 4, 5), xlab="Wavelength", ylab="Spectral Reflectance", main="Meat Data")
-      legend("topleft", legend=levels(factor(type)), bty="n", lty=1, col=c(2, 1, 3, 4, 5))
+      matplot(t(spectra), type="l", col=meat.col, xlab="Wavelength", ylab="Spectral Reflectance", main="Meat Data")
+      legend("topleft", legend=levels(factor(type))[sort(unique(meat.col))], bty="n", lty=1, col=sort(unique(meat.col)))
     # Red vs. White
-      matplot(t(spectra), type="l", col=c(2, 1, 2, 1, 1), xlab="Wavelength", ylab="Spectral Reflectance", main="Meat Data")
-      legend("topleft", legend=c("Red Meat", "White Meat"), bty="n", lty=1, col=c(2, 1))
+      meat.col[meat.col == 3] <- 1; meat.col[meat.col > 1] <- 2
+      matplot(t(spectra), type="l", col=meat.col, xlab="Wavelength", ylab="Spectral Reflectance", main="Meat Data")
+      legend("topleft", legend=c("White Meat", "Red Meat"), bty="n", lty=1, col=c(2, 1))
   # Microarray  (# labels)
     load(file=paste0(datdir, "/Data/Microarray.Rdata", sep=""), envir=.GlobalEnv)
     aliza    <- data.frame(labels = as.factor(mydata.alizadeth$y), t(mydata.alizadeth$x))
