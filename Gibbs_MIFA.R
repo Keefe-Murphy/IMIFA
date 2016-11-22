@@ -139,6 +139,7 @@
       z            <- z.res$z
       nn           <- tabulate(z, nbins=G)
       nn0          <- nn  > 0
+      nn.ind       <- which(nn0)
       z.ind        <- lapply(Gseq, function(g) Nseq[z == g])
       dat.g        <- lapply(Gseq, function(g) data[z.ind[[g]],, drop=FALSE])
     
@@ -174,41 +175,64 @@
     
     # Local Shrinkage
       load.2       <- lapply(lmat, function(lg) lg * lg)
-      phi          <- lapply(Gseq, function(g) sim.phi(Q=Qs[g], P=P, nu=nu, tau=tau[[g]], load.2=load.2[[g]], plus1=nuplus1))
+      phi          <- lapply(Gseq, function(g) if(nn0[g]) sim.phi(Q=Qs[g], P=P, nu=nu, plus1=nuplus1,
+                      tau=tau[[g]], load.2=load.2[[g]]) else sim.phi.p(Q=Qs[g], P=P, nu=nu, plus1=nuplus1))
     
     # Global Shrinkage
       sum.terms    <- lapply(Gseq, function(g) diag(crossprod(phi[[g]], load.2[[g]])))
       for(g in Gseq)  {
         Qg         <- Qs[g]
         Q1g        <- Q1[g]
-        for(k in seq_len(Qg)) { 
-          delta[[g]][k]     <- if(k > 1) sim.deltak(alpha.d2=alpha.d2[g], beta.d2=beta.d2, delta.k=delta[[g]][k], tau.kq=tau[[g]][k:Qg], P=P,
-                               Q=Qg, k=k, sum.term.kq=sum.terms[[g]][k:Qg]) else sim.delta1(Q=Qg, P=P, tau=tau[[g]], sum.term=sum.terms[[g]],
-                               alpha.d1=ifelse(Q1g, alpha.d2[g], alpha.d1[g]), beta.d1=ifelse(Q1g, beta.d2, beta.d1), delta.1=delta[[g]][1])
-          tau[[g]]          <- cumprod(delta[[g]])
+        if(nn0[g])    {
+          for(k in seq_len(Qg)) { 
+            delta[[g]][k]   <- if(k > 1) sim.deltak(alpha.d2=alpha.d2[g], beta.d2=beta.d2, delta.k=delta[[g]][k], tau.kq=tau[[g]][k:Qg], P=P,
+                                                    Q=Qg, k=k, sum.term.kq=sum.terms[[g]][k:Qg]) else sim.delta1(Q=Qg, P=P, tau=tau[[g]], sum.term=sum.terms[[g]],
+                                                                                                                 alpha.d1=ifelse(Q1g, alpha.d2[g], alpha.d1[g]), beta.d1=ifelse(Q1g, beta.d2, beta.d1), delta.1=delta[[g]][1])
+            tau[[g]]        <- cumprod(delta[[g]])
+          }
+        } else {
+          for(k in seq_len(Qg)) { 
+            delta[[g]][k]   <- if(k > 1) sim.delta.p(alpha=alpha.d2[g], beta=beta.d2) else sim.delta.p(alpha=ifelse(Q1g, alpha.d2[g], alpha.d1[g]), beta=ifelse(Q1g, beta.d2, beta.d1))
+            tau[[g]]        <- cumprod(delta[[g]])
+          }
         }
       }
     
     # Adaptation  
       if(all(adapt, iter > adapt.at)) {      
         if(runif(1) < ifelse(iter < burnin, 0.5, 1/exp(b0 + b1 * (iter - adapt.at)))) {
-          colvec   <- lapply(Gseq,   function(g) (if(Q0[g]) colSums(abs(lmat[[g]]) < epsilon)/P else 0) >= prop)
+          colvec   <- lapply(nn.ind, function(g) (if(Q0[g]) colSums(abs(lmat[[g]]) < epsilon)/P else 0) >= prop)
           nonred   <- lapply(colvec, function(v) which(v == 0))
           numred   <- vapply(colvec, sum, numeric(1))
           notred   <- numred == 0
-          Qs.old   <- Qs
-          Qs       <- vapply(Gseq,   function(g) if(notred[g]) Qs.old[g] + 1 else Qs.old[g] - numred[g], numeric(1))
-          Q.big    <- Qs > Q.star
+          ng.ind   <- seq_along(nn.ind)
+          Qs.old   <- Qs[nn0]
+          Qs[nn0]  <- vapply(ng.ind, function(h) if(notred[h]) Qs.old[h] + 1 else Qs.old[h] - numred[h], numeric(1))
+          Q.big    <- Qs[nn0] > Q.star
           Q.bigs   <- any(Q.big)
           if(Q.bigs) {
             notred <- notred & !Q.big
-            Qs[Q.big]       <- Q.star
+            Qs[nn0][Q.big]  <- Q.star
           }
-          phi      <- lapply(Gseq, function(g)   if(notred[g]) cbind(phi[[g]][,seq_len(Qs.old[g])], rgamma(n=P, shape=nu + nuplus1, rate=nu)) else phi[[g]][,nonred[[g]], drop=FALSE])
-          delta    <- lapply(Gseq, function(g)   if(notred[g]) c(delta[[g]][seq_len(Qs.old[g])], rgamma(n=1, shape=alpha.d2[g], rate=beta.d2)) else delta[[g]][nonred[[g]]])  
-          tau      <- lapply(delta, cumprod)
-          lmat     <- lapply(Gseq, function(g)   if(notred[g]) cbind(lmat[[g]][,seq_len(Qs.old[g])], rnorm(n=P, mean=0, sd=sqrt(1/(phi[[g]][,Qs[g]] * tau[[g]][Qs[g]])))) else lmat[[g]][,nonred[[g]], drop=FALSE])
-          eta      <- if(all(max(Qs) > max(Qs.old), !Q.bigs)) cbind(eta[,seq_len(max(Qs.old))], rnorm(N)) else eta[,seq_len(max(Qs)), drop=FALSE]
+          phi[nn0]          <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) cbind(phi[[g]][,seq_len(Qs.old[h])], rgamma(n=P, shape=nu + nuplus1, rate=nu)) else phi[[g]][,nonred[[h]], drop=FALSE])
+          delta[nn0]        <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) c(delta[[g]][seq_len(Qs.old[h])], rgamma(n=1, shape=alpha.d2, rate=beta.d2)) else delta[[g]][nonred[[h]]])  
+          tau[nn0]          <- lapply(delta[nn.ind], cumprod)
+          lmat[nn0]         <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) cbind(lmat[[g]][,seq_len(Qs.old[h])], rnorm(n=P, mean=0, sd=sqrt(1/(phi[[g]][,Qs[g]] * tau[[g]][Qs[g]])))) else lmat[[g]][,nonred[[h]], drop=FALSE])
+          Qemp     <- Qs[!nn0]
+          Fmax     <- max(Qs[nn0])
+          Qmax     <- ifelse(all(Q.big), Fmax, max(Qs[nn0][!Q.big]))
+          Qmaxseq  <- seq_len(Qmax)
+          Qmaxold  <- max(Qs.old)
+          eta      <- if(all(Fmax  > Qmaxold, !Q.bigs)) cbind(eta[,seq_len(Qmaxold)], rnorm(N)) else eta[,seq_len(Fmax), drop=FALSE]
+          if(Qmax   < max(Qemp, 0)) {
+            Qs[Qmax < Qs & !nn0]  <- Qmax
+            for(g  in Gseq[!nn0][Qemp > Qmax]) {  
+              phi[[g]]      <- phi[[g]][,Qmaxseq,  drop=FALSE]
+              delta[[g]]    <- delta[[g]][Qmaxseq]
+              tau[[g]]      <- tau[[g]][Qmaxseq]
+              lmat[[g]]     <- lmat[[g]][,Qmaxseq, drop=FALSE]
+            }
+          }
         }
       }
     
