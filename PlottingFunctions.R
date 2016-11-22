@@ -66,7 +66,7 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
   grp.ind      <- !is.element(method, c("FA", "IFA"))
   if(grp.ind)   {
     clust      <- results$Clust
-    labelmiss  <- !attr(clust, "Label.Sup")
+    labelmiss  <- !is.null(attr(clust, "Label.Sup")) && !attr(clust, "Label.Sup")
   }
   grp.ind      <- all(G != 1, grp.ind)
   if(all.ind)   {
