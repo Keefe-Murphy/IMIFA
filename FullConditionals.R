@@ -238,7 +238,11 @@
       obj.name  <- deparse(substitute(obj0g))
       sw.name   <- deparse(substitute(switch0g))
       if(!is.list(obj0g))        obj0g  <- list(obj0g)
-      if(length(obj0g) != length(range.G)) stop(paste0(obj.name, " must be a list of length ", length(range.G)))
+      if(length(obj0g) != length(range.G)) {
+        if(!P.dim) {
+          obj0g <- replicate(length(range.G), obj0g)
+        } else                             stop(paste0(obj.name, " must be a list of length ", length(range.G)))
+      }
       len       <- vapply(obj0g, length, numeric(1))
       if(is.element(method, c("FA", "IFA"))) {
         if(any(!is.element(len, c(1, V)))) stop(paste0(obj.name, " must be list of length 1 containing a scalar", ifelse(P.dim, paste0(" or a vector of length P=", V), ""), " for a 1-group model"))
