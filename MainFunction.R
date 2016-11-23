@@ -141,6 +141,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
         }
         if(all(length(rho) > 1,
            rho > 1 && rho <= 0))    stop("'rho' must be a single number in the interval (0, 1]")
+        if(rho < 0.5)               warning("Are you sure 'rho' should be less than 0.5? This could adversely affect mixing", call.=FALSE)
         if(missing(alpha.hyper))    {
           alpha.hyper     <- if(alpha.step == "gibbs") c(2, 1) else if(alpha.step == "metropolis") c(- discount, range.G/2) else c(0, 0)
         }
