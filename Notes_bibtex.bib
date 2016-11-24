@@ -25,6 +25,65 @@
 	year = {1980}
 }
 
+@article{Durante2016,
+abstract = {Adaptive dimensionality reduction in high-dimensional problems is a key topic in statistics. The multiplicative gamma process prior takes a step in this direction, but improved studies on its properties are required to ease implementation. This note addresses such aim.},
+archivePrefix = {arXiv},
+arxivId = {1610.03408},
+author = {Durante, D.},
+eprint = {1610.03408},
+file = {:C$\backslash$:/Users/Keefe/AppData/Local/Mendeley Ltd./Mendeley Desktop/Downloaded/Durante - 2016 - A note on the multiplicative gamma process.pdf:pdf},
+keywords = {matrix factorization,multiplicative gamma process,shrinkage prior,stochastic order},
+mendeley-groups = {IMIFA},
+title = {{A note on the multiplicative gamma process}},
+url = {http://arxiv.org/abs/1610.03408},
+year = {2016}
+}
+
+@article{Escobar1994,
+ ISSN = {01621459},
+ URL = {http://www.jstor.org/stable/2291223},
+ abstract = {In this article, the Dirichlet process prior is used to provide a nonparametric Bayesian estimate of a vector of normal means. In the past there have been computational difficulties with this model. This article solves the computational difficulties by developing a "Gibbs sampler" algorithm. The estimator developed in this article is then compared to parametric empirical Bayes estimators (PEB) and nonparametric empirical Bayes estimators (NPEB) in a Monte Carlo study. The Monte Carlo study demonstrates that in some conditions the PEB is better than the NPEB and in other conditions the NPEB is better than the PEB. The Monte Carlo study also shows that the estimator developed in this article produces estimates that are about as good as the PEB when the PEB is better and produces estimates that are as good as the NPEB estimator when that method is better.},
+ author = {M. D. Escobar},
+ journal = {Journal of the American Statistical Association},
+ number = {425},
+ pages = {268-277},
+ publisher = {[American Statistical Association, Taylor & Francis, Ltd.]},
+ title = {Estimating Normal Means with a Dirichlet Process Prior},
+ volume = {89},
+ year = {1994}
+}
+
+@article{EscWest1995,
+ ISSN = {01621459},
+ URL = {http://www.jstor.org/stable/2291069},
+ abstract = {We describe and illustrate Bayesian inference in models for density estimation using mixtures of Dirichlet processes. These models provide natural settings for density estimation and are exemplified by special cases where data are modeled as a sample from mixtures of normal distributions. Efficient simulation methods are used to approximate various prior, posterior, and predictive distributions. This allows for direct inference on a variety of practical issues, including problems of local versus global smoothing, uncertainty about density estimates, assessment of modality, and the inference on the numbers of components. Also, convergence results are established for a general class of normal mixture models.},
+ author = {M. D. Escobar and M. West},
+ journal = {Journal of the American Statistical Association},
+ number = {430},
+ pages = {577-588},
+ publisher = {[American Statistical Association, Taylor & Francis, Ltd.]},
+ title = {Bayesian Density Estimation and Inference Using Mixtures},
+ volume = {90},
+ year = {1995}
+}
+
+
+
+@article{Ferguson1973,
+author = "Ferguson, T. S.",
+doi = "10.1214/aos/1176342360",
+fjournal = "The Annals of Statistics",
+journal = "Ann. Statist.",
+month = "03",
+number = "2",
+pages = "209--230",
+publisher = "The Institute of Mathematical Statistics",
+title = "A Bayesian Analysis of Some Nonparametric Problems",
+url = "http://dx.doi.org/10.1214/aos/1176342360",
+volume = "1",
+year = "1973"
+}
+
 @book{Fruhwirth-Schnatter2010,
 	author = {Fr{\"{u}}hwirth-Schnatter, S.},
 	doi = {10.1007/978-0-387-98135-2},
@@ -75,6 +134,28 @@
 	YEAR = 2005
 }
 
+@article{Hastie2014,
+abstract = {We consider the question of Markov chain Monte Carlo sampling from a general stick-breaking Dirichlet process mixture model, with concentration parameter $\alpha$. This paper introduces a Gibbs sampling algorithm that combines the slice sampling approach of Walker (Communications in Statistics - Simulation and Computation 36:45–54, 2007) and the retrospective sampling approach of Papaspiliopoulos and Roberts (Biometrika 95(1):169–186, 2008). Our general algorithm is implemented as efficient open source C++ software, available as an R package, and is based on a blocking strategy similar to that suggested by Papaspiliopoulos (A note on posterior sampling from Dirichlet mixture models, 2008) and implemented by Yau et al. (Journal of the Royal Statistical Society, Series B (Statistical Methodology) 73:37–57, 2011). We discuss the difficulties of achieving good mixing in MCMC samplers of this nature in large data sets and investigate sensitivity to initialisation. We additionally consider the challenges when an additional layer of hierarchy is added such that joint inference is to be made on $\alpha$. We introduce a new label-switching move and compute the marginal partition posterior to help to surmount these difficulties. Our work is illustrated using a profile regression (Molitor et al. Biostatistics 11(3):484–498, 2010) application, where we demonstrate good mixing behaviour for both synthetic and real examples.},
+archivePrefix = {arXiv},
+arxivId = {1304.1778},
+author = {Hastie, D. I. and Liverani, S. and Richardson, S.},
+doi = {10.1007/s11222-014-9471-3},
+eprint = {1304.1778},
+file = {:C$\backslash$:/Users/Keefe/AppData/Local/Mendeley Ltd./Mendeley Desktop/Downloaded/Hastie, Liverani, Richardson - 2014 - Sampling from Dirichlet process mixture models with unknown concentration parameter mixing issues.pdf:pdf},
+isbn = {1122201494},
+issn = {09603174},
+journal = {Statistics and Computing},
+keywords = {Bayesian clustering,Dirichlet process,Mixture model,Profile regression},
+mendeley-groups = {IMIFA},
+number = {5},
+pages = {1023--1037},
+pmid = {26321800},
+title = {{Sampling from Dirichlet process mixture models with unknown concentration parameter: mixing issues in large data implementations}},
+volume = {25},
+year = {2014}
+}
+
+
 @ARTICLE{Ishwaran,
 	title = {Bayesian Model Selection in Finite Mixtures by Marginal Density Decompositions},
 	author = {Ishwaran, H. and James, L.F. and Sun, J.},
@@ -83,6 +164,22 @@
 	volume = {96},
 	pages = {1316-1332},
 	url = {http://EconPapers.repec.org/RePEc:bes:jnlasa:v:96:y:2001:m:december:p:1316-1332}
+}
+
+@article{Kalli2011,
+abstract = {We propose a more efficient version of the slice sampler for Dirichlet process mixture models described by Walker (Commun. Stat., Simul. Comput. 36:45--54, 2007). This new sampler allows for the fitting of infinite mixture models with a wide-range of prior specifications. To illustrate this flexibility we consider priors defined through infinite sequences of independent positive random variables. Two applications are considered: density estimation using mixture models and hazard function estimation. In each case we show how the slice efficient sampler can be applied to make inference in the models. In the mixture case, two submodels are studied in detail. The first one assumes that the positive random variables are Gamma distributed and the second assumes that they are inverse-Gaussian distributed. Both priors have two hyperparameters and we consider their effect on the prior distribution of the number of occupied clusters in a sample. Extensive computational comparisons with alternative ``conditional'' simulation techniques for mixture models using the standard Dirichlet process prior and our new priors are made. The properties of the new priors are illustrated on a density estimation problem.},
+author = {Kalli, M. and Griffin, J. E. and Walker, S. G.},
+doi = {10.1007/s11222-009-9150-y},
+file = {:D$\backslash$:/Dropbox/UCD/IMIFA/Papers {\&} Books/Kalli-Griffin-Walker-2011.pdf:pdf},
+issn = {09603174},
+journal = {Statistics and Computing},
+keywords = {Dirichlet process,Hazard function,Markov chain Monte Carlo,Mixture model,Normalized weights,Slice sampler},
+mendeley-groups = {IMIFA},
+number = {1},
+pages = {93--105},
+title = {{Slice sampling mixture models}},
+volume = {21},
+year = {2011}
 }
 
 @book{McLachlanPeel,
@@ -96,6 +193,55 @@
 	year = 2000
 }
 
+@article{McNicholas2008,
+author = {McNicholas, P. D. and Murphy, T. B.},
+file = {:C$\backslash$:/Users/Keefe/AppData/Local/Mendeley Ltd./Mendeley Desktop/Downloaded/McNicholas, Murphy - 2008 - Parsimonious Gaussian Mixture Models.pdf:pdf},
+journal = {Statistics and Computing},
+keywords = {analysis,cluster analysis,factor analysis,mixture models,probabilistic principal components},
+mendeley-groups = {IMIFA},
+number = {3},
+pages = {285--296},
+title = {{Parsimonious Gaussian Mixture Models}},
+volume = {18},
+year = {2008}
+}
+
+@article{Neal2000,
+ ISSN = {10618600},
+ URL = {http://www.jstor.org/stable/1390653},
+ abstract = {This article reviews Markov chain methods for sampling from the posterior distribution of a Dirichlet process mixture model and presents two new classes of methods. One new approach is to make Metropolis-Hastings updates of the indicators specifying which mixture component is associated with each observation, perhaps supplemented with a partial form of Gibbs sampling. The other new approach extends Gibbs sampling for these indicators by using a set of auxiliary parameters. These methods are simple to implement and are more efficient than previous ways of handling general Dirichlet process mixture models with non-conjugate priors.},
+ author = {R. M. Neal},
+ journal = {Journal of Computational and Graphical Statistics},
+ number = {2},
+ pages = {249-265},
+ publisher = {[American Statistical Association, Taylor & Francis, Ltd., Institute of Mathematical Statistics, Interface Foundation of America]},
+ title = {Markov Chain Sampling Methods for Dirichlet Process Mixture Models},
+ volume = {9},
+ year = {2000}
+}
+
+
+
+@article{Papaspiliopoulos2008,
+abstract = {Inference for Dirichlet process hierarchical models is typically performed using Markov chain Monte Carlo methods, which can be roughly categorized into marginal and conditional methods. The former integrate out analytically the infinite-dimensional component of the hierarchical model and sample from the marginal distribution of the remaining variables using the Gibbs sampler. Conditional methods impute the Dirichlet process and update it as a component of the Gibbs sampler. Since this requires imputation of an infinite-dimensional process, implementation of the conditional method has relied on finite approximations. In this paper, we show how to avoid such approximations by designing two novel Markov chain Monte Carlo algorithms which sample from the exact posterior distribution of quantities of interest. The approximations are avoided by the new technique of retrospective sampling. We also show how the algorithms can obtain samples from functionals of the Dirichlet process. The marginal and the conditional methods are compared and a careful simulation study is included, which involves a non-conjugate model, different datasets and prior specifications.},
+archivePrefix = {arXiv},
+arxivId = {0710.4228},
+author = {Papaspiliopoulos, O. and Roberts, G. O.},
+doi = {10.1093/biomet/asm086},
+eprint = {0710.4228},
+file = {:C$\backslash$:/Users/Keefe/AppData/Local/Mendeley Ltd./Mendeley Desktop/Downloaded/Papaspiliopoulos, Roberts - 2008 - Retrospective Markov chain Monte Carlo methods for Dirichlet process hierarchical models.pdf:pdf},
+issn = {00063444},
+journal = {Biometrika},
+keywords = {Exact simulation,Label switching,Mixture model,Retrospective sampling,Stick-breaking prior},
+mendeley-groups = {IMIFA},
+number = {1},
+pages = {169--186},
+title = {{Retrospective Markov chain Monte Carlo methods for Dirichlet process hierarchical models}},
+volume = {95},
+year = {2008}
+}
+
+
 @article{Raftery2007,
 	abstract = {The integrated likelihood (also called the marginal likelihood or the normalizing constant) is a central quantity in Bayesian model selection and model averaging. It is defined as the integral over the parameter space of the likelihood times the prior density. The Bayes factor for model comparison and Bayesian testing is a ratio of integrated likelihoods, and the model weights in Bayesian model averaging are proportional to the integrated likelihoods. We consider the estimation of the integrated likelihood from posterior simulation output, aiming at a generic method that uses only the likelihoods from the posterior simulation iterations. The key is the harmonic mean identity, which says that the reciprocal of the integrated likelihood is equal to the posterior harmonic mean of the likelihood. The simplest estimator based on the identity is thus the harmonic mean of the likelihoods. While this is an unbiased and simulation-consistent estimator, its reciprocal can have infinite variance and so it is unstable in general. We describe two methods for stabilizing the harmonic mean estimator. In the first one, the parameter space is reduced in such a way that the modified estimator involves a harmonic mean of heavier-tailed densities, thus resulting in a finite variance estimator. The resulting estimator is stable. It is also self-monitoring, since it obeys the central limit theorem, and so confidence intervals are available. We discuss general conditions under which this reduction is applicable.},
 	author = {Raftery, A. E. and  Newton, M. and Krivitsky, P. N. and Satagopan, J. M.},
@@ -107,4 +253,52 @@
 	pages = {1--45},
 	title = {{Estimating the Integrated Likelihood via Posterior Simulation Using the Harmonic Mean Identity}},
 	year = {2007}
+}
+
+@misc{Sethuraman1994,
+abstract = {In this paper we give a simple and new constructive definition of Dirichlet measures removing the restriction that the basic space should be Rk. We also give complete, self contained proofs of the three basic results for Dirichlet measures: 1. The Dirichlet measure is a probability measure on the space of all probability measures. 2. It gives probability one to the subset of discrete probability measures. 3. The posterior distribution is also a Dirichlet measure.},
+author = {Sethuraman, J.},
+booktitle = {Statistica Sinica},
+doi = {***},
+file = {:C$\backslash$:/Users/Keefe/AppData/Local/Mendeley Ltd./Mendeley Desktop/Downloaded/Sethuraman - 1994 - A constructive definition of Dirichlet priors.pdf:pdf},
+mendeley-groups = {IMIFA},
+pages = {639--650},
+title = {{A constructive definition of Dirichlet priors}},
+url = {http://www3.stat.sinica.edu.tw/statistica/j4n2/j4n27/..$\backslash$j4n216$\backslash$j4n216.htm},
+volume = {4},
+year = {1994}
+}
+
+@article{Walker2007,
+author = {Walker, S. G.},
+title = {Sampling the Dirichlet Mixture Model with Slices},
+journal = {Communications in Statistics - Simulation and Computation},
+volume = {36},
+number = {1},
+pages = {45-54},
+year = {2007},
+doi = {10.1080/03610910601096262},
+
+URL = { 
+        http://dx.doi.org/10.1080/03610910601096262
+    
+},
+eprint = { 
+        http://dx.doi.org/10.1080/03610910601096262
+    
+}
+,
+    abstract = { We provide a new approach to the sampling of the well known mixture of Dirichlet process model. Recent attention has focused on retention of the random distribution function in the model, but sampling algorithms have then suffered from the countably infinite representation these distributions have. The key to the algorithm detailed in this article, which also keeps the random distribution functions, is the introduction of a latent variable which allows a finite number, which is known, of objects to be sampled within each iteration of a Gibbs sampler. }
+}
+
+@article{West1992,
+abstract = {INTRODUCTION Escobar and West (1991) develop Gibbs sampling methods for the computations involved in Bayesian density estimation and problems of deconvolution using mixtures of Dirichlet processes. We adopt the normal mixture model of this reference for example here - note that the assumed normal data distributions may be replaced by any exponential family form, if required. In analysis of random samples from these nonparametric Bayesian models, data y 1 ; : : : ; y n are assumed conditionally ...},
+author = {West, M.},
+file = {:C$\backslash$:/Users/Keefe/AppData/Local/Mendeley Ltd./Mendeley Desktop/Downloaded/West - 1992 - Hyperparameter estimation in Dirichlet process mixture models.pdf:pdf},
+journal = {ISDS discussion paper series},
+mendeley-groups = {IMIFA},
+pages = {{\#}92--03},
+title = {{Hyperparameter estimation in Dirichlet process mixture models}},
+url = {http://www.stat.duke.edu/{~}mw/.downloads/DP.learnalpha.pdf},
+year = {1992}
 }
