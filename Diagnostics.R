@@ -511,7 +511,8 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, 
       var.exp    <- sum(colSums(post.load * post.load))/n.var
       class(post.load)   <- "loadings"
     } else if(emp.T[g]) {
-      var.exp    <- ifelse(sum(z.ind[[g]]) == 0, 0, max(0, (sum(diag(cov.emp)) - sum(post.psi))/n.var))
+      var.exp    <- ifelse(exists("z.ind", envir=.GlobalEnv) && sum(z.ind[[g]]) == 0, 0, max(0, (sum(diag(cov.emp)) - sum(post.psi))/n.var))
+      
     }
   
   # Calculate estimated covariance matrices & compute error metrics

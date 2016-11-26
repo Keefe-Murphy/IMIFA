@@ -341,9 +341,9 @@
       G         <- res$GQ.results$G
       Q         <- res$GQ.results$Q
       if(is.element(method, c("FA", "IFA")))  {
-        msg     <- paste0("The chosen ", method, " model has ", Q, " factor", ifelse(Q == 1, "", "s"))
+        msg     <- paste0("The chosen ", method, " model has ", Q, " factor", ifelse(Q == 1, "\n", "s\n"))
       } else if(is.element(method, c("MFA", "OMFA", "IMFA"))) {
-        msg     <- paste0("The chosen ", method, " model has ", G, " group", ifelse(G == 1, " with ", "s, each with "), unique(Q), " factor", ifelse(unique(Q) == 1, "", "s"))
+        msg     <- paste0("The chosen ", method, " model has ", G, " group", ifelse(G == 1, " with ", "s, each with "), unique(Q), " factor", ifelse(unique(Q) == 1, "\n", "s\n"))
       } else {
         Q.msg   <- NULL 
         for(i in seq_along(Q[-length(Q)])) {
