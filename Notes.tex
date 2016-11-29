@@ -349,7 +349,7 @@ The conjugacy of the above priors facilitates MCMC sampling via efficient Gibbs 
 	
 \section[Introducing the Shrinkage Prior]{Introducing the Shrinkage Prior}
 \subsection[Multiplicative Gamma Process Shrinkage Priors]{Multiplicative Gamma Process Shrinkage Priors}
-\label{MGP} A limitation of this approach is that a value for the number of factors $q$ must be specified in advance, with selection of the optimal value performed by comparing some model selection criteria across models employing a range of $q$ values. This becomes particularly difficult in the context of mixtures of factor analysers, for which ranges of values for the interdependent numbers of clusters $G$ and factors $q$ must be pre-specified, with the pair which optimise some model selection criterion chosen, because it's computationally intensive to search the space of candidate models. Furthermore, without the introduction of the shrinkage prior, it's generally only reasonable to fit models where $q$ is the same across clusters, as is the case with PGMM models \citet{McNicholas2008}.
+\label{MGP} A limitation of this approach is that a value for the number of factors $q$ must be specified in advance, with selection of the optimal value performed by comparing some model selection criteria across models employing a range of $q$ values. This becomes particularly difficult in the context of mixtures of factor analysers, for which ranges of values for the interdependent numbers of clusters $G$ and factors $q$ must be pre-specified, with the pair which optimise some model selection criterion chosen, because it's computationally intensive to search the space of candidate models. Furthermore, without the introduction of the shrinkage prior, it's generally only reasonable to fit models where $q$ is the same across clusters, as is the case with PGMM models \citet{McNicholas2008, Ghahramani1996}.
 
 To remove this difficulty, we now propose the multiplicative gamma process shrinkage prior of \citet{Bhattacharya2011} on the factor loadings which allows the introduction of infinitely many factors, with the loadings increasingly shrunk towards zero as the column index increases. Their prior is placed on a parameter expanded factor loadings matrix without imposing any restriction on the loading elements, thereby making the induced prior on the covariance matrix invariant to the ordering of the data. The Gibbs sampler can still be used due to the joint conjugacy property of this prior, which allows block updating of the loadings matrix. Furthermore, these authors propose that an adaptive Gibbs sampler be used for automatically truncating the infinite loading matrix, through selection of the number of important factors, to one having finite columns. This facilitates posterior computation while providing a close approximation of the infinite factor model.
 \newpage The exact specification of this shrinkage-type prior allows the degree of shrinkage to increase across the column index as follows$\colon$
@@ -634,7 +634,57 @@ A simulation study with the following design was conducted in order to assess th
 \normalsize
 This demonstrates good performance in the sense that the modal estimate of $G$ uncovered the truth in all cases, with only the scenario $N \ll P$ and $\alpha$ fixed too large showing some deviation in the $95\%$ credible interval, given in brackets. Furthermore, estimates of $q_g$ are within the limits of the credible intervals in every case also. Lastly, clustering performance is perfect. Overall, the IMIFA model demonstrates excellent ability to uncover the truth of simulated data.
 
-\subsection[Olive Benchmark]{Olive Benchmark}
+\subsection[Olive Oil Benchmark]{Olive Oil Benchmark}
+Further assessment of IMIFA's clustering performance was conducted using data due to \citet{Forina1983} on the percentage composition of 8 fatty acids found by lipid fraction of 572 Italian olive oils, from three areas: Southern Italy, Sardinia, and Northern Italy. Within each area there are a number of different regions. Southern Italy comprises North Apulia, Calabria, South Apulia, and Sicily. Sardinia is divided into Inland Sardinia and Coastal Sardinia. Northern Italy comprises Umbria, East Liguria, and West Liguria. As such the true number of groups is hypothesised to correspond to either 3 \textit{areas} or 9 \textit{regions}. The full suite of models, from (Infinite) Factor Analysis through Mixtures of (Infinite) Factor Analysers, to (Overfitted/Infinite) Mixtures of (Infinite) Factor Analysers, were run on the data for 50,000 iterations, with the first 10,000 discarded and every 2\textsuperscript{nd} sample thereafter thinned. Results for methods that rely on ranges of $G$ and/or $q$ values being supplied are based on $G=1,\ldots,9$ and $q=0,\ldots,6$, respectively, with the optimal model chosen by BICM where necessary. The results are summarised in the table below, with clusterings evaluated using the Adjusted Rand Index, and the percentage error rate, compared to the known \textit{area} labels. Though the $\alpha$ parameter plays different roles in each of these models, it is given as its fixed value or posterior mean, as appropriate. The IMIFA algorithm was used as the baseline for the relative time.\newline 
+
+\centering
+\footnotesize
+\begin{tabular}[pos=center]{I c | c | c | c | c | c | c | c | c I}
+	\specialrule{.1em}{.01em}{.01em} 
+	\centering
+	\textbf{Method} & \textbf{\# Models} & \textbf{Time (s)} & \textbf{Rel. Time} & $\boldsymbol{\alpha}$ & $\mathbf{G}$ & $\mathbf{q}$ & \textbf{Adj. Rand} & \textbf{Error (\%)}\\
+	\specialrule{.1em}{.01em}{.01em}
+	IMIFA & 1 & 1814.59 & 1.000 & 4.54 & 4 & 6, 2, 3, 2 & 0.9345 & 8.57\\
+	IMFA & 7 & 13152.41 & 7.248 & 4.79 & 6 & 5, 5, 5, 5, 5, 5 & 0.5164 & 37.24\\
+	OMIFA & 1 & 1860.42 & 1.025 & 0.025 & 6 & 6, 2, 2, 2, 2, 2 & 0.9037 & 15.91\\
+	OMFA & 7 & 9547.15 & 5.261 & 0.025 & 6 & 5, 5, 5, 5, 5, 5 & 0.5153 & 37.41\\
+	MIFA & 9 & 6848.13 & 3.774 & 1 & 1 & 6 & 0 & 43.53\\
+	MFA & 63 & 33636.22 & 18.537 & 1 & 2 & 5, 5 & 0.8192 & 17.13\\
+	IFA & 1 & 240.82 & 0.133 & -- &  1 & 6 & -- & --\\
+	FA & 7 & 1092.95 & 0.602 & -- &  1 & 6 & -- & --\\
+	\specialrule{.1em}{.01em}{.01em} 
+\end{tabular}
+\justifying
+\normalsize
+\newline\newline
+
+Of the 572 observations, 323 originate from Southern Italy. This large cluster requires the largest amount of factors. It's clear that the flexibilty to model remaining clusters by different, in this case lower, numbers of factors greatly improves the clustering performance. Indeed, the best solution is given by the IMIFA model, which requires only one run and doesn't rely on any model selection criteria. The IMIFA performance compares favourably to the PGMM solution also, which gives a 5 group, 5 factor model (Adj. Rand = 0.5586, Error Rate = 33.56). It's also worth noting that the optimal models chosen by algorithms which do rely on model selection criteria were not all optimal in a clustering sense -- for instance, in this case where the truth is known, the candidate MIFA model with $G=4$ yields an Adj. Rand of 0.9304 and an error rate of 10.49\%, despite having a higher BICM. The cross tabulation of the MAP clustering from the IMIFA model against the known area labels suggests the possibility of a fourth group, whereby Umbria is separated from East and West Liguria in the North. This makes sense, geographically. The confusion matrix using this relabelling yields an Adj. Rand of 0.9961 and an error rate of 0.7\%.
+\begin{table}[!htb]
+	\footnotesize
+	\begin{minipage}{.5\linewidth}
+		\centering
+		\begin{tabular}[pos=left]{c | c | c | c | c}
+			& 1 & 2 & 3 & 4 \\
+			\specialrule{.1em}{.01em}{.01em} 
+			South & 323 & 0 & 0 & 0\\
+			Sardinia & 0 & 97 & 1 & 0\\
+			North & 0 & 0 & 103 & 48 \\
+		\end{tabular}		
+	\end{minipage}%
+	\begin{minipage}{.5\linewidth}
+		\centering
+		\begin{tabular}[pos=left]{c | c | c | c | c}
+			& 1 & 2 & 3 & 4 \\
+			\specialrule{.1em}{.01em}{.01em} 
+			South & 323 & 0 & 0 & 0\\
+			Sardinia & 0 & 97 & 1 & 0\\
+			Liguria & 0 & 0 & 100 & 0\\
+			Umbria & 0 & 0 & 3 & 48
+		\end{tabular}
+	\end{minipage} 
+\end{table}
+\justifying
+
 \subsection[Real Data]{Real Data}
 
 \section[Extensions]{Extensions}

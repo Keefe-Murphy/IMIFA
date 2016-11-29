@@ -6,18 +6,19 @@
  #set.seed(1)
  #rm(list=ls(all=TRUE))
  #while("IMIFA.env" %in% search()) detach("IMIFA.env")
-  if(getwd() != "/home/kmurphy")  {
+  if(!is.element(getwd(), c("/home/kmurphy", "/home/kmurphy/IMIFA-GIT"))) {
     wd       <- try(setwd("C:/Users/Windows/Documents/"), silent=TRUE)
     if(inherits(wd, "try-error")) { 
-      setwd("D:/Documents"); rm(wd)
+      setwd("D:/Documents/IMIFA-GIT"); rm(wd)
       datdir <- "D:/Dropbox/UCD/IMIFA"
     } else {
       datdir <- "C:/Users/Windows/Dropbox/UCD/IMIFA"
     }
   } else   {
-    datdir   <- getwd()
+    datdir   <- "/home/kmurphy"
+    setwd("/home/kmurphy/IMIFA-GIT")
   }
-  source(paste0(getwd(), "/IMIFA-GIT/PackageSetup.R"))
+  source(paste0(getwd(), "/PackageSetup.R"))
     
 # Read in the data
   # Wine        (# lab)
