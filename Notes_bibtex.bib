@@ -15,6 +15,21 @@
 	year = {2011}
 }
 
+@article{Bhattacharya2015,
+abstract = {We propose an efficient way to sample from a class of structured multivariate Gaussian distributions which routinely arise as conditional posteriors of model parameters that are assigned a conditionally Gaussian prior. The proposed algorithm only requires matrix operations in the form of matrix multiplications and linear system solutions. We exhibit that the computational complexity of the proposed algorithm grows linearly with the dimension unlike existing algorithms relying on Cholesky factorizations with cubic orders of complexity. The algorithm should be broadly applicable in settings where Gaussian scale mixture priors are used on high dimensional model parameters. We provide an illustration through posterior sampling in a high dimensional regression setting with a horseshoe prior on the vector of regression coefficients.},
+archivePrefix = {arXiv},
+arxivId = {1506.04778},
+author = {Bhattacharya, A. and Chakraborty, A. and Mallick, B. K.},
+eprint = {1506.04778},
+file = {:C$\backslash$:/Users/Keefe/AppData/Local/Mendeley Ltd./Mendeley Desktop/Downloaded/Bhattacharya, Chakraborty, Mallick - 2015 - Fast sampling with Gaussian scale-mixture priors in high-dimensional regression.pdf:pdf},
+keywords = {able,bayesian,gaussian scale mixture,global-local prior,high dimensional,scal-,shrinkage,sparsity},
+mendeley-groups = {IMIFA},
+pages = {1--11},
+title = {{Fast sampling with Gaussian scale-mixture priors in high-dimensional regression}},
+url = {http://arxiv.org/abs/1506.04778},
+year = {2015}
+}
+
 @article{CarpToth1980,
 	author = {G. Carpaneto and P. Toth},
 	journal = {ACM Transactions on Mathematical Software},
@@ -23,6 +38,28 @@
 	title = {\textit{Algorithm 548 Solution of the assignment problem}},
 	volume = {6},
 	year = {1980}
+}
+
+@article{Carvalho2008,
+abstract = {We describe studies in molecular profiling and biological pathway analysis that use sparse latent factor and regression models for microarray gene expression data. We discuss breast cancer applications and key aspects of the modeling and computational methodology. Our case studies aim to investigate and characterize heterogeneity of structure related to specific oncogenic pathways, as well as links between aggregate patterns in gene expression profiles and clinical biomarkers. Based on the metaphor of statistically derived "factors" as representing biological "subpathway" structure, we explore the decomposition of fitted sparse factor models into pathway subcomponents and investigate how these components overlay multiple aspects of known biological activity. Our methodology is based on sparsity modeling of multivariate regression, ANOVA, and latent factor models, as well as a class of models that combines all components. Hierarchical sparsity priors address questions of dimension reduction and multiple comparisons, as well as scalability of the methodology. The models include practically relevant non-Gaussian/nonparametric components for latent structure, underlying often quite complex non-Gaussianity in multivariate expression patterns. Model search and fitting are addressed through stochastic simulation and evolutionary stochastic search methods that are exemplified in the oncogenic pathway studies. Supplementary supporting material provides more details of the applications, as well as examples of the use of freely available software tools for implementing the methodology.},
+archivePrefix = {arXiv},
+arxivId = {NIHMS150003},
+author = {Carvalho, C. M. and Chang, J/ and Lucas, J. E. and Nevins, J. R. and Wang, Q. and West, M.},
+doi = {10.1198/016214508000000869},
+eprint = {NIHMS150003},
+file = {:D$\backslash$:/Dropbox/UCD/IMIFA/Papers {\&} Books/Carvalho - Bayesian Factor Regression Models.pdf:pdf},
+isbn = {0162-1459 (Print)$\backslash$n0162-1459 (Linking)},
+issn = {0162-1459},
+journal = {Journal of the American Statistical Association},
+keywords = {biological pathways,breast cancer genomics,decomposing gene expression patterns,dirichlet process factor model,evolutionary stochastic search,factor regression,gene expression analysis,gene expression profiling,gene networks,non-gaussian multivariate analysis,sparse factor models,sparsity priors},
+mendeley-groups = {IMIFA},
+number = {484},
+pages = {1438--1456},
+pmid = {21218139},
+title = {{High-Dimensional Sparse Factor Modeling: Applications in Gene Expression Genomics}},
+url = {http://www.pubmedcentral.nih.gov/articlerender.fcgi?artid=3017385{\&}tool=pmcentrez{\&}rendertype=abstract},
+volume = {103},
+year = {2008}
 }
 
 @article{Durante2016,
@@ -66,8 +103,6 @@ year = {2016}
  volume = {90},
  year = {1995}
 }
-
-
 
 @article{Ferguson1973,
 author = "Ferguson, T. S.",
@@ -170,8 +205,7 @@ volume = {25},
 year = {2014}
 }
 
-
-@ARTICLE{Ishwaran,
+@ARTICLE{Ishwaran2001,
 	title = {Bayesian Model Selection in Finite Mixtures by Marginal Density Decompositions},
 	author = {Ishwaran, H. and James, L.F. and Sun, J.},
 	year = {2001},
@@ -235,8 +269,6 @@ year = {2008}
  year = {2000}
 }
 
-
-
 @article{Papaspiliopoulos2008,
 abstract = {Inference for Dirichlet process hierarchical models is typically performed using Markov chain Monte Carlo methods, which can be roughly categorized into marginal and conditional methods. The former integrate out analytically the infinite-dimensional component of the hierarchical model and sample from the marginal distribution of the remaining variables using the Gibbs sampler. Conditional methods impute the Dirichlet process and update it as a component of the Gibbs sampler. Since this requires imputation of an infinite-dimensional process, implementation of the conditional method has relied on finite approximations. In this paper, we show how to avoid such approximations by designing two novel Markov chain Monte Carlo algorithms which sample from the exact posterior distribution of quantities of interest. The approximations are avoided by the new technique of retrospective sampling. We also show how the algorithms can obtain samples from functionals of the Dirichlet process. The marginal and the conditional methods are compared and a careful simulation study is included, which involves a non-conjugate model, different datasets and prior specifications.},
 archivePrefix = {arXiv},
@@ -255,6 +287,38 @@ title = {{Retrospective Markov chain Monte Carlo methods for Dirichlet process h
 volume = {95},
 year = {2008}
 }
+
+@article{Peel2000,
+abstract = {Normal mixture models are being increasingly used to model the distributions of a wide variety of random phenomena and to cluster sets of continuous multivariate data. However, for a set of data containing a group or groups of observations with longer than normal tails or atypical observations, the use of normal components may unduly affect the fit of the mixture model. In this paper, we consider a more robust approach by modelling the data by a mixture of t distributions. The use of the ECM algorithm to fit this t mixture model is described and examples of its use are given in the context of clustering multivariate data in the presence of atypical observations in the form of background noise.},
+author = {Peel, D. and Mclachlan, G. J.},
+doi = {http://dx.doi.org/10.1023/A:1008981510081},
+file = {:C$\backslash$:/Users/Keefe/AppData/Local/Mendeley Ltd./Mendeley Desktop/Downloaded/Peel, Mclachlan - 2000 - Robust mixture modelling using the t distribution.pdf:pdf},
+issn = {0960-3174},
+journal = {Statistics and Computing},
+keywords = {EM algorithm,cluster analysis,finite mixture models,maximum like-lihood,multivariate t components,normal components},
+mendeley-groups = {IMIFA},
+pages = {339--348},
+title = {{Robust mixture modelling using the t distribution}},
+volume = {10},
+year = {2000}
+}
+
+@Article{Perman1992,
+author="Perman, M.
+and Pitman, J.
+and Yor, M.",
+title="Size-biased sampling of Poisson point processes and excursions",
+journal="Probability Theory and Related Fields",
+year="1992",
+volume="92",
+number="1",
+pages="21--39",
+abstract="Some general formulae are obtained for size-biased sampling from a Poisson point process in an abstract space where the size of a point is defined by an arbitrary strictly positive function. These formulae explain why in certain cases (gamma and stable) the size-biased permutation of the normalized jumps of a subordinator can be represented by a stickbreaking (residual allocation) scheme defined by independent beta random variables. An application is made to length biased sampling of excursions of a Markov process away from a recurrent point of its statespace, with emphasis on the Brownian and Bessel cases when the associated inverse local time is a stable subordinator. Results in this case are linked to generalizations of the arcsine law for the fraction of time spent positive by Brownian motion.",
+issn="1432-2064",
+doi="10.1007/BF01205234",
+url="http://dx.doi.org/10.1007/BF01205234"
+}
+
 
 
 @article{Raftery2007,
@@ -284,6 +348,22 @@ volume = {4},
 year = {1994}
 }
 
+@article{Viroli2011,
+abstract = {Matrix-variate distributions represent a natural way for modeling random matrices. Realizations from random matrices are generated by the simultaneous observation of variables in different situations or locations, and are commonly arranged in three-way data structures. Among the matrix-variate distributions, the matrix normal density plays the same pivotal role as the multivariate normal distribution in the family of multivariate distributions. In this work we define and explore finite mixtures of matrix normals. An EM algorithm for the model estimation is developed and some useful properties are demonstrated. We finally show that the proposed mixture model can be a powerful tool for classifying three-way data both in supervised and unsupervised problems. A simulation study and some real examples are presented.},
+author = {Viroli, C.},
+doi = {10.1007/s11222-010-9188-x},
+file = {:D$\backslash$:/Dropbox/UCD/IMIFA/Papers {\&} Books/Cinzia Stuff/Matrix Normals/art{\%}3A10.1007{\%}2Fs11222-010-9188-x.pdf:pdf},
+issn = {09603174},
+journal = {Statistics and Computing},
+keywords = {EM-algorithm,Model based clustering,Random matrix,Three-way data},
+mendeley-groups = {IMIFA},
+number = {4},
+pages = {511--522},
+title = {{Finite mixtures of matrix normal distributions for classifying three-way data}},
+volume = {21},
+year = {2011}
+}
+
 @article{Walker2007,
 author = {Walker, S. G.},
 title = {Sampling the Dirichlet Mixture Model with Slices},
@@ -306,6 +386,16 @@ eprint = {
     abstract = { We provide a new approach to the sampling of the well known mixture of Dirichlet process model. Recent attention has focused on retention of the random distribution function in the model, but sampling algorithms have then suffered from the countably infinite representation these distributions have. The key to the algorithm detailed in this article, which also keeps the random distribution functions, is the introduction of a latent variable which allows a finite number, which is known, of objects to be sampled within each iteration of a Gibbs sampler. }
 }
 
+@article{Wang2007,
+  author = {Q. Wang and C. M. Carvalho and J. E. Lucas and M. West},
+  title = {BFRM: Bayesian factor regression modelling},
+  journal = {Bulletin of the International Society for Bayesian Analysis},
+  year = {2007},
+  volume = {14},
+  pages = {4-5},
+  url = {http://www.isds.duke.edu/ mw/.downloads/bfrm-isbabull07.pdf}
+}
+
 @article{West1992,
 abstract = {INTRODUCTION Escobar and West (1991) develop Gibbs sampling methods for the computations involved in Bayesian density estimation and problems of deconvolution using mixtures of Dirichlet processes. We adopt the normal mixture model of this reference for example here - note that the assumed normal data distributions may be replaced by any exponential family form, if required. In analysis of random samples from these nonparametric Bayesian models, data y 1 ; : : : ; y n are assumed conditionally ...},
 author = {West, M.},
@@ -317,3 +407,24 @@ title = {{Hyperparameter estimation in Dirichlet process mixture models}},
 url = {http://www.stat.duke.edu/{~}mw/.downloads/DP.learnalpha.pdf},
 year = {1992}
 }
+
+@inproceedings{West2003,
+  author = {M. West},
+  title = {Bayesian factor regression models in the lqlq large p, small n" paradigm},
+  booktitle = {Bayesian Statistics 7},
+  publisher = {Oxford University Press},
+  year = {2003},
+  pages = {723-732},
+  url = {http://ftp.isds.duke.edu/WorkingPapers/02-12.html}
+}
+
+@article{Yu2009,
+abstract = {The Neal's review paper [4] presents three algorithms of Gibbs sampling for Dirichlet Process Mixture Models (DPMM) when conjugate priors are used. But he did not give technical details for these algorithms and thus it is unclear how to use them in a practical problem for a newbie. Rasmussen's paper [6], Teh's tutorial course [9] and Ranganathan's thesis appendix [5] provide us more technical details of these algorithms. Sudderth has a good review about the two Gibbs sampling methods with Chinese restaurant process in the Chapter 2 of his thesis[8]. The purpose of this report is thus to combine these materials into a self-contained tutorial for the techniques of Gibbs sampling for Dirichlet Process Mixture Models (DPMM), especially when conjugate priors are used. Later on, I found several papers, which are perhaps the original papers about the algorithms described here: ? The paper by Escobar and West [1] related to Section 4.1 ? The paper byWest, Muller and Escobar [11] seems to be related to Section 4.2 ? The paper by MacEarchern [3] seems to be related to Section 4.3 The papers [11, 3] also gives examples on normal distribution, which would be very helpful to understand the algorithms. But I have no time to read these papers in details. So this report is still based on Neal, Rasmussen, Teh, Ranganathan, and Sudderth's materials.},
+author = {Yu, X.},
+file = {:D$\backslash$:/Dropbox/UCD/IMIFA/Papers {\&} Books/technical details in Gibbs sampling for DP mixture model.pdf:pdf},
+mendeley-groups = {IMIFA},
+pages = {1--18},
+title = {{Gibbs Sampling Methods for Dirichlet Process Mixture Model: Technical Details}},
+year = {2009}
+}
+
