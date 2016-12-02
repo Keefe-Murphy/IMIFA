@@ -632,10 +632,10 @@ A simulation study with the following design was conducted in order to assess th
 
 \justifying
 \normalsize
-This demonstrates good performance in the sense that the modal estimate of $G$ uncovered the truth in all cases, with only the scenario $N \ll P$ and $\alpha$ fixed too large showing some deviation in the $95\%$ credible interval, given in brackets. Furthermore, estimates of $q_g$ are within the limits of the credible intervals in every case also. Lastly, clustering performance is perfect. Overall, the IMIFA model demonstrates excellent ability to uncover the truth of simulated data.
+This demonstrates good performance in the sense that the modal estimate of $G$ uncovered the truth in all cases, with only the scenario with $N \ll P$ and $\alpha$ fixed too large showing some deviation in the $95\%$ credible interval, given in brackets. Furthermore, estimates of $q_g$ are within the limits of the credible intervals in every case also. Lastly, clustering performance is perfect. Overall, the IMIFA model demonstrates excellent ability to uncover the truth of simulated data.
 
 \subsection[Olive Oil Benchmark]{Olive Oil Benchmark}
-Further assessment of IMIFA's clustering performance was conducted using data due to \citet{Forina1983} on the percentage composition of 8 fatty acids found by lipid fraction of 572 Italian olive oils, from three areas: Southern Italy, Sardinia, and Northern Italy. Within each area there are a number of different regions. Southern Italy comprises North Apulia, Calabria, South Apulia, and Sicily. Sardinia is divided into Inland Sardinia and Coastal Sardinia. Northern Italy comprises Umbria, East Liguria, and West Liguria. As such the true number of groups is hypothesised to correspond to either 3 \textit{areas} or 9 \textit{regions}. The full suite of models, from (Infinite) Factor Analysis through Mixtures of (Infinite) Factor Analysers, to (Overfitted/Infinite) Mixtures of (Infinite) Factor Analysers, were run on the data for 50,000 iterations, with the first 10,000 discarded and every 2\textsuperscript{nd} sample thereafter thinned. Results for methods that rely on ranges of $G$ and/or $q$ values being supplied are based on $G=1,\ldots,9$ and $q=0,\ldots,6$, respectively, with the optimal model chosen by BICM where necessary. The results are summarised in the table below, with clusterings evaluated using the Adjusted Rand Index, and the percentage error rate, compared to the known \textit{area} labels. Though the $\alpha$ parameter plays different roles in each of these models, it is given as its fixed value or posterior mean, as appropriate. The IMIFA algorithm was used as the baseline for the relative time.\newline 
+Further assessment of IMIFA's clustering performance was conducted using data due to \citet{Forina1983} on the percentage composition of 8 fatty acids found by lipid fraction of 572 Italian olive oils, from three areas: Southern Italy, Sardinia, and Northern Italy. Within each area there are a number of different regions. Southern Italy comprises North Apulia, Calabria, South Apulia, and Sicily. Sardinia is divided into Inland Sardinia and Coastal Sardinia. Northern Italy comprises Umbria, East Liguria, and West Liguria. As such the true number of groups is hypothesised to correspond to either 3 \textit{areas} or 9 \textit{regions}. The full suite of models, from (Infinite) Factor Analysis through Mixtures of (Infinite) Factor Analysers, to (Overfitted/Infinite) Mixtures of (Infinite) Factor Analysers, were run on the data for 50,000 iterations, with the first 10,000 discarded and every 2\textsuperscript{nd} sample thereafter thinned. Results for methods that rely on ranges of $G$ and/or $q$ values being supplied are based on $G=1,\ldots,9$, and $q=0,\ldots,6$, respectively, with the optimal model chosen by BICM where necessary. The results are summarised in the table below, with clusterings evaluated using the Adjusted Rand Index, and the percentage error rate, compared to the known \textit{area} labels. Though the $\alpha$ parameter plays different roles in each of these models, it is given as its fixed value or posterior mean, as appropriate. The IMIFA algorithm was used as the baseline for the relative time.\newline 
 
 \centering
 \footnotesize
@@ -646,7 +646,7 @@ Further assessment of IMIFA's clustering performance was conducted using data du
 	\specialrule{.1em}{.01em}{.01em}
 	IMIFA & 1 & 1814.59 & 1.000 & 4.54 & 4 & 6, 2, 3, 2 & 0.9345 & 8.57\\
 	IMFA & 7 & 13152.41 & 7.248 & 4.79 & 6 & 5, 5, 5, 5, 5, 5 & 0.5164 & 37.24\\
-	OMIFA & 1 & 1860.42 & 1.025 & 0.025 & 6 & 6, 2, 2, 2, 2, 2 & 0.9037 & 15.91\\
+	OMIFA & 1 & 1860.42 & 1.025 & 0.025 & 5 & 6, 2, 2, 2, 2 & 0.9037 & 15.91\\
 	OMFA & 7 & 9547.15 & 5.261 & 0.025 & 6 & 5, 5, 5, 5, 5, 5 & 0.5153 & 37.41\\
 	MIFA & 9 & 6848.13 & 3.774 & 1 & 1 & 6 & 0 & 43.53\\
 	MFA & 63 & 33636.22 & 18.537 & 1 & 2 & 5, 5 & 0.8192 & 17.13\\
@@ -656,9 +656,9 @@ Further assessment of IMIFA's clustering performance was conducted using data du
 \end{tabular}
 \justifying
 \normalsize
-\newline\newline
+\newline
 
-Of the 572 observations, 323 originate from Southern Italy. This large cluster requires the largest amount of factors. It's clear that the flexibilty to model remaining clusters by different, in this case lower, numbers of factors greatly improves the clustering performance. Indeed, the best solution is given by the IMIFA model, which requires only one run and doesn't rely on any model selection criteria. The IMIFA performance compares favourably to the PGMM solution also, which gives a 5 group, 5 factor model (Adj. Rand = 0.5586, Error Rate = 33.56). It's also worth noting that the optimal models chosen by algorithms which do rely on model selection criteria were not all optimal in a clustering sense -- for instance, in this case where the truth is known, the candidate MIFA model with $G=4$ yields an Adj. Rand of 0.9304 and an error rate of 10.49\%, despite having a higher BICM. The cross tabulation of the MAP clustering from the IMIFA model against the known area labels suggests the possibility of a fourth group, whereby Umbria is separated from East and West Liguria in the North. This makes sense, geographically. The confusion matrix using this relabelling yields an Adj. Rand of 0.9961 and an error rate of 0.7\%.
+Of the 572 observations, 323 originate from Southern Italy. This large cluster requires the largest amount of factors. It's clear that the flexibilty to model remaining clusters by different, in this case lower, numbers of factors greatly improves the clustering performance. Indeed, the best solution is given by the IMIFA model, which requires only one run and doesn't rely on any model selection criteria. The IMIFA performance compares favourably to the PGMM solution also, which gives a 5 group, 5 factor model (Adj. Rand = 0.5586, Error Rate = 33.56). It's also worth noting that the optimal models chosen by algorithms which do rely on model selection criteria were not all optimal in a clustering sense -- for instance, in this case where the truth is known, the candidate MIFA model with $G=4$ yields an Adj. Rand of 0.9304 and an error rate of 10.49\%, despite having a lower BICM. The cross tabulation of the MAP clustering from the IMIFA model against the known area labels suggests the possibility of a fourth group, whereby Umbria is separated from East and West Liguria in the North. This makes sense, geographically. The confusion matrix using this relabelling yields an Adj. Rand of 0.9961 and an error rate of 0.7\%. Indeed, the other methods perform better with this labelling as well.
 \begin{table}[!htb]
 	\footnotesize
 	\begin{minipage}{.5\linewidth}
@@ -685,6 +685,27 @@ Of the 572 observations, 323 originate from Southern Italy. This large cluster r
 \end{table}
 \justifying
 
+In order to assess the robustness of the IMIFA algorithm, $\mathrm{N}\left(0,1\right)$ noise with no classification information was appended separately to the rows and columns of the Olive data, generating 6 new scenarios with 10, 50 and 100 extra variables, and the same number of extra observations, respectively. Cluster validity is evaluated with respect to the new 4-group relabelling: in the case of extra observations, the new observations are labelled as though they belonged to a fifth group. Data were centered and scaled prior to expansion.
+
+\begin{center}
+\begin{tabular}[pos=center]{I c | c | c | c | c | c | c I}
+	\specialrule{.1em}{.01em}{.01em} 
+	\centering
+	\textbf{Scenario} & \textbf{Rel. Time} & $\boldsymbol{\alpha}$ & $\mathbf{G}$ & $\mathbf{q}$ & \textbf{Adj. Rand} & \textbf{Error (\%)}\\
+	\specialrule{.1em}{.01em}{.01em}
+	N=572, P=18 & 1.364 & 4.55 & 6 & 2, 2, 2, 2, 2, 2 & 0.9366 & 13.64\\
+	N=572, P=58 & 3.121 & 4.55 & 5 & 2, 1, 1, 1, 2 & 0.7365 & 14.69\\
+	N=572, P=108 & 5.168 & 4.56 & 4 & 1, 1, 1, 1 & 0.7334 & 17.66\\
+	\specialrule{.1em}{.01em}{.01em}
+	N=582, P=8 & 1.219 & 4.53 & 11 & 4, 2 $\times$ 10 & 0.8582 & 14.6\\
+	N=622, P=8 & 1.225 & 4.48 &  9 & 3, 2 $\times$ 8  & 0.5632  & 30.23 \\
+	N=672, P=8 & 2.309  & 4.41  & 7  & 2 $\times$ 7  & 0.6232  & 28.12 \\
+	\specialrule{.1em}{.01em}{.01em} 
+\end{tabular}
+\end{center}
+\justifying
+The group structure can still be uncovered reasonably well as the number of irrelevant variables increases, however there is increasing support for a 1-group, 1-factor model as the signal-to-noise ratio decreases. As such, variable selection, or at least the need to pre-process the data, may still be an issue. As rows of noise are appended, the algorithm generally has no difficulty in assigning these observations to a group of their own, however their presence is leading to overestimation of the total number of groups, yielding a poorer (though still homogeneous) clustering overall.
+
 \subsection[Real Data]{Real Data}
 
 \section[Extensions]{Extensions}
@@ -699,7 +720,7 @@ which means this generalisation can be easily incorporated into our Gibbs sampli
 	\item Rewrite code bottlenecks using \pkg{RCPP}.
 	\item Investigate block updating the loadings matrix using a matrix normal prior \citet{Viroli2011}. This works, albeit surprisingly slower than the current implementation, for the models where $q_g$ is fixed. It remains to reformulate the MGP prior as a matrix normal MGP prior. \citet{Bhattacharya2015} could be of some help in this regard.
 	\item Implement the third label switching move of \citet{Hastie2014}.
-	\item Learn the shrinkage hyperparameters $\alpha_1$ \& $\alpha_2$, which was proposed but not implemented by \citet{Bhattacharya2011}. This requires the introduction of Metropolis Hastings steps.
+	\item Learn the shrinkage hyperparameters $\alpha_1$ \& $\alpha_2$, which was proposed but not implemented by \citet{Bhattacharya2011}. This requires the introduction of Metropolis-Hastings steps.
 	\item \citet{Yu2009} gives a strategy for Collapsed Gibbs Sampling of Dirichlet Process Mixture Models.
 	\item The present work could be extended to the supervised/semi-supervised settings where some or all of the data is labelled, in order to uses Mixtures of Infinite Factor Analysers for (semi-) supervised Model Based Classification.
 	\item Covariates could be incorporated in the spirit of Bayesian Factor Regression Models \citet{West2003, Wang2007, Carvalho2008}; for instance, the spectral metabolomic urine data also contains information on gender, weight and age.
@@ -711,6 +732,7 @@ which means this generalisation can be easily incorporated into our Gibbs sampli
 	U_i \given z_{ig} = 1 &\sim \textrm{Ga}\left(\frac{1}{2}\kappa_g,\frac{1}{2}\kappa_g\right)\label{eq:50}
 	\end{flalign}
 	As $\kappa$ tends to infinity, the $t$ distribution approaches normality, as each $U_i$ will tend to one with probability one. Hence this parameter $\kappa$ may be viewed as a robustness tuning parameter. It can be fixed in advance or it can be inferred from the data for each component.
+	\item As results above when appending Gaussian noise to the Olive data show, variable selection, or at least pre-processing of the data, may be still be required.
 \end{itemize}
 \bibliography{Notes_bibtex}
 \end{document}

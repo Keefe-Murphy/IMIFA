@@ -36,6 +36,8 @@
     cinzia   <- ifelse(olive$region < 5, 1, ifelse(olive$region < 7, 2, ifelse(olive$region == 9, 4, 3)))
     region   <- as.factor(olive$region)
     olive    <- olive[,-c(1, 2)]
+    # Robust Olive
+      load(file=paste0(datdir, "/Data/ExtraOlive.Rdata", sep=""), envir=.GlobalEnv)
     # Oils      (# oliveoillabels)
       load(file=paste0(datdir, "/Data/Oliveoils.Rdata", sep=""), envir=.GlobalEnv)
       oils   <- t(oliveoils); rm(oliveoils, wavelengths, x)
