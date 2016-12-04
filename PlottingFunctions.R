@@ -693,11 +693,12 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
           par(mar=c(5.1, 4.1, 0.5, 2.1))
         }
         x.plot  <- hist(plot.x, plot=FALSE)
-        breaks  <- x.plot$breaks
+        breaks  <- x.plot$breaks <- seq(from=0, to=max(plot.x, 1/G), by=1/G)
         cols    <- 3 + (x.plot$breaks >= 1/G)
         cols[cols == 3] <- grey
-        plot(x.plot, main="", xlab="Uncertainties", xlim=c(0, 1 - 1/G), col=cols, xaxt="n")
-        axis(1, at=c(breaks[round(breaks, 1) < min(0.8, 1 - 1/G)], 1 - 1/G), labels=c(breaks[round(breaks, 1) < min(0.8, 1 - 1/G)], "1 - 1/G"), las=2, pos=0, cex.axis=0.9)
+        plot(x.plot, main="", xlab="Uncertainties", xlim=c(0, 1 - 1/G), col=cols, xaxt="n", ylim=c(0, n.obs))
+        axis(1, at=c(breaks[round(breaks, 1) < min(0.8, 1 - 1/G)], 1 - 1/G), labels=(c(round(breaks[round(breaks, 1) < min(0.8, 1 - 1/G)], 3), "1 - 1/G")), las=2, pos=0, cex.axis=0.9)
+        axis(2, at=c(0, ifelse(max(x.plot$counts) < n.obs * 0.9, n.obs, max(x.plot$counts[x.plot$counts != max(x.plot$counts)], 0))))
       }
       if(g == min(Gs)) {
         if(any(!labelmiss,  !z.miss)) {

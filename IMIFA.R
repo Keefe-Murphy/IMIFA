@@ -45,6 +45,7 @@
     load(file=paste0(datdir, "/Data/Coffee.Rdata", sep=""), envir=.GlobalEnv) 
   # Urine       (# grp) {n.b. pareto scaling}
     load(file=paste0(datdir, "/Data/Epi_urine_data.Rdata", sep=""), envir=.GlobalEnv)
+    rat.cov  <- read.csv(file=paste0(datdir, "/Data/D10Weight.csv"))
     ppms     <- substr(colnames(x10[,4:ncol(x10)]), 2, 6); rm(x)
     urine    <- x10[,4:ncol(x10)]
     grp      <- x10[,"Group"]
@@ -53,6 +54,10 @@
     axis(1, at=seq(from=20, to=nrow(ppm.g), by=20), labels=9:1, tick=TRUE, lwd.ticks=1, xpd=TRUE)
     axis(1, at=seq_len(nrow(ppm.g)), labels=FALSE, tick=TRUE, tcl=-0.2)
     legend("topleft", legend=c("Control", "Epileptic"), bty="n", lty=1, col=c(1, 2))  
+    rat.cov  <- read.csv(file=paste0(datdir, "/Data/D10Weight.csv"))
+    plot(rat.cov$Weight, type="h", main="", ylab="Weight (g)", xlab="Observation", xaxt="n", lty=1, lwd=2, col=replace(grp, 13, 0) + 2)
+    axis(1, at=seq_len(nrow(urine)), labels=seq_len(nrow(urine)), tick=FALSE)
+    legend("topright", legend=c("Control", "Epileptic", "Outlier"), bty="n", lty=1, lwd=2, col=c(3, 4, 2))
   # Meat        (# type)
     load(file=paste0(datdir, "/Data/Meat.Rdata", sep=""), envir=.GlobalEnv)
     spectra  <- t(spectra); rm(last.warning)
