@@ -34,7 +34,7 @@
 \counterwithin{figure}{section}
 \usepackage{multirow}
 \usepackage[font=footnotesize]{caption}
-\usepackage[lotdepth,lofdepth]{subfig}
+\usepackage{subcaption}
 \usepackage{graphicx}
 \usepackage{float}
 % command to number equations according to the their sections
@@ -618,6 +618,7 @@ A simulation study with the following design was conducted in order to assess th
 	& 5 & 3 [3,4] & 4 [2,8] & 4 [2,8] & 4 [2,8] & 330.50 & 0\\
 	& Gibbs & 3 [3,3] & 4 [2,8] & 3 [2,7] & 4 [2,8] & 327.56 & 0\\
 	\hline
+	\label{SimulationStudy}
 	\multirow{4}{0.1\linewidth}{\centering N = 50\quad(N~$=$~p)} & 0.5 & 3 [3,3] & 5 [3,6] & 5 [3,6] & 5 [3,7] & 361.66 & 0\\
 	& 1 & 3 [3,3] & 5 [3,7] & 5 [3,7] & 5 [3,7] & 363.06 & 0\\
 	& 5 & 3 [3,3] & 5 [3,6] & 5 [3,6] & 4 [3,7] & 367.44 & 0\\
@@ -642,6 +643,7 @@ Further assessment of IMIFA's clustering performance was conducted using data du
 \begin{tabular}[pos=center]{I c | c | c | c | c | c | c | c | c I}
 	\specialrule{.1em}{.01em}{.01em} 
 	\centering
+	\label{Olive_Results}
 	\textbf{Method} & \textbf{\# Models} & \textbf{Time (s)} & \textbf{Rel. Time} & $\boldsymbol{\alpha}$ & $\mathbf{G}$ & $\mathbf{q}$ & \textbf{Adj. Rand} & \textbf{Error (\%)}\\
 	\specialrule{.1em}{.01em}{.01em}
 	IMIFA & 1 & 1814.59 & 1.000 & 4.54 & 4 & 6, 2, 3, 2 & 0.9345 & 8.57\\
@@ -658,9 +660,10 @@ Further assessment of IMIFA's clustering performance was conducted using data du
 \normalsize
 \newline
 
-Of the 572 observations, 323 originate from Southern Italy. This large cluster requires the largest amount of factors. It's clear that the flexibilty to model remaining clusters by different, in this case lower, numbers of factors greatly improves the clustering performance. Indeed, the best solution is given by the IMIFA model, which requires only one run and doesn't rely on any model selection criteria. The IMIFA performance compares favourably to the PGMM solution also, which gives a 5 group, 5 factor model (Adj. Rand = 0.5586, Error Rate = 33.56). It's also worth noting that the optimal models chosen by algorithms which do rely on model selection criteria were not all optimal in a clustering sense -- for instance, in this case where the truth is known, the candidate MIFA model with $G=4$ yields an Adj. Rand of 0.9304 and an error rate of 10.49\%, despite having a lower BICM. The cross tabulation of the MAP clustering from the IMIFA model against the known area labels suggests the possibility of a fourth group, whereby Umbria is separated from East and West Liguria in the North. This makes sense, geographically. The confusion matrix using this relabelling yields an Adj. Rand of 0.9961 and an error rate of 0.7\%. Indeed, the other methods perform better with this labelling as well.
+Of the 572 observations, 323 originate in Southern Italy. This large cluster requires the largest amount of factors. It's clear that the flexibilty to model remaining clusters by lower numbers of factors greatly improves clustering performance. Indeed, the best solution is given by IMIFA, which requires only one run and doesn't rely on any model selection criteria. The IMIFA performance compares favourably to the PGMM solution also, which gives a 5 group, 5 factor model (Adj. Rand = 0.5586, Error Rate = 33.56). It's also worth noting that the optimal models chosen by algorithms which do rely on model selection criteria were not all optimal in a clustering sense -- for instance, in this case where the truth is known, the candidate MIFA model with $G=4$ yields an Adj. Rand of 0.9304 and an error rate of 10.49\%, despite having a lower BICM. The cross tabulation of the MAP clustering from the IMIFA model against the known area labels suggests the possibility of a fourth group, whereby Umbria is separated from East and West Liguria in the North. This makes sense, geographically. The confusion matrix using this relabelling yields an Adj. Rand of 0.9961 and an error rate of 0.7\%. Indeed, the other methods also perform better with this labelling.
 \begin{table}[!htb]
 	\footnotesize
+	\caption{IMIFA Olive confusion matrices}
 	\begin{minipage}{.5\linewidth}
 		\centering
 		\begin{tabular}[pos=left]{c | c | c | c | c}
@@ -682,6 +685,7 @@ Of the 572 observations, 323 originate from Southern Italy. This large cluster r
 			Umbria & 0 & 0 & 3 & 48
 		\end{tabular}
 	\end{minipage} 
+	\label{Olive_Clustering}
 \end{table}
 \justifying
 
@@ -691,6 +695,7 @@ In order to assess the robustness of the IMIFA algorithm, $\mathrm{N}\left(0,1\r
 \begin{tabular}[pos=center]{I c | c | c | c | c | c | c I}
 	\specialrule{.1em}{.01em}{.01em} 
 	\centering
+	\label{Olive_Robust}
 	\textbf{Scenario} & \textbf{Rel. Time} & $\boldsymbol{\alpha}$ & $\mathbf{G}$ & $\mathbf{q}$ & \textbf{Adj. Rand} & \textbf{Error (\%)}\\
 	\specialrule{.1em}{.01em}{.01em}
 	N=572, P=18 & 1.364 & 4.55 & 6 & 2, 2, 2, 2, 2, 2 & 0.9366 & 13.64\\
@@ -707,7 +712,49 @@ In order to assess the robustness of the IMIFA algorithm, $\mathrm{N}\left(0,1\r
 The group structure can still be uncovered reasonably well as the number of irrelevant variables increases, however there is increasing support for a 1-group, 1-factor model as the signal-to-noise ratio decreases. As such, variable selection, or at least the need to pre-process the data, may still be an issue. As rows of noise are appended, the algorithm generally has no difficulty in assigning these observations to a group of their own, however their presence is leading to overestimation of the total number of groups, yielding a poorer (though still homogeneous) clustering overall.
 
 \subsection[Real Data]{Real Data}
+A real application of IMIFA is given on $N \ll P$ metabolomic data consisting of 189 spectral peaks from urine samples of just 18 subjects, half of which have epilepsy and half of which are controls. Data were mean-centered and scaled by the square root of their standard deviation prior to analysis. This `Pareto' scaling is common practice for metabolomic data \citet{vandenBerg2006}.
 
+\begin{figure}[h]
+	\centering
+	\caption{Spectral metabolomic data}
+	\includegraphics[width=0.7\textwidth, keepaspectratio]{Rat_Data.eps}
+	\label{RatData}
+\end{figure}
+
+Results are compared against MFA and MIFA algorithms. To ensure satisfactory convergence, all results are based on 50,000 iterations, with the first 10,000 discarded due to burn-in and every 2\textsuperscript{nd} sample thinned. Cluster labels were initialised using Mclust for all methods \citet{Mclust}. When fitting MFA with $G$ fixed at $2$, over a range of $q$ values from $0,\ldots,10$, BICM suggests $q_g = 3$ for each cluster and 4 observations are misclassified. When fitting MIFA over a range of $G$ values from $1, \ldots, 5$, BICM correctly chooses $2$ as the optimal number of clusters and only one subject is clustered incorrectly. Uncertainty in the number of latent factors for each MIFA cluster is quantified by 95\% credible intervals -- $q_1 \in \left(1,4\right)$ and $q_2 \in \left(2,5\right)$. It's worth noting the greater complexity in the epileptic cluster. Similarly, heatmaps of each cluster's $p\times q_g$ \textit{posterior mean loadings} matrix, based only on a subset of retained samples with $q_g$ or more factors, after applying Procrustes rotation, demonstrate the sparsity and shrinkage induced by the multiplicative gamma process prior.
+
+\begin{figure}[h]
+	\centering
+	\begin{subfigure}{0.5\textwidth}
+		\centering
+		\includegraphics[width=\linewidth, keepaspectratio]{Qdist.eps}
+		\caption{Approximation to posterior distribution of $q_g$}
+		\label{MIFA_Qdist}
+	\end{subfigure}%
+	\begin{subfigure}{0.5\textwidth}
+		\centering
+		\includegraphics[width=\linewidth, keepaspectratio]{Loadings_Heatmap.eps}
+		\caption{Posterion mean loadings matrices heatmaps}
+		\label{MIFA_Loadings}
+	\end{subfigure}
+		\caption{Results on the number of latent factors in two metabolomic MIFA clusters}
+		\label{MIFA_UrineResults}
+\end{figure}
+
+One run of IMIFA, however, with sufficiently strong shrinkage hyperparameters and $\alpha$ not fixed, is unanimous in visiting a $3$-cluster model in all retained samples, with the modal estimate of $q_g$ in each group being $2$ in each case. The corresponding modal clustering uncovers the cluster structure perfectly, save for the one subject previously misclassified by MIFA now being given its own component. As such, the method may be useful from an outlier detection point of view - indeed, examination of excluded covariates associated with these subjects reveals this epileptic observation to have an abnormally low weight value, quite distinct not only from the other observations in its cluster, but from all observations. Furthermore, perhaps the absence of the outlier in the epileptic cluster accounts for the estimate $q_g$ therein now being $2$, rather than $3$ as it was under MIFA above.
+
+\begin{table}[h]
+	\caption{\textbf{IMIFA Metabolomic Clustering}\\ Adj. Rand = 0.8944\\ Error Rate = 5.56\%}
+	\centering
+	\begin{tabular}[pos=center]{c | c | c | c}
+		\centering
+		& 1 & 2 & 3 \\
+		\specialrule{.1em}{.01em}{.01em} 
+		Control & 9 & 0 & 0\\
+		Epileptic & 0 & 8 & 1\\
+	\end{tabular}
+	\label{Urine_Confusion}
+\end{table}
 \section[Extensions]{Extensions}
 The Pitman-Yor process is a popular generalisation of the Dirichlet Process \citet{Perman1992}, and is sometimes referred to as the two-parameter Poisson-Dirichlet process. This prior introduces a discount parameter, $d$, which lies in the interval $\left[0, 1\right)$. In order to satisfy the rules of probability, the $\alpha$ parameter must be strictly greater than $-d$. The PY prior reduces to the Dirichlet process prior when $d=0$. Nonetheless, some important distributional features of the PY process are fundamentally different when this parameter is non-zero. Conveniently, this prior has its own stick-breaking construction, given by
 \begin{equation}
@@ -718,14 +765,13 @@ which means this generalisation can be easily incorporated into our Gibbs sampli
 \noindent Below are some possible further extensions to this work:
 \begin{itemize}
 	\item Rewrite code bottlenecks using \pkg{RCPP}.
-	\item Investigate block updating the loadings matrix using a matrix normal prior \citet{Viroli2011}. This works, albeit surprisingly slower than the current implementation, for the models where $q_g$ is fixed. It remains to reformulate the MGP prior as a matrix normal MGP prior. \citet{Bhattacharya2015} could be of some help in this regard.
+	\item Investigate block updating the loadings using a matrix normal prior \citet{Viroli2011}. When $q_g$ is fixed, this works, albeit surprisingly slower than current code. It remains to reformulate the MGP prior as a matrix normal. \citet{Bhattacharya2015} could be helpful in this regard.
 	\item Implement the third label switching move of \citet{Hastie2014}.
 	\item Learn the shrinkage hyperparameters $\alpha_1$ \& $\alpha_2$, which was proposed but not implemented by \citet{Bhattacharya2011}. This requires the introduction of Metropolis-Hastings steps.
 	\item \citet{Yu2009} gives a strategy for Collapsed Gibbs Sampling of Dirichlet Process Mixture Models.
-	\item The present work could be extended to the supervised/semi-supervised settings where some or all of the data is labelled, in order to uses Mixtures of Infinite Factor Analysers for (semi-) supervised Model Based Classification.
-	\item Covariates could be incorporated in the spirit of Bayesian Factor Regression Models \citet{West2003, Wang2007, Carvalho2008}; for instance, the spectral metabolomic urine data also contains information on gender, weight and age.
-	\item The \pkg{IMIFA} package includes functions to assist in soliciting good priors for either Dirichlet or Pitman-Yor processes, by finding the expected number of groups for a given combination of $\alpha$, $N$, and $d$ values, as well as the variance. A third function exists to actually plot the distribution of the number of groups, but at present this is only possible in the case where $d=0$. Extending this function to plot Pitman-Yor priors with non-zero discount requires computation of generalized Stirling numbers of the second kind.
-	\item Furthermore, the discount parameter currently remains fixed. Some papers introduce a $\textrm{Beta}\left(1, 1\right)$ prior on it, but strategies for subsequently updating the parameter are unclear, at least in the papers I have read to date.
+	\item The present work could be extended to (semi-)supervised settings where some or all of the data is labelled, in order to use MIFA for (semi-)supervised Model Based Classification.
+	\item Covariates could be incorporated in the spirit of Bayesian Factor Regression Models \citet{West2003, Wang2007, Carvalho2008}; for instance, the spectral metabolomic urine data also contains information on weight and urine pH.
+	\item The \pkg{IMIFA} package includes functions to assist in soliciting good priors for either Dirichlet or Pitman-Yor processes, by finding the expected number of groups for a given combination of $\alpha$, $N$, and $d$ values, as well as the variance. A third function exists to actually plot the induced distribution on $G$, but at present this is only possible in the case where $d=0$. Extending this function to plot Pitman-Yor priors with non-zero discount requires computation of generalized Stirling numbers of the second kind. Furthermore, $d$ currently remains fixed. Some papers introduce a $\textrm{Beta}\left(1, 1\right)$ prior on it, but strategies for subsequently updating $d\given\mbox{---}$ are unclear, at least in papers I have read to date.
 	\item Practically useful extensions to heavier-tailed errors using multivariate $t$ distributions in place of the multivariate normal here are easily encompassed within the simulation based Bayesian analysis we develop and use, as per \citet{Peel2000}. For many applied problems, the tails of the normal distribution are often shorter than required. Also, the estimates of the component means and covariance matrices can be affected by observations that are atypical of the components in the normal mixture model being fitted. The problem of providing protection	against outliers in multivariate data is a very difficult problem and increases with the difficulty of the dimension of the data. With this $t$ mixture model-based approach, the normal distribution for each component in the mixture is embedded in a wider class of elliptically symmetric distributions with an additional parameter called the degrees of freedom $\kappa$. The normal-scale characterisation of the mixture of \textrm{MVt} distributions is given as follows:
 	\begin{flalign}
 	p_g =~\mathrm{P}\left(z_{ig}=1\given\underline{x}_i,\gamma,\kappa_g\right) &= \frac{\pi_g\mathrm{P}\left(\underline{x}_i\given\theta_g,\kappa_g\right)}{\sum_{g=1}^{G}\pi_g\mathrm{P}\left(\underline{x}_i \given\theta_g,\kappa_g\right)} = \frac{\pi_g f\left(\underline{x}_i \given \underline{\mu}_g,\nicefrac{\left(\Lambda_g\Lambda_g^T+\Psi_g\right)}{U_i}\right)}{\sum_{g=1}^G\pi_g f\left(\underline{x}_i \given \underline{\mu}_g,\nicefrac{\left(\Lambda_g\Lambda_g^T+\Psi_g\right)}{U_i}\right)}\label{eq:49}\shortintertext{where} 
@@ -734,5 +780,6 @@ which means this generalisation can be easily incorporated into our Gibbs sampli
 	As $\kappa$ tends to infinity, the $t$ distribution approaches normality, as each $U_i$ will tend to one with probability one. Hence this parameter $\kappa$ may be viewed as a robustness tuning parameter. It can be fixed in advance or it can be inferred from the data for each component.
 	\item As results above when appending Gaussian noise to the Olive data show, variable selection, or at least pre-processing of the data, may be still be required.
 \end{itemize}
-\bibliography{Notes_bibtex}
+{\small
+	\bibliography{Notes_bibtex}}
 \end{document}
