@@ -85,12 +85,12 @@
           fail.gs  <- c(fail.gs, g)
         }
       }
-      fail.gs      <- fail.gs[order(fail.gs)]
+      fail.gs      <- fail.gs[Order(fail.gs)]
       len.fail     <- length(fail.gs)
       if(len.fail   > 0)      message(paste0("Parameters of the following group", ifelse(len.fail > 2, "s ", " "), "were initialised by simulation from priors, not factanal: ", ifelse(len.fail > 1, paste0(paste0(fail.gs[-len.fail], sep="", collapse=", "), " and ", fail.gs[len.fail]), fail.gs), " - G=", G, ", Q=", Q))
     } else     {
       psi.tmp      <- psi.inv
-      psi.inv      <- vapply(Gseq, function(g) if(nn[g] > 1) 1/apply(data[z == g,, drop=FALSE], 2, var) else psi.tmp[,g], numeric(P))
+      psi.inv      <- vapply(Gs, function(g) if(nn[g] > 1) 1/colVars(data[z == g,, drop=FALSE]) else psi.tmp[,g], numeric(P))
       inf.ind      <- is.infinite(psi.inv)
       psi.inv[inf.ind]     <- psi.tmp[inf.ind]
     }

@@ -81,14 +81,14 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   }          
   if(method != "classify") {
     if(scaling   != "none")   {
-      scal  <- apply(raw.dat, 2, sd)
+      scal  <- colVars(as.matrix(raw.dat), std=TRUE)
       if(scaling == "pareto") {
        scal <- sqrt(scal)
       }
     } else {
       scal  <- FALSE
     }
-    dat     <- scale(raw.dat, center=centering, scale=scal)
+    dat     <- if(is.logical(scal)) standardise(as.matrix(raw.dat), center=centering, scale=scal) else scale(raw.dat, center=centering, scale=scal)
   } else   {
     dat     <- raw.dat
   }
@@ -192,7 +192,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(G.x)                         stop("'range.G' must be specified")
     if(any(range.G  < 1))           stop("'range.G' must be strictly positive")
     if(any(range.G  > alp3 * lnN))  warning(paste0("'range.G' MUCH greater than log(N) (=log(", N, ")):\n Empty clusters are likely, consider running an overfitted or infinite mixture"), call.=FALSE)
-    range.G <- sort(unique(range.G))
+    range.G <- sort_unique(range.G)
     meth    <- rep(method, length(range.G))                               
   }
   if(any(range.G >= N))             stop(paste0("'range.G' must be less than the number of observations N=", N))
@@ -212,7 +212,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   }
   
 # Define full conditionals, hyperparamters & Gibbs Sampler function for desired method
-  cov.mat          <- var(dat)
+  cov.mat          <- cova(as.matrix(dat))
   if(is.null(rownames(dat))) rownames(dat) <- seq_len(N)
   sigmu.miss       <- missing("sigma.mu")
   if(sigmu.miss)             sigma.mu      <- diag(cov.mat)
@@ -236,7 +236,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(range.Q    <= 0)             stop(paste0("'range.Q' must be strictly positive for the ", method, " method"))
     if(all(adapt, range.Q < Q.min)) stop(paste0("'range.Q' must be at least min(log(P), log(N)) for the ", method, " method when 'adapt' is TRUE"))
   }
-  range.Q   <- sort(unique(range.Q)) 
+  range.Q   <- sort_unique(range.Q)
   len.G     <- ifelse(method == "classify", range.G, length(range.G))
   len.Q     <- length(range.Q)
   len.X     <- len.G * len.Q
@@ -442,7 +442,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
       }
       if(beta.x)  {
         if(psi0g) {
-          cov.gg   <- lapply(seq_len(G), function(gg) if(nngs[gg] > 1) cov(dat[zi[[g]] == gg,, drop=FALSE]) else cov.mat)
+          cov.gg   <- lapply(seq_len(G), function(gg) if(nngs[gg] > 1) cova(as.matrix(dat[zi[[g]] == gg,, drop=FALSE])) else cov.mat)
           psi.beta[[g]] <- vapply(seq_len(G), function(gg) psi.hyper(psi.alpha, cov.gg[[gg]]), numeric(P))
         } else {
           psi.beta[[g]] <- replicate(G, temp.psi[[1]])
@@ -568,7 +568,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     for(g in seq_len(range.G))  {
       tmp.dat      <- raw.dat[zlabels == levels(zlabels)[g],]
       if(scaling   != "none")   {
-        scal  <- apply(tmp.dat, 2, sd)
+        scal  <- colVars(as.matrix(tmp.dat), std=TRUE)
         if(scaling == "pareto") {
          scal <- sqrt(scal)
         }
@@ -576,7 +576,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
         scal  <- FALSE
       }
       tmp.dat <- scale(tmp.dat, center=centering, scale=scal)
-      if(sigmu.miss)   gibbs.arg$sigma.mu  <- cov(tmp.dat)
+      if(sigmu.miss)   gibbs.arg$sigma.mu  <- cova(as.matrix(tmp.dat))
       imifa[[g]]          <- list()
       gibbs.arg    <- append(temp.args, lapply(deltas[[Gi]], "[[", g))
       imifa[[g]][[Qi]]    <- do.call(paste0("gibbs.", "IFA"),

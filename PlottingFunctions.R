@@ -571,12 +571,12 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
         missG  <- setdiff(rangeG, G.name)
         missG  <- setNames(rep(0, length(missG)), as.character(missG))
         plot.G <- c(plot.G, missG)
-        plot.G <- plot.G[order(as.numeric(names(plot.G)))]
+        plot.G <- plot.G[Order(as.numeric(names(plot.G)))]
         col.G  <- c(1, 2)[(rangeG == G) + 1]
         G.plot <- barplot(plot.G, ylab="Frequency", xaxt="n", col=col.G)
         if(titles) title(main=list("Posterior Distribution of G"))
         axis(1, at=G.plot, labels=names(plot.G), tick=FALSE) 
-        axis(1, at=median(G.plot), labels="G", tick=FALSE, line=1.5) 
+        axis(1, at=med(G.plot), labels="G", tick=FALSE, line=1.5) 
       }
       if(all(method == "IFA", plotQ.ind)) {
         layout(1)
@@ -588,12 +588,12 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
         missQ  <- setdiff(rangeQ, Q.name)
         missQ  <- setNames(rep(0, length(missQ)), as.character(missQ))
         plot.Q <- c(plot.Q, missQ)
-        plot.Q <- plot.Q[order(as.numeric(names(plot.Q)))]
+        plot.Q <- plot.Q[Order(as.numeric(names(plot.Q)))]
         col.Q  <- c(1, 2)[(rangeQ == Q) + 1]
         Q.plot <- barplot(plot.Q, ylab="Frequency", xaxt="n", col=col.Q)
         if(titles) title(main=list("Posterior Distribution of Q"))
         axis(1, at=Q.plot, labels=Q.name, tick=FALSE) 
-        axis(1, at=median(Q.plot), labels="Q", tick=FALSE, line=1.5) 
+        axis(1, at=med(Q.plot), labels="Q", tick=FALSE, line=1.5) 
       }  
       if(all(method != "IFA", plotQ.ind)) {
         plot.Q <- GQ.res$Q.Counts
@@ -604,15 +604,15 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
         missQ  <- lapply(Gseq, function(g) setdiff(rangeQ, as.numeric(Q.name[[g]])))
         missQ  <- lapply(Gseq, function(g) setNames(rep(0, length(missQ[[g]])), as.character(missQ[[g]])))
         plot.Q <- lapply(Gseq, function(g) c(plot.Q[[g]], missQ[[g]]))
-        plot.Q <- do.call(rbind, lapply(Gseq, function(g) plot.Q[[g]][order(as.numeric(names(plot.Q[[g]])))]))
+        plot.Q <- do.call(rbind, lapply(Gseq, function(g) plot.Q[[g]][Order(as.numeric(names(plot.Q[[g]])))]))
         if(titles) {
           layout(rbind(1, 2), heights=c(9, 1))
           par(mar=c(3.1, 4.1, 4.1, 2.1))
         }
         Q.plot <- barplot(plot.Q, beside=TRUE, ylab="Frequency", xaxt="n", col=Gseq, space=c(0, 2))
         if(titles) title(main=list(expression('Posterior Distribution of Q'["g"])))
-        axis(1, at=apply(Q.plot, 2, median), labels=colnames(plot.Q), tick=FALSE)
-        axis(1, at=median(Q.plot), labels="Q", tick=FALSE, line=1)
+        axis(1, at=colMedians(Q.plot), labels=colnames(plot.Q), tick=FALSE)
+        axis(1, at=med(Q.plot), labels="Q", tick=FALSE, line=1)
         if(titles) {
           par(mar=c(0, 0, 0, 0))
           plot.new()
@@ -783,7 +783,7 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
       }
       pl.x   <- barplot(plot.x, beside=TRUE, col=col.e, main="", ylab="Deviation", density=dens)
       na.x   <- if(G > 1) is.na(results$Error[[1]]) else FALSE
-      if(G > 1) points(x=apply(as.matrix(pl.x[,which(na.x)]), 2, median), y=rep(0, sum(na.x)), pch=16, col=6)
+      if(G > 1) points(x=colMedians(as.matrix(pl.x[,which(na.x)])), y=rep(0, sum(na.x)), pch=16, col=6)
       if(titles) title(main=list("Error Metrics"))
       if(titles) {
         par(mar=c(0, 0, 0, 0))
@@ -959,7 +959,7 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
         rx[,i] <- c(0, asNumeric(abs(Stirling1.all(N) * tmp)))
       } else                          stop("Plotting with non-zero discount not yet implemented\nTry supplying the same arguments to G.expected() or G.variance()")
     }
-    rx         <- scale(rx, center=FALSE, scale=colSums(rx))
+    rx         <- scale(rx, center=FALSE, scale=colsums(rx))
     max.rx     <- apply(rx, 2, max)
     if(plot)   {
       matplot(x=c(0, seq_len(N)), y=rx, type="l", col=col, lty=1, xlab="Groups", 

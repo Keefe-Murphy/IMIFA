@@ -68,7 +68,7 @@
       for(g in Gseq[-1]) {
         lnp[,g] <- colLogSumExps(rbind(lnp[,g], lnp[,g - 1]))
       }
-        return(list(z = rowSums(-rexp(N) > lnp) + 1, log.likes = log.denom))
+        return(list(z = rowsums(-rexp(N) > lnp) + 1, log.likes = log.denom))
     }
 
   # Alpha
@@ -182,7 +182,7 @@
   # Label Switching
     lab.switch  <- function(z.new, z.old, Gs, ng = tabulate(z.new)) {
       tab       <- table(z.new, z.old, dnn=NULL)
-      tab.tmp   <- tab[rowSums(tab) != 0,colSums(tab) != 0, drop=FALSE]
+      tab.tmp   <- tab[rowsums(tab) != 0,colsums(tab) != 0, drop=FALSE]
       nc        <- ncol(tab.tmp)
       nr        <- nrow(tab.tmp)
       if(nc > nr) {
@@ -206,7 +206,7 @@
         z.perm  <- c(z.perm, setNames(setdiff(Gs, z.perm), setdiff(Gs, names(z.perm))))
       }
       z.names   <- as.numeric(names(z.perm))
-      z.perm    <- z.perm[order(z.names)]
+      z.perm    <- z.perm[Order(z.names)]
       z.sw      <- factor(z.new, labels=z.perm[seq_along(ng[ng > 0])])
         return(list(z = as.numeric(levels(z.sw))[z.sw], z.perm = z.perm))
     }
@@ -325,7 +325,7 @@
       Qmsg      <- if(length(fac) > 1) paste(c(Qmsg, paste0("and ", fac[length(fac)])), sep="", collapse="") else fac
       Gmsg      <- if(length(grp) > 1) paste(c(Gmsg, paste0("and ", grp[length(grp)])), sep="", collapse="") else grp
       Qmsg      <- paste0(" with ", Qmsg, " factor", ifelse(length(fac) == 1, "", "s"))
-      Gmsg      <- paste0(" with ", Gmsg, " group", ifelse(length(grp) == 1, "", "s"))
+      Gmsg      <- paste0(" with ", Gmsg, " group",  ifelse(length(grp) == 1, "", "s"))
       if(is.element(meth, c("FA", "OMFA", "IMFA"))) {
         msg     <- Qmsg
       } else if(meth == "MFA")  {
@@ -343,7 +343,7 @@
       if(is.element(method, c("FA", "IFA")))  {
         msg     <- paste0("The chosen ", method, " model has ", Q, " factor", ifelse(Q == 1, "\n", "s\n"))
       } else if(is.element(method, c("MFA", "OMFA", "IMFA"))) {
-        msg     <- paste0("The chosen ", method, " model has ", G, " group", ifelse(G == 1, " with ", "s, each with "), unique(Q), " factor", ifelse(unique(Q) == 1, "\n", "s\n"))
+        msg     <- paste0("The chosen ", method, " model has ", G, " group",  ifelse(G == 1, " with ", "s, each with "), unique(Q), " factor", ifelse(unique(Q) == 1, "\n", "s\n"))
       } else {
         Q.msg   <- NULL 
         for(i in seq_along(Q[-length(Q)])) {

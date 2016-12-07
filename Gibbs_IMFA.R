@@ -89,7 +89,7 @@
       }
     } else {
       psi.tmp       <- psi.inv
-      psi.inv[,Gs]  <- vapply(Gs, function(g) if(nn[g] > 1) 1/apply(data[z == g,, drop=FALSE], 2, var) else psi.tmp[,g], numeric(P))
+      psi.inv[,Gs]  <- vapply(Gs, function(g) if(nn[g] > 1) 1/colVars(data[z == g,, drop=FALSE]) else psi.tmp[,g], numeric(P))
       inf.ind       <- is.infinite(psi.inv)
       psi.inv[inf.ind]      <- psi.tmp[inf.ind]
     }
@@ -271,7 +271,7 @@
                             alpha    = if(not.fixed)           alpha.store,
                             discount = if(learn.d)             d.store,
                             rate     = if(MH.step)             mean(rate),
-                            lab.rate = if(DP.lab.sw)           setNames(apply(lab.rate, 1, mean), c("Move1", "Move2")),
+                            lab.rate = if(DP.lab.sw)           setNames(rowmeans(lab.rate), c("Move1", "Move2")),
                             z.store  = z.store,
                             ll.store = ll.store,
                             G.store  = G.store,

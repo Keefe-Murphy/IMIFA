@@ -64,7 +64,7 @@
     meat.col <- as.numeric(as.factor(type))
     # All Meats
       matplot(t(spectra), type="l", col=meat.col, xlab="Wavelength", ylab="Spectral Reflectance", main="Meat Data")
-      legend("topleft", legend=levels(factor(type))[sort(unique(meat.col))], bty="n", lty=1, col=sort(unique(meat.col)))
+      legend("topleft", legend=levels(factor(type))[sort_unique(meat.col)], bty="n", lty=1, col=sort(unique(meat.col)))
     # Red vs. White
       meat.col[meat.col == 3] <- 1; meat.col[meat.col > 1] <- 2
       matplot(t(spectra), type="l", col=meat.col, xlab="Wavelength", ylab="Spectral Reflectance", main="Meat Data")

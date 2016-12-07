@@ -46,7 +46,7 @@ sim.IMIFA      <- function(N = 300L, G = 3L, P = 50L, Q = rep(4L, G), pis = rep(
   } 
                                          
   simdata      <- matrix(0, nr=0, nc=P)
-  prior.mu     <- as.integer(scale(Gseq, center=TRUE, scale=FALSE))
+  prior.mu     <- as.integer(standardise(Gseq, center=TRUE, scale=FALSE))
   true.mu      <- setNames(vector("list", G), paste0("Group", Gseq))
   true.l       <- true.mu
   true.psi     <- true.mu

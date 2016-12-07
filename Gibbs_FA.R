@@ -38,7 +38,7 @@
     }
     post.mu      <- setNames(rep(0, P), varnames)
     post.psi     <- setNames(rep(0, P), varnames)
-    cov.emp      <- cov(data)
+    cov.emp      <- cova(as.matrix(data))
     cov.est      <- matrix(0, nr=P, nc=P)
     ll.store     <- rep(0, n.store)
     dimnames(cov.emp)      <- list(varnames, varnames)
@@ -57,7 +57,7 @@
       }
     } else {
       psi.tmp    <- psi.inv
-      psi.inv    <- 1/apply(data, 2, var)
+      psi.inv    <- 1/colVars(data)
       inf.ind    <- is.infinite(psi.inv)
       psi.inv[inf.ind]     <- psi.tmp[inf.ind]
     }

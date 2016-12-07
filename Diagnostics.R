@@ -62,7 +62,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, 
     G.tab        <- if(GQ1) lapply(apply(G.store, 1, function(x) list(table(x, dnn=NULL))), "[[", 1) else table(G.store, dnn=NULL)
     G.prob       <- if(GQ1) lapply(G.tab, prop.table) else prop.table(G.tab)
     G.mode       <- if(GQ1) unlist(lapply(G.tab, function(gt) as.numeric(names(gt[gt == max(gt)])[1]))) else as.numeric(names(G.tab[G.tab == max(G.tab)])[1])
-    G.med        <- if(GQ1) ceiling(apply(G.store, 1, median) * 2)/2 else ceiling(median(G.store) * 2)/2
+    G.med        <- if(GQ1) ceiling(rowMedians(G.store) * 2)/2 else ceiling(med(G.store) * 2)/2
     if(!G.T) {
       G          <- if(G.meth == "Mode") G.mode else floor(G.med)
     }
@@ -106,7 +106,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, 
     if(inf.Q)  {
       if(any((Q  != 0) + (Q * 
         (n.var - Q)   <= 0) > 1)) stop(paste0("'Q' must be less than the number of variables ", n.var))
-      Qtmp       <- if(inf.G) apply(sims[[1]][[1]]$Q.store[seq_len(G),, drop=FALSE], 1, max) else if(method == "MIFA") apply(sims[[ifelse(G.T, which(G == n.grp), G.ind)]][[1]]$Q.store, 1, max) else max(sims[[1]][[1]]$Q.store)
+      Qtmp       <- if(inf.G) rowMaxs(sims[[1]][[1]]$Q.store[seq_len(G),, drop=FALSE], value=TRUE) else if(method == "MIFA") rowMaxs(sims[[ifelse(G.T, which(G == n.grp), G.ind)]][[1]]$Q.store, value=TRUE) else max(sims[[1]][[1]]$Q.store)
       if(any(Q * (Qtmp - Q) < 0)) stop(paste0("'Q' can't be greater than the maximum number of factors stored in ", ifelse(method == "IFA", "", "any group of "), match.call()$sims))
     }
   } 
@@ -225,14 +225,14 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, 
         neg.c            <- grepl("-", spl.tmp[2], fixed=TRUE) || grepl("!", spl.tmp[2], fixed=TRUE)
         rowx             <- as.numeric(unlist(strsplit(gsub('\\(', '', gsub(',', '', unlist(regmatches(spl.tmp[1], gregexpr('\\(?[0-9,.]+', spl.tmp[1]))))), '')))
         rowx             <- if(any(spl.ind <= 0, sum(rowx) == 0)) seq_len(nrow(dat)) else rowx
-        colseq           <- ifelse(neg.c, -1, 1) * as.numeric(unlist(strsplit(gsub('\\(', '', gsub(',', '', unlist(regmatches(spl.tmp[2], gregexpr('\\(?[0-9,.]+', spl.tmp[2]))))), '')))
+        colseq           <- ifelse(neg.c, -1, 1) * suppressWarnings(as.numeric(unlist(strsplit(gsub('\\(', '', gsub(',', '', unlist(regmatches(spl.tmp[2], gregexpr('\\(?[0-9,.]+', spl.tmp[2]))))), ''))))
         rowseq           <- rep(neg.r, nrow(dat)) 
         rowseq[rowx]     <- !rowseq[rowx]
         dat              <- subset(dat, select=if(any(spl.ind <= 0, sum(colseq) == 0)) seq_len(ncol(dat)) else colseq, subset=rowseq, drop=!grepl("drop=F", dat.nam))
       }
       dat        <- dat[complete.cases(dat),]
       dat        <- dat[vapply(dat, is.numeric, logical(1))]
-      dat        <- scale(dat, center=cent, scale=scaling)
+      dat        <- if(is.logical(scaling)) standardise(as.matrix(dat), center=cent, scale=scaling) else scale(dat, center=cent, scale=scaling)
       varnames   <- colnames(dat)
       if(!identical(dim(dat), 
          c(n.obs, n.var)))        warning("Dimensions of data don't match those in the dataset supplied to mcmc.IMIFA():\n be careful using subsetted data, best to create new object", call.=FALSE)
@@ -304,9 +304,9 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, 
     uncertain    <- 1 - apply(matrix(apply(z, 1, tabulate, nbins=G)/length(tmp.store), nr=G, nc=n.obs), 2, max)
     if(sw["pi.sw"])    {
       pi.prop    <- pies[Gseq,seq_along(tmp.store), drop=FALSE]
-      var.pi     <- apply(pi.prop, 1, var)
+      var.pi     <- rowVars(pi.prop)
       ci.pi      <- apply(pi.prop, 1, function(x) quantile(x, conf.levels))
-      post.pi    <- rowMeans(pi.prop, dims=1)
+      post.pi    <- rowmeans(pi.prop)
     } else {
       post.pi    <- setNames(prop.table(tabulate(post.z, nbins=G)), paste0("Group ", Gseq))
     }
@@ -383,7 +383,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, 
     Q.tab        <- if(G1) lapply(apply(Q.store, 1, function(x) list(table(x, dnn=NULL))), "[[", 1) else table(Q.store, dnn=NULL)
     Q.prob       <- if(G1) lapply(Q.tab, prop.table) else prop.table(Q.tab)
     Q.mode       <- if(G1) unlist(lapply(Q.tab, function(qt) as.numeric(names(qt[qt == max(qt)])[1]))) else as.numeric(names(Q.tab[Q.tab == max(Q.tab)])[1])
-    Q.med        <- if(G1) ceiling(apply(Q.store, 1, median) * 2)/2 else ceiling(median(Q.store) * 2)/2
+    Q.med        <- if(G1) ceiling(rowMedians(Q.store) * 2)/2 else ceiling(med(Q.store) * 2)/2
     if(!Q.T)  {
       Q          <- if(Q.meth == "Mode") Q.mode else floor(Q.med)
     } else    {
@@ -475,7 +475,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, 
         psi      <- as.matrix(psis[,g,store])
       }
       if(data.x) {
-        cov.emp  <- cov(dat[z.ind[[g]],, drop=FALSE])
+        cov.emp  <- cova(as.matrix(dat[z.ind[[g]],, drop=FALSE]))
         dimnames(cov.emp)  <- list(varnames, varnames)  
         if(sum(z.ind[[g]]) <= 1)  rm(cov.emp)
       }  
@@ -495,12 +495,12 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, 
   # Compute posterior means and % variation explained
     if(sw["mu.sw"])  {
       post.mu    <- rowMeans(mu, dims=1)
-      var.mu     <- apply(mu, 1, var)
+      var.mu     <- rowVars(mu)
       ci.mu      <- apply(mu, 1, function(x) quantile(x, conf.levels))
     }
     if(sw["psi.sw"]) {
       post.psi   <- rowMeans(psi, dims=1)
-      var.psi    <- apply(psi, 1, var)
+      var.psi    <- rowVars(psi)
       ci.psi     <- apply(psi, 1, function(x) quantile(x, conf.levels))
     }
     if(sw["l.sw"])   { 
