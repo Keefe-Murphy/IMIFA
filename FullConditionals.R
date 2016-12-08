@@ -243,7 +243,7 @@
           obj0g <- replicate(length(range.G), obj0g)
         } else                             stop(paste0(obj.name, " must be a list of length ", length(range.G)))
       }
-      len       <- vapply(obj0g, length, numeric(1))
+      len       <- lengths(obj0g)
       if(is.element(method, c("FA", "IFA"))) {
         if(any(!is.element(len, c(1, V)))) stop(paste0(obj.name, " must be list of length 1 containing a scalar", ifelse(P.dim, paste0(" or a vector of length P=", V), ""), " for a 1-group model"))
       } else {

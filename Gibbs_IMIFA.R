@@ -24,39 +24,32 @@
     gnames           <- paste0("Group ", Ts)
     iternames        <- paste0("Iteration", seq_len(n.store))
     if(sw["mu.sw"])  {
-      mu.store       <- array(0, dim=c(P, trunc.G, n.store))
-      dimnames(mu.store)      <- list(varnames, gnames, iternames)
+      mu.store       <- provideDimnames(array(0, dim=c(P, G, n.store)), base=list(varnames, gnames, iternames))
     }
     if(sw["s.sw"])   {
-      eta.store      <- array(0, dim=c(N, Q, n.store))
-      dimnames(eta.store)     <- list(obsnames, facnames, iternames)
+      eta.store      <- provideDimnames(array(0, dim=c(N, Q, n.store)), base=list(obsnames, if(Q > 0) facnames, iternames))
     }
     if(sw["l.sw"])   {
-      load.store     <- array(0, dim=c(P, Q, trunc.G, n.store))
-      dimnames(load.store)    <- list(varnames, facnames, gnames, iternames)
+      load.store     <- provideDimnames(array(0, dim=c(P, Q, G, n.store)), base=list(varnames, if(Q > 0) facnames, gnames, iternames))
     }
     if(sw["psi.sw"]) {
-      psi.store      <- array(0, dim=c(P, trunc.G, n.store))
-      dimnames(psi.store)     <- list(varnames, gnames, iternames)
+      psi.store      <- provideDimnames(array(0, dim=c(P, G, n.store)), base=list(varnames, gnames, iternames))
     }
     if(sw["pi.sw"])  {
-      pi.store       <- matrix(0, nr=trunc.G, nc=n.store)
-      dimnames(pi.store)      <- list(gnames, iternames)
+      pi.store       <- provideDimnames(matrix(0, nr=G, nc=n.store), base=list(gnames, iternames))
     }
-    z.store          <- matrix(0, nr=N, nc=n.store)
-    ll.store         <- rep(0, n.store)
+    z.store          <- provideDimnames(matrix(0, nr=N, nc=n.store), base=list(obsnames, iternames))
+    ll.store         <- setNames(rep(0, n.store), iternames)
     Q.star           <- Q
     Qs               <- rep(Q, trunc.G)
-    Q.store          <- matrix(0, nr=trunc.G, nc=n.store)
+    Q.store          <- provideDimnames(matrix(0, nr=G, nc=n.store), base=list(gnames, iternames))
     Q.large          <- Q.big <- Q.bigs <- FALSE
     acc1             <- acc2  <- FALSE
     err.z            <- z.err <- FALSE
-    G.store          <- rep(0, n.store)
-    dimnames(z.store)         <- list(obsnames, iternames)
-    dimnames(Q.store)         <- list(gnames, iternames)
+    G.store          <- setNames(rep(0, n.store), iternames)
     not.fixed        <- alpha.step != "fixed"
     if(not.fixed) {
-      alpha.store    <- rep(0, n.store)
+      alpha.store    <- setNames(rep(0, n.store), iternames)
       alpha.shape    <- a.hyper[1]
       alpha.rate     <- a.hyper[2]
     }
@@ -67,7 +60,7 @@
     }
     MH.step          <- alpha.step == "metropolis"
     if(MH.step)   {
-      rate           <- rep(0, n.store)
+      rate           <- setNames(rep(0, n.store), iternames)
     }
     if(DP.lab.sw) {
       lab.rate       <- matrix(0, nr=2, nc=n.store)  
@@ -163,7 +156,7 @@
         log.ksi      <- log(ksi)
       }  
       u.slice        <- runif(N, 0, ksi[z])
-      Gs             <- seq_len(max(vapply(Ns, function(i) sum(u.slice[i] < ksi), numeric(1))))
+      Gs             <- seq_len(max(vapply(Ns, function(i) sum(u.slice[i] < ksi), integer(1L))))
       log.slice.ind  <- vapply(Gs, function(g) slice.logs[1 + (u.slice < ksi[g])] - log.ksi[g], numeric(N))
     
     # Cluster Labels
@@ -245,7 +238,7 @@
         if(runif(1)   < ifelse(iter < burnin, 0.5, 1/exp(b0 + b1 * (iter - adapt.at)))) {
           colvec     <- lapply(nn.ind, function(g) (if(Q0[g]) colSums(abs(lmat[[g]]) < epsilon)/P else 0) >= prop)
           nonred     <- lapply(colvec, function(v) which(v == 0))
-          numred     <- vapply(colvec, sum, numeric(1))
+          numred     <- lengths(colvec) - lengths(nonred)
           notred     <- numred == 0
           ng.ind     <- seq_along(nn.ind)
           Qs.old     <- Qs[nn0]

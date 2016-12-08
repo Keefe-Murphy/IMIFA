@@ -76,7 +76,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     raw.dat <- raw.dat[num.check]
   }
   if(length(iters)  <= 1)           stop("Run a longer chain!")
-  if(any(is.na(raw.dat)))  {        message("Rows with missing values removed from data")
+  if(anyNA(raw.dat)) {              message("Rows with missing values removed from data")
     raw.dat <- raw.dat[complete.cases(raw.dat),]
   }          
   if(method != "classify") {
@@ -111,12 +111,12 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
          length(learn.d)  != 1))    stop("'learn.d' must be TRUE or FALSE")
   if(isTRUE(learn.d))               stop("Pitman-Yor discount hyperparameter must remain fixed; learning not yet implemented")
   if(missing(d.hyper))       d.hyper       <- c(1, 1)
-  if(length(d.hyper)  != 2)         stop("d.hyper' must be a vector of length 2")
+  if(length(d.hyper)      != 2)     stop("d.hyper' must be a vector of length 2")
   if(any(d.hyper   <= 0))           stop("'Discount Beta prior hyperparameters must be strictly positive")
   discount         <- ifelse(missing(discount), ifelse(learn.d, rbeta(1, d.hyper[1], d.hyper[2]), 0), discount)
   if(any(!is.numeric(discount),
          length(discount) != 1))    stop("'discount' must be a single number")
-  if(discount       < 0 || 
+  if(discount       < 0   || 
      discount      >= 1)            stop("'discount' must lie in the interval [0, 1)")
   if(all(!is.element(method, c("IMFA", "IMIFA")), alpha.step != "fixed"))  {
     alpha.step     <- "fixed"
@@ -345,7 +345,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(all(is.element(method,  c("OMIFA", "OMFA")), is.element(z.init, 
        "priors")))                  stop(paste0("'z.init' cannot be set to 'priors' for the ", method, " method to ensure all groups are populated at the initialisation stage"))
     if(!zli.miss) {
-      if(length(z.list)   != len.G) {
+      if(length(z.list)   != len.G)  {
                                     stop(paste0("'z.list' must be a list of length ", len.G))  }
                              list.levels   <- lapply(z.list, nlevels)
       if(!all(list.levels == range.G))            {
@@ -354,10 +354,10 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
                                     stop(paste0("Each element of 'z.list' must have the same number of levels as 'range.G'")) 
         } else                      stop(paste0("Only ", list.levels, " groups are populated according to z.list, but 'range.G' has been set to ", range.G, ":\n  Reset range.G to this value to avoid redunandtly carrying around empty groups or supply a list with ", range.G, " levels"))
       }
-      if(!all(lapply(z.list, length) == N)) {
+      if(!all(lengths(z.list) == N)) {
                                     stop(paste0("Each element of 'z.list' must be a vector of length N=", N)) }
     }
-    if(all(zli.miss, z.init == "list"))     {
+    if(all(zli.miss, z.init   == "list"))         {
                                     stop(paste0("'z.list' must be supplied if 'z.init' is set to 'list'")) }
   }
   imifa     <- list(list())
@@ -469,8 +469,8 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     }
   }
   if(is.element(method, c("IMIFA", "IMFA", "OMIFA", "OMFA"))) {
-    mu.zero        <- if(all(lapply(mu.zero,  length)  == 1)) list(mu.zero[[1]])  else list(mu.zero[[1]][,1])
-    psi.beta       <- if(all(lapply(psi.beta, length)  == 1)) list(psi.beta[[1]]) else list(psi.beta[[1]][,1])
+    mu.zero        <- if(all(lengths(mu.zero)  == 1)) list(mu.zero[[1]])  else list(mu.zero[[1]][,1])
+    psi.beta       <- if(all(lengths(psi.beta) == 1)) list(psi.beta[[1]]) else list(psi.beta[[1]][,1])
     if(!is.element(method, c("OMFA", "IMFA"))) {
       alpha.d1     <- list(alpha.d1[[1]][1])
       alpha.d2     <- list(alpha.d2[[1]][1])
@@ -479,7 +479,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   if(all(round(vapply(mu.zero, sum, numeric(1))) == 0)) {
     mu.zero        <- if(method == "classify") matrix(0, nr=1, nc=range.G) else lapply(mu.zero, function(x) 0)
   }
-  if(any(is.na(unlist(psi.beta)))) {
+  if(anyNA(unlist(psi.beta))) {
     psi.beta       <- lapply(psi.beta, function(x) replace(x, is.na(x), 0))
   }
   if(any(unlist(psi.beta)   <= 0))  stop("'psi.beta' must be strictly positive")

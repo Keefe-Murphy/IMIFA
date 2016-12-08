@@ -26,45 +26,39 @@
     Q0s             <- rep(Q0, trunc.G)
     Q1              <- Q == 1
     if(sw["mu.sw"])  {
-      mu.store      <- array(0, dim=c(P, trunc.G, n.store))
-      dimnames(mu.store)    <- list(varnames, gnames, iternames)
+      mu.store      <- provideDimnames(array(0, dim=c(P, G, n.store)), base=list(varnames, gnames, iternames))
     }
     if(sw["s.sw"])   {
-      eta.store     <- array(0, dim=c(N, Q, n.store))
-      dimnames(eta.store)   <- list(obsnames, if(Q0) facnames, iternames)
+      eta.store     <- provideDimnames(array(0, dim=c(N, Q, n.store)), base=list(obsnames, if(Q0) facnames, iternames))
     }
     if(sw["l.sw"])   {
-      load.store    <- array(0, dim=c(P, Q, trunc.G, n.store))
-      dimnames(load.store)  <- list(varnames, if(Q0) facnames, gnames, iternames)
+      load.store    <- provideDimnames(array(0, dim=c(P, Q, G, n.store)), base=list(varnames, if(Q0) facnames, gnames, iternames))
     }
     if(sw["psi.sw"]) {
-      psi.store     <- array(0, dim=c(P, trunc.G, n.store))
-      dimnames(psi.store)   <- list(varnames, gnames, iternames)
+      psi.store     <- provideDimnames(array(0, dim=c(P, G, n.store)), base=list(varnames, gnames, iternames))
     }
     if(sw["pi.sw"])  {
-      pi.store      <- matrix(0, nr=trunc.G, nc=n.store)
-      dimnames(pi.store)    <- list(gnames, iternames)
+      pi.store      <- provideDimnames(matrix(0, nr=G, nc=n.store), base=list(gnames, iternames))
     }
-    z.store         <- matrix(0, nr=N, nc=n.store)
-    ll.store        <- rep(0, n.store)
+    z.store         <- provideDimnames(matrix(0, nr=N, nc=n.store), base=list(obsnames, iternames))
+    ll.store        <- setNames(rep(0, n.store), iternames)
     acc1            <- acc2 <- FALSE
     err.z           <- zerr <- FALSE
-    G.store         <- rep(0, n.store)
-    dimnames(z.store)       <- list(obsnames, iternames)
+    G.store         <- setNames(rep(0, n.store), iternames)
     not.fixed       <- alpha.step != "fixed"
     if(not.fixed) {
-      alpha.store   <- rep(0, n.store)
+      alpha.store   <- setNames(rep(0, n.store), iternames)
       alpha.shape   <- a.hyper[1]
       alpha.rate    <- a.hyper[2]
     }
     if(learn.d)   {
-      d.store       <- rep(0, n.store)
+      d.store       <- setNames(rep(0, n.store), iternames)
       d.shape1      <- d.hyper[1]
       d.shape2      <- d.hyper[2]
     }
     MH.step         <- alpha.step == "metropolis"
     if(MH.step)   {
-      rate          <- rep(0, n.store)
+      rate          <- setNames(rep(0, n.store), iternames)
     }
     if(DP.lab.sw) {
       lab.rate      <- matrix(0, nr=2, nc=n.store)  
@@ -151,7 +145,7 @@
         log.ksi     <- log(ksi)
       }
       u.slice       <- runif(N, 0, ksi[z])
-      G             <- max(vapply(Ns, function(i) sum(u.slice[i] < ksi), numeric(1)))
+      G             <- max(vapply(Ns, function(i) sum(u.slice[i] < ksi), integer(1L)))
       Gs            <- seq_len(G)
       log.slice.ind <- vapply(Gs, function(g) slice.logs[1 + (u.slice < ksi[g])] - log.ksi[g], numeric(N))
     

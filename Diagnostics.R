@@ -248,7 +248,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, 
       nam.zx     <- gsub(".*\\[(.*)\\].*", "\\1)",   z.nam)
       if(!exists(nam.z,
          envir=.GlobalEnv))       stop(paste0("Object ", match.call()$zlabels, " not found\n"))
-      if(any(unlist(vapply(seq_along(pattern), function(p) grepl(pattern[p], nam.z,   fixed=TRUE), logical(1))), 
+      if(any(unlist(vapply(seq_along(pattern), function(p) grepl(pattern[p], nam.z, fixed=TRUE), logical(1))), 
          !identical(z.nam,   nam.z)   && (any(grepl("[[:alpha:]]", gsub('c', '', nam.zx))) || grepl(":",
          nam.zx, fixed=TRUE))))   stop("Extremely inadvisable to supply 'zlabels' subsetted by any means other than row/column numbers or c() indexing: best to create new object")
      if(length(zlabels) != n.obs) stop(paste0("'zlabels' must be a factor of length N=",  n.obs))  
@@ -318,8 +318,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, 
         post.z   <- setNames(factor(sw.lab$z), names(post.z))
         l.perm   <- sw.lab$z.perm
         z.tmp    <- apply(z, 2, function(x) factor(x, levels=l.perm))
-        z        <- apply(z.tmp, 2, function(x) as.numeric(levels(as.factor(x)))[as.numeric(x)])
-        dimnames(z)            <- dimnames(z.tmp)
+        z        <- provideDimnames(apply(z.tmp, 2, function(x) as.numeric(levels(as.factor(x)))[as.numeric(x)]), base=dimnames(z.tmp))
         if(sw["mu.sw"])    mus <- mus[,l.perm,, drop=FALSE]
         if(sw["l.sw"])   lmats <- lmats[,,l.perm,, drop=FALSE]
         if(sw["psi.sw"])  psis <- psis[,l.perm,, drop=FALSE]
@@ -475,8 +474,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, 
         psi      <- as.matrix(psis[,g,store])
       }
       if(data.x) {
-        cov.emp  <- cova(as.matrix(dat[z.ind[[g]],, drop=FALSE]))
-        dimnames(cov.emp)  <- list(varnames, varnames)  
+        cov.emp  <- provideDimnames(cova(as.matrix(dat[z.ind[[g]],, drop=FALSE])), base=list(varnames, varnames))
         if(sum(z.ind[[g]]) <= 1)  rm(cov.emp)
       }  
     } else {
@@ -494,12 +492,12 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, 
   
   # Compute posterior means and % variation explained
     if(sw["mu.sw"])  {
-      post.mu    <- rowMeans(mu, dims=1)
+      post.mu    <- rowmeans(mu)
       var.mu     <- rowVars(mu)
       ci.mu      <- apply(mu, 1, function(x) quantile(x, conf.levels))
     }
     if(sw["psi.sw"]) {
-      post.psi   <- rowMeans(psi, dims=1)
+      post.psi   <- rowmeans(psi)
       var.psi    <- rowVars(psi)
       ci.psi     <- apply(psi, 1, function(x) quantile(x, conf.levels))
     }

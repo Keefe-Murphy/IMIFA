@@ -23,34 +23,27 @@
     gnames         <- paste0("Group ", Gseq)
     iternames      <- paste0("Iteration", seq_len(n.store))
     if(sw["mu.sw"])  {
-      mu.store     <- array(0, dim=c(P, G, n.store))
-      dimnames(mu.store)    <- list(varnames, gnames, iternames)
+      mu.store     <- provideDimnames(array(0, dim=c(P, G, n.store)), base=list(varnames, gnames, iternames))
     }
     if(sw["s.sw"])   {
-      eta.store    <- array(0, dim=c(N, Q, n.store))
-      dimnames(eta.store)   <- list(obsnames, if(Q > 0) facnames, iternames)
+      eta.store    <- provideDimnames(array(0, dim=c(N, Q, n.store)), base=list(obsnames, if(Q > 0) facnames, iternames))
     }
     if(sw["l.sw"])   {
-      load.store   <- array(0, dim=c(P, Q, G, n.store))
-      dimnames(load.store)  <- list(varnames, if(Q > 0) facnames, gnames, iternames)
+      load.store   <- provideDimnames(array(0, dim=c(P, Q, G, n.store)), base=list(varnames, if(Q > 0) facnames, gnames, iternames))
     }
     if(sw["psi.sw"]) {
-      psi.store    <- array(0, dim=c(P, G, n.store))
-      dimnames(psi.store)   <- list(varnames, gnames, iternames)
+      psi.store    <- provideDimnames(array(0, dim=c(P, G, n.store)), base=list(varnames, gnames, iternames))
     }
     if(sw["pi.sw"])  {
-      pi.store     <- matrix(0, nr=G, nc=n.store)
-      dimnames(pi.store)    <- list(gnames, iternames)
+      pi.store     <- provideDimnames(matrix(0, nr=G, nc=n.store), base=list(gnames, iternames))
     }
-    z.store        <- matrix(0, nr=N, nc=n.store)
-    ll.store       <- rep(0, n.store)
+    z.store        <- provideDimnames(matrix(0, nr=N, nc=n.store), base=list(obsnames, iternames))
+    ll.store       <- setNames(rep(0, n.store), iternames)
     Q.star         <- Q
     Qs             <- rep(Q, G)
-    Q.store        <- matrix(0, nr=G, nc=n.store)
+    Q.store        <- provideDimnames(matrix(0, nr=G, nc=n.store), base=list(gnames, iternames))
     Q.large        <- Q.big <- Q.bigs <- FALSE
     err.z          <- z.err <- FALSE
-    dimnames(z.store)       <- list(obsnames, iternames)
-    dimnames(Q.store)       <- list(gnames, iternames)
     
     mu.sigma       <- 1/sigma.mu
     if(all(mu.zero == 0)) {
@@ -203,7 +196,7 @@
         if(runif(1) < ifelse(iter < burnin, 0.5, 1/exp(b0 + b1 * (iter - adapt.at)))) {
           colvec   <- lapply(nn.ind, function(g) (if(Q0[g]) colSums(abs(lmat[[g]]) < epsilon)/P else 0) >= prop)
           nonred   <- lapply(colvec, function(v) which(v == 0))
-          numred   <- vapply(colvec, sum, numeric(1))
+          numred   <- lengths(colvec) - lengths(nonred)
           notred   <- numred == 0
           ng.ind   <- seq_along(nn.ind)
           Qs.old   <- Qs[nn0]

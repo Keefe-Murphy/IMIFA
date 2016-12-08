@@ -26,30 +26,24 @@
     Q0s            <- rep(Q0, G)
     Q1             <- Q == 1
     if(sw["mu.sw"])  {
-      mu.store     <- array(0, dim=c(P, G, n.store))
-      dimnames(mu.store)   <- list(varnames, gnames, iternames)
+      mu.store     <- provideDimnames(array(0, dim=c(P, G, n.store)), base=list(varnames, gnames, iternames))
     }
     if(sw["s.sw"])   {
-      eta.store    <- array(0, dim=c(N, Q, n.store))
-      dimnames(eta.store)  <- list(obsnames, if(Q0) facnames, iternames)
+      eta.store    <- provideDimnames(array(0, dim=c(N, Q, n.store)), base=list(obsnames, if(Q0) facnames, iternames))
     }
     if(sw["l.sw"])   {
-      load.store   <- array(0, dim=c(P, Q, G, n.store))
-      dimnames(load.store) <- list(varnames, if(Q0) facnames, gnames, iternames)
+      load.store   <- provideDimnames(array(0, dim=c(P, Q, G, n.store)), base=list(varnames, if(Q0) facnames, gnames, iternames))
     }
     if(sw["psi.sw"]) {
-      psi.store    <- array(0, dim=c(P, G, n.store))
-      dimnames(psi.store)  <- list(varnames, gnames, iternames)
+      psi.store    <- provideDimnames(array(0, dim=c(P, G, n.store)), base=list(varnames, gnames, iternames))
     }
     if(sw["pi.sw"])  {
-      pi.store     <- matrix(0, nr=G, nc=n.store)
-      dimnames(pi.store)   <- list(gnames, iternames)
+      pi.store     <- provideDimnames(matrix(0, nr=G, nc=n.store), base=list(gnames, iternames))
     }
-    z.store        <- matrix(0, nr=N, nc=n.store)
-    ll.store       <- rep(0, n.store)
+    z.store        <- provideDimnames(matrix(0, nr=N, nc=n.store), base=list(obsnames, iternames))
+    ll.store       <- setNames(rep(0, n.store), iternames)
     err.z          <- zerr <- FALSE
-    G.store        <- rep(0, n.store)
-    dimnames(z.store)      <- list(obsnames, iternames)
+    G.store        <- setNames(rep(0, n.store), iternames)
     
     mu.sigma       <- 1/sigma.mu
     z              <- cluster$z

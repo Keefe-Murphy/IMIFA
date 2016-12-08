@@ -18,33 +18,27 @@
     varnames     <- colnames(data)
     facnames     <- paste0("Factor ", seq_len(Q))
     iternames    <- paste0("Iteration", seq_len(n.store))
-    dimnames(data)         <- NULL
+    data         <- provideDimnames(data, base=NULL)
     if(sw["mu.sw"])  {
-      mu.store   <- matrix(0, nr=P, nc=n.store)
-      dimnames(mu.store)   <- list(varnames, iternames)
+      mu.store   <- provideDimnames(matrix(0, nr=P, nc=n.store), base=list(varnames, iternames))
     }
     if(sw["s.sw"])   {
-      eta.store  <- array(0, dim=c(N, Q, n.store))
-      dimnames(eta.store)  <- list(obsnames, if(Q > 0) facnames, iternames)
+      eta.store  <- provideDimnames(array(0, dim=c(N, Q, n.store)), base=list(obsnames, if(Q > 0) facnames, iternames))
     }
     if(sw["l.sw"])   {
-      load.store <- array(0, dim=c(P, Q, n.store))
-      dimnames(load.store) <- list(varnames, if(Q > 0) facnames, iternames)
+      load.store <- provideDimnames(array(0, dim=c(P, Q, n.store)), base=list(varnames, if(Q > 0) facnames, iternames))
     }
     if(sw["psi.sw"]) {
-      psi.store  <- matrix(0, nr=P, nc=n.store)
-      dimnames(psi.store)  <- list(varnames, iternames)
+      psi.store  <- provideDimnames(matrix(0, nr=P, nc=n.store), base=list(varnames, iternames))
     }
     post.mu      <- setNames(rep(0, P), varnames)
     post.psi     <- setNames(rep(0, P), varnames)
-    cov.emp      <- cova(as.matrix(data))
-    cov.est      <- matrix(0, nr=P, nc=P)
-    ll.store     <- rep(0, n.store)
+    cov.emp      <- provideDimnames(cova(as.matrix(data)), base=list(varnames, varnames))
+    cov.est      <- provideDimnames(matrix(0, nr=P, nc=P), base=dimnames(cov.emp))
+    ll.store     <- setNames(rep(0, n.store), iternames)
     Q.star       <- Q
     Q.store      <- setNames(rep(0, n.store), iternames)
     Q.large      <- Q.big  <- FALSE
-    dimnames(cov.emp)      <- list(varnames, varnames)
-    dimnames(cov.est)      <- dimnames(cov.emp)
     
     mu.sigma     <- 1/sigma.mu
     eta          <- sim.eta.p(Q=Q, N=N)
