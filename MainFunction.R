@@ -92,7 +92,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   } else   {
     dat     <- raw.dat
   }
-  centered  <- if(method == "classify") round(colSums(dat)) == 0 else any(centering, round(colSums(dat)) == 0)
+  centered  <- if(method == "classify") all(round(colSums(dat)) == 0) else any(centering, all(round(colSums(dat)) == 0))
   N         <- nrow(dat)
   P         <- ncol(dat)
   lnN       <- log(N)

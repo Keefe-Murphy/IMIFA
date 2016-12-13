@@ -7,7 +7,7 @@
  #rm(list=ls(all=TRUE))
  #while("IMIFA.env" %in% search()) detach("IMIFA.env")
   if(!is.element(getwd(), c("/home/kmurphy", "/home/kmurphy/IMIFA-GIT"))) {
-    wd       <- try(setwd("C:/Users/Windows/Documents/"), silent=TRUE)
+    wd       <- try(setwd("C:/Users/Windows/Documents/IMIFA-GIT/"), silent=TRUE)
     if(inherits(wd, "try-error")) { 
       setwd("D:/Documents/IMIFA-GIT"); rm(wd)
       datdir <- "D:/Dropbox/UCD/IMIFA"

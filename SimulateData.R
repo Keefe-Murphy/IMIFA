@@ -30,7 +30,7 @@ sim.IMIFA      <- function(N = 300L, G = 3L, P = 50L, Q = rep(4L, G), pis = rep(
   vnames       <- paste0("Var ", Pseq)
   if(!missing(nn) && missing(pis))     {
     nn         <- as.integer(nn)
-    if(any(nn  == 0))                     stop("All 'nn' values be strictly positive; simulating empty groups not allowed")
+    if(any(nn  == 0))                     stop("All 'nn' values must be strictly positive; simulating empty groups not allowed")
     if(any(length(nn)  != G, 
            sum(nn)     != N,
            !is.integer(nn)))              stop(paste0("'nn' must be an integer vector of length G=", G, " which sums to N=", N))

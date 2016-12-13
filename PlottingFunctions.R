@@ -424,7 +424,7 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
         labs   <- if(grp.ind) clust$map else 1
         if(g.score)  { 
           if(g.ind == 1)  tmplab <- labs
-          z.ind  <- as.numeric(levels(tmplab))[tmplab] == g
+          z.ind  <- as.numeric(levels(tmplab))[tmplab] %in% g
           plot.x <- results$Scores$post.eta[z.ind,,drop=FALSE]
           ind2   <- ifelse(any(!facx, Q <= 1), ind[2], if(Q > 1) max(2, ind[2]))
           if(ci.sw[vars])  ci.x  <- results$Scores$ci.eta[,z.ind,, drop=FALSE]
