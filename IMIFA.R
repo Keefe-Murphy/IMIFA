@@ -43,14 +43,24 @@
       oils   <- t(oliveoils); rm(oliveoils, wavelengths, x)
   # Coffee      (# type, country) [% coffee]
     load(file=paste0(datdir, "/Data/Coffee.Rdata", sep=""), envir=.GlobalEnv) 
+  # Brain       (# region) {n.b. pareto scaling}
+    load(file=paste0(datdir, "/Data/RatBrain.Rdata", sep=""), envir=.GlobalEnv)
+    region   <- brain$Region; brain <- brain[,-1]
+    ppm.g    <- do.call(cbind, by(brain, region, colMeans))
+    matplot(ppm.g, type="l", xlab="Chemical Shift (ppm)", yaxt="n", ylab="", bty="n", xaxt="n", lwd=2, lty=1)
+   #matplot(t(brain), type="l", xlab="Chemical Shift (ppm)", yaxt="n", ylab="", bty="n", xaxt="n", lwd=2, lty=1, col=region)
+    axis(1, at=seq(from=0, to=nrow(ppm.g), by=20), labels=9:1, tick=TRUE, lwd.ticks=1, xpd=TRUE)
+    axis(1, at=seq_len(nrow(ppm.g)), labels=FALSE, tick=TRUE, tcl=-0.2)
+    legend("topleft", cex=0.8, legend=c("Brain Stem", "Cerebellum", "Hippocampus", "Pre-frontal Cores"), bty="n", lty=1, col=seq_len(4))  
   # Urine       (# grp) {n.b. pareto scaling}
     load(file=paste0(datdir, "/Data/Epi_urine_data.Rdata", sep=""), envir=.GlobalEnv)
     rat.cov  <- read.csv(file=paste0(datdir, "/Data/D10Weight.csv"))
     ppms     <- substr(colnames(x10[,4:ncol(x10)]), 2, 6); rm(x)
     urine    <- x10[,4:ncol(x10)]
     grp      <- x10[,"Group"]
-    ppm.g    <- vapply(seq_len(max(grp)), function(g) colMeans(urine[grp == g,]), numeric(ncol(urine)))
+    ppm.g    <- do.call(cbind, by(urine, grp, colMeans))
     matplot(ppm.g, type="l", xlab="Chemical Shift (ppm)", yaxt="n", ylab="", bty="n", xaxt="n", lwd=2, lty=1)
+   #matplot(t(urine), type="l", xlab="Chemical Shift (ppm)", yaxt="n", ylab="", bty="n", xaxt="n", lwd=2, lty=1, col=grp)
     axis(1, at=seq(from=20, to=nrow(ppm.g), by=20), labels=9:1, tick=TRUE, lwd.ticks=1, xpd=TRUE)
     axis(1, at=seq_len(nrow(ppm.g)), labels=FALSE, tick=TRUE, tcl=-0.2)
     legend("topleft", legend=c("Control", "Epileptic"), bty="n", lty=1, col=c(1, 2))  
