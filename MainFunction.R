@@ -92,7 +92,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   } else   {
     dat     <- raw.dat
   }
-  centered  <- if(method == "classify") all(round(colSums(dat)) == 0) else any(centering, all(round(colSums(dat)) == 0))
+  centered  <- switch(method, classify=all(round(colSums(dat)) == 0), any(centering, all(round(colSums(dat)) == 0)))
   N         <- nrow(dat)
   P         <- ncol(dat)
   lnN       <- log(N)
@@ -144,6 +144,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
         if(rho < 0.5)               warning("Are you sure 'rho' should be less than 0.5? This could adversely affect mixing", call.=FALSE)
         if(missing(alpha.hyper))    {
           alpha.hyper     <- if(alpha.step == "gibbs") c(2, 1) else if(alpha.step == "metropolis") c(- discount, range.G/2) else c(0, 0)
+          alpha.hyper     <- switch(alpha.step, gibbs=c(2, 1), metropolis=c(- discount, range.G/2), c(0, 0))
         }
         if(discount > 0) {
           alpha.hyper     <- shift.gamma(shape=alpha.hyper[1], rate=alpha.hyper[2], shift=discount)
@@ -200,12 +201,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(is.element(meth[1], c("IMIFA", "IMFA",
        "OMIFA", "OMFA")))   {       stop("'method' must be FA or IFA for a one group model")
     } else {
-      if(meth[1] == "MFA")  {
-        meth[1]  <- "FA"                              
-      } 
-      if(meth[1] == "MIFA") {
-        meth[1]  <- "IFA"
-      } 
+      meth[1]    <- switch(meth[1], MFA=FA, MIFA=IFA)
     }
     if(!is.element(method, 
                    c("FA", "IFA"))) message(paste0("Forced use of ", meth[1], " method where 'range.G' is equal to 1"))
@@ -237,7 +233,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(all(adapt, range.Q < Q.min)) stop(paste0("'range.Q' must be at least min(log(P), log(N)) for the ", method, " method when 'adapt' is TRUE"))
   }
   range.Q   <- sort_unique(range.Q)
-  len.G     <- ifelse(method == "classify", range.G, length(range.G))
+  len.G     <- switch(method, classify=range.G, length(range.G))
   len.Q     <- length(range.Q)
   len.X     <- len.G * len.Q
   if(is.element(method, c("FA", "MFA", "OMFA", "IMFA"))) {
@@ -332,9 +328,8 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   if(all(!is.element(method, c("MFA", "MIFA", "classify")), 
          any(sw0gs)))               stop(paste0(names(which(sw0gs)), " should be FALSE for the ", method, " method\n"))
   if(!is.element(method, c("FA", "IFA", "classify"))) {
-    if(missing("alpha"))     alpha         <- ifelse(is.element(method, c("OMIFA", "OMFA")), 0.5/range.G, 
-                                              ifelse(alpha.step == "gibbs", rgamma(1, a.hyp.1, a.hyp.2) - discount,
-                                              ifelse(alpha.step == "metropolis", runif(1, a.hyp.1, a.hyp.2), 1)))
+    if(missing("alpha"))     alpha         <- ifelse(is.element(method, c("OMIFA", "OMFA")), 0.5/range.G, switch(alpha.step, 
+                                                     gibbs=rgamma(1, a.hyp.1, a.hyp.2) - discount, metropolis=runif(1, a.hyp.1, a.hyp.2), 1))
     if(length(alpha) != 1)          stop("'alpha' must be specified as a scalar to ensure an exchangeable prior")
     if(alpha <= -discount)          stop(paste0("'alpha' must be ", ifelse(discount != 0, paste0("greater than -discount (i.e. > ", - discount, ")"), "strictly positive")))
     if(all(is.element(method,  c("IMIFA", "IMFA")),
@@ -477,7 +472,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     }
   } 
   if(all(round(vapply(mu.zero, sum, numeric(1))) == 0)) {
-    mu.zero        <- if(method == "classify") base::matrix(0, nr=1, nc=range.G) else lapply(mu.zero, function(x) 0)
+    mu.zero        <- switch(method, classify=base::matrix(0, nr=1, nc=range.G), lapply(mu.zero, function(x) 0))
   }
   if(anyNA(unlist(psi.beta))) {
     psi.beta       <- lapply(psi.beta, function(x) replace(x, is.na(x), 0))
@@ -587,9 +582,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     }
   }
   tot.time  <- proc.time() - start.time
-  avg.time  <- tot.time/ifelse(method == "MFA", len.X,
-                           ifelse(method == "MIFA", len.G,
-                             ifelse(method == "classify", range.G, len.Q)))
+  avg.time  <- tot.time/switch(method, MFA=len.x, MIFA=len.G, classify=range.G, len.Q)
   tot.time  <- tot.time    + init.time
   init.time <- init.time   + fac.time
   for(g in length(imifa)) {
@@ -614,7 +607,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
            "Z.init")      <- factor(zi[[g]], levels=seq_len(range.G[g]))
     }
   }
-  gnames    <- if(method  == "classify") paste0("Group ", seq_len(range.G)) else paste0(range.G, ifelse(range.G == 1, "Group", "Groups"))
+  gnames    <- switch(method, classify=paste0("Group ", seq_len(range.G)), paste0(range.G, ifelse(range.G == 1, "Group", "Groups")))
   names(imifa)            <- gnames
   attr(imifa, 
        "Alph.step")       <- alpha.step
@@ -652,7 +645,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     switches["pi.sw"]     <- FALSE
   }
   attr(imifa, "Switch")   <- switches
-  times                   <- lapply(list(Total = tot.time, Average = avg.time, Initialisation = init.time), function(x) round(x, 2)) 
+  times                   <- lapply(list(Total = tot.time, Average = avg.time, Initialisation = init.time), round, 2) 
   if(all(len.G  == 1,
          len.Q  == 1)) {
     times                 <- times[-2]

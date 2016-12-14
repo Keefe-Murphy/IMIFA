@@ -64,7 +64,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, 
     G.mode       <- if(GQ1) unlist(lapply(G.tab, function(gt) as.numeric(names(gt[gt == max(gt)])[1]))) else as.numeric(names(G.tab[G.tab == max(G.tab)])[1])
     G.med        <- if(GQ1) ceiling(rowMedians(G.store) * 2)/2 else ceiling(med(G.store) * 2)/2
     if(!G.T) {
-      G          <- if(G.meth == "Mode") G.mode else floor(G.med)
+      G          <- switch(G.meth, Mode=G.mode, floor(G.med))
     }
     G.CI         <- if(GQ1) apply(G.store, 1, function(gs) round(quantile(gs, conf.levels))) else round(quantile(G.store, conf.levels))
   }
@@ -106,7 +106,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, 
     if(inf.Q)  {
       if(any((Q  != 0) + (Q * 
         (n.var - Q)   <= 0) > 1)) stop(paste0("'Q' must be less than the number of variables ", n.var))
-      Qtmp       <- if(inf.G) rowMaxs(sims[[1]][[1]]$Q.store[seq_len(G),, drop=FALSE], value=TRUE) else if(method == "MIFA") rowMaxs(sims[[ifelse(G.T, which(G == n.grp), G.ind)]][[1]]$Q.store, value=TRUE) else max(sims[[1]][[1]]$Q.store)
+      Qtmp       <- if(inf.G) rowMaxs(sims[[1]][[1]]$Q.store[seq_len(G),, drop=FALSE], value=TRUE) else switch(method, MIFA=rowMaxs(sims[[ifelse(G.T, which(G == n.grp), G.ind)]][[1]]$Q.store, value=TRUE), max(sims[[1]][[1]]$Q.store))
       if(any(Q * (Qtmp - Q) < 0)) stop(paste0("'Q' can't be greater than the maximum number of factors stored in ", ifelse(method == "IFA", "", "any group of "), match.call()$sims))
     }
   } 
@@ -361,7 +361,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, 
       post.alpha <- mean(alpha)
       var.alpha  <- var(alpha)
       ci.alpha   <- quantile(alpha, conf.levels)
-      rate       <- ifelse(alpha.step == "metropolis", sims[[G.ind]][[Q.ind]]$rate, 1)
+      rate       <- switch(alpha.step, metropolis=sims[[G.ind]][[Q.ind]]$rate, 1)
       DP.alpha   <- list(alpha = alpha, post.alpha = post.alpha, var.alpha = var.alpha, ci.alpha = ci.alpha, acceptance.rate = rate)
       class(DP.alpha)          <- "listof"
     }
@@ -384,7 +384,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, 
     Q.mode       <- if(G1) unlist(lapply(Q.tab, function(qt) as.numeric(names(qt[qt == max(qt)])[1]))) else as.numeric(names(Q.tab[Q.tab == max(Q.tab)])[1])
     Q.med        <- if(G1) ceiling(rowMedians(Q.store) * 2)/2 else ceiling(med(Q.store) * 2)/2
     if(!Q.T)  {
-      Q          <- if(Q.meth == "Mode") Q.mode else floor(Q.med)
+      Q          <- switch(Q.meth, Mode=Q.mode, floor(Q.med))
     } else    {
       Q          <- if(G.T) Q else setNames(rep(Q, G), paste0("Group ", Gseq))
     }

@@ -193,7 +193,7 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
       matx     <- mat
     }  
     if(!matx) {
-      iter     <- if(vars == "scores") seq_along(attr(results$Score, "Eta.store")) else if(vars == "pis") seq_along(store) else seq_len(attr(result, "Store"))
+      iter     <- switch(vars, scores=seq_along(attr(results$Score, "Eta.store")), pis=seq_along(store), seq_len(attr(result, "Store")))
     }               
     if(is.element(vars, c("scores", "loadings"))) {
       if(indx)               ind <- c(1, 1)
@@ -402,7 +402,7 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
     if(m.sw["M.sw"])  {
       if(is.element(vars, c("scores", "loadings"))) {
         if(indx)  {
-          ind     <- if(vars == "scores") c(1, min(Q.max, 2)) else c(1, 1)
+          ind     <- switch(vars, scores=c(1, min(Q.max, 2)), c(1, 1))
         }
         if(!facx) {
           ind[2]  <- fac[g]
@@ -532,8 +532,8 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
         conf   <- attr(results, "Conf.Level")
         digits <- options()$digits
         a.adj  <- rep(0.5, 2)
-        a.cex  <- par()$fin[2]/ifelse(a.step != "metropolis", 4, 5)
-        pen    <- ifelse(a.step != "metropolis", 0.125, 0)
+        a.cex  <- par()$fin[2]/switch(a.step, metropolis=5, 4)
+        pen    <- switch(a.step, metropolis=0, 0.125)
         text(x=0.5, y=0.85 - pen, cex=a.cex, col="black", adj=a.adj, expression(bold("Posterior Mean:\n")))
         text(x=0.5, y=0.85 - pen, cex=a.cex, col="black", adj=a.adj, bquote(.(round(plot.x$post.alpha, digits))))
         text(x=0.5, y=0.57 - pen, cex=a.cex, col="black", adj=a.adj, expression(bold("\nVariance:\n")))
@@ -635,11 +635,11 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
         }
       } else if(is.element(method, c("MFA", "MIFA", "OMFA", "IMFA"))) {
           print(GQ.res[gq.nam != "S"])
-      } else if(method == "IFA") {
+      } else switch(method, IFA={
           print(tail(GQ.res[gq.nam != "S"], -1))
-      } else   {
+        },
           cat(paste0("Q = ", Q, "\n"))
-      }
+      )
       if(any(dim(bicm) > 1)) {
         G.ind  <- ifelse(any(G.supp, !is.element(method, c("MFA", "MIFA"))), 1, which(n.grp == G))
         Q.ind  <- ifelse(any(Q.supp, !is.element(method, c("FA", "MFA"))),   1, which(n.fac == Q))
@@ -738,7 +738,7 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
     }
     
     if(m.sw["P.sw"]) {
-      plot.x <- if(vars == "means") results$Means$post.mu else if(vars == "uniquenesses") results$Uniquenesses$post.psi else results$Loadings$post.load[[g]]
+      plot.x <- switch(vars, means=results$Means$post.mu, uniquenesses=results$Uniquenesses$post.psi, results$Loadings$post.load[[g]])
       x.plot <- apply(plot.x, 1L, range, na.rm=TRUE)
       plot.x <- apply(plot.x, 2L, function(x) (x - min(x, na.rm=TRUE))/(max(x, na.rm=TRUE) - min(x, na.rm=TRUE)))
       varnam <- paste0(toupper(substr(vars, 1, 1)), substr(vars, 2, nchar(vars)))
@@ -746,7 +746,7 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
         layout(rbind(1, 2), heights=c(9, 1))
         par(mar=c(3.1, 4.1, 4.1, 2.1))
       }
-      matplot(seq_len(n.var), plot.x, type="p", col=if(vars == "loadings") seq_len(Q) + 1 else seq_len(G) + 1, pch=15, xlab="Variable", ylab=paste0("Standardised ", varnam), axes=FALSE, main=paste0("Parallel Coordinates: ", varnam, ifelse(all(grp.ind, vars == "loadings"), paste0("\n Group ", g), "")))
+      matplot(seq_len(n.var), plot.x, type="p", col=switch(vars, loadings=seq_len(Q) + 1, seq_len(G) + 1), pch=15, xlab="Variable", ylab=paste0("Standardised ", varnam), axes=FALSE, main=paste0("Parallel Coordinates: ", varnam, ifelse(all(grp.ind, vars == "loadings"), paste0("\n Group ", g), "")))
       axis(1, at=seq_len(n.var), labels=if(titles && n.var < 100) rownames(plot.x) else rep("", n.var), cex.axis=0.5, tick=FALSE)
       for(i in seq_len(n.var))    {
         lines(c(i, i), c(0, 1), col=grey)
@@ -760,7 +760,7 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
         Xp   <- ifelse(vars == "loadings", Q, G)
         Xseq <- seq_len(Xp)
         tmp  <- if(Xp > 5) unlist(lapply(Xseq, function(x) c(Xseq[x], Xseq[x + ceiling(Xp/2)])))[Xseq] else Xseq
-        ltxt <- paste0(ifelse(vars == "loadings", "Factor ", "Group "), tmp)
+        ltxt <- paste0(switch(vars, loadings="Factor", "Group"), tmp)
         lcol <- Xseq[tmp]
         legend("center", pch=15, col=lcol + 1, legend=ltxt, ncol=if(Xp > 5) ceiling(Xp/2) else Xp, bty="n", cex=max(0.7, 1 - 0.03 * Xp))
       }

@@ -66,10 +66,10 @@ sim.IMIFA      <- function(N = 300L, G = 3L, P = 50L, Q = rep(4L, G), pis = rep(
     psi.true   <- setNames(runif(P, 0, 1), vnames)
     
   # Simulate data
-    covmat     <- provideDimnames(diag(psi.true) + (if(method == "marginal") tcrossprod(l.true) else 0), base=list(vnames, vnames))
+    covmat     <- provideDimnames(diag(psi.true) + switch(method, marginal=tcrossprod(l.true), 0), base=list(vnames, vnames))
     if(!isSymmetric(covmat))             stop("Non-symmetric covariance matrix")
     sigma      <- if(any(Q.g > 0, method == "conditional")) chol(covmat) else sqrt(covmat)
-    means      <- matrix(mu.true, nr=N.g, nc=P, byrow=TRUE) + (if(method == "conditional") tcrossprod(eta.true[true.zlab == g, seq_len(Q.g), drop=FALSE], l.true) else 0)
+    means      <- matrix(mu.true, nr=N.g, nc=P, byrow=TRUE) + switch(method, conditional=tcrossprod(eta.true[true.zlab == g, seq_len(Q.g), drop=FALSE], l.true), 0)
     simdata    <- rbind(simdata, means + matrix(rnorm(N.g * P), nr=N.g, nc=P) %*% sigma)
     true.mu[[g]]       <- mu.true
     true.l[[g]]        <- l.true

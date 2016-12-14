@@ -146,7 +146,7 @@
       exp       <- var * rate + shift
       rate      <- exp/var
       shape     <- rate * exp
-        c(shape, ifelse(param == "rate", rate, 1/rate))
+        c(shape, switch(param, rate=rate, 1/rate))
     }
     
   # Check Shrinkage Hyperparemeters
@@ -328,11 +328,9 @@
       Gmsg      <- paste0(" with ", Gmsg, " group",  ifelse(length(grp) == 1, "", "s"))
       if(is.element(meth, c("FA", "OMFA", "IMFA"))) {
         msg     <- Qmsg
-      } else if(meth == "MFA")  {
-        msg     <- paste0(Gmsg, " and", Qmsg)
-      } else if(meth == "MIFA") {
-        msg     <- Gmsg
-      } 
+      } else {
+        msg     <- switch(meth, MFA=paste0(Gmsg, " and", Qmsg), MIFA=Gmsg)
+      }
         cat(paste0(meth, " simulations for '", name, "' dataset", msg, " to be passed to tune.IMIFA(...)\n"))
     }
     
