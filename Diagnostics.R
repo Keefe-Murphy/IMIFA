@@ -301,7 +301,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, 
     post.z       <- apply(z, 1, function(x) factor(which.max(tabulate(x)), levels=Gseq))
     if(nlevels(droplevels(post.z)) !=
        nlevels(post.z))           warning("Empty group exists in modal clustering: examine trace plots and try supplying a lower G value to tune.imifa() or re-running the model", call.=FALSE)
-    uncertain    <- 1 - apply(matrix(apply(z, 1, tabulate, nbins=G)/length(tmp.store), nr=G, nc=n.obs), 2, max)
+    uncertain    <- 1 - matrixStats::colMaxs(matrix(apply(z, 1, tabulate, nbins=G)/length(tmp.store), nr=G, nc=n.obs))
     if(sw["pi.sw"])    {
       pi.prop    <- pies[Gseq,seq_along(tmp.store), drop=FALSE]
       var.pi     <- rowVars(pi.prop)
@@ -352,7 +352,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, 
       uncert.obs <- which(uncertain >= 1/G)
       attr(uncertain, "Obs")   <- if(sum(uncert.obs) != 0) uncert.obs
       if(!label.miss && (length(levs) == G)) {
-        names(tab.stat)[1]     <- "matched.confusion.matrix"
+        names(tab.stat)[1]     <- "confusion.matrix.matched"
       }
       class(tab.stat)          <- "listof"
     }

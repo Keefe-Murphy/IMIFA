@@ -119,8 +119,7 @@
       nn           <- tabulate(z, nbins=G)
       nn0          <- nn > 0
       nn.ind       <- which(nn0)
-      z.ind        <- lapply(Gseq, function(g) Nseq[z == g])
-      dat.g        <- lapply(Gseq, function(g) data[z.ind[[g]],, drop=FALSE])
+      dat.g          <- lapply(Gs, function(g) data[z == g,, drop=FALSE])
       
     # Scores & Loadings
       c.data       <- lapply(Gseq, function(g) sweep(dat.g[[g]], 2, mu[,g], FUN="-"))
@@ -131,13 +130,13 @@
                             P=P, psi.inv=psi.inv[,g][j], shrink=FALSE)), use.names=FALSE), nr=P, byrow=TRUE) else sim.load.p(Q=Q, P=P, sigma.l=sigma.l, shrink=FALSE)), use.names=FALSE), dim=c(P, Q, G))
         eta        <- do.call(rbind, eta.tmp)[obsnames,, drop=FALSE]
       } else {
-        eta.tmp    <- lapply(Gseq, function(g) eta[z.ind[[g]],, drop=FALSE])
+        eta.tmp    <- lapply(Gseq, function(g) eta[z == g,, drop=FALSE])
       }
     
     # Means
-      sum.data     <- lapply(dat.g, colSums)
+      sum.data     <- vapply(dat.g, colSums, numeric(P))
       sum.eta      <- lapply(eta.tmp, colSums)
-      mu           <- vapply(Gseq, function(g) if(nn0[g]) sim.mu(N=nn[g], mu.sigma=mu.sigma, psi.inv=psi.inv[,g], P=P, sum.data=sum.data[[g]], sum.eta=sum.eta[[g]], 
+      mu           <- vapply(Gseq, function(g) if(nn0[g]) sim.mu(N=nn[g], mu.sigma=mu.sigma, psi.inv=psi.inv[,g], P=P, sum.data=sum.data[,g], sum.eta=sum.eta[[g]], 
                              lmat=if(Q1) as.matrix(lmat[,,g]) else lmat[,,g], mu.zero=mu.zero) else sim.mu.p(P=P, sigma.mu=sigma.mu, mu.zero=mu.zero), numeric(P))
       
     # Uniquenesses

@@ -960,7 +960,7 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
       } else                          stop("Plotting with non-zero discount not yet implemented\nTry supplying the same arguments to G.expected() or G.variance()")
     }
     rx         <- scale(rx, center=FALSE, scale=colsums(rx))
-    max.rx     <- apply(rx, 2, max)
+    max.rx     <- matrixStats::colMaxs(rx)
     if(plot)   {
       matplot(x=c(0, seq_len(N)), y=rx, type="l", col=col, lty=1, xlab="Groups", 
               ylab="Density", main=paste0("Prior Distribution of G\nN=", N), ...)

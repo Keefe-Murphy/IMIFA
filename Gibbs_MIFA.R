@@ -133,14 +133,13 @@
       nn           <- tabulate(z, nbins=G)
       nn0          <- nn  > 0
       nn.ind       <- which(nn0)
-      z.ind        <- lapply(Gseq, function(g) Nseq[z == g])
-      dat.g        <- lapply(Gseq, function(g) data[z.ind[[g]],, drop=FALSE])
+      dat.g        <- lapply(Gs, function(g) data[z == g,, drop=FALSE])
     
     # Scores & Loadings
       c.data       <- lapply(Gseq, function(g) sweep(dat.g[[g]], 2, mu[,g], FUN="-"))
       if(!any(Q0))    {
         eta        <- base::matrix(0, nr=N, nc=0)
-        eta.tmp    <- lapply(Gseq, function(g) eta[z.ind[[g]],, drop=FALSE])
+        eta.tmp    <- lapply(Gseq, function(g) eta[z == g,, drop=FALSE])
         lmat       <- lapply(Gseq, function(g) base::matrix(0, nr=P, nc=0))
       } else {
         eta.tmp    <- lapply(Gseq, function(g) if(all(nn0[g], Q0[g])) sim.score(N=nn[g], lmat=lmat[[g]], Q=Qs[g], Q1=Q1[g], c.data=c.data[[g]], psi.inv=psi.inv[,g]) else base::matrix(0, nr=ifelse(Q0[g], 0, nn[g]), nc=Qs[g]))
@@ -151,16 +150,16 @@
         eta.tmp    <- if(length(unique(Qs)) != 1) lapply(Gseq, function(g) cbind(eta.tmp[[g]], matrix(0, nr=nn[g], nc=max(Qs) - Qs[g]))) else eta.tmp
         q0ng       <- !Q0 & nn0
         if(any(q0ng)) {
-          eta.tmp[q0ng]     <- lapply(Gseq[q0ng], function(g, x=eta.tmp[[g]]) { row.names(x) <- obsnames[z.ind[[g]]]; x })
+          eta.tmp[q0ng]     <- lapply(Gseq[q0ng], function(g, x=eta.tmp[[g]]) { attr(x, "row.names") <- attr(dat.g[[g]], "row.names"); x })
         }
         eta        <- do.call(rbind, eta.tmp)[obsnames,, drop=FALSE]
       }
       
     # Means
-      sum.data     <- lapply(dat.g, colSums)
+      sum.data     <- vapply(dat.g, colSums, numeric(P))
       sum.eta      <- lapply(eta.tmp, colSums)
       mu           <- vapply(Gseq, function(g) if(nn0[g]) sim.mu(N=nn[g], mu.sigma=mu.sigma, psi.inv=psi.inv[,g], P=P, sum.eta=sum.eta[[g]][seq_len(Qs[g])], 
-                             sum.data=sum.data[[g]], lmat=lmat[[g]], mu.zero=mu.zero[,g]) else sim.mu.p(P=P, sigma.mu=sigma.mu, mu.zero=mu.zero[,g]), numeric(P))
+                             sum.data=sum.data[,g], lmat=lmat[[g]], mu.zero=mu.zero[,g]) else sim.mu.p(P=P, sigma.mu=sigma.mu, mu.zero=mu.zero[,g]), numeric(P))
       
     # Uniquenesses
       psi.inv      <- vapply(Gseq, function(g) if(nn0[g]) sim.psi.inv(N=nn[g], psi.alpha=psi.alpha, c.data=c.data[[g]], psi.beta=psi.beta[,g], lmat=lmat[[g]],

@@ -24,25 +24,25 @@
     gnames           <- paste0("Group ", Ts)
     iternames        <- paste0("Iteration", seq_len(n.store))
     if(sw["mu.sw"])  {
-      mu.store       <- provideDimnames(array(0, dim=c(P, G, n.store)), base=list(varnames, gnames, iternames))
+      mu.store       <- provideDimnames(array(0, dim=c(P, trunc.G, n.store)), base=list(varnames, gnames, iternames))
     }
     if(sw["s.sw"])   {
       eta.store      <- provideDimnames(array(0, dim=c(N, Q, n.store)), base=list(obsnames, if(Q > 0) facnames, iternames))
     }
     if(sw["l.sw"])   {
-      load.store     <- provideDimnames(array(0, dim=c(P, Q, G, n.store)), base=list(varnames, if(Q > 0) facnames, gnames, iternames))
+      load.store     <- provideDimnames(array(0, dim=c(P, Q, trunc.G, n.store)), base=list(varnames, if(Q > 0) facnames, gnames, iternames))
     }
     if(sw["psi.sw"]) {
-      psi.store      <- provideDimnames(array(0, dim=c(P, G, n.store)), base=list(varnames, gnames, iternames))
+      psi.store      <- provideDimnames(array(0, dim=c(P, trunc.G, n.store)), base=list(varnames, gnames, iternames))
     }
     if(sw["pi.sw"])  {
-      pi.store       <- provideDimnames(matrix(0, nr=G, nc=n.store), base=list(gnames, iternames))
+      pi.store       <- provideDimnames(matrix(0, nr=trunc.G, nc=n.store), base=list(gnames, iternames))
     }
     z.store          <- provideDimnames(matrix(0, nr=N, nc=n.store), base=list(obsnames, iternames))
     ll.store         <- setNames(rep(0, n.store), iternames)
     Q.star           <- Q
     Qs               <- rep(Q, trunc.G)
-    Q.store          <- provideDimnames(matrix(0, nr=G, nc=n.store), base=list(gnames, iternames))
+    Q.store          <- provideDimnames(matrix(0, nr=trunc.G, nc=n.store), base=list(gnames, iternames))
     Q.large          <- Q.big <- Q.bigs <- FALSE
     acc1             <- acc2  <- FALSE
     err.z            <- z.err <- FALSE
@@ -175,14 +175,13 @@
       nn             <- tabulate(z, nbins=trunc.G)
       nn0            <- nn   > 0
       nn.ind         <- which(nn0)
-      z.ind          <- lapply(Gs, function(g) Ns[z == g])
-      dat.g          <- lapply(Gs, function(g) data[z.ind[[g]],, drop=FALSE])
+      dat.g          <- lapply(Gs, function(g) data[z == g,, drop=FALSE])
       
     # Scores & Loadings
       c.data         <- lapply(Gs, function(g) sweep(dat.g[[g]], 2, mu[,g], FUN="-"))
       if(!any(Q0))    {
         eta          <- base::matrix(0, nr=N, nc=0)
-        eta.tmp      <- lapply(Gs, function(g) eta[z.ind[[g]],, drop=FALSE])
+        eta.tmp      <- lapply(Gs, function(g) eta[z == g,, drop=FALSE])
         lmat[Gs]     <- lapply(Gs, function(g) base::matrix(0, nr=P, nc=0))
       } else {
         eta.tmp      <- lapply(Gs, function(g) if(all(nn0[g], Q0[g])) sim.score(N=nn[g], lmat=lmat[[g]], Q=Qs[g], Q1=Q1[g], c.data=c.data[[g]], psi.inv=psi.inv[,g]) else base::matrix(0, nr=ifelse(Q0[g], 0, nn[g]), nc=Qs[g]))
@@ -193,16 +192,16 @@
         eta.tmp      <- if(length(unique(Qs)) != 1) lapply(Gs, function(g) cbind(eta.tmp[[g]], matrix(0, nr=nn[g], nc=max(Qs) - Qs[g]))) else eta.tmp
         q0ng         <- !Q0 & nn0[Gs]
         if(any(q0ng)) {
-          eta.tmp[q0ng]       <- lapply(Gs[q0ng], function(g, x=eta.tmp[[g]]) { row.names(x) <- obsnames[z.ind[[g]]]; x })
+          eta.tmp[q0ng]       <- lapply(Gs[q0ng], function(g, x=eta.tmp[[g]]) { attr(x, "row.names") <- attr(dat.g[[g]], "row.names"); x })
         }
         eta          <- do.call(rbind, eta.tmp)[obsnames,, drop=FALSE]
       }
       
     # Means
-      sum.data       <- lapply(dat.g, colSums)
+      sum.data       <- vapply(dat.g, colSums, numeric(P))
       sum.eta        <- lapply(eta.tmp, colSums)
       mu[,Gs]        <- vapply(Gs, function(g) if(nn0[g]) sim.mu(N=nn[g], mu.sigma=mu.sigma, psi.inv=psi.inv[,g], P=P, sum.eta=sum.eta[[g]][seq_len(Qs[g])],
-                               sum.data=sum.data[[g]], lmat=lmat[[g]], mu.zero=mu.zero) else sim.mu.p(P=P, sigma.mu=sigma.mu, mu.zero=mu.zero), numeric(P))
+                               sum.data=sum.data[,g] , lmat=lmat[[g]], mu.zero=mu.zero) else sim.mu.p(P=P, sigma.mu=sigma.mu, mu.zero=mu.zero), numeric(P))
       
     # Uniquenesses
       psi.inv[,Gs]   <- vapply(Gs, function(g) if(nn0[g]) sim.psi.inv(N=nn[g], psi.alpha=psi.alpha, c.data=c.data[[g]], psi.beta=psi.beta, lmat=lmat[[g]],

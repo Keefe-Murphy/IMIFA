@@ -162,11 +162,11 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
           if(a.hyp.2  <= a.hyp.1)   stop(paste0("The upper limit (=", a.hyp.2, ") of the uniform prior/proposal for alpha must be greater than the lower limit (=", a.hyp.1, ")"))  
         }
         if(missing(trunc.G))  {
-          trunc.G  <- ifelse(N < 100, N, 100)
+          trunc.G  <- ifelse(N < 50, N, 50)
         }
         if(length(trunc.G) > 1)     stop("'trunc.G' must be a single number")
-        if(ifelse(N > 100, trunc.G < 100,
-                  trunc.G  < N))    warning(paste0("'trunc.G' should only be less than min(N=", N, ", 100) for practical reasons in heavy computational/memory burden cases"), call.=FALSE)
+        if(ifelse(N > 50, trunc.G < 50,
+                  trunc.G  < N))    warning(paste0("'trunc.G' should only be less than min(N=", N, ", 50) for practical reasons in heavy computational/memory burden cases"), call.=FALSE)
         if(trunc.G  < range.G)      stop(paste0("'trunc.G' must be at least range.G=", range.G))
         if(trunc.G  > N)            stop(paste0("'trunc.G' cannot be greater than N=", N))
       }
@@ -175,7 +175,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
          z.init    != "list") {     stop("'z.init' must be set to 'list' for classification")
       } else z.init       <- "list"
       if(zli.miss)                  stop("Data labels must be supplied via 'z.list' for classification")
-      levs         <- nlevels(z.list)
+      levs         <- nlevels(unlist(z.list))
       if(length(z.list)    > 1)     stop("Only one set of labels can be supplied via 'z.list'")
       zlabels      <- unlist(z.list)
       if(length(zlabels)  != N)     stop(paste0("'z.list' must be a factor of length N=",  N)) 
@@ -222,7 +222,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
      c(1, P))))                     stop(paste0("'sigma.mu' must be strictly positive, and of length 1 or P=", P))
   if(missing("psi.alpha"))   psi.alpha     <- 2.5
   if(any(psi.alpha <= 1, !is.numeric(psi.alpha),
-     length(psi.alpha) != 1))       stop("'psi.alpha' must be a single number strictly greater than 1 in order to bound uniquenesses away from zero")
+     length(psi.alpha)   != 1))     stop("'psi.alpha' must be a single number strictly greater than 1 in order to bound uniquenesses away from zero")
   Q.miss    <- missing(range.Q)
   Q.min     <- min(ceiling(log(P)), ceiling(log(N)))
   if(is.element(method, c("FA", "MFA", "OMFA", "IMFA"))) {
@@ -232,7 +232,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(Q.miss)        range.Q    <- min(ifelse(P > 500, 12 + floor(log(P)), floor(3 * log(P))), N - 1)
     if(any(!is.logical(adapt),
            length(adapt) != 1))     stop("'adapt' must be TRUE or FALSE") 
-    if(length(range.Q) > 1)         stop(paste0("Only one starting value for 'range.Q' can be supplied for the ", method, " method"))
+    if(length(range.Q)    > 1)      stop(paste0("Only one starting value for 'range.Q' can be supplied for the ", method, " method"))
     if(range.Q    <= 0)             stop(paste0("'range.Q' must be strictly positive for the ", method, " method"))
     if(all(adapt, range.Q < Q.min)) stop(paste0("'range.Q' must be at least min(log(P), log(N)) for the ", method, " method when 'adapt' is TRUE"))
   }
@@ -477,7 +477,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     }
   } 
   if(all(round(vapply(mu.zero, sum, numeric(1))) == 0)) {
-    mu.zero        <- if(method == "classify") matrix(0, nr=1, nc=range.G) else lapply(mu.zero, function(x) 0)
+    mu.zero        <- if(method == "classify") base::matrix(0, nr=1, nc=range.G) else lapply(mu.zero, function(x) 0)
   }
   if(anyNA(unlist(psi.beta))) {
     psi.beta       <- lapply(psi.beta, function(x) replace(x, is.na(x), 0))
