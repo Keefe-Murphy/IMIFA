@@ -3,7 +3,7 @@
 ################################################################
   
 # Gibbs Sampler Function
-  gibbs.MFA        <- function(Q, data, iters, N, P, G, mu.zero,
+  .gibbs_MFA       <- function(Q, data, iters, N, P, G, mu.zero,
                                sigma.mu, sigma.l, burnin, mu,
                                thinning, psi.alpha, psi.beta,
                                sw, verbose, cluster, ...) {
@@ -147,7 +147,7 @@
     
     # Label Switching
       if(label.switch) {
-        switch.lab <- lab.switch(z.new=z, z.old=z.temp, Gs=Gseq)
+        switch.lab <- .lab.switch(z.new=z, z.old=z.temp, Gs=Gseq)
         z          <- switch.lab$z
         z.perm     <- switch.lab$z.perm
         if(!identical(as.integer(z.perm), Gseq)) {

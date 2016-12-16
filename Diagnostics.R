@@ -276,7 +276,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, 
         z.temp   <- factor(z[,1], levels=Gseq)
       }
       for(sl in seq_along(tmp.store)) {
-        sw.lab   <- lab.switch(z.new=z[,sl], z.old=z.temp, Gs=Gseq)
+        sw.lab   <- .lab.switch(z.new=z[,sl], z.old=z.temp, Gs=Gseq)
         z[,sl]   <- sw.lab$z
         z.perm   <- sw.lab$z.perm
         if(!identical(as.integer(z.perm), Gseq)) {
@@ -314,7 +314,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, 
       zlabels    <- factor(zlabels, labels=seq_along(unique(zlabels)))
       levs       <- levels(zlabels)
       if(length(levs) == G) {
-        sw.lab   <- lab.switch(z.new=post.z, z.old=zlabels, Gs=Gseq)
+        sw.lab   <- .lab.switch(z.new=post.z, z.old=zlabels, Gs=Gseq)
         post.z   <- setNames(factor(sw.lab$z), names(post.z))
         l.perm   <- sw.lab$z.perm
         z.tmp    <- apply(z, 2, function(x) factor(x, levels=l.perm))

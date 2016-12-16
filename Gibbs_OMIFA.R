@@ -3,7 +3,7 @@
 #####################################################################
   
 # Gibbs Sampler Function
-  gibbs.OMIFA        <- function(Q, data, iters, N, P, G, mu.zero, sigma.mu, 
+  .gibbs_OMIFA       <- function(Q, data, iters, N, P, G, mu.zero, sigma.mu, 
                                  burnin, thinning, mu, adapt, psi.alpha, psi.beta, 
                                  verbose, alpha.d1, alpha.d2, sw, cluster, nu, b0, b1, 
                                  prop, beta.d1, beta.d2, adapt.at, epsilon, nuplus1, ...) {
@@ -139,7 +139,7 @@
       if(!any(Q0))    {
         eta          <- base::matrix(0, nr=N, nc=0)
         eta.tmp      <- lapply(Gseq, function(g) eta[z == g,, drop=FALSE])
-        lmat         <- lapply(Gseq, function(g) base::matrix(0, nr=P, nc=0))
+        lmat         <- lapply(Gs, base::matrix, 0, nr=P, nc=0)
       } else {
         eta.tmp      <- lapply(Gseq, function(g) if(all(nn0[g], Q0[g])) sim.score(N=nn[g], lmat=lmat[[g]], Q=Qs[g], Q1=Q1[g], c.data=c.data[[g]], psi.inv=psi.inv[,g]) else base::matrix(0, nr=ifelse(Q0[g], 0, nn[g]), nc=Qs[g]))
         EtE          <- lapply(Gseq, function(g) if(nn0[g]) crossprod(eta.tmp[[g]]))
@@ -165,7 +165,7 @@
                                P=P, eta=eta.tmp[[g]][,seq_len(Qs[g]), drop=FALSE]) else sim.psi.i.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), numeric(P))
     
     # Local Shrinkage
-      load.2         <- lapply(lmat, function(lg) lg * lg)
+      load.2         <- lapply(lmat, .power2)
       phi            <- lapply(Gseq, function(g) if(nn0[g]) sim.phi(Q=Qs[g], P=P, nu=nu, plus1=nuplus1,
                         tau=tau[[g]], load.2=load.2[[g]]) else sim.phi.p(Q=Qs[g], P=P, nu=nu, plus1=nuplus1))
     
@@ -193,7 +193,7 @@
       if(all(adapt, iter > adapt.at)) {      
         if(runif(1)   < ifelse(iter < burnin, 0.5, 1/exp(b0 + b1 * (iter - adapt.at)))) {
           colvec     <- lapply(nn.ind, function(g) (if(Q0[g]) colSums(abs(lmat[[g]]) < epsilon)/P else 0) >= prop)
-          nonred     <- lapply(colvec, function(v) which(v == 0))
+          nonred     <- lapply(colvec, .which0)
           numred     <- lengths(colvec) - lengths(nonred)
           notred     <- numred == 0
           ng.ind     <- seq_along(nn.ind)

@@ -143,14 +143,13 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
            rho > 1 && rho <= 0))    stop("'rho' must be a single number in the interval (0, 1]")
         if(rho < 0.5)               warning("Are you sure 'rho' should be less than 0.5? This could adversely affect mixing", call.=FALSE)
         if(missing(alpha.hyper))    {
-          alpha.hyper     <- if(alpha.step == "gibbs") c(2, 1) else if(alpha.step == "metropolis") c(- discount, range.G/2) else c(0, 0)
           alpha.hyper     <- switch(alpha.step, gibbs=c(2, 1), metropolis=c(- discount, range.G/2), c(0, 0))
         }
         if(discount > 0) {
           alpha.hyper     <- shift.gamma(shape=alpha.hyper[1], rate=alpha.hyper[2], shift=discount)
         }
-        a.len      <- length(alpha.hyper)
-        if(a.len   != 2)            stop(paste0("'alpha.hyper' must be a vector of length 2, giving the ", ifelse(alpha.step == "gibbs", "shape and rate hyperparameters of the gamma prior for alpha when alpha.step is given as 'gibbs'", ifelse(alpha.step == "metropolis", "lower and upper limits of the uniform prior/proposal for alpha when alpha.step is given as 'metropolis'")))) 
+        if(all(length(alpha.hyper)  != 2,
+           alpha.step != "fixed"))  stop(paste0("'alpha.hyper' must be a vector of length 2, giving the ", switch(alpha.step, gibbs="shape and rate hyperparameters of the gamma prior for alpha when alpha.step is given as 'gibbs'", metropolis="lower and upper limits of the uniform prior/proposal for alpha when alpha.step is given as 'metropolis'")))
         a.hyp.1    <- alpha.hyper[1]
         a.hyp.2    <- alpha.hyper[2]
         if(alpha.step == "gibbs")   {
@@ -386,12 +385,12 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   if(beta.x) {
     psi.beta       <- temp.psi <- list(psi.hyper(psi.alpha, cov.mat))
   } else {
-    psi.beta       <- len.check(psi.beta, psi0g, method, P, range.G)
+    psi.beta       <- .len.check(psi.beta, psi0g, method, P, range.G)
   }
-  mu.zero          <- if(mu0.x) mu else len.check(mu.zero, mu0g, method, P, range.G)
+  mu.zero          <- if(mu0.x) mu else .len.check(mu.zero, mu0g, method, P, range.G)
   if(!is.element(method, c("FA", "MFA", "OMFA", "IMFA"))) {
-    alpha.d1       <- if(ad1.x) list(3) else len.check(alpha.d1, delta0g, method, P, range.G, P.dim=FALSE)
-    alpha.d2       <- if(adk.x) list(6) else len.check(alpha.d2, delta0g, method, P, range.G, P.dim=FALSE)
+    alpha.d1       <- if(ad1.x) list(3) else .len.check(alpha.d1, delta0g, method, P, range.G, P.dim=FALSE)
+    alpha.d2       <- if(adk.x) list(6) else .len.check(alpha.d2, delta0g, method, P, range.G, P.dim=FALSE)
   }
   if(!is.element(method, c("FA", "IFA"))) {
     if(verbose)                     cat(paste0("Initialising...\n"))
@@ -493,7 +492,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
       if(meth[Gi]  != "MIFA") {
         gibbs.arg  <- append(temp.args, deltas[[Gi]])
       }
-      imifa[[Gi]][[Qi]]   <- do.call(paste0("gibbs.", meth[Gi]),                          
+      imifa[[Gi]][[Qi]]   <- do.call(paste0(".gibbs_", meth[Gi]),                          
                                      args=append(list(data = dat, N = N, G = range.G, Q = range.Q, mu = mu[[Gi]], mu.zero = mu.zero[[Gi]],
                                                       psi.beta = psi.beta[[Gi]], cluster = if(meth[Gi] != "IFA") clust[[Gi]]), gibbs.arg))
       fac.time     <- fac.time + imifa[[Gi]][[Qi]]$time
@@ -505,7 +504,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
          gibbs.arg <- append(temp.args, deltas[[Gi]])
         }
         imifa[[Gi]]       <- list()
-        imifa[[Gi]][[Qi]] <- do.call(paste0("gibbs.", meth[Gi]),
+        imifa[[Gi]][[Qi]] <- do.call(paste0(".gibbs_", meth[Gi]),
                                      args=append(list(data = dat, N = N, G = g, Q = range.Q, mu = mu[[Gi]], mu.zero = mu.zero[[Gi]],
                                                       psi.beta = psi.beta[[Gi]], cluster = if(meth[Gi] == "MIFA") clust[[Gi]]), gibbs.arg))
         fac.time   <- fac.time + imifa[[Gi]][[Qi]]$time
@@ -515,7 +514,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   } else if(is.element(method, c("FA", "MFA", "OMFA", "IMFA")))   {
     if(all(len.G == 1, len.Q == 1)) {
       start.time   <- proc.time()
-      imifa[[Gi]][[Qi]]   <- do.call(paste0("gibbs.", meth[Gi]), 
+      imifa[[Gi]][[Qi]]   <- do.call(paste0(".gibbs_", meth[Gi]), 
                                      args=append(list(data = dat, N = N, G = range.G, Q = range.Q, mu = mu[[Gi]], mu.zero = mu.zero[[Gi]],
                                                       psi.beta = psi.beta[[Gi]], cluster = if(meth[Gi] != "FA") clust[[Gi]]), gibbs.arg))
       fac.time     <- fac.time + imifa[[Gi]][[Qi]]$time
@@ -523,7 +522,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
       start.time   <- proc.time()
       for(q in range.Q)   { 
         Qi         <- which(range.Q == q)
-        imifa[[Gi]][[Qi]] <- do.call(paste0("gibbs.", meth[Gi]),
+        imifa[[Gi]][[Qi]] <- do.call(paste0(".gibbs_", meth[Gi]),
                                      args=append(list(data = dat, N = N, G = range.G, Q = q, mu = mu[[Gi]], mu.zero = mu.zero[[Gi]],
                                                       psi.beta = psi.beta[[Gi]], cluster = if(meth[Gi] != "FA") clust[[Gi]]), gibbs.arg))
         fac.time   <- fac.time + imifa[[Gi]][[Qi]]$time
@@ -534,7 +533,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
       for(g in range.G) {
         Gi         <- which(range.G == g)
         imifa[[Gi]]       <- list()
-        imifa[[Gi]][[Qi]] <- do.call(paste0("gibbs.", meth[Gi]),
+        imifa[[Gi]][[Qi]] <- do.call(paste0(".gibbs_", meth[Gi]),
                                      args=append(list(data = dat, N = N, G = g, Q = range.Q, mu = mu[[Gi]], mu.zero = mu.zero[[Gi]],
                                                       psi.beta = psi.beta[[Gi]], cluster = if(meth[Gi] != "FA") clust[[Gi]]), gibbs.arg))
         fac.time   <- fac.time + imifa[[Gi]][[Qi]]$time
@@ -548,7 +547,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
         imifa[[Gi]]       <- list()
         for(q in range.Q) {
           Qi       <- which(range.Q == q)
-        imifa[[Gi]][[Qi]] <- do.call(paste0("gibbs.", meth[Gi]),
+        imifa[[Gi]][[Qi]] <- do.call(paste0(".gibbs_", meth[Gi]),
                                      args=append(list(data = dat, N = N, G = g, Q = q, mu = mu[[Gi]], mu.zero = mu.zero[[Gi]],
                                                       psi.beta = psi.beta[[Gi]], cluster = if(meth[Gi] != "FA") clust[[Gi]]), gibbs.arg))
         mi         <- mi + 1
@@ -574,7 +573,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
       if(sigmu.miss)   gibbs.arg$sigma.mu  <- cova(as.matrix(tmp.dat))
       imifa[[g]]          <- list()
       gibbs.arg    <- append(temp.args, lapply(deltas[[Gi]], "[[", g))
-      imifa[[g]][[Qi]]    <- do.call(paste0("gibbs.", "IFA"),
+      imifa[[g]][[Qi]]    <- do.call(paste0(".gibbs_", "IFA"),
                                      args=append(list(data = tmp.dat, N = nrow(tmp.dat), mu = mu[[Gi]][,g], mu.zero = mu.zero[[Gi]][,g],
                                                       Q = range.Q, psi.beta = psi.beta[[Gi]][,g]), gibbs.arg))
       fac.time     <- fac.time + imifa[[g]][[Qi]]$time

@@ -3,7 +3,7 @@
 #######################################################################
   
 # Gibbs Sampler Function
-  gibbs.IMIFA        <- function(Q, data, iters, N, P, G, mu.zero, rho, sigma.l, alpha.step, mu, sw, 
+  .gibbs_IMIFA       <- function(Q, data, iters, N, P, G, mu.zero, rho, sigma.l, alpha.step, mu, sw, 
                                  sigma.mu, burnin, thinning, trunc.G, a.hyper, psi.alpha, psi.beta, adapt,
                                  verbose, ind.slice, alpha.d1, discount, alpha.d2, cluster, b0, b1, DP.lab.sw,
                                  nu, prop, d.hyper, beta.d1, beta.d2, adapt.at, epsilon, learn.d, nuplus1, ...) {
@@ -182,7 +182,7 @@
       if(!any(Q0))    {
         eta          <- base::matrix(0, nr=N, nc=0)
         eta.tmp      <- lapply(Gs, function(g) eta[z == g,, drop=FALSE])
-        lmat[Gs]     <- lapply(Gs, function(g) base::matrix(0, nr=P, nc=0))
+        lmat[Gs]     <- lapply(Gs, base::matrix, 0, nr=P, nc=0)
       } else {
         eta.tmp      <- lapply(Gs, function(g) if(all(nn0[g], Q0[g])) sim.score(N=nn[g], lmat=lmat[[g]], Q=Qs[g], Q1=Q1[g], c.data=c.data[[g]], psi.inv=psi.inv[,g]) else base::matrix(0, nr=ifelse(Q0[g], 0, nn[g]), nc=Qs[g]))
         EtE          <- lapply(Gs, function(g) if(nn0[g]) crossprod(eta.tmp[[g]]))
@@ -208,7 +208,7 @@
                                P=P, eta=eta.tmp[[g]][,seq_len(Qs[g]), drop=FALSE]) else sim.psi.i.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), numeric(P))
     
     # Local Shrinkage
-      load.2         <- lapply(lmat[Gs], function(lg) lg * lg)
+      load.2         <- lapply(lmat[Gs], .power2)
       phi[Gs]        <- lapply(Gs, function(g) if(nn0[g]) sim.phi(Q=Qs[g], P=P, nu=nu, plus1=nuplus1,
                         tau=tau[[g]], load.2=load.2[[g]]) else sim.phi.p(Q=Qs[g], P=P, nu=nu, plus1=nuplus1))
     
@@ -236,7 +236,7 @@
       if(all(adapt, iter > adapt.at)) {      
         if(runif(1)   < ifelse(iter < burnin, 0.5, 1/exp(b0 + b1 * (iter - adapt.at)))) {
           colvec     <- lapply(nn.ind, function(g) (if(Q0[g]) colSums(abs(lmat[[g]]) < epsilon)/P else 0) >= prop)
-          nonred     <- lapply(colvec, function(v) which(v == 0))
+          nonred     <- lapply(colvec, .which0)
           numred     <- lengths(colvec) - lengths(nonred)
           notred     <- numred == 0
           ng.ind     <- seq_along(nn.ind)
@@ -283,7 +283,7 @@
     # Label Switching
       G.non          <- sum(nn0)
       if(DP.lab.sw   && G.non  > 1) {
-        move1        <- label.move1(nn.ind=nn.ind, pi.prop=pi.prop, nn=nn)
+        move1        <- .lab.move1(nn.ind=nn.ind, pi.prop=pi.prop, nn=nn)
         acc1         <- move1$rate1
         if(acc1)    {
           sw1        <- move1$sw
@@ -304,7 +304,7 @@
           z[z == sw1[2]]      <- sw1[1]
           z[zsw1]    <- sw1[2]            
         } 
-        move2        <- label.move2(nn.ind=nn.ind, Vs=Vs, nn=nn)
+        move2        <- .lab.move2(nn.ind=nn.ind, Vs=Vs, nn=nn)
         acc2         <- move2$rate2
         if(acc2)    {
           sw2        <- move2$sw

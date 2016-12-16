@@ -3,7 +3,7 @@
 #######################################################################
   
 # Gibbs Sampler Function
-  gibbs.IMFA        <- function(Q, data, iters, N, P, G, mu.zero, rho, sigma.l, alpha.step, discount,
+  .gibbs_IMFA       <- function(Q, data, iters, N, P, G, mu.zero, rho, sigma.l, alpha.step, discount,
                                 a.hyper, mu, sigma.mu, burnin, thinning, trunc.G, d.hyper, learn.d,
                                 ind.slice, psi.alpha, psi.beta, verbose, sw, cluster, DP.lab.sw, ...) {
         
@@ -177,7 +177,7 @@
       }
       
     # Means
-      sum.data      <- sum.data       <- vapply(dat.g, colSums, numeric(P))
+      sum.data      <- vapply(dat.g, colSums, numeric(P))
       sum.eta       <- lapply(eta.tmp, colSums)
       mu[,Gs]       <- vapply(Gs, function(g) if(nn0[g]) sim.mu(N=nn[g], mu.sigma=mu.sigma, psi.inv=psi.inv[,g], P=P, sum.data=sum.data[,g], sum.eta=sum.eta[[g]],
                               lmat=if(Q1) as.matrix(lmat[,,g]) else lmat[,,g], mu.zero=mu.zero) else sim.mu.p(P=P, sigma.mu=sigma.mu, mu.zero=mu.zero), numeric(P))
@@ -199,7 +199,7 @@
     # Label Switching
       G.non         <- sum(nn0)
       if(DP.lab.sw  && G.non > 1)  {
-        move1       <- label.move1(nn.ind=nn.ind, pi.prop=pi.prop, nn=nn)
+        move1       <- .lab.move1(nn.ind=nn.ind, pi.prop=pi.prop, nn=nn)
         acc1        <- move1$rate1
         if(acc1)    {
           sw1       <- move1$sw
@@ -216,7 +216,7 @@
           z[z == sw1[2]]    <- sw1[1]
           z[zsw1]   <- sw1[2]            
         } 
-        move2       <- label.move2(nn.ind=nn.ind, Vs=Vs, nn=nn)
+        move2       <- .lab.move2(nn.ind=nn.ind, Vs=Vs, nn=nn)
         acc2        <- move2$rate2
         if(acc2)    {
           sw2       <- move2$sw

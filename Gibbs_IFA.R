@@ -3,7 +3,7 @@
 ###################################################################
   
 # Gibbs Sampler Function
-  gibbs.IFA      <- function(Q, data, iters, N, P, sigma.mu, sw, mu, prop, 
+  .gibbs_IFA     <- function(Q, data, iters, N, P, sigma.mu, sw, mu, prop, 
                              psi.alpha, psi.beta, burnin, thinning, verbose,
                              epsilon, mu.zero, nu, adapt, adapt.at, b0, b1,
                              alpha.d1, alpha.d2, beta.d1, beta.d2, nuplus1, ...) {    

@@ -164,25 +164,21 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
   for(g in Gs) {
     Q     <- Qs[g]
     g.ind <- which(Gs == g)
-    msg   <- "Hit <Return> to see next plot or type 'EXIT'/hit <Esc> to exit: "
     msgx  <- all(interactive(), g != max(Gs))
-    ent.exit   <- function() {
-      if(msgx) {
-        ent  <- readline(msg)
-        options(show.error.messages=FALSE)
-        on.exit(suppressWarnings(options(defopt)), add=TRUE)
-        if(is.element(ent, 
-           c("exit", "EXIT")))        stop()
-      }
-    }
     result     <- results[[g]]
+    .ent.exit  <- function() {
+      ent      <- readline("Hit <Return> to see next plot or type 'EXIT'/hit <Esc> to exit: ")
+      options(show.error.messages=FALSE)
+      on.exit(suppressWarnings(options(defopt)), add=TRUE)
+      if(ent  %in% c("exit", "EXIT")) stop()
+    }
     if(any(all(Q  == 0, vars == "loadings"),
            all(Qs == 0, vars == "scores")))  {            
                                       warning(paste0("Can't plot ", vars, paste0(ifelse(all(vars == "loadings", G > 1), paste0(" for group ", g), "")), " as they contain no columns/factors"), call.=FALSE)
       if(g == max(Gs)) {
         break
       } else {
-        ent.exit()
+        if(isTRUE(msgx)) .ent.exit()
       }
     }
     if(any(vars   == "alpha",
@@ -202,13 +198,13 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
       if(vars  == "scores")  {
         if(ind[1] >  n.obs)           stop(paste0("First index can't be greater than the number of observations: ",  n.obs))
         if(ind[2] >  Q.max)  {        warning(paste0("Second index can't be greater than ", Q.max, ", the total number of factors", if(grp.ind) paste0(" across groups"), ".\n Try specifying a vector of fac values with maximum entries ", paste0(Qs, collapse=", "), "."), call.=FALSE)
-        ent.exit()
+        if(isTRUE(msgx)) .ent.exit()
         next
         }
       } else {
         if(ind[1] > n.var)            stop(paste0("First index can't be greater than the number of variables: ",  n.var))
         if(ind[2] > Q) {              warning(paste0("Second index can't be greater than ", Q, ", the number of factors", if(grp.ind) paste0(" in group ", g), ".\n Try specifying a vector of fac values with maximum entries ", paste0(Qs, collapse=", "), "."), call.=FALSE)
-        ent.exit()
+        if(isTRUE(msgx)) .ent.exit()
         next
         }
       }
@@ -697,8 +693,8 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
         cols    <- 3     + (breaks >= 1/G)
         cols[cols == 3] <- grey
         plot(x.plot, main="", xlab="Uncertainties", xlim=c(0, 1 - 1/G), col=cols, xaxt="n", ylim=c(0, max(x.plot$counts)), yaxt="n")
-        axis(1, at=c(breaks[round(breaks, 1) < min(0.8, 1 - 1/G)], 1 - 1/G), labels=(c(round(breaks[round(breaks, 1) < min(0.8, 1 - 1/G)], 3), "1 - 1/G")), las=2, pos=0, cex.axis=0.9)
-        axis(2, at=if(sum(plot.x)  == 0) c(axTicks(2), max(x.plot$counts)) else axTicks(2), las=1)
+        axis(1, at=c(breaks[round(breaks, 1) < min(0.8, 1 - 1/G)], 1 - 1/G), labels=(c(round(breaks[round(breaks, 1) < min(0.8, 1 - 1/G)], 3), "1 - 1/G")), las=2, pos=0, cex.axis=0.8)
+        axis(2, at=if(sum(plot.x)  == 0) c(axTicks(2), max(x.plot$counts)) else axTicks(2), las=1, cex.axis=0.8)
       }
       if(g == min(Gs)) {
         if(any(!labelmiss,  !z.miss)) {
@@ -707,7 +703,7 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
           } else   {
            pzs  <- clust$map
            if(nlevels(pzs) == nlevels(labs)) {
-            lsw <- lab.switch(z.new=pzs, z.old=labs, Gs=seq_len(G))
+            lsw <- .lab.switch(z.new=pzs, z.old=labs, Gs=seq_len(G))
             pzs <- factor(lsw$z)
            }
            tab  <- table(pzs, labs, dnn=list("Predicted", "Observed"))
@@ -782,7 +778,7 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
         dens <- NULL
       }
       pl.x   <- barplot(plot.x, beside=TRUE, col=col.e, main="", ylab="Deviation", density=dens)
-      na.x   <- if(G > 1) is.na(results$Error[[1]]) else FALSE
+      na.x   <- all(G > 1, is.na(results$Error[[1]]))
       if(G > 1) points(x=colMedians(as.matrix(pl.x[,which(na.x)])), y=rep(0, sum(na.x)), pch=16, col=6)
       if(titles) title(main=list("Error Metrics"))
       if(titles) {
@@ -891,13 +887,15 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
     if(all(all.ind, titles)) title(ifelse(vars != "pis", paste0(toupper(substr(vars, 1, 1)), substr(vars, 2, nchar(vars)), 
                              ifelse(all(grp.ind, !is.element(vars, c("scores", "pis", "alpha"))), paste0(" - Group ", g), "")), 
                              paste0("Mixing Proportions", ifelse(matx, "", paste0(" - Group ", ind)))), outer=TRUE)
-    ent.exit()
+    if(isTRUE(msgx)) .ent.exit()
   }
 }
 
 # Loadings Heatmaps
-  mat2cols     <- function(m, cols = dichromat(heat.colors(30)), 
+  mat2cols     <- function(mat, cols = heat.colors(30), blind = TRUE, 
                            byrank = FALSE, breaks = length(cols)) { 
+    m          <- as.matrix(mat)
+    cols       <- if(isTRUE(blind)) dichromat(cols) else cols
     m1         <- if(isTRUE(byrank)) rank(m) else m
     facs       <- cut(m1, breaks, include.lowest=TRUE)
     answer     <- cols[as.numeric(facs)]
@@ -918,8 +916,8 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
   G.prior      <- function(N, alpha, discount = 0, plot = TRUE, 
                            avg = FALSE, col = "black", ...) {
     if(suppressMessages(require(Rmpfr))) {
-      on.exit(detach.pkg(Rmpfr))
-      on.exit(detach.pkg(gmp), add=TRUE)  
+      on.exit(.detach.pkg(Rmpfr))
+      on.exit(.detach.pkg(gmp), add=TRUE)  
     } else                            stop("'Rmpfr' package not installed")
     if(missing(col))    {
       col      <- c("#999999", "#E69F00", "#009E73", "#56B4E9", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")

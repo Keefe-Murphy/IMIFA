@@ -141,17 +141,15 @@
 
   # Alpha Shifted Gamma Hyperparameters
     shift.gamma <- function(shape, rate, shift = 0, param = c("rate", "scale")) {
-      param     <- match.arg(param)
       var       <- shape/rate^2
       exp       <- var * rate + shift
       rate      <- exp/var
       shape     <- rate * exp
-        c(shape, switch(param, rate=rate, 1/rate))
+        c(shape, switch(match.arg(param), rate=rate, 1/rate))
     }
     
   # Check Shrinkage Hyperparemeters
     MGP.check   <- Vectorize(function(ad1, ad2, Q, nu, bd1 = 1, bd2 = 1, plus1 = TRUE, inverse = TRUE) {
-      args      <- as.list(match.call())
       if(any(!is.logical(plus1),
              length(plus1)    != 1))       stop("'plus1' must be TRUE or FALSE")
       if(any(!is.logical(inverse),
@@ -180,7 +178,7 @@
     }, vectorize.args = c("ad1", "ad2", "nu", "bd1", "bd2"), SIMPLIFY=FALSE)
 
   # Label Switching
-    lab.switch  <- function(z.new, z.old, Gs, ng = tabulate(z.new)) {
+    .lab.switch <- function(z.new, z.old, Gs, ng = tabulate(z.new)) {
       tab       <- table(z.new, z.old, dnn=NULL)
       tab.tmp   <- tab[rowsums(tab) != 0,colsums(tab) != 0, drop=FALSE]
       nc        <- ncol(tab.tmp)
@@ -212,7 +210,7 @@
     }
     
     # Move 1
-    label.move1 <- function(nn.ind, pi.prop, nn) {
+    .lab.move1  <- function(nn.ind, pi.prop, nn) {
       sw        <- sample(nn.ind, 2)
       pis       <- pi.prop[sw]
       nns       <- nn[sw]
@@ -221,7 +219,7 @@
     }
     
     # Move 2
-    label.move2 <- function(nn.ind, Vs, nn) {
+    .lab.move2  <- function(nn.ind, Vs, nn) {
       sw        <- sample(nn.ind, 1)
       nn.x      <- which(nn.ind == sw)
       sw        <- c(sw, max(nn.ind[nn.x + 1], nn.ind[nn.x - 1], na.rm=TRUE))
@@ -232,7 +230,7 @@
     }
 
   # Length Checker
-    len.check   <- function(obj0g, switch0g, method, P, range.G, P.dim = TRUE) {
+    .len.check  <- function(obj0g, switch0g, method, P, range.G, P.dim = TRUE) {
       V         <- ifelse(P.dim, P, 1)
       rGseq     <- seq_along(range.G)
       obj.name  <- deparse(substitute(obj0g))
@@ -271,8 +269,8 @@
           alpha * (digamma(alpha + N) - digamma(alpha))
       } else {
         if(suppressMessages(require(Rmpfr))) {
-          on.exit(detach.pkg(Rmpfr))
-          on.exit(detach.pkg(gmp), add=TRUE)  
+          on.exit(.detach.pkg(Rmpfr))
+          on.exit(.detach.pkg(gmp), add=TRUE)  
         } else                             stop("'Rmpfr' package not installed")
           asNumeric(alpha/discount * pochMpfr(alpha + discount, N)/pochMpfr(alpha, N) - alpha/discount)
       }
@@ -287,8 +285,8 @@
           alpha * (digamma(alpha + N) - digamma(alpha)) + (alpha^2) * (trigamma(alpha + N) - trigamma(alpha))
       } else {
         if(suppressMessages(require(Rmpfr))) {
-          on.exit(detach.pkg(Rmpfr))
-          on.exit(detach.pkg(gmp), add=TRUE)  
+          on.exit(.detach.pkg(Rmpfr))
+          on.exit(.detach.pkg(gmp), add=TRUE)  
         } else                             stop("'Rmpfr' package not installed")
         sum.ad  <- alpha + discount
         poch.a  <- pochMpfr(alpha, N)
@@ -299,7 +297,7 @@
     })
 
   # Detach packages
-    detach.pkg  <- function(pkg, character.only = FALSE) {
+    .detach.pkg <- function(pkg, character.only = FALSE) {
       if(!character.only) {
         pkg     <- deparse(substitute(pkg))
       }
@@ -363,3 +361,6 @@
       }
         cat(paste0(capture.output(print(res)), msg))
     }
+    
+    .power2     <- function(x) x * x
+    .which0     <- function(x) which(x == 0)

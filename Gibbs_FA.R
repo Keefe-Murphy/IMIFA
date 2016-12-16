@@ -3,7 +3,7 @@
 ################################################################
   
 # Gibbs Sampler Function
-  gibbs.FA       <- function(Q, data, iters, N, P, sigma.mu, mu,
+  .gibbs_FA      <- function(Q, data, iters, N, P, sigma.mu, mu,
                              mu.zero, psi.alpha, psi.beta, burnin,
                              thinning, verbose, sw, sigma.l, ...) {
         

@@ -3,7 +3,7 @@
 #####################################################################
   
 # Gibbs Sampler Function
-  gibbs.OMFA       <- function(Q, data, iters, N, P, G, mu.zero,
+  .gibbs_OMFA      <- function(Q, data, iters, N, P, G, mu.zero,
                                sigma.mu, sigma.l, burnin, mu, 
                                thinning, psi.alpha, psi.beta, 
                                sw, verbose, cluster, ...) {
