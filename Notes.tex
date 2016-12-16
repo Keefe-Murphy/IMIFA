@@ -360,7 +360,7 @@ To remove this difficulty, we now propose the multiplicative gamma process shrin
 \vspace{2mm}\tau_k &= \prod_{h=1}^k \delta_h\nonumber&\\
 \delta_1 &\sim \textrm{Ga}\left(\alpha_1,\beta_1\right), \quad\delta_h \sim \textrm{Ga}\left(\alpha_2,\beta_2\right), \quad h \geq 2\label{eq:23}&
 \end{flalign}
-\noindent where $\delta_h \left(h=1,\ldots,\infty\right)$ are independent, $\tau_k$ is a \textit{global} shrinkage parameter for the $k$-th column and the $\phi_{jk}$s are \textit{local} shrinkage parameters for the elements in the $k$-th column. Typically $\beta_1 = \beta_2 = 1$. The $\tau_k$s are stochastically increasing under the restriction $\alpha_2 > \beta_2 + 1$, which favours more shrinkage as the column index increases \citep{Durante2016}. However, we find it useful to consider an alternative reparameterisation of the local shrinkage prior via $\phi_{jk}\sim\textrm{Ga}\left(\nu + 1, \nu\right)$, s.t. the induced inverse-gamma prior on each $\phi_{jk}^{-1}$ is non-informative in the sense that it has expectation 1. Though hyperparameters remain fixed under our consideration, they can also be learned from the data with the introduction of Metropolis-Hastings steps. In any case, when extending this prior to mixture models, the hyperparameters $\alpha_1$ and $\alpha_2$ tend to need to be higher than the values suggested by \citet{Bhattacharya2011}, in order to enforce stricter priors with a greater degree of shrinkage, as there will be less data in each group to affect the posterior loadings than in the overall dataset.
+\noindent where $\delta_h \left(h=1,\ldots,\infty\right)$ are independent, $\tau_k$ is a \textit{global} shrinkage parameter for the $k$-th column and the $\phi_{jk}$s are \textit{local} shrinkage parameters for the elements in the $k$-th column. The original formulation by \citet{Bhattacharya2011} fixed $\beta_1 = \beta_2 = 1$, but $\tau_k$ is stochastically increasing under the restriction $\alpha_2 > \beta_2 + 1$, which favours cumulative shrinkage as the column index increases \citep{Durante2016}. However, we find it useful to consider an alternative reparameterisation of \eqref{eq:22} via $\phi_{jk}\sim\textrm{Ga}\left(\nu + 1, \nu\right)$, s.t. the induced inverse-gamma prior on each $\phi_{jk}^{-1}$ is non-informative in the sense that it has expectation 1. Though hyperparameters remain fixed under our consideration, they can also be learned from the data by introducing Metropolis-Hastings steps. In any case, when extending this prior to mixture models, $\alpha_1$ and $\alpha_2$ tend to need to be higher than the values suggested by \citet{Bhattacharya2011}, in order to enforce a greater degree of shrinkage, as there will be less data in each group to affect the posterior loadings than in the overall dataset.
 
 \begin{figure}[h]
 	\centering
@@ -370,7 +370,7 @@ To remove this difficulty, we now propose the multiplicative gamma process shrin
 \end{figure}
 
 \subsection[Defining new MGP Full Conditionals]{Defining new MGP Full Conditionals}
-We propose a Gibbs sampler for posterior computation, much like the one above, and an adaptive strategy for inference on the truncation level $q^\star$ is described in Section \ref{Adapt_Section}. For now, let's focus on the new full conditionals for the loadings matrix, global shrinkages, and local shrinkages which need to be derived in order to implement this. Other full conditionals are exactly as before, with just a small adjustment to the factor scores to allow for the truncation to $q^\star$ columns, i.e. $\mathrm{P}\left(\underline{\eta}_i \given \mbox{---}\right) \sim  \textrm{MVN}_{q^\star}\left(\left[\mathcal{I}_{q^\star} + \Lambda^T_{q^\star}\Psi^{-1}\Lambda_{q^\star}\right]^{-1}\Lambda^T\Psi^{-1}\underline{x}_i - \underline{\mu},\left[\mathcal{I}_{q^\star} + \Lambda^T_{q^\star}\Psi^{-1}\Lambda_{q^\star}\right]^{-1}\right)$
+We propose a Gibbs sampler for posterior computation, much like the one above, and an adaptive strategy for inference on the truncation level $q^\star$ is described in Section \ref{Adapt_Section}. For now, let's focus on the new full conditionals for the loadings matrix, global shrinkages, and local shrinkages which need to be derived in order to implement this. Other full conditionals are exactly as before, with just a small adjustment to the factor scores to allow for the truncation to $q^\star$ columns, i.e. $\mathrm{P}\left(\underline{\eta}_i \given \mbox{---}\right) \sim  \textrm{MVN}_{q^\star}\left(\left[\mathcal{I}_{q^\star} + \Lambda^T_{q^\star}\Psi^{-1}\Lambda_{q^\star}\right]^{-1}\Lambda^T\Psi^{-1}\underline{x}_i - \underline{\mu},\left[\mathcal{I}_{q^\star} + \Lambda^T_{q^\star}\Psi^{-1}\Lambda_{q^\star}\right]^{-1}\right)$.
 
 \subsubsection[Loadings Matrix]{Loadings Matrix - $\Lambda$}
 Incorporating the new prior \eqref{eq:21}, and following the same steps as Section \ref{Loadings_Section} above, it's trivial to show that the $\Lambda_j$s now have independent conditionally conjugate posteriors given by$\colon$
@@ -731,7 +731,7 @@ A real application of IMIFA is given on $N \ll p$ metabolomic data consisting of
 \begin{figure}[h]
 	\centering
 	\caption{Spectral metabolomic data}
-	\includegraphics[width=0.7\textwidth, keepaspectratio]{Rat_Data.eps}
+	\includegraphics[width=0.7\textwidth, keepaspectratio]{Urine_Data.eps}
 	\label{RatData}
 \end{figure}
 
