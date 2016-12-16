@@ -52,9 +52,9 @@
     nn.ind         <- which(nn > 0)
     pi.alpha       <- cluster$pi.alpha
     pi.prop        <- cluster$pi.prop
-    eta            <- sim.eta.p(N=N, Q=Q)
-    lmat           <- lapply(Gseq, function(g) sim.load.p(Q=Q, P=P, sigma.l=sigma.l, shrink=FALSE))
-    psi.inv        <- vapply(Gseq, function(g) sim.psi.i.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), numeric(P))
+    eta            <- .sim.eta.p(N=N, Q=Q)
+    lmat           <- lapply(Gseq, function(g) .sim.load.p(Q=Q, P=P, sigma.l=sigma.l, shrink=FALSE))
+    psi.inv        <- vapply(Gseq, function(g) .sim.psi.i.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), numeric(P))
     if(Q0 && Q  < P - sqrt(P + Q)) {
       for(g in which(nn     > P))  {
         fact       <- try(factanal(data[z == g,, drop=FALSE], factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
@@ -86,7 +86,7 @@
       psi.store[,,1]       <- 1/psi.inv
       pi.store[,1]         <- pi.prop
       z.store[,1]          <- z
-      ll.store[1]          <- sum(sim.z(data=data, mu=mu, Gseq=Gseq, N=N, pi.prop=pi.prop, sigma=lapply(Gseq, function(g) 
+      ll.store[1]          <- sum(.sim.z(data=data, mu=mu, Gseq=Gseq, N=N, pi.prop=pi.prop, sigma=lapply(Gseq, function(g) 
                                         make.positive.definite(tcrossprod(lmat[,,g]) + diag(1/psi.inv[,g]))), Q0=Q0s)$log.likes)
       G.store[1]           <- G
     }
@@ -97,7 +97,7 @@
       if(verbose   && iter  < burnin) setTxtProgressBar(pb, iter)
       
     # Mixing Proportions & Re-ordering
-      pi.prop[]    <- sim.pi(pi.alpha=pi.alpha, nn=nn)
+      pi.prop[]    <- .sim.pi(pi.alpha=pi.alpha, nn=nn)
       index        <- order(nn, decreasing=TRUE)
       pi.prop      <- pi.prop[index]
       mu           <- mu[,index, drop=FALSE]
@@ -109,11 +109,11 @@
     # Cluster Labels
       psi          <- 1/psi.inv
       sigma        <- lapply(Gseq, function(g) tcrossprod(lmat[,,g]) + diag(psi[,g]))
-      z.log        <- capture.output({ z.res <- try(sim.z(data=data, mu=mu, sigma=sigma, Gseq=Gseq, N=N, pi.prop=pi.prop, Q0=Q0s), silent=TRUE) })
+      z.log        <- capture.output({ z.res <- try(.sim.z(data=data, mu=mu, sigma=sigma, Gseq=Gseq, N=N, pi.prop=pi.prop, Q0=Q0s), silent=TRUE) })
       zerr         <- inherits(z.res, "try-error")
       if(zerr) {
         sigma      <- lapply(sigma, make.positive.definite)
-        z.res      <- sim.z(data=data, mu=mu, sigma=sigma, Gseq=Gseq, N=N, pi.prop=pi.prop, Q0=Q0s)
+        z.res      <- .sim.z(data=data, mu=mu, sigma=sigma, Gseq=Gseq, N=N, pi.prop=pi.prop, Q0=Q0s)
       }
       z            <- z.res$z
       nn           <- tabulate(z, nbins=G)
@@ -124,10 +124,10 @@
     # Scores & Loadings
       c.data       <- lapply(Gseq, function(g) sweep(dat.g[[g]], 2, mu[,g], FUN="-"))
       if(Q0) {
-        eta.tmp    <- lapply(Gseq, function(g) if(nn0[g]) sim.score(N=nn[g], lmat=lmat[,,g], Q=Q, c.data=c.data[[g]], psi.inv=psi.inv[,g], Q1=Q1) else base::matrix(0, nr=0, nc=Q))
+        eta.tmp    <- lapply(Gseq, function(g) if(nn0[g]) .sim.score(N=nn[g], lmat=lmat[,,g], Q=Q, c.data=c.data[[g]], psi.inv=psi.inv[,g], Q1=Q1) else base::matrix(0, nr=0, nc=Q))
         EtE        <- lapply(Gseq, function(g) if(nn0[g]) crossprod(eta.tmp[[g]]))
-        lmat       <- array(unlist(lapply(Gseq, function(g) if(nn0[g]) matrix(unlist(lapply(Pseq, function(j) sim.load(l.sigma=l.sigma, Q=Q, c.data=c.data[[g]][,j], eta=eta.tmp[[g]], Q1=Q1, EtE=EtE[[g]], 
-                            P=P, psi.inv=psi.inv[,g][j], shrink=FALSE)), use.names=FALSE), nr=P, byrow=TRUE) else sim.load.p(Q=Q, P=P, sigma.l=sigma.l, shrink=FALSE)), use.names=FALSE), dim=c(P, Q, G))
+        lmat       <- array(unlist(lapply(Gseq, function(g) if(nn0[g]) matrix(unlist(lapply(Pseq, function(j) .sim.load(l.sigma=l.sigma, Q=Q, c.data=c.data[[g]][,j], eta=eta.tmp[[g]], Q1=Q1, EtE=EtE[[g]], 
+                            P=P, psi.inv=psi.inv[,g][j], shrink=FALSE)), use.names=FALSE), nr=P, byrow=TRUE) else .sim.load.p(Q=Q, P=P, sigma.l=sigma.l, shrink=FALSE)), use.names=FALSE), dim=c(P, Q, G))
         eta        <- do.call(rbind, eta.tmp)[obsnames,, drop=FALSE]
       } else {
         eta.tmp    <- lapply(Gseq, function(g) eta[z == g,, drop=FALSE])
@@ -136,12 +136,12 @@
     # Means
       sum.data     <- vapply(dat.g, colSums, numeric(P))
       sum.eta      <- lapply(eta.tmp, colSums)
-      mu           <- vapply(Gseq, function(g) if(nn0[g]) sim.mu(N=nn[g], mu.sigma=mu.sigma, psi.inv=psi.inv[,g], P=P, sum.data=sum.data[,g], sum.eta=sum.eta[[g]], 
-                             lmat=if(Q1) as.matrix(lmat[,,g]) else lmat[,,g], mu.zero=mu.zero) else sim.mu.p(P=P, sigma.mu=sigma.mu, mu.zero=mu.zero), numeric(P))
+      mu           <- vapply(Gseq, function(g) if(nn0[g]) .sim.mu(N=nn[g], mu.sigma=mu.sigma, psi.inv=psi.inv[,g], P=P, sum.data=sum.data[,g], sum.eta=sum.eta[[g]], 
+                             lmat=if(Q1) as.matrix(lmat[,,g]) else lmat[,,g], mu.zero=mu.zero) else .sim.mu.p(P=P, sigma.mu=sigma.mu, mu.zero=mu.zero), numeric(P))
       
     # Uniquenesses
-      psi.inv      <- vapply(Gseq, function(g) if(nn0[g]) sim.psi.inv(N=nn[g], psi.alpha=psi.alpha, c.data=c.data[[g]], eta=eta.tmp[[g]], psi.beta=psi.beta, 
-                             P=P, lmat=if(Q1) as.matrix(lmat[,,g]) else lmat[,,g]) else sim.psi.i.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), numeric(P))
+      psi.inv      <- vapply(Gseq, function(g) if(nn0[g]) .sim.psi.inv(N=nn[g], psi.alpha=psi.alpha, c.data=c.data[[g]], eta=eta.tmp[[g]], psi.beta=psi.beta, 
+                             P=P, lmat=if(Q1) as.matrix(lmat[,,g]) else lmat[,,g]) else .sim.psi.i.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), numeric(P))
     
       if(zerr && !err.z) {                                    warning("Algorithm may slow due to corrections for Choleski decompositions of non-positive-definite covariance matrices", call.=FALSE)
         err.z      <- TRUE

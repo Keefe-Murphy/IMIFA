@@ -70,12 +70,12 @@
     delta0g        <- cluster$l.switch[3]
     qstar0g        <- cluster$l.switch[4]
     label.switch   <- any(cluster$l.switch)
-    eta            <- sim.eta.p(N=N, Q=Q)
-    phi            <- lapply(Gseq, function(g) sim.phi.p(Q=Q, P=P, nu=nu, plus1=nuplus1))
-    delta          <- lapply(Gseq, function(g) c(sim.delta.p(alpha=alpha.d1[g], beta=beta.d1), sim.delta.p(Q=Q, alpha=alpha.d2[g], beta=beta.d2)))
+    eta            <- .sim.eta.p(N=N, Q=Q)
+    phi            <- lapply(Gseq, function(g) .sim.phi.p(Q=Q, P=P, nu=nu, plus1=nuplus1))
+    delta          <- lapply(Gseq, function(g) c(.sim.delta.p(alpha=alpha.d1[g], beta=beta.d1), .sim.delta.p(Q=Q, alpha=alpha.d2[g], beta=beta.d2)))
     tau            <- lapply(delta, cumprod)
-    lmat           <- lapply(Gseq, function(g) matrix(unlist(lapply(Pseq, function(j) sim.load.p(Q=Q, phi=phi[[g]][j,], tau=tau[[g]], P=P)), use.names=FALSE), nr=P, byrow=TRUE))
-    psi.inv        <- vapply(Gseq, function(g) sim.psi.i.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta[,g]), numeric(P))
+    lmat           <- lapply(Gseq, function(g) matrix(unlist(lapply(Pseq, function(j) .sim.load.p(Q=Q, phi=phi[[g]][j,], tau=tau[[g]], P=P)), use.names=FALSE), nr=P, byrow=TRUE))
+    psi.inv        <- vapply(Gseq, function(g) .sim.psi.i.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta[,g]), numeric(P))
     if(Q < P - sqrt(P + Q)) {
       fact.ind     <- nn    <= P
       fail.gs      <- which(fact.ind)
@@ -105,7 +105,7 @@
       psi.store[,,1]        <- 1/psi.inv
       pi.store[,1]          <- pi.prop
       z.store[,1]           <- z
-      ll.store[1]           <- sum(sim.z(data=data, mu=mu, Gseq=Gseq, N=N, pi.prop=pi.prop, sigma=lapply(Gseq, function(g) 
+      ll.store[1]           <- sum(.sim.z(data=data, mu=mu, Gseq=Gseq, N=N, pi.prop=pi.prop, sigma=lapply(Gseq, function(g) 
                                          make.positive.definite(tcrossprod(lmat[[g]]) + diag(1/psi.inv[,g]))), Q0=Qs > 0)$log.likes)
       Q.store[,1]           <- Qs
     }
@@ -116,18 +116,18 @@
       if(verbose   && iter   < burnin) setTxtProgressBar(pb, iter)
       
     # Mixing Proportions
-      pi.prop[]    <- sim.pi(pi.alpha=pi.alpha, nn=nn)
+      pi.prop[]    <- .sim.pi(pi.alpha=pi.alpha, nn=nn)
       
     # Cluster Labels
       psi          <- 1/psi.inv
       sigma        <- lapply(Gseq, function(g) tcrossprod(lmat[[g]]) + diag(psi[,g]))
       Q0           <- Qs  > 0
       Q1           <- Qs == 1
-      z.log        <- capture.output({ z.res <- try(sim.z(data=data, mu=mu, sigma=sigma, Gseq=Gseq, N=N, pi.prop=pi.prop, Q0=Q0), silent=TRUE) })
+      z.log        <- capture.output({ z.res <- try(.sim.z(data=data, mu=mu, sigma=sigma, Gseq=Gseq, N=N, pi.prop=pi.prop, Q0=Q0), silent=TRUE) })
       z.err        <- inherits(z.res, "try-error")
       if(z.err) {
         sigma      <- lapply(sigma, make.positive.definite)
-        z.res      <- sim.z(data=data, mu=mu, sigma=sigma, Gseq=Gseq, N=N, pi.prop=pi.prop, Q0=Q0)
+        z.res      <- .sim.z(data=data, mu=mu, sigma=sigma, Gseq=Gseq, N=N, pi.prop=pi.prop, Q0=Q0)
       }
       z            <- z.res$z
       nn           <- tabulate(z, nbins=G)
@@ -142,11 +142,11 @@
         eta.tmp    <- lapply(Gseq, function(g) eta[z == g,, drop=FALSE])
         lmat       <- lapply(Gs, base::matrix, 0, nr=P, nc=0)
       } else {
-        eta.tmp    <- lapply(Gseq, function(g) if(all(nn0[g], Q0[g])) sim.score(N=nn[g], lmat=lmat[[g]], Q=Qs[g], Q1=Q1[g], c.data=c.data[[g]], psi.inv=psi.inv[,g]) else base::matrix(0, nr=ifelse(Q0[g], 0, nn[g]), nc=Qs[g]))
+        eta.tmp    <- lapply(Gseq, function(g) if(all(nn0[g], Q0[g])) .sim.score(N=nn[g], lmat=lmat[[g]], Q=Qs[g], Q1=Q1[g], c.data=c.data[[g]], psi.inv=psi.inv[,g]) else base::matrix(0, nr=ifelse(Q0[g], 0, nn[g]), nc=Qs[g]))
         EtE        <- lapply(Gseq, function(g) if(nn0[g]) crossprod(eta.tmp[[g]]))
-        lmat       <- lapply(Gseq, function(g) if(all(nn0[g], Q0[g])) matrix(unlist(lapply(Pseq, function(j) sim.load(Q=Qs[g], P=P, c.data=c.data[[g]][,j], EtE=EtE[[g]],
+        lmat       <- lapply(Gseq, function(g) if(all(nn0[g], Q0[g])) matrix(unlist(lapply(Pseq, function(j) .sim.load(Q=Qs[g], P=P, c.data=c.data[[g]][,j], EtE=EtE[[g]],
                              eta=eta.tmp[[g]], psi.inv=psi.inv[,g][j], Q1=Q1[g], phi=phi[[g]][j,], tau=tau[[g]], shrink=TRUE)), use.names=FALSE), nr=P, byrow=TRUE) else 
-                             matrix(unlist(lapply(Pseq, function(j) sim.load.p(Q=Qs[g], phi=phi[[g]][j,], tau=tau[[g]], P=P)), use.names=FALSE), nr=P, byrow=FALSE))
+                             matrix(unlist(lapply(Pseq, function(j) .sim.load.p(Q=Qs[g], phi=phi[[g]][j,], tau=tau[[g]], P=P)), use.names=FALSE), nr=P, byrow=FALSE))
         eta.tmp    <- if(length(unique(Qs)) != 1) lapply(Gseq, function(g) cbind(eta.tmp[[g]], matrix(0, nr=nn[g], nc=max(Qs) - Qs[g]))) else eta.tmp
         q0ng       <- !Q0 & nn0
         if(any(q0ng)) {
@@ -158,17 +158,17 @@
     # Means
       sum.data     <- vapply(dat.g, colSums, numeric(P))
       sum.eta      <- lapply(eta.tmp, colSums)
-      mu           <- vapply(Gseq, function(g) if(nn0[g]) sim.mu(N=nn[g], mu.sigma=mu.sigma, psi.inv=psi.inv[,g], P=P, sum.eta=sum.eta[[g]][seq_len(Qs[g])], 
-                             sum.data=sum.data[,g], lmat=lmat[[g]], mu.zero=mu.zero[,g]) else sim.mu.p(P=P, sigma.mu=sigma.mu, mu.zero=mu.zero[,g]), numeric(P))
+      mu           <- vapply(Gseq, function(g) if(nn0[g]) .sim.mu(N=nn[g], mu.sigma=mu.sigma, psi.inv=psi.inv[,g], P=P, sum.eta=sum.eta[[g]][seq_len(Qs[g])], 
+                             sum.data=sum.data[,g], lmat=lmat[[g]], mu.zero=mu.zero[,g]) else .sim.mu.p(P=P, sigma.mu=sigma.mu, mu.zero=mu.zero[,g]), numeric(P))
       
     # Uniquenesses
-      psi.inv      <- vapply(Gseq, function(g) if(nn0[g]) sim.psi.inv(N=nn[g], psi.alpha=psi.alpha, c.data=c.data[[g]], psi.beta=psi.beta[,g], lmat=lmat[[g]],
-                             P=P, eta=eta.tmp[[g]][,seq_len(Qs[g]), drop=FALSE]) else sim.psi.i.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta[,g]), numeric(P))
+      psi.inv      <- vapply(Gseq, function(g) if(nn0[g]) .sim.psi.inv(N=nn[g], psi.alpha=psi.alpha, c.data=c.data[[g]], psi.beta=psi.beta[,g], lmat=lmat[[g]],
+                             P=P, eta=eta.tmp[[g]][,seq_len(Qs[g]), drop=FALSE]) else .sim.psi.i.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta[,g]), numeric(P))
     
     # Local Shrinkage
       load.2       <- lapply(lmat, .power2)
-      phi          <- lapply(Gseq, function(g) if(nn0[g]) sim.phi(Q=Qs[g], P=P, nu=nu, plus1=nuplus1,
-                      tau=tau[[g]], load.2=load.2[[g]]) else sim.phi.p(Q=Qs[g], P=P, nu=nu, plus1=nuplus1))
+      phi          <- lapply(Gseq, function(g) if(nn0[g]) .sim.phi(Q=Qs[g], P=P, nu=nu, plus1=nuplus1,
+                      tau=tau[[g]], load.2=load.2[[g]]) else .sim.phi.p(Q=Qs[g], P=P, nu=nu, plus1=nuplus1))
     
     # Global Shrinkage
       sum.terms    <- lapply(Gseq, function(g) diag(crossprod(phi[[g]], load.2[[g]])))
@@ -177,14 +177,14 @@
         Q1g        <- Q1[g]
         if(nn0[g])    {
           for(k in seq_len(Qg)) { 
-            delta[[g]][k]   <- if(k > 1) sim.deltak(alpha.d2=alpha.d2[g], beta.d2=beta.d2, delta.k=delta[[g]][k], tau.kq=tau[[g]][k:Qg], P=P,
-                                                    Q=Qg, k=k, sum.term.kq=sum.terms[[g]][k:Qg]) else sim.delta1(Q=Qg, P=P, tau=tau[[g]], sum.term=sum.terms[[g]],
+            delta[[g]][k]   <- if(k > 1) .sim.deltak(alpha.d2=alpha.d2[g], beta.d2=beta.d2, delta.k=delta[[g]][k], tau.kq=tau[[g]][k:Qg], P=P,
+                                                    Q=Qg, k=k, sum.term.kq=sum.terms[[g]][k:Qg]) else .sim.delta1(Q=Qg, P=P, tau=tau[[g]], sum.term=sum.terms[[g]],
                                                                                                                  alpha.d1=ifelse(Q1g, alpha.d2[g], alpha.d1[g]), beta.d1=ifelse(Q1g, beta.d2, beta.d1), delta.1=delta[[g]][1])
             tau[[g]]        <- cumprod(delta[[g]])
           }
         } else {
           for(k in seq_len(Qg)) { 
-            delta[[g]][k]   <- if(k > 1) sim.delta.p(alpha=alpha.d2[g], beta=beta.d2) else sim.delta.p(alpha=ifelse(Q1g, alpha.d2[g], alpha.d1[g]), beta=ifelse(Q1g, beta.d2, beta.d1))
+            delta[[g]][k]   <- if(k > 1) .sim.delta.p(alpha=alpha.d2[g], beta=beta.d2) else .sim.delta.p(alpha=ifelse(Q1g, alpha.d2[g], alpha.d1[g]), beta=ifelse(Q1g, beta.d2, beta.d1))
             tau[[g]]        <- cumprod(delta[[g]])
           }
         }

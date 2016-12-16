@@ -41,9 +41,9 @@
     cov.est      <- provideDimnames(matrix(0, nr=P, nc=P), base=dimnames(cov.emp))
     
     mu.sigma     <- 1/sigma.mu
-    eta          <- sim.eta.p(Q=Q, N=N)
-    lmat         <- sim.load.p(Q=Q, P=P, sigma.l=sigma.l, shrink=FALSE)
-    psi.inv      <- sim.psi.i.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
+    eta          <- .sim.eta.p(Q=Q, N=N)
+    lmat         <- .sim.load.p(Q=Q, P=P, sigma.l=sigma.l, shrink=FALSE)
+    psi.inv      <- .sim.psi.i.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
     if(all(Q0, Q  < P - sqrt(P + Q), N > P)) {
       fact       <- try(factanal(data, factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
       if(!inherits(fact, "try-error")) {
@@ -75,16 +75,16 @@
     # Scores & Loadings
       c.data     <- sweep(data, 2, mu, FUN="-")
       if(Q0) {
-        eta      <- sim.score(N=N, Q=Q, lmat=lmat, psi.inv=psi.inv, c.data=c.data, Q1=Q1)
-        lmat     <- matrix(unlist(lapply(Pseq, function(j) sim.load(l.sigma=l.sigma, Q=Q, eta=eta, c.data=c.data[,j], P=P, 
+        eta      <- .sim.score(N=N, Q=Q, lmat=lmat, psi.inv=psi.inv, c.data=c.data, Q1=Q1)
+        lmat     <- matrix(unlist(lapply(Pseq, function(j) .sim.load(l.sigma=l.sigma, Q=Q, eta=eta, c.data=c.data[,j], P=P, 
                            Q1=Q1, psi.inv=psi.inv[j], EtE=crossprod(eta), shrink=FALSE)), use.names=FALSE), nr=P, byrow=TRUE)
       }
       
     # Means
-      mu[]       <- sim.mu(N=N, P=P, mu.sigma=mu.sigma, psi.inv=psi.inv, sum.data=sum.data, sum.eta=colSums(eta), lmat=lmat, mu.zero=mu.zero)
+      mu[]       <- .sim.mu(N=N, P=P, mu.sigma=mu.sigma, psi.inv=psi.inv, sum.data=sum.data, sum.eta=colSums(eta), lmat=lmat, mu.zero=mu.zero)
                       
     # Uniquenesses
-      psi.inv    <- sim.psi.inv(N=N, P=P, psi.alpha=psi.alpha, psi.beta=psi.beta, c.data=c.data, eta=eta, lmat=lmat)
+      psi.inv    <- .sim.psi.inv(N=N, P=P, psi.alpha=psi.alpha, psi.beta=psi.beta, c.data=c.data, eta=eta, lmat=lmat)
     
       if(is.element(iter, iters)) {
         if(verbose) setTxtProgressBar(pb, iter)

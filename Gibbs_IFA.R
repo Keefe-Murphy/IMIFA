@@ -41,12 +41,12 @@
     Q.large      <- Q.big  <- FALSE
     
     mu.sigma     <- 1/sigma.mu
-    eta          <- sim.eta.p(Q=Q, N=N)
-    phi          <- sim.phi.p(Q=Q, P=P, nu=nu, plus1=nuplus1)
-    delta        <- c(sim.delta.p(alpha=alpha.d1, beta=beta.d1), sim.delta.p(Q=Q, alpha=alpha.d2, beta=beta.d2))
+    eta          <- .sim.eta.p(Q=Q, N=N)
+    phi          <- .sim.phi.p(Q=Q, P=P, nu=nu, plus1=nuplus1)
+    delta        <- c(.sim.delta.p(alpha=alpha.d1, beta=beta.d1), .sim.delta.p(Q=Q, alpha=alpha.d2, beta=beta.d2))
     tau          <- cumprod(delta)
-    lmat         <- matrix(unlist(lapply(Pseq, function(j) sim.load.p(Q=Q, phi=phi[j,], tau=tau, P=P)), use.names=FALSE), nr=P, byrow=TRUE)
-    psi.inv      <- sim.psi.i.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
+    lmat         <- matrix(unlist(lapply(Pseq, function(j) .sim.load.p(Q=Q, phi=phi[j,], tau=tau, P=P)), use.names=FALSE), nr=P, byrow=TRUE)
+    psi.inv      <- .sim.psi.i.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
     if(all(Q  < P - sqrt(P + Q), N > P)) {
       fact       <- try(factanal(data, factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
       if(!inherits(fact, "try-error"))   {
@@ -79,8 +79,8 @@
     # Scores & Loadings
       c.data     <- sweep(data, 2, mu, FUN="-")
       if(Q0) {
-        eta      <- sim.score(N=N, Q=Q, lmat=lmat, psi.inv=psi.inv, c.data=c.data, Q1=Q1)
-        lmat     <- matrix(unlist(lapply(Pseq, function(j) sim.load(Q=Q, tau=tau, eta=eta, c.data=c.data[,j], P=P, Q1=Q1, 
+        eta      <- .sim.score(N=N, Q=Q, lmat=lmat, psi.inv=psi.inv, c.data=c.data, Q1=Q1)
+        lmat     <- matrix(unlist(lapply(Pseq, function(j) .sim.load(Q=Q, tau=tau, eta=eta, c.data=c.data[,j], P=P, Q1=Q1, 
                            phi=phi[j,], psi.inv=psi.inv[j], EtE=crossprod(eta))), use.names=FALSE), nr=P, byrow=TRUE)
       } else {
         eta      <- base::matrix(0, nr=N, nc=0)
@@ -88,20 +88,20 @@
       }     
       
     # Means
-      mu[]       <- sim.mu(N=N, P=P, mu.sigma=mu.sigma, psi.inv=psi.inv, sum.data=sum.data, sum.eta=colSums(eta), lmat=lmat, mu.zero=mu.zero)
+      mu[]       <- .sim.mu(N=N, P=P, mu.sigma=mu.sigma, psi.inv=psi.inv, sum.data=sum.data, sum.eta=colSums(eta), lmat=lmat, mu.zero=mu.zero)
     
     # Uniquenesses
-      psi.inv    <- sim.psi.inv(N=N, P=P, psi.alpha=psi.alpha, psi.beta=psi.beta, c.data=c.data, eta=eta, lmat=lmat)
+      psi.inv    <- .sim.psi.inv(N=N, P=P, psi.alpha=psi.alpha, psi.beta=psi.beta, c.data=c.data, eta=eta, lmat=lmat)
     
     # Local Shrinkage
       load.2     <- lmat * lmat
-      phi        <- sim.phi(Q=Q, P=P, nu=nu, tau=tau, load.2=load.2, plus1=nuplus1)
+      phi        <- .sim.phi(Q=Q, P=P, nu=nu, tau=tau, load.2=load.2, plus1=nuplus1)
           
     # Global Shrinkage
       sum.term   <- diag(crossprod(phi, load.2))
       for(k in seq_len(Q)) { 
-        delta[k] <- if(k > 1) sim.deltak(alpha.d2=alpha.d2, beta.d2=beta.d2, delta.k=delta[k], Q=Q, P=P, k=k,
-                    tau.kq=tau[k:Q], sum.term.kq=sum.term[k:Q]) else sim.delta1(Q=Q, P=P, tau=tau, sum.term=sum.term,
+        delta[k] <- if(k > 1) .sim.deltak(alpha.d2=alpha.d2, beta.d2=beta.d2, delta.k=delta[k], Q=Q, P=P, k=k,
+                    tau.kq=tau[k:Q], sum.term.kq=sum.term[k:Q]) else .sim.delta1(Q=Q, P=P, tau=tau, sum.term=sum.term,
                     alpha.d1=ifelse(Q1, alpha.d2, alpha.d1), beta.d1=ifelse(Q1, beta.d2, beta.d1), delta.1=delta[1])
         tau      <- cumprod(delta)      
       }
