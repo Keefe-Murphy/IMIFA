@@ -300,7 +300,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, 
     }
     post.z       <- apply(z, 1, function(x) factor(which.max(tabulate(x)), levels=Gseq))
     if(nlevels(droplevels(post.z)) !=
-       nlevels(post.z))           warning("Empty group exists in modal clustering: examine trace plots and try supplying a lower G value to tune.imifa() or re-running the model", call.=FALSE)
+       nlevels(post.z))           warning("Empty group exists in modal clustering:\n examine trace plots and try supplying a lower G value to tune.imifa() or re-running the model", call.=FALSE)
     uncertain    <- 1 - matrixStats::colMaxs(matrix(apply(z, 1, tabulate, nbins=G)/length(tmp.store), nr=G, nc=n.obs))
     if(sw["pi.sw"])    {
       pi.prop    <- pies[Gseq,seq_along(tmp.store), drop=FALSE]
@@ -315,7 +315,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, 
       levs       <- levels(zlabels)
       if(length(levs) == G) {
         sw.lab   <- .lab.switch(z.new=post.z, z.old=zlabels, Gs=Gseq)
-        post.z   <- setNames(factor(sw.lab$z), names(post.z))
+        post.z   <- setNames(factor(sw.lab$z, levels=Gseq), names(post.z))
         l.perm   <- sw.lab$z.perm
         z.tmp    <- apply(z, 2, function(x) factor(x, levels=l.perm))
         z        <- provideDimnames(apply(z.tmp, 2, function(x) as.numeric(levels(as.factor(x)))[as.numeric(x)]), base=dimnames(z.tmp))
@@ -474,7 +474,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, 
         psi      <- as.matrix(psis[,g,store])
       }
       if(data.x) {
-        cov.emp  <- provideDimnames(cova(as.matrix(dat[z.ind[[g]],, drop=FALSE])), base=list(varnames, varnames))
+        cov.emp  <- provideDimnames(cov(dat[z.ind[[g]],, drop=FALSE]), base=list(varnames, varnames))
         if(sum(z.ind[[g]]) <= 1)  rm(cov.emp)
       }  
     } else {

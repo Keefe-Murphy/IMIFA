@@ -66,6 +66,7 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
   grp.ind      <- !is.element(method, c("FA", "IFA"))
   if(grp.ind)   {
     clust      <- results$Clust
+    grp.size   <- tabulate(clust$map, nbins=G)
     labelmiss  <- !is.null(attr(clust, "Label.Sup")) && !attr(clust, "Label.Sup")
   }
   grp.ind      <- all(G != 1, grp.ind)
@@ -163,6 +164,7 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
   
   for(g in Gs) {
     Q     <- Qs[g]
+    ng    <- ifelse(grp.ind, grp.size[g], n.obs)
     g.ind <- which(Gs == g)
     msgx  <- all(interactive(), g != max(Gs))
     result     <- results[[g]]
@@ -172,13 +174,15 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
       on.exit(suppressWarnings(options(defopt)), add=TRUE)
       if(ent  %in% c("exit", "EXIT")) stop()
     }
-    if(any(all(Q  == 0, vars == "loadings"),
-           all(Qs == 0, vars == "scores")))  {            
-                                      warning(paste0("Can't plot ", vars, paste0(ifelse(all(vars == "loadings", G > 1), paste0(" for group ", g), "")), " as they contain no columns/factors"), call.=FALSE)
+    if(any(all(Qs == 0, vars == "scores"),
+           all(Q  == 0, vars == "loadings"),
+           all(ng == 0, vars == "scores", m.sw["M.sw"]))) {
+      warning(paste0("Can't plot ", vars, paste0(ifelse(any(all(vars == "scores", ng == 0), all(vars == "loadings", grp.ind)), paste0(" for group ", g), "")), " as they contain no ", ifelse(all(vars == "scores", ng == 0), "rows/observations", "columns/factors")), call.=FALSE)
       if(g == max(Gs)) {
         break
       } else {
         if(isTRUE(msgx)) .ent.exit()
+        next
       }
     }
     if(any(vars   == "alpha",
