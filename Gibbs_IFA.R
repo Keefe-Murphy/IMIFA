@@ -18,15 +18,17 @@
     varnames     <- colnames(data)
     facnames     <- paste0("Factor ", seq_len(Q))
     iternames    <- paste0("Iteration", seq_len(n.store))
-    data         <- provideDimnames(data, base=NULL)
+    dimnames(data)         <- NULL
     if(sw["mu.sw"])  {
       mu.store   <- provideDimnames(matrix(0, nr=P, nc=n.store), base=list(varnames, iternames))
     }
     if(sw["s.sw"])   {
-      eta.store  <- provideDimnames(array(0, dim=c(N, Q, n.store)), base=list(obsnames, if(Q > 0) facnames, iternames))
+      eta.store  <- array(0, dim=c(N, Q, n.store))
+      dimnames(eta.store)  <- list(obsnames, if(Q > 0) facnames, iternames)
     }
     if(sw["l.sw"])   {
-      load.store <- provideDimnames(array(0, dim=c(P, Q, n.store)), base=list(varnames, if(Q > 0) facnames, iternames))
+      load.store <- array(0, dim=c(P, Q, n.store))
+      dimnames(load.store) <- list(varnames, if(Q > 0) facnames, iternames)
     }
     if(sw["psi.sw"]) {
       psi.store  <- provideDimnames(matrix(0, nr=P, nc=n.store), base=list(varnames, iternames))

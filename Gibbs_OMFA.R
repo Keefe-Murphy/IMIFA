@@ -29,10 +29,12 @@
       mu.store     <- provideDimnames(array(0, dim=c(P, G, n.store)), base=list(varnames, gnames, iternames))
     }
     if(sw["s.sw"])   {
-      eta.store    <- provideDimnames(array(0, dim=c(N, Q, n.store)), base=list(obsnames, if(Q0) facnames, iternames))
+      eta.store    <- array(0, dim=c(N, Q, n.store))
+      dimnames(eta.store)  <- list(obsnames, if(Q0) facnames, iternames)
     }
     if(sw["l.sw"])   {
-      load.store   <- provideDimnames(array(0, dim=c(P, Q, G, n.store)), base=list(varnames, if(Q0) facnames, gnames, iternames))
+      load.store   <- array(0, dim=c(P, Q, G, n.store))
+      dimnames(load.store) <- list(varnames, if(Q0) facnames, gnames, iternames)
     }
     if(sw["psi.sw"]) {
       psi.store    <- provideDimnames(array(0, dim=c(P, G, n.store)), base=list(varnames, gnames, iternames))
@@ -66,7 +68,7 @@
       }
     } else {
       psi.tmp      <- psi.inv
-      psi.inv      <- vapply(Gs, function(g) if(nn[g] > 1) 1/colVars(data[z == g,, drop=FALSE]) else psi.tmp[,g], numeric(P))
+      psi.inv      <- vapply(Gseq, function(g) if(nn[g] > 1) 1/colVars(data[z == g,, drop=FALSE]) else psi.tmp[,g], numeric(P))
       inf.ind      <- is.infinite(psi.inv)
       psi.inv[inf.ind]     <- psi.tmp[inf.ind]
     }
@@ -119,7 +121,7 @@
       nn           <- tabulate(z, nbins=G)
       nn0          <- nn > 0
       nn.ind       <- which(nn0)
-      dat.g          <- lapply(Gs, function(g) data[z == g,, drop=FALSE])
+      dat.g        <- lapply(Gseq, function(g) data[z == g,, drop=FALSE])
       
     # Scores & Loadings
       c.data       <- lapply(Gseq, function(g) sweep(dat.g[[g]], 2, mu[,g], FUN="-"))

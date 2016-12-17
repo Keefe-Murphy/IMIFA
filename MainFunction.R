@@ -200,7 +200,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(is.element(meth[1], c("IMIFA", "IMFA",
        "OMIFA", "OMFA")))   {       stop("'method' must be FA or IFA for a one group model")
     } else {
-      meth[1]    <- switch(meth[1], MFA=FA, MIFA=IFA)
+      meth[1]    <- switch(meth[1], MFA="FA", FA="FA", MIFA="IFA", IFA="IFA")
     }
     if(!is.element(method, 
                    c("FA", "IFA"))) message(paste0("Forced use of ", meth[1], " method where 'range.G' is equal to 1"))
@@ -581,7 +581,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     }
   }
   tot.time  <- proc.time() - start.time
-  avg.time  <- tot.time/switch(method, MFA=len.x, MIFA=len.G, classify=range.G, len.Q)
+  avg.time  <- tot.time/switch(method, MFA=len.X, MIFA=len.G, classify=range.G, len.Q)
   tot.time  <- tot.time    + init.time
   init.time <- init.time   + fac.time
   for(g in length(imifa)) {

@@ -26,10 +26,12 @@
       mu.store     <- provideDimnames(array(0, dim=c(P, G, n.store)), base=list(varnames, gnames, iternames))
     }
     if(sw["s.sw"])   {
-      eta.store    <- provideDimnames(array(0, dim=c(N, Q, n.store)), base=list(obsnames, if(Q > 0) facnames, iternames))
+      eta.store    <- array(0, dim=c(N, Q, n.store))
+      dimnames(eta.store)   <- list(obsnames, if(Q > 0) facnames, iternames)
     }
     if(sw["l.sw"])   {
-      load.store   <- provideDimnames(array(0, dim=c(P, Q, G, n.store)), base=list(varnames, if(Q > 0) facnames, gnames, iternames))
+      load.store   <- array(0, dim=c(P, Q, G, n.store))
+      dimnames(load.store)  <- list(varnames, if(Q > 0) facnames, gnames, iternames)
     }
     if(sw["psi.sw"]) {
       psi.store    <- provideDimnames(array(0, dim=c(P, G, n.store)), base=list(varnames, gnames, iternames))
@@ -94,7 +96,7 @@
       if(len.fail   > 0)       message(paste0("Parameters of the following group", ifelse(len.fail > 2, "s ", " "), "were initialised by simulation from priors, not factanal: ", ifelse(len.fail > 1, paste0(paste0(fail.gs[-len.fail], sep="", collapse=", "), " and ", fail.gs[len.fail]), fail.gs), " - G=", G, ", Q=", Q))
     } else     {
       psi.tmp      <- psi.inv
-      psi.inv      <- vapply(Gs, function(g) if(nn[g] > 1) 1/colVars(data[z == g,, drop=FALSE]) else psi.tmp[,g], numeric(P))
+      psi.inv      <- vapply(Gseq, function(g) if(nn[g] > 1) 1/colVars(data[z == g,, drop=FALSE]) else psi.tmp[,g], numeric(P))
       inf.ind      <- is.infinite(psi.inv)
       psi.inv[inf.ind]      <- psi.tmp[inf.ind]
     }
@@ -133,14 +135,14 @@
       nn           <- tabulate(z, nbins=G)
       nn0          <- nn  > 0
       nn.ind       <- which(nn0)
-      dat.g        <- lapply(Gs, function(g) data[z == g,, drop=FALSE])
+      dat.g        <- lapply(Gseq, function(g) data[z == g,, drop=FALSE])
     
     # Scores & Loadings
       c.data       <- lapply(Gseq, function(g) sweep(dat.g[[g]], 2, mu[,g], FUN="-"))
       if(!any(Q0))    {
         eta        <- base::matrix(0, nr=N, nc=0)
         eta.tmp    <- lapply(Gseq, function(g) eta[z == g,, drop=FALSE])
-        lmat       <- lapply(Gs, base::matrix, 0, nr=P, nc=0)
+        lmat       <- lapply(Gseq, base::matrix, 0, nr=P, nc=0)
       } else {
         eta.tmp    <- lapply(Gseq, function(g) if(all(nn0[g], Q0[g])) .sim.score(N=nn[g], lmat=lmat[[g]], Q=Qs[g], Q1=Q1[g], c.data=c.data[[g]], psi.inv=psi.inv[,g]) else base::matrix(0, nr=ifelse(Q0[g], 0, nn[g]), nc=Qs[g]))
         EtE        <- lapply(Gseq, function(g) if(nn0[g]) crossprod(eta.tmp[[g]]))

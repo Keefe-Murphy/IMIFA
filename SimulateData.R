@@ -62,15 +62,19 @@ sim.IMIFA      <- function(N = 300L, G = 3L, P = 50L, Q = rep(4L, G), pis = rep(
     Q.g        <- Q[g]
     N.g        <- nn[g]
     mu.true    <- setNames(.sim.mu.p(P=P, mu.zero=prior.mu[g] * loc.diff, sigma.mu=1), vnames)
-    l.true     <- provideDimnames(.sim.load.p(Q=Q.g, P=P, sigma.l=1, shrink=FALSE), base=list(vnames, if(Q.g > 0) paste0("Factor ", seq_len(Q.g))))
+    l.true     <- .sim.load.p(Q=Q.g, P=P, sigma.l=1, shrink=FALSE)
     psi.true   <- setNames(runif(P, 0, 1), vnames)
     
   # Simulate data
     covmat     <- provideDimnames(diag(psi.true) + switch(method, marginal=tcrossprod(l.true), 0), base=list(vnames, vnames))
     if(!isSymmetric(covmat))             stop("Non-symmetric covariance matrix")
+    if(!is.positive.definite(covmat)) {
+      covmat   <- make.positive.definite(covmat)
+    }
     sigma      <- if(any(Q.g > 0, method == "conditional")) chol(covmat) else sqrt(covmat)
     means      <- matrix(mu.true, nr=N.g, nc=P, byrow=TRUE) + switch(method, conditional=tcrossprod(eta.true[true.zlab == g, seq_len(Q.g), drop=FALSE], l.true), 0)
     simdata    <- rbind(simdata, means + matrix(rnorm(N.g * P), nr=N.g, nc=P) %*% sigma)
+    dimnames(l.true)   <- list(vnames, if(Q.g > 0) paste0("Factor ", seq_len(Q.g)))
     true.mu[[g]]       <- mu.true
     true.l[[g]]        <- l.true
     true.psi[[g]]      <- psi.true
@@ -79,8 +83,9 @@ sim.IMIFA      <- function(N = 300L, G = 3L, P = 50L, Q = rep(4L, G), pis = rep(
   
 # Post-process data
   permute      <- sample(Nseq, N, replace=FALSE)
-  simdata      <- provideDimnames(simdata[permute,, drop=FALSE], list(nnames, vnames))
+  simdata      <- simdata[permute,, drop=FALSE]
   true.zlab    <- true.zlab[permute]
+  dimnames(simdata)    <- list(nnames, vnames)
   simdata      <- as.data.frame(simdata)
   attr(simdata,
        "Factors")      <- Q
@@ -89,7 +94,8 @@ sim.IMIFA      <- function(N = 300L, G = 3L, P = 50L, Q = rep(4L, G), pis = rep(
   attr(simdata, 
        "Means")        <- do.call(cbind, true.mu)
   if(method == "conditional") {
-    eta.true   <- provideDimnames(eta.true[permute,, drop=FALSE], base=list(nnames, paste0("Factor ", seq_len(Q.max))))
+    eta.true   <- eta.true[permute,, drop=FALSE]
+    dimnames(eta.true) <- list(nnames, if(Q.max > 0) paste0("Factor ", seq_len(Q.max)))
     attr(simdata,
          "Scores")     <- eta.true
   }

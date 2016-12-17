@@ -29,10 +29,12 @@
       mu.store      <- provideDimnames(array(0, dim=c(P, trunc.G, n.store)), base=list(varnames, gnames, iternames))
     }
     if(sw["s.sw"])   {
-      eta.store     <- provideDimnames(array(0, dim=c(N, Q, n.store)), base=list(obsnames, if(Q0) facnames, iternames))
+      eta.store     <- array(0, dim=c(N, Q, n.store))
+      dimnames(eta.store)   <- list(obsnames, if(Q0) facnames, iternames)
     }
     if(sw["l.sw"])   {
-      load.store    <- provideDimnames(array(0, dim=c(P, Q, trunc.G, n.store)), base=list(varnames, if(Q0) facnames, gnames, iternames))
+      load.store    <- array(0, dim=c(P, Q, trunc.G, n.store))
+      dimnames(load.store)  <- list(varnames, if(Q0) facnames, gnames, iternames)
     }
     if(sw["psi.sw"]) {
       psi.store     <- provideDimnames(array(0, dim=c(P, trunc.G, n.store)), base=list(varnames, gnames, iternames))
