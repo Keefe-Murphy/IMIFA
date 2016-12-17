@@ -145,17 +145,17 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
   if(!gx  && any(length(g) != 1, 
                  !is.numeric(g)))     stop("If 'g' is supplied it must be of length 1")
   if(any(all(is.element(method, c("IMIFA", "OMIFA")), m.sw["G.sw"]), m.sw["Z.sw"])) {
-    Gs    <- if(gx) seq_len(2) else ifelse(g <= 2, g, 
+    Gs    <- if(gx) seq_len(2L) else ifelse(g <= 2, g, 
                                       stop("Invalid 'g' value"))
   } else if(any(all(is.element(vars, c("scores", "pis", "alpha")), any(all.ind, vars != "scores", !m.sw["M.sw"])), 
             m.sw["G.sw"], all(m.sw["P.sw"], vars != "loadings"), m.sw["E.sw"])) {
-    Gs    <- 1
+    Gs    <- 1L
   } else if(!gx) {
     if(!is.element(method, c("FA", "IFA"))) {
       if(!is.element(g, Gseq))        stop("This g value was not used during simulation")
       Gs  <- g
     } else if(g > 1)     {            message(paste0("Forced g=1 for the ", method, " method"))
-      Gs  <- 1
+      Gs  <- 1L
     }
   } else if(!interactive())  {        stop("g must be supplied for non-interactive sessions")
   } else {
@@ -177,7 +177,7 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
     if(any(all(Qs == 0, vars == "scores"),
            all(Q  == 0, vars == "loadings"),
            all(ng == 0, vars == "scores", m.sw["M.sw"]))) {
-      warning(paste0("Can't plot ", vars, paste0(ifelse(any(all(vars == "scores", ng == 0), all(vars == "loadings", grp.ind)), paste0(" for group ", g), "")), " as they contain no ", ifelse(all(vars == "scores", ng == 0), "rows/observations", "columns/factors")), call.=FALSE)
+                                      warning(paste0("Can't plot ", vars, paste0(ifelse(any(all(vars == "scores", ng == 0), all(vars == "loadings", grp.ind)), paste0(" for group ", g), "")), " as they contain no ", ifelse(all(vars == "scores", ng == 0), "rows/observations", "columns/factors")), call.=FALSE)
       if(g == max(Gs)) {
         break
       } else {
@@ -196,7 +196,7 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
       iter     <- switch(vars, scores=seq_along(attr(results$Score, "Eta.store")), pis=seq_along(store), seq_len(attr(result, "Store")))
     }               
     if(is.element(vars, c("scores", "loadings"))) {
-      if(indx)               ind <- c(1, 1)
+      if(indx)               ind <- c(1L, 1L)
       if(!facx)           ind[2] <- fac[g]
       if(length(ind) > 2)             stop("Length of plotting indices can't be greater than 2")
       if(vars  == "scores")  {
@@ -214,7 +214,7 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
       }
     } else   {
       if(any(vars == "alpha",
-             indx))       ind    <- 1
+             indx))       ind    <- 1L
       if(length(ind) >  1)            stop("Length of plotting indices can't be greater than 1")
       if(vars  == "pis")    {
         if(ind       >  G)            stop(paste0("Index can't be greater than the number of groups: ", G))
@@ -402,7 +402,7 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
     if(m.sw["M.sw"])  {
       if(is.element(vars, c("scores", "loadings"))) {
         if(indx)  {
-          ind     <- switch(vars, scores=c(1, min(Q.max, 2)), c(1, 1))
+          ind     <- switch(vars, scores=c(1L, min(Q.max, 2L)), c(1L, 1L))
         }
         if(!facx) {
           ind[2]  <- fac[g]
@@ -896,7 +896,7 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
 }
 
 # Loadings Heatmaps
-  mat2cols     <- function(mat, cols = heat.colors(30), blind = TRUE, 
+  mat2cols     <- function(mat, cols = heat.colors(30L), blind = TRUE, 
                            byrank = FALSE, breaks = length(cols)) { 
     m          <- as.matrix(mat)
     cols       <- if(isTRUE(blind)) dichromat(cols) else cols
@@ -913,11 +913,11 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
 
 # Colour Checker
   are.cols     <- function(cols) {
-    vapply(cols, function(x) { tryCatch(is.matrix(col2rgb(x)), error = function(e) FALSE) }, logical(1))
+    vapply(cols,  function(x) { tryCatch(is.matrix(col2rgb(x)), error = function(e) FALSE) }, logical(1))
   }
 
 # Prior No. Groups (DP & PY)
-  G.prior      <- function(N, alpha, discount = 0, plot = TRUE, 
+  G.prior      <- function(N, alpha, discount = 0L, plot = TRUE, 
                            avg = FALSE, col = "black", ...) {
     if(suppressMessages(require(Rmpfr))) {
       on.exit(.detach.pkg(Rmpfr))

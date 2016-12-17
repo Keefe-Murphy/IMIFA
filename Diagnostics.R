@@ -52,8 +52,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, 
   
   G.T            <- !missing(G)
   Q.T            <- !missing(Q)
-  G.ind          <- 1
-  Q.ind          <- 1
+  G.ind          <- Q.ind      <- 1L
   if(inf.G)  {
     GQs          <- length(sims[[G.ind]])
     GQ1          <- GQs > 1
@@ -219,8 +218,8 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, 
          !identical(dat.nam, nam.dat) && (any(grepl("[[:alpha:]]", gsub('c', '', nam.x))) || grepl(":", 
          nam.x, fixed=TRUE)))) {  warning("Extremely inadvisable to supply 'dat' subsetted by any means other than row/column numbers or c() indexing:\n can't compute empirical covariance and error metrics, best to create new data object", call.=FALSE)
       } else  {
-        spl.ind          <- if(grepl("(,", nam.x, fixed=TRUE)) sapply(gregexpr("\\(,", nam.x), head, 1) else sapply(gregexpr("\\)", nam.x), head, 1)
-        spl.tmp          <- c(substring(nam.x, 1, spl.ind), substring(nam.x, spl.ind + 2, nchar(nam.x)))
+        spl.ind          <- if(grepl("(,", nam.x, fixed=TRUE)) sapply(gregexpr("\\(,", nam.x), head, 1L) else sapply(gregexpr("\\)", nam.x), head, 1L)
+        spl.tmp          <- c(substring(nam.x, 1, spl.ind), substring(nam.x, spl.ind + 2L, nchar(nam.x)))
         neg.r            <- grepl("-", spl.tmp[1], fixed=TRUE) || grepl("!", spl.tmp[1], fixed=TRUE)
         neg.c            <- grepl("-", spl.tmp[2], fixed=TRUE) || grepl("!", spl.tmp[2], fixed=TRUE)
         rowx             <- as.numeric(unlist(strsplit(gsub('\\(', '', gsub(',', '', unlist(regmatches(spl.tmp[1], gregexpr('\\(?[0-9,.]+', spl.tmp[1]))))), '')))

@@ -48,7 +48,7 @@
     }
 
   # Mixing Proportions
-    .sim.pi      <- function(pi.alpha, nn, N = sum(nn), inf.G = FALSE, len, discount = 0) {
+    .sim.pi      <- function(pi.alpha, nn, N = sum(nn), inf.G = FALSE, len, discount = 0L) {
       if(inf.G) {
         vs       <- if(discount == 0) rbeta(len, 1 + nn, pi.alpha + N - cumsum(nn)) else rbeta(len, 1 - discount + nn, pi.alpha + seq_along(nn) * discount + N - cumsum(nn))
           return(list(Vs = vs, pi.prop = vapply(seq_len(len), function(t) vs[t] * prod(1 - vs[seq_len(t - 1)]), numeric(1))))
@@ -72,14 +72,14 @@
     }
 
   # Alpha
-    .sim.alpha.g <- function(alpha, shape, rate, G, N, discount) {
+    .sim.alpha.g <- function(alpha, shape, rate, G, N, discount = 0L) {
       shape2     <- shape + G - 1
-      rate2      <- rate - log(rbeta(1, alpha + discount + 1, N))
+      rate2      <- rate  - log(rbeta(1, alpha + discount + 1, N))
       weight     <- shape2/(shape2 + N * rate2)
         weight    * rgamma(1, shape=shape2 + 1, rate=rate2) + (1 - weight) * rgamma(1, shape=shape2, rate=rate2) - discount
     }
     
-    .sim.alpha.m <- function(alpha, lower, upper, trunc.G, Vs, discount) {
+    .sim.alpha.m <- function(alpha, lower, upper, trunc.G, Vs, discount = 0L) {
       alpha.old  <- alpha + discount
       alpha.new  <- runif(1, lower, upper) + discount
       a.prob     <- trunc.G * (log(alpha.new) - log(alpha.old)) + (alpha.new - alpha.old) * sum(log((1 - Vs[-trunc.G])))
@@ -119,7 +119,7 @@
     }
   
   # Global Shrinkage
-    .sim.delta.p <- function(Q = 2, alpha, beta) {
+    .sim.delta.p <- function(Q = 2L, alpha, beta) {
         rgamma(n=Q - 1, shape=alpha, rate=beta)
     }
         
@@ -140,7 +140,7 @@
     }
 
   # Alpha Shifted Gamma Hyperparameters
-    shift.gamma <- function(shape, rate, shift = 0, param = c("rate", "scale")) {
+    shift.gamma <- function(shape, rate, shift = 0L, param = c("rate", "scale")) {
       var       <- shape/rate^2
       exp       <- var * rate + shift
       rate      <- exp/var
@@ -149,7 +149,7 @@
     }
     
   # Check Shrinkage Hyperparemeters
-    MGP.check   <- Vectorize(function(ad1, ad2, Q, nu, bd1 = 1, bd2 = 1, plus1 = TRUE, inverse = TRUE) {
+    MGP.check   <- Vectorize(function(ad1, ad2, Q, nu, bd1 = 1L, bd2 = 1L, plus1 = TRUE, inverse = TRUE) {
       if(any(!is.logical(plus1),
              length(plus1)    != 1))       stop("'plus1' must be TRUE or FALSE")
       if(any(!is.logical(inverse),
@@ -211,7 +211,7 @@
     
     # Move 1
     .lab.move1  <- function(nn.ind, pi.prop, nn) {
-      sw        <- sample(nn.ind, 2)
+      sw        <- sample(nn.ind, 2L)
       pis       <- pi.prop[sw]
       nns       <- nn[sw]
       a.prob    <- (nns[1] - nns[2]) * (log(pis[1]) - log(pis[2])) 
@@ -220,7 +220,7 @@
     
     # Move 2
     .lab.move2  <- function(nn.ind, Vs, nn) {
-      sw        <- sample(nn.ind, 1)
+      sw        <- sample(nn.ind, 1L)
       nn.x      <- which(nn.ind == sw)
       sw        <- c(sw, max(nn.ind[nn.x + 1], nn.ind[nn.x - 1], na.rm=TRUE))
       nns       <- nn[sw]
@@ -231,7 +231,7 @@
 
   # Length Checker
     .len.check  <- function(obj0g, switch0g, method, P, range.G, P.dim = TRUE) {
-      V         <- ifelse(P.dim, P, 1)
+      V         <- ifelse(P.dim, P, 1L)
       rGseq     <- seq_along(range.G)
       obj.name  <- deparse(substitute(obj0g))
       sw.name   <- deparse(substitute(switch0g))
@@ -260,7 +260,7 @@
     }
 
   # Moments of Dirichlet / Pitman-Yor Processes
-    G.expected  <- Vectorize(function(N, alpha, discount = 0) {
+    G.expected  <- Vectorize(function(N, alpha, discount = 0L) {
       if(!all(is.numeric(N), is.numeric(discount), 
          is.numeric(alpha)))               stop("All inputs must be numeric")
       if(discount  < 0  || discount >= 1)  stop("Invalid discount value")
@@ -276,7 +276,7 @@
       }
     })
 
-    G.variance  <- Vectorize(function(N, alpha, discount = 0) {
+    G.variance  <- Vectorize(function(N, alpha, discount = 0L) {
       if(!all(is.numeric(N), is.numeric(discount), 
          is.numeric(alpha)))               stop("All inputs must be numeric")
       if(discount  < 0  || discount >= 1)  stop("Invalid discount value")
