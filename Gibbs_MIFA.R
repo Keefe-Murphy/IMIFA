@@ -55,14 +55,15 @@
     if(length(mu.zero)  == 1) {
       mu.zero      <- matrix(mu.zero,  nr=1, nc=G)
     }
-    if(length(psi.beta) == 1) {
-      psi.beta     <- matrix(psi.beta, nr=1, nc=G)
-    }
     z              <- cluster$z
     z.temp         <- factor(z, levels=Gseq)
     nn             <- tabulate(z, nbins=G)
-    pi.alpha       <- cluster$pi.alpha
     pi.prop        <- cluster$pi.prop
+    pi.alpha       <- cluster$pi.alpha
+    psi.beta       <- unique(round(psi.beta, min(nchar(psi.beta))))
+    if(length(psi.beta) == 1) {
+      psi.beta     <- matrix(psi.beta, nr=1, nc=G)
+    }
     alpha.d1       <- cluster$alpha.d1
     alpha.d2       <- cluster$alpha.d2
     ad1.x          <- length(unique(alpha.d1)) == 1
@@ -152,7 +153,7 @@
         eta.tmp    <- if(length(unique(Qs)) != 1) lapply(Gseq, function(g) cbind(eta.tmp[[g]], matrix(0, nr=nn[g], nc=max(Qs) - Qs[g]))) else eta.tmp
         q0ng       <- !Q0 & nn0
         if(any(q0ng)) {
-          eta.tmp[q0ng]     <- lapply(Gseq[q0ng], function(g, x=eta.tmp[[g]]) { attr(x, "row.names") <- attr(dat.g[[g]], "row.names"); x })
+          eta.tmp[q0ng]     <- lapply(Gseq[q0ng], function(g, x=eta.tmp[[g]]) { row.names(x) <- row.names(dat.g[[g]]); x })
         }
         eta        <- do.call(rbind, eta.tmp)[obsnames,, drop=FALSE]
       }

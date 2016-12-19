@@ -136,7 +136,7 @@
       if(inherits(inv.cov, "try-error"))  {
         inv.cov <- 1/covar
       }
-        (alpha - 1)/diag(inv.cov) 
+        unname((alpha - 1)/diag(inv.cov))
     }
 
   # Alpha Shifted Gamma Hyperparameters

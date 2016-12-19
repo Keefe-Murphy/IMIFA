@@ -68,6 +68,7 @@
     mu.sigma        <- 1/sigma.mu
     z               <- cluster$z
     pi.alpha        <- cluster$pi.alpha
+    psi.beta        <- unique(round(psi.beta, min(nchar(psi.beta))))
     pi.prop         <- c(cluster$pi.prop, .sim.pi(pi.alpha=pi.alpha, nn=rep(0, trunc.G), N=N, inf.G=TRUE, len=trunc.G, discount=discount)$pi.prop[-Gs])
     nn              <- tabulate(z, nbins=trunc.G)
     mu              <- cbind(mu, vapply(seq_len(trunc.G - G), function(g) .sim.mu.p(P=P, sigma.mu=sigma.mu, mu.zero=mu.zero), numeric(P)))

@@ -70,6 +70,7 @@
     mu.sigma         <- 1/sigma.mu
     z                <- cluster$z
     pi.alpha         <- cluster$pi.alpha
+    psi.beta         <- unique(round(psi.beta, min(nchar(psi.beta))))
     pi.prop          <- c(cluster$pi.prop, .sim.pi(pi.alpha=pi.alpha, nn=rep(0, trunc.G), N=N, inf.G=TRUE, len=trunc.G, discount=discount)$pi.prop[-Gs])
     nn               <- tabulate(z, nbins=trunc.G)
     mu               <- cbind(mu, vapply(seq_len(trunc.G - G), function(g) .sim.mu.p(P=P, sigma.mu=sigma.mu, mu.zero=mu.zero), numeric(P)))
@@ -194,7 +195,7 @@
         eta.tmp      <- if(length(unique(Qs)) != 1) lapply(Gs, function(g) cbind(eta.tmp[[g]], matrix(0, nr=nn[g], nc=max(Qs) - Qs[g]))) else eta.tmp
         q0ng         <- !Q0 & nn0[Gs]
         if(any(q0ng)) {
-          eta.tmp[q0ng]       <- lapply(Gs[q0ng], function(g, x=eta.tmp[[g]]) { attr(x, "row.names") <- attr(dat.g[[g]], "row.names"); x })
+          eta.tmp[q0ng]       <- lapply(Gs[q0ng], function(g, x=eta.tmp[[g]]) { row.names(x) <- row.names(dat.g[[g]]); x })
         }
         eta          <- do.call(rbind, eta.tmp)[obsnames,, drop=FALSE]
       }

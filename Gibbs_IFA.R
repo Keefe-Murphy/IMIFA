@@ -43,6 +43,7 @@
     Q.large      <- Q.big  <- FALSE
     
     mu.sigma     <- 1/sigma.mu
+    psi.beta     <- unique(round(psi.beta, min(nchar(psi.beta))))
     eta          <- .sim.eta.p(Q=Q, N=N)
     phi          <- .sim.phi.p(Q=Q, P=P, nu=nu, plus1=nuplus1)
     delta        <- c(.sim.delta.p(alpha=alpha.d1, beta=beta.d1), .sim.delta.p(Q=Q, alpha=alpha.d2, beta=beta.d2))

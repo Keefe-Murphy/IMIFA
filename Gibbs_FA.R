@@ -43,6 +43,7 @@
     cov.est      <- provideDimnames(matrix(0, nr=P, nc=P), base=dimnames(cov.emp))
     
     mu.sigma     <- 1/sigma.mu
+    psi.beta     <- unique(round(psi.beta, min(nchar(psi.beta))))
     eta          <- .sim.eta.p(Q=Q, N=N)
     lmat         <- .sim.load.p(Q=Q, P=P, sigma.l=sigma.l, shrink=FALSE)
     psi.inv      <- .sim.psi.i.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)

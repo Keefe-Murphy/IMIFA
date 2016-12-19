@@ -52,8 +52,9 @@
     z.temp         <- factor(z, levels=Gseq)
     nn             <- tabulate(z, nbins=G)
     nn.ind         <- which(nn > 0)
-    pi.alpha       <- cluster$pi.alpha
     pi.prop        <- cluster$pi.prop
+    pi.alpha       <- cluster$pi.alpha
+    psi.beta       <- unique(round(psi.beta, min(nchar(psi.beta))))
     eta            <- .sim.eta.p(N=N, Q=Q)
     lmat           <- lapply(Gseq, function(g) .sim.load.p(Q=Q, P=P, sigma.l=sigma.l, shrink=FALSE))
     psi.inv        <- vapply(Gseq, function(g) .sim.psi.i.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), numeric(P))

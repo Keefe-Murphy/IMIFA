@@ -208,7 +208,9 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   
 # Define full conditionals, hyperparamters & Gibbs Sampler function for desired method
   cov.mat          <- cova(as.matrix(dat))
-  if(is.null(rownames(dat))) rownames(dat) <- seq_len(N)
+  datname          <- rownames(dat)
+  if(any(length(unique(datname)) != N,
+     is.null(datname)))      rownames(dat) <- seq_len(N)
   sigmu.miss       <- missing("sigma.mu")
   if(sigmu.miss)             sigma.mu      <- diag(cov.mat)
   if(scaling == "unit")      sigma.mu      <- sigma.mu[1]

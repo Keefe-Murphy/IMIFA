@@ -53,8 +53,9 @@
     z.temp           <- factor(z, levels=Gseq)
     nn               <- tabulate(z, nbins=G)
     nn.ind           <- which(nn > 0)
-    pi.alpha         <- cluster$pi.alpha
     pi.prop          <- cluster$pi.prop
+    pi.alpha         <- cluster$pi.alpha
+    psi.beta         <- unique(round(psi.beta, min(nchar(psi.beta))))
     eta              <- .sim.eta.p(N=N, Q=Q)
     phi              <- lapply(Gseq, function(g) .sim.phi.p(Q=Q, P=P, nu=nu, plus1=nuplus1))
     delta            <- lapply(Gseq, function(g) c(.sim.delta.p(alpha=alpha.d1, beta=beta.d1), .sim.delta.p(Q=Q, alpha=alpha.d2, beta=beta.d2)))
@@ -151,7 +152,7 @@
         eta.tmp      <- if(length(unique(Qs)) != 1) lapply(Gseq, function(g) cbind(eta.tmp[[g]], matrix(0, nr=nn[g], nc=max(Qs) - Qs[g]))) else eta.tmp
         q0ng         <- !Q0 & nn0
         if(any(q0ng)) {
-          eta.tmp[q0ng]       <- lapply(Gseq[q0ng], function(g, x=eta.tmp[[g]]) { attr(x, "row.names") <- attr(dat.g[[g]], "row.names"); x })
+          eta.tmp[q0ng]       <- lapply(Gseq[q0ng], function(g, x=eta.tmp[[g]]) { row.names(x) <- row.names(dat.g[[g]]); x })
         }
         eta          <- do.call(rbind, eta.tmp)[obsnames,, drop=FALSE]
       }

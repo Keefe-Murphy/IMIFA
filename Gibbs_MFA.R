@@ -54,14 +54,15 @@
     if(length(mu.zero)  == 1) {
       mu.zero      <- matrix(mu.zero,  nr=1, nc=G)
     }
-    if(length(psi.beta) == 1) {
-      psi.beta     <- matrix(psi.beta, nr=1, nc=G)
-    }
     z              <- cluster$z
     z.temp         <- factor(z, levels=Gseq)
     nn             <- tabulate(z, nbins=G)
-    pi.alpha       <- cluster$pi.alpha
     pi.prop        <- cluster$pi.prop
+    pi.alpha       <- cluster$pi.alpha
+    psi.beta       <- unique(round(psi.beta, min(nchar(psi.beta))))
+    if(length(psi.beta) == 1) {
+      psi.beta     <- matrix(psi.beta, nr=1, nc=G)
+    }
     mu0g           <- cluster$l.switch[1]
     psi0g          <- cluster$l.switch[2]
     label.switch   <- any(cluster$l.switch)
