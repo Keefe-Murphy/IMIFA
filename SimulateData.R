@@ -71,7 +71,7 @@ sim.IMIFA      <- function(N = 300L, G = 3L, P = 50L, Q = rep(4L, G), pis = rep(
     if(!is.positive.definite(covmat)) {
       covmat   <- make.positive.definite(covmat)
     }
-    sigma      <- if(any(Q.g > 0, method == "conditional")) chol(covmat) else sqrt(covmat)
+    sigma      <- if(any(Q.g > 0, method == "conditional")) .chol(covmat) else sqrt(covmat)
     means      <- matrix(mu.true, nr=N.g, nc=P, byrow=TRUE) + switch(method, conditional=tcrossprod(eta.true[true.zlab == g, seq_len(Q.g), drop=FALSE], l.true), 0)
     simdata    <- rbind(simdata, means + matrix(rnorm(N.g * P), nr=N.g, nc=P) %*% sigma)
     dimnames(l.true)   <- list(vnames, if(Q.g > 0) paste0("Factor ", seq_len(Q.g)))
