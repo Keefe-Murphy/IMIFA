@@ -48,7 +48,7 @@
     phi          <- .sim.phi.p(Q=Q, P=P, nu=nu, plus1=nuplus1)
     delta        <- c(.sim.delta.p(alpha=alpha.d1, beta=beta.d1), .sim.delta.p(Q=Q, alpha=alpha.d2, beta=beta.d2))
     tau          <- cumprod(delta)
-    lmat         <- matrix(unlist(lapply(Pseq, function(j) .sim.load.p(Q=Q, phi=phi[j,], tau=tau, P=P)), use.names=FALSE), nr=P, byrow=TRUE)
+    lmat         <- matrix(unlist(lapply(Pseq, function(j) .sim.load.ps(Q=Q, phi=phi[j,], tau=tau)), use.names=FALSE), nr=P, byrow=TRUE)
     psi.inv      <- .sim.psi.i.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
     if(all(Q  < P - sqrt(P + Q), N > P)) {
       fact       <- try(factanal(data, factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
@@ -83,7 +83,7 @@
       c.data     <- sweep(data, 2, mu, FUN="-")
       if(Q0) {
         eta      <- .sim.score(N=N, Q=Q, lmat=lmat, psi.inv=psi.inv, c.data=c.data, Q1=Q1)
-        lmat     <- matrix(unlist(lapply(Pseq, function(j) .sim.load(Q=Q, tau=tau, eta=eta, c.data=c.data[,j], P=P, Q1=Q1, 
+        lmat     <- matrix(unlist(lapply(Pseq, function(j) .sim.load.s(Q=Q, tau=tau, eta=eta, c.data=c.data[,j], Q1=Q1, 
                            phi=phi[j,], psi.inv=psi.inv[j], EtE=crossprod(eta))), use.names=FALSE), nr=P, byrow=TRUE)
       } else {
         eta      <- base::matrix(0, nr=N, nc=0)

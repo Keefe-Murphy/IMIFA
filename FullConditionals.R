@@ -20,16 +20,23 @@
     }
       
   # Loadings
-    .sim.load    <- function(l.sigma, Q, c.data, P, eta, phi, tau, psi.inv, EtE, Q1, shrink = TRUE) {
-      u.load     <- if(shrink) diag(phi * tau, Q) + psi.inv * EtE else l.sigma + psi.inv * EtE
+    .sim.load    <- function(l.sigma, Q, c.data, eta, psi.inv, EtE, Q1) {
+      u.load     <- l.sigma + psi.inv * EtE
       u.load     <- if(Q1) sqrt(u.load) else .chol(u.load)
       mu.load    <- psi.inv * (if(Q1) 1/(u.load * u.load) else chol2inv(u.load)) %*% crossprod(eta, c.data)
         mu.load   + backsolve(u.load, rnorm(Q))
     }
     
+    .sim.load.s  <- function(l.sigma, Q, c.data, eta, phi, tau, psi.inv, EtE, Q1) {
+      u.load     <- diag(phi * tau, Q) + psi.inv * EtE
+      u.load     <- if(Q1) sqrt(u.load) else .chol(u.load)
+      mu.load    <- psi.inv  * (if(Q1) 1/(u.load * u.load) else chol2inv(u.load)) %*% crossprod(eta, c.data)
+        mu.load   + backsolve(u.load, rnorm(Q))
+    }
+    
   # Uniquenesses
     .sim.psi.inv <- function(N, P, psi.alpha, psi.beta, c.data, eta, lmat) { 
-      rate.t     <- c.data - tcrossprod(eta, lmat)
+      rate.t     <- c.data    - tcrossprod(eta, lmat)
         rgamma(P,   shape=N/2 + psi.alpha, rate=colSums(rate.t * rate.t)/2 + psi.beta) 
     }
 
@@ -48,21 +55,28 @@
     }
 
   # Mixing Proportions
-    .sim.pi      <- function(pi.alpha, nn, N = sum(nn), inf.G = FALSE, len, discount = 0L) {
-      if(inf.G) {
-        vs       <- if(discount == 0) rbeta(len, 1 + nn, pi.alpha + N - cumsum(nn)) else rbeta(len, 1 - discount + nn, pi.alpha + seq_along(nn) * discount + N - cumsum(nn))
-          return(list(Vs = vs, pi.prop = vapply(seq_len(len), function(t) vs[t] * prod(1 - vs[seq_len(t - 1)]), numeric(1))))
-      } else {
-          rdirichlet(1, pi.alpha + nn)
-      }
+    .sim.pi      <- function(pi.alpha, nn) {
+        rdirichlet(1, pi.alpha + nn)
+    }
+    
+    .sim.pi.inf  <- function(pi.alpha, nn, N = sum(nn), len, lseq, discount = 0L) {
+      vs         <- if(discount == 0) rbeta(len, 1 + nn, pi.alpha + N - cumsum(nn)) else rbeta(len, 1 - discount + nn, pi.alpha + lseq * discount + N - cumsum(nn))
+        return(list(Vs = vs, pi.prop = vapply(lseq, function(t) vs[t] * prod(1 - vs[seq_len(t - 1)]), numeric(1))))
     }
   
   # Cluster Labels
-    .sim.z       <- function(data, mu, sigma, Gseq, N, pi.prop, log.slice.ind = NULL, Q0) {
+    .sim.z       <- function(data, mu, sigma, Gseq, N, pi.prop, Q0) {
       log.num    <- vapply(Gseq, function(g, Q=Q0[g]) dmvn(data, mu[,g], if(Q) sigma[[g]] else sqrt(sigma[[g]]), log=TRUE, isChol=!Q) + log(pi.prop[g]), numeric(N))
-      if(!missing(log.slice.ind)) {
-        log.num  <- log.num + log.slice.ind
+      log.denom  <- rowLogSumExps(log.num)
+      lnp        <- sweep(log.num, 1, log.denom, FUN="-")
+      for(g in Gseq[-1]) {
+        lnp[,g]  <- colLogSumExps(rbind(lnp[,g], lnp[,g - 1]))
       }
+        return(list(z = rowsums(-rexp(N) > lnp) + 1, log.likes = log.denom))
+    }
+    
+    .sim.z.inf   <- function(data, mu, sigma, Gseq, N, pi.prop, log.slice.ind, Q0) {
+      log.num    <- vapply(Gseq, function(g, Q=Q0[g]) dmvn(data, mu[,g], if(Q) sigma[[g]] else sqrt(sigma[[g]]), log=TRUE, isChol=!Q) + log(pi.prop[g]), numeric(N)) + log.slice.ind
       log.denom  <- rowLogSumExps(log.num)
       lnp        <- sweep(log.num, 1, log.denom, FUN="-")
       for(g in Gseq[-1]) {
@@ -80,18 +94,17 @@
     }
     
     .sim.alpha.m <- function(alpha, lower, upper, trunc.G, Vs, discount = 0L) {
-      alpha.old  <- alpha + discount
+      alpha.old  <- alpha   + discount
       alpha.new  <- runif(1, lower, upper) + discount
-      a.prob     <- trunc.G * (log(alpha.new) - log(alpha.old)) + (alpha.new - alpha.old) * sum(log((1 - Vs[-trunc.G])))
+      a.prob     <- trunc.G * (log(alpha.new) - log(alpha.old))    + (alpha.new - alpha.old) * sum(log((1 - Vs[-trunc.G])))
       accept     <- a.prob >= 0 || - rexp(1)  < a.prob
-        return(list(alpha  = ifelse(accept, alpha.new, alpha.old) - discount, rate = accept))
+        return(list(alpha   = ifelse(accept, alpha.new, alpha.old) - discount, rate = accept))
     }
 
 # Priors
-
   # Means
-    .sim.mu.p    <- function(P, mu.zero, sigma.mu) {
-      sqrt(sigma.mu) * rnorm(P) + mu.zero
+    .sim.mu.p    <- function(P, mu.zero, sig.mu.sqrt) {
+      sig.mu.sqrt * rnorm(P) + mu.zero
     }
   
   # Scores
@@ -100,12 +113,12 @@
     }
   
   # Loadings
-    .sim.load.p  <- function(Q, P, sigma.l, phi, tau, shrink = TRUE) {
-      if(shrink) {
-        sqrt(1/(phi * tau)) * rnorm(Q)
-      } else     {
+    .sim.load.p  <- function(Q, P, sigma.l) {
         sqrt(sigma.l) * matrix(rnorm(P * Q), nr=P, nc=Q)
-      }
+    }
+    
+    .sim.load.ps <- function(Q, sigma.l, phi, tau) {
+        sqrt(1/(phi * tau)) * rnorm(Q)
     }
   
   # Uniquenesses
@@ -142,10 +155,10 @@
   # Alpha Shifted Gamma Hyperparameters
     shift.gamma <- function(shape, rate, shift = 0L, param = c("rate", "scale")) {
       var       <- shape/rate^2
-      exp       <- var * rate + shift
+      exp       <- var  * rate + shift
       rate      <- exp/var
       shape     <- rate * exp
-        c(shape, switch(match.arg(param), rate=rate, 1/rate))
+        c(shape,   switch(match.arg(param), rate=rate, 1/rate))
     }
     
   # Check Shrinkage Hyperparemeters
@@ -214,8 +227,8 @@
       sw        <- sample(nn.ind, 2L)
       pis       <- pi.prop[sw]
       nns       <- nn[sw]
-      a.prob    <- (nns[1] - nns[2]) * (log(pis[1]) - log(pis[2])) 
-        return(list(rate1 = a.prob >= 0 || - rexp(1) < a.prob, sw = sw))
+      a.prob    <- (nns[1] - nns[2]) * (log(pis[1])  - log(pis[2])) 
+        return(list(rate1  = a.prob >= 0 || -rexp(1) < a.prob, sw = sw))
     }
     
     # Move 2
@@ -225,8 +238,8 @@
       sw        <- c(sw, max(nn.ind[nn.x + 1], nn.ind[nn.x - 1], na.rm=TRUE))
       nns       <- nn[sw]
       Vsw       <- Vs[sw]
-      a.prob    <- nns[1] * log(1 - Vsw[1]) - nns[2] * log(1 - Vsw[2])
-        return(list(rate2 = a.prob >= 0 || - rexp(1) < a.prob, sw = sw))
+      a.prob    <- nns[1] * log(1 - Vsw[1]) - nns[2]  * log(1 - Vsw[2])
+        return(list(rate2 = a.prob >= 0 ||  - rexp(1) < a.prob, sw = sw))
     }
 
   # Length Checker
@@ -236,7 +249,7 @@
       obj.name  <- deparse(substitute(obj0g))
       sw.name   <- deparse(substitute(switch0g))
       if(!is.list(obj0g))        obj0g  <- list(obj0g)
-      if(length(obj0g) != length(range.G)) {
+      if(length(obj0g) != length(range.G))   {
         if(!P.dim) {
           obj0g <- replicate(length(range.G), obj0g)
         } else                             stop(paste0(obj.name, " must be a list of length ", length(range.G)))

@@ -48,6 +48,7 @@
     err.z          <- z.err <- FALSE
     
     mu.sigma       <- 1/sigma.mu
+    sig.mu.sqrt    <- sqrt(sigma.mu)
     if(all(mu.zero == 0)) {
       mu.zero      <- matrix(0, nr=1, nc=G)
       cluster$l.switch[1]   <- FALSE
@@ -77,7 +78,7 @@
     phi            <- lapply(Gseq, function(g) .sim.phi.p(Q=Q, P=P, nu=nu, plus1=nuplus1))
     delta          <- lapply(Gseq, function(g) c(.sim.delta.p(alpha=alpha.d1[g], beta=beta.d1), .sim.delta.p(Q=Q, alpha=alpha.d2[g], beta=beta.d2)))
     tau            <- lapply(delta, cumprod)
-    lmat           <- lapply(Gseq, function(g) matrix(unlist(lapply(Pseq, function(j) .sim.load.p(Q=Q, phi=phi[[g]][j,], tau=tau[[g]], P=P)), use.names=FALSE), nr=P, byrow=TRUE))
+    lmat           <- lapply(Gseq, function(g) matrix(unlist(lapply(Pseq, function(j) .sim.load.ps(Q=Q, phi=phi[[g]][j,], tau=tau[[g]])), use.names=FALSE), nr=P, byrow=TRUE))
     psi.inv        <- vapply(Gseq, function(g) .sim.psi.i.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta[,g]), numeric(P))
     if(Q < P - sqrt(P + Q)) {
       fact.ind     <- nn    <= P
@@ -147,9 +148,9 @@
       } else {
         eta.tmp    <- lapply(Gseq, function(g) if(all(nn0[g], Q0[g])) .sim.score(N=nn[g], lmat=lmat[[g]], Q=Qs[g], Q1=Q1[g], c.data=c.data[[g]], psi.inv=psi.inv[,g]) else base::matrix(0, nr=ifelse(Q0[g], 0, nn[g]), nc=Qs[g]))
         EtE        <- lapply(Gseq, function(g) if(nn0[g]) crossprod(eta.tmp[[g]]))
-        lmat       <- lapply(Gseq, function(g) if(all(nn0[g], Q0[g])) matrix(unlist(lapply(Pseq, function(j) .sim.load(Q=Qs[g], P=P, c.data=c.data[[g]][,j], EtE=EtE[[g]],
-                             eta=eta.tmp[[g]], psi.inv=psi.inv[,g][j], Q1=Q1[g], phi=phi[[g]][j,], tau=tau[[g]], shrink=TRUE)), use.names=FALSE), nr=P, byrow=TRUE) else 
-                             matrix(unlist(lapply(Pseq, function(j) .sim.load.p(Q=Qs[g], phi=phi[[g]][j,], tau=tau[[g]], P=P)), use.names=FALSE), nr=P, byrow=FALSE))
+        lmat       <- lapply(Gseq, function(g) if(all(nn0[g], Q0[g])) matrix(unlist(lapply(Pseq, function(j) .sim.load.s(Q=Qs[g], Q1=Q1[g], c.data=c.data[[g]][,j], 
+                             EtE=EtE[[g]], eta=eta.tmp[[g]], psi.inv=psi.inv[,g][j], phi=phi[[g]][j,], tau=tau[[g]])), use.names=FALSE), nr=P, byrow=TRUE) else 
+                             matrix(unlist(lapply(Pseq, function(j) .sim.load.ps(Q=Qs[g], phi=phi[[g]][j,], tau=tau[[g]])), use.names=FALSE), nr=P, byrow=FALSE))
         eta.tmp    <- if(length(unique(Qs)) != 1) lapply(Gseq, function(g) cbind(eta.tmp[[g]], matrix(0, nr=nn[g], nc=max(Qs) - Qs[g]))) else eta.tmp
         q0ng       <- !Q0 & nn0
         if(any(q0ng)) {
@@ -161,8 +162,8 @@
     # Means
       sum.data     <- vapply(dat.g, colSums, numeric(P))
       sum.eta      <- lapply(eta.tmp, colSums)
-      mu           <- vapply(Gseq, function(g) if(nn0[g]) .sim.mu(N=nn[g], mu.sigma=mu.sigma, psi.inv=psi.inv[,g], P=P, sum.eta=sum.eta[[g]][seq_len(Qs[g])], 
-                             sum.data=sum.data[,g], lmat=lmat[[g]], mu.zero=mu.zero[,g]) else .sim.mu.p(P=P, sigma.mu=sigma.mu, mu.zero=mu.zero[,g]), numeric(P))
+      mu           <- vapply(Gseq, function(g) if(nn0[g]) .sim.mu(mu.sigma=mu.sigma, psi.inv=psi.inv[,g], mu.zero=mu.zero[,g], sum.eta=sum.eta[[g]][seq_len(Qs[g])],
+                             sum.data=sum.data[,g], lmat=lmat[[g]], N=nn[g], P=P) else .sim.mu.p(P=P, sig.mu.sqrt=sig.mu.sqrt, mu.zero=mu.zero[,g]), numeric(P))
       
     # Uniquenesses
       psi.inv      <- vapply(Gseq, function(g) if(nn0[g]) .sim.psi.inv(N=nn[g], psi.alpha=psi.alpha, c.data=c.data[[g]], psi.beta=psi.beta[,g], lmat=lmat[[g]],

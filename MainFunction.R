@@ -423,13 +423,13 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
           }  
         } else {
           if(alpha <= 1)            stop("Supply a value > 1 for 'alpha' if initialising labels from the stick-breaking prior")
-          pies     <- .sim.pi(pi.alpha=alpha, nn=rep(0, trunc.G), inf.G=TRUE, discount=discount, len=trunc.G)$pi.prop
+          pies     <- .sim.pi.inf(pi.alpha=alpha, N=N, nn=rep(N/range.G, range.G), discount=discount, lseq=seq_len(range.G), len=range.G)$pi.prop
           zips     <- .sim.z.p(N=N, prob.z=pies)
         }
         zi[[g]]    <- as.numeric(zips)
         rm(zips)
       }
-      nngs         <- tabulate(zi[[g]], nbins=G)
+      nngs         <- tabulate(zips, nbins=ifelse(is.element(method, c("IMFA", "IMIFA")), trunc.G, G))
       pi.prop[[g]] <- prop.table(nngs)
       mu[[g]]      <- vapply(seq_len(G), function(gg) if(nngs[gg] > 0) colMeans(dat[zi[[g]] == gg,, drop=FALSE]) else rep(0, P), numeric(P))
       if(mu0.x)   {

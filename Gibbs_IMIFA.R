@@ -68,17 +68,18 @@
       lab.rate       <- matrix(0, nr=2, nc=n.store)  
     }
     mu.sigma         <- 1/sigma.mu
+    sig.mu.sqrt      <- sqrt(sigma.mu)
     z                <- cluster$z
     pi.alpha         <- cluster$pi.alpha
     psi.beta         <- unique(round(psi.beta, min(nchar(psi.beta))))
-    pi.prop          <- c(cluster$pi.prop, .sim.pi(pi.alpha=pi.alpha, nn=rep(0, trunc.G), N=N, inf.G=TRUE, len=trunc.G, discount=discount)$pi.prop[-Gs])
+    pi.prop          <- cluster$pi.prop
     nn               <- tabulate(z, nbins=trunc.G)
-    mu               <- cbind(mu, vapply(seq_len(trunc.G - G), function(g) .sim.mu.p(P=P, sigma.mu=sigma.mu, mu.zero=mu.zero), numeric(P)))
+    mu               <- cbind(mu, vapply(seq_len(trunc.G - G), function(g) .sim.mu.p(P=P, sig.mu.sqrt=sig.mu.sqrt, mu.zero=mu.zero), numeric(P)))
     eta              <- .sim.eta.p(N=N, Q=Q)
     phi              <- lapply(Ts, function(t) .sim.phi.p(Q=Q, P=P, nu=nu, plus1=nuplus1))
     delta            <- lapply(Ts, function(t) c(.sim.delta.p(alpha=alpha.d1, beta=beta.d1), .sim.delta.p(Q=Q, alpha=alpha.d2, beta=beta.d2)))
     tau              <- lapply(delta, cumprod)
-    lmat             <- lapply(Ts, function(t) matrix(unlist(lapply(Ps, function(j) .sim.load.p(Q=Q, phi=phi[[t]][j,], tau=tau[[t]], P=P)), use.names=FALSE), nr=P, byrow=TRUE))
+    lmat             <- lapply(Ts, function(t) matrix(unlist(lapply(Ps, function(j) .sim.load.ps(Q=Q, phi=phi[[t]][j,], tau=tau[[t]])), use.names=FALSE), nr=P, byrow=TRUE))
     psi.inv          <- vapply(Ts, function(t) .sim.psi.i.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), numeric(P))
     if(Q < P - sqrt(P + Q))   {
       for(g in which(nn > P)) {
@@ -117,9 +118,9 @@
       eta.store[,,1]          <- eta
       load.store[,,,1]        <- array(unlist(lmat, use.names=FALSE), dim=c(P, Q, trunc.G))
       psi.store[,,1]          <- 1/psi.inv
-      pi.store[,1]            <- pi.prop/sum(pi.prop)
+      pi.store[,1]            <- pi.prop
       z.store[,1]             <- z
-      ll.store[1]             <- sum(.sim.z(data=data, mu=mu[,Gs], Gseq=Gs, N=N, pi.prop=pi.store[Gs,1], sigma=lapply(Gs, function(g)
+      ll.store[1]             <- sum(.sim.z(data=data, mu=mu[,Gs], Gseq=Gs, N=N, pi.prop=pi.prop, sigma=lapply(Gs, function(g)
                                            make.positive.definite(tcrossprod(lmat[[g]]) + diag(1/psi.inv[,g]))), Q0=Qs > 0)$log.likes)
       Q.store[,1]             <- Qs
       G.store[1]              <- G.non
@@ -137,7 +138,7 @@
       if(verbose     && iter   < burnin) setTxtProgressBar(pb, iter)
     
     # Mixing Proportions
-      weights        <- .sim.pi(pi.alpha=pi.alpha, nn=nn, N=N, inf.G=TRUE, len=trunc.G, discount=discount)
+      weights        <- .sim.pi.inf(pi.alpha=pi.alpha, nn=nn, N=N, len=trunc.G, lseq=Ts, discount=discount)
       pi.prop        <- weights$pi.prop
       Vs             <- weights$Vs
       
@@ -168,11 +169,11 @@
       Qgs            <- Qs[Gs]
       Q0             <- Qgs  > 0
       Q1             <- Qgs == 1
-      z.log          <- capture.output({ z.res <- try(.sim.z(data=data, mu=mu[,Gs, drop=FALSE], sigma=sigma, Gseq=Gs, N=N, pi.prop=pi.prop[Gs], log.slice.ind=log.slice.ind, Q0=Q0[Gs]), silent=TRUE) })
+      z.log          <- capture.output({ z.res <- try(.sim.z.inf(data=data, mu=mu[,Gs, drop=FALSE], sigma=sigma, Gseq=Gs, N=N, pi.prop=pi.prop[Gs], log.slice.ind=log.slice.ind, Q0=Q0[Gs]), silent=TRUE) })
       z.err          <- inherits(z.res, "try-error")
       if(z.err) {
         sigma        <- lapply(sigma, make.positive.definite)
-        z.res        <- .sim.z(data=data, mu=mu[,Gs, drop=FALSE], sigma=sigma, Gseq=Gs, N=N, pi.prop=pi.prop[Gs], log.slice.ind=log.slice.ind, Q0=Q0[Gs])
+        z.res        <- .sim.z.inf(data=data, mu=mu[,Gs, drop=FALSE], sigma=sigma, Gseq=Gs, N=N, pi.prop=pi.prop[Gs], log.slice.ind=log.slice.ind, Q0=Q0[Gs])
       }
       z              <- z.res$z
       nn             <- tabulate(z, nbins=trunc.G)
@@ -189,9 +190,9 @@
       } else {
         eta.tmp      <- lapply(Gs, function(g) if(all(nn0[g], Q0[g])) .sim.score(N=nn[g], lmat=lmat[[g]], Q=Qs[g], Q1=Q1[g], c.data=c.data[[g]], psi.inv=psi.inv[,g]) else base::matrix(0, nr=ifelse(Q0[g], 0, nn[g]), nc=Qs[g]))
         EtE          <- lapply(Gs, function(g) if(nn0[g]) crossprod(eta.tmp[[g]]))
-        lmat[Gs]     <- lapply(Gs, function(g) if(all(nn0[g], Q0[g])) matrix(unlist(lapply(Ps, function(j) .sim.load(Q=Qs[g], P=P, c.data=c.data[[g]][,j], EtE=EtE[[g]],
-                               eta=eta.tmp[[g]], psi.inv=psi.inv[,g][j], Q1=Q1[g], phi=phi[[g]][j,], tau=tau[[g]], shrink=TRUE)), use.names=FALSE), nr=P, byrow=TRUE) else 
-                               matrix(unlist(lapply(Ps, function(j) .sim.load.p(Q=Qs[g], phi=phi[[g]][j,], tau=tau[[g]], P=P)), use.names=FALSE), nr=P, byrow=FALSE))
+        lmat[Gs]     <- lapply(Gs, function(g) if(all(nn0[g], Q0[g])) matrix(unlist(lapply(Ps, function(j) .sim.load.s(Q=Qs[g], Q1=Q1[g], c.data=c.data[[g]][,j], 
+                               EtE=EtE[[g]], eta=eta.tmp[[g]], psi.inv=psi.inv[,g][j], phi=phi[[g]][j,], tau=tau[[g]])), use.names=FALSE), nr=P, byrow=TRUE) else 
+                               matrix(unlist(lapply(Ps, function(j) .sim.load.ps(Q=Qs[g], phi=phi[[g]][j,], tau=tau[[g]])), use.names=FALSE), nr=P, byrow=FALSE))
         eta.tmp      <- if(length(unique(Qs)) != 1) lapply(Gs, function(g) cbind(eta.tmp[[g]], matrix(0, nr=nn[g], nc=max(Qs) - Qs[g]))) else eta.tmp
         q0ng         <- !Q0 & nn0[Gs]
         if(any(q0ng)) {
@@ -204,7 +205,7 @@
       sum.data       <- vapply(dat.g, colSums, numeric(P))
       sum.eta        <- lapply(eta.tmp, colSums)
       mu[,Gs]        <- vapply(Gs, function(g) if(nn0[g]) .sim.mu(N=nn[g], mu.sigma=mu.sigma, psi.inv=psi.inv[,g], P=P, sum.eta=sum.eta[[g]][seq_len(Qs[g])],
-                               sum.data=sum.data[,g] , lmat=lmat[[g]], mu.zero=mu.zero) else .sim.mu.p(P=P, sigma.mu=sigma.mu, mu.zero=mu.zero), numeric(P))
+                               sum.data=sum.data[,g], lmat=lmat[[g]], mu.zero=mu.zero) else .sim.mu.p(P=P, sig.mu.sqrt=sig.mu.sqrt, mu.zero=mu.zero), numeric(P))
       
     # Uniquenesses
       psi.inv[,Gs]   <- vapply(Gs, function(g) if(nn0[g]) .sim.psi.inv(N=nn[g], psi.alpha=psi.alpha, c.data=c.data[[g]], psi.beta=psi.beta, lmat=lmat[[g]],

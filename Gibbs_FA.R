@@ -45,7 +45,7 @@
     mu.sigma     <- 1/sigma.mu
     psi.beta     <- unique(round(psi.beta, min(nchar(psi.beta))))
     eta          <- .sim.eta.p(Q=Q, N=N)
-    lmat         <- .sim.load.p(Q=Q, P=P, sigma.l=sigma.l, shrink=FALSE)
+    lmat         <- .sim.load.p(Q=Q, P=P, sigma.l=sigma.l)
     psi.inv      <- .sim.psi.i.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
     if(all(Q0, Q  < P - sqrt(P + Q), N > P)) {
       fact       <- try(factanal(data, factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
@@ -79,8 +79,8 @@
       c.data     <- sweep(data, 2, mu, FUN="-")
       if(Q0) {
         eta      <- .sim.score(N=N, Q=Q, lmat=lmat, psi.inv=psi.inv, c.data=c.data, Q1=Q1)
-        lmat     <- matrix(unlist(lapply(Pseq, function(j) .sim.load(l.sigma=l.sigma, Q=Q, eta=eta, c.data=c.data[,j], P=P, 
-                           Q1=Q1, psi.inv=psi.inv[j], EtE=crossprod(eta), shrink=FALSE)), use.names=FALSE), nr=P, byrow=TRUE)
+        lmat     <- matrix(unlist(lapply(Pseq, function(j) .sim.load(l.sigma=l.sigma, Q=Q, Q1=Q1, c.data=c.data[,j],
+                           eta=eta, psi.inv=psi.inv[j], EtE=crossprod(eta))), use.names=FALSE), nr=P, byrow=TRUE)
       }
       
     # Means
