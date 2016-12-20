@@ -117,7 +117,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   if(missing(d.hyper))       d.hyper       <- c(1L, 1L)
   if(length(d.hyper)      != 2)     stop("d.hyper' must be a vector of length 2")
   if(any(d.hyper   <= 0))           stop("'Discount Beta prior hyperparameters must be strictly positive")
-  discount         <- ifelse(is.element(method, c("IMFA", "IMIFA")), ifelse(missing(discount), ifelse(learn.d, rbeta(1, d.hyper[1], d.hyper[2]), 0), discount), 0)
+  discount         <- switch(method, IMFA=, IMIFA=ifelse(missing(discount), ifelse(learn.d, rbeta(1, d.hyper[1], d.hyper[2]), 0), discount), 0)
   if(any(!is.numeric(discount),
          length(discount) != 1))    stop("'discount' must be a single number")
   if(discount       < 0   || 
@@ -204,7 +204,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(is.element(meth[1], c("IMIFA", "IMFA",
        "OMIFA", "OMFA")))   {       stop("'method' must be FA or IFA for a one group model")
     } else {
-      meth[1]    <- switch(meth[1], MFA="FA", FA="FA", MIFA="IFA", IFA="IFA")
+      meth[1]    <- switch(meth[1], MFA=, FA="FA", MIFA=, IFA="IFA")
     }
     if(!is.element(method, 
                    c("FA", "IFA"))) message(paste0("Forced use of ", meth[1], " method where 'range.G' is equal to 1"))
@@ -262,7 +262,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(any(length(b1) != 1, !is.numeric(b1),
            b1 <= 0))                stop("'b1' must be a single strictly positive scalar to ensure adaptation probability decreases")
     if(missing("prop"))      prop          <- floor(0.7 * P)/P
-    if(missing("adapt.at"))  adapt.at      <- ifelse(is.element(method, c("IFA", "MIFA")), burnin, 0)
+    if(missing("adapt.at"))  adapt.at      <- switch(method, IFA=, MIFA=burnin, 0)
     if(missing("epsilon"))   epsilon       <- ifelse(any(centered, centering), 0.1, 0.05)
     if(any(length(prop)    != 1, length(adapt.at) != 1,
            length(epsilon) != 1))   stop("'prop', 'adapt.at', and 'epsilon' must all be of length 1")
@@ -333,7 +333,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   if(all(!is.element(method, c("MFA", "MIFA", "classify")), 
          any(sw0gs)))               stop(paste0(names(which(sw0gs)), " should be FALSE for the ", method, " method\n"))
   if(!is.element(method, c("FA", "IFA", "classify"))) {
-    if(missing("alpha"))     alpha         <- ifelse(is.element(method, c("OMIFA", "OMFA")), 0.5/range.G, max(1 - discount, switch(alpha.step, 
+    if(missing("alpha"))     alpha         <- switch(method, OMFA=, OMIFA=0.5/range.G, max(1 - discount, switch(alpha.step, 
                                               gibbs=rgamma(1, a.hyp1, a.hyp2) - discount, metropolis=runif(1, a.hyp1, a.hyp2), 1 - discount)))
     if(length(alpha) != 1)          stop("'alpha' must be specified as a scalar to ensure an exchangeable prior")
     if(alpha <= -discount)          stop(paste0("'alpha' must be ", ifelse(discount != 0, paste0("greater than -discount (i.e. > ", - discount, ")"), "strictly positive")))
@@ -433,7 +433,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
         zi[[g]]    <- as.numeric(zips)
         rm(zips)
       }
-      nngs         <- tabulate(zi[[g]], nbins=ifelse(is.element(method, c("IMFA", "IMIFA")), trunc.G, G))
+      nngs         <- tabulate(zi[[g]], nbins=switch(method, IMFA=, IMIFA=trunc.G, G))
       pi.prop[[g]] <- prop.table(nngs)
       mu[[g]]      <- vapply(seq_len(G), function(gg) if(nngs[gg] > 0) colMeans(dat[zi[[g]] == gg,, drop=FALSE]) else rep(0, P), numeric(P))
       if(mu0.x)   {
@@ -600,11 +600,9 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     print(summaryRprof())
     invisible(file.remove("Rprof.out"))
   }
-  if(is.element(method, c("FA", "MFA", "OMFA", "IMFA")))   {
-    imifa   <- lapply(seq_along(imifa), function(x) setNames(imifa[[x]], paste0(range.Q, ifelse(range.Q == 1, "Factor", "Factors"))))
-  } else {
-    imifa   <- lapply(seq_along(imifa), function(x) setNames(imifa[[x]], "IFA"))
-  }
+  imifa     <- switch(method, FA=, MFA=, OMFA=, IMFA={
+     lapply(seq_along(imifa), function(x) setNames(imifa[[x]], paste0(range.Q, ifelse(range.Q == 1, "Factor", "Factors"))))
+  }, lapply(seq_along(imifa), function(x) setNames(imifa[[x]], "IFA")))
   if(!is.element(method, c("FA", "IFA"))) {
     for(g in seq_along(range.G)) {
       attr(imifa[[g]], 

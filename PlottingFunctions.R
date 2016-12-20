@@ -111,7 +111,7 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
      is.element(vars, c("means", "uniquenesses")),
      !v.sw[vars],
      is.element(method, c("FA", "IFA")))) {  
-    if(all.ind)                       warning(paste0("Can only plot posterior mean, as ", vars, ifelse(vars == "alpha", " wasn't", " weren't"), " stored"), call.=FALSE)
+    if(all.ind)                       warning(paste0("Can only plot posterior mean, as ", vars, switch(vars, alpha="wasn't", "weren't"), " stored"), call.=FALSE)
     v.sw[vars]     <- !v.sw[vars]
     all.ind        <- FALSE
     m.sw["M.sw"]   <- TRUE

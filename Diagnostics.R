@@ -95,7 +95,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, 
       if(length(Q) == 1)     Q <- rep(Q, G)
       if(length(Q) != G)          stop(paste0("'Q' must be supplied for each group, as a scalar or vector of length G=", G))
     } else if(length(n.grp)    != 1 && all(!is.element(length(Q), 
-              c(1,   n.grp))))    stop("'Q' must be a scalar if G=1, 'G' is not suppplied, or a range of G values were explored")
+              c(1,  n.grp))))     stop("'Q' must be a scalar if G=1, 'G' is not suppplied, or a range of G values were explored")
     if(all(is.element(method, c("FA", "MFA", "OMFA", "IMFA")))) {
       if(length(unique(Q)) != 1)  stop(paste0("'Q' cannot vary across groups for the ", method, " method"))
       Q          <- unique(Q)
@@ -128,11 +128,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, 
     } else {
       dimnames(crit.mat) <- list(paste0("G", n.grp), if(inf.Q) "IFA" else paste0("Q", n.fac))
     }
-    if(is.element(method, c("IMFA", "IMIFA"))) {
-      rownames(crit.mat) <- "IM"
-    } else if(is.element(method, c("OMFA", "OMIFA"))) {
-      rownames(crit.mat) <- "OM"
-    }
+    rownames(crit.mat)   <- switch(method, IMFA=, IMIFA="IM", OMFA=, OMIFA="OM")
     aicm         <- bicm       <- log.iLLH <- 
     aic.mcmc     <- bic.mcmc   <- crit.mat
     log.N        <- log(n.obs)
@@ -148,7 +144,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, 
         log.iLLH[g,q]    <- mean(log.likes, na.rm=TRUE) - ll.var * (log.N - 1)
         if(!inf.Q) {
           qk             <- if(G.T) 1 else qi
-          K              <- if(!is.element(method, c("OMFA", "IMFA"))) attr(sims[[gi]][[qi]], "K") else G[qk] - 1 + G[qk] * (n.var * n.fac[qi] - 0.5 * n.fac[qi] * (n.fac[qi] - 1)) + 2 * G[qk] * n.var
+          K              <- switch(method, OMFA=, IMFA=G[qk] - 1 + G[qk] * (n.var * n.fac[qi] - 0.5 * n.fac[qi] * (n.fac[qi] - 1)) + 2 * G[qk] * n.var, attr(sims[[gi]][[qi]], "K"))
           aic.mcmc[g,q]  <- ll.max - K * 2
           bic.mcmc[g,q]  <- ll.max - K * log.N
         }
@@ -193,7 +189,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, 
       if(all(inf.G, Q.T))  GQ.temp1$G <- rep(G, GQs)
       GQ.temp1   <- if(is.element(method, c("OMFA", "IMFA")) && GQ1) lapply(GQ.temp1, "[[", Q.ind) else if(inf.G) GQ.temp1
       GQ.temp3   <- c(GQ.temp2, list(AIC.mcmcs = aic.mcmc, BIC.mcmcs = bic.mcmc))
-      GQ.res     <- if(!is.element(method, c("OMFA", "IMFA"))) c(list(G = G, Q = Q), GQ.temp3) else c(GQ.temp1, list(Q = Q), GQ.temp3)
+      GQ.res     <- switch(method, OMFA=, IMFA=c(GQ.temp1, list(Q = Q), GQ.temp3), c(list(G = G, Q = Q), GQ.temp3))
     }
     clust.ind    <- !any(is.element(method,   c("FA", "IFA")), 
                      all(is.element(method, c("MFA", "MIFA")), G == 1))
