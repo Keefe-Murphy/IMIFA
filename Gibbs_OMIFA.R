@@ -3,7 +3,7 @@
 #####################################################################
   
 # Gibbs Sampler Function
-  .gibbs_OMIFA       <- function(Q, data, iters, N, P, G, mu.zero, sigma.mu, 
+  .gibbs_OMIFA       <- function(Q, data, iters, N, P, G, mu.zero, sigma.mu, uni.type,
                                  burnin, thinning, mu, adapt, psi.alpha, psi.beta, 
                                  verbose, alpha.d1, alpha.d2, sw, cluster, nu, b0, b1, 
                                  prop, beta.d1, beta.d2, adapt.at, epsilon, nuplus1, ...) {
@@ -56,13 +56,15 @@
     nn.ind           <- which(nn > 0)
     pi.prop          <- cluster$pi.prop
     pi.alpha         <- cluster$pi.alpha
+    .sim.psi.inv     <- switch(uni.type, unconstrained=.sim.psi.iu, isotropic=.sim.psi.ii)
+    .sim.psi.ip      <- switch(uni.type, unconstrained=.sim.psi.ipu, isotropic=.sim.psi.ipi)
     psi.beta         <- unique(round(psi.beta, min(nchar(psi.beta))))
     eta              <- .sim.eta.p(N=N, Q=Q)
     phi              <- lapply(Gseq, function(g) .sim.phi.p(Q=Q, P=P, nu=nu, plus1=nuplus1))
     delta            <- lapply(Gseq, function(g) c(.sim.delta.p(alpha=alpha.d1, beta=beta.d1), .sim.delta.p(Q=Q, alpha=alpha.d2, beta=beta.d2)))
     tau              <- lapply(delta, cumprod)
     lmat             <- lapply(Gseq, function(g) matrix(unlist(lapply(Pseq, function(j) .sim.load.ps(Q=Q, phi=phi[[g]][j,], tau=tau[[g]])), use.names=FALSE), nr=P, byrow=TRUE))
-    psi.inv          <- vapply(Gseq, function(g) .sim.psi.i.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), numeric(P))
+    psi.inv          <- vapply(Gseq, function(g) .sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), numeric(P))
     if(Q < P - sqrt(P + Q))   {
       for(g in which(nn > P)) {
         fact         <- try(factanal(data[z == g,, drop=FALSE], factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
@@ -166,7 +168,7 @@
                   
     # Uniquenesses
       psi.inv        <- vapply(Gseq, function(g) if(nn0[g]) .sim.psi.inv(N=nn[g], psi.alpha=psi.alpha, c.data=c.data[[g]], psi.beta=psi.beta, lmat=lmat[[g]],
-                               P=P, eta=eta.tmp[[g]][,seq_len(Qs[g]), drop=FALSE]) else .sim.psi.i.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), numeric(P))
+                               P=P, eta=eta.tmp[[g]][,seq_len(Qs[g]), drop=FALSE]) else .sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), numeric(P))
     
     # Local Shrinkage
       load.2         <- lapply(lmat, .power2)

@@ -3,8 +3,8 @@
 ###################################################################
   
 # Gibbs Sampler Function
-  .gibbs_IFA     <- function(Q, data, iters, N, P, sigma.mu, sw, mu, prop, 
-                             psi.alpha, psi.beta, burnin, thinning, verbose,
+  .gibbs_IFA     <- function(Q, data, iters, N, P, sigma.mu, mu, prop, uni.type,
+                             psi.alpha, psi.beta, burnin, thinning, verbose, sw, 
                              epsilon, mu.zero, nu, adapt, adapt.at, b0, b1,
                              alpha.d1, alpha.d2, beta.d1, beta.d2, nuplus1, ...) {    
     
@@ -43,13 +43,15 @@
     Q.large      <- Q.big  <- FALSE
     
     mu.sigma     <- 1/sigma.mu
+    .sim.psi.inv <- switch(uni.type, unconstrained=.sim.psi.iu, isotropic=.sim.psi.ii)
+    .sim.psi.ip  <- switch(uni.type, unconstrained=.sim.psi.ipu, isotropic=.sim.psi.ipi)
     psi.beta     <- unique(round(psi.beta, min(nchar(psi.beta))))
     eta          <- .sim.eta.p(Q=Q, N=N)
     phi          <- .sim.phi.p(Q=Q, P=P, nu=nu, plus1=nuplus1)
     delta        <- c(.sim.delta.p(alpha=alpha.d1, beta=beta.d1), .sim.delta.p(Q=Q, alpha=alpha.d2, beta=beta.d2))
     tau          <- cumprod(delta)
     lmat         <- matrix(unlist(lapply(Pseq, function(j) .sim.load.ps(Q=Q, phi=phi[j,], tau=tau)), use.names=FALSE), nr=P, byrow=TRUE)
-    psi.inv      <- .sim.psi.i.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
+    psi.inv      <- .sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
     if(all(Q  < P - sqrt(P + Q), N > P)) {
       fact       <- try(factanal(data, factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
       if(!inherits(fact, "try-error"))   {

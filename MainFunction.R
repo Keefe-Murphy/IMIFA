@@ -3,8 +3,8 @@
 ########################################################
 
 mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA", "MFA", "IFA", "FA", "classify"), n.iters = 25000L, range.G = NULL, range.Q = NULL, thinning = 2L, 
-                        burnin = n.iters/5, centering = TRUE, scaling = c("unit", "pareto", "none"), mu.zero = NULL, sigma.mu = NULL, sigma.l = NULL, alpha = NULL, z.list = NULL, 
-                        z.init = c("mclust", "kmeans", "list", "priors"), psi.alpha = NULL, psi.beta = NULL, adapt = TRUE, b0 = NULL, b1 = NULL, prop = NULL, epsilon = NULL, nu = NULL,  
+                        burnin = n.iters/5, centering = TRUE, scaling = c("unit", "pareto", "none"), mu.zero = NULL, sigma.mu = NULL, sigma.l = NULL, alpha = NULL, psi.alpha = NULL, psi.beta = NULL,
+                        z.list = NULL, z.init = c("mclust", "kmeans", "list", "priors"),  adapt = TRUE, b0 = NULL, b1 = NULL, prop = NULL, epsilon = NULL, nu = NULL, uni.type = c("unconstrained", "isotropic"),
                         nuplus1 = TRUE, alpha.d1 = NULL, alpha.d2 = NULL, adapt.at = NULL, beta.d1 = NULL, beta.d2 = NULL, alpha.step = c("gibbs", "metropolis", "fixed"), alpha.hyper = NULL, 
                         ind.slice = TRUE, rho = NULL, DP.lab.sw = TRUE, trunc.G = NULL, profile = FALSE, verbose = TRUE, discount = NULL, learn.d = FALSE, d.hyper = NULL, mu0g = FALSE, 
                         psi0g = FALSE, delta0g = FALSE, mu.switch = TRUE, score.switch = TRUE, load.switch = TRUE, psi.switch = TRUE, pi.switch = TRUE, factanal = FALSE, Q.fac = NULL) {
@@ -19,6 +19,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   }
   method    <- match.arg(method)
   scaling   <- match.arg(scaling)
+  uni.type  <- match.arg(uni.type)
   if(missing(dat))                  stop("Dataset must be supplied")
   dat.nam   <- gsub("[[:space:]]", "", deparse(substitute(dat)))
   nam.dat   <- gsub("\\[.*", "", dat.nam)
@@ -96,6 +97,9 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   N         <- as.integer(nrow(dat))
   P         <- as.integer(ncol(dat))
   lnN       <- log(N)
+  if(missing("uni.type"))  {
+   uni.type <- ifelse(N < P, "isotropic", "unconstrained")
+  }
   
 # Manage storage switches & warnings for other function inputs
   if(!missing(mu.switch) && all(!mu.switch, ifelse(method == "classify", 
@@ -358,8 +362,8 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   }
   imifa     <- list(list())
   Gi        <- Qi  <- 1L
-  gibbs.arg <- list(P = P, sigma.mu = sigma.mu, psi.alpha = psi.alpha, burnin = burnin, 
-                    thinning = thinning, iters = iters, verbose = verbose, sw = switches)
+  gibbs.arg <- list(P = P, sigma.mu = sigma.mu, psi.alpha = psi.alpha, burnin = burnin, sw = switches, 
+                    thinning = thinning, iters = iters, verbose = verbose, uni.type = uni.type)
   if(is.element(method, c("IMIFA", "IMFA"))) {
     gibbs.arg      <- append(gibbs.arg, list(trunc.G = trunc.G, rho = rho, ind.slice = ind.slice, alpha.step = alpha.step, learn.d = learn.d, 
                                              DP.lab.sw = DP.lab.sw, a.hyper = alpha.hyper, discount = discount, d.hyper = d.hyper))
@@ -384,7 +388,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(all(!beta.x, psi0g))         stop("'psi.beta' can only be supplied for each group if z.init=list")
   }
   if(beta.x) {
-    psi.beta       <- temp.psi <- list(psi.hyper(psi.alpha, cov.mat))
+    psi.beta       <- temp.psi <- list(psi.hyper(psi.alpha, cov.mat, uni.type, P))
   } else {
     psi.beta       <- .len.check(psi.beta, psi0g, method, P, range.G)
   }
@@ -438,7 +442,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
       if(beta.x)  {
         if(psi0g) {
           cov.gg   <- lapply(seq_len(G), function(gg) if(nngs[gg] > 1) cova(as.matrix(dat[zi[[g]] == gg,, drop=FALSE])) else cov.mat)
-          psi.beta[[g]] <- vapply(seq_len(G), function(gg) psi.hyper(psi.alpha, cov.gg[[gg]]), numeric(P))
+          psi.beta[[g]] <- vapply(seq_len(G), function(gg) psi.hyper(psi.alpha, cov.gg[[gg]], uni.type, P), numeric(P))
         } else {
           psi.beta[[g]] <- replicate(G, temp.psi[[1]])
         }
@@ -655,6 +659,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   }
   class(times)            <- "listof"
   attr(imifa, "Time")     <- times
+  attr(imifa, "Uni.Type") <- uni.type
   attr(imifa, "Vars")     <- P
   if(verbose)                print(attr(imifa, "Time"))  
       

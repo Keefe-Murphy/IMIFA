@@ -3,9 +3,9 @@
 ################################################################
   
 # Gibbs Sampler Function
-  .gibbs_FA      <- function(Q, data, iters, N, P, sigma.mu, mu,
-                             mu.zero, psi.alpha, psi.beta, burnin,
-                             thinning, verbose, sw, sigma.l, ...) {
+  .gibbs_FA      <- function(Q, data, iters, N, P, sigma.mu, mu, burnin,
+                             thinning, uni.type, psi.alpha, psi.beta, 
+                             mu.zero, verbose, sw, sigma.l, ...) {
         
   # Define & initialise variables
     start.time   <- proc.time()
@@ -43,10 +43,12 @@
     cov.est      <- provideDimnames(matrix(0, nr=P, nc=P), base=dimnames(cov.emp))
     
     mu.sigma     <- 1/sigma.mu
+    .sim.psi.inv <- switch(uni.type, unconstrained=.sim.psi.iu, isotropic=.sim.psi.ii)
+    .sim.psi.ip  <- switch(uni.type, unconstrained=.sim.psi.ipu, isotropic=.sim.psi.ipi)
     psi.beta     <- unique(round(psi.beta, min(nchar(psi.beta))))
     eta          <- .sim.eta.p(Q=Q, N=N)
     lmat         <- .sim.load.p(Q=Q, P=P, sigma.l=sigma.l)
-    psi.inv      <- .sim.psi.i.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
+    psi.inv      <- .sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
     if(all(Q0, Q  < P - sqrt(P + Q), N > P)) {
       fact       <- try(factanal(data, factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
       if(!inherits(fact, "try-error")) {

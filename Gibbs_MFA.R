@@ -3,10 +3,9 @@
 ################################################################
   
 # Gibbs Sampler Function
-  .gibbs_MFA       <- function(Q, data, iters, N, P, G, mu.zero,
-                               sigma.mu, sigma.l, burnin, mu,
-                               thinning, psi.alpha, psi.beta,
-                               sw, verbose, cluster, ...) {
+  .gibbs_MFA       <- function(Q, data, iters, N, P, G, mu.zero, sigma.mu, 
+                               mu, sigma.l, burnin, thinning, sw, uni.type,
+                               psi.alpha, psi.beta, verbose, cluster, ...) {
          
   # Define & initialise variables
     start.time     <- proc.time()
@@ -60,6 +59,8 @@
     nn             <- tabulate(z, nbins=G)
     pi.prop        <- cluster$pi.prop
     pi.alpha       <- cluster$pi.alpha
+    .sim.psi.inv   <- switch(uni.type, unconstrained=.sim.psi.iu, isotropic=.sim.psi.ii)
+    .sim.psi.ip    <- switch(uni.type, unconstrained=.sim.psi.ipu, isotropic=.sim.psi.ipi)
     psi.beta       <- unique(round(psi.beta, min(nchar(psi.beta))))
     if(length(psi.beta) == 1) {
       psi.beta     <- matrix(psi.beta, nr=1, nc=G)
@@ -69,7 +70,7 @@
     label.switch   <- any(cluster$l.switch)
     eta            <- .sim.eta.p(N=N, Q=Q)
     lmat           <- lapply(Gseq, function(g) .sim.load.p(Q=Q, P=P, sigma.l=sigma.l))
-    psi.inv        <- vapply(Gseq, function(g) .sim.psi.i.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta[,g]), numeric(P))
+    psi.inv        <- vapply(Gseq, function(g) .sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta[,g]), numeric(P))
     if(Q0 && Q  < P - sqrt(P + Q)) {
       fact.ind     <- nn   <= P
       fail.gs      <- which(fact.ind)
@@ -147,7 +148,7 @@
       
     # Uniquenesses
       psi.inv      <- vapply(Gseq, function(g) if(nn0[g]) .sim.psi.inv(N=nn[g], psi.alpha=psi.alpha, c.data=c.data[[g]], eta=eta.tmp[[g]], psi.beta=psi.beta[,g],
-                             P=P, lmat=if(Q1) as.matrix(lmat[,,g]) else lmat[,,g]) else .sim.psi.i.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta[,g]), numeric(P))
+                             P=P, lmat=if(Q1) as.matrix(lmat[,,g]) else lmat[,,g]) else .sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta[,g]), numeric(P))
     
     # Label Switching
       if(label.switch) {

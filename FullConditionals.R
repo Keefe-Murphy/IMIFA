@@ -35,9 +35,15 @@
     }
     
   # Uniquenesses
-    .sim.psi.inv <- function(N, P, psi.alpha, psi.beta, c.data, eta, lmat) { 
+    .sim.psi.iu  <- function(N, P, psi.alpha, psi.beta, c.data, eta, lmat) { 
       rate.t     <- c.data    - tcrossprod(eta, lmat)
         rgamma(P,   shape=N/2 + psi.alpha, rate=colSums(rate.t * rate.t)/2 + psi.beta) 
+    }
+    
+    .sim.psi.ii  <- function(N, P, psi.alpha, psi.beta, c.data, eta, lmat) { 
+      S.mat      <- c.data - tcrossprod(eta, lmat)
+      rate.t     <- sum(S.mat * S.mat)/P
+        rep(rgamma(1, shape=N/2 + psi.alpha, rate=rate.t/2 + psi.beta), P)
     }
 
   # Local Shrinkage
@@ -122,8 +128,12 @@
     }
   
   # Uniquenesses
-    .sim.psi.i.p <- function(P, psi.alpha, psi.beta) {
+    .sim.psi.ipu <- function(P, psi.alpha, psi.beta) {
         rgamma(n=P, shape=psi.alpha, rate=psi.beta) 
+    }
+    
+    .sim.psi.ipi <- function(P, psi.alpha, psi.beta) {
+        rep(rgamma(1, shape=psi.alpha, rate=psi.beta), P)
     }
 
   # Local Shrinkage
@@ -144,12 +154,12 @@
 # Other Functions
     
   # Uniqueness Hyperparameters
-    psi.hyper   <- function(alpha, covar) {
+    psi.hyper   <- function(alpha, covar, type=c("unconstrained", "isotropic"), P) {
       inv.cov   <- try(solve(covar), silent=TRUE)
       if(inherits(inv.cov, "try-error"))  {
         inv.cov <- 1/covar
       }
-        unname((alpha - 1)/diag(inv.cov))
+        unname((alpha - 1)/switch(match.arg(type), unconstrained=diag(inv.cov), isotropic=rep(sum(diag(inv.cov))/P, P)))
     }
 
   # Alpha Shifted Gamma Hyperparameters

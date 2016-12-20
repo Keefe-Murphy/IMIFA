@@ -52,6 +52,7 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
      c("G", "Q", 
        "QG")))  {      plot.meth <- "GQ"
   }
+  uni.type     <- attr(results, "Uni.Type")
   plot.meth    <- match.arg(plot.meth)
   load.meth    <- match.arg(load.meth)
   type.x       <- missing(type)
@@ -740,13 +741,13 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
     if(m.sw["P.sw"]) {
       plot.x <- switch(vars, means=results$Means$post.mu, uniquenesses=results$Uniquenesses$post.psi, results$Loadings$post.load[[g]])
       x.plot <- apply(plot.x, 1L, range, na.rm=TRUE)
-      plot.x <- apply(plot.x, 2L, function(x) (x - min(x, na.rm=TRUE))/(max(x, na.rm=TRUE) - min(x, na.rm=TRUE)))
+      plot.x <- switch(uni.type, unconstrained=apply(plot.x, 2L, function(x) (x - min(x, na.rm=TRUE))/(max(x, na.rm=TRUE) - min(x, na.rm=TRUE))), isotropic=plot.x)
       varnam <- paste0(toupper(substr(vars, 1, 1)), substr(vars, 2, nchar(vars)))
       if(grp.ind) {
         layout(rbind(1, 2), heights=c(9, 1))
         par(mar=c(3.1, 4.1, 4.1, 2.1))
       }
-      matplot(seq_len(n.var), plot.x, type="p", col=switch(vars, loadings=seq_len(Q) + 1, seq_len(G) + 1), pch=15, xlab="Variable", ylab=paste0("Standardised ", varnam), axes=FALSE, main=paste0("Parallel Coordinates: ", varnam, ifelse(all(grp.ind, vars == "loadings"), paste0("\n Group ", g), "")))
+      matplot(seq_len(n.var), plot.x, type=switch(vars, uniquenesses=switch(uni.type, unconstrained="p", isotropic="l"), "p"), col=switch(vars, loadings=seq_len(Q) + 1, seq_len(G) + 1), pch=15, xlab="Variable", ylab=paste0("Standardised ", varnam), axes=FALSE, main=paste0("Parallel Coordinates: ", varnam, ifelse(all(grp.ind, vars == "loadings"), paste0("\n Group ", g), "")))
       axis(1, at=seq_len(n.var), labels=if(titles && n.var < 100) rownames(plot.x) else rep("", n.var), cex.axis=0.5, tick=FALSE)
       for(i in seq_len(n.var))    {
         lines(c(i, i), c(0, 1), col=grey)

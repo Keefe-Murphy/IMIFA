@@ -4,7 +4,7 @@
   
 # Gibbs Sampler Function
   .gibbs_IMFA       <- function(Q, data, iters, N, P, G, mu.zero, rho, sigma.l, alpha.step, discount,
-                                a.hyper, mu, sigma.mu, burnin, thinning, trunc.G, d.hyper, learn.d,
+                                a.hyper, mu, sigma.mu, burnin, thinning, trunc.G, d.hyper, learn.d, uni.type,
                                 ind.slice, psi.alpha, psi.beta, verbose, sw, cluster, DP.lab.sw, ...) {
         
   # Define & initialise variables
@@ -69,13 +69,15 @@
     sig.mu.sqrt     <- sqrt(sigma.mu)
     z               <- cluster$z
     pi.alpha        <- cluster$pi.alpha
+    .sim.psi.inv    <- switch(uni.type, unconstrained=.sim.psi.iu, isotropic=.sim.psi.ii)
+    .sim.psi.ip     <- switch(uni.type, unconstrained=.sim.psi.ipu, isotropic=.sim.psi.ipi)
     psi.beta        <- unique(round(psi.beta, min(nchar(psi.beta))))
     pi.prop         <- cluster$pi.prop
     nn              <- tabulate(z, nbins=trunc.G)
     mu              <- cbind(mu, vapply(seq_len(trunc.G - G), function(g) .sim.mu.p(P=P, sig.mu.sqrt=sig.mu.sqrt, mu.zero=mu.zero), numeric(P)))
     eta             <- .sim.eta.p(N=N, Q=Q)
     lmat            <- lapply(Ts, function(t) .sim.load.p(Q=Q, P=P, sigma.l=sigma.l))
-    psi.inv         <- vapply(Ts, function(t) .sim.psi.i.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), numeric(P))
+    psi.inv         <- vapply(Ts, function(t) .sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), numeric(P))
     if(Q0 && Q   < P - sqrt(P + Q)) {
       for(g in which(nn      > P))  {
         fact        <- try(factanal(data[z == g,, drop=FALSE], factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
@@ -188,7 +190,7 @@
                     
     # Uniquenesses
       psi.inv[,Gs]  <- vapply(Gs, function(g) if(nn0[g]) .sim.psi.inv(N=nn[g], psi.alpha=psi.alpha, c.data=c.data[[g]], P=P, eta=eta.tmp[[g]], psi.beta=psi.beta,
-                              lmat=if(Q1) as.matrix(lmat[,,g]) else lmat[,,g]) else .sim.psi.i.p(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), numeric(P))
+                              lmat=if(Q1) as.matrix(lmat[,,g]) else lmat[,,g]) else .sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), numeric(P))
       
     # Alpha
       if(not.fixed) {

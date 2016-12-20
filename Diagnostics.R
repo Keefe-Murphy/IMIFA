@@ -641,6 +641,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, 
   attr(result, "Obs")          <- n.obs
   attr(result, "Store")        <- tmp.store
   attr(result, "Switch")       <- sw
+  attr(result, "Uni.Type")     <- attr(sims, "Uni.Type")
   attr(result, "Vars")         <- n.var
   cat(print(result))
   return(result)
