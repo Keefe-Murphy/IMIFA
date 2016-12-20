@@ -106,7 +106,7 @@
     z               <- as.numeric(levels(z))[z]
     ksi             <- (1 - rho) * rho^(Ts - 1)
     log.ksi         <- log(ksi)
-    slice.logs      <- c(- Inf, 0L)
+    slice.logs      <- c(- Inf, 0)
     if(burnin        < 1)  {
       mu.store[,,1]         <- mu
       eta.store[,,1]        <- eta

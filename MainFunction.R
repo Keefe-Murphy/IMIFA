@@ -429,7 +429,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
         zi[[g]]    <- as.numeric(zips)
         rm(zips)
       }
-      nngs         <- tabulate(zips, nbins=ifelse(is.element(method, c("IMFA", "IMIFA")), trunc.G, G))
+      nngs         <- tabulate(zi[[g]], nbins=ifelse(is.element(method, c("IMFA", "IMIFA")), trunc.G, G))
       pi.prop[[g]] <- prop.table(nngs)
       mu[[g]]      <- vapply(seq_len(G), function(gg) if(nngs[gg] > 0) colMeans(dat[zi[[g]] == gg,, drop=FALSE]) else rep(0, P), numeric(P))
       if(mu0.x)   {
