@@ -20,14 +20,14 @@
     }
       
   # Loadings
-    .sim.load    <- function(l.sigma, Q, c.data, eta, psi.inv, EtE, Q1) {
+    .sim.load    <- function(l.sigma, Q, c.data, eta, psi.inv, EtE, Q1)  {
       u.load     <- l.sigma + psi.inv * EtE
       u.load     <- if(Q1) sqrt(u.load) else .chol(u.load)
       mu.load    <- psi.inv * (if(Q1) 1/(u.load * u.load) else chol2inv(u.load)) %*% crossprod(eta, c.data)
         mu.load   + backsolve(u.load, rnorm(Q))
     }
     
-    .sim.load.s  <- function(l.sigma, Q, c.data, eta, phi, tau, psi.inv, EtE, Q1) {
+    .sim.load.s  <- function(Q, c.data, eta, phi, tau, psi.inv, EtE, Q1) {
       u.load     <- diag(phi * tau, Q) + psi.inv * EtE
       u.load     <- if(Q1) sqrt(u.load) else .chol(u.load)
       mu.load    <- psi.inv  * (if(Q1) 1/(u.load * u.load) else chol2inv(u.load)) %*% crossprod(eta, c.data)
@@ -70,7 +70,7 @@
       log.denom  <- rowLogSumExps(log.num)
       lnp        <- sweep(log.num, 1, log.denom, FUN="-")
       for(g in Gseq[-1]) {
-        lnp[,g]  <- colLogSumExps(rbind(lnp[,g], lnp[,g - 1]))
+        lnp[,g]  <- rowLogSumExps(lnp[,g:(g - 1)])
       }
         return(list(z = rowsums(-rexp(N) > lnp) + 1, log.likes = log.denom))
     }
@@ -80,7 +80,7 @@
       log.denom  <- rowLogSumExps(log.num)
       lnp        <- sweep(log.num, 1, log.denom, FUN="-")
       for(g in Gseq[-1]) {
-        lnp[,g]  <- colLogSumExps(rbind(lnp[,g], lnp[,g - 1]))
+        lnp[,g]  <- rowLogSumExps(lnp[,g:(g - 1)])
       }
         return(list(z = rowsums(-rexp(N) > lnp) + 1, log.likes = log.denom))
     }
