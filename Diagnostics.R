@@ -409,8 +409,9 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, 
 # Loop over g in G to extract other results
   result         <- list(list())
   e.store        <- list()
-  mse   <- rmse  <- nrmse  <- cvrmse  <- 
-  mad   <- emp.T <- est.T  <- rep(NA, G)
+  mse   <- mae   <- medse  <- 
+  medae <- rmse  <- cvrmse <- 
+  nrmse <- emp.T <- est.T  <- rep(NA, G)
   for(g in Gseq) {
     Qg           <- Q[g]
     Qgs          <- seq_len(Qg)
@@ -542,11 +543,15 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, 
     
     if(all(emp.T[g], est.T[g])) {
       error      <- cov.emp - cov.est
-      mse[g]     <- mean(error * error)
+      sq.error   <- error * error
+      abs.error  <- abs(error)
+      mse[g]     <- mean(sq.error)
+      mae[g]     <- mean(abs.error)
+      medse[g]   <- med(sq.error)
+      medae[g]   <- med(abs.error)
       rmse[g]    <- sqrt(mse[g])
       nrmse[g]   <- rmse[g]/(max(cov.emp) - min(cov.emp))
       cvrmse[g]  <- rmse[g]/mean(cov.emp)
-      mad[g]     <- mean(abs(error))
       if(any(all(scal.meth != "none", cent) && 
                  sum(round(diag(cov.est))   != 
                  round(diag(cov.emp)))      != 0,
@@ -589,9 +594,10 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, 
   attr(GQ.res, "Supplied")     <- c(Q=Q.T, G=G.T)
   err.T                        <- vapply(Gseq, function(g) all(emp.T[g], est.T[g]), logical(1))
   if(any(err.T))   {
-    errors       <- lapply(list(MSE = mse, RMSE = rmse, NRMSE = nrmse, CVRMSE = cvrmse, MAD = mad), setNames, paste0("Group ", Gseq))
+    errors       <- lapply(list(MSE = mse, MAE = mae, MEDSE = medse, MEDAE = medae, RMSE = rmse, 
+                                NRMSE = nrmse, CVRMSE = cvrmse), setNames, paste0("Group ", Gseq))
     if(G > 1)      {
-      errors     <- c(errors, list(Averages = unlist(lapply(errors, mean, na.rm=TRUE))))
+      errors     <- c(errors, Averages = lapply(errors, mean, na.rm=TRUE))
       class(errors)            <- "listof"
     } else {
       errors     <- setNames(unlist(errors), names(errors))

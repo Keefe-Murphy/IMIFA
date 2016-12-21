@@ -776,27 +776,27 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
         par(mar=c(3.1, 4.1, 4.1, 2.1))
       }
       col.e  <- if(G > 1) seq_len(nrow(plot.x)) else seq_along(plot.x)
-      if(G > 1)  {
-        dens <- matrix(-1, nr=5, nc=G + 1)
+      if(G    > 1)   {
+        dens <- matrix(-1, nr=7, nc=G + 1)
         dens[,G + 1]       <- 30
-      } else {
+      } else  {
         dens <- NULL
       }
       pl.x   <- barplot(plot.x, beside=TRUE, col=col.e, main="", ylab="Deviation", density=dens)
-      na.x   <- all(G > 1, is.na(results$Error[[1]]))
-      if(G > 1) points(x=colMedians(as.matrix(pl.x[,which(na.x)])), y=rep(0, sum(na.x)), pch=16, col=6)
+      na.x   <- G > 1 & is.na(x.plot[[1]])
+      if(G > 1) points(x=matrixStats::colMedians(pl.x[,which(na.x)]), y=rep(0, sum(na.x)), pch=16, col=8)
       if(titles) title(main=list("Error Metrics"))
       if(titles) {
         par(mar=c(0, 0, 0, 0))
         plot.new()
-        ltxt <- c("MSE", "RMSE", "NRMSE", "CVRMSE", "MAD")
+        ltxt <- c("MSE", "MAE", "MEDSE", "MEDAE", "RMSE", "NRMSE", "CVRMSE")
         lnc  <- length(col.e)
         lcol <- col.e
-        xna  <- sum(na.x) > 0
-        lpch <- rep(15, 5)
+        xna  <- sum(na.x)   > 0
+        lpch <- rep(15, 7) 
         temp <- legend("center", legend=if(xna) c(ltxt, "Missing") else ltxt, ncol=ifelse(xna, lnc + 1, lnc), bty="n",
-                       pch=if(xna) c(lpch, max(lpch) + 1) else lpch, col=if(xna) c(lcol, length(lcol) + 1) else lcol, cex=0.8)
-        if(xna) text(x=temp$text$x[6] - 0.025, y=temp$text$y[6] + 0.015, "__")
+                       pch=if(xna) c(lpch, 16) else lpch, col=if(xna) c(lcol, length(lcol) + 1) else lcol, cex=0.8)
+        if(xna) text(x=temp$text$x[8] - 0.01, y=temp$text$y[8] + 0.01, "__")
       }  
       if(G > 1) {
         avg  <- setNames(list(x.plot$Averages), "Average Error Metrics") 
