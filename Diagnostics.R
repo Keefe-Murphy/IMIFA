@@ -597,7 +597,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, 
     errors       <- lapply(list(MSE = mse, MAE = mae, MEDSE = medse, MEDAE = medae, RMSE = rmse, 
                                 NRMSE = nrmse, CVRMSE = cvrmse), setNames, paste0("Group ", Gseq))
     if(G > 1)      {
-      errors     <- c(errors, Averages = lapply(errors, mean, na.rm=TRUE))
+      errors     <- c(errors, list(Averages = unlist(lapply(errors, mean, na.rm=TRUE))))
       class(errors)            <- "listof"
     } else {
       errors     <- setNames(unlist(errors), names(errors))
