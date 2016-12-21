@@ -67,7 +67,7 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
   grp.ind      <- !is.element(method, c("FA", "IFA"))
   if(grp.ind)   {
     clust      <- results$Clust
-    grp.size   <- tabulate(clust$map, nbins=G)
+    grp.size   <- clust$sizes
     labelmiss  <- !is.null(attr(clust, "Label.Sup")) && !attr(clust, "Label.Sup")
   }
   grp.ind      <- all(G != 1, grp.ind)

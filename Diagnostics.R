@@ -294,8 +294,8 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, 
       }
     }
     post.z       <- apply(z, 1, function(x) factor(which.max(tabulate(x)), levels=Gseq))
-    if(nlevels(droplevels(post.z)) !=
-       nlevels(post.z))           warning("Empty group exists in modal clustering:\n examine trace plots and try supplying a lower G value to tune.imifa() or re-running the model", call.=FALSE)
+    sizes        <- tabulate(post.z, nbins=G)
+    if(any(sizes == 0))           warning("Empty group exists in modal clustering:\n examine trace plots and try supplying a lower G value to tune.imifa() or re-running the model", call.=FALSE)
     uncertain    <- 1 - matrixStats::colMaxs(matrix(apply(z, 1, tabulate, nbins=G)/length(tmp.store), nr=G, nc=n.obs))
     if(sw["pi.sw"])    {
       pi.prop    <- pies[Gseq,seq_along(tmp.store), drop=FALSE]
@@ -361,7 +361,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, 
       class(DP.alpha)          <- "listof"
     }
     cluster      <- list(map = post.z, z = z, uncertainty = uncertain)
-    cluster      <- c(cluster, list(post.pi = post.pi/sum(post.pi)), 
+    cluster      <- c(cluster, list(sizes = sizes, post.pi = post.pi/sum(post.pi)), 
                       if(sw["pi.sw"]) list(pi.prop = pi.prop, var.pi = var.pi, ci.pi = ci.pi),
                       if(!label.miss) list(perf = tab.stat), 
                       if(alpha.step != "fixed") list(DP.alpha = DP.alpha),
