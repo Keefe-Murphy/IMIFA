@@ -36,14 +36,13 @@
     
   # Uniquenesses
     .sim.psi.iu  <- function(N, P, psi.alpha, psi.beta, c.data, eta, lmat) { 
-      rate.t     <- c.data    - tcrossprod(eta, lmat)
-        rgamma(P,   shape=N/2 + psi.alpha, rate=colSums(rate.t * rate.t)/2 + psi.beta) 
+      S.mat      <- c.data    - tcrossprod(eta, lmat)
+        rgamma(P,   shape=N/2 + psi.alpha, rate=colSums(S.mat * S.mat)/2 + psi.beta) 
     }
     
     .sim.psi.ii  <- function(N, P, psi.alpha, psi.beta, c.data, eta, lmat) { 
       S.mat      <- c.data - tcrossprod(eta, lmat)
-      rate.t     <- sum(S.mat * S.mat)/P
-        rep(rgamma(1, shape=N/2 + psi.alpha, rate=rate.t/2 + psi.beta), P)
+        rep(rgamma(1, shape=(N * P)/2 + psi.alpha, rate=sum(S.mat * S.mat)/2 + psi.beta), P)
     }
 
   # Local Shrinkage
@@ -163,7 +162,7 @@
     }
 
   # Alpha Shifted Gamma Hyperparameters
-    shift.gamma <- function(shape, rate, shift = 0L, param = c("rate", "scale")) {
+    shift.gamma <- function(shape, rate, shift = 0L, param = c("rate", "scale"))   {
       var       <- shape/rate^2
       exp       <- var  * rate + shift
       rate      <- exp/var
