@@ -2,8 +2,13 @@
 ### Tune Parameters & Extract Results ###
 #########################################
 
-tune.IMIFA       <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, Q = NULL, Q.meth = c("Mode", "Median"), G.meth = c("Mode", "Median"), dat = NULL,
-                             criterion = c("bicm", "aicm", "bic.mcmc", "aic.mcmc", "log.iLLH"), conf.level = 0.95, zlabels = NULL, recomp = FALSE) {
+get_IMIFA_results              <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, Q = NULL, Q.meth = c("Mode", "Median"), G.meth = c("Mode", "Median"), dat = NULL,
+                                           criterion = c("bicm", "aicm", "bic.mcmc", "aic.mcmc", "log.iLLH"), conf.level = 0.95, zlabels = NULL, recomp = FALSE) {
+  UseMethod("get_IMIFA_results")
+}
+
+get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, Q = NULL, Q.meth = c("Mode", "Median"), G.meth = c("Mode", "Median"), dat = NULL,
+                                           criterion = c("bicm", "aicm", "bic.mcmc", "aic.mcmc", "log.iLLH"), conf.level = 0.95, zlabels = NULL, recomp = FALSE) {
   
   defpar         <- suppressWarnings(par(no.readonly=TRUE))
   defopt         <- options()
@@ -361,7 +366,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, 
       class(DP.alpha)          <- "listof"
     }
     cluster      <- list(map = post.z, z = z, uncertainty = uncertain)
-    cluster      <- c(cluster, list(sizes = sizes, post.pi = post.pi/sum(post.pi)), 
+    cluster      <- c(cluster, list(post.sizes = sizes, post.pi = post.pi/sum(post.pi)), 
                       if(sw["pi.sw"]) list(pi.prop = pi.prop, var.pi = var.pi, ci.pi = ci.pi),
                       if(!label.miss) list(perf = tab.stat), 
                       if(alpha.step != "fixed") list(DP.alpha = DP.alpha),

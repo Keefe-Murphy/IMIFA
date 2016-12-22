@@ -19,7 +19,6 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   }
   method    <- match.arg(method)
   scaling   <- match.arg(scaling)
-  uni.type  <- match.arg(uni.type)
   if(missing(dat))                  stop("Dataset must be supplied")
   dat.nam   <- gsub("[[:space:]]", "", deparse(substitute(dat)))
   nam.dat   <- gsub("\\[.*", "", dat.nam)
@@ -100,6 +99,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   if(missing("uni.type"))  {
    uni.type <- ifelse(N < P, "isotropic", "unconstrained")
   }
+  uni.type  <- match.arg(uni.type)
   
 # Manage storage switches & warnings for other function inputs
   if(!missing(mu.switch) && all(!mu.switch, ifelse(method == "classify", 
