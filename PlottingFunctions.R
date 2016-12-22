@@ -2,14 +2,14 @@
 ### IMIFA Plotting Functions ###
 ################################
 
-plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlation", "density", "errors", "GQ", "means", "parallel.coords", "trace", "zlabels"), 
+plot.Tuned_IMIFA    <- function(x = NULL, plot.meth = c("all", "correlation", "density", "errors", "GQ", "means", "parallel.coords", "trace", "zlabels"), 
                                 vars = c("means", "scores", "loadings", "uniquenesses", "pis", "alpha"), zlabels = NULL, load.meth = c("heatmap", "raw"), palette = NULL, g = NULL, 
                                 fac = NULL, by.fac = TRUE, ind = NULL, type = c("h", "n", "p", "l"), intervals = TRUE, mat = TRUE, partial = FALSE, titles = TRUE, transparency = NULL) {
 
   defpar  <- suppressWarnings(par(no.readonly=TRUE))
   defpar$new        <- FALSE
   if(missing(palette))   palette <- c("#999999", "#E69F00", "#009E73", "#56B4E9", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
-  if(!all(are.cols(cols=palette)))    stop("Supplied colour palette contains invalid colours")
+  if(!all(are_cols(cols=palette)))    stop("Supplied colour palette contains invalid colours")
   if(length(palette) < 3)             stop("Palette must contain 3 or more colours")
   if(missing(transparency)) {
     transparency    <- 0.75
@@ -29,11 +29,11 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
   on.exit(do.call("clip", as.list(defpar$usr)), add=TRUE)
   on.exit(palette("default"), add=TRUE)
   on.exit(suppressWarnings(options(defopt)), add=TRUE)
-  if(missing(results))                stop("Results must be supplied")
-  if(!exists(deparse(substitute(results)),
-             envir=.GlobalEnv))       stop(paste0("Object ", match.call()$results, " not found\n"))
-  if(class(results) != "Tuned_IMIFA") stop(paste0("Results object of class 'Tuned_IMIFA' must be supplied"))
-  GQ.res  <- results$GQ.results
+  if(missing(x))                      stop("'x' must be supplied")
+  if(!exists(deparse(substitute(x)),
+             envir=.GlobalEnv))       stop(paste0("Object ", match.call()$x, " not found\n"))
+  if(class(x) != "Tuned_IMIFA")       stop(paste0("Results object of class 'Tuned_IMIFA' must be supplied"))
+  GQ.res  <- x$GQ.results
   G       <- GQ.res$G
   Gseq    <- seq_len(G)
   Qs      <- GQ.res$Q
@@ -42,31 +42,31 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
   n.fac   <- attr(GQ.res, "Factors")
   G.supp  <- attr(GQ.res, "Supplied")["G"]
   Q.supp  <- attr(GQ.res, "Supplied")["Q"]
-  method  <- attr(results, "Method")
-  store   <- attr(results, "Store")
+  method  <- attr(x, "Method")
+  store   <- attr(x, "Store")
   vars    <- match.arg(vars)
-  n.var   <- attr(results, "Vars")
-  n.obs   <- attr(results, "Obs")
+  n.var   <- attr(x, "Vars")
+  n.obs   <- attr(x, "Obs")
   if(missing(plot.meth))              stop("What type of plot would you like to produce?")
   if(is.element(plot.meth, 
      c("G", "Q", 
        "QG")))  {      plot.meth <- "GQ"
   }
-  uni.type     <- attr(results, "Uni.Type")
+  uni.type     <- attr(x, "Uni.Type")
   plot.meth    <- match.arg(plot.meth)
   load.meth    <- match.arg(load.meth)
   type.x       <- missing(type)
   type         <- match.arg(type)
   m.sw         <- c(G.sw = FALSE, Z.sw = FALSE, E.sw = FALSE, P.sw = FALSE, C.sw = FALSE, D.sw = FALSE, M.sw = FALSE, T.sw = FALSE)
-  v.sw         <- attr(results, "Switch")
+  v.sw         <- attr(x, "Switch")
   names(v.sw)  <- formals(sys.function(sys.parent()))$vars
   ci.sw        <- v.sw
-  var.names    <- rownames(results[[1]]$post.load)
-  obs.names    <- rownames(results$Scores$post.eta)
+  var.names    <- rownames(x[[1]]$post.load)
+  obs.names    <- rownames(x$Scores$post.eta)
   all.ind      <- plot.meth == "all"
   grp.ind      <- !is.element(method, c("FA", "IFA"))
   if(grp.ind)   {
-    clust      <- results$Clust
+    clust      <- x$Clust
     grp.size   <- clust$sizes
     labelmiss  <- !is.null(attr(clust, "Label.Sup")) && !attr(clust, "Label.Sup")
   }
@@ -104,7 +104,7 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
     if(vars == "pis")                 stop("Can't plot mixing proportions as no clustering has taken place")
   }
   if(all(m.sw["E.sw"], 
-         !attr(results, "Errors")))   stop("Can't plot error metrics as they were not calculated due to storage switches")
+         !attr(x, "Errors")))         stop("Can't plot error metrics as they were not calculated due to storage switches")
   if(all(!m.sw["G.sw"], !m.sw["Z.sw"], !m.sw["E.sw"],
      missing(vars)))                  stop("What variable would you like to plot?")
   if(all(any(m.sw["M.sw"], all.ind),
@@ -117,7 +117,7 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
     m.sw["M.sw"]   <- TRUE
   } 
   if(all(!v.sw[vars], !m.sw["G.sw"], 
-     !m.sw["Z.sw"],   !m.sw["E.sw"])) stop(paste0("Nothing to plot: ", vars, ifelse(vars == "alpha", ifelse(is.element(method, c("FA", "IFA")), paste0(" not used for the ", method, " method"), paste0(" was fixed at ", attr(results, "Alpha"))), " weren't stored")))
+     !m.sw["Z.sw"],   !m.sw["E.sw"])) stop(paste0("Nothing to plot: ", vars, ifelse(vars == "alpha", ifelse(is.element(method, c("FA", "IFA")), paste0(" not used for the ", method, " method"), paste0(" was fixed at ", attr(x, "Alpha"))), " weren't stored")))
   if(any(!is.logical(intervals),
          length(intervals) != 1))     stop("'intervals' must be TRUE or FALSE")
   if(any(!is.logical(mat),
@@ -168,8 +168,8 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
     ng    <- ifelse(grp.ind, grp.size[g], n.obs)
     g.ind <- which(Gs == g)
     msgx  <- all(interactive(), g != max(Gs))
-    result     <- results[[g]]
-    .ent.exit  <- function() {
+    result     <- x[[g]]
+    .ent_exit  <- function() {
       ent      <- readline("Hit <Return> to see next plot or type 'EXIT'/hit <Esc> to exit: ")
       options(show.error.messages=FALSE)
       on.exit(suppressWarnings(options(defopt)), add=TRUE)
@@ -182,7 +182,7 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
       if(g == max(Gs)) {
         break
       } else {
-        if(isTRUE(msgx)) .ent.exit()
+        if(isTRUE(msgx)) .ent_exit()
         next
       }
     }
@@ -194,7 +194,7 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
       matx     <- mat
     }  
     if(!matx) {
-      iter     <- switch(vars, scores=seq_along(attr(results$Score, "Eta.store")), pis=seq_along(store), seq_len(attr(result, "Store")))
+      iter     <- switch(vars, scores=seq_along(attr(x$Score, "Eta.store")), pis=seq_along(store), seq_len(attr(result, "Store")))
     }               
     if(is.element(vars, c("scores", "loadings"))) {
       if(indx)               ind <- c(1L, 1L)
@@ -203,13 +203,13 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
       if(vars  == "scores")  {
         if(ind[1] >  n.obs)           stop(paste0("First index can't be greater than the number of observations: ",  n.obs))
         if(ind[2] >  Q.max)  {        warning(paste0("Second index can't be greater than ", Q.max, ", the total number of factors", if(grp.ind) paste0(" across groups"), ".\n Try specifying a vector of fac values with maximum entries ", paste0(Qs, collapse=", "), "."), call.=FALSE)
-        if(isTRUE(msgx)) .ent.exit()
+        if(isTRUE(msgx)) .ent_exit()
         next
         }
       } else {
         if(ind[1] > n.var)            stop(paste0("First index can't be greater than the number of variables: ",  n.var))
         if(ind[2] > Q) {              warning(paste0("Second index can't be greater than ", Q, ", the number of factors", if(grp.ind) paste0(" in group ", g), ".\n Try specifying a vector of fac values with maximum entries ", paste0(Qs, collapse=", "), "."), call.=FALSE)
-        if(isTRUE(msgx)) .ent.exit()
+        if(isTRUE(msgx)) .ent_exit()
         next
         }
       }
@@ -236,7 +236,7 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
         }
       }
       if(vars  == "scores") {
-        x.plot <- results$Scores$eta
+        x.plot <- x$Scores$eta
         if(by.fac) {
           plot.x  <- if(Q.max > 1) x.plot[ind[1],,] else t(x.plot[ind[1],,])
         } else {
@@ -321,7 +321,7 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
         }
       }
       if(vars  == "scores") {
-        x.plot <- results$Scores$eta
+        x.plot <- x$Scores$eta
         if(by.fac) {
           plot.x  <- if(Q > 1) x.plot[ind[1],,] else t(x.plot[ind[1],,])
         } else   {
@@ -426,14 +426,14 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
         if(g.score)  { 
           if(g.ind == 1)  tmplab <- labs
           z.ind  <- as.numeric(levels(tmplab))[tmplab] %in% g
-          plot.x <- results$Scores$post.eta[z.ind,,drop=FALSE]
+          plot.x <- x$Scores$post.eta[z.ind,,drop=FALSE]
           ind2   <- ifelse(any(!facx, Q <= 1), ind[2], if(Q > 1) max(2, ind[2]))
-          if(ci.sw[vars])  ci.x  <- results$Scores$ci.eta[,z.ind,, drop=FALSE]
+          if(ci.sw[vars])  ci.x  <- x$Scores$ci.eta[,z.ind,, drop=FALSE]
           labs   <- g
         } else       {
-          plot.x <- results$Scores$post.eta
+          plot.x <- x$Scores$post.eta
           ind2   <- ifelse(any(!facx, Q.max <= 1), ind[2], if(Q.max > 1) max(2, ind[2]))
-          if(ci.sw[vars])  ci.x  <- results$Scores$ci.eta
+          if(ci.sw[vars])  ci.x  <- x$Scores$ci.eta
         }
         col.s  <- if(is.factor(labs)) as.numeric(levels(labs))[labs] + 1 else labs + 1
         type.s <- ifelse(any(type.x, type == "l"), "p", type)
@@ -529,8 +529,8 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
         plot(c(0, 1), c(0, 1), ann=FALSE, bty='n', type='n', xaxt='n', yaxt='n')
         if(titles) title(main=list(paste0("Summary Statistics", ifelse(all.ind, "", ":\nAlpha"))))
         plot.x <- clust$DP.alpha[-1]
-        a.step <- attr(results, "Alph.step")
-        conf   <- attr(results, "Conf.Level")
+        a.step <- attr(x, "Alph.step")
+        conf   <- attr(x, "Conf.Level")
         digits <- options()$digits
         a.adj  <- rep(0.5, 2)
         a.cex  <- par()$fin[2]/switch(a.step, metropolis=5, 4)
@@ -739,7 +739,7 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
     }
     
     if(m.sw["P.sw"]) {
-      plot.x <- switch(vars, means=results$Means$post.mu, uniquenesses=results$Uniquenesses$post.psi, results$Loadings$post.load[[g]])
+      plot.x <- switch(vars, means=x$Means$post.mu, uniquenesses=x$Uniquenesses$post.psi, x$Loadings$post.load[[g]])
       x.plot <- apply(plot.x, 1L, range, na.rm=TRUE)
       plot.x <- switch(uni.type, unconstrained=apply(plot.x, 2L, function(x) (x - min(x, na.rm=TRUE))/(max(x, na.rm=TRUE) - min(x, na.rm=TRUE))), isotropic=plot.x)
       varnam <- paste0(toupper(substr(vars, 1, 1)), substr(vars, 2, nchar(vars)))
@@ -769,7 +769,7 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
     
     if(m.sw["E.sw"]) {
       palette(tmp.pal)
-      x.plot <- results$Error
+      x.plot <- x$Error
       plot.x      <- if(G > 1) cbind(do.call(rbind, x.plot[-length(x.plot)]), Averages = x.plot$Averages) else x.plot
       if(titles) {
         layout(rbind(1, 2), heights=c(9, 1))
@@ -825,7 +825,7 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
         }
       }
       if(vars  == "scores")   { 
-        plot.x <- results$Scores$eta
+        plot.x <- x$Scores$eta
         if(!partial) {
           acf(plot.x[ind[1],ind[2],], main="", ci.col=4, ylab="")
           if(titles) title(main=list(paste0("ACF", ifelse(all.ind, paste0(":\n", "Observation ", obs.names[ind[1]], ", Factor ", ind[2]), ""))))
@@ -892,7 +892,7 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
     if(all(all.ind, titles)) title(ifelse(vars != "pis", paste0(toupper(substr(vars, 1, 1)), substr(vars, 2, nchar(vars)), 
                              ifelse(all(grp.ind, !is.element(vars, c("scores", "pis", "alpha"))), paste0(" - Group ", g), "")), 
                              paste0("Mixing Proportions", ifelse(matx, "", paste0(" - Group ", ind)))), outer=TRUE)
-    if(isTRUE(msgx)) .ent.exit()
+    if(isTRUE(msgx)) .ent_exit()
   }
 }
 
@@ -913,21 +913,21 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
   }
 
 # Colour Checker
-  are.cols     <- function(cols) {
+  are_cols     <- function(cols) {
     vapply(cols,  function(x) { tryCatch(is.matrix(col2rgb(x)), error = function(e) FALSE) }, logical(1))
   }
 
 # Prior No. Groups (DP & PY)
-  G.prior      <- function(N, alpha, discount = 0L, plot = TRUE, 
+  G_prior      <- function(N, alpha, discount = 0L, plot = TRUE, 
                            avg = FALSE, col = "black", ...) {
     if(suppressMessages(require(Rmpfr))) {
-      on.exit(.detach.pkg(Rmpfr))
-      on.exit(.detach.pkg(gmp), add=TRUE)  
+      on.exit(.detach_pkg(Rmpfr))
+      on.exit(.detach_pkg(gmp), add=TRUE)  
     } else                            stop("'Rmpfr' package not installed")
     if(missing(col))    {
       col      <- c("#999999", "#E69F00", "#009E73", "#56B4E9", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
     }   
-    if(!all(are.cols(col)))           stop("Supplied colour palette contains invalid colours")
+    if(!all(are_cols(col)))           stop("Supplied colour palette contains invalid colours")
     palette(col)
     on.exit(palette("default"), add=TRUE)
     on.exit(do.call("clip", as.list(par("usr"))), add=TRUE)
@@ -960,7 +960,7 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
                          log(pochMpfr(alpha[i] + 1, N - 1))) / discount[i]^seq_len(N) }
       if(discount[i]  == 0) {
         rx[,i] <- c(0, asNumeric(abs(Stirling1.all(N) * tmp)))
-      } else                          stop("Plotting with non-zero discount not yet implemented\nTry supplying the same arguments to G.expected() or G.variance()")
+      } else                          stop("Plotting with non-zero discount not yet implemented\nTry supplying the same arguments to G_expected() or G_variance()")
     }
     rx         <- scale(rx, center=FALSE, scale=colsums(rx))
     max.rx     <- matrixStats::colMaxs(rx)
@@ -969,7 +969,7 @@ plot.Tuned_IMIFA    <- function(results = NULL, plot.meth = c("all", "correlatio
               ylab="Density", main=paste0("Prior Distribution of G\nN=", N), ...)
     }
     if(avg)    {
-      exp.g    <- G.expected(N, alpha, discount)
+      exp.g    <- G_expected(N, alpha, discount)
       cat("\t");  cat(paste("E(G) = ", signif(exp.g, options()$digits), "\n"))  
       if(plot) {
         for(i in seq_len(max.len))  {

@@ -43,12 +43,12 @@
     cov.est      <- provideDimnames(matrix(0, nr=P, nc=P), base=dimnames(cov.emp))
     
     mu.sigma     <- 1/sigma.mu
-    .sim.psi.inv <- switch(uni.type, unconstrained=.sim.psi.iu, isotropic=.sim.psi.ii)
-    .sim.psi.ip  <- switch(uni.type, unconstrained=.sim.psi.ipu, isotropic=.sim.psi.ipi)
+    .sim_psi.inv <- switch(uni.type, unconstrained=.sim_psi.iu, isotropic=.sim_psi.ii)
+    .sim_psi.ip  <- switch(uni.type, unconstrained=.sim_psi.ipu, isotropic=.sim_psi.ipi)
     psi.beta     <- unique(round(psi.beta, min(nchar(psi.beta))))
-    eta          <- .sim.eta.p(Q=Q, N=N)
-    lmat         <- .sim.load.p(Q=Q, P=P, sigma.l=sigma.l)
-    psi.inv      <- .sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
+    eta          <- .sim_eta.p(Q=Q, N=N)
+    lmat         <- .sim_load.p(Q=Q, P=P, sigma.l=sigma.l)
+    psi.inv      <- .sim_psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
     if(all(Q0, Q  < P - sqrt(P + Q), N > P)) {
       fact       <- try(factanal(data, factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
       if(!inherits(fact, "try-error")) {
@@ -80,16 +80,16 @@
     # Scores & Loadings
       c.data     <- sweep(data, 2, mu, FUN="-")
       if(Q0) {
-        eta      <- .sim.score(N=N, Q=Q, lmat=lmat, psi.inv=psi.inv, c.data=c.data, Q1=Q1)
-        lmat     <- matrix(unlist(lapply(Pseq, function(j) .sim.load(l.sigma=l.sigma, Q=Q, Q1=Q1, c.data=c.data[,j],
+        eta      <- .sim_score(N=N, Q=Q, lmat=lmat, psi.inv=psi.inv, c.data=c.data, Q1=Q1)
+        lmat     <- matrix(unlist(lapply(Pseq, function(j) .sim_load(l.sigma=l.sigma, Q=Q, Q1=Q1, c.data=c.data[,j],
                            eta=eta, psi.inv=psi.inv[j], EtE=crossprod(eta))), use.names=FALSE), nr=P, byrow=TRUE)
       }
       
     # Means
-      mu[]       <- .sim.mu(N=N, P=P, mu.sigma=mu.sigma, psi.inv=psi.inv, sum.data=sum.data, sum.eta=colSums(eta), lmat=lmat, mu.zero=mu.zero)
+      mu[]       <- .sim_mu(N=N, P=P, mu.sigma=mu.sigma, psi.inv=psi.inv, sum.data=sum.data, sum.eta=colSums(eta), lmat=lmat, mu.zero=mu.zero)
                       
     # Uniquenesses
-      psi.inv    <- .sim.psi.inv(N=N, P=P, psi.alpha=psi.alpha, psi.beta=psi.beta, c.data=c.data, eta=eta, lmat=lmat)
+      psi.inv    <- .sim_psi.inv(N=N, P=P, psi.alpha=psi.alpha, psi.beta=psi.beta, c.data=c.data, eta=eta, lmat=lmat)
     
       if(is.element(iter, iters)) {
         if(verbose) setTxtProgressBar(pb, iter)

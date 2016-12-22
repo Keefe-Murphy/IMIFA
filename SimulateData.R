@@ -2,7 +2,7 @@
 ### Simulate Data (Single, Shrinkage & Group Case) ###
 ######################################################
 
-sim.IMIFA      <- function(N = 300L, G = 3L, P = 50L, Q = rep(4L, G), pis = rep(1/G, G), 
+sim_IMIFA      <- function(N = 300L, G = 3L, P = 50L, Q = rep(4L, G), pis = rep(1/G, G), 
                            nn = NULL, loc.diff = 1L, method = c("conditional", "marginal")) {
   
   N            <- as.integer(N)
@@ -40,7 +40,7 @@ sim.IMIFA      <- function(N = 300L, G = 3L, P = 50L, Q = rep(4L, G), pis = rep(
            !is.numeric(pis)))             stop(paste0("'pis' must be a numeric vector of length G=", G, " which sums to ", 1))
     nn         <- rep(0,  G)
     while(any(nn < floor(N/(G * G))))  {
-      labs     <- .sim.z.p(N=N, prob.z=pis)
+      labs     <- .sim_z.p(N=N, prob.z=pis)
       nn       <- tabulate(labs, nbins=G)  
     }
   } 
@@ -56,13 +56,13 @@ sim.IMIFA      <- function(N = 300L, G = 3L, P = 50L, Q = rep(4L, G), pis = rep(
   true.zlab    <- factor(rep(Gseq, nn), labels=Gseq)
   if(method    == "conditional") {
     Q.max      <- max(Q)
-    eta.true   <- .sim.eta.p(Q=Q.max, N=N)
+    eta.true   <- .sim_eta.p(Q=Q.max, N=N)
   }
   for(g in Gseq) {
     Q.g        <- Q[g]
     N.g        <- nn[g]
-    mu.true    <- setNames(.sim.mu.p(P=P, mu.zero=prior.mu[g] * loc.diff, sigma.mu=1), vnames)
-    l.true     <- .sim.load.p(Q=Q.g, P=P, sigma.l=1)
+    mu.true    <- setNames(.sim_mu.p(P=P, mu.zero=prior.mu[g] * loc.diff, sigma.mu=1), vnames)
+    l.true     <- .sim_load.p(Q=Q.g, P=P, sigma.l=1)
     psi.true   <- setNames(runif(P, 0, 1), vnames)
     
   # Simulate data

@@ -21,6 +21,14 @@
   source(paste0(getwd(), "/PackageSetup.R"))
     
 # Read in the data
+  # Olive       (# area, region)
+    load(file=paste0(datdir, "/Data/Olive.Rdata", sep=""), envir=.GlobalEnv)
+    area     <- as.factor(olive$area)
+    cinzia   <- ifelse(olive$region < 5, 1, ifelse(olive$region < 7, 2, ifelse(olive$region == 9, 4, 3)))
+    region   <- as.factor(olive$region)
+    olive    <- olive[,-c(1, 2)]
+    # Robust Olive
+      load(file=paste0(datdir, "/Data/ExtraOlive.Rdata", sep=""), envir=.GlobalEnv)
   # Wine        (# lab)
     load(file=paste0(datdir, "/Data/Wine.Rdata", sep=""), envir=.GlobalEnv)
     lab      <- wine[,1]
@@ -30,17 +38,9 @@
   # Iris        (# species)
     load(file=paste0(datdir, "/Data/Iris.Rdata", sep=""), envir=.GlobalEnv)
     species  <- iris[,5]
-  # Olive       (# area, region)
-    load(file=paste0(datdir, "/Data/Olive.Rdata", sep=""), envir=.GlobalEnv)
-    area     <- as.factor(olive$area)
-    cinzia   <- ifelse(olive$region < 5, 1, ifelse(olive$region < 7, 2, ifelse(olive$region == 9, 4, 3)))
-    region   <- as.factor(olive$region)
-    olive    <- olive[,-c(1, 2)]
-    # Robust Olive
-      load(file=paste0(datdir, "/Data/ExtraOlive.Rdata", sep=""), envir=.GlobalEnv)
-    # Oils      (# oliveoillabels)
-      load(file=paste0(datdir, "/Data/Oliveoils.Rdata", sep=""), envir=.GlobalEnv)
-      oils   <- t(oliveoils); rm(oliveoils, wavelengths, x)
+  # Oils        (# oliveoillabels)
+    load(file=paste0(datdir, "/Data/Oliveoils.Rdata", sep=""), envir=.GlobalEnv)
+    oils     <- t(oliveoils); rm(oliveoils, wavelengths, x)
   # Coffee      (# type, country) [% coffee]
     load(file=paste0(datdir, "/Data/Coffee.Rdata", sep=""), envir=.GlobalEnv) 
   # Brain       (# region) {n.b. pareto scaling}
@@ -99,13 +99,13 @@
     cereal   <- read.csv(paste0(datdir, "/Data/", "Cereal.csv", sep=""))
     classes  <- cereal$Cereals
   # Simulated   (# classes)
-   #SimData  <- sim.IMIFA(N=80, G=4, P=100, Q=c(5, 1, 4, 0), nn=c(20, 20, 20, 20))
+   #SimData  <- sim_IMIFA(N=80, G=4, P=100, Q=c(5, 1, 4, 0), nn=c(20, 20, 20, 20))
    #save(SimData, file=paste0(datdir,"/Data/Simulated_Data.Rdata", sep=""))
     load(file=paste0(datdir, "/Data/Simulated Data/Replication 1/Simulated_DataN25P50.Rdata", sep=""), envir=.GlobalEnv)
     classes  <- attr(SimData, "Labels")
 
 # Run the Gibbs Sampler
-  sim        <- mcmc.IMIFA(wine, method="IMIFA")
+  sim        <- mcmc_IMIFA(olive, method="IMIFA")
   summary(sim)
 
 # Save / Load Simulations
@@ -115,7 +115,7 @@
                    "__Simulations_", "IMIFA", ".Rdata"), envir=.GlobalEnv)
                         
 # Posterior Summaries (optional: additional 'burnin' & 'thinning', user-defined G/Q, model selection criterion)
-  res        <- tune.IMIFA(sim, zlabels=lab)
+  res        <- tune(sim, zlabels=lab)
   summary(res)
 
 # Save / Load Results

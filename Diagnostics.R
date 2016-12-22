@@ -230,7 +230,7 @@ tune.IMIFA       <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, 
       dat        <- if(is.logical(scaling)) standardise(as.matrix(dat), center=cent, scale=scaling) else scale(dat, center=cent, scale=scaling)
       varnames   <- colnames(dat)
       if(!identical(dim(dat), 
-         c(n.obs, n.var)))        warning("Dimensions of data don't match those in the dataset supplied to mcmc.IMIFA():\n be careful using subsetted data, best to create new object", call.=FALSE)
+         c(n.obs, n.var)))        warning("Dimensions of data don't match those in the dataset supplied to mcmc_IMIFA():\n be careful using subsetted data, best to create new object", call.=FALSE)
       n.obs      <- nrow(dat)
     }
   

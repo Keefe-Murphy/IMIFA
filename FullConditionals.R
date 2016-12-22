@@ -5,13 +5,13 @@
 # Full Conditionals
 
   # Means
-    .sim.mu      <- function(N, P, mu.sigma, psi.inv, sum.data, sum.eta, lmat, mu.zero) {
+    .sim_mu      <- function(N, P, mu.sigma, psi.inv, sum.data, sum.eta, lmat, mu.zero) {
       mu.omega   <- 1/(mu.sigma + N * psi.inv)
         mu.omega  * (psi.inv * (sum.data - lmat %*% sum.eta) + mu.sigma * mu.zero) + sqrt(mu.omega) * rnorm(P)
     }
   
   # Scores
-    .sim.score   <- function(N, Q, lmat, psi.inv, c.data, Q1) {
+    .sim_score   <- function(N, Q, lmat, psi.inv, c.data, Q1) {
       load.psi   <- lmat * psi.inv
       u.eta      <- diag(Q) + crossprod(load.psi, lmat)
       u.eta      <- if(Q1) sqrt(u.eta) else .chol(u.eta)
@@ -20,14 +20,14 @@
     }
       
   # Loadings
-    .sim.load    <- function(l.sigma, Q, c.data, eta, psi.inv, EtE, Q1)  {
+    .sim_load    <- function(l.sigma, Q, c.data, eta, psi.inv, EtE, Q1)  {
       u.load     <- l.sigma + psi.inv * EtE
       u.load     <- if(Q1) sqrt(u.load) else .chol(u.load)
       mu.load    <- psi.inv * (if(Q1) 1/(u.load * u.load) else chol2inv(u.load)) %*% crossprod(eta, c.data)
         mu.load   + backsolve(u.load, rnorm(Q))
     }
     
-    .sim.load.s  <- function(Q, c.data, eta, phi, tau, psi.inv, EtE, Q1) {
+    .sim_load.s  <- function(Q, c.data, eta, phi, tau, psi.inv, EtE, Q1) {
       u.load     <- diag(phi * tau, Q) + psi.inv * EtE
       u.load     <- if(Q1) sqrt(u.load) else .chol(u.load)
       mu.load    <- psi.inv  * (if(Q1) 1/(u.load * u.load) else chol2inv(u.load)) %*% crossprod(eta, c.data)
@@ -35,42 +35,42 @@
     }
     
   # Uniquenesses
-    .sim.psi.iu  <- function(N, P, psi.alpha, psi.beta, c.data, eta, lmat) { 
+    .sim_psi.iu  <- function(N, P, psi.alpha, psi.beta, c.data, eta, lmat) { 
       S.mat      <- c.data    - tcrossprod(eta, lmat)
         rgamma(P,   shape=N/2 + psi.alpha, rate=colSums(S.mat * S.mat)/2 + psi.beta) 
     }
     
-    .sim.psi.ii  <- function(N, P, psi.alpha, psi.beta, c.data, eta, lmat) { 
+    .sim_psi.ii  <- function(N, P, psi.alpha, psi.beta, c.data, eta, lmat) { 
       S.mat      <- c.data - tcrossprod(eta, lmat)
         rep(rgamma(1, shape=(N * P)/2 + psi.alpha, rate=sum(S.mat * S.mat)/2 + psi.beta), P)
     }
 
   # Local Shrinkage
-    .sim.phi     <- function(Q, P, nu, tau, load.2, plus1) {
+    .sim_phi     <- function(Q, P, nu, tau, load.2, plus1) {
         matrix(rgamma(P * Q, shape=1/2 + nu + plus1, rate=(nu + sweep(load.2, 2, tau, FUN="*"))/2), nr=P, nc=Q)
     }
   
   # Global Shrinkage
-    .sim.delta1  <- function(Q, P, alpha.d1, delta.1, beta.d1, tau, sum.term) {
+    .sim_delta1  <- function(Q, P, alpha.d1, delta.1, beta.d1, tau, sum.term) {
         rgamma(1,   shape=alpha.d1 + P * Q/2, rate=beta.d1 + 0.5/delta.1 * tau %*% sum.term)
     }
     
-    .sim.deltak  <- function(Q, P, k, alpha.d2, beta.d2, delta.k, tau.kq, sum.term.kq) {
+    .sim_deltak  <- function(Q, P, k, alpha.d2, beta.d2, delta.k, tau.kq, sum.term.kq) {
         rgamma(1,   shape=alpha.d2 + P/2 * (Q - k + 1), rate=beta.d2 + 0.5/delta.k * tau.kq %*% sum.term.kq)
     }
 
   # Mixing Proportions
-    .sim.pi      <- function(pi.alpha, nn) {
+    .sim_pi      <- function(pi.alpha, nn) {
         rdirichlet(1, pi.alpha + nn)
     }
     
-    .sim.pi.inf  <- function(pi.alpha, nn, N = sum(nn), len, lseq, discount = 0L) {
+    .sim_pi.inf  <- function(pi.alpha, nn, N = sum(nn), len, lseq, discount = 0L) {
       vs         <- if(discount == 0) rbeta(len, 1 + nn, pi.alpha + N - cumsum(nn)) else rbeta(len, 1 - discount + nn, pi.alpha + lseq * discount + N - cumsum(nn))
         return(list(Vs = vs, pi.prop = vapply(lseq, function(t) vs[t] * prod(1 - vs[seq_len(t - 1)]), numeric(1))))
     }
   
   # Cluster Labels
-    .sim.z       <- function(data, mu, sigma, Gseq, N, pi.prop, Q0) {
+    .sim_z       <- function(data, mu, sigma, Gseq, N, pi.prop, Q0) {
       log.num    <- vapply(Gseq, function(g, Q=Q0[g]) dmvn(data, mu[,g], if(Q) sigma[[g]] else sqrt(sigma[[g]]), log=TRUE, isChol=!Q) + log(pi.prop[g]), numeric(N))
       log.denom  <- rowLogSumExps(log.num)
       lnp        <- sweep(log.num, 1, log.denom, FUN="-")
@@ -80,7 +80,7 @@
         return(list(z = rowsums(-rexp(N) > lnp) + 1, log.likes = log.denom))
     }
     
-    .sim.z.inf   <- function(data, mu, sigma, Gseq, N, pi.prop, log.slice.ind, Q0) {
+    .sim_z.inf   <- function(data, mu, sigma, Gseq, N, pi.prop, log.slice.ind, Q0) {
       log.num    <- vapply(Gseq, function(g, Q=Q0[g]) dmvn(data, mu[,g], if(Q) sigma[[g]] else sqrt(sigma[[g]]), log=TRUE, isChol=!Q) + log(pi.prop[g]), numeric(N)) + log.slice.ind
       log.denom  <- rowLogSumExps(log.num)
       lnp        <- sweep(log.num, 1, log.denom, FUN="-")
@@ -91,14 +91,14 @@
     }
 
   # Alpha
-    .sim.alpha.g <- function(alpha, shape, rate, G, N, discount = 0L) {
+    .sim_alpha.g <- function(alpha, shape, rate, G, N, discount = 0L) {
       shape2     <- shape + G - 1
       rate2      <- rate  - log(rbeta(1, alpha + discount + 1, N))
       weight     <- shape2/(shape2 + N * rate2)
         weight    * rgamma(1, shape=shape2 + 1, rate=rate2) + (1 - weight) * rgamma(1, shape=shape2, rate=rate2) - discount
     }
     
-    .sim.alpha.m <- function(alpha, lower, upper, trunc.G, Vs, discount = 0L) {
+    .sim_alpha.m <- function(alpha, lower, upper, trunc.G, Vs, discount = 0L) {
       alpha.old  <- alpha   + discount
       alpha.new  <- runif(1, lower, upper) + discount
       a.prob     <- trunc.G * (log(alpha.new) - log(alpha.old))    + (alpha.new - alpha.old) * sum(log((1 - Vs[-trunc.G])))
@@ -108,52 +108,51 @@
 
 # Priors
   # Means
-    .sim.mu.p    <- function(P, mu.zero, sig.mu.sqrt) {
+    .sim_mu.p    <- function(P, mu.zero, sig.mu.sqrt) {
       sig.mu.sqrt * rnorm(P) + mu.zero
     }
   
   # Scores
-    .sim.eta.p   <- function(Q, N) {
+    .sim_eta.p   <- function(Q, N) {
         matrix(rnorm(N * Q), nr=N, nc=Q)
     }
   
   # Loadings
-    .sim.load.p  <- function(Q, P, sigma.l) {
+    .sim_load.p  <- function(Q, P, sigma.l) {
         sqrt(sigma.l) * matrix(rnorm(P * Q), nr=P, nc=Q)
     }
     
-    .sim.load.ps <- function(Q, sigma.l, phi, tau) {
+    .sim_load.ps <- function(Q, sigma.l, phi, tau) {
         sqrt(1/(phi * tau)) * rnorm(Q)
     }
   
   # Uniquenesses
-    .sim.psi.ipu <- function(P, psi.alpha, psi.beta) {
+    .sim_psi.ipu <- function(P, psi.alpha, psi.beta) {
         rgamma(n=P, shape=psi.alpha, rate=psi.beta) 
     }
     
-    .sim.psi.ipi <- function(P, psi.alpha, psi.beta) {
+    .sim_psi.ipi <- function(P, psi.alpha, psi.beta) {
         rep(rgamma(1, shape=psi.alpha, rate=psi.beta), P)
     }
 
   # Local Shrinkage
-    .sim.phi.p   <- function(Q, P, nu, plus1) {
+    .sim_phi.p   <- function(Q, P, nu, plus1) {
         matrix(rgamma(n=P * Q, shape=nu + plus1, rate=nu), nr=P, nc=Q)
     }
   
   # Global Shrinkage
-    .sim.delta.p <- function(Q = 2L, alpha, beta) {
+    .sim_delta.p <- function(Q = 2L, alpha, beta) {
         rgamma(n=Q - 1, shape=alpha, rate=beta)
     }
         
   # Cluster Labels
-    .sim.z.p     <- function(N, prob.z) {
+    .sim_z.p     <- function(N, prob.z) {
         factor(which(rmultinom(N, size=1, prob=prob.z) != 0, arr.ind=TRUE)[,1], levels=seq_along(prob.z))
     }
 
 # Other Functions
-    
   # Uniqueness Hyperparameters
-    psi.hyper   <- function(alpha, covar, type=c("unconstrained", "isotropic"), P) {
+    psi_hyper   <- function(alpha, covar, type=c("unconstrained", "isotropic"), P) {
       inv.cov   <- try(solve(covar), silent=TRUE)
       if(inherits(inv.cov, "try-error"))  {
         inv.cov <- 1/covar
@@ -162,7 +161,7 @@
     }
 
   # Alpha Shifted Gamma Hyperparameters
-    shift.gamma <- function(shape, rate, shift = 0L, param = c("rate", "scale"))   {
+    shift_gamma <- function(shape, rate, shift = 0L, param = c("rate", "scale"))   {
       var       <- shape/rate^2
       exp       <- var  * rate + shift
       rate      <- exp/var
@@ -171,7 +170,7 @@
     }
     
   # Check Shrinkage Hyperparemeters
-    MGP.check   <- Vectorize(function(ad1, ad2, Q, nu, bd1 = 1L, bd2 = 1L, plus1 = TRUE, inverse = TRUE) {
+    MGP_check   <- Vectorize(function(ad1, ad2, Q, nu, bd1 = 1L, bd2 = 1L, plus1 = TRUE, inverse = TRUE) {
       if(any(!is.logical(plus1),
              length(plus1)    != 1))       stop("'plus1' must be TRUE or FALSE")
       if(any(!is.logical(inverse),
@@ -282,7 +281,7 @@
     }
 
   # Moments of Dirichlet / Pitman-Yor Processes
-    G.expected  <- Vectorize(function(N, alpha, discount = 0L) {
+    G_expected  <- Vectorize(function(N, alpha, discount = 0L) {
       if(!all(is.numeric(N), is.numeric(discount), 
          is.numeric(alpha)))               stop("All inputs must be numeric")
       if(discount  < 0  || discount >= 1)  stop("Invalid discount value")
@@ -291,14 +290,14 @@
           alpha * (digamma(alpha + N) - digamma(alpha))
       } else {
         if(suppressMessages(require(Rmpfr))) {
-          on.exit(.detach.pkg(Rmpfr))
-          on.exit(.detach.pkg(gmp), add=TRUE)  
+          on.exit(.detach_pkg(Rmpfr))
+          on.exit(.detach_pkg(gmp), add=TRUE)  
         } else                             stop("'Rmpfr' package not installed")
           asNumeric(alpha/discount * pochMpfr(alpha + discount, N)/pochMpfr(alpha, N) - alpha/discount)
       }
     })
 
-    G.variance  <- Vectorize(function(N, alpha, discount = 0L) {
+    G_variance  <- Vectorize(function(N, alpha, discount = 0L) {
       if(!all(is.numeric(N), is.numeric(discount), 
          is.numeric(alpha)))               stop("All inputs must be numeric")
       if(discount  < 0  || discount >= 1)  stop("Invalid discount value")
@@ -307,8 +306,8 @@
           alpha * (digamma(alpha + N) - digamma(alpha)) + (alpha^2) * (trigamma(alpha + N) - trigamma(alpha))
       } else {
         if(suppressMessages(require(Rmpfr))) {
-          on.exit(.detach.pkg(Rmpfr))
-          on.exit(.detach.pkg(gmp), add=TRUE)  
+          on.exit(.detach_pkg(Rmpfr))
+          on.exit(.detach_pkg(gmp), add=TRUE)  
         } else                             stop("'Rmpfr' package not installed")
         sum.ad  <- alpha + discount
         poch.a  <- pochMpfr(alpha, N)
@@ -319,7 +318,7 @@
     })
 
   # Detach packages
-    .detach.pkg <- function(pkg, character.only = FALSE) {
+    .detach_pkg <- function(pkg, character.only = FALSE) {
       if(!character.only) {
         pkg     <- deparse(substitute(pkg))
       }

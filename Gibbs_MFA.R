@@ -59,8 +59,8 @@
     nn             <- tabulate(z, nbins=G)
     pi.prop        <- cluster$pi.prop
     pi.alpha       <- cluster$pi.alpha
-    .sim.psi.inv   <- switch(uni.type, unconstrained=.sim.psi.iu, isotropic=.sim.psi.ii)
-    .sim.psi.ip    <- switch(uni.type, unconstrained=.sim.psi.ipu, isotropic=.sim.psi.ipi)
+    .sim_psi.inv   <- switch(uni.type, unconstrained=.sim_psi.iu, isotropic=.sim_psi.ii)
+    .sim_psi.ip    <- switch(uni.type, unconstrained=.sim_psi.ipu, isotropic=.sim_psi.ipi)
     psi.beta       <- unique(round(psi.beta, min(nchar(psi.beta))))
     if(length(psi.beta) == 1) {
       psi.beta     <- matrix(psi.beta, nr=1, nc=G)
@@ -68,9 +68,9 @@
     mu0g           <- cluster$l.switch[1]
     psi0g          <- cluster$l.switch[2]
     label.switch   <- any(cluster$l.switch)
-    eta            <- .sim.eta.p(N=N, Q=Q)
-    lmat           <- lapply(Gseq, function(g) .sim.load.p(Q=Q, P=P, sigma.l=sigma.l))
-    psi.inv        <- vapply(Gseq, function(g) .sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta[,g]), numeric(P))
+    eta            <- .sim_eta.p(N=N, Q=Q)
+    lmat           <- lapply(Gseq, function(g) .sim_load.p(Q=Q, P=P, sigma.l=sigma.l))
+    psi.inv        <- vapply(Gseq, function(g) .sim_psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta[,g]), numeric(P))
     if(Q0 && Q  < P - sqrt(P + Q)) {
       fact.ind     <- nn   <= P
       fail.gs      <- which(fact.ind)
@@ -102,7 +102,7 @@
       psi.store[,,1]       <- 1/psi.inv
       pi.store[,1]         <- pi.prop
       z.store[,1]          <- z
-      ll.store[1]          <- sum(.sim.z(data=data, mu=mu, Gseq=Gseq, N=N, pi.prop=pi.prop, sigma=lapply(Gseq, function(g) 
+      ll.store[1]          <- sum(.sim_z(data=data, mu=mu, Gseq=Gseq, N=N, pi.prop=pi.prop, sigma=lapply(Gseq, function(g) 
                                         make.positive.definite(tcrossprod(lmat[,,g]) + diag(1/psi.inv[,g]))), Q0=Q0s)$log.likes)
     }
     init.time      <- proc.time() - start.time
@@ -112,16 +112,16 @@
       if(verbose   && iter  < burnin) setTxtProgressBar(pb, iter)
   
     # Mixing Proportions
-      pi.prop[]    <- .sim.pi(pi.alpha=pi.alpha, nn=nn)
+      pi.prop[]    <- .sim_pi(pi.alpha=pi.alpha, nn=nn)
       
     # Cluster Labels
       psi          <- 1/psi.inv
       sigma        <- lapply(Gseq, function(g) tcrossprod(lmat[,,g]) + diag(psi[,g]))
-      z.log        <- capture.output({ z.res <- try(.sim.z(data=data, mu=mu, sigma=sigma, Gseq=Gseq, N=N, pi.prop=pi.prop, Q0=Q0s), silent=TRUE) })
+      z.log        <- capture.output({ z.res <- try(.sim_z(data=data, mu=mu, sigma=sigma, Gseq=Gseq, N=N, pi.prop=pi.prop, Q0=Q0s), silent=TRUE) })
       zerr         <- inherits(z.res, "try-error")
       if(zerr) {
         sigma      <- lapply(sigma, make.positive.definite)
-        z.res      <- .sim.z(data=data, mu=mu, sigma=sigma, Gseq=Gseq, N=N, pi.prop=pi.prop, Q0=Q0s)
+        z.res      <- .sim_z(data=data, mu=mu, sigma=sigma, Gseq=Gseq, N=N, pi.prop=pi.prop, Q0=Q0s)
       }
       z            <- z.res$z
       nn           <- tabulate(z, nbins=G)
@@ -131,10 +131,10 @@
     # Scores & Loadings
       c.data       <- lapply(Gseq, function(g) sweep(dat.g[[g]], 2, mu[,g], FUN="-"))
       if(Q0) {
-        eta.tmp    <- lapply(Gseq, function(g) if(nn0[g]) .sim.score(N=nn[g], lmat=lmat[,,g], Q=Q, c.data=c.data[[g]], psi.inv=psi.inv[,g], Q1=Q1) else base::matrix(0, nr=0, nc=Q))
+        eta.tmp    <- lapply(Gseq, function(g) if(nn0[g]) .sim_score(N=nn[g], lmat=lmat[,,g], Q=Q, c.data=c.data[[g]], psi.inv=psi.inv[,g], Q1=Q1) else base::matrix(0, nr=0, nc=Q))
         EtE        <- lapply(Gseq, function(g) if(nn0[g]) crossprod(eta.tmp[[g]]))
-        lmat       <- array(unlist(lapply(Gseq, function(g) if(nn0[g]) matrix(unlist(lapply(Pseq, function(j) .sim.load(l.sigma=l.sigma, Q=Q, c.data=c.data[[g]][,j], eta=eta.tmp[[g]],
-                      Q1=Q1, EtE=EtE[[g]], psi.inv=psi.inv[,g][j])), use.names=FALSE), nr=P, byrow=TRUE) else .sim.load.p(Q=Q, P=P, sigma.l=sigma.l)), use.names=FALSE), dim=c(P, Q, G))
+        lmat       <- array(unlist(lapply(Gseq, function(g) if(nn0[g]) matrix(unlist(lapply(Pseq, function(j) .sim_load(l.sigma=l.sigma, Q=Q, c.data=c.data[[g]][,j], eta=eta.tmp[[g]],
+                      Q1=Q1, EtE=EtE[[g]], psi.inv=psi.inv[,g][j])), use.names=FALSE), nr=P, byrow=TRUE) else .sim_load.p(Q=Q, P=P, sigma.l=sigma.l)), use.names=FALSE), dim=c(P, Q, G))
         eta        <- do.call(rbind, eta.tmp)[obsnames,, drop=FALSE]
       } else {
         eta.tmp    <- lapply(Gseq, function(g) eta[z == g,, drop=FALSE])
@@ -143,12 +143,12 @@
     # Means
       sum.data     <- vapply(dat.g, colSums, numeric(P))
       sum.eta      <- lapply(eta.tmp, colSums)
-      mu           <- vapply(Gseq, function(g) if(nn0[g]) .sim.mu(mu.zero=mu.zero[,g], mu.sigma=mu.sigma, psi.inv=psi.inv[,g],  sum.data=sum.data[,g], sum.eta=sum.eta[[g]], 
-                             lmat=if(Q1) as.matrix(lmat[,,g]) else lmat[,,g], N=nn[g], P=P) else .sim.mu.p(P=P, sig.mu.sqrt=sig.mu.sqrt, mu.zero=mu.zero[,g]), numeric(P))
+      mu           <- vapply(Gseq, function(g) if(nn0[g]) .sim_mu(mu.zero=mu.zero[,g], mu.sigma=mu.sigma, psi.inv=psi.inv[,g],  sum.data=sum.data[,g], sum.eta=sum.eta[[g]], 
+                             lmat=if(Q1) as.matrix(lmat[,,g]) else lmat[,,g], N=nn[g], P=P) else .sim_mu.p(P=P, sig.mu.sqrt=sig.mu.sqrt, mu.zero=mu.zero[,g]), numeric(P))
       
     # Uniquenesses
-      psi.inv      <- vapply(Gseq, function(g) if(nn0[g]) .sim.psi.inv(N=nn[g], psi.alpha=psi.alpha, c.data=c.data[[g]], eta=eta.tmp[[g]], psi.beta=psi.beta[,g],
-                             P=P, lmat=if(Q1) as.matrix(lmat[,,g]) else lmat[,,g]) else .sim.psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta[,g]), numeric(P))
+      psi.inv      <- vapply(Gseq, function(g) if(nn0[g]) .sim_psi.inv(N=nn[g], psi.alpha=psi.alpha, c.data=c.data[[g]], eta=eta.tmp[[g]], psi.beta=psi.beta[,g],
+                             P=P, lmat=if(Q1) as.matrix(lmat[,,g]) else lmat[,,g]) else .sim_psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta[,g]), numeric(P))
     
     # Label Switching
       if(label.switch) {

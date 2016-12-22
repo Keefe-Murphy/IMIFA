@@ -2,7 +2,7 @@
 ### Main Function for Keefe Murphy's IMIFA R Package ###
 ########################################################
 
-mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA", "MFA", "IFA", "FA", "classify"), n.iters = 25000L, range.G = NULL, range.Q = NULL, thinning = 2L, 
+mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA", "MFA", "IFA", "FA", "classify"), n.iters = 25000L, range.G = NULL, range.Q = NULL, thinning = 2L, 
                         burnin = n.iters/5, centering = TRUE, scaling = c("unit", "pareto", "none"), mu.zero = NULL, sigma.mu = NULL, sigma.l = NULL, alpha = NULL, psi.alpha = NULL, psi.beta = NULL,
                         z.list = NULL, z.init = c("mclust", "kmeans", "list", "priors"),  adapt = TRUE, b0 = NULL, b1 = NULL, prop = NULL, epsilon = NULL, nu = NULL, uni.type = c("unconstrained", "isotropic"),
                         nuplus1 = TRUE, alpha.d1 = NULL, alpha.d2 = NULL, adapt.at = NULL, beta.d1 = NULL, beta.d2 = NULL, alpha.step = c("gibbs", "metropolis", "fixed"), alpha.hyper = NULL, 
@@ -150,7 +150,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
           alpha.hyper     <- switch(alpha.step, gibbs=c(2L, 1L), metropolis=c(- discount, range.G/2), c(0L, 0L))
         }
         if(discount > 0) {
-          alpha.hyper     <- shift.gamma(shape=alpha.hyper[1], rate=alpha.hyper[2], shift=discount)
+          alpha.hyper     <- shift_gamma(shape=alpha.hyper[1], rate=alpha.hyper[2], shift=discount)
         }
         if(all(length(alpha.hyper)  != 2,
            alpha.step != "fixed"))  stop(paste0("'alpha.hyper' must be a vector of length 2, giving the ", switch(alpha.step, gibbs="shape and rate hyperparameters of the gamma prior for alpha when alpha.step is given as 'gibbs'", metropolis="lower and upper limits of the uniform prior/proposal for alpha when alpha.step is given as 'metropolis'")))
@@ -388,7 +388,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(all(!beta.x, psi0g))         stop("'psi.beta' can only be supplied for each group if z.init=list")
   }
   if(beta.x) {
-    psi.beta       <- temp.psi <- list(psi.hyper(psi.alpha, cov.mat, uni.type, P))
+    psi.beta       <- temp.psi <- list(psi_hyper(psi.alpha, cov.mat, uni.type, P))
   } else {
     psi.beta       <- .len.check(psi.beta, psi0g, method, P, range.G)
   }
@@ -422,13 +422,13 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
         if(!is.element(method, c("IMFA", "IMIFA"))) {
           while(all(length(unique(zips)) != G,
                 any(prop.table(tabulate(zips, nbins=G)) < 1/G^2))) {
-            pies   <- .sim.pi(pi.alpha=rep(alpha, G), nn=0)
-            zips   <- .sim.z.p(N=N, prob.z=pies)
+            pies   <- .sim_pi(pi.alpha=rep(alpha, G), nn=0)
+            zips   <- .sim_z.p(N=N, prob.z=pies)
           }  
         } else {
           if(alpha <= 1)            stop("Supply a value > 1 for 'alpha' if initialising labels from the stick-breaking prior")
-          pies     <- .sim.pi.inf(pi.alpha=alpha, N=N, nn=rep(N/range.G, range.G), discount=discount, lseq=seq_len(range.G), len=range.G)$pi.prop
-          zips     <- .sim.z.p(N=N, prob.z=pies)
+          pies     <- .sim_pi.inf(pi.alpha=alpha, N=N, nn=rep(N/range.G, range.G), discount=discount, lseq=seq_len(range.G), len=range.G)$pi.prop
+          zips     <- .sim_z.p(N=N, prob.z=pies)
         }
         zi[[g]]    <- as.numeric(zips)
         rm(zips)
@@ -442,7 +442,7 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
       if(beta.x)  {
         if(psi0g) {
           cov.gg   <- lapply(seq_len(G), function(gg) if(nngs[gg] > 1) cova(as.matrix(dat[zi[[g]] == gg,, drop=FALSE])) else cov.mat)
-          psi.beta[[g]] <- vapply(seq_len(G), function(gg) psi.hyper(psi.alpha, cov.gg[[gg]], uni.type, P), numeric(P))
+          psi.beta[[g]] <- vapply(seq_len(G), function(gg) psi_hyper(psi.alpha, cov.gg[[gg]], uni.type, P), numeric(P))
         } else {
           psi.beta[[g]] <- replicate(G, temp.psi[[1]])
         }
@@ -483,8 +483,8 @@ mcmc.IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   }
   if(any(unlist(psi.beta)   <= 0))  stop("'psi.beta' must be strictly positive")
   if(is.element(method, c("classify", "IFA", "MIFA", "IMIFA", "OMIFA"))) {
-    if(!all(MGP.check(unlist(alpha.d1), unlist(alpha.d2), unique(range.Q), nu, beta.d1, beta.d2, 
-        plus1=nuplus1)[[1]]$valid)) stop("Invalid shrinkage hyperparameter values will not encourage loadings column removal.\n Try using the MGP.check() function in advance to ensure cumulative shrinkage property holds.")
+    if(!all(MGP_check(unlist(alpha.d1), unlist(alpha.d2), unique(range.Q), nu, beta.d1, beta.d2, 
+        plus1=nuplus1)[[1]]$valid)) stop("Invalid shrinkage hyperparameter values will not encourage loadings column removal.\n Try using the MGP_check() function in advance to ensure cumulative shrinkage property holds.")
     deltas         <- lapply(seq_along(range.G), function(g) list(alpha.d1 = alpha.d1[[g]], alpha.d2 = alpha.d2[[g]]))
   }
   init.time        <- proc.time() - init.start
