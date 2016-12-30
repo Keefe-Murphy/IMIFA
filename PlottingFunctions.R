@@ -67,7 +67,7 @@ plot.Tuned_IMIFA    <- function(x = NULL, plot.meth = c("all", "correlation", "d
   grp.ind      <- !is.element(method, c("FA", "IFA"))
   if(grp.ind)   {
     clust      <- x$Clust
-    grp.size   <- clust$sizes
+    grp.size   <- clust$post.sizes
     labelmiss  <- !is.null(attr(clust, "Label.Sup")) && !attr(clust, "Label.Sup")
   }
   grp.ind      <- all(G != 1, grp.ind)
@@ -593,7 +593,7 @@ plot.Tuned_IMIFA    <- function(x = NULL, plot.meth = c("all", "correlation", "d
         col.Q  <- c(1, 2)[(rangeQ == Q) + 1]
         Q.plot <- barplot(plot.Q, ylab="Frequency", xaxt="n", col=col.Q)
         if(titles) title(main=list("Posterior Distribution of Q"))
-        axis(1, at=Q.plot, labels=Q.name, tick=FALSE) 
+        axis(1, at=Q.plot, labels=names(plot.Q), tick=FALSE) 
         axis(1, at=med(Q.plot), labels="Q", tick=FALSE, line=1.5) 
       }  
       if(all(method != "IFA", plotQ.ind)) {
@@ -743,7 +743,7 @@ plot.Tuned_IMIFA    <- function(x = NULL, plot.meth = c("all", "correlation", "d
       x.plot <- apply(plot.x, 1L, range, na.rm=TRUE)
       plot.x <- switch(uni.type, unconstrained=apply(plot.x, 2L, function(x) (x - min(x, na.rm=TRUE))/(max(x, na.rm=TRUE) - min(x, na.rm=TRUE))), isotropic=plot.x)
       varnam <- paste0(toupper(substr(vars, 1, 1)), substr(vars, 2, nchar(vars)))
-      if(grp.ind) {
+      if(any(grp.ind, vars == "loadings")) {
         layout(rbind(1, 2), heights=c(9, 1))
         par(mar=c(3.1, 4.1, 4.1, 2.1))
       }
@@ -755,7 +755,7 @@ plot.Tuned_IMIFA    <- function(x = NULL, plot.meth = c("all", "correlation", "d
           text(c(i, i), c(0, 1), labels=format(x.plot[,i], digits=3), xpd=NA, offset=0.3, pos=c(1, 3), cex=0.5)
         }
       }
-      if(grp.ind) {
+      if(any(grp.ind, vars == "loadings")) {
         par(mar=c(0, 0, 0, 0))
         plot.new()
         Xp   <- ifelse(vars == "loadings", Q, G)
@@ -963,7 +963,7 @@ plot.Tuned_IMIFA    <- function(x = NULL, plot.meth = c("all", "correlation", "d
       } else                          stop("Plotting with non-zero discount not yet implemented\nTry supplying the same arguments to G_expected() or G_variance()")
     }
     rx         <- scale(rx, center=FALSE, scale=colsums(rx))
-    max.rx     <- matrixStats::colMaxs(rx)
+    max.rx     <- Rfast::colMaxs(rx, value=TRUE)
     if(plot)   {
       matplot(x=c(0, seq_len(N)), y=rx, type="l", col=col, lty=1, xlab="Groups", 
               ylab="Density", main=paste0("Prior Distribution of G\nN=", N), ...)

@@ -81,7 +81,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   }          
   if(method != "classify") {
     if(scaling   != "none")   {
-      scal  <- colVars(as.matrix(raw.dat), std=TRUE)
+      scal  <- Rfast::colVars(as.matrix(raw.dat), std=TRUE)
       if(scaling == "pareto") {
        scal <- sqrt(scal)
       }
@@ -426,7 +426,6 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
             zips   <- .sim_z.p(N=N, prob.z=pies)
           }  
         } else {
-          if(alpha <= 1)            stop("Supply a value > 1 for 'alpha' if initialising labels from the stick-breaking prior")
           pies     <- .sim_pi.inf(pi.alpha=alpha, N=N, nn=rep(N/range.G, range.G), discount=discount, lseq=seq_len(range.G), len=range.G)$pi.prop
           zips     <- .sim_z.p(N=N, prob.z=pies)
         }
@@ -567,7 +566,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     for(g in seq_len(range.G))  {
       tmp.dat      <- raw.dat[zlabels == levels(zlabels)[g],]
       if(scaling   != "none")   {
-        scal  <- colVars(as.matrix(tmp.dat), std=TRUE)
+        scal  <- Rfast::colVars(as.matrix(tmp.dat), std=TRUE)
         if(scaling == "pareto") {
          scal <- sqrt(scal)
         }

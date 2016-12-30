@@ -33,7 +33,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   inf.G          <- is.element(method, c("IMIFA", "IMFA", "OMIFA", "OMFA"))
   inf.Q          <- !is.element(method, c("FA", "MFA", "OMFA", "IMFA"))
   n.fac          <- attr(sims, "Factors")
-  n.grp          <- attr(sims, "Groups")
+  n.grp          <- max(attr(sims, "Groups"), 1)
   n.obs          <- attr(sims, "Obs")
   n.var          <- attr(sims, "Vars")
   sw             <- attr(sims, "Switch")
@@ -110,7 +110,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     if(inf.Q)  {
       if(any((Q  != 0) + (Q * 
         (n.var - Q)   <= 0) > 1)) stop(paste0("'Q' must be less than the number of variables ", n.var))
-      Qtmp       <- if(inf.G) rowMaxs(sims[[1]][[1]]$Q.store[seq_len(G),, drop=FALSE], value=TRUE) else switch(method, MIFA=rowMaxs(sims[[ifelse(G.T, which(G == n.grp), G.ind)]][[1]]$Q.store, value=TRUE), max(sims[[1]][[1]]$Q.store))
+      Qtmp       <- if(inf.G) Rfast::rowMaxs(sims[[1]][[1]]$Q.store[seq_len(G),, drop=FALSE], value=TRUE) else switch(method, MIFA=Rfast::rowMaxs(sims[[ifelse(G.T, which(G == n.grp), G.ind)]][[1]]$Q.store, value=TRUE), max(sims[[1]][[1]]$Q.store))
       if(any(Q * (Qtmp - Q) < 0)) stop(paste0("'Q' can't be greater than the maximum number of factors stored in ", ifelse(method == "IFA", "", "any group of "), match.call()$sims))
     }
   } 
@@ -133,7 +133,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     } else {
       dimnames(crit.mat) <- list(paste0("G", n.grp), if(inf.Q) "IFA" else paste0("Q", n.fac))
     }
-    rownames(crit.mat)   <- switch(method, IMFA=, IMIFA="IM", OMFA=, OMIFA="OM")
+    rownames(crit.mat)   <- switch(method, IMFA=, IMIFA="IM", OMFA=, OMIFA="OM", rownames(crit.mat))
     aicm         <- bicm       <- log.iLLH <- 
     aic.mcmc     <- bic.mcmc   <- crit.mat
     log.N        <- log(n.obs)
@@ -301,7 +301,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     post.z       <- apply(z, 1, function(x) factor(which.max(tabulate(x)), levels=Gseq))
     sizes        <- tabulate(post.z, nbins=G)
     if(any(sizes == 0))           warning("Empty group exists in modal clustering:\n examine trace plots and try supplying a lower G value to tune.imifa() or re-running the model", call.=FALSE)
-    uncertain    <- 1 - matrixStats::colMaxs(matrix(apply(z, 1, tabulate, nbins=G)/length(tmp.store), nr=G, nc=n.obs))
+    uncertain    <- 1 - Rfast::colMaxs(matrix(apply(z, 1, tabulate, nbins=G)/length(tmp.store), nr=G, nc=n.obs), value=TRUE)
     if(sw["pi.sw"])    {
       pi.prop    <- pies[Gseq,seq_along(tmp.store), drop=FALSE]
       var.pi     <- rowVars(pi.prop)
