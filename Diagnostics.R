@@ -258,7 +258,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     }
     if(sw["l.sw"])    {
       lmats      <- sims[[G.ind]][[Q.ind]]$load
-      if(!is.element(method, c("MFA", "OMFA", "IMFA"))) {
+      if(inf.Q) {
         lmats    <- as.array(lmats)
       }
       lmats      <- lmats[,,,tmp.store, drop=FALSE]

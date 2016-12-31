@@ -161,9 +161,11 @@
     }
     close(pb)
     Qmax         <- seq_len(max(Q.store))
+    eta.save     <- eta.store[,Qmax,, drop=FALSE]
+    lmat.save    <- load.store[,Qmax,, drop=FALSE]
     returns      <- list(mu       = if(sw["mu.sw"])  mu.store,
-                         eta      = if(sw["s.sw"])   as.simple_sparse_array(eta.store[,Qmax,, drop=FALSE]), 
-                         load     = if(sw["l.sw"])   as.simple_sparse_array(load.store[,Qmax,, drop=FALSE]), 
+                         eta      = if(sw["s.sw"])   tryCatch(as.simple_sparse_array(eta.save),  error=function(e) eta.save), 
+                         load     = if(sw["l.sw"])   tryCatch(as.simple_sparse_array(lmat.save), error=function(e) lmat.save),
                          psi      = if(sw["psi.sw"]) psi.store,
                          post.mu  = post.mu,
                          post.psi = post.psi,
