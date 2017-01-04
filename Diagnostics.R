@@ -33,7 +33,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   inf.G          <- is.element(method, c("IMIFA", "IMFA", "OMIFA", "OMFA"))
   inf.Q          <- !is.element(method, c("FA", "MFA", "OMFA", "IMFA"))
   n.fac          <- attr(sims, "Factors")
-  n.grp          <- max(attr(sims, "Groups"), 1)
+  n.grp          <- attr(sims, "Groups")
   n.obs          <- attr(sims, "Obs")
   n.var          <- attr(sims, "Vars")
   sw             <- attr(sims, "Switch")
@@ -92,7 +92,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
          unique(G.store[tmpQ,]))) stop("This 'G' value was not visited during simulation")
     }
   }
-  G              <- if(any(inf.G, all(G.T, !is.element(method, c("FA", "IFA"))))) G else 1
+  G              <- ifelse(any(inf.G, all(G.T, !is.element(method, c("FA", "IFA")))), G, 1L)
   if(Q.T)    {
     Q            <- as.integer(Q)
     if(!is.integer(Q))            stop("'Q' must of integer type")
@@ -114,7 +114,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       if(any(Q * (Qtmp - Q) < 0)) stop(paste0("'Q' can't be greater than the maximum number of factors stored in ", ifelse(method == "IFA", "", "any group of "), match.call()$sims))
     }
   } 
-  if(inf.G)  {
+  if(inf.G)    {
     tmp.store    <- if(GQ1) lapply(seq_len(GQs), function(gq) store[which(G.store[gq,] == G[ifelse(G.T, 1, gq)])]) else store[which(G.store == G)]  
     GQ.temp1     <- list(G = G, G.Mode = G.mode, G.Median = G.med, Stored.G = G.store,
                          G.CI = G.CI, G.Probs = G.prob, G.Counts = G.tab)
