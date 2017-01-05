@@ -2,15 +2,15 @@
 ### Set-up for Keefe Murphy's IMIFA R Package ###
 #################################################
 
-packages  <- c("abind", "corpcor", "dichromat", "e1071", "gclus", "matrixStats", 
-               "mclust", "MCMCpack", "mvnfast", "plotrix", "Rfast", "slam")
+packages  <- c("abind", "corpcor", "dichromat", "e1071", "gclus", "graphics", "grDevices", "matrixStats", 
+               "mclust", "MCMCpack", "mvnfast", "plotrix", "Rfast", "slam", "stats", "utils")
 if(length(setdiff(packages, rownames(installed.packages()))) > 0) {
   suppressMessages(install.packages(setdiff(packages, rownames(installed.packages()))))
 }
 if(length(setdiff(packages, (.packages()))) > 0) {
   suppressMessages(lapply(setdiff(packages, (.packages())), library, ch=TRUE))
 } 
-if(!("IMIFA.env"  %in% search())) packageStartupMessage("   ________  __________________\n  /_  __/  |/   /_  __/ ___/ _ \\  \n   / / / /|_// / / / / /__/ /_\\ \\ \n _/ /_/ /   / /_/ /_/ ___/ /___\\ \\ \n/____/_/   /_/_____/_/  /_/     \\_\\    version 1.0")
+if(!("IMIFA.env"  %in% search())) packageStartupMessage("   ________  __________________\n  /_  __/  |/   /_  __/ ___/ _ \\  \n   / / / /|_// / / / / /__/ /_\\ \\ \n _/ /_/ /   / /_/ /_/ ___/ /___\\ \\ \n/____/_/   /_/_____/_/  /_/     \\_\\    version 0.1.0")
 while("IMIFA.env" %in% search())  detach("IMIFA.env")
 IMIFA.env <- new.env()
 source(paste0(getwd(),   "/Diagnostics.R"),       local=IMIFA.env) 

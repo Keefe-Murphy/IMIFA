@@ -11,7 +11,7 @@
   # Define & initialise variables
     start.time     <- proc.time()
     total          <- max(iters)
-    if(verbose)       pb    <- txtProgressBar(min=0, max=total, style=3)
+    if(verbose)       pb    <- utils::txtProgressBar(min=0, max=total, style=3)
     n.store        <- length(iters)
     Gseq           <- seq_len(G)
     Pseq           <- seq_len(P)
@@ -40,7 +40,7 @@
       pi.store     <- provideDimnames(matrix(0, nr=G, nc=n.store), base=list(gnames, iternames))
     }
     z.store        <- provideDimnames(matrix(0, nr=N, nc=n.store), base=list(obsnames, iternames))
-    ll.store       <- setNames(rep(0, n.store), iternames)
+    ll.store       <- stats::setNames(rep(0, n.store), iternames)
     Q.star         <- Q
     Qs             <- rep(Q, G)
     Q.store        <- provideDimnames(matrix(0, nr=G, nc=n.store), base=list(gnames, iternames))
@@ -61,7 +61,7 @@
     nn             <- tabulate(z, nbins=G)
     pi.prop        <- cluster$pi.prop
     pi.alpha       <- cluster$pi.alpha
-    .sim_psi.inv   <- switch(uni.type, unconstrained=.sim_psi.iu, isotropic=.sim_psi.ii)
+    .sim_psi.inv   <- switch(uni.type, unconstrained=.sim_psi.iu,  isotropic=.sim_psi.ii)
     .sim_psi.ip    <- switch(uni.type, unconstrained=.sim_psi.ipu, isotropic=.sim_psi.ipi)
     psi.beta       <- unique(round(psi.beta, min(nchar(psi.beta))))
     if(length(psi.beta) == 1) {
@@ -86,7 +86,7 @@
       fact.ind     <- nn    <= P
       fail.gs      <- which(fact.ind)
       for(g in which(!fact.ind))   {
-        fact       <- try(factanal(data[z == g,, drop=FALSE], factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
+        fact       <- try(stats::factanal(data[z == g,, drop=FALSE], factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
         if(!inherits(fact, "try-error")) {
           eta[z == g,]      <- fact$scores
           lmat[[g]]         <- fact$loadings
@@ -95,12 +95,12 @@
           fail.gs  <- c(fail.gs, g)
         }               
       }
-      fail.gs      <- fail.gs[Order(fail.gs)]
+      fail.gs      <- fail.gs[Rfast::Order(fail.gs)]
       len.fail     <- length(fail.gs)
       if(len.fail   > 0)       message(paste0("Parameters of the following group", ifelse(len.fail > 2, "s ", " "), "were initialised by simulation from priors, not factanal: ", ifelse(len.fail > 1, paste0(paste0(fail.gs[-len.fail], sep="", collapse=", "), " and ", fail.gs[len.fail]), fail.gs), " - G=", G, ", Q=", Q))
     } else     {
       psi.tmp      <- psi.inv
-      psi.inv      <- vapply(Gseq, function(g) if(nn[g] > 1) 1/colVars(data[z == g,, drop=FALSE]) else psi.tmp[,g], numeric(P))
+      psi.inv      <- vapply(Gseq, function(g) if(nn[g] > 1) 1/Rfast::colVars(data[z == g,, drop=FALSE]) else psi.tmp[,g], numeric(P))
       inf.ind      <- is.infinite(psi.inv)
       psi.inv[inf.ind]      <- psi.tmp[inf.ind]
     }
@@ -112,14 +112,14 @@
       pi.store[,1]          <- pi.prop
       z.store[,1]           <- z
       ll.store[1]           <- sum(.sim_z(data=data, mu=mu, Gseq=Gseq, N=N, pi.prop=pi.prop, sigma=lapply(Gseq, function(g) 
-                                         make.positive.definite(tcrossprod(lmat[[g]]) + diag(1/psi.inv[,g]))), Q0=Qs > 0)$log.likes)
+                               corpcor::make.positive.definite(tcrossprod(lmat[[g]]) + diag(1/psi.inv[,g]))), Q0=Qs > 0)$log.likes)
       Q.store[,1]           <- Qs
     }
     init.time      <- proc.time() - start.time
     
   # Iterate
     for(iter in seq_len(total)[-1]) { 
-      if(verbose   && iter   < burnin) setTxtProgressBar(pb, iter)
+      if(verbose   && iter   < burnin) utils::setTxtProgressBar(pb, iter)
       
     # Mixing Proportions
       pi.prop[]    <- .sim_pi(pi.alpha=pi.alpha, nn=nn)
@@ -129,10 +129,10 @@
       sigma        <- lapply(Gseq, function(g) tcrossprod(lmat[[g]]) + diag(psi[,g]))
       Q0           <- Qs  > 0
       Q1           <- Qs == 1
-      z.log        <- capture.output({ z.res <- try(.sim_z(data=data, mu=mu, sigma=sigma, Gseq=Gseq, N=N, pi.prop=pi.prop, Q0=Q0), silent=TRUE) })
+      z.log        <- utils::capture.output({ z.res <- try(.sim_z(data=data, mu=mu, sigma=sigma, Gseq=Gseq, N=N, pi.prop=pi.prop, Q0=Q0), silent=TRUE) })
       z.err        <- inherits(z.res, "try-error")
       if(z.err) {
-        sigma      <- lapply(sigma, make.positive.definite)
+        sigma      <- lapply(sigma, corpcor::make.positive.definite)
         z.res      <- .sim_z(data=data, mu=mu, sigma=sigma, Gseq=Gseq, N=N, pi.prop=pi.prop, Q0=Q0)
       }
       z            <- z.res$z
@@ -198,7 +198,7 @@
     
     # Adaptation  
       if(all(adapt, iter > adapt.at)) {      
-        if(runif(1) < ifelse(iter < burnin, 0.5, 1/exp(b0 + b1 * (iter - adapt.at)))) {
+        if(stats::runif(1)   < ifelse(iter < burnin, 0.5, 1/exp(b0 + b1 * (iter - adapt.at)))) {
           colvec   <- lapply(nn.ind, function(g) (if(Q0[g]) colSums(abs(lmat[[g]]) < epsilon)/P else 0) >= prop)
           nonred   <- lapply(colvec, .which0)
           numred   <- lengths(colvec) - lengths(nonred)
@@ -212,16 +212,16 @@
             notred <- notred & !Q.big
             Qs[nn0][Q.big]  <- Q.star
           }
-          phi[nn0]          <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) cbind(phi[[g]][,seq_len(Qs.old[h])], rgamma(n=P, shape=nu + nuplus1, rate=nu)) else phi[[g]][,nonred[[h]], drop=FALSE])
-          delta[nn0]        <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) c(delta[[g]][seq_len(Qs.old[h])], rgamma(n=1, shape=alpha.d2, rate=beta.d2)) else delta[[g]][nonred[[h]]])  
+          phi[nn0]          <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) cbind(phi[[g]][,seq_len(Qs.old[h])], stats::rgamma(n=P, shape=nu + nuplus1, rate=nu)) else phi[[g]][,nonred[[h]], drop=FALSE])
+          delta[nn0]        <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) c(delta[[g]][seq_len(Qs.old[h])], stats::rgamma(n=1, shape=alpha.d2, rate=beta.d2)) else delta[[g]][nonred[[h]]])  
           tau[nn0]          <- lapply(delta[nn.ind], cumprod)
-          lmat[nn0]         <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) cbind(lmat[[g]][,seq_len(Qs.old[h])], rnorm(n=P, mean=0, sd=sqrt(1/(phi[[g]][,Qs[g]] * tau[[g]][Qs[g]])))) else lmat[[g]][,nonred[[h]], drop=FALSE])
+          lmat[nn0]         <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) cbind(lmat[[g]][,seq_len(Qs.old[h])], stats::rnorm(n=P, mean=0, sd=sqrt(1/(phi[[g]][,Qs[g]] * tau[[g]][Qs[g]])))) else lmat[[g]][,nonred[[h]], drop=FALSE])
           Qemp     <- Qs[!nn0]
           Fmax     <- max(Qs[nn0])
           Qmax     <- ifelse(all(Q.big), Fmax, max(Qs[nn0][!Q.big]))
           Qmaxseq  <- seq_len(Qmax)
           Qmaxold  <- max(Qs.old)
-          eta      <- if(all(Fmax  > Qmaxold, !Q.bigs)) cbind(eta[,seq_len(Qmaxold)], rnorm(N)) else eta[,seq_len(Fmax), drop=FALSE]
+          eta      <- if(all(Fmax  > Qmaxold, !Q.bigs)) cbind(eta[,seq_len(Qmaxold)], stats::rnorm(N)) else eta[,seq_len(Fmax), drop=FALSE]
           if(Qmax   < max(Qemp, 0)) {
             Qs[Qmax < Qs & !nn0]  <- Qmax
             for(g  in Gseq[!nn0][Qemp > Qmax]) {  
@@ -275,7 +275,7 @@
         err.z      <- TRUE
       }
       if(is.element(iter, iters))   {
-        if(verbose)   setTxtProgressBar(pb, iter)
+        if(verbose)   utils::setTxtProgressBar(pb, iter)
         new.it     <- which(iters == iter)
         if(sw["mu.sw"])    mu.store[,,new.it]       <- mu  
         if(all(sw["s.sw"], 
@@ -297,8 +297,8 @@
     eta.save       <- eta.store[,Qmax,, drop=FALSE]
     lmat.save      <- load.store[,Qmax,,, drop=FALSE]
     returns        <- list(mu       = if(sw["mu.sw"])  mu.store,
-                           eta      = if(sw["s.sw"])   tryCatch(as.simple_sparse_array(eta.save),  error=function(e) eta.save), 
-                           load     = if(sw["l.sw"])   tryCatch(as.simple_sparse_array(lmat.save), error=function(e) lmat.save),
+                           eta      = if(sw["s.sw"])   tryCatch(slam::as.simple_sparse_array(eta.save),  error=function(e) eta.save), 
+                           load     = if(sw["l.sw"])   tryCatch(slam::as.simple_sparse_array(lmat.save), error=function(e) lmat.save),
                            psi      = if(sw["psi.sw"]) psi.store,
                            pi.prop  = if(sw["pi.sw"])  pi.store,
                            z.store  = z.store,

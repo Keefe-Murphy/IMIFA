@@ -11,7 +11,7 @@
   # Define & initialise variables
     start.time       <- proc.time()
     total            <- max(iters)
-    if(verbose)         pb    <- txtProgressBar(min=0, max=total, style=3)
+    if(verbose)         pb    <- utils::txtProgressBar(min=0, max=total, style=3)
     n.store          <- length(iters)
     Gs               <- seq_len(G)
     Ts               <- seq_len(trunc.G)
@@ -41,17 +41,17 @@
       pi.store       <- provideDimnames(matrix(0, nr=trunc.G, nc=n.store), base=list(gnames, iternames))
     }
     z.store          <- provideDimnames(matrix(0, nr=N, nc=n.store), base=list(obsnames, iternames))
-    ll.store         <- setNames(rep(0, n.store), iternames)
+    ll.store         <- stats::setNames(rep(0, n.store), iternames)
     Q.star           <- Q
     Qs               <- rep(Q, trunc.G)
     Q.store          <- provideDimnames(matrix(0, nr=trunc.G, nc=n.store), base=list(gnames, iternames))
     Q.large          <- Q.big <- Q.bigs <- FALSE
     acc1             <- acc2  <- FALSE
     err.z            <- z.err <- FALSE
-    G.store          <- setNames(rep(0, n.store), iternames)
+    G.store          <- stats::setNames(rep(0, n.store), iternames)
     not.fixed        <- alpha.step != "fixed"
     if(not.fixed) {
-      alpha.store    <- setNames(rep(0, n.store), iternames)
+      alpha.store    <- stats::setNames(rep(0, n.store), iternames)
       alpha.shape    <- a.hyper[1]
       alpha.rate     <- a.hyper[2]
     }
@@ -62,7 +62,7 @@
     }
     MH.step          <- alpha.step == "metropolis"
     if(MH.step)   {
-      rate           <- setNames(rep(0, n.store), iternames)
+      rate           <- stats::setNames(rep(0, n.store), iternames)
     }
     if(DP.lab.sw) {
       lab.rate       <- matrix(0, nr=2, nc=n.store)  
@@ -71,7 +71,7 @@
     sig.mu.sqrt      <- sqrt(sigma.mu)
     z                <- cluster$z
     pi.alpha         <- cluster$pi.alpha
-    .sim_psi.inv     <- switch(uni.type, unconstrained=.sim_psi.iu, isotropic=.sim_psi.ii)
+    .sim_psi.inv     <- switch(uni.type, unconstrained=.sim_psi.iu,  isotropic=.sim_psi.ii)
     .sim_psi.ip      <- switch(uni.type, unconstrained=.sim_psi.ipu, isotropic=.sim_psi.ipi)
     psi.beta         <- unique(round(psi.beta, min(nchar(psi.beta))))
     pi.prop          <- cluster$pi.prop
@@ -85,7 +85,7 @@
     psi.inv          <- vapply(Ts, function(t) .sim_psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), numeric(P))
     if(Q < P - sqrt(P + Q))   {
       for(g in which(nn > P)) {
-        fact         <- try(factanal(data[z == g,, drop=FALSE], factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
+        fact         <- try(stats::factanal(data[z == g,, drop=FALSE], factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
         if(!inherits(fact, "try-error")) {
           eta[z == g,]        <- fact$scores
           lmat[[g]]           <- fact$loadings
@@ -94,7 +94,7 @@
       }
     } else {
       psi.tmp        <- psi.inv
-      psi.inv[,Gs]   <- vapply(Gs, function(g) if(nn[g] > 1) 1/colVars(data[z == g,, drop=FALSE]) else psi.tmp[,g], numeric(P))
+      psi.inv[,Gs]   <- vapply(Gs, function(g) if(nn[g] > 1) 1/Rfast::colVars(data[z == g,, drop=FALSE]) else psi.tmp[,g], numeric(P))
       inf.ind        <- is.infinite(psi.inv)
       psi.inv[inf.ind]        <- psi.tmp[inf.ind]
     }
@@ -123,7 +123,7 @@
       pi.store[,1]            <- pi.prop
       z.store[,1]             <- z
       ll.store[1]             <- sum(.sim_z(data=data, mu=mu[,Gs], Gseq=Gs, N=N, pi.prop=pi.prop[Gs], sigma=lapply(Gs, function(g)
-                                     make.positive.definite(tcrossprod(lmat[[g]]) + diag(1/psi.inv[,g]))), Q0=Qs[Gs] > 0)$log.likes)
+                                 corpcor::make.positive.definite(tcrossprod(lmat[[g]]) + diag(1/psi.inv[,g]))), Q0=Qs[Gs] > 0)$log.likes)
       Q.store[,1]             <- Qs
       G.store[1]              <- G.non
       if(not.fixed) {
@@ -137,7 +137,7 @@
     
   # Iterate
     for(iter in seq_len(total)[-1]) { 
-      if(verbose     && iter   < burnin) setTxtProgressBar(pb, iter)
+      if(verbose     && iter   < burnin) utils::setTxtProgressBar(pb, iter)
     
     # Mixing Proportions
       weights        <- .sim_pi.inf(pi.alpha=pi.alpha, nn=nn, N=N, len=trunc.G, lseq=Ts, discount=discount)
@@ -161,7 +161,7 @@
         ksi          <- pi.prop
         log.ksi      <- log(ksi)
       }  
-      u.slice        <- runif(N, 0, ksi[z])
+      u.slice        <- stats::runif(N, 0, ksi[z])
       Gs             <- seq_len(max(vapply(Ns, function(i) sum(u.slice[i] < ksi), integer(1L))))
       log.slice.ind  <- vapply(Gs, function(g) slice.logs[1 + (u.slice < ksi[g])] - log.ksi[g], numeric(N))
     
@@ -171,10 +171,10 @@
       Qgs            <- Qs[Gs]
       Q0             <- Qgs  > 0
       Q1             <- Qgs == 1
-      z.log          <- capture.output({ z.res <- try(.sim_z.inf(data=data, mu=mu[,Gs, drop=FALSE], sigma=sigma, Gseq=Gs, N=N, pi.prop=pi.prop[Gs], log.slice.ind=log.slice.ind, Q0=Q0[Gs]), silent=TRUE) })
+      z.log          <- utils::capture.output({ z.res <- try(.sim_z.inf(data=data, mu=mu[,Gs, drop=FALSE], sigma=sigma, Gseq=Gs, N=N, pi.prop=pi.prop[Gs], log.slice.ind=log.slice.ind, Q0=Q0[Gs]), silent=TRUE) })
       z.err          <- inherits(z.res, "try-error")
       if(z.err) {
-        sigma        <- lapply(sigma, make.positive.definite)
+        sigma        <- lapply(sigma, corpcor::make.positive.definite)
         z.res        <- .sim_z.inf(data=data, mu=mu[,Gs, drop=FALSE], sigma=sigma, Gseq=Gs, N=N, pi.prop=pi.prop[Gs], log.slice.ind=log.slice.ind, Q0=Q0[Gs])
       }
       z              <- z.res$z
@@ -240,7 +240,7 @@
     
     # Adaptation  
       if(all(adapt, iter > adapt.at)) {      
-        if(runif(1)   < ifelse(iter < burnin, 0.5, 1/exp(b0 + b1 * (iter - adapt.at)))) {
+        if(stats::runif(1)     < ifelse(iter < burnin, 0.5, 1/exp(b0 + b1 * (iter - adapt.at)))) {
           colvec     <- lapply(nn.ind, function(g) (if(Q0[g]) colSums(abs(lmat[[g]]) < epsilon)/P else 0) >= prop)
           nonred     <- lapply(colvec, .which0)
           numred     <- lengths(colvec) - lengths(nonred)
@@ -254,16 +254,16 @@
             notred   <- notred & !Q.big
             Qs[nn0][Q.big]    <- Q.star
           }
-          phi[nn0]   <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) cbind(phi[[g]][,seq_len(Qs.old[h])], rgamma(n=P, shape=nu + nuplus1, rate=nu)) else phi[[g]][,nonred[[h]], drop=FALSE])
-          delta[nn0] <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) c(delta[[g]][seq_len(Qs.old[h])], rgamma(n=1, shape=alpha.d2, rate=beta.d2)) else delta[[g]][nonred[[h]]])  
+          phi[nn0]   <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) cbind(phi[[g]][,seq_len(Qs.old[h])], stats::rgamma(n=P, shape=nu + nuplus1, rate=nu)) else phi[[g]][,nonred[[h]], drop=FALSE])
+          delta[nn0] <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) c(delta[[g]][seq_len(Qs.old[h])], stats::rgamma(n=1, shape=alpha.d2, rate=beta.d2)) else delta[[g]][nonred[[h]]])  
           tau[nn0]   <- lapply(delta[nn.ind], cumprod)
-          lmat[nn0]  <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) cbind(lmat[[g]][,seq_len(Qs.old[h])], rnorm(n=P, mean=0, sd=sqrt(1/(phi[[g]][,Qs[g]] * tau[[g]][Qs[g]])))) else lmat[[g]][,nonred[[h]], drop=FALSE])
+          lmat[nn0]  <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) cbind(lmat[[g]][,seq_len(Qs.old[h])], stats::rnorm(n=P, mean=0, sd=sqrt(1/(phi[[g]][,Qs[g]] * tau[[g]][Qs[g]])))) else lmat[[g]][,nonred[[h]], drop=FALSE])
           Qemp       <- Qs[!nn0]
           Fmax       <- max(Qs[nn0])
           Qmax       <- ifelse(all(Q.big), Fmax, max(Qs[nn0][!Q.big]))
           Qmaxseq    <- seq_len(Qmax)
           Qmaxold    <- max(Qs.old)
-          eta        <- if(all(Fmax > Qmaxold, !Q.bigs)) cbind(eta[,seq_len(Qmaxold)], rnorm(N)) else eta[,seq_len(Fmax), drop=FALSE]
+          eta        <- if(all(Fmax > Qmaxold, !Q.bigs)) cbind(eta[,seq_len(Qmaxold)], stats::rnorm(N)) else eta[,seq_len(Fmax), drop=FALSE]
           if(Qmax     < max(Qemp, 0)) {
             Qs[Qmax   < Qs & !nn0] <- Qmax
             for(t in Ts[!nn0][Qemp  > Qmax]) {  
@@ -339,8 +339,8 @@
         err.z        <- TRUE
       }
       if(is.element(iter, iters)) {
-        if(verbose)     setTxtProgressBar(pb, iter)
-        new.it       <- which(iters == iter)
+        if(verbose)      utils::setTxtProgressBar(pb, iter)
+        new.it       <-  which(iters == iter)
         if(sw["mu.sw"])  mu.store[,,new.it]           <- mu  
         if(all(sw["s.sw"], 
            any(Q0)))     eta.store[,seq_len(max(Qs)),new.it]  <- eta 
@@ -374,7 +374,7 @@
                              alpha    = if(not.fixed)    alpha.store,
                              discount = if(learn.d)      discount,
                              rate     = if(MH.step)      mean(rate),
-                             lab.rate = if(DP.lab.sw)    setNames(rowmeans(lab.rate), c("Move1", "Move2")),
+                             lab.rate = if(DP.lab.sw)    stats::setNames(Rfast::rowmeans(lab.rate), c("Move1", "Move2")),
                              z.store  = z.store,
                              ll.store = ll.store,
                              G.store  = G.store,

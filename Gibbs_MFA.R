@@ -10,7 +10,7 @@
   # Define & initialise variables
     start.time     <- proc.time()
     total          <- max(iters)
-    if(verbose)       pb   <- txtProgressBar(min=0, max=total, style=3)
+    if(verbose)       pb   <- utils::txtProgressBar(min=0, max=total, style=3)
     n.store        <- length(iters)
     Gseq           <- seq_len(G)
     Pseq           <- seq_len(P)
@@ -43,7 +43,7 @@
     }
     z.store        <- provideDimnames(matrix(0, nr=N, nc=n.store), base=list(obsnames, iternames))
     err.z          <- zerr <- FALSE
-    ll.store       <- setNames(rep(0, n.store), iternames)
+    ll.store       <- stats::setNames(rep(0, n.store), iternames)
 
     mu.sigma       <- 1/sigma.mu
     sig.mu.sqrt    <- sqrt(sigma.mu)
@@ -59,7 +59,7 @@
     nn             <- tabulate(z, nbins=G)
     pi.prop        <- cluster$pi.prop
     pi.alpha       <- cluster$pi.alpha
-    .sim_psi.inv   <- switch(uni.type, unconstrained=.sim_psi.iu, isotropic=.sim_psi.ii)
+    .sim_psi.inv   <- switch(uni.type, unconstrained=.sim_psi.iu,  isotropic=.sim_psi.ii)
     .sim_psi.ip    <- switch(uni.type, unconstrained=.sim_psi.ipu, isotropic=.sim_psi.ipi)
     psi.beta       <- unique(round(psi.beta, min(nchar(psi.beta))))
     if(length(psi.beta) == 1) {
@@ -75,7 +75,7 @@
       fact.ind     <- nn   <= P
       fail.gs      <- which(fact.ind)
       for(g in which(!fact.ind))   {
-        fact       <- try(factanal(data[z == g,, drop=FALSE], factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
+        fact       <- try(stats::factanal(data[z == g,, drop=FALSE], factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
         if(!inherits(fact, "try-error")) {
           eta[z == g,]     <- fact$scores
           lmat[[g]]        <- fact$loadings
@@ -84,12 +84,12 @@
           fail.gs  <- c(fail.gs, g)
         }
       }
-      fail.gs      <- fail.gs[Order(fail.gs)]
+      fail.gs      <- fail.gs[Rfast::Order(fail.gs)]
       len.fail     <- length(fail.gs)
       if(len.fail   > 0)      message(paste0("Parameters of the following group", ifelse(len.fail > 2, "s ", " "), "were initialised by simulation from priors, not factanal: ", ifelse(len.fail > 1, paste0(paste0(fail.gs[-len.fail], sep="", collapse=", "), " and ", fail.gs[len.fail]), fail.gs), " - G=", G, ", Q=", Q))
     } else     {
       psi.tmp      <- psi.inv
-      psi.inv      <- vapply(Gseq, function(g) if(nn[g] > 1) 1/colVars(data[z == g,, drop=FALSE]) else psi.tmp[,g], numeric(P))
+      psi.inv      <- vapply(Gseq, function(g) if(nn[g] > 1) 1/Rfast::colVars(data[z == g,, drop=FALSE]) else psi.tmp[,g], numeric(P))
       inf.ind      <- is.infinite(psi.inv)
       psi.inv[inf.ind]     <- psi.tmp[inf.ind]
     }
@@ -103,13 +103,13 @@
       pi.store[,1]         <- pi.prop
       z.store[,1]          <- z
       ll.store[1]          <- sum(.sim_z(data=data, mu=mu, Gseq=Gseq, N=N, pi.prop=pi.prop, sigma=lapply(Gseq, function(g) 
-                                        make.positive.definite(tcrossprod(lmat[,,g]) + diag(1/psi.inv[,g]))), Q0=Q0s)$log.likes)
+                              corpcor::make.positive.definite(tcrossprod(lmat[,,g]) + diag(1/psi.inv[,g]))), Q0=Q0s)$log.likes)
     }
     init.time      <- proc.time() - start.time
     
   # Iterate
     for(iter in seq_len(total)[-1]) { 
-      if(verbose   && iter  < burnin) setTxtProgressBar(pb, iter)
+      if(verbose   && iter  < burnin) utils::setTxtProgressBar(pb, iter)
   
     # Mixing Proportions
       pi.prop[]    <- .sim_pi(pi.alpha=pi.alpha, nn=nn)
@@ -117,10 +117,10 @@
     # Cluster Labels
       psi          <- 1/psi.inv
       sigma        <- lapply(Gseq, function(g) tcrossprod(lmat[,,g]) + diag(psi[,g]))
-      z.log        <- capture.output({ z.res <- try(.sim_z(data=data, mu=mu, sigma=sigma, Gseq=Gseq, N=N, pi.prop=pi.prop, Q0=Q0s), silent=TRUE) })
+      z.log        <- utils::capture.output({ z.res <- try(.sim_z(data=data, mu=mu, sigma=sigma, Gseq=Gseq, N=N, pi.prop=pi.prop, Q0=Q0s), silent=TRUE) })
       zerr         <- inherits(z.res, "try-error")
       if(zerr) {
-        sigma      <- lapply(sigma, make.positive.definite)
+        sigma      <- lapply(sigma, corpcor::make.positive.definite)
         z.res      <- .sim_z(data=data, mu=mu, sigma=sigma, Gseq=Gseq, N=N, pi.prop=pi.prop, Q0=Q0s)
       }
       z            <- z.res$z
@@ -174,7 +174,7 @@
         err.z      <- TRUE
       }
       if(is.element(iter, iters))  {
-        if(verbose)   setTxtProgressBar(pb, iter)
+        if(verbose)   utils::setTxtProgressBar(pb, iter)
         new.it     <- which(iters == iter)
         if(sw["mu.sw"])            mu.store[,,new.it]      <- mu  
         if(all(sw["s.sw"], Q0))    eta.store[,,new.it]     <- eta

@@ -9,10 +9,10 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
                         ind.slice = TRUE, rho = NULL, DP.lab.sw = TRUE, trunc.G = NULL, profile = FALSE, verbose = TRUE, discount = NULL, learn.d = FALSE, d.hyper = NULL, mu0g = FALSE, 
                         psi0g = FALSE, delta0g = FALSE, mu.switch = TRUE, score.switch = TRUE, load.switch = TRUE, psi.switch = TRUE, pi.switch = TRUE, factanal = FALSE, Q.fac = NULL) {
   
-  defpar    <- suppressWarnings(par(no.readonly=TRUE))
+  defpar    <- suppressWarnings(graphics::par(no.readonly=TRUE))
   defopt    <- options()
   options(warn=1)
-  on.exit(suppressWarnings(par(defpar)))
+  on.exit(suppressWarnings(graphics::par(defpar)))
   on.exit(suppressWarnings(options(defopt)), add=TRUE)
   if(!missing(method) && method == "classification") {
     method  <- "classify"
@@ -88,7 +88,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     } else {
       scal  <- FALSE
     }
-    dat     <- if(is.logical(scal)) standardise(as.matrix(raw.dat), center=centering, scale=scal) else scale(raw.dat, center=centering, scale=scal)
+    dat     <- if(is.logical(scal)) Rfast::standardise(as.matrix(raw.dat), center=centering, scale=scal) else scale(raw.dat, center=centering, scale=scal)
   } else   {
     dat     <- raw.dat
   }
@@ -117,7 +117,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   if(missing(d.hyper))       d.hyper       <- c(1L, 1L)
   if(length(d.hyper)      != 2)     stop("d.hyper' must be a vector of length 2")
   if(any(d.hyper   <= 0))           stop("'Discount Beta prior hyperparameters must be strictly positive")
-  discount         <- switch(method, IMFA=, IMIFA=ifelse(missing(discount), ifelse(learn.d, rbeta(1, d.hyper[1], d.hyper[2]), 0), discount), 0)
+  discount         <- switch(method, IMFA=, IMIFA=ifelse(missing(discount), ifelse(learn.d, stats::rbeta(1, d.hyper[1], d.hyper[2]), 0), discount), 0)
   if(any(!is.numeric(discount),
          length(discount) != 1))    stop("'discount' must be a single number")
   if(discount       < 0   || 
@@ -196,7 +196,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(G.x)                         stop("'range.G' must be specified")
     if(any(range.G  < 1))           stop("'range.G' must be strictly positive")
     if(any(range.G  > alp3 * lnN))  warning(paste0("'range.G' MUCH greater than log(N) (=log(", N, ")):\n Empty clusters are likely, consider running an overfitted or infinite mixture"), call.=FALSE)
-    range.G <- sort_unique(range.G)
+    range.G <- Rfast::sort_unique(range.G)
     meth    <- rep(method, length(range.G))                               
   }
   if(any(range.G >= N))             stop(paste0("'range.G' must be less than the number of observations N=", N))
@@ -211,7 +211,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   }
   
 # Define full conditionals, hyperparamters & Gibbs Sampler function for desired method
-  cov.mat          <- cova(as.matrix(dat))
+  cov.mat          <- Rfast::cova(as.matrix(dat))
   datname          <- rownames(dat)
   if(any(length(unique(datname)) != N,
      is.null(datname)))      rownames(dat) <- seq_len(N)
@@ -237,7 +237,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(range.Q    <= 0)             stop(paste0("'range.Q' must be strictly positive for the ", method, " method"))
     if(all(adapt, range.Q < Q.min)) stop(paste0("'range.Q' must be at least min(log(P), log(N)) for the ", method, " method when 'adapt' is TRUE"))
   }
-  range.Q   <- sort_unique(range.Q)
+  range.Q   <- Rfast::sort_unique(range.Q)
   len.G     <- switch(method, classify=range.G, length(range.G))
   len.Q     <- length(range.Q)
   len.X     <- len.G * len.Q
@@ -334,7 +334,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
          any(sw0gs)))               stop(paste0(names(which(sw0gs)), " should be FALSE for the ", method, " method\n"))
   if(!is.element(method, c("FA", "IFA", "classify"))) {
     if(missing("alpha"))     alpha         <- switch(method, OMFA=, OMIFA=0.5/range.G, max(1 - discount, switch(alpha.step, 
-                                              gibbs=rgamma(1, a.hyp1, a.hyp2) - discount, metropolis=runif(1, a.hyp1, a.hyp2), 1 - discount)))
+                                              gibbs=stats::rgamma(1, a.hyp1, a.hyp2) - discount, metropolis=stats::runif(1, a.hyp1, a.hyp2), 1 - discount)))
     if(length(alpha) != 1)          stop("'alpha' must be specified as a scalar to ensure an exchangeable prior")
     if(alpha <= -discount)          stop(paste0("'alpha' must be ", ifelse(discount != 0, paste0("greater than -discount (i.e. > ", - discount, ")"), "strictly positive")))
     if(all(is.element(method,  c("IMIFA", "IMFA")),
@@ -406,14 +406,14 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     for(g in seq_along(range.G)) {
       G            <- range.G[g]
       if(z.init    == "kmeans")     {
-        k.res      <- try(suppressWarnings(kmeans(dat, centers=G, iter.max=20, nstart=100)), silent=TRUE)
+        k.res      <- try(suppressWarnings(stats::kmeans(dat, centers=G, iter.max=20, nstart=100)), silent=TRUE)
         if(!inherits(k.res, "try-error"))  {
           zi[[g]]  <- as.numeric(factor(k.res$cluster, levels=seq_len(G)))
         } else                      stop("Cannot initialise cluster labels using kmeans. Try another z.init method")
       } else if(z.init  == "list")   {
         zi[[g]]    <- as.numeric(z.list[[g]])
       } else if(z.init  == "mclust") {
-        m.res      <- try(Mclust(dat, G), silent=TRUE)
+        m.res      <- try(mclust::Mclust(dat, G), silent=TRUE)
         if(!inherits(m.res, "try_error"))  {
           zi[[g]]  <- as.numeric(m.res$classification)
         } else                      stop("Cannot initialise cluster labels using mclust. Try another z.init method")
@@ -440,7 +440,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
       }
       if(beta.x)  {
         if(psi0g) {
-          cov.gg   <- lapply(seq_len(G), function(gg) if(nngs[gg] > 1) cova(as.matrix(dat[zi[[g]] == gg,, drop=FALSE])) else cov.mat)
+          cov.gg   <- lapply(seq_len(G), function(gg) if(nngs[gg] > 1) Rfast::cova(as.matrix(dat[zi[[g]] == gg,, drop=FALSE])) else cov.mat)
           psi.beta[[g]] <- vapply(seq_len(G), function(gg) psi_hyper(psi.alpha, cov.gg[[gg]], uni.type, P), numeric(P))
         } else {
           psi.beta[[g]] <- replicate(G, temp.psi[[1]])
@@ -456,7 +456,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
       if(is.element(method, c("MFA", "MIFA"))) {
         sw0g.tmp   <- sw0gs
         if(all(g > 9, any(sw0gs))) {
-          sw0g.tmp <- setNames(rep(FALSE, 4L), names(sw0gs))
+          sw0g.tmp <- stats::setNames(rep(FALSE, 4L), names(sw0gs))
                                     warning(paste0(names(which(sw0gs)), " set to FALSE where G > 9, as 'exact' label-switching is not possible in this case\n"), call.=FALSE)
         }
         clust[[g]] <- append(clust[[g]], list(l.switch = sw0g.tmp))
@@ -489,7 +489,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   init.time        <- proc.time() - init.start
   fac.time         <- 0
   
-  if(profile)  Rprof()
+  if(profile)         utils::Rprof()
   if(is.element(method, c("IFA", "MIFA", "OMIFA", "IMIFA"))) {
     if(len.G == 1)  {
       start.time   <- proc.time()
@@ -573,8 +573,8 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
       } else {
         scal  <- FALSE
       }
-      tmp.dat <- scale(tmp.dat, center=centering, scale=scal)
-      if(sigmu.miss)   gibbs.arg$sigma.mu  <- cova(as.matrix(tmp.dat))
+      tmp.dat <- if(is.logical(scal)) Rfast::standardise(as.matrix(tmp.dat), center=centering, scale=scal) else scale(tmp.dat, center=centering, scale=scal)
+      if(sigmu.miss)   gibbs.arg$sigma.mu  <- Rfast::cova(as.matrix(tmp.dat))
       imifa[[g]]          <- list()
       gibbs.arg    <- append(temp.args, lapply(deltas[[Gi]], "[[", g))
       imifa[[g]][[Qi]]    <- do.call(paste0(".gibbs_", "IFA"),
@@ -595,13 +595,13 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   }
 
   if(profile) {
-    Rprof(NULL)
-    print(summaryRprof())
+    utils::Rprof(NULL)
+    print(utils::summaryRprof())
     invisible(file.remove("Rprof.out"))
   }
   imifa     <- switch(method, FA=, MFA=, OMFA=, IMFA={
-     lapply(seq_along(imifa), function(x) setNames(imifa[[x]], paste0(range.Q, ifelse(range.Q == 1, "Factor", "Factors"))))
-  }, lapply(seq_along(imifa), function(x) setNames(imifa[[x]], "IFA")))
+     lapply(seq_along(imifa), function(x) stats::setNames(imifa[[x]], paste0(range.Q, ifelse(range.Q == 1, "Factor", "Factors"))))
+  }, lapply(seq_along(imifa), function(x) stats::setNames(imifa[[x]], "IFA")))
   if(!is.element(method, c("FA", "IFA"))) {
     for(g in seq_along(range.G)) {
       attr(imifa[[g]], 
@@ -669,7 +669,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     }
     Q.fac   <- as.integer(Q.fac)
     if(length(Q.fac) != 1)          stop("'Q.fac' must be of length 1")
-    fac     <- try(factanal(dat, factors=Q.fac, control=list(nstart=50)))
+    fac     <- try(stats::factanal(dat, factors=Q.fac, control=list(nstart=50)))
     if(!inherits(fac, "try-error")) {
       imifa <- append(imifa, list(fac = fac))
       names(imifa)[length(imifa)] <- "Factanal"

@@ -11,7 +11,7 @@
   # Define & initialise variables
     start.time   <- proc.time()
     total        <- max(iters)
-    if(verbose)     pb     <- txtProgressBar(min=0, max=total, style=3)
+    if(verbose)     pb     <- utils::txtProgressBar(min=0, max=total, style=3)
     n.store      <- length(iters)
     Pseq         <- seq_len(P)
     obsnames     <- rownames(data)
@@ -33,17 +33,17 @@
     if(sw["psi.sw"]) {
       psi.store  <- provideDimnames(matrix(0, nr=P, nc=n.store), base=list(varnames, iternames))
     }
-    post.mu      <- setNames(rep(0, P), varnames)
-    post.psi     <- setNames(rep(0, P), varnames)
-    cov.emp      <- provideDimnames(cova(as.matrix(data)), base=list(varnames, varnames))
+    post.mu      <- stats::setNames(rep(0, P), varnames)
+    post.psi     <- stats::setNames(rep(0, P), varnames)
+    cov.emp      <- provideDimnames(Rfast::cova(as.matrix(data)), base=list(varnames, varnames))
     cov.est      <- provideDimnames(matrix(0, nr=P, nc=P), base=dimnames(cov.emp))
-    ll.store     <- setNames(rep(0, n.store), iternames)
+    ll.store     <- stats::setNames(rep(0, n.store), iternames)
     Q.star       <- Q
-    Q.store      <- setNames(rep(0, n.store), iternames)
+    Q.store      <- stats::setNames(rep(0, n.store), iternames)
     Q.large      <- Q.big  <- FALSE
     
     mu.sigma     <- 1/sigma.mu
-    .sim_psi.inv <- switch(uni.type, unconstrained=.sim_psi.iu, isotropic=.sim_psi.ii)
+    .sim_psi.inv <- switch(uni.type, unconstrained=.sim_psi.iu,  isotropic=.sim_psi.ii)
     .sim_psi.ip  <- switch(uni.type, unconstrained=.sim_psi.ipu, isotropic=.sim_psi.ipi)
     psi.beta     <- unique(round(psi.beta, min(nchar(psi.beta))))
     eta          <- .sim_eta.p(Q=Q, N=N)
@@ -53,7 +53,7 @@
     lmat         <- matrix(unlist(lapply(Pseq, function(j) .sim_load.ps(Q=Q, phi=phi[j,], tau=tau)), use.names=FALSE), nr=P, byrow=TRUE)
     psi.inv      <- .sim_psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
     if(all(Q  < P - sqrt(P + Q), N > P)) {
-      fact       <- try(factanal(data, factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
+      fact       <- try(stats::factanal(data, factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
       if(!inherits(fact, "try-error"))   {
         eta      <- fact$scores
         lmat     <- fact$loadings
@@ -61,7 +61,7 @@
       }
     } else {
       psi.tmp    <- psi.inv
-      psi.inv    <- 1/colVars(data)
+      psi.inv    <- 1/Rfast::colVars(data)
       inf.ind    <- is.infinite(psi.inv)
       psi.inv[inf.ind]     <- psi.tmp[inf.ind]
     }
@@ -71,13 +71,13 @@
       eta.store[,,1]       <- eta
       load.store[,,1]      <- lmat
       psi.store[,1]        <- 1/psi.inv
-      ll.store[1]          <- sum(dmvn(X=data, mu=mu, sigma=tcrossprod(lmat) + diag(1/psi.inv), log=TRUE))
+      ll.store[1]          <- sum(mvnfast::dmvn(X=data, mu=mu, sigma=tcrossprod(lmat) + diag(1/psi.inv), log=TRUE))
     }
     init.time    <- proc.time() - start.time
   
   # Iterate
     for(iter in seq_len(total)[-1]) { 
-      if(verbose && iter    < burnin) setTxtProgressBar(pb, iter)
+      if(verbose && iter    < burnin) utils::setTxtProgressBar(pb, iter)
       Q0         <- Q  > 0
       Q1         <- Q == 1
       
@@ -113,20 +113,20 @@
     
     # Adaptation  
       if(all(adapt, iter > adapt.at)) {      
-        if(runif(1)  < ifelse(iter < burnin, 0.5, 1/exp(b0 + b1 * (iter - adapt.at)))) {
+        if(stats::runif(1) < ifelse(iter < burnin, 0.5, 1/exp(b0 + b1 * (iter - adapt.at)))) {
           colvec <- (if(Q0) colSums(abs(lmat) < epsilon) / P else 0) >= prop
           numred <- sum(colvec)
-          if(numred == 0) { # simulate extra columns from priors
+          if(numred == 0)  { # simulate extra columns from priors
             Q    <- Q + 1
             Q.big   <- Q > Q.star
             if(Q.big) {
               Q     <- Q.star
             } else {
-              eta   <- cbind(eta, rnorm(N))         
-              phi   <- cbind(phi, rgamma(n=P, shape=nu + nuplus1, rate=nu))
-              delta <- c(delta, rgamma(n=1, shape=alpha.d2, rate=beta.d2))
+              eta   <- cbind(eta, stats::rnorm(N))         
+              phi   <- cbind(phi, stats::rgamma(n=P, shape=nu + nuplus1, rate=nu))
+              delta <- c(delta, stats::rgamma(n=1, shape=alpha.d2, rate=beta.d2))
               tau   <- cumprod(delta)
-              lmat  <- cbind(lmat, rnorm(n=P, mean=0, sd=sqrt(1/(phi[,Q] * tau[Q]))))  
+              lmat  <- cbind(lmat, stats::rnorm(n=P, mean=0, sd=sqrt(1/(phi[,Q] * tau[Q]))))  
             }
           } else          { # remove redundant columns
             nonred  <- which(colvec == 0)
@@ -144,7 +144,7 @@
         Q.large  <- TRUE
       }
       if(is.element(iter, iters))  {
-        if(verbose) setTxtProgressBar(pb, iter)
+        if(verbose) utils::setTxtProgressBar(pb, iter)
         new.it   <- which(iters == iter)  
         psi      <- 1/psi.inv
         post.mu  <- post.mu + mu/n.store
@@ -156,7 +156,7 @@
         if(all(sw["l.sw"], Q0))     load.store[,seq_len(Q),new.it] <- lmat
         if(sw["psi.sw"])            psi.store[,new.it]             <- psi
                                     Q.store[new.it]                <- Q
-                                    ll.store[new.it]               <- sum(dmvn(X=data, mu=mu, sigma=sigma, log=TRUE))
+                                    ll.store[new.it]               <- sum(mvnfast::dmvn(X=data, mu=mu, sigma=sigma, log=TRUE))
       }
     }
     close(pb)
@@ -164,8 +164,8 @@
     eta.save     <- eta.store[,Qmax,, drop=FALSE]
     lmat.save    <- load.store[,Qmax,, drop=FALSE]
     returns      <- list(mu       = if(sw["mu.sw"])  mu.store,
-                         eta      = if(sw["s.sw"])   tryCatch(as.simple_sparse_array(eta.save),  error=function(e) eta.save), 
-                         load     = if(sw["l.sw"])   tryCatch(as.simple_sparse_array(lmat.save), error=function(e) lmat.save),
+                         eta      = if(sw["s.sw"])   tryCatch(slam::as.simple_sparse_array(eta.save),  error=function(e) eta.save), 
+                         load     = if(sw["l.sw"])   tryCatch(slam::as.simple_sparse_array(lmat.save), error=function(e) lmat.save),
                          psi      = if(sw["psi.sw"]) psi.store,
                          post.mu  = post.mu,
                          post.psi = post.psi,

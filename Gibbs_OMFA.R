@@ -10,7 +10,7 @@
   # Define & initialise variables
     start.time     <- proc.time()
     total          <- max(iters)
-    if(verbose)       pb   <- txtProgressBar(min=0, max=total, style=3)
+    if(verbose)       pb   <- utils::txtProgressBar(min=0, max=total, style=3)
     n.store        <- length(iters)
     Gseq           <- seq_len(G)
     Pseq           <- seq_len(P)
@@ -42,9 +42,9 @@
       pi.store     <- provideDimnames(matrix(0, nr=G, nc=n.store), base=list(gnames, iternames))
     }
     z.store        <- provideDimnames(matrix(0, nr=N, nc=n.store), base=list(obsnames, iternames))
-    ll.store       <- setNames(rep(0, n.store), iternames)
+    ll.store       <- stats::setNames(rep(0, n.store), iternames)
     err.z          <- zerr <- FALSE
-    G.store        <- setNames(rep(0, n.store), iternames)
+    G.store        <- stats::setNames(rep(0, n.store), iternames)
     
     mu.sigma       <- 1/sigma.mu
     sig.mu.sqrt    <- sqrt(sigma.mu)
@@ -54,7 +54,7 @@
     nn.ind         <- which(nn > 0)
     pi.prop        <- cluster$pi.prop
     pi.alpha       <- cluster$pi.alpha
-    .sim_psi.inv   <- switch(uni.type, unconstrained=.sim_psi.iu, isotropic=.sim_psi.ii)
+    .sim_psi.inv   <- switch(uni.type, unconstrained=.sim_psi.iu,  isotropic=.sim_psi.ii)
     .sim_psi.ip    <- switch(uni.type, unconstrained=.sim_psi.ipu, isotropic=.sim_psi.ipi)
     psi.beta       <- unique(round(psi.beta, min(nchar(psi.beta))))
     eta            <- .sim_eta.p(N=N, Q=Q)
@@ -62,7 +62,7 @@
     psi.inv        <- vapply(Gseq, function(g) .sim_psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), numeric(P))
     if(Q0 && Q  < P - sqrt(P + Q)) {
       for(g in which(nn     > P))  {
-        fact       <- try(factanal(data[z == g,, drop=FALSE], factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
+        fact       <- try(stats::factanal(data[z == g,, drop=FALSE], factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
         if(!inherits(fact, "try-error")) {
           eta[z == g,]     <- fact$scores
           lmat[[g]]        <- fact$loadings
@@ -71,7 +71,7 @@
       }
     } else {
       psi.tmp      <- psi.inv
-      psi.inv      <- vapply(Gseq, function(g) if(nn[g] > 1) 1/colVars(data[z == g,, drop=FALSE]) else psi.tmp[,g], numeric(P))
+      psi.inv      <- vapply(Gseq, function(g) if(nn[g] > 1) 1/Rfast::colVars(data[z == g,, drop=FALSE]) else psi.tmp[,g], numeric(P))
       inf.ind      <- is.infinite(psi.inv)
       psi.inv[inf.ind]     <- psi.tmp[inf.ind]
     }
@@ -92,14 +92,14 @@
       pi.store[,1]         <- pi.prop
       z.store[,1]          <- z
       ll.store[1]          <- sum(.sim_z(data=data, mu=mu, Gseq=Gseq, N=N, pi.prop=pi.prop, sigma=lapply(Gseq, function(g) 
-                                        make.positive.definite(tcrossprod(lmat[,,g]) + diag(1/psi.inv[,g]))), Q0=Q0s)$log.likes)
+                              corpcor::make.positive.definite(tcrossprod(lmat[,,g]) + diag(1/psi.inv[,g]))), Q0=Q0s)$log.likes)
       G.store[1]           <- G
     }
     init.time      <- proc.time() - start.time
     
   # Iterate
     for(iter in seq_len(total)[-1]) { 
-      if(verbose   && iter  < burnin) setTxtProgressBar(pb, iter)
+      if(verbose   && iter  < burnin) utils::setTxtProgressBar(pb, iter)
       
     # Mixing Proportions & Re-ordering
       pi.prop[]    <- .sim_pi(pi.alpha=pi.alpha, nn=nn)
@@ -114,10 +114,10 @@
     # Cluster Labels
       psi          <- 1/psi.inv
       sigma        <- lapply(Gseq, function(g) tcrossprod(lmat[,,g]) + diag(psi[,g]))
-      z.log        <- capture.output({ z.res <- try(.sim_z(data=data, mu=mu, sigma=sigma, Gseq=Gseq, N=N, pi.prop=pi.prop, Q0=Q0s), silent=TRUE) })
+      z.log        <- utils::capture.output({ z.res <- try(.sim_z(data=data, mu=mu, sigma=sigma, Gseq=Gseq, N=N, pi.prop=pi.prop, Q0=Q0s), silent=TRUE) })
       zerr         <- inherits(z.res, "try-error")
       if(zerr) {
-        sigma      <- lapply(sigma, make.positive.definite)
+        sigma      <- lapply(sigma, corpcor::make.positive.definite)
         z.res      <- .sim_z(data=data, mu=mu, sigma=sigma, Gseq=Gseq, N=N, pi.prop=pi.prop, Q0=Q0s)
       }
       z            <- z.res$z
@@ -152,7 +152,7 @@
         err.z      <- TRUE
       }
       if(is.element(iter, iters))   {
-        if(verbose)   setTxtProgressBar(pb, iter)
+        if(verbose)   utils::setTxtProgressBar(pb, iter)
         new.it     <- which(iters == iter)
         if(sw["mu.sw"])            mu.store[,,new.it]      <- mu 
         if(all(sw["s.sw"], Q0))    eta.store[,,new.it]     <- eta
