@@ -648,7 +648,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   attr(result, "Obs")          <- n.obs
   attr(result, "Store")        <- tmp.store
   attr(result, "Switch")       <- sw
-  attr(result, "Uni.Type")     <- attr(sims, "Uni.Type")
+  attr(result, "Uni.Meth")     <- attr(sims, "Uni.Meth")
   attr(result, "Vars")         <- n.var
   cat(print(result))
   return(result)

@@ -52,7 +52,7 @@ plot.Tuned_IMIFA    <- function(x = NULL, plot.meth = c("all", "correlation", "d
      c("G", "Q", 
        "QG")))  {      plot.meth <- "GQ"
   }
-  uni.type     <- attr(x, "Uni.Type")
+  uni.type     <- unname(attr(x, "Uni.Meth")['Uni.Type'])
   plot.meth    <- match.arg(plot.meth)
   load.meth    <- match.arg(load.meth)
   type.x       <- missing(type)

@@ -5,8 +5,8 @@
 mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA", "MFA", "IFA", "FA", "classify"), n.iters = 25000L, range.G = NULL, range.Q = NULL, thinning = 2L, 
                         burnin = n.iters/5, centering = TRUE, scaling = c("unit", "pareto", "none"), mu.zero = NULL, sigma.mu = NULL, sigma.l = NULL, alpha = NULL, psi.alpha = NULL, psi.beta = NULL,
                         z.list = NULL, z.init = c("mclust", "kmeans", "list", "priors"),  adapt = TRUE, b0 = NULL, b1 = NULL, prop = NULL, epsilon = NULL, nu = NULL, uni.type = c("unconstrained", "isotropic"),
-                        nuplus1 = TRUE, alpha.d1 = NULL, alpha.d2 = NULL, adapt.at = NULL, beta.d1 = NULL, beta.d2 = NULL, alpha.step = c("gibbs", "metropolis", "fixed"), alpha.hyper = NULL, 
-                        ind.slice = TRUE, rho = NULL, DP.lab.sw = TRUE, trunc.G = NULL, profile = FALSE, verbose = TRUE, discount = NULL, learn.d = FALSE, d.hyper = NULL, mu0g = FALSE, 
+                        uni.prior = c("unconstrained", "isotropic"), nuplus1 = TRUE, alpha.d1 = NULL, alpha.d2 = NULL, adapt.at = NULL, beta.d1 = NULL, beta.d2 = NULL, alpha.step = c("gibbs", "metropolis", "fixed"), 
+                        alpha.hyper = NULL, ind.slice = TRUE, rho = NULL, DP.lab.sw = TRUE, trunc.G = NULL, profile = FALSE, verbose = TRUE, discount = NULL, learn.d = FALSE, d.hyper = NULL, mu0g = FALSE, 
                         psi0g = FALSE, delta0g = FALSE, mu.switch = TRUE, score.switch = TRUE, load.switch = TRUE, psi.switch = TRUE, pi.switch = TRUE, factanal = FALSE, Q.fac = NULL) {
   
   defpar    <- suppressWarnings(graphics::par(no.readonly=TRUE))
@@ -97,10 +97,16 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   P         <- as.integer(ncol(dat))
   lnN       <- log(N)
   if(missing("uni.type"))  {
-   uni.type <- ifelse(N < P, "isotropic", "unconstrained")
+    uni.type       <- ifelse(N < P, "isotropic", "unconstrained")
+  }
+  if(missing("uni.prior")) {
+    uni.prior      <- ifelse(N < P, "isotropic", "unconstrained")
   }
   uni.type  <- match.arg(uni.type)
-  
+  uni.prior <- match.arg(uni.prior)
+  if(all(uni.prior == "unconstrained",
+         uni.type  == "isotropic")) stop("'uni.prior' can only be 'unconstrained' when 'uni.type' is 'unconstrained'")
+         
 # Manage storage switches & warnings for other function inputs
   if(!missing(mu.switch) && all(!mu.switch, ifelse(method == "classify", 
      !centering, !centered)))       warning("Centering hasn't been applied - are you sure you want mu.switch=FALSE?", call.=FALSE)
@@ -388,7 +394,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(all(!beta.x, psi0g))         stop("'psi.beta' can only be supplied for each group if z.init=list")
   }
   if(beta.x) {
-    psi.beta       <- temp.psi <- list(psi_hyper(psi.alpha, cov.mat, uni.type, P))
+    psi.beta       <- temp.psi <- list(psi_hyper(psi.alpha, cov.mat, uni.prior, P))
   } else {
     psi.beta       <- .len.check(psi.beta, psi0g, method, P, range.G)
   }
@@ -441,7 +447,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
       if(beta.x)  {
         if(psi0g) {
           cov.gg   <- lapply(seq_len(G), function(gg) if(nngs[gg] > 1) Rfast::cova(as.matrix(dat[zi[[g]] == gg,, drop=FALSE])) else cov.mat)
-          psi.beta[[g]] <- vapply(seq_len(G), function(gg) psi_hyper(psi.alpha, cov.gg[[gg]], uni.type, P), numeric(P))
+          psi.beta[[g]] <- vapply(seq_len(G), function(gg) psi_hyper(psi.alpha, cov.gg[[gg]], uni.prior, P), numeric(P))
         } else {
           psi.beta[[g]] <- replicate(G, temp.psi[[1]])
         }
@@ -656,7 +662,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   }
   class(times)            <- "listof"
   attr(imifa, "Time")     <- times
-  attr(imifa, "Uni.Type") <- uni.type
+  attr(imifa, "Uni.Meth") <- c(Uni.Prior = uni.prior, Uni.Type = uni.type)
   attr(imifa, "Vars")     <- P
   if(verbose)                print(attr(imifa, "Time"))  
       
