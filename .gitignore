@@ -1,9 +1,10 @@
 .Rproj.user
+.Rproj
 .Rhistory
 .RData
 .zip
 .gitignore
 .Rbuildignore
-pacman.Rproj
 .out
+.eps
 desktop.ini
