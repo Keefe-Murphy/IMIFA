@@ -128,7 +128,7 @@
       sigma          <- lapply(Gseq, function(g) tcrossprod(lmat[[g]]) + diag(psi[,g]))
       Q0             <- Qs  > 0
       Q1             <- Qs == 1
-      z.log          <- utils::capture.output({ z.res <- try(.sim_z(data=data, mu=mu, sigma=sigma, Gseq=Gseq, N=N, pi.prop=pi.prop, Q0=Q0[Gs]), silent=TRUE) })
+      z.log          <- utils::capture.output({ z.res <- try(.sim_z(data=data, mu=mu, sigma=sigma, Gseq=Gseq, N=N, pi.prop=pi.prop, Q0=Q0), silent=TRUE) })
       z.err          <- inherits(z.res, "try-error")
       if(z.err) {
         sigma        <- lapply(sigma, corpcor::make.positive.definite)
