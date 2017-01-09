@@ -474,9 +474,8 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       if(sw["psi.sw"]) {
         psi      <- as.matrix(psis[,g,store])
       }
-      if(data.x) {
+      if(all(data.x, sizes[g] > 1)) {
         cov.emp  <- provideDimnames(Rfast::cova(dat[z.ind[[g]],, drop=FALSE]), base=list(varnames, varnames))
-        if(sum(z.ind[[g]]) <= 1)  rm(cov.emp)
       }  
     } else {
       post.mu    <- sims[[G.ind]][[Q.ind]]$post.mu
