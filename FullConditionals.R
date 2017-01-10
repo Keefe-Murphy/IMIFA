@@ -152,7 +152,8 @@
 
 # Other Functions
   # Uniqueness Hyperparameters
-    psi_hyper   <- function(alpha, covar, type=c("unconstrained", "isotropic"), P) {
+    psi_hyper   <- function(alpha, covar, type=c("unconstrained", "isotropic")) {
+      P         <- ncol(covar)
       inv.cov   <- try(solve(covar), silent=TRUE)
       if(inherits(inv.cov, "try-error"))  {
         inv.cov <- 1/covar

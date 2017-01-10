@@ -394,7 +394,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(all(!beta.x, psi0g))         stop("'psi.beta' can only be supplied for each group if z.init=list")
   }
   if(beta.x) {
-    psi.beta       <- temp.psi <- list(psi_hyper(psi.alpha, cov.mat, uni.prior, P))
+    psi.beta       <- temp.psi <- list(psi_hyper(psi.alpha, cov.mat, uni.prior))
   } else {
     psi.beta       <- .len.check(psi.beta, psi0g, method, P, range.G)
   }
@@ -447,7 +447,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
       if(beta.x)  {
         if(psi0g) {
           cov.gg   <- lapply(seq_len(G), function(gg) if(nngs[gg] > 1) Rfast::cova(as.matrix(dat[zi[[g]] == gg,, drop=FALSE])) else cov.mat)
-          psi.beta[[g]] <- vapply(seq_len(G), function(gg) psi_hyper(psi.alpha, cov.gg[[gg]], uni.prior, P), numeric(P))
+          psi.beta[[g]] <- vapply(seq_len(G), function(gg) psi_hyper(psi.alpha, cov.gg[[gg]], uni.prior), numeric(P))
         } else {
           psi.beta[[g]] <- replicate(G, temp.psi[[1]])
         }
