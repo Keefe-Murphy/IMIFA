@@ -364,11 +364,11 @@
     close(pb)
     Gmax             <- seq_len(max(as.numeric(z.store)))
     Qmax             <- seq_len(max(Q.store))
-    eta.save         <- eta.store[,Qmax,, drop=FALSE]
-    lmat.save        <- load.store[,Qmax,Gmax,, drop=FALSE]
+    eta.store        <- if(sw["s.sw"])  tryCatch(eta.store[,Qmax,, drop=FALSE],       error=function(e) eta.store)
+    load.store       <- if(sw["l.sw"])  tryCatch(load.store[,Qmax,Gmax,, drop=FALSE], error=function(e) load.store)
     returns          <- list(mu       = if(sw["mu.sw"])  mu.store[,Gmax,, drop=FALSE],
-                             eta      = if(sw["s.sw"])   tryCatch(as.simple_sparse_array(eta.save),  error=function(e) eta.save), 
-                             load     = if(sw["l.sw"])   tryCatch(as.simple_sparse_array(lmat.save), error=function(e) lmat.save),
+                             eta      = if(sw["s.sw"])   tryCatch(as.simple_sparse_array(eta.store),  error=function(e) eta.store), 
+                             load     = if(sw["l.sw"])   tryCatch(as.simple_sparse_array(load.store), error=function(e) load.store),
                              psi      = if(sw["psi.sw"]) psi.store[,Gmax,, drop=FALSE],
                              pi.prop  = if(sw["pi.sw"])  pi.store[Gmax,, drop=FALSE],
                              alpha    = if(not.fixed)    alpha.store,
