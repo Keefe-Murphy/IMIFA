@@ -668,14 +668,17 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
       
 # Vanilla 'factanal' for comparison purposes
   miss.Q    <- missing(Q.fac)
-  if(!miss.Q)  factanal   <- TRUE
+  miss.fac  <- missing(factanal)
+  factanal  <- all(range.G == 1) && any(all(!miss.Q, miss.fac), all(!miss.fac, factanal))
   if(factanal) {
     if(miss.Q) {
-      Q.fac <- if(Q.miss) round(sqrt(P)) else max(1, max(range.Q))
+      Q.fac <- ifelse(Q.miss, round(sqrt(P)), max(1, range.Q))
     }
     Q.fac   <- as.integer(Q.fac)
     if(length(Q.fac) != 1)          stop("'Q.fac' must be of length 1")
-    fac     <- try(stats::factanal(dat, factors=Q.fac, control=list(nstart=50)))
+    if(!all(Q.fac < P - sqrt(P + Q.fac),
+            Q.fac > 0, N > P))      warning("Can't produce vanilla 'factanal' based on the supplied dimensions and number of latent factors", call.=FALSE)
+    fac     <- try(stats::factanal(dat, factors=Q.fac, control=list(nstart=50)), silent=TRUE)
     if(!inherits(fac, "try-error")) {
       imifa <- append(imifa, list(fac = fac))
       names(imifa)[length(imifa)] <- "Factanal"
