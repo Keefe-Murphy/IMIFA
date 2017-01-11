@@ -45,7 +45,9 @@
     load(file=paste0(datdir, "/Data/Coffee.Rdata", sep=""), envir=.GlobalEnv) 
   # Brain       (# region) {n.b. pareto scaling}
     load(file=paste0(datdir, "/Data/RatBrain.Rdata", sep=""), envir=.GlobalEnv)
-    region   <- brain$Region; brain <- brain[,-1]
+   #library(MetabolAnalyze); data(BrainSpectra)
+    region   <- brain$Region;      brain  <- brain[,-1]
+   #brain    <- BrainSpectra[[1]]; region <- BrainSpectra[[2]]
     ppm.g    <- do.call(cbind, by(brain, region, colMeans))
    #graphics::matplot(ppm.g, type="l", xlab="Chemical Shift (ppm)", yaxt="n", ylab="", bty="n", xaxt="n", lwd=2, lty=1)
     graphics::matplot(t(brain), type="l", xlab="Chemical Shift (ppm)", yaxt="n", ylab="", bty="n", xaxt="n", lwd=2, lty=1, col=region)
