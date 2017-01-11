@@ -152,7 +152,7 @@
 
 # Other Functions
   # Uniqueness Hyperparameters
-    psi_hyper   <- function(alpha, covar, type=c("unconstrained", "isotropic")) {
+    psi_hyper   <- function(shape, covar, type=c("unconstrained", "isotropic")) {
       if(!all(matrixcalc::is.positive.semi.definite(covar), 
               isSymmetric(covar)))         stop("Invalid covariance matrix supplied")
       P         <- ncol(covar)
@@ -160,7 +160,7 @@
       if(inherits(inv.cov, "try-error"))  {
         inv.cov <- 1/covar
       }
-        unname((alpha - 1)/switch(match.arg(type), unconstrained=diag(inv.cov), isotropic=rep(sum(diag(inv.cov))/P, P)))
+        unname((shape - 1)/switch(match.arg(type), unconstrained=diag(inv.cov), isotropic=rep(sum(diag(inv.cov))/P, P)))
     }
 
   # Alpha Shifted Gamma Hyperparameters
