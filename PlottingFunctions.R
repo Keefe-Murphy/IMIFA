@@ -577,7 +577,7 @@ plot.Tuned_IMIFA    <- function(x = NULL, plot.meth = c("all", "correlation", "d
         G.plot <- graphics::barplot(plot.G, ylab="Frequency", xaxt="n", col=col.G)
         if(titles) graphics::title(main=list("Posterior Distribution of G"))
         graphics::axis(1, at=G.plot, labels=names(plot.G), tick=FALSE) 
-        graphics::axis(1, at=med(G.plot), labels="G", tick=FALSE, line=1.5) 
+        graphics::axis(1, at=Rfast::med(G.plot), labels="G", tick=FALSE, line=1.5) 
       }
       if(all(method == "IFA", plotQ.ind)) {
         graphics::layout(1)
@@ -594,7 +594,7 @@ plot.Tuned_IMIFA    <- function(x = NULL, plot.meth = c("all", "correlation", "d
         Q.plot <- graphics::barplot(plot.Q, ylab="Frequency", xaxt="n", col=col.Q)
         if(titles) graphics::title(main=list("Posterior Distribution of Q"))
         graphics::axis(1, at=Q.plot, labels=names(plot.Q), tick=FALSE) 
-        graphics::axis(1, at=med(Q.plot), labels="Q", tick=FALSE, line=1.5) 
+        graphics::axis(1, at=Rfast::med(Q.plot), labels="Q", tick=FALSE, line=1.5) 
       }  
       if(all(method != "IFA", plotQ.ind)) {
         plot.Q <- GQ.res$Q.Counts
@@ -612,8 +612,8 @@ plot.Tuned_IMIFA    <- function(x = NULL, plot.meth = c("all", "correlation", "d
         }
         Q.plot <- graphics::barplot(plot.Q, beside=TRUE, ylab="Frequency", xaxt="n", col=Gseq, space=c(0, 2))
         if(titles) graphics::title(main=list(expression('Posterior Distribution of Q'["g"])))
-        graphics::axis(1, at=colMedians(Q.plot), labels=colnames(plot.Q), tick=FALSE)
-        graphics::axis(1, at=med(Q.plot), labels="Q", tick=FALSE, line=1)
+        graphics::axis(1, at=matrixStats::colMedians(Q.plot), labels=colnames(plot.Q), tick=FALSE)
+        graphics::axis(1, at=Rfast::med(Q.plot), labels="Q", tick=FALSE, line=1)
         if(titles) {
           graphics::par(mar=c(0, 0, 0, 0))
           graphics::plot.new()
@@ -699,7 +699,7 @@ plot.Tuned_IMIFA    <- function(x = NULL, plot.meth = c("all", "correlation", "d
         cols[cols == 3] <- grey
         graphics::plot(x.plot, main="", xlab="Uncertainties", xlim=c(0, 1 - 1/G), col=cols, xaxt="n", ylim=c(0, max(x.plot$counts)), yaxt="n")
         graphics::axis(1, at=c(breaks[round(breaks, 1) < min(0.8, 1 - 1/G)], 1 - 1/G), labels=(c(round(breaks[round(breaks, 1) < min(0.8, 1 - 1/G)], 3), "1 - 1/G")), las=2, pos=0, cex.axis=0.8)
-        graphics::axis(2, at=if(sum(plot.x)  == 0) c(axTicks(2), max(x.plot$counts)) else axTicks(2), las=1, cex.axis=0.8)
+        graphics::axis(2, at=if(sum(plot.x)  == 0) c(graphics::axTicks(2), max(x.plot$counts)) else graphics::axTicks(2), las=1, cex.axis=0.8)
       }
       if(g == min(Gs)) {
         if(any(!labelmiss,  !z.miss)) {
@@ -719,11 +719,11 @@ plot.Tuned_IMIFA    <- function(x = NULL, plot.meth = c("all", "correlation", "d
            } else {
             names(prf)[6]        <- "error.rate"
            }
-           if(prf$error.rate     == 0) {
+           if(prf$error.rate     == 0)  {
             prf$misclassified    <- NULL
            }
            prf  <- c(list(confusion.matrix = tab), prf)
-           if(nlevels(pzs)  == nlevels(labs)) {
+           if(nlevels(pzs) == nlevels(labs)) {
             names(prf)[1]  <- "matched.confusion.matrix"
            }
            class(prf)      <- "listof"
