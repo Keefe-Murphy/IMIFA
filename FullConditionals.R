@@ -77,7 +77,7 @@
       for(g in Gseq[-1]) {
         lnp[,g]  <- matrixStats::rowLogSumExps(lnp[,g:(g - 1)])
       }
-        return(list(z = Rfast::rowsums(-stats::rexp(N) > lnp) + 1, log.likes = log.denom))
+        return(list(z = Rfast::rowsums(-stats::rexp(N) > lnp) + 1, log.like = sum(log.denom)))
     }
     
     .sim_z.inf   <- function(data, mu, sigma, Gseq, N, pi.prop, log.slice.ind, Q0) {
@@ -87,7 +87,7 @@
       for(g in Gseq[-1]) {
         lnp[,g]  <- matrixStats::rowLogSumExps(lnp[,g:(g - 1)])
       }
-        return(list(z = Rfast::rowsums(-stats::rexp(N) > lnp) + 1, log.likes = log.denom))
+        return(list(z = Rfast::rowsums(-stats::rexp(N) > lnp) + 1, log.like = sum(log.denom)))
     }
 
   # Alpha

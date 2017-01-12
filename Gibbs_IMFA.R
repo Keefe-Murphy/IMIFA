@@ -116,8 +116,8 @@
       psi.store[,,1]        <- 1/psi.inv
       pi.store[,1]          <- pi.prop
       z.store[,1]           <- z
-      ll.store[1]           <- sum(.sim_z(data=data, mu=mu[,Gs], Gseq=Gs, N=N, pi.prop=pi.prop[Gs], sigma=lapply(Gs, function(g)
-                               corpcor::make.positive.definite(tcrossprod(lmat[,,g]) + diag(1/psi.inv[,g]))), Q0=Q0s[Gs])$log.likes)
+      ll.store[1]           <- .sim_z(data=data, mu=mu[,Gs], Gseq=Gs, N=N, pi.prop=pi.prop[Gs], sigma=lapply(Gs, function(g)
+                               corpcor::make.positive.definite(tcrossprod(lmat[,,g]) + diag(1/psi.inv[,g]))), Q0=Q0s[Gs])$log.like
       G.store[1]            <- G.non
       if(not.fixed) {
         alpha.store[1]      <- pi.alpha 
@@ -256,7 +256,7 @@
         if(MH.step)                   rate[new.it]          <- MH.alpha$rate
         if(DP.lab.sw)                 lab.rate[,new.it]     <- c(acc1, acc2)
                                       z.store[,new.it]      <- z 
-                                      ll.store[new.it]      <- sum(z.res$log.likes)
+                                      ll.store[new.it]      <- z.res$log.like
                                       G.store[new.it]       <- G.non
       } 
     }
