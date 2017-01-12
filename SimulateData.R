@@ -67,7 +67,8 @@ sim_IMIFA      <- function(N = 300L, G = 3L, P = 50L, Q = rep(4L, G), pis = rep(
     
   # Simulate data
     covmat     <- provideDimnames(diag(psi.true) + switch(method, marginal=tcrossprod(l.true), 0), base=list(vnames, vnames))
-    if(!isSymmetric(covmat))             stop("Non-symmetric covariance matrix")
+    if(!all(isSymmetric(covmat),
+            is.double(covmat)))           stop("Invalid covariance matrix")
     if(!corpcor::is.positive.definite(covmat)) {
       covmat   <- corpcor::make.positive.definite(covmat)
     }

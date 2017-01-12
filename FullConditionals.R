@@ -154,7 +154,8 @@
   # Uniqueness Hyperparameters
     psi_hyper   <- function(shape, covar, type=c("unconstrained", "isotropic")) {
       if(!all(matrixcalc::is.positive.semi.definite(covar), 
-              isSymmetric(covar)))         stop("Invalid covariance matrix supplied")
+              isSymmetric(covar),
+              is.double(covar)))           stop("Invalid covariance matrix supplied")
       P         <- ncol(covar)
       inv.cov   <- try(solve(covar), silent=TRUE)
       if(inherits(inv.cov, "try-error"))  {
