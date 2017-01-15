@@ -194,6 +194,6 @@
                            z.store  = z.store,
                            ll.store = ll.store,
                            time     = init.time)
-    attr(returns, "K")  <- G - 1 + G * (P * Q - 0.5 * Q * (Q - 1)) + 2 * G * P
+    attr(returns, "K")  <- G - 1 + G * (P * Q - 0.5 * Q * (Q - 1) + 2 * P)
     return(returns)
   }
