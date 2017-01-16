@@ -394,7 +394,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(all(!beta.x, psi0g))         stop("'psi.beta' can only be supplied for each group if z.init=list")
   }
   if(beta.x) {
-    psi.beta       <- temp.psi <- list(psi_hyper(psi.alpha, cov.mat, uni.prior))
+    psi.beta       <- temp.psi <- list(psi_hyper(shape=psi.alpha, covar=cov.mat, type=uni.prior))
   } else {
     psi.beta       <- .len.check(psi.beta, psi0g, method, P, range.G)
   }
@@ -447,7 +447,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
       if(beta.x)  {
         if(psi0g) {
           cov.gg   <- lapply(seq_len(G), function(gg) if(nngs[gg] > 1) Rfast::cova(as.matrix(dat[zi[[g]] == gg,, drop=FALSE])) else cov.mat)
-          psi.beta[[g]] <- vapply(seq_len(G), function(gg) psi_hyper(psi.alpha, cov.gg[[gg]], uni.prior), numeric(P))
+          psi.beta[[g]] <- vapply(seq_len(G), function(gg) psi_hyper(shape=psi.alpha, covar=cov.gg[[gg]], type=uni.prior), numeric(P))
         } else {
           psi.beta[[g]] <- replicate(G, temp.psi[[1]])
         }
@@ -488,7 +488,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   }
   if(any(unlist(psi.beta)   <= 0))  stop("'psi.beta' must be strictly positive")
   if(is.element(method, c("classify", "IFA", "MIFA", "IMIFA", "OMIFA"))) {
-    if(!all(MGP_check(unlist(alpha.d1), unlist(alpha.d2), unique(range.Q), nu, beta.d1, beta.d2, 
+    if(!all(MGP_check(ad1=unlist(alpha.d1), ad2=unlist(alpha.d2), Q=unique(range.Q), nu=nu, bd1=beta.d1, bd2=beta.d2, 
         plus1=nuplus1)[[1]]$valid)) stop("Invalid shrinkage hyperparameter values will not encourage loadings column removal.\n Try using the MGP_check() function in advance to ensure cumulative shrinkage property holds.")
     deltas         <- lapply(seq_along(range.G), function(g) list(alpha.d1 = alpha.d1[[g]], alpha.d2 = alpha.d2[[g]]))
   }
