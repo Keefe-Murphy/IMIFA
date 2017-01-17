@@ -923,17 +923,20 @@ plot.Tuned_IMIFA    <- function(x = NULL, plot.meth = c("all", "correlation", "d
   }
 
 # Prior No. Groups (DP & PY)
-  G_prior      <- function(N, alpha, discount = 0L, plot = TRUE, 
-                           avg = FALSE, col = "black", ...) {
+  G_prior      <- function(N, alpha, discount = 0L, plot = TRUE, avg = FALSE, 
+                           col = "black", main = NULL, ...) {
     if(suppressMessages(require(Rmpfr))) {
       on.exit(.detach_pkg(Rmpfr))
       on.exit(.detach_pkg(gmp), add=TRUE)  
     } else                            stop("'Rmpfr' package not installed")
     if(missing(col))    {
-      col      <- c("#999999", "#E69F00", "#009E73", "#56B4E9", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
-    }   
+      col      <- c("#E69F00", "#009E73", "#56B4E9", "#F0E442", "#0072B2", "#D55E00", "#CC79A7", "#999999")
+    }
+    if(missing(main))   {
+      main     <- paste0("Prior Distribution of G\nN=", N)
+    } else if(!is.character(main))    stop("'main' title must be a character string")
     if(!all(are_cols(col)))           stop("Supplied colour palette contains invalid colours")
-    grDevices::palette(col)
+    grDevices::palette(grDevices::adjustcolor(col))
     on.exit(grDevices::palette("default"), add=TRUE)
     on.exit(do.call("clip", as.list(graphics::par("usr"))), add=TRUE)
     if(any(c(length(N), length(plot),
@@ -971,7 +974,7 @@ plot.Tuned_IMIFA    <- function(x = NULL, plot.meth = c("all", "correlation", "d
     max.rx     <- Rfast::colMaxs(rx, value=TRUE)
     if(plot)   {
       graphics::matplot(x=c(0, seq_len(N)), y=rx, type="l", col=col, lty=1, xlab="Groups", 
-              ylab="Density", main=paste0("Prior Distribution of G\nN=", N), ...)
+              ylab="Density", main=main, ...)
     }
     if(avg)    {
       exp.g    <- G_expected(N, alpha, discount)
