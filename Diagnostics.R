@@ -148,7 +148,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
         bicm[g,q]        <- ll.max - ll.var * log.N
         log.iLLH[g,q]    <- mean(log.likes, na.rm=TRUE) - ll.var * (log.N - 1)
         if(!inf.Q) {
-          qk             <- if(G.T) 1 else qi
+          qk             <- ifelse(G.T, 1, qi)
           K              <- switch(method, OMFA=, IMFA=G[qk] - 1 + G[qk] * .dim(n.fac[qi], n.var), attr(sims[[gi]][[qi]], "K"))
           aic.mcmc[g,q]  <- ll.max - K * 2
           bic.mcmc[g,q]  <- ll.max - K * log.N
@@ -317,7 +317,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
         sw.lab   <- .lab.switch(z.new=post.z, z.old=zlabels, Gs=Gseq)
         post.z   <- stats::setNames(factor(sw.lab$z, levels=Gseq), names(post.z))
         l.perm   <- sw.lab$z.perm
-        z.tmp    <- apply(z, 2, function(x) factor(x, levels=l.perm))
+        z.tmp    <- apply(z, 2, factor, levels=l.perm)
         z        <- provideDimnames(apply(z.tmp, 2, function(x) as.numeric(levels(as.factor(x)))[as.numeric(x)]), base=dimnames(z.tmp))
         if(sw["mu.sw"])    mus <- mus[,l.perm,, drop=FALSE]
         if(sw["l.sw"])   lmats <- lmats[,,l.perm,, drop=FALSE]
@@ -388,7 +388,8 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     } else    {
       Q          <- if(G.T) Q else stats::setNames(rep(Q, G), paste0("Group ", Gseq))
     }
-    if(any(unlist(Q) >= n.var))   warning(paste0("Estimate of Q is not less than the number of variables, ", n.var, ": solution may be invalid"), call.=FALSE)
+    leder.b      <- .ledermann(n.obs, n.var)
+    if(any(unlist(Q) > leder.b))  warning(paste0("Estimate of Q", ifelse(clust.ind, " in one or more of the groups ", " "), "is not less than the suggested Ledermann upper bound (", leder.b, "): solution may be invalid"), call.=FALSE)
     Q.CI         <- if(G1) round(matrixStats::rowQuantiles(Q.store, probs=conf.levels)) else round(stats::quantile(Q.store, conf.levels))
     GQ.temp4     <- list(Q = Q, Q.Mode = Q.mode, Q.Median = Q.med, Stored.Q = Q.store,
                          Q.CI = Q.CI, Q.Probs = Q.prob, Q.Counts = Q.tab)
