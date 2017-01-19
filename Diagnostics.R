@@ -149,7 +149,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
         log.iLLH[g,q]    <- mean(log.likes, na.rm=TRUE) - ll.var * (log.N - 1)
         if(!inf.Q) {
           qk             <- if(G.T) 1 else qi
-          K              <- switch(method, OMFA=, IMFA=G[qk] - 1 + G[qk] * (n.var * n.fac[qi] - 0.5 * n.fac[qi] * (n.fac[qi] - 1)) + 2 * G[qk] * n.var, attr(sims[[gi]][[qi]], "K"))
+          K              <- switch(method, OMFA=, IMFA=G[qk] - 1 + G[qk] * .dim(n.fac[qi], n.var), attr(sims[[gi]][[qi]], "K"))
           aic.mcmc[g,q]  <- ll.max - K * 2
           bic.mcmc[g,q]  <- ll.max - K * log.N
         }

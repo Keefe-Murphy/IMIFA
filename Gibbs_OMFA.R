@@ -60,8 +60,8 @@
     eta            <- .sim_eta.p(N=N, Q=Q)
     lmat           <- lapply(Gseq, function(g) .sim_load.p(Q=Q, P=P, sigma.l=sigma.l))
     psi.inv        <- vapply(Gseq, function(g) .sim_psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), numeric(P))
-    if(Q0 && Q  < P - sqrt(P + Q)) {
-      for(g in which(nn     > P))  {
+    if(Q0 && Q  < .ledermann(N, P)) {
+      for(g in which(nn     > P))   {
         fact       <- try(stats::factanal(data[z == g,, drop=FALSE], factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
         if(!inherits(fact, "try-error")) {
           eta[z == g,]     <- fact$scores

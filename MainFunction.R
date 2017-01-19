@@ -281,15 +281,14 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(epsilon <= 0 ||
        epsilon >= 1)                stop("'epsilon' must be lie in the interval (0, 1)")
   } 
-  Q.warn       <- as.integer(floor(min(N - 1, P + 3/2 - sqrt(2 * P + 9/4))))
-  if(any(range.Q  >= P)) {          
+  Q.warn       <- .ledermann(N=N, P=P)
+  if(any(range.Q  >= Q.warn)) {          
     if(all(is.element(method, c("IFA", "MIFA", "OMIFA", "IMIFA")),
-       isTRUE(adapt)))   {          warning(paste0("Starting value for number of factors is not less than the number of variables, ", P, ":\n Suggested upper bound = ", Q.warn), call.=FALSE)
+       isTRUE(adapt)))        {     warning(paste0("Starting value for number of factors is not less than the suggested Ledermann upper bound = ", Q.warn), call.=FALSE)
     } else if(any(is.element(method, c("FA", "MFA", "OMFA", "IMFA")),
               all(is.element(method, c("IFA", "MIFA", "OMIFA", "IMIFA")), 
-                  isTRUE(!adapt)))) stop(paste0("Number of factors must be less than the number of variables, ", P, ":\n Suggested upper bound = ", Q.warn))
+                  isTRUE(!adapt)))) stop(paste0("Number of factors must be less than the suggested Ledermann upper bound = ", Q.warn))
   } 
-  if(any(range.Q  >= N))            stop(paste0("Number of factors must be less than the number of observations, ", N, ":\n Suggested upper bound = ", Q.warn))
   if(any(all(method == "MFA",  any(range.G > 1)) && any(range.Q > 0),
          all(method == "MIFA", any(range.G > 1)), is.element(method, c("IMIFA",
      "IMFA", "OMIFA", "OMFA"))))  {
@@ -336,6 +335,8 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
            delta0g))                stop("'delta0g' cannot be TRUE for the 'MFA' method")
     if(method == "classify") mu0g          <- TRUE
   }
+  dimension <- .dim(range.Q, P)
+  min.d2G    <- min(dimension)/(2 * range.G)
   sw0gs     <- c(mu0g = mu0g, psi0g = psi0g, delta0g = delta0g)
   if(all(!is.element(method, c("MFA", "MIFA", "classify")), 
          any(sw0gs)))               stop(paste0(names(which(sw0gs)), " should be FALSE for the ", method, " method\n"))
@@ -346,7 +347,9 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(alpha <= -discount)          stop(paste0("'alpha' must be ", ifelse(discount != 0, paste0("greater than -discount (i.e. > ", - discount, ")"), "strictly positive")))
     if(all(is.element(method,  c("IMIFA", "IMFA")),
        alpha.step == "fixed"))      warning(paste0("'alpha' fixed at ", alpha, " as it's not being learned via Gibbs/Metropolis-Hastings updates"), call.=FALSE)
-    if(all(!is.element(method, c("IMFA", "IMIFA")),
+    if(all(is.element(method,  c("OMIFA", "OMFA")),
+       alpha  > min.d2G))           stop(paste0("'alpha' for the OMFA & OMIFA methods must be less than the dimension of the free parameters (", min(dimension), "),\n over twice the starting number of groups (", range.G, "), i.e. ", min.d2G))
+    if(all(is.element(method,  c("MFA",   "MIFA")),
            alpha   > 1))            warning("Are you sure alpha should be greater than 1?", call.=FALSE)
                              z.init        <- match.arg(z.init)
     if(all(is.element(method,  c("OMIFA", "OMFA")), is.element(z.init, 

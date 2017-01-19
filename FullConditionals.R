@@ -390,3 +390,6 @@
     .power2     <- function(x) x * x
     .which0     <- function(x) which(x == 0)
     .chol       <- function(x) tryCatch(chol(x), error=function(e) chol(corpcor::make.positive.definite(x)))
+    .ledermann  <- function(N, P) as.integer(min(N - 1, floor((2 * P + 1 - sqrt(8 * P + 1))/2)))
+    .dim        <- Vectorize(function(Q, P) as.integer(P * Q - 0.5 * Q * (Q - 1) + 2 * P), vectorize.args = "Q", SIMPLIFY=TRUE)
+    #

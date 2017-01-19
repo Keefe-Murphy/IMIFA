@@ -83,7 +83,7 @@
     tau              <- lapply(delta, cumprod)
     lmat             <- lapply(Ts, function(t) matrix(unlist(lapply(Ps, function(j) .sim_load.ps(Q=Q, phi=phi[[t]][j,], tau=tau[[t]])), use.names=FALSE), nr=P, byrow=TRUE))
     psi.inv          <- vapply(Ts, function(t) .sim_psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), numeric(P))
-    if(Q < P - sqrt(P + Q))   {
+    if(Q < .ledermann(N, P))  {
       for(g in which(nn > P)) {
         fact         <- try(stats::factanal(data[z == g,, drop=FALSE], factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
         if(!inherits(fact, "try-error")) {

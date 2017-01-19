@@ -52,9 +52,9 @@
     tau          <- cumprod(delta)
     lmat         <- matrix(unlist(lapply(Pseq, function(j) .sim_load.ps(Q=Q, phi=phi[j,], tau=tau)), use.names=FALSE), nr=P, byrow=TRUE)
     psi.inv      <- .sim_psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
-    if(all(Q  < P - sqrt(P + Q), N > P)) {
+    if(all(Q      < .ledermann(N, P))) {
       fact       <- try(stats::factanal(data, factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
-      if(!inherits(fact, "try-error"))   {
+      if(!inherits(fact, "try-error")) {
         eta      <- fact$scores
         lmat     <- fact$loadings
         psi.inv  <- 1/fact$uniquenesses
