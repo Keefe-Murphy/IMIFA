@@ -96,11 +96,12 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   N         <- as.integer(nrow(dat))
   P         <- as.integer(ncol(dat))
   lnN       <- log(N)
+  NlP       <- N < P
   if(missing("uni.type"))  {
-    uni.type       <- ifelse(N < P, "isotropic", "unconstrained")
+    uni.type       <- ifelse(NlP, "isotropic", "unconstrained")
   }
   if(missing("uni.prior")) {
-    uni.prior      <- ifelse(N < P, "isotropic", "unconstrained")
+    uni.prior      <- ifelse(NlP, "isotropic", "unconstrained")
   }
   uni.type  <- match.arg(uni.type)
   uni.prior <- match.arg(uni.prior)
@@ -402,6 +403,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   if(!is.element(method, c("FA", "MFA", "OMFA", "IMFA"))) {
     alpha.d1       <- if(ad1.x) list(3L) else .len.check(alpha.d1, delta0g, method, P, range.G, P.dim=FALSE)
     alpha.d2       <- if(adk.x) list(6L) else .len.check(alpha.d2, delta0g, method, P, range.G, P.dim=FALSE)
+    if(all(NlP, any(ad1.x, adk.x))) warning("Consider applying more shrinkage with higher 'alpha.d1' and 'alpha.dk' hyperparameter values when N << P", call.=FALSE)
   }
   if(!is.element(method, c("FA", "IFA"))) {
     if(verbose)                     cat(paste0("Initialising...\n"))
