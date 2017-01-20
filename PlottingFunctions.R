@@ -923,8 +923,8 @@ plot.Tuned_IMIFA    <- function(x = NULL, plot.meth = c("all", "correlation", "d
   }
 
 # Prior No. Groups (DP & PY)
-  G_prior      <- function(N, alpha, discount = 0L, plot = TRUE, avg = FALSE, 
-                           col = "black", main = NULL, ...) {
+  G_prior      <- function(N, alpha, discount = 0L, show.plot = TRUE, 
+                           avg = FALSE, col = "black", main = NULL, ...) {
     if(suppressMessages(require(Rmpfr))) {
       on.exit(.detach_pkg(Rmpfr))
       on.exit(.detach_pkg(gmp), add=TRUE)  
@@ -939,9 +939,9 @@ plot.Tuned_IMIFA    <- function(x = NULL, plot.meth = c("all", "correlation", "d
     grDevices::palette(grDevices::adjustcolor(col))
     on.exit(grDevices::palette("default"), add=TRUE)
     on.exit(do.call("clip", as.list(graphics::par("usr"))), add=TRUE)
-    if(any(c(length(N), length(plot),
-             length(avg)) > 1))       stop("Arguments 'N', 'plot', and 'avg' must be strictly of length 1")
-    if(!is.logical(plot))             stop("'plot' must be TRUE or FALSE")
+    if(any(c(length(N), length(show.plot),
+             length(avg)) > 1))       stop("Arguments 'N', 'show.plot', and 'avg' must be strictly of length 1")
+    if(!is.logical(show.plot))        stop("'show.plot' must be TRUE or FALSE")
     max.len    <- max(length(alpha),  length(discount))
     if(!is.element(length(alpha),
        c(1, max.len)))                stop("'alpha' must be of length 1 or length(discount)")
@@ -953,7 +953,6 @@ plot.Tuned_IMIFA    <- function(x = NULL, plot.meth = c("all", "correlation", "d
        discount >= 1))                stop("'discount' must lie in the interval [0,1)")
     if(any(alpha < -discount))        stop("'alpha' must be strictly greater than -discount")
     if(!is.logical(avg))              stop("'avg' must be TRUE or FALSE")
-    if(!is.logical(plot))             stop("'plot' must be TRUE or FALSE")
     if(length(alpha)    != max.len) {
       alpha    <- rep(alpha,    max.len)
     }
@@ -972,14 +971,14 @@ plot.Tuned_IMIFA    <- function(x = NULL, plot.meth = c("all", "correlation", "d
     }
     rx         <- scale(rx, center=FALSE, scale=Rfast::colsums(rx))
     max.rx     <- Rfast::colMaxs(rx, value=TRUE)
-    if(plot)   {
+    if(isTRUE(show.plot))   {
       graphics::matplot(x=c(0, seq_len(N)), y=rx, type="l", col=col, lty=1, xlab="Groups", 
-              ylab="Density", main=main, ...)
+                        ylab="Density", main=main, ...)
     }
-    if(avg)    {
+    if(isTRUE(avg))         {
       exp.g    <- G_expected(N, alpha, discount)
       cat("\t");  cat(paste("E(G) = ", signif(exp.g, options()$digits), "\n"))  
-      if(plot) {
+      if(isTRUE(show.plot)) {
         for(i in seq_len(max.len))  {
           clip(exp.g[i], exp.g[i], 0, max.rx[i])
           graphics::abline(v=exp.g[i], lty=2, col=i)  
