@@ -925,19 +925,21 @@ plot.Tuned_IMIFA    <- function(x = NULL, plot.meth = c("all", "correlation", "d
 # Prior No. Groups (DP & PY)
   G_prior      <- function(N, alpha, discount = 0L, show.plot = TRUE, 
                            avg = FALSE, col = "black", main = NULL, ...) {
-    if(suppressMessages(require(Rmpfr))) {
+    firstex    <- suppressMessages(require(Rmpfr))
+    if(isTRUE(firstex)) {
       on.exit(.detach_pkg(Rmpfr))
       on.exit(.detach_pkg(gmp), add=TRUE)  
     } else                            stop("'Rmpfr' package not installed")
     if(missing(col))    {
       col      <- c("#E69F00", "#009E73", "#56B4E9", "#F0E442", "#0072B2", "#D55E00", "#CC79A7", "#999999")
+    } else {
+      if(!all(are_cols(col)))         stop("Supplied colour palette contains invalid colours")
+      grDevices::palette(grDevices::adjustcolor(rep(col, 2)))
     }
     if(missing(main))   {
       main     <- paste0("Prior Distribution of G\nN=", N)
     } else if(!is.character(main))    stop("'main' title must be a character string")
-    if(!all(are_cols(col)))           stop("Supplied colour palette contains invalid colours")
-    grDevices::palette(grDevices::adjustcolor(col))
-    on.exit(grDevices::palette("default"), add=TRUE)
+    on.exit(grDevices::palette("default"), add=!isTRUE(firstex))
     on.exit(do.call("clip", as.list(graphics::par("usr"))), add=TRUE)
     if(any(c(length(N), length(show.plot),
              length(avg)) > 1))       stop("Arguments 'N', 'show.plot', and 'avg' must be strictly of length 1")
@@ -949,7 +951,7 @@ plot.Tuned_IMIFA    <- function(x = NULL, plot.meth = c("all", "correlation", "d
        c(1, max.len)))                stop("'discount' must be of length 1 or length(alpha)")
     if(!all(is.numeric(discount), is.numeric(alpha), 
             is.numeric(N)))           stop("All inputs must be numeric")
-    if(any(discount < 0 |
+    if(any(discount < 0,
        discount >= 1))                stop("'discount' must lie in the interval [0,1)")
     if(any(alpha < -discount))        stop("'alpha' must be strictly greater than -discount")
     if(!is.logical(avg))              stop("'avg' must be TRUE or FALSE")
@@ -966,13 +968,13 @@ plot.Tuned_IMIFA    <- function(x = NULL, plot.meth = c("all", "correlation", "d
                     x <- x + log(alpha[i] + g * discount[i]) }; x}, numeric(1))) - 
                          log(Rmpfr::pochMpfr(alpha[i] + 1, N - 1))) / discount[i]^seq_len(N)    }
       if(discount[i]  == 0) {
-        rx[,i] <- c(0, gmp::asNumeric(abs(gmp::Stirling1.all(N) * tmp)))
+        rx[,i] <- c(0, abs(gmp::asNumeric(gmp::Stirling1.all(N) * tmp)))
       } else                          stop("Plotting with non-zero discount not yet implemented\nTry supplying the same arguments to G_expected() or G_variance()")
     }
     rx         <- scale(rx, center=FALSE, scale=Rfast::colsums(rx))
     max.rx     <- Rfast::colMaxs(rx, value=TRUE)
     if(isTRUE(show.plot))   {
-      graphics::matplot(x=c(0, seq_len(N)), y=rx, type="l", col=col, lty=1, xlab="Groups", 
+      graphics::matplot(x=c(0, seq_len(N)), y=rx, type="l", col=col, xlab="Clusters", 
                         ylab="Density", main=main, ...)
     }
     if(isTRUE(avg))         {
