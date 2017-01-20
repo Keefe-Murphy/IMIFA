@@ -555,12 +555,13 @@ plot.Tuned_IMIFA    <- function(x = NULL, plot.meth = c("all", "correlation", "d
     if(m.sw["G.sw"]) {
       plotG.ind  <- is.element(method, c("IMIFA", "IMFA", "OMIFA", "OMFA"))
       plotQ.ind  <- any(any(g > 1, is.element(method, c("IFA", "MIFA"))), all(is.element(method, c("IMIFA", "OMIFA")), g != 1))
-      aicm       <- round(GQ.res$AICM, 2)
-      bicm       <- round(GQ.res$BICM, 2)
+      aicm       <- round(GQ.res$AICMs, 2)
+      bicm       <- round(GQ.res$BICMs, 2)
       log.iLLH   <- round(GQ.res$LogIntegratedLikelihoods, 2)
       if(is.element(method, c("FA", "MFA", "OMFA", "IMFA"))) {
-        aic.mcmc <- round(GQ.res$AIC.mcmc, 2)
-        bic.mcmc <- round(GQ.res$BIC.mcmc, 2)
+        aic.mcmc <- round(GQ.res$AIC.mcmcs, 2)
+        bic.mcmc <- round(GQ.res$BIC.mcmcs, 2)
+        dic.mcmc <- round(GQ.res$DIC.mcmcs, 2)
       }
       if(all(plotG.ind, g == 1))  {
         graphics::layout(1)
@@ -644,13 +645,14 @@ plot.Tuned_IMIFA    <- function(x = NULL, plot.meth = c("all", "correlation", "d
       if(any(dim(bicm) > 1)) {
         G.ind  <- ifelse(any(G.supp, !is.element(method, c("MFA", "MIFA"))), 1, which(n.grp == G))
         Q.ind  <- ifelse(any(Q.supp, !is.element(method, c("FA", "MFA"))),   1, which(n.fac == Q))
-          cat(paste0("AICM = ", aicm[G.ind,Q.ind], "\n"))
-          cat(paste0("BICM = ", bicm[G.ind,Q.ind], "\n"))
         if(!is.element(method, c("IFA", "MIFA"))) {
           cat(paste0("AIC.mcmc = ", aic.mcmc[G.ind,Q.ind], "\n"))
           cat(paste0("BIC.mcmc = ", bic.mcmc[G.ind,Q.ind], "\n"))
+          cat(paste0("DIC.mcmc = ", dic.mcmc[G.ind,Q.ind], "\n"))
         }
-        cat(paste0("Log Integrated Likelihood = ", log.iLLH[G.ind,Q.ind], "\n"))
+          cat(paste0("AICM = ", aicm[G.ind,Q.ind], "\n"))
+          cat(paste0("BICM = ", bicm[G.ind,Q.ind], "\n"))
+          cat(paste0("Log Integrated Likelihood = ", log.iLLH[G.ind,Q.ind], "\n"))
       }
       if(all(plotQ.ind, 
              attr(GQ.res, "Q.big")))  warning("Q had to be prevented from exceeding its initial value.\n Consider re-running the model with a higher value for 'range.Q'", call.=FALSE)

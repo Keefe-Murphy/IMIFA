@@ -253,7 +253,7 @@
         if(sw["psi.sw"]) psi.store[,,new.it]          <- psi
         if(sw["pi.sw"])  pi.store[,new.it]            <- pi.prop
                          z.store[,new.it]             <- z 
-                         ll.store[new.it]             <- sum(z.res$log.likes)
+                         ll.store[new.it]             <- z.res$log.like
                          Q.store[,new.it]             <- Qs
                          G.store[new.it]              <- sum(nn0)
       }

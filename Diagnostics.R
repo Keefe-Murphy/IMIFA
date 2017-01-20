@@ -3,12 +3,12 @@
 #########################################
 
 get_IMIFA_results              <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, Q = NULL, Q.meth = c("Mode", "Median"), G.meth = c("Mode", "Median"), dat = NULL,
-                                           criterion = c("bicm", "aicm", "bic.mcmc", "aic.mcmc", "log.iLLH"), conf.level = 0.95, zlabels = NULL, recomp = FALSE) {
+                                           criterion = c("bicm", "aicm", "bic.mcmc", "aic.mcmc", "log.iLLH", "dic.mcmc"), conf.level = 0.95, zlabels = NULL, recomp = FALSE) {
   UseMethod("get_IMIFA_results")
 }
 
 get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, Q = NULL, Q.meth = c("Mode", "Median"), G.meth = c("Mode", "Median"), dat = NULL,
-                                           criterion = c("bicm", "aicm", "bic.mcmc", "aic.mcmc", "log.iLLH"), conf.level = 0.95, zlabels = NULL, recomp = FALSE) {
+                                           criterion = c("bicm", "aicm", "bic.mcmc", "aic.mcmc", "log.iLLH", "dic.mcmc"), conf.level = 0.95, zlabels = NULL, recomp = FALSE) {
   
   defpar         <- suppressWarnings(graphics::par(no.readonly=TRUE))
   defopt         <- options()
@@ -92,7 +92,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
          unique(G.store[tmpQ,]))) stop("This 'G' value was not visited during simulation")
     }
   }
-  G              <- ifelse(any(inf.G, all(G.T, !is.element(method, c("FA", "IFA")))), G, 1L)
+  G              <- if(any(inf.G, all(G.T, !is.element(method, c("FA", "IFA"))))) G else 1L
   if(Q.T)    {
     Q            <- as.integer(Q)
     if(!is.integer(Q))            stop("'Q' must of integer type")
@@ -135,7 +135,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     }
     rownames(crit.mat)   <- switch(method, IMFA=, IMIFA="IM", OMFA=, OMIFA="OM", rownames(crit.mat))
     aicm         <- bicm       <- log.iLLH <- 
-    aic.mcmc     <- bic.mcmc   <- crit.mat
+    aic.mcmc     <- bic.mcmc   <- dic.mcmc <- crit.mat
     log.N        <- log(n.obs)
     for(g in seq_len(G.range))   { 
       gi                 <- ifelse(G.T, G.ind, g)
@@ -144,14 +144,16 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
         log.likes        <- if(is.element(method, c("OMFA", "IMFA")) && GQ1) sims[[gi]][[qi]]$ll.store[tmp.store[[qi]]] else sims[[gi]][[qi]]$ll.store[tmp.store]
         ll.max           <- 2 * max(log.likes, na.rm=TRUE)
         ll.var           <- ifelse(length(log.likes) != 1, 2 * stats::var(log.likes, na.rm=TRUE), 0)
-        aicm[g,q]        <- ll.max - ll.var * 2
-        bicm[g,q]        <- ll.max - ll.var * log.N
-        log.iLLH[g,q]    <- mean(log.likes, na.rm=TRUE) - ll.var * (log.N - 1)
+        ll.mean          <- mean(log.likes, na.rm=TRUE)
+        aicm[g,q]        <- ll.max  - ll.var * 2
+        bicm[g,q]        <- ll.max  - ll.var * log.N
+        log.iLLH[g,q]    <- ll.mean - ll.var * (log.N - 1)
         if(!inf.Q) {
           qk             <- ifelse(G.T, 1, qi)
           K              <- switch(method, OMFA=, IMFA=G[qk] - 1 + G[qk] * .dim(n.fac[qi], n.var), attr(sims[[gi]][[qi]], "K"))
-          aic.mcmc[g,q]  <- ll.max - K * 2
-          bic.mcmc[g,q]  <- ll.max - K * log.N
+          aic.mcmc[g,q]  <- ll.max  - K * 2
+          bic.mcmc[g,q]  <- ll.max  - K * log.N
+          dic.mcmc[g,q]  <- (ll.max - ll.mean) * 3 - ll.mean
         }
       }  
     }
@@ -193,7 +195,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       Q          <- stats::setNames(if(length(Q) != G) rep(Q, G) else Q, paste0("Group ", Gseq))  
       if(all(inf.G, Q.T))  GQ.temp1$G <- rep(G, GQs)
       GQ.temp1   <- if(is.element(method, c("OMFA", "IMFA")) && GQ1) lapply(GQ.temp1, "[[", Q.ind) else if(inf.G) GQ.temp1
-      GQ.temp3   <- c(GQ.temp2, list(AIC.mcmcs = aic.mcmc, BIC.mcmcs = bic.mcmc))
+      GQ.temp3   <- c(GQ.temp2, list(AIC.mcmcs = aic.mcmc, BIC.mcmcs = bic.mcmc, DIC.mcmcs = dic.mcmc))
       GQ.res     <- switch(method, OMFA=, IMFA=c(GQ.temp1, list(Q = Q), GQ.temp3), c(list(G = G, Q = Q), GQ.temp3))
     }
     clust.ind    <- !any(is.element(method,   c("FA", "IFA")), 
@@ -389,7 +391,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       Q          <- if(G.T) Q else stats::setNames(rep(Q, G), paste0("Group ", Gseq))
     }
     leder.b      <- .ledermann(n.obs, n.var)
-    if(any(unlist(Q) > leder.b))  warning(paste0("Estimate of Q", ifelse(clust.ind, " in one or more of the groups ", " "), "is not less than the suggested Ledermann upper bound (", leder.b, "): solution may be invalid"), call.=FALSE)
+    if(any(unlist(Q) > leder.b))  warning(paste0("Estimate of Q", ifelse(clust.ind, " in one or more of the groups ", " "), "is greater than the suggested Ledermann upper bound (", leder.b, "): solution may be invalid"), call.=FALSE)
     Q.CI         <- if(G1) round(matrixStats::rowQuantiles(Q.store, probs=conf.levels)) else round(stats::quantile(Q.store, conf.levels))
     GQ.temp4     <- list(Q = Q, Q.Mode = Q.mode, Q.Median = Q.med, Stored.Q = Q.store,
                          Q.CI = Q.CI, Q.Probs = Q.prob, Q.Counts = Q.tab)

@@ -282,12 +282,12 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
        epsilon >= 1)                stop("'epsilon' must be lie in the interval (0, 1)")
   } 
   Q.warn       <- .ledermann(N=N, P=P)
-  if(any(range.Q  >= Q.warn)) {          
+  if(any(range.Q > Q.warn))   {          
     if(all(is.element(method, c("IFA", "MIFA", "OMIFA", "IMIFA")),
-       isTRUE(adapt)))        {     warning(paste0("Starting value for number of factors is not less than the suggested Ledermann upper bound = ", Q.warn), call.=FALSE)
+       isTRUE(adapt)))        {     warning(paste0("Starting value for number of factors is greater than the suggested Ledermann upper bound = ", Q.warn), call.=FALSE)
     } else if(any(is.element(method, c("FA", "MFA", "OMFA", "IMFA")),
               all(is.element(method, c("IFA", "MIFA", "OMIFA", "IMIFA")), 
-                  isTRUE(!adapt)))) stop(paste0("Number of factors must be less than the suggested Ledermann upper bound = ", Q.warn))
+                  isTRUE(!adapt)))) stop(paste0("Number of factors cannot be greater than the suggested Ledermann upper bound = ", Q.warn))
   } 
   if(any(all(method == "MFA",  any(range.G > 1)) && any(range.Q > 0),
          all(method == "MIFA", any(range.G > 1)), is.element(method, c("IMIFA",
