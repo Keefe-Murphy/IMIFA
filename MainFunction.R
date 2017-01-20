@@ -191,7 +191,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
       zlabels      <- unlist(z.list)
       if(length(zlabels)  != N)     stop(paste0("'z.list' must be a factor of length N=",  N)) 
       if(!missing(range.G) && any(length(range.G > 1), 
-          range.G  != levs))   {    warning("Forced 'range.G' equal to the number of levels in 'zlabels' for the 'classify' method")
+          range.G  != levs))   {    message("Forced 'range.G' equal to the number of levels in 'zlabels' for the 'classify' method")
       }
       range.G      <- levs
     } else {

@@ -401,7 +401,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
 # Retrieve (unrotated) scores
   no.score       <- all(Q == 0)
   if(no.score)   { 
-    if(sw["s.sw"])                warning("Scores & loadings not stored as model has zero factors", call.=FALSE)
+    if(sw["s.sw"])                message("Scores & loadings not stored as model has zero factors")
     sw["s.sw"]   <- FALSE
   }
   if(sw["s.sw"]) {
@@ -424,7 +424,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     sw["l.sw"]   <- attr(sims, "Switch")["l.sw"]
     if(Qg == 0)  {
       if(all(sw["l.sw"],
-             !no.score))          warning(paste0("Loadings ", ifelse(G > 1, paste0("for group ", g, " not stored as it"), " not stored as model"), " has zero factors"), call.=FALSE)
+             !no.score))          message(paste0("Loadings ", ifelse(G > 1, paste0("for group ", g, " not stored as it"), " not stored as model"), " has zero factors"))
       sw["l.sw"] <- FALSE
     }
     store        <- if(inf.Q) seq_along(tmp.store)[which(Q.store[g,] >= Qg)] else seq_along(tmp.store)
