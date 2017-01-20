@@ -299,8 +299,6 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       }
     }
     post.z       <- apply(z, 1, function(x) factor(which.max(tabulate(x)), levels=Gseq))
-    sizes        <- tabulate(post.z, nbins=G)
-    if(any(sizes == 0))           warning("Empty group exists in modal clustering:\n examine trace plots and try supplying a lower G value to tune.imifa() or re-running the model", call.=FALSE)
     uncertain    <- 1 - Rfast::colMaxs(matrix(apply(z, 1, tabulate, nbins=G)/length(tmp.store), nr=G, nc=n.obs), value=TRUE)
     if(sw["pi.sw"])    {
       pi.prop    <- pies[Gseq,seq_along(tmp.store), drop=FALSE]
@@ -356,6 +354,8 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       }
       class(tab.stat)          <- "listof"
     }
+    sizes        <- tabulate(post.z, nbins=G)
+    if(any(sizes == 0))           warning("Empty group exists in modal clustering:\n examine trace plots and try supplying a lower G value to tune.imifa() or re-running the model", call.=FALSE)
     if(alpha.step != "fixed") {
       alpha      <- sims[[G.ind]][[Q.ind]]$alpha
       post.alpha <- mean(alpha)
