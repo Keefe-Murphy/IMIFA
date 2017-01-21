@@ -250,7 +250,7 @@
       sw        <- c(sw, max(nn.ind[nn.x + 1], nn.ind[nn.x - 1], na.rm=TRUE))
       nns       <- nn[sw]
       Vsw       <- Vs[sw]
-      a.prob    <- nns[1] * log(1 - Vsw[1]) - nns[2]  * log(1 - Vsw[2])
+      a.prob    <- nns[1] * log(1 - Vsw[2]) - nns[2]  * log(1 - Vsw[1])
         return(list(rate2 = a.prob >= 0 ||  - stats::rexp(1) < a.prob, sw = sw))
     }
 

@@ -391,7 +391,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   beta.x           <- missing("psi.beta")
   mu0.x            <- missing("mu.zero")
   ad1.x            <- all(missing("alpha.d1"), is.element(method, c("IFA", "MIFA", "OMIFA", "IMIFA", "classify")))
-  adk.x            <- all(missing("alpha.d2"), is.element(method, c("IFA", "MIFA", "OMIFA", "IMIFA", "classify")))
+  ad2.x            <- all(missing("alpha.d2"), is.element(method, c("IFA", "MIFA", "OMIFA", "IMIFA", "classify")))
   if(all(z.init != "list", any(sw0gs))) {
     if(delta0g)                     stop("'delta0g' can only be TRUE if z.init=list\n")
     if(all(!mu0.x, mu0g))           stop("'mu.zero' can only be supplied for each group if z.init=list")
@@ -405,8 +405,8 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   mu.zero          <- if(mu0.x) mu else .len.check(mu.zero, mu0g, method, P, range.G)
   if(!is.element(method, c("FA", "MFA", "OMFA", "IMFA"))) {
     alpha.d1       <- if(ad1.x) list(3L) else .len.check(alpha.d1, delta0g, method, P, range.G, P.dim=FALSE)
-    alpha.d2       <- if(adk.x) list(6L) else .len.check(alpha.d2, delta0g, method, P, range.G, P.dim=FALSE)
-    if(all(NlP, any(ad1.x, adk.x))) warning("Consider applying more shrinkage with higher 'alpha.d1' and 'alpha.dk' hyperparameter values when N << P", call.=FALSE)
+    alpha.d2       <- if(ad2.x) list(6L) else .len.check(alpha.d2, delta0g, method, P, range.G, P.dim=FALSE)
+    if(all(NlP, any(ad1.x, ad2.x))) warning("Consider applying more shrinkage with higher 'alpha.d1' and 'alpha.d2' hyperparameter values when N << P", call.=FALSE)
   }
   if(!is.element(method, c("FA", "IFA"))) {
     if(verbose)                     cat(paste0("Initialising...\n"))
@@ -460,7 +460,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
       if(ad1.x)   {
         alpha.d1[[g]]   <- rep(unlist(alpha.d1), G)
       }
-      if(adk.x)   {
+      if(ad2.x)   {
         alpha.d2[[g]]   <- rep(unlist(alpha.d2), G)
       }
       clust[[g]]   <- list(z = zi[[g]], pi.alpha = alpha, pi.prop = pi.prop[[g]])
