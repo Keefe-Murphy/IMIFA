@@ -3,12 +3,12 @@
 #########################################
 
 get_IMIFA_results              <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, Q = NULL, Q.meth = c("Mode", "Median"), G.meth = c("Mode", "Median"), dat = NULL,
-                                           criterion = c("bicm", "aicm", "bic.mcmc", "aic.mcmc", "log.iLLH", "dic.mcmc"), conf.level = 0.95, zlabels = NULL, recomp = FALSE) {
+                                           criterion = c("bicm", "aicm", "bic.mcmc", "aic.mcmc", "log.iLLH", "dic"), conf.level = 0.95, zlabels = NULL, recomp = FALSE) {
   UseMethod("get_IMIFA_results")
 }
 
 get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, Q = NULL, Q.meth = c("Mode", "Median"), G.meth = c("Mode", "Median"), dat = NULL,
-                                           criterion = c("bicm", "aicm", "bic.mcmc", "aic.mcmc", "log.iLLH", "dic.mcmc"), conf.level = 0.95, zlabels = NULL, recomp = FALSE) {
+                                           criterion = c("bicm", "aicm", "bic.mcmc", "aic.mcmc", "log.iLLH", "dic"), conf.level = 0.95, zlabels = NULL, recomp = FALSE) {
   
   defpar         <- suppressWarnings(graphics::par(no.readonly=TRUE))
   defopt         <- options()
@@ -135,7 +135,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     }
     rownames(crit.mat)   <- switch(method, IMFA=, IMIFA="IM", OMFA=, OMIFA="OM", rownames(crit.mat))
     aicm         <- bicm       <- log.iLLH <- 
-    aic.mcmc     <- bic.mcmc   <- dic.mcmc <- crit.mat
+    aic.mcmc     <- bic.mcmc   <- dic      <- crit.mat
     log.N        <- log(n.obs)
     for(g in seq_len(G.range))   { 
       gi                 <- ifelse(G.T, G.ind, g)
@@ -153,7 +153,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
           K              <- switch(method, OMFA=, IMFA=G[qk] - 1 + G[qk] * .dim(n.fac[qi], n.var), attr(sims[[gi]][[qi]], "K"))
           aic.mcmc[g,q]  <- ll.max  - K * 2
           bic.mcmc[g,q]  <- ll.max  - K * log.N
-          dic.mcmc[g,q]  <- (ll.max - ll.mean) * 3 - ll.mean
+          dic[g,q]       <- (ll.max - ll.mean) * 3 - ll.mean
         }
       }  
     }
@@ -195,7 +195,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       Q          <- stats::setNames(if(length(Q) != G) rep(Q, G) else Q, paste0("Group ", Gseq))  
       if(all(inf.G, Q.T))  GQ.temp1$G <- rep(G, GQs)
       GQ.temp1   <- if(is.element(method, c("OMFA", "IMFA")) && GQ1) lapply(GQ.temp1, "[[", Q.ind) else if(inf.G) GQ.temp1
-      GQ.temp3   <- c(GQ.temp2, list(AIC.mcmcs = aic.mcmc, BIC.mcmcs = bic.mcmc, DIC.mcmcs = dic.mcmc))
+      GQ.temp3   <- c(GQ.temp2, list(AIC.mcmcs = aic.mcmc, BIC.mcmcs = bic.mcmc, DICs = dic))
       GQ.res     <- switch(method, OMFA=, IMFA=c(GQ.temp1, list(Q = Q), GQ.temp3), c(list(G = G, Q = Q), GQ.temp3))
     }
     clust.ind    <- !any(is.element(method,   c("FA", "IFA")), 
