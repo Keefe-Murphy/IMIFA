@@ -1,10 +1,27 @@
-######################################################
-### Simulate Data (Single, Shrinkage & Group Case) ###
-######################################################
-
-sim_IMIFA      <- function(N = 300L, G = 3L, P = 50L, Q = rep(4L, G), pis = rep(1/G, G), 
+#' Simulating Data from a Mixture of Factor Analysers Structure
+#'
+#' Function to simulate data of any size and dimension from a mixture of (infinite) factor analysers structure.
+#' @param N Desired overall number of observations in the simulated data set - a single integer.
+#' @param G Desired number of clusters in the simulated data set - a single integer.
+#' @param P Desired number of variables in the simulated dataset - a single integer.
+#' @param Q Desired number of cluster-specific latent factors in the simulated data set. Can be specified either as a single integer if all clusters are to have the same number of factors, or a vector of length \code{G}.
+#' @param pis Mixing proportions of the clusters in the dataset if \code{G} > 1. Must sum to 1. Defaults to \code{rep(1/G, G)}.
+#' @param nn An alternative way to specify the size of each cluster, by giving the number of observations in each group explicitly. Must sum to \code{N}.
+#' @param loc.diff A parameter to control the closeness of the clusters in terms of the difference in their location vectors.
+#' @param method A switch indicating whether the mixture to be simulated from is the conditional distribution of the data given the latent variables (default), or simply the marginal distribution of the data.
+#'
+#' @return An data.frame with \code{N} observations of \code{P} variables. The true values of the parameters which generated these data are also stored.
+#' @export
+#'
+#' @examples
+#' sim.data <- sim_IMIFA(N=100, G=3, P=20, Q=c(2, 2, 5))
+#' names(attributes(sim.data))
+#' attr(sim.data, "Labels")
+#' #tmp <- mcmc_IMIFA(sim.data, method="MIFA", range.G=3, n.iters=5000)
+#' @seealso The function \code{\link{mcmc_IMIFA}} for fitting an IMIFA related model to the simulated data set.
+sim_IMIFA      <- function(N = 300L, G = 3L, P = 50L, Q = rep(4L, G), pis = rep(1/G, G),
                            nn = NULL, loc.diff = 1L, method = c("conditional", "marginal")) {
-  
+
   N            <- as.integer(N)
   G            <- as.integer(G)
   P            <- as.integer(P)
@@ -15,23 +32,23 @@ sim_IMIFA      <- function(N = 300L, G = 3L, P = 50L, Q = rep(4L, G), pis = rep(
   if(!is.numeric(loc.diff))               stop("'loc.diff' must be numeric")
   if(any(N  < 2, N <= G))                 stop("Must simulate more than one data-point and the number of groups cannot exceed N")
   if(any(Q  > .ledermann(N=N, P=P)))      stop(paste0("Cannot generate this many factors relative to N=", N, " and P=", P))
-  if(length(Q) != G) {                   
+  if(length(Q) != G) {
     if(!missing(Q))  {
       if(length(Q) == 1) {
         Q      <- rep(Q, G)
-      } else if(length(Q != G))           stop(paste0("'Q' must supplied for each of the G=", G, " groups"))  
+      } else if(length(Q != G))           stop(paste0("'Q' must supplied for each of the G=", G, " groups"))
     }
   }
   method       <- match.arg(method)
   Gseq         <- seq_len(G)
   Nseq         <- seq_len(N)
   Pseq         <- seq_len(P)
-  nnames       <- paste0("Obs ", Nseq) 
+  nnames       <- paste0("Obs ", Nseq)
   vnames       <- paste0("Var ", Pseq)
   if(!missing(nn) && missing(pis))     {
     nn         <- as.integer(nn)
     if(any(nn  == 0))                     stop("All 'nn' values must be strictly positive; simulating empty groups not allowed")
-    if(any(length(nn)  != G, 
+    if(any(length(nn)  != G,
            sum(nn)     != N,
            !is.integer(nn)))              stop(paste0("'nn' must be an integer vector of length G=", G, " which sums to N=", N))
   } else {
@@ -41,17 +58,17 @@ sim_IMIFA      <- function(N = 300L, G = 3L, P = 50L, Q = rep(4L, G), pis = rep(
     nn         <- rep(0,  G)
     while(any(nn < floor(N/(G * G))))  {
       labs     <- .sim_z.p(N=N, prob.z=pis)
-      nn       <- tabulate(labs, nbins=G)  
+      nn       <- tabulate(labs, nbins=G)
     }
-  } 
-                                         
+  }
+
   simdata      <- matrix(0, nr=0, nc=P)
   prior.mu     <- as.integer(scale(Gseq, center=TRUE, scale=FALSE))
   true.mu      <- stats::setNames(vector("list", G), paste0("Group", Gseq))
   true.l       <- true.mu
   true.psi     <- true.mu
   true.cov     <- true.mu
-  
+
 # Simulate true parameter values
   true.zlab    <- factor(rep(Gseq, nn), labels=Gseq)
   if(method    == "conditional") {
@@ -61,10 +78,10 @@ sim_IMIFA      <- function(N = 300L, G = 3L, P = 50L, Q = rep(4L, G), pis = rep(
   for(g in Gseq) {
     Q.g        <- Q[g]
     N.g        <- nn[g]
-    mu.true    <- stats::setNames(.sim_mu.p(P=P, mu.zero=prior.mu[g] * loc.diff, sigma.mu=1), vnames)
+    mu.true    <- stats::setNames(.sim_mu.p(P=P, mu.zero=prior.mu[g] * loc.diff, sig.mu.sqrt=1), vnames)
     l.true     <- .sim_load.p(Q=Q.g, P=P, sigma.l=1)
     psi.true   <- stats::setNames(stats::runif(P, 0, 1), vnames)
-    
+
   # Simulate data
     covmat     <- provideDimnames(diag(psi.true) + switch(method, marginal=tcrossprod(l.true), 0), base=list(vnames, vnames))
     if(!all(isSymmetric(covmat),
@@ -81,7 +98,7 @@ sim_IMIFA      <- function(N = 300L, G = 3L, P = 50L, Q = rep(4L, G), pis = rep(
     true.psi[[g]]      <- psi.true
     true.cov[[g]]      <- covmat
   }
-  
+
 # Post-process data
   permute      <- sample(Nseq, N, replace=FALSE)
   simdata      <- simdata[permute,, drop=FALSE]
@@ -92,7 +109,7 @@ sim_IMIFA      <- function(N = 300L, G = 3L, P = 50L, Q = rep(4L, G), pis = rep(
        "Factors")      <- Q
   attr(simdata,
        "Groups")       <- G
-  attr(simdata, 
+  attr(simdata,
        "Means")        <- do.call(cbind, true.mu)
   if(method == "conditional") {
     eta.true   <- eta.true[permute,, drop=FALSE]
@@ -100,16 +117,18 @@ sim_IMIFA      <- function(N = 300L, G = 3L, P = 50L, Q = rep(4L, G), pis = rep(
     attr(simdata,
          "Scores")     <- eta.true
   }
-  attr(simdata, 
+  attr(simdata,
        "Loadings")     <- true.l
   attr(simdata,
        "Loc.Diff")     <- loc.diff
-  attr(simdata, 
+  attr(simdata,
        "Uniquenesses") <- do.call(cbind, true.psi)
-  attr(simdata, 
+  attr(simdata,
        "Labels")       <- true.zlab
   attr(simdata,
+       "Proportions")  <- pis
+  attr(simdata,
        "Covariance")   <- true.cov
-  class(simdata)       <- c("data.frame", "IMIFA")
+  class(simdata)       <- c("data.frame")
   return(simdata)
 }
