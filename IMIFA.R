@@ -12,7 +12,7 @@
       setwd("D:/Documents/IMIFA-GIT"); rm(wd)
       datdir <- "D:/Dropbox/UCD/IMIFA"
     } else {
-      datdir <- "C:/Users/Windows/Dropbox/UCD/IMIFA"
+      datdir <- "C:/Users/Windows/Dropbox/UCD/IMIFA"...
     }
   } else   {
     datdir   <- "/home/kmurphy"
