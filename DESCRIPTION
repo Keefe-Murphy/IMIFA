@@ -5,7 +5,7 @@ Title: Fitting, Diagnostics, and Plotting Functions for Infinite Mixtures of
     Infinite Factor Analysers and Related Models
 Version: 0.1.0
 Authors@R: c(person("Keefe", "Murphy", email = "keefe.murphy@ucd.ie", role = c("aut", "cre")),
-             person("Claire", "Gormley", role = "ctb"),
+             person("Isobel Claire", "Gormley", role = "ctb"),
              person("Cinzia", "Viroli", role = "ctb"))
 Description: Provides flexible Gibbs sampler function for fitting the full
     suite of IMIFA related models, which allows model based clustering with factor

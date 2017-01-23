@@ -15,7 +15,7 @@
 #' Data on the percentage composition of eight fatty acids found by lipid fraction of 572 Italian olive oils. The data come from three areas; within each area there are a number of constituent regions, of which there are 9 in total.
 #' @format A data frame with 572 observations and 10 columns. The first columns gives the area, the second gives the region, and the remaining 8 columns give the variables.
 #' \describe{
-#'   \item{area}{One of Southern Italy, Sardinia, and Northern Italy}
+#'   \item{area}{One of Southern Italy, Sardinia, and Northern Italy.}
 #'   \item{region}{Southern Italy comprises North Apulia, Calabria, South Apulia, and Sicily, Sardinia is divided into Inland Sardinia and Coastal Sardinia and Northern Italy comprises Umbria, East Liguria, and West Liguria. }
 #' }
 #' @references Forina, M., Armanino, C., Lanteri, S. and Tiscornia, E. (1983). Classification of olive oils from their fatty acid composition. In \emph{Food Research and Data Analysis}, pp. 189–214. Applied Science Publishers, London.
