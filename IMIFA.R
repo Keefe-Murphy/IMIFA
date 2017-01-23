@@ -6,10 +6,10 @@
  #set.seed(1)
  #rm(list=ls(all=TRUE))
  #while("IMIFA.env" %in% search()) detach("IMIFA.env")
-  if(!is.element(getwd(), c("/home/kmurphy", "/home/kmurphy/IMIFA-GIT"))) {
-    wd       <- try(setwd("C:/Users/Windows/Documents/IMIFA-GIT/"), silent=TRUE)
-    if(inherits(wd, "try-error")) { 
-      setwd("D:/Documents/IMIFA-GIT"); rm(wd)
+  if(!is.element(getwd(), c("/home/kmurphy", "/home/kmurphy/IMIFA"))) {
+    wd       <- try(setwd("C:/Users/Windows/Documents/IMIFA/"), silent=TRUE)
+    if(inherits(wd, "try-error")) {
+      setwd("D:/Documents/IMIFA"); rm(wd)
       datdir <- "D:/Dropbox/UCD/IMIFA"
     } else {
       datdir <- "C:/Users/Windows/Dropbox/UCD/IMIFA"
@@ -19,7 +19,7 @@
     setwd("/home/kmurphy/IMIFA-GIT")
   }
   source(paste0(getwd(), "/PackageSetup.R"))
-    
+
 # Read in the data
   # Olive       (# area, region)
     load(file=paste0(datdir, "/Data/Olive.Rdata", sep=""), envir=.GlobalEnv)
@@ -42,7 +42,7 @@
     load(file=paste0(datdir, "/Data/Oliveoils.Rdata", sep=""), envir=.GlobalEnv)
     oils     <- t(oliveoils); rm(oliveoils, wavelengths, x)
   # Coffee      (# type, country) [% coffee]
-    load(file=paste0(datdir, "/Data/Coffee.Rdata", sep=""), envir=.GlobalEnv) 
+    load(file=paste0(datdir, "/Data/Coffee.Rdata", sep=""), envir=.GlobalEnv)
   # Brain       (# region) {n.b. pareto scaling}
     load(file=paste0(datdir, "/Data/RatBrain.Rdata", sep=""), envir=.GlobalEnv)
    #library(MetabolAnalyze); data(BrainSpectra)
@@ -53,7 +53,7 @@
     graphics::matplot(t(brain), type="l", xlab="Chemical Shift (ppm)", yaxt="n", ylab="", bty="n", xaxt="n", lwd=2, lty=1, col=region)
     graphics::axis(1, at=seq(from=0, to=nrow(ppm.g), by=20), labels=9:1, tick=TRUE, lwd.ticks=1, xpd=TRUE)
     graphics::axis(1, at=seq_len(nrow(ppm.g)), labels=FALSE, tick=TRUE, tcl=-0.2)
-    graphics::legend("topleft", cex=0.8, legend=c("Brain Stem", "Cerebellum", "Hippocampus", "Pre-frontal Cores"), bty="n", lty=1, col=seq_len(4))  
+    graphics::legend("topleft", cex=0.8, legend=c("Brain Stem", "Cerebellum", "Hippocampus", "Pre-frontal Cores"), bty="n", lty=1, col=seq_len(4))
   # Urine       (# grp) {n.b. pareto scaling}
     load(file=paste0(datdir, "/Data/Epi_urine_data.Rdata", sep=""), envir=.GlobalEnv)
     rat.cov  <- read.csv(file=paste0(datdir, "/Data/D10Weight.csv"))
@@ -65,7 +65,7 @@
     graphics::matplot(t(urine), type="l", xlab="Chemical Shift (ppm)", yaxt="n", ylab="", bty="n", xaxt="n", lwd=2, lty=1, col=grp)
     graphics::axis(1, at=seq(from=20, to=nrow(ppm.g), by=20), labels=9:1, tick=TRUE, lwd.ticks=1, xpd=TRUE)
     graphics::axis(1, at=seq_len(nrow(ppm.g)), labels=FALSE, tick=TRUE, tcl=-0.2)
-    graphics::legend("topleft", legend=c("Control", "Epileptic"), bty="n", lty=1, col=c(1, 2))  
+    graphics::legend("topleft", legend=c("Control", "Epileptic"), bty="n", lty=1, col=c(1, 2))
     rat.cov  <- read.csv(file=paste0(datdir, "/Data/D10Weight.csv"))
     graphics::plot(rat.cov$Weight, type="h", main="", ylab="Weight (g)", xlab="Observation", xaxt="n", lty=1, lwd=2, col=replace(grp, 13, 0) + 2)
     graphics::axis(1, at=seq_len(nrow(urine)), labels=seq_len(nrow(urine)), tick=FALSE)
@@ -95,7 +95,7 @@
       rm(list = remove)
       labels <- as.factor(as.matrix(golub[1]))
      #G2levs <- ifelse(labels == "AML", "AML", "ALL")
-  # Subjects 
+  # Subjects
     subjects <- read.csv(paste0(datdir, "/Data/", "SubjectMarks.csv", sep=""))
   # Cereal      (# classes)
     cereal   <- read.csv(paste0(datdir, "/Data/", "Cereal.csv", sep=""))
@@ -111,23 +111,23 @@
   summary(sim)
 
 # Save / Load Simulations
-  save(sim, file=paste0(datdir, "/Simulations/", attr(sim, "Name"), 
+  save(sim, file=paste0(datdir, "/Simulations/", attr(sim, "Name"),
                         "__Simulations_", attr(sim, "Method"), ".Rdata"))
-  load(file=paste0(datdir, "/Simulations/", "wine", 
+  load(file=paste0(datdir, "/Simulations/", "wine",
                    "__Simulations_", "IMIFA", ".Rdata"), envir=.GlobalEnv)
-                        
+
 # Posterior Summaries (optional: additional 'burnin' & 'thinning', user-defined G/Q, model selection criterion)
   res        <- get_IMIFA_results(sim, zlabels=area)
   summary(res)
 
 # Save / Load Results
-  save(res, file=paste0(datdir, "/Simulations/", attr(res, "Name"), 
+  save(res, file=paste0(datdir, "/Simulations/", attr(res, "Name"),
                         "__Results_", attr(res, "Method"), ".Rdata"))
-  load(file=paste0(datdir, "/Simulations/", "wine", 
+  load(file=paste0(datdir, "/Simulations/", "wine",
                    "__Results_", "IMIFA", ".Rdata"), envir=.GlobalEnv)
 
 # Model Selection Parameters
-  plot(res, "GQ") 
+  plot(res, "GQ")
 
 # Cluster Labels
   plot(res, "z")
@@ -147,7 +147,7 @@
   res$Means$post.mu
   res$Means$var.mu
   res$Means$ci.mu
-  
+
 # Loadings
   plot(res, "p", "l")
   plot(res, "a", "l")
@@ -177,7 +177,7 @@
   res$Scores$post.eta
   res$Scores$var.eta
   res$Scores$ci.eta
-  
+
 # Uniquenesses
   plot(res, "p", "u")
   plot(res, "a", "u")
@@ -205,10 +205,10 @@
   res$Clust$post.pi
   res$Clust$var.pi
   res$Clust$ci.pi
-  
+
 # Covariance Matrices & Error Metrics
   plot(res, "e")
-  
+
 # Learning 'alpha' for Dirichlet Process methods
   plot(res, "a", "a")
   plot(res, "t", "a")
