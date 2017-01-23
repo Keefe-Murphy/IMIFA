@@ -240,18 +240,18 @@
       pis       <- pi.prop[sw]
       nns       <- nn[sw]
       a.prob    <- (nns[1] - nns[2]) * (log(pis[1])  - log(pis[2])) 
-        return(list(rate1  = a.prob >= 0 || -stats::rexp(1) < a.prob, sw = sw))
+        return(list(rate1  = a.prob >= 0 || - stats::rexp(1) < a.prob, sw = sw))
     }
     
     # Move 2
-    .lab.move2  <- function(nn.ind, Vs, nn) {
-      sw        <- sample(nn.ind, 1L)
-      nn.x      <- which(nn.ind == sw)
-      sw        <- c(sw, max(nn.ind[nn.x + 1], nn.ind[nn.x - 1], na.rm=TRUE))
+    .lab.move2  <- function(Gs, G, Vs, nn) {
+      sw        <- sample(Gs, 1L)
+      sgx       <- G == sw
+      sw        <- c(sw, max(Gs[sw + 1], Gs[sw - 1], na.rm=TRUE))
       nns       <- nn[sw]
       Vsw       <- Vs[sw]
-      a.prob    <- nns[1] * log(1 - Vsw[2]) - nns[2]  * log(1 - Vsw[1])
-        return(list(rate2 = a.prob >= 0 ||  - stats::rexp(1) < a.prob, sw = sw))
+      a.prob    <- nns[1] * log(1 - Vsw[2]) - nns[2] * log(1 - Vsw[1]) + ifelse(sgx, log(G/(G + 1)), 0)
+        return(list(rate2 = a.prob >= 0  || - stats::rexp(1) < a.prob, sw = sw))
     }
 
   # Length Checker

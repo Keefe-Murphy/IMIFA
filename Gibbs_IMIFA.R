@@ -162,7 +162,8 @@
         log.ksi      <- log(ksi)
       }  
       u.slice        <- stats::runif(N, 0, ksi[z])
-      Gs             <- seq_len(max(vapply(Ns, function(i) sum(u.slice[i] < ksi), integer(1L))))
+      G              <- max(vapply(Ns, function(i) sum(u.slice[i] < ksi), integer(1L)))
+      Gs             <- seq_len(G)
       log.slice.ind  <- vapply(Gs, function(g) slice.logs[1 + (u.slice < ksi[g])] - log.ksi[g], numeric(N))
     
     # Cluster Labels
@@ -288,47 +289,51 @@
     
     # Label Switching
       G.non          <- sum(nn0)
-      if(DP.lab.sw   && G.non  > 1) {
-        move1        <- .lab.move1(nn.ind=nn.ind, pi.prop=pi.prop, nn=nn)
-        acc1         <- move1$rate1
-        if(acc1)    {
-          sw1        <- move1$sw
-          sw1x       <- c(sw1[2], sw1[1])
-          nn[sw1]    <- nn[sw1x]
-          nn0[sw1]   <- nn0[sw1x]
-          nn.ind     <- which(nn0)
-          Vs[sw1]    <- Vs[sw1x]
-          mu[,sw1]   <- mu[,sw1x, drop=FALSE]
-          phi[sw1]   <- phi[sw1x]
-          tau[sw1]   <- tau[sw1x]
-          Qs[sw1]    <- Qs[sw1x]
-          lmat[sw1]  <- lmat[sw1x]
-          delta[sw1]          <- delta[sw1x]
-          psi.inv[,sw1]       <- psi.inv[,sw1x, drop=FALSE]
-          pi.prop[sw1]        <- pi.prop[sw1x]
-          zsw1       <- z == sw1[1]
-          z[z == sw1[2]]      <- sw1[1]
-          z[zsw1]    <- sw1[2]            
-        } 
-        move2        <- .lab.move2(nn.ind=nn.ind, Vs=Vs, nn=nn)
-        acc2         <- move2$rate2
-        if(acc2)    {
-          sw2        <- move2$sw
-          sw2x       <- c(sw2[2], sw2[1])
-          nn[sw2]    <- nn[sw2x]
-          nn0[sw2]   <- nn0[sw2x]
-          nn.ind     <- which(nn0)
-          mu[,sw2]   <- mu[,sw2x, drop=FALSE]
-          phi[sw2]   <- phi[sw2x]
-          tau[sw2]   <- tau[sw2x]
-          Qs[sw2]    <- Qs[sw2x]
-          lmat[sw2]  <- lmat[sw2x]
-          delta[sw2]          <- delta[sw2x]
-          psi.inv[,sw2]       <- psi.inv[,sw2x, drop=FALSE]
-          pi.prop[sw2]        <- pi.prop[sw2x]
-          zsw2       <- z == sw2[1]
-          z[z == sw2[2]]      <- sw2[1]
-          z[zsw2]    <- sw2[2]            
+      if(DP.lab.sw)   {
+        if(G.non > 1) {
+          move1      <- .lab.move1(nn.ind=nn.ind, pi.prop=pi.prop, nn=nn)
+          acc1       <- move1$rate1
+          if(acc1)    {
+            sw1      <- move1$sw
+            sw1x     <- c(sw1[2], sw1[1])
+            nn[sw1]  <- nn[sw1x]
+            nn0[sw1] <- nn0[sw1x]
+            nn.ind   <- which(nn0)
+            Vs[sw1]  <- Vs[sw1x]
+            mu[,sw1] <- mu[,sw1x, drop=FALSE]
+            phi[sw1] <- phi[sw1x]
+            tau[sw1] <- tau[sw1x]
+            Qs[sw1]  <- Qs[sw1x]
+            lmat[sw1]         <- lmat[sw1x]
+            delta[sw1]        <- delta[sw1x]
+            psi.inv[,sw1]     <- psi.inv[,sw1x, drop=FALSE]
+            pi.prop[sw1]      <- pi.prop[sw1x]
+            zsw1     <- z == sw1[1]
+            z[z == sw1[2]]    <- sw1[1]
+            z[zsw1]  <- sw1[2]            
+          } else        acc1  <- FALSE
+        }
+        if(G     > 1) {
+          move2      <- .lab.move2(Gs=Gs, G=G, Vs=Vs, nn=nn)
+          acc2       <- move2$rate2
+          if(acc2)    {
+            sw2      <- move2$sw
+            sw2x     <- c(sw2[2], sw2[1])
+            nn[sw2]  <- nn[sw2x]
+            nn0[sw2] <- nn0[sw2x]
+            nn.ind   <- which(nn0)
+            mu[,sw2] <- mu[,sw2x, drop=FALSE]
+            phi[sw2] <- phi[sw2x]
+            tau[sw2] <- tau[sw2x]
+            Qs[sw2]  <- Qs[sw2x]
+            lmat[sw2]         <- lmat[sw2x]
+            delta[sw2]        <- delta[sw2x]
+            psi.inv[,sw2]     <- psi.inv[,sw2x, drop=FALSE]
+            pi.prop[sw2]      <- pi.prop[sw2x]
+            zsw2     <- z == sw2[1]
+            z[z == sw2[2]]    <- sw2[1]
+            z[zsw2]  <- sw2[2]            
+          } else        acc2  <- FALSE
         }
       }
     
