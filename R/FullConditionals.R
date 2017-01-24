@@ -9,7 +9,7 @@
       mu.omega   <- 1/(mu.sigma + N * psi.inv)
         mu.omega  * (psi.inv * (sum.data - lmat %*% sum.eta) + mu.sigma * mu.zero) + sqrt(mu.omega) * stats::rnorm(P)
     }
-  
+
   # Scores
     .sim_score   <- function(N, Q, lmat, psi.inv, c.data, Q1) {
       load.psi   <- lmat * psi.inv
@@ -18,7 +18,7 @@
       mu.eta     <- c.data %*% (load.psi %*% if(Q1) 1/(u.eta * u.eta) else chol2inv(u.eta))
         mu.eta    + t(backsolve(u.eta, matrix(stats::rnorm(Q * N), nr=Q, nc=N)))
     }
-      
+
   # Loadings
     .sim_load    <- function(l.sigma, Q, c.data, eta, psi.inv, EtE, Q1)  {
       u.load     <- l.sigma + psi.inv * EtE
@@ -26,21 +26,21 @@
       mu.load    <- psi.inv * (if(Q1) 1/(u.load * u.load) else chol2inv(u.load)) %*% crossprod(eta, c.data)
         mu.load   + backsolve(u.load, stats::rnorm(Q))
     }
-    
+
     .sim_load.s  <- function(Q, c.data, eta, phi, tau, psi.inv, EtE, Q1) {
       u.load     <- diag(phi * tau, Q) + psi.inv * EtE
       u.load     <- if(Q1) sqrt(u.load) else .chol(u.load)
       mu.load    <- psi.inv  * (if(Q1) 1/(u.load * u.load) else chol2inv(u.load)) %*% crossprod(eta, c.data)
         mu.load   + backsolve(u.load, stats::rnorm(Q))
     }
-    
+
   # Uniquenesses
-    .sim_psi.iu  <- function(N, P, psi.alpha, psi.beta, c.data, eta, lmat) { 
+    .sim_psi.iu  <- function(N, P, psi.alpha, psi.beta, c.data, eta, lmat) {
       S.mat      <- c.data - tcrossprod(eta, lmat)
-        stats::rgamma(P, shape=N/2 + psi.alpha, rate=colSums(S.mat * S.mat)/2 + psi.beta) 
+        stats::rgamma(P, shape=N/2 + psi.alpha, rate=colSums(S.mat * S.mat)/2 + psi.beta)
     }
-    
-    .sim_psi.ii  <- function(N, P, psi.alpha, psi.beta, c.data, eta, lmat) { 
+
+    .sim_psi.ii  <- function(N, P, psi.alpha, psi.beta, c.data, eta, lmat) {
       S.mat      <- c.data - tcrossprod(eta, lmat)
         rep(stats::rgamma(1, shape=(N * P)/2 + psi.alpha, rate=sum(S.mat * S.mat)/2 + psi.beta), P)
     }
@@ -49,12 +49,12 @@
     .sim_phi     <- function(Q, P, nu, tau, load.2, plus1) {
         matrix(stats::rgamma(P * Q, shape=1/2 + nu + plus1, rate=(nu + sweep(load.2, 2, tau, FUN="*"))/2), nr=P, nc=Q)
     }
-  
+
   # Global Shrinkage
     .sim_delta1  <- function(Q, P, alpha.d1, delta.1, beta.d1, tau, sum.term) {
         stats::rgamma(1, shape=alpha.d1 + P * Q/2, rate=beta.d1 + 0.5/delta.1 * tau %*% sum.term)
     }
-    
+
     .sim_deltak  <- function(Q, P, k, alpha.d2, beta.d2, delta.k, tau.kq, sum.term.kq) {
         stats::rgamma(1, shape=alpha.d2 + P/2 * (Q - k + 1), rate=beta.d2 + 0.5/delta.k * tau.kq %*% sum.term.kq)
     }
@@ -63,12 +63,12 @@
     .sim_pi      <- function(pi.alpha, nn) {
         MCMCpack::rdirichlet(1, pi.alpha + nn)
     }
-    
+
     .sim_pi.inf  <- function(pi.alpha, nn, N = sum(nn), len, lseq, discount = 0L) {
       vs         <- if(discount == 0) stats::rbeta(len, 1 + nn, pi.alpha + N - cumsum(nn)) else stats::rbeta(len, 1 - discount + nn, pi.alpha + lseq * discount + N - cumsum(nn))
         return(list(Vs = vs, pi.prop = vapply(lseq, function(t) vs[t] * prod(1 - vs[seq_len(t - 1)]), numeric(1))))
     }
-  
+
   # Cluster Labels
     .sim_z       <- function(data, mu, sigma, Gseq, N, pi.prop, Q0) {
       log.num    <- vapply(Gseq, function(g, Q=Q0[g]) mvnfast::dmvn(data, mu[,g], if(Q) sigma[[g]] else sqrt(sigma[[g]]), log=TRUE, isChol=!Q) + log(pi.prop[g]), numeric(N))
@@ -79,7 +79,7 @@
       }
         return(list(z = Rfast::rowsums(-stats::rexp(N) > lnp) + 1, log.like = sum(log.denom)))
     }
-    
+
     .sim_z.inf   <- function(data, mu, sigma, Gseq, N, pi.prop, log.slice.ind, Q0) {
       log.num    <- vapply(Gseq, function(g, Q=Q0[g]) mvnfast::dmvn(data, mu[,g], if(Q) sigma[[g]] else sqrt(sigma[[g]]), log=TRUE, isChol=!Q) + log(pi.prop[g]), numeric(N)) + log.slice.ind
       log.denom  <- matrixStats::rowLogSumExps(log.num)
@@ -97,7 +97,7 @@
       weight     <- shape2/(shape2 + N * rate2)
         weight    * stats::rgamma(1, shape=shape2 + 1, rate=rate2) + (1 - weight) * stats::rgamma(1, shape=shape2, rate=rate2) - discount
     }
-    
+
     .sim_alpha.m <- function(alpha, lower, upper, trunc.G, Vs, discount = 0L) {
       alpha.old  <- alpha   + discount
       alpha.new  <- stats::runif(1, lower, upper) + discount
@@ -111,26 +111,26 @@
     .sim_mu.p    <- function(P, mu.zero, sig.mu.sqrt) {
       sig.mu.sqrt * stats::rnorm(P) + mu.zero
     }
-  
+
   # Scores
     .sim_eta.p   <- function(Q, N) {
         matrix(stats::rnorm(N * Q), nr=N, nc=Q)
     }
-  
+
   # Loadings
     .sim_load.p  <- function(Q, P, sigma.l) {
         sqrt(sigma.l) * matrix(stats::rnorm(P * Q), nr=P, nc=Q)
     }
-    
+
     .sim_load.ps <- function(Q, sigma.l, phi, tau) {
         sqrt(1/(phi * tau)) * stats::rnorm(Q)
     }
-  
+
   # Uniquenesses
     .sim_psi.ipu <- function(P, psi.alpha, psi.beta) {
-        stats::rgamma(n=P, shape=psi.alpha, rate=psi.beta) 
+        stats::rgamma(n=P, shape=psi.alpha, rate=psi.beta)
     }
-    
+
     .sim_psi.ipi <- function(P, psi.alpha, psi.beta) {
         rep(stats::rgamma(1, shape=psi.alpha, rate=psi.beta), P)
     }
@@ -139,12 +139,12 @@
     .sim_phi.p   <- function(Q, P, nu, plus1) {
         matrix(stats::rgamma(n=P * Q, shape=nu + plus1, rate=nu), nr=P, nc=Q)
     }
-  
+
   # Global Shrinkage
     .sim_delta.p <- function(Q = 2L, alpha, beta) {
         stats::rgamma(n=Q - 1, shape=alpha, rate=beta)
     }
-        
+
   # Cluster Labels
     .sim_z.p     <- function(N, prob.z) {
         factor(which(stats::rmultinom(N, size=1, prob=prob.z) != 0, arr.ind=TRUE)[,1], levels=seq_along(prob.z))
@@ -153,7 +153,7 @@
 # Other Functions
   # Uniqueness Hyperparameters
     psi_hyper   <- function(shape, covar, type=c("unconstrained", "isotropic")) {
-      if(!all(matrixcalc::is.positive.semi.definite(covar), 
+      if(!all(matrixcalc::is.positive.semi.definite(covar),
               isSymmetric(covar),
               is.double(covar)))           stop("Invalid covariance matrix supplied")
       P         <- ncol(covar)
@@ -172,7 +172,7 @@
       shape     <- rate * exp
         c(shape,   switch(match.arg(param), rate=rate, 1/rate))
     }
-    
+
   # Check Shrinkage Hyperparemeters
     MGP_check   <- Vectorize(function(ad1, ad2, Q, nu, bd1 = 1L, bd2 = 1L, plus1 = TRUE, inverse = TRUE) {
       if(any(!is.logical(plus1),
@@ -180,9 +180,9 @@
       if(any(!is.logical(inverse),
              length(inverse)  != 1))       stop("'inverse' must be TRUE or FALSE")
       if(any(length(Q) > 1, Q  < 2))       stop("Q must be single value, greater than or equal to 2")
-      if(any(nu <= !plus1, 
-             !is.numeric(nu)))             stop(paste0("'nu' must be a single ", ifelse(plus1, 
-                                                "strictly positive number for the Ga(nu + 1, nu) parameterisation", 
+      if(any(nu <= !plus1,
+             !is.numeric(nu)))             stop(paste0("'nu' must be a single ", ifelse(plus1,
+                                                "strictly positive number for the Ga(nu + 1, nu) parameterisation",
                                                 "number strictly greater than 1 for the Ga(nu, nu) parameterisation")))
       if(any(c(ad1, ad2)  < 1))            stop("All shrinkage shape hyperparameter values must be at least 1")
       if(any(c(bd1, bd2) <= 0))            stop("All shrinkage rate hyperparameter values must be strictly positive")
@@ -233,16 +233,16 @@
       z.sw      <- factor(z.new, labels=z.perm[seq_along(ng[ng > 0])])
         return(list(z = as.numeric(levels(z.sw))[z.sw], z.perm = z.perm))
     }
-    
+
     # Move 1
     .lab.move1  <- function(nn.ind, pi.prop, nn) {
       sw        <- sample(nn.ind, 2L)
       pis       <- pi.prop[sw]
       nns       <- nn[sw]
-      a.prob    <- (nns[1] - nns[2]) * (log(pis[1])  - log(pis[2])) 
+      a.prob    <- (nns[1] - nns[2]) * (log(pis[1])  - log(pis[2]))
         return(list(rate1  = a.prob >= 0 || - stats::rexp(1) < a.prob, sw = sw))
     }
-    
+
     # Move 2
     .lab.move2  <- function(Gs, G, Vs, nn) {
       sw        <- sample(Gs, 1L)
@@ -274,7 +274,7 @@
           if(all(len == range.G)) obj0g <- if(switch0g) lapply(rGseq, function(g) matrix(obj0g[[g]], nr=1))    else stop(paste0(sw.name, " must be TRUE if the dimension of ", obj.name, " depends on G"))
           if(all(len == V))       obj0g <- if(V == 1)   lapply(rGseq, function(g) rep(obj0g[[g]], range.G[g])) else lapply(rGseq, function(g) matrix(obj0g[[g]], nr=V, nc=range.G[g]))
         } else if(!all(vapply(rGseq, function(g) is.matrix(obj0g[[g]]) && any(identical(dim(obj0g[[g]]), c(1, range.G[g])), identical(dim(obj0g[[g]]), c(V, range.G[g]))), logical(1)))) {
-                                           stop(paste0(ifelse(length(range.G) > 1, "Each element of ", ""), obj.name, " must be either of length 1, ", ifelse(P.dim, paste0("P=", V, ", or it's corresponding range.G, or a matrix with P rows and it's corresponding range.G columns"), paste0("or G=", range.G)))) 
+                                           stop(paste0(ifelse(length(range.G) > 1, "Each element of ", ""), obj.name, " must be either of length 1, ", ifelse(P.dim, paste0("P=", V, ", or it's corresponding range.G, or a matrix with P rows and it's corresponding range.G columns"), paste0("or G=", range.G))))
         } else if(all(vapply(obj0g, is.matrix, logical(1)), !switch0g) && any(vapply(rGseq, function(g) any(dim(obj0g[[g]]) == range.G[g]), logical(1)))) {
                                            stop(paste0(sw.name, " must be TRUE if the dimension of ", obj.name, " depends on G"))
         }
@@ -286,7 +286,7 @@
 
   # Moments of Dirichlet / Pitman-Yor Processes
     G_expected  <- Vectorize(function(N, alpha, discount = 0L) {
-      if(!all(is.numeric(N), is.numeric(discount), 
+      if(!all(is.numeric(N), is.numeric(discount),
          is.numeric(alpha)))               stop("All inputs must be numeric")
       if(discount  < 0  || discount >= 1)  stop("Invalid discount value")
       if(alpha   < - discount)             stop("Invalid alpha value")
@@ -295,14 +295,14 @@
       } else {
         if(suppressMessages(require(Rmpfr))) {
           on.exit(.detach_pkg(Rmpfr))
-          on.exit(.detach_pkg(gmp), add=TRUE)  
+          on.exit(.detach_pkg(gmp), add=TRUE)
         } else                             stop("'Rmpfr' package not installed")
           gmp::asNumeric(alpha/discount * Rmpfr::pochMpfr(alpha + discount, N)/Rmpfr::pochMpfr(alpha, N) - alpha/discount)
       }
     })
 
     G_variance  <- Vectorize(function(N, alpha, discount = 0L) {
-      if(!all(is.numeric(N), is.numeric(discount), 
+      if(!all(is.numeric(N), is.numeric(discount),
          is.numeric(alpha)))               stop("All inputs must be numeric")
       if(discount  < 0  || discount >= 1)  stop("Invalid discount value")
       if(alpha   < - discount)             stop("Invalid alpha value")
@@ -311,7 +311,7 @@
       } else {
         if(suppressMessages(require(Rmpfr))) {
           on.exit(.detach_pkg(Rmpfr))
-          on.exit(.detach_pkg(gmp), add=TRUE)  
+          on.exit(.detach_pkg(gmp), add=TRUE)
         } else                             stop("'Rmpfr' package not installed")
         sum.ad  <- alpha + discount
         poch.a  <- Rmpfr::pochMpfr(alpha, N)
@@ -331,14 +331,14 @@
         detach(searches, unload=TRUE, character.only=TRUE)
       }
     }
-    
+
   # Print functions
     print.IMIFA <- summary.IMIFA <- function(imifa) {
       meth      <- attr(imifa, "Method")
       name      <- attr(imifa, "Name")
       fac       <- attr(imifa, "Factors")
       grp       <- attr(imifa, "Groups")
-      Qmsg      <- Gmsg <- msg   <- NULL 
+      Qmsg      <- Gmsg <- msg   <- NULL
       for(i in seq_along(fac[-length(fac)])) {
         Qmsg    <- c(Qmsg, (paste0(fac[i], ifelse(i + 1 < length(fac), ", ", " "))))
       }
@@ -356,8 +356,8 @@
       }
         cat(paste0(meth, " simulations for '", name, "' dataset", msg, " to be passed to get_IMIFA_results(...)\n"))
     }
-    
-    print.Tuned_IMIFA   <- function(res) {
+
+    print.Results_IMIFA  <- function(res) {
       method    <- attr(res, "Method")
       G         <- res$GQ.results$G
       Q         <- res$GQ.results$Q
@@ -366,27 +366,27 @@
       } else if(is.element(method, c("MFA", "OMFA", "IMFA"))) {
         msg     <- paste0("The chosen ", method, " model has ", G, " group",  ifelse(G == 1, " with ", "s, each with "), unique(Q), " factor", ifelse(unique(Q) == 1, "\n", "s\n"))
       } else {
-        Q.msg   <- NULL 
+        Q.msg   <- NULL
         for(i in seq_along(Q[-length(Q)])) {
           Q.msg <- c(Q.msg, (paste0(Q[i], ifelse(i + 1 < length(Q), ", ", " "))))
-        } 
+        }
         Q.msg   <- if(length(Q) > 1) paste(c(Q.msg, paste0("and ", Q[length(Q)])), sep="", collapse="") else Q
         msg     <- paste0("The chosen ", method, " model has ", G, " group",  ifelse(G == 1, " with ", "s, with "), Q.msg, " factor", ifelse(G == 1 && Q == 1, "\n", paste0("s", ifelse(G == 1, "\n", " respectively\n"))), sep="")
-      }               
+      }
         cat(msg)
     }
-  
-    summary.Tuned_IMIFA <- function(res) {
+
+    summary.Results_IMIFA <- function(res) {
       criterion <- unlist(strsplit(toupper(attr(res$GQ.results, "Criterion")), "[.]"))
       criterion <- ifelse(length(criterion) > 1, ifelse(criterion[1] != "LOG", paste0(criterion[1], ".", tolower(criterion[2])), "LogIntegratedLikelihood"), criterion)
       crit.mat  <- res$GQ.results[[paste0(criterion, "s")]]
       msg       <- NULL
       if(any(dim(crit.mat) > 1)) {
-        msg     <- paste0(", and ", ifelse(substr(criterion, 1, 1) == "A", "an ", "a "),  criterion, " of ", round(max(crit.mat), 2), "\n")  
+        msg     <- paste0(", and ", ifelse(substr(criterion, 1, 1) == "A", "an ", "a "),  criterion, " of ", round(max(crit.mat), 2), "\n")
       }
-        cat(paste0(utils::capture.output(print(res)), msg))
+        cat(paste0(utils::capture.output(print.Results_IMIFA(res)), msg))
     }
-    
+
     .power2     <- function(x) x * x
     .which0     <- function(x) which(x == 0)
     .chol       <- function(x) tryCatch(chol(x), error=function(e) chol(corpcor::make.positive.definite(x)))

@@ -42,6 +42,10 @@ Keefe Murphy [aut, cre], Isobel Claire Gormley [ctb], Cinzia Viroli [ctb]
 Maintainer: Keefe Murphy <keefe.murphy@ucd.ie>
 }
 
+\section{References}{
+
+}
+
 \section{See Also}{
 
 Further details and examples are given in the associated vignette document.

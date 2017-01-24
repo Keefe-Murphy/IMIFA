@@ -652,6 +652,6 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   attr(result, "Switch")       <- sw
   attr(result, "Uni.Meth")     <- attr(sims, "Uni.Meth")
   attr(result, "Vars")         <- n.var
-  cat(print(result))
+  cat(print.Results_IMIFA(result))
   return(result)
 }

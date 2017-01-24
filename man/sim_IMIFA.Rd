@@ -34,7 +34,7 @@ Function to simulate data of any size and dimension from a mixture of (infinite)
 sim.data <- sim_IMIFA(N=100, G=3, P=20, Q=c(2, 2, 5))
 names(attributes(sim.data))
 attr(sim.data, "Labels")
-#tmp <- mcmc_IMIFA(sim.data, method="MIFA", range.G=3, n.iters=5000)
+# tmp <- mcmc_IMIFA(sim.data, method="MIFA", range.G=3, n.iters=5000)
 }
 \seealso{
 The function \code{\link{mcmc_IMIFA}} for fitting an IMIFA related model to the simulated data set.
