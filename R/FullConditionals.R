@@ -161,6 +161,7 @@
 #'
 #' @return Either a single rate hyperparameter or \code{ncol(covar)} variable specific hyperparameters.
 #' @export
+#' @importFrom matrixcalc "is.positive.semi.definite"
 #'
 #' @seealso \code{\link{mcmc_IMIFA}}
 #' @references Fruwirth-Schnatter, S.  and Lopes, H.F. (2010). Parsimonious Bayesian factor analysis when the number of factors is unknown. \emph{Technical Report}. The University of Chicago Booth School of Business.
@@ -181,7 +182,7 @@
       if(any(!is.numeric(shape),
              length(shape) != 1))          stop("'shape' must be a single digit")
       P         <- ncol(covar)
-      inv.cov   <- try(solve(covar), silent=TRUE)
+      inv.cov   <- try(base::solve(covar), silent=TRUE)
       if(inherits(inv.cov, "try-error"))  {
         inv.cov <- 1/covar
       }
@@ -348,6 +349,8 @@
 #'
 #' @return The expected number of clusters under the specified prior conditions.
 #' @export
+#' @importFrom Rmpfr "pochMpfr"
+#' @importFrom gmp "asNumeric"
 #' @seealso \code{\link{G_variance}}, \code{\link{G_prior}}, \code{\link[Rmpfr]{Rmpfr}}, \code{\link[gmp]{gmp}}
 #'
 #' @examples
@@ -377,6 +380,8 @@
 #'
 #' @return The variance of the number of clusters under the specified prior conditions.
 #' @export
+#' @importFrom Rmpfr "pochMpfr"
+#' @importFrom gmp "asNumeric"
 #' @seealso @seealso \code{\link{G_expected}}, \code{\link{G_prior}}, \code{\link[Rmpfr]{Rmpfr}}, \code{\link[gmp]{gmp}}
 #'
 #' @examples

@@ -372,8 +372,8 @@
     eta.store        <- if(sw["s.sw"])  tryCatch(eta.store[,Qmax,, drop=FALSE],       error=function(e) eta.store)
     load.store       <- if(sw["l.sw"])  tryCatch(load.store[,Qmax,Gmax,, drop=FALSE], error=function(e) load.store)
     returns          <- list(mu       = if(sw["mu.sw"])  mu.store[,Gmax,, drop=FALSE],
-                             eta      = if(sw["s.sw"])   tryCatch(as.simple_sparse_array(eta.store),  error=function(e) eta.store),
-                             load     = if(sw["l.sw"])   tryCatch(as.simple_sparse_array(load.store), error=function(e) load.store),
+                             eta      = if(sw["s.sw"])   tryCatch(slam::as.simple_sparse_array(eta.store),  error=function(e) eta.store),
+                             load     = if(sw["l.sw"])   tryCatch(slam::as.simple_sparse_array(load.store), error=function(e) load.store),
                              psi      = if(sw["psi.sw"]) psi.store[,Gmax,, drop=FALSE],
                              pi.prop  = if(sw["pi.sw"])  pi.store[Gmax,, drop=FALSE],
                              alpha    = if(not.fixed)    alpha.store,

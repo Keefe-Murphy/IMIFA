@@ -24,6 +24,12 @@
 #' \item{Uniqueness}{Posterior summaries for the uniquenesses.}
 #' }
 #' @export
+#' @importFrom Rfast "med" "rowMaxs" "standardise" "colMaxs" "rowVars" "rowmeans" "Order" "cova"
+#' @importFrom abind "adrop"
+#' @importFrom MCMCpack "procrustes"
+#' @importFrom e1071 "matchClasses" "classAgreement"
+#' @importFrom mclust "classError"
+#' @importFrom matrixStats "rowMedians" "rowQuantiles"
 #'
 #' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{plot.Results_IMIFA}}
 #' @references
@@ -52,13 +58,12 @@ get_IMIFA_results              <- function(sims = NULL, burnin = 0L, thinning = 
   UseMethod("get_IMIFA_results")
 }
 
+#' @export
 get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, Q = NULL, criterion = c("bicm", "aicm", "bic.mcmc", "aic.mcmc", "log.iLLH", "dic"),
                                            G.meth = c("mode", "median"), Q.meth = c("mode", "median"), dat = NULL, conf.level = 0.95, zlabels = NULL) {
 
-  defpar         <- suppressWarnings(graphics::par(no.readonly=TRUE))
   defopt         <- options()
   options(warn=1)
-  on.exit(suppressWarnings(graphics::par(defpar)))
   on.exit(suppressWarnings(options(defopt)), add=TRUE)
   if(missing(sims))               stop("Simulations must be supplied")
   if(class(sims) != "IMIFA")      stop("Object of class 'IMIFA' must be supplied")

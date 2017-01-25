@@ -12,6 +12,7 @@
 #'
 #' @return An data.frame with \code{N} observations of \code{P} variables. The true values of the parameters which generated these data are also stored.
 #' @export
+#' @importFrom corpcor "is.positive.definite" "make.positive.definite"
 #'
 #' @examples
 #' # Simulate 100 observations from 3 balanced groups with cluster-specific numbers of latent factors

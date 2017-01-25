@@ -19,6 +19,13 @@
 #'
 #' @return The desired plot with appropriate output and summary statistics printed to the console screen.
 #' @export
+#' @import graphics
+#' @importFrom grDevices "palette" "adjustcolor"
+#' @importFrom Rfast "Order" "med" "colMedians"
+#' @importFrom plotrix "plotCI"
+#' @importFrom gclus "plotcolors"
+#' @importFrom e1071 "classAgreement"
+#' @importFrom mclust "classError"
 #' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{get_IMIFA_results}}, \code{\link{mat2cols}}, \code{\link[gclus]{plotcolors}}
 #'
 #' @examples
@@ -950,6 +957,9 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
 #'
 #' @return A matrix of hex colour code representations.
 #' @export
+#' @importFrom grDevices "col2rgb" "heat.colors"
+#' @importFrom dichromat "dichromat"
+#' @importFrom gclus "plotcolors"
 #'
 #' @seealso \code{\link[gclus]{plotcolors}}
 #'
@@ -998,6 +1008,10 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
 #'
 #' @return A plot of the prior distribution if \code{show.plot} is TRUE. Density values are returned invisibly.
 #' @export
+#' @importFrom grDevices "palette" "adjustcolor"
+#' @importFrom Rmpfr "pochMpfr"
+#' @importFrom gmp "asNumeric" "Stirling1.all"
+#' @importFrom Rfast "colsums" "colMaxs"
 #' @seealso \code{\link{G_expected}}, \code{\link{G_variance}}, \code{\link[Rmpfr]{Rmpfr}}, \code{\link[gmp]{gmp}}
 #'
 #' @examples

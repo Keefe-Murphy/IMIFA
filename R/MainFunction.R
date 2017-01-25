@@ -54,6 +54,16 @@
 #'
 #' @return A list of lists of lists of class "IMIFA" to be passed to \code{\link{get_IMIFA_results}}. If the returned object is x, candidate models accesible via subsetting, where x is of the form x[[1:length(range.G)]][[1:length(range.Q)]]. However, these objects of class "IMIFA" should rarely if ever be manipulated by hand - use of the \code{\link{get_IMIFA_results}} function is \emph{strongly} advised. Dedicated \code{print} and \code{summary} functions exist for objects of class "\code{IMIFA}".
 #' @export
+#' @import stats
+#' @importFrom matrixStats "rowLogSumExps"
+#' @importFrom MCMCpack "rdirichlet"
+#' @importFrom Rfast "rowsums" "colsums" "Order" "colVars" "rowmeans" "standardise" "sort_unique" "cova"
+#' @importFrom e1071 "matchClasses"
+#' @importFrom mvnfast "dmvn"
+#' @importFrom slam "as.simple_sparse_array"
+#' @importFrom utils "capture.output" "txtProgressBar" "setTxtProgressBar"
+#' @importFrom corpcor "make.positive.definite"
+#' @importFrom mclust "Mclust" "mclustBIC"
 #'
 #' @seealso \code{\link{get_IMIFA_results}}, \code{\link{psi_hyper}}, \code{\link{MGP_check}}
 #' @references
@@ -89,10 +99,8 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
                         alpha.step = c("gibbs", "metropolis", "fixed"), alpha.hyper = NULL, ind.slice = TRUE, rho = NULL, DP.lab.sw = TRUE, trunc.G = NULL, verbose = TRUE, discount = NULL,
                         learn.d = FALSE, d.hyper = NULL, mu0g = FALSE, psi0g = FALSE, delta0g = FALSE, mu.switch = TRUE, score.switch = TRUE, load.switch = TRUE, psi.switch = TRUE, pi.switch = TRUE) {
 
-  defpar    <- suppressWarnings(graphics::par(no.readonly=TRUE))
   defopt    <- options()
   options(warn=1)
-  on.exit(suppressWarnings(graphics::par(defpar)))
   on.exit(suppressWarnings(options(defopt)), add=TRUE)
   if(!missing(method) && method == "classification") {
     method  <- "classify"
