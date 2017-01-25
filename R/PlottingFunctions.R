@@ -945,8 +945,28 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
   }
 
 # Prior No. Groups (DP & PY)
+#' Plot Dirichlet / Pitman-Yor process Priors
+#'
+#' Plots the prior distribution of the number of clusters under a Dirichlet / Pitman-Yor process prior, for a sample of size \code{N} at given values of the concentration parameter \code{alpha} and optionally also the \code{discount} parameter. Useful for soliciting sensible priors for \code{alpha} or suitable fixed values for \code{alpha} or \code{discount} under the "\code{IMFA}" and "\code{IMIFA}" methods for \code{\link{mcmc_IMIFA}}, All arguments are vectorised. Requires use of the \code{\link[Rmpfr]{Rmpfr}} and \code{\link[gmp]{gmp}} libraries. Density values are returned invisibly.
+#' @param N The sample size.
+#' @param alpha The concentration parameter. Must be specified and must be strictly greater than \code{-discount}.
+#' @param discount The discount parameter for the Pitman-Yor process. Must lie in the interval [0, 1). Defaults to 0 (i.e. the Dirichlet process) as plotting with non-zero discount is not yet implement. However, users can still consult \code{\link{G_expected}} and \code{\link{G_variance}} in order to solicit sensible \code{discount} values.
+#' @param show.plot Logical indicating whether the plot should be displayed (default = TRUE).
+#' @param avg Logical indicating whether perpendicular lines should be dropped at the expected value, using \code{\link{G_expected}} with the supplied arguments.
+#' @param col Colour of the plotted lines.
+#' @param main Title of the plot.
+#' @param ... Other optional arguments typically passed to \code{\link{plot}}.
+#'
+#' @return A plot of the prior distribution if \code{show.plot} is TRUE. Density values are returned invisibly.
+#' @export
+#' @seealso \code{\link{G_expected}}, \code{\link{G_variance}}, \code{\link[Rmpfr]{Rmpfr}}, \code{\link[gmp]{gmp}}
+#'
+#' @examples
+#' # library(Rmpfr)
+#' # x <- G_prior(150, alpha=5)
+#' # x
   G_prior      <- function(N, alpha, discount = 0L, show.plot = TRUE,
-                           avg = FALSE, col = "black", main = NULL, ...) {
+                           avg = FALSE, col = NULL, main = NULL, ...) {
     firstex    <- suppressMessages(require(Rmpfr))
     if(isTRUE(firstex)) {
       on.exit(.detach_pkg(Rmpfr))
@@ -1009,6 +1029,6 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         }
       }
     }
-      invisible(rx)
+      invisible(as.vector(rx))
   }
 #

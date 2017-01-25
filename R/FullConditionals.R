@@ -339,6 +339,19 @@
     }
 
   # Moments of Dirichlet / Pitman-Yor Processes
+#' 1st Moment of the Dirichlet / Pitman-Yor processes
+#'
+#' Calculates the expected number of clusters under a Dirichlet process or Pitman-Yor process prior for a sample of size \code{N} at given values of the concentration parameter \code{alpha} and optionally also the \code{discount} parameter. Useful for soliciting sensible priors for \code{alpha} or suitable fixed values for \code{alpha} or \code{discount} under the "\code{IMFA}" and "\code{IMIFA}" methods for \code{\link{mcmc_IMIFA}}, All arguments are vectorised. Requires use of the \code{\link[Rmpfr]{Rmpfr}} and \code{\link[gmp]{gmp}} libraries for non-zero \code{discount} values.
+#' @param N The sample size.
+#' @param alpha The concentration parameter. Must be specified and must be strictly greater than \code{-discount}.
+#' @param discount The discount parameter for the Pitman-Yor process. Must lie in the interval [0, 1). Defaults to 0 (i.e. the Dirichlet process).
+#'
+#' @return The expected number of clusters under the specified prior conditions.
+#' @export
+#' @seealso \code{\link{G_variance}}, \code{\link{G_prior}}, \code{\link[Rmpfr]{Rmpfr}}, \code{\link[gmp]{gmp}}
+#'
+#' @examples
+#' G_expected(N=150, alpha=c(3, 10, 25))
     G_expected  <- Vectorize(function(N, alpha, discount = 0L) {
       if(!all(is.numeric(N), is.numeric(discount),
          is.numeric(alpha)))               stop("All inputs must be numeric")
@@ -355,6 +368,19 @@
       }
     })
 
+#' 2nd Moment of Dirichlet / Pitman-Yor processes
+#'
+#' Calculates the variance in the number of clusters under a Dirichlet process or Pitman-Yor process prior for a sample of size \code{N} at given values of the concentration parameter \code{alpha} and optionally also the \code{discount} parameter. Useful for soliciting sensible priors for \code{alpha} or suitable fixed values for \code{alpha} or \code{discount} under the "\code{IMFA}" and "\code{IMIFA}" methods for \code{\link{mcmc_IMIFA}}, All arguments are vectorised. Requires use of the \code{\link[Rmpfr]{Rmpfr}} and \code{\link[gmp]{gmp}} libraries for non-zero \code{discount} values.7
+#' @param N The sample size.
+#' @param alpha The concentration parameter. Must be specified and must be strictly greater than \code{-discount}.
+#' @param discount The discount parameter for the Pitman-Yor process. Must lie in the interval [0, 1). Defaults to 0 (i.e. the Dirichlet process).
+#'
+#' @return The variance of the number of clusters under the specified prior conditions.
+#' @export
+#' @seealso @seealso \code{\link{G_expected}}, \code{\link{G_prior}}, \code{\link[Rmpfr]{Rmpfr}}, \code{\link[gmp]{gmp}}
+#'
+#' @examples
+#' G_variance(N=150, alpha=c(3, 10, 25))
     G_variance  <- Vectorize(function(N, alpha, discount = 0L) {
       if(!all(is.numeric(N), is.numeric(discount),
          is.numeric(alpha)))               stop("All inputs must be numeric")
