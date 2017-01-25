@@ -39,7 +39,7 @@
 #' @param rho Parameter controlling the rate of geometric decay for the independent slice-efficient sampler, s.t. xi = (1 - rho)rho^(g-1). Must lie in the interval (0, 1]. Higher values are associated with better mixing but longer run times. Defaults to 0.75, Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods when \code{ind.slice} is TRUE.
 #' @param DP.lab.sw Logial indicating whether the two forced label switching moves are to be implemented (defaults to TRUE). Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods.
 #' @param trunc.G The maximum number of allowable and storable groups if the "\code{IMFA}" or "\code{IMIFA}" method is employed. Defaults to smaller of \code{N} and 50.
-#' @param verbose Logical indicating whether to print output and a progress bar to the screen while the sampler runs (defaults to TRUE).
+#' @param verbose Logical indicating whether to print output (e.g. run times) and a progress bar to the screen while the sampler runs (defaults to TRUE).
 #' @param discount The discount parameter used when generalising the Dirichlet process to the Pitman-Yor process. Must lie in the interval (0, 1). If non-zero, \code{alpha} can be supplied greater than -discount. Defaults to 0. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods.
 #' @param learn.d Logical indicating whether the \code{discount} parameter is to be updated. Not yet implemented.
 #' @param d.hyper Hyperparameters for the Beta prior on the \code{discount} hyperparameter. However, learning this parameter is not yet implemented.

@@ -9,11 +9,20 @@
 #' @param criterion The criterion to use for model selection, if model selection is required by the method in \code{sims}. Note that these are \emph{all} calculated, this argument merely indicates which one will form the basis of the construction of the output.
 #' @param G.meth If the object in \code{sims} arises from the "\code{OMFA}", "\code{OMIFA}", "\code{IMFA}" or "\code{IMIFA}" methods, this argument determines whether the optimal number of clusters is given by the mode or median of the posterior distribution of \code{G}. Defaults to "\code{Mode}".
 #' @param Q.meth If the object in \code{sims} arises from the "\code{IFA}", "\code{MIFA}", "\code{OMIFA}" or "\code{IMIFA}" methods, this argument determines whether the optimal number of latent factors is given by the mode or median of the posterior distribution of \code{Q}. Defaults to "\code{Mode}".
-#' @param dat The actual data set on which \code{\link{mcmc_IMIFA}} was originally run. This is necessary for computing error metrics between the estimated and empirical covariance matrice(s). If this is not supplied, the function will attempt to find the data set if it is still available in the global environment.
+#' @param dat The actual data set on which \code{\link{mcmc_IMIFA}} was originally run. This is necessary for computing error metrics between the estimated and empirical covariance matrix/matrices. If this is not supplied, the function will attempt to find the data set if it is still available in the global environment.
 #' @param conf.level The confidence level to be used throughout for credible intervals for all parameters of inferential interest. Defaults to 0.95.
 #' @param zlabels For any method that performs clustering, the true labels can be supplied if they are known in order to compute clustering performance metrics. This also has the effect of ordering the MAP labels (and thus the ordering of cluster-specific parameters) to most closely correspond to the true labels if supplied.
 #'
-#' @return An object of class "\code{Results_IMIFA}" to be passed to \code{\link{plot.Results_IMIFA}} for visualising results. Dedicated \code{print} and \code{summary} functions exist for objects of this class.
+#' @return An object of class "\code{Results_IMIFA}" to be passed to \code{\link{plot.Results_IMIFA}} for visualising results. Dedicated \code{print} and \code{summary} functions exist for objects of this class. The object is a list of lists, some of the most important components of which are:
+#' \describe{
+#' \item{Clust}{Everything pertaining to clustering performance can be found here for all but the "\code{FA}" and "\code{IFA}" methods. More detail is given if \code{zlabels}} are supplied.
+#' \item{Error}{Error metrics (e.g. MSE) between the empirical and estimated covariance matrix/matrices.}
+#' \item{GQ.results}{Everything pertaining to model choice can be found here, incl. posterior summaries for the estimated number of groups and estimated number of factors, if applicable to the method employed. Information criterion values are also accessible here.}
+#' \item{Means}{Posterior summaries for the means.}
+#' \item{Loadings}{Posterior summaries for the factor loadings matrix/matrices.}
+#' \item{Scores}{Posterior summaries for the latent factor scores.}
+#' \item{Uniqueness}{Posterior summaries for the uniquenesses.}
+#' }
 #' @export
 #'
 #' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{plot.Results_IMIFA}}
