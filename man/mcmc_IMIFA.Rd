@@ -66,15 +66,15 @@ mcmc_IMIFA(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA",
 
 \item{epsilon}{Neighbourhood of zero within which a loadings entry is considered negligible according to \code{prop}. Defaults to 0.1. Only relevant for methods ending in IFA.}
 
-\item{alpha.d1}{Shape hyperparameter of the global shrinkage on the first column of the loadings according to the MGP shrinkage prior. Passed to \code{\link{psi_hyper}} to ensure validity. Defaults to 3. Only relevant for methods ending in IFA.}
+\item{alpha.d1}{Shape hyperparameter of the global shrinkage on the first column of the loadings according to the MGP shrinkage prior. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to 3. Only relevant for methods ending in IFA.}
 
-\item{alpha.d2}{Shape hyperparameter of the global shrinkage on subsequent columns of the loadings according to the MGP shrinkage prior. Passed to \code{\link{psi_hyper}} to ensure validity. Defaults to 6. Only relevant for methods ending in IFA.}
+\item{alpha.d2}{Shape hyperparameter of the global shrinkage on subsequent columns of the loadings according to the MGP shrinkage prior. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to 6. Only relevant for methods ending in IFA.}
 
-\item{beta.d1}{Rate hyperparameter of the global shrinkage on the first column of the loadings according to the MGP shrinkage prior. Passed to \code{\link{psi_hyper}} to ensure validity. Defaults to 1. Only relevant for methods ending in IFA.}
+\item{beta.d1}{Rate hyperparameter of the global shrinkage on the first column of the loadings according to the MGP shrinkage prior. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to 1. Only relevant for methods ending in IFA.}
 
-\item{beta.d2}{Rate hyperparameter of the global shrinkage on the first column of the loadings according to the MGP shrinkage prior. Passed to \code{\link{psi_hyper}} to ensure validity. Defaults to 1. Only relevant for methods ending in IFA.}
+\item{beta.d2}{Rate hyperparameter of the global shrinkage on the first column of the loadings according to the MGP shrinkage prior. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to 1. Only relevant for methods ending in IFA.}
 
-\item{nu}{Hyperparameter for the inverse gamma prior on the local shrinkage parameters ~ IG(\code{nu + 1}, \code{nu}). Defaults to 2. Only relevant for methods ending in IFA.}
+\item{nu}{Hyperparameter for the gamma prior on the local shrinkage parameters. Defaults to 2. Passed to \code{\link{MGP_check}} to ensure validity. Only relevant for methods ending in IFA.}
 
 \item{nuplus1}{Logical switch indicating whether the shape hyperparameter of the prior on the local shrinkage parameters is equal to \code{nu + 1}. If FALSE, it is simply equal to \code{nu}. Only relevant for methods ending in IFA.}
 
@@ -155,6 +155,6 @@ Carries out Gibbs sampling for all models from the IMIFA family, allowing model-
 
 }
 \seealso{
-\code{\link{get_IMIFA_results}}
+\code{\link{get_IMIFA_results}}, \code{\link{psi_hyper}}, \code{\link{MGP_check}}
 }
 

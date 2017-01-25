@@ -899,24 +899,44 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
 }
 
 # Loadings Heatmaps
+#' Convert a numeric matrix to colours
+#'
+#' Converts a matrix to a hex colour code representation for plotting using \code{\link[gclus]{plotcolors}}. Used internally by \code{\link{plot.Results_IMIFA}} for plotting posterior mean loadings heatmaps.
+#' @param mat A matrix.
+#' @param cols The colour palette to be used. Defaults to \code{heat.colors(30)}. Will be checked for validity.
+#' @param byrank Logical indicating whether to convert the matrix itself or the sample ranks of the values therein. Defaults to FALSE.
+#' @param breaks Number of gradations in colour to use. Defaults to \code{length(cols)}.
+#' @param blind A logical switch indicating whether colour blind plots using \code{\link[dichromat]{dichromat}} should be produced. Defaults to TRUE.
+#' @param blind.type The type of colour palette to be used if \code{blind} is TRUE. The arguments are exactly as the \code{type} argument under \code{\link[dichromat]{dichromat}}.
+#'
+#' @return A matrix of hex colour code representations.
+#' @export
+#'
+#' @seealso \code{\link[gclus]{plotcolors}}
+#'
+#' @examples
+#' mat <- matrix(rnorm(100), nr=10, nc=10)
+#' cols <- mat2cols(mat)
+#' cols
+#' plotcolors(cols)
+#' # plotcolors(cols, blind=FALSE, breaks=10)
   mat2cols     <- function(mat, cols = heat.colors(30L), byrank = FALSE, breaks = length(cols),
                            blind = TRUE, blind.type = c("deutan", "protan", "tritan")) {
     m          <- as.matrix(mat)
     if(!all(.are_cols(cols)))         stop("Invalid colours supplied")
     if(any(!is.logical(blind),
-           length(blind)  != 1))      stop("'blind' must be TRUE or FALSE")
+           length(blind)   != 1))     stop("'blind' must be TRUE or FALSE")
     if(any(!is.logical(byrank),
-           length(byrank) != 1))      stop("'blind' must be TRUE or FALSE")
+           length(byrank)  != 1))     stop("'byrank' must be TRUE or FALSE")
+    if(any(!is.numeric(breaks),
+           length(breaks)  != 1))     stop("'breaks' must be a single digit")
     cols       <- if(isTRUE(blind))   dichromat::dichromat(cols, type=match.arg(blind.type)) else cols
     m1         <- if(isTRUE(byrank))  rank(m) else m
     facs       <- cut(m1, breaks, include.lowest=TRUE)
-    answer     <- cols[as.numeric(facs)]
-    if(is.matrix(m)) {
-      answer   <- matrix(answer, nrow(m), ncol(m))
-      rownames(answer)  <- rownames(m)
-      colnames(answer)  <- colnames(m)
-    }
-    answer
+    ans        <- matrix(cols[as.numeric(facs)], nr=nrow(m), nc=ncol(m))
+    rownames(answer)       <- rownames(m)
+    colnames(answer)       <- colnames(m)
+      ans
   }
 
 # Colour Checker

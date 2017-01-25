@@ -152,10 +152,34 @@
 
 # Other Functions
   # Uniqueness Hyperparameters
+#' Find sensible inverse gamma hyperparameters for variance/uniqueness parameters
+#'
+#' Takes a shape hyperparameter and covariance matrix, and finds data-driven rate hyperparameters in such a way that Heywood problems are avoided. Rates are allowed to be variable-specific. Used internally by \code{\link{mcmc_IMIFA}} when it's argument \code{psi_beta} is not supplied.
+#' @param shape A positive shape hyperparameter.
+#' @param covar A square, positive-semidefinite covariance matrix
+#' @param type A switch indicating whether a single rate (\code{isotropic}) or variable-specific rates (\code{unconstrained}) are to be derived. uniquenesses are allowed to be variable specific
+#'
+#' @return Either a single rate hyperparameter or \code{ncol(covar)} variable specific hyperparameters.
+#' @export
+#'
+#' @seealso \code{\link{mcmc_IMIFA}}
+#' @references Fruwirth-Schnatter, S.  and Lopes, H.F. (2010). Parsimonious Bayesian factor analysis when the number of factors is unknown. \emph{Technical Report}. The University of Chicago Booth School of Business.
+#'
+#' @examples
+#' data(olive)
+#' olive2 <- olive[,-(1:2)]
+#' rates <- psi_hyper(shape=2.5, covar=cov(olive2), type="isotropic")
+#' rates
+#'
+#' olive_scaled <- scale(olive2, center=TRUE, scale=TRUE)
+#' rate <- psi_hyper(shape=3, covar=cov(olive_scaled), type="unconstrained")
+#' rate
     psi_hyper   <- function(shape, covar, type=c("unconstrained", "isotropic")) {
       if(!all(matrixcalc::is.positive.semi.definite(covar),
               isSymmetric(covar),
               is.double(covar)))           stop("Invalid covariance matrix supplied")
+      if(any(!is.numeric(shape),
+             length(shape) != 1))          stop("'shape' must be a single digit")
       P         <- ncol(covar)
       inv.cov   <- try(solve(covar), silent=TRUE)
       if(inherits(inv.cov, "try-error"))  {
@@ -174,6 +198,36 @@
     }
 
   # Check Shrinkage Hyperparemeters
+#' Check the validity of MGP hyperparameters
+#'
+#' Checks the hyperparameters for the multiplicative gamma process (MGP) shrinkage prior in order to ensure that the property of cumulative shrinkage holds. This is called inside \code{\link{mcmc_IMIFA}} for the "\code{IFA}", "\code{MIFA}", "\code{OMIFA}" and "\code{IMIFA}" methods. The arguments \code{ad1, ad2, nu, bd1} and \code{bd2} are vectorised.
+#' @param ad1 Shape hyperparameter for delta_1
+#' @param ad2 Shape hyperparameter for delta_2
+#' @param Q Number of latent factors
+#' @param nu Hyperparameter for the local shrinkage parameters
+#' @param bd1 Rate hyperparameter for delta_1. Defaults to 1.
+#' @param bd2 Rate hyperparameter for delta_2. Defaults to 1.
+#' @param plus1 Logical indicator for whether the Gamma prior on the local shrinkage parameters is of the form Ga(\code{nu + 1, nu}), the default, or Ga(\code{nu, nu}).
+#' @param inverse Logical indicator for whether the increasing shrinkage property is assessed against the induced Inverse Gamma prior, the default. Always TRUE when used inside \code{\link{mcmc_IMIFA}}: the FALSE option exists only for demonstration purposes.
+#'
+#' @return A list of length 2 containing the following objects:
+#' \describe{
+#'   \item{expectation}{The vector of actual expected shrinkage factors}
+#'   \item{valid}{A logical indicating whether the cumulative shrinkage property holds}
+#' }
+#' @export
+#' @seealso \code{\link{mcmc_IMIFA}}
+#' @references
+#' Bhattacharya, A. and Dunson, D. B. (2011). Sparse Bayesian infinite factor models. \emph{Biometrika}, 98(2): 291–306.
+#'
+#' Durante, D. (2017). A note on the multiplicative gamma process. \emph{Statistics & Probability Letters}, 122: 198–204.
+#'
+#' @examples
+#' # Check if the MGP global shrinkage parameters are increasing as the column index increases.
+#' MGP_check(ad1=1.5, ad2=1.8, Q=10, nu=2, inverse=FALSE)[[1]]$valid
+#'
+#' # Check if the induced inverse gamma prior on the MGP global shrinkage parameters is stochastically increasing.
+#' MGP_check(ad1=1.5, ad2=1.8, Q=10, nu=2, inverse=TRUE)[[1]]$valid
     MGP_check   <- Vectorize(function(ad1, ad2, Q, nu, bd1 = 1L, bd2 = 1L, plus1 = TRUE, inverse = TRUE) {
       if(any(!is.logical(plus1),
              length(plus1)    != 1))       stop("'plus1' must be TRUE or FALSE")
