@@ -1,12 +1,12 @@
 ################################################################
 ### Gibbs Sampler for Bayesian Factor Analysis (Group Case) ####
 ################################################################
-  
+
 # Gibbs Sampler Function
-  .gibbs_MFA       <- function(Q, data, iters, N, P, G, mu.zero, sigma.mu, 
+  .gibbs_MFA       <- function(Q, data, iters, N, P, G, mu.zero, sigma.mu,
                                mu, sigma.l, burnin, thinning, sw, uni.type,
                                psi.alpha, psi.beta, verbose, cluster, ...) {
-         
+
   # Define & initialise variables
     start.time     <- proc.time()
     total          <- max(iters)
@@ -86,7 +86,7 @@
       }
       fail.gs      <- fail.gs[Rfast::Order(fail.gs)]
       len.fail     <- length(fail.gs)
-      if(len.fail   > 0)      message(paste0("Parameters of the following group", ifelse(len.fail > 2, "s ", " "), "were initialised by simulation from priors, not factanal: ", ifelse(len.fail > 1, paste0(paste0(fail.gs[-len.fail], sep="", collapse=", "), " and ", fail.gs[len.fail]), fail.gs), " - G=", G, ", Q=", Q))
+     #if(len.fail   > 0)      message(paste0("Parameters of the following group", ifelse(len.fail > 2, "s ", " "), "were initialised by simulation from priors, not factanal: ", ifelse(len.fail > 1, paste0(paste0(fail.gs[-len.fail], sep="", collapse=", "), " and ", fail.gs[len.fail]), fail.gs), " - G=", G, ", Q=", Q))
     } else     {
       psi.tmp      <- psi.inv
       psi.inv      <- vapply(Gseq, function(g) if(nn[g] > 1) 1/Rfast::colVars(data[z == g,, drop=FALSE]) else psi.tmp[,g], numeric(P))
@@ -102,18 +102,18 @@
       psi.store[,,1]       <- 1/psi.inv
       pi.store[,1]         <- pi.prop
       z.store[,1]          <- z
-      ll.store[1]          <- .sim_z(data=data, mu=mu, Gseq=Gseq, N=N, pi.prop=pi.prop, sigma=lapply(Gseq, function(g) 
+      ll.store[1]          <- .sim_z(data=data, mu=mu, Gseq=Gseq, N=N, pi.prop=pi.prop, sigma=lapply(Gseq, function(g)
                               corpcor::make.positive.definite(tcrossprod(lmat[,,g]) + diag(1/psi.inv[,g]))), Q0=Q0s)$log.like
     }
     init.time      <- proc.time() - start.time
-    
+
   # Iterate
-    for(iter in seq_len(total)[-1]) { 
+    for(iter in seq_len(total)[-1]) {
       if(verbose   && iter  < burnin) utils::setTxtProgressBar(pb, iter)
-  
+
     # Mixing Proportions
       pi.prop[]    <- .sim_pi(pi.alpha=pi.alpha, nn=nn)
-      
+
     # Cluster Labels
       psi          <- 1/psi.inv
       sigma        <- lapply(Gseq, function(g) tcrossprod(lmat[,,g]) + diag(psi[,g]))
@@ -127,7 +127,7 @@
       nn           <- tabulate(z, nbins=G)
       nn0          <- nn > 0
       dat.g        <- lapply(Gseq, function(g) data[z == g,, drop=FALSE])
-      
+
     # Scores & Loadings
       c.data       <- lapply(Gseq, function(g) sweep(dat.g[[g]], 2, mu[,g], FUN="-"))
       if(Q0) {
@@ -139,17 +139,17 @@
       } else {
         eta.tmp    <- lapply(Gseq, function(g) eta[z == g,, drop=FALSE])
       }
-      
+
     # Means
       sum.data     <- vapply(dat.g, colSums, numeric(P))
       sum.eta      <- lapply(eta.tmp, colSums)
-      mu           <- vapply(Gseq, function(g) if(nn0[g]) .sim_mu(mu.zero=mu.zero[,g], mu.sigma=mu.sigma, psi.inv=psi.inv[,g],  sum.data=sum.data[,g], sum.eta=sum.eta[[g]], 
+      mu           <- vapply(Gseq, function(g) if(nn0[g]) .sim_mu(mu.zero=mu.zero[,g], mu.sigma=mu.sigma, psi.inv=psi.inv[,g],  sum.data=sum.data[,g], sum.eta=sum.eta[[g]],
                              lmat=if(Q1) as.matrix(lmat[,,g]) else lmat[,,g], N=nn[g], P=P) else .sim_mu.p(P=P, sig.mu.sqrt=sig.mu.sqrt, mu.zero=mu.zero[,g]), numeric(P))
-      
+
     # Uniquenesses
       psi.inv      <- vapply(Gseq, function(g) if(nn0[g]) .sim_psi.inv(N=nn[g], psi.alpha=psi.alpha, c.data=c.data[[g]], eta=eta.tmp[[g]], psi.beta=psi.beta[,g],
                              P=P, lmat=if(Q1) as.matrix(lmat[,,g]) else lmat[,,g]) else .sim_psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta[,g]), numeric(P))
-    
+
     # Label Switching
       if(label.switch) {
         switch.lab <- .lab.switch(z.new=z, z.old=z.temp, Gs=Gseq)
@@ -169,26 +169,26 @@
          }
         }
       }
-      
+
       if(zerr && !err.z) {                                    warning("Algorithm may slow due to corrections for Choleski decompositions of non-positive-definite covariance matrices", call.=FALSE)
         err.z      <- TRUE
       }
       if(is.element(iter, iters))  {
         if(verbose)   utils::setTxtProgressBar(pb, iter)
         new.it     <- which(iters == iter)
-        if(sw["mu.sw"])            mu.store[,,new.it]      <- mu  
+        if(sw["mu.sw"])            mu.store[,,new.it]      <- mu
         if(all(sw["s.sw"], Q0))    eta.store[,,new.it]     <- eta
         if(all(sw["l.sw"], Q0))    load.store[,,,new.it]   <- lmat
         if(sw["psi.sw"])           psi.store[,,new.it]     <- psi
         if(sw["pi.sw"])            pi.store[,new.it]       <- pi.prop
-                                   z.store[,new.it]        <- z 
+                                   z.store[,new.it]        <- z
                                    ll.store[new.it]        <- z.res$log.like
-      }  
+      }
     }
     close(pb)
     returns        <- list(mu       = if(sw["mu.sw"])         mu.store,
-                           eta      = if(all(sw["s.sw"], Q0)) eta.store, 
-                           load     = if(all(sw["l.sw"], Q0)) load.store, 
+                           eta      = if(all(sw["s.sw"], Q0)) eta.store,
+                           load     = if(all(sw["l.sw"], Q0)) load.store,
                            psi      = if(sw["psi.sw"])        psi.store,
                            pi.prop  = if(sw["pi.sw"])         pi.store,
                            z.store  = z.store,

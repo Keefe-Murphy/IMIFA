@@ -9,7 +9,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
   defpar  <- suppressWarnings(graphics::par(no.readonly=TRUE))
   defpar$new        <- FALSE
   if(missing(palette))   palette <- c("#999999", "#E69F00", "#009E73", "#56B4E9", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
-  if(!all(are_cols(cols=palette)))    stop("Supplied colour palette contains invalid colours")
+  if(!all(.are_cols(cols=palette)))   stop("Supplied colour palette contains invalid colours")
   if(length(palette) < 3)             stop("Palette must contain 3 or more colours")
   if(missing(transparency)) {
     transparency    <- 0.75
@@ -902,7 +902,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
   mat2cols     <- function(mat, cols = heat.colors(30L), byrank = FALSE, breaks = length(cols),
                            blind = TRUE, blind.type = c("deutan", "protan", "tritan")) {
     m          <- as.matrix(mat)
-    if(!all(are_cols(cols)))          stop("Invalid colours supplied")
+    if(!all(.are_cols(cols)))         stop("Invalid colours supplied")
     if(any(!is.logical(blind),
            length(blind)  != 1))      stop("'blind' must be TRUE or FALSE")
     if(any(!is.logical(byrank),
@@ -920,8 +920,8 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
   }
 
 # Colour Checker
-  are_cols     <- function(cols) {
-    vapply(cols,  function(x) { tryCatch(is.matrix(col2rgb(x)), error = function(e) FALSE) }, logical(1))
+  .are_cols    <- function(cols) {
+    vapply(cols,  function(x) { tryCatch(is.matrix(grDevices::col2rgb(x)), error = function(e) FALSE) }, logical(1))
   }
 
 # Prior No. Groups (DP & PY)
@@ -935,7 +935,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
     if(missing(col))    {
       col      <- c("#E69F00", "#009E73", "#56B4E9", "#F0E442", "#0072B2", "#D55E00", "#CC79A7", "#999999")
     } else {
-      if(!all(are_cols(col)))         stop("Supplied colour palette contains invalid colours")
+      if(!all(.are_cols(col)))        stop("Supplied colour palette contains invalid colours")
       grDevices::palette(grDevices::adjustcolor(rep(col, 2)))
     }
     if(missing(main))   {

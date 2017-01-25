@@ -22,7 +22,7 @@ mcmc_IMIFA(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA",
   pi.switch = TRUE)
 }
 \arguments{
-\item{dat}{A matrix or data frame such that rows correspond to observations (\code{N}) and columns correspond to variables (\code{P}).}
+\item{dat}{A matrix or data frame such that rows correspond to observations (\code{N}) and columns correspond to variables (\code{P}). Non-numeric variables and rows with missing entries will be removed.}
 
 \item{method}{An acronym for the type of model to fit where "\code{FA}" is Factor Analysis, "\code{IFA}" is Infinite Factor Analysis, "\code{MFA}" is Mixtures of Factor Analysers, "\code{MIFA}" is Mixtures of Infinite Factor Analysers, "\code{OMFA}" is Overfitted Mixtures of Factor Analysers, "\code{OMIFA}" is Overfitted Mixtures of Infinite Factor Analysers, "\code{IMFA}" is Infinite Mixtures of Factor Analysers and "\code{IMIFA}" is Infinite Mixtures of Infinite Factor Analysers. The "\code{classify}" method is not yet implemented.}
 
@@ -32,9 +32,9 @@ mcmc_IMIFA(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA",
 
 \item{range.Q}{Depending on the method employed, either the range of values for the number of latent factors, or, for methods ending in IFA the conservatively high starting value for the number of cluster-specific factors, in which case the default starting value is \code{floor(3 * log(P))}. For methods ending in IFA, different clusters can be modelled using different numbers of latent factors.}
 
-\item{burnin}{The number of burn-in iterations for the sampler. Defaults to \code{n.iters/5}.}
+\item{burnin}{The number of burn-in iterations for the sampler. Defaults to \code{n.iters/5}. Note that chains can also be burned in later, using \code{\link{get_IMIFA_results}}.}
 
-\item{thinning}{The thinning interval used in the simulation. Defaults to 2.}
+\item{thinning}{The thinning interval used in the simulation. Defaults to 2. Note that chains can also be thinned later, using \code{\link{get_IMIFA_results}}.}
 
 \item{centering}{A logical value indicating whether mean centering should be applied to the data, defaulting to TRUE.}
 
@@ -90,7 +90,7 @@ mcmc_IMIFA(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA",
 
 \item{ind.slice}{Logical indicitating whether the independent slice-efficient sampler is to employed. If FALSE the dependent slice-efficient sampler is employed. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods.}
 
-\item{rho}{Parameter controlling the rate of geometric decay for the independent slice-efficient sampler, s.t. xi = (1 - rho)rho^(g-1). Must lie in the interval (0, 1]. Defaults to 0.75, Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods when \code{ind.slice} is TRUE.}
+\item{rho}{Parameter controlling the rate of geometric decay for the independent slice-efficient sampler, s.t. xi = (1 - rho)rho^(g-1). Must lie in the interval (0, 1]. Higher values are associated with better mixing but longer run times. Defaults to 0.75, Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods when \code{ind.slice} is TRUE.}
 
 \item{DP.lab.sw}{Logial indicating whether the two forced label switching moves are to be implemented (defaults to TRUE). Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods.}
 
@@ -121,20 +121,21 @@ mcmc_IMIFA(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA",
 \item{pi.switch}{Logical indicating whether the mixing proportions are to be stored (defaults to TRUE). May be useful not to store if memory is an issue. Warning: posterior inference won't be posssible.}
 }
 \value{
-A list of lists of lists of class "IMIFA" to be passed to \code{\link{get_IMIFA_results}}. If the returned object is x, candidate models accesible via subsetting, where x is of the form x[[1:length(range.G)]][[1:length(range.Q)]]. However, these objects of class "IMIFA" should rarely if ever be manipulated by hand - use of the \code{\link{get_IMIFA_results}} function is \emph{strongly} advised.
+A list of lists of lists of class "IMIFA" to be passed to \code{\link{get_IMIFA_results}}. If the returned object is x, candidate models accesible via subsetting, where x is of the form x[[1:length(range.G)]][[1:length(range.Q)]]. However, these objects of class "IMIFA" should rarely if ever be manipulated by hand - use of the \code{\link{get_IMIFA_results}} function is \emph{strongly} advised. Dedicated \code{print} and \code{summary} functions exist for objects of class "\code{IMIFA}".
 }
 \description{
 Carries out Gibbs sampling for all models from the IMIFA family, allowing model-based clustering with factor analytic covariance structure with automatic estimation of the number of clusters and cluster-specific factors as appropriate to the method employed. Factor analysis with one group, finite mixtures, overfitted mixtures, infinite factor models which employed the multiplicative gamma process shrinkage prior (MGP), and infinite mixtures which employ Dirichlet Process Mixture Models are all provided. Creates a raw object of class 'IMIFA' from which the optimal modal can be extracted by \code{\link{get_IMIFA_results}}.
 }
 \examples{
-data(olive)
-data(coffee)
+# data(olive)
+# data(coffee)
 
 # Fit an IMIFA model to the olive data. Accept all defaults.
 # simIMIFA <- mcmc_IMIFA(olive, method="IMIFA")
+# summary(simIMIFA)
 
 # Fit a MFA model to the scaled olive data, with isotropic uniquenesses.
-# All diagonal covariance as a special case where range.Q = 0. Accept all other defaults.
+# Allow diagonal covariance as a special case where range.Q = 0. Accept all other defaults.
 # simMFA <- mcmc_IMIFA(olive, method="MFA", n.iters=10000, range.G=3:6, range.Q=0:3, centering=FALSE, uni.type="isotropic")
 
 # Fit a MIFA model to the centered and scaled coffee data, with cluster labels initialised by K-Means.

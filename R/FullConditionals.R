@@ -164,13 +164,13 @@
         unname((shape - 1)/switch(match.arg(type), unconstrained=diag(inv.cov), isotropic=rep(sum(diag(inv.cov))/P, P)))
     }
 
-  # Alpha Shifted Gamma Hyperparameters
-    shift_gamma <- function(shape, rate, shift = 0L, param = c("rate", "scale"))   {
+  # Alpha/Discount Shifted Gamma Hyperparameters
+    .shift_GA   <- function(shape, rate, shift = 0L, param = c("rate", "scale"))   {
       var       <- shape/rate^2
       exp       <- var  * rate + shift
       rate      <- exp/var
       shape     <- rate * exp
-        c(shape,   switch(match.arg(param), rate=rate, 1/rate))
+        return(list(shape = shape, rate = switch(match.arg(param), rate=rate, 1/rate)))
     }
 
   # Check Shrinkage Hyperparemeters

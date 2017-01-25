@@ -101,7 +101,7 @@
     cereal   <- read.csv(paste0(datdir, "/Data/", "Cereal.csv", sep=""))
     classes  <- cereal$Cereals
   # Simulated   (# classes)
-   #SimData  <- sim_IMIFA(N=80, G=4, P=100, Q=c(5, 1, 4, 0), nn=c(20, 20, 20, 20))
+   #SimData  <- sim_IMIFA_data(N=80, G=4, P=100, Q=c(5, 1, 4, 0), nn=c(20, 20, 20, 20))
    #save(SimData, file=paste0(datdir,"/Data/Simulated_Data.Rdata", sep=""))
     load(file=paste0(datdir, "/Data/Simulated Data/Replication 1/Simulated_DataN25P50.Rdata", sep=""), envir=.GlobalEnv)
     classes  <- attr(SimData, "Labels")

@@ -1,13 +1,13 @@
 ################################################################
 ### Gibbs Sampler for Bayesian Factor Analysis (Group Case) ####
 ################################################################
-  
+
 # Gibbs Sampler Function
   .gibbs_MIFA      <- function(Q, data, iters, N, P, G, sw, mu, mu.zero, uni.type,
-                               sigma.mu, burnin, thinning, verbose, nu, cluster, 
-                               psi.alpha, psi.beta, adapt, adapt.at, prop, b0, 
+                               sigma.mu, burnin, thinning, verbose, nu, cluster,
+                               psi.alpha, psi.beta, adapt, adapt.at, prop, b0,
                                b1, beta.d1, beta.d2, epsilon, nuplus1, ...) {
-        
+
   # Define & initialise variables
     start.time     <- proc.time()
     total          <- max(iters)
@@ -46,7 +46,7 @@
     Q.store        <- provideDimnames(matrix(0, nr=G, nc=n.store), base=list(gnames, iternames))
     Q.large        <- Q.big <- Q.bigs <- FALSE
     err.z          <- z.err <- FALSE
-    
+
     mu.sigma       <- 1/sigma.mu
     sig.mu.sqrt    <- sqrt(sigma.mu)
     if(all(mu.zero == 0)) {
@@ -93,11 +93,11 @@
           psi.inv[,g]       <- 1/fact$uniquenesses
         } else  {
           fail.gs  <- c(fail.gs, g)
-        }               
+        }
       }
       fail.gs      <- fail.gs[Rfast::Order(fail.gs)]
       len.fail     <- length(fail.gs)
-      if(len.fail   > 0)       message(paste0("Parameters of the following group", ifelse(len.fail > 2, "s ", " "), "were initialised by simulation from priors, not factanal: ", ifelse(len.fail > 1, paste0(paste0(fail.gs[-len.fail], sep="", collapse=", "), " and ", fail.gs[len.fail]), fail.gs), " - G=", G, ", Q=", Q))
+     #if(len.fail   > 0)       message(paste0("Parameters of the following group", ifelse(len.fail > 2, "s ", " "), "were initialised by simulation from priors, not factanal: ", ifelse(len.fail > 1, paste0(paste0(fail.gs[-len.fail], sep="", collapse=", "), " and ", fail.gs[len.fail]), fail.gs), " - G=", G, ", Q=", Q))
     } else     {
       psi.tmp      <- psi.inv
       psi.inv      <- vapply(Gseq, function(g) if(nn[g] > 1) 1/Rfast::colVars(data[z == g,, drop=FALSE]) else psi.tmp[,g], numeric(P))
@@ -111,19 +111,19 @@
       psi.store[,,1]        <- 1/psi.inv
       pi.store[,1]          <- pi.prop
       z.store[,1]           <- z
-      ll.store[1]           <- .sim_z(data=data, mu=mu, Gseq=Gseq, N=N, pi.prop=pi.prop, sigma=lapply(Gseq, function(g) 
+      ll.store[1]           <- .sim_z(data=data, mu=mu, Gseq=Gseq, N=N, pi.prop=pi.prop, sigma=lapply(Gseq, function(g)
                                corpcor::make.positive.definite(tcrossprod(lmat[[g]]) + diag(1/psi.inv[,g]))), Q0=Qs > 0)$log.like
       Q.store[,1]           <- Qs
     }
     init.time      <- proc.time() - start.time
-    
+
   # Iterate
-    for(iter in seq_len(total)[-1]) { 
+    for(iter in seq_len(total)[-1]) {
       if(verbose   && iter   < burnin) utils::setTxtProgressBar(pb, iter)
-      
+
     # Mixing Proportions
       pi.prop[]    <- .sim_pi(pi.alpha=pi.alpha, nn=nn)
-      
+
     # Cluster Labels
       psi          <- 1/psi.inv
       sigma        <- lapply(Gseq, function(g) tcrossprod(lmat[[g]]) + diag(psi[,g]))
@@ -140,7 +140,7 @@
       nn0          <- nn  > 0
       nn.ind       <- which(nn0)
       dat.g        <- lapply(Gseq, function(g) data[z == g,, drop=FALSE])
-    
+
     # Scores & Loadings
       c.data       <- lapply(Gseq, function(g) sweep(dat.g[[g]], 2, mu[,g], FUN="-"))
       if(!any(Q0))    {
@@ -150,8 +150,8 @@
       } else {
         eta.tmp    <- lapply(Gseq, function(g) if(all(nn0[g], Q0[g])) .sim_score(N=nn[g], lmat=lmat[[g]], Q=Qs[g], Q1=Q1[g], c.data=c.data[[g]], psi.inv=psi.inv[,g]) else base::matrix(0, nr=ifelse(Q0[g], 0, nn[g]), nc=Qs[g]))
         EtE        <- lapply(Gseq, function(g) if(nn0[g]) crossprod(eta.tmp[[g]]))
-        lmat       <- lapply(Gseq, function(g) if(all(nn0[g], Q0[g])) matrix(unlist(lapply(Pseq, function(j) .sim_load.s(Q=Qs[g], Q1=Q1[g], c.data=c.data[[g]][,j], 
-                             EtE=EtE[[g]], eta=eta.tmp[[g]], psi.inv=psi.inv[,g][j], phi=phi[[g]][j,], tau=tau[[g]])), use.names=FALSE), nr=P, byrow=TRUE) else 
+        lmat       <- lapply(Gseq, function(g) if(all(nn0[g], Q0[g])) matrix(unlist(lapply(Pseq, function(j) .sim_load.s(Q=Qs[g], Q1=Q1[g], c.data=c.data[[g]][,j],
+                             EtE=EtE[[g]], eta=eta.tmp[[g]], psi.inv=psi.inv[,g][j], phi=phi[[g]][j,], tau=tau[[g]])), use.names=FALSE), nr=P, byrow=TRUE) else
                              matrix(unlist(lapply(Pseq, function(j) .sim_load.ps(Q=Qs[g], phi=phi[[g]][j,], tau=tau[[g]])), use.names=FALSE), nr=P, byrow=FALSE))
         eta.tmp    <- if(length(unique(Qs)) != 1) lapply(Gseq, function(g) cbind(eta.tmp[[g]], matrix(0, nr=nn[g], nc=max(Qs) - Qs[g]))) else eta.tmp
         q0ng       <- !Q0 & nn0
@@ -160,44 +160,44 @@
         }
         eta        <- do.call(rbind, eta.tmp)[obsnames,, drop=FALSE]
       }
-      
+
     # Means
       sum.data     <- vapply(dat.g, colSums, numeric(P))
       sum.eta      <- lapply(eta.tmp, colSums)
       mu           <- vapply(Gseq, function(g) if(nn0[g]) .sim_mu(mu.sigma=mu.sigma, psi.inv=psi.inv[,g], mu.zero=mu.zero[,g], sum.eta=sum.eta[[g]][seq_len(Qs[g])],
                              sum.data=sum.data[,g], lmat=lmat[[g]], N=nn[g], P=P) else .sim_mu.p(P=P, sig.mu.sqrt=sig.mu.sqrt, mu.zero=mu.zero[,g]), numeric(P))
-      
+
     # Uniquenesses
       psi.inv      <- vapply(Gseq, function(g) if(nn0[g]) .sim_psi.inv(N=nn[g], psi.alpha=psi.alpha, c.data=c.data[[g]], psi.beta=psi.beta[,g], lmat=lmat[[g]],
                              P=P, eta=eta.tmp[[g]][,seq_len(Qs[g]), drop=FALSE]) else .sim_psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta[,g]), numeric(P))
-    
+
     # Local Shrinkage
       load.2       <- lapply(lmat, .power2)
       phi          <- lapply(Gseq, function(g) if(nn0[g]) .sim_phi(Q=Qs[g], P=P, nu=nu, plus1=nuplus1,
                       tau=tau[[g]], load.2=load.2[[g]]) else .sim_phi.p(Q=Qs[g], P=P, nu=nu, plus1=nuplus1))
-    
+
     # Global Shrinkage
       sum.terms    <- lapply(Gseq, function(g) diag(crossprod(phi[[g]], load.2[[g]])))
       for(g in Gseq)  {
         Qg         <- Qs[g]
         Q1g        <- Q1[g]
         if(nn0[g])    {
-          for(k in seq_len(Qg)) { 
+          for(k in seq_len(Qg)) {
             delta[[g]][k]   <- if(k > 1) .sim_deltak(alpha.d2=alpha.d2[g], beta.d2=beta.d2, delta.k=delta[[g]][k], tau.kq=tau[[g]][k:Qg], P=P,
                                                     Q=Qg, k=k, sum.term.kq=sum.terms[[g]][k:Qg]) else .sim_delta1(Q=Qg, P=P, tau=tau[[g]], sum.term=sum.terms[[g]],
                                                                                                                  alpha.d1=ifelse(Q1g, alpha.d2[g], alpha.d1[g]), beta.d1=ifelse(Q1g, beta.d2, beta.d1), delta.1=delta[[g]][1])
             tau[[g]]        <- cumprod(delta[[g]])
           }
         } else {
-          for(k in seq_len(Qg)) { 
+          for(k in seq_len(Qg)) {
             delta[[g]][k]   <- if(k > 1) .sim_delta.p(alpha=alpha.d2[g], beta=beta.d2) else .sim_delta.p(alpha=ifelse(Q1g, alpha.d2[g], alpha.d1[g]), beta=ifelse(Q1g, beta.d2, beta.d1))
             tau[[g]]        <- cumprod(delta[[g]])
           }
         }
       }
-    
-    # Adaptation  
-      if(all(adapt, iter > adapt.at)) {      
+
+    # Adaptation
+      if(all(adapt, iter > adapt.at)) {
         if(stats::runif(1)   < ifelse(iter < burnin, 0.5, 1/exp(b0 + b1 * (iter - adapt.at)))) {
           colvec   <- lapply(nn.ind, function(g) (if(Q0[g]) colSums(abs(lmat[[g]]) < epsilon)/P else 0) >= prop)
           nonred   <- lapply(colvec, .which0)
@@ -213,7 +213,7 @@
             Qs[nn0][Q.big]  <- Q.star
           }
           phi[nn0]          <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) cbind(phi[[g]][,seq_len(Qs.old[h])], stats::rgamma(n=P, shape=nu + nuplus1, rate=nu)) else phi[[g]][,nonred[[h]], drop=FALSE])
-          delta[nn0]        <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) c(delta[[g]][seq_len(Qs.old[h])], stats::rgamma(n=1, shape=alpha.d2, rate=beta.d2)) else delta[[g]][nonred[[h]]])  
+          delta[nn0]        <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) c(delta[[g]][seq_len(Qs.old[h])], stats::rgamma(n=1, shape=alpha.d2, rate=beta.d2)) else delta[[g]][nonred[[h]]])
           tau[nn0]          <- lapply(delta[nn.ind], cumprod)
           lmat[nn0]         <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) cbind(lmat[[g]][,seq_len(Qs.old[h])], stats::rnorm(n=P, mean=0, sd=sqrt(1/(phi[[g]][,Qs[g]] * tau[[g]][Qs[g]])))) else lmat[[g]][,nonred[[h]], drop=FALSE])
           Qemp     <- Qs[!nn0]
@@ -224,7 +224,7 @@
           eta      <- if(all(Fmax  > Qmaxold, !Q.bigs)) cbind(eta[,seq_len(Qmaxold)], stats::rnorm(N)) else eta[,seq_len(Fmax), drop=FALSE]
           if(Qmax   < max(Qemp, 0)) {
             Qs[Qmax < Qs & !nn0]  <- Qmax
-            for(g  in Gseq[!nn0][Qemp > Qmax]) {  
+            for(g  in Gseq[!nn0][Qemp > Qmax]) {
               phi[[g]]      <- phi[[g]][,Qmaxseq,  drop=FALSE]
               delta[[g]]    <- delta[[g]][Qmaxseq]
               tau[[g]]      <- tau[[g]][Qmaxseq]
@@ -233,7 +233,7 @@
           }
         }
       }
-    
+
     # Label Switching
       if(label.switch)   {
         switch.lab <- .lab.switch(z.new=z, z.old=z.temp, Gs=Gseq)
@@ -241,7 +241,7 @@
         z.perm     <- switch.lab$z.perm
         if(!identical(as.integer(z.perm), Gseq)) {
          if(length(unique(Qs)) != 1) {
-          Qs       <- Qs[z.perm]  
+          Qs       <- Qs[z.perm]
          }
          mu        <- mu[,z.perm, drop=FALSE]
          lmat      <- lmat[z.perm]
@@ -257,17 +257,17 @@
          if(psi0g)       {
           psi.beta <- psi.beta[,z.perm, drop=FALSE]
          }
-         if(all(delta0g, 
+         if(all(delta0g,
                 !ad1.x)) {
           alpha.d1 <- alpha.d1[z.perm]
          }
-         if(all(delta0g, 
+         if(all(delta0g,
                 !adk.x)) {
           alpha.d2 <- alpha.d2[z.perm]
-         } 
+         }
         }
       }
-      
+
       if(Q.bigs && !Q.large && iter > burnin) {        warning(paste0("Q has exceeded initial number of loadings columns since burnin: consider increasing range.Q from ", Q.star), call.=FALSE)
         Q.large    <- TRUE
       }
@@ -277,8 +277,8 @@
       if(is.element(iter, iters))   {
         if(verbose)   utils::setTxtProgressBar(pb, iter)
         new.it     <- which(iters == iter)
-        if(sw["mu.sw"])    mu.store[,,new.it]       <- mu  
-        if(all(sw["s.sw"], 
+        if(sw["mu.sw"])    mu.store[,,new.it]       <- mu
+        if(all(sw["s.sw"],
            any(Q0)))  eta.store[,seq_len(max(Qs)),new.it]  <- eta
         if(sw["l.sw"])   {
           for(g in Gseq) {
@@ -287,7 +287,7 @@
         }
         if(sw["psi.sw"])   psi.store[,,new.it]      <- psi
         if(sw["pi.sw"])    pi.store[,new.it]        <- pi.prop
-                           z.store[,new.it]         <- z 
+                           z.store[,new.it]         <- z
                            ll.store[new.it]         <- z.res$log.like
                            Q.store[,new.it]         <- Qs
       }
@@ -297,7 +297,7 @@
     eta.store      <- if(sw["s.sw"])  tryCatch(eta.store[,Qmax,, drop=FALSE],   error=function(e) eta.store)
     load.store     <- if(sw["l.sw"])  tryCatch(load.store[,Qmax,,, drop=FALSE], error=function(e) load.store)
     returns        <- list(mu       = if(sw["mu.sw"])  mu.store,
-                           eta      = if(sw["s.sw"])   tryCatch(slam::as.simple_sparse_array(eta.store),  error=function(e) eta.store), 
+                           eta      = if(sw["s.sw"])   tryCatch(slam::as.simple_sparse_array(eta.store),  error=function(e) eta.store),
                            load     = if(sw["l.sw"])   tryCatch(slam::as.simple_sparse_array(load.store), error=function(e) load.store),
                            psi      = if(sw["psi.sw"]) psi.store,
                            pi.prop  = if(sw["pi.sw"])  pi.store,

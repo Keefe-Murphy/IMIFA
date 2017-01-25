@@ -14,12 +14,13 @@
 #' @export
 #'
 #' @examples
-#' sim.data <- sim_IMIFA(N=100, G=3, P=20, Q=c(2, 2, 5))
-#' names(attributes(sim.data))
-#' attr(sim.data, "Labels")
+#' # Simulate 100 observations from 3 balanced groups with cluster-specific numbers of latent factors
+#' # sim.data <- sim_IMIFA_data(N=100, G=3, P=20, Q=c(2, 2, 5))
+#' # names(attributes(sim.data))
+#' # attr(sim.data, "Labels")
 #' # tmp <- mcmc_IMIFA(sim.data, method="MIFA", range.G=3, n.iters=5000)
 #' @seealso The function \code{\link{mcmc_IMIFA}} for fitting an IMIFA related model to the simulated data set.
-sim_IMIFA      <- function(N = 300L, G = 3L, P = 50L, Q = rep(4L, G), pis = rep(1/G, G),
+sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(4L, G), pis = rep(1/G, G),
                            nn = NULL, loc.diff = 1L, method = c("conditional", "marginal")) {
 
   N            <- as.integer(N)

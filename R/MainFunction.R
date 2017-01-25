@@ -2,13 +2,13 @@
 #'
 #' Carries out Gibbs sampling for all models from the IMIFA family, allowing model-based clustering with factor analytic covariance structure with automatic estimation of the number of clusters and cluster-specific factors as appropriate to the method employed. Factor analysis with one group, finite mixtures, overfitted mixtures, infinite factor models which employed the multiplicative gamma process shrinkage prior (MGP), and infinite mixtures which employ Dirichlet Process Mixture Models are all provided. Creates a raw object of class 'IMIFA' from which the optimal modal can be extracted by \code{\link{get_IMIFA_results}}.
 #'
-#' @param dat A matrix or data frame such that rows correspond to observations (\code{N}) and columns correspond to variables (\code{P}).
+#' @param dat A matrix or data frame such that rows correspond to observations (\code{N}) and columns correspond to variables (\code{P}). Non-numeric variables and rows with missing entries will be removed.
 #' @param method An acronym for the type of model to fit where "\code{FA}" is Factor Analysis, "\code{IFA}" is Infinite Factor Analysis, "\code{MFA}" is Mixtures of Factor Analysers, "\code{MIFA}" is Mixtures of Infinite Factor Analysers, "\code{OMFA}" is Overfitted Mixtures of Factor Analysers, "\code{OMIFA}" is Overfitted Mixtures of Infinite Factor Analysers, "\code{IMFA}" is Infinite Mixtures of Factor Analysers and "\code{IMIFA}" is Infinite Mixtures of Infinite Factor Analysers. The "\code{classify}" method is not yet implemented.
 #' @param n.iters The number of iterations to run the Gibbs sampler for.
 #' @param range.G Depending on the method employed, either the range of values for the number of clusters, or the conseratively high starting value for the number of clusters. Defaults to 1 for the "\code{FA}" and "\code{IFA}" methods. For the "\code{MFA}" and "\code{MIFA}" models this is to be given as a range of candidate models to explore. For the "\code{OMFA}", "\code{OMIFA}", "\code{IMFA}", and "\code{IMIFA}" models, this is the number of clusters with which the chain is to be initialised, in which case the default is \code{min(N - 1, floor(3 * log(N)))}.
 #' @param range.Q Depending on the method employed, either the range of values for the number of latent factors, or, for methods ending in IFA the conservatively high starting value for the number of cluster-specific factors, in which case the default starting value is \code{floor(3 * log(P))}. For methods ending in IFA, different clusters can be modelled using different numbers of latent factors.
-#' @param thinning The thinning interval used in the simulation. Defaults to 2.
-#' @param burnin The number of burn-in iterations for the sampler. Defaults to \code{n.iters/5}.
+#' @param burnin The number of burn-in iterations for the sampler. Defaults to \code{n.iters/5}. Note that chains can also be burned in later, using \code{\link{get_IMIFA_results}}.
+#' @param thinning The thinning interval used in the simulation. Defaults to 2. Note that chains can also be thinned later, using \code{\link{get_IMIFA_results}}.
 #' @param centering A logical value indicating whether mean centering should be applied to the data, defaulting to TRUE.
 #' @param scaling The scaling to be applied - one of "\code{unit}", "\code{none}" or "\code{pareto}".
 #' @param mu.zero The mean of the prior distribution for the mean parameter. Defaults to the sample mean of the data.
@@ -36,7 +36,7 @@
 #' @param alpha.step Switch indicating whether the Dirichlet process concentration parameter is to be learned by Gibbs sampling (with a Ga(a, b) prior), a Metropolis-Hastings step (with a Unif(a, b) prior), or remain fixed for the duration of the sampler. Defaults to Ga(2, 1). Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods.
 #' @param alpha.hyper A vector of length 2 giving hyperparameters for the Dirichlet  process concentration parameter. If \code{alpha.step = "gibbs"}, the shape and rate parameter of a Gamma distribution. If \code{alpha.step = "metropolis"}, the lower and upper limits of a Uniform distribution. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods when \code{alpha.step} is no "\code{fixed}".
 #' @param ind.slice Logical indicitating whether the independent slice-efficient sampler is to employed. If FALSE the dependent slice-efficient sampler is employed. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods.
-#' @param rho Parameter controlling the rate of geometric decay for the independent slice-efficient sampler, s.t. xi = (1 - rho)rho^(g-1). Must lie in the interval (0, 1]. Defaults to 0.75, Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods when \code{ind.slice} is TRUE.
+#' @param rho Parameter controlling the rate of geometric decay for the independent slice-efficient sampler, s.t. xi = (1 - rho)rho^(g-1). Must lie in the interval (0, 1]. Higher values are associated with better mixing but longer run times. Defaults to 0.75, Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods when \code{ind.slice} is TRUE.
 #' @param DP.lab.sw Logial indicating whether the two forced label switching moves are to be implemented (defaults to TRUE). Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods.
 #' @param trunc.G The maximum number of allowable and storable groups if the "\code{IMFA}" or "\code{IMIFA}" method is employed. Defaults to smaller of \code{N} and 50.
 #' @param verbose Logical indicating whether to print output and a progress bar to the screen while the sampler runs (defaults to TRUE).
@@ -52,21 +52,22 @@
 #' @param psi.switch Logical indicating whether the uniquenesses are to be stored (defaults to TRUE). May be useful not to store if memory is an issue. Warning: posterior inference won't be posssible.
 #' @param pi.switch Logical indicating whether the mixing proportions are to be stored (defaults to TRUE). May be useful not to store if memory is an issue. Warning: posterior inference won't be posssible.
 #'
-#' @return A list of lists of lists of class "IMIFA" to be passed to \code{\link{get_IMIFA_results}}. If the returned object is x, candidate models accesible via subsetting, where x is of the form x[[1:length(range.G)]][[1:length(range.Q)]]. However, these objects of class "IMIFA" should rarely if ever be manipulated by hand - use of the \code{\link{get_IMIFA_results}} function is \emph{strongly} advised.
+#' @return A list of lists of lists of class "IMIFA" to be passed to \code{\link{get_IMIFA_results}}. If the returned object is x, candidate models accesible via subsetting, where x is of the form x[[1:length(range.G)]][[1:length(range.Q)]]. However, these objects of class "IMIFA" should rarely if ever be manipulated by hand - use of the \code{\link{get_IMIFA_results}} function is \emph{strongly} advised. Dedicated \code{print} and \code{summary} functions exist for objects of class "\code{IMIFA}".
 #' @export
 #'
 #' @seealso \code{\link{get_IMIFA_results}}
 #' @references
 #'
 #' @examples
-#' data(olive)
-#' data(coffee)
+#' # data(olive)
+#' # data(coffee)
 #'
 #' # Fit an IMIFA model to the olive data. Accept all defaults.
 #' # simIMIFA <- mcmc_IMIFA(olive, method="IMIFA")
+#' # summary(simIMIFA)
 #'
 #' # Fit a MFA model to the scaled olive data, with isotropic uniquenesses.
-#' # All diagonal covariance as a special case where range.Q = 0. Accept all other defaults.
+#' # Allow diagonal covariance as a special case where range.Q = 0. Accept all other defaults.
 #' # simMFA <- mcmc_IMIFA(olive, method="MFA", n.iters=10000, range.G=3:6, range.Q=0:3, centering=FALSE, uni.type="isotropic")
 #'
 #' # Fit a MIFA model to the centered and scaled coffee data, with cluster labels initialised by K-Means.
@@ -237,7 +238,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
           alpha.hyper     <- switch(alpha.step, gibbs=c(2L, 1L), metropolis=c(- discount, range.G/2), c(0L, 0L))
         }
         if(discount > 0) {
-          alpha.hyper     <- shift_gamma(shape=alpha.hyper[1], rate=alpha.hyper[2], shift=discount)
+          alpha.hyper     <- unlist(.shift_GA(shape=alpha.hyper[1], rate=alpha.hyper[2], shift=discount))
         }
         if(all(length(alpha.hyper)  != 2,
            alpha.step != "fixed"))  stop(paste0("'alpha.hyper' must be a vector of length 2, giving the ", switch(alpha.step, gibbs="shape and rate hyperparameters of the gamma prior for alpha when alpha.step is given as 'gibbs'", metropolis="lower and upper limits of the uniform prior/proposal for alpha when alpha.step is given as 'metropolis'")))
