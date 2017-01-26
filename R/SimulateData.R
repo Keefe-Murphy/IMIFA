@@ -64,7 +64,7 @@ sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(4L, G), pis = rep(
     }
   }
 
-  simdata      <- matrix(0, nr=0, nc=P)
+  simdata      <- matrix(0, nrow=0, ncol=P)
   prior.mu     <- as.integer(scale(Gseq, center=TRUE, scale=FALSE))
   true.mu      <- stats::setNames(vector("list", G), paste0("Group", Gseq))
   true.l       <- true.mu
@@ -92,8 +92,8 @@ sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(4L, G), pis = rep(
       covmat   <- corpcor::make.positive.definite(covmat)
     }
     sigma      <- if(any(Q.g > 0, method == "conditional")) .chol(covmat) else sqrt(covmat)
-    means      <- matrix(mu.true, nr=N.g, nc=P, byrow=TRUE) + switch(method, conditional=tcrossprod(eta.true[true.zlab == g, seq_len(Q.g), drop=FALSE], l.true), 0)
-    simdata    <- rbind(simdata, means + matrix(stats::rnorm(N.g * P), nr=N.g, nc=P) %*% sigma)
+    means      <- matrix(mu.true, nrow=N.g, ncol=P, byrow=TRUE) + switch(method, conditional=tcrossprod(eta.true[true.zlab == g, seq_len(Q.g), drop=FALSE], l.true), 0)
+    simdata    <- rbind(simdata, means + matrix(stats::rnorm(N.g * P), nrow=N.g, ncol=P) %*% sigma)
     dimnames(l.true)   <- list(vnames, if(Q.g > 0) paste0("Factor ", seq_len(Q.g)))
     true.mu[[g]]       <- mu.true
     true.l[[g]]        <- l.true

@@ -39,20 +39,20 @@
       psi.store    <- provideDimnames(array(0, dim=c(P, G, n.store)), base=list(varnames, gnames, iternames))
     }
     if(sw["pi.sw"])  {
-      pi.store     <- provideDimnames(matrix(0, nr=G, nc=n.store), base=list(gnames, iternames))
+      pi.store     <- provideDimnames(matrix(0, nrow=G, ncol=n.store), base=list(gnames, iternames))
     }
-    z.store        <- provideDimnames(matrix(0, nr=N, nc=n.store), base=list(obsnames, iternames))
+    z.store        <- provideDimnames(matrix(0, nrow=N, ncol=n.store), base=list(obsnames, iternames))
     err.z          <- zerr <- FALSE
     ll.store       <- stats::setNames(rep(0, n.store), iternames)
 
     mu.sigma       <- 1/sigma.mu
     sig.mu.sqrt    <- sqrt(sigma.mu)
     if(all(mu.zero == 0)) {
-      mu.zero      <- matrix(0, nr=1, nc=G)
+      mu.zero      <- matrix(0, nrow=1, ncol=G)
       cluster$l.switch[1]  <- FALSE
     }
     if(length(mu.zero)  == 1) {
-      mu.zero      <- matrix(mu.zero,  nr=1, nc=G)
+      mu.zero      <- matrix(mu.zero,  nrow=1, ncol=G)
     }
     z              <- cluster$z
     z.temp         <- factor(z, levels=Gseq)
@@ -63,7 +63,7 @@
     .sim_psi.ip    <- switch(uni.type, unconstrained=.sim_psi.ipu, isotropic=.sim_psi.ipi)
     psi.beta       <- unique(round(psi.beta, min(nchar(psi.beta))))
     if(length(psi.beta) == 1) {
-      psi.beta     <- matrix(psi.beta, nr=1, nc=G)
+      psi.beta     <- matrix(psi.beta, nrow=1, ncol=G)
     }
     mu0g           <- cluster$l.switch[1]
     psi0g          <- cluster$l.switch[2]
@@ -131,10 +131,10 @@
     # Scores & Loadings
       c.data       <- lapply(Gseq, function(g) sweep(dat.g[[g]], 2, mu[,g], FUN="-"))
       if(Q0) {
-        eta.tmp    <- lapply(Gseq, function(g) if(nn0[g]) .sim_score(N=nn[g], lmat=lmat[,,g], Q=Q, c.data=c.data[[g]], psi.inv=psi.inv[,g], Q1=Q1) else base::matrix(0, nr=0, nc=Q))
+        eta.tmp    <- lapply(Gseq, function(g) if(nn0[g]) .sim_score(N=nn[g], lmat=lmat[,,g], Q=Q, c.data=c.data[[g]], psi.inv=psi.inv[,g], Q1=Q1) else base::matrix(0, nrow=0, ncol=Q))
         EtE        <- lapply(Gseq, function(g) if(nn0[g]) crossprod(eta.tmp[[g]]))
         lmat       <- array(unlist(lapply(Gseq, function(g) if(nn0[g]) matrix(unlist(lapply(Pseq, function(j) .sim_load(l.sigma=l.sigma, Q=Q, c.data=c.data[[g]][,j], eta=eta.tmp[[g]],
-                      Q1=Q1, EtE=EtE[[g]], psi.inv=psi.inv[,g][j])), use.names=FALSE), nr=P, byrow=TRUE) else .sim_load.p(Q=Q, P=P, sigma.l=sigma.l)), use.names=FALSE), dim=c(P, Q, G))
+                      Q1=Q1, EtE=EtE[[g]], psi.inv=psi.inv[,g][j])), use.names=FALSE), nrow=P, byrow=TRUE) else .sim_load.p(Q=Q, P=P, sigma.l=sigma.l)), use.names=FALSE), dim=c(P, Q, G))
         eta        <- do.call(rbind, eta.tmp)[obsnames,, drop=FALSE]
       } else {
         eta.tmp    <- lapply(Gseq, function(g) eta[z == g,, drop=FALSE])

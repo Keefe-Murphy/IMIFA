@@ -16,6 +16,7 @@
 #' @param partial Logical indicating whether plots of type "\code{correlation}" use the PACF. The default, FALSE, ensures the ACF is used. Only relevant when \code{plot.meth = "all"}, otherwise both plots are produced when \code{plot.meth = "correlation"}.
 #' @param titles Logical indicating whether default plot titles are to be used (TRUE), or suppressed (FALSE).
 #' @param transparency A factor in [0, 1] modifying the opacity for overplotted lines. Defaults to 0.75.
+#' @param ... Other arguments typically passed to \code{\link{plot}}.
 #'
 #' @return The desired plot with appropriate output and summary statistics printed to the console screen.
 #' @export
@@ -26,6 +27,7 @@
 #' @importFrom gclus "plotcolors"
 #' @importFrom e1071 "classAgreement"
 #' @importFrom mclust "classError"
+#' @importFrom utils "tail"
 #' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{get_IMIFA_results}}, \code{\link{mat2cols}}, \code{\link[gclus]{plotcolors}}
 #' @references Murphy, K., Gormley, I.C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, \code{https://arxiv.org/abs/1701.07010}
 #'
@@ -54,7 +56,7 @@
 #' # plot(resIMIFA, "all", "alpha")
 plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "density", "errors", "GQ", "means", "parallel.coords", "trace", "zlabels"),
                                 param = c("means", "scores", "loadings", "uniquenesses", "pis", "alpha"), zlabels = NULL, load.meth = c("heatmap", "raw"), palette = NULL, g = NULL,
-                                mat = TRUE, ind = NULL, fac = NULL, by.fac = TRUE, type = c("h", "n", "p", "l"), intervals = TRUE, partial = FALSE, titles = TRUE, transparency = 0.75) {
+                                mat = TRUE, ind = NULL, fac = NULL, by.fac = TRUE, type = c("h", "n", "p", "l"), intervals = TRUE, partial = FALSE, titles = TRUE, transparency = 0.75, ...) {
 
   defpar  <- suppressWarnings(graphics::par(no.readonly=TRUE))
   defpar$new        <- FALSE
@@ -121,7 +123,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
   if(all.ind)   {
     if(v.sw[param]) {
       m.sw[-(1:4)]  <- !m.sw[-(1:4)]
-      graphics::layout(matrix(c(1, 2, 3, 4), nr=2, nc=2, byrow=TRUE))
+      graphics::layout(matrix(c(1, 2, 3, 4), nrow=2, ncol=2, byrow=TRUE))
       graphics::par(cex=0.8, mai=c(0.7, 0.7, 0.5, 0.2), mgp=c(2, 1, 0), oma=c(0, 0, 2, 0))
     }
   } else {
@@ -685,7 +687,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
       } else if(is.element(method, c("MFA", "MIFA", "OMFA", "IMFA"))) {
           print(GQ.res[gq.nam != "S"])
       } else switch(method, IFA={
-          print(tail(GQ.res[gq.nam != "S"], -1))
+          print(utils::tail(GQ.res[gq.nam != "S"], -1))
         },
           cat(paste0("Q = ", Q, "\n"))
       )
@@ -826,7 +828,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
       }
       col.e  <- if(G > 1) seq_len(nrow(plot.x)) else seq_along(plot.x)
       if(G    > 1)   {
-        dens <- matrix(-1, nr=7, nc=G + 1)
+        dens <- matrix(-1, nrow=7, ncol=G + 1)
         dens[,G + 1]       <- 30
       } else  {
         dens <- NULL
@@ -965,10 +967,12 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
 #' @seealso \code{\link[gclus]{plotcolors}}
 #'
 #' @examples
-#' mat  <- matrix(rnorm(100), nr=10, nc=10)
+#' mat  <- matrix(rnorm(100), nrow=10, ncol=10)
 #' cols <- mat2cols(mat)
 #' cols
-#' plotcolors(cols)
+#'
+#' # Use gclus::plotcolors() to visualise the colours matrix
+#' # plotcolors(cols)
 #' # plotcolors(cols, blind=FALSE, breaks=10)
   mat2cols     <- function(mat, cols = heat.colors(30L), byrank = FALSE, breaks = length(cols),
                            blind = TRUE, blind.type = c("deutan", "protan", "tritan")) {
@@ -983,10 +987,10 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
     cols       <- if(isTRUE(blind))   dichromat::dichromat(cols, type=match.arg(blind.type)) else cols
     m1         <- if(isTRUE(byrank))  rank(m) else m
     facs       <- cut(m1, breaks, include.lowest=TRUE)
-    ans        <- matrix(cols[as.numeric(facs)], nr=nrow(m), nc=ncol(m))
+    answer     <- matrix(cols[as.numeric(facs)], nrow=nrow(m), ncol=ncol(m))
     rownames(answer)       <- rownames(m)
     colnames(answer)       <- colnames(m)
-      ans
+      answer
   }
 
 # Colour Checker
@@ -997,7 +1001,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
 # Prior No. Groups (DP & PY)
 #' Plot Dirichlet / Pitman-Yor process Priors
 #'
-#' Plots the prior distribution of the number of clusters under a Dirichlet / Pitman-Yor process prior, for a sample of size \code{N} at given values of the concentration parameter \code{alpha} and optionally also the \code{discount} parameter. Useful for soliciting sensible priors for \code{alpha} or suitable fixed values for \code{alpha} or \code{discount} under the "\code{IMFA}" and "\code{IMIFA}" methods for \code{\link{mcmc_IMIFA}}, All arguments are vectorised. Requires use of the \code{\link[Rmpfr]{Rmpfr}} and \code{\link[gmp]{gmp}} libraries. Density values are returned invisibly.
+#' Plots the prior distribution of the number of clusters under a Dirichlet / Pitman-Yor process prior, for a sample of size \code{N} at given values of the concentration parameter \code{alpha} and optionally also the \code{discount} parameter. Useful for soliciting sensible priors for \code{alpha} or suitable fixed values for \code{alpha} or \code{discount} under the "\code{IMFA}" and "\code{IMIFA}" methods for \code{\link{mcmc_IMIFA}}, All arguments are vectorised. Requires use of the \code{Rmpfr} and \code{gmp} libraries. Density values are returned invisibly.
 #' @param N The sample size.
 #' @param alpha The concentration parameter. Must be specified and must be strictly greater than \code{-discount}.
 #' @param discount The discount parameter for the Pitman-Yor process. Must lie in the interval [0, 1). Defaults to 0 (i.e. the Dirichlet process) as plotting with non-zero discount is not yet implement. However, users can still consult \code{\link{G_expected}} and \code{\link{G_variance}} in order to solicit sensible \code{discount} values.
@@ -1010,10 +1014,8 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
 #' @return A plot of the prior distribution if \code{show.plot} is TRUE. Density values are returned invisibly.
 #' @export
 #' @importFrom grDevices "palette" "adjustcolor"
-#' @importFrom Rmpfr "pochMpfr"
-#' @importFrom gmp "asNumeric" "Stirling1.all"
 #' @importFrom Rfast "colsums" "colMaxs"
-#' @seealso \code{\link{G_expected}}, \code{\link{G_variance}}, \code{\link[Rmpfr]{Rmpfr}}, \code{\link[gmp]{gmp}}
+#' @seealso \code{\link{G_expected}}, \code{\link{G_variance}}, \code{\link[Rmpfr]{Rmpfr}}
 #'
 #' @examples
 #' # library(Rmpfr)
@@ -1021,10 +1023,10 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
 #' # x
   G_prior      <- function(N, alpha, discount = 0L, show.plot = TRUE,
                            avg = FALSE, col = NULL, main = NULL, ...) {
-    firstex    <- suppressMessages(require(Rmpfr))
+    firstex    <- suppressMessages(requireNamespace("Rmpfr", quietly=TRUE))
     if(isTRUE(firstex)) {
-      on.exit(.detach_pkg(Rmpfr))
-      on.exit(.detach_pkg(gmp), add=TRUE)
+      on.exit(.detach_pkg("Rmpfr"))
+      on.exit(.detach_pkg("gmp"), add=TRUE)
     } else                            stop("'Rmpfr' package not installed")
     if(missing(col))    {
       col      <- c("#E69F00", "#009E73", "#56B4E9", "#F0E442", "#0072B2", "#D55E00", "#CC79A7", "#999999")
@@ -1057,12 +1059,12 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
     if(length(discount) != max.len) {
       discount <- rep(discount, max.len)
     }
-    rx         <- matrix(0, nr=N + 1, nc=max.len)
+    rx         <- matrix(0, nrow=N + 1, ncol=max.len)
     for(i in seq_len(max.len))      {
-      tmp      <- if(discount[i] == 0) alpha[i]^seq_len(N)/Rmpfr::pochMpfr(alpha[i], N) else    {
-                  exp(unlist(vapply(seq_len(N), function(Gs=seq_len(k - 1), x=0) { for(g in Gs) {
+      tmp      <- if(discount[i] == 0) alpha[i]^seq_len(N)/Rmpfr::pochMpfr(alpha[i], N) else       {
+                  exp(unlist(vapply(seq_len(N), function(k, Gs=seq_len(k - 1), x=0) { for(g in Gs) {
                     x <- x + log(alpha[i] + g * discount[i]) }; x}, numeric(1))) -
-                         log(Rmpfr::pochMpfr(alpha[i] + 1, N - 1))) / discount[i]^seq_len(N)    }
+                         log(Rmpfr::pochMpfr(alpha[i] + 1, N - 1))) / discount[i]^seq_len(N)       }
       if(discount[i]  == 0) {
         rx[,i] <- c(0, abs(gmp::asNumeric(gmp::Stirling1.all(N) * tmp)))
       } else                          stop("Plotting with non-zero discount not yet implemented\nTry supplying the same arguments to G_expected() or G_variance()")

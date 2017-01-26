@@ -136,19 +136,23 @@ Carries out Gibbs sampling for all models from the IMIFA family, allowing model-
 
 # Fit a MFA model to the scaled olive data, with isotropic uniquenesses.
 # Allow diagonal covariance as a special case where range.Q = 0. Accept all other defaults.
-# simMFA   <- mcmc_IMIFA(olive, method="MFA", n.iters=10000, range.G=3:6, range.Q=0:3, centering=FALSE, uni.type="isotropic")
+# simMFA   <- mcmc_IMIFA(olive, method="MFA", n.iters=10000, range.G=3:6,
+#                        range.Q=0:3, centering=FALSE, uni.type="isotropic")
 
-# Fit a MIFA model to the centered and scaled coffee data, with cluster labels initialised by K-Means.
-# Note that range.Q no longer needs to be specified. Allow IFA as a special case where range.G=1.
+# Fit a MIFA model to the centered & scaled coffee data, w/ cluster labels initialised by K-Means.
+# Note that range.Q doesn't need to be specified. Allow IFA as a special case where range.G=1.
 # simMIFA  <- mcmc_IMIFA(coffee, method="MIFA", n.iters=10000, range.G=1:3, z.init="kmeans")
 
 # Fit an IFA model to the centered and pareto scaled olive data.
-# Note that range.G doesn't need to be specified and we can optionally supply a starting value for range.Q.
+# Note that range.G doesn't need to be specified. We can optionally supply a range.Q starting value.
 # We can also enforce additional shrinkage using alpha.d1, alpha.d2, prop, and epsilon.
-# simIFA   <- mcmc_IMIFA(olive, method="IFA", n.iters=10000, range.Q=4, alpha.d1=3.5, alpha.d2=7, prop=0.6, epsilon=0.12)
+# simIFA   <- mcmc_IMIFA(olive, method="IFA", n.iters=10000, range.Q=4,
+#                        alpha.d1=3.5, alpha.d2=7, prop=0.6, epsilon=0.12)
 
-# Fit an OMIFA model to the centered and scaled coffee data. Supply a sufficiently small alpha value. Try varying other hyperparameters.
-# Accept the default value for the starting number of factors but supply a value for the starting number of clusters.
+# Fit an OMIFA model to the centered & scaled coffee data.
+# Supply a sufficiently small alpha value. Try varying other hyperparameters.
+# Accept the default value for the starting number of factors,
+# but supply a value for the starting number of clusters.
 # simOMIFA <- mcmc_IMIFA(coffee, method="OMIFA", range.G=10, psi.alpha=3, nu=3, alpha=0.8)
 }
 \references{

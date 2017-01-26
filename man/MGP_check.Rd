@@ -38,7 +38,7 @@ Checks the hyperparameters for the multiplicative gamma process (MGP) shrinkage 
 # Check if the MGP global shrinkage parameters are increasing as the column index increases.
 MGP_check(ad1=1.5, ad2=1.8, Q=10, nu=2, inverse=FALSE)[[1]]$valid
 
-# Check if the induced inverse gamma prior on the MGP global shrinkage parameters is stochastically increasing.
+# Check if the induced IG prior on the MGP global shrinkage parameters is stochastically increasing.
 MGP_check(ad1=1.5, ad2=1.8, Q=10, nu=2, inverse=TRUE)[[1]]$valid
 }
 \references{

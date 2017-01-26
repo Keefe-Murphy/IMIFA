@@ -30,6 +30,7 @@
 #' @importFrom e1071 "matchClasses" "classAgreement"
 #' @importFrom mclust "classError"
 #' @importFrom matrixStats "rowMedians" "rowQuantiles"
+#' @importFrom utils "head"
 #'
 #' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{plot.Results_IMIFA}}
 #' @references Murphy, K., Gormley, I.C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, \code{https://arxiv.org/abs/1701.07010}
@@ -45,14 +46,17 @@
 #' # resMFAcoffee  <- get_IMIFA_results(simMFAcoffee)
 #'
 #'
-#' # Instead let's produce results for a 3-cluster model, allowing the number of factors to be chosen by \code{aic.mcmc}.
+#' # Instead let's get results for a 3-cluster model, allowing Q be chosen by \code{aic.mcmc}.
 #' # resMFAcoffee2 <- get_IMIFA_results(simMFAcoffee, G=3, criterion="aic.mcmc")
 #'
 #' # Run an IMIFA model on the olive data, accepting all defaults.
 #' # simIMIFAolive <- mcmc_IMIFA(olive, method="IMIFA", n.iters=10000)
 #'
-#' # Extract the optimum results, estimated \code{G} and \code{Q} by the \emph{median} of their posterior distributions, and construct 90% credible intervals.
-#' # resIMIFAolive <- get_IMIFA_results(simIMIFAolive, G.meth="median", Q.meth="median", conf.level=0.9)
+#' # Extract optimum results
+#' # Estimate \code{G} & \code{Q} by the \emph{median} of their posterior distributions
+#' # Construct 90% credible intervals.
+#' # resIMIFAolive <- get_IMIFA_results(simIMIFAolive, G.meth="median",
+#' #                                    Q.meth="median", conf.level=0.9)
 get_IMIFA_results              <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, Q = NULL, criterion = c("bicm", "aicm", "bic.mcmc", "aic.mcmc", "log.iLLH", "dic"),
                                            G.meth = c("mode", "median"), Q.meth = c("mode", "median"), dat = NULL, conf.level = 0.95, zlabels = NULL) {
   UseMethod("get_IMIFA_results")
@@ -111,7 +115,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   if(inf.G)  {
     GQs          <- length(sims[[G.ind]])
     GQ1          <- GQs > 1
-    G.store      <- matrix(unlist(lapply(seq_len(GQs), function(gq) sims[[G.ind]][[gq]]$G.store[store])), nr=GQs, nc=n.store, byrow=TRUE)
+    G.store      <- matrix(unlist(lapply(seq_len(GQs), function(gq) sims[[G.ind]][[gq]]$G.store[store])), nrow=GQs, ncol=n.store, byrow=TRUE)
     G.meth       <- ifelse(missing(G.meth), "mode", match.arg(G.meth))
     G.tab        <- if(GQ1) lapply(apply(G.store, 1, function(x) list(table(x, dnn=NULL))), "[[", 1) else table(G.store, dnn=NULL)
     G.prob       <- if(GQ1) lapply(G.tab, prop.table) else prop.table(G.tab)
@@ -171,7 +175,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   }
   G.range        <- ifelse(G.T, 1, length(n.grp))
   Q.range        <- ifelse(any(Q.T, all(!is.element(method, c("OMFA", "IMFA")), inf.Q)), 1, length(n.fac))
-  crit.mat       <- matrix(NA, nr=G.range, nc=Q.range)
+  crit.mat       <- matrix(NA, nrow=G.range, ncol=Q.range)
 
   # Retrieve log-likelihoods and/or tune G &/or Q according to criterion
     if(all(G.T, Q.T)) {
@@ -271,7 +275,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
          !identical(dat.nam, nam.dat) && (any(grepl("[[:alpha:]]", gsub('c', '', nam.x))) || grepl(":",
          nam.x, fixed=TRUE)))) {  warning("Extremely inadvisable to supply 'dat' subsetted by any means other than row/column numbers or c() indexing:\n can't compute empirical covariance and error metrics, best to create new data object", call.=FALSE)
       } else  {
-        spl.ind          <- if(grepl("(,", nam.x, fixed=TRUE)) sapply(gregexpr("\\(,", nam.x), head, 1L) else sapply(gregexpr("\\)", nam.x), head, 1L)
+        spl.ind          <- if(grepl("(,", nam.x, fixed=TRUE)) sapply(gregexpr("\\(,", nam.x), utils::head, 1L) else sapply(gregexpr("\\)", nam.x), utils::head, 1L)
         spl.tmp          <- c(substring(nam.x, 1, spl.ind), substring(nam.x, spl.ind + 2L, nchar(nam.x)))
         neg.r            <- grepl("-", spl.tmp[1], fixed=TRUE) || grepl("!", spl.tmp[1], fixed=TRUE)
         neg.c            <- grepl("-", spl.tmp[2], fixed=TRUE) || grepl("!", spl.tmp[2], fixed=TRUE)
@@ -351,7 +355,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       }
     }
     post.z       <- apply(z, 1, function(x) factor(which.max(tabulate(x)), levels=Gseq))
-    uncertain    <- 1 - Rfast::colMaxs(matrix(apply(z, 1, tabulate, nbins=G)/length(tmp.store), nr=G, nc=n.obs), value=TRUE)
+    uncertain    <- 1 - Rfast::colMaxs(matrix(apply(z, 1, tabulate, nbins=G)/length(tmp.store), nrow=G, ncol=n.obs), value=TRUE)
     if(sw["pi.sw"])    {
       pi.prop    <- pies[Gseq,seq_along(tmp.store), drop=FALSE]
       var.pi     <- Rfast::rowVars(pi.prop)

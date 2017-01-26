@@ -28,7 +28,7 @@ G_prior(N, alpha, discount = 0L, show.plot = TRUE, avg = FALSE,
 A plot of the prior distribution if \code{show.plot} is TRUE. Density values are returned invisibly.
 }
 \description{
-Plots the prior distribution of the number of clusters under a Dirichlet / Pitman-Yor process prior, for a sample of size \code{N} at given values of the concentration parameter \code{alpha} and optionally also the \code{discount} parameter. Useful for soliciting sensible priors for \code{alpha} or suitable fixed values for \code{alpha} or \code{discount} under the "\code{IMFA}" and "\code{IMIFA}" methods for \code{\link{mcmc_IMIFA}}, All arguments are vectorised. Requires use of the \code{\link[Rmpfr]{Rmpfr}} and \code{\link[gmp]{gmp}} libraries. Density values are returned invisibly.
+Plots the prior distribution of the number of clusters under a Dirichlet / Pitman-Yor process prior, for a sample of size \code{N} at given values of the concentration parameter \code{alpha} and optionally also the \code{discount} parameter. Useful for soliciting sensible priors for \code{alpha} or suitable fixed values for \code{alpha} or \code{discount} under the "\code{IMFA}" and "\code{IMIFA}" methods for \code{\link{mcmc_IMIFA}}, All arguments are vectorised. Requires use of the \code{Rmpfr} and \code{gmp} libraries. Density values are returned invisibly.
 }
 \examples{
 # library(Rmpfr)
@@ -36,6 +36,6 @@ Plots the prior distribution of the number of clusters under a Dirichlet / Pitma
 # x
 }
 \seealso{
-\code{\link{G_expected}}, \code{\link{G_variance}}, \code{\link[Rmpfr]{Rmpfr}}, \code{\link[gmp]{gmp}}
+\code{\link{G_expected}}, \code{\link{G_variance}}, \code{\link[Rmpfr]{Rmpfr}}
 }
 

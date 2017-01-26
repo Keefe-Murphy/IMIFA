@@ -41,4 +41,4 @@
 #' @name IMIFA-package
 NULL
 
-.onLoad <- function(...) packageStartupMessage(paste0("   ________  __________________\n  /_  __/  |/   /_  __/ ___/ _ \\  \n   / / / /|_// / / / / /__/ /_\\ \\ \n _/ /_/ /   / /_/ /_/ ___/ /___\\ \\ \n/____/_/   /_/_____/_/  /_/     \\_\\              version 0.1.0\nType ?`IMIFA-package` for a brief guide for using this package.\nType 'citation(","IMIFA",")' for citing this package in publications."))
+.onAttach <- function(...) packageStartupMessage(paste0("   ________  __________________\n  /_  __/  |/   /_  __/ ___/ _ \\  \n   / / / /|_// / / / / /__/ /_\\ \\ \n _/ /_/ /   / /_/ /_/ ___/ /___\\ \\ \n/____/_/   /_/_____/_/  /_/     \\_\\              version 0.1.0\nType ?`IMIFA-package` for a brief guide for using this package.\nType 'citation(","IMIFA",")' for citing this package in publications."))

@@ -4,11 +4,7 @@
 \name{olive}
 \alias{olive}
 \title{Fatty acid composition of Italian olive oils}
-\format{A data frame with 572 observations and 10 columns. The first columns gives the area, the second gives the region, and the remaining 8 columns give the variables.
-\describe{
-  \item{area}{One of Southern Italy, Sardinia, and Northern Italy.}
-  \item{region}{Southern Italy comprises North Apulia, Calabria, South Apulia, and Sicily, Sardinia is divided into Inland Sardinia and Coastal Sardinia and Northern Italy comprises Umbria, East Liguria, and West Liguria. }
-}}
+\format{A data frame with 572 observations and 10 columns. The first columns gives the area (one of Southern Italy, Sardinia, and Northern Italy), the second gives the region, and the remaining 8 columns give the variables. Southern Italy comprises the North Apulia, Calabria, South Apulia, and Sicily regions, Sardinia is divided into Inland Sardinia and Coastal Sardinia and Northern Italy comprises the Umbria, East Liguria, and West Liguria regions.}
 \usage{
 olive
 }

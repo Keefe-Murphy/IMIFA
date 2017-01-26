@@ -18,9 +18,6 @@ Depends:
 License: GPL (>= 2)
 Encoding: UTF-8
 LazyData: true
-Suggests: 
-    Rmpfr,
-    gmp
 Imports:
     abind,
     corpcor,
@@ -39,4 +36,7 @@ Imports:
     slam,
     stats,
     utils
+Suggests: 
+    Rmpfr,
+    gmp
 RoxygenNote: 5.0.1

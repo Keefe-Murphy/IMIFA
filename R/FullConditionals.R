@@ -16,7 +16,7 @@
       u.eta      <- diag(Q) + crossprod(load.psi, lmat)
       u.eta      <- if(Q1) sqrt(u.eta) else .chol(u.eta)
       mu.eta     <- c.data %*% (load.psi %*% if(Q1) 1/(u.eta * u.eta) else chol2inv(u.eta))
-        mu.eta    + t(backsolve(u.eta, matrix(stats::rnorm(Q * N), nr=Q, nc=N)))
+        mu.eta    + t(backsolve(u.eta, matrix(stats::rnorm(Q * N), nrow=Q, ncol=N)))
     }
 
   # Loadings
@@ -47,7 +47,7 @@
 
   # Local Shrinkage
     .sim_phi     <- function(Q, P, nu, tau, load.2, plus1) {
-        matrix(stats::rgamma(P * Q, shape=1/2 + nu + plus1, rate=(nu + sweep(load.2, 2, tau, FUN="*"))/2), nr=P, nc=Q)
+        matrix(stats::rgamma(P * Q, shape=1/2 + nu + plus1, rate=(nu + sweep(load.2, 2, tau, FUN="*"))/2), nrow=P, ncol=Q)
     }
 
   # Global Shrinkage
@@ -114,12 +114,12 @@
 
   # Scores
     .sim_eta.p   <- function(Q, N) {
-        matrix(stats::rnorm(N * Q), nr=N, nc=Q)
+        matrix(stats::rnorm(N * Q), nrow=N, ncol=Q)
     }
 
   # Loadings
     .sim_load.p  <- function(Q, P, sigma.l) {
-        sqrt(sigma.l) * matrix(stats::rnorm(P * Q), nr=P, nc=Q)
+        sqrt(sigma.l) * matrix(stats::rnorm(P * Q), nrow=P, ncol=Q)
     }
 
     .sim_load.ps <- function(Q, sigma.l, phi, tau) {
@@ -137,7 +137,7 @@
 
   # Local Shrinkage
     .sim_phi.p   <- function(Q, P, nu, plus1) {
-        matrix(stats::rgamma(n=P * Q, shape=nu + plus1, rate=nu), nr=P, nc=Q)
+        matrix(stats::rgamma(n=P * Q, shape=nu + plus1, rate=nu), nrow=P, ncol=Q)
     }
 
   # Global Shrinkage
@@ -227,7 +227,7 @@
 #' # Check if the MGP global shrinkage parameters are increasing as the column index increases.
 #' MGP_check(ad1=1.5, ad2=1.8, Q=10, nu=2, inverse=FALSE)[[1]]$valid
 #'
-#' # Check if the induced inverse gamma prior on the MGP global shrinkage parameters is stochastically increasing.
+#' # Check if the induced IG prior on the MGP global shrinkage parameters is stochastically increasing.
 #' MGP_check(ad1=1.5, ad2=1.8, Q=10, nu=2, inverse=TRUE)[[1]]$valid
     MGP_check   <- Vectorize(function(ad1, ad2, Q, nu, bd1 = 1L, bd2 = 1L, plus1 = TRUE, inverse = TRUE) {
       if(any(!is.logical(plus1),
@@ -264,11 +264,11 @@
       nc        <- ncol(tab.tmp)
       nr        <- nrow(tab.tmp)
       if(nc > nr) {
-        tmp.mat <- matrix(rep(0, nc), nr=nc - nr, nc=nc)
+        tmp.mat <- matrix(rep(0, nc), nrow=nc - nr, ncol=nc)
         rownames(tmp.mat) <- setdiff(as.numeric(colnames(tab.tmp)), as.numeric(rownames(tab.tmp)))[seq_len(nc - nr)]
         tab.tmp <- rbind(tab.tmp, tmp.mat)
       } else if(nr > nc) {
-        tmp.mat <- matrix(rep(0, nr), nr=nr, nc=nr - nc)
+        tmp.mat <- matrix(rep(0, nr), nrow=nr, ncol=nr - nc)
         colnames(tmp.mat) <- setdiff(as.numeric(rownames(tab.tmp)), as.numeric(colnames(tab.tmp)))[seq_len(nr - nc)]
         tab.tmp <- cbind(tab.tmp, tmp.mat)
       }
@@ -326,8 +326,8 @@
         if(any(!is.element(len, c(1, V)))) stop(paste0(obj.name, " must be list of length 1 containing a scalar", ifelse(P.dim, paste0(" or a vector of length P=", V), ""), " for a 1-group model"))
       } else {
         if(is.element(len, c(1, range.G, V))) {
-          if(all(len == range.G)) obj0g <- if(switch0g) lapply(rGseq, function(g) matrix(obj0g[[g]], nr=1))    else stop(paste0(sw.name, " must be TRUE if the dimension of ", obj.name, " depends on G"))
-          if(all(len == V))       obj0g <- if(V == 1)   lapply(rGseq, function(g) rep(obj0g[[g]], range.G[g])) else lapply(rGseq, function(g) matrix(obj0g[[g]], nr=V, nc=range.G[g]))
+          if(all(len == range.G)) obj0g <- if(switch0g) lapply(rGseq, function(g) matrix(obj0g[[g]], nrow=1))  else stop(paste0(sw.name, " must be TRUE if the dimension of ", obj.name, " depends on G"))
+          if(all(len == V))       obj0g <- if(V == 1)   lapply(rGseq, function(g) rep(obj0g[[g]], range.G[g])) else lapply(rGseq, function(g) matrix(obj0g[[g]], nrow=V, ncol=range.G[g]))
         } else if(!all(vapply(rGseq, function(g) is.matrix(obj0g[[g]]) && any(identical(dim(obj0g[[g]]), c(1, range.G[g])), identical(dim(obj0g[[g]]), c(V, range.G[g]))), logical(1)))) {
                                            stop(paste0(ifelse(length(range.G) > 1, "Each element of ", ""), obj.name, " must be either of length 1, ", ifelse(P.dim, paste0("P=", V, ", or it's corresponding range.G, or a matrix with P rows and it's corresponding range.G columns"), paste0("or G=", range.G))))
         } else if(all(vapply(obj0g, is.matrix, logical(1)), !switch0g) && any(vapply(rGseq, function(g) any(dim(obj0g[[g]]) == range.G[g]), logical(1)))) {
@@ -342,16 +342,14 @@
   # Moments of Dirichlet / Pitman-Yor Processes
 #' 1st Moment of the Dirichlet / Pitman-Yor processes
 #'
-#' Calculates the expected number of clusters under a Dirichlet process or Pitman-Yor process prior for a sample of size \code{N} at given values of the concentration parameter \code{alpha} and optionally also the \code{discount} parameter. Useful for soliciting sensible priors for \code{alpha} or suitable fixed values for \code{alpha} or \code{discount} under the "\code{IMFA}" and "\code{IMIFA}" methods for \code{\link{mcmc_IMIFA}}, All arguments are vectorised. Requires use of the \code{\link[Rmpfr]{Rmpfr}} and \code{\link[gmp]{gmp}} libraries for non-zero \code{discount} values.
+#' Calculates the expected number of clusters under a Dirichlet process or Pitman-Yor process prior for a sample of size \code{N} at given values of the concentration parameter \code{alpha} and optionally also the \code{discount} parameter. Useful for soliciting sensible priors for \code{alpha} or suitable fixed values for \code{alpha} or \code{discount} under the "\code{IMFA}" and "\code{IMIFA}" methods for \code{\link{mcmc_IMIFA}}, All arguments are vectorised. Requires use of the \code{Rmpfr} and \code{gmp} libraries for non-zero \code{discount} values.
 #' @param N The sample size.
 #' @param alpha The concentration parameter. Must be specified and must be strictly greater than \code{-discount}.
 #' @param discount The discount parameter for the Pitman-Yor process. Must lie in the interval [0, 1). Defaults to 0 (i.e. the Dirichlet process).
 #'
 #' @return The expected number of clusters under the specified prior conditions.
 #' @export
-#' @importFrom Rmpfr "pochMpfr"
-#' @importFrom gmp "asNumeric"
-#' @seealso \code{\link{G_variance}}, \code{\link{G_prior}}, \code{\link[Rmpfr]{Rmpfr}}, \code{\link[gmp]{gmp}}
+#' @seealso \code{\link{G_variance}}, \code{\link{G_prior}}, \code{\link[Rmpfr]{Rmpfr}}
 #'
 #' @examples
 #' G_expected(N=150, alpha=c(3, 10, 25))
@@ -363,9 +361,9 @@
       if(discount == 0) {
           alpha * (digamma(alpha + N) - digamma(alpha))
       } else {
-        if(suppressMessages(require(Rmpfr))) {
-          on.exit(.detach_pkg(Rmpfr))
-          on.exit(.detach_pkg(gmp), add=TRUE)
+        if(suppressMessages(requireNamespace("Rmpfr", quietly=TRUE))) {
+          on.exit(.detach_pkg("Rmpfr"))
+          on.exit(.detach_pkg("gmp"), add=TRUE)
         } else                             stop("'Rmpfr' package not installed")
           gmp::asNumeric(alpha/discount * Rmpfr::pochMpfr(alpha + discount, N)/Rmpfr::pochMpfr(alpha, N) - alpha/discount)
       }
@@ -373,16 +371,14 @@
 
 #' 2nd Moment of Dirichlet / Pitman-Yor processes
 #'
-#' Calculates the variance in the number of clusters under a Dirichlet process or Pitman-Yor process prior for a sample of size \code{N} at given values of the concentration parameter \code{alpha} and optionally also the \code{discount} parameter. Useful for soliciting sensible priors for \code{alpha} or suitable fixed values for \code{alpha} or \code{discount} under the "\code{IMFA}" and "\code{IMIFA}" methods for \code{\link{mcmc_IMIFA}}, All arguments are vectorised. Requires use of the \code{\link[Rmpfr]{Rmpfr}} and \code{\link[gmp]{gmp}} libraries for non-zero \code{discount} values.7
+#' Calculates the variance in the number of clusters under a Dirichlet process or Pitman-Yor process prior for a sample of size \code{N} at given values of the concentration parameter \code{alpha} and optionally also the \code{discount} parameter. Useful for soliciting sensible priors for \code{alpha} or suitable fixed values for \code{alpha} or \code{discount} under the "\code{IMFA}" and "\code{IMIFA}" methods for \code{\link{mcmc_IMIFA}}, All arguments are vectorised. Requires use of the \code{Rmpfr} and \code{gmp} libraries for non-zero \code{discount} values.7
 #' @param N The sample size.
 #' @param alpha The concentration parameter. Must be specified and must be strictly greater than \code{-discount}.
 #' @param discount The discount parameter for the Pitman-Yor process. Must lie in the interval [0, 1). Defaults to 0 (i.e. the Dirichlet process).
 #'
 #' @return The variance of the number of clusters under the specified prior conditions.
 #' @export
-#' @importFrom Rmpfr "pochMpfr"
-#' @importFrom gmp "asNumeric"
-#' @seealso @seealso \code{\link{G_expected}}, \code{\link{G_prior}}, \code{\link[Rmpfr]{Rmpfr}}, \code{\link[gmp]{gmp}}
+#' @seealso @seealso \code{\link{G_expected}}, \code{\link{G_prior}}, \code{\link[Rmpfr]{Rmpfr}}
 #'
 #' @examples
 #' G_variance(N=150, alpha=c(3, 10, 25))
@@ -394,7 +390,7 @@
       if(discount == 0) {
           alpha * (digamma(alpha + N) - digamma(alpha)) + (alpha^2) * (trigamma(alpha + N) - trigamma(alpha))
       } else {
-        if(suppressMessages(require(Rmpfr))) {
+        if(suppressMessages(requireNamespace("Rmpfr", quietly=TRUE))) {
           on.exit(.detach_pkg(Rmpfr))
           on.exit(.detach_pkg(gmp), add=TRUE)
         } else                             stop("'Rmpfr' package not installed")
