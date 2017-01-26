@@ -38,7 +38,7 @@
 #' @section See Also:
 #' Further details and examples are given in the associated vignette document.
 #' @docType package
-#' @name IMIFA-package
+#' @name IMIFA
 NULL
 
-.onAttach <- function(...) packageStartupMessage(paste0("   ________  __________________\n  /_  __/  |/   /_  __/ ___/ _ \\  \n   / / / /|_// / / / / /__/ /_\\ \\ \n _/ /_/ /   / /_/ /_/ ___/ /___\\ \\ \n/____/_/   /_/_____/_/  /_/     \\_\\              version 0.1.0\nType ?`IMIFA-package` for a brief guide for using this package.\nType 'citation(","IMIFA",")' for citing this package in publications."))
+.onAttach <- function(...) packageStartupMessage(paste0("   ________  __________________\n  /_  __/  |/   /_  __/ ___/ _ \\  \n   / / / /|_// / / / / /__/ /_\\ \\ \n _/ /_/ /   / /_/ /_/ ___/ /___\\ \\ \n/____/_/   /_/_____/_/  /_/     \\_\\             version 0.1.0\nType '?IMIFA' for a brief guide for how to use this R package.\nType 'citation(","IMIFA",")' for citing the package in publications."))
