@@ -18,7 +18,7 @@
     datdir   <- "/home/kmurphy"
     setwd("/home/kmurphy/IMIFA-GIT")
   }
-  source(paste0(getwd(), "/PackageSetup.R"))
+  source(paste0(getwd(), "/PackageSetup_old.R"))
 
 # Read in the data
   # Olive       (# area, region)
