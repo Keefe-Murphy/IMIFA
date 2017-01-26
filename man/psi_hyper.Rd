@@ -22,11 +22,11 @@ Takes a shape hyperparameter and covariance matrix, and finds data-driven rate h
 \examples{
 data(olive)
 olive2 <- olive[,-(1:2)]
-rates <- psi_hyper(shape=2.5, covar=cov(olive2), type="isotropic")
+rates  <- psi_hyper(shape=2.5, covar=cov(olive2), type="isotropic")
 rates
 
 olive_scaled <- scale(olive2, center=TRUE, scale=TRUE)
-rate <- psi_hyper(shape=3, covar=cov(olive_scaled), type="unconstrained")
+rate   <- psi_hyper(shape=3, covar=cov(olive_scaled), type="unconstrained")
 rate
 }
 \references{

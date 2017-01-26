@@ -45,6 +45,7 @@ Maintainer: Keefe Murphy <keefe.murphy@ucd.ie>
 
 \section{References}{
 
+Murphy, K., Gormley, I.C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, https://arxiv.org/abs/1701.07010
 }
 
 \section{See Also}{

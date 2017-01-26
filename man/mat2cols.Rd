@@ -28,7 +28,7 @@ A matrix of hex colour code representations.
 Converts a matrix to a hex colour code representation for plotting using \code{\link[gclus]{plotcolors}}. Used internally by \code{\link{plot.Results_IMIFA}} for plotting posterior mean loadings heatmaps.
 }
 \examples{
-mat <- matrix(rnorm(100), nr=10, nc=10)
+mat  <- matrix(rnorm(100), nr=10, nc=10)
 cols <- mat2cols(mat)
 cols
 plotcolors(cols)
