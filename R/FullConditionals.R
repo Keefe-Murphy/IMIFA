@@ -372,10 +372,7 @@
 #' 2nd Moment of Dirichlet / Pitman-Yor processes
 #'
 #' Calculates the variance in the number of clusters under a Dirichlet process or Pitman-Yor process prior for a sample of size \code{N} at given values of the concentration parameter \code{alpha} and optionally also the \code{discount} parameter. Useful for soliciting sensible priors for \code{alpha} or suitable fixed values for \code{alpha} or \code{discount} under the "\code{IMFA}" and "\code{IMIFA}" methods for \code{\link{mcmc_IMIFA}}, All arguments are vectorised. Requires use of the \code{Rmpfr} and \code{gmp} libraries for non-zero \code{discount} values.7
-#' @param N The sample size.
-#' @param alpha The concentration parameter. Must be specified and must be strictly greater than \code{-discount}.
-#' @param discount The discount parameter for the Pitman-Yor process. Must lie in the interval [0, 1). Defaults to 0 (i.e. the Dirichlet process).
-#'
+#' @inheritParams G_expected
 #' @return The variance of the number of clusters under the specified prior conditions.
 #' @export
 #' @seealso @seealso \code{\link{G_expected}}, \code{\link{G_prior}}, \code{\link[Rmpfr]{Rmpfr}}
@@ -414,7 +411,9 @@
     }
 
   # Print functions
-    print.IMIFA <- summary.IMIFA <- function(imifa) {
+#' @method print IMIFA
+#' @export
+    print.IMIFA <- function(imifa) {
       meth      <- attr(imifa, "Method")
       name      <- attr(imifa, "Name")
       fac       <- attr(imifa, "Factors")
@@ -437,7 +436,12 @@
       }
         cat(paste0(meth, " simulations for '", name, "' dataset", msg, " to be passed to get_IMIFA_results(...)\n"))
     }
+#' @method summary IMIFA
+#' @export
+    summary.IMIFA        <- print.IMIFA
 
+#' @method print Results_IMIFA
+#' @export
     print.Results_IMIFA  <- function(res) {
       method    <- attr(res, "Method")
       G         <- res$GQ.results$G
@@ -457,6 +461,8 @@
         cat(msg)
     }
 
+#' @method summary Results_IMIFA
+#' @export
     summary.Results_IMIFA <- function(res) {
       criterion <- unlist(strsplit(toupper(attr(res$GQ.results, "Criterion")), "[.]"))
       criterion <- ifelse(length(criterion) > 1, ifelse(criterion[1] != "LOG", paste0(criterion[1], ".", tolower(criterion[2])), "LogIntegratedLikelihood"), criterion)

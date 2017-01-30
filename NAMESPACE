@@ -2,6 +2,10 @@
 
 S3method(get_IMIFA_results,IMIFA)
 S3method(plot,Results_IMIFA)
+S3method(print,IMIFA)
+S3method(print,Results_IMIFA)
+S3method(summary,IMIFA)
+S3method(summary,Results_IMIFA)
 export(G_expected)
 export(G_prior)
 export(G_variance)

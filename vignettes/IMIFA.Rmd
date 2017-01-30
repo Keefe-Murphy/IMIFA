@@ -1,0 +1,81 @@
+---
+title: "Infinite Mixtures of Infinite Factor Analysers"
+author: "Keefe Murphy"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Infinite Mixtures of Infinite Factor Analysers}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.width=7, fig.height = 5, fig.align = 'center',
+                      warning=FALSE, message=FALSE)
+```
+## Introduction
+IMIFA is an R package that provides flexible Gibbs sampler functions for fitting Infinite Mixtures of Infinite Factor Analysers (IMIFA) and related models. While the package offers a Bayesian implementation of the Factor Analysis (FA) and Mixtures of Factor Analysers (MFA) models, among others, these require pre-specification of the number of latent factors &/or the number of components, the main advantages of IMIFA are that a) these quantities are estimated automatically, and b) the number of latent factors is allowed to be cluster-specific.
+
+Typically one would run FA or MFA models over ranges of values for the numbers of clusters and factors, with the pair which optimise some model selection criteria typically chosen. IMIFA instead enables Bayesian nonparametric model-based clustering with factor analytic covariance structures _without_ recourse to model selection criteria to choose the number of clusters or cluster-specific latent factors. Model-specific diagnostic tools are also provided, as well as many options for plotting results and conducting posterior inference on parameters of interest. Please see [Murphy et al. (2017)](https://arxiv.org/abs/1701.07010) for more info.
+
+If you find bugs or want to suggest new features please visit the IMIFA [GitHub issues page](https://github.com/Keefe-Murphy/IMIFA/issues). This vignette makes use of previously obtained results, for plotting purposes, but shows you how to obtain them using the `mcmc_IMIFA()` and `get_IMIFA_results()` functions.
+
+### Installing IMIFA
+IMIFA will run in Windows, Mac OS X or Linux. To install IMIFA you first need to install [R](https://cran.r-project.org/). I would also recommend installing [Rstudio](https://www.rstudio.com/) as a nice desktop environment for using R. Once in R you can type:
+
+```{r}
+# install.packages("IMIFA")
+```
+
+at the R command prompt to install IMIFA. If you then type:
+
+```{r}
+library(IMIFA)
+```
+
+it will load in all the IMIFA functions.
+
+If you want to install the development version of IMIFA please visit the IMIFA [GitHub page](https://github.com/Keefe-Murphy/IMIFA). The GitHub version contains a few more features but some of these can be quite untested, and occasionally this version will break when it is in the process of being updated.
+
+### The three main functions
+While there exist several utility functions in the package to solicit good prior hyperparameters (e.g. `G_prior()`, `psi_hyper()`), to simulate data from factor-analytic mixture models (`sim_IMIFA_data()`), and to prepare results for producing nice plots (e.g. `mat2cols()`), this vignette focuses only on the three most important functions:
+
+    1. `mcmc_IMIFA()`: 
+    2. `get_IMIFA_results()`:
+    3.  and a dedicated S3 `plot` method: 
+
+The well-known Italian olive oil data set will be used throughout. You can load this data set after loading the IMIFA package by typing:
+
+```{r}
+data(olive)
+```
+
+## Figures
+
+The figure sizes have been customised so that you can easily put two images side-by-side. 
+
+```{r, fig.show='hold'}
+plot(1:10)
+plot(10:1)
+```
+
+You can enable figure captions by `fig_caption: yes` in YAML:
+
+    output:
+      rmarkdown::html_vignette:
+        fig_caption: yes
+
+Then you can use the chunk option `fig.cap = "Your figure caption."` in **knitr**.
+
+## More Examples
+
+You can write math expressions, e.g. $Y = X\beta + \epsilon$, footnotes^[A footnote here.], and tables, e.g. using `knitr::kable()`.
+
+```{r, echo=FALSE, results='asis'}
+knitr::kable(head(mtcars, 10))
+```
+
+Also a quote using `>`:
+
+> "He who gives up [code] safety for [code] speed deserves neither."
+([via](https://twitter.com/hadleywickham/status/504368538874703872))

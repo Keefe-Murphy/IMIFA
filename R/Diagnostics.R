@@ -57,6 +57,7 @@
 #' # Construct 90% credible intervals.
 #' # resIMIFAolive <- get_IMIFA_results(simIMIFAolive, G.meth="median",
 #' #                                    Q.meth="median", conf.level=0.9)
+#' # summary(resIMIFAolive)
 get_IMIFA_results              <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, Q = NULL, criterion = c("bicm", "aicm", "bic.mcmc", "aic.mcmc", "log.iLLH", "dic"),
                                            G.meth = c("mode", "median"), Q.meth = c("mode", "median"), dat = NULL, conf.level = 0.95, zlabels = NULL) {
   UseMethod("get_IMIFA_results")
