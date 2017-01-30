@@ -4,22 +4,16 @@
 \alias{mat2cols}
 \title{Convert a numeric matrix to colours}
 \usage{
-mat2cols(mat, cols = heat.colors(30L), byrank = FALSE,
-  breaks = length(cols), blind = TRUE, blind.type = c("deutan", "protan",
-  "tritan"))
+mat2cols(mat, cols = NULL, byrank = FALSE, breaks = length(cols))
 }
 \arguments{
 \item{mat}{A matrix.}
 
-\item{cols}{The colour palette to be used. Defaults to \code{heat.colors(30)}. Will be checked for validity.}
+\item{cols}{The colour palette to be used. The default palette uses \code{\link[viridis]{viridis}}. Will be checked for validity.}
 
 \item{byrank}{Logical indicating whether to convert the matrix itself or the sample ranks of the values therein. Defaults to FALSE.}
 
 \item{breaks}{Number of gradations in colour to use. Defaults to \code{length(cols)}.}
-
-\item{blind}{A logical switch indicating whether colour blind plots using \code{\link[dichromat]{dichromat}} should be produced. Defaults to TRUE.}
-
-\item{blind.type}{The type of colour palette to be used if \code{blind} is TRUE. The arguments are exactly as the \code{type} argument under \code{\link[dichromat]{dichromat}}.}
 }
 \value{
 A matrix of hex colour code representations.
@@ -34,7 +28,6 @@ cols
 
 # Use gclus::plotcolors() to visualise the colours matrix
 # plotcolors(cols)
-# plotcolors(cols, blind=FALSE, breaks=10)
 }
 \seealso{
 \code{\link[gclus]{plotcolors}}

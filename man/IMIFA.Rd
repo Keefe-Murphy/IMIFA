@@ -21,9 +21,9 @@ Package: IMIFA
 
 Type: Package
 
-Version: 0.1.0
+Version: 1.1.0
 
-Date: 2017-01-23
+Date: 2017-01-30
 
 Licence: GPL (>=2)
 

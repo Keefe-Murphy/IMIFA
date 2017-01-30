@@ -1,9 +1,9 @@
 Package: IMIFA
 Type: Package
-Date: 2017-01-23
+Date: 2017-01-30
 Title: Fitting, Diagnostics, and Plotting Functions for Infinite Mixtures of
     Infinite Factor Analysers and Related Models
-Version: 0.1.0
+Version: 1.1.0
 Authors@R: c(person("Keefe", "Murphy", email = "keefe.murphy@ucd.ie", role = c("aut", "cre")),
              person("Isobel Claire", "Gormley", role = "ctb"),
              person("Cinzia", "Viroli", role = "ctb"))
@@ -21,7 +21,6 @@ URL: https://github.com/Keefe-Murphy/IMIFA
 Imports:
     abind,
     corpcor,
-    dichromat,
     e1071,
     gclus,
     graphics,
@@ -35,8 +34,9 @@ Imports:
     Rfast,
     slam,
     stats,
-    utils
-Suggests: 
+    utils,
+    viridis
+Suggests:
     Rmpfr,
     gmp
 RoxygenNote: 5.0.1

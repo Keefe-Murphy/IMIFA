@@ -23,7 +23,7 @@
 
 \item{load.meth}{Switch which allows plotting posterior mean loadings as a heatmap (the default), or as something akin to \code{link{plot}} with \code{type = "h"}. ONly relevant if \code{param = "loadings"}. Heatmaps are produced with the aid of \code{\link{mat2cols}} and \code{\link[gclus]{plotcolors}}.}
 
-\item{palette}{An optional colour palette to be supplied if overwriting the default palette set inside the function is desired.}
+\item{palette}{An optional colour palette to be supplied if overwriting the default palette set inside the function by \code{\link[viridis]{viridis}} is desired.}
 
 \item{g}{Optional argument that allows specification of exactly which cluster the plot of interest is to be produced for. If not supplied, the user will be prompted to cycle through plots for all clusters.}
 

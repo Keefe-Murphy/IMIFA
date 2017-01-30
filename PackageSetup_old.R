@@ -10,7 +10,7 @@ if(length(setdiff(packages, rownames(installed.packages()))) > 0) {
 if(length(setdiff(packages, (.packages()))) > 0) {
   suppressMessages(lapply(setdiff(packages, (.packages())), library, ch=TRUE))
 }
-if(!("IMIFA.env"  %in% search())) packageStartupMessage("   ________  __________________\n  /_  __/  |/   /_  __/ ___/ _ \\  \n   / / / /|_// / / / / /__/ /_\\ \\ \n _/ /_/ /   / /_/ /_/ ___/ /___\\ \\ \n/____/_/   /_/_____/_/  /_/     \\_\\    version 0.1.0")
+if(!("IMIFA.env"  %in% search())) packageStartupMessage("   ________  __________________\n  /_  __/  |/   /_  __/ ___/ _ \\  \n   / / / /|_// / / / / /__/ /_\\ \\ \n _/ /_/ /   / /_/ /_/ ___/ /___\\ \\ \n/____/_/   /_/_____/_/  /_/     \\_\\    version 1.1.0")
 while("IMIFA.env" %in% search())  detach("IMIFA.env")
 IMIFA.env <- new.env()
 source(paste0(getwd(),   "/R/Diagnostics.R"),       local=IMIFA.env)

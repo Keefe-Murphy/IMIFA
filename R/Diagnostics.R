@@ -122,7 +122,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     G.mode       <- if(GQ1) unlist(lapply(G.tab, function(gt) as.numeric(names(gt[gt == max(gt)])[1]))) else as.numeric(names(G.tab[G.tab == max(G.tab)])[1])
     G.med        <- if(GQ1) ceiling(matrixStats::rowMedians(G.store) * 2)/2 else ceiling(Rfast::med(G.store) * 2)/2
     if(!G.T) {
-      G          <- switch(G.meth, Mode=G.mode, floor(G.med))
+      G          <- switch(G.meth, mode=G.mode, floor(G.med))
     }
     G.CI         <- if(GQ1) round(matrixStats::rowQuantiles(G.store, probs=conf.levels)) else round(stats::quantile(G.store, conf.levels))
   }
@@ -440,12 +440,12 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     Q.mode       <- if(G1) unlist(lapply(Q.tab, function(qt) as.numeric(names(qt[qt == max(qt)])[1]))) else as.numeric(names(Q.tab[Q.tab == max(Q.tab)])[1])
     Q.med        <- if(G1) ceiling(matrixStats::rowMedians(Q.store) * 2)/2 else ceiling(Rfast::med(Q.store) * 2)/2
     if(!Q.T)  {
-      Q          <- switch(Q.meth, Mode=Q.mode, floor(Q.med))
+      Q          <- switch(Q.meth, mode=Q.mode, floor(Q.med))
     } else    {
       Q          <- if(G.T) Q else stats::setNames(rep(Q, G), paste0("Group ", Gseq))
     }
     leder.b      <- .ledermann(n.obs, n.var)
-    if(any(unlist(Q) > leder.b))  warning(paste0("Estimate of Q", ifelse(clust.ind, " in one or more of the groups ", " "), "is greater than the suggested Ledermann upper bound (", leder.b, "): solution may be invalid"), call.=FALSE)
+    if(any(unlist(Q) > leder.b))  warning(paste0("Estimate of Q", ifelse(clust.ind, " in one or more of the groups ", " "), "is greater than the suggested Ledermann upper bound (", leder.b, "):\nsolution may be invalid"), call.=FALSE)
     Q.CI         <- if(G1) round(matrixStats::rowQuantiles(Q.store, probs=conf.levels)) else round(stats::quantile(Q.store, conf.levels))
     GQ.temp4     <- list(Q = Q, Q.Mode = Q.mode, Q.Median = Q.med, Stored.Q = Q.store,
                          Q.CI = Q.CI, Q.Probs = Q.prob, Q.Counts = Q.tab)
