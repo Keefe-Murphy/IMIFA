@@ -1,12 +1,12 @@
 #####################################################################
 ### Gibbs Sampler for Bayesian Factor Analysis (Overfitted Case) ####
 #####################################################################
-  
+
 # Gibbs Sampler Function
-  .gibbs_OMFA      <- function(Q, data, iters, N, P, G, mu.zero, sigma.mu, 
+  .gibbs_OMFA      <- function(Q, data, iters, N, P, G, mu.zero, sigma.mu,
                                mu, sigma.l, burnin, thinning, sw, uni.type,
                                psi.alpha, psi.beta, verbose, cluster, ...) {
-        
+
   # Define & initialise variables
     start.time     <- proc.time()
     total          <- max(iters)
@@ -39,13 +39,13 @@
       psi.store    <- provideDimnames(array(0, dim=c(P, G, n.store)), base=list(varnames, gnames, iternames))
     }
     if(sw["pi.sw"])  {
-      pi.store     <- provideDimnames(matrix(0, nr=G, nc=n.store), base=list(gnames, iternames))
+      pi.store     <- provideDimnames(matrix(0, nrow=G, ncol=n.store), base=list(gnames, iternames))
     }
-    z.store        <- provideDimnames(matrix(0, nr=N, nc=n.store), base=list(obsnames, iternames))
+    z.store        <- provideDimnames(matrix(0, nrow=N, ncol=n.store), base=list(obsnames, iternames))
     ll.store       <- stats::setNames(rep(0, n.store), iternames)
     err.z          <- zerr <- FALSE
     G.store        <- stats::setNames(rep(0, n.store), iternames)
-    
+
     mu.sigma       <- 1/sigma.mu
     sig.mu.sqrt    <- sqrt(sigma.mu)
     z              <- cluster$z
@@ -60,14 +60,14 @@
     eta            <- .sim_eta.p(N=N, Q=Q)
     lmat           <- lapply(Gseq, function(g) .sim_load.p(Q=Q, P=P, sigma.l=sigma.l))
     psi.inv        <- vapply(Gseq, function(g) .sim_psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), numeric(P))
-    if(Q0 && Q  < P - sqrt(P + Q)) {
-      for(g in which(nn     > P))  {
+    if(Q0 && Q  < .ledermann(N, P)) {
+      for(g in which(nn     > P))   {
         fact       <- try(stats::factanal(data[z == g,, drop=FALSE], factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
         if(!inherits(fact, "try-error")) {
           eta[z == g,]     <- fact$scores
           lmat[[g]]        <- fact$loadings
           psi.inv[,g]      <- 1/fact$uniquenesses
-        } 
+        }
       }
     } else {
       psi.tmp      <- psi.inv
@@ -91,16 +91,16 @@
       psi.store[,,1]       <- 1/psi.inv
       pi.store[,1]         <- pi.prop
       z.store[,1]          <- z
-      ll.store[1]          <- sum(.sim_z(data=data, mu=mu, Gseq=Gseq, N=N, pi.prop=pi.prop, sigma=lapply(Gseq, function(g) 
-                              corpcor::make.positive.definite(tcrossprod(lmat[,,g]) + diag(1/psi.inv[,g]))), Q0=Q0s)$log.likes)
+      ll.store[1]          <- .sim_z(data=data, mu=mu, Gseq=Gseq, N=N, pi.prop=pi.prop, sigma=lapply(Gseq, function(g)
+                              corpcor::make.positive.definite(tcrossprod(lmat[,,g]) + diag(1/psi.inv[,g]))), Q0=Q0s)$log.like
       G.store[1]           <- G
     }
     init.time      <- proc.time() - start.time
-    
+
   # Iterate
-    for(iter in seq_len(total)[-1]) { 
+    for(iter in seq_len(total)[-1]) {
       if(verbose   && iter  < burnin) utils::setTxtProgressBar(pb, iter)
-      
+
     # Mixing Proportions & Re-ordering
       pi.prop[]    <- .sim_pi(pi.alpha=pi.alpha, nn=nn)
       index        <- order(nn, decreasing=TRUE)
@@ -110,7 +110,7 @@
       psi.inv      <- psi.inv[,index, drop=FALSE]
       z            <- factor(z, labels=match(nn.ind, index))
       z            <- as.numeric(levels(z))[z]
-      
+
     # Cluster Labels
       psi          <- 1/psi.inv
       sigma        <- lapply(Gseq, function(g) tcrossprod(lmat[,,g]) + diag(psi[,g]))
@@ -125,50 +125,50 @@
       nn0          <- nn > 0
       nn.ind       <- which(nn0)
       dat.g        <- lapply(Gseq, function(g) data[z == g,, drop=FALSE])
-      
+
     # Scores & Loadings
       c.data       <- lapply(Gseq, function(g) sweep(dat.g[[g]], 2, mu[,g], FUN="-"))
       if(Q0) {
-        eta.tmp    <- lapply(Gseq, function(g) if(nn0[g]) .sim_score(N=nn[g], lmat=lmat[,,g], Q=Q, c.data=c.data[[g]], psi.inv=psi.inv[,g], Q1=Q1) else base::matrix(0, nr=0, nc=Q))
+        eta.tmp    <- lapply(Gseq, function(g) if(nn0[g]) .sim_score(N=nn[g], lmat=lmat[,,g], Q=Q, c.data=c.data[[g]], psi.inv=psi.inv[,g], Q1=Q1) else base::matrix(0, nrow=0, ncol=Q))
         EtE        <- lapply(Gseq, function(g) if(nn0[g]) crossprod(eta.tmp[[g]]))
         lmat       <- array(unlist(lapply(Gseq, function(g) if(nn0[g]) matrix(unlist(lapply(Pseq, function(j) .sim_load(l.sigma=l.sigma, Q=Q, c.data=c.data[[g]][,j], eta=eta.tmp[[g]],
-                      Q1=Q1, EtE=EtE[[g]], psi.inv=psi.inv[,g][j])), use.names=FALSE), nr=P, byrow=TRUE) else .sim_load.p(Q=Q, P=P, sigma.l=sigma.l)), use.names=FALSE), dim=c(P, Q, G))
+                      Q1=Q1, EtE=EtE[[g]], psi.inv=psi.inv[,g][j])), use.names=FALSE), nrow=P, byrow=TRUE) else .sim_load.p(Q=Q, P=P, sigma.l=sigma.l)), use.names=FALSE), dim=c(P, Q, G))
         eta        <- do.call(rbind, eta.tmp)[obsnames,, drop=FALSE]
       } else {
         eta.tmp    <- lapply(Gseq, function(g) eta[z == g,, drop=FALSE])
       }
-    
+
     # Means
       sum.data     <- vapply(dat.g, colSums, numeric(P))
       sum.eta      <- lapply(eta.tmp, colSums)
-      mu           <- vapply(Gseq, function(g) if(nn0[g]) .sim_mu(mu.sigma=mu.sigma, psi.inv=psi.inv[,g], mu.zero=mu.zero, sum.data=sum.data[,g], sum.eta=sum.eta[[g]], 
+      mu           <- vapply(Gseq, function(g) if(nn0[g]) .sim_mu(mu.sigma=mu.sigma, psi.inv=psi.inv[,g], mu.zero=mu.zero, sum.data=sum.data[,g], sum.eta=sum.eta[[g]],
                              lmat=if(Q1) as.matrix(lmat[,,g]) else lmat[,,g], N=nn[g], P=P) else .sim_mu.p(P=P, sig.mu.sqrt=sig.mu.sqrt, mu.zero=mu.zero), numeric(P))
-      
+
     # Uniquenesses
-      psi.inv      <- vapply(Gseq, function(g) if(nn0[g]) .sim_psi.inv(N=nn[g], psi.alpha=psi.alpha, c.data=c.data[[g]], eta=eta.tmp[[g]], psi.beta=psi.beta, 
+      psi.inv      <- vapply(Gseq, function(g) if(nn0[g]) .sim_psi.inv(N=nn[g], psi.alpha=psi.alpha, c.data=c.data[[g]], eta=eta.tmp[[g]], psi.beta=psi.beta,
                              P=P, lmat=if(Q1) as.matrix(lmat[,,g]) else lmat[,,g]) else .sim_psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), numeric(P))
-    
+
       if(zerr && !err.z) {                                    warning("Algorithm may slow due to corrections for Choleski decompositions of non-positive-definite covariance matrices", call.=FALSE)
         err.z      <- TRUE
       }
       if(is.element(iter, iters))   {
         if(verbose)   utils::setTxtProgressBar(pb, iter)
         new.it     <- which(iters == iter)
-        if(sw["mu.sw"])            mu.store[,,new.it]      <- mu 
+        if(sw["mu.sw"])            mu.store[,,new.it]      <- mu
         if(all(sw["s.sw"], Q0))    eta.store[,,new.it]     <- eta
         if(all(sw["l.sw"], Q0))    load.store[,,,new.it]   <- lmat
         if(sw["psi.sw"])           psi.store[,,new.it]     <- psi
         if(sw["pi.sw"])            pi.store[,new.it]       <- pi.prop
-                                   z.store[,new.it]        <- z 
-                                   ll.store[new.it]        <- sum(z.res$log.likes)
+                                   z.store[,new.it]        <- z
+                                   ll.store[new.it]        <- z.res$log.like
                                    G.store[new.it]         <- sum(nn0)
       }
     }
     close(pb)
     Gmax           <- seq_len(max(as.numeric(z.store)))
     returns        <- list(mu       = if(sw["mu.sw"])         mu.store[,Gmax,, drop=FALSE],
-                           eta      = if(all(sw["s.sw"], Q0)) eta.store, 
-                           load     = if(all(sw["l.sw"], Q0)) load.store[,,Gmax,, drop=FALSE], 
+                           eta      = if(all(sw["s.sw"], Q0)) eta.store,
+                           load     = if(all(sw["l.sw"], Q0)) load.store[,,Gmax,, drop=FALSE],
                            psi      = if(sw["psi.sw"])        psi.store[,Gmax,, drop=FALSE],
                            pi.prop  = if(sw["pi.sw"])         pi.store[Gmax,, drop=FALSE],
                            z.store  = z.store,

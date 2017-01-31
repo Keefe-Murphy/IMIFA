@@ -1,3 +1,3 @@
-# IMIFA-GIT
-# Infinite Mixture of Infinite Factor Analyzers (Bayesian MBC)
-# PhD Stuff F.A.O. Keefe Murphy, Claire Gormley, Cinzia Viroli & Brendan Murphy only
+# IMIFA R Package
+# Infinite Mixture of Infinite Factor Analysers
+# Written by Keefe Murphy

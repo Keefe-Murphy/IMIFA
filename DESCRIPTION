@@ -1,0 +1,40 @@
+Package: IMIFA
+Type: Package
+Date: 2017-01-30
+Title: Fitting, Diagnostics, and Plotting Functions for Infinite Mixtures of
+    Infinite Factor Analysers and Related Models
+Version: 1.1.0
+Authors@R: c(person("Keefe", "Murphy", email = "keefe.murphy@ucd.ie", role = c("aut", "cre")),
+             person("Isobel Claire", "Gormley", role = "ctb"),
+             person("Cinzia", "Viroli", role = "ctb"))
+Description: Provides flexible Gibbs sampler functions for fitting Infinite Mixtures of Infinite Factor Analysers and related models, which conducts Bayesian nonparametric model based clustering with factor analytic covariance structures without recourse to model selection criteria to choose the number of clusters or cluster-specific latent factors. Model-specific diagnostic tools are also provided, as well as many options for plotting results and conducting posterior inference on parameters of interest.
+Depends:
+    R (>= 3.3.2)
+License: GPL (>= 2)
+Encoding: UTF-8
+URL: https://github.com/Keefe-Murphy/IMIFA
+Imports:
+    abind,
+    corpcor,
+    e1071,
+    gclus,
+    graphics,
+    grDevices,
+    matrixcalc,
+    matrixStats,
+    mclust,
+    MCMCpack,
+    mvnfast,
+    plotrix,
+    Rfast,
+    slam,
+    stats,
+    utils,
+    viridis
+Suggests:
+    Rmpfr,
+    gmp,
+    knitr,
+    rmarkdown
+RoxygenNote: 5.0.1
+VignetteBuilder: knitr

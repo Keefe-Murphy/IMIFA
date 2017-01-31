@@ -8,4 +8,4 @@
 .out
 .eps
 desktop.ini
-~$Results.xlsx
+inst/doc
