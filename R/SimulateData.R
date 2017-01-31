@@ -6,11 +6,11 @@
 #' @param P Desired number of variables in the simulated dataset - a single integer.
 #' @param Q Desired number of cluster-specific latent factors in the simulated data set. Can be specified either as a single integer if all clusters are to have the same number of factors, or a vector of length \code{G}.
 #' @param pis Mixing proportions of the clusters in the dataset if \code{G} > 1. Must sum to 1. Defaults to \code{rep(1/G, G)}.
-#' @param nn An alternative way to specify the size of each cluster, by giving the number of observations in each group explicitly. Must sum to \code{N}.
-#' @param loc.diff A parameter to control the closeness of the clusters in terms of the difference in their location vectors.
+#' @param nn An alternative way to specify the size of each cluster, by giving the exact number of observations in each group explicitly. Must sum to \code{N}.
+#' @param loc.diff A parameter to control the closeness of the clusters in terms of the difference in their location vectors. Defaults to 1.
 #' @param method A switch indicating whether the mixture to be simulated from is the conditional distribution of the data given the latent variables (default), or simply the marginal distribution of the data.
 #'
-#' @return An data.frame with \code{N} observations of \code{P} variables. The true values of the parameters which generated these data are also stored.
+#' @return A data.frame with \code{N} observations (rows) of \code{P} variables (columns). The true values of the parameters which generated these data are also stored.
 #' @export
 #' @importFrom corpcor "is.positive.definite" "make.positive.definite"
 #'

@@ -19,14 +19,14 @@ sim_IMIFA_data(N = 300L, G = 3L, P = 50L, Q = rep(4L, G),
 
 \item{pis}{Mixing proportions of the clusters in the dataset if \code{G} > 1. Must sum to 1. Defaults to \code{rep(1/G, G)}.}
 
-\item{nn}{An alternative way to specify the size of each cluster, by giving the number of observations in each group explicitly. Must sum to \code{N}.}
+\item{nn}{An alternative way to specify the size of each cluster, by giving the exact number of observations in each group explicitly. Must sum to \code{N}.}
 
-\item{loc.diff}{A parameter to control the closeness of the clusters in terms of the difference in their location vectors.}
+\item{loc.diff}{A parameter to control the closeness of the clusters in terms of the difference in their location vectors. Defaults to 1.}
 
 \item{method}{A switch indicating whether the mixture to be simulated from is the conditional distribution of the data given the latent variables (default), or simply the marginal distribution of the data.}
 }
 \value{
-An data.frame with \code{N} observations of \code{P} variables. The true values of the parameters which generated these data are also stored.
+A data.frame with \code{N} observations (rows) of \code{P} variables (columns). The true values of the parameters which generated these data are also stored.
 }
 \description{
 Function to simulate data of any size and dimension from a mixture of (infinite) factor analysers structure.
