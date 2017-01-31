@@ -10,7 +10,7 @@ vignette: >
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(fig.width=7, fig.height = 5, fig.align = 'center',
+knitr::opts_chunk$set(fig.width=7, fig.height = 5, fig.align = 'center', fig.show='hold',
                       warning=FALSE, message=FALSE, progress=FALSE)
 ```
 ## Introduction
@@ -102,7 +102,7 @@ simOMIFA <- mcmc_IMIFA(olive, method="OMIFA", range.G=10, nu=3, alpha=0.8,
 Finally, let's run the flagship IMIFA model, on which all subsequent demonstrations and results will be based, for a greater number of iterations, accepting all argument defaults.
 
 ```{r, progess='hide', results='hide'}
-simIMIFA <- mcmc_IMIFA(olive, method="IMIFA")
+simIMIFA <- mcmc_IMIFA(olive, method="IMIFA", n.iters=50000)
 ```
 
 ## Postprocessing and extracing optimum results
@@ -135,50 +135,52 @@ summary(resIMIFA)
 ```
 
 ## Visualing IMIFA results
-The object `resIMIFA` above is of the class `Results_IMIFA`. We can call `plot` an objects of this class to access a dedicated function for visualising output and parameters of inferential interest for IMIFA and related models. The two most important arguments, beyond the `Results_IMIFA` object itself, are `plot.meth` and `param`, where the former dictates the type of plot to be produced for the `param`eter of interest. Note that many of the function calls below will also print relevant output to the console window that is not always shown here. Please see the function's help manual for further assistance with the various function arguments.
+The object `resIMIFA` above is of the class `Results_IMIFA`. We can call `plot` an objects of this class to access a dedicated function for visualising output and parameters of inferential interest for IMIFA and related models. The two most important arguments, beyond the `Results_IMIFA` object itself, are `plot.meth` and `param`, where the former dictates the type of plot to be produced (one of `c("all", "correlation", "density", "errors", "GQ", "means", "parallel.coords", "trace", "zlabels")`, depending on the `method` employed originally by `mcmc_IMIFA`) for the `param`eter of interest (one of `c("means", "scores", "loadings", "uniquenesses", "pis", "alpha")`, depending on the `method` employed originally by `mcmc_IMIFA`). Note that many of the function calls below will also print relevant output to the console window that is not always shown here. Please see the function's help manual for further assistance with the various function arguments.
 
 Let's examine the posterior distributions of $G$ and $Q_g$. 
 
-```{r, fig.show='hold', results='hide'}
+```{r, results='hide'}
 plot(resIMIFA, plot.meth="GQ")
 ```
 
 Let's examine clustering performance against the known group labels.
 
-```{r, fig.show='hold'}
+```{r}
 plot(resIMIFA, plot.meth="zlabels", zlabels=area)
 ```
 
-To examine the mean parameters of the 1st cluster, where `all` below refers to trace, density, posterior mean, and ACF plots, and `mat=TRUE` means all variables simultaneously, we can type
+To examine the factor score parameters, where `all` below refers to trace, density, posterior mean, and ACF plots, and `mat=TRUE` means, in this case, to all plot all observations simultaneously (for a given factor, say the 1st), we can type
 
-```{r, fig.show='hold'}
-plot(resIMIFA, plot.meth="all", param="means", mat=TRUE, g=1)
+```{r}
+plot(resIMIFA, plot.meth="all", param="scores", mat=TRUE, fac=1)
 ```
+
+To instead plot all observations simultaneously for a given factor, we can specify `by.fac=FALSE` in the code above.
 
 The code below will produce only a heatmap of the loadings matrix in the first cluster. Darker colours correspond to entries which are more negatively loaded and _vice versa_.
 
-```{r, fig.show='hold'}
+```{r}
 plot(resIMIFA, plot.meth="means", param="loadings", load.meth="heatmap", g=1)
 ```
 To examine uniquenesses from all clusters in the form of a parellel coordinates plot, type
 
-```{r, fig.show='hold'}
+```{r}
 plot(resIMIFA, plot.meth="parallel.coords", param="uniquenesses")
 ```
 
 The error between the empirical and estimated covariance matrices (by group and averaged across groups) can be visualised as follows
-```{r, fig.show='hold'}
+```{r}
 plot(resIMIFA, plot.meth="errors")
 ```
 
 Finally, inference can be conducted on the Dirichlet process concentration parameter $\alpha$ (assuming `alpha.step` was set to `"fixed"` when `mcmc_IMIFA` was initially run using the IMFA/IMIFA methods).
-```{r, fig.show='hold'}
+```{r}
 plot(resIMIFA, plot.meth="all", param="alpha")
 ```
 
 # References
 For a more detailed description of the kind of things IMIFA can do and the purposes for which the model was developed, please consult the followng papers:
 
-Murphy, K., Gormley, I.C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, [https://arxiv.org/abs/1701.07010](_to appear_)
+Murphy, K., Gormley, I.C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, [_to appear_](https://arxiv.org/abs/1701.07010)
 
 Bhattacharya, A. and Dunson, D. B. (2011). Sparse Bayesian infinite factor models. _Biometrika_, 98(2): 291–306.

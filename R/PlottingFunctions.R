@@ -189,8 +189,10 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
   if(!facx) {
     fac   <- as.integer(fac)
     flen  <- length(fac)
-    if(flen == 1 && gx)      fac <- rep(fac, G)
-    if(flen != G && gx)               stop(paste0("'fac' must be supplied for each of the ", G, " groups"))
+    if(flen  == 1 && gx)     fac <- rep(fac, G)
+    flen  <- length(fac)
+    if(flen  != G && all(gx,
+       param == "loadings"))          stop(paste0("'fac' must be supplied for each of the ", G, " groups"))
   }
   g.score <- all(grp.ind, !all.ind, param == "scores")
   if(!gx)                      g <- as.integer(g)
@@ -289,16 +291,16 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
       if(param == "scores") {
         x.plot <- x$Scores$eta
         if(by.fac) {
-          plot.x  <- if(Q.max > 1) x.plot[ind[1],,] else t(x.plot[ind[1],,])
-        } else {
           plot.x  <- x.plot[,ind[2],]
+        } else {
+          plot.x  <- if(Q.max > 1) x.plot[ind[1],,] else t(x.plot[ind[1],,])
         }
         if(matx) {
           graphics::matplot(t(plot.x), type="l", ylab="", xlab="Iteration", lty=1)
           if(by.fac) {
-            if(titles) graphics::title(main=list(paste0("Trace", ifelse(all.ind, ":\n", ":\nScores - "), "Observation ", obs.names[ind[1]])))
-          } else {
             if(titles) graphics::title(main=list(paste0("Trace", ifelse(all.ind, ":\n", ":\nScores - "), "Factor ", ind[2])))
+          } else {
+            if(titles) graphics::title(main=list(paste0("Trace", ifelse(all.ind, ":\n", ":\nScores - "), "Observation ", obs.names[ind[1]])))
           }
         } else {
           graphics::plot(x=iter, y=x.plot[ind[1],ind[2],], type="l", ylab="", xlab="Iteration")
@@ -307,13 +309,13 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
       }
       if(param == "loadings") {
         x.plot <- result$loadings
-        plot.x <- if(by.fac) x.plot[ind[1],,] else x.plot[,ind[2],]
+        plot.x <- if(by.fac) x.plot[,ind[2],] else x.plot[ind[1],,]
         if(matx) {
           graphics::matplot(t(plot.x), type="l", ylab="", xlab="Iteration", lty=1)
           if(by.fac) {
-            if(titles) graphics::title(main=list(paste0("Trace", ifelse(all.ind, ":\n", paste0(":\nLoadings - ", ifelse(grp.ind, paste0("Group ", g, " - "), ""))), var.names[ind[1]], " Variable")))
-          } else {
             if(titles) graphics::title(main=list(paste0("Trace", ifelse(all.ind, ":\n", paste0(":\nLoadings - ", ifelse(grp.ind, paste0("Group ", g, " - "), ""))), "Factor ", ind[2])))
+          } else {
+            if(titles) graphics::title(main=list(paste0("Trace", ifelse(all.ind, ":\n", paste0(":\nLoadings - ", ifelse(grp.ind, paste0("Group ", g, " - "), ""))), var.names[ind[1]], " Variable")))
           }
         } else   {
           graphics::plot(x=iter, y=x.plot[ind[1],ind[2],], type="l", ylab="", xlab="Iteration")
@@ -375,17 +377,17 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
       if(param == "scores") {
         x.plot <- x$Scores$eta
         if(by.fac) {
-          plot.x  <- if(Q > 1) x.plot[ind[1],,] else t(x.plot[ind[1],,])
-        } else   {
           plot.x  <- x.plot[,ind[2],]
+        } else   {
+          plot.x  <- if(Q > 1) x.plot[ind[1],,] else t(x.plot[ind[1],,])
         }
         if(matx) {
           plot.x  <- sapply(apply(plot.x, 1, stats::density), "[[", "y")
           graphics::matplot(plot.x, type="l", ylab="", lty=1)
           if(by.fac) {
-            if(titles) graphics::title(main=list(paste0("Density", ifelse(all.ind, ":\n", ":\nScores - "), "Observation ", obs.names[ind[1]])))
-          } else {
             if(titles) graphics::title(main=list(paste0("Density", ifelse(all.ind, ":\n", ":\nScores - "), "Factor ", ind[2])))
+          } else {
+            if(titles) graphics::title(main=list(paste0("Density", ifelse(all.ind, ":\n", ":\nScores - "), "Observation ", obs.names[ind[1]])))
           }
         } else   {
           plot.d  <- stats::density(x.plot[ind[1],ind[2],])
@@ -396,14 +398,14 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
       }
       if(param == "loadings") {
         x.plot <- result$loadings
-        plot.x    <- if(by.fac) x.plot[ind[1],,] else x.plot[,ind[2],]
+        plot.x    <- if(by.fac) x.plot[,ind[2],] else x.plot[ind[1],,]
         if(matx) {
           plot.x  <- sapply(apply(plot.x, 1, stats::density), "[[", "y")
           graphics::matplot(plot.x, type="l", ylab="", lty=1)
           if(by.fac) {
-            if(titles) graphics::title(main=list(paste0("Density", ifelse(all.ind, ":\n", paste0(":\nLoadings - ", ifelse(grp.ind, paste0("Group ", g, " - "), ""))), var.names[ind[1]], " Variable")))
-          } else {
             if(titles) graphics::title(main=list(paste0("Density", ifelse(all.ind, ":\n", paste0(":\nLoadings - ", ifelse(grp.ind, paste0("Group ", g, " - "), ""))), "Factor ", ind[2])))
+          } else {
+            if(titles) graphics::title(main=list(paste0("Density", ifelse(all.ind, ":\n", paste0(":\nLoadings - ", ifelse(grp.ind, paste0("Group ", g, " - "), ""))), var.names[ind[1]], " Variable")))
           }
         } else   {
           plot.d  <- stats::density(x.plot[ind[1],ind[2],])
@@ -529,15 +531,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           if(Q != 1) graphics::abline(v=seq(1, Q - 1, 1) + 0.5, lty=2, lwd=1)
         } else {
           if(ci.sw[param]) ci.x  <- result$ci.load
-          if(by.fac) {
-           if(ci.sw[param]) ci.x <- ci.x[,,ind[2]]
-            graphics::plot(plot.x[,ind[2]], type=type, xaxt="n", xlab="", ylab="Loading", ylim=if(ci.sw[param]) c(min(ci.x[1,]), max(ci.x[2,])))
-            if(all(intervals, ci.sw[param])) plotrix::plotCI(plot.x[,ind[2]], li=ci.x[1,], ui=ci.x[2,], slty=3, scol=grey, add=TRUE, gap=TRUE, pch=ifelse(type == "n", NA, 20))
-            graphics::axis(1, line=-0.5, tick=FALSE, at=seq_len(n.var), labels=seq_len(n.var))
-            graphics::mtext("Variable #", side=1, line=2, cex=0.8)
-            if(titles) graphics::title(main=list(paste0(ifelse(!all.ind, paste0("Loadings - ", ifelse(grp.ind, paste0("Group ", g, " - "), "")), ""), "Factor ", ind[2])))
-            if(type == "n") graphics::text(x=plot.x, var.names, cex=0.5)
-          } else     {
+          if(!by.fac) {
            if(ci.sw[param]) ci.x <- ci.x[,ind[1],]
             graphics::plot(plot.x[ind[1],], type=type, xaxt="n", xlab="", ylab="Loading", ylim=if(ci.sw[param]) c(min(ci.x[1,]), max(ci.x[2,])))
             if(all(intervals, ci.sw[param])) plotrix::plotCI(plot.x[ind[1],], li=ci.x[1,], ui=ci.x[2,], slty=3, scol=grey, add=TRUE, gap=TRUE, pch=ifelse(type == "n", NA, 20))
@@ -545,6 +539,14 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
             graphics::mtext("Factors", side=1, line=2)
             if(titles) graphics::title(main=list(paste0(ifelse(!all.ind, paste0("Loadings - ", ifelse(grp.ind, paste0("Group ", g, " - "), "")), ""), var.names[ind[1]], " Variable")))
             if(type == "n") graphics::text(x=plot.x[ind[1],], paste0("Factor ", seq_len(Q)), cex=0.5)
+          } else     {
+           if(ci.sw[param]) ci.x <- ci.x[,,ind[2]]
+            graphics::plot(plot.x[,ind[2]], type=type, xaxt="n", xlab="", ylab="Loading", ylim=if(ci.sw[param]) c(min(ci.x[1,]), max(ci.x[2,])))
+            if(all(intervals, ci.sw[param])) plotrix::plotCI(plot.x[,ind[2]], li=ci.x[1,], ui=ci.x[2,], slty=3, scol=grey, add=TRUE, gap=TRUE, pch=ifelse(type == "n", NA, 20))
+            graphics::axis(1, line=-0.5, tick=FALSE, at=seq_len(n.var), labels=seq_len(n.var))
+            graphics::mtext("Variable #", side=1, line=2, cex=0.8)
+            if(titles) graphics::title(main=list(paste0(ifelse(!all.ind, paste0("Loadings - ", ifelse(grp.ind, paste0("Group ", g, " - "), "")), ""), "Factor ", ind[2])))
+            if(type == "n") graphics::text(x=plot.x, var.names, cex=0.5)
           }
         }
       }
@@ -804,7 +806,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         graphics::par(mar=c(3.1, 4.1, 4.1, 2.1))
       }
       jitcol <- switch(param, loadings=Q, G)
-      graphics::matplot(seq_len(n.var) + matrix(rnorm(jitcol * n.var, 0, min(0.1, 0.5/n.var^2)), nrow=n.var, ncol=jitcol), plot.x, type=switch(param, uniquenesses=switch(uni.type, unconstrained="p", isotropic="l"), "p"),
+      graphics::matplot(seq_len(n.var) + matrix(rnorm(jitcol * n.var, 0, min(0.1, 0.75/n.var^2)), nrow=n.var, ncol=jitcol), plot.x, type=switch(param, uniquenesses=switch(uni.type, unconstrained="p", isotropic="l"), "p"),
                         col=switch(param, loadings=seq_len(Q), seq_len(G)), pch=15, xlab="Variable", ylab=paste0("Standardised ", varnam), axes=FALSE, main=paste0("Parallel Coordinates: ", varnam, ifelse(all(grp.ind, param == "loadings"), paste0("\n Group ", g), "")), lty=1)
       graphics::axis(1, at=seq_len(n.var), labels=if(titles && n.var < 100) rownames(plot.x) else rep("", n.var), cex.axis=0.5, tick=FALSE)
       for(i in seq_len(n.var))    {

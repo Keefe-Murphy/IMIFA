@@ -1,6 +1,6 @@
 Package: IMIFA
 Type: Package
-Date: 2017-01-30
+Date: 2017-01-31
 Title: Fitting, Diagnostics, and Plotting Functions for Infinite Mixtures of
     Infinite Factor Analysers and Related Models
 Version: 1.1.0
