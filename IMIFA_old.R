@@ -16,7 +16,7 @@
     }
   } else   {
     datdir   <- "/home/kmurphy"
-    setwd("/home/kmurphy/IMIFA-GIT")
+    setwd("/home/kmurphy/IMIFA")
   }
   source(paste0(getwd(), "/PackageSetup_old.R"))
 

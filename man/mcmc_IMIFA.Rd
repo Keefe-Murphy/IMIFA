@@ -96,7 +96,7 @@ mcmc_IMIFA(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA",
 
 \item{trunc.G}{The maximum number of allowable and storable groups if the "\code{IMFA}" or "\code{IMIFA}" method is employed. Defaults to smaller of \code{N} and 50.}
 
-\item{verbose}{Logical indicating whether to print output (e.g. run times) and a progress bar to the screen while the sampler runs (defaults to TRUE).}
+\item{verbose}{Logical indicating whether to print output (e.g. run times) and a progress bar to the screen while the sampler runs (defaults to TRUE). If FALSE, warnings and error messages will still be printed to the screen, but everything else will be suppressed.}
 
 \item{discount}{The discount parameter used when generalising the Dirichlet process to the Pitman-Yor process. Must lie in the interval (0, 1). If non-zero, \code{alpha} can be supplied greater than -discount. Defaults to 0. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods.}
 

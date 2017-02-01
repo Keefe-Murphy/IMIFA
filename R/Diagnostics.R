@@ -473,7 +473,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   result         <- list(list())
   e.store        <- list()
   mse   <- mae   <- medse  <-
-  medae <- rmse  <- cvrmse <-
+  medae <- rmse  <-#cvrmse <-
   nrmse <- emp.T <- est.T  <- rep(NA, G)
   for(g in Gseq) {
     Qg           <- Q[g]
@@ -613,7 +613,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       medae[g]   <- Rfast::med(abs.error)
       rmse[g]    <- sqrt(mse[g])
       nrmse[g]   <- rmse[g]/(max(cov.emp) - min(cov.emp))
-      cvrmse[g]  <- rmse[g]/mean(cov.emp)
+     #cvrmse[g]  <- rmse[g]/mean(cov.emp)
       if(any(all(scal.meth != "none", cent) &&
                  sum(round(diag(cov.est))   !=
                  round(diag(cov.emp)))      != 0,
@@ -656,8 +656,10 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   attr(GQ.res, "Supplied")     <- c(Q=Q.T, G=G.T)
   err.T                        <- vapply(Gseq, function(g) all(emp.T[g], est.T[g]), logical(1))
   if(any(err.T))   {
-    errors       <- lapply(list(MSE = mse, MAE = mae, MEDSE = medse, MEDAE = medae, RMSE = rmse,
-                                NRMSE = nrmse, CVRMSE = cvrmse), stats::setNames, paste0("Group ", Gseq))
+    errors       <- lapply(list(MSE = mse, MAE = mae, MEDSE = medse,
+                                MEDAE = medae, RMSE = rmse, NRMSE = nrmse
+                                #,CVRMSE = cvrmse
+                                ), stats::setNames, paste0("Group ", Gseq))
     if(G > 1)      {
       errors     <- c(errors, list(Averages = unlist(lapply(errors, mean, na.rm=TRUE))))
       class(errors)            <- "listof"

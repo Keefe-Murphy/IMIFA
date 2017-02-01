@@ -39,7 +39,7 @@
 #' @param rho Parameter controlling the rate of geometric decay for the independent slice-efficient sampler, s.t. xi = (1 - rho)rho^(g-1). Must lie in the interval (0, 1]. Higher values are associated with better mixing but longer run times. Defaults to 0.75, Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods when \code{ind.slice} is TRUE.
 #' @param DP.lab.sw Logial indicating whether the two forced label switching moves are to be implemented (defaults to TRUE). Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods.
 #' @param trunc.G The maximum number of allowable and storable groups if the "\code{IMFA}" or "\code{IMIFA}" method is employed. Defaults to smaller of \code{N} and 50.
-#' @param verbose Logical indicating whether to print output (e.g. run times) and a progress bar to the screen while the sampler runs (defaults to TRUE).
+#' @param verbose Logical indicating whether to print output (e.g. run times) and a progress bar to the screen while the sampler runs (defaults to TRUE). If FALSE, warnings and error messages will still be printed to the screen, but everything else will be suppressed.
 #' @param discount The discount parameter used when generalising the Dirichlet process to the Pitman-Yor process. Must lie in the interval (0, 1). If non-zero, \code{alpha} can be supplied greater than -discount. Defaults to 0. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods.
 #' @param learn.d Logical indicating whether the \code{discount} parameter is to be updated. Not yet implemented.
 #' @param d.hyper Hyperparameters for the Beta prior on the \code{discount} hyperparameter. However, learning this parameter is not yet implemented.
@@ -138,7 +138,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(!is.list(z.list))     z.list        <- lapply(list(z.list), as.factor)
     if(zin.miss &&
         z.init  != "list") { z.init        <- "list"
-                                    message("'z.init' set to 'list' as 'z.list' was supplied")
+      if(verbose)                   message("'z.init' set to 'list' as 'z.list' was supplied")
     }
   }
   if(any(!is.logical(centering),
@@ -167,11 +167,13 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   iters     <- iters[iters > 0]
   raw.dat   <- as.data.frame(dat)
   num.check <- vapply(raw.dat, is.numeric, logical(1))
-  if(sum(num.check) != ncol(dat)) { message("Non-numeric columns removed")
+  if(sum(num.check) != ncol(dat)) {
+    if(verbose)                     message("Non-numeric columns removed")
     raw.dat <- raw.dat[num.check]
   }
   if(length(iters)  <= 1)           stop("Run a longer chain!")
-  if(anyNA(raw.dat)) {              message("Rows with missing values removed from data")
+  if(anyNA(raw.dat)) {
+    if(verbose)                     message("Rows with missing values removed from data")
     raw.dat <- raw.dat[complete.cases(raw.dat),]
   }
   if(method != "classify") {
@@ -286,7 +288,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
       if(length(z.list)    > 1)     stop("Only one set of labels can be supplied via 'z.list'")
       zlabels      <- unlist(z.list)
       if(length(zlabels)  != N)     stop(paste0("'z.list' must be a factor of length N=",  N))
-      if(!missing(range.G) && any(length(range.G > 1),
+      if(all(verbose, !missing(range.G)) && any(length(range.G > 1),
           range.G  != levs))   {    message("Forced 'range.G' equal to the number of levels in 'zlabels' for the 'classify' method")
       }
       range.G      <- levs
@@ -309,8 +311,8 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     } else {
       meth[1]    <- switch(meth[1], MFA=, FA="FA", MIFA=, IFA="IFA")
     }
-    if(!is.element(method,
-                   c("FA", "IFA"))) message(paste0("Forced use of ", meth[1], " method where 'range.G' is equal to 1"))
+    if(all(verbose, !is.element(method,
+           c("FA", "IFA"))))        message(paste0("Forced use of ", meth[1], " method where 'range.G' is equal to 1"))
   }
 
 # Define full conditionals, hyperparamters & Gibbs Sampler function for desired method
@@ -417,7 +419,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     } else if(!switches["l.sw"])  { warning("Posterior Loadings won't be available as they're not being stored", call.=FALSE)
     }
   }
-  if(all(is.element(method, c("FA", "IFA")),
+  if(all(is.element(method, c("FA", "IFA")), verbose,
          !zin.miss ||
          !zli.miss))                message(paste0("z does not need to be initialised for the ", method, " method"))
   if(is.element(method, c("MFA", "MIFA", "classify"))) {
