@@ -46,7 +46,7 @@ There exist several utility functions in the package to solicit good prior hyper
 
     1.  mcmc_IMIFA() 
     2.  get_IMIFA_results()
-    3.  and a dedicated S3 plot method
+    3.  and a dedicated S3 plot() method
 
 While it is possible to simulate data from a factor analytic mixture using the `sim_IMIFA_data()` function, specifying, among other things, the sample size `N`, the number of groups `G`, and the number of variables `P`, e.g. 
 
@@ -78,7 +78,7 @@ There are many, many options for specifying hyperparameters, specifying running 
 ?mcmc_IMIFA
 ```
 
-Let's begin by fitting a Mixture of Factor Analysers model (MFA) to the unit-scaled `olive` data. For this, we must specify sequences of values for `range.G`, the number of clusters, and `range.Q`, the number of latent factors. Let's assume that uniquenesses are `isotropic` rather than `unconstrained`. Let's also allow diagonal covariance as a special case where `range.Q` is `0`, and accept all other defaults (for instance, cluster labels will be initialised by `mclust`).
+Be warned that the `mcmc_IMIFA` function calls in this section may take quite some time to run. Let's begin by fitting a Mixture of Factor Analysers model (MFA) to the unit-scaled `olive` data. For this, we must specify sequences of values for `range.G`, the number of clusters, and `range.Q`, the number of latent factors. Let's assume that uniquenesses are `isotropic` rather than `unconstrained`. Let's also allow diagonal covariance as a special case where `range.Q` is `0`, and accept all other defaults (for instance, cluster labels will be initialised by `mclust`).
 
 ```{r, eval=FALSE}
 simMFA   <- mcmc_IMIFA(olive, method="MFA", n.iters=10000, range.G=3:6, range.Q=0:3, 
@@ -95,7 +95,7 @@ simMIFA  <- mcmc_IMIFA(olive, method="MIFA", n.iters=10000, centering=TRUE,
 MIFA doesn't entirely solve the issue of model choice, as you can see; `range.G` still needs to be specified. We can allow the number of clusters to instead/also be estimated automatically by fitting one of the overfitted mixture models (OMFA/OMIFA) or one of the infinite mixture models (IMFA/IMIFA). Let's fit an Overfitted Mixture of Infinite Factor Analysers, and override the default value for the starting value / upper limit for the number of clusters (`range.G`) and supply a sufficiently small dirichlet hyperparameter (`alpha`) for the cluster mixing proportions. We can enforce additional shrinkage by varying other hyperparameters
 
 ```{r, eval=FALSE}
-simOMIFA <- mcmc_IMIFA(olive, method="OMIFA", range.G=10, nu=3, alpha=0.8,
+simOMIFA <- mcmc_IMIFA(olive, method="OMIFA", n.iters=10000, range.G=10, nu=3, alpha=0.8,
                        alpha.d1=3.5, alpha.d2=7, prop=0.6, epsilon=0.12)
 ```
 
@@ -124,8 +124,16 @@ resMFA2 <- get_IMIFA_results(simMFA, G=3, criterion="aic.mcmc")
 
 For now, let's just extract results from our IMIFA run above so we can proceed to visually examine them. Though the IMIFA model obviates the need for model selection criteria, the syntax for extracting results is exactly the same
 
-```{r, progress='hide', results='hide'}
+```{r, eval=FALSE}
 resIMIFA <- get_IMIFA_results(simIMIFA)
+```
+
+```{r, progress='hide', results='hide', include=FALSE}
+resIMIFA <- get_IMIFA_results(simIMIFA, zlabels=area)
+while(resIMIFA$GQ.results$G != 4) {
+  simIMIFA <- mcmc_IMIFA(olive, method="IMIFA", n.iters=50000)
+  resIMIFA <- get_IMIFA_results(simIMIFA, zlabels=area)
+}
 ```
 
 Before we examine the results in great detail, we can quickly summarise the solution as follows
@@ -143,16 +151,17 @@ Let's examine the posterior distributions of $G$ and $Q_g$.
 plot(resIMIFA, plot.meth="GQ")
 ```
 
-Let's examine clustering performance against the known group labels.
+Let's examine clustering performance against the known group labels. Note that the group labels could have been already supplied to `get_IMIFA_results` too, but plotting allows clustering performance to be evaluated against new labels without having to extract the full results object all over again.
 
 ```{r}
 plot(resIMIFA, plot.meth="zlabels", zlabels=area)
 ```
 
-To examine the factor score parameters, where `all` below refers to trace, density, posterior mean, and ACF plots, and `mat=TRUE` means, in this case, to all plot all observations simultaneously (for a given factor, say the 1st), we can type
+To examine the posterior mean estimates of the cluster means in each group, we can ...
+To examine the trace plots for the factor score parameters, where `mat=TRUE` means, in this case, to all plot all observations simultaneously (for a given factor, say the 1st), we can type
 
 ```{r}
-plot(resIMIFA, plot.meth="all", param="scores", mat=TRUE, fac=1)
+plot(resIMIFA, plot.meth="trace", param="scores", mat=TRUE, fac=1)
 ```
 
 To instead plot all observations simultaneously for a given factor, we can specify `by.fac=FALSE` in the code above.
@@ -168,12 +177,12 @@ To examine uniquenesses from all clusters in the form of a parellel coordinates 
 plot(resIMIFA, plot.meth="parallel.coords", param="uniquenesses")
 ```
 
-The error between the empirical and estimated covariance matrices (by group and averaged across groups) can be visualised as follows
+The error between the empirical and estimated covariance matrices (by group and averaged across groups) can sometimes provide a useful indicator of the validity of a clustering solution, and can be visualised as follows:
 ```{r}
 plot(resIMIFA, plot.meth="errors")
 ```
 
-Finally, inference can be conducted on the Dirichlet process concentration parameter $\alpha$ (assuming `alpha.step` was set to `"fixed"` when `mcmc_IMIFA` was initially run using the IMFA/IMIFA methods).
+Finally, inference can be conducted on the Dirichlet process concentration parameter $\alpha$ (assuming `alpha.step` was set to `"fixed"` when `mcmc_IMIFA` was initially run using the IMFA/IMIFA methods), where`all` below refers to trace, density, posterior mean, and ACF plots.
 ```{r}
 plot(resIMIFA, plot.meth="all", param="alpha")
 ```
@@ -181,6 +190,6 @@ plot(resIMIFA, plot.meth="all", param="alpha")
 # References
 For a more detailed description of the kind of things IMIFA can do and the purposes for which the model was developed, please consult the followng papers:
 
-Murphy, K., Gormley, I.C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, [_to appear_](https://arxiv.org/abs/1701.07010)
+Murphy, K., Gormley, I.C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, [_to appear_](https://arxiv.org/abs/1701.07010).
 
 Bhattacharya, A. and Dunson, D. B. (2011). Sparse Bayesian infinite factor models. _Biometrika_, 98(2): 291–306.

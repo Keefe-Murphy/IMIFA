@@ -33,7 +33,7 @@
 
 \item{fac}{Optional argument that provides an alternative way to specify \code{ind[2]} when \code{mat} is FALSE and \code{param} is one of \code{scores} or \code{loadings}.}
 
-\item{by.fac}{When \code{mat} is TRUE (the default), by.fac optionally allows (mat)plotting of scores and loadings by factor (for a given observation or variable, respetively, controlled by \code{ind}) when set to TRUE (the default). Otherwise every observation or variable is plotted for a given factor, controlled by \code{ind}.}
+\item{by.fac}{Optionally allows (mat)plotting of scores and loadings by factor - i.e. observation(s) (scores) or variable(s) (loadings) for a given factor, respectively, controlled by \code{ind} or \code{fac}) when set to TRUE (the default). Otherwise factor(s) are plotted for a given observation or variable, again controlled by \code{ind} or \code{fac}.}
 
 \item{type}{The manner in which the plot is to be drawn, as per the \code{type} argument to \code{\link{plot}}.}
 
