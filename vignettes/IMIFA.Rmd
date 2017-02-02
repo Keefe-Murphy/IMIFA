@@ -99,14 +99,10 @@ simOMIFA <- mcmc_IMIFA(olive, method="OMIFA", n.iters=10000, range.G=10, nu=3, a
                        alpha.d1=3.5, alpha.d2=7, prop=0.6, epsilon=0.12)
 ```
 
-Finally, let's run the flagship IMIFA model, on which all subsequent demonstrations and results will be based, for a greater number of iterations, accepting all argument defaults. Note that the `verbose` argument, which defaults to `TRUE` will ordinarily print a progress bar to the console window.
+Finally, let's run the flagship IMIFA model, on which all subsequent demonstrations and results will be based, for a greater number of iterations, accepting all argument defaults. Note that the `verbose` argument, which defaults to `TRUE` will ordinarily print a progress bar to the console window. We can avoid scoring the latent scores if we wish, as this can be a huge drain on memory, with the caveat that posterior inference on the scores won't be possible. 
 
 ```{r, eval=FALSE}
-simIMIFA <- mcmc_IMIFA(olive, method="IMIFA", n.iters=50000)
-```
-
-```{r, progess='hide', results='hide', include=FALSE}
-simIMIFA <- mcmc_IMIFA(olive, method="IMIFA", n.iters=50000, rho=0.7)
+simIMIFA <- mcmc_IMIFA(olive, method="IMIFA", n.iters=50000, s.sw=FALSE)
 ```
 
 ## Postprocessing and extracing optimum results
@@ -132,12 +128,8 @@ For now, let's just extract results from our IMIFA run above so we can proceed t
 resIMIFA <- get_IMIFA_results(simIMIFA)
 ```
 
-```{r, progress='hide', results='hide', include=FALSE}
-resIMIFA <- try(get_IMIFA_results(simIMIFA, zlabels=area, G=4), silent=TRUE)
-while(inherits(resIMIFA, "try-error")) {
-  simIMIFA <- mcmc_IMIFA(olive, method="IMIFA", n.iters=50000, rho=0.7)
-  resIMIFA <- try(get_IMIFA_results(simIMIFA, zlabels=area, G=4), silent=TRUE)
-}
+```{r, include=FALSE}
+load(file="resIMIFA.rda")
 ```
 
 Before we examine the results in great detail, we can quickly summarise the solution as follows
@@ -149,10 +141,10 @@ summary(resIMIFA)
 ## Visualing IMIFA results
 The object `resIMIFA` above is of the class `Results_IMIFA`. We can call `plot` an objects of this class to access a dedicated function for visualising output and parameters of inferential interest for IMIFA and related models. The two most important arguments, beyond the `Results_IMIFA` object itself, are `plot.meth` and `param`, where the former dictates the type of plot to be produced (one of `c("all", "correlation", "density", "errors", "GQ", "means", "parallel.coords", "trace", "zlabels")`, depending on the `method` employed originally by `mcmc_IMIFA`) for the `param`eter of interest (one of `c("means", "scores", "loadings", "uniquenesses", "pis", "alpha")`, depending on the `method` employed originally by `mcmc_IMIFA`). Note that many of the function calls below will also print relevant output to the console window that is not always shown here. Please see the function's help manual by typing `plot.Results_IMIFA` for further assistance with the various function arguments.
 
-Let's examine the posterior distribution of $Q_g$ for each of the `r resIMIFA$GQ.results$G` groups. In this case, `g=1` would mean to instead examine the posterior distribution of $G$).
+Let's examine the posterior distribution of $G$ and the posterior distribution of $Q_g$ for each of the `r resIMIFA$GQ.results$G` groups.
 
 ```{r, results='hide'}
-plot(resIMIFA, plot.meth="GQ", g=2)
+plot(resIMIFA, plot.meth="GQ")
 ```
 
 Let's examine clustering performance against the known group labels. Note that the group labels could have been already supplied to `get_IMIFA_results` too, but plotting allows clustering performance to be evaluated against new labels without having to extract the full results object all over again. More specifically, the code below allows us to visualise the clustering uncertainty (with or without the labels being supplied, in fact). In this case, `g=2` would mean to instead visualise the uncertainties in the form of a histogram.
@@ -165,17 +157,16 @@ To examine the posterior mean estimates of the cluster means in a given cluster 
 ```{r}
 plot(resIMIFA, plot.meth="means", param="means", mat=TRUE, g=1)
 ```
-To examine the trace plots for the factor score parameters, where `mat=TRUE` means, in this case, to all plot all observations simultaneously (for a given factor, say the 1st), we would type
+Had the factor scores been stored, we could examine the trace plots for them using the code below, where `mat=TRUE` and `by.fac=FALSE` means, in this case, to plot all factors simultaneously for a given observation, say the 1st (however this is not shown, as the scores were not stored).
 
 ```{r, eval=FALSE}
-plot(resIMIFA, plot.meth="trace", param="scores", mat=TRUE, fac=1)
+plot(resIMIFA, plot.meth="trace", param="scores", mat=TRUE, by.fac=FALSE, ind=1)
 ```
 
-Let's instead plot all factors simultaneously for a given observation (say the 2nd), by specifying `by.fac=FALSE`:
-```{r}
-plot(resIMIFA, plot.meth="trace", param="scores", mat=TRUE, ind=2, by.fac=FALSE)
+We could instead plot all observations simultaneously for a given factor, say the 2nd (also not shown).
+```{r, eval=FALSE}
+plot(resIMIFA, plot.meth="trace", param="scores", mat=TRUE, fac=2)
 ```
-
 
 The code below will produce only a heatmap of the loadings matrix in the first cluster. Darker colours correspond to entries which are more negatively loaded and _vice versa_.
 
