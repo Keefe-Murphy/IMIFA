@@ -17,11 +17,11 @@
 
 \item{plot.meth}{The type of plot to be produced for the \code{param} of interest, where \code{correlation} refers to ACF/PACF plots, \code{means} refers to posterior means, \code{density}, \code{trace} and \code{parallel.coords} are self-explanatory. "\code{all}" in this case, the default, refers to {\code{trace, density, means, correlation}}. \code{parallel.coords} is only available when \code{param} is one of \code{means}, \code{loadings} or \code{uniquenesses} - note that this method applies a small amount of horizontal jitter to avoid overplotting. Special types of plots which don't require a \code{param} are \code{GQ}, for plotting the posterior summaries of the numbers of groups/factors, if available, \code{zlabels} for plotting clustering uncertainties if clustering has taken place (with or without the clustering labels being supplied via the \code{zlabels} argument), and \code{errors} for visualing the difference between the estimated and empirical covariance matrix/matrices.}
 
-\item{param}{The parameter of interest for any of the following \code{plot.meth} options: {\code{trace, density, means, correlation}}. The \code{param} must have been stored when \code{\link{mcmc_IMIFA}} was initially ran. Includes \code{pis} for methods where clustering takes place, and allows posterior inference on \code{alpha} for the "\code{IMFA}" and "\code{IMIFA}" methods.}
+\item{param}{The parameter of interest for any of the following \code{plot.meth} options: \code{trace}, \code{density}, \code{means}, \code{correlation}. The \code{param} must have been stored when \code{\link{mcmc_IMIFA}} was initially ran. Includes \code{pis} for methods where clustering takes place, and allows posterior inference on \code{alpha} for the "\code{IMFA}" and "\code{IMIFA}" methods.}
 
 \item{zlabels}{The true labels can be supplied if they are known. Only relevant when \code{plot.meth = "zlabels"}. If this is not supplied, the function uses the labels that were supplied, if any, to \code{\link{get_IMIFA_results}}.}
 
-\item{load.meth}{Switch which allows plotting posterior mean loadings as a heatmap (the default), or as something akin to \code{link{plot}} with \code{type = "h"}. ONly relevant if \code{param = "loadings"}. Heatmaps are produced with the aid of \code{\link{mat2cols}} and \code{\link[gclus]{plotcolors}}.}
+\item{load.meth}{Switch which allows plotting posterior mean loadings as a heatmap (the default), or as something akin to \code{link{plot}} with \code{type = "h"}. Only relevant if \code{param = "loadings"}. Heatmaps are produced with the aid of \code{\link{mat2cols}} and \code{\link[gclus]{plotcolors}}.}
 
 \item{palette}{An optional colour palette to be supplied if overwriting the default palette set inside the function by \code{\link[viridis]{viridis}} is desired.}
 
@@ -29,7 +29,7 @@
 
 \item{mat}{Logical indicating whether a \code{\link{matplot}} is produced (defaults to TRUE). If given as FALSE, \code{ind} is invoked.}
 
-\item{ind}{Either a single number indicating which variable to plot when \code{param} is one of \code{means} or \code{uniquenesses}, or which cluster to plot if \code{param} is \code{pis}. If \code{scores} are plotted, a vector of length two giving which observation and factor to plot; If \code{loadings} are plotted, a vector of length two giving which variable and factor to plot. Only relevant when \code{mat} is FALSE.}
+\item{ind}{Either a single number indicating which variable to plot when \code{param} is one of \code{means} or \code{uniquenesses}, or which cluster to plot if \code{param} is \code{pis}. If \code{scores} are plotted, a vector of length two giving which observation and factor to plot; If \code{loadings} are plotted, a vector of length two giving which variable and factor to plot. Only relevant when \code{mat} or \code{by.fac} is FALSE.}
 
 \item{fac}{Optional argument that provides an alternative way to specify \code{ind[2]} when \code{mat} is FALSE and \code{param} is one of \code{scores} or \code{loadings}.}
 
