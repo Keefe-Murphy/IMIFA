@@ -10,7 +10,7 @@
 #' @param loc.diff A parameter to control the closeness of the clusters in terms of the difference in their location vectors. Defaults to 1.
 #' @param method A switch indicating whether the mixture to be simulated from is the conditional distribution of the data given the latent variables (default), or simply the marginal distribution of the data.
 #'
-#' @return A data.frame with \code{N} observations (rows) of \code{P} variables (columns). The true values of the parameters which generated these data are also stored.
+#' @return Invisibly returns a data.frame with \code{N} observations (rows) of \code{P} variables (columns). The true values of the parameters which generated these data are also stored.
 #' @export
 #' @importFrom corpcor "is.positive.definite" "make.positive.definite"
 #'
@@ -132,5 +132,5 @@ sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(4L, G), pis = rep(
   attr(simdata,
        "Covariance")   <- true.cov
   class(simdata)       <- c("data.frame")
-  return(simdata)
+    invisible(simdata)
 }
