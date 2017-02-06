@@ -221,7 +221,6 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
     ng    <- ifelse(grp.ind, grp.size[g], n.obs)
     g.ind <- which(Gs == g)
     msgx  <- all(interactive(), g != max(Gs))
-    result     <- x[[g]]
     .ent_exit  <- function() {
       ent      <- readline("Hit <Return> to see next plot or type 'EXIT'/hit <Esc> to exit: ")
       options(show.error.messages=FALSE)
@@ -247,7 +246,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
       matx     <- mat
     }
     if(!matx) {
-      iter     <- switch(param, scores=seq_along(attr(x$Score, "Eta.store")), pis=seq_along(store), seq_len(attr(result, "Store")))
+      iter     <- switch(param, scores=seq_along(attr(x$Score, "Eta.store")), pis=seq_along(store), seq_len(attr(x, "N.Loadstore")[g]))
     }
     if(is.element(param, c("scores", "loadings"))) {
       if(indx)               ind <- c(1L, 1L)
@@ -281,7 +280,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
 
     if(m.sw["T.sw"]) {
       if(param == "means")  {
-        plot.x <- result$means
+        plot.x <- x$Means$mus[[g]]
         if(matx) {
           graphics::matplot(t(plot.x), type="l", ylab="", xlab="Iteration", lty=1, ylim=if(is.element(method, c("FA", "IFA"))) c(-1, 1))
           if(titles) graphics::title(main=list(paste0("Trace", ifelse(all.ind, "", paste0(":\nMeans", ifelse(grp.ind, paste0(" - Group ", g), ""))))))
@@ -310,7 +309,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         }
       }
       if(param == "loadings") {
-        x.plot <- result$loadings
+        x.plot <- x$Loadings$lmats[[g]]
         plot.x <- if(by.fac) x.plot[,ind[2],] else x.plot[ind[1],,]
         if(matx) {
           graphics::matplot(t(plot.x), type="l", ylab="", xlab="Iteration", lty=1)
@@ -325,7 +324,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         }
       }
       if(param == "uniquenesses") {
-        plot.x <- result$psi
+        plot.x <- x$Uniquenesses$psis[[g]]
         if(matx) {
           graphics::matplot(t(plot.x), type="l", ylab="", xlab="Iteration", lty=1)
           if(titles) graphics::title(main=list(paste0("Trace", ifelse(all.ind, "", paste0(":\nUniquenesses", ifelse(grp.ind, paste0(" - Group ", g), ""))))))
@@ -364,7 +363,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
 
     if(m.sw["D.sw"]) {
       if(param == "means") {
-        x.plot <- result$means
+        x.plot <- x$Means$mus[[g]]
         if(matx) {
           plot.x  <- sapply(apply(x.plot, 1, stats::density), "[[", "y")
           graphics::matplot(plot.x, type="l", ylab="", lty=1)
@@ -399,7 +398,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         }
       }
       if(param == "loadings") {
-        x.plot <- result$loadings
+        x.plot <- x$Loadings$lmats[[g]]
         plot.x    <- if(by.fac) x.plot[,ind[2],] else x.plot[ind[1],,]
         if(matx) {
           plot.x  <- sapply(apply(plot.x, 1, stats::density), "[[", "y")
@@ -417,7 +416,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         }
       }
       if(param == "uniquenesses") {
-        x.plot <- result$psi
+        x.plot <- x$Uniquenesses$psis[[g]]
         if(matx) {
           plot.x  <- sapply(apply(x.plot, 1, stats::density), "[[", "y")
           graphics::matplot(plot.x, type="l", ylab="", lty=1)
@@ -470,8 +469,8 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         } else if(ind[2] > Q)         stop(paste0("Only the first ", Q, " columns can be plotted"))
       }
       if(param == "means") {
-        plot.x <- result$post.mu
-        if(ci.sw[param])  ci.x   <- result$ci.mu
+        plot.x <- x$Means$post.mu[,g]
+        if(ci.sw[param])  ci.x   <- x$Means$ci.mu[[g]]
         graphics::plot(plot.x, type=type, ylab="", xlab="Variable", ylim=if(is.element(method, c("FA", "IFA"))) c(-1, 1) else if(ci.sw[param]) c(min(ci.x[,1]), max(ci.x[,2])))
         if(all(intervals, ci.sw[param])) plotrix::plotCI(plot.x, li=ci.x[,1], ui=ci.x[,2], slty=3, scol=grey, add=TRUE, gap=TRUE, pch=ifelse(type == "n", NA, 20))
         if(titles) graphics::title(main=list(paste0("Posterior Mean", ifelse(all.ind, "", paste0(":\nMeans", ifelse(grp.ind, paste0(" - Group ", g), ""))))))
@@ -516,7 +515,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         }
       }
       if(param == "loadings") {
-        plot.x <- result$post.load
+        plot.x <- x$Loadings$post.load[[g]]
         if(load.meth == "heatmap") {
           if(Q  > 1) {
             gclus::plotcolors(mat2cols(plot.x))
@@ -532,7 +531,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           graphics::mtext(ifelse(Q > 1, "Factors", "Factor"), side=1, line=2)
           if(Q != 1) graphics::abline(v=seq(1, Q - 1, 1) + 0.5, lty=2, lwd=1)
         } else {
-          if(ci.sw[param]) ci.x  <- result$ci.load
+          if(ci.sw[param]) ci.x  <- x$Loadings$ci.load[[g]]
           if(!by.fac) {
            if(ci.sw[param]) ci.x <- ci.x[,ind[1],]
             graphics::plot(plot.x[ind[1],], type=type, xaxt="n", xlab="", ylab="Loading", ylim=if(ci.sw[param]) c(min(ci.x[1,]), max(ci.x[2,])))
@@ -553,8 +552,8 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         }
       }
       if(param == "uniquenesses") {
-        plot.x <- result$post.psi
-        if(ci.sw[param])  ci.x   <- result$ci.psi
+        plot.x <- x$Uniquenesses$post.psi[,g]
+        if(ci.sw[param])  ci.x   <- x$Uniquenesses$ci.psi[[g]]
         graphics::plot(plot.x, type=type, ylab="", xlab="Variable", ylim=if(ci.sw[param]) c(min(ci.x[,1]), max(ci.x[,2])))
         if(all(intervals, ci.sw[param])) plotrix::plotCI(plot.x, li=ci.x[,1], ui=ci.x[,2], slty=3, scol=grey, add=TRUE, gap=TRUE, pch=ifelse(type == "n", NA, 20))
         if(titles) graphics::title(main=list(paste0("Posterior Mean", ifelse(all.ind, "", paste0(":\nUniquenesses", ifelse(grp.ind, paste0(" - Group ", g), ""))))))
@@ -877,7 +876,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
        graphics::par(mai=c(1.25, 1, 0.75, 0.5), mfrow=c(1, 2), oma=c(0, 0, 2, 0))
       }
       if(param == "means")    {
-        plot.x <- result$means
+        plot.x <- x$Means$mus[[g]]
         if(!partial) {
           stats::acf(plot.x[ind,], main="", ci.col=4, ylab="")
           if(titles) graphics::title(main=list(paste0("ACF", ifelse(all.ind, paste0(":\n", var.names[ind], " Variable"), ""))))
@@ -901,7 +900,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         }
       }
       if(param == "loadings") {
-        plot.x <- result$loadings
+        plot.x <- x$Loadings$lmats[[g]]
         if(!partial) {
           stats::acf(plot.x[ind[1],ind[2],], main="", ci.col=4, ylab="")
           if(titles) graphics::title(main=list(paste0("ACF", ifelse(all.ind, paste0(":\n", var.names[ind[1]], " Variable, Factor ", ind[2]), ""))))
@@ -913,7 +912,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         }
       }
       if(param == "uniquenesses")  {
-        plot.x <- result$psi
+        plot.x <- x$Uniquenesses$psis[[g]]
         if(!partial) {
           stats::acf(plot.x[ind,], main="", ci.col=4, ylab="")
           if(titles) graphics::title(main=list(paste0("ACF", ifelse(all.ind, paste0(":\n", var.names[ind], " Variable"), ""))))

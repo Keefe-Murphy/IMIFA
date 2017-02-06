@@ -328,10 +328,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     }
     z            <- as.matrix(sims[[G.ind]][[Q.ind]]$z.store[,tmp.store])
     if(!label.switch) {
-      z.temp     <- try(factor(z[,1], labels=Gseq), silent=TRUE)
-      if(inherits(z.temp, "try-error")) {
-        z.temp   <- factor(z[,1], levels=Gseq)
-      }
+      z.temp     <- tryCatch(factor(z[,1], labels=Gseq), error=function(e) factor(z[,1], levels=Gseq))
       for(sl in seq_along(tmp.store)) {
         sw.lab   <- .lab.switch(z.new=z[,sl], z.old=z.temp, Gs=Gseq)
         z[,sl]   <- sw.lab$z
@@ -627,7 +624,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
                                                post.load = post.load,
                                                var.load  = var.load,
                                                ci.load   = ci.load),
-                         if(sw["psi.sw"]) list(psi       = psi,
+                         if(sw["psi.sw"]) list(psis      = psi,
                                                var.psi   = var.psi,
                                                ci.psi    = ci.psi),
                          if(sw.mx)        list(post.mu   = post.mu),
@@ -654,7 +651,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   attr(GQ.res, "Groups")       <- n.grp
   attr(GQ.res, "Supplied")     <- c(Q=Q.T, G=G.T)
   err.T                        <- vapply(Gseq, function(g) all(emp.T[g], est.T[g]), logical(1))
-  var.exps       <- sapply(lapply(result, "[[", "var.exp"), function(x) ifelse(is.null(x), NA, x))
+  var.exps       <- vapply(lapply(result, "[[", "var.exp"), function(x) ifelse(is.null(x), NA, x), numeric(1))
   var.exps       <- if(sum(is.na(var.exps)) == G) NULL else var.exps
   if(any(err.T))   {
     Err          <- lapply(list(MSE = mse, MAE = mae, MEDSE = medse,
@@ -672,24 +669,28 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   } else Err     <- if(!is.null(var.exps)) list(Var.Exps = var.exps)
   if(!is.null(Err)) class(Err) <- "listof"
   if(sw["mu.sw"])  {
+    mus          <- Filter(Negate(is.null), lapply(result, "[[", "means"))
     post.mu      <- do.call(cbind, lapply(result, "[[", "post.mu"))
     var.mu       <- do.call(cbind, lapply(result, "[[", "var.mu"))
     ci.mu        <- Filter(Negate(is.null), lapply(result, "[[", "ci.mu"))
-    means        <- list(post.mu = post.mu, var.mu = var.mu, ci.mu = ci.mu)
+    means        <- list(mus = mus, post.mu = post.mu, var.mu = var.mu, ci.mu = ci.mu)
   }
   if(sw["l.sw"])   {
+    lmats        <- Filter(Negate(is.null), lapply(result, "[[", "loadings"))
     post.load    <- Filter(Negate(is.null), lapply(result, "[[", "post.load"))
     var.load     <- Filter(Negate(is.null), lapply(result, "[[", "var.load"))
     ci.load      <- Filter(Negate(is.null), lapply(result, "[[", "ci.load"))
-    loads        <- list(post.load = post.load, var.load = var.load, ci.load = ci.load)
+    loads        <- list(lmats = lmats, post.load = post.load, var.load = var.load, ci.load = ci.load)
   }
   if(sw["psi.sw"]) {
+    psis         <- Filter(Negate(is.null), lapply(result, "[[", "psis"))
     post.psi     <- do.call(cbind, lapply(result, "[[", "post.psi"))
     var.psi      <- do.call(cbind, lapply(result, "[[", "var.psi"))
     ci.psi       <- Filter(Negate(is.null), lapply(result, "[[", "ci.psi"))
-    psis         <- list(post.psi = post.psi, var.psi = var.psi, ci.psi = ci.psi)
+    uniquenesses <- list(psis = psis, post.psi = post.psi, var.psi = var.psi, ci.psi = ci.psi)
   }
-  result         <- c(result, if(exists("cluster", envir=environment())) list(Clust = cluster),
+  load.store     <- vapply(result, attr, numeric(1), "Store")
+  result         <- c(if(exists("cluster", envir=environment())) list(Clust = cluster),
                       list(Error     = Err),   list(GQ.results = GQ.res),
                       if(sw["mu.sw"])  list(Means        =        means),
                       if(sw["l.sw"])   list(Loadings     =        loads),
@@ -708,6 +709,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     attr(result, "Ind.Slice")  <- attr(sims, "Ind.Slice")
   }
   attr(result, "Name")         <- attr(sims, "Name")
+  attr(result, "N.Loadstore")  <- load.store
   attr(result, "Obs")          <- n.obs
   attr(result, "Store")        <- tmp.store
   attr(result, "Switch")       <- sw
