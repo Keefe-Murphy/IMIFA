@@ -54,14 +54,12 @@
 #'
 #' @return A list of lists of lists of class "IMIFA" to be passed to \code{\link{get_IMIFA_results}}. If the returned object is x, candidate models accesible via subsetting, where x is of the form x[[1:length(range.G)]][[1:length(range.Q)]]. However, these objects of class "IMIFA" should rarely if ever be manipulated by hand - use of the \code{\link{get_IMIFA_results}} function is \emph{strongly} advised. Dedicated \code{print} and \code{summary} functions exist for objects of class "\code{IMIFA}".
 #' @export
-#' @import stats
 #' @importFrom matrixStats "rowLogSumExps"
 #' @importFrom MCMCpack "rdirichlet"
 #' @importFrom Rfast "rowsums" "colsums" "Order" "colVars" "rowmeans" "standardise" "sort_unique" "cova"
 #' @importFrom e1071 "matchClasses"
 #' @importFrom mvnfast "dmvn"
 #' @importFrom slam "as.simple_sparse_array"
-#' @importFrom utils "capture.output" "txtProgressBar" "setTxtProgressBar"
 #' @importFrom corpcor "make.positive.definite"
 #' @importFrom mclust "Mclust" "mclustBIC"
 #'
@@ -174,7 +172,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   if(length(iters)  <= 1)           stop("Run a longer chain!")
   if(anyNA(raw.dat)) {
     if(verbose)                     message("Rows with missing values removed from data")
-    raw.dat <- raw.dat[complete.cases(raw.dat),]
+    raw.dat <- raw.dat[stats::complete.cases(raw.dat),]
   }
   if(method != "classify") {
     if(scaling   != "none")   {

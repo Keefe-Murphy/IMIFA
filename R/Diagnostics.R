@@ -30,7 +30,6 @@
 #' @importFrom e1071 "matchClasses" "classAgreement"
 #' @importFrom mclust "classError"
 #' @importFrom matrixStats "rowMedians" "rowQuantiles"
-#' @importFrom utils "head"
 #'
 #' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{plot.Results_IMIFA}}
 #' @references Murphy, K., Gormley, I.C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, \code{https://arxiv.org/abs/1701.07010}
@@ -287,7 +286,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
         rowseq[rowx]     <- !rowseq[rowx]
         dat              <- subset(dat, select=if(any(spl.ind <= 0, sum(colseq) %in% 0)) seq_len(ncol(dat)) else colseq, subset=rowseq, drop=!grepl("drop=F", dat.nam))
       }
-      dat        <- dat[complete.cases(dat),]
+      dat        <- dat[stats::complete.cases(dat),]
       dat        <- dat[vapply(dat, is.numeric, logical(1))]
       dat        <- if(is.logical(scaling)) Rfast::standardise(as.matrix(dat), center=cent, scale=scaling) else scale(dat, center=cent, scale=scaling)
       varnames   <- colnames(dat)
@@ -401,7 +400,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
         tab.stat$misclassified <- NULL
       }
       tab.stat   <- c(list(confusion.matrix = tab), tab.stat)
-      uncert.obs <- which(uncertain >= 1/G)
+      uncert.obs <- which(uncertain   >= 1/G)
       attr(uncertain, "Obs")   <- if(sum(uncert.obs) != 0) uncert.obs
       if(!label.miss && (length(levs) == G)) {
         names(tab.stat)[1]     <- "confusion.matrix.matched"
@@ -419,7 +418,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       DP.alpha   <- list(alpha = alpha, post.alpha = post.alpha, var.alpha = var.alpha, ci.alpha = ci.alpha, acceptance.rate = rate)
       class(DP.alpha)          <- "listof"
     }
-    cluster      <- list(map = post.z, z = z, uncertainty = uncertain)
+    cluster      <- list(map = unname(post.z), z = z, uncertainty = uncertain)
     cluster      <- c(cluster, list(post.sizes = sizes, post.pi = post.pi/sum(post.pi)),
                       if(sw["pi.sw"]) list(pi.prop = pi.prop, var.pi = var.pi, ci.pi = ci.pi),
                       if(!label.miss) list(perf = tab.stat),
@@ -559,7 +558,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     if(sw["l.sw"])   {
       lmat       <- lmat[,Qgs,, drop=FALSE]
       post.load  <- rowMeans(lmat, dims=2)
-      var.load   <- apply(lmat, c(1, 2), var)
+      var.load   <- apply(lmat, c(1, 2), stats::var)
       ci.load    <- apply(lmat, c(1, 2), stats::quantile, conf.levels)
       var.exp    <- sum(colSums(post.load * post.load))/n.var
       class(post.load)     <- "loadings"
@@ -640,8 +639,8 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   if(sw["s.sw"])   {
     eta.store    <- unique(unlist(e.store))
     eta          <- eta[,seq_len(max(Q)),eta.store, drop=FALSE]
-    scores       <- list(eta = eta, post.eta = rowMeans(eta, dims=2), var.eta = apply(eta, c(1, 2), var),
-                         ci.eta  = apply(eta, c(1, 2), stats::quantile, conf.levels))
+    scores       <- list(eta = eta, post.eta = rowMeans(eta, dims=2), var.eta = apply(eta, c(1, 2),
+                         stats::var), ci.eta  = apply(eta, c(1, 2), stats::quantile, conf.levels))
     attr(scores, "Eta.store")  <- eta.store
   }
   names(result)  <- paste0("Group", Gseq)
@@ -709,7 +708,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     attr(result, "Ind.Slice")  <- attr(sims, "Ind.Slice")
   }
   attr(result, "Name")         <- attr(sims, "Name")
-  attr(result, "N.Loadstore")  <- load.store
+  attr(result, "N.Loadstore")  <- unname(load.store)
   attr(result, "Obs")          <- n.obs
   attr(result, "Store")        <- tmp.store
   attr(result, "Switch")       <- sw

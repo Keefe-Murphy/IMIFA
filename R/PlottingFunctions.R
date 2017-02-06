@@ -20,14 +20,11 @@
 #'
 #' @return The desired plot with appropriate output and summary statistics printed to the console screen.
 #' @export
-#' @import graphics
-#' @importFrom grDevices "palette" "adjustcolor"
 #' @importFrom Rfast "Order" "med" "colMedians"
 #' @importFrom plotrix "plotCI"
 #' @importFrom gclus "plotcolors"
 #' @importFrom e1071 "classAgreement"
 #' @importFrom mclust "classError"
-#' @importFrom utils "tail"
 #' @importFrom viridis "viridis"
 #' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{get_IMIFA_results}}, \code{\link{mat2cols}}, \code{\link[gclus]{plotcolors}}
 #' @references Murphy, K., Gormley, I.C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, \code{https://arxiv.org/abs/1701.07010}
@@ -86,7 +83,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
   options(warn=1)
   suppressWarnings(graphics::par(cex.axis=0.8, new=FALSE))
   on.exit(suppressWarnings(graphics::par(defpar)))
-  on.exit(do.call("clip", as.list(defpar$usr)), add=TRUE)
+  on.exit(do.call(graphics::clip, as.list(defpar$usr)), add=TRUE)
   on.exit(grDevices::palette("default"), add=TRUE)
   on.exit(suppressWarnings(options(defopt)), add=TRUE)
   n.grp   <- attr(GQ.res, "Groups")
@@ -449,7 +446,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         graphics::polygon(plot.d, col=grey)
         if(intervals) {
           avg  <- plot.x$post.alpha
-          clip(avg, avg, 0, plot.d$y[which.min(abs(plot.d$x - avg))])
+          graphics::clip(avg, avg, 0, plot.d$y[which.min(abs(plot.d$x - avg))])
           graphics::abline(v=avg, col=2, lty=2)
         }
       }
@@ -807,7 +804,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         graphics::par(mar=c(3.1, 4.1, 4.1, 2.1))
       }
       jitcol <- switch(param, loadings=Q, G)
-      graphics::matplot(seq_len(n.var) + matrix(rnorm(jitcol * n.var, 0, min(0.1, 0.75/n.var^2)), nrow=n.var, ncol=jitcol), plot.x, type=switch(param, uniquenesses=switch(uni.type, unconstrained="p", isotropic="l"), "p"),
+      graphics::matplot(seq_len(n.var) + matrix(stats::rnorm(jitcol * n.var, 0, min(0.1, 0.75/n.var^2)), nrow=n.var, ncol=jitcol), plot.x, type=switch(param, uniquenesses=switch(uni.type, unconstrained="p", isotropic="l"), "p"),
                         col=switch(param, loadings=seq_len(Q), seq_len(G)), pch=15, xlab="Variable", ylab=paste0("Standardised ", varnam), axes=FALSE, main=paste0("Parallel Coordinates: ", varnam, ifelse(all(grp.ind, param == "loadings"), paste0("\n Group ", g), "")), lty=1)
       graphics::axis(1, at=seq_len(n.var), labels=if(titles && n.var < 100) rownames(plot.x) else rep("", n.var), cex.axis=0.5, tick=FALSE)
       for(i in seq_len(n.var))    {
@@ -970,7 +967,6 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
 #'
 #' @return A matrix of hex colour code representations.
 #' @export
-#' @importFrom grDevices "col2rgb" "heat.colors"
 #' @importFrom gclus "plotcolors"
 #' @importFrom viridis "viridis"
 #'
@@ -1019,7 +1015,6 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
 #'
 #' @return A plot of the prior distribution if \code{show.plot} is TRUE. Density values are returned invisibly.
 #' @export
-#' @importFrom grDevices "palette" "adjustcolor"
 #' @importFrom Rfast "colsums" "colMaxs"
 #' @importFrom viridis "viridis"
 #' @seealso \code{\link{G_expected}}, \code{\link{G_variance}}, \code{\link[Rmpfr]{Rmpfr}}
@@ -1045,7 +1040,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
       main     <- paste0("Prior Distribution of G\nN=", N)
     } else if(!is.character(main))    stop("'main' title must be a character string")
     on.exit(grDevices::palette("default"), add=!isTRUE(firstex))
-    on.exit(do.call("clip", as.list(graphics::par("usr"))), add=TRUE)
+    on.exit(do.call(graphics::clip, as.list(graphics::par("usr"))), add=TRUE)
     if(any(c(length(N), length(show.plot),
              length(avg)) > 1))       stop("Arguments 'N', 'show.plot', and 'avg' must be strictly of length 1")
     if(!is.logical(show.plot))        stop("'show.plot' must be TRUE or FALSE")
@@ -1087,7 +1082,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
       cat("\t");  cat(paste("E(G) = ", signif(exp.g, options()$digits), "\n"))
       if(isTRUE(show.plot)) {
         for(i in seq_len(max.len))  {
-          clip(exp.g[i], exp.g[i], 0, max.rx[i])
+          graphics::clip(exp.g[i], exp.g[i], 0, max.rx[i])
           graphics::abline(v=exp.g[i], lty=2, col=i)
         }
       }
