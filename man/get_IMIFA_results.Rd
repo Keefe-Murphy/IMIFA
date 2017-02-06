@@ -33,7 +33,7 @@ get_IMIFA_results(sims = NULL, burnin = 0L, thinning = 1L, G = NULL,
 \item{zlabels}{For any method that performs clustering, the true labels can be supplied if they are known in order to compute clustering performance metrics. This also has the effect of ordering the MAP labels (and thus the ordering of cluster-specific parameters) to most closely correspond to the true labels if supplied.}
 }
 \value{
-An object of class "\code{Results_IMIFA}" to be passed to \code{\link{plot.Results_IMIFA}} for visualising results. Dedicated \code{print} and \code{summary} functions exist for objects of this class. The object is a list of lists, some of the most important components of which are:
+An object of class "\code{Results_IMIFA}" to be passed to \code{\link{plot.Results_IMIFA}} for visualising results. Dedicated \code{print} and \code{summary} functions exist for objects of this class. The object is a list of lists, the most important components of which are:
 \describe{
 \item{Clust}{Everything pertaining to clustering performance can be found here for all but the "\code{FA}" and "\code{IFA}" methods. More detail is given if \code{zlabels}} are supplied.
 \item{Error}{Error metrics (e.g. MSE) between the empirical and estimated covariance matrix/matrices.}

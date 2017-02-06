@@ -13,7 +13,7 @@
 #' @param conf.level The confidence level to be used throughout for credible intervals for all parameters of inferential interest. Defaults to 0.95.
 #' @param zlabels For any method that performs clustering, the true labels can be supplied if they are known in order to compute clustering performance metrics. This also has the effect of ordering the MAP labels (and thus the ordering of cluster-specific parameters) to most closely correspond to the true labels if supplied.
 #'
-#' @return An object of class "\code{Results_IMIFA}" to be passed to \code{\link{plot.Results_IMIFA}} for visualising results. Dedicated \code{print} and \code{summary} functions exist for objects of this class. The object is a list of lists, some of the most important components of which are:
+#' @return An object of class "\code{Results_IMIFA}" to be passed to \code{\link{plot.Results_IMIFA}} for visualising results. Dedicated \code{print} and \code{summary} functions exist for objects of this class. The object is a list of lists, the most important components of which are:
 #' \describe{
 #' \item{Clust}{Everything pertaining to clustering performance can be found here for all but the "\code{FA}" and "\code{IFA}" methods. More detail is given if \code{zlabels}} are supplied.
 #' \item{Error}{Error metrics (e.g. MSE) between the empirical and estimated covariance matrix/matrices.}
@@ -565,10 +565,9 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       var.load   <- apply(lmat, c(1, 2), var)
       ci.load    <- apply(lmat, c(1, 2), stats::quantile, conf.levels)
       var.exp    <- sum(colSums(post.load * post.load))/n.var
-      class(post.load)   <- "loadings"
-    } else if(emp.T[g]) {
-      var.exp    <- ifelse(exists("z.ind", envir=.GlobalEnv) && sum(z.ind[[g]]) == 0, 0, max(0, (sum(diag(cov.emp)) - sum(post.psi))/n.var))
-
+      class(post.load)     <- "loadings"
+    } else if(all(emp.T[g], sw["psi.sw"])) {
+      var.exp    <- ifelse(exists("z.ind", envir=.GlobalEnv) && sizes[g] == 0, 0, max(0, (sum(diag(cov.emp)) - sum(post.psi))/n.var))
     }
 
   # Calculate estimated covariance matrices & compute error metrics
@@ -655,18 +654,23 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   attr(GQ.res, "Groups")       <- n.grp
   attr(GQ.res, "Supplied")     <- c(Q=Q.T, G=G.T)
   err.T                        <- vapply(Gseq, function(g) all(emp.T[g], est.T[g]), logical(1))
+  var.exps       <- sapply(lapply(result, "[[", "var.exp"), function(x) ifelse(is.null(x), NA, x))
+  var.exps       <- if(sum(is.na(var.exps)) == G) NULL else var.exps
   if(any(err.T))   {
-    errors       <- lapply(list(MSE = mse, MAE = mae, MEDSE = medse,
+    Err          <- lapply(list(MSE = mse, MAE = mae, MEDSE = medse,
                                 MEDAE = medae, RMSE = rmse, NRMSE = nrmse
                                 #,CVRMSE = cvrmse
                                 ), stats::setNames, paste0("Group ", Gseq))
     if(G > 1)      {
-      errors     <- c(errors, list(Averages = unlist(lapply(errors, mean, na.rm=TRUE))))
-      class(errors)            <- "listof"
+      Err        <- c(Err, list(Averages = unlist(lapply(Err, mean, na.rm=TRUE))))
     } else {
-      errors     <- stats::setNames(unlist(errors), names(errors))
+      Err        <- stats::setNames(unlist(Err), names(Err))
     }
-  }
+    emp.covs     <- lapply(result, "[[", "cov.emp")
+    est.covs     <- lapply(result, "[[", "cov.est")
+    Err          <- c(Err, list(Var.Exps = var.exps, Empirical.Covs = emp.covs, Estimated.Covs = est.covs))
+  } else Err     <- if(!is.null(var.exps)) list(Var.Exps = var.exps)
+  if(!is.null(Err)) class(Err) <- "listof"
   if(sw["mu.sw"])  {
     post.mu      <- do.call(cbind, lapply(result, "[[", "post.mu"))
     var.mu       <- do.call(cbind, lapply(result, "[[", "var.mu"))
@@ -686,11 +690,11 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     psis         <- list(post.psi = post.psi, var.psi = var.psi, ci.psi = ci.psi)
   }
   result         <- c(result, if(exists("cluster", envir=environment())) list(Clust = cluster),
-                      if(any(err.T))   list(Error        = errors),  list(GQ.results = GQ.res),
-                      if(sw["mu.sw"])  list(Means        =  means),
-                      if(sw["l.sw"])   list(Loadings     =  loads),
-                      if(sw["s.sw"])   list(Scores       = scores),
-                      if(sw["psi.sw"]) list(Uniquenesses =   psis))
+                      list(Error     = Err),   list(GQ.results = GQ.res),
+                      if(sw["mu.sw"])  list(Means        =        means),
+                      if(sw["l.sw"])   list(Loadings     =        loads),
+                      if(sw["s.sw"])   list(Scores       =       scores),
+                      if(sw["psi.sw"]) list(Uniquenesses = uniquenesses))
 
   class(result)                <- "Results_IMIFA"
   attr(result, "Alpha")        <- if(alpha.step == "fixed") attr(sims, "Alpha")

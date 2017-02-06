@@ -19,7 +19,7 @@
 
 \item{param}{The parameter of interest for any of the following \code{plot.meth} options: \code{trace}, \code{density}, \code{means}, \code{correlation}. The \code{param} must have been stored when \code{\link{mcmc_IMIFA}} was initially ran. Includes \code{pis} for methods where clustering takes place, and allows posterior inference on \code{alpha} for the "\code{IMFA}" and "\code{IMIFA}" methods.}
 
-\item{zlabels}{The true labels can be supplied if they are known. Only relevant when \code{plot.meth = "zlabels"}. If this is not supplied, the function uses the labels that were supplied, if any, to \code{\link{get_IMIFA_results}}.}
+\item{zlabels}{The true labels can be supplied if they are known. If this is not supplied, the function uses the labels that were supplied, if any, to \code{\link{get_IMIFA_results}}. Only relevant when \code{plot.meth = "zlabels"}.}
 
 \item{load.meth}{Switch which allows plotting posterior mean loadings as a heatmap (the default), or as something akin to \code{link{plot}} with \code{type = "h"}. Only relevant if \code{param = "loadings"}. Heatmaps are produced with the aid of \code{\link{mat2cols}} and \code{\link[gclus]{plotcolors}}.}
 
