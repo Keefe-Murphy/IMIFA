@@ -16,30 +16,27 @@
     Pseq         <- seq_len(P)
     obsnames     <- rownames(data)
     varnames     <- colnames(data)
-    facnames     <- paste0("Factor ", seq_len(Q))
-    iternames    <- paste0("Iteration", seq_len(n.store))
+    facnames     <- paste0("Factor", seq_len(Q))
     dimnames(data)         <- NULL
     if(sw["mu.sw"])  {
-      mu.store   <- provideDimnames(matrix(0, nrow=P, ncol=n.store), base=list(varnames, iternames))
+      mu.store   <- matrix(0, nrow=P, ncol=n.store)
     }
     if(sw["s.sw"])   {
       eta.store  <- array(0, dim=c(N, Q, n.store))
-      dimnames(eta.store)  <- list(obsnames, if(Q > 0) facnames, iternames)
     }
     if(sw["l.sw"])   {
       load.store <- array(0, dim=c(P, Q, n.store))
-      dimnames(load.store) <- list(varnames, if(Q > 0) facnames, iternames)
     }
     if(sw["psi.sw"]) {
-      psi.store  <- provideDimnames(matrix(0, nrow=P, ncol=n.store), base=list(varnames, iternames))
+      psi.store  <- matrix(0, nrow=P, ncol=n.store)
     }
-    post.mu      <- stats::setNames(rep(0, P), varnames)
-    post.psi     <- stats::setNames(rep(0, P), varnames)
-    cov.emp      <- provideDimnames(Rfast::cova(as.matrix(data)), base=list(varnames, varnames))
-    cov.est      <- provideDimnames(matrix(0, nrow=P, ncol=P), base=dimnames(cov.emp))
-    ll.store     <- stats::setNames(rep(0, n.store), iternames)
+    post.mu      <- rep(0, P)
+    post.psi     <- rep(0, P)
+    ll.store     <- rep(0, n.store)
+    cov.emp      <- Rfast::cova(as.matrix(data))
+    cov.est      <- matrix(0, nrow=P, ncol=P)
     Q.star       <- Q
-    Q.store      <- stats::setNames(rep(0, n.store), iternames)
+    Q.store      <- rep(0, n.store)
     Q.large      <- Q.big  <- FALSE
 
     mu.sigma     <- 1/sigma.mu
@@ -163,14 +160,16 @@
     Qmax         <- seq_len(max(Q.store))
     eta.store    <- if(sw["s.sw"])  tryCatch(eta.store[,Qmax,, drop=FALSE],  error=function(e) eta.store)
     load.store   <- if(sw["l.sw"])  tryCatch(load.store[,Qmax,, drop=FALSE], error=function(e) load.store)
-    returns      <- list(mu       = if(sw["mu.sw"])  mu.store,
+    if(sw["s.sw"])  dimnames(eta.store)           <- list(obsnames, facnames[seq_len(ncol(eta.store))],  NULL)
+    if(sw["l.sw"])  dimnames(load.store)          <- list(varnames, facnames[seq_len(ncol(load.store))], NULL)
+    returns      <- list(mu       = if(sw["mu.sw"])  provideDimnames(mu.store,  base=list(varnames, "")),
                          eta      = if(sw["s.sw"])   tryCatch(slam::as.simple_sparse_array(eta.store),  error=function(e) eta.store),
                          load     = if(sw["l.sw"])   tryCatch(slam::as.simple_sparse_array(load.store), error=function(e) load.store),
-                         psi      = if(sw["psi.sw"]) psi.store,
-                         post.mu  = post.mu,
-                         post.psi = post.psi,
-                         cov.emp  = cov.emp,
-                         cov.est  = cov.est,
+                         psi      = if(sw["psi.sw"]) provideDimnames(psi.store, base=list(varnames, "")),
+                         post.mu  = stats::setNames(post.mu,  varnames),
+                         post.psi = stats::setNames(post.psi, varnames),
+                         cov.emp  = provideDimnames(cov.emp, base=list(varnames, varnames)),
+                         cov.est  = provideDimnames(cov.est, base=list(varnames, varnames)),
                          ll.store = ll.store,
                          Q.store  = matrix(Q.store, nrow=1),
                          time     = init.time)

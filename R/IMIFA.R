@@ -27,7 +27,7 @@
 #' \code{\link{plot.Results_IMIFA}}:
 #' Results obtained from get_IMIFA_Results are passed to this function with the type of plot desired specified by 'plot.meth' (e.g. "trace") and the parameter of interest specified by 'param' (e.g. "loadings").
 #'
-#' @section Author(s):
+#' @author
 #' Keefe Murphy [aut, cre], Isobel Claire Gormley [ctb], Cinzia Viroli [ctb]
 #'
 #' Maintainer: Keefe Murphy <keefe.murphy@ucd.ie>

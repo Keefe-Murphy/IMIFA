@@ -107,10 +107,12 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
   type         <- match.arg(type)
   m.sw         <- c(G.sw = FALSE, Z.sw = FALSE, E.sw = FALSE, P.sw = FALSE, C.sw = FALSE, D.sw = FALSE, M.sw = FALSE, T.sw = FALSE)
   v.sw         <- attr(x, "Switch")
+  obs.names    <- if(v.sw["s.sw"]) rownames(x$Scores$post.eta) else attr(x, "Obsnames")
+  var.names    <- if(v.sw["l.sw"]) rownames(x$Loadings$post.load[[1]]) else if(v.sw["mu.sw"]) rownames(x$Means$post.mu) else if(v.sw["psi.sw"]) rownames(x$Uniquenesses$post.psi) else attr(x, "Varnames")
+  obs.names    <- if(is.null(obs.names)) seq_len(n.obs) else obs.names
+  var.names    <- if(is.null(var.names)) seq_len(n.var) else var.names
   names(v.sw)  <- formals(sys.function(sys.parent()))$param
   ci.sw        <- v.sw
-  var.names    <- rownames(x[[1]]$post.load)
-  obs.names    <- rownames(x$Scores$post.eta)
   all.ind      <- plot.meth == "all"
   grp.ind      <- !is.element(method, c("FA", "IFA"))
   if(grp.ind)   {

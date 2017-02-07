@@ -41,4 +41,3 @@ Function to simulate data of any size and dimension from a mixture of (infinite)
 \seealso{
 The function \code{\link{mcmc_IMIFA}} for fitting an IMIFA related model to the simulated data set.
 }
-

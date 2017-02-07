@@ -190,7 +190,7 @@
     }
 
   # Alpha/Discount Shifted Gamma Hyperparameters
-    .shift_GA   <- function(shape, rate, shift = 0L, param = c("rate", "scale"))   {
+    .shift_GA   <- function(shape, rate, shift = 0L, param = c("rate", "scale")) {
       var       <- shape/rate^2
       exp       <- var  * rate + shift
       rate      <- exp/var

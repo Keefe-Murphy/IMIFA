@@ -3,7 +3,18 @@
 #' Carries out Gibbs sampling for all models from the IMIFA family, facilitating model-based clustering with dimensionally reduced factor-analytic covariance structures, with automatic estimation of the number of clusters and cluster-specific factors as appropriate to the method employed. Factor analysis with one group (FA/IFA), finite mixtures (MFA/MIFA), overfitted mixtures (OMFA/OMIFA), infinite factor models which employ the multiplicative gamma process (MGP) shrinkage prior (IFA/MIFA/OMIFA/IMIFA), and infinite mixtures which employ Dirichlet Process Mixture Models (IMFA/IMIFA) are all provided. Creates a raw object of class 'IMIFA' from which the optimal/modal model can be extracted by \code{\link{get_IMIFA_results}}.
 #'
 #' @param dat A matrix or data frame such that rows correspond to observations (\code{N}) and columns correspond to variables (\code{P}). Non-numeric variables and rows with missing entries will be removed.
-#' @param method An acronym for the type of model to fit where "\code{FA}" is Factor Analysis, "\code{IFA}" is Infinite Factor Analysis, "\code{MFA}" is Mixtures of Factor Analysers, "\code{MIFA}" is Mixtures of Infinite Factor Analysers, "\code{OMFA}" is Overfitted Mixtures of Factor Analysers, "\code{OMIFA}" is Overfitted Mixtures of Infinite Factor Analysers, "\code{IMFA}" is Infinite Mixtures of Factor Analysers and "\code{IMIFA}" is Infinite Mixtures of Infinite Factor Analysers. The "\code{classify}" method is not yet implemented.
+#' @param method An acronym for the type of model to fit where: \cr
+#' \cr
+#'  "\code{FA}" = Factor Analysis \cr
+#'  "\code{IFA}" = Infinite Factor Analysis \cr
+#'  "\code{MFA}" = Mixtures of Factor Analysers \cr
+#'  "\code{MIFA}" = Mixtures of Infinite Factor Analysers \cr
+#'  "\code{OMFA}" = Overfitted Mixtures of Factor Analysers \cr
+#'  "\code{OMIFA}" = Overfitted Mixtures of Infinite Factor Analysers \cr
+#'  "\code{IMFA}" = Infinite Mixtures of Factor Analysers \cr
+#'  "\code{IMIFA}" = Infinite Mixtures of Infinite Factor Analysers \cr
+#'  \cr
+#'  The "\code{classify}" method is not yet implemented.
 #' @param n.iters The number of iterations to run the Gibbs sampler for.
 #' @param range.G Depending on the method employed, either the range of values for the number of clusters, or the conseratively high starting value for the number of clusters. Defaults to 1 for the "\code{FA}" and "\code{IFA}" methods. For the "\code{MFA}" and "\code{MIFA}" models this is to be given as a range of candidate models to explore. For the "\code{OMFA}", "\code{OMIFA}", "\code{IMFA}", and "\code{IMIFA}" models, this is the number of clusters with which the chain is to be initialised, in which case the default is \code{min(N - 1, floor(3 * log(N)))}.
 #' @param range.Q Depending on the method employed, either the range of values for the number of latent factors, or, for methods ending in IFA the conservatively high starting value for the number of cluster-specific factors, in which case the default starting value is \code{floor(3 * log(P))}. For methods ending in IFA, different clusters can be modelled using different numbers of latent factors.

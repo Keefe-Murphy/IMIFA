@@ -18,32 +18,28 @@
     Nseq           <- seq_len(N)
     obsnames       <- rownames(data)
     varnames       <- colnames(data)
+    facnames       <- paste0("Factor", seq_len(Q))
     colnames(data) <- NULL
-    facnames       <- paste0("Factor ", seq_len(Q))
-    gnames         <- paste0("Group ", Gseq)
-    iternames      <- paste0("Iteration", seq_len(n.store))
     if(sw["mu.sw"])  {
-      mu.store     <- provideDimnames(array(0, dim=c(P, G, n.store)), base=list(varnames, gnames, iternames))
+      mu.store     <- array(0, dim=c(P, G, n.store))
     }
     if(sw["s.sw"])   {
       eta.store    <- array(0, dim=c(N, Q, n.store))
-      dimnames(eta.store)   <- list(obsnames, if(Q > 0) facnames, iternames)
     }
     if(sw["l.sw"])   {
       load.store   <- array(0, dim=c(P, Q, G, n.store))
-      dimnames(load.store)  <- list(varnames, if(Q > 0) facnames, gnames, iternames)
     }
     if(sw["psi.sw"]) {
-      psi.store    <- provideDimnames(array(0, dim=c(P, G, n.store)), base=list(varnames, gnames, iternames))
+      psi.store    <- array(0, dim=c(P, G, n.store))
     }
     if(sw["pi.sw"])  {
-      pi.store     <- provideDimnames(matrix(0, nrow=G, ncol=n.store), base=list(gnames, iternames))
+      pi.store     <- matrix(0, nrow=G, ncol=n.store)
     }
-    z.store        <- provideDimnames(matrix(0, nrow=N, ncol=n.store), base=list(obsnames, iternames))
-    ll.store       <- stats::setNames(rep(0, n.store), iternames)
+    z.store        <- matrix(0, nrow=N, ncol=n.store)
+    ll.store       <- rep(0, n.store)
     Q.star         <- Q
     Qs             <- rep(Q, G)
-    Q.store        <- provideDimnames(matrix(0, nrow=G, ncol=n.store), base=list(gnames, iternames))
+    Q.store        <- matrix(0, nrow=G, ncol=n.store)
     Q.large        <- Q.big <- Q.bigs <- FALSE
     err.z          <- z.err <- FALSE
 
@@ -84,7 +80,7 @@
     psi.inv        <- vapply(Gseq, function(g) .sim_psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta[,g]), numeric(P))
     if(Q < .ledermann(N, P)) {
       fact.ind     <- nn    <= P
-      fail.gs      <- which(fact.ind)
+     #fail.gs      <- which(fact.ind)
       for(g in which(!fact.ind)) {
         fact       <- try(stats::factanal(data[z == g,, drop=FALSE], factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
         if(!inherits(fact, "try-error")) {
@@ -92,11 +88,11 @@
           lmat[[g]]         <- fact$loadings
           psi.inv[,g]       <- 1/fact$uniquenesses
         } else  {
-          fail.gs  <- c(fail.gs, g)
+         #fail.gs  <- c(fail.gs, g)
         }
       }
-      fail.gs      <- fail.gs[Rfast::Order(fail.gs)]
-      len.fail     <- length(fail.gs)
+     #fail.gs      <- fail.gs[Rfast::Order(fail.gs)]
+     #len.fail     <- length(fail.gs)
      #if(all(verbose,
      #   len.fail   > 0))      message(paste0("Parameters of the following group", ifelse(len.fail > 2, "s ", " "), "were initialised by simulation from priors, not factanal: ", ifelse(len.fail > 1, paste0(paste0(fail.gs[-len.fail], sep="", collapse=", "), " and ", fail.gs[len.fail]), fail.gs), " - G=", G, ", Q=", Q))
     } else     {
@@ -297,10 +293,12 @@
     Qmax           <- seq_len(max(Q.store))
     eta.store      <- if(sw["s.sw"])  tryCatch(eta.store[,Qmax,, drop=FALSE],   error=function(e) eta.store)
     load.store     <- if(sw["l.sw"])  tryCatch(load.store[,Qmax,,, drop=FALSE], error=function(e) load.store)
-    returns        <- list(mu       = if(sw["mu.sw"])  mu.store,
+    if(sw["s.sw"])    dimnames(eta.store)           <- list(obsnames, facnames[seq_len(ncol(eta.store))], NULL)
+    if(sw["l.sw"])    dimnames(load.store)          <- list(varnames, facnames[seq_len(ncol(eta.store))], NULL, NULL)
+    returns        <- list(mu       = if(sw["mu.sw"])  provideDimnames(mu.store,  base=list(varnames, "", "")),
                            eta      = if(sw["s.sw"])   tryCatch(slam::as.simple_sparse_array(eta.store),  error=function(e) eta.store),
                            load     = if(sw["l.sw"])   tryCatch(slam::as.simple_sparse_array(load.store), error=function(e) load.store),
-                           psi      = if(sw["psi.sw"]) psi.store,
+                           psi      = if(sw["psi.sw"]) provideDimnames(psi.store, base=list(varnames, "", "")),
                            pi.prop  = if(sw["pi.sw"])  pi.store,
                            z.store  = z.store,
                            ll.store = ll.store,

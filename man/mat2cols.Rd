@@ -32,4 +32,3 @@ cols
 \seealso{
 \code{\link[gclus]{plotcolors}}
 }
-

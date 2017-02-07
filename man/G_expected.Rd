@@ -25,4 +25,3 @@ G_expected(N=150, alpha=c(3, 10, 25))
 \seealso{
 \code{\link{G_variance}}, \code{\link{G_prior}}, \code{\link[Rmpfr]{Rmpfr}}
 }
-

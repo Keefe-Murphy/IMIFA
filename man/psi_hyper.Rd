@@ -35,4 +35,3 @@ Fruwirth-Schnatter, S.  and Lopes, H.F. (2010). Parsimonious Bayesian factor ana
 \seealso{
 \code{\link{mcmc_IMIFA}}
 }
-

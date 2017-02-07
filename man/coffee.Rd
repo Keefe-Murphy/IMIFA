@@ -15,4 +15,3 @@ Data on the chemical composition of coffee samples collected from around the wor
 Streuli, H. (1973). Der heutige stand der kaffeechemie. In \emph{Association Scientifique International du Cafe, 6th International Colloquium on Coffee Chemistry}, Bogata, Columbia, pp. 61–72.
 }
 \keyword{datasets}
-

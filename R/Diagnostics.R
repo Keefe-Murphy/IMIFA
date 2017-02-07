@@ -170,7 +170,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   }
   if(inf.G)    {
     tmp.store    <- if(GQ1) lapply(seq_len(GQs), function(gq) store[which(G.store[gq,] == G[ifelse(G.T, 1, gq)])]) else store[which(G.store == G)]
-    GQ.temp1     <- list(G = G, G.Mode = G.mode, G.Median = G.med, Stored.G = G.store,
+    GQ.temp1     <- list(G = G, G.Mode = G.mode, G.Median = G.med, Stored.G = as.vector(G.store),
                          G.CI = G.CI, G.Probs = G.prob, G.Counts = G.tab)
   }
   G.range        <- ifelse(G.T, 1, length(n.grp))
@@ -237,6 +237,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     }
     G            <- ifelse(inf.G, ifelse(G.T, G, G[Q.ind]), ifelse(length(n.grp) == 1, n.grp, G))
     Gseq         <- seq_len(G)
+    gnames       <- paste0("Group", Gseq)
     G.ind        <- ifelse(all(length(n.grp) == 1, !inf.G), which(n.grp == G), G.ind)
     GQ.temp2     <- list(AICMs = aicm, BICMs = bicm, LogIntegratedLikelihoods = log.iLLH)
     if(is.element(method, c("OMFA", "IMFA")) &&
@@ -246,7 +247,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     if(!inf.Q)   {
       Q          <- if(length(n.fac)   > 1)  Q else  n.fac
       Q.ind      <- if(all(!Q.T, length(n.fac) > 1)) Q.ind else which(n.fac == Q)
-      Q          <- stats::setNames(if(length(Q) != G) rep(Q, G) else Q, paste0("Group ", Gseq))
+      Q          <- stats::setNames(if(length(Q) != G) rep(Q, G) else Q, gnames)
       if(all(inf.G, Q.T))  GQ.temp1$G <- rep(G, GQs)
       GQ.temp1   <- if(is.element(method, c("OMFA", "IMFA")) && GQ1) lapply(GQ.temp1, "[[", Q.ind) else if(inf.G) GQ.temp1
       GQ.temp3   <- c(GQ.temp2, list(AIC.mcmcs = aic.mcmc, BIC.mcmcs = bic.mcmc, DICs = dic))
@@ -257,7 +258,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     sw.mx        <- ifelse(clust.ind, sw["mu.sw"],  TRUE)
     sw.px        <- ifelse(clust.ind, sw["psi.sw"], TRUE)
     if(inf.Q) {
-      Q.store    <- sims[[G.ind]][[Q.ind]]$Q.store[Gseq,tmp.store, drop=FALSE]
+      Q.store    <- sims[[G.ind]][[Q.ind]]$Q.store[,tmp.store, drop=FALSE]
       Q.meth     <- ifelse(missing(Q.meth), "mode", match.arg(Q.meth))
     }
     if(length(tmp.store) <= 1)    stop(paste0("Not enough samples stored to proceed", ifelse(any(G.T, Q.T), paste0(": try supplying different Q or G values"), "")))
@@ -267,8 +268,9 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     nam.dat      <- gsub("\\[.*", "", dat.nam)
     data.x       <- exists(nam.dat, envir=.GlobalEnv)
     pattern      <- c("(", ")")
-    if(!data.x) {                 warning(paste0("Object ", nam.dat, " not found in .GlobalEnv: can't compute empirical covariance and error metrics"), call.=FALSE)
-    } else      {
+    if(!any(is.element(method, c("FA", "IFA")),
+       data.x)) {                 warning(paste0("Object ", nam.dat, " not found in .GlobalEnv: can't compute empirical covariance and error metrics"), call.=FALSE)
+    } else if(!is.element(method, c("FA", "IFA"))) {
       dat        <- as.data.frame(get(nam.dat))
       nam.x      <- gsub(".*\\[(.*)\\].*", "(\\1)",  dat.nam)
       if(any(unlist(vapply(seq_along(pattern), function(p) grepl(pattern[p], nam.dat, fixed=TRUE), logical(1))),
@@ -289,6 +291,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       dat        <- dat[stats::complete.cases(dat),]
       dat        <- dat[vapply(dat, is.numeric, logical(1))]
       dat        <- if(is.logical(scaling)) Rfast::standardise(as.matrix(dat), center=cent, scale=scaling) else scale(dat, center=cent, scale=scaling)
+      obsnames   <- rownames(dat)
       varnames   <- colnames(dat)
       if(!identical(dim(dat),
          c(n.obs, n.var)))        warning("Dimensions of data don't match those in the dataset supplied to mcmc_IMIFA():\n be careful using subsetted data, best to create new object", call.=FALSE)
@@ -305,7 +308,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       if(!exists(nam.z,
          envir=.GlobalEnv))       stop(paste0("Object ", match.call()$zlabels, " not found\n"))
       if(any(unlist(vapply(seq_along(pattern), function(p) grepl(pattern[p], nam.z, fixed=TRUE), logical(1))),
-         !identical(z.nam,   nam.z)   && (any(grepl("[[:alpha:]]", gsub('c', '', nam.zx))) || grepl(":",
+         !identical(z.nam, nam.z) && (any(grepl("[[:alpha:]]", gsub('c', '', nam.zx))) || grepl(":",
          nam.zx, fixed=TRUE))))   stop("Extremely inadvisable to supply 'zlabels' subsetted by any means other than row/column numbers or c() indexing: best to create new object")
      if(length(zlabels) != n.obs) stop(paste0("'zlabels' must be a factor of length N=",  n.obs))
     }
@@ -353,39 +356,38 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     }
     post.z       <- apply(z, 1, function(x) factor(which.max(tabulate(x)), levels=Gseq))
     uncertain    <- 1 - Rfast::colMaxs(matrix(apply(z, 1, tabulate, nbins=G)/length(tmp.store), nrow=G, ncol=n.obs), value=TRUE)
-    if(sw["pi.sw"])    {
-      pi.prop    <- pies[Gseq,seq_along(tmp.store), drop=FALSE]
-      var.pi     <- Rfast::rowVars(pi.prop)
+    if(sw["pi.sw"]) {
+      pi.prop    <- provideDimnames(pies[Gseq,seq_along(tmp.store), drop=FALSE], base=list(gnames, ""))
+      var.pi     <- stats::setNames(Rfast::rowVars(pi.prop),  gnames)
       ci.pi      <- matrixStats::rowQuantiles(pi.prop, probs=conf.levels)
-      post.pi    <- Rfast::rowmeans(pi.prop)
+      post.pi    <- stats::setNames(Rfast::rowmeans(pi.prop), gnames)
     } else {
-      post.pi    <- stats::setNames(prop.table(tabulate(post.z, nbins=G)), paste0("Group ", Gseq))
+      post.pi    <- stats::setNames(prop.table(tabulate(post.z, nbins=G)), gnames)
+    }
+    if(inf.Q)       {
+      Q.store    <- provideDimnames(Q.store[Gseq,, drop=FALSE], base=list(gnames, ""))
     }
     if(!label.miss) {
       zlabels    <- factor(zlabels, labels=seq_along(unique(zlabels)))
       levs       <- levels(zlabels)
       if(length(levs) == G) {
         sw.lab   <- .lab.switch(z.new=post.z, z.old=zlabels, Gs=Gseq)
-        post.z   <- stats::setNames(factor(sw.lab$z, levels=Gseq), names(post.z))
+        post.z   <- factor(sw.lab$z, levels=Gseq)
         l.perm   <- sw.lab$z.perm
         z.tmp    <- apply(z, 2, factor, levels=l.perm)
-        z        <- provideDimnames(apply(z.tmp, 2, function(x) as.numeric(levels(as.factor(x)))[as.numeric(x)]), base=dimnames(z.tmp))
-        if(sw["mu.sw"])    mus <- mus[,l.perm,, drop=FALSE]
-        if(sw["l.sw"])   lmats <- lmats[,,l.perm,, drop=FALSE]
-        if(sw["psi.sw"])  psis <- psis[,l.perm,, drop=FALSE]
-        gnames   <- paste0("Group ", l.perm)
-        index    <- order(gnames)
-        post.pi  <- stats::setNames(post.pi[index], gnames[index])
+        z        <- apply(z.tmp, 2, function(x) as.numeric(levels(as.factor(x)))[as.numeric(x)])
+        if(sw["mu.sw"])    mus <- mus[,l.perm,,     drop=FALSE]
+        if(sw["l.sw"])   lmats <- lmats[,,l.perm,,  drop=FALSE]
+        if(sw["psi.sw"])  psis <- psis[,l.perm,,    drop=FALSE]
+        index    <- Rfast::Order(l.perm)
+        post.pi  <- stats::setNames(post.pi[index], gnames)
         if(sw["pi.sw"]) {
-         rownames(pi.prop)     <- gnames
-         pi.prop <- pi.prop[index,, drop=FALSE]
-         var.pi  <- stats::setNames(var.pi[index],  gnames[index])
-         rownames(ci.pi)       <- gnames
-         ci.pi   <- ci.pi[index,,   drop=FALSE]
+         pi.prop <- provideDimnames(unname(pi.prop[index,, drop=FALSE]), base=list(gnames, ""))
+         var.pi  <- stats::setNames(var.pi[index],  gnames)
+         ci.pi   <- provideDimnames(unname(ci.pi[index,,   drop=FALSE]), base=list(gnames, colnames(ci.pi)))
         }
         if(inf.Q)   {
-         rownames(Q.store)     <- gnames
-         Q.store <- Q.store[index,, drop=FALSE]
+         Q.store <- provideDimnames(unname(Q.store[index,, drop=FALSE]), base=list(gnames, ""))
         }
       }
       tab        <- table(post.z, zlabels, dnn=list("Predicted", "Observed"))
@@ -407,7 +409,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       }
       class(tab.stat)          <- "listof"
     }
-    sizes        <- tabulate(post.z, nbins=G)
+    sizes        <- stats::setNames(tabulate(post.z, nbins=G), gnames)
     if(any(sizes == 0))           warning("Empty group exists in modal clustering:\n examine trace plots and try supplying a lower G value to tune.imifa() or re-running the model", call.=FALSE)
     if(alpha.step != "fixed") {
       alpha      <- sims[[G.ind]][[Q.ind]]$alpha
@@ -418,7 +420,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       DP.alpha   <- list(alpha = alpha, post.alpha = post.alpha, var.alpha = var.alpha, ci.alpha = ci.alpha, acceptance.rate = rate)
       class(DP.alpha)          <- "listof"
     }
-    cluster      <- list(map = unname(post.z), z = z, uncertainty = uncertain)
+    cluster      <- list(map = post.z, z = z, uncertainty = uncertain)
     cluster      <- c(cluster, list(post.sizes = sizes, post.pi = post.pi/sum(post.pi)),
                       if(sw["pi.sw"]) list(pi.prop = pi.prop, var.pi = var.pi, ci.pi = ci.pi),
                       if(!label.miss) list(perf = tab.stat),
@@ -435,16 +437,17 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     Q.tab        <- if(G1) lapply(apply(Q.store, 1, function(x) list(table(x, dnn=NULL))), "[[", 1) else table(Q.store, dnn=NULL)
     Q.prob       <- if(G1) lapply(Q.tab, prop.table) else prop.table(Q.tab)
     Q.mode       <- if(G1) unlist(lapply(Q.tab, function(qt) as.numeric(names(qt[qt == max(qt)])[1]))) else as.numeric(names(Q.tab[Q.tab == max(Q.tab)])[1])
-    Q.med        <- if(G1) ceiling(matrixStats::rowMedians(Q.store) * 2)/2 else ceiling(Rfast::med(Q.store) * 2)/2
+    Q.med        <- if(G1) stats::setNames(ceiling(matrixStats::rowMedians(Q.store) * 2)/2, gnames) else ceiling(Rfast::med(Q.store) * 2)/2
     if(!Q.T)  {
       Q          <- switch(Q.meth, mode=Q.mode, floor(Q.med))
     } else    {
-      Q          <- if(G.T) Q else stats::setNames(rep(Q, G), paste0("Group ", Gseq))
+      Q          <- if(G.T) Q else stats::setNames(rep(Q, G), gnames)
     }
     leder.b      <- .ledermann(n.obs, n.var)
     if(any(unlist(Q) > leder.b))  warning(paste0("Estimate of Q", ifelse(clust.ind, " in one or more of the groups ", " "), "is greater than the suggested Ledermann upper bound (", leder.b, "):\nsolution may be invalid"), call.=FALSE)
     Q.CI         <- if(G1) round(matrixStats::rowQuantiles(Q.store, probs=conf.levels)) else round(stats::quantile(Q.store, conf.levels))
-    GQ.temp4     <- list(Q = Q, Q.Mode = Q.mode, Q.Median = Q.med, Stored.Q = Q.store,
+    GQ.temp4     <- list(Q = Q, Q.Mode = Q.mode, Q.Median = Q.med,
+                         Stored.Q = if(clust.ind) Q.store else as.vector(Q.store),
                          Q.CI = Q.CI, Q.Probs = Q.prob, Q.Counts = Q.tab)
     GQ.res       <- if(inf.G) c(GQ.temp1, GQ.temp4) else c(list(G = G), GQ.temp4)
     GQ.res       <- c(GQ.res, GQ.temp2)
@@ -643,7 +646,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
                          stats::var), ci.eta  = apply(eta, c(1, 2), stats::quantile, conf.levels))
     attr(scores, "Eta.store")  <- eta.store
   }
-  names(result)  <- paste0("Group", Gseq)
+  names(result)  <- gnames
   class(GQ.res)                <- "listof"
   attr(GQ.res, "Criterion")    <- criterion
   attr(GQ.res, "Factors")      <- n.fac
@@ -656,7 +659,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     Err          <- lapply(list(MSE = mse, MAE = mae, MEDSE = medse,
                                 MEDAE = medae, RMSE = rmse, NRMSE = nrmse
                                 #,CVRMSE = cvrmse
-                                ), stats::setNames, paste0("Group ", Gseq))
+                                ), stats::setNames, gnames)
     if(G > 1)      {
       Err        <- c(Err, list(Averages = unlist(lapply(Err, mean, na.rm=TRUE))))
     } else {
@@ -669,8 +672,8 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   if(!is.null(Err)) class(Err) <- "listof"
   if(sw["mu.sw"])  {
     mus          <- Filter(Negate(is.null), lapply(result, "[[", "means"))
-    post.mu      <- do.call(cbind, lapply(result, "[[", "post.mu"))
-    var.mu       <- do.call(cbind, lapply(result, "[[", "var.mu"))
+    post.mu      <- provideDimnames(do.call(cbind, lapply(result, "[[", "post.mu")),  base=list(rownames(mus[[1]]),  gnames))
+    var.mu       <- provideDimnames(do.call(cbind, lapply(result, "[[", "var.mu")),   base=list(rownames(mus[[1]]),  gnames))
     ci.mu        <- Filter(Negate(is.null), lapply(result, "[[", "ci.mu"))
     means        <- list(mus = mus, post.mu = post.mu, var.mu = var.mu, ci.mu = ci.mu)
   }
@@ -683,8 +686,8 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   }
   if(sw["psi.sw"]) {
     psis         <- Filter(Negate(is.null), lapply(result, "[[", "psis"))
-    post.psi     <- do.call(cbind, lapply(result, "[[", "post.psi"))
-    var.psi      <- do.call(cbind, lapply(result, "[[", "var.psi"))
+    post.psi     <- provideDimnames(do.call(cbind, lapply(result, "[[", "post.psi")), base=list(rownames(psis[[1]]), gnames))
+    var.psi      <- provideDimnames(do.call(cbind, lapply(result, "[[", "var.psi")),  base=list(rownames(psis[[1]]), gnames))
     ci.psi       <- Filter(Negate(is.null), lapply(result, "[[", "ci.psi"))
     uniquenesses <- list(psis = psis, post.psi = post.psi, var.psi = var.psi, ci.psi = ci.psi)
   }
@@ -708,6 +711,8 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     attr(result, "Ind.Slice")  <- attr(sims, "Ind.Slice")
   }
   attr(result, "Name")         <- attr(sims, "Name")
+  attr(result, "Obsnames")     <- if(all(!sw["s.sw"], exists("obsnames", envir=.GlobalEnv))) obsnames
+  attr(result, "Varnames")     <- if(all(!sw["l.sw"], !sw["mu.sw"], !sw["psi.sw"], exists("varnames", envir=.GlobalEnv))) varnames
   attr(result, "N.Loadstore")  <- unname(load.store)
   attr(result, "Obs")          <- n.obs
   attr(result, "Store")        <- tmp.store

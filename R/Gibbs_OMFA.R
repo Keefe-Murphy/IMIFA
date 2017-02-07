@@ -17,34 +17,30 @@
     Nseq           <- seq_len(N)
     obsnames       <- rownames(data)
     varnames       <- colnames(data)
+    facnames       <- paste0("Factor", seq_len(Q))
     colnames(data) <- NULL
-    facnames       <- paste0("Factor ", seq_len(Q))
-    gnames         <- paste0("Group ", Gseq)
-    iternames      <- paste0("Iteration", seq_len(n.store))
     Q0             <- Q  > 0
     Q0s            <- rep(Q0, G)
     Q1             <- Q == 1
     if(sw["mu.sw"])  {
-      mu.store     <- provideDimnames(array(0, dim=c(P, G, n.store)), base=list(varnames, gnames, iternames))
+      mu.store     <- array(0, dim=c(P, G, n.store))
     }
     if(sw["s.sw"])   {
       eta.store    <- array(0, dim=c(N, Q, n.store))
-      dimnames(eta.store)  <- list(obsnames, if(Q0) facnames, iternames)
     }
     if(sw["l.sw"])   {
       load.store   <- array(0, dim=c(P, Q, G, n.store))
-      dimnames(load.store) <- list(varnames, if(Q0) facnames, gnames, iternames)
     }
     if(sw["psi.sw"]) {
-      psi.store    <- provideDimnames(array(0, dim=c(P, G, n.store)), base=list(varnames, gnames, iternames))
+      psi.store    <- array(0, dim=c(P, G, n.store))
     }
     if(sw["pi.sw"])  {
-      pi.store     <- provideDimnames(matrix(0, nrow=G, ncol=n.store), base=list(gnames, iternames))
+      pi.store     <- matrix(0, nrow=G, ncol=n.store)
     }
-    z.store        <- provideDimnames(matrix(0, nrow=N, ncol=n.store), base=list(obsnames, iternames))
-    ll.store       <- stats::setNames(rep(0, n.store), iternames)
+    z.store        <- matrix(0, nrow=N, ncol=n.store)
+    ll.store       <- rep(0, n.store)
     err.z          <- zerr <- FALSE
-    G.store        <- stats::setNames(rep(0, n.store), iternames)
+    G.store        <- rep(0, n.store)
 
     mu.sigma       <- 1/sigma.mu
     sig.mu.sqrt    <- sqrt(sigma.mu)
@@ -152,24 +148,26 @@
         err.z      <- TRUE
       }
       if(is.element(iter, iters))   {
-        if(verbose)   utils::setTxtProgressBar(pb, iter)
+        if(verbose)    utils::setTxtProgressBar(pb, iter)
         new.it     <- which(iters == iter)
-        if(sw["mu.sw"])            mu.store[,,new.it]      <- mu
-        if(all(sw["s.sw"], Q0))    eta.store[,,new.it]     <- eta
-        if(all(sw["l.sw"], Q0))    load.store[,,,new.it]   <- lmat
-        if(sw["psi.sw"])           psi.store[,,new.it]     <- psi
-        if(sw["pi.sw"])            pi.store[,new.it]       <- pi.prop
-                                   z.store[,new.it]        <- z
-                                   ll.store[new.it]        <- z.res$log.like
-                                   G.store[new.it]         <- sum(nn0)
+        if(sw["mu.sw"])             mu.store[,,new.it]     <- mu
+        if(all(sw["s.sw"], Q0))     eta.store[,,new.it]    <- eta
+        if(all(sw["l.sw"], Q0))     load.store[,,,new.it]  <- lmat
+        if(sw["psi.sw"])            psi.store[,,new.it]    <- psi
+        if(sw["pi.sw"])             pi.store[,new.it]      <- pi.prop
+                                    z.store[,new.it]       <- z
+                                    ll.store[new.it]       <- z.res$log.like
+                                    G.store[new.it]        <- sum(nn0)
       }
     }
     close(pb)
     Gmax           <- seq_len(max(as.numeric(z.store)))
-    returns        <- list(mu       = if(sw["mu.sw"])         mu.store[,Gmax,, drop=FALSE],
+    if(sw["s.sw"])    dimnames(eta.store)                  <- list(obsnames, if(Q0) facnames, NULL)
+    if(sw["l.sw"])    dimnames(load.store)                 <- list(varnames, if(Q0) facnames, NULL, NULL)
+    returns        <- list(mu       = if(sw["mu.sw"])         provideDimnames(mu.store[,Gmax,, drop=FALSE],  base=list(varnames, "", "")),
                            eta      = if(all(sw["s.sw"], Q0)) eta.store,
                            load     = if(all(sw["l.sw"], Q0)) load.store[,,Gmax,, drop=FALSE],
-                           psi      = if(sw["psi.sw"])        psi.store[,Gmax,, drop=FALSE],
+                           psi      = if(sw["psi.sw"])        provideDimnames(psi.store[,Gmax,, drop=FALSE], base=list(varnames, "", "")),
                            pi.prop  = if(sw["pi.sw"])         pi.store[Gmax,, drop=FALSE],
                            z.store  = z.store,
                            ll.store = ll.store,

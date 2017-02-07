@@ -24,7 +24,18 @@ mcmc_IMIFA(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA",
 \arguments{
 \item{dat}{A matrix or data frame such that rows correspond to observations (\code{N}) and columns correspond to variables (\code{P}). Non-numeric variables and rows with missing entries will be removed.}
 
-\item{method}{An acronym for the type of model to fit where "\code{FA}" is Factor Analysis, "\code{IFA}" is Infinite Factor Analysis, "\code{MFA}" is Mixtures of Factor Analysers, "\code{MIFA}" is Mixtures of Infinite Factor Analysers, "\code{OMFA}" is Overfitted Mixtures of Factor Analysers, "\code{OMIFA}" is Overfitted Mixtures of Infinite Factor Analysers, "\code{IMFA}" is Infinite Mixtures of Factor Analysers and "\code{IMIFA}" is Infinite Mixtures of Infinite Factor Analysers. The "\code{classify}" method is not yet implemented.}
+\item{method}{An acronym for the type of model to fit where: \cr
+\cr
+ "\code{FA}" = Factor Analysis \cr
+ "\code{IFA}" = Infinite Factor Analysis \cr
+ "\code{MFA}" = Mixtures of Factor Analysers \cr
+ "\code{MIFA}" = Mixtures of Infinite Factor Analysers \cr
+ "\code{OMFA}" = Overfitted Mixtures of Factor Analysers \cr
+ "\code{OMIFA}" = Overfitted Mixtures of Infinite Factor Analysers \cr
+ "\code{IMFA}" = Infinite Mixtures of Factor Analysers \cr
+ "\code{IMIFA}" = Infinite Mixtures of Infinite Factor Analysers \cr
+ \cr
+ The "\code{classify}" method is not yet implemented.}
 
 \item{n.iters}{The number of iterations to run the Gibbs sampler for.}
 
@@ -163,4 +174,3 @@ Bhattacharya, A. and Dunson, D. B. (2011). Sparse Bayesian infinite factor model
 \seealso{
 \code{\link{get_IMIFA_results}}, \code{\link{psi_hyper}}, \code{\link{MGP_check}}
 }
-

@@ -18,49 +18,45 @@
     Ns               <- seq_len(N)
     obsnames         <- rownames(data)
     varnames         <- colnames(data)
+    facnames         <- paste0("Factor", seq_len(Q))
     colnames(data)   <- NULL
-    facnames         <- paste0("Factor ", seq_len(Q))
-    gnames           <- paste0("Group ", Ts)
-    iternames        <- paste0("Iteration", seq_len(n.store))
     Q0               <- Q  > 0
     Q0s              <- rep(Q0, trunc.G)
     Q1               <- Q == 1
     if(sw["mu.sw"])  {
-      mu.store       <- provideDimnames(array(0, dim=c(P, trunc.G, n.store)), base=list(varnames, gnames, iternames))
+      mu.store       <- array(0, dim=c(P, trunc.G, n.store))
     }
     if(sw["s.sw"])   {
       eta.store      <- array(0, dim=c(N, Q, n.store))
-      dimnames(eta.store)    <- list(obsnames, if(Q0) facnames, iternames)
     }
     if(sw["l.sw"])   {
       load.store     <- array(0, dim=c(P, Q, trunc.G, n.store))
-      dimnames(load.store)   <- list(varnames, if(Q0) facnames, gnames, iternames)
     }
     if(sw["psi.sw"]) {
-      psi.store      <- provideDimnames(array(0, dim=c(P, trunc.G, n.store)), base=list(varnames, gnames, iternames))
+      psi.store      <- array(0, dim=c(P, trunc.G, n.store))
     }
     if(sw["pi.sw"])  {
-      pi.store       <- provideDimnames(matrix(0, nrow=trunc.G, ncol=n.store), base=list(gnames, iternames))
+      pi.store       <- matrix(0, nrow=trunc.G, ncol=n.store)
     }
-    z.store          <- provideDimnames(matrix(0, nrow=N, ncol=n.store), base=list(obsnames, iternames))
-    ll.store         <- stats::setNames(rep(0, n.store), iternames)
+    z.store          <- matrix(0, nrow=N, ncol=n.store)
+    ll.store         <- rep(0, n.store)
     acc1             <- acc2 <- FALSE
     err.z            <- zerr <- FALSE
-    G.store          <- stats::setNames(rep(0, n.store), iternames)
+    G.store          <- rep(0, n.store)
     not.fixed        <- alpha.step != "fixed"
     if(not.fixed) {
-      alpha.store    <- stats::setNames(rep(0, n.store), iternames)
+      alpha.store    <- rep(0, n.store)
       alpha.shape    <- a.hyper[1]
       alpha.rate     <- a.hyper[2]
     }
     if(learn.d)   {
-      d.store        <- stats::setNames(rep(0, n.store), iternames)
+      d.store        <- rep(0, n.store)
       d.shape1       <- d.hyper[1]
       d.shape2       <- d.hyper[2]
     }
     MH.step          <- alpha.step == "metropolis"
     if(MH.step)   {
-      rate           <- stats::setNames(rep(0, n.store), iternames)
+      rate           <- rep(0, n.store)
     }
     if(DP.lab.sw) {
       lab.rate       <- matrix(0, nrow=2, ncol=n.store)
@@ -266,10 +262,12 @@
     }
     close(pb)
     Gmax             <- seq_len(max(as.numeric(z.store)))
-    returns          <- list(mu       = if(sw["mu.sw"])         mu.store[,Gmax,, drop=FALSE],
+    if(sw["s.sw"])      dimnames(eta.store)                  <- list(obsnames, if(Q0) facnames, NULL)
+    if(sw["l.sw"])      dimnames(load.store)                 <- list(varnames, if(Q0) facnames, NULL, NULL)
+    returns          <- list(mu       = if(sw["mu.sw"])         provideDimnames(mu.store[,Gmax,, drop=FALSE],  base=list(varnames, "", "")),
                              eta      = if(all(sw["s.sw"], Q0)) eta.store,
                              load     = if(all(sw["l.sw"], Q0)) load.store[,,Gmax,, drop=FALSE],
-                             psi      = if(sw["psi.sw"])        psi.store[,Gmax,, drop=FALSE],
+                             psi      = if(sw["psi.sw"])        provideDimnames(psi.store[,Gmax,, drop=FALSE], base=list(varnames, "", "")),
                              pi.prop  = if(sw["pi.sw"])         pi.store[Gmax,, drop=FALSE],
                              alpha    = if(not.fixed)           alpha.store,
                              discount = if(learn.d)             d.store,

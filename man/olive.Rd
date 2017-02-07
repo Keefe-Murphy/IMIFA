@@ -15,4 +15,3 @@ Data on the percentage composition of eight fatty acids found by lipid fraction 
 Forina, M., Armanino, C., Lanteri, S. and Tiscornia, E. (1983). Classification of olive oils from their fatty acid composition. In \emph{Food Research and Data Analysis}, pp. 189–214. Applied Science Publishers, London.
 }
 \keyword{datasets}
-

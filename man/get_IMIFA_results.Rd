@@ -77,4 +77,3 @@ Murphy, K., Gormley, I.C. and Viroli, C. (2017) Infinite Mixtures of Infinite Fa
 \seealso{
 \code{\link{mcmc_IMIFA}}, \code{\link{plot.Results_IMIFA}}
 }
-

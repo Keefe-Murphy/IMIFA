@@ -38,4 +38,3 @@ Plots the prior distribution of the number of clusters under a Dirichlet / Pitma
 \seealso{
 \code{\link{G_expected}}, \code{\link{G_variance}}, \code{\link[Rmpfr]{Rmpfr}}
 }
-
