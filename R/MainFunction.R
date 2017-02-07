@@ -32,7 +32,7 @@
 #' @param uni.prior A switch indicating whether uniquenesses rate hyperparameters are to be "\code{unconstrained}" or "\code{isotropic}". Note that unconstrained here means variable-specific and group-specific. Defaults to \code{uni.type} if that is supplied and \code{uni.prior} is not, otherwise defaults to "\code{unconstrained}" unless \code{N < P}, in which case the default is "\code{isotropic}". Only relevant when "\code{psi.beta}" is not supplied and \code{\link{psi_hyper}} is invoked.
 #' @param z.init The method used to initialise the cluster labels. Defaults to \code{\link[mclust]{Mclust}}. Not relevant for the "\code{FA}" and "\code{"IFA"} methods.
 #' @param z.list A user supplied list of cluster labels. Only relevant if \code{z.init == "z.list"}.
-#' @param adapt A logical value indicating whether adaptation of the number of cluster-specific factors is to take place. Only relevant for methods ending in IFA, in which case the default is TRUE.
+#' @param adapt A logical value indicating whether adaptation of the number of cluster-specific factors is to take place. Only relevant for methods ending in IFA, in which case the default is TRUE. Specifying FALSE and supplying \code{range.Q} provides a means to use the MGP prior in a finite factor context.
 #' @param prop Proportion of elements within the neighbourhood \code{epsilon} of zero necessary to consider a loadings column redundant. Defaults to \code{floor(0.7 * P)/P}. Only relevant for methods ending in IFA.
 #' @param epsilon Neighbourhood of zero within which a loadings entry is considered negligible according to \code{prop}. Defaults to 0.1. Only relevant for methods ending in IFA.
 #' @param alpha.d1 Shape hyperparameter of the global shrinkage on the first column of the loadings according to the MGP shrinkage prior. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to 3. Only relevant for methods ending in IFA.
@@ -66,7 +66,6 @@
 #' @return A list of lists of lists of class "IMIFA" to be passed to \code{\link{get_IMIFA_results}}. If the returned object is x, candidate models accesible via subsetting, where x is of the form x[[1:length(range.G)]][[1:length(range.Q)]]. However, these objects of class "IMIFA" should rarely if ever be manipulated by hand - use of the \code{\link{get_IMIFA_results}} function is \emph{strongly} advised. Dedicated \code{print} and \code{summary} functions exist for objects of class "\code{IMIFA}".
 #' @export
 #' @importFrom matrixStats "rowLogSumExps"
-#' @importFrom MCMCpack "rdirichlet"
 #' @importFrom Rfast "rowsums" "colsums" "Order" "colVars" "rowmeans" "standardise" "sort_unique" "cova"
 #' @importFrom e1071 "matchClasses"
 #' @importFrom mvnfast "dmvn"
@@ -542,7 +541,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
         if(!is.element(method, c("IMFA", "IMIFA"))) {
           while(all(length(unique(zips)) != G,
                 any(prop.table(tabulate(zips, nbins=G)) < 1/G^2))) {
-            pies   <- .sim_pi(pi.alpha=rep(alpha, G), nn=0)
+            pies   <- .sim_pi(pi.alpha=alpha, nn=0, G)
             zips   <- .sim_z.p(N=N, prob.z=pies)
           }
         } else {

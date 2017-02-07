@@ -71,7 +71,7 @@ mcmc_IMIFA(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA",
 
 \item{z.list}{A user supplied list of cluster labels. Only relevant if \code{z.init == "z.list"}.}
 
-\item{adapt}{A logical value indicating whether adaptation of the number of cluster-specific factors is to take place. Only relevant for methods ending in IFA, in which case the default is TRUE.}
+\item{adapt}{A logical value indicating whether adaptation of the number of cluster-specific factors is to take place. Only relevant for methods ending in IFA, in which case the default is TRUE. Specifying FALSE and supplying \code{range.Q} provides a means to use the MGP prior in a finite factor context.}
 
 \item{prop}{Proportion of elements within the neighbourhood \code{epsilon} of zero necessary to consider a loadings column redundant. Defaults to \code{floor(0.7 * P)/P}. Only relevant for methods ending in IFA.}
 

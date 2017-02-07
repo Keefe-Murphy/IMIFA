@@ -60,8 +60,9 @@
     }
 
   # Mixing Proportions
-    .sim_pi      <- function(pi.alpha, nn) {
-        MCMCpack::rdirichlet(1, pi.alpha + nn)
+    .sim_pi      <- function(pi.alpha, nn, G) {
+      tmp        <- stats::rgamma(G, shape=pi.alpha + nn, rate=1)
+        tmp/sum(tmp)
     }
 
     .sim_pi.inf  <- function(pi.alpha, nn, N = sum(nn), len, lseq, discount = 0L) {

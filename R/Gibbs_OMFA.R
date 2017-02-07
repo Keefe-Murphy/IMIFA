@@ -98,7 +98,7 @@
       if(verbose   && iter  < burnin) utils::setTxtProgressBar(pb, iter)
 
     # Mixing Proportions & Re-ordering
-      pi.prop[]    <- .sim_pi(pi.alpha=pi.alpha, nn=nn)
+      pi.prop      <- .sim_pi(pi.alpha=pi.alpha, nn=nn, G)
       index        <- order(nn, decreasing=TRUE)
       pi.prop      <- pi.prop[index]
       mu           <- mu[,index, drop=FALSE]

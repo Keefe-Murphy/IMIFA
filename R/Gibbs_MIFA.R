@@ -119,7 +119,7 @@
       if(verbose   && iter   < burnin) utils::setTxtProgressBar(pb, iter)
 
     # Mixing Proportions
-      pi.prop[]    <- .sim_pi(pi.alpha=pi.alpha, nn=nn)
+      pi.prop      <- .sim_pi(pi.alpha=pi.alpha, nn=nn, G)
 
     # Cluster Labels
       psi          <- 1/psi.inv
