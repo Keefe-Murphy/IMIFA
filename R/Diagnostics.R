@@ -359,7 +359,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     post.z       <- apply(z, 1, function(x) factor(which.max(tabulate(x)), levels=Gseq))
     uncertain    <- 1 - Rfast::colMaxs(matrix(apply(z, 1, tabulate, nbins=G)/length(tmp.store), nrow=G, ncol=n.obs), value=TRUE)
     if(sw["pi.sw"]) {
-      pi.prop    <- provideDimnames(pies[Gseq,seq_along(tmp.store), drop=FALSE], base=list(gnames, ""))
+      pi.prop    <- provideDimnames(pies[Gseq,seq_along(tmp.store), drop=FALSE], base=list(gnames, ""), unique=FALSE)
       var.pi     <- stats::setNames(Rfast::rowVars(pi.prop),  gnames)
       ci.pi      <- matrixStats::rowQuantiles(pi.prop, probs=conf.levels)
       post.pi    <- stats::setNames(Rfast::rowmeans(pi.prop), gnames)
@@ -367,7 +367,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       post.pi    <- stats::setNames(prop.table(tabulate(post.z, nbins=G)), gnames)
     }
     if(inf.Q)       {
-      Q.store    <- provideDimnames(Q.store[Gseq,, drop=FALSE], base=list(gnames, ""))
+      Q.store    <- provideDimnames(Q.store[Gseq,, drop=FALSE], base=list(gnames, ""), unique=FALSE)
     }
     if(!label.miss) {
       zlabels    <- factor(zlabels, labels=seq_along(unique(zlabels)))
@@ -384,12 +384,12 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
         index    <- Rfast::Order(l.perm)
         post.pi  <- stats::setNames(post.pi[index], gnames)
         if(sw["pi.sw"]) {
-         pi.prop <- provideDimnames(unname(pi.prop[index,, drop=FALSE]), base=list(gnames, ""))
+         pi.prop <- provideDimnames(unname(pi.prop[index,, drop=FALSE]), base=list(gnames, ""), unique=FALSE)
          var.pi  <- stats::setNames(var.pi[index],  gnames)
-         ci.pi   <- provideDimnames(unname(ci.pi[index,,   drop=FALSE]), base=list(gnames, colnames(ci.pi)))
+         ci.pi   <- provideDimnames(unname(ci.pi[index,,   drop=FALSE]), base=list(gnames,  colnames(ci.pi)))
         }
         if(inf.Q)   {
-         Q.store <- provideDimnames(unname(Q.store[index,, drop=FALSE]), base=list(gnames, ""))
+         Q.store <- provideDimnames(unname(Q.store[index,, drop=FALSE]), base=list(gnames, ""), unique=FALSE)
         }
       }
       tab        <- table(post.z, zlabels, dnn=list("Predicted", "Observed"))
@@ -534,7 +534,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
         psi      <- as.matrix(psis[,g,store])
       }
       if(all(data.x, sizes[g] > 1)) {
-        cov.emp  <- provideDimnames(Rfast::cova(dat[z.ind[[g]],, drop=FALSE]), base=list(varnames, varnames))
+        cov.emp  <- provideDimnames(Rfast::cova(dat[z.ind[[g]],, drop=FALSE]), base=list(varnames))
       }
     } else {
       post.mu    <- sims[[G.ind]][[Q.ind]]$post.mu
@@ -561,7 +561,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       ci.psi     <- matrixStats::rowQuantiles(psi, probs=conf.levels)
     }
     if(sw["l.sw"])   {
-      lmat       <- lmat[,Qgs,, drop=FALSE]
+      lmat       <- provideDimnames(lmat[,Qgs,, drop=FALSE], base=list("", paste0("Factor", Qgs), ""), unique=FALSE)
       post.load  <- rowMeans(lmat, dims=2)
       var.load   <- apply(lmat, c(1, 2), stats::var)
       ci.load    <- apply(lmat, c(1, 2), stats::quantile, conf.levels)
@@ -643,9 +643,10 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   }
   if(sw["s.sw"])   {
     eta.store    <- unique(unlist(e.store))
-    eta          <- eta[,seq_len(max(Q)),eta.store, drop=FALSE]
+    Qseq         <- seq_len(max(Q))
+    eta          <- provideDimnames(eta[,Qseq,eta.store, drop=FALSE], base=list("", paste0("Factor", Qseq), ""), unique=FALSE)
     scores       <- list(eta = eta, post.eta = rowMeans(eta, dims=2), var.eta = apply(eta, c(1, 2),
-                         stats::var), ci.eta  = apply(eta, c(1, 2), stats::quantile, conf.levels))
+                         stats::var), ci.eta = apply(eta, c(1, 2), stats::quantile, conf.levels))
     attr(scores, "Eta.store")  <- eta.store
   }
   names(result)  <- gnames

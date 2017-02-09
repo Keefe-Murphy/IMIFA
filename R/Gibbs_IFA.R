@@ -16,7 +16,6 @@
     Pseq         <- seq_len(P)
     obsnames     <- rownames(data)
     varnames     <- colnames(data)
-    facnames     <- paste0("Factor", seq_len(Q))
     dimnames(data)         <- NULL
     if(sw["mu.sw"])  {
       mu.store   <- matrix(0, nrow=P, ncol=n.store)
@@ -160,16 +159,14 @@
     Qmax         <- seq_len(max(Q.store))
     eta.store    <- if(sw["s.sw"])  tryCatch(eta.store[,Qmax,, drop=FALSE],  error=function(e) eta.store)
     load.store   <- if(sw["l.sw"])  tryCatch(load.store[,Qmax,, drop=FALSE], error=function(e) load.store)
-    if(sw["s.sw"])  dimnames(eta.store)           <- list(obsnames, facnames[seq_len(ncol(eta.store))],  NULL)
-    if(sw["l.sw"])  dimnames(load.store)          <- list(varnames, facnames[seq_len(ncol(load.store))], NULL)
-    returns      <- list(mu       = if(sw["mu.sw"])  provideDimnames(mu.store,  base=list(varnames, "")),
-                         eta      = if(sw["s.sw"])   tryCatch(slam::as.simple_sparse_array(eta.store),  error=function(e) eta.store),
-                         load     = if(sw["l.sw"])   tryCatch(slam::as.simple_sparse_array(load.store), error=function(e) load.store),
-                         psi      = if(sw["psi.sw"]) provideDimnames(psi.store, base=list(varnames, "")),
+    returns      <- list(mu       = if(sw["mu.sw"])  provideDimnames(mu.store,  base=list(varnames, ""), unique=FALSE),
+                         eta      = if(sw["s.sw"])   provideDimnames(tryCatch(slam::as.simple_sparse_array(eta.store),  error=function(e) eta.store),  base=list(obsnames, "", ""), unique=FALSE),
+                         load     = if(sw["l.sw"])   provideDimnames(tryCatch(slam::as.simple_sparse_array(load.store), error=function(e) load.store), base=list(varnames, "", ""), unique=FALSE),
+                         psi      = if(sw["psi.sw"]) provideDimnames(psi.store, base=list(varnames, ""), unique=FALSE),
                          post.mu  = stats::setNames(post.mu,  varnames),
                          post.psi = stats::setNames(post.psi, varnames),
-                         cov.emp  = provideDimnames(cov.emp, base=list(varnames, varnames)),
-                         cov.est  = provideDimnames(cov.est, base=list(varnames, varnames)),
+                         cov.emp  = provideDimnames(cov.emp,  base=list(varnames)),
+                         cov.est  = provideDimnames(cov.est,  base=list(varnames)),
                          ll.store = ll.store,
                          Q.store  = matrix(Q.store, nrow=1),
                          time     = init.time)

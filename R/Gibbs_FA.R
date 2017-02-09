@@ -15,7 +15,6 @@
     Pseq         <- seq_len(P)
     obsnames     <- rownames(data)
     varnames     <- colnames(data)
-    facnames     <- paste0("Factor", seq_len(Q))
     Q0           <- Q  > 0
     Q1           <- Q == 1
     dimnames(data)         <- NULL
@@ -94,24 +93,22 @@
         post.psi <- post.psi + psi/n.store
         sigma    <- tcrossprod(lmat) + diag(psi)
         cov.est  <- cov.est + sigma/n.store
-        if(sw["mu.sw"])          mu.store[,new.it]    <- mu
-        if(all(sw["s.sw"], Q0))  eta.store[,,new.it]  <- eta
-        if(all(sw["l.sw"], Q0))  load.store[,,new.it] <- lmat
-        if(sw["psi.sw"])         psi.store[,new.it]   <- psi
-                                 ll.store[new.it]     <- sum(mvnfast::dmvn(X=data, mu=mu, sigma=sigma, log=TRUE))
+        if(sw["mu.sw"])          mu.store[,new.it]      <- mu
+        if(all(sw["s.sw"], Q0))  eta.store[,,new.it]    <- eta
+        if(all(sw["l.sw"], Q0))  load.store[,,new.it]   <- lmat
+        if(sw["psi.sw"])         psi.store[,new.it]     <- psi
+                                 ll.store[new.it]       <- sum(mvnfast::dmvn(X=data, mu=mu, sigma=sigma, log=TRUE))
       }
     }
     close(pb)
-    if(sw["s.sw"])               dimnames(eta.store)  <- list(obsnames, if(Q0) facnames, NULL)
-    if(sw["l.sw"])               dimnames(load.store) <- list(varnames, if(Q0) facnames, NULL)
-    returns   <- list(mu       = if(sw["mu.sw"])         provideDimnames(mu.store,   base=list(varnames, "")),
-                      eta      = if(all(sw["s.sw"], Q0)) eta.store,
-                      load     = if(all(sw["l.sw"], Q0)) load.store,
-                      psi      = if(sw["psi.sw"])        provideDimnames(psi.store,  base=list(varnames, "")),
+    returns   <- list(mu       = if(sw["mu.sw"])           provideDimnames(mu.store,    base=list(varnames, ""),     unique=FALSE),
+                      eta      = if(all(sw["s.sw"], Q0))   provideDimnames(eta.store,   base=list(obsnames, "", ""), unique=FALSE),
+                      load     = if(all(sw["l.sw"], Q0))   provideDimnames(load.store,  base=list(varnames, "", ""), unique=FALSE),
+                      psi      = if(sw["psi.sw"])          provideDimnames(psi.store,   base=list(varnames, ""),     unique=FALSE),
                       post.mu  = stats::setNames(post.mu,  varnames),
                       post.psi = stats::setNames(post.psi, varnames),
-                      cov.emp  = provideDimnames(cov.emp, base=list(varnames, varnames)),
-                      cov.est  = provideDimnames(cov.est, base=list(varnames, varnames)),
+                      cov.emp  = provideDimnames(cov.emp,  base=list(varnames)),
+                      cov.est  = provideDimnames(cov.est,  base=list(varnames)),
                       ll.store = ll.store,
                       time     = init.time)
     attr(returns, "K")        <- .dim(Q, P)

@@ -17,7 +17,6 @@
     Nseq           <- seq_len(N)
     obsnames       <- rownames(data)
     varnames       <- colnames(data)
-    facnames       <- paste0("Factor", seq_len(Q))
     colnames(data) <- NULL
     Q0             <- Q  > 0
     Q0s            <- rep(Q0, G)
@@ -183,12 +182,10 @@
       }
     }
     close(pb)
-    if(sw["s.sw"])                 dimnames(eta.store)     <- list(obsnames, if(Q0) facnames, NULL)
-    if(sw["l.sw"])                 dimnames(load.store)    <- list(varnames, if(Q0) facnames, NULL, NULL)
-    returns        <- list(mu       = if(sw["mu.sw"])         provideDimnames(mu.store,  base=list(varnames, "", "")),
-                           eta      = if(all(sw["s.sw"], Q0)) eta.store,
-                           load     = if(all(sw["l.sw"], Q0)) load.store,
-                           psi      = if(sw["psi.sw"])        provideDimnames(psi.store, base=list(varnames, "", "")),
+    returns        <- list(mu       = if(sw["mu.sw"])         provideDimnames(mu.store,   base=list(varnames, "", ""),     unique=FALSE),
+                           eta      = if(all(sw["s.sw"], Q0)) provideDimnames(eta.store,  base=list(obsnames, "", ""),     unique=FALSE),
+                           load     = if(all(sw["l.sw"], Q0)) provideDimnames(load.store, base=list(varnames, "", "", ""), unique=FALSE),
+                           psi      = if(sw["psi.sw"])        provideDimnames(psi.store,  base=list(varnames, "", ""),     unique=FALSE),
                            pi.prop  = if(sw["pi.sw"])         pi.store,
                            z.store  = z.store,
                            ll.store = ll.store,
