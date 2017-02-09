@@ -139,7 +139,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
     ptrn  <- c("(", ")")
     if(!exists(nam.z,
                envir=.GlobalEnv))     stop(paste0("Object ", match.call()$zlabels, " not found\n"))
-    if(any(unlist(vapply(seq_along(ptrn), function(p) grepl(ptrn[p], nam.z, fixed=TRUE), logical(1))),
+    if(any(unlist(vapply(seq_along(ptrn), function(p) grepl(ptrn[p], nam.z, fixed=TRUE), logical(1L))),
            !identical(z.nam,   nam.z) && (any(grepl("[[:alpha:]]", gsub('c', '', nam.x))) || grepl(":",
            nam.x, fixed=TRUE))))      stop("Extremely inadvisable to supply 'zlabels' subsetted by any means other than row/column numbers or c() indexing: best to create new object")
     labs  <- as.numeric(as.factor(zlabels))
@@ -999,7 +999,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
 
 # Colour Checker
   .are_cols    <- function(cols) {
-    vapply(cols,  function(x) { tryCatch(is.matrix(grDevices::col2rgb(x)), error = function(e) FALSE) }, logical(1))
+    vapply(cols,  function(x) { tryCatch(is.matrix(grDevices::col2rgb(x)), error = function(e) FALSE) }, logical(1L))
   }
 
 # Prior No. Groups (DP & PY)
@@ -1067,7 +1067,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
     for(i in seq_len(max.len))      {
       tmp      <- if(discount[i] == 0) alpha[i]^seq_len(N)/Rmpfr::pochMpfr(alpha[i], N) else       {
                   exp(unlist(vapply(seq_len(N), function(k, Gs=seq_len(k - 1), x=0) { for(g in Gs) {
-                    x <- x + log(alpha[i] + g * discount[i]) }; x}, numeric(1))) -
+                    x <- x + log(alpha[i] + g * discount[i]) }; x}, numeric(1L))) -
                          log(Rmpfr::pochMpfr(alpha[i] + 1, N - 1))) / discount[i]^seq_len(N)       }
       if(discount[i]  == 0) {
         rx[,i] <- c(0, abs(gmp::asNumeric(gmp::Stirling1.all(N) * tmp)))

@@ -202,7 +202,7 @@
           notred   <- numred == 0
           ng.ind   <- seq_along(nn.ind)
           Qs.old   <- Qs[nn0]
-          Qs[nn0]  <- vapply(ng.ind, function(h) if(notred[h]) Qs.old[h] + 1 else Qs.old[h] - numred[h], numeric(1))
+          Qs[nn0]  <- vapply(ng.ind, function(h) if(notred[h]) Qs.old[h] + 1 else Qs.old[h] - numred[h], numeric(1L))
           Q.big    <- Qs[nn0] > Q.star
           Q.bigs   <- any(Q.big)
           if(Q.bigs) {

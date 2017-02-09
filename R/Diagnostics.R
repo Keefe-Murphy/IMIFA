@@ -275,7 +275,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     } else if(!is.element(method, c("FA", "IFA"))) {
       dat        <- as.data.frame(get(nam.dat))
       nam.x      <- gsub(".*\\[(.*)\\].*", "(\\1)",  dat.nam)
-      if(any(unlist(vapply(seq_along(pattern), function(p) grepl(pattern[p], nam.dat, fixed=TRUE), logical(1))),
+      if(any(unlist(vapply(seq_along(pattern), function(p) grepl(pattern[p], nam.dat, fixed=TRUE), logical(1L))),
          !identical(dat.nam, nam.dat) && (any(grepl("[[:alpha:]]", gsub('c', '', nam.x))) || grepl(":",
          nam.x, fixed=TRUE)))) {  warning("Extremely inadvisable to supply 'dat' subsetted by any means other than row/column numbers or c() indexing:\n can't compute empirical covariance and error metrics, best to create new data object", call.=FALSE)
       } else  {
@@ -291,7 +291,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
         dat              <- subset(dat, select=if(any(spl.ind <= 0, sum(colseq) %in% 0)) seq_len(ncol(dat)) else colseq, subset=rowseq, drop=!grepl("drop=F", dat.nam))
       }
       dat        <- dat[stats::complete.cases(dat),]
-      dat        <- dat[vapply(dat, is.numeric, logical(1))]
+      dat        <- dat[vapply(dat, is.numeric, logical(1L))]
       dat        <- if(is.logical(scaling)) Rfast::standardise(as.matrix(dat), center=cent, scale=scaling) else scale(dat, center=cent, scale=scaling)
       obsnames   <- rownames(dat)
       varnames   <- colnames(dat)
@@ -309,7 +309,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       nam.zx     <- gsub(".*\\[(.*)\\].*", "\\1)", z.nam)
       if(!exists(nam.z,
          envir=.GlobalEnv))       stop(paste0("Object ", match.call()$zlabels, " not found\n"))
-      if(any(unlist(vapply(seq_along(pattern), function(p) grepl(pattern[p], nam.z, fixed=TRUE), logical(1))),
+      if(any(unlist(vapply(seq_along(pattern), function(p) grepl(pattern[p], nam.z, fixed=TRUE), logical(1L))),
          !identical(z.nam, nam.z) && (any(grepl("[[:alpha:]]", gsub('c', '', nam.zx))) || grepl(":",
          nam.zx, fixed=TRUE))))   stop("Extremely inadvisable to supply 'zlabels' subsetted by any means other than row/column numbers or c() indexing: best to create new object")
      if(length(zlabels) != n.obs) stop(paste0("'zlabels' must be a factor of length N=",  n.obs))
@@ -654,8 +654,8 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   attr(GQ.res, "Factors")      <- n.fac
   attr(GQ.res, "Groups")       <- n.grp
   attr(GQ.res, "Supplied")     <- c(Q=Q.T, G=G.T)
-  err.T                        <- vapply(Gseq, function(g) all(emp.T[g], est.T[g]), logical(1))
-  var.exps       <- vapply(lapply(result, "[[", "var.exp"), function(x) ifelse(is.null(x), NA, x), numeric(1))
+  err.T                        <- vapply(Gseq, function(g) all(emp.T[g], est.T[g]), logical(1L))
+  var.exps       <- vapply(lapply(result, "[[", "var.exp"), function(x) ifelse(is.null(x), NA, x), numeric(1L))
   var.exps       <- if(sum(is.na(var.exps)) == G) NULL else var.exps
   if(any(err.T))   {
     Err          <- lapply(list(MSE = mse, MAE = mae, MEDSE = medse,
@@ -693,7 +693,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     ci.psi       <- Filter(Negate(is.null), lapply(result, "[[", "ci.psi"))
     uniquenesses <- list(psis = psis, post.psi = post.psi, var.psi = var.psi, ci.psi = ci.psi)
   }
-  load.store     <- vapply(result, attr, numeric(1), "Store")
+  load.store     <- vapply(result, attr, numeric(1L), "Store")
   result         <- c(if(exists("cluster", envir=environment())) list(Clust = cluster),
                       list(Error     = Err),   list(GQ.results = GQ.res),
                       if(sw["mu.sw"])  list(Means        =        means),

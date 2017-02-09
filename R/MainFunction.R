@@ -129,7 +129,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   nam.x     <- gsub(".*\\[(.*)\\].*", "\\1)", dat.nam)
   if(!exists(nam.dat,
      envir=.GlobalEnv))             stop(paste0("Object ", match.call()$dat, " not found\n"))
-  if(any(unlist(vapply(seq_along(pattern), function(p) grepl(pattern[p], nam.dat, fixed=TRUE), logical(1))),
+  if(any(unlist(vapply(seq_along(pattern), function(p) grepl(pattern[p], nam.dat, fixed=TRUE), logical(1L))),
          !identical(dat.nam, nam.dat) && (any(grepl("[[:alpha:]]", gsub('c', '',  nam.x))) || grepl(":",
          nam.x,    fixed=TRUE))))   stop("Extremely inadvisable to supply 'dat' subsetted by any means other than row/column numbers or c() indexing: best to create new data object")
   zin.miss  <- missing(z.init)
@@ -140,7 +140,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     nam.zx  <- gsub(".*\\[(.*)\\].*", "\\1)",   z.nam)
     if(!exists(nam.z,
                envir=.GlobalEnv))   stop(paste0("Object ", match.call()$z.list, " not found\n"))
-    if(any(unlist(vapply(seq_along(pattern), function(p) grepl(pattern[p], nam.z, fixed=TRUE), logical(1))),
+    if(any(unlist(vapply(seq_along(pattern), function(p) grepl(pattern[p], nam.z, fixed=TRUE), logical(1L))),
            !identical(z.nam,   nam.z) && (any(grepl("[[:alpha:]]", gsub('c', '', nam.zx))) || grepl(":",
            nam.zx, fixed=TRUE))))   stop("Extremely inadvisable to supply 'z.list' subsetted by any means other than row/column numbers or c() indexing: best to create new object")
     if(!is.list(z.list))     z.list        <- lapply(list(z.list), as.factor)
@@ -174,7 +174,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   iters     <- seq(from=burnin + 1, to=n.iters, by=thinning)
   iters     <- iters[iters > 0]
   raw.dat   <- as.data.frame(dat)
-  num.check <- vapply(raw.dat, is.numeric, logical(1))
+  num.check <- vapply(raw.dat, is.numeric, logical(1L))
   if(sum(num.check) != ncol(dat)) {
     if(verbose)                     message("Non-numeric columns removed")
     raw.dat <- raw.dat[num.check]
@@ -593,7 +593,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
       alpha.d2     <- list(alpha.d2[[1]][1])
     }
   }
-  if(all(round(vapply(mu.zero, sum, numeric(1))) == 0)) {
+  if(all(round(vapply(mu.zero, sum, numeric(1L))) == 0)) {
     mu.zero        <- switch(method, classify=base::matrix(0, nr=1, nc=range.G), lapply(mu.zero, function(x) 0))
   }
   if(anyNA(unlist(psi.beta))) {

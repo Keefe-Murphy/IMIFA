@@ -164,17 +164,21 @@
 
     # Cluster Labels
       psi            <- 1/psi.inv
-      sigma          <- lapply(Gs, function(g) tcrossprod(lmat[[g]]) + diag(psi[,g]))
       Qgs            <- Qs[Gs]
       Q0             <- Qgs  > 0
       Q1             <- Qgs == 1
-      z.log          <- utils::capture.output({ z.res <- try(.sim_z(data=data, mu=mu[,Gs, drop=FALSE], sigma=sigma, Gseq=Gs, N=N, pi.prop=pi.prop[Gs], log.slice.ind=log.slice.ind, Q0=Q0[Gs]), silent=TRUE) })
-      z.err          <- inherits(z.res, "try-error")
-      if(z.err) {
-        sigma        <- lapply(sigma, corpcor::make.positive.definite)
-        z.res        <- .sim_z.inf(data=data, mu=mu[,Gs, drop=FALSE], sigma=sigma, Gseq=Gs, N=N, pi.prop=pi.prop[Gs], log.slice.ind=log.slice.ind, Q0=Q0[Gs])
+      if(G > 1)   {
+        sigma        <- lapply(Gs, function(g) tcrossprod(lmat[[g]]) + diag(psi[,g]))
+        z.log        <- utils::capture.output({ z.res <- try(.sim_z(data=data, mu=mu[,Gs, drop=FALSE], sigma=sigma, Gseq=Gs, N=N, pi.prop=pi.prop[Gs], log.slice.ind=log.slice.ind, Q0=Q0[Gs]), silent=TRUE) })
+        z.err        <- inherits(z.res, "try-error")
+        if(z.err) {
+          sigma      <- lapply(sigma, corpcor::make.positive.definite)
+          z.res      <- .sim_z(data=data, mu=mu[,Gs, drop=FALSE], sigma=sigma, Gseq=Gs, N=N, pi.prop=pi.prop[Gs], log.slice.ind=log.slice.ind, Q0=Q0[Gs])
+        }
+        z            <- z.res$z
+      } else      {
+        z            <- rep(1, N)
       }
-      z              <- z.res$z
       nn             <- tabulate(z, nbins=trunc.G)
       nn0            <- nn   > 0
       nn.ind         <- which(nn0)
@@ -244,7 +248,7 @@
           notred     <- numred == 0
           ng.ind     <- seq_along(nn.ind)
           Qs.old     <- Qs[nn0]
-          Qs[nn0]    <- vapply(ng.ind, function(h) if(notred[h]) Qs.old[h] + 1 else Qs.old[h] - numred[h], numeric(1))
+          Qs[nn0]    <- vapply(ng.ind, function(h) if(notred[h]) Qs.old[h] + 1 else Qs.old[h] - numred[h], numeric(1L))
           Q.big      <- Qs[nn0] > Q.star
           Q.bigs     <- any(Q.big)
           if(Q.bigs) {

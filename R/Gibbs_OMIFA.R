@@ -121,16 +121,20 @@
 
     # Cluster Labels
       psi            <- 1/psi.inv
-      sigma          <- lapply(Gseq, function(g) tcrossprod(lmat[[g]]) + diag(psi[,g]))
       Q0             <- Qs  > 0
       Q1             <- Qs == 1
-      z.log          <- utils::capture.output({ z.res <- try(.sim_z(data=data, mu=mu, sigma=sigma, Gseq=Gseq, N=N, pi.prop=pi.prop, Q0=Q0), silent=TRUE) })
-      z.err          <- inherits(z.res, "try-error")
-      if(z.err) {
-        sigma        <- lapply(sigma, corpcor::make.positive.definite)
-        z.res        <- .sim_z(data=data, mu=mu, sigma=sigma, Gseq=Gseq, N=N, pi.prop=pi.prop, Q0=Q0)
+      if(G > 1)   {
+        sigma        <- lapply(Gseq, function(g) tcrossprod(lmat[[g]]) + diag(psi[,g]))
+        z.log        <- utils::capture.output({ z.res <- try(.sim_z(data=data, mu=mu, sigma=sigma, Gseq=Gseq, N=N, pi.prop=pi.prop, Q0=Q0), silent=TRUE) })
+        z.err        <- inherits(z.res, "try-error")
+        if(z.err) {
+          sigma      <- lapply(sigma, corpcor::make.positive.definite)
+          z.res      <- .sim_z(data=data, mu=mu, sigma=sigma, Gseq=Gseq, N=N, pi.prop=pi.prop, Q0=Q0)
+        }
+        z            <- z.res$z
+      } else      {
+        z            <- rep(1, N)
       }
-      z              <- z.res$z
       nn             <- tabulate(z, nbins=G)
       nn0            <- nn  > 0
       nn.ind         <- which(nn0)
@@ -200,7 +204,7 @@
           notred     <- numred == 0
           ng.ind     <- seq_along(nn.ind)
           Qs.old     <- Qs[nn0]
-          Qs[nn0]    <- vapply(ng.ind, function(h) if(notred[h]) Qs.old[h] + 1 else Qs.old[h] - numred[h], numeric(1))
+          Qs[nn0]    <- vapply(ng.ind, function(h) if(notred[h]) Qs.old[h] + 1 else Qs.old[h] - numred[h], numeric(1L))
           Q.big      <- Qs[nn0] > Q.star
           Q.bigs     <- any(Q.big)
           if(Q.bigs) {

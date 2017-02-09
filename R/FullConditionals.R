@@ -67,7 +67,7 @@
 
     .sim_pi.inf  <- function(pi.alpha, nn, N = sum(nn), len, lseq, discount = 0L) {
       vs         <- if(discount == 0) stats::rbeta(len, 1 + nn, pi.alpha + N - cumsum(nn)) else stats::rbeta(len, 1 - discount + nn, pi.alpha + lseq * discount + N - cumsum(nn))
-        return(list(Vs = vs, pi.prop = vapply(lseq, function(t) vs[t] * prod(1 - vs[seq_len(t - 1)]), numeric(1))))
+        return(list(Vs = vs, pi.prop = vapply(lseq, function(t) vs[t] * prod(1 - vs[seq_len(t - 1)]), numeric(1L))))
     }
 
   # Cluster Labels
@@ -318,9 +318,9 @@
         if(is.element(len, c(1, range.G, V))) {
           if(all(len == range.G)) obj0g <- if(switch0g) lapply(rGseq, function(g) matrix(obj0g[[g]], nrow=1))  else stop(paste0(sw.name, " must be TRUE if the dimension of ", obj.name, " depends on G"))
           if(all(len == V))       obj0g <- if(V == 1)   lapply(rGseq, function(g) rep(obj0g[[g]], range.G[g])) else lapply(rGseq, function(g) matrix(obj0g[[g]], nrow=V, ncol=range.G[g]))
-        } else if(!all(vapply(rGseq, function(g) is.matrix(obj0g[[g]]) && any(identical(dim(obj0g[[g]]), c(1, range.G[g])), identical(dim(obj0g[[g]]), c(V, range.G[g]))), logical(1)))) {
+        } else if(!all(vapply(rGseq, function(g) is.matrix(obj0g[[g]]) && any(identical(dim(obj0g[[g]]), c(1, range.G[g])), identical(dim(obj0g[[g]]), c(V, range.G[g]))), logical(1L)))) {
                                            stop(paste0(ifelse(length(range.G) > 1, "Each element of ", ""), obj.name, " must be either of length 1, ", ifelse(P.dim, paste0("P=", V, ", or it's corresponding range.G, or a matrix with P rows and it's corresponding range.G columns"), paste0("or G=", range.G))))
-        } else if(all(vapply(obj0g, is.matrix, logical(1)), !switch0g) && any(vapply(rGseq, function(g) any(dim(obj0g[[g]]) == range.G[g]), logical(1)))) {
+        } else if(all(vapply(obj0g, is.matrix, logical(1L)), !switch0g) && any(vapply(rGseq, function(g) any(dim(obj0g[[g]]) == range.G[g]), logical(1L)))) {
                                            stop(paste0(sw.name, " must be TRUE if the dimension of ", obj.name, " depends on G"))
         }
       }

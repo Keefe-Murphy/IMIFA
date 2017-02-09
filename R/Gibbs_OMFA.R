@@ -109,14 +109,18 @@
 
     # Cluster Labels
       psi          <- 1/psi.inv
-      sigma        <- lapply(Gseq, function(g) tcrossprod(lmat[,,g]) + diag(psi[,g]))
-      z.log        <- utils::capture.output({ z.res <- try(.sim_z(data=data, mu=mu, sigma=sigma, Gseq=Gseq, N=N, pi.prop=pi.prop, Q0=Q0s), silent=TRUE) })
-      zerr         <- inherits(z.res, "try-error")
-      if(zerr) {
-        sigma      <- lapply(sigma, corpcor::make.positive.definite)
-        z.res      <- .sim_z(data=data, mu=mu, sigma=sigma, Gseq=Gseq, N=N, pi.prop=pi.prop, Q0=Q0s)
+      if(G > 1)  {
+        sigma      <- lapply(Gseq, function(g) tcrossprod(lmat[,,g]) + diag(psi[,g]))
+        z.log      <- utils::capture.output({ z.res <- try(.sim_z(data=data, mu=mu, sigma=sigma, Gseq=Gseq, N=N, pi.prop=pi.prop, Q0=Q0s), silent=TRUE) })
+        zerr       <- inherits(z.res, "try-error")
+        if(zerr) {
+          sigma    <- lapply(sigma, corpcor::make.positive.definite)
+          z.res    <- .sim_z(data=data, mu=mu, sigma=sigma, Gseq=Gseq, N=N, pi.prop=pi.prop, Q0=Q0s)
+        }
+        z          <- z.res$z
+      } else     {
+        z          <- rep(1, N)
       }
-      z            <- z.res$z
       nn           <- tabulate(z, nbins=G)
       nn0          <- nn > 0
       nn.ind       <- which(nn0)
