@@ -310,7 +310,7 @@
           } else        acc1  <- FALSE
         }
         if(G     > 1) {
-          move2      <- .lab.move2(Gs=Gs, G=G, Vs=Vs, nn=nn)
+          move2      <- .lab.move2(G=G, Vs=Vs, nn=nn)
           acc2       <- move2$rate2
           if(acc2)    {
             sw2      <- move2$sw

@@ -290,13 +290,12 @@
     }
 
     # Move 2
-    .lab.move2  <- function(Gs, G, Vs, nn) {
-      sw        <- sample(Gs, 1L)
-      sgx       <- G == sw
-      sw        <- c(sw, max(Gs[sw + 1], Gs[sw - 1], na.rm=TRUE))
+    .lab.move2  <- function(G, Vs, nn) {
+      sw        <- sample(G, 1L, prob=c(rep(1, G - 2), 0.5, 0.5))
+      sw        <- if(is.element(sw, c(G, G - 1))) c(G - 1, G) else c(sw, sw + 1)
       nns       <- nn[sw]
       Vsw       <- Vs[sw]
-      a.prob    <- nns[1] * log(1 - Vsw[2]) - nns[2] * log(1 - Vsw[1]) + ifelse(sgx, log(G/(G + 1)), 0)
+      a.prob    <- nns[1] * log(1 - Vsw[2]) - nns[2] * log(1 - Vsw[1])
         return(list(rate2 = a.prob >= 0  || - stats::rexp(1) < a.prob, sw = sw))
     }
 
