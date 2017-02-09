@@ -168,7 +168,7 @@
       Qgs            <- Qs[Gs]
       Q0             <- Qgs  > 0
       Q1             <- Qgs == 1
-      z.log          <- utils::capture.output({ z.res <- try(.sim_z.inf(data=data, mu=mu[,Gs, drop=FALSE], sigma=sigma, Gseq=Gs, N=N, pi.prop=pi.prop[Gs], log.slice.ind=log.slice.ind, Q0=Q0[Gs]), silent=TRUE) })
+      z.log          <- utils::capture.output({ z.res <- try(.sim_z(data=data, mu=mu[,Gs, drop=FALSE], sigma=sigma, Gseq=Gs, N=N, pi.prop=pi.prop[Gs], log.slice.ind=log.slice.ind, Q0=Q0[Gs]), silent=TRUE) })
       z.err          <- inherits(z.res, "try-error")
       if(z.err) {
         sigma        <- lapply(sigma, corpcor::make.positive.definite)

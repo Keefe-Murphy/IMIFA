@@ -45,7 +45,7 @@ mcmc_IMIFA(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA",
 
 \item{burnin}{The number of burn-in iterations for the sampler. Defaults to \code{n.iters/5}. Note that chains can also be burned in later, using \code{\link{get_IMIFA_results}}.}
 
-\item{thinning}{The thinning interval used in the simulation. Defaults to 2. Note that chains can also be thinned later, using \code{\link{get_IMIFA_results}}.}
+\item{thinning}{The thinning interval used in the simulation. Defaults to 2. No thinning corresponds to 1. Note that chains can also be thinned later, using \code{\link{get_IMIFA_results}}.}
 
 \item{centering}{A logical value indicating whether mean centering should be applied to the data, defaulting to TRUE.}
 

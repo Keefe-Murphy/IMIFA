@@ -19,7 +19,7 @@
 #' @param range.G Depending on the method employed, either the range of values for the number of clusters, or the conseratively high starting value for the number of clusters. Defaults to 1 for the "\code{FA}" and "\code{IFA}" methods. For the "\code{MFA}" and "\code{MIFA}" models this is to be given as a range of candidate models to explore. For the "\code{OMFA}", "\code{OMIFA}", "\code{IMFA}", and "\code{IMIFA}" models, this is the number of clusters with which the chain is to be initialised, in which case the default is \code{min(N - 1, floor(3 * log(N)))}.
 #' @param range.Q Depending on the method employed, either the range of values for the number of latent factors, or, for methods ending in IFA the conservatively high starting value for the number of cluster-specific factors, in which case the default starting value is \code{floor(3 * log(P))}. For methods ending in IFA, different clusters can be modelled using different numbers of latent factors.
 #' @param burnin The number of burn-in iterations for the sampler. Defaults to \code{n.iters/5}. Note that chains can also be burned in later, using \code{\link{get_IMIFA_results}}.
-#' @param thinning The thinning interval used in the simulation. Defaults to 2. Note that chains can also be thinned later, using \code{\link{get_IMIFA_results}}.
+#' @param thinning The thinning interval used in the simulation. Defaults to 2. No thinning corresponds to 1. Note that chains can also be thinned later, using \code{\link{get_IMIFA_results}}.
 #' @param centering A logical value indicating whether mean centering should be applied to the data, defaulting to TRUE.
 #' @param scaling The scaling to be applied - one of "\code{unit}", "\code{none}" or "\code{pareto}".
 #' @param mu.zero The mean of the prior distribution for the mean parameter. Defaults to the sample mean of the data.
@@ -164,9 +164,9 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   burnin    <- as.integer(burnin)
   thinning  <- as.integer(thinning)
   n.iters   <- as.integer(n.iters)
-  if(any(!is.integer(burnin),
+  if(any(!is.integer(burnin),   burnin   < 1,
          length(burnin)   != 1))    stop("'burnin' must be a single integer")
-  if(any(!is.integer(thinning),
+  if(any(!is.integer(thinning), thinning < 1,
          length(thinning) != 1))    stop("'thinning' must be a single integer")
   if(any(!is.integer(n.iters),
          length(n.iters)  != 1))    stop("'n.iters' must be a single integer")

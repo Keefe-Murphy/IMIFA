@@ -47,7 +47,7 @@
 
   # Local Shrinkage
     .sim_phi     <- function(Q, P, nu, tau, load.2, plus1) {
-        matrix(stats::rgamma(P * Q, shape=1/2 + nu + plus1, rate=(nu + sweep(load.2, 2, tau, FUN="*"))/2), nrow=P, ncol=Q)
+        matrix(stats::rgamma(P * Q, shape=0.5 + nu + plus1, rate=(nu + sweep(load.2, 2, tau, FUN="*"))/2), nrow=P, ncol=Q)
     }
 
   # Global Shrinkage
@@ -71,18 +71,8 @@
     }
 
   # Cluster Labels
-    .sim_z       <- function(data, mu, sigma, Gseq, N, pi.prop, Q0) {
+    .sim_z       <- function(data, mu, sigma, Gseq, N, pi.prop, Q0, log.slice.ind = 0) {
       log.num    <- vapply(Gseq, function(g, Q=Q0[g]) mvnfast::dmvn(data, mu[,g], if(Q) sigma[[g]] else sqrt(sigma[[g]]), log=TRUE, isChol=!Q) + log(pi.prop[g]), numeric(N))
-      log.denom  <- matrixStats::rowLogSumExps(log.num)
-      lnp        <- sweep(log.num, 1, log.denom, FUN="-")
-      for(g in Gseq[-1]) {
-        lnp[,g]  <- matrixStats::rowLogSumExps(lnp[,g:(g - 1)])
-      }
-        return(list(z = Rfast::rowsums(-stats::rexp(N) > lnp) + 1, log.like = sum(log.denom)))
-    }
-
-    .sim_z.inf   <- function(data, mu, sigma, Gseq, N, pi.prop, log.slice.ind, Q0) {
-      log.num    <- vapply(Gseq, function(g, Q=Q0[g]) mvnfast::dmvn(data, mu[,g], if(Q) sigma[[g]] else sqrt(sigma[[g]]), log=TRUE, isChol=!Q) + log(pi.prop[g]), numeric(N)) + log.slice.ind
       log.denom  <- matrixStats::rowLogSumExps(log.num)
       lnp        <- sweep(log.num, 1, log.denom, FUN="-")
       for(g in Gseq[-1]) {
