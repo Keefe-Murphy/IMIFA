@@ -642,7 +642,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     e.store[[g]] <- store
   }
   if(sw["s.sw"])   {
-    eta.store    <- unique(unlist(e.store))
+    eta.store    <- Rfast::sort_unique(unlist(e.store))
     Qseq         <- seq_len(max(Q))
     eta          <- provideDimnames(eta[,Qseq,eta.store, drop=FALSE], base=list("", paste0("Factor", Qseq), ""), unique=FALSE)
     scores       <- list(eta = eta, post.eta = rowMeans(eta, dims=2), var.eta = apply(eta, c(1, 2),

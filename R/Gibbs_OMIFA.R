@@ -232,16 +232,16 @@
         }
       }
 
-      if(Q.bigs && !Q.large   && iter > burnin) {        warning(paste0("Q has exceeded initial number of loadings columns since burnin: consider increasing range.Q from ", Q.star), call.=FALSE)
+      if(Q.bigs && !Q.large   && iter > burnin) {         warning(paste0("Q has exceeded initial number of loadings columns since burnin: consider increasing range.Q from ", Q.star), call.=FALSE)
         Q.large      <- TRUE
       }
-      if(z.err  && !err.z) {                             warning("Algorithm may slow due to corrections for Choleski decompositions of non-positive-definite covariance matrices", call.=FALSE)
+      if(z.err  && !err.z) {                              warning("Algorithm may slow due to corrections for Choleski decompositions of non-positive-definite covariance matrices", call.=FALSE)
         err.z        <- TRUE
       }
       if(is.element(iter, iters))   {
         if(verbose)      utils::setTxtProgressBar(pb, iter)
         new.it       <-  which(iters == iter)
-        if(sw["mu.sw"])  mu.store[,,new.it]           <- mu
+        if(sw["mu.sw"])  mu.store[,,new.it]            <- mu
         if(all(sw["s.sw"],
            any(Q0)))     eta.store[,seq_len(max(Qs)),new.it]  <- eta
         if(sw["l.sw"])   {
@@ -249,29 +249,32 @@
             if(Q0[g])    load.store[,seq_len(Qs[g]),g,new.it] <- lmat[[g]]
           }
         }
-        if(sw["psi.sw"]) psi.store[,,new.it]          <- psi
-        if(sw["pi.sw"])  pi.store[,new.it]            <- pi.prop
-                         z.store[,new.it]             <- z
-                         ll.store[new.it]             <- z.res$log.like
-                         Q.store[,new.it]             <- Qs
-                         G.store[new.it]              <- sum(nn0)
+        if(sw["psi.sw"]) psi.store[,,new.it]           <- psi
+        if(sw["pi.sw"])  pi.store[,new.it]             <- pi.prop
+                         z.store[,new.it]              <- z
+                         ll.store[new.it]              <- z.res$log.like
+                         Q.store[,new.it]              <- Qs
+                         G.store[new.it]               <- sum(nn0)
       }
     }
     close(pb)
     Gmax             <- seq_len(max(as.numeric(z.store)))
     Qmax             <- seq_len(max(Q.store))
-    eta.store        <- if(sw["s.sw"])  tryCatch(eta.store[,Qmax,, drop=FALSE],       error=function(e) eta.store)
-    load.store       <- if(sw["l.sw"])  tryCatch(load.store[,Qmax,Gmax,, drop=FALSE], error=function(e) load.store)
-    returns          <- list(mu       = if(sw["mu.sw"])  provideDimnames(mu.store[,Gmax,, drop=FALSE],  base=list(varnames, "", ""), unique=FALSE),
-                             eta      = if(sw["s.sw"])   provideDimnames(tryCatch(slam::as.simple_sparse_array(eta.store),  error=function(e) eta.store),  base=list(obsnames, "", ""),     unique=FALSE),
-                             load     = if(sw["l.sw"])   provideDimnames(tryCatch(slam::as.simple_sparse_array(load.store), error=function(e) load.store), base=list(varnames, "", "", ""), unique=FALSE),
-                             psi      = if(sw["psi.sw"]) provideDimnames(psi.store[,Gmax,, drop=FALSE], base=list(varnames, "", ""), unique=FALSE),
-                             pi.prop  = if(sw["pi.sw"])  pi.store[Gmax,, drop=FALSE],
-                             z.store  = z.store,
-                             ll.store = ll.store,
-                             G.store  = G.store,
-                             Q.store  = Q.store[Gmax,, drop=FALSE],
-                             time     = init.time)
+    mu.store         <- if(sw["mu.sw"])  tryCatch(mu.store[,Gmax,, drop=FALSE],        error=function(e) mu.store)
+    eta.store        <- if(sw["s.sw"])   tryCatch(eta.store[,Qmax,, drop=FALSE],       error=function(e) eta.store)
+    load.store       <- if(sw["l.sw"])   tryCatch(load.store[,Qmax,Gmax,, drop=FALSE], error=function(e) load.store)
+    psi.store        <- if(sw["psi.sw"]) tryCatch(psi.store[,Gmax,, drop=FALSE],       error=function(e) psi.store)
+    pi.store         <- if(sw["pi.sw"])  tryCatch(pi.store[Gmax,, drop=FALSE],         error=function(e) pi.store)
+    returns          <- list(mu        = if(sw["mu.sw"])  provideDimnames(mu.store,    base=list(varnames, "", ""), unique=FALSE),
+                             eta       = if(sw["s.sw"])   provideDimnames(tryCatch(slam::as.simple_sparse_array(eta.store),  error=function(e) eta.store),  base=list(obsnames, "", ""),     unique=FALSE),
+                             load      = if(sw["l.sw"])   provideDimnames(tryCatch(slam::as.simple_sparse_array(load.store), error=function(e) load.store), base=list(varnames, "", "", ""), unique=FALSE),
+                             psi       = if(sw["psi.sw"]) provideDimnames(psi.store,   base=list(varnames, "", ""), unique=FALSE),
+                             pi.prop   = if(sw["pi.sw"])  pi.store,
+                             z.store   = z.store,
+                             ll.store  = ll.store,
+                             G.store   = G.store,
+                             Q.store   = tryCatch(Q.store[Gmax,, drop=FALSE],          error=function(e) Q.store),
+                             time      = init.time)
     attr(returns, "Q.big")    <- Q.large
     return(returns)
   }

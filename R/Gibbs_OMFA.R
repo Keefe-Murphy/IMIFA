@@ -147,32 +147,36 @@
       psi.inv      <- vapply(Gseq, function(g) if(nn0[g]) .sim_psi.inv(N=nn[g], psi.alpha=psi.alpha, c.data=c.data[[g]], eta=eta.tmp[[g]], psi.beta=psi.beta,
                              P=P, lmat=if(Q1) as.matrix(lmat[,,g]) else lmat[,,g]) else .sim_psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), numeric(P))
 
-      if(zerr && !err.z) {                                    warning("Algorithm may slow due to corrections for Choleski decompositions of non-positive-definite covariance matrices", call.=FALSE)
+      if(zerr && !err.z) {                                     warning("Algorithm may slow due to corrections for Choleski decompositions of non-positive-definite covariance matrices", call.=FALSE)
         err.z      <- TRUE
       }
       if(is.element(iter, iters))   {
         if(verbose)    utils::setTxtProgressBar(pb, iter)
         new.it     <- which(iters == iter)
-        if(sw["mu.sw"])             mu.store[,,new.it]     <- mu
-        if(all(sw["s.sw"], Q0))     eta.store[,,new.it]    <- eta
-        if(all(sw["l.sw"], Q0))     load.store[,,,new.it]  <- lmat
-        if(sw["psi.sw"])            psi.store[,,new.it]    <- psi
-        if(sw["pi.sw"])             pi.store[,new.it]      <- pi.prop
-                                    z.store[,new.it]       <- z
-                                    ll.store[new.it]       <- z.res$log.like
-                                    G.store[new.it]        <- sum(nn0)
+        if(sw["mu.sw"])             mu.store[,,new.it]      <- mu
+        if(all(sw["s.sw"], Q0))     eta.store[,,new.it]     <- eta
+        if(all(sw["l.sw"], Q0))     load.store[,,,new.it]   <- lmat
+        if(sw["psi.sw"])            psi.store[,,new.it]     <- psi
+        if(sw["pi.sw"])             pi.store[,new.it]       <- pi.prop
+                                    z.store[,new.it]        <- z
+                                    ll.store[new.it]        <- z.res$log.like
+                                    G.store[new.it]         <- sum(nn0)
       }
     }
     close(pb)
     Gmax           <- seq_len(max(as.numeric(z.store)))
-    returns        <- list(mu       = if(sw["mu.sw"])         provideDimnames(mu.store[,Gmax,, drop=FALSE],    base=list(varnames, "", ""),     unique=FALSE),
-                           eta      = if(all(sw["s.sw"], Q0)) provideDimnames(eta.store,                       base=list(obsnames, "", ""),     unique=FALSE),
-                           load     = if(all(sw["l.sw"], Q0)) provideDimnames(load.store[,,Gmax,, drop=FALSE], base=list(varnames, "", "", ""), unique=FALSE),
-                           psi      = if(sw["psi.sw"])        provideDimnames(psi.store[,Gmax,, drop=FALSE],   base=list(varnames, "", ""),     unique=FALSE),
-                           pi.prop  = if(sw["pi.sw"])         pi.store[Gmax,, drop=FALSE],
-                           z.store  = z.store,
-                           ll.store = ll.store,
-                           G.store  = G.store,
-                           time     = init.time)
+    mu.store       <- if(sw["mu.sw"])  tryCatch(mu.store[,Gmax,, drop=FALSE],    error=function(e) mu.store)
+    load.store     <- if(sw["l.sw"])   tryCatch(load.store[,,Gmax,, drop=FALSE], error=function(e) load.store)
+    psi.store      <- if(sw["psi.sw"]) tryCatch(psi.store[,Gmax,, drop=FALSE],   error=function(e) psi.store)
+    pi.store       <- if(sw["pi.sw"])  tryCatch(pi.store[Gmax,, drop=FALSE],     error=function(e) pi.store)
+    returns        <- list(mu        = if(sw["mu.sw"])         provideDimnames(mu.store,   base=list(varnames, "", ""),     unique=FALSE),
+                           eta       = if(all(sw["s.sw"], Q0)) provideDimnames(eta.store,  base=list(obsnames, "", ""),     unique=FALSE),
+                           load      = if(all(sw["l.sw"], Q0)) provideDimnames(load.store, base=list(varnames, "", "", ""), unique=FALSE),
+                           psi       = if(sw["psi.sw"])        provideDimnames(psi.store,  base=list(varnames, "", ""),     unique=FALSE),
+                           pi.prop   = if(sw["pi.sw"])         pi.store,
+                           z.store   = z.store,
+                           ll.store  = ll.store,
+                           G.store   = G.store,
+                           time      = init.time)
     return(returns)
   }
