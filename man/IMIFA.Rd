@@ -44,7 +44,8 @@ Murphy, K., Gormley, I.C. and Viroli, C. (2017) Infinite Mixtures of Infinite Fa
 
 \section{See Also}{
 
-Further details and examples are given in the associated vignette document.
+Further details and examples are given in the associated vignette document:\cr
+\code{vignette("IMIFA", package = "IMIFA")}
 }
 
 \author{

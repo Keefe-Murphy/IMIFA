@@ -12,7 +12,8 @@ Depends:
     R (>= 3.3.2)
 License: GPL (>= 2)
 Encoding: UTF-8
-URL: https://github.com/Keefe-Murphy/IMIFA
+URL: https://cran.r-project.org/package=IMIFA
+BugReports: https://github.com/Keefe-Murphy/IMIFA
 Imports:
     abind,
     corpcor,

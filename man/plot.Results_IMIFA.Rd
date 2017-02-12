@@ -54,29 +54,34 @@ The desired plot with appropriate output and summary statistics printed to the c
 Plotting output and parameters of inferential interest for IMIFA and related models
 }
 \examples{
-# See the vignette associated with the package for more graphical examples.
+# See the vignette associated with the package for more graphical examples:
+# vignette("IMIFA", package = "IMIFA")
 
 # data(olive)
 # area     <- olive$area
 # simIMIFA <- mcmc_IMIFA(olive, method="IMIFA")
 # resIMIFA <- get_IMIFA_results(simIMIFA)
 
-# plot(resIMIFA, "GQ")
-# plot(resIMIFA, "GQ", g=2)
+# Examine the posterior distribution(s) of the number(s) of clusters (G) &/or latent factors (Q)
+# plot(resIMIFA, plot.meth="GQ")
+# plot(resIMIFA, plot.meth="GQ", g=2)
 
-# plot(resIMIFA, "zlabels", zlabels=area)
+# Plot clustering uncertainty
+# plot(resIMIFA, plot.meth="zlabels", zlabels=area)
 
-# plot(resIMIFA, "errors")
+# Visualise empirical vs. estimated covariance error metrics
+# plot(resIMIFA, plot.meth="errors")
 
-# plot(resIMIFA, "all", "means", g=1)
-# plot(resIMIFA, "all", "means", g=1, ind=2)
-# plot(resIMIFA, "all", "scores")
-# plot(resIMIFA, "all", "scores", by.fac=FALSE)
-# plot(resIMIFA, "all", "loadings", g=1)
-# plot(resIMIFA, "all", "loadings", g=1, load.meth="raw")
-# plot(resIMIFA, "parallel.coords", "uniquenesses")
-# plot(resIMIFA, "all", "pis", intervals=FALSE, partial=TRUE)
-# plot(resIMIFA, "all", "alpha")
+# Look at the trace, density, posterior mean and correlation of various parameters of interest
+# plot(resIMIFA, plot.meth="all", param="means", g=1)
+# plot(resIMIFA, plot.meth="all", param="means", g=1, ind=2)
+# plot(resIMIFA, plot.meth="all", param="scores")
+# plot(resIMIFA, plot.meth="all", param="scores", by.fac=FALSE)
+# plot(resIMIFA, plot.meth="all", param="loadings", g=1)
+# plot(resIMIFA, plot.meth="all", param="loadings", g=1, load.meth="raw")
+# plot(resIMIFA, plot.meth="parallel.coords", param="uniquenesses")
+# plot(resIMIFA, plot.meth="all", param="pis", intervals=FALSE, partial=TRUE)
+# plot(resIMIFA, plot.meth="all", param="alpha")
 }
 \references{
 Murphy, K., Gormley, I.C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, \code{https://arxiv.org/abs/1701.07010}
