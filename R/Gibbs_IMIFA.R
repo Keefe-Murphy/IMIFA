@@ -4,46 +4,47 @@
 
 # Gibbs Sampler Function
   .gibbs_IMIFA       <- function(Q, data, iters, N, P, G, mu.zero, rho, sigma.l, alpha.step, mu, sw, uni.type,
-                                 sigma.mu, burnin, thinning, trunc.G, a.hyper, psi.alpha, psi.beta, adapt,
-                                 verbose, ind.slice, alpha.d1, discount, alpha.d2, cluster, b0, b1, DP.lab.sw,
-                                 nu, prop, d.hyper, beta.d1, beta.d2, adapt.at, epsilon, learn.d, nuplus1, ...) {
+                                 sigma.mu, burnin, thinning, a.hyper, psi.alpha, psi.beta, adapt, verbose,
+                                 ind.slice, alpha.d1, discount, alpha.d2, cluster, b0, b1, DP.lab.sw, nu,
+                                 prop, d.hyper, beta.d1, beta.d2, adapt.at, epsilon, learn.d, nuplus1, ...) {
 
   # Define & initialise variables
     start.time       <- proc.time()
     total            <- max(iters)
     if(verbose)         pb    <- utils::txtProgressBar(min=0, max=total, style=3)
     n.store          <- length(iters)
-    Gs               <- seq_len(G)
-    Ts               <- seq_len(trunc.G)
+    trunc.G          <- G
+    Gs               <- Ts    <- seq_len(G)
     Ps               <- seq_len(P)
     Ns               <- seq_len(N)
     obsnames         <- rownames(data)
     varnames         <- colnames(data)
     colnames(data)   <- NULL
     if(sw["mu.sw"])  {
-      mu.store       <- array(0, dim=c(P, trunc.G, n.store))
+      mu.store       <- array(0, dim=c(P, G, n.store))
     }
     if(sw["s.sw"])   {
       eta.store      <- array(0, dim=c(N, Q, n.store))
     }
     if(sw["l.sw"])   {
-      load.store     <- array(0, dim=c(P, Q, trunc.G, n.store))
+      load.store     <- array(0, dim=c(P, Q, G, n.store))
     }
     if(sw["psi.sw"]) {
-      psi.store      <- array(0, dim=c(P, trunc.G, n.store))
+      psi.store      <- array(0, dim=c(P, G, n.store))
     }
     if(sw["pi.sw"])  {
-      pi.store       <- matrix(0, nrow=trunc.G, ncol=n.store)
+      pi.store       <- matrix(0, nrow=G, ncol=n.store)
     }
     z.store          <- matrix(0, nrow=N, ncol=n.store)
     ll.store         <- rep(0, n.store)
     Q.star           <- Q
-    Qs               <- rep(Q, trunc.G)
-    Q.store          <- matrix(0, nrow=trunc.G, ncol=n.store)
+    Qs               <- rep(Q, G)
+    Q.store          <- matrix(0, nrow=G, ncol=n.store)
     Q.large          <- Q.big <- Q.bigs <- FALSE
     acc1             <- acc2  <- FALSE
     err.z            <- z.err <- FALSE
     G.store          <- rep(0, n.store)
+    act.store        <- G.store
     not.fixed        <- alpha.step != "fixed"
     if(not.fixed) {
       alpha.store    <- rep(0, n.store)
@@ -70,14 +71,13 @@
     .sim_psi.ip      <- switch(uni.type, unconstrained=.sim_psi.ipu, isotropic=.sim_psi.ipi)
     psi.beta         <- unique(round(psi.beta, min(nchar(psi.beta))))
     pi.prop          <- cluster$pi.prop
-    nn               <- tabulate(z, nbins=trunc.G)
-    mu               <- cbind(mu, vapply(seq_len(trunc.G - G), function(g) .sim_mu.p(P=P, sig.mu.sqrt=sig.mu.sqrt, mu.zero=mu.zero), numeric(P)))
+    nn               <- tabulate(z, nbins=G)
     eta              <- .sim_eta.p(N=N, Q=Q)
-    phi              <- lapply(Ts, function(t) .sim_phi.p(Q=Q, P=P, nu=nu, plus1=nuplus1))
-    delta            <- lapply(Ts, function(t) c(.sim_delta.p(alpha=alpha.d1, beta=beta.d1), .sim_delta.p(Q=Q, alpha=alpha.d2, beta=beta.d2)))
+    phi              <- lapply(Gs, function(g) .sim_phi.p(Q=Q, P=P, nu=nu, plus1=nuplus1))
+    delta            <- lapply(Gs, function(g) c(.sim_delta.p(alpha=alpha.d1, beta=beta.d1), .sim_delta.p(Q=Q, alpha=alpha.d2, beta=beta.d2)))
     tau              <- lapply(delta, cumprod)
-    lmat             <- lapply(Ts, function(t) matrix(unlist(lapply(Ps, function(j) .sim_load.ps(Q=Q, phi=phi[[t]][j,], tau=tau[[t]])), use.names=FALSE), nrow=P, byrow=TRUE))
-    psi.inv          <- vapply(Ts, function(t) .sim_psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), numeric(P))
+    lmat             <- lapply(Gs, function(g) matrix(unlist(lapply(Ps, function(j) .sim_load.ps(Q=Q, phi=phi[[g]][j,], tau=tau[[g]])), use.names=FALSE), nrow=P, byrow=TRUE))
+    psi.inv          <- vapply(Gs, function(g) .sim_psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), numeric(P))
     if(Q < .ledermann(N, P))  {
       for(g in which(nn > P)) {
         fact         <- try(stats::factanal(data[z == g,, drop=FALSE], factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
@@ -89,7 +89,7 @@
       }
     } else {
       psi.tmp        <- psi.inv
-      psi.inv[,Gs]   <- vapply(Gs, function(g) if(nn[g] > 1) 1/Rfast::colVars(data[z == g,, drop=FALSE]) else psi.tmp[,g], numeric(P))
+      psi.inv        <- vapply(Gs, function(g) if(nn[g] > 1) 1/Rfast::colVars(data[z == g,, drop=FALSE]) else psi.tmp[,g], numeric(P))
       inf.ind        <- is.infinite(psi.inv)
       psi.inv[inf.ind]        <- psi.tmp[inf.ind]
     }
@@ -107,13 +107,13 @@
     G.non            <- sum(nn0)
     z                <- factor(z, labels=match(nn.ind, index))
     z                <- as.numeric(levels(z))[z]
-    ksi              <- (1 - rho) * rho^(Ts - 1)
+    ksi              <- (1 - rho) * rho^(Gs - 1)
     log.ksi          <- log(ksi)
     slice.logs       <- c(- Inf, 0)
     if(burnin         < 1)  {
       mu.store[,,1]           <- mu
       eta.store[,,1]          <- eta
-      load.store[,,,1]        <- array(unlist(lmat, use.names=FALSE), dim=c(P, Q, trunc.G))
+      load.store[,,,1]        <- array(unlist(lmat, use.names=FALSE), dim=c(P, Q, G))
       psi.store[,,1]          <- 1/psi.inv
       pi.store[,1]            <- pi.prop
       z.store[,1]             <- z
@@ -121,6 +121,7 @@
                                  corpcor::make.positive.definite(tcrossprod(lmat[[g]]) + diag(1/psi.inv[,g]))), Q0=Qs[Gs] > 0)$log.like
       Q.store[,1]             <- Qs
       G.store[1]              <- G.non
+      act.store[1]            <- G
       if(not.fixed) {
         alpha.store[1]        <- pi.alpha
       }
@@ -363,6 +364,7 @@
                          ll.store[new.it]              <- z.res$log.like
                          Q.store[,new.it]              <- Qs
                          G.store[new.it]               <- G.non
+                         act.store[new.it]             <- G
       }
     }
     close(pb)
@@ -384,8 +386,9 @@
                              lab.rate  = if(DP.lab.sw)    stats::setNames(Rfast::rowmeans(lab.rate), c("Move1", "Move2")),
                              z.store   = z.store,
                              ll.store  = ll.store,
-                             G.store   = G.store,
                              Q.store   = tryCatch(Q.store[Gmax,, drop=FALSE],          error=function(e) Q.store),
+                             G.store   = G.store,
+                             act.store = act.store,
                              time      = init.time)
     attr(returns, "Q.big")    <- Q.large
     return(returns)

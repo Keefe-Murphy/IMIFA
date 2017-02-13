@@ -16,7 +16,7 @@
 #'  \cr
 #'  The "\code{classify}" method is not yet implemented.
 #' @param n.iters The number of iterations to run the Gibbs sampler for.
-#' @param range.G Depending on the method employed, either the range of values for the number of clusters, or the conseratively high starting value for the number of clusters. Defaults to 1 for the "\code{FA}" and "\code{IFA}" methods. For the "\code{MFA}" and "\code{MIFA}" models this is to be given as a range of candidate models to explore. For the "\code{OMFA}", "\code{OMIFA}", "\code{IMFA}", and "\code{IMIFA}" models, this is the number of clusters with which the chain is to be initialised, in which case the default is \code{min(N - 1, floor(3 * log(N)))}.
+#' @param range.G Depending on the method employed, either the range of values for the number of clusters, or the conseratively high starting value for the number of clusters. Defaults to 1 for the "\code{FA}" and "\code{IFA}" methods. For the "\code{MFA}" and "\code{MIFA}" models this is to be given as a range of candidate models to explore. For the "\code{OMFA}", "\code{OMIFA}", "\code{IMFA}", and "\code{IMIFA}" models, this is the number of clusters with which the chain is to be initialised, in which case the default is \code{min(N - 1, floor(3 * log(N)))}. For the "\code{OMFA}", and "\code{OMIFA}" models this remains fixed for the entire length of the chain, whereas for the "\code{IMFA}", and "\code{IMIFA}" models this acts as the maximum allowable number of active components.
 #' @param range.Q Depending on the method employed, either the range of values for the number of latent factors, or, for methods ending in IFA the conservatively high starting value for the number of cluster-specific factors, in which case the default starting value is \code{floor(3 * log(P))}. For methods ending in IFA, different clusters can be modelled using different numbers of latent factors.
 #' @param burnin The number of burn-in iterations for the sampler. Defaults to \code{n.iters/5}. Note that chains can also be burned in later, using \code{\link{get_IMIFA_results}}.
 #' @param thinning The thinning interval used in the simulation. Defaults to 2. No thinning corresponds to 1. Note that chains can also be thinned later, using \code{\link{get_IMIFA_results}}.
@@ -49,7 +49,6 @@
 #' @param ind.slice Logical indicitating whether the independent slice-efficient sampler is to employed. If FALSE the dependent slice-efficient sampler is employed. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods.
 #' @param rho Parameter controlling the rate of geometric decay for the independent slice-efficient sampler, s.t. xi = (1 - rho)rho^(g-1). Must lie in the interval (0, 1]. Higher values are associated with better mixing but longer run times. Defaults to 0.75, Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods when \code{ind.slice} is TRUE.
 #' @param DP.lab.sw Logial indicating whether the two forced label switching moves are to be implemented (defaults to TRUE). Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods.
-#' @param trunc.G The maximum number of allowable and storable groups if the "\code{IMFA}" or "\code{IMIFA}" method is employed. Defaults to smaller of \code{N} and 50.
 #' @param verbose Logical indicating whether to print output (e.g. run times) and a progress bar to the screen while the sampler runs (defaults to TRUE). If FALSE, warnings and error messages will still be printed to the screen, but everything else will be suppressed.
 #' @param discount The discount parameter used when generalising the Dirichlet process to the Pitman-Yor process. Must lie in the interval (0, 1). If non-zero, \code{alpha} can be supplied greater than -discount. Defaults to 0. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods.
 #' @param learn.d Logical indicating whether the \code{discount} parameter is to be updated. Not yet implemented.
@@ -111,8 +110,8 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
                         thinning = 2L, centering = TRUE, scaling = c("unit", "pareto", "none"), mu.zero = NULL, sigma.mu = NULL, sigma.l = NULL, alpha = NULL, psi.alpha = NULL, psi.beta = NULL,
                         uni.type = c("unconstrained", "isotropic"), uni.prior = c("unconstrained", "isotropic"), z.init = c("mclust", "kmeans", "list", "priors"), z.list = NULL, adapt = TRUE,
                         prop = NULL, epsilon = NULL, alpha.d1 = NULL, alpha.d2 = NULL, beta.d1 = NULL, beta.d2 = NULL, nu = NULL, nuplus1 = TRUE, adapt.at = NULL, b0 = NULL, b1 = NULL,
-                        alpha.step = c("gibbs", "metropolis", "fixed"), alpha.hyper = NULL, ind.slice = TRUE, rho = NULL, DP.lab.sw = TRUE, trunc.G = NULL, verbose = TRUE, discount = NULL,
-                        learn.d = FALSE, d.hyper = NULL, mu0g = FALSE, psi0g = FALSE, delta0g = FALSE, mu.switch = TRUE, score.switch = TRUE, load.switch = TRUE, psi.switch = TRUE, pi.switch = TRUE) {
+                        alpha.step = c("gibbs", "metropolis", "fixed"), alpha.hyper = NULL, ind.slice = TRUE, rho = NULL, DP.lab.sw = TRUE, verbose = TRUE, discount = NULL, learn.d = FALSE,
+                        d.hyper = NULL, mu0g = FALSE, psi0g = FALSE, delta0g = FALSE, mu.switch = TRUE, score.switch = TRUE, load.switch = TRUE, psi.switch = TRUE, pi.switch = TRUE) {
 
   defopt    <- options()
   options(warn=1)
@@ -278,14 +277,6 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
           if(a.hyp2    < 1)         stop("The upper limit of the uniform prior/proposal for alpha must be at least 1")
           if(a.hyp2   <= a.hyp1)    stop(paste0("The upper limit (=", a.hyp2, ") of the uniform prior/proposal for alpha must be greater than the lower limit (=", a.hyp1, ")"))
         }
-        if(missing(trunc.G))  {
-          trunc.G  <- as.integer(ifelse(N < 50, N, 50))
-        }
-        if(length(trunc.G) > 1)     stop("'trunc.G' must be a single number")
-        if(ifelse(N > 50, trunc.G < 50,
-                  trunc.G  < N))    warning(paste0("'trunc.G' should only be less than min(N=", N, ", 50) for practical reasons in heavy computational/memory burden cases"), call.=FALSE)
-        if(trunc.G  < range.G)      stop(paste0("'trunc.G' must be at least range.G=", range.G))
-        if(trunc.G  > N)            stop(paste0("'trunc.G' cannot be greater than N=", N))
       }
     } else if(method == "classify") {
       if(!zin.miss &&
@@ -483,7 +474,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   gibbs.arg <- list(P = P, sigma.mu = sigma.mu, psi.alpha = psi.alpha, burnin = burnin, sw = switches,
                     thinning = thinning, iters = iters, verbose = verbose, uni.type = uni.type)
   if(is.element(method, c("IMIFA", "IMFA"))) {
-    gibbs.arg      <- append(gibbs.arg, list(trunc.G = trunc.G, rho = rho, ind.slice = ind.slice, alpha.step = alpha.step, learn.d = learn.d,
+    gibbs.arg      <- append(gibbs.arg, list(rho = rho, ind.slice = ind.slice, alpha.step = alpha.step, learn.d = learn.d,
                                              DP.lab.sw = DP.lab.sw, a.hyper = alpha.hyper, discount = discount, d.hyper = d.hyper))
   }
   if(!is.element(method, c("FA", "MFA", "OMFA", "IMFA"))) {
@@ -551,7 +542,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
         zi[[g]]    <- as.numeric(zips)
         rm(zips)
       }
-      nngs         <- tabulate(zi[[g]], nbins=switch(method, IMFA=, IMIFA=trunc.G, G))
+      nngs         <- tabulate(zi[[g]], nbins=G)
       pi.prop[[g]] <- prop.table(nngs)
       mu[[g]]      <- vapply(seq_len(G), function(gg) if(nngs[gg] > 0) colMeans(dat[zi[[g]] == gg,, drop=FALSE]) else rep(0, P), numeric(P))
       if(mu0.x)   {
