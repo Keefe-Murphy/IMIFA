@@ -20,6 +20,8 @@
 #'
 #' @return The desired plot with appropriate output and summary statistics printed to the console screen.
 #' @export
+#' @import graphics
+#' @importFrom grDevices "adjustcolor" "col2rgb" "palette"
 #' @importFrom Rfast "Order" "med" "colMedians"
 #' @importFrom plotrix "plotCI"
 #' @importFrom gclus "plotcolors"

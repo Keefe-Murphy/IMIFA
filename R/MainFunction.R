@@ -64,6 +64,8 @@
 #'
 #' @return A list of lists of lists of class "IMIFA" to be passed to \code{\link{get_IMIFA_results}}. If the returned object is x, candidate models accesible via subsetting, where x is of the form x[[1:length(range.G)]][[1:length(range.Q)]]. However, these objects of class "IMIFA" should rarely if ever be manipulated by hand - use of the \code{\link{get_IMIFA_results}} function is \emph{strongly} advised. Dedicated \code{print} and \code{summary} functions exist for objects of class "\code{IMIFA}".
 #' @export
+#' @import stats
+#' @importFrom utils "capture.output" "head" "setTxtProgressBar" "tail" "txtProgressBar"
 #' @importFrom matrixStats "rowLogSumExps"
 #' @importFrom Rfast "rowsums" "colsums" "Order" "colVars" "rowmeans" "standardise" "sort_unique" "cova"
 #' @importFrom e1071 "matchClasses"
