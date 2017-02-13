@@ -21,44 +21,44 @@
     varnames         <- colnames(data)
     colnames(data)   <- NULL
     if(sw["mu.sw"])  {
-      mu.store       <- array(0, dim=c(P, G, n.store))
+      mu.store       <- array(0, dim=c(P, trunc.G, n.store))
     }
     if(sw["s.sw"])   {
       eta.store      <- array(0, dim=c(N, Q, n.store))
     }
     if(sw["l.sw"])   {
-      load.store     <- array(0, dim=c(P, Q, G, n.store))
+      load.store     <- array(0, dim=c(P, Q, trunc.G, n.store))
     }
     if(sw["psi.sw"]) {
-      psi.store      <- array(0, dim=c(P, G, n.store))
+      psi.store      <- array(0, dim=c(P, trunc.G, n.store))
     }
     if(sw["pi.sw"])  {
-      pi.store       <- matrix(0, nrow=G, ncol=n.store)
+      pi.store       <- matrix(0, nrow=trunc.G, ncol=n.store)
     }
     z.store          <- matrix(0, nrow=N, ncol=n.store)
     ll.store         <- rep(0, n.store)
     Q.star           <- Q
-    Qs               <- rep(Q, G)
-    Q.store          <- matrix(0, nrow=G, ncol=n.store)
+    Qs               <- rep(Q, trunc.G)
+    Q.store          <- matrix(0, nrow=trunc.G, ncol=n.store)
     Q.large          <- Q.big <- Q.bigs <- FALSE
     acc1             <- acc2  <- FALSE
     err.z            <- z.err <- FALSE
-    G.store          <- rep(0, n.store)
-    act.store        <- G.store
+    G.store          <- ll.store
+    act.store        <- ll.store
     not.fixed        <- alpha.step != "fixed"
     if(not.fixed) {
-      alpha.store    <- rep(0, n.store)
+      alpha.store    <- ll.store
       alpha.shape    <- a.hyper[1]
       alpha.rate     <- a.hyper[2]
     }
     if(learn.d)   {
-      d.store        <- rep(0, n.store)
+      d.store        <- ll.store
       d.shape1       <- d.hyper[1]
       d.shape2       <- d.hyper[2]
     }
     MH.step          <- alpha.step == "metropolis"
     if(MH.step)   {
-      rate           <- rep(0, n.store)
+      rate           <- ll.store
     }
     if(DP.lab.sw) {
       lab.rate       <- matrix(0, nrow=2, ncol=n.store)
@@ -71,13 +71,13 @@
     .sim_psi.ip      <- switch(uni.type, unconstrained=.sim_psi.ipu, isotropic=.sim_psi.ipi)
     psi.beta         <- unique(round(psi.beta, min(nchar(psi.beta))))
     pi.prop          <- cluster$pi.prop
-    nn               <- tabulate(z, nbins=G)
+    nn               <- tabulate(z, nbins=trunc.G)
     eta              <- .sim_eta.p(N=N, Q=Q)
-    phi              <- lapply(Gs, function(g) .sim_phi.p(Q=Q, P=P, nu=nu, plus1=nuplus1))
-    delta            <- lapply(Gs, function(g) c(.sim_delta.p(alpha=alpha.d1, beta=beta.d1), .sim_delta.p(Q=Q, alpha=alpha.d2, beta=beta.d2)))
+    phi              <- lapply(Ts, function(t) .sim_phi.p(Q=Q, P=P, nu=nu, plus1=nuplus1))
+    delta            <- lapply(Ts, function(t) c(.sim_delta.p(alpha=alpha.d1, beta=beta.d1), .sim_delta.p(Q=Q, alpha=alpha.d2, beta=beta.d2)))
     tau              <- lapply(delta, cumprod)
-    lmat             <- lapply(Gs, function(g) matrix(unlist(lapply(Ps, function(j) .sim_load.ps(Q=Q, phi=phi[[g]][j,], tau=tau[[g]])), use.names=FALSE), nrow=P, byrow=TRUE))
-    psi.inv          <- vapply(Gs, function(g) .sim_psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), numeric(P))
+    lmat             <- lapply(Ts, function(t) matrix(unlist(lapply(Ps, function(j) .sim_load.ps(Q=Q, phi=phi[[t]][j,], tau=tau[[t]])), use.names=FALSE), nrow=P, byrow=TRUE))
+    psi.inv          <- vapply(Ts, function(t) .sim_psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), numeric(P))
     if(Q < .ledermann(N, P))  {
       for(g in which(nn > P)) {
         fact         <- try(stats::factanal(data[z == g,, drop=FALSE], factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
@@ -107,18 +107,18 @@
     G.non            <- sum(nn0)
     z                <- factor(z, labels=match(nn.ind, index))
     z                <- as.numeric(levels(z))[z]
-    ksi              <- (1 - rho) * rho^(Gs - 1)
+    ksi              <- (1 - rho) * rho^(Ts - 1)
     log.ksi          <- log(ksi)
     slice.logs       <- c(- Inf, 0)
     if(burnin         < 1)  {
       mu.store[,,1]           <- mu
       eta.store[,,1]          <- eta
-      load.store[,,,1]        <- array(unlist(lmat, use.names=FALSE), dim=c(P, Q, G))
+      load.store[,,,1]        <- array(unlist(lmat, use.names=FALSE), dim=c(P, Q, trunc.G))
       psi.store[,,1]          <- 1/psi.inv
       pi.store[,1]            <- pi.prop
       z.store[,1]             <- z
-      ll.store[1]             <- .sim_z(data=data, mu=mu[,Gs], Gseq=Gs, N=N, pi.prop=pi.prop[Gs], sigma=lapply(Gs, function(g)
-                                 corpcor::make.positive.definite(tcrossprod(lmat[[g]]) + diag(1/psi.inv[,g]))), Q0=Qs[Gs] > 0)$log.like
+      ll.store[1]             <- .sim_z(data=data, mu=mu, Gseq=Gs, N=N, pi.prop=pi.prop, sigma=lapply(Gs, function(g)
+                                 corpcor::make.positive.definite(tcrossprod(lmat[[g]]) + diag(1/psi.inv[,g]))), Q0=Qs > 0)$log.like
       Q.store[,1]             <- Qs
       G.store[1]              <- G.non
       act.store[1]            <- G
@@ -169,11 +169,11 @@
       Q1             <- Qgs == 1
       if(G > 1)   {
         sigma        <- lapply(Gs, function(g) tcrossprod(lmat[[g]]) + diag(psi[,g]))
-        z.log        <- utils::capture.output({ z.res <- try(.sim_z(data=data, mu=mu[,Gs, drop=FALSE], sigma=sigma, Gseq=Gs, N=N, pi.prop=pi.prop[Gs], log.slice.ind=log.slice.ind, Q0=Q0[Gs]), silent=TRUE) })
+        z.log        <- utils::capture.output({ z.res <- try(.sim_z.inf(data=data, mu=mu[,Gs, drop=FALSE], sigma=sigma, Gseq=Gs, N=N, pi.prop=pi.prop[Gs], Q0=Q0[Gs], G=G, log.slice.ind=log.slice.ind), silent=TRUE) })
         z.err        <- inherits(z.res, "try-error")
         if(z.err) {
           sigma      <- lapply(sigma, corpcor::make.positive.definite)
-          z.res      <- .sim_z(data=data, mu=mu[,Gs, drop=FALSE], sigma=sigma, Gseq=Gs, N=N, pi.prop=pi.prop[Gs], log.slice.ind=log.slice.ind, Q0=Q0[Gs])
+          z.res      <- .sim_z.inf(data=data, mu=mu[,Gs, drop=FALSE], sigma=sigma, Gseq=Gs, N=N, pi.prop=pi.prop[Gs], Q0=Q0[Gs], G=G, log.slice.ind=log.slice.ind)
         }
         z            <- z.res$z
       } else      {

@@ -31,7 +31,7 @@
       psi.store  <- matrix(0, nrow=P, ncol=n.store)
     }
     post.mu      <- rep(0, P)
-    post.psi     <- rep(0, P)
+    post.psi     <- post.mu
     ll.store     <- rep(0, n.store)
     cov.emp      <- Rfast::cova(as.matrix(data))
     cov.est      <- matrix(0, nrow=P, ncol=P)

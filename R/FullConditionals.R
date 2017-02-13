@@ -71,7 +71,7 @@
     }
 
   # Cluster Labels
-    .sim_z       <- function(data, mu, sigma, Gseq, N, pi.prop, Q0, log.slice.ind = 0) {
+    .sim_z       <- function(data, mu, sigma, Gseq, N, pi.prop, Q0) {
       log.num    <- vapply(Gseq, function(g, Q=Q0[g]) mvnfast::dmvn(data, mu[,g], if(Q) sigma[[g]] else sqrt(sigma[[g]]), log=TRUE, isChol=!Q) + log(pi.prop[g]), numeric(N))
       log.denom  <- matrixStats::rowLogSumExps(log.num)
       lnp        <- sweep(log.num, 1, log.denom, FUN="-")
@@ -79,6 +79,30 @@
         lnp[,g]  <- matrixStats::rowLogSumExps(lnp[,g:(g - 1)])
       }
         return(list(z = Rfast::rowsums(-stats::rexp(N) > lnp) + 1, log.like = sum(log.denom)))
+    }
+
+    .sim_z.inf   <- function(data, mu, sigma, Gseq, N, pi.prop, Q0, G, log.slice.ind = 0) {
+      log.num    <- vapply(Gseq, function(g, Q=Q0[g]) mvnfast::dmvn(data, mu[,g], if(Q) sigma[[g]] else sqrt(sigma[[g]]), log=TRUE, isChol=!Q) + log(pi.prop[g]), numeric(N)) + log.slice.ind
+      log.denom  <- z   <- matrixStats::rowLogSumExps(log.num)
+      G2         <- max(ceiling(G/2L), 2L)
+      G2s        <- seq_len(G2)
+      exps       <- -stats::rexp(N)
+      lnp        <- sweep(log.num[,G2s], 1, log.denom, FUN="-")
+      for(g in G2s[-1])  {
+        lnp[,g]  <- matrixStats::rowLogSumExps(lnp[,g:(g - 1)])
+      }
+      tmp        <- exps > lnp
+      ind        <- tmp[,G2]
+      z[!ind]    <- Rfast::rowsums(tmp[!ind,, drop=FALSE])
+      if(sum(ind) != 0)  {
+        lnp      <- cbind(lnp[ind,G2, drop=FALSE], sweep(log.num[ind,Gseq[-G2s], drop=FALSE], 1, log.denom[ind], FUN="-"))
+        for(g in seq_len(G - G2) + 1)   {
+         lnp[,g] <- matrixStats::rowLogSumExps(lnp[,g:(g - 1), drop=FALSE])
+        }
+        tmp      <- exps[ind]   >= lnp[,-1, drop=FALSE]
+        z[ind]   <- Rfast::rowsums(tmp) + G2
+      }
+      return(list(z = z  + 1, log.like  = sum(log.denom)))
     }
 
   # Alpha

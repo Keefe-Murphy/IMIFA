@@ -79,21 +79,14 @@
     psi.inv        <- vapply(Gseq, function(g) .sim_psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta[,g]), numeric(P))
     if(Q < .ledermann(N, P)) {
       fact.ind     <- nn    <= P
-     #fail.gs      <- which(fact.ind)
       for(g in which(!fact.ind)) {
         fact       <- try(stats::factanal(data[z == g,, drop=FALSE], factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
         if(!inherits(fact, "try-error")) {
           eta[z == g,]      <- fact$scores
           lmat[[g]]         <- fact$loadings
           psi.inv[,g]       <- 1/fact$uniquenesses
-        } else  {
-         #fail.gs  <- c(fail.gs, g)
         }
       }
-     #fail.gs      <- fail.gs[Rfast::Order(fail.gs)]
-     #len.fail     <- length(fail.gs)
-     #if(all(verbose,
-     #   len.fail   > 0))      message(paste0("Parameters of the following group", ifelse(len.fail > 2, "s ", " "), "were initialised by simulation from priors, not factanal: ", ifelse(len.fail > 1, paste0(paste0(fail.gs[-len.fail], sep="", collapse=", "), " and ", fail.gs[len.fail]), fail.gs), " - G=", G, ", Q=", Q))
     } else     {
       psi.tmp      <- psi.inv
       psi.inv      <- vapply(Gseq, function(g) if(nn[g] > 1) 1/Rfast::colVars(data[z == g,, drop=FALSE]) else psi.tmp[,g], numeric(P))

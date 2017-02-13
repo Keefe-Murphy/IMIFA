@@ -32,5 +32,5 @@ help(mcmc_IMIFA) # Help on the main modelling function
 To read the vignette guide to using the package, type the following within R:
 
 ```
-vignette("IMIFA", package = "IMIFA")
+vignette('IMIFA', package = 'IMIFA')
 ```

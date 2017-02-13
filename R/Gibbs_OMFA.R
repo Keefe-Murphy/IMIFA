@@ -39,7 +39,7 @@
     z.store        <- matrix(0, nrow=N, ncol=n.store)
     ll.store       <- rep(0, n.store)
     err.z          <- zerr <- FALSE
-    G.store        <- rep(0, n.store)
+    G.store        <- ll.store
 
     mu.sigma       <- 1/sigma.mu
     sig.mu.sqrt    <- sqrt(sigma.mu)
@@ -110,11 +110,11 @@
       psi          <- 1/psi.inv
       if(G > 1)  {
         sigma      <- lapply(Gseq, function(g) tcrossprod(lmat[,,g]) + diag(psi[,g]))
-        z.log      <- utils::capture.output({ z.res <- try(.sim_z(data=data, mu=mu, sigma=sigma, Gseq=Gseq, N=N, pi.prop=pi.prop, Q0=Q0s), silent=TRUE) })
+        z.log      <- utils::capture.output({ z.res <- try(.sim_z.inf(data=data, mu=mu, sigma=sigma, Gseq=Gseq, N=N, pi.prop=pi.prop, Q0=Q0s, G=G), silent=TRUE) })
         zerr       <- inherits(z.res, "try-error")
         if(zerr) {
           sigma    <- lapply(sigma, corpcor::make.positive.definite)
-          z.res    <- .sim_z(data=data, mu=mu, sigma=sigma, Gseq=Gseq, N=N, pi.prop=pi.prop, Q0=Q0s)
+          z.res    <- .sim_z.inf(data=data, mu=mu, sigma=sigma, Gseq=Gseq, N=N, pi.prop=pi.prop, Q0=Q0s, G=G)
         }
         z          <- z.res$z
       } else     {

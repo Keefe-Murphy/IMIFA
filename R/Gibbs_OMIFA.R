@@ -41,7 +41,7 @@
     Q.store          <- matrix(0, nrow=G, ncol=n.store)
     Q.large          <- Q.big <- Q.bigs <- FALSE
     err.z            <- z.err <- FALSE
-    G.store          <- rep(0, n.store)
+    G.store          <- ll.store
 
     mu.sigma         <- 1/sigma.mu
     sig.mu.sqrt      <- sqrt(sigma.mu)
@@ -124,11 +124,11 @@
       Q1             <- Qs == 1
       if(G > 1)   {
         sigma        <- lapply(Gseq, function(g) tcrossprod(lmat[[g]]) + diag(psi[,g]))
-        z.log        <- utils::capture.output({ z.res <- try(.sim_z(data=data, mu=mu, sigma=sigma, Gseq=Gseq, N=N, pi.prop=pi.prop, Q0=Q0), silent=TRUE) })
+        z.log        <- utils::capture.output({ z.res <- try(.sim_z.inf(data=data, mu=mu, sigma=sigma, Gseq=Gseq, N=N, pi.prop=pi.prop, Q0=Q0, G=G), silent=TRUE) })
         z.err        <- inherits(z.res, "try-error")
         if(z.err) {
           sigma      <- lapply(sigma, corpcor::make.positive.definite)
-          z.res      <- .sim_z(data=data, mu=mu, sigma=sigma, Gseq=Gseq, N=N, pi.prop=pi.prop, Q0=Q0)
+          z.res      <- .sim_z.inf(data=data, mu=mu, sigma=sigma, Gseq=Gseq, N=N, pi.prop=pi.prop, Q0=Q0, G=G)
         }
         z            <- z.res$z
       } else      {
