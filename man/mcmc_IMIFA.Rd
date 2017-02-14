@@ -98,9 +98,9 @@ mcmc_IMIFA(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA",
 
 \item{alpha.hyper}{A vector of length 2 giving hyperparameters for the Dirichlet  process concentration parameter. If \code{alpha.step = "gibbs"}, the shape and rate parameter of a Gamma distribution. If \code{alpha.step = "metropolis"}, the lower and upper limits of a Uniform distribution. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods when \code{alpha.step} is no "\code{fixed}".}
 
-\item{ind.slice}{Logical indicitating whether the independent slice-efficient sampler is to employed. If FALSE the dependent slice-efficient sampler is employed. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods.}
+\item{ind.slice}{Logical indicitating whether the independent slice-efficient sampler is to be employed. If FALSE the dependent slice-efficient sampler is employed, whereby the slice sequence xi_1,...,xi_g is equal to the decreasingly ordered mixing proportions. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods. Defaults to TRUE.}
 
-\item{rho}{Parameter controlling the rate of geometric decay for the independent slice-efficient sampler, s.t. xi = (1 - rho)rho^(g-1). Must lie in the interval (0, 1]. Higher values are associated with better mixing but longer run times. Defaults to 0.75, Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods when \code{ind.slice} is TRUE.}
+\item{rho}{Parameter controlling the rate of geometric decay for the independent slice-efficient sampler, s.t. xi = (1 - rho)rho^(g-1). Must lie in the interval (0, 1]. Higher values are associated with better mixing but longer run times. Defaults to 0.75, but 0.5 is an interesting special case which guarantees that the slice sequence xi_1,...,xi_g is equal to the \emph{expectation} of the decreasingly ordered mixing proportions. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods when \code{ind.slice} is TRUE.}
 
 \item{DP.lab.sw}{Logial indicating whether the two forced label switching moves are to be implemented (defaults to TRUE). Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods.}
 
@@ -166,7 +166,9 @@ Carries out Gibbs sampling for all models from the IMIFA family, facilitating mo
 \references{
 Murphy, K., Gormley, I.C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, \code{https://arxiv.org/abs/1701.07010}
 
-Bhattacharya, A. and Dunson, D. B. (2011). Sparse Bayesian infinite factor models. \emph{Biometrika}, 98(2): 291–306.
+Bhattacharya, A. and Dunson, D. B. (2011) Sparse Bayesian infinite factor models. \emph{Biometrika}, 98(2): 291–306.
+
+Kalli, M., Griffin, J. E. and Walker, S. G. (2011) Slice sampling mixture models. \emph{Statistics and Computing}, 21(1): 93-105.
 }
 \seealso{
 \code{\link{get_IMIFA_results}}, \code{\link{psi_hyper}}, \code{\link{MGP_check}}

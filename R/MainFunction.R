@@ -46,8 +46,8 @@
 #' @param b1 Slope parameter for the exponentially decaying adaptation probability s.t. \code{p(iter) = 1/exp(b0 + b1(iter - adapt.at))}. Defaults to 0.00005. Only relevant for methods ending in IFA.
 #' @param alpha.step Switch indicating whether the Dirichlet process concentration parameter is to be learned by Gibbs sampling (with a Ga(a, b) prior), a Metropolis-Hastings step (with a Unif(a, b) prior), or remain fixed for the duration of the sampler. Defaults to Ga(2, 1). Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods.
 #' @param alpha.hyper A vector of length 2 giving hyperparameters for the Dirichlet  process concentration parameter. If \code{alpha.step = "gibbs"}, the shape and rate parameter of a Gamma distribution. If \code{alpha.step = "metropolis"}, the lower and upper limits of a Uniform distribution. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods when \code{alpha.step} is no "\code{fixed}".
-#' @param ind.slice Logical indicitating whether the independent slice-efficient sampler is to employed. If FALSE the dependent slice-efficient sampler is employed. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods.
-#' @param rho Parameter controlling the rate of geometric decay for the independent slice-efficient sampler, s.t. xi = (1 - rho)rho^(g-1). Must lie in the interval (0, 1]. Higher values are associated with better mixing but longer run times. Defaults to 0.75, Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods when \code{ind.slice} is TRUE.
+#' @param ind.slice Logical indicitating whether the independent slice-efficient sampler is to be employed. If FALSE the dependent slice-efficient sampler is employed, whereby the slice sequence xi_1,...,xi_g is equal to the decreasingly ordered mixing proportions. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods. Defaults to TRUE.
+#' @param rho Parameter controlling the rate of geometric decay for the independent slice-efficient sampler, s.t. xi = (1 - rho)rho^(g-1). Must lie in the interval (0, 1]. Higher values are associated with better mixing but longer run times. Defaults to 0.75, but 0.5 is an interesting special case which guarantees that the slice sequence xi_1,...,xi_g is equal to the \emph{expectation} of the decreasingly ordered mixing proportions. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods when \code{ind.slice} is TRUE.
 #' @param DP.lab.sw Logial indicating whether the two forced label switching moves are to be implemented (defaults to TRUE). Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods.
 #' @param verbose Logical indicating whether to print output (e.g. run times) and a progress bar to the screen while the sampler runs (defaults to TRUE). If FALSE, warnings and error messages will still be printed to the screen, but everything else will be suppressed.
 #' @param discount The discount parameter used when generalising the Dirichlet process to the Pitman-Yor process. Must lie in the interval (0, 1). If non-zero, \code{alpha} can be supplied greater than -discount. Defaults to 0. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods.
@@ -78,7 +78,9 @@
 #' @references
 #' Murphy, K., Gormley, I.C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, \code{https://arxiv.org/abs/1701.07010}
 #'
-#' Bhattacharya, A. and Dunson, D. B. (2011). Sparse Bayesian infinite factor models. \emph{Biometrika}, 98(2): 291–306.
+#' Bhattacharya, A. and Dunson, D. B. (2011) Sparse Bayesian infinite factor models. \emph{Biometrika}, 98(2): 291–306.
+#'
+#' Kalli, M., Griffin, J. E. and Walker, S. G. (2011) Slice sampling mixture models. \emph{Statistics and Computing}, 21(1): 93-105.
 #'
 #' @examples
 #' # data(olive)
@@ -152,12 +154,8 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   }
   if(any(!is.logical(centering),
          length(centering) != 1))   stop("'centering' must be TRUE or FALSE")
- #if(any(!is.logical(factanal),
- #       length(factanal)  != 1))   stop("'factanal' must be TRUE or FALSE")
   if(any(!is.logical(nuplus1),
          length(nuplus1)   != 1))   stop("'nuplus1' must be TRUE or FALSE")
- #if(any(!is.logical(profile),
- #       length(profile)   != 1))   stop("'profile' must be TRUE or FALSE")
   if(any(!is.logical(verbose),
          length(verbose)   != 1))   stop("'verbose' must be TRUE or FALSE")
 
@@ -606,7 +604,6 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   init.time        <- proc.time() - init.start
   fac.time         <- 0
 
- #if(profile)         utils::Rprof()
   if(is.element(method, c("IFA", "MIFA", "OMIFA", "IMIFA"))) {
     if(len.G == 1)  {
       start.time   <- proc.time()
@@ -711,11 +708,6 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
    }
   }
 
- #if(profile) {
- #  utils::Rprof(NULL)
- #  print(utils::summaryRprof())
- #  invisible(file.remove("Rprof.out"))
- #}
   imifa     <- switch(method, FA=, MFA=, OMFA=, IMFA={
      lapply(seq_along(imifa), function(x) stats::setNames(imifa[[x]], paste0(range.Q, ifelse(range.Q == 1, "Factor", "Factors"))))
   }, lapply(seq_along(imifa), function(x) stats::setNames(imifa[[x]], "IFA")))
@@ -777,25 +769,6 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   attr(imifa, "Uni.Meth") <- c(Uni.Prior = uni.prior, Uni.Type = uni.type)
   attr(imifa, "Vars")     <- P
   if(verbose)                print(attr(imifa, "Time"))
-
-# Vanilla 'factanal' for comparison purposes
- #miss.Q    <- missing(Q.fac)
- #miss.fac  <- missing(factanal)
- #factanal  <- all(range.G == 1) && any(all(!miss.Q, miss.fac), all(!miss.fac, factanal))
- #if(factanal) {
- #  if(miss.Q) {
- #    Q.fac <- ifelse(Q.miss, round(sqrt(P)), max(1, range.Q))
- #  }
- #  Q.fac   <- as.integer(Q.fac)
- #  if(length(Q.fac) != 1)          stop("'Q.fac' must be of length 1")
- #  if(!all(Q.fac < P - sqrt(P + Q.fac),
- #          Q.fac > 0, N > P))      warning("Can't produce vanilla 'factanal' based on the supplied dimensions and number of latent factors", call.=FALSE)
- #  fac     <- try(stats::factanal(dat, factors=Q.fac, control=list(nstart=50)), silent=TRUE)
- #  if(!inherits(fac, "try-error")) {
- #    imifa <- append(imifa, list(fac = fac))
- #    names(imifa)[length(imifa)] <- "Factanal"
- #  }
- #}
-  class(imifa)     <- "IMIFA"
-  return(imifa)
+  class(imifa)            <- "IMIFA"
+    return(imifa)
 }
