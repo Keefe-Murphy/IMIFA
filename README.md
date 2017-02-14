@@ -12,7 +12,7 @@ To install the development version of the package type:
 
 ```
 # If required install devtools:
-#install.packages('devtools')
+# install.packages('devtools')
 devtools::install_github('Keefe-Murphy/IMIFA')
 ```
 
