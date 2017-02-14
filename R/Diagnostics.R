@@ -117,7 +117,11 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   if(inf.G)  {
     GQs          <- length(sims[[G.ind]])
     GQ1          <- GQs > 1
-    G.store      <- matrix(unlist(lapply(seq_len(GQs), function(gq) sims[[G.ind]][[gq]]$G.store[store])), nrow=GQs, ncol=n.store, byrow=TRUE)
+    G.store2     <- lapply(seq_len(GQs), function(gq) sims[[G.ind]][[gq]]$G.store[store])
+    G.store      <- matrix(unlist(G.store2), nrow=GQs, ncol=n.store, byrow=TRUE)
+    if(is.element(method, c("IMFA", "IMIFA"))) {
+      act.store  <- lapply(seq_len(GQs), function(gq) sims[[G.ind]][[gq]]$act.store[store])
+    }
     G.meth       <- ifelse(missing(G.meth), "mode", match.arg(G.meth))
     G.tab        <- if(GQ1) lapply(apply(G.store, 1, function(x) list(table(x, dnn=NULL))), "[[", 1) else table(G.store, dnn=NULL)
     G.prob       <- if(GQ1) lapply(G.tab, prop.table) else prop.table(G.tab)
@@ -172,8 +176,11 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   }
   if(inf.G)    {
     tmp.store    <- if(GQ1) lapply(seq_len(GQs), function(gq) store[which(G.store[gq,] == G[ifelse(G.T, 1, gq)])]) else store[which(G.store == G)]
-    GQ.temp1     <- list(G = G, G.Mode = G.mode, G.Median = G.med, Stored.G = as.vector(G.store),
-                         G.CI = G.CI, G.Probs = G.prob, G.Counts = G.tab)
+    GQ.temp1     <- list(G = G, G.Mode = G.mode, G.Median = G.med, G.CI = G.CI, G.Probs = G.prob, G.Counts = G.tab)
+    GQ.temp1     <- c(GQ.temp1, list(Stored.G = switch(method, OMIFA=provideDimnames(G.store, base=list("Non-Empty", ""),    unique=FALSE),
+                      IMIFA=provideDimnames(do.call(rbind, c(G.store2, act.store)), base=list(c("Non-Empty", "Active"), ""), unique=FALSE),
+                      OMFA=lapply(seq_len(GQs), function(g) provideDimnames(t(G.store[g,]),   base=list("Non-Empty", ""),    unique=FALSE)),
+                      IMFA=lapply(seq_len(GQs), function(g) provideDimnames(rbind(G.store2[[g]], act.store[[g]]), base=list(c("Non-Empty", "Active"), ""), unique=FALSE)))))
   }
   G.range        <- ifelse(G.T, 1, length(n.grp))
   Q.range        <- ifelse(any(Q.T, all(!is.element(method, c("OMFA", "IMFA")), inf.Q)), 1, length(n.fac))
@@ -449,8 +456,8 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     if(any(unlist(Q) > leder.b))  warning(paste0("Estimate of Q", ifelse(clust.ind, " in one or more of the groups ", " "), "is greater than the suggested Ledermann upper bound (", leder.b, "):\nsolution may be invalid"), call.=FALSE)
     Q.CI         <- if(G1) round(matrixStats::rowQuantiles(Q.store, probs=conf.levels)) else round(stats::quantile(Q.store, conf.levels))
     GQ.temp4     <- list(Q = Q, Q.Mode = Q.mode, Q.Median = Q.med,
-                         Stored.Q = if(clust.ind) Q.store else as.vector(Q.store),
-                         Q.CI = Q.CI, Q.Probs = Q.prob, Q.Counts = Q.tab)
+                         Q.CI = Q.CI, Q.Probs = Q.prob, Q.Counts = Q.tab,
+                         Stored.Q = if(clust.ind) Q.store else as.vector(Q.store))
     GQ.res       <- if(inf.G) c(GQ.temp1, GQ.temp4) else c(list(G = G), GQ.temp4)
     GQ.res       <- c(GQ.res, GQ.temp2)
     attr(GQ.res, "Q.big") <- attr(sims[[G.ind]][[Q.ind]], "Q.big")

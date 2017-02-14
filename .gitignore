@@ -11,5 +11,5 @@ desktop.ini
 inst/doc
 ~$Results.xlsx
 *.tar.gz
-IMIFA_old\.R$
-PackageSetup_old\.R$
+IMIFA_old.R
+PackageSetup_old.R
