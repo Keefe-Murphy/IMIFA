@@ -86,7 +86,8 @@
     psi.inv        <- psi.inv[,index, drop=FALSE]
     z              <- factor(z, labels=match(nn.ind, index))
     z              <- as.numeric(levels(z))[z]
-    if(burnin         < 1)  {
+    G.non          <- G
+    if(burnin       < 1)  {
       mu.store[,,1]           <- mu
       eta.store[,,1]          <- eta
       load.store[,,,1]        <- array(unlist(lmat, use.names=FALSE), dim=c(P, Q, G))
@@ -124,11 +125,12 @@
       Q1             <- Qs == 1
       if(G > 1)   {
         sigma        <- lapply(Gseq, function(g) tcrossprod(lmat[[g]]) + diag(psi[,g]))
-        z.log        <- utils::capture.output({ z.res <- try(.sim_z.inf(data=data, mu=mu, sigma=sigma, Gseq=Gseq, N=N, pi.prop=pi.prop, Q0=Q0, G=G), silent=TRUE) })
+        log.probs    <- vapply(Gseq, function(g, Q=Q0[g]) mvnfast::dmvn(data, mu[,g], if(Q) sigma[[g]] else sqrt(sigma[[g]]), log=TRUE, isChol=!Q) + log(pi.prop[g]), numeric(N))
+        z.log        <- utils::capture.output({ z.res <- try(sim_z_inf(log.probs=log.probs, Gseq=Gseq, N=N, G=G, G.non=G.non, slice=FALSE), silent=TRUE) })
         z.err        <- inherits(z.res, "try-error")
         if(z.err) {
           sigma      <- lapply(sigma, corpcor::make.positive.definite)
-          z.res      <- .sim_z.inf(data=data, mu=mu, sigma=sigma, Gseq=Gseq, N=N, pi.prop=pi.prop, Q0=Q0, G=G)
+          z.res      <- sim_z_inf(log.probs=log.probs, Gseq=Gseq, N=N, G=G, G.non=G.non, slice=FALSE)
         }
         z            <- z.res$z
       } else      {
@@ -137,6 +139,7 @@
       nn             <- tabulate(z, nbins=G)
       nn0            <- nn  > 0
       nn.ind         <- which(nn0)
+      G.non          <- length(nn.ind)
       dat.g          <- lapply(Gseq, function(g) data[z == g,, drop=FALSE])
 
     # Scores & Loadings
@@ -254,7 +257,7 @@
                          z.store[,new.it]              <- z
                          ll.store[new.it]              <- z.res$log.like
                          Q.store[,new.it]              <- Qs
-                         G.store[new.it]               <- sum(nn0)
+                         G.store[new.it]               <- G.non
       }
     }
     if(verbose)         close(pb)

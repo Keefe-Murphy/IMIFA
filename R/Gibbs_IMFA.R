@@ -155,11 +155,12 @@
       psi            <- 1/psi.inv
       if(G > 1)  {
         sigma        <- lapply(Gs, function(g) tcrossprod(lmat[,,g]) + diag(psi[,g]))
-        z.log        <- utils::capture.output({ z.res <- try(.sim_z.inf(data=data, mu=mu[,Gs, drop=FALSE], sigma=sigma, Gseq=Gs, N=N, pi.prop=pi.prop[Gs], Q0=Q0s[Gs], G=G, log.slice.ind=log.slice.ind), silent=TRUE) })
+        log.probs    <- vapply(Gs, function(g, Q=Q0s[g]) mvnfast::dmvn(data, mu[,g], if(Q) sigma[[g]] else sqrt(sigma[[g]]), log=TRUE, isChol=!Q) + log(pi.prop[g]), numeric(N)) + log.slice.ind
+        z.log        <- utils::capture.output({ z.res <- try(sim_z_inf(log.probs=log.probs, Gseq=Gs, N=N, G=G, G.non=G.non, slice=TRUE), silent=TRUE) })
         zerr         <- inherits(z.res, "try-error")
         if(zerr) {
           sigma      <- lapply(sigma, corpcor::make.positive.definite)
-          z.res      <- .sim_z.inf(data=data, mu=mu[,Gs, drop=FALSE], sigma=sigma, Gseq=Gs, N=N, pi.prop=pi.prop[Gs], Q0=Q0s[Gs], G=G, log.slice.ind=log.slice.ind)
+          z.res      <- sim_z_inf(log.probs=log.probs, Gseq=Gs, N=N, G=G, G.non=G.non, slice=TRUE)
         }
         z            <- z.res$z
       } else     {
@@ -168,6 +169,7 @@
       nn             <- tabulate(z, nbins=G)
       nn0            <- nn > 0
       nn.ind         <- which(nn0)
+      G.non          <- length(nn.ind)
       dat.g          <- lapply(Gs, function(g) data[z == g,, drop=FALSE])
 
     # Scores & Loadings
@@ -203,7 +205,6 @@
       }
 
     # Label Switching
-      G.non          <- sum(nn0)
       if(DP.lab.sw)   {
         if(G.non > 1) {
           move1      <- .lab.move1(nn.ind=nn.ind, pi.prop=pi.prop, nn=nn)
