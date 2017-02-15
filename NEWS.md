@@ -10,7 +10,7 @@
 * Simulated finite/overfitted mixing proportions using `rgamma(G, alpha, 1)` trick (Devroye, p.594) instead of `MCMCpack:rdirichlet`.
 * Removed IMFA/IMIFA `trunc.G` arg, made `range.G` the max allowable number of active groups & also stored number of active groups.
 * Code sped up when G=1 by not simulating labels for OMFA/OMIFA/IMFA/IMIFA & not simulating mixing proportions for OMFA/OMIFA.
-* Sped up simulation of the cluster labels for OMFA/OMIFA/IMFA/IMIFA methods using two part construction & search of the log-cdf.
+* Sped up simulating cluster labels for OMFA/OMIFA/IMFA/IMIFA methods using 2-part construction & search of necessary parts of the log-cdf.
 * Invisibly returned from `sim_IMIFA_data()`.
 
 ## Bug Fixes 
