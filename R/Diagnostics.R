@@ -267,7 +267,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     sw.mx        <- ifelse(clust.ind, sw["mu.sw"],  TRUE)
     sw.px        <- ifelse(clust.ind, sw["psi.sw"], TRUE)
     if(inf.Q) {
-      Q.store    <- sims[[G.ind]][[Q.ind]]$Q.store[,tmp.store, drop=FALSE]
+      Q.store    <- sims[[G.ind]][[Q.ind]]$Q.store[Gseq,tmp.store, drop=FALSE]
       Q.meth     <- ifelse(missing(Q.meth), "mode", match.arg(Q.meth))
     }
     if(length(tmp.store) <= 1)    stop(paste0("Not enough samples stored to proceed", ifelse(any(G.T, Q.T), paste0(": try supplying different Q or G values"), "")))
@@ -358,7 +358,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
             pies[Gseq,sl]      <- pies[z.perm,sl]
           }
           if(inf.Q)        {
-            Q.store[Gseq,sl]   <- Q.store[z.perm,sl]
+            Q.store[,sl]       <- Q.store[z.perm,sl]
           }
         }
       }
@@ -374,7 +374,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       post.pi    <- stats::setNames(prop.table(tabulate(post.z, nbins=G)), gnames)
     }
     if(inf.Q)       {
-      Q.store    <- provideDimnames(Q.store[Gseq,, drop=FALSE], base=list(gnames, ""), unique=FALSE)
+      Q.store    <- provideDimnames(Q.store, base=list(gnames, ""), unique=FALSE)
     }
     if(!label.miss) {
       zlabels    <- factor(zlabels, labels=seq_along(unique(zlabels)))
