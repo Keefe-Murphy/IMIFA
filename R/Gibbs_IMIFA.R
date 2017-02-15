@@ -367,7 +367,7 @@
                          act.store[new.it]             <- G
       }
     }
-    close(pb)
+    if(verbose)         close(pb)
     Gmax             <- seq_len(max(as.numeric(z.store)))
     Qmax             <- seq_len(max(Q.store))
     mu.store         <- if(sw["mu.sw"])  tryCatch(mu.store[,Gmax,, drop=FALSE],        error=function(e) mu.store)

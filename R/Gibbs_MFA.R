@@ -174,7 +174,7 @@
                                    ll.store[new.it]        <- z.res$log.like
       }
     }
-    close(pb)
+    if(verbose)       close(pb)
     returns        <- list(mu       = if(sw["mu.sw"])         provideDimnames(mu.store,   base=list(varnames, "", ""),     unique=FALSE),
                            eta      = if(all(sw["s.sw"], Q0)) provideDimnames(eta.store,  base=list(obsnames, "", ""),     unique=FALSE),
                            load     = if(all(sw["l.sw"], Q0)) provideDimnames(load.store, base=list(varnames, "", "", ""), unique=FALSE),

@@ -155,7 +155,7 @@
                                     ll.store[new.it]               <- sum(mvnfast::dmvn(X=data, mu=mu, sigma=sigma, log=TRUE))
       }
     }
-    close(pb)
+    if(verbose)     close(pb)
     Qmax         <- seq_len(max(Q.store))
     eta.store    <- if(sw["s.sw"])  tryCatch(eta.store[,Qmax,, drop=FALSE],  error=function(e) eta.store)
     load.store   <- if(sw["l.sw"])  tryCatch(load.store[,Qmax,, drop=FALSE], error=function(e) load.store)

@@ -19,5 +19,6 @@
 * Edited/robustified subsetting of large objects when storing `mcmc_IMIFA()` output.
 * Tightened controls for when certain items are not stored.
 * Edited Ledermann upper bound `stop(...)` for finite factor models to `warning(...)`.
+* Fixed behaviour of progress bar when `verbose=FALSE`.
 * Fixed typos and expanded/clarified help documentation & vignette.
 

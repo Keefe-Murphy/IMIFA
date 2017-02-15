@@ -281,7 +281,7 @@
                            Q.store[,new.it]         <- Qs
       }
     }
-    close(pb)
+    if(verbose)       close(pb)
     Qmax           <- seq_len(max(Q.store))
     eta.store      <- if(sw["s.sw"])  tryCatch(eta.store[,Qmax,, drop=FALSE],   error=function(e) eta.store)
     load.store     <- if(sw["l.sw"])  tryCatch(load.store[,Qmax,,, drop=FALSE], error=function(e) load.store)
