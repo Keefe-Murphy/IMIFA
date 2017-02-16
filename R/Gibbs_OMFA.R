@@ -87,9 +87,10 @@
       psi.store[,,1]       <- 1/psi.inv
       pi.store[,1]         <- pi.prop
       z.store[,1]          <- z
-      ll.store[1]          <- .sim_z(data=data, mu=mu, Gseq=Gseq, N=N, pi.prop=pi.prop, sigma=lapply(Gseq, function(g)
-                              corpcor::make.positive.definite(tcrossprod(lmat[,,g]) + diag(1/psi.inv[,g]))), Q0=Q0s)$log.like
-      G.store[1]           <- G
+      sigma                <- lapply(Gseq, function(g) corpcor::make.positive.definite(tcrossprod(lmat[,,g]) + diag(1/psi.inv[,g])))
+      log.probs            <- vapply(Gseq, function(g, Q=Q0s[g]) mvnfast::dmvn(data, mu[,g], if(Q) sigma[[g]] else sqrt(sigma[[g]]), log=TRUE, isChol=!Q) + log(pi.prop[g]), numeric(N))
+      ll.store[1]          <- sim_z_log(log.probs=log.probs, N=N, G=G, Gseq=Gseq)$log.like
+      G.store[1]           <- G.non
     }
     init.time      <- proc.time() - start.time
 
@@ -112,11 +113,11 @@
       if(G > 1)  {
         sigma      <- lapply(Gseq, function(g) tcrossprod(lmat[,,g]) + diag(psi[,g]))
         log.probs  <- vapply(Gseq, function(g, Q=Q0s[g]) mvnfast::dmvn(data, mu[,g], if(Q) sigma[[g]] else sqrt(sigma[[g]]), log=TRUE, isChol=!Q) + log(pi.prop[g]), numeric(N))
-        z.log      <- utils::capture.output({ z.res <- try(sim_z_inf(log.probs=log.probs, Gseq=Gseq, N=N, G=G, G.non=G.non, slice=FALSE), silent=TRUE) })
+        z.log      <- utils::capture.output({ z.res <- try(sim_z_log(log.probs=log.probs, N=N, G=G, G.non=G.non, Gseq=Gseq, slice=FALSE), silent=TRUE) })
         zerr       <- inherits(z.res, "try-error")
         if(zerr) {
           sigma    <- lapply(sigma, corpcor::make.positive.definite)
-          z.res    <- sim_z_inf(log.probs=log.probs, Gseq=Gseq, N=N, G=G, G.non=G.non, slice=FALSE)
+          z.res    <- sim_z_log(log.probs=log.probs,  N=N, G=G, G.non=G.non, Gseq=Gseq, slice=FALSE)
         }
         z          <- z.res$z
       } else     {

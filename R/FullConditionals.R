@@ -71,23 +71,13 @@
     }
 
   # Cluster Labels
-    .sim_z       <- function(data, mu, sigma, Gseq, N, pi.prop, Q0) {
-      log.num    <- vapply(Gseq, function(g, Q=Q0[g]) mvnfast::dmvn(data, mu[,g], if(Q) sigma[[g]] else sqrt(sigma[[g]]), log=TRUE, isChol=!Q) + log(pi.prop[g]), numeric(N))
-      log.denom  <- matrixStats::rowLogSumExps(log.num)
-      lnp        <- sweep(log.num, 1, log.denom, FUN="-")
-      for(g in Gseq[-1]) {
-        lnp[,g]  <- matrixStats::rowLogSumExps(lnp, cols=g:(g - 1))
-      }
-        return(list(z = Rfast::rowsums(-stats::rexp(N) > lnp) + 1, log.like = sum(log.denom)))
-    }
-
 #' Simulate Cluster Labels from log-probabilities
 #'
 #' Samples cluster labels for N observations from G groups using decreasingly ordered non-normalised log-probabilities. Computation takes place on the log scale for stability/underflow reasons; in any case, many functions for calculating multivariate normal densities already output on the log scale. Sampling takes place via a two-step construction and binary-search of a normalised log-cdf; thus redunant computation can be avoided for observations with labels corresponding to the first few groups and neglible probabilities for later groups won't cause computational difficulties. This method is particularly useful for sampling cluster labels for overfitted or Dirichlet process mixture models. Please note that while the function is available for standalone use that no checks take place, in order to speed up repeated calls to the function inside \code{\link{mcmc_IMIFA}}.
 #' @param log.probs An N x G matrix of non-normalised probabilities on the log scale. Works best if each row of this matrix is sorted in decreasing order of the size of the corresponding mixing proportions, which is the case under the "\code{IMIFA}", "\code{IMFA}", "\code{OMIFA}" and "\code{OMIFA}" implementations of \code{\link{mcmc_IMIFA}}.
 #' @param N The number of observations that require labels to be sampled. Defaults to (and should not be changed from!) \code{nrow(log.probs)}.
 #' @param G The number of 'active' clusters, s.t. sampled labels can take values in \code{1:G}. Must be greater than 1. Defaults to (and should not be changed from!) \code{ncol(log.probs)}.
-#' @param G.non The number of non-empty clusters at the previous iteration of the sampler. This is used to determine how many columns are incorporated in the first stage of the log.cdf construction, given by \code{max(min(G.non, floor(G/2)), 2)}. Defaults to \code{floor(G/2)} if not supplied.
+#' @param G.non The number of non-empty clusters at the previous iteration of the sampler. This is used to determine how many columns are incorporated in the first stage of the log.cdf construction, given by \code{max(min(G.non, floor(G/2)), 2)}. Defaults to \code{G} if not supplied.
 #' @param Gseq A sequence from 1:G which should not be altered. Exists as an argument only because this sequence already exists inside the \code{\link{mcmc_IMIFA}} samplers for the relevant methods.
 #' @param slice A logical indicating whether or not the indicator correction for slice sampling has been applied to \code{log.probs}. This is used to determine how much of the remaining portion of the log.cdf needs to be computed and searched. Defaults to FALSE but is TRUE for the "\code{IMIFA}" and "\code{IMFA}" methods under \code{\link{mcmc_IMIFA}}. Details of this correction are given in Murphy et. al. (2017).
 #'
@@ -108,9 +98,9 @@
 #'                    sort, decreasing=TRUE)), 1, seq(1, 0, -25), FUN="/")
 #'
 #' # Sample the cluster labels and tabulate them
-#' res       <- sim_z_inf(log.probs, N, G)
+#' res       <- sim_z_log(log.probs, N, G)
 #' tabulate(res$z, nbins=G)
-    sim_z_inf    <- function(log.probs, N = nrow(log.probs), G = ncol(log.probs), G.non = floor(G/2), Gseq = seq_len(G), slice = FALSE) {
+    sim_z_log    <- function(log.probs, N = nrow(log.probs), G = ncol(log.probs), G.non = G, Gseq = seq_len(G), slice = FALSE) {
       log.denom  <- z   <- matrixStats::rowLogSumExps(log.probs)
       G2         <- max(min(G.non, floor(G/2L)), 2L)
       G2s        <- seq_len(G2)

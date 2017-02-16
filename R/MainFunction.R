@@ -163,7 +163,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   burnin    <- as.integer(burnin)
   thinning  <- as.integer(thinning)
   n.iters   <- as.integer(n.iters)
-  if(any(!is.integer(burnin),   burnin   < 1,
+  if(any(!is.integer(burnin),   burnin   < 0,
          length(burnin)   != 1))    stop("'burnin' must be a single integer")
   if(any(!is.integer(thinning), thinning < 1,
          length(thinning) != 1))    stop("'thinning' must be a single integer")

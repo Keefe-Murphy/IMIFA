@@ -98,7 +98,7 @@
     nn               <- nn[index]
     nn0              <- nn > 0
     nn.ind           <- which(nn0)
-    G.non            <- sum(nn0)
+    G.non            <- length(nn.ind)
     z                <- factor(z, labels=match(nn.ind, index))
     z                <- as.numeric(levels(z))[z]
     ksi              <- (1 - rho) * rho^(Ts - 1)
@@ -111,8 +111,9 @@
       psi.store[,,1]         <- 1/psi.inv
       pi.store[,1]           <- pi.prop
       z.store[,1]            <- z
-      ll.store[1]            <- .sim_z(data=data, mu=mu, Gseq=Gs, N=N, pi.prop=pi.prop, sigma=lapply(Gs, function(g)
-                                corpcor::make.positive.definite(tcrossprod(lmat[,,g]) + diag(1/psi.inv[,g]))), Q0=Q0s)$log.like
+      sigma                  <- lapply(Gs, function(g) corpcor::make.positive.definite(tcrossprod(lmat[,,g]) + diag(1/psi.inv[,g])))
+      log.probs              <- vapply(Gs, function(g, Q=Q0s[g]) mvnfast::dmvn(data, mu[,g], if(Q) sigma[[g]] else sqrt(sigma[[g]]), log=TRUE, isChol=!Q) + log(pi.prop[g]), numeric(N))
+      ll.store[1]            <- sim_z_log(log.probs=log.probs, N=N, G=G, G.non=G.non, Gseq=Gs)$log.like
       G.store[1]             <- G.non
       act.store[1]           <- G
       if(not.fixed) {
@@ -156,11 +157,11 @@
       if(G > 1)  {
         sigma        <- lapply(Gs, function(g) tcrossprod(lmat[,,g]) + diag(psi[,g]))
         log.probs    <- vapply(Gs, function(g, Q=Q0s[g]) mvnfast::dmvn(data, mu[,g], if(Q) sigma[[g]] else sqrt(sigma[[g]]), log=TRUE, isChol=!Q) + log(pi.prop[g]), numeric(N)) + log.slice.ind
-        z.log        <- utils::capture.output({ z.res <- try(sim_z_inf(log.probs=log.probs, Gseq=Gs, N=N, G=G, G.non=G.non, slice=TRUE), silent=TRUE) })
+        z.log        <- utils::capture.output({ z.res <- try(sim_z_log(log.probs=log.probs, N=N, G=G, G.non=G.non, Gseq=Gs, slice=TRUE), silent=TRUE) })
         zerr         <- inherits(z.res, "try-error")
         if(zerr) {
           sigma      <- lapply(sigma, corpcor::make.positive.definite)
-          z.res      <- sim_z_inf(log.probs=log.probs, Gseq=Gs, N=N, G=G, G.non=G.non, slice=TRUE)
+          z.res      <- sim_z_log(log.probs=log.probs,N=N, G=G, G.non=G.non, Gseq=Gs, slice=TRUE)
         }
         z            <- z.res$z
       } else     {

@@ -100,8 +100,10 @@
       psi.store[,,1]        <- 1/psi.inv
       pi.store[,1]          <- pi.prop
       z.store[,1]           <- z
-      ll.store[1]           <- .sim_z(data=data, mu=mu, Gseq=Gseq, N=N, pi.prop=pi.prop, sigma=lapply(Gseq, function(g)
-                               corpcor::make.positive.definite(tcrossprod(lmat[[g]]) + diag(1/psi.inv[,g]))), Q0=Qs > 0)$log.like
+      sigma                 <- lapply(Gseq, function(g) corpcor::make.positive.definite(tcrossprod(lmat[[g]]) + diag(1/psi.inv[,g])))
+      Q0                    <- Qs > 0
+      log.probs             <- vapply(Gseq, function(g, Q=Q0[g]) mvnfast::dmvn(data, mu[,g], if(Q) sigma[[g]] else sqrt(sigma[[g]]), log=TRUE, isChol=!Q) + log(pi.prop[g]), numeric(N))
+      ll.store[1]           <- sim_z_log(log.probs=log.probs, N=N, G=G, Gseq=Gseq)$log.like
       Q.store[,1]           <- Qs
     }
     init.time      <- proc.time() - start.time
@@ -115,14 +117,15 @@
 
     # Cluster Labels
       psi          <- 1/psi.inv
-      sigma        <- lapply(Gseq, function(g) tcrossprod(lmat[[g]]) + diag(psi[,g]))
       Q0           <- Qs  > 0
       Q1           <- Qs == 1
-      z.log        <- utils::capture.output({ z.res <- try(.sim_z(data=data, mu=mu, sigma=sigma, Gseq=Gseq, N=N, pi.prop=pi.prop, Q0=Q0), silent=TRUE) })
+      sigma        <- lapply(Gseq, function(g) tcrossprod(lmat[[g]]) + diag(psi[,g]))
+      log.probs    <- vapply(Gseq, function(g, Q=Q0[g]) mvnfast::dmvn(data, mu[,g], if(Q) sigma[[g]] else sqrt(sigma[[g]]), log=TRUE, isChol=!Q) + log(pi.prop[g]), numeric(N))
+      z.log        <- utils::capture.output({ z.res <- try(sim_z_log(log.probs=log.probs, N=N, G=G, Gseq=Gseq), silent=TRUE) })
       z.err        <- inherits(z.res, "try-error")
       if(z.err) {
         sigma      <- lapply(sigma, corpcor::make.positive.definite)
-        z.res      <- .sim_z(data=data, mu=mu, sigma=sigma, Gseq=Gseq, N=N, pi.prop=pi.prop, Q0=Q0)
+        z.res      <- sim_z_log(log.probs=log.probs, N=N, G=G, Gseq=Gseq)
       }
       z            <- z.res$z
       nn           <- tabulate(z, nbins=G)
