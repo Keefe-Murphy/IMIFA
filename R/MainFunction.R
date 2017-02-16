@@ -499,12 +499,12 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   if(beta.x) {
     psi.beta       <- temp.psi <- list(psi_hyper(shape=psi.alpha, covar=cov.mat, type=uni.prior))
   } else {
-    psi.beta       <- .len.check(psi.beta, psi0g, method, P, range.G)
+    psi.beta       <- .len_check(psi.beta, psi0g, method, P, range.G)
   }
-  mu.zero          <- if(mu0.x) mu else .len.check(mu.zero, mu0g, method, P, range.G)
+  mu.zero          <- if(mu0.x) mu else .len_check(mu.zero, mu0g, method, P, range.G)
   if(!is.element(method, c("FA", "MFA", "OMFA", "IMFA"))) {
-    alpha.d1       <- if(ad1.x) list(3L) else .len.check(alpha.d1, delta0g, method, P, range.G, P.dim=FALSE)
-    alpha.d2       <- if(ad2.x) list(6L) else .len.check(alpha.d2, delta0g, method, P, range.G, P.dim=FALSE)
+    alpha.d1       <- if(ad1.x) list(3L) else .len_check(alpha.d1, delta0g, method, P, range.G, P.dim=FALSE)
+    alpha.d2       <- if(ad2.x) list(6L) else .len_check(alpha.d2, delta0g, method, P, range.G, P.dim=FALSE)
     if(all(NlP, any(ad1.x, ad2.x))) warning("Consider applying more shrinkage with higher 'alpha.d1' and 'alpha.d2' hyperparameter values when N << P", call.=FALSE)
   }
   if(!is.element(method, c("FA", "IFA"))) {
@@ -533,11 +533,11 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
           while(all(length(unique(zips)) != G,
                 any(prop.table(tabulate(zips, nbins=G)) < 1/G^2))) {
             pies   <- .sim_pi(pi.alpha=alpha, nn=0, G)
-            zips   <- .sim_z.p(N=N, prob.z=pies)
+            zips   <- .sim_z_p(N=N, prob.z=pies)
           }
         } else {
-          pies     <- .sim_pi.inf(pi.alpha=alpha, N=N, nn=rep(N/range.G, range.G), discount=discount, lseq=seq_len(range.G), len=range.G)$pi.prop
-          zips     <- .sim_z.p(N=N, prob.z=pies)
+          pies     <- .sim_pi_inf(pi.alpha=alpha, N=N, nn=rep(N/range.G, range.G), discount=discount, lseq=seq_len(range.G), len=range.G)$pi.prop
+          zips     <- .sim_z_p(N=N, prob.z=pies)
         }
         zi[[g]]    <- as.numeric(zips)
         rm(zips)

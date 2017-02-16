@@ -772,7 +772,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           } else   {
            pzs  <- clust$map
            if(nlevels(pzs) == nlevels(labs)) {
-            lsw <- .lab.switch(z.new=pzs, z.old=labs, Gs=seq_len(G))
+            lsw <- .lab_switch(z.new=pzs, z.old=labs, Gs=seq_len(G))
             pzs <- factor(lsw$z)
            }
            tab  <- table(pzs, labs, dnn=list("Predicted", "Observed"))

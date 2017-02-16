@@ -51,15 +51,15 @@
     nn.ind           <- which(nn > 0)
     pi.prop          <- cluster$pi.prop
     pi.alpha         <- cluster$pi.alpha
-    .sim_psi.inv     <- switch(uni.type, unconstrained=.sim_psi.iu,  isotropic=.sim_psi.ii)
-    .sim_psi.ip      <- switch(uni.type, unconstrained=.sim_psi.ipu, isotropic=.sim_psi.ipi)
+    .sim_psi_inv     <- switch(uni.type, unconstrained=.sim_psi_iu,  isotropic=.sim_psi_ii)
+    .sim_psi_ip      <- switch(uni.type, unconstrained=.sim_psi_ipu, isotropic=.sim_psi_ipi)
     psi.beta         <- unique(round(psi.beta, min(nchar(psi.beta))))
-    eta              <- .sim_eta.p(N=N, Q=Q)
-    phi              <- lapply(Gseq, function(g) .sim_phi.p(Q=Q, P=P, nu=nu, plus1=nuplus1))
-    delta            <- lapply(Gseq, function(g) c(.sim_delta.p(alpha=alpha.d1, beta=beta.d1), .sim_delta.p(Q=Q, alpha=alpha.d2, beta=beta.d2)))
+    eta              <- .sim_eta_p(N=N, Q=Q)
+    phi              <- lapply(Gseq, function(g) .sim_phi_p(Q=Q, P=P, nu=nu, plus1=nuplus1))
+    delta            <- lapply(Gseq, function(g) c(.sim_delta_p(alpha=alpha.d1, beta=beta.d1), .sim_delta_p(Q=Q, alpha=alpha.d2, beta=beta.d2)))
     tau              <- lapply(delta, cumprod)
-    lmat             <- lapply(Gseq, function(g) matrix(unlist(lapply(Pseq, function(j) .sim_load.ps(Q=Q, phi=phi[[g]][j,], tau=tau[[g]])), use.names=FALSE), nrow=P, byrow=TRUE))
-    psi.inv          <- vapply(Gseq, function(g) .sim_psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), numeric(P))
+    lmat             <- lapply(Gseq, function(g) matrix(unlist(lapply(Pseq, function(j) .sim_load_ps(Q=Q, phi=phi[[g]][j,], tau=tau[[g]])), use.names=FALSE), nrow=P, byrow=TRUE))
+    psi.inv          <- vapply(Gseq, function(g) .sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), numeric(P))
     if(Q < P - sqrt(P + Q))   {
       for(g in which(nn > P)) {
         fact         <- try(stats::factanal(data[z == g,, drop=FALSE], factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
@@ -153,9 +153,9 @@
       } else {
         eta.tmp      <- lapply(Gseq, function(g) if(all(nn0[g], Q0[g])) .sim_score(N=nn[g], lmat=lmat[[g]], Q=Qs[g], Q1=Q1[g], c.data=c.data[[g]], psi.inv=psi.inv[,g]) else base::matrix(0, nrow=ifelse(Q0[g], 0, nn[g]), ncol=Qs[g]))
         EtE          <- lapply(Gseq, function(g) if(nn0[g]) crossprod(eta.tmp[[g]]))
-        lmat         <- lapply(Gseq, function(g) if(all(nn0[g], Q0[g])) matrix(unlist(lapply(Pseq, function(j) .sim_load.s(Q=Qs[g], c.data=c.data[[g]][,j], Q1=Q1[g],
+        lmat         <- lapply(Gseq, function(g) if(all(nn0[g], Q0[g])) matrix(unlist(lapply(Pseq, function(j) .sim_load_s(Q=Qs[g], c.data=c.data[[g]][,j], Q1=Q1[g],
                                EtE=EtE[[g]], eta=eta.tmp[[g]], psi.inv=psi.inv[,g][j], phi=phi[[g]][j,], tau=tau[[g]])), use.names=FALSE), nrow=P, byrow=TRUE) else
-                               matrix(unlist(lapply(Pseq, function(j) .sim_load.ps(Q=Qs[g], phi=phi[[g]][j,], tau=tau[[g]])), use.names=FALSE), nrow=P, byrow=FALSE))
+                               matrix(unlist(lapply(Pseq, function(j) .sim_load_ps(Q=Qs[g], phi=phi[[g]][j,], tau=tau[[g]])), use.names=FALSE), nrow=P, byrow=FALSE))
         eta.tmp      <- if(length(unique(Qs)) != 1) lapply(Gseq, function(g) cbind(eta.tmp[[g]], matrix(0, nrow=nn[g], ncol=max(Qs) - Qs[g]))) else eta.tmp
         q0ng         <- !Q0 & nn0
         if(any(q0ng)) {
@@ -165,19 +165,19 @@
       }
 
     # Uniquenesses
-      psi.inv        <- vapply(Gseq, function(g) if(nn0[g]) .sim_psi.inv(N=nn[g], psi.alpha=psi.alpha, c.data=c.data[[g]], psi.beta=psi.beta, lmat=lmat[[g]],
-                               P=P, eta=eta.tmp[[g]][,seq_len(Qs[g]), drop=FALSE]) else .sim_psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), numeric(P))
+      psi.inv        <- vapply(Gseq, function(g) if(nn0[g]) .sim_psi_inv(N=nn[g], psi.alpha=psi.alpha, c.data=c.data[[g]], psi.beta=psi.beta, lmat=lmat[[g]],
+                               P=P, eta=eta.tmp[[g]][,seq_len(Qs[g]), drop=FALSE]) else .sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), numeric(P))
 
     # Means
       sum.data       <- vapply(dat.g, colSums, numeric(P))
       sum.eta        <- lapply(eta.tmp, colSums)
       mu             <- vapply(Gseq, function(g) if(nn0[g]) .sim_mu(N=nn[g], mu.sigma=mu.sigma, psi.inv=psi.inv[,g], P=P, sum.eta=sum.eta[[g]][seq_len(Qs[g])],
-                               sum.data=sum.data[,g], lmat=lmat[[g]], mu.zero=mu.zero) else .sim_mu.p(P=P, sig.mu.sqrt=sig.mu.sqrt, mu.zero=mu.zero), numeric(P))
+                               sum.data=sum.data[,g], lmat=lmat[[g]], mu.zero=mu.zero) else .sim_mu_p(P=P, sig.mu.sqrt=sig.mu.sqrt, mu.zero=mu.zero), numeric(P))
 
     # Local Shrinkage
       load.2         <- lapply(lmat, .power2)
       phi            <- lapply(Gseq, function(g) if(nn0[g]) .sim_phi(Q=Qs[g], P=P, nu=nu, plus1=nuplus1,
-                        tau=tau[[g]], load.2=load.2[[g]]) else .sim_phi.p(Q=Qs[g], P=P, nu=nu, plus1=nuplus1))
+                        tau=tau[[g]], load.2=load.2[[g]]) else .sim_phi_p(Q=Qs[g], P=P, nu=nu, plus1=nuplus1))
 
     # Global Shrinkage
       sum.terms      <- lapply(Gseq, function(g) diag(crossprod(phi[[g]], load.2[[g]])))
@@ -193,7 +193,7 @@
           }
         } else {
           for(k in seq_len(Qg)) {
-            delta[[g]][k]     <- if(k > 1) .sim_delta.p(alpha=alpha.d2, beta=beta.d2) else .sim_delta.p(alpha=ifelse(Q1g, alpha.d2, alpha.d1), beta=ifelse(Q1g, beta.d2, beta.d1))
+            delta[[g]][k]     <- if(k > 1) .sim_delta_p(alpha=alpha.d2, beta=beta.d2) else .sim_delta_p(alpha=ifelse(Q1g, alpha.d2, alpha.d1), beta=ifelse(Q1g, beta.d2, beta.d1))
             tau[[g]]          <- cumprod(delta[[g]])
           }
         }

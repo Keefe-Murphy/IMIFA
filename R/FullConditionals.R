@@ -27,7 +27,7 @@
         mu.load   + backsolve(u.load, stats::rnorm(Q))
     }
 
-    .sim_load.s  <- function(Q, c.data, eta, phi, tau, psi.inv, EtE, Q1) {
+    .sim_load_s  <- function(Q, c.data, eta, phi, tau, psi.inv, EtE, Q1) {
       u.load     <- diag(phi * tau, Q) + psi.inv * EtE
       u.load     <- if(Q1) sqrt(u.load) else .chol(u.load)
       mu.load    <- psi.inv  * (if(Q1) 1/(u.load * u.load) else chol2inv(u.load)) %*% crossprod(eta, c.data)
@@ -35,12 +35,12 @@
     }
 
   # Uniquenesses
-    .sim_psi.iu  <- function(N, P, psi.alpha, psi.beta, c.data, eta, lmat) {
+    .sim_psi_iu  <- function(N, P, psi.alpha, psi.beta, c.data, eta, lmat) {
       S.mat      <- c.data - tcrossprod(eta, lmat)
         stats::rgamma(P, shape=N/2 + psi.alpha, rate=colSums(S.mat * S.mat)/2 + psi.beta)
     }
 
-    .sim_psi.ii  <- function(N, P, psi.alpha, psi.beta, c.data, eta, lmat) {
+    .sim_psi_ii  <- function(N, P, psi.alpha, psi.beta, c.data, eta, lmat) {
       S.mat      <- c.data - tcrossprod(eta, lmat)
         rep(stats::rgamma(1, shape=(N * P)/2 + psi.alpha, rate=sum(S.mat * S.mat)/2 + psi.beta), P)
     }
@@ -65,7 +65,7 @@
         tmp/sum(tmp)
     }
 
-    .sim_pi.inf  <- function(pi.alpha, nn, N = sum(nn), len, lseq, discount = 0L) {
+    .sim_pi_inf  <- function(pi.alpha, nn, N = sum(nn), len, lseq, discount = 0L) {
       vs         <- if(discount == 0) stats::rbeta(len, 1 + nn, pi.alpha + N - cumsum(nn)) else stats::rbeta(len, 1 - discount + nn, pi.alpha + lseq * discount + N - cumsum(nn))
         return(list(Vs = vs, pi.prop = vapply(lseq, function(t) vs[t] * prod(1 - vs[seq_len(t - 1)]), numeric(1L))))
     }
@@ -94,11 +94,11 @@
 #' # Set the dimensions & simulate a matrix of log-probabilities
 #' N         <- 400
 #' G         <- 25
-#' log.probs <- sweep(t(apply(matrix(-stats::rexp(N * G), nrow=N, ncol=G), 1,
+#' log_probs <- sweep(t(apply(matrix(-stats::rexp(N * G), nrow=N, ncol=G), 1,
 #'                    sort, decreasing=TRUE)), 1, seq(1, 0, -25), FUN="/")
 #'
 #' # Sample the cluster labels and tabulate them
-#' res       <- sim_z_log(log.probs, N, G)
+#' res       <- sim_z_log(log_probs, N, G)
 #' tabulate(res$z, nbins=G)
     sim_z_log    <- function(log.probs, N = nrow(log.probs), G = ncol(log.probs), G.non = G, Gseq = seq_len(G), slice = FALSE) {
       log.denom  <- z   <- matrixStats::rowLogSumExps(log.probs)
@@ -125,14 +125,14 @@
     }
 
   # Alpha
-    .sim_alpha.g <- function(alpha, shape, rate, G, N, discount = 0L) {
+    .sim_alpha_g <- function(alpha, shape, rate, G, N, discount = 0L) {
       shape2     <- shape + G - 1
       rate2      <- rate  - log(stats::rbeta(1, alpha + discount + 1, N))
       weight     <- shape2/(shape2 + N * rate2)
         weight    * stats::rgamma(1, shape=shape2 + 1, rate=rate2) + (1 - weight) * stats::rgamma(1, shape=shape2, rate=rate2) - discount
     }
 
-    .sim_alpha.m <- function(alpha, lower, upper, trunc.G, Vs, discount = 0L) {
+    .sim_alpha_m <- function(alpha, lower, upper, trunc.G, Vs, discount = 0L) {
       alpha.old  <- alpha   + discount
       alpha.new  <- stats::runif(1, lower, upper) + discount
       a.prob     <- trunc.G * (log(alpha.new) - log(alpha.old))    + (alpha.new - alpha.old) * sum(log((1 - Vs[-trunc.G])))
@@ -142,45 +142,45 @@
 
 # Priors
   # Means
-    .sim_mu.p    <- function(P, mu.zero, sig.mu.sqrt) {
+    .sim_mu_p    <- function(P, mu.zero, sig.mu.sqrt) {
       sig.mu.sqrt * stats::rnorm(P) + mu.zero
     }
 
   # Scores
-    .sim_eta.p   <- function(Q, N) {
+    .sim_eta_p   <- function(Q, N) {
         matrix(stats::rnorm(N * Q), nrow=N, ncol=Q)
     }
 
   # Loadings
-    .sim_load.p  <- function(Q, P, sigma.l) {
+    .sim_load_p  <- function(Q, P, sigma.l) {
         sqrt(sigma.l) * matrix(stats::rnorm(P * Q), nrow=P, ncol=Q)
     }
 
-    .sim_load.ps <- function(Q, sigma.l, phi, tau) {
+    .sim_load_ps <- function(Q, sigma.l, phi, tau) {
         sqrt(1/(phi * tau)) * stats::rnorm(Q)
     }
 
   # Uniquenesses
-    .sim_psi.ipu <- function(P, psi.alpha, psi.beta) {
+    .sim_psi_ipu <- function(P, psi.alpha, psi.beta) {
         stats::rgamma(n=P, shape=psi.alpha, rate=psi.beta)
     }
 
-    .sim_psi.ipi <- function(P, psi.alpha, psi.beta) {
+    .sim_psi_ipi <- function(P, psi.alpha, psi.beta) {
         rep(stats::rgamma(1, shape=psi.alpha, rate=psi.beta), P)
     }
 
   # Local Shrinkage
-    .sim_phi.p   <- function(Q, P, nu, plus1) {
+    .sim_phi_p   <- function(Q, P, nu, plus1) {
         matrix(stats::rgamma(n=P * Q, shape=nu + plus1, rate=nu), nrow=P, ncol=Q)
     }
 
   # Global Shrinkage
-    .sim_delta.p <- function(Q = 2L, alpha, beta) {
+    .sim_delta_p <- function(Q = 2L, alpha, beta) {
         stats::rgamma(n=Q - 1, shape=alpha, rate=beta)
     }
 
   # Cluster Labels
-    .sim_z.p     <- function(N, prob.z) {
+    .sim_z_p     <- function(N, prob.z) {
         factor(which(stats::rmultinom(N, size=1, prob=prob.z) != 0, arr.ind=TRUE)[,1], levels=seq_along(prob.z))
     }
 
@@ -292,7 +292,7 @@
     }, vectorize.args = c("ad1", "ad2", "nu", "bd1", "bd2"), SIMPLIFY=FALSE)
 
   # Label Switching
-    .lab.switch <- function(z.new, z.old, Gs, ng = tabulate(z.new)) {
+    .lab_switch <- function(z.new, z.old, Gs, ng = tabulate(z.new)) {
       tab       <- table(z.new, z.old, dnn=NULL)
       tab.tmp   <- tab[Rfast::rowsums(tab) != 0,Rfast::colsums(tab) != 0, drop=FALSE]
       nc        <- ncol(tab.tmp)
@@ -324,7 +324,7 @@
     }
 
     # Move 1
-    .lab.move1  <- function(nn.ind, pi.prop, nn) {
+    .lab_move1  <- function(nn.ind, pi.prop, nn) {
       sw        <- sample(nn.ind, 2L)
       pis       <- pi.prop[sw]
       nns       <- nn[sw]
@@ -333,7 +333,7 @@
     }
 
     # Move 2
-    .lab.move2  <- function(G, Vs, nn) {
+    .lab_move2  <- function(G, Vs, nn) {
       sw        <- sample(G, 1L, prob=c(rep(1, G - 2), 0.5, 0.5))
       sw        <- if(is.element(sw, c(G, G - 1))) c(G - 1, G) else c(sw, sw + 1)
       nns       <- nn[sw]
@@ -343,7 +343,7 @@
     }
 
   # Length Checker
-    .len.check  <- function(obj0g, switch0g, method, P, range.G, P.dim = TRUE) {
+    .len_check  <- function(obj0g, switch0g, method, P, range.G, P.dim = TRUE) {
       V         <- ifelse(P.dim, P, 1L)
       rGseq     <- seq_along(range.G)
       obj.name  <- deparse(substitute(obj0g))

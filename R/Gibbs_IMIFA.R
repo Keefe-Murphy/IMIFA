@@ -67,17 +67,17 @@
     sig.mu.sqrt      <- sqrt(sigma.mu)
     z                <- cluster$z
     pi.alpha         <- cluster$pi.alpha
-    .sim_psi.inv     <- switch(uni.type, unconstrained=.sim_psi.iu,  isotropic=.sim_psi.ii)
-    .sim_psi.ip      <- switch(uni.type, unconstrained=.sim_psi.ipu, isotropic=.sim_psi.ipi)
+    .sim_psi_inv     <- switch(uni.type, unconstrained=.sim_psi_iu,  isotropic=.sim_psi_ii)
+    .sim_psi_ip      <- switch(uni.type, unconstrained=.sim_psi_ipu, isotropic=.sim_psi_ipi)
     psi.beta         <- unique(round(psi.beta, min(nchar(psi.beta))))
     pi.prop          <- cluster$pi.prop
     nn               <- tabulate(z, nbins=trunc.G)
-    eta              <- .sim_eta.p(N=N, Q=Q)
-    phi              <- lapply(Ts, function(t) .sim_phi.p(Q=Q, P=P, nu=nu, plus1=nuplus1))
-    delta            <- lapply(Ts, function(t) c(.sim_delta.p(alpha=alpha.d1, beta=beta.d1), .sim_delta.p(Q=Q, alpha=alpha.d2, beta=beta.d2)))
+    eta              <- .sim_eta_p(N=N, Q=Q)
+    phi              <- lapply(Ts, function(t) .sim_phi_p(Q=Q, P=P, nu=nu, plus1=nuplus1))
+    delta            <- lapply(Ts, function(t) c(.sim_delta_p(alpha=alpha.d1, beta=beta.d1), .sim_delta_p(Q=Q, alpha=alpha.d2, beta=beta.d2)))
     tau              <- lapply(delta, cumprod)
-    lmat             <- lapply(Ts, function(t) matrix(unlist(lapply(Ps, function(j) .sim_load.ps(Q=Q, phi=phi[[t]][j,], tau=tau[[t]])), use.names=FALSE), nrow=P, byrow=TRUE))
-    psi.inv          <- vapply(Ts, function(t) .sim_psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), numeric(P))
+    lmat             <- lapply(Ts, function(t) matrix(unlist(lapply(Ps, function(j) .sim_load_ps(Q=Q, phi=phi[[t]][j,], tau=tau[[t]])), use.names=FALSE), nrow=P, byrow=TRUE))
+    psi.inv          <- vapply(Ts, function(t) .sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), numeric(P))
     if(Q < .ledermann(N, P))  {
       for(g in which(nn > P)) {
         fact         <- try(stats::factanal(data[z == g,, drop=FALSE], factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
@@ -138,7 +138,7 @@
       if(verbose     && iter   < burnin) utils::setTxtProgressBar(pb, iter)
 
     # Mixing Proportions
-      weights        <- .sim_pi.inf(pi.alpha=pi.alpha, nn=nn, N=N, len=trunc.G, lseq=Ts, discount=discount)
+      weights        <- .sim_pi_inf(pi.alpha=pi.alpha, nn=nn, N=N, len=trunc.G, lseq=Ts, discount=discount)
       pi.prop        <- weights$pi.prop
       Vs             <- weights$Vs
 
@@ -197,9 +197,9 @@
       } else {
         eta.tmp      <- lapply(Gs, function(g) if(all(nn0[g], Q0[g])) .sim_score(N=nn[g], lmat=lmat[[g]], Q=Qs[g], Q1=Q1[g], c.data=c.data[[g]], psi.inv=psi.inv[,g]) else base::matrix(0, nrow=ifelse(Q0[g], 0, nn[g]), ncol=Qs[g]))
         EtE          <- lapply(Gs, function(g) if(nn0[g]) crossprod(eta.tmp[[g]]))
-        lmat[Gs]     <- lapply(Gs, function(g) if(all(nn0[g], Q0[g])) matrix(unlist(lapply(Ps, function(j) .sim_load.s(Q=Qs[g], Q1=Q1[g], c.data=c.data[[g]][,j],
+        lmat[Gs]     <- lapply(Gs, function(g) if(all(nn0[g], Q0[g])) matrix(unlist(lapply(Ps, function(j) .sim_load_s(Q=Qs[g], Q1=Q1[g], c.data=c.data[[g]][,j],
                                EtE=EtE[[g]], eta=eta.tmp[[g]], psi.inv=psi.inv[,g][j], phi=phi[[g]][j,], tau=tau[[g]])), use.names=FALSE), nrow=P, byrow=TRUE) else
-                               matrix(unlist(lapply(Ps, function(j) .sim_load.ps(Q=Qs[g], phi=phi[[g]][j,], tau=tau[[g]])), use.names=FALSE), nrow=P, byrow=FALSE))
+                               matrix(unlist(lapply(Ps, function(j) .sim_load_ps(Q=Qs[g], phi=phi[[g]][j,], tau=tau[[g]])), use.names=FALSE), nrow=P, byrow=FALSE))
         eta.tmp      <- if(length(unique(Qs)) != 1) lapply(Gs, function(g) cbind(eta.tmp[[g]], matrix(0, nrow=nn[g], ncol=max(Qs) - Qs[g]))) else eta.tmp
         q0ng         <- !Q0 & nn0[Gs]
         if(any(q0ng)) {
@@ -209,19 +209,19 @@
       }
 
     # Uniquenesses
-      psi.inv[,Gs]   <- vapply(Gs, function(g) if(nn0[g]) .sim_psi.inv(N=nn[g], psi.alpha=psi.alpha, c.data=c.data[[g]], psi.beta=psi.beta, lmat=lmat[[g]],
-                               P=P, eta=eta.tmp[[g]][,seq_len(Qs[g]), drop=FALSE]) else .sim_psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), numeric(P))
+      psi.inv[,Gs]   <- vapply(Gs, function(g) if(nn0[g]) .sim_psi_inv(N=nn[g], psi.alpha=psi.alpha, c.data=c.data[[g]], psi.beta=psi.beta, lmat=lmat[[g]],
+                               P=P, eta=eta.tmp[[g]][,seq_len(Qs[g]), drop=FALSE]) else .sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), numeric(P))
 
     # Means
       sum.data       <- vapply(dat.g, colSums, numeric(P))
       sum.eta        <- lapply(eta.tmp, colSums)
       mu[,Gs]        <- vapply(Gs, function(g) if(nn0[g]) .sim_mu(N=nn[g], mu.sigma=mu.sigma, psi.inv=psi.inv[,g], P=P, sum.eta=sum.eta[[g]][seq_len(Qs[g])],
-                               sum.data=sum.data[,g], lmat=lmat[[g]], mu.zero=mu.zero) else .sim_mu.p(P=P, sig.mu.sqrt=sig.mu.sqrt, mu.zero=mu.zero), numeric(P))
+                               sum.data=sum.data[,g], lmat=lmat[[g]], mu.zero=mu.zero) else .sim_mu_p(P=P, sig.mu.sqrt=sig.mu.sqrt, mu.zero=mu.zero), numeric(P))
 
     # Local Shrinkage
       load.2         <- lapply(lmat[Gs], .power2)
       phi[Gs]        <- lapply(Gs, function(g) if(nn0[g]) .sim_phi(Q=Qs[g], P=P, nu=nu, plus1=nuplus1,
-                        tau=tau[[g]], load.2=load.2[[g]]) else .sim_phi.p(Q=Qs[g], P=P, nu=nu, plus1=nuplus1))
+                        tau=tau[[g]], load.2=load.2[[g]]) else .sim_phi_p(Q=Qs[g], P=P, nu=nu, plus1=nuplus1))
 
     # Global Shrinkage
       sum.terms      <- lapply(Gs, function(g) diag(crossprod(phi[[g]], load.2[[g]])))
@@ -237,7 +237,7 @@
           }
         } else {
           for(k in seq_len(Qg)) {
-            delta[[g]][k]     <- if(k > 1) .sim_delta.p(alpha=alpha.d2, beta=beta.d2) else .sim_delta.p(alpha=ifelse(Q1g, alpha.d2, alpha.d1), beta=ifelse(Q1g, beta.d2, beta.d1))
+            delta[[g]][k]     <- if(k > 1) .sim_delta_p(alpha=alpha.d2, beta=beta.d2) else .sim_delta_p(alpha=ifelse(Q1g, alpha.d2, alpha.d1), beta=ifelse(Q1g, beta.d2, beta.d1))
             tau[[g]]          <- cumprod(delta[[g]])
           }
         }
@@ -284,17 +284,17 @@
     # Alpha
       if(not.fixed) {
         if(MH.step) {
-          MH.alpha   <- .sim_alpha.m(alpha=pi.alpha, lower=alpha.shape, upper=alpha.rate, trunc.G=trunc.G, Vs=Vs, discount=discount)
+          MH.alpha   <- .sim_alpha_m(alpha=pi.alpha, lower=alpha.shape, upper=alpha.rate, trunc.G=trunc.G, Vs=Vs, discount=discount)
           pi.alpha   <- MH.alpha$alpha
         } else {
-          pi.alpha   <- .sim_alpha.g(alpha=pi.alpha, shape=alpha.shape, rate=alpha.rate, G=G, N=N, discount=discount)
+          pi.alpha   <- .sim_alpha_g(alpha=pi.alpha, shape=alpha.shape, rate=alpha.rate, G=G, N=N, discount=discount)
         }
       }
 
     # Label Switching
       if(DP.lab.sw)   {
         if(G.non > 1) {
-          move1      <- .lab.move1(nn.ind=nn.ind, pi.prop=pi.prop, nn=nn)
+          move1      <- .lab_move1(nn.ind=nn.ind, pi.prop=pi.prop, nn=nn)
           acc1       <- move1$rate1
           if(acc1)    {
             sw1      <- move1$sw
@@ -317,7 +317,7 @@
           } else        acc1  <- FALSE
         }
         if(G     > 1) {
-          move2      <- .lab.move2(G=G, Vs=Vs, nn=nn)
+          move2      <- .lab_move2(G=G, Vs=Vs, nn=nn)
           acc2       <- move2$rate2
           if(acc2)    {
             sw2      <- move2$sw

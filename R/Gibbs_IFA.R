@@ -39,15 +39,15 @@
     Q.large      <- Q.big  <- FALSE
 
     mu.sigma     <- 1/sigma.mu
-    .sim_psi.inv <- switch(uni.type, unconstrained=.sim_psi.iu,  isotropic=.sim_psi.ii)
-    .sim_psi.ip  <- switch(uni.type, unconstrained=.sim_psi.ipu, isotropic=.sim_psi.ipi)
+    .sim_psi_inv <- switch(uni.type, unconstrained=.sim_psi_iu,  isotropic=.sim_psi_ii)
+    .sim_psi_ip  <- switch(uni.type, unconstrained=.sim_psi_ipu, isotropic=.sim_psi_ipi)
     psi.beta     <- unique(round(psi.beta, min(nchar(psi.beta))))
-    eta          <- .sim_eta.p(Q=Q, N=N)
-    phi          <- .sim_phi.p(Q=Q, P=P, nu=nu, plus1=nuplus1)
-    delta        <- c(.sim_delta.p(alpha=alpha.d1, beta=beta.d1), .sim_delta.p(Q=Q, alpha=alpha.d2, beta=beta.d2))
+    eta          <- .sim_eta_p(Q=Q, N=N)
+    phi          <- .sim_phi_p(Q=Q, P=P, nu=nu, plus1=nuplus1)
+    delta        <- c(.sim_delta_p(alpha=alpha.d1, beta=beta.d1), .sim_delta_p(Q=Q, alpha=alpha.d2, beta=beta.d2))
     tau          <- cumprod(delta)
-    lmat         <- matrix(unlist(lapply(Pseq, function(j) .sim_load.ps(Q=Q, phi=phi[j,], tau=tau)), use.names=FALSE), nrow=P, byrow=TRUE)
-    psi.inv      <- .sim_psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
+    lmat         <- matrix(unlist(lapply(Pseq, function(j) .sim_load_ps(Q=Q, phi=phi[j,], tau=tau)), use.names=FALSE), nrow=P, byrow=TRUE)
+    psi.inv      <- .sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
     if(all(Q      < .ledermann(N, P))) {
       fact       <- try(stats::factanal(data, factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
       if(!inherits(fact, "try-error")) {
@@ -81,7 +81,7 @@
       c.data     <- sweep(data, 2, mu, FUN="-")
       if(Q0) {
         eta      <- .sim_score(N=N, Q=Q, lmat=lmat, psi.inv=psi.inv, c.data=c.data, Q1=Q1)
-        lmat     <- matrix(unlist(lapply(Pseq, function(j) .sim_load.s(Q=Q, tau=tau, eta=eta, c.data=c.data[,j], Q1=Q1,
+        lmat     <- matrix(unlist(lapply(Pseq, function(j) .sim_load_s(Q=Q, tau=tau, eta=eta, c.data=c.data[,j], Q1=Q1,
                            phi=phi[j,], psi.inv=psi.inv[j], EtE=crossprod(eta))), use.names=FALSE), nrow=P, byrow=TRUE)
       } else {
         eta      <- base::matrix(0, nrow=N, ncol=0)
@@ -89,7 +89,7 @@
       }
 
     # Uniquenesses
-      psi.inv    <- .sim_psi.inv(N=N, P=P, psi.alpha=psi.alpha, psi.beta=psi.beta, c.data=c.data, eta=eta, lmat=lmat)
+      psi.inv    <- .sim_psi_inv(N=N, P=P, psi.alpha=psi.alpha, psi.beta=psi.beta, c.data=c.data, eta=eta, lmat=lmat)
 
     # Means
       mu[]       <- .sim_mu(N=N, P=P, mu.sigma=mu.sigma, psi.inv=psi.inv, sum.data=sum.data, sum.eta=colSums(eta), lmat=lmat, mu.zero=mu.zero)

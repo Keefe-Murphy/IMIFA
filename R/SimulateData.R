@@ -16,10 +16,10 @@
 #'
 #' @examples
 #' # Simulate 100 observations from 3 balanced groups with cluster-specific numbers of latent factors
-#' # sim.data <- sim_IMIFA_data(N=100, G=3, P=20, Q=c(2, 2, 5))
-#' # names(attributes(sim.data))
-#' # attr(sim.data, "Labels")
-#' # tmp      <- mcmc_IMIFA(sim.data, method="MIFA", range.G=3, n.iters=5000)
+#' # sim_data <- sim_IMIFA_data(N=100, G=3, P=20, Q=c(2, 2, 5))
+#' # names(attributes(sim_data))
+#' # attr(sim_data, "Labels")
+#' # tmp      <- mcmc_IMIFA(sim_data, method="MIFA", range.G=3, n.iters=5000)
 #' @seealso The function \code{\link{mcmc_IMIFA}} for fitting an IMIFA related model to the simulated data set.
 sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(4L, G), pis = rep(1/G, G),
                            nn = NULL, loc.diff = 1L, method = c("conditional", "marginal")) {
@@ -59,7 +59,7 @@ sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(4L, G), pis = rep(
            !is.numeric(pis)))             stop(paste0("'pis' must be a numeric vector of length G=", G, " which sums to ", 1))
     nn         <- rep(0,  G)
     while(any(nn < floor(N/(G * G))))  {
-      labs     <- .sim_z.p(N=N, prob.z=pis)
+      labs     <- .sim_z_p(N=N, prob.z=pis)
       nn       <- tabulate(labs, nbins=G)
     }
   }
@@ -75,13 +75,13 @@ sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(4L, G), pis = rep(
   true.zlab    <- factor(rep(Gseq, nn), labels=Gseq)
   if(method    == "conditional") {
     Q.max      <- max(Q)
-    eta.true   <- .sim_eta.p(Q=Q.max, N=N)
+    eta.true   <- .sim_eta_p(Q=Q.max, N=N)
   }
   for(g in Gseq) {
     Q.g        <- Q[g]
     N.g        <- nn[g]
-    mu.true    <- stats::setNames(.sim_mu.p(P=P, mu.zero=prior.mu[g] * loc.diff, sig.mu.sqrt=1), vnames)
-    l.true     <- .sim_load.p(Q=Q.g, P=P, sigma.l=1)
+    mu.true    <- stats::setNames(.sim_mu_p(P=P, mu.zero=prior.mu[g] * loc.diff, sig.mu.sqrt=1), vnames)
+    l.true     <- .sim_load_p(Q=Q.g, P=P, sigma.l=1)
     psi.true   <- stats::setNames(stats::rgamma(P, 1, 1), vnames)
 
   # Simulate data

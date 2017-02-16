@@ -37,12 +37,12 @@
     cov.est      <- matrix(0, nrow=P, ncol=P)
 
     mu.sigma     <- 1/sigma.mu
-    .sim_psi.inv <- switch(uni.type, unconstrained=.sim_psi.iu,  isotropic=.sim_psi.ii)
-    .sim_psi.ip  <- switch(uni.type, unconstrained=.sim_psi.ipu, isotropic=.sim_psi.ipi)
+    .sim_psi_inv <- switch(uni.type, unconstrained=.sim_psi_iu,  isotropic=.sim_psi_ii)
+    .sim_psi_ip  <- switch(uni.type, unconstrained=.sim_psi_ipu, isotropic=.sim_psi_ipi)
     psi.beta     <- unique(round(psi.beta, min(nchar(psi.beta))))
-    eta          <- .sim_eta.p(Q=Q, N=N)
-    lmat         <- .sim_load.p(Q=Q, P=P, sigma.l=sigma.l)
-    psi.inv      <- .sim_psi.ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
+    eta          <- .sim_eta_p(Q=Q, N=N)
+    lmat         <- .sim_load_p(Q=Q, P=P, sigma.l=sigma.l)
+    psi.inv      <- .sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
     if(all(Q0, Q  < .ledermann(N, P))) {
       fact       <- try(stats::factanal(data, factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
       if(!inherits(fact, "try-error")) {
@@ -80,7 +80,7 @@
       }
 
     # Uniquenesses
-      psi.inv    <- .sim_psi.inv(N=N, P=P, psi.alpha=psi.alpha, psi.beta=psi.beta, c.data=c.data, eta=eta, lmat=lmat)
+      psi.inv    <- .sim_psi_inv(N=N, P=P, psi.alpha=psi.alpha, psi.beta=psi.beta, c.data=c.data, eta=eta, lmat=lmat)
 
     # Means
       mu[]       <- .sim_mu(N=N, P=P, mu.sigma=mu.sigma, psi.inv=psi.inv, sum.data=sum.data, sum.eta=colSums(eta), lmat=lmat, mu.zero=mu.zero)

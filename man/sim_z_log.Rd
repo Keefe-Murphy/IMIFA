@@ -34,11 +34,11 @@ Samples cluster labels for N observations from G groups using decreasingly order
 # Set the dimensions & simulate a matrix of log-probabilities
 N         <- 400
 G         <- 25
-log.probs <- sweep(t(apply(matrix(-stats::rexp(N * G), nrow=N, ncol=G), 1,
+log_probs <- sweep(t(apply(matrix(-stats::rexp(N * G), nrow=N, ncol=G), 1,
                    sort, decreasing=TRUE)), 1, seq(1, 0, -25), FUN="/")
 
 # Sample the cluster labels and tabulate them
-res       <- sim_z_log(log.probs, N, G)
+res       <- sim_z_log(log_probs, N, G)
 tabulate(res$z, nbins=G)
 }
 \references{

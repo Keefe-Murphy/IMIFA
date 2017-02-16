@@ -341,7 +341,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     if(!label.switch) {
       z.temp     <- tryCatch(factor(z[,1], labels=Gseq), error=function(e) factor(z[,1], levels=Gseq))
       for(sl in seq_along(tmp.store)) {
-        sw.lab   <- .lab.switch(z.new=z[,sl], z.old=z.temp, Gs=Gseq)
+        sw.lab   <- .lab_switch(z.new=z[,sl], z.old=z.temp, Gs=Gseq)
         z[,sl]   <- sw.lab$z
         z.perm   <- sw.lab$z.perm
         if(!identical(as.integer(z.perm), Gseq)) {
@@ -380,7 +380,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       zlabels    <- factor(zlabels, labels=seq_along(unique(zlabels)))
       levs       <- levels(zlabels)
       if(length(levs) == G) {
-        sw.lab   <- .lab.switch(z.new=post.z, z.old=zlabels, Gs=Gseq)
+        sw.lab   <- .lab_switch(z.new=post.z, z.old=zlabels, Gs=Gseq)
         post.z   <- factor(sw.lab$z, levels=Gseq)
         l.perm   <- sw.lab$z.perm
         z.tmp    <- apply(z, 2, factor, levels=l.perm)
