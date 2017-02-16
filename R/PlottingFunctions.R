@@ -99,16 +99,18 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
   Q.supp  <- attr(GQ.res, "Supplied")["Q"]
   method  <- attr(x, "Method")
   store   <- attr(x, "Store")
-  param   <- match.arg(param)
   n.var   <- attr(x, "Vars")
   n.obs   <- attr(x, "Obs")
-  if(missing(plot.meth))              stop("What type of plot would you like to produce?")
+  if(missing(plot.meth))              stop("'plot.meth' not supplied:\nWhat type of plot would you like to produce?")
   if(is.element(plot.meth,
      c("G", "Q",
        "QG")))  {      plot.meth <- "GQ"
   }
   uni.type     <- unname(attr(x, "Uni.Meth")['Uni.Type'])
   plot.meth    <- match.arg(plot.meth)
+  if(!is.element(plot.meth, c("errors", "GQ", "zlabels")) &&
+     missing(param))                  stop("'param' not supplied:\nWhat variable would you like to plot?")
+  param        <- match.arg(param)
   load.meth    <- match.arg(load.meth)
   type.x       <- missing(type)
   type         <- match.arg(type)
