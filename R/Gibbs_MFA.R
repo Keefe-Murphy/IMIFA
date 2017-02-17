@@ -107,6 +107,7 @@
     # Cluster Labels
       psi          <- 1/psi.inv
       sigma        <- lapply(Gseq, function(g) tcrossprod(lmat[,,g]) + diag(psi[,g]))
+      log.probs    <- vapply(Gseq, function(g, Q=Q0s[g]) mvnfast::dmvn(data, mu[,g], if(Q) sigma[[g]] else sqrt(sigma[[g]]), log=TRUE, isChol=!Q) + log(pi.prop[g]), numeric(N))
       z.log        <- utils::capture.output({ z.res <- try(sim_z_log(log.probs=log.probs, N=N, G=G, Gseq=Gseq), silent=TRUE) })
       zerr         <- inherits(z.res, "try-error")
       if(zerr) {

@@ -258,7 +258,11 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       Q.ind      <- if(all(!Q.T, length(n.fac) > 1)) Q.ind else which(n.fac == Q)
       Q          <- stats::setNames(if(length(Q) != G) rep(Q, G) else Q, gnames)
       if(all(inf.G, Q.T))  GQ.temp1$G <- rep(G, GQs)
-      GQ.temp1   <- if(is.element(method, c("OMFA", "IMFA")) && GQ1) lapply(GQ.temp1, "[[", Q.ind) else if(inf.G) GQ.temp1
+      if(is.element(method, c("OMFA", "IMFA")) && GQ1) {
+        GQ.temp1 <- lapply(GQ.temp1, "[[", Q.ind)
+      } else if(inf.G) {
+        GQ.temp1$Stored.G <- GQ.temp1$Stored.G[[1]]
+      }
       GQ.temp3   <- c(GQ.temp2, list(AIC.mcmcs = aic.mcmc, BIC.mcmcs = bic.mcmc, DICs = dic))
       GQ.res     <- switch(method, OMFA=, IMFA=c(GQ.temp1, list(Q = Q), GQ.temp3), c(list(G = G, Q = Q), GQ.temp3))
     }
@@ -722,6 +726,8 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   }
   attr(result, "Name")         <- attr(sims, "Name")
   attr(result, "Obsnames")     <- if(all(!sw["s.sw"], exists("obsnames", envir=.GlobalEnv))) obsnames
+  attr(result, "range.G")      <- attr(sim, "Groups")
+  attr(result, "range.Q")      <- attr(sim, "Factors")
   attr(result, "Varnames")     <- if(all(!sw["l.sw"], !sw["mu.sw"], !sw["psi.sw"], exists("varnames", envir=.GlobalEnv))) varnames
   attr(result, "N.Loadstore")  <- unname(load.store)
   attr(result, "Obs")          <- n.obs
