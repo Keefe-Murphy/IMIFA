@@ -726,8 +726,8 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   }
   attr(result, "Name")         <- attr(sims, "Name")
   attr(result, "Obsnames")     <- if(all(!sw["s.sw"], exists("obsnames", envir=.GlobalEnv))) obsnames
-  attr(result, "range.G")      <- attr(sim, "Groups")
-  attr(result, "range.Q")      <- attr(sim, "Factors")
+  attr(result, "range.G")      <- attr(sims, "Groups")
+  attr(result, "range.Q")      <- attr(sims, "Factors")
   attr(result, "Varnames")     <- if(all(!sw["l.sw"], !sw["mu.sw"], !sw["psi.sw"], exists("varnames", envir=.GlobalEnv))) varnames
   attr(result, "N.Loadstore")  <- unname(load.store)
   attr(result, "Obs")          <- n.obs

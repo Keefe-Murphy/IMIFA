@@ -143,8 +143,14 @@ The object `resIMIFA` above is of the class `Results_IMIFA`. We can call `plot` 
 
 Let's examine the posterior distribution of $G$ and the posterior distribution of $Q_g$ for each of the `r resIMIFA$GQ.results$G` groups.
 
-```{r, results='hide'}
+```{r, results='hide', eval=FALSE}
 plot(resIMIFA, plot.meth="GQ")
+```
+```{r, results='hide', echo=FALSE}
+plot(resIMIFA, plot.meth="GQ", g=1)
+```
+```{r, results='hide', echo=FALSE}
+plot(resIMIFA, plot.meth="GQ", g=2)
 ```
 
 Let's examine clustering performance against the known group labels. Note that the group labels could have been already supplied to `get_IMIFA_results` too, but plotting allows clustering performance to be evaluated against new labels without having to extract the full results object all over again. More specifically, the code below allows us to visualise the clustering uncertainty (with or without the labels being supplied, in fact). In this case, `g=2` would mean to instead visualise the uncertainties in the form of a histogram.

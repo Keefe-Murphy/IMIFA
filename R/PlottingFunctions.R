@@ -206,11 +206,14 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
   if(!gx)                      g <- as.integer(g)
   if(!gx  && any(length(g) != 1,
                  !is.numeric(g)))     stop("If 'g' is supplied it must be of length 1")
-  if(any(all(is.element(method, c("IMIFA", "OMIFA")), m.sw["G.sw"]), m.sw["Z.sw"])) {
+  if(any(all(is.element(method, c("IMFA", "OMFA")), m.sw["G.sw"]), m.sw["Z.sw"])) {
     Gs    <- if(gx) seq_len(2L) else ifelse(g <= 2, g,
                                       stop("Invalid 'g' value"))
+  } else if(all(is.element(method, c("IMIFA", "OMIFA")), m.sw["G.sw"]))           {
+    Gs    <- if(gx) seq_len(3L) else ifelse(g <= 3, g,
+                                      stop("Invalid 'g' value"))
   } else if(any(all(is.element(param, c("scores", "pis", "alpha")), any(all.ind, param != "scores", !m.sw["M.sw"])),
-            m.sw["G.sw"], all(m.sw["P.sw"], param != "loadings"), m.sw["E.sw"])) {
+            m.sw["G.sw"], all(m.sw["P.sw"], param != "loadings"), m.sw["E.sw"]))  {
     Gs    <- 1L
   } else if(!gx) {
     if(!is.element(method, c("FA", "IFA"))) {
@@ -618,7 +621,8 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
 
     if(m.sw["G.sw"]) {
       plotG.ind  <- is.element(method, c("IMIFA", "IMFA", "OMIFA", "OMFA"))
-      plotQ.ind  <- any(any(g > 1, is.element(method, c("IFA", "MIFA"))), all(is.element(method, c("IMIFA", "OMIFA")), g != 1))
+      plotQ.ind  <- any(is.element(method, c("IFA", "MIFA")), all(is.element(method, c("IMIFA", "OMIFA")), g == 2))
+      plotT.ind  <- any(all(g == 2, is.element(method, c("IMFA", "OMFA"))), all(is.element(method, c("IMIFA", "OMIFA")), g == 3))
       aicm       <- round(GQ.res$AICMs, 2)
       bicm       <- round(GQ.res$BICMs, 2)
       log.iLLH   <- round(GQ.res$LogIntegratedLikelihoods, 2)
@@ -662,6 +666,8 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         graphics::axis(1, at=Rfast::med(Q.plot), labels="Q", tick=FALSE, line=1.5)
       }
       if(all(method != "IFA", plotQ.ind)) {
+        graphics::layout(1)
+        graphics::par(mar=c(5.1, 4.1, 4.1, 2.1))
         plot.Q <- GQ.res$Q.Counts
         plot.Q <- if(is.list(plot.Q)) plot.Q else list(plot.Q)
         Q.name <- lapply(plot.Q, names)
@@ -671,7 +677,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         missQ  <- lapply(Gseq, function(g) stats::setNames(rep(0, length(missQ[[g]])), as.character(missQ[[g]])))
         plot.Q <- lapply(Gseq, function(g) c(plot.Q[[g]], missQ[[g]]))
         plot.Q <- do.call(rbind, lapply(Gseq, function(g) plot.Q[[g]][Rfast::Order(as.numeric(names(plot.Q[[g]])))]))
-        if(titles) {
+        if(titles)  {
           graphics::layout(rbind(1, 2), heights=c(9, 1))
           graphics::par(mar=c(3.1, 4.1, 4.1, 2.1))
         }
@@ -679,7 +685,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         if(titles) graphics::title(main=list(expression('Posterior Distribution of Q'["g"])))
         graphics::axis(1, at=matrixStats::colMedians(Q.plot), labels=colnames(plot.Q), tick=FALSE)
         graphics::axis(1, at=Rfast::med(Q.plot), labels="Q", tick=FALSE, line=1)
-        if(titles) {
+        if(titles)  {
           graphics::par(mar=c(0, 0, 0, 0))
           graphics::plot.new()
           tmp  <- if(G > 5) unlist(lapply(Gseq, function(g) c(Gseq[g], Gseq[g + ceiling(G/2)])))[Gseq] else Gseq
@@ -688,20 +694,41 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           graphics::legend("center", legend=ltxt, ncol=if(G > 5) ceiling(G/2) else G, bty="n", pch=15, col=lcol, cex=max(0.7, 1 - 0.03 * G))
         }
       }
-      if(!any(plotQ.ind, plotG.ind))  message("Nothing to plot")
-      gq.nam <- substring(names(GQ.res), 1, 1)
-      if(is.element(method, c("IMIFA", "OMIFA"))) {
-        if(g == 1) {
-          print(GQ.res[gq.nam == "G"])
-        } else {
-          print(GQ.res[gq.nam == "Q"])
+      if(plotT.ind) {
+        graphics::layout(1)
+        graphics::par(mar=c(5.1, 4.1, 4.1, 2.1))
+        col.G  <- c(ceiling(length(palette)/2), 1)
+        x.plot <- GQ.res$Stored.G
+        plot.x <- if(is.element(method, c("IMFA", "IMIFA"))) t(x.plot) else cbind(as.vector(x.plot), rep(attr(x, "range.G"), ncol(x.plot)))
+        matplot(plot.x, type="l", col=col.G, ylab="G", xlab="Iteration", main="", lty=if(is.element(method, c("IMFA", "IMIFA"))) 1 else 1:2, ylim=c(0, max(plot.x) + 1))
+        if(titles) {
+          title(main=list("Trace:     \n\n"))
+          title(expression("Active" * phantom(" and Non-empty Groups")), col.main = 1)
+          title(expression(phantom("Active ") * "and" * phantom(" Non-empty Groups")), col.main="black")
+          title(expression(phantom("Active and ") * "Non-empty" * phantom(" Groups")), col.main = col.G[1])
+          title(expression(phantom("Active and Non-empty ") * "Groups"), col.main="black")
         }
-        if(g == max(Gs)) {
+      }
+      if(!any(plotQ.ind,
+              plotG.ind, plotT.ind))  message("Nothing to plot")
+      gq.nam <- substring(names(GQ.res), 1, 1)
+      if(is.element(method, c("IMIFA", "OMIFA")))      {
+        if(g == 1)   {
+          print(GQ.res[gq.nam == "G"])
+        } else if(g == 2) {
+          print(GQ.res[gq.nam == "Q"])
+        } else if(g == 3) {
           print(GQ.res[gq.nam != "G" & gq.nam != "Q" & gq.nam != "S"])
         }
-      } else if(is.element(method, c("MFA", "MIFA", "OMFA", "IMFA"))) {
+      } else if(is.element(method, c("OMFA", "IMFA"))) {
+          if(g == 1) {
+            print(GQ.res[gq.nam == "G"])
+          } else {
+            print(GQ.res[gq.nam != "G" & gq.nam != "S"])
+          }
+      } else switch(method, MFA=, MIFA={
           print(GQ.res[gq.nam != "S"])
-      } else switch(method, IFA={
+        }, IFA=  {
           print(utils::tail(GQ.res[gq.nam != "S"], -1))
         },
           cat(paste0("Q = ", Q, "\n"))
