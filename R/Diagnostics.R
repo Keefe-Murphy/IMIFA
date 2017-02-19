@@ -318,6 +318,13 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       z.nam      <- gsub("[[:space:]]", "", deparse(substitute(zlabels)))
       nam.z      <- gsub("\\[.*", "", z.nam)
       nam.zx     <- gsub(".*\\[(.*)\\].*", "\\1)", z.nam)
+      if(grepl("$", z.nam, fixed=TRUE)) {
+        x.nam    <- strsplit(nam.z, "$", fixed=TRUE)[[1]]
+        nam.z    <- z.nam  <- x.nam[1]
+        if(x.nam[2] %in% colnames(get(nam.z))) {
+         zlabels <- get(nam.z)[x.nam[2]][,1]
+        } else                    stop(paste0("'", x.nam[2], "' not found within '", nam.z, "'"))
+      }
       if(!exists(nam.z,
          envir=.GlobalEnv))       stop(paste0("Object ", match.call()$zlabels, " not found\n"))
       if(any(unlist(vapply(seq_along(pattern), function(p) grepl(pattern[p], nam.z, fixed=TRUE), logical(1L))),
@@ -415,13 +422,13 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
         tab.stat$misclassified <- NULL
       }
       tab.stat   <- c(list(confusion.matrix = tab), tab.stat)
-      uncert.obs <- which(uncertain   >= 1/G)
-      attr(uncertain, "Obs")   <- if(sum(uncert.obs) != 0) uncert.obs
-      if(!label.miss && (length(levs) == G)) {
+      if(length(levs) == G)   {
         names(tab.stat)[1]     <- "confusion.matrix.matched"
       }
       class(tab.stat)          <- "listof"
     }
+    uncert.obs <- which(uncertain >= 1/G)
+    attr(uncertain, "Obs")     <- if(sum(uncert.obs) != 0) uncert.obs
     sizes        <- stats::setNames(tabulate(post.z, nbins=G), gnames)
     if(any(sizes == 0))           warning("Empty group exists in modal clustering:\n examine trace plots and try supplying a lower G value to tune.imifa() or re-running the model", call.=FALSE)
     if(alpha.step != "fixed") {

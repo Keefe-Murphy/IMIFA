@@ -145,6 +145,13 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
     z.nam <- gsub("[[:space:]]", "", deparse(substitute(zlabels)))
     nam.z <- gsub("\\[.*", "", z.nam)
     nam.x <- gsub(".*\\[(.*)\\].*", "\\1)", z.nam)
+    if(grepl("$", z.nam, fixed=TRUE)) {
+      x.nam    <- strsplit(nam.z, "$", fixed=TRUE)[[1]]
+      nam.z    <- z.nam  <- x.nam[1]
+      if(x.nam[2] %in% colnames(get(nam.z))) {
+        zlabels <- get(nam.z)[x.nam[2]][,1]
+      } else                          stop(paste0("'", x.nam[2], "' not found within '", nam.z, "'"))
+    }
     ptrn  <- c("(", ")")
     if(!exists(nam.z,
                envir=.GlobalEnv))     stop(paste0("Object ", match.call()$zlabels, " not found\n"))
@@ -795,6 +802,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         graphics::axis(2, at=if(sum(plot.x)  == 0) c(graphics::axTicks(2), max(x.plot$counts)) else graphics::axTicks(2), las=1, cex.axis=0.8)
       }
       if(g == min(Gs)) {
+        ucert   <- attr(plot.x, "Obs")
         if(any(!labelmiss,  !z.miss)) {
           if(all(!labelmiss, z.miss)) {
            prf  <- clust$perf
@@ -819,15 +827,18 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
            if(nlevels(pzs) == nlevels(labs)) {
             names(prf)[1]  <- "matched.confusion.matrix"
            }
-           class(prf)      <- "listof"
           }
-          ucert <- attr(plot.x, "Obs")
           if(!is.null(ucert)) {
            prf  <- c(prf, list(uncertain = ucert))
           }
           prf$error.rate   <- paste0(round(100 * prf$error.rate, 2), "%")
-          print(prf)
-        } else                        message("Nothing to print: try supplying known cluster labels")
+        } else       {               message("Try supplying true cluster labels, if known, for more printed output")
+          if(!is.null(ucert)) {
+            prf <- list(uncertain = ucert)
+          }
+        }
+        class(prf)         <- "listof"
+        print(prf)
       }
     }
 

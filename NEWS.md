@@ -20,6 +20,7 @@
 * Tightened controls for when certain items are not stored.
 * Edited Ledermann upper bound `stop(...)` for finite factor models to `warning(...)`.
 * Slightly rearranged order in which Gibbs updates take place.
+* Indices of uncertain observations now returned (`get_IMIFA_results`) & printed (`plot.Results_IMIFA`) even when `zlabels` not supplied.
 * Fixed behaviour of progress bar when `verbose=FALSE`.
 * Fixed typos and expanded/clarified help documentation & vignette.
 
