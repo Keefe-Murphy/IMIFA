@@ -630,13 +630,13 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
       plotG.ind  <- is.element(method, c("IMIFA", "IMFA", "OMIFA", "OMFA"))
       plotQ.ind  <- any(is.element(method, c("IFA", "MIFA")), all(is.element(method, c("IMIFA", "OMIFA")), g == 2))
       plotT.ind  <- any(all(g == 2, is.element(method, c("IMFA", "OMFA"))), all(is.element(method, c("IMIFA", "OMIFA")), g == 3))
-      aicm       <- round(GQ.res$AICMs, 2)
-      bicm       <- round(GQ.res$BICMs, 2)
-      log.iLLH   <- round(GQ.res$LogIntegratedLikelihoods, 2)
+      aicm       <- round(GQ.res$Criteria$AICMs, 2)
+      bicm       <- round(GQ.res$Criteria$BICMs, 2)
+      log.iLLH   <- round(GQ.res$Criteria$LogIntegratedLikelihoods, 2)
       if(is.element(method, c("FA", "MFA", "OMFA", "IMFA"))) {
-        aic.mcmc <- round(GQ.res$AIC.mcmcs, 2)
-        bic.mcmc <- round(GQ.res$BIC.mcmcs, 2)
-        dic      <- round(GQ.res$DICs, 2)
+        aic.mcmc <- round(GQ.res$Criteria$AIC.mcmcs, 2)
+        bic.mcmc <- round(GQ.res$Criteria$BIC.mcmcs, 2)
+        dic      <- round(GQ.res$Criteria$DICs, 2)
       }
       if(all(plotG.ind, g == 1))  {
         graphics::layout(1)

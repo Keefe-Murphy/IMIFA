@@ -264,7 +264,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
         GQ.temp1$Stored.G <- GQ.temp1$Stored.G[[1]]
       }
       GQ.temp3   <- c(GQ.temp2, list(AIC.mcmcs = aic.mcmc, BIC.mcmcs = bic.mcmc, DICs = dic))
-      GQ.res     <- switch(method, OMFA=, IMFA=c(GQ.temp1, list(Q = Q), GQ.temp3), c(list(G = G, Q = Q), GQ.temp3))
+      GQ.res     <- switch(method, OMFA=, IMFA=c(GQ.temp1, list(Q = Q), list(Criteria = GQ.temp3)), c(list(G = G, Q = Q), list(Criteria = GQ.temp3)))
     }
     clust.ind    <- !any(is.element(method,   c("FA", "IFA")),
                      all(is.element(method, c("MFA", "MIFA")), G == 1))
@@ -470,7 +470,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
                          Q.CI = Q.CI, Q.Probs = Q.prob, Q.Counts = Q.tab,
                          Stored.Q = if(clust.ind) Q.store else as.vector(Q.store))
     GQ.res       <- if(inf.G) c(GQ.temp1, GQ.temp4) else c(list(G = G), GQ.temp4)
-    GQ.res       <- c(GQ.res, GQ.temp2)
+    GQ.res       <- c(GQ.res, list(Criteria = GQ.temp2))
     attr(GQ.res, "Q.big") <- attr(sims[[G.ind]][[Q.ind]], "Q.big")
   }
 
