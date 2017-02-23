@@ -159,14 +159,14 @@
     Qmax         <- seq_len(max(Q.store))
     eta.store    <- if(sw["s.sw"])  tryCatch(eta.store[,Qmax,, drop=FALSE],  error=function(e) eta.store)
     load.store   <- if(sw["l.sw"])  tryCatch(load.store[,Qmax,, drop=FALSE], error=function(e) load.store)
-    returns      <- list(mu       = if(sw["mu.sw"])  provideDimnames(mu.store,  base=list(varnames, ""), unique=FALSE),
-                         eta      = if(sw["s.sw"])   provideDimnames(tryCatch(slam::as.simple_sparse_array(eta.store),  error=function(e) eta.store),  base=list(obsnames, "", ""), unique=FALSE),
-                         load     = if(sw["l.sw"])   provideDimnames(tryCatch(slam::as.simple_sparse_array(load.store), error=function(e) load.store), base=list(varnames, "", ""), unique=FALSE),
-                         psi      = if(sw["psi.sw"]) provideDimnames(psi.store, base=list(varnames, ""), unique=FALSE),
-                         post.mu  = stats::setNames(post.mu,  varnames),
-                         post.psi = stats::setNames(post.psi, varnames),
-                         cov.emp  = provideDimnames(cov.emp,  base=list(varnames)),
-                         cov.est  = provideDimnames(cov.est,  base=list(varnames)),
+    returns      <- list(mu       = if(sw["mu.sw"])  tryCatch(provideDimnames(mu.store,  base=list(varnames, ""), unique=FALSE), error=function(e) mu.store),
+                         eta      = if(sw["s.sw"])   tryCatch(provideDimnames(tryCatch(slam::as.simple_sparse_array(eta.store),  error=function(e) eta.store),  base=list(obsnames, "", ""), unique=FALSE), error=function(e) eta.store),
+                         load     = if(sw["l.sw"])   tryCatch(provideDimnames(tryCatch(slam::as.simple_sparse_array(load.store), error=function(e) load.store), base=list(varnames, "", ""), unique=FALSE), error=function(e) load.store),
+                         psi      = if(sw["psi.sw"]) tryCatch(provideDimnames(psi.store, base=list(varnames, ""), unique=FALSE), error=function(e) psi.store),
+                         post.mu  = tryCatch(stats::setNames(post.mu,  varnames),            error=function(e) post.mu),
+                         post.psi = tryCatch(stats::setNames(post.psi, varnames),            error=function(e) post.psi),
+                         cov.emp  = tryCatch(provideDimnames(cov.emp,  base=list(varnames)), error=function(e) cov.emp),
+                         cov.est  = tryCatch(provideDimnames(cov.est,  base=list(varnames)), error=function(e) cov.est),
                          ll.store = ll.store,
                          Q.store  = matrix(Q.store, nrow=1),
                          time     = init.time)

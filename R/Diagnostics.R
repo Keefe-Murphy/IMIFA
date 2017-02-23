@@ -99,6 +99,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   scaling        <- attr(sims, "Scaling")
   scal.meth      <- attr(scaling, "Method")
   conf.level     <- as.numeric(conf.level)
+  varnames       <- NULL
   if(any(length(conf.level) != 1,
      !is.numeric(conf.level),
      (conf.level <= 0   ||
@@ -566,6 +567,18 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       cov.emp    <- sims[[G.ind]][[Q.ind]]$cov.emp
     }
     emp.T[g]     <- exists("cov.emp", envir=environment())
+    if(data.x)         {
+      if(is.null(rownames(mu)))   {
+        rownames(mu)     <- varnames
+      }
+      if(is.null(rownames(psi)))  {
+        rownames(psi)    <- varnames
+      }
+      if(sw["l.sw"]      &&
+         is.null(rownames(lmat))) {
+        rownames(lmat)   <- varnames
+      }
+    }
 
   # Compute posterior means and % variation explained
     if(sw["mu.sw"])  {

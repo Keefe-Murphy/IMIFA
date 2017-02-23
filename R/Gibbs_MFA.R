@@ -177,10 +177,10 @@
       }
     }
     if(verbose)       close(pb)
-    returns        <- list(mu       = if(sw["mu.sw"])         provideDimnames(mu.store,   base=list(varnames, "", ""),     unique=FALSE),
-                           eta      = if(all(sw["s.sw"], Q0)) provideDimnames(eta.store,  base=list(obsnames, "", ""),     unique=FALSE),
-                           load     = if(all(sw["l.sw"], Q0)) provideDimnames(load.store, base=list(varnames, "", "", ""), unique=FALSE),
-                           psi      = if(sw["psi.sw"])        provideDimnames(psi.store,  base=list(varnames, "", ""),     unique=FALSE),
+    returns        <- list(mu       = if(sw["mu.sw"])         tryCatch(provideDimnames(mu.store,   base=list(varnames, "", ""),     unique=FALSE), error=function(e) mu.store),
+                           eta      = if(all(sw["s.sw"], Q0)) tryCatch(provideDimnames(eta.store,  base=list(obsnames, "", ""),     unique=FALSE), error=function(e) eta.store),
+                           load     = if(all(sw["l.sw"], Q0)) tryCatch(provideDimnames(load.store, base=list(varnames, "", "", ""), unique=FALSE), error=function(e) load.store),
+                           psi      = if(sw["psi.sw"])        tryCatch(provideDimnames(psi.store,  base=list(varnames, "", ""),     unique=FALSE), error=function(e) psi.store),
                            pi.prop  = if(sw["pi.sw"])         pi.store,
                            z.store  = z.store,
                            ll.store = ll.store,

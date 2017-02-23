@@ -288,10 +288,10 @@
     Qmax           <- seq_len(max(Q.store))
     eta.store      <- if(sw["s.sw"])  tryCatch(eta.store[,Qmax,, drop=FALSE],   error=function(e) eta.store)
     load.store     <- if(sw["l.sw"])  tryCatch(load.store[,Qmax,,, drop=FALSE], error=function(e) load.store)
-    returns        <- list(mu       = if(sw["mu.sw"])  provideDimnames(mu.store,  base=list(varnames, "", ""), unique=FALSE),
-                           eta      = if(sw["s.sw"])   provideDimnames(tryCatch(slam::as.simple_sparse_array(eta.store),  error=function(e) eta.store),  base=list(obsnames, "", ""),     unique=FALSE),
-                           load     = if(sw["l.sw"])   provideDimnames(tryCatch(slam::as.simple_sparse_array(load.store), error=function(e) load.store), base=list(varnames, "", "", ""), unique=FALSE),
-                           psi      = if(sw["psi.sw"]) provideDimnames(psi.store, base=list(varnames, "", ""), unique=FALSE),
+    returns        <- list(mu       = if(sw["mu.sw"])  tryCatch(provideDimnames(mu.store,  base=list(varnames, "", ""), unique=FALSE), error=function(e) mu.store),
+                           eta      = if(sw["s.sw"])   tryCatch(provideDimnames(tryCatch(slam::as.simple_sparse_array(eta.store),      error=function(e) eta.store),  base=list(obsnames, "", ""),     unique=FALSE), error=function(e) eta.store),
+                           load     = if(sw["l.sw"])   tryCatch(provideDimnames(tryCatch(slam::as.simple_sparse_array(load.store),     error=function(e) load.store), base=list(varnames, "", "", ""), unique=FALSE), error=function(e) load.store),
+                           psi      = if(sw["psi.sw"]) tryCatch(provideDimnames(psi.store, base=list(varnames, "", ""), unique=FALSE), error=function(e) psi.store),
                            pi.prop  = if(sw["pi.sw"])  pi.store,
                            z.store  = z.store,
                            ll.store = ll.store,

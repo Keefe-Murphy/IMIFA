@@ -378,10 +378,10 @@
     load.store       <- if(sw["l.sw"])   tryCatch(load.store[,Qmax,Gmax,, drop=FALSE], error=function(e) load.store)
     psi.store        <- if(sw["psi.sw"]) tryCatch(psi.store[,Gmax,, drop=FALSE],       error=function(e) psi.store)
     pi.store         <- if(sw["pi.sw"])  tryCatch(pi.store[Gmax,, drop=FALSE],         error=function(e) pi.store)
-    returns          <- list(mu        = if(sw["mu.sw"])  provideDimnames(mu.store,    base=list(varnames, "", ""), unique=FALSE),
-                             eta       = if(sw["s.sw"])   provideDimnames(tryCatch(slam::as.simple_sparse_array(eta.store),  error=function(e) eta.store),  base=list(obsnames, "", ""),     unique=FALSE),
-                             load      = if(sw["l.sw"])   provideDimnames(tryCatch(slam::as.simple_sparse_array(load.store), error=function(e) load.store), base=list(varnames, "", "", ""), unique=FALSE),
-                             psi       = if(sw["psi.sw"]) provideDimnames(psi.store,   base=list(varnames, "", ""), unique=FALSE),
+    returns          <- list(mu        = if(sw["mu.sw"])  tryCatch(provideDimnames(mu.store,    base=list(varnames, "", ""), unique=FALSE), error=function(e) mu.store),
+                             eta       = if(sw["s.sw"])   tryCatch(provideDimnames(tryCatch(slam::as.simple_sparse_array(eta.store),        error=function(e) eta.store),  base=list(obsnames, "", ""),     unique=FALSE), error=function(e) eta.store),
+                             load      = if(sw["l.sw"])   tryCatch(provideDimnames(tryCatch(slam::as.simple_sparse_array(load.store),       error=function(e) load.store), base=list(varnames, "", "", ""), unique=FALSE), error=function(e) load.store),
+                             psi       = if(sw["psi.sw"]) tryCatch(provideDimnames(psi.store,   base=list(varnames, "", ""), unique=FALSE), error=function(e) psi.store),
                              pi.prop   = if(sw["pi.sw"])  pi.store,
                              alpha     = if(not.fixed)    alpha.store,
                              discount  = if(learn.d)      discount,

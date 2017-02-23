@@ -101,14 +101,14 @@
       }
     }
     if(verbose)  close(pb)
-    returns   <- list(mu       = if(sw["mu.sw"])           provideDimnames(mu.store,    base=list(varnames, ""),     unique=FALSE),
-                      eta      = if(all(sw["s.sw"], Q0))   provideDimnames(eta.store,   base=list(obsnames, "", ""), unique=FALSE),
-                      load     = if(all(sw["l.sw"], Q0))   provideDimnames(load.store,  base=list(varnames, "", ""), unique=FALSE),
-                      psi      = if(sw["psi.sw"])          provideDimnames(psi.store,   base=list(varnames, ""),     unique=FALSE),
-                      post.mu  = stats::setNames(post.mu,  varnames),
-                      post.psi = stats::setNames(post.psi, varnames),
-                      cov.emp  = provideDimnames(cov.emp,  base=list(varnames)),
-                      cov.est  = provideDimnames(cov.est,  base=list(varnames)),
+    returns   <- list(mu       = if(sw["mu.sw"])           tryCatch(provideDimnames(mu.store,    base=list(varnames, ""),     unique=FALSE), error=function(e) mu.store),
+                      eta      = if(all(sw["s.sw"], Q0))   tryCatch(provideDimnames(eta.store,   base=list(obsnames, "", ""), unique=FALSE), error=function(e) eta.store),
+                      load     = if(all(sw["l.sw"], Q0))   tryCatch(provideDimnames(load.store,  base=list(varnames, "", ""), unique=FALSE), error=function(e) load.store),
+                      psi      = if(sw["psi.sw"])          tryCatch(provideDimnames(psi.store,   base=list(varnames, ""),     unique=FALSE), error=function(e) psi.store),
+                      post.mu  = tryCatch(stats::setNames(post.mu,  varnames),            error=function(e) post.mu),
+                      post.psi = tryCatch(stats::setNames(post.psi, varnames),            error=function(e) post.psi),
+                      cov.emp  = tryCatch(provideDimnames(cov.emp,  base=list(varnames)), error=function(e) cov.emp),
+                      cov.est  = tryCatch(provideDimnames(cov.est,  base=list(varnames)), error=function(e) cov.est),
                       ll.store = ll.store,
                       time     = init.time)
     attr(returns, "K")        <- .dim(Q, P)
