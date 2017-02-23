@@ -350,7 +350,7 @@
       sw.name   <- deparse(substitute(switch0g))
       if(!is.list(obj0g))        obj0g  <- list(obj0g)
       if(length(obj0g) != length(range.G))    {
-        if(!P.dim) {
+        if(!P.dim)             {
           obj0g <- replicate(length(range.G), obj0g)
         } else                             stop(paste0(obj.name, " must be a list of length ", length(range.G)))
       }
@@ -358,7 +358,8 @@
       if(is.element(method, c("FA", "IFA")))  {
         if(any(!is.element(len, c(1, V)))) stop(paste0(obj.name, " must be list of length 1 containing a scalar", ifelse(P.dim, paste0(" or a vector of length P=", V), ""), " for a 1-group model"))
       } else {
-        if(is.element(len, c(1, range.G, V))) {
+        if(any(is.element(len,
+           c(1, range.G, V)))) {
           if(all(len == range.G)) obj0g <- if(switch0g) lapply(rGseq, function(g) matrix(obj0g[[g]], nrow=1))  else stop(paste0(sw.name, " must be TRUE if the dimension of ", obj.name, " depends on G"))
           if(all(len == V))       obj0g <- if(V == 1)   lapply(rGseq, function(g) rep(obj0g[[g]], range.G[g])) else lapply(rGseq, function(g) matrix(obj0g[[g]], nrow=V, ncol=range.G[g]))
         } else if(!all(vapply(rGseq, function(g) is.matrix(obj0g[[g]]) && any(identical(dim(obj0g[[g]]), c(1, range.G[g])), identical(dim(obj0g[[g]]), c(V, range.G[g]))), logical(1L)))) {
@@ -368,7 +369,7 @@
         }
       }
       if(all(length(unique(unlist(obj0g))) > 1,
-             !switch0g, !P.dim))           stop(paste0(obj.name, " must be a scalar if ", sw.name, " is TRUE"))
+             !switch0g, !P.dim))           stop(paste0(obj.name, " must be a scalar if ", sw.name, " is FALSE"))
         obj0g
     }
 

@@ -592,9 +592,9 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   }
   if(all(uni.type == "isotropic", unlist(lapply(psi.beta, function(x) {
     if(is.matrix(x)) any(apply(x, 2, function(y) {
-      length(round(y, nchar(y))) }) != 1)  else  {
-        length(round(x, nchar(x)))  !=
-          1 } } ))))                stop("'psi.beta' cannot be variable specific if 'uni.type' is 'isotropic'")
+      length(unique(round(y, nchar(y)))) }) != 1)  else  {
+      length(unique(round(x,
+      nchar(x)))) != 1 } } ))))     stop("'psi.beta' cannot be variable specific if 'uni.type' is 'isotropic'")
   if(any(unlist(psi.beta)   <= 0))  stop("'psi.beta' must be strictly positive")
   if(is.element(method, c("classify", "IFA", "MIFA", "IMIFA", "OMIFA"))) {
     if(!all(MGP_check(ad1=unlist(alpha.d1), ad2=unlist(alpha.d2), Q=unique(range.Q), nu=nu, bd1=beta.d1, bd2=beta.d2,

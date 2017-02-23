@@ -802,6 +802,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         graphics::axis(2, at=if(sum(plot.x)  == 0) c(graphics::axTicks(2), max(x.plot$counts)) else graphics::axTicks(2), las=1, cex.axis=0.8)
       }
       if(g == min(Gs)) {
+        prf     <- NULL
         ucert   <- attr(plot.x, "Obs")
         if(any(!labelmiss,  !z.miss)) {
           if(all(!labelmiss, z.miss)) {
@@ -832,13 +833,15 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
            prf  <- c(prf, list(uncertain = ucert))
           }
           prf$error.rate   <- paste0(round(100 * prf$error.rate, 2), "%")
-        } else       {               message("Try supplying true cluster labels, if known, for more printed output")
-          if(!is.null(ucert)) {
+        } else       {
+          if(!is.null(ucert)) {      message("Try supplying true cluster labels, if known, for more printed output")
             prf <- list(uncertain = ucert)
-          }
+          } else                     message("Nothing to print: try supplying known cluster labels")
         }
-        class(prf)         <- "listof"
-        print(prf)
+        if(!is.null(prf))     {
+          class(prf)       <- "listof"
+          print(prf)
+        }
       }
     }
 
