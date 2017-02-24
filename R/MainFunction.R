@@ -16,8 +16,8 @@
 #'  \cr
 #'  The "\code{classify}" method is not yet implemented.
 #' @param n.iters The number of iterations to run the Gibbs sampler for.
-#' @param range.G Depending on the method employed, either the range of values for the number of clusters, or the conseratively high starting value for the number of clusters. Defaults to 1 for the "\code{FA}" and "\code{IFA}" methods. For the "\code{MFA}" and "\code{MIFA}" models this is to be given as a range of candidate models to explore. For the "\code{OMFA}", "\code{OMIFA}", "\code{IMFA}", and "\code{IMIFA}" models, this is the number of clusters with which the chain is to be initialised, in which case the default is \code{min(N - 1, floor(3 * log(N)))}. For the "\code{OMFA}", and "\code{OMIFA}" models this remains fixed for the entire length of the chain, whereas for the "\code{IMFA}", and "\code{IMIFA}" models this acts as the maximum allowable number of active components.
-#' @param range.Q Depending on the method employed, either the range of values for the number of latent factors, or, for methods ending in IFA the conservatively high starting value for the number of cluster-specific factors, in which case the default starting value is \code{floor(3 * log(P))}. For methods ending in IFA, different clusters can be modelled using different numbers of latent factors (incl. zero); for methods not ending in IFA it is possible to fit zero-factor models, corresponding to simple diagonal covariance structures. For instance, fitting the "\code{IMFA}" model with \code{range.Q=0} corresponds to a vanilla Dirichlet Process Mixture Model.
+#' @param range.G Depending on the method employed, either the range of values for the number of clusters, or the conseratively high starting value for the number of clusters. Defaults to 1 for the "\code{FA}" and "\code{IFA}" methods. For the "\code{MFA}" and "\code{MIFA}" models this is to be given as a range of candidate models to explore. For the "\code{OMFA}", "\code{OMIFA}", "\code{IMFA}", and "\code{IMIFA}" models, this is the number of clusters with which the chain is to be initialised, in which case the default is \code{min(N - 1, floor(3 * log(N)))}. For the "\code{OMFA}", and "\code{OMIFA}" models this remains fixed for the entire length of the chain, whereas for the "\code{IMFA}", and "\code{IMIFA}" models this acts as the maximum allowable number of active components. If \code{length(range.G) * length(range.Q)} is large, consider not storing unnecessary parameters, or breaking up the range of models to be explored into chunks, and send each chunk to \code{\link{get_IMIFA_results}}.
+#' @param range.Q Depending on the method employed, either the range of values for the number of latent factors, or, for methods ending in IFA the conservatively high starting value for the number of cluster-specific factors, in which case the default starting value is \code{floor(3 * log(P))}. For methods ending in IFA, different clusters can be modelled using different numbers of latent factors (incl. zero); for methods not ending in IFA it is possible to fit zero-factor models, corresponding to simple diagonal covariance structures. For instance, fitting the "\code{IMFA}" model with \code{range.Q=0} corresponds to a vanilla Dirichlet Process Mixture Model. If \code{length(range.G) * length(range.Q)} is large, consider not storing unnecessary parameters or breaking up the range of models to be explored into chunks, and send each chunk to \code{\link{get_IMIFA_results}}.
 #' @param burnin The number of burn-in iterations for the sampler. Defaults to \code{n.iters/5}. Note that chains can also be burned in later, using \code{\link{get_IMIFA_results}}.
 #' @param thinning The thinning interval used in the simulation. Defaults to 2. No thinning corresponds to 1. Note that chains can also be thinned later, using \code{\link{get_IMIFA_results}}.
 #' @param centering A logical value indicating whether mean centering should be applied to the data, defaulting to TRUE.
@@ -57,7 +57,7 @@
 #' @param psi0g Logical indicating whether the \code{psi.beta} hyperparameter(s) can be cluster-specific. Defaults to FALSE. Only relevant for the "\code{MFA}" and "\code{MIFA}" methods when \code{z.list} is supplied.
 #' @param delta0g Logical indicating whether the \code{alpha.d1}  and \code{alpha.d2} hyperparameters can be cluster-specific. Defaults to FALSE. Only relevant for the "\code{MFA}" and "\code{MIFA}" methods when \code{z.list} is supplied.
 #' @param mu.switch Logical indicating whether the means are to be stored (defaults to TRUE). May be useful not to store if memory is an issue. Warning: posterior inference won't be posssible.
-#' @param score.switch Logical indicating whether the factor scores are to be stored (defaults to TRUE). May be useful not to store if memory is an issue. Warning: posterior inference won't be posssible.
+#' @param score.switch Logical indicating whether the factor scores are to be stored. As the array containing each sampled scores matrix tends to be amongst the largest objects to be stored, this defaults to FALSE when \code{length(range.G) * length(range.Q) > 10}, otherwise the default is TRUE. May be useful not to store if memory is an issue. Warning: posterior inference won't be posssible.
 #' @param load.switch Logical indicating whether the factor loadings are to be stored (defaults to TRUE). May be useful not to store if memory is an issue. Warning: posterior inference won't be posssible.
 #' @param psi.switch Logical indicating whether the uniquenesses are to be stored (defaults to TRUE). May be useful not to store if memory is an issue. Warning: posterior inference won't be posssible.
 #' @param pi.switch Logical indicating whether the mixing proportions are to be stored (defaults to TRUE). May be useful not to store if memory is an issue. Warning: posterior inference won't be posssible.
@@ -73,6 +73,7 @@
 #' @importFrom slam "as.simple_sparse_array"
 #' @importFrom corpcor "make.positive.definite"
 #' @importFrom mclust "Mclust" "mclustBIC"
+#' @importFrom utils "memory.limit"
 #'
 #' @seealso \code{\link{get_IMIFA_results}}, \code{\link{psi_hyper}}, \code{\link{MGP_check}}
 #' @references
@@ -216,6 +217,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
 # Manage storage switches & warnings for other function inputs
   if(!missing(mu.switch) && all(!mu.switch, ifelse(method == "classify",
      !centering, !centered)))       warning("Centering hasn't been applied - are you sure you want mu.switch=FALSE?", call.=FALSE)
+  score.x   <- missing(score.switch)
   switches  <- c(mu.sw=mu.switch, s.sw=score.switch, l.sw=load.switch, psi.sw=psi.switch, pi.sw=pi.switch)
   if(any(length(switches) != 5,
          !is.logical(switches)))    stop("All logical parameter storage switches must be TRUE or FALSE")
@@ -345,6 +347,14 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   len.G     <- switch(method, classify=range.G, length(range.G))
   len.Q     <- length(range.Q)
   len.X     <- len.G * len.Q
+  if(all(len.X > 10,
+         utils::memory.limit()   <= 16256,
+         switches["s.sw"])) {
+    if(!score.x)            {       warning(paste0("The large number of candidate models being explored (", len.X, ") could lead to memory issues\nConsider setting 'score.switch' to FALSE or breaking up the task into chunks and calling get_IMIFA_results() on each chunk"), call.=FALSE)
+    } else                  {       warning(paste0("'score.switch' set to FALSE as too many candidate models are being explored (", len.X, ")\nPosterior inference on the scores will not be possible, though you can risk forcing storage by supplying score.switch=TRUE\nConsider breaking up the task into chunks and calling get_IMIFA_results() on each chunk"), call.=FALSE)
+      switches["s.sw"]   <- FALSE
+    }
+  }
   if(is.element(method, c("FA", "MFA", "OMFA", "IMFA"))) {
     if(missing("sigma.l"))   sigma.l       <- 1L
     if(any(sigma.l <= 0, !is.numeric(sigma.l),
