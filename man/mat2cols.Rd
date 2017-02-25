@@ -26,7 +26,7 @@ mat  <- matrix(rnorm(100), nrow=10, ncol=10)
 cols <- mat2cols(mat)
 cols
 
-# Use gclus::plotcolors() to visualise the colours matrix
+# Use plotcolors() to visualise the colours matrix
 # plotcolors(cols)
 }
 \seealso{

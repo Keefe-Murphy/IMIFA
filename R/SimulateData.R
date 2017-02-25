@@ -66,7 +66,7 @@ sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(4L, G), pis = rep(
 
   simdata      <- matrix(0, nrow=0, ncol=P)
   prior.mu     <- as.integer(scale(Gseq, center=TRUE, scale=FALSE))
-  true.mu      <- stats::setNames(vector("list", G), paste0("Group", Gseq))
+  true.mu      <- setNames(vector("list", G), paste0("Group", Gseq))
   true.l       <- true.mu
   true.psi     <- true.mu
   true.cov     <- true.mu
@@ -80,20 +80,20 @@ sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(4L, G), pis = rep(
   for(g in Gseq) {
     Q.g        <- Q[g]
     N.g        <- nn[g]
-    mu.true    <- stats::setNames(.sim_mu_p(P=P, mu.zero=prior.mu[g] * loc.diff, sig.mu.sqrt=1), vnames)
+    mu.true    <- setNames(.sim_mu_p(P=P, mu.zero=prior.mu[g] * loc.diff, sig.mu.sqrt=1), vnames)
     l.true     <- .sim_load_p(Q=Q.g, P=P, sigma.l=1)
-    psi.true   <- stats::setNames(stats::rgamma(P, 1, 1), vnames)
+    psi.true   <- setNames(rgamma(P, 1, 1), vnames)
 
   # Simulate data
     covmat     <- provideDimnames(diag(psi.true) + switch(method, marginal=tcrossprod(l.true), 0), base=list(vnames))
     if(!all(isSymmetric(covmat),
             is.double(covmat)))           stop("Invalid covariance matrix")
-    if(!corpcor::is.positive.definite(covmat)) {
-      covmat   <- corpcor::make.positive.definite(covmat)
+    if(!is.positive.definite(covmat)) {
+      covmat   <- make.positive.definite(covmat)
     }
     sigma      <- if(any(Q.g > 0, method == "conditional")) .chol(covmat) else sqrt(covmat)
     means      <- matrix(mu.true, nrow=N.g, ncol=P, byrow=TRUE) + switch(method, conditional=tcrossprod(eta.true[true.zlab == g, seq_len(Q.g), drop=FALSE], l.true), 0)
-    simdata    <- rbind(simdata, means + matrix(stats::rnorm(N.g * P), nrow=N.g, ncol=P) %*% sigma)
+    simdata    <- rbind(simdata, means + matrix(rnorm(N.g * P), nrow=N.g, ncol=P) %*% sigma)
     dimnames(l.true)   <- list(vnames, if(Q.g > 0) paste0("Factor ", seq_len(Q.g)))
     true.mu[[g]]       <- mu.true
     true.l[[g]]        <- l.true

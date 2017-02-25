@@ -1,6 +1,6 @@
-#######################################################################
-### Gibbs Sampler for Bayesian Factor Analysis (Dirichlet Process) ####
-#######################################################################
+############################################################################
+### Gibbs Sampler for Infinite DP Mixtures of Infinite Factor Analysers ####
+############################################################################
 
 # Gibbs Sampler Function
   .gibbs_IMIFA       <- function(Q, data, iters, N, P, G, mu.zero, rho, sigma.l, alpha.step, mu, sw, uni.type,
@@ -11,7 +11,7 @@
   # Define & initialise variables
     start.time       <- proc.time()
     total            <- max(iters)
-    if(verbose)         pb    <- utils::txtProgressBar(min=0, max=total, style=3)
+    if(verbose)         pb    <- txtProgressBar(min=0, max=total, style=3)
     n.store          <- length(iters)
     trunc.G          <- G
     Gs               <- Ts    <- seq_len(G)
@@ -80,7 +80,7 @@
     psi.inv          <- vapply(Ts, function(t) .sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), numeric(P))
     if(Q < .ledermann(N, P))  {
       for(g in which(nn > P)) {
-        fact         <- try(stats::factanal(data[z == g,, drop=FALSE], factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
+        fact         <- try(factanal(data[z == g,, drop=FALSE], factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
         if(!inherits(fact, "try-error")) {
           eta[z == g,]        <- fact$scores
           lmat[[g]]           <- fact$loadings
@@ -117,9 +117,9 @@
       psi.store[,,1]          <- 1/psi.inv
       pi.store[,1]            <- pi.prop
       z.store[,1]             <- z
-      sigma                   <- lapply(Gs, function(g) corpcor::make.positive.definite(tcrossprod(lmat[[g]]) + diag(1/psi.inv[,g])))
+      sigma                   <- lapply(Gs, function(g) make.positive.definite(tcrossprod(lmat[[g]]) + diag(1/psi.inv[,g])))
       Q0                      <- Qs > 0
-      log.probs               <- vapply(Gs, function(g, Q=Q0[g]) mvnfast::dmvn(data, mu[,g], if(Q) sigma[[g]] else sqrt(sigma[[g]]), log=TRUE, isChol=!Q) + log(pi.prop[g]), numeric(N))
+      log.probs               <- vapply(Gs, function(g, Q=Q0[g]) dmvn(data, mu[,g], if(Q) sigma[[g]] else sqrt(sigma[[g]]), log=TRUE, isChol=!Q) + log(pi.prop[g]), numeric(N))
       ll.store[1]             <- sim_z_log(log.probs=log.probs, N=N, G=G, G.non=G.non, Gseq=Gs)$log.like
       Q.store[,1]             <- Qs
       G.store[1]              <- G.non
@@ -135,7 +135,7 @@
 
   # Iterate
     for(iter in seq_len(total)[-1]) {
-      if(verbose     && iter   < burnin) utils::setTxtProgressBar(pb, iter)
+      if(verbose     && iter   < burnin) setTxtProgressBar(pb, iter)
 
     # Mixing Proportions
       weights        <- .sim_pi_inf(pi.alpha=pi.alpha, nn=nn, N=N, len=trunc.G, lseq=Ts, discount=discount)
@@ -159,7 +159,7 @@
         ksi          <- pi.prop
         log.ksi      <- log(ksi)
       }
-      u.slice        <- stats::runif(N, 0, ksi[z])
+      u.slice        <- runif(N, 0, ksi[z])
       G              <- max(vapply(Ns, function(i) sum(u.slice[i] < ksi), integer(1L)))
       Gs             <- seq_len(G)
       log.slice.ind  <- vapply(Gs, function(g) slice.logs[1 + (u.slice < ksi[g])] - log.ksi[g], numeric(N))
@@ -171,11 +171,11 @@
       Q1             <- Qgs == 1
       if(G > 1)   {
         sigma        <- lapply(Gs, function(g) tcrossprod(lmat[[g]]) + diag(psi[,g]))
-        log.probs    <- vapply(Gs, function(g, Q=Q0[g]) mvnfast::dmvn(data, mu[,g], if(Q) sigma[[g]] else sqrt(sigma[[g]]), log=TRUE, isChol=!Q) + log(pi.prop[g]), numeric(N)) + log.slice.ind
-        z.log        <- utils::capture.output({ z.res <- try(sim_z_log(log.probs=log.probs, N=N, G=G, G.non=G.non, Gseq=Gs, slice=TRUE), silent=TRUE) })
+        log.probs    <- vapply(Gs, function(g, Q=Q0[g]) dmvn(data, mu[,g], if(Q) sigma[[g]] else sqrt(sigma[[g]]), log=TRUE, isChol=!Q) + log(pi.prop[g]), numeric(N)) + log.slice.ind
+        z.log        <- capture.output({ z.res <- try(sim_z_log(log.probs=log.probs, N=N, G=G, G.non=G.non, Gseq=Gs, slice=TRUE), silent=TRUE) })
         z.err        <- inherits(z.res, "try-error")
         if(z.err) {
-          sigma      <- lapply(sigma, corpcor::make.positive.definite)
+          sigma      <- lapply(sigma, make.positive.definite)
           z.res      <- sim_z_log(log.probs=log.probs, N=N, G=G, G.non=G.non, Gseq=Gs, slice=TRUE)
         }
         z            <- z.res$z
@@ -245,7 +245,7 @@
 
     # Adaptation
       if(all(adapt, iter > adapt.at)) {
-        if(stats::runif(1)     < ifelse(iter < burnin, 0.5, 1/exp(b0 + b1 * (iter - adapt.at)))) {
+        if(runif(1)   < ifelse(iter < burnin, 0.5, 1/exp(b0 + b1 * (iter - adapt.at)))) {
           colvec     <- lapply(nn.ind, function(g) (if(Q0[g]) colSums(abs(lmat[[g]]) < epsilon)/P else 0) >= prop)
           nonred     <- lapply(colvec, .which0)
           numred     <- lengths(colvec) - lengths(nonred)
@@ -259,16 +259,16 @@
             notred   <- notred & !Q.big
             Qs[nn0][Q.big]    <- Q.star
           }
-          phi[nn0]   <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) cbind(phi[[g]][,seq_len(Qs.old[h])], stats::rgamma(n=P, shape=nu + nuplus1, rate=nu)) else phi[[g]][,nonred[[h]], drop=FALSE])
-          delta[nn0] <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) c(delta[[g]][seq_len(Qs.old[h])], stats::rgamma(n=1, shape=alpha.d2, rate=beta.d2)) else delta[[g]][nonred[[h]]])
+          phi[nn0]   <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) cbind(phi[[g]][,seq_len(Qs.old[h])],  rgamma(n=P, shape=nu + nuplus1, rate=nu)) else phi[[g]][,nonred[[h]], drop=FALSE])
+          delta[nn0] <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) c(delta[[g]][seq_len(Qs.old[h])],     rgamma(n=1, shape=alpha.d2, rate=beta.d2)) else delta[[g]][nonred[[h]]])
           tau[nn0]   <- lapply(delta[nn.ind], cumprod)
-          lmat[nn0]  <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) cbind(lmat[[g]][,seq_len(Qs.old[h])], stats::rnorm(n=P, mean=0, sd=sqrt(1/(phi[[g]][,Qs[g]] * tau[[g]][Qs[g]])))) else lmat[[g]][,nonred[[h]], drop=FALSE])
+          lmat[nn0]  <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) cbind(lmat[[g]][,seq_len(Qs.old[h])], rnorm(n=P, mean=0, sd=sqrt(1/(phi[[g]][,Qs[g]] * tau[[g]][Qs[g]])))) else lmat[[g]][,nonred[[h]], drop=FALSE])
           Qemp       <- Qs[!nn0]
           Fmax       <- max(Qs[nn0])
           Qmax       <- ifelse(all(Q.big), Fmax, max(Qs[nn0][!Q.big]))
           Qmaxseq    <- seq_len(Qmax)
           Qmaxold    <- max(Qs.old)
-          eta        <- if(all(Fmax > Qmaxold, !Q.bigs)) cbind(eta[,seq_len(Qmaxold)], stats::rnorm(N)) else eta[,seq_len(Fmax), drop=FALSE]
+          eta        <- if(all(Fmax > Qmaxold, !Q.bigs)) cbind(eta[,seq_len(Qmaxold)], rnorm(N)) else eta[,seq_len(Fmax), drop=FALSE]
           if(Qmax     < max(Qemp, 0)) {
             Qs[Qmax   < Qs & !nn0] <- Qmax
             for(t in Ts[!nn0][Qemp  > Qmax]) {
@@ -347,7 +347,7 @@
         err.z        <- TRUE
       }
       if(is.element(iter, iters)) {
-        if(verbose)      utils::setTxtProgressBar(pb, iter)
+        if(verbose)      setTxtProgressBar(pb, iter)
         new.it       <-  which(iters == iter)
         if(sw["mu.sw"])  mu.store[,,new.it]            <- mu
         if(all(sw["s.sw"],
@@ -378,15 +378,15 @@
     load.store       <- if(sw["l.sw"])   tryCatch(load.store[,Qmax,Gmax,, drop=FALSE], error=function(e) load.store)
     psi.store        <- if(sw["psi.sw"]) tryCatch(psi.store[,Gmax,, drop=FALSE],       error=function(e) psi.store)
     pi.store         <- if(sw["pi.sw"])  tryCatch(pi.store[Gmax,, drop=FALSE],         error=function(e) pi.store)
-    returns          <- list(mu        = if(sw["mu.sw"])  tryCatch(provideDimnames(mu.store,    base=list(varnames, "", ""), unique=FALSE), error=function(e) mu.store),
-                             eta       = if(sw["s.sw"])   tryCatch(provideDimnames(tryCatch(slam::as.simple_sparse_array(eta.store),        error=function(e) eta.store),  base=list(obsnames, "", ""),     unique=FALSE), error=function(e) eta.store),
-                             load      = if(sw["l.sw"])   tryCatch(provideDimnames(tryCatch(slam::as.simple_sparse_array(load.store),       error=function(e) load.store), base=list(varnames, "", "", ""), unique=FALSE), error=function(e) load.store),
-                             psi       = if(sw["psi.sw"]) tryCatch(provideDimnames(psi.store,   base=list(varnames, "", ""), unique=FALSE), error=function(e) psi.store),
+    returns          <- list(mu        = if(sw["mu.sw"])  tryCatch(provideDimnames(mu.store,  base=list(varnames, "", ""), unique=FALSE), error=function(e) mu.store),
+                             eta       = if(sw["s.sw"])   tryCatch(provideDimnames(tryCatch(as.simple_sparse_array(eta.store),            error=function(e) eta.store),  base=list(obsnames, "", ""),     unique=FALSE), error=function(e) eta.store),
+                             load      = if(sw["l.sw"])   tryCatch(provideDimnames(tryCatch(as.simple_sparse_array(load.store),           error=function(e) load.store), base=list(varnames, "", "", ""), unique=FALSE), error=function(e) load.store),
+                             psi       = if(sw["psi.sw"]) tryCatch(provideDimnames(psi.store, base=list(varnames, "", ""), unique=FALSE), error=function(e) psi.store),
                              pi.prop   = if(sw["pi.sw"])  pi.store,
                              alpha     = if(not.fixed)    alpha.store,
                              discount  = if(learn.d)      discount,
                              rate      = if(MH.step)      mean(rate),
-                             lab.rate  = if(DP.lab.sw)    stats::setNames(Rfast::rowmeans(lab.rate), c("Move1", "Move2")),
+                             lab.rate  = if(DP.lab.sw)    setNames(rowmeans(lab.rate), c("Move1", "Move2")),
                              z.store   = z.store,
                              ll.store  = ll.store,
                              Q.store   = tryCatch(Q.store[Gmax,, drop=FALSE],          error=function(e) Q.store),

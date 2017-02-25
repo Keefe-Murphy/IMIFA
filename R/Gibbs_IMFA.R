@@ -1,6 +1,6 @@
-#######################################################################
-### Gibbs Sampler for Bayesian Factor Analysis (Dirichlet Process) ####
-#######################################################################
+############################################################################
+### Gibbs Sampler for Infinite DP Mixtures of (Finite) Factor Analysers ####
+############################################################################
 
 # Gibbs Sampler Function
   .gibbs_IMFA        <- function(Q, data, iters, N, P, G, mu.zero, rho, sigma.l, alpha.step, discount,
@@ -10,7 +10,7 @@
   # Define & initialise variables
     start.time       <- proc.time()
     total            <- max(iters)
-    if(verbose)         pb   <- utils::txtProgressBar(min=0, max=total, style=3)
+    if(verbose)         pb   <- txtProgressBar(min=0, max=total, style=3)
     n.store          <- length(iters)
     trunc.G          <- G
     Gs               <- Ts   <- seq_len(G)
@@ -75,7 +75,7 @@
     psi.inv          <- vapply(Ts, function(t) .sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), numeric(P))
     if(Q0 && Q   < .ledermann(N, P)) {
       for(g in which(nn       > P))  {
-        fact         <- try(stats::factanal(data[z == g,, drop=FALSE], factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
+        fact         <- try(factanal(data[z == g,, drop=FALSE], factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
         if(!inherits(fact, "try-error")) {
           eta[z == g,]       <- fact$scores
           lmat[[g]]          <- fact$loadings
@@ -111,8 +111,8 @@
       psi.store[,,1]         <- 1/psi.inv
       pi.store[,1]           <- pi.prop
       z.store[,1]            <- z
-      sigma                  <- lapply(Gs, function(g) corpcor::make.positive.definite(tcrossprod(lmat[,,g]) + diag(1/psi.inv[,g])))
-      log.probs              <- vapply(Gs, function(g, Q=Q0s[g]) mvnfast::dmvn(data, mu[,g], if(Q) sigma[[g]] else sqrt(sigma[[g]]), log=TRUE, isChol=!Q) + log(pi.prop[g]), numeric(N))
+      sigma                  <- lapply(Gs, function(g) make.positive.definite(tcrossprod(lmat[,,g]) + diag(1/psi.inv[,g])))
+      log.probs              <- vapply(Gs, function(g, Q=Q0s[g]) dmvn(data, mu[,g], if(Q) sigma[[g]] else sqrt(sigma[[g]]), log=TRUE, isChol=!Q) + log(pi.prop[g]), numeric(N))
       ll.store[1]            <- sim_z_log(log.probs=log.probs, N=N, G=G, G.non=G.non, Gseq=Gs)$log.like
       G.store[1]             <- G.non
       act.store[1]           <- G
@@ -127,7 +127,7 @@
 
   # Iterate
     for(iter in seq_len(total)[-1]) {
-      if(verbose     && iter  < burnin) utils::setTxtProgressBar(pb, iter)
+      if(verbose     && iter  < burnin) setTxtProgressBar(pb, iter)
 
     # Mixing Proportions
       weights        <- .sim_pi_inf(pi.alpha=pi.alpha, nn=nn, N=N, len=trunc.G, lseq=Ts, discount=discount)
@@ -147,7 +147,7 @@
         ksi          <- pi.prop
         log.ksi      <- log(ksi)
       }
-      u.slice        <- stats::runif(N, 0, ksi[z])
+      u.slice        <- runif(N, 0, ksi[z])
       G              <- max(vapply(Ns, function(i) sum(u.slice[i] < ksi), integer(1L)))
       Gs             <- seq_len(G)
       log.slice.ind  <- vapply(Gs, function(g) slice.logs[1 + (u.slice < ksi[g])] - log.ksi[g], numeric(N))
@@ -156,11 +156,11 @@
       psi            <- 1/psi.inv
       if(G > 1)  {
         sigma        <- lapply(Gs, function(g) tcrossprod(lmat[,,g]) + diag(psi[,g]))
-        log.probs    <- vapply(Gs, function(g, Q=Q0s[g]) mvnfast::dmvn(data, mu[,g], if(Q) sigma[[g]] else sqrt(sigma[[g]]), log=TRUE, isChol=!Q) + log(pi.prop[g]), numeric(N)) + log.slice.ind
-        z.log        <- utils::capture.output({ z.res <- try(sim_z_log(log.probs=log.probs, N=N, G=G, G.non=G.non, Gseq=Gs, slice=TRUE), silent=TRUE) })
+        log.probs    <- vapply(Gs, function(g, Q=Q0s[g]) dmvn(data, mu[,g], if(Q) sigma[[g]] else sqrt(sigma[[g]]), log=TRUE, isChol=!Q) + log(pi.prop[g]), numeric(N)) + log.slice.ind
+        z.log        <- capture.output({ z.res <- try(sim_z_log(log.probs=log.probs, N=N, G=G, G.non=G.non, Gseq=Gs, slice=TRUE), silent=TRUE) })
         zerr         <- inherits(z.res, "try-error")
         if(zerr) {
-          sigma      <- lapply(sigma, corpcor::make.positive.definite)
+          sigma      <- lapply(sigma, make.positive.definite)
           z.res      <- sim_z_log(log.probs=log.probs,N=N, G=G, G.non=G.non, Gseq=Gs, slice=TRUE)
         }
         z            <- z.res$z
@@ -250,7 +250,7 @@
       }
 
       if(is.element(iter, iters)) {
-        if(verbose)     utils::setTxtProgressBar(pb, iter)
+        if(verbose)     setTxtProgressBar(pb, iter)
         new.it       <- which(iters == iter)
         if(sw["mu.sw"])               mu.store[,,new.it]      <- mu
         if(all(sw["s.sw"], Q0))       eta.store[,,new.it]     <- eta
@@ -281,7 +281,7 @@
                              alpha     = if(not.fixed)           alpha.store,
                              discount  = if(learn.d)             d.store,
                              rate      = if(MH.step)             mean(rate),
-                             lab.rate  = if(DP.lab.sw)           stats::setNames(Rfast::rowmeans(lab.rate), c("Move1", "Move2")),
+                             lab.rate  = if(DP.lab.sw)           setNames(rowmeans(lab.rate), c("Move1", "Move2")),
                              z.store   = z.store,
                              ll.store  = ll.store,
                              G.store   = G.store,

@@ -1,6 +1,6 @@
-###################################################################
-### Gibbs Sampler for Bayesian Factor Analysis (Shrinkage Case) ###
-###################################################################
+###########################################################
+### Gibbs Sampler for Bayesian Infinite Factor Analysis ###
+###########################################################
 
 # Gibbs Sampler Function
   .gibbs_IFA     <- function(Q, data, iters, N, P, sigma.mu, mu, prop, uni.type,
@@ -11,7 +11,7 @@
   # Define & initialise variables
     start.time   <- proc.time()
     total        <- max(iters)
-    if(verbose)     pb     <- utils::txtProgressBar(min=0, max=total, style=3)
+    if(verbose)     pb     <- txtProgressBar(min=0, max=total, style=3)
     n.store      <- length(iters)
     Pseq         <- seq_len(P)
     obsnames     <- rownames(data)
@@ -32,7 +32,7 @@
     post.mu      <- rep(0, P)
     post.psi     <- post.mu
     ll.store     <- rep(0, n.store)
-    cov.emp      <- Rfast::cova(as.matrix(data))
+    cov.emp      <- cova(as.matrix(data))
     cov.est      <- matrix(0, nrow=P, ncol=P)
     Q.star       <- Q
     Q.store      <- ll.store
@@ -49,7 +49,7 @@
     lmat         <- matrix(unlist(lapply(Pseq, function(j) .sim_load_ps(Q=Q, phi=phi[j,], tau=tau)), use.names=FALSE), nrow=P, byrow=TRUE)
     psi.inv      <- .sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
     if(all(Q      < .ledermann(N, P))) {
-      fact       <- try(stats::factanal(data, factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
+      fact       <- try(factanal(data, factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
       if(!inherits(fact, "try-error")) {
         eta      <- fact$scores
         lmat     <- fact$loadings
@@ -67,13 +67,13 @@
       eta.store[,,1]       <- eta
       load.store[,,1]      <- lmat
       psi.store[,1]        <- 1/psi.inv
-      ll.store[1]          <- sum(mvnfast::dmvn(X=data, mu=mu, sigma=tcrossprod(lmat) + diag(1/psi.inv), log=TRUE))
+      ll.store[1]          <- sum(dmvn(X=data, mu=mu, sigma=tcrossprod(lmat) + diag(1/psi.inv), log=TRUE))
     }
     init.time    <- proc.time() - start.time
 
   # Iterate
     for(iter in seq_len(total)[-1]) {
-      if(verbose && iter    < burnin) utils::setTxtProgressBar(pb, iter)
+      if(verbose && iter    < burnin) setTxtProgressBar(pb, iter)
       Q0         <- Q  > 0
       Q1         <- Q == 1
 
@@ -109,7 +109,7 @@
 
     # Adaptation
       if(all(adapt, iter > adapt.at)) {
-        if(stats::runif(1) < ifelse(iter < burnin, 0.5, 1/exp(b0 + b1 * (iter - adapt.at)))) {
+        if(runif(1) < ifelse(iter < burnin, 0.5, 1/exp(b0 + b1 * (iter - adapt.at)))) {
           colvec <- (if(Q0) colSums(abs(lmat) < epsilon) / P else 0) >= prop
           numred <- sum(colvec)
           if(numred == 0)  { # simulate extra columns from priors
@@ -118,11 +118,11 @@
             if(Q.big) {
               Q     <- Q.star
             } else {
-              eta   <- cbind(eta, stats::rnorm(N))
-              phi   <- cbind(phi, stats::rgamma(n=P, shape=nu + nuplus1, rate=nu))
-              delta <- c(delta, stats::rgamma(n=1, shape=alpha.d2, rate=beta.d2))
+              eta   <- cbind(eta,  rnorm(N))
+              phi   <- cbind(phi,  rgamma(n=P, shape=nu + nuplus1, rate=nu))
+              delta <- c(delta,    rgamma(n=1, shape=alpha.d2, rate=beta.d2))
               tau   <- cumprod(delta)
-              lmat  <- cbind(lmat, stats::rnorm(n=P, mean=0, sd=sqrt(1/(phi[,Q] * tau[Q]))))
+              lmat  <- cbind(lmat, rnorm(n=P, mean=0, sd=sqrt(1/(phi[,Q] * tau[Q]))))
             }
           } else          { # remove redundant columns
             nonred  <- which(colvec == 0)
@@ -140,7 +140,7 @@
         Q.large  <- TRUE
       }
       if(is.element(iter, iters))  {
-        if(verbose) utils::setTxtProgressBar(pb, iter)
+        if(verbose) setTxtProgressBar(pb, iter)
         new.it   <- which(iters == iter)
         psi      <- 1/psi.inv
         post.mu  <- post.mu + mu/n.store
@@ -152,7 +152,7 @@
         if(all(sw["l.sw"], Q0))     load.store[,seq_len(Q),new.it] <- lmat
         if(sw["psi.sw"])            psi.store[,new.it]             <- psi
                                     Q.store[new.it]                <- Q
-                                    ll.store[new.it]               <- sum(mvnfast::dmvn(X=data, mu=mu, sigma=sigma, log=TRUE))
+                                    ll.store[new.it]               <- sum(dmvn(X=data, mu=mu, sigma=sigma, log=TRUE))
       }
     }
     if(verbose)     close(pb)
@@ -160,11 +160,11 @@
     eta.store    <- if(sw["s.sw"])  tryCatch(eta.store[,Qmax,, drop=FALSE],  error=function(e) eta.store)
     load.store   <- if(sw["l.sw"])  tryCatch(load.store[,Qmax,, drop=FALSE], error=function(e) load.store)
     returns      <- list(mu       = if(sw["mu.sw"])  tryCatch(provideDimnames(mu.store,  base=list(varnames, ""), unique=FALSE), error=function(e) mu.store),
-                         eta      = if(sw["s.sw"])   tryCatch(provideDimnames(tryCatch(slam::as.simple_sparse_array(eta.store),  error=function(e) eta.store),  base=list(obsnames, "", ""), unique=FALSE), error=function(e) eta.store),
-                         load     = if(sw["l.sw"])   tryCatch(provideDimnames(tryCatch(slam::as.simple_sparse_array(load.store), error=function(e) load.store), base=list(varnames, "", ""), unique=FALSE), error=function(e) load.store),
+                         eta      = if(sw["s.sw"])   tryCatch(provideDimnames(tryCatch(as.simple_sparse_array(eta.store),        error=function(e) eta.store),  base=list(obsnames, "", ""), unique=FALSE), error=function(e) eta.store),
+                         load     = if(sw["l.sw"])   tryCatch(provideDimnames(tryCatch(as.simple_sparse_array(load.store),       error=function(e) load.store), base=list(varnames, "", ""), unique=FALSE), error=function(e) load.store),
                          psi      = if(sw["psi.sw"]) tryCatch(provideDimnames(psi.store, base=list(varnames, ""), unique=FALSE), error=function(e) psi.store),
-                         post.mu  = tryCatch(stats::setNames(post.mu,  varnames),            error=function(e) post.mu),
-                         post.psi = tryCatch(stats::setNames(post.psi, varnames),            error=function(e) post.psi),
+                         post.mu  = tryCatch(setNames(post.mu,  varnames),                   error=function(e) post.mu),
+                         post.psi = tryCatch(setNames(post.psi, varnames),                   error=function(e) post.psi),
                          cov.emp  = tryCatch(provideDimnames(cov.emp,  base=list(varnames)), error=function(e) cov.emp),
                          cov.est  = tryCatch(provideDimnames(cov.est,  base=list(varnames)), error=function(e) cov.est),
                          ll.store = ll.store,

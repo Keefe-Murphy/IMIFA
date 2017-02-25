@@ -127,11 +127,11 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     G.tab        <- if(GQ1) lapply(apply(G.store, 1, function(x) list(table(x, dnn=NULL))), "[[", 1) else table(G.store, dnn=NULL)
     G.prob       <- if(GQ1) lapply(G.tab, prop.table) else prop.table(G.tab)
     G.mode       <- if(GQ1) unlist(lapply(G.tab, function(gt) as.numeric(names(gt[gt == max(gt)])[1]))) else as.numeric(names(G.tab[G.tab == max(G.tab)])[1])
-    G.med        <- if(GQ1) ceiling(matrixStats::rowMedians(G.store) * 2)/2 else ceiling(Rfast::med(G.store) * 2)/2
+    G.med        <- if(GQ1) ceiling(matrixStats::rowMedians(G.store) * 2)/2 else ceiling(med(G.store) * 2)/2
     if(!G.T) {
       G          <- switch(G.meth, mode=G.mode, floor(G.med))
     }
-    G.CI         <- if(GQ1) round(matrixStats::rowQuantiles(G.store, probs=conf.levels)) else round(stats::quantile(G.store, conf.levels))
+    G.CI         <- if(GQ1) round(rowQuantiles(G.store, probs=conf.levels)) else round(quantile(G.store, conf.levels))
   }
   if(G.T)    {
     G            <- as.integer(G)
@@ -207,7 +207,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
         qi               <- ifelse(Q.T, Q.ind, q)
         log.likes        <- if(is.element(method, c("OMFA", "IMFA")) && GQ1) sims[[gi]][[qi]]$ll.store[tmp.store[[qi]]] else sims[[gi]][[qi]]$ll.store[tmp.store]
         ll.max           <- 2 * max(log.likes, na.rm=TRUE)
-        ll.var           <- ifelse(length(log.likes) != 1, 2 * stats::var(log.likes, na.rm=TRUE), 0)
+        ll.var           <- ifelse(length(log.likes) != 1, 2 * var(log.likes, na.rm=TRUE), 0)
         ll.mean          <- mean(log.likes, na.rm=TRUE)
         aicm[g,q]        <- ll.max  - ll.var * 2
         bicm[g,q]        <- ll.max  - ll.var * log.N
@@ -257,7 +257,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     if(!inf.Q)   {
       Q          <- if(length(n.fac)   > 1)  Q else  n.fac
       Q.ind      <- if(all(!Q.T, length(n.fac) > 1)) Q.ind else which(n.fac == Q)
-      Q          <- stats::setNames(if(length(Q) != G) rep(Q, G) else Q, gnames)
+      Q          <- setNames(if(length(Q) != G) rep(Q, G) else Q, gnames)
       if(all(inf.G, Q.T))  GQ.temp1$G <- rep(G, GQs)
       if(is.element(method, c("OMFA", "IMFA")) && GQ1) {
         GQ.temp1 <- lapply(GQ.temp1, "[[", Q.ind)
@@ -291,7 +291,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
          !identical(dat.nam, nam.dat) && (any(grepl("[[:alpha:]]", gsub('c', '', nam.x))) || grepl(":",
          nam.x, fixed=TRUE)))) {  warning("Extremely inadvisable to supply 'dat' subsetted by any means other than row/column numbers or c() indexing:\n can't compute empirical covariance and error metrics, best to create new data object", call.=FALSE)
       } else  {
-        spl.ind          <- if(grepl("(,", nam.x, fixed=TRUE)) sapply(gregexpr("\\(,", nam.x), utils::head, 1L) else sapply(gregexpr("\\)", nam.x), utils::head, 1L)
+        spl.ind          <- if(grepl("(,", nam.x, fixed=TRUE)) sapply(gregexpr("\\(,", nam.x), head, 1L) else sapply(gregexpr("\\)", nam.x), head, 1L)
         spl.tmp          <- c(substring(nam.x, 1, spl.ind), substring(nam.x, spl.ind + 2L, nchar(nam.x)))
         neg.r            <- grepl("-", spl.tmp[1], fixed=TRUE) || grepl("!", spl.tmp[1], fixed=TRUE)
         neg.c            <- grepl("-", spl.tmp[2], fixed=TRUE) || grepl("!", spl.tmp[2], fixed=TRUE)
@@ -302,9 +302,9 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
         rowseq[rowx]     <- !rowseq[rowx]
         dat              <- subset(dat, select=if(any(spl.ind <= 0, sum(colseq) %in% 0)) seq_len(ncol(dat)) else colseq, subset=rowseq, drop=!grepl("drop=F", dat.nam))
       }
-      dat        <- dat[stats::complete.cases(dat),]
+      dat        <- dat[complete.cases(dat),]
       dat        <- dat[vapply(dat, is.numeric, logical(1L))]
-      dat        <- if(is.logical(scaling)) Rfast::standardise(as.matrix(dat), center=cent, scale=scaling) else scale(dat, center=cent, scale=scaling)
+      dat        <- if(is.logical(scaling)) standardise(as.matrix(dat), center=cent, scale=scaling) else scale(dat, center=cent, scale=scaling)
       obsnames   <- rownames(dat)
       varnames   <- colnames(dat)
       if(!identical(dim(dat),
@@ -379,11 +379,11 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     uncertain    <- 1 - Rfast::colMaxs(matrix(apply(z, 1, tabulate, nbins=G)/length(tmp.store), nrow=G, ncol=n.obs), value=TRUE)
     if(sw["pi.sw"]) {
       pi.prop    <- provideDimnames(pies[Gseq,seq_along(tmp.store), drop=FALSE], base=list(gnames, ""), unique=FALSE)
-      var.pi     <- stats::setNames(Rfast::rowVars(pi.prop),  gnames)
-      ci.pi      <- matrixStats::rowQuantiles(pi.prop, probs=conf.levels)
-      post.pi    <- stats::setNames(Rfast::rowmeans(pi.prop), gnames)
+      var.pi     <- setNames(Rfast::rowVars(pi.prop),  gnames)
+      ci.pi      <- rowQuantiles(pi.prop, probs=conf.levels)
+      post.pi    <- setNames(rowmeans(pi.prop),        gnames)
     } else {
-      post.pi    <- stats::setNames(prop.table(tabulate(post.z, nbins=G)), gnames)
+      post.pi    <- setNames(prop.table(tabulate(post.z, nbins=G)), gnames)
     }
     if(inf.Q)       {
       Q.store    <- provideDimnames(Q.store, base=list(gnames, ""), unique=FALSE)
@@ -400,11 +400,11 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
         if(sw["mu.sw"])    mus <- mus[,l.perm,,     drop=FALSE]
         if(sw["l.sw"])   lmats <- lmats[,,l.perm,,  drop=FALSE]
         if(sw["psi.sw"])  psis <- psis[,l.perm,,    drop=FALSE]
-        index    <- Rfast::Order(l.perm)
-        post.pi  <- stats::setNames(post.pi[index], gnames)
+        index    <- Order(l.perm)
+        post.pi  <- setNames(post.pi[index], gnames)
         if(sw["pi.sw"]) {
          pi.prop <- provideDimnames(unname(pi.prop[index,, drop=FALSE]), base=list(gnames, ""), unique=FALSE)
-         var.pi  <- stats::setNames(var.pi[index],  gnames)
+         var.pi  <- setNames(var.pi[index],  gnames)
          ci.pi   <- provideDimnames(unname(ci.pi[index,,   drop=FALSE]), base=list(gnames,  colnames(ci.pi)))
         }
         if(inf.Q)   {
@@ -412,7 +412,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
         }
       }
       tab        <- table(post.z, zlabels, dnn=list("Predicted", "Observed"))
-      tab.stat   <- c(e1071::classAgreement(tab), mclust::classError(post.z, zlabels))
+      tab.stat   <- c(classAgreement(tab), classError(post.z, zlabels))
       if(nrow(tab) != ncol(tab))     {
         tab.stat <- tab.stat[-seq_len(2)]
         names(tab.stat)[4]     <- "error.rate"
@@ -430,13 +430,13 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     }
     uncert.obs <- which(uncertain >= 1/G)
     attr(uncertain, "Obs")     <- if(sum(uncert.obs) != 0) uncert.obs
-    sizes        <- stats::setNames(tabulate(post.z, nbins=G), gnames)
+    sizes        <- setNames(tabulate(post.z, nbins=G), gnames)
     if(any(sizes == 0))           warning("Empty group exists in modal clustering:\n examine trace plots and try supplying a lower G value to tune.imifa() or re-running the model", call.=FALSE)
     if(alpha.step != "fixed") {
       alpha      <- sims[[G.ind]][[Q.ind]]$alpha
       post.alpha <- mean(alpha)
-      var.alpha  <- stats::var(alpha)
-      ci.alpha   <- stats::quantile(alpha, conf.levels)
+      var.alpha  <- var(alpha)
+      ci.alpha   <- quantile(alpha, conf.levels)
       rate       <- switch(alpha.step, metropolis=sims[[G.ind]][[Q.ind]]$rate, 1)
       DP.alpha   <- list(alpha = alpha, post.alpha = post.alpha, var.alpha = var.alpha, ci.alpha = ci.alpha, acceptance.rate = rate)
       class(DP.alpha)          <- "listof"
@@ -458,15 +458,15 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     Q.tab        <- if(G1) lapply(apply(Q.store, 1, function(x) list(table(x, dnn=NULL))), "[[", 1) else table(Q.store, dnn=NULL)
     Q.prob       <- if(G1) lapply(Q.tab, prop.table) else prop.table(Q.tab)
     Q.mode       <- if(G1) unlist(lapply(Q.tab, function(qt) as.numeric(names(qt[qt == max(qt)])[1]))) else as.numeric(names(Q.tab[Q.tab == max(Q.tab)])[1])
-    Q.med        <- if(G1) stats::setNames(ceiling(matrixStats::rowMedians(Q.store) * 2)/2, gnames) else ceiling(Rfast::med(Q.store) * 2)/2
+    Q.med        <- if(G1) setNames(ceiling(matrixStats::rowMedians(Q.store) * 2)/2, gnames) else ceiling(med(Q.store) * 2)/2
     if(!Q.T)  {
       Q          <- switch(Q.meth, mode=Q.mode, floor(Q.med))
     } else    {
-      Q          <- if(G.T) Q else stats::setNames(rep(Q, G), gnames)
+      Q          <- if(G.T) Q else setNames(rep(Q, G), gnames)
     }
     leder.b      <- .ledermann(n.obs, n.var)
     if(any(unlist(Q) > leder.b))  warning(paste0("Estimate of Q", ifelse(clust.ind, " in one or more of the groups ", " "), "is greater than the suggested Ledermann upper bound (", leder.b, "):\nsolution may be invalid"), call.=FALSE)
-    Q.CI         <- if(G1) round(matrixStats::rowQuantiles(Q.store, probs=conf.levels)) else round(stats::quantile(Q.store, conf.levels))
+    Q.CI         <- if(G1) round(rowQuantiles(Q.store, probs=conf.levels)) else round(quantile(Q.store, conf.levels))
     GQ.temp4     <- list(Q = Q, Q.Mode = Q.mode, Q.Median = Q.med,
                          Q.CI = Q.CI, Q.Probs = Q.prob, Q.Counts = Q.tab,
                          Stored.Q = if(clust.ind) Q.store else as.vector(Q.store))
@@ -493,8 +493,8 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   result         <- list(list())
   e.store        <- list()
   mse   <- mae   <- medse  <-
-  medae <- rmse  <-#cvrmse <-
-  nrmse <- emp.T <- est.T  <- rep(NA, G)
+  medae <- rmse  <- nrmse  <-
+  emp.T <- est.T <- rep(NA, G)
   for(g in Gseq) {
     Qg           <- Q[g]
     Qgs          <- seq_len(Qg)
@@ -510,15 +510,15 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   # Retrieve (unrotated) loadings
     if(sw["l.sw"]) {
       if(clust.ind)  {
-        lmat     <- abind::adrop(lmats[,,g,store, drop=FALSE], drop=3)
-        l.temp   <- abind::adrop(lmat[,,1, drop=FALSE], drop=3)
+        lmat     <- adrop(lmats[,,g,store, drop=FALSE], drop=3)
+        l.temp   <- adrop(lmat[,,1, drop=FALSE], drop=3)
       } else {
         lmat     <- sims[[G.ind]][[Q.ind]]$load
         if(inf.Q) {
           lmat   <- as.array(lmat)
         }
         lmat     <- lmat[,,store, drop=FALSE]
-        l.temp   <- abind::adrop(lmat[,,1, drop=FALSE], drop=3)
+        l.temp   <- adrop(lmat[,,1, drop=FALSE], drop=3)
       }
     }
 
@@ -553,7 +553,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
         psi      <- as.matrix(psis[,g,store])
       }
       if(all(data.x, sizes[g] > 1)) {
-        cov.emp  <- provideDimnames(Rfast::cova(dat[z.ind[[g]],, drop=FALSE]), base=list(varnames))
+        cov.emp  <- provideDimnames(cova(dat[z.ind[[g]],, drop=FALSE]), base=list(varnames))
       }
     } else {
       post.mu    <- sims[[G.ind]][[Q.ind]]$post.mu
@@ -582,20 +582,20 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
 
   # Compute posterior means and % variation explained
     if(sw["mu.sw"])  {
-      post.mu    <- Rfast::rowmeans(mu)
+      post.mu    <- rowmeans(mu)
       var.mu     <- Rfast::rowVars(mu)
-      ci.mu      <- matrixStats::rowQuantiles(mu,  probs=conf.levels)
+      ci.mu      <- rowQuantiles(mu,  probs=conf.levels)
     }
     if(sw["psi.sw"]) {
-      post.psi   <- Rfast::rowmeans(psi)
+      post.psi   <- rowmeans(psi)
       var.psi    <- Rfast::rowVars(psi)
-      ci.psi     <- matrixStats::rowQuantiles(psi, probs=conf.levels)
+      ci.psi     <- rowQuantiles(psi, probs=conf.levels)
     }
     if(sw["l.sw"])   {
       lmat       <- provideDimnames(lmat[,Qgs,, drop=FALSE], base=list("", paste0("Factor", Qgs), ""), unique=FALSE)
       post.load  <- rowMeans(lmat, dims=2)
-      var.load   <- apply(lmat, c(1, 2), stats::var)
-      ci.load    <- apply(lmat, c(1, 2), stats::quantile, conf.levels)
+      var.load   <- apply(lmat, c(1, 2), var)
+      ci.load    <- apply(lmat, c(1, 2), quantile, conf.levels)
       var.exp    <- sum(colSums(post.load * post.load))/n.var
       class(post.load)     <- "loadings"
     } else if(all(emp.T[g], sw["psi.sw"])) {
@@ -640,11 +640,10 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       abs.error  <- abs(error)
       mse[g]     <- mean(sq.error)
       mae[g]     <- mean(abs.error)
-      medse[g]   <- Rfast::med(sq.error)
-      medae[g]   <- Rfast::med(abs.error)
+      medse[g]   <- med(sq.error)
+      medae[g]   <- med(abs.error)
       rmse[g]    <- sqrt(mse[g])
       nrmse[g]   <- rmse[g]/(max(cov.emp) - min(cov.emp))
-     #cvrmse[g]  <- rmse[g]/mean(cov.emp)
       if(any(all(scal.meth != "none", cent) &&
                  sum(round(diag(cov.est))   !=
                  round(diag(cov.emp)))      != 0,
@@ -673,11 +672,11 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     e.store[[g]] <- store
   }
   if(sw["s.sw"])   {
-    eta.store    <- Rfast::sort_unique(unlist(e.store))
+    eta.store    <- sort_unique(unlist(e.store))
     Qseq         <- seq_len(max(Q))
     eta          <- provideDimnames(eta[,Qseq,eta.store, drop=FALSE], base=list("", paste0("Factor", Qseq), ""), unique=FALSE)
-    scores       <- list(eta = eta, post.eta = rowMeans(eta, dims=2), var.eta = apply(eta, c(1, 2),
-                         stats::var), ci.eta = apply(eta, c(1, 2), stats::quantile, conf.levels))
+    scores       <- list(eta = eta, post.eta = rowMeans(eta, dims=2), var.eta = apply(eta,
+                         c(1, 2), var), ci.eta = apply(eta, c(1, 2), quantile, conf.levels))
     attr(scores, "Eta.store")  <- eta.store
   }
   names(result)  <- gnames
@@ -690,14 +689,12 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   var.exps       <- vapply(lapply(result, "[[", "var.exp"), function(x) ifelse(is.null(x), NA, x), numeric(1L))
   var.exps       <- if(sum(is.na(var.exps)) == G) NULL else var.exps
   if(any(err.T))   {
-    Err          <- lapply(list(MSE = mse, MAE = mae, MEDSE = medse,
-                                MEDAE = medae, RMSE = rmse, NRMSE = nrmse
-                                #,CVRMSE = cvrmse
-                                ), stats::setNames, gnames)
+    Err          <- lapply(list(MSE = mse, MAE = mae, MEDSE = medse, MEDAE = medae,
+                                RMSE = rmse, NRMSE = nrmse), setNames, gnames)
     if(G > 1)      {
       Err        <- c(Err, list(Averages = unlist(lapply(Err, mean, na.rm=TRUE))))
     } else {
-      Err        <- stats::setNames(unlist(Err), names(Err))
+      Err        <- setNames(unlist(Err), names(Err))
     }
     emp.covs     <- lapply(result, "[[", "cov.emp")
     est.covs     <- lapply(result, "[[", "cov.est")

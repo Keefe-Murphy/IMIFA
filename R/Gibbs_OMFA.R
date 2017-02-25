@@ -1,6 +1,6 @@
-#####################################################################
-### Gibbs Sampler for Bayesian Factor Analysis (Overfitted Case) ####
-#####################################################################
+###########################################################################
+### Gibbs Sampler for Overfitted Mixtures of (Finite) Factor Analysers ####
+###########################################################################
 
 # Gibbs Sampler Function
   .gibbs_OMFA      <- function(Q, data, iters, N, P, G, mu.zero, sigma.mu,
@@ -10,7 +10,7 @@
   # Define & initialise variables
     start.time     <- proc.time()
     total          <- max(iters)
-    if(verbose)       pb   <- utils::txtProgressBar(min=0, max=total, style=3)
+    if(verbose)       pb   <- txtProgressBar(min=0, max=total, style=3)
     n.store        <- length(iters)
     Gseq           <- seq_len(G)
     Pseq           <- seq_len(P)
@@ -57,7 +57,7 @@
     psi.inv        <- vapply(Gseq, function(g) .sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), numeric(P))
     if(Q0 && Q  < .ledermann(N, P)) {
       for(g in which(nn     > P))   {
-        fact       <- try(stats::factanal(data[z == g,, drop=FALSE], factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
+        fact       <- try(factanal(data[z == g,, drop=FALSE], factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
         if(!inherits(fact, "try-error")) {
           eta[z == g,]     <- fact$scores
           lmat[[g]]        <- fact$loadings
@@ -87,8 +87,8 @@
       psi.store[,,1]       <- 1/psi.inv
       pi.store[,1]         <- pi.prop
       z.store[,1]          <- z
-      sigma                <- lapply(Gseq, function(g) corpcor::make.positive.definite(tcrossprod(lmat[,,g]) + diag(1/psi.inv[,g])))
-      log.probs            <- vapply(Gseq, function(g, Q=Q0s[g]) mvnfast::dmvn(data, mu[,g], if(Q) sigma[[g]] else sqrt(sigma[[g]]), log=TRUE, isChol=!Q) + log(pi.prop[g]), numeric(N))
+      sigma                <- lapply(Gseq, function(g) make.positive.definite(tcrossprod(lmat[,,g]) + diag(1/psi.inv[,g])))
+      log.probs            <- vapply(Gseq, function(g, Q=Q0s[g]) dmvn(data, mu[,g], if(Q) sigma[[g]] else sqrt(sigma[[g]]), log=TRUE, isChol=!Q) + log(pi.prop[g]), numeric(N))
       ll.store[1]          <- sim_z_log(log.probs=log.probs, N=N, G=G, Gseq=Gseq)$log.like
       G.store[1]           <- G.non
     }
@@ -96,7 +96,7 @@
 
   # Iterate
     for(iter in seq_len(total)[-1]) {
-      if(verbose   && iter  < burnin) utils::setTxtProgressBar(pb, iter)
+      if(verbose   && iter  < burnin) setTxtProgressBar(pb, iter)
 
     # Mixing Proportions & Re-ordering
       pi.prop      <- if(G == 1) 1 else .sim_pi(pi.alpha=pi.alpha, nn=nn, G)
@@ -112,11 +112,11 @@
       psi          <- 1/psi.inv
       if(G > 1)  {
         sigma      <- lapply(Gseq, function(g) tcrossprod(lmat[,,g]) + diag(psi[,g]))
-        log.probs  <- vapply(Gseq, function(g, Q=Q0s[g]) mvnfast::dmvn(data, mu[,g], if(Q) sigma[[g]] else sqrt(sigma[[g]]), log=TRUE, isChol=!Q) + log(pi.prop[g]), numeric(N))
-        z.log      <- utils::capture.output({ z.res <- try(sim_z_log(log.probs=log.probs, N=N, G=G, G.non=G.non, Gseq=Gseq, slice=FALSE), silent=TRUE) })
+        log.probs  <- vapply(Gseq, function(g, Q=Q0s[g]) dmvn(data, mu[,g], if(Q) sigma[[g]] else sqrt(sigma[[g]]), log=TRUE, isChol=!Q) + log(pi.prop[g]), numeric(N))
+        z.log      <- capture.output({ z.res <- try(sim_z_log(log.probs=log.probs, N=N, G=G, G.non=G.non, Gseq=Gseq, slice=FALSE), silent=TRUE) })
         zerr       <- inherits(z.res, "try-error")
         if(zerr) {
-          sigma    <- lapply(sigma, corpcor::make.positive.definite)
+          sigma    <- lapply(sigma, make.positive.definite)
           z.res    <- sim_z_log(log.probs=log.probs,  N=N, G=G, G.non=G.non, Gseq=Gseq, slice=FALSE)
         }
         z          <- z.res$z
@@ -155,7 +155,7 @@
         err.z      <- TRUE
       }
       if(is.element(iter, iters))   {
-        if(verbose)    utils::setTxtProgressBar(pb, iter)
+        if(verbose)   setTxtProgressBar(pb, iter)
         new.it     <- which(iters == iter)
         if(sw["mu.sw"])             mu.store[,,new.it]      <- mu
         if(all(sw["s.sw"], Q0))     eta.store[,,new.it]     <- eta

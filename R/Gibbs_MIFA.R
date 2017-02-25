@@ -1,6 +1,6 @@
-################################################################
-### Gibbs Sampler for Bayesian Factor Analysis (Group Case) ####
-################################################################
+#########################################################################
+### Gibbs Sampler for (Finite) Mixtures of Infinite Factor Analysers ####
+#########################################################################
 
 # Gibbs Sampler Function
   .gibbs_MIFA      <- function(Q, data, iters, N, P, G, sw, mu, mu.zero, uni.type,
@@ -11,7 +11,7 @@
   # Define & initialise variables
     start.time     <- proc.time()
     total          <- max(iters)
-    if(verbose)       pb    <- utils::txtProgressBar(min=0, max=total, style=3)
+    if(verbose)       pb    <- txtProgressBar(min=0, max=total, style=3)
     n.store        <- length(iters)
     Gseq           <- seq_len(G)
     Pseq           <- seq_len(P)
@@ -80,7 +80,7 @@
     if(Q < .ledermann(N, P)) {
       fact.ind     <- nn    <= P
       for(g in which(!fact.ind)) {
-        fact       <- try(stats::factanal(data[z == g,, drop=FALSE], factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
+        fact       <- try(factanal(data[z == g,, drop=FALSE], factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
         if(!inherits(fact, "try-error")) {
           eta[z == g,]      <- fact$scores
           lmat[[g]]         <- fact$loadings
@@ -100,9 +100,9 @@
       psi.store[,,1]        <- 1/psi.inv
       pi.store[,1]          <- pi.prop
       z.store[,1]           <- z
-      sigma                 <- lapply(Gseq, function(g) corpcor::make.positive.definite(tcrossprod(lmat[[g]]) + diag(1/psi.inv[,g])))
+      sigma                 <- lapply(Gseq, function(g) make.positive.definite(tcrossprod(lmat[[g]]) + diag(1/psi.inv[,g])))
       Q0                    <- Qs > 0
-      log.probs             <- vapply(Gseq, function(g, Q=Q0[g]) mvnfast::dmvn(data, mu[,g], if(Q) sigma[[g]] else sqrt(sigma[[g]]), log=TRUE, isChol=!Q) + log(pi.prop[g]), numeric(N))
+      log.probs             <- vapply(Gseq, function(g, Q=Q0[g]) dmvn(data, mu[,g], if(Q) sigma[[g]] else sqrt(sigma[[g]]), log=TRUE, isChol=!Q) + log(pi.prop[g]), numeric(N))
       ll.store[1]           <- sim_z_log(log.probs=log.probs, N=N, G=G, Gseq=Gseq)$log.like
       Q.store[,1]           <- Qs
     }
@@ -110,7 +110,7 @@
 
   # Iterate
     for(iter in seq_len(total)[-1]) {
-      if(verbose   && iter   < burnin) utils::setTxtProgressBar(pb, iter)
+      if(verbose   && iter   < burnin) setTxtProgressBar(pb, iter)
 
     # Mixing Proportions
       pi.prop      <- .sim_pi(pi.alpha=pi.alpha, nn=nn, G)
@@ -120,11 +120,11 @@
       Q0           <- Qs  > 0
       Q1           <- Qs == 1
       sigma        <- lapply(Gseq, function(g) tcrossprod(lmat[[g]]) + diag(psi[,g]))
-      log.probs    <- vapply(Gseq, function(g, Q=Q0[g]) mvnfast::dmvn(data, mu[,g], if(Q) sigma[[g]] else sqrt(sigma[[g]]), log=TRUE, isChol=!Q) + log(pi.prop[g]), numeric(N))
-      z.log        <- utils::capture.output({ z.res <- try(sim_z_log(log.probs=log.probs, N=N, G=G, Gseq=Gseq), silent=TRUE) })
+      log.probs    <- vapply(Gseq, function(g, Q=Q0[g]) dmvn(data, mu[,g], if(Q) sigma[[g]] else sqrt(sigma[[g]]), log=TRUE, isChol=!Q) + log(pi.prop[g]), numeric(N))
+      z.log        <- capture.output({ z.res <- try(sim_z_log(log.probs=log.probs, N=N, G=G, Gseq=Gseq), silent=TRUE) })
       z.err        <- inherits(z.res, "try-error")
       if(z.err) {
-        sigma      <- lapply(sigma, corpcor::make.positive.definite)
+        sigma      <- lapply(sigma, make.positive.definite)
         z.res      <- sim_z_log(log.probs=log.probs, N=N, G=G, Gseq=Gseq)
       }
       z            <- z.res$z
@@ -190,7 +190,7 @@
 
     # Adaptation
       if(all(adapt, iter > adapt.at)) {
-        if(stats::runif(1)   < ifelse(iter < burnin, 0.5, 1/exp(b0 + b1 * (iter - adapt.at)))) {
+        if(runif(1) < ifelse(iter < burnin, 0.5, 1/exp(b0 + b1 * (iter - adapt.at)))) {
           colvec   <- lapply(nn.ind, function(g) (if(Q0[g]) colSums(abs(lmat[[g]]) < epsilon)/P else 0) >= prop)
           nonred   <- lapply(colvec, .which0)
           numred   <- lengths(colvec) - lengths(nonred)
@@ -204,16 +204,16 @@
             notred <- notred & !Q.big
             Qs[nn0][Q.big]  <- Q.star
           }
-          phi[nn0]          <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) cbind(phi[[g]][,seq_len(Qs.old[h])], stats::rgamma(n=P, shape=nu + nuplus1, rate=nu)) else phi[[g]][,nonred[[h]], drop=FALSE])
-          delta[nn0]        <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) c(delta[[g]][seq_len(Qs.old[h])], stats::rgamma(n=1, shape=alpha.d2, rate=beta.d2)) else delta[[g]][nonred[[h]]])
+          phi[nn0]          <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) cbind(phi[[g]][,seq_len(Qs.old[h])],  rgamma(n=P, shape=nu + nuplus1, rate=nu)) else phi[[g]][,nonred[[h]], drop=FALSE])
+          delta[nn0]        <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) c(delta[[g]][seq_len(Qs.old[h])],     rgamma(n=1, shape=alpha.d2, rate=beta.d2)) else delta[[g]][nonred[[h]]])
           tau[nn0]          <- lapply(delta[nn.ind], cumprod)
-          lmat[nn0]         <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) cbind(lmat[[g]][,seq_len(Qs.old[h])], stats::rnorm(n=P, mean=0, sd=sqrt(1/(phi[[g]][,Qs[g]] * tau[[g]][Qs[g]])))) else lmat[[g]][,nonred[[h]], drop=FALSE])
+          lmat[nn0]         <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) cbind(lmat[[g]][,seq_len(Qs.old[h])], rnorm(n=P, mean=0, sd=sqrt(1/(phi[[g]][,Qs[g]] * tau[[g]][Qs[g]])))) else lmat[[g]][,nonred[[h]], drop=FALSE])
           Qemp     <- Qs[!nn0]
           Fmax     <- max(Qs[nn0])
           Qmax     <- ifelse(all(Q.big), Fmax, max(Qs[nn0][!Q.big]))
           Qmaxseq  <- seq_len(Qmax)
           Qmaxold  <- max(Qs.old)
-          eta      <- if(all(Fmax  > Qmaxold, !Q.bigs)) cbind(eta[,seq_len(Qmaxold)], stats::rnorm(N)) else eta[,seq_len(Fmax), drop=FALSE]
+          eta      <- if(all(Fmax  > Qmaxold, !Q.bigs)) cbind(eta[,seq_len(Qmaxold)], rnorm(N)) else eta[,seq_len(Fmax), drop=FALSE]
           if(Qmax   < max(Qemp, 0)) {
             Qs[Qmax < Qs & !nn0]  <- Qmax
             for(g  in Gseq[!nn0][Qemp > Qmax]) {
@@ -267,7 +267,7 @@
         err.z      <- TRUE
       }
       if(is.element(iter, iters))   {
-        if(verbose)   utils::setTxtProgressBar(pb, iter)
+        if(verbose)   setTxtProgressBar(pb, iter)
         new.it     <- which(iters == iter)
         if(sw["mu.sw"])    mu.store[,,new.it]       <- mu
         if(all(sw["s.sw"],
@@ -289,8 +289,8 @@
     eta.store      <- if(sw["s.sw"])  tryCatch(eta.store[,Qmax,, drop=FALSE],   error=function(e) eta.store)
     load.store     <- if(sw["l.sw"])  tryCatch(load.store[,Qmax,,, drop=FALSE], error=function(e) load.store)
     returns        <- list(mu       = if(sw["mu.sw"])  tryCatch(provideDimnames(mu.store,  base=list(varnames, "", ""), unique=FALSE), error=function(e) mu.store),
-                           eta      = if(sw["s.sw"])   tryCatch(provideDimnames(tryCatch(slam::as.simple_sparse_array(eta.store),      error=function(e) eta.store),  base=list(obsnames, "", ""),     unique=FALSE), error=function(e) eta.store),
-                           load     = if(sw["l.sw"])   tryCatch(provideDimnames(tryCatch(slam::as.simple_sparse_array(load.store),     error=function(e) load.store), base=list(varnames, "", "", ""), unique=FALSE), error=function(e) load.store),
+                           eta      = if(sw["s.sw"])   tryCatch(provideDimnames(tryCatch(as.simple_sparse_array(eta.store),            error=function(e) eta.store),  base=list(obsnames, "", ""),     unique=FALSE), error=function(e) eta.store),
+                           load     = if(sw["l.sw"])   tryCatch(provideDimnames(tryCatch(as.simple_sparse_array(load.store),           error=function(e) load.store), base=list(varnames, "", "", ""), unique=FALSE), error=function(e) load.store),
                            psi      = if(sw["psi.sw"]) tryCatch(provideDimnames(psi.store, base=list(varnames, "", ""), unique=FALSE), error=function(e) psi.store),
                            pi.prop  = if(sw["pi.sw"])  pi.store,
                            z.store  = z.store,

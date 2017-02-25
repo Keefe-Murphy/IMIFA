@@ -7,7 +7,7 @@
   # Means
     .sim_mu      <- function(N, P, mu.sigma, psi.inv, sum.data, sum.eta, lmat, mu.zero) {
       mu.omega   <- 1/(mu.sigma + N * psi.inv)
-        mu.omega  * (psi.inv * (sum.data - lmat %*% sum.eta) + mu.sigma * mu.zero) + sqrt(mu.omega) * stats::rnorm(P)
+        mu.omega  * (psi.inv * (sum.data - lmat %*% sum.eta) + mu.sigma * mu.zero) + sqrt(mu.omega) * rnorm(P)
     }
 
   # Scores
@@ -16,7 +16,7 @@
       u.eta      <- diag(Q) + crossprod(load.psi, lmat)
       u.eta      <- if(Q1) sqrt(u.eta) else .chol(u.eta)
       mu.eta     <- c.data %*% (load.psi %*% if(Q1) 1/(u.eta * u.eta) else chol2inv(u.eta))
-        mu.eta    + t(backsolve(u.eta, matrix(stats::rnorm(Q * N), nrow=Q, ncol=N)))
+        mu.eta    + t(backsolve(u.eta, matrix(rnorm(Q * N), nrow=Q, ncol=N)))
     }
 
   # Loadings
@@ -24,49 +24,49 @@
       u.load     <- l.sigma + psi.inv * EtE
       u.load     <- if(Q1) sqrt(u.load) else .chol(u.load)
       mu.load    <- psi.inv * (if(Q1) 1/(u.load * u.load) else chol2inv(u.load)) %*% crossprod(eta, c.data)
-        mu.load   + backsolve(u.load, stats::rnorm(Q))
+        mu.load   + backsolve(u.load, rnorm(Q))
     }
 
     .sim_load_s  <- function(Q, c.data, eta, phi, tau, psi.inv, EtE, Q1) {
       u.load     <- diag(phi * tau, Q) + psi.inv * EtE
       u.load     <- if(Q1) sqrt(u.load) else .chol(u.load)
       mu.load    <- psi.inv  * (if(Q1) 1/(u.load * u.load) else chol2inv(u.load)) %*% crossprod(eta, c.data)
-        mu.load   + backsolve(u.load, stats::rnorm(Q))
+        mu.load   + backsolve(u.load, rnorm(Q))
     }
 
   # Uniquenesses
     .sim_psi_iu  <- function(N, P, psi.alpha, psi.beta, c.data, eta, lmat) {
       S.mat      <- c.data - tcrossprod(eta, lmat)
-        stats::rgamma(P, shape=N/2 + psi.alpha, rate=colSums(S.mat * S.mat)/2 + psi.beta)
+        rgamma(P, shape=N/2 + psi.alpha, rate=colSums(S.mat * S.mat)/2 + psi.beta)
     }
 
     .sim_psi_ii  <- function(N, P, psi.alpha, psi.beta, c.data, eta, lmat) {
       S.mat      <- c.data - tcrossprod(eta, lmat)
-        rep(stats::rgamma(1, shape=(N * P)/2 + psi.alpha, rate=sum(S.mat * S.mat)/2 + psi.beta), P)
+        rep(rgamma(1, shape=(N * P)/2 + psi.alpha, rate=sum(S.mat * S.mat)/2 + psi.beta), P)
     }
 
   # Local Shrinkage
     .sim_phi     <- function(Q, P, nu, tau, load.2, plus1) {
-        matrix(stats::rgamma(P * Q, shape=0.5 + nu + plus1, rate=(nu + sweep(load.2, 2, tau, FUN="*"))/2), nrow=P, ncol=Q)
+        matrix(rgamma(P * Q, shape=0.5 + nu + plus1, rate=(nu + sweep(load.2, 2, tau, FUN="*"))/2), nrow=P, ncol=Q)
     }
 
   # Global Shrinkage
     .sim_delta1  <- function(Q, P, alpha.d1, delta.1, beta.d1, tau, sum.term) {
-        stats::rgamma(1, shape=alpha.d1 + P * Q/2, rate=beta.d1 + 0.5/delta.1 * tau %*% sum.term)
+        rgamma(1, shape=alpha.d1 + P * Q/2, rate=beta.d1 + 0.5/delta.1 * tau %*% sum.term)
     }
 
     .sim_deltak  <- function(Q, P, k, alpha.d2, beta.d2, delta.k, tau.kq, sum.term.kq) {
-        stats::rgamma(1, shape=alpha.d2 + P/2 * (Q - k + 1), rate=beta.d2 + 0.5/delta.k * tau.kq %*% sum.term.kq)
+        rgamma(1, shape=alpha.d2 + P/2 * (Q - k + 1), rate=beta.d2 + 0.5/delta.k * tau.kq %*% sum.term.kq)
     }
 
   # Mixing Proportions
     .sim_pi      <- function(pi.alpha, nn, G) {
-      tmp        <- stats::rgamma(G, shape=pi.alpha + nn, rate=1)
+      tmp        <- rgamma(G, shape=pi.alpha + nn, rate=1)
         tmp/sum(tmp)
     }
 
     .sim_pi_inf  <- function(pi.alpha, nn, N = sum(nn), len, lseq, discount = 0L) {
-      vs         <- if(discount == 0) stats::rbeta(len, 1 + nn, pi.alpha + N - cumsum(nn)) else stats::rbeta(len, 1 - discount + nn, pi.alpha + lseq * discount + N - cumsum(nn))
+      vs         <- if(discount == 0) rbeta(len, 1 + nn, pi.alpha + N - cumsum(nn)) else rbeta(len, 1 - discount + nn, pi.alpha + lseq * discount + N - cumsum(nn))
         return(list(Vs = vs, pi.prop = vapply(lseq, function(t) vs[t] * prod(1 - vs[seq_len(t - 1)]), numeric(1L))))
     }
 
@@ -94,20 +94,20 @@
 #' # Set the dimensions & simulate a matrix of log-probabilities
 #' N         <- 400
 #' G         <- 25
-#' log_probs <- sweep(t(apply(matrix(-stats::rexp(N * G), nrow=N, ncol=G), 1,
+#' log_probs <- sweep(t(apply(matrix(-rexp(N * G), nrow=N, ncol=G), 1,
 #'                    sort, decreasing=TRUE)), 1, seq(1, 0, -25), FUN="/")
 #'
 #' # Sample the cluster labels and tabulate them
 #' res       <- sim_z_log(log_probs, N, G)
 #' tabulate(res$z, nbins=G)
     sim_z_log    <- function(log.probs, N = nrow(log.probs), G = ncol(log.probs), G.non = G, Gseq = seq_len(G), slice = FALSE) {
-      log.denom  <- z   <- matrixStats::rowLogSumExps(log.probs)
+      log.denom  <- z   <- rowLogSumExps(log.probs)
       G2         <- max(min(G.non, floor(G/2L)), 2L)
       G2s        <- seq_len(G2)
-      exps       <- -stats::rexp(N)
+      exps       <- -rexp(N)
       lnp        <- sweep(log.probs[,G2s], 1, log.denom, FUN="-")
       for(g in G2s[-1])   {
-        lnp[,g]  <- matrixStats::rowLogSumExps(lnp, cols=g:(g - 1))
+        lnp[,g]  <- rowLogSumExps(lnp, cols=g:(g - 1))
       }
       tmp        <- exps  > lnp
       ind        <- tmp[,G2]
@@ -116,7 +116,7 @@
         G3s      <- seq_len(if(!isTRUE(slice)) G - G2 else if(sum(ind) > G - G2) sum(colSums(is.finite(log.probs[ind,-G2s, drop=FALSE])) > 0) else max(Rfast::rowsums(is.finite(log.probs[ind,-G2s, drop=FALSE]))))
         lnp      <- cbind(lnp[ind,G2, drop=FALSE], sweep(log.probs[ind,Gseq[-G2s][G3s], drop=FALSE], 1, log.denom[ind], FUN="-"))
         for(g in G3s + 1) {
-         lnp[,g] <- matrixStats::rowLogSumExps(lnp, cols=g:(g - 1))
+         lnp[,g] <- rowLogSumExps(lnp, cols=g:(g - 1))
         }
         tmp      <- exps[ind]   >= lnp[,-1, drop=FALSE]
         z[ind]   <- Rfast::rowsums(tmp) + G2
@@ -127,61 +127,61 @@
   # Alpha
     .sim_alpha_g <- function(alpha, shape, rate, G, N, discount = 0L) {
       shape2     <- shape + G - 1
-      rate2      <- rate  - log(stats::rbeta(1, alpha + discount + 1, N))
+      rate2      <- rate  - log(rbeta(1, alpha + discount + 1, N))
       weight     <- shape2/(shape2 + N * rate2)
-        weight    * stats::rgamma(1, shape=shape2 + 1, rate=rate2) + (1 - weight) * stats::rgamma(1, shape=shape2, rate=rate2) - discount
+        weight    * rgamma(1, shape=shape2 + 1, rate=rate2) + (1 - weight) * rgamma(1, shape=shape2, rate=rate2) - discount
     }
 
     .sim_alpha_m <- function(alpha, lower, upper, trunc.G, Vs, discount = 0L) {
       alpha.old  <- alpha   + discount
-      alpha.new  <- stats::runif(1, lower, upper) + discount
+      alpha.new  <- runif(1, lower, upper) + discount
       a.prob     <- trunc.G * (log(alpha.new) - log(alpha.old))    + (alpha.new - alpha.old) * sum(log((1 - Vs[-trunc.G])))
-      accept     <- a.prob >= 0 || - stats::rexp(1)  < a.prob
+      accept     <- a.prob >= 0 || - rexp(1)  < a.prob
         return(list(alpha   = ifelse(accept, alpha.new, alpha.old) - discount, rate = accept))
     }
 
 # Priors
   # Means
     .sim_mu_p    <- function(P, mu.zero, sig.mu.sqrt) {
-      sig.mu.sqrt * stats::rnorm(P) + mu.zero
+      sig.mu.sqrt * rnorm(P) + mu.zero
     }
 
   # Scores
     .sim_eta_p   <- function(Q, N) {
-        matrix(stats::rnorm(N * Q), nrow=N, ncol=Q)
+        matrix(rnorm(N * Q), nrow=N, ncol=Q)
     }
 
   # Loadings
     .sim_load_p  <- function(Q, P, sigma.l) {
-        sqrt(sigma.l) * matrix(stats::rnorm(P * Q), nrow=P, ncol=Q)
+        sqrt(sigma.l) * matrix(rnorm(P * Q), nrow=P, ncol=Q)
     }
 
     .sim_load_ps <- function(Q, sigma.l, phi, tau) {
-        sqrt(1/(phi * tau)) * stats::rnorm(Q)
+        sqrt(1/(phi * tau)) * rnorm(Q)
     }
 
   # Uniquenesses
     .sim_psi_ipu <- function(P, psi.alpha, psi.beta) {
-        stats::rgamma(n=P, shape=psi.alpha, rate=psi.beta)
+        rgamma(n=P, shape=psi.alpha, rate=psi.beta)
     }
 
     .sim_psi_ipi <- function(P, psi.alpha, psi.beta) {
-        rep(stats::rgamma(1, shape=psi.alpha, rate=psi.beta), P)
+        rep(rgamma(1, shape=psi.alpha, rate=psi.beta), P)
     }
 
   # Local Shrinkage
     .sim_phi_p   <- function(Q, P, nu, plus1) {
-        matrix(stats::rgamma(n=P * Q, shape=nu + plus1, rate=nu), nrow=P, ncol=Q)
+        matrix(rgamma(n=P * Q, shape=nu + plus1, rate=nu), nrow=P, ncol=Q)
     }
 
   # Global Shrinkage
     .sim_delta_p <- function(Q = 2L, alpha, beta) {
-        stats::rgamma(n=Q - 1, shape=alpha, rate=beta)
+        rgamma(n=Q - 1, shape=alpha, rate=beta)
     }
 
   # Cluster Labels
     .sim_z_p     <- function(N, prob.z) {
-        factor(which(stats::rmultinom(N, size=1, prob=prob.z) != 0, arr.ind=TRUE)[,1], levels=seq_along(prob.z))
+        which(rmultinom(N, size=1, prob=prob.z) != 0, arr.ind=TRUE)[,1]
     }
 
 # Other Functions
@@ -210,7 +210,7 @@
 #' rate   <- psi_hyper(shape=3, covar=cov(olive_scaled), type="unconstrained")
 #' rate
     psi_hyper   <- function(shape, covar, type=c("unconstrained", "isotropic")) {
-      if(!all(matrixcalc::is.positive.semi.definite(covar),
+      if(!all(is.positive.semi.definite(covar),
               isSymmetric(covar),
               is.double(covar)))           stop("Invalid covariance matrix supplied")
       if(any(!is.numeric(shape),
@@ -307,18 +307,18 @@
         tab.tmp <- cbind(tab.tmp, tmp.mat)
       }
       if(nr == 1) {
-        z.perm  <- stats::setNames(as.numeric(colnames(tab.tmp)), as.numeric(colnames(tab.tmp)))
+        z.perm  <- setNames(as.numeric(colnames(tab.tmp)), as.numeric(colnames(tab.tmp)))
       } else if(nc == 1) {
-        z.perm  <- stats::setNames(as.numeric(colnames(tab.tmp)), as.numeric(colnames(tab.tmp)))
+        z.perm  <- setNames(as.numeric(colnames(tab.tmp)), as.numeric(colnames(tab.tmp)))
       } else {
-        z.perm  <- suppressWarnings(e1071::matchClasses(tab.tmp, method="exact", verbose=FALSE))
-        z.perm  <- stats::setNames(as.numeric(z.perm), names(z.perm))
+        z.perm  <- suppressWarnings(matchClasses(tab.tmp, method="exact", verbose=FALSE))
+        z.perm  <- setNames(as.numeric(z.perm), names(z.perm))
       }
       if(length(Gs) > length(z.perm)) {
-        z.perm  <- c(z.perm, stats::setNames(setdiff(Gs, z.perm), setdiff(Gs, names(z.perm))))
+        z.perm  <- c(z.perm, setNames(setdiff(Gs, z.perm), setdiff(Gs, names(z.perm))))
       }
       z.names   <- as.numeric(names(z.perm))
-      z.perm    <- z.perm[Rfast::Order(z.names)]
+      z.perm    <- z.perm[Order(z.names)]
       z.sw      <- factor(z.new, labels=z.perm[seq_along(ng[ng > 0])])
         return(list(z = as.numeric(levels(z.sw))[z.sw], z.perm = z.perm))
     }
@@ -329,7 +329,7 @@
       pis       <- pi.prop[sw]
       nns       <- nn[sw]
       a.prob    <- (nns[1] - nns[2]) * (log(pis[1])  - log(pis[2]))
-        return(list(rate1  = a.prob >= 0 || - stats::rexp(1) < a.prob, sw = sw))
+        return(list(rate1  = a.prob >= 0 || - exp(1) < a.prob, sw = sw))
     }
 
     # Move 2
@@ -338,8 +338,8 @@
       sw        <- if(is.element(sw, c(G, G - 1))) c(G - 1, G) else c(sw, sw + 1)
       nns       <- nn[sw]
       Vsw       <- Vs[sw]
-      a.prob    <- nns[1] * log(1 - Vsw[2]) - nns[2] * log(1 - Vsw[1])
-        return(list(rate2 = a.prob >= 0  || - stats::rexp(1) < a.prob, sw = sw))
+      a.prob    <- nns[1] * log(1 - Vsw[2]) - nns[2]  * log(1 - Vsw[1])
+        return(list(rate2 = a.prob >= 0  || - rexp(1) < a.prob, sw = sw))
     }
 
   # Length Checker
@@ -527,12 +527,12 @@
       if(any(dim(crit.mat) > 1)) {
         msg     <- paste0(", and ", ifelse(substr(criterion, 1, 1) == "A", "an ", "a "),  criterion, " of ", round(max(crit.mat), 2), "\n")
       }
-        cat(paste0(utils::capture.output(print.Results_IMIFA(object)), msg))
+        cat(paste0(capture.output(print.Results_IMIFA(object)), msg))
     }
 
     .power2     <- function(x) x * x
     .which0     <- function(x) which(x == 0)
-    .chol       <- function(x) tryCatch(chol(x), error=function(e) chol(corpcor::make.positive.definite(x)))
+    .chol       <- function(x) tryCatch(chol(x), error=function(e) chol(make.positive.definite(x)))
     .ledermann  <- function(N, P) as.integer(min(N - 1, floor((2 * P + 1 - sqrt(8 * P + 1))/2)))
     .dim        <- Vectorize(function(Q, P) as.integer(P * Q - 0.5 * Q * (Q - 1) + 2 * P), vectorize.args = "Q", SIMPLIFY=TRUE)
     #

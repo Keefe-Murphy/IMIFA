@@ -1,5 +1,5 @@
 ################################################################
-### Gibbs Sampler for Bayesian Factor Analysis (Single Case) ###
+### Gibbs Sampler for Bayesian (Finite) Factor Analysis ########
 ################################################################
 
 # Gibbs Sampler Function
@@ -10,7 +10,7 @@
   # Define & initialise variables
     start.time   <- proc.time()
     total        <- max(iters)
-    if(verbose)     pb     <- utils::txtProgressBar(min=0, max=total, style=3)
+    if(verbose)     pb     <- txtProgressBar(min=0, max=total, style=3)
     n.store      <- length(iters)
     Pseq         <- seq_len(P)
     obsnames     <- rownames(data)
@@ -33,7 +33,7 @@
     post.mu      <- rep(0, P)
     post.psi     <- post.mu
     ll.store     <- rep(0, n.store)
-    cov.emp      <- Rfast::cova(as.matrix(data))
+    cov.emp      <- cova(as.matrix(data))
     cov.est      <- matrix(0, nrow=P, ncol=P)
 
     mu.sigma     <- 1/sigma.mu
@@ -44,7 +44,7 @@
     lmat         <- .sim_load_p(Q=Q, P=P, sigma.l=sigma.l)
     psi.inv      <- .sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
     if(all(Q0, Q  < .ledermann(N, P))) {
-      fact       <- try(stats::factanal(data, factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
+      fact       <- try(factanal(data, factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
       if(!inherits(fact, "try-error")) {
         eta      <- fact$scores
         lmat     <- fact$loadings
@@ -63,13 +63,13 @@
       eta.store[,,1]       <- eta
       load.store[,,1]      <- lmat
       psi.store[,1]        <- 1/psi.inv
-      ll.store[1]          <- sum(mvnfast::dmvn(X=data, mu=mu, sigma=tcrossprod(lmat) + diag(1/psi.inv), log=TRUE))
+      ll.store[1]          <- sum(dmvn(X=data, mu=mu, sigma=tcrossprod(lmat) + diag(1/psi.inv), log=TRUE))
     }
     init.time    <- proc.time() - start.time
 
   # Iterate
     for(iter in seq_len(total)[-1]) {
-      if(verbose && iter    < burnin) utils::setTxtProgressBar(pb, iter)
+      if(verbose && iter    < burnin) setTxtProgressBar(pb, iter)
 
     # Scores & Loadings
       c.data     <- sweep(data, 2, mu, FUN="-")
@@ -86,7 +86,7 @@
       mu[]       <- .sim_mu(N=N, P=P, mu.sigma=mu.sigma, psi.inv=psi.inv, sum.data=sum.data, sum.eta=colSums(eta), lmat=lmat, mu.zero=mu.zero)
 
       if(is.element(iter, iters)) {
-        if(verbose) utils::setTxtProgressBar(pb, iter)
+        if(verbose) setTxtProgressBar(pb, iter)
         new.it   <- which(iters == iter)
         psi      <- 1/psi.inv
         post.mu  <- post.mu + mu/n.store
@@ -97,7 +97,7 @@
         if(all(sw["s.sw"], Q0))  eta.store[,,new.it]    <- eta
         if(all(sw["l.sw"], Q0))  load.store[,,new.it]   <- lmat
         if(sw["psi.sw"])         psi.store[,new.it]     <- psi
-                                 ll.store[new.it]       <- sum(mvnfast::dmvn(X=data, mu=mu, sigma=sigma, log=TRUE))
+                                 ll.store[new.it]       <- sum(dmvn(X=data, mu=mu, sigma=sigma, log=TRUE))
       }
     }
     if(verbose)  close(pb)
@@ -105,8 +105,8 @@
                       eta      = if(all(sw["s.sw"], Q0))   tryCatch(provideDimnames(eta.store,   base=list(obsnames, "", ""), unique=FALSE), error=function(e) eta.store),
                       load     = if(all(sw["l.sw"], Q0))   tryCatch(provideDimnames(load.store,  base=list(varnames, "", ""), unique=FALSE), error=function(e) load.store),
                       psi      = if(sw["psi.sw"])          tryCatch(provideDimnames(psi.store,   base=list(varnames, ""),     unique=FALSE), error=function(e) psi.store),
-                      post.mu  = tryCatch(stats::setNames(post.mu,  varnames),            error=function(e) post.mu),
-                      post.psi = tryCatch(stats::setNames(post.psi, varnames),            error=function(e) post.psi),
+                      post.mu  = tryCatch(setNames(post.mu,  varnames),                   error=function(e) post.mu),
+                      post.psi = tryCatch(setNames(post.psi, varnames),                   error=function(e) post.psi),
                       cov.emp  = tryCatch(provideDimnames(cov.emp,  base=list(varnames)), error=function(e) cov.emp),
                       cov.est  = tryCatch(provideDimnames(cov.est,  base=list(varnames)), error=function(e) cov.est),
                       ll.store = ll.store,
