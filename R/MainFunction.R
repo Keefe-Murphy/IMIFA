@@ -185,7 +185,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     raw.dat <- raw.dat[complete.cases(raw.dat),]
   }
   if(method != "classify") {
-    scal    <- switch(scaling, unit=FALSE, Rfast::colVars(as.matrix(raw.dat), std=TRUE))
+    scal    <- switch(scaling, none=FALSE, Rfast::colVars(as.matrix(raw.dat), std=TRUE))
     scal    <- switch(scaling, pareto=sqrt(scal), scal)
     dat     <- if(is.logical(scal)) standardise(as.matrix(raw.dat), center=centering, scale=scal) else scale(raw.dat, center=centering, scale=scal)
   } else   {
@@ -342,7 +342,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   len.Q     <- length(range.Q)
   len.X     <- len.G * len.Q
   if(all(len.X > 10,
-         memory.limit()  <= 16256,
+         suppressWarnings(memory.limit())  <= 16256,
          switches["s.sw"])) {
     if(!score.x)            {       warning(paste0("The large number of candidate models being explored (", len.X, ") could lead to memory issues\nConsider setting 'score.switch' to FALSE or breaking up the task into chunks and calling get_IMIFA_results() on each chunk"), call.=FALSE)
     } else                  {       warning(paste0("'score.switch' set to FALSE as too many candidate models are being explored (", len.X, ")\nPosterior inference on the scores will not be possible, though you can risk forcing storage by supplying score.switch=TRUE\nConsider breaking up the task into chunks and calling get_IMIFA_results() on each chunk"), call.=FALSE)
@@ -688,7 +688,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(centered)                    warning("Data supplied is globally centered, are you sure?", call.=FALSE)
     for(g in seq_len(range.G))  {
       tmp.dat      <- raw.dat[zlabels == levels(zlabels)[g],]
-      scal         <- switch(scaling, unit=FALSE, Rfast::colVars(as.matrix(tmp.dat), std=TRUE))
+      scal         <- switch(scaling, none=FALSE, Rfast::colVars(as.matrix(tmp.dat), std=TRUE))
       scal         <- switch(scaling, pareto=sqrt(scal), scal)
       tmp.dat <- if(is.logical(scal)) standardise(as.matrix(tmp.dat), center=centering, scale=scal) else scale(tmp.dat, center=centering, scale=scal)
       if(sigmu.miss)   gibbs.arg$sigma.mu  <- if(P > 500) switch(scaling, unit=cora(as.matrix(tmp.dat)), cova(as.matrix(tmp.dat))) else switch(scaling, unit=cor(tmp.dat), cov(tmp.dat))
