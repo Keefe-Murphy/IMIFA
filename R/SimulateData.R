@@ -13,6 +13,7 @@
 #' @return Invisibly returns a data.frame with \code{N} observations (rows) of \code{P} variables (columns). The true values of the parameters which generated these data are also stored.
 #' @export
 #' @importFrom corpcor "is.positive.definite" "make.positive.definite"
+#' @importFrom Rfast "is.symmetric"
 #'
 #' @examples
 #' # Simulate 100 observations from 3 balanced groups with cluster-specific numbers of latent factors
@@ -86,7 +87,7 @@ sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(4L, G), pis = rep(
 
   # Simulate data
     covmat     <- provideDimnames(diag(psi.true) + switch(method, marginal=tcrossprod(l.true), 0), base=list(vnames))
-    if(!all(isSymmetric(covmat),
+    if(!all(is.symmetric(covmat),
             is.double(covmat)))           stop("Invalid covariance matrix")
     if(!is.positive.definite(covmat)) {
       covmat   <- make.positive.definite(covmat)

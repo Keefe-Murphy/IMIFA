@@ -5,8 +5,8 @@
 # Gibbs Sampler Function
   .gibbs_IFA     <- function(Q, data, iters, N, P, sigma.mu, mu, prop, uni.type,
                              psi.alpha, psi.beta, burnin, thinning, verbose, sw,
-                             epsilon, mu.zero, nu, adapt, adapt.at, b0, b1,
-                             alpha.d1, alpha.d2, beta.d1, beta.d2, nuplus1, ...) {
+                             epsilon, mu.zero, nu, adapt, adapt.at, b0, b1, nuplus1,
+                             alpha.d1, alpha.d2, beta.d1, beta.d2, scaling, ...) {
 
   # Define & initialise variables
     start.time   <- proc.time()
@@ -32,7 +32,7 @@
     post.mu      <- rep(0, P)
     post.psi     <- post.mu
     ll.store     <- rep(0, n.store)
-    cov.emp      <- cova(as.matrix(data))
+    cov.emp      <- if(P > 500) switch(scaling, unit=cora(as.matrix(data)), cova(as.matrix(data))) else switch(scaling, unit=cor(data), cov(data))
     cov.est      <- matrix(0, nrow=P, ncol=P)
     Q.star       <- Q
     Q.store      <- ll.store

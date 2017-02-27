@@ -67,7 +67,7 @@
 #' @import stats
 #' @importFrom utils "capture.output" "head" "setTxtProgressBar" "tail" "txtProgressBar"
 #' @importFrom matrixStats "rowLogSumExps"
-#' @importFrom Rfast "rowsums" "Order" "colVars" "rowmeans" "standardise" "sort_unique" "cova"
+#' @importFrom Rfast "rowsums" "Order" "colVars" "rowmeans" "standardise" "sort_unique" "cora" "cova"
 #' @importFrom e1071 "matchClasses"
 #' @importFrom mvnfast "dmvn"
 #' @importFrom slam "as.simple_sparse_array"
@@ -185,14 +185,8 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     raw.dat <- raw.dat[complete.cases(raw.dat),]
   }
   if(method != "classify") {
-    if(scaling   != "none")   {
-      scal  <- Rfast::colVars(as.matrix(raw.dat), std=TRUE)
-      if(scaling == "pareto") {
-       scal <- sqrt(scal)
-      }
-    } else {
-      scal  <- FALSE
-    }
+    scal    <- switch(scaling, unit=FALSE, Rfast::colVars(as.matrix(raw.dat), std=TRUE))
+    scal    <- switch(scaling, pareto=sqrt(scal), scal)
     dat     <- if(is.logical(scal)) standardise(as.matrix(raw.dat), center=centering, scale=scal) else scale(raw.dat, center=centering, scale=scal)
   } else   {
     dat     <- raw.dat
@@ -317,7 +311,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   }
 
 # Define full conditionals, hyperparamters & Gibbs Sampler function for desired method
-  cov.mat          <- cova(as.matrix(dat))
+  cov.mat          <- if(P > 500) switch(scaling, unit=cora(as.matrix(dat)), cova(as.matrix(dat))) else switch(scaling, unit=cor(dat), cov(dat))
   datname          <- rownames(dat)
   if(any(length(unique(datname)) != N,
      is.null(datname)))      rownames(dat) <- seq_len(N)
@@ -335,6 +329,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   if(is.element(method, c("FA", "MFA", "OMFA", "IMFA"))) {
     if(Q.miss)                      stop("'range.Q' must be specified")
     if(any(range.Q < 0))            stop(paste0("'range.Q' must be non-negative for the ", method, " method"))
+    range.Q <- sort_unique(range.Q)
   } else {
     if(Q.miss)        range.Q    <- as.integer(min(ifelse(P > 500, 12 + floor(log(P)), floor(3 * log(P))), N - 1))
     if(any(!is.logical(adapt),
@@ -343,7 +338,6 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(range.Q    <= 0)             stop(paste0("'range.Q' must be strictly positive for the ", method, " method"))
     if(all(adapt, range.Q < Q.min)) stop(paste0("'range.Q' must be at least min(log(P), log(N)) for the ", method, " method when 'adapt' is TRUE"))
   }
-  range.Q   <- sort_unique(range.Q)
   len.G     <- switch(method, classify=range.G, length(range.G))
   len.Q     <- length(range.Q)
   len.X     <- len.G * len.Q
@@ -487,6 +481,9 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     gibbs.arg      <- append(gibbs.arg, list(rho = rho, ind.slice = ind.slice, alpha.step = alpha.step, learn.d = learn.d,
                                              DP.lab.sw = DP.lab.sw, a.hyper = alpha.hyper, discount = discount, d.hyper = d.hyper))
   }
+  if(is.element(method, c("FA", "IFA", "MFA", "MIFA")))   {
+    gibbs.arg      <- append(gibbs.arg, list(scaling = scaling))
+  }
   if(!is.element(method, c("FA", "MFA", "OMFA", "IMFA"))) {
     gibbs.arg      <- append(gibbs.arg, list(nu = nu, beta.d1 = beta.d1, beta.d2 = beta.d2, adapt.at = adapt.at, adapt = adapt,
                                              nuplus1 = nuplus1, b0 = b0, b1 = b1, prop = prop, epsilon = epsilon))
@@ -560,7 +557,9 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
       }
       if(beta.x)  {
         if(psi0g) {
-          cov.gg   <- lapply(seq_len(G), function(gg) if(nngs[gg] > 1) cova(as.matrix(dat[zi[[g]] == gg,, drop=FALSE])) else cov.mat)
+          cov.gg   <- lapply(seq_len(G), function(gg, dat.gg = dat[zi[[g]] == gg,, drop=FALSE]) if(nngs[gg] > 1) { if(P > 500) {
+                                         switch(scaling, unit=cora(as.matrix(dat.gg)), cova(as.matrix(dat.gg)))  }
+                                         else switch(scaling, unit=cor(dat.gg), cov(dat.gg))  } else cov.mat)
           psi.beta[[g]] <- vapply(seq_len(G), function(gg) psi_hyper(shape=psi.alpha, covar=cov.gg[[gg]], type=uni.prior), numeric(P))
         } else {
           psi.beta[[g]] <- replicate(G, temp.psi[[1]])
@@ -689,16 +688,10 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(centered)                    warning("Data supplied is globally centered, are you sure?", call.=FALSE)
     for(g in seq_len(range.G))  {
       tmp.dat      <- raw.dat[zlabels == levels(zlabels)[g],]
-      if(scaling   != "none")   {
-        scal  <- Rfast::colVars(as.matrix(tmp.dat), std=TRUE)
-        if(scaling == "pareto") {
-         scal <- sqrt(scal)
-        }
-      } else {
-        scal  <- FALSE
-      }
+      scal         <- switch(scaling, unit=FALSE, Rfast::colVars(as.matrix(tmp.dat), std=TRUE))
+      scal         <- switch(scaling, pareto=sqrt(scal), scal)
       tmp.dat <- if(is.logical(scal)) standardise(as.matrix(tmp.dat), center=centering, scale=scal) else scale(tmp.dat, center=centering, scale=scal)
-      if(sigmu.miss)   gibbs.arg$sigma.mu  <- cova(as.matrix(tmp.dat))
+      if(sigmu.miss)   gibbs.arg$sigma.mu  <- if(P > 500) switch(scaling, unit=cora(as.matrix(tmp.dat)), cova(as.matrix(tmp.dat))) else switch(scaling, unit=cor(tmp.dat), cov(tmp.dat))
       imifa[[g]]          <- list()
       gibbs.arg    <- append(temp.args, lapply(deltas[[Gi]], "[[", g))
       imifa[[g]][[Qi]]    <- do.call(paste0(".gibbs_", "IFA"),

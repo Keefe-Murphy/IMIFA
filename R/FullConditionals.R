@@ -211,7 +211,7 @@
 #' rate
     psi_hyper   <- function(shape, covar, type=c("unconstrained", "isotropic")) {
       if(!all(is.positive.semi.definite(covar),
-              isSymmetric(covar),
+              is.symmetric(covar),
               is.double(covar)))           stop("Invalid covariance matrix supplied")
       if(any(!is.numeric(shape),
              length(shape) != 1))          stop("'shape' must be a single digit")

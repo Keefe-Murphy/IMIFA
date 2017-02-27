@@ -24,7 +24,7 @@
 #' \item{Uniquenesses}{Posterior summaries for the uniquenesses.}
 #' }
 #' @export
-#' @importFrom Rfast "med" "rowMaxs" "standardise" "colMaxs" "rowVars" "rowmeans" "Order" "cova"
+#' @importFrom Rfast "med" "rowMaxs" "standardise" "colMaxs" "rowVars" "rowmeans" "Order" "cova" "Var"
 #' @importFrom abind "adrop"
 #' @importFrom MCMCpack "procrustes"
 #' @importFrom e1071 "matchClasses" "classAgreement"
@@ -206,9 +206,10 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       for(q in seq_len(Q.range)) {
         qi               <- ifelse(Q.T, Q.ind, q)
         log.likes        <- if(is.element(method, c("OMFA", "IMFA")) && GQ1) sims[[gi]][[qi]]$ll.store[tmp.store[[qi]]] else sims[[gi]][[qi]]$ll.store[tmp.store]
-        ll.max           <- 2 * max(log.likes, na.rm=TRUE)
-        ll.var           <- ifelse(length(log.likes) != 1, 2 * var(log.likes, na.rm=TRUE), 0)
-        ll.mean          <- mean(log.likes, na.rm=TRUE)
+        log.likes        <- log.likes[complete.cases(log.likes)]
+        ll.max           <- 2 * max(log.likes)
+        ll.var           <- ifelse(length(log.likes) != 1, 2 * Var(log.likes), 0)
+        ll.mean          <- mean(log.likes)
         aicm[g,q]        <- ll.max  - ll.var * 2
         bicm[g,q]        <- ll.max  - ll.var * log.N
         log.iLLH[g,q]    <- ll.mean - ll.var * (log.N - 1)
@@ -435,7 +436,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     if(alpha.step != "fixed") {
       alpha      <- sims[[G.ind]][[Q.ind]]$alpha
       post.alpha <- mean(alpha)
-      var.alpha  <- var(alpha)
+      var.alpha  <- Var(alpha)
       ci.alpha   <- quantile(alpha, conf.levels)
       rate       <- switch(alpha.step, metropolis=sims[[G.ind]][[Q.ind]]$rate, 1)
       DP.alpha   <- list(alpha = alpha, post.alpha = post.alpha, var.alpha = var.alpha, ci.alpha = ci.alpha, acceptance.rate = rate)
@@ -553,7 +554,8 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
         psi      <- as.matrix(psis[,g,store])
       }
       if(all(data.x, sizes[g] > 1)) {
-        cov.emp  <- provideDimnames(cova(dat[z.ind[[g]],, drop=FALSE]), base=list(varnames))
+        dat.gg   <- dat[z.ind[[g]],, drop=FALSE]
+        cov.emp  <- if(n.var > 500) provideDimnames(switch(scal.meth, unit=cora(dat.gg), cova(dat.gg)), base=list(varnames)) else switch(scal.meth, unit=cor(dat.gg), cov(dat.gg))
       }
     } else {
       post.mu    <- sims[[G.ind]][[Q.ind]]$post.mu
@@ -594,7 +596,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     if(sw["l.sw"])   {
       lmat       <- provideDimnames(lmat[,Qgs,, drop=FALSE], base=list("", paste0("Factor", Qgs), ""), unique=FALSE)
       post.load  <- rowMeans(lmat, dims=2)
-      var.load   <- apply(lmat, c(1, 2), var)
+      var.load   <- apply(lmat, c(1, 2), Var)
       ci.load    <- apply(lmat, c(1, 2), quantile, conf.levels)
       var.exp    <- sum(colSums(post.load * post.load))/n.var
       class(post.load)     <- "loadings"
@@ -676,7 +678,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     Qseq         <- seq_len(max(Q))
     eta          <- provideDimnames(eta[,Qseq,eta.store, drop=FALSE], base=list("", paste0("Factor", Qseq), ""), unique=FALSE)
     scores       <- list(eta = eta, post.eta = rowMeans(eta, dims=2), var.eta = apply(eta,
-                         c(1, 2), var), ci.eta = apply(eta, c(1, 2), quantile, conf.levels))
+                         c(1, 2), Var), ci.eta = apply(eta, c(1, 2), quantile, conf.levels))
     attr(scores, "Eta.store")  <- eta.store
   }
   names(result)  <- gnames
