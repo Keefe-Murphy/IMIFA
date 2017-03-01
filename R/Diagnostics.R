@@ -555,7 +555,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       }
       if(all(data.x, sizes[g] > 1)) {
         dat.gg   <- dat[z.ind[[g]],, drop=FALSE]
-        cov.emp  <- if(n.var > 500) provideDimnames(switch(scal.meth, unit=cora(dat.gg), cova(dat.gg)), base=list(varnames)) else switch(scal.meth, unit=cor(dat.gg), cov(dat.gg))
+        cov.emp  <- if(n.var > 500) provideDimnames(cova(dat.gg), base=list(varnames)) else cov(dat.gg)
       }
     } else {
       post.mu    <- sims[[G.ind]][[Q.ind]]$post.mu

@@ -19,7 +19,7 @@
 * Fixed trace plots for factor scores by extracting indices of stored iterations properly using `Rfast::sort_unique`. 
 * Slightly rearranged order in which Gibbs updates take place to ensure means enter simulation of uniquenesses properly.
 * Edited/robustified subsetting of large objects when storing `mcmc_IMIFA` output.
-* Tightened controls for when certain paramters are not stored for posterior inference.
+* Tightened controls for when certain parameters are not stored for posterior inference.
 * Edited Ledermann upper bound `stop(...)` for finite factor models to `warning(...)`.
 * Indices of uncertain observations now returned (`get_IMIFA_results`) & printed (`plot.Results_IMIFA`) even when `zlabels` not supplied.
 * Fixed behaviour of progress bar when `verbose=FALSE`.
