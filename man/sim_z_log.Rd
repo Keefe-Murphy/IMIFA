@@ -4,16 +4,14 @@
 \alias{sim_z_log}
 \title{Simulate Cluster Labels from Unnormalised Log-Probabilities using the Gumbel-Max Trick}
 \usage{
-sim_z_log(probs, N = ifelse(isTRUE(slice), nrow(probs), NULL),
-  G = ifelse(isTRUE(slice), ncol(probs), NULL), log.like = FALSE,
-  slice = FALSE)
+sim_z_log(probs, N, G, log.like = FALSE, slice = FALSE)
 }
 \arguments{
 \item{probs}{An N x G matrix of unnormalised probabilities on the log scale.}
 
-\item{N}{The number of observations that require labels to be sampled. Must be at least 1. Defaults to (and should not be changed from!) \code{nrow(log.probs)}. Only necessary if \code{isTRUE(slice)}.}
+\item{N}{The number of observations that require labels to be sampled. Must be at least 1. Defaults to (and should not be changed from!) \code{nrow(log.probs)}. Only necessary if \code{slice} is \code{FALSE}.}
 
-\item{G}{The number of 'active' clusters, s.t. sampled labels can take values in \code{1:G}. Must be at least 1. Defaults to (and should not be changed from!) \code{ncol(log.probs)}. Only necessary if \code{isTRUE(slice)}.}
+\item{G}{The number of 'active' clusters, s.t. sampled labels can take values in \code{1:G}. Must be at least 1. Defaults to (and should not be changed from!) \code{ncol(log.probs)}. Only necessary if \code{slice} is \code{FALSE}.}
 
 \item{log.like}{A logical indicating whether the normalising constant is to be computed. Defaults to \code{FALSE} but is \code{TRUE} for all methods under \code{\link{mcmc_IMIFA}} where it's necessary for computation of the log-likelihoods required for model choice.}
 

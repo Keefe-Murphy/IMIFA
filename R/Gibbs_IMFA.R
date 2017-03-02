@@ -160,7 +160,7 @@
         if(inherits(log.probs, "try-error")) {
           log.probs  <- vapply(Gs, function(g, Q=Q0s[g]) dmvn(data, mu[,g], if(Q) make.positive.definite(sigma[[g]]) else make.positive.definite(sqrt(sigma[[g]])), log=TRUE, isChol=!Q) + log(pi.prop[g]), numeric(N))
         }
-        z.res        <- sim_z_log(probs=log.probs, N=N, G=G, log.like=TRUE)
+        z.res        <- sim_z_log(probs=log.probs, log.like=TRUE, slice=TRUE)
         z            <- z.res$z
       } else     {
         z            <- rep(1, N)

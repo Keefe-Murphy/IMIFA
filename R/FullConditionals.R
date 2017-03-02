@@ -75,8 +75,8 @@
 #'
 #' Samples cluster labels for N observations from G groups efficiently using log-probabilities and the so-called Gumbel-Max trick, without requiring that the log-probabilities need to be normalised; thus redunant computation can be avoided. Computation takes place on the log scale for stability/underflow reasons (to ensure negligible probabilities won't cause computational difficulties); in any case, many functions for calculating multivariate normal densities already output on the log scale. Please note that while the function is available for standalone use that no checks take place, in order to speed up repeated calls to the function inside \code{\link{mcmc_IMIFA}}.
 #' @param probs An N x G matrix of unnormalised probabilities on the log scale.
-#' @param N The number of observations that require labels to be sampled. Must be at least 1. Defaults to (and should not be changed from!) \code{nrow(log.probs)}. Only necessary if \code{isTRUE(slice)}.
-#' @param G The number of 'active' clusters, s.t. sampled labels can take values in \code{1:G}. Must be at least 1. Defaults to (and should not be changed from!) \code{ncol(log.probs)}. Only necessary if \code{isTRUE(slice)}.
+#' @param N The number of observations that require labels to be sampled. Must be at least 1. Defaults to (and should not be changed from!) \code{nrow(log.probs)}. Only necessary if \code{slice} is \code{FALSE}.
+#' @param G The number of 'active' clusters, s.t. sampled labels can take values in \code{1:G}. Must be at least 1. Defaults to (and should not be changed from!) \code{ncol(log.probs)}. Only necessary if \code{slice} is \code{FALSE}.
 #' @param slice A logical indicating whether or not the indicator correction for slice sampling has been applied to \code{log.probs}. Defaults to \code{FALSE} but is \code{TRUE} for the "\code{IMIFA}" and "\code{IMFA}" methods under \code{\link{mcmc_IMIFA}}. Details of this correction are given in Murphy et. al. (2017).
 #' @param log.like A logical indicating whether the normalising constant is to be computed. Defaults to \code{FALSE} but is \code{TRUE} for all methods under \code{\link{mcmc_IMIFA}} where it's necessary for computation of the log-likelihoods required for model choice.
 #' @return Either a N-vector of sampled cluster labels, or if \code{isTRUE(log.like)}, a list with two elements:
@@ -111,15 +111,16 @@
 #'   tmp     <- matrix(rgamma(N * G, shape=1), nrow=N, ncol=G)
 #'   weights <- sweep(tmp, 1, rowSums(tmp), FUN="/")
 #'   zs      <- sim_z_log(probs=log(weights), N=N, G=G)
-    sim_z_log    <- function(probs, N = ifelse(isTRUE(slice), nrow(probs), NULL),
-                             G = ifelse(isTRUE(slice), ncol(probs), NULL), log.like = FALSE, slice = FALSE) {
+    sim_z_log    <- function(probs, N, G, log.like = FALSE, slice = FALSE) {
       if(isTRUE(slice))    {
         fp       <- is.finite(probs)
         zs       <- max.col(replace(probs, fp, probs[fp] - log(rexp(sum(fp)))))
-      } else zs  <- max.col(probs - log(matrix(rexp(N * G), nrow=N, ncol=G)))
-      if(isTRUE(log.like)) {
-        return(list(z = zs, log.like=rowLogSumExps(probs)))
-      } else zs
+      } else {
+        if(missing(N)) N <- nrow(probs)
+        if(missing(G)) G <- ncol(probs)
+        zs       <- max.col(probs - log(matrix(rexp(N * G), nrow=N, ncol=G)))
+      }
+        return(if(isTRUE(log.like)) list(z = zs, log.like=rowLogSumExps(probs)) else zs)
     }
 
   # Alpha
