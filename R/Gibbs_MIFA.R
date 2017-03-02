@@ -209,13 +209,14 @@
           tau[nn0]          <- lapply(delta[nn.ind], cumprod)
           lmat[nn0]         <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) cbind(lmat[[g]][,seq_len(Qs.old[h])], rnorm(n=P, mean=0, sd=sqrt(1/(phi[[g]][,Qs[g]] * tau[[g]][Qs[g]])))) else lmat[[g]][,nonred[[h]], drop=FALSE])
           Qemp     <- Qs[!nn0]
-          Fmax     <- max(Qs[nn0])
-          Qmax     <- ifelse(all(Q.big), Fmax, max(Qs[nn0][!Q.big]))
-          Qmaxseq  <- seq_len(Qmax)
+          Qpop     <- Qs[nn0]
+          Fmax     <- max(Qpop)
+          Qmax     <- ifelse(all(Q.big), Fmax, max(Qpop[!Q.big]))
           Qmaxold  <- max(Qs.old)
           eta      <- if(all(Fmax  > Qmaxold, !Q.bigs)) cbind(eta[,seq_len(Qmaxold)], rnorm(N)) else eta[,seq_len(Fmax), drop=FALSE]
           if(Qmax   < max(Qemp, 0)) {
-            Qs[Qmax < Qs & !nn0]  <- Qmax
+           Qs[Qmax  < Qs & !nn0]  <- Qmax
+           Qmaxseq <- seq_len(Qmax)
             for(g  in Gseq[!nn0][Qemp > Qmax]) {
               phi[[g]]      <- phi[[g]][,Qmaxseq,  drop=FALSE]
               delta[[g]]    <- delta[[g]][Qmaxseq]
