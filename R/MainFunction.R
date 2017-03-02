@@ -242,7 +242,8 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
       if(G.x) {
         range.G    <- as.integer(min(N - 1, max(25, ceiling(3 * log(N)))))
       }
-      if(range.G    < ceiling(lnN)) stop(paste0("'range.G' should be at least log(N) (=log(", N, "))", " for the ", method, " method"))
+      lnN2         <- ceiling(lnN - digamma(1))
+      if(range.G    < lnN2)         stop(paste0("'range.G' should be at least log(N) (=log(", N, "))", " for the ", method, " method"))
       if(is.element(method, c("IMFA", "IMIFA"))) {
         if(any(!is.logical(ind.slice),
            length(ind.slice) != 1)) stop("'ind.slice' must be TRUE or FALSE")

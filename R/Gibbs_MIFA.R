@@ -103,7 +103,7 @@
       sigma                 <- lapply(Gseq, function(g) make.positive.definite(tcrossprod(lmat[[g]]) + diag(1/psi.inv[,g])))
       Q0                    <- Qs > 0
       log.probs             <- vapply(Gseq, function(g, Q=Q0[g]) dmvn(data, mu[,g], if(Q) sigma[[g]] else sqrt(sigma[[g]]), log=TRUE, isChol=!Q) + log(pi.prop[g]), numeric(N))
-      ll.store[1]           <- sim_z_log(log.probs=log.probs, N=N, G=G, Gseq=Gseq)$log.like
+      ll.store[1]           <- sum(sim_z_log(probs=log.probs, N=N, G=G, log.like=TRUE)$log.like)
       Q.store[,1]           <- Qs
     }
     init.time      <- proc.time() - start.time
@@ -120,13 +120,11 @@
       Q0           <- Qs  > 0
       Q1           <- Qs == 1
       sigma        <- lapply(Gseq, function(g) tcrossprod(lmat[[g]]) + diag(psi[,g]))
-      log.probs    <- vapply(Gseq, function(g, Q=Q0[g]) dmvn(data, mu[,g], if(Q) sigma[[g]] else sqrt(sigma[[g]]), log=TRUE, isChol=!Q) + log(pi.prop[g]), numeric(N))
-      z.log        <- capture.output({ z.res <- try(sim_z_log(log.probs=log.probs, N=N, G=G, Gseq=Gseq), silent=TRUE) })
-      z.err        <- inherits(z.res, "try-error")
-      if(z.err) {
-        sigma      <- lapply(sigma, make.positive.definite)
-        z.res      <- sim_z_log(log.probs=log.probs, N=N, G=G, Gseq=Gseq)
+      log.check    <- capture.output(log.probs <- try(vapply(Gseq, function(g, Q=Q0[g]) dmvn(data, mu[,g], if(Q) sigma[[g]] else sqrt(sigma[[g]]), log=TRUE, isChol=!Q) + log(pi.prop[g]), numeric(N)), silent=TRUE))
+      if(inherits(log.probs, "try-error")) {
+        log.probs  <- vapply(Gseq, function(g, Q=Q0[g]) dmvn(data, mu[,g], if(Q) make.positive.definite(sigma[[g]]) else make.positive.definite(sqrt(sigma[[g]])), log=TRUE, isChol=!Q) + log(pi.prop[g]), numeric(N))
       }
+      z.res        <- sim_z_log(probs=log.probs, N=N, G=G, log.like=TRUE)
       z            <- z.res$z
       nn           <- tabulate(z, nbins=G)
       nn0          <- nn  > 0
@@ -281,7 +279,7 @@
         if(sw["psi.sw"])   psi.store[,,new.it]      <- psi
         if(sw["pi.sw"])    pi.store[,new.it]        <- pi.prop
                            z.store[,new.it]         <- z
-                           ll.store[new.it]         <- z.res$log.like
+                           ll.store[new.it]         <- sum(z.res$log.like)
                            Q.store[,new.it]         <- Qs
       }
     }

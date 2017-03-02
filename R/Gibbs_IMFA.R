@@ -113,7 +113,7 @@
       z.store[,1]            <- z
       sigma                  <- lapply(Gs, function(g) make.positive.definite(tcrossprod(lmat[,,g]) + diag(1/psi.inv[,g])))
       log.probs              <- vapply(Gs, function(g, Q=Q0s[g]) dmvn(data, mu[,g], if(Q) sigma[[g]] else sqrt(sigma[[g]]), log=TRUE, isChol=!Q) + log(pi.prop[g]), numeric(N))
-      ll.store[1]            <- sim_z_log(log.probs=log.probs, N=N, G=G, G.non=G.non, Gseq=Gs)$log.like
+      ll.store[1]            <- sum(sim_z_log(probs=log.probs, N=N, G=G, log.like=TRUE)$log.like)
       G.store[1]             <- G.non
       act.store[1]           <- G
       if(not.fixed) {
@@ -156,13 +156,11 @@
       psi            <- 1/psi.inv
       if(G > 1)  {
         sigma        <- lapply(Gs, function(g) tcrossprod(lmat[,,g]) + diag(psi[,g]))
-        log.probs    <- vapply(Gs, function(g, Q=Q0s[g]) dmvn(data, mu[,g], if(Q) sigma[[g]] else sqrt(sigma[[g]]), log=TRUE, isChol=!Q) + log(pi.prop[g]), numeric(N)) + log.slice.ind
-        z.log        <- capture.output({ z.res <- try(sim_z_log(log.probs=log.probs, N=N, G=G, G.non=G.non, Gseq=Gs, slice=TRUE), silent=TRUE) })
-        zerr         <- inherits(z.res, "try-error")
-        if(zerr) {
-          sigma      <- lapply(sigma, make.positive.definite)
-          z.res      <- sim_z_log(log.probs=log.probs,N=N, G=G, G.non=G.non, Gseq=Gs, slice=TRUE)
+        log.check    <- capture.output(log.probs <- try(vapply(Gs, function(g, Q=Q0s[g]) dmvn(data, mu[,g], if(Q) sigma[[g]] else sqrt(sigma[[g]]), log=TRUE, isChol=!Q) + log(pi.prop[g]), numeric(N)), silent=TRUE))
+        if(inherits(log.probs, "try-error")) {
+          log.probs  <- vapply(Gs, function(g, Q=Q0s[g]) dmvn(data, mu[,g], if(Q) make.positive.definite(sigma[[g]]) else make.positive.definite(sqrt(sigma[[g]])), log=TRUE, isChol=!Q) + log(pi.prop[g]), numeric(N))
         }
+        z.res        <- sim_z_log(probs=log.probs, N=N, G=G, log.like=TRUE)
         z            <- z.res$z
       } else     {
         z            <- rep(1, N)
@@ -262,7 +260,7 @@
         if(MH.step)                   rate[new.it]            <- MH.alpha$rate
         if(DP.lab.sw)                 lab.rate[,new.it]       <- c(acc1, acc2)
                                       z.store[,new.it]        <- z
-                                      ll.store[new.it]        <- z.res$log.like
+                                      ll.store[new.it]        <- sum(z.res$log.like)
                                       G.store[new.it]         <- G.non
                                       act.store[new.it]       <- G
       }

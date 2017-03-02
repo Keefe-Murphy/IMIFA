@@ -2,7 +2,8 @@
 ============================================
 
 ## New Features
-* Sped up simulating cluster labels for OMFA/OMIFA/IMFA/IMIFA methods using 2-part construction & search of necessary parts of the log-cdf. \cr As a result `sim_z_log` replaces earlier functions to simulate cluster labels & is now unhidden & exported with accompanying documentation.
+* Sped up simulating cluster labels from unnormalised log probabilities using the Gumbel-Max trick.  
+  \cr As a result `sim_z_log` replaces earlier functions to simulate cluster labels & is now unhidden & exported with accompanying documentation.
 * Added new plot when `plot.meth=GQ` for OMFA/OMIFA/IMFA/IMIFA methods depicting the trace(s) of the #s of active/non-empty groups.
 
 ## Improvements

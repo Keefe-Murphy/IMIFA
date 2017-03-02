@@ -2,47 +2,59 @@
 % Please edit documentation in R/FullConditionals.R
 \name{sim_z_log}
 \alias{sim_z_log}
-\title{Simulate Cluster Labels from log-probabilities}
+\title{Simulate Cluster Labels from Unnormalised Log-Probabilities using the Gumbel-Max Trick}
 \usage{
-sim_z_log(log.probs, N = nrow(log.probs), G = ncol(log.probs), G.non = G,
-  Gseq = seq_len(G), slice = FALSE)
+sim_z_log(probs, N = ifelse(isTRUE(slice), nrow(probs), NULL),
+  G = ifelse(isTRUE(slice), ncol(probs), NULL), log.like = FALSE,
+  slice = FALSE)
 }
 \arguments{
-\item{log.probs}{An N x G matrix of non-normalised probabilities on the log scale. Works best if each row of this matrix is sorted in decreasing order of the size of the corresponding mixing proportions, which is the case under the "\code{IMIFA}", "\code{IMFA}", "\code{OMIFA}" and "\code{OMIFA}" implementations of \code{\link{mcmc_IMIFA}}.}
+\item{probs}{An N x G matrix of unnormalised probabilities on the log scale.}
 
-\item{N}{The number of observations that require labels to be sampled. Defaults to (and should not be changed from!) \code{nrow(log.probs)}.}
+\item{N}{The number of observations that require labels to be sampled. Must be at least 1. Defaults to (and should not be changed from!) \code{nrow(log.probs)}. Only necessary if \code{isTRUE(slice)}.}
 
-\item{G}{The number of 'active' clusters, s.t. sampled labels can take values in \code{1:G}. Must be greater than 1. Defaults to (and should not be changed from!) \code{ncol(log.probs)}.}
+\item{G}{The number of 'active' clusters, s.t. sampled labels can take values in \code{1:G}. Must be at least 1. Defaults to (and should not be changed from!) \code{ncol(log.probs)}. Only necessary if \code{isTRUE(slice)}.}
 
-\item{G.non}{The number of non-empty clusters at the previous iteration of the sampler. This is used to determine how many columns are incorporated in the first stage of the log.cdf construction, given by \code{max(min(G.non, floor(G/2)), 2)}. Defaults to \code{G} if not supplied.}
+\item{log.like}{A logical indicating whether the normalising constant is to be computed. Defaults to \code{FALSE} but is \code{TRUE} for all methods under \code{\link{mcmc_IMIFA}} where it's necessary for computation of the log-likelihoods required for model choice.}
 
-\item{Gseq}{A sequence from 1:G which should not be altered. Exists as an argument only because this sequence already exists inside the \code{\link{mcmc_IMIFA}} samplers for the relevant methods.}
-
-\item{slice}{A logical indicating whether or not the indicator correction for slice sampling has been applied to \code{log.probs}. This is used to determine how much of the remaining portion of the log.cdf needs to be computed and searched. Defaults to FALSE but is TRUE for the "\code{IMIFA}" and "\code{IMFA}" methods under \code{\link{mcmc_IMIFA}}. Details of this correction are given in Murphy et. al. (2017).}
+\item{slice}{A logical indicating whether or not the indicator correction for slice sampling has been applied to \code{log.probs}. Defaults to \code{FALSE} but is \code{TRUE} for the "\code{IMIFA}" and "\code{IMFA}" methods under \code{\link{mcmc_IMIFA}}. Details of this correction are given in Murphy et. al. (2017).}
 }
 \value{
-A list with two elements:
+Either a N-vector of sampled cluster labels, or if \code{isTRUE(log.like)}, a list with two elements:
 \describe{
 \item{z}{The numeric vector of \code{N} sampled cluster labels, with the largest label no greater than \code{G}.}
-\item{log.like}{The log-likelihood, given by the normalising constant, computed with the aid of \code{\link[matrixStats]{rowLogSumExps}}.}
+\item{log.like}{The log-likelihood(s), given by the normalising constant(s), computed with the aid of \code{\link[matrixStats]{rowLogSumExps}}.}
 }
 }
 \description{
-Samples cluster labels for N observations from G groups using decreasingly ordered non-normalised log-probabilities. Computation takes place on the log scale for stability/underflow reasons; in any case, many functions for calculating multivariate normal densities already output on the log scale. Sampling takes place via a two-step construction and binary-search of a normalised log-cdf; thus redunant computation can be avoided for observations with labels corresponding to the first few groups and neglible probabilities for later groups won't cause computational difficulties. This method is particularly useful for sampling cluster labels for overfitted or Dirichlet process mixture models. Please note that while the function is available for standalone use that no checks take place, in order to speed up repeated calls to the function inside \code{\link{mcmc_IMIFA}}.
+Samples cluster labels for N observations from G groups efficiently using log-probabilities and the so-called Gumbel-Max trick, without requiring that the log-probabilities need to be normalised; thus redunant computation can be avoided. Computation takes place on the log scale for stability/underflow reasons (to ensure negligible probabilities won't cause computational difficulties); in any case, many functions for calculating multivariate normal densities already output on the log scale. Please note that while the function is available for standalone use that no checks take place, in order to speed up repeated calls to the function inside \code{\link{mcmc_IMIFA}}.
 }
 \examples{
-# Set the dimensions & simulate a matrix of log-probabilities
-N         <- 400
-G         <- 25
-log_probs <- sweep(t(apply(matrix(-rexp(N * G), nrow=N, ncol=G), 1,
-                   sort, decreasing=TRUE)), 1, seq(1, 0, -25), FUN="/")
+# Set the dimensions & simulate a matrix of weights
+  N         <- 1
+  G         <- 3
+  weights   <- matrix(c(1, 2, 3), nrow=N, ncol=G)
 
-# Sample the cluster labels and tabulate them
-res       <- sim_z_log(log_probs, N, G)
-tabulate(res$z, nbins=G)
+# Call sim_z_log() repeatedly to obtain samples of the label zs
+  iters     <- 10000
+  zs        <- vapply(seq_len(iters), function(i)
+               sim_z_log(probs=log(weights), N=N, G=G), numeric(1L))
+
+# Compare answer to the normalised weights
+  tabulate(zs, nbins=G)/iters
+  normalised <- as.numeric(weights/sum(weights))
+
+# Simulate a matrix of dirichlet weights & the associated vector of N labels
+  N       <- 400
+  G       <- 10
+  tmp     <- matrix(rgamma(N * G, shape=1), nrow=N, ncol=G)
+  weights <- sweep(tmp, 1, rowSums(tmp), FUN="/")
+  zs      <- sim_z_log(probs=log(weights), N=N, G=G)
 }
 \references{
 Murphy, K., Gormley, I.C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, \code{https://arxiv.org/abs/1701.07010}
+
+Yellot, J. I. Jr. (1977) The relationship between Luce's choice axiom, Thurstone's theory of comparative judgment, and the double exponential distribution. \emph{Journal of Mathematical Psychology}, 15: 109-144.
 }
 \seealso{
 \code{\link{mcmc_IMIFA}}, \code{\link[matrixStats]{rowLogSumExps}}
