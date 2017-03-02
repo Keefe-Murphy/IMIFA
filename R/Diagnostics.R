@@ -584,12 +584,12 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
 
   # Compute posterior means and % variation explained
     if(sw["mu.sw"])  {
-      post.mu    <- rowmeans(mu)
+      post.mu    <- if(clust.ind) rowmeans(mu)  else post.mu
       var.mu     <- Rfast::rowVars(mu)
       ci.mu      <- rowQuantiles(mu,  probs=conf.levels)
     }
     if(sw["psi.sw"]) {
-      post.psi   <- rowmeans(psi)
+      post.psi   <- if(clust.ind) rowmeans(psi) else post.psi
       var.psi    <- Rfast::rowVars(psi)
       ci.psi     <- rowQuantiles(psi, probs=conf.levels)
     }
@@ -602,6 +602,8 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       class(post.load)     <- "loadings"
     } else if(all(emp.T[g], sw["psi.sw"])) {
       var.exp    <- ifelse(exists("z.ind", envir=.GlobalEnv) && sizes[g] == 0, 0, max(0, (sum(diag(cov.emp)) - sum(post.psi))/n.var))
+    } else {
+      var.exp    <- NULL
     }
 
   # Calculate estimated covariance matrices & compute error metrics
