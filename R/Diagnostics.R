@@ -6,7 +6,7 @@
 #' @param thinning Optional interval for extra thinning to be applied. Defaults to 1, corresponding to no thinning.
 #' @param G If this argument is not specified, results will be returned with the optimal number of clusters. If different numbers of clusters were explored in \code{sims} for the "\code{MFA}" or "\code{MIFA}" methods, supplying an integer value allows pulling out a specific solution with \code{G} clusters, even if the solution is sub-optimal. Similarly, this allows retrieval of samples corresponding to a solution, if visited, with \code{G} clusters for the "\code{OMFA}", "\code{OMIFA}", "\code{IMFA}" and "\code{IMIFA}" methods.
 #' @param Q If this argument is non specified, results will be returned with the optimal number of factors. If different numbers of factors were explored in \code{sims} for the "\code{FA}", "\code{MFA}", "\code{OMFA}" or "\code{IMFA}" methods, this allows pulling out a specific solution with \code{Q} factors, even if the solution is sub-optimal. Similarly, this allows retrieval of samples corresponding to a solution, if visited, with \code{Q} factors for the "\code{IFA}", "\code{MIFA}", "\code{OMIFA}" and "\code{IMIFA}" methods.
-#' @param criterion The criterion to use for model selection, if model selection is required by the method in \code{sims}. Note that these are \emph{all} calculated, this argument merely indicates which one will form the basis of the construction of the output.
+#' @param criterion The criterion to use for model selection, if model selection is required by the method in \code{sims}. Note that these are \emph{all} calculated, this argument merely indicates which one will form the basis of the construction of the output. Note that the first three options here are biased in favour of zero-factor models for the finite factor "\code{FA}", "\code{MFA}", "\code{OMFA}" and "\code{IMFA}" models.
 #' @param G.meth If the object in \code{sims} arises from the "\code{OMFA}", "\code{OMIFA}", "\code{IMFA}" or "\code{IMIFA}" methods, this argument determines whether the optimal number of clusters is given by the mode or median of the posterior distribution of \code{G}. Defaults to "\code{Mode}".
 #' @param Q.meth If the object in \code{sims} arises from the "\code{IFA}", "\code{MIFA}", "\code{OMIFA}" or "\code{IMIFA}" methods, this argument determines whether the optimal number of latent factors is given by the mode or median of the posterior distribution of \code{Q}. Defaults to "\code{Mode}".
 #' @param dat The actual data set on which \code{\link{mcmc_IMIFA}} was originally run. This is necessary for computing error metrics between the estimated and empirical covariance matrix/matrices. If this is not supplied, the function will attempt to find the data set if it is still available in the global environment.
@@ -57,13 +57,13 @@
 #' # resIMIFAolive <- get_IMIFA_results(simIMIFAolive, G.meth="median",
 #' #                                    Q.meth="median", conf.level=0.9)
 #' # summary(resIMIFAolive)
-get_IMIFA_results              <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, Q = NULL, criterion = c("bicm", "aicm", "bic.mcmc", "aic.mcmc", "log.iLLH", "dic"),
+get_IMIFA_results              <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, Q = NULL, criterion = c("bicm", "aicm", "log.iLLH", "bic.mcmc", "aic.mcmc", "dic"),
                                            G.meth = c("mode", "median"), Q.meth = c("mode", "median"), dat = NULL, conf.level = 0.95, zlabels = NULL) {
   UseMethod("get_IMIFA_results")
 }
 
 #' @export
-get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, Q = NULL, criterion = c("bicm", "aicm", "bic.mcmc", "aic.mcmc", "log.iLLH", "dic"),
+get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, Q = NULL, criterion = c("bicm", "aicm", "log.iLLH", "bic.mcmc", "aic.mcmc", "dic"),
                                            G.meth = c("mode", "median"), Q.meth = c("mode", "median"), dat = NULL, conf.level = 0.95, zlabels = NULL) {
 
   defopt         <- options()
