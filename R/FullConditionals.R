@@ -96,10 +96,10 @@
 #'   G         <- 3
 #'   weights   <- matrix(c(1, 2, 3), nrow=N, ncol=G)
 #'
-#' # Call sim_z_log() repeatedly to obtain samples of the label zs
+#' # Call gumbel_max() repeatedly to obtain samples of the label zs
 #'   iters     <- 10000
 #'   zs        <- vapply(seq_len(iters), function(i)
-#'                sim_z_log(probs=log(weights), N=N, G=G), numeric(1L))
+#'                gumbel_max(probs=log(weights), N=N, G=G), numeric(1L))
 #'
 #' # Compare answer to the normalised weights
 #'   tabulate(zs, nbins=G)/iters
@@ -110,8 +110,8 @@
 #'   G       <- 10
 #'   tmp     <- matrix(rgamma(N * G, shape=1), nrow=N, ncol=G)
 #'   weights <- sweep(tmp, 1, rowSums(tmp), FUN="/")
-#'   zs      <- sim_z_log(probs=log(weights), N=N, G=G)
-    sim_z_log    <- function(probs, N, G, log.like = FALSE, slice = FALSE) {
+#'   zs      <- gumbel_max(probs=log(weights), N=N, G=G)
+    gumbel_max   <- function(probs, N, G, log.like = FALSE, slice = FALSE) {
       if(isTRUE(slice))    {
         fp       <- is.finite(probs)
         zs       <- max.col(replace(probs, fp, probs[fp] - log(rexp(sum(fp)))))
