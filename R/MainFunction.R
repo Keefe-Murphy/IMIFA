@@ -558,7 +558,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
       }
       if(beta.x)  {
         if(psi0g) {
-          cov.gg   <- lapply(seq_len(G), function(gg, dat.gg = dat[zi[[g]] == gg,, drop=FALSE]) if(nngs[gg] > 1) { if(P > 500) cova(as.matrix(dat.gg)) else cov(dat.gg) } else cov.mat)
+          cov.gg   <- lapply(seq_len(G), function(gg, dat.gg = dat[zi[[g]] == gg,, drop=FALSE]) if(all(nngs[gg] > 1, P > nngs[g])) { if(P > 500) cova(as.matrix(dat.gg)) else cov(dat.gg) } else cov.mat)
           psi.beta[[g]] <- vapply(seq_len(G), function(gg) psi_hyper(shape=psi.alpha, covar=cov.gg[[gg]], type=uni.prior), numeric(P))
         } else {
           psi.beta[[g]] <- replicate(G, temp.psi[[1]])
@@ -690,7 +690,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
       scal         <- switch(scaling, none=FALSE, Rfast::colVars(as.matrix(tmp.dat), std=TRUE))
       scal         <- switch(scaling, pareto=sqrt(scal), scal)
       tmp.dat <- if(is.logical(scal)) standardise(as.matrix(tmp.dat), center=centering, scale=scal) else scale(tmp.dat, center=centering, scale=scal)
-      if(sigmu.miss)   gibbs.arg$sigma.mu  <- if(P > 500) cova(as.matrix(tmp.dat)) else cov(tmp.dat)
+      if(sigmu.miss)   gibbs.arg$sigma.mu  <- if(nrow(tmp.dat) > 1) { if(P > 500) cova(as.matrix(tmp.dat)) else cov(tmp.dat) } else cov.mat
       imifa[[g]]          <- list()
       gibbs.arg    <- append(temp.args, lapply(deltas[[Gi]], "[[", g))
       imifa[[g]][[Qi]]    <- do.call(paste0(".gibbs_", "IFA"),
