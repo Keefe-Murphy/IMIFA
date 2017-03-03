@@ -79,9 +79,9 @@
 #' @references
 #' Murphy, K., Gormley, I.C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, \code{https://arxiv.org/abs/1701.07010}
 #'
-#' Bhattacharya, A. and Dunson, D. B. (2011) Sparse Bayesian infinite factor models. \emph{Biometrika}, 98(2): 291–306.
+#' Bhattacharya, A. and Dunson, D. B. (2011) Sparse Bayesian infinite factor models, \emph{Biometrika}, 98(2): 291–306.
 #'
-#' Kalli, M., Griffin, J. E. and Walker, S. G. (2011) Slice sampling mixture models. \emph{Statistics and Computing}, 21(1): 93-105.
+#' Kalli, M., Griffin, J. E. and Walker, S. G. (2011) Slice sampling mixture models, \emph{Statistics and Computing}, 21(1): 93-105.
 #'
 #' @examples
 #' # data(olive)
@@ -437,8 +437,8 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
            delta0g))                stop("'delta0g' cannot be TRUE for the 'MFA' method")
     if(method == "classify") mu0g          <- TRUE
   }
-  dimension <- .dim(range.Q, P)
-  min.d2G    <- min(dimension)/(2 * range.G)
+  dimension <- mixFac_pen(Q=range.Q, P=P, uni=uni.type)
+  min.d2G   <- min(dimension)/(2 * range.G)
   sw0gs     <- c(mu0g = mu0g, psi0g = psi0g, delta0g = delta0g)
   if(all(!is.element(method, c("MFA", "MIFA", "classify")),
          any(sw0gs)))               stop(paste0(names(which(sw0gs)), " should be FALSE for the ", method, " method\n"))

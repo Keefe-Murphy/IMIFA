@@ -30,7 +30,7 @@ rate   <- psi_hyper(shape=3, covar=cov(olive_scaled), type="unconstrained")
 rate
 }
 \references{
-Fruwirth-Schnatter, S.  and Lopes, H.F. (2010). Parsimonious Bayesian factor analysis when the number of factors is unknown. \emph{Technical Report}. The University of Chicago Booth School of Business.
+Fruwirth-Schnatter, S.  and Lopes, H.F. (2010). Parsimonious Bayesian factor analysis when the number of factors is unknown, \emph{Technical Report}. The University of Chicago Booth School of Business.
 }
 \seealso{
 \code{\link{mcmc_IMIFA}}

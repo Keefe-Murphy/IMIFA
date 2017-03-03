@@ -99,7 +99,7 @@
 #' @seealso \code{\link{mcmc_IMIFA}}, \code{\link[matrixStats]{rowLogSumExps}}
 #' @references Murphy, K., Gormley, I.C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, \code{https://arxiv.org/abs/1701.07010}.
 #'
-#' Yellot, J. I. Jr. (1977) The relationship between Luce's choice axiom, Thurstone's theory of comparative judgment, and the double exponential distribution. \emph{Journal of Mathematical Psychology}, 15: 109-144.
+#' Yellot, J. I. Jr. (1977) The relationship between Luce's choice axiom, Thurstone's theory of comparative judgment, and the double exponential distribution, \emph{Journal of Mathematical Psychology}, 15: 109-144.
 #' @export
 #'
 #' @examples
@@ -209,7 +209,7 @@
 #' @importFrom matrixcalc "is.positive.semi.definite"
 #'
 #' @seealso \code{\link{mcmc_IMIFA}}
-#' @references Fruwirth-Schnatter, S.  and Lopes, H.F. (2010). Parsimonious Bayesian factor analysis when the number of factors is unknown. \emph{Technical Report}. The University of Chicago Booth School of Business.
+#' @references Fruwirth-Schnatter, S.  and Lopes, H.F. (2010). Parsimonious Bayesian factor analysis when the number of factors is unknown, \emph{Technical Report}. The University of Chicago Booth School of Business.
 #'
 #' @examples
 #' data(olive)
@@ -264,9 +264,9 @@
 #' @export
 #' @seealso \code{\link{mcmc_IMIFA}}
 #' @references
-#' Bhattacharya, A. and Dunson, D. B. (2011). Sparse Bayesian infinite factor models. \emph{Biometrika}, 98(2): 291–306.
+#' Bhattacharya, A. and Dunson, D. B. (2011). Sparse Bayesian infinite factor models, \emph{Biometrika}, 98(2): 291–306.
 #'
-#' Durante, D. (2017). A note on the multiplicative gamma process. \emph{Statistics & Probability Letters}, 122: 198–204.
+#' Durante, D. (2017). A note on the multiplicative gamma process, \emph{Statistics & Probability Letters}, 122: 198–204.
 #'
 #' @examples
 #' # Check if the MGP global shrinkage parameters are increasing as the column index increases.
@@ -301,6 +301,28 @@
       }
         return(list(expectation = exp.seq, valid = check))
     }, vectorize.args = c("ad1", "ad2", "nu", "bd1", "bd2"), SIMPLIFY=FALSE)
+
+  # Number of 'free' parameters
+#' Estimate the Number of Free Parameters in a Finite Factor Analysis (Mixture) Model
+#'
+#' Estimates the dimension of the 'free' parameters in a factor analysis model, used to calculate the penalty terms for the \code{\link{aic.mcmc}} and \code{\link{bic.mcmc}} model selection criteria implemented in \code{\link{get_IMIFA_results}}. Please note that while this available as a standalone function, no checks are performed in order to make its use in \code{\link{get_IMIFA_results}} faster.
+#' @param Q The number of latent factors (which can be 0, corresponding to a model with diagonal covariance). This argument is vectorised.
+#' @param P The number of variables.
+#' @param G The number of groups. This defaults to 1.
+#' @param uni By default, calculation assumes the \emph{UUU} model, with "\code{unconstrained}" uniquesses. It's also possible to calculate this quantity for the \emph{UUC} model, with "\code{isotropic}" uniquenesses.
+#'
+#' @return A vector of length \code{length(Q)}.
+#' @export
+#' @references McNicholas, P. D. and Murphy, T. B. (2008) Parsimonious Gaussian Mixture Models, \emph{Statistics and Computing}, 18(3): 285-296.
+#'
+#' @examples
+#' mixFac_pen(Q=4, P=50, G=3, uni="unconstrained")
+#'
+#' mixFac_pen(Q=3:6, P=100, uni="isotropic")
+    mixFac_pen  <- Vectorize(function(Q, P, G = 1, uni = c("unconstrained", "isotropic")) {
+                             as.integer(G - 1 + G * (P * Q - 0.5 * Q *   (Q - 1) +
+                             switch(match.arg(uni), unconstrained=2  * P, P + 1)))
+                             }, vectorize.args = "Q", SIMPLIFY=TRUE)
 
   # Label Switching
     .lab_switch <- function(z.new, z.old, Gs, ng = tabulate(z.new)) {
@@ -545,5 +567,4 @@
     .which0     <- function(x) which(x == 0)
     .chol       <- function(x) tryCatch(chol(x), error=function(e) chol(make.positive.definite(x)))
     .ledermann  <- function(N, P) as.integer(min(N - 1, floor((2 * P + 1 - sqrt(8 * P + 1))/2)))
-    .dim        <- Vectorize(function(Q, P) as.integer(P * Q - 0.5 * Q * (Q - 1) + 2 * P), vectorize.args = "Q", SIMPLIFY=TRUE)
     #

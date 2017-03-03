@@ -111,6 +111,6 @@
                       cov.est  = tryCatch(provideDimnames(cov.est,  base=list(varnames)), error=function(e) cov.est),
                       ll.store = ll.store,
                       time     = init.time)
-    attr(returns, "K")        <- .dim(Q, P)
+    attr(returns, "K")        <- mixFac_pen(Q=Q, P=P, uni=uni.type)
     return(returns)
   }

@@ -6,6 +6,8 @@
   \cr As a result `gumbel_max` replaces earlier function to sample cluster labels & is now unhidden/exported w/ accompanying documentation.
 * Simulated finite/overfitted mixing proportions using `rgamma(G, alpha, 1)` trick (Devroye 1986, p.594) instead of `MCMCpack:rdirichlet`.  
   \cr As a result `rDirichlet` replaces earlier function to sample mixing proportions & is now unhidden/exported w/ accompanying documentation.
+* Fixed calculation of # 'free' parameters for `aic.mcmc` and `bic.mcmc` criteria when uniquenesses are isotropic.  
+  \cr As a result `mixFac_pen`, which calculates # 'free' parameters for any _finite_ factor model is exported w/ accompanying documentation.
 * Added new plot when `plot.meth=GQ` for OMFA/OMIFA/IMFA/IMIFA methods depicting the trace(s) of the #s of active/non-empty groups.
 
 ## Improvements
@@ -13,7 +15,7 @@
 * Jettisoned superfluous duplicate material in the object outputted from `get_IMIFA_results` to reduce size & simplify access.
 * Removed IMFA/IMIFA `trunc.G` arg, made `range.G` the max allowable number of active groups & also stored number of active groups.
 * Code sped up when G=1 by not simulating labels for OMFA/OMIFA/IMFA/IMIFA & not simulating mixing proportions for OMFA/OMIFA.
-* To reduce chance of crash due to exceeding memory capacity, `score.switch` defaults to FALSE if number of models being run is large.
+* To reduce chance of crash due to exceeding memory capacity, `score.switch` defaults to `FALSE` if number of models being run is large.
 * Invisibly returned from `sim_IMIFA_data`.
 
 ## Bug Fixes 

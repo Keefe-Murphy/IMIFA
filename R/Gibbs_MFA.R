@@ -183,6 +183,6 @@
                            z.store  = z.store,
                            ll.store = ll.store,
                            time     = init.time)
-    attr(returns, "K")  <- G - 1 + G * .dim(Q, P)
+    attr(returns, "K")  <- mixFac_pen(Q=Q, P=P, G=G, uni=uni.type)
     return(returns)
   }

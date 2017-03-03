@@ -98,6 +98,8 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   cent           <- attr(sims, "Center")
   scaling        <- attr(sims, "Scaling")
   scal.meth      <- attr(scaling, "Method")
+  uni.meth       <- attr(sims, "Uni.Meth")
+  uni.type       <- unname(uni.meth["Uni.Type"])
   conf.level     <- as.numeric(conf.level)
   varnames       <- NULL
   if(any(length(conf.level) != 1,
@@ -214,8 +216,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
         bicm[g,q]        <- ll.max  - ll.var * log.N
         log.iLLH[g,q]    <- ll.mean - ll.var * (log.N - 1)
         if(!inf.Q) {
-          qk             <- ifelse(G.T, 1, qi)
-          K              <- switch(method, OMFA=, IMFA=G[qk] - 1 + G[qk] * .dim(n.fac[qi], n.var), attr(sims[[gi]][[qi]], "K"))
+          K              <- switch(method, OMFA=, IMFA=mixFac_pen(Q=n.fac[qi], P=n.var, G=G[ifelse(G.T, 1, qi)], uni=uni.type), attr(sims[[gi]][[qi]], "K"))
           aic.mcmc[g,q]  <- ll.max  - K * 2
           bic.mcmc[g,q]  <- ll.max  - K * log.N
           dic[g,q]       <- (ll.max - ll.mean) * 3 - ll.mean
@@ -754,7 +755,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   attr(result, "Obs")          <- n.obs
   attr(result, "Store")        <- tmp.store
   attr(result, "Switch")       <- sw
-  attr(result, "Uni.Meth")     <- attr(sims, "Uni.Meth")
+  attr(result, "Uni.Meth")     <- uni.meth
   attr(result, "Vars")         <- n.var
   cat(print.Results_IMIFA(result))
   return(result)

@@ -166,9 +166,9 @@ Carries out Gibbs sampling for all models from the IMIFA family, facilitating mo
 \references{
 Murphy, K., Gormley, I.C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, \code{https://arxiv.org/abs/1701.07010}
 
-Bhattacharya, A. and Dunson, D. B. (2011) Sparse Bayesian infinite factor models. \emph{Biometrika}, 98(2): 291–306.
+Bhattacharya, A. and Dunson, D. B. (2011) Sparse Bayesian infinite factor models, \emph{Biometrika}, 98(2): 291–306.
 
-Kalli, M., Griffin, J. E. and Walker, S. G. (2011) Slice sampling mixture models. \emph{Statistics and Computing}, 21(1): 93-105.
+Kalli, M., Griffin, J. E. and Walker, S. G. (2011) Slice sampling mixture models, \emph{Statistics and Computing}, 21(1): 93-105.
 }
 \seealso{
 \code{\link{get_IMIFA_results}}, \code{\link{psi_hyper}}, \code{\link{MGP_check}}
