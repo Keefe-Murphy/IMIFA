@@ -120,7 +120,7 @@
       sigma                   <- lapply(Gs, function(g) make.positive.definite(tcrossprod(lmat[[g]]) + diag(1/psi.inv[,g])))
       Q0                      <- Qs > 0
       log.probs               <- vapply(Gs, function(g, Q=Q0[g]) dmvn(data, mu[,g], if(Q) sigma[[g]] else sqrt(sigma[[g]]), log=TRUE, isChol=!Q) + log(pi.prop[g]), numeric(N))
-      ll.store[1]             <- sum(gumbel_max(probs=log.probs, N=N, G=G, log.like=TRUE)$log.like)
+      ll.store[1]             <- sum(gumbel_max(probs=log.probs, log.like=TRUE)$log.like)
       Q.store[,1]             <- Qs
       G.store[1]              <- G.non
       act.store[1]            <- G
@@ -138,7 +138,7 @@
       if(verbose     && iter   < burnin) setTxtProgressBar(pb, iter)
 
     # Mixing Proportions
-      weights        <- .sim_pi_inf(pi.alpha=pi.alpha, nn=nn, N=N, len=trunc.G, lseq=Ts, discount=discount)
+      weights        <- .sim_pi_inf(alpha=pi.alpha, nn=nn, N=N, len=trunc.G, lseq=Ts, discount=discount)
       pi.prop        <- weights$pi.prop
       Vs             <- weights$Vs
 

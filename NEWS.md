@@ -2,14 +2,15 @@
 ============================================
 
 ## New Features
-* Sped up simulating cluster labels from unnormalised log probabilities using the Gumbel-Max trick.  
-  \cr As a result `gumbel_max` replaces earlier function to simulate cluster labels & is now unhidden & exported with accompanying documentation.
+* Sped up simulating cluster labels from unnormalised log probabilities using the Gumbel-Max trick (Yellott, 1977).  
+  \cr As a result `gumbel_max` replaces earlier function to sample cluster labels & is now unhidden/exported w/ accompanying documentation.
+* Simulated finite/overfitted mixing proportions using `rgamma(G, alpha, 1)` trick (Devroye 1986, p.594) instead of `MCMCpack:rdirichlet`.  
+  \cr As a result `rDirichlet` replaces earlier function to sample mixing proportions & is now unhidden/exported w/ accompanying documentation.
 * Added new plot when `plot.meth=GQ` for OMFA/OMIFA/IMFA/IMIFA methods depicting the trace(s) of the #s of active/non-empty groups.
 
 ## Improvements
 * Deferred setting of `dimnames` attributes from `mcmc_IMIFA` to `get_IMIFA_results` to reduce memory burden & speed up simulations.
 * Jettisoned superfluous duplicate material in the object outputted from `get_IMIFA_results` to reduce size & simplify access.
-* Simulated finite/overfitted mixing proportions using `rgamma(G, alpha, 1)` trick (Devroye, p.594) instead of `MCMCpack:rdirichlet`.
 * Removed IMFA/IMIFA `trunc.G` arg, made `range.G` the max allowable number of active groups & also stored number of active groups.
 * Code sped up when G=1 by not simulating labels for OMFA/OMIFA/IMFA/IMIFA & not simulating mixing proportions for OMFA/OMIFA.
 * To reduce chance of crash due to exceeding memory capacity, `score.switch` defaults to FALSE if number of models being run is large.

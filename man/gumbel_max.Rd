@@ -4,18 +4,14 @@
 \alias{gumbel_max}
 \title{Simulate Cluster Labels from Unnormalised Log-Probabilities using the Gumbel-Max Trick}
 \usage{
-gumbel_max(probs, N, G, log.like = FALSE, slice = FALSE)
+gumbel_max(probs, log.like = FALSE, slice = FALSE)
 }
 \arguments{
-\item{probs}{An N x G matrix of unnormalised probabilities on the log scale.}
-
-\item{N}{The number of observations that require labels to be sampled. Must be at least 1. Defaults to (and should not be changed from!) \code{nrow(log.probs)}. Only necessary if \code{slice} is \code{FALSE}.}
-
-\item{G}{The number of 'active' clusters, s.t. sampled labels can take values in \code{1:G}. Must be at least 1. Defaults to (and should not be changed from!) \code{ncol(log.probs)}. Only necessary if \code{slice} is \code{FALSE}.}
+\item{probs}{An N x G matrix of unnormalised probabilities on the log scale, where N is he number of observations that require labels to be sampled and G is the number of active clusters s.t. sampled labels can take values in \code{1:G}.}
 
 \item{log.like}{A logical indicating whether the normalising constant is to be computed. Defaults to \code{FALSE} but is \code{TRUE} for all methods under \code{\link{mcmc_IMIFA}} where it's necessary for computation of the log-likelihoods required for model choice.}
 
-\item{slice}{A logical indicating whether or not the indicator correction for slice sampling has been applied to \code{log.probs}. Defaults to \code{FALSE} but is \code{TRUE} for the "\code{IMIFA}" and "\code{IMFA}" methods under \code{\link{mcmc_IMIFA}}. Details of this correction are given in Murphy et. al. (2017).}
+\item{slice}{A logical indicating whether or not the indicator correction for slice sampling has been applied to \code{probs}. Defaults to \code{FALSE} but is \code{TRUE} for the "\code{IMIFA}" and "\code{IMFA}" methods under \code{\link{mcmc_IMIFA}}. Details of this correction are given in Murphy et. al. (2017).}
 }
 \value{
 Either a N-vector of sampled cluster labels, or if \code{isTRUE(log.like)}, a list with two elements:
@@ -33,10 +29,10 @@ Samples cluster labels for N observations from G groups efficiently using log-pr
   G         <- 3
   weights   <- matrix(c(1, 2, 3), nrow=N, ncol=G)
 
-# Call gumbel_max() repeatedly to obtain samples of the label zs
+# Call gumbel_max() repeatedly to obtain samples of the labels, zs
   iters     <- 10000
   zs        <- vapply(seq_len(iters), function(i)
-               gumbel_max(probs=log(weights), N=N, G=G), numeric(1L))
+               gumbel_max(probs=log(weights)), numeric(1L))
 
 # Compare answer to the normalised weights
   tabulate(zs, nbins=G)/iters
@@ -47,10 +43,10 @@ Samples cluster labels for N observations from G groups efficiently using log-pr
   G       <- 10
   tmp     <- matrix(rgamma(N * G, shape=1), nrow=N, ncol=G)
   weights <- sweep(tmp, 1, rowSums(tmp), FUN="/")
-  zs      <- gumbel_max(probs=log(weights), N=N, G=G)
+  zs      <- gumbel_max(probs=log(weights))
 }
 \references{
-Murphy, K., Gormley, I.C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, \code{https://arxiv.org/abs/1701.07010}
+Murphy, K., Gormley, I.C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, \code{https://arxiv.org/abs/1701.07010}.
 
 Yellot, J. I. Jr. (1977) The relationship between Luce's choice axiom, Thurstone's theory of comparative judgment, and the double exponential distribution. \emph{Journal of Mathematical Psychology}, 15: 109-144.
 }

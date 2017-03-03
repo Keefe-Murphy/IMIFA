@@ -540,11 +540,11 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
         if(!is.element(method, c("IMFA", "IMIFA"))) {
           while(all(length(unique(zips)) != G,
                 any(prop.table(tabulate(zips, nbins=G)) < 1/G^2))) {
-            pies   <- .sim_pi(pi.alpha=alpha, nn=0, G)
+            pies   <- rDirichlet(alpha=alpha, G)
             zips   <- .sim_z_p(N=N, prob.z=pies)
           }
         } else {
-          pies     <- .sim_pi_inf(pi.alpha=alpha, N=N, nn=rep(N/range.G, range.G), discount=discount, lseq=seq_len(range.G), len=range.G)$pi.prop
+          pies     <- .sim_pi_inf(alpha=alpha, N=N, nn=rep(N/range.G, range.G), discount=discount, lseq=seq_len(range.G), len=range.G)$pi.prop
           zips     <- .sim_z_p(N=N, prob.z=pies)
         }
         zi[[g]]    <- as.numeric(zips)

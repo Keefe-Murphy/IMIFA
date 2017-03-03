@@ -89,7 +89,7 @@
       z.store[,1]          <- z
       sigma                <- lapply(Gseq, function(g) make.positive.definite(tcrossprod(lmat[,,g]) + diag(1/psi.inv[,g])))
       log.probs            <- vapply(Gseq, function(g, Q=Q0s[g]) dmvn(data, mu[,g], if(Q) sigma[[g]] else sqrt(sigma[[g]]), log=TRUE, isChol=!Q) + log(pi.prop[g]), numeric(N))
-      ll.store[1]          <- sum(gumbel_max(probs=log.probs, N=N, G=G, log.like=TRUE)$log.like)
+      ll.store[1]          <- sum(gumbel_max(probs=log.probs, log.like=TRUE)$log.like)
       G.store[1]           <- G.non
     }
     init.time      <- proc.time() - start.time
@@ -99,7 +99,7 @@
       if(verbose   && iter  < burnin) setTxtProgressBar(pb, iter)
 
     # Mixing Proportions & Re-ordering
-      pi.prop      <- if(G == 1) 1 else .sim_pi(pi.alpha=pi.alpha, nn=nn, G)
+      pi.prop      <- if(G == 1) 1 else rDirichlet(alpha=pi.alpha, G=G, nn=nn)
       index        <- order(nn, decreasing=TRUE)
       pi.prop      <- pi.prop[index]
       mu           <- mu[,index, drop=FALSE]
@@ -116,7 +116,7 @@
         if(inherits(log.probs, "try-error")) {
          log.probs <- vapply(Gseq, function(g, Q=Q0s[g]) dmvn(data, mu[,g], if(Q) make.positive.definite(sigma[[g]]) else make.positive.definite(sqrt(sigma[[g]])), log=TRUE, isChol=!Q) + log(pi.prop[g]), numeric(N))
         }
-        z.res      <- gumbel_max(probs=log.probs, N=N, G=G, log.like=TRUE)
+        z.res      <- gumbel_max(probs=log.probs, log.like=TRUE)
         z          <- z.res$z
       } else     {
         z          <- rep(1, N)

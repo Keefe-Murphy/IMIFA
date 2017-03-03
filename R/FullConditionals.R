@@ -60,13 +60,27 @@
     }
 
   # Mixing Proportions
-    .sim_pi      <- function(pi.alpha, nn, G) {
-      tmp        <- rgamma(G, shape=pi.alpha + nn, rate=1)
+#' Simulate Mixing Proportions from a Dirichlet Distribution
+#'
+#' Generates samples from the Dirichlet distrubution with parameter \code{alpha} efficiently by simulating Gamma(\code{alpha}, 1) random variables and normalising them. Please note that while this is available as a standalone function, no checks are performed in order to make its use in \code{\link{mcmc_IMIFA}} faster.
+#' @param alpha The Dirichlet hyperparameter, either of length 1 or \code{G}. When the length of \code{alpha} is 1, this amounts to assuming an exchangeable prior. Be warned that this will be recycled if necessary.
+#' @param nn A vector giving the number of observations in each of G groups so that Dirichlet posteriors rather than priors can be sampled from. This defaults to 0, i.e. simulation from the prior. Be warned that this will be recycled if necessary.
+#' @param G The number of groups for which weights need to be sampled.
+#'
+#' @return A Dirichlet vector of \code{G} weights which sum to 1.
+#' @references Devroye, L. (1986) \emph{Non-Uniform Random Variate Generation}, Springer-Verlag, New York, 1986, p.594.
+#' @export
+#'
+#' @examples
+#' prior     <- rDirichlet(alpha=1, G=5)
+#' posterior <- rDirichlet(alpha=1, G=5, nn=c(20, 41, 32, 8, 12))
+    rDirichlet   <- function(alpha, G, nn = 0) {
+      tmp        <- rgamma(G, shape=alpha + nn, rate=1)
         tmp/sum(tmp)
     }
 
-    .sim_pi_inf  <- function(pi.alpha, nn, N = sum(nn), len, lseq, discount = 0L) {
-      vs         <- if(discount == 0) rbeta(len, 1 + nn, pi.alpha + N - cumsum(nn)) else rbeta(len, 1 - discount + nn, pi.alpha + lseq * discount + N - cumsum(nn))
+    .sim_pi_inf  <- function(alpha, nn, N = sum(nn), len, lseq, discount = 0L) {
+      vs         <- if(discount == 0) rbeta(len, 1 + nn, alpha + N - cumsum(nn)) else rbeta(len, 1 - discount + nn, alpha + lseq * discount + N - cumsum(nn))
         return(list(Vs = vs, pi.prop = vapply(lseq, function(t) vs[t] * prod(1 - vs[seq_len(t - 1)]), numeric(1L))))
     }
 
@@ -74,18 +88,16 @@
 #' Simulate Cluster Labels from Unnormalised Log-Probabilities using the Gumbel-Max Trick
 #'
 #' Samples cluster labels for N observations from G groups efficiently using log-probabilities and the so-called Gumbel-Max trick, without requiring that the log-probabilities need to be normalised; thus redunant computation can be avoided. Computation takes place on the log scale for stability/underflow reasons (to ensure negligible probabilities won't cause computational difficulties); in any case, many functions for calculating multivariate normal densities already output on the log scale. Please note that while the function is available for standalone use that no checks take place, in order to speed up repeated calls to the function inside \code{\link{mcmc_IMIFA}}.
-#' @param probs An N x G matrix of unnormalised probabilities on the log scale.
-#' @param N The number of observations that require labels to be sampled. Must be at least 1. Defaults to (and should not be changed from!) \code{nrow(log.probs)}. Only necessary if \code{slice} is \code{FALSE}.
-#' @param G The number of 'active' clusters, s.t. sampled labels can take values in \code{1:G}. Must be at least 1. Defaults to (and should not be changed from!) \code{ncol(log.probs)}. Only necessary if \code{slice} is \code{FALSE}.
-#' @param slice A logical indicating whether or not the indicator correction for slice sampling has been applied to \code{log.probs}. Defaults to \code{FALSE} but is \code{TRUE} for the "\code{IMIFA}" and "\code{IMFA}" methods under \code{\link{mcmc_IMIFA}}. Details of this correction are given in Murphy et. al. (2017).
+#' @param probs An N x G matrix of unnormalised probabilities on the log scale, where N is he number of observations that require labels to be sampled and G is the number of active clusters s.t. sampled labels can take values in \code{1:G}.
 #' @param log.like A logical indicating whether the normalising constant is to be computed. Defaults to \code{FALSE} but is \code{TRUE} for all methods under \code{\link{mcmc_IMIFA}} where it's necessary for computation of the log-likelihoods required for model choice.
+#' @param slice A logical indicating whether or not the indicator correction for slice sampling has been applied to \code{probs}. Defaults to \code{FALSE} but is \code{TRUE} for the "\code{IMIFA}" and "\code{IMFA}" methods under \code{\link{mcmc_IMIFA}}. Details of this correction are given in Murphy et. al. (2017).
 #' @return Either a N-vector of sampled cluster labels, or if \code{isTRUE(log.like)}, a list with two elements:
 #' \describe{
 #' \item{z}{The numeric vector of \code{N} sampled cluster labels, with the largest label no greater than \code{G}.}
 #' \item{log.like}{The log-likelihood(s), given by the normalising constant(s), computed with the aid of \code{\link[matrixStats]{rowLogSumExps}}.}
 #' }
 #' @seealso \code{\link{mcmc_IMIFA}}, \code{\link[matrixStats]{rowLogSumExps}}
-#' @references Murphy, K., Gormley, I.C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, \code{https://arxiv.org/abs/1701.07010}
+#' @references Murphy, K., Gormley, I.C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, \code{https://arxiv.org/abs/1701.07010}.
 #'
 #' Yellot, J. I. Jr. (1977) The relationship between Luce's choice axiom, Thurstone's theory of comparative judgment, and the double exponential distribution. \emph{Journal of Mathematical Psychology}, 15: 109-144.
 #' @export
@@ -96,10 +108,10 @@
 #'   G         <- 3
 #'   weights   <- matrix(c(1, 2, 3), nrow=N, ncol=G)
 #'
-#' # Call gumbel_max() repeatedly to obtain samples of the label zs
+#' # Call gumbel_max() repeatedly to obtain samples of the labels, zs
 #'   iters     <- 10000
 #'   zs        <- vapply(seq_len(iters), function(i)
-#'                gumbel_max(probs=log(weights), N=N, G=G), numeric(1L))
+#'                gumbel_max(probs=log(weights)), numeric(1L))
 #'
 #' # Compare answer to the normalised weights
 #'   tabulate(zs, nbins=G)/iters
@@ -110,14 +122,14 @@
 #'   G       <- 10
 #'   tmp     <- matrix(rgamma(N * G, shape=1), nrow=N, ncol=G)
 #'   weights <- sweep(tmp, 1, rowSums(tmp), FUN="/")
-#'   zs      <- gumbel_max(probs=log(weights), N=N, G=G)
-    gumbel_max   <- function(probs, N, G, log.like = FALSE, slice = FALSE) {
+#'   zs      <- gumbel_max(probs=log(weights))
+    gumbel_max   <- function(probs, log.like = FALSE, slice = FALSE) {
       if(isTRUE(slice))    {
         fp       <- is.finite(probs)
         zs       <- max.col(replace(probs, fp, probs[fp] - log(rexp(sum(fp)))))
       } else {
-        if(missing(N)) N <- nrow(probs)
-        if(missing(G)) G <- ncol(probs)
+        N        <- nrow(probs)
+        G        <- ncol(probs)
         zs       <- max.col(probs - log(matrix(rexp(N * G), nrow=N, ncol=G)))
       }
         return(if(isTRUE(log.like)) list(z = zs, log.like=rowLogSumExps(probs)) else zs)
