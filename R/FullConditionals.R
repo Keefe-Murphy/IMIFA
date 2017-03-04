@@ -62,7 +62,7 @@
   # Mixing Proportions
 #' Simulate Mixing Proportions from a Dirichlet Distribution
 #'
-#' Generates samples from the Dirichlet distrubution with parameter \code{alpha} efficiently by simulating Gamma(\code{alpha}, 1) random variables and normalising them. Please note that while this is available as a standalone function, no checks are performed in order to make its use in \code{\link{mcmc_IMIFA}} faster.
+#' Generates samples from the Dirichlet distrubution with parameter \code{alpha} efficiently by simulating Gamma(\code{alpha}, 1) random variables and normalising them. Please note that while this is available as a standalone function, no checks are performed in order to make its use for \emph{finite} mixture models in \code{\link{mcmc_IMIFA}} faster.
 #' @param alpha The Dirichlet hyperparameter, either of length 1 or \code{G}. When the length of \code{alpha} is 1, this amounts to assuming an exchangeable prior. Be warned that this will be recycled if necessary.
 #' @param nn A vector giving the number of observations in each of G groups so that Dirichlet posteriors rather than priors can be sampled from. This defaults to 0, i.e. simulation from the prior. Be warned that this will be recycled if necessary.
 #' @param G The number of groups for which weights need to be sampled.
@@ -305,7 +305,7 @@
   # Number of 'free' parameters
 #' Estimate the Number of Free Parameters in a Finite Factor Analysis (Mixture) Model
 #'
-#' Estimates the dimension of the 'free' parameters in a factor analysis model, used to calculate the penalty terms for the \code{aic.mcmc} and \code{bic.mcmc} model selection criteria implemented in \code{\link{get_IMIFA_results}}. Please note that while this available as a standalone function, no checks are performed in order to make its use in \code{\link{get_IMIFA_results}} faster.
+#' Estimates the dimension of the 'free' parameters in \emph{UUU} or \emph{UUC} factor analysis models, used to calculate the penalty terms for the \code{aic.mcmc} and \code{bic.mcmc} model selection criteria implemented in \code{\link{get_IMIFA_results}}. Please note that while this available as a standalone function, no checks are performed in order to make its use in \code{\link{get_IMIFA_results}} faster.
 #' @param Q The number of latent factors (which can be 0, corresponding to a model with diagonal covariance). This argument is vectorised.
 #' @param P The number of variables.
 #' @param G The number of groups. This defaults to 1.

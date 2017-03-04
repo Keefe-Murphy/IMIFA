@@ -7,7 +7,7 @@
 * Simulated (finite) mixing proportions w/ _Gamma(alpha, 1)_ trick (Devroye 1986, p.594) instead of `MCMCpack:rdirichlet`:  
   `rDirichlet` replaces earlier function to sample mixing proportions & is now unhidden/exported/documented.
 * Fixed calculation of # 'free' parameters for `aic.mcmc` and `bic.mcmc` criteria when uniquenesses are isotropic:    
-  `mixFac_free`, which calculates # 'free' parameters for any _finite_ factor model is exported/documented.
+  `mixFac_free`, which calculates # 'free' parameters for UUU/UUC _finite_ factor models is exported/documented.
 * Added new plot when `plot.meth=GQ` for OM(I)FA/IM(I)FA methods depicting trace(s) of #s of active/non-empty groups.
 
 ## Improvements

@@ -19,7 +19,7 @@ mixFac_free(Q, P, G = 1, uni = c("unconstrained", "isotropic"))
 A vector of length \code{length(Q)}.
 }
 \description{
-Estimates the dimension of the 'free' parameters in a factor analysis model, used to calculate the penalty terms for the \code{aic.mcmc} and \code{bic.mcmc} model selection criteria implemented in \code{\link{get_IMIFA_results}}. Please note that while this available as a standalone function, no checks are performed in order to make its use in \code{\link{get_IMIFA_results}} faster.
+Estimates the dimension of the 'free' parameters in \emph{UUU} or \emph{UUC} factor analysis models, used to calculate the penalty terms for the \code{aic.mcmc} and \code{bic.mcmc} model selection criteria implemented in \code{\link{get_IMIFA_results}}. Please note that while this available as a standalone function, no checks are performed in order to make its use in \code{\link{get_IMIFA_results}} faster.
 }
 \examples{
 mixFac_free(Q=4, P=50, G=3, uni="unconstrained")
