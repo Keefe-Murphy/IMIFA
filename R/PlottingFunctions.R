@@ -633,10 +633,10 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
       aicm       <- round(GQ.res$Criteria$AICMs, 2)
       bicm       <- round(GQ.res$Criteria$BICMs, 2)
       log.iLLH   <- round(GQ.res$Criteria$LogIntegratedLikelihoods, 2)
+      dic        <- round(GQ.res$Criteria$DICs, 2)
       if(is.element(method, c("FA", "MFA", "OMFA", "IMFA"))) {
         aic.mcmc <- round(GQ.res$Criteria$AIC.mcmcs, 2)
         bic.mcmc <- round(GQ.res$Criteria$BIC.mcmcs, 2)
-        dic      <- round(GQ.res$Criteria$DICs, 2)
       }
       if(all(plotG.ind, g == 1))  {
         layout(1)
@@ -746,11 +746,11 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         if(!is.element(method, c("IFA", "MIFA"))) {
           cat(paste0("AIC.mcmc = ", aic.mcmc[G.ind,Q.ind], "\n"))
           cat(paste0("BIC.mcmc = ", bic.mcmc[G.ind,Q.ind], "\n"))
-          cat(paste0("DIC = ", dic[G.ind,Q.ind], "\n"))
         }
           cat(paste0("AICM = ", aicm[G.ind,Q.ind], "\n"))
           cat(paste0("BICM = ", bicm[G.ind,Q.ind], "\n"))
           cat(paste0("Log Integrated Likelihood = ", log.iLLH[G.ind,Q.ind], "\n"))
+          cat(paste0("DIC = ", dic[G.ind,Q.ind], "\n"))
       }
       if(all(plotQ.ind,
              attr(GQ.res, "Q.big")))  warning("Q had to be prevented from exceeding its initial value.\n Consider re-running the model with a higher value for 'range.Q'", call.=FALSE)

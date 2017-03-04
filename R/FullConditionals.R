@@ -305,7 +305,7 @@
   # Number of 'free' parameters
 #' Estimate the Number of Free Parameters in a Finite Factor Analysis (Mixture) Model
 #'
-#' Estimates the dimension of the 'free' parameters in a factor analysis model, used to calculate the penalty terms for the \code{\link{aic.mcmc}} and \code{\link{bic.mcmc}} model selection criteria implemented in \code{\link{get_IMIFA_results}}. Please note that while this available as a standalone function, no checks are performed in order to make its use in \code{\link{get_IMIFA_results}} faster.
+#' Estimates the dimension of the 'free' parameters in a factor analysis model, used to calculate the penalty terms for the \code{aic.mcmc} and \code{bic.mcmc} model selection criteria implemented in \code{\link{get_IMIFA_results}}. Please note that while this available as a standalone function, no checks are performed in order to make its use in \code{\link{get_IMIFA_results}} faster.
 #' @param Q The number of latent factors (which can be 0, corresponding to a model with diagonal covariance). This argument is vectorised.
 #' @param P The number of variables.
 #' @param G The number of groups. This defaults to 1.
@@ -316,10 +316,10 @@
 #' @references McNicholas, P. D. and Murphy, T. B. (2008) Parsimonious Gaussian Mixture Models, \emph{Statistics and Computing}, 18(3): 285-296.
 #'
 #' @examples
-#' mixFac_pen(Q=4, P=50, G=3, uni="unconstrained")
+#' mixFac_free(Q=4, P=50, G=3, uni="unconstrained")
 #'
-#' mixFac_pen(Q=3:6, P=100, uni="isotropic")
-    mixFac_pen  <- Vectorize(function(Q, P, G = 1, uni = c("unconstrained", "isotropic")) {
+#' mixFac_free(Q=3:6, P=100, uni="isotropic")
+    mixFac_free <- Vectorize(function(Q, P, G = 1, uni = c("unconstrained", "isotropic")) {
                              as.integer(G - 1 + G * (P * Q - 0.5 * Q *   (Q - 1) +
                              switch(match.arg(uni), unconstrained=2  * P, P + 1)))
                              }, vectorize.args = "Q", SIMPLIFY=TRUE)
@@ -566,5 +566,8 @@
     .power2     <- function(x) x * x
     .which0     <- function(x) which(x == 0)
     .chol       <- function(x) tryCatch(chol(x), error=function(e) chol(make.positive.definite(x)))
-    .ledermann  <- function(N, P) as.integer(min(N - 1, floor((2 * P + 1 - sqrt(8 * P + 1))/2)))
+    .ledermann  <- function(N, P) {
+      R         <- P + 0.5 - (0.5  * sqrt(8 * P + 1))
+        as.integer(floor(min(N - 1, ifelse(1e-10 > abs(R - round(R)), round(R), R))))
+    }
     #

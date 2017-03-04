@@ -6,7 +6,7 @@
 #' @param thinning Optional interval for extra thinning to be applied. Defaults to 1, corresponding to no thinning.
 #' @param G If this argument is not specified, results will be returned with the optimal number of clusters. If different numbers of clusters were explored in \code{sims} for the "\code{MFA}" or "\code{MIFA}" methods, supplying an integer value allows pulling out a specific solution with \code{G} clusters, even if the solution is sub-optimal. Similarly, this allows retrieval of samples corresponding to a solution, if visited, with \code{G} clusters for the "\code{OMFA}", "\code{OMIFA}", "\code{IMFA}" and "\code{IMIFA}" methods.
 #' @param Q If this argument is non specified, results will be returned with the optimal number of factors. If different numbers of factors were explored in \code{sims} for the "\code{FA}", "\code{MFA}", "\code{OMFA}" or "\code{IMFA}" methods, this allows pulling out a specific solution with \code{Q} factors, even if the solution is sub-optimal. Similarly, this allows retrieval of samples corresponding to a solution, if visited, with \code{Q} factors for the "\code{IFA}", "\code{MIFA}", "\code{OMIFA}" and "\code{IMIFA}" methods.
-#' @param criterion The criterion to use for model selection, if model selection is required by the method in \code{sims}. Note that these are \emph{all} calculated, this argument merely indicates which one will form the basis of the construction of the output. Note that the first three options here are biased in favour of zero-factor models for the finite factor "\code{FA}", "\code{MFA}", "\code{OMFA}" and "\code{IMFA}" models.
+#' @param criterion The criterion to use for model selection, where model selection is only required if more than one model was run under the "\code{FA}", "\code{MFA}", "\code{MIFA}", "\code{OMFA}" or "\code{IMFA}" methods when \code{sims} was created via \code{\link{mcmc_IMIFA}}. Note that these are \emph{all} calculated, this argument merely indicates which one will form the basis of the construction of the output. Note that the first three options here might exhibit bias in favour of zero-factor models for the finite factor "\code{FA}", "\code{MFA}", "\code{OMFA}" and "\code{IMFA}" methods and might exhibit bias in favour of one-group models for the "\code{MFA}" and "\code{MIFA}" methods.
 #' @param G.meth If the object in \code{sims} arises from the "\code{OMFA}", "\code{OMIFA}", "\code{IMFA}" or "\code{IMIFA}" methods, this argument determines whether the optimal number of clusters is given by the mode or median of the posterior distribution of \code{G}. Defaults to "\code{Mode}".
 #' @param Q.meth If the object in \code{sims} arises from the "\code{IFA}", "\code{MIFA}", "\code{OMIFA}" or "\code{IMIFA}" methods, this argument determines whether the optimal number of latent factors is given by the mode or median of the posterior distribution of \code{Q}. Defaults to "\code{Mode}".
 #' @param dat The actual data set on which \code{\link{mcmc_IMIFA}} was originally run. This is necessary for computing error metrics between the estimated and empirical covariance matrix/matrices. If this is not supplied, the function will attempt to find the data set if it is still available in the global environment.
@@ -57,13 +57,13 @@
 #' # resIMIFAolive <- get_IMIFA_results(simIMIFAolive, G.meth="median",
 #' #                                    Q.meth="median", conf.level=0.9)
 #' # summary(resIMIFAolive)
-get_IMIFA_results              <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, Q = NULL, criterion = c("bicm", "aicm", "log.iLLH", "bic.mcmc", "aic.mcmc", "dic"),
+get_IMIFA_results              <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, Q = NULL, criterion = c("bicm", "aicm", "log.iLLH", "dic", "bic.mcmc", "aic.mcmc"),
                                            G.meth = c("mode", "median"), Q.meth = c("mode", "median"), dat = NULL, conf.level = 0.95, zlabels = NULL) {
   UseMethod("get_IMIFA_results")
 }
 
 #' @export
-get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, Q = NULL, criterion = c("bicm", "aicm", "log.iLLH", "bic.mcmc", "aic.mcmc", "dic"),
+get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, Q = NULL, criterion = c("bicm", "aicm", "log.iLLH", "dic", "bic.mcmc", "aic.mcmc"),
                                            G.meth = c("mode", "median"), Q.meth = c("mode", "median"), dat = NULL, conf.level = 0.95, zlabels = NULL) {
 
   defopt         <- options()
@@ -88,8 +88,8 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   method         <- attr(sims, "Method")
   alpha.step     <- attr(sims, "Alph.step")
   learn.d        <- attr(sims, "Disc.step")
-  inf.G          <- is.element(method, c("IMIFA", "IMFA", "OMIFA", "OMFA"))
-  inf.Q          <- !is.element(method, c("FA", "MFA", "OMFA", "IMFA"))
+  inf.G          <- is.element(method, c("IMIFA", "OMIFA", "IMFA", "OMFA"))
+  inf.Q          <- is.element(method, c("IMIFA", "OMIFA", "MIFA",  "IFA"))
   n.fac          <- attr(sims, "Factors")
   n.grp          <- attr(sims, "Groups")
   n.obs          <- attr(sims, "Obs")
@@ -107,10 +107,10 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
      (conf.level <= 0   ||
       conf.level >= 1)))          stop("'conf.level' must be a single number between 0 and 1")
   conf.levels    <- c((1 - conf.level)/2, (1 + conf.level)/2)
+  choice         <- length(n.grp) * length(n.fac) > 1
   criterion      <- match.arg(criterion)
-  if(all(!is.element(method, c("FA", "MFA", "OMFA", "IMFA")),
-     !is.element(criterion,  c("log.iLLH",
-     "aicm", "bicm"))))           stop(paste0("'criterion' should be one of 'aicm', 'bicm' or 'log.iLLH' for the ", method, " method"))
+  if(all(inf.Q, is.element(criterion,
+     c("aic.mcmc", "bic.mcmc")))) stop(paste0(ifelse(isTRUE(choice), "Model choice is", "Though model choice isn't"), " actually required -\n 'criterion' cannot be 'aic.mcmc' or 'bic.mcmc' for the ", method, " method"))
   recomp         <- any(burnin  > 0,
                     thinning    > 1)
 
@@ -201,7 +201,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     }
     rownames(crit.mat)   <- switch(method, IMFA=, IMIFA="IM", OMFA=, OMIFA="OM", rownames(crit.mat))
     aicm         <- bicm       <- log.iLLH <-
-    aic.mcmc     <- bic.mcmc   <- dic      <- crit.mat
+    dic          <- aic.mcmc   <- bic.mcmc <- crit.mat
     log.N        <- log(n.obs)
     for(g in seq_len(G.range))   {
       gi                 <- ifelse(G.T, G.ind, g)
@@ -212,14 +212,14 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
         ll.max           <- 2 * max(log.likes)
         ll.var           <- ifelse(length(log.likes) != 1, 2 * Var(log.likes), 0)
         ll.mean          <- mean(log.likes)
-        aicm[g,q]        <- ll.max  - ll.var * 2
-        bicm[g,q]        <- ll.max  - ll.var * log.N
-        log.iLLH[g,q]    <- ll.mean - ll.var * (log.N - 1)
+        aicm[g,q]        <- ll.max  - ll.var   * 2
+        bicm[g,q]        <- ll.max  - ll.var   * log.N
+        log.iLLH[g,q]    <- ll.mean - ll.var   * (log.N - 1)
+        dic[g,q]         <- (ll.max - ll.mean) * 3 - ll.mean
         if(!inf.Q) {
-          K              <- switch(method, OMFA=, IMFA=mixFac_pen(Q=n.fac[qi], P=n.var, G=G[ifelse(G.T, 1, qi)], uni=uni.type), attr(sims[[gi]][[qi]], "K"))
+          K              <- switch(method, OMFA=, IMFA=mixFac_free(Q=n.fac[qi], P=n.var, G=G[ifelse(G.T, 1, qi)], uni=uni.type), attr(sims[[gi]][[qi]], "K"))
           aic.mcmc[g,q]  <- ll.max  - K * 2
           bic.mcmc[g,q]  <- ll.max  - K * log.N
-          dic[g,q]       <- (ll.max - ll.mean) * 3 - ll.mean
         }
       }
     }
@@ -237,12 +237,12 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
         Q        <- n.fac[Q.ind]
       }
     } else if(all(G.T, !Q.T)) {
-      Q.ind      <- which(crit == max(crit))
+      Q.ind      <- which.max(crit)
       if(!inf.Q) {
         Q        <- n.fac[Q.ind]
       }
     } else if(all(Q.T, !G.T)) {
-      G.ind      <- which(crit == max(crit))
+      G.ind      <- which.max(crit)
       if(!inf.G) {
         G        <- n.grp[G.ind]
       }
@@ -251,7 +251,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     Gseq         <- seq_len(G)
     gnames       <- paste0("Group", Gseq)
     G.ind        <- ifelse(all(length(n.grp) == 1, !inf.G), which(n.grp == G), G.ind)
-    GQ.temp2     <- list(AICMs = aicm, BICMs = bicm, LogIntegratedLikelihoods = log.iLLH)
+    GQ.temp2     <- list(AICMs = aicm, BICMs = bicm, LogIntegratedLikelihoods = log.iLLH, DICs = dic)
     if(is.element(method, c("OMFA", "IMFA")) &&
        GQ1)      {
       tmp.store  <- tmp.store[[Q.ind]]
@@ -266,7 +266,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       } else if(inf.G) {
         GQ.temp1$Stored.G <- GQ.temp1$Stored.G[[1]]
       }
-      GQ.temp3   <- c(GQ.temp2, list(AIC.mcmcs = aic.mcmc, BIC.mcmcs = bic.mcmc, DICs = dic))
+      GQ.temp3   <- c(GQ.temp2, list(AIC.mcmcs = aic.mcmc, BIC.mcmcs = bic.mcmc))
       GQ.res     <- switch(method, OMFA=, IMFA=c(GQ.temp1, list(Q = Q), list(Criteria = GQ.temp3)), c(list(G = G, Q = Q), list(Criteria = GQ.temp3)))
     }
     clust.ind    <- !any(is.element(method,   c("FA", "IFA")),
@@ -476,9 +476,17 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     GQ.res       <- c(GQ.res, list(Criteria = GQ.temp2))
     attr(GQ.res, "Q.big") <- attr(sims[[G.ind]][[Q.ind]], "Q.big")
   }
+  Q0             <- Q == 0
+  if(all(isTRUE(choice), is.element(criterion, c("aicm", "bicm", "log.iLLH")))) {
+    if(G == 1)                    warning(paste0("Chosen model has only one group:\n Note that the ", criterion, " criterion may exhibit bias toward one-group models"),   call.=FALSE)
+    if(method    == "MIFA") {
+      if(any(Q0))                 warning(paste0("Chosen model has ", ifelse(sum(Q0) == G, "zero factors", "a group with zero factors"), ":\n Note that the ", criterion, " criterion may exhibit bias toward models ", ifelse(sum(Q0) == G, "with zero factors", "where some groups have zero factors")), call.=FALSE)
+    } else if(all(Q0))            warning(paste0("Chosen model has zero factors:\n Note that the ",   criterion, " criterion may exhibit bias toward zero-factor models"), call.=FALSE)
+  }
+
 
 # Retrieve (unrotated) scores
-  no.score       <- all(Q == 0)
+  no.score       <- all(Q0)
   if(no.score)   {
     if(sw["s.sw"])                message("Scores & loadings not stored as model has zero factors")
     sw["s.sw"]   <- FALSE
@@ -499,9 +507,10 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   emp.T <- est.T <- rep(NA, G)
   for(g in Gseq) {
     Qg           <- Q[g]
+    Q0g          <- Q0[g]
     Qgs          <- seq_len(Qg)
     sw["l.sw"]   <- attr(sims, "Switch")["l.sw"]
-    if(Qg == 0)  {
+    if(Q0g)      {
       if(all(sw["l.sw"],
              !no.score))          message(paste0("Loadings ", ifelse(G > 1, paste0("for group ", g, " not stored as it"), " not stored as model"), " has zero factors"))
       sw["l.sw"] <- FALSE
@@ -609,30 +618,30 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
 
   # Calculate estimated covariance matrices & compute error metrics
     if(clust.ind) {
-      if(all(sw["psi.sw"], any(sw["l.sw"], Qg == 0))) {
-        cov.est  <- if(Qg > 0)    tcrossprod(post.load) + diag(post.psi) else diag(post.psi)
+      if(all(sw["psi.sw"], any(sw["l.sw"], Q0g))) {
+        cov.est  <- if(!Q0g)      tcrossprod(post.load) + diag(post.psi) else diag(post.psi)
         if(data.x)      {
           dimnames(cov.est)    <- list(varnames, varnames)
         }
       } else if(g == 1) {
-        if(all(!sw["l.sw"], Qg  > 0, !sw["psi.sw"]))  {
+        if(all(!sw["l.sw"], !Q0g, !sw["psi.sw"])) {
                                   warning("Loadings & Uniquenesses not stored: can't estimate covariance matrix and compute error metrics", call.=FALSE)
-        } else if(all(Qg > 0,
+        } else if(all(!Q0g,
                   !sw["l.sw"])) { warning("Loadings not stored: can't estimate covariance matrix and compute error metrics", call.=FALSE)
         } else if(!sw["psi.sw"])  warning("Uniquenesses not stored: can't estimate covariance matrix and compute error metrics", call.=FALSE)
       }
     } else     {
       cov.est    <- sims[[G.ind]][[Q.ind]]$cov.est
-      if(all(recomp, sw["psi.sw"], any(sw["l.sw"], Qg == 0))) {
+      if(all(recomp, sw["psi.sw"], any(sw["l.sw"], Q0g))) {
         cov.est  <- replace(cov.est, is.numeric(cov.est), 0)
         for(r in seq_len(n.store))    {
-         sigma   <- if(Qg > 0)    tcrossprod(lmat[,,r]) + diag(psi[,r]) else diag(psi[,r])
+         sigma   <- if(!Q0g)      tcrossprod(lmat[,,r]) + diag(psi[,r]) else diag(psi[,r])
          cov.est <- cov.est + sigma/n.store
         }
       } else if(all(recomp,  g == 1)) {
-        if(all(!sw["l.sw"], Qg  > 0, !sw["psi.sw"]))  {
+        if(all(!sw["l.sw"], !Q0g, !sw["psi.sw"]))         {
                                   warning("Loadings & Uniquenesses not stored: can't re-estimate covariance matrix", call.=FALSE)
-        } else if(all(Qg > 0,
+        } else if(all(!Q0g,
                   !sw["l.sw"])) { warning("Loadings not stored: can't re-estimate covariance matrix", call.=FALSE)
         } else if(!sw["psi.sw"])  warning("Uniquenesses not stored: can't re-estimate covariance matrix", call.=FALSE)
       }

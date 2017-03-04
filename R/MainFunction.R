@@ -437,7 +437,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
            delta0g))                stop("'delta0g' cannot be TRUE for the 'MFA' method")
     if(method == "classify") mu0g          <- TRUE
   }
-  dimension <- mixFac_pen(Q=range.Q, P=P, uni=uni.type)
+  dimension <- mixFac_free(Q=range.Q, P=P, uni=uni.type)
   min.d2G   <- min(dimension)/(2 * range.G)
   sw0gs     <- c(mu0g = mu0g, psi0g = psi0g, delta0g = delta0g)
   if(all(!is.element(method, c("MFA", "MIFA", "classify")),
