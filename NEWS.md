@@ -4,18 +4,18 @@
 ## New Features
 * Sped up simulating cluster labels from unnormalised log probabilities using the Gumbel-Max trick (Yellott, 1977):  
   `gumbel_max` replaces earlier function to sample cluster labels & is now unhidden/exported/documented.
-* Simulated (finite) mixing proportions with `rgamma(G, alpha, 1)` trick (Devroye 1986, p.594) instead of `MCMCpack:rdirichlet`:  
+* Simulated (finite) mixing proportions w/ `rgamma(G, alpha, 1)` trick (Devroye 1986, p.594) instead of `MCMCpack:rdirichlet`:  
   `rDirichlet` replaces earlier function to sample mixing proportions & is now unhidden/exported/documented.
 * Fixed calculation of # 'free' parameters for `aic.mcmc` and `bic.mcmc` criteria when uniquenesses are isotropic:    
   `mixFac_free`, which calculates # 'free' parameters for any _finite_ factor model is exported/documented.
 * Added new plot when `plot.meth=GQ` for OM(I)FA/IM(I)FA methods depicting trace(s) of #s of active/non-empty groups.
 
 ## Improvements
-* Deferred setting `dimnames` attributes in `mcmc_IMIFA` to `get_IMIFA_results` to reduce memory burden/speed up simulations.
+* Deferred setting `dimnames` attributes in `mcmc_IMIFA` to `get_IMIFA_results`: reduced memory burden/sped up simulations.
 * Jettisoned superfluous duplicate material in object outputted from `get_IMIFA_results` to reduce size/simplify access.
 * Removed IMFA/IMIFA `trunc.G` arg, made `range.G` the max allowable # active groups & also stored # active groups.
 * Code sped up when G=1 by not simulating labels for OM(I)FA/IM(I)FA & not simulating mixing proportions for OM(I)FA.
-* Reduced chance of crash due to exceeding memory capacity; `score.switch` defaults to `FALSE` if # models being run is large.
+* Reduced chance of crash by exceeding memory capacity; `score.switch` defaults to `FALSE` if # models ran is large.
 * DIC model selection criterion now also available for infinite factor models.
 * Invisibly returned from `sim_IMIFA_data`.
 
