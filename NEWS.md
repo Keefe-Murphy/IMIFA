@@ -4,7 +4,7 @@
 ## New Features
 * Sped up simulating cluster labels from unnormalised log probabilities using the Gumbel-Max trick (Yellott, 1977):  
   `gumbel_max` replaces earlier function to sample cluster labels & is now unhidden/exported/documented.
-* Simulated (finite) mixing proportions w/ `rgamma(G, alpha, 1)` trick (Devroye 1986, p.594) instead of `MCMCpack:rdirichlet`:  
+* Simulated (finite) mixing proportions w/ _Gamma(alpha, 1)_ trick (Devroye 1986, p.594) instead of `MCMCpack:rdirichlet`:  
   `rDirichlet` replaces earlier function to sample mixing proportions & is now unhidden/exported/documented.
 * Fixed calculation of # 'free' parameters for `aic.mcmc` and `bic.mcmc` criteria when uniquenesses are isotropic:    
   `mixFac_free`, which calculates # 'free' parameters for any _finite_ factor model is exported/documented.
@@ -22,7 +22,7 @@
 ## Bug Fixes 
 * 2<sup>nd</sup> IM(I)FA label switching move sped up/properly weighted to ensure uniform sampling of neighbouring cluster pairs.
 * Fixed trace plots for factor scores by extracting indices of stored iterations properly using `Rfast::sort_unique`. 
-* Fixed way in which `rnorm` columns are added to the scores matrix during adaptation when the 'widest' loadings matrix is added to.
+* Fixed way in which `rnorm` columns are added to scores matrix during adaptation when 'widest' loadings matrix grows.
 * Slightly rearranged order in which Gibbs updates take place to ensure means enter simulation of uniquenesses properly.
 * Edited/robustified subsetting of large objects when storing `mcmc_IMIFA` output.
 * Tightened controls for when certain parameters are not stored for posterior inference.
