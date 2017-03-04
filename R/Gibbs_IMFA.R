@@ -3,8 +3,8 @@
 ############################################################################
 
 # Gibbs Sampler Function
-  .gibbs_IMFA        <- function(Q, data, iters, N, P, G, mu.zero, rho, sigma.l, alpha.step, discount,
-                                 a.hyper, mu, sigma.mu, burnin, thinning, d.hyper, learn.d, uni.type,
+  .gibbs_IMFA        <- function(Q, data, iters, N, P, G, mu.zero, rho, sigma.l, alpha.step, discount,  mu,
+                                 a.hyper, sigma.mu, burnin, thinning, d.hyper, learn.d, uni.type, uni.prior,
                                  ind.slice, psi.alpha, psi.beta, verbose, sw, cluster, DP.lab.sw, ...) {
 
   # Define & initialise variables
@@ -65,9 +65,9 @@
     sig.mu.sqrt      <- sqrt(sigma.mu)
     z                <- cluster$z
     pi.alpha         <- cluster$pi.alpha
-    .sim_psi_inv     <- switch(uni.type, unconstrained=.sim_psi_iu,  isotropic=.sim_psi_ii)
-    .sim_psi_ip      <- switch(uni.type, unconstrained=.sim_psi_ipu, isotropic=.sim_psi_ipi)
-    psi.beta         <- unique(round(psi.beta, min(nchar(psi.beta))))
+    .sim_psi_inv     <- switch(uni.type,  unconstrained=.sim_psi_iu,  isotropic=.sim_psi_ii)
+    .sim_psi_ip      <- switch(uni.type,  unconstrained=.sim_psi_ipu, isotropic=.sim_psi_ipi)
+    psi.beta         <- switch(uni.prior, isotropic=unique(round(psi.beta, min(nchar(psi.beta)))), psi.beta)
     pi.prop          <- cluster$pi.prop
     nn               <- tabulate(z, nbins=trunc.G)
     eta              <- .sim_eta_p(N=N, Q=Q)

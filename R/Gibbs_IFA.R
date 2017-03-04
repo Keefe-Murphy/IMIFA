@@ -4,8 +4,8 @@
 
 # Gibbs Sampler Function
   .gibbs_IFA     <- function(Q, data, iters, N, P, sigma.mu, mu, prop, uni.type,
-                             psi.alpha, psi.beta, burnin, thinning, verbose, sw,
-                             epsilon, mu.zero, nu, adapt, adapt.at, b0, b1, nuplus1,
+                             uni.prior, psi.alpha, psi.beta, burnin, thinning, verbose,
+                             sw, epsilon, mu.zero, nu, adapt, adapt.at, b0, b1, nuplus1,
                              alpha.d1, alpha.d2, beta.d1, beta.d2, scaling, ...) {
 
   # Define & initialise variables
@@ -39,9 +39,9 @@
     Q.large      <- Q.big  <- FALSE
 
     mu.sigma     <- 1/sigma.mu
-    .sim_psi_inv <- switch(uni.type, unconstrained=.sim_psi_iu,  isotropic=.sim_psi_ii)
-    .sim_psi_ip  <- switch(uni.type, unconstrained=.sim_psi_ipu, isotropic=.sim_psi_ipi)
-    psi.beta     <- unique(round(psi.beta, min(nchar(psi.beta))))
+    .sim_psi_inv <- switch(uni.type,  unconstrained=.sim_psi_iu,  isotropic=.sim_psi_ii)
+    .sim_psi_ip  <- switch(uni.type,  unconstrained=.sim_psi_ipu, isotropic=.sim_psi_ipi)
+    psi.beta     <- switch(uni.prior, isotropic=unique(round(psi.beta, min(nchar(psi.beta)))), psi.beta)
     eta          <- .sim_eta_p(Q=Q, N=N)
     phi          <- .sim_phi_p(Q=Q, P=P, nu=nu, plus1=nuplus1)
     delta        <- c(.sim_delta_p(alpha=alpha.d1, beta=beta.d1), .sim_delta_p(Q=Q, alpha=alpha.d2, beta=beta.d2))

@@ -477,7 +477,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   imifa     <- list(list())
   Gi        <- Qi  <- 1L
   gibbs.arg <- list(P = P, sigma.mu = sigma.mu, psi.alpha = psi.alpha, burnin = burnin, sw = switches,
-                    thinning = thinning, iters = iters, verbose = verbose, uni.type = uni.type)
+                    thinning = thinning, iters = iters, verbose = verbose, uni.type = uni.type, uni.prior = uni.prior)
   if(is.element(method, c("IMIFA", "IMFA"))) {
     gibbs.arg      <- append(gibbs.arg, list(rho = rho, ind.slice = ind.slice, alpha.step = alpha.step, learn.d = learn.d,
                                              DP.lab.sw = DP.lab.sw, a.hyper = alpha.hyper, discount = discount, d.hyper = d.hyper))

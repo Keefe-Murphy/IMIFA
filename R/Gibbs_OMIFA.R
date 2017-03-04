@@ -4,8 +4,8 @@
 
 # Gibbs Sampler Function
   .gibbs_OMIFA       <- function(Q, data, iters, N, P, G, mu.zero, sigma.mu, uni.type,
-                                 burnin, thinning, mu, adapt, psi.alpha, psi.beta,
-                                 verbose, alpha.d1, alpha.d2, sw, cluster, nu, b0, b1,
+                                 uni.prior, burnin, thinning, adapt, psi.alpha, psi.beta,
+                                 verbose, alpha.d1, alpha.d2, sw, cluster, nu, b0, b1, mu,
                                  prop, beta.d1, beta.d2, adapt.at, epsilon, nuplus1, ...) {
 
   # Define & initialise variables
@@ -51,9 +51,9 @@
     nn.ind           <- which(nn > 0)
     pi.prop          <- cluster$pi.prop
     pi.alpha         <- cluster$pi.alpha
-    .sim_psi_inv     <- switch(uni.type, unconstrained=.sim_psi_iu,  isotropic=.sim_psi_ii)
-    .sim_psi_ip      <- switch(uni.type, unconstrained=.sim_psi_ipu, isotropic=.sim_psi_ipi)
-    psi.beta         <- unique(round(psi.beta, min(nchar(psi.beta))))
+    .sim_psi_inv     <- switch(uni.type,  unconstrained=.sim_psi_iu,  isotropic=.sim_psi_ii)
+    .sim_psi_ip      <- switch(uni.type,  unconstrained=.sim_psi_ipu, isotropic=.sim_psi_ipi)
+    psi.beta         <- switch(uni.prior, isotropic=unique(round(psi.beta, min(nchar(psi.beta)))), psi.beta)
     eta              <- .sim_eta_p(N=N, Q=Q)
     phi              <- lapply(Gseq, function(g) .sim_phi_p(Q=Q, P=P, nu=nu, plus1=nuplus1))
     delta            <- lapply(Gseq, function(g) c(.sim_delta_p(alpha=alpha.d1, beta=beta.d1), .sim_delta_p(Q=Q, alpha=alpha.d2, beta=beta.d2)))

@@ -3,9 +3,9 @@
 ###########################################################################
 
 # Gibbs Sampler Function
-  .gibbs_OMFA      <- function(Q, data, iters, N, P, G, mu.zero, sigma.mu,
-                               mu, sigma.l, burnin, thinning, sw, uni.type,
-                               psi.alpha, psi.beta, verbose, cluster, ...) {
+  .gibbs_OMFA      <- function(Q, data, iters, N, P, G, mu.zero, sigma.mu, mu,
+                               sigma.l, burnin, thinning, uni.type, uni.prior,
+                               sw, psi.alpha, psi.beta, verbose, cluster, ...) {
 
   # Define & initialise variables
     start.time     <- proc.time()
@@ -51,7 +51,7 @@
     pi.alpha       <- cluster$pi.alpha
     .sim_psi_inv   <- switch(uni.type, unconstrained=.sim_psi_iu,  isotropic=.sim_psi_ii)
     .sim_psi_ip    <- switch(uni.type, unconstrained=.sim_psi_ipu, isotropic=.sim_psi_ipi)
-    psi.beta       <- unique(round(psi.beta, min(nchar(psi.beta))))
+    psi.beta       <- switch(uni.prior, isotropic=unique(round(psi.beta, min(nchar(psi.beta)))), psi.beta)
     eta            <- .sim_eta_p(N=N, Q=Q)
     lmat           <- lapply(Gseq, function(g) .sim_load_p(Q=Q, P=P, sigma.l=sigma.l))
     psi.inv        <- vapply(Gseq, function(g) .sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), numeric(P))

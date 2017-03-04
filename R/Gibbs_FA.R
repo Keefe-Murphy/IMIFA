@@ -4,8 +4,8 @@
 
 # Gibbs Sampler Function
   .gibbs_FA      <- function(Q, data, iters, N, P, sigma.mu, mu, burnin,
-                             thinning, uni.type, psi.alpha, psi.beta, sw,
-                             mu.zero, verbose, sigma.l, scaling, ...) {
+                             thinning, uni.type, uni.prior, psi.alpha, psi.beta,
+                             sw, mu.zero, verbose, sigma.l, scaling, ...) {
 
   # Define & initialise variables
     start.time   <- proc.time()
@@ -37,9 +37,9 @@
     cov.est      <- matrix(0, nrow=P, ncol=P)
 
     mu.sigma     <- 1/sigma.mu
-    .sim_psi_inv <- switch(uni.type, unconstrained=.sim_psi_iu,  isotropic=.sim_psi_ii)
-    .sim_psi_ip  <- switch(uni.type, unconstrained=.sim_psi_ipu, isotropic=.sim_psi_ipi)
-    psi.beta     <- unique(round(psi.beta, min(nchar(psi.beta))))
+    .sim_psi_inv <- switch(uni.type,  unconstrained=.sim_psi_iu,  isotropic=.sim_psi_ii)
+    .sim_psi_ip  <- switch(uni.type,  unconstrained=.sim_psi_ipu, isotropic=.sim_psi_ipi)
+    psi.beta     <- switch(uni.prior, isotropic=unique(round(psi.beta, min(nchar(psi.beta)))), psi.beta)
     eta          <- .sim_eta_p(Q=Q, N=N)
     lmat         <- .sim_load_p(Q=Q, P=P, sigma.l=sigma.l)
     psi.inv      <- .sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)

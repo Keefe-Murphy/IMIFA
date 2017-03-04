@@ -4,9 +4,9 @@
 
 # Gibbs Sampler Function
   .gibbs_MIFA      <- function(Q, data, iters, N, P, G, sw, mu, mu.zero, uni.type,
-                               sigma.mu, burnin, thinning, verbose, nu, cluster,
-                               psi.alpha, psi.beta, adapt, adapt.at, prop, b0,
-                               b1, beta.d1, beta.d2, epsilon, nuplus1, ...) {
+                               uni.prior, sigma.mu, burnin, thinning, verbose, nu,
+                               cluster, psi.alpha, psi.beta, adapt, adapt.at, prop,
+                               b0, b1, beta.d1, beta.d2, epsilon, nuplus1, ...) {
 
   # Define & initialise variables
     start.time     <- proc.time()
@@ -56,9 +56,9 @@
     nn             <- tabulate(z, nbins=G)
     pi.prop        <- cluster$pi.prop
     pi.alpha       <- cluster$pi.alpha
-    .sim_psi_inv   <- switch(uni.type, unconstrained=.sim_psi_iu,  isotropic=.sim_psi_ii)
-    .sim_psi_ip    <- switch(uni.type, unconstrained=.sim_psi_ipu, isotropic=.sim_psi_ipi)
-    psi.beta       <- unique(round(psi.beta, min(nchar(psi.beta))))
+    .sim_psi_inv   <- switch(uni.type,  unconstrained=.sim_psi_iu,  isotropic=.sim_psi_ii)
+    .sim_psi_ip    <- switch(uni.type,  unconstrained=.sim_psi_ipu, isotropic=.sim_psi_ipi)
+    psi.beta       <- switch(uni.prior, isotropic=unique(round(psi.beta, min(nchar(psi.beta)))), psi.beta)
     if(length(psi.beta) == 1) {
       psi.beta     <- matrix(psi.beta, nrow=1, ncol=G)
     }
