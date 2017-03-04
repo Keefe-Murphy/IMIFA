@@ -11,7 +11,7 @@
 * Added new plot when `plot.meth=GQ` for OM(I)FA/IM(I)FA methods depicting trace(s) of #s of active/non-empty groups.
 
 ## Improvements
-* Deferred setting `dimnames` attributes in `mcmc_IMIFA` to `get_IMIFA_results`: reduced memory burden/sped up simulations.
+* Deferred setting `dimnames` attributes in `mcmc_IMIFA` to `get_IMIFA_results`: lower memory burden/faster simulations.
 * Jettisoned superfluous duplicate material in object outputted from `get_IMIFA_results` to reduce size/simplify access.
 * Removed IMFA/IMIFA `trunc.G` arg, made `range.G` the max allowable # active groups & also stored # active groups.
 * Code sped up when G=1 by not simulating labels for OM(I)FA/IM(I)FA & not simulating mixing proportions for OM(I)FA.
@@ -22,6 +22,7 @@
 ## Bug Fixes 
 * 2<sup>nd</sup> IM(I)FA label switching move sped up/properly weighted to ensure uniform sampling of neighbouring cluster pairs.
 * Fixed trace plots for factor scores by extracting indices of stored iterations properly using `Rfast::sort_unique`. 
+* Fixed way in which `rnorm` columns are added to the scores matrix during adaptation when the 'widest' loadings matrix is added to.
 * Slightly rearranged order in which Gibbs updates take place to ensure means enter simulation of uniquenesses properly.
 * Edited/robustified subsetting of large objects when storing `mcmc_IMIFA` output.
 * Tightened controls for when certain parameters are not stored for posterior inference.
