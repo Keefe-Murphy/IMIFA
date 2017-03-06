@@ -17,6 +17,7 @@
 * Code sped up when G=1 by not simulating labels for OM(I)FA/IM(I)FA & not simulating mixing proportions for OM(I)FA.
 * Reduced chance of crash by exceeding memory capacity; `score.switch` defaults to `FALSE` if # models ran is large.
 * DIC model selection criterion now also available for infinite factor models.
+* `G_prior` now reflects discrete nature of the density and gains the argument `Q.probs`.
 * Invisibly returned from `sim_IMIFA_data`.
 
 ## Bug Fixes 

@@ -300,7 +300,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
       if(param == "means")  {
         plot.x <- x$Means$mus[[g]]
         if(matx) {
-          matplot(t(plot.x), type="l", ylab="", xlab="Iteration", lty=1, ylim=if(is.element(method, c("FA", "IFA"))) c(-1, 1))
+          matplot(t(plot.x), type="l", ylab="", xlab="Iteration", lty=1, ylim=if(is.element(method, c("FA", "IFA"))) c(-1, 1), col=seq_along(palette))
           if(titles) title(main=list(paste0("Trace", ifelse(all.ind, "", paste0(":\nMeans", ifelse(grp.ind, paste0(" - Group ", g), ""))))))
         } else {
           plot(x=iter, y=plot.x[ind,], type="l", ylab="", xlab="Iteration", ylim=if(is.element(method, c("FA", "IFA"))) c(-1, 1))
@@ -311,11 +311,13 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         x.plot <- x$Scores$eta
         if(by.fac) {
           plot.x  <- x.plot[,ind[2],]
+          palette(viridis(min(10, n.obs)))
         } else {
           plot.x  <- if(Q.max > 1) x.plot[ind[1],,] else t(x.plot[ind[1],,])
+          palette(viridis(min(10, Q.max)))
         }
         if(matx) {
-          matplot(t(plot.x), type="l", ylab="", xlab="Iteration", lty=1)
+          matplot(t(plot.x), type="l", ylab="", xlab="Iteration", lty=1, col=seq_along(palette))
           if(by.fac) {
             if(titles) title(main=list(paste0("Trace", ifelse(all.ind, ":\n", ":\nScores - "), "Factor ", ind[2])))
           } else {
@@ -328,9 +330,15 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
       }
       if(param == "loadings") {
         x.plot <- x$Loadings$lmats[[g]]
-        plot.x <- if(by.fac) x.plot[,ind[2],] else x.plot[ind[1],,]
+        if(by.fac) {
+          plot.x  <- x.plot[,ind[2],]
+          palette(viridis(min(10, n.var)))
+        } else {
+          plot.x  <- x.plot[ind[1],,]
+          palette(viridis(min(10, Q)))
+        }
         if(matx) {
-          matplot(t(plot.x), type="l", ylab="", xlab="Iteration", lty=1)
+          matplot(t(plot.x), type="l", ylab="", xlab="Iteration", lty=1, col=seq_along(palette))
           if(by.fac) {
             if(titles) title(main=list(paste0("Trace", ifelse(all.ind, ":\n", paste0(":\nLoadings - ", ifelse(grp.ind, paste0("Group ", g, " - "), ""))), "Factor ", ind[2])))
           } else {
@@ -344,7 +352,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
       if(param == "uniquenesses") {
         plot.x <- x$Uniquenesses$psis[[g]]
         if(matx) {
-          matplot(t(plot.x), type="l", ylab="", xlab="Iteration", lty=1)
+          matplot(t(plot.x), type="l", ylab="", xlab="Iteration", lty=1, col=seq_along(palette))
           if(titles) title(main=list(paste0("Trace", ifelse(all.ind, "", paste0(":\nUniquenesses", ifelse(grp.ind, paste0(" - Group ", g), ""))))))
         } else   {
           plot(x=iter, y=plot.x[ind,], ylab="", type="l", xlab="Iteration")
@@ -354,7 +362,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
       if(param == "pis") {
         plot.x <- clust$pi.prop
         if(matx) {
-          matplot(t(plot.x), type="l", ylab="", xlab="Iteration", lty=1)
+          matplot(t(plot.x), type="l", ylab="", xlab="Iteration", lty=1, seq_along(palette))
           if(titles) title(main=list(paste0("Trace", ifelse(all.ind, "", paste0(":\nMixing Proportions")))))
         } else   {
           plot(x=iter, y=plot.x[ind,], ylab="", type="l", xlab="Iteration")
@@ -384,7 +392,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         x.plot <- x$Means$mus[[g]]
         if(matx) {
           plot.x  <- sapply(apply(x.plot, 1, density), "[[", "y")
-          matplot(plot.x, type="l", ylab="", lty=1)
+          matplot(plot.x, type="l", ylab="", lty=1, col=seq_along(palette))
           if(titles) title(main=list(paste0("Density", ifelse(all.ind, "", paste0(":\nMeans", ifelse(grp.ind, paste0(" - Group ", g), ""))))))
         } else   {
           plot.d  <- density(x.plot[ind,])
@@ -397,12 +405,14 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         x.plot <- x$Scores$eta
         if(by.fac) {
           plot.x  <- x.plot[,ind[2],]
+          palette(viridis(min(10, n.obs)))
         } else   {
           plot.x  <- if(Q > 1) x.plot[ind[1],,] else t(x.plot[ind[1],,])
+          palette(viridis(min(10, Q.max)))
         }
         if(matx) {
           plot.x  <- sapply(apply(plot.x, 1, density), "[[", "y")
-          matplot(plot.x, type="l", ylab="", lty=1)
+          matplot(plot.x, type="l", ylab="", lty=1, col=seq_along(palette))
           if(by.fac) {
             if(titles) title(main=list(paste0("Density", ifelse(all.ind, ":\n", ":\nScores - "), "Factor ", ind[2])))
           } else {
@@ -417,10 +427,16 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
       }
       if(param == "loadings") {
         x.plot <- x$Loadings$lmats[[g]]
-        plot.x    <- if(by.fac) x.plot[,ind[2],] else x.plot[ind[1],,]
+        if(by.fac) {
+          plot.x  <- x.plot[,ind[2],]
+          palette(viridis(min(10, n.var)))
+        } else {
+          plot.x  <- x.plot[ind[1],,]
+          palette(viridis(min(10, Q)))
+        }
         if(matx) {
           plot.x  <- sapply(apply(plot.x, 1, density), "[[", "y")
-          matplot(plot.x, type="l", ylab="", lty=1)
+          matplot(plot.x, type="l", ylab="", lty=1, col=seq_along(palette))
           if(by.fac) {
             if(titles) title(main=list(paste0("Density", ifelse(all.ind, ":\n", paste0(":\nLoadings - ", ifelse(grp.ind, paste0("Group ", g, " - "), ""))), "Factor ", ind[2])))
           } else {
@@ -437,7 +453,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         x.plot <- x$Uniquenesses$psis[[g]]
         if(matx) {
           plot.x  <- sapply(apply(x.plot, 1, density), "[[", "y")
-          matplot(plot.x, type="l", ylab="", lty=1)
+          matplot(plot.x, type="l", ylab="", lty=1, col=seq_along(palette))
           if(titles) title(main=list(paste0("Density", ifelse(all.ind, "", paste0(":\nUniquenesses", ifelse(grp.ind, paste0(" - Group ", g), ""))))))
         } else   {
           plot.d  <- density(x.plot[ind,])
@@ -450,7 +466,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         x.plot <- clust$pi.prop
         if(matx) {
           plot.x  <- sapply(apply(x.plot, 1, density), "[[", "y")
-          matplot(plot.x, type="l", ylab="", lty=1)
+          matplot(plot.x, type="l", ylab="", lty=1, col=seq_along(palette))
           if(titles) title(main=list(paste0("Density", ifelse(all.ind, "", paste0(":\nMixing Proportions")))))
         } else   {
           plot.d  <- density(x.plot[ind,])
@@ -1061,6 +1077,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
 #' @param discount The discount parameter for the Pitman-Yor process. Must lie in the interval [0, 1). Defaults to 0 (i.e. the Dirichlet process) as plotting with non-zero discount is not yet implement. However, users can still consult \code{\link{G_expected}} and \code{\link{G_variance}} in order to solicit sensible \code{discount} values.
 #' @param show.plot Logical indicating whether the plot should be displayed (default = \code{TRUE}).
 #' @param avg Logical indicating whether perpendicular lines should be dropped at the expected value, using \code{\link{G_expected}} with the supplied arguments.
+#' @param Q.probs A single number in [0,1] corresponding to the quantile of the density below which values will be considered as zero for plotting purposes. This does not affect the invisibly returned density values themselves.
 #' @param col Colour of the plotted lines.
 #' @param main Title of the plot.
 #' @param ... Other optional arguments typically passed to \code{\link{plot}}.
@@ -1075,19 +1092,13 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
 #' # library(Rmpfr)
 #' # x <- G_prior(150, alpha=5)
 #' # x
-  G_prior      <- function(N, alpha, discount = 0L, show.plot = TRUE,
-                           avg = FALSE, col = NULL, main = NULL, ...) {
+  G_prior      <- function(N, alpha, discount = 0L, show.plot = TRUE, avg = FALSE,
+                           Q.probs = 0.75, col = NULL, main = NULL, ...) {
     firstex    <- suppressMessages(requireNamespace("Rmpfr", quietly=TRUE))
     if(isTRUE(firstex)) {
       on.exit(.detach_pkg("Rmpfr"))
       on.exit(.detach_pkg("gmp"), add=TRUE)
     } else                            stop("'Rmpfr' package not installed")
-    if(missing(col))    {
-      col      <- viridis(length(alpha))
-    } else {
-      if(!all(.are_cols(col)))        stop("Supplied colour palette contains invalid colours")
-      palette(adjustcolor(rep(col, 2)))
-    }
     if(missing(main))   {
       main     <- paste0("Prior Distribution of G\nN=", N)
     } else if(!is.character(main))    stop("'main' title must be a character string")
@@ -1097,6 +1108,13 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
              length(avg)) > 1))       stop("Arguments 'N', 'show.plot', and 'avg' must be strictly of length 1")
     if(!is.logical(show.plot))        stop("'show.plot' must be TRUE or FALSE")
     max.len    <- max(length(alpha),  length(discount))
+    if(missing(col))    {
+      col      <- viridis(max.len + 1)
+    } else {
+      if(!all(.are_cols(col)))        stop("Supplied colour palette contains invalid colours")
+      palette(adjustcolor(rep(col, 2), alpha.f=0.5))
+    }
+    if(max.len  > 10)                 stop("Can't plot more than ten distributions simultaneously")
     if(!is.element(length(alpha),
        c(1, max.len)))                stop("'alpha' must be of length 1 or length(discount)")
     if(!is.element(length(discount),
@@ -1126,8 +1144,12 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
     rx         <- scale(rx, center=FALSE, scale=Rfast::colsums(rx))
     max.rx     <- Rfast::colMaxs(rx, value=TRUE)
     if(isTRUE(show.plot))   {
-      matplot(x=c(0, seq_len(N)), y=rx, type="l", col=col, xlab="Clusters",
-                        ylab="Density", main=main, ...)
+      if(length(Q.probs) != 1)          stop("'Q.probs' must be a single number")
+      if(any(length(Q.probs)   != 1,
+         Q.probs <= 0, Q.probs >= 1))  stop("'Q.probs' must be a single number in the interval [0,1]")
+      r2       <- replace(rx, rx < quantile(rx, probs=Q.probs), NA)
+      matplot(x=c(0, seq_len(N)), y=r2, type="h", col=col, xlab="Clusters", ylim=c(0, max(max.rx)),
+              ylab="Density", main=main, lwd=seq(3, 1, length.out=length(alpha)), lty=seq_len(2))
     }
     if(isTRUE(avg))         {
       exp.g    <- G_expected(N, alpha, discount)

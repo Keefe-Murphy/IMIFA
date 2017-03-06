@@ -5,7 +5,7 @@
 \title{Plot Dirichlet / Pitman-Yor process Priors}
 \usage{
 G_prior(N, alpha, discount = 0L, show.plot = TRUE, avg = FALSE,
-  col = NULL, main = NULL, ...)
+  Q.probs = 0.75, col = NULL, main = NULL, ...)
 }
 \arguments{
 \item{N}{The sample size.}
@@ -17,6 +17,8 @@ G_prior(N, alpha, discount = 0L, show.plot = TRUE, avg = FALSE,
 \item{show.plot}{Logical indicating whether the plot should be displayed (default = \code{TRUE}).}
 
 \item{avg}{Logical indicating whether perpendicular lines should be dropped at the expected value, using \code{\link{G_expected}} with the supplied arguments.}
+
+\item{Q.probs}{A single number in [0,1] corresponding to the quantile of the density below which values will be considered as zero for plotting purposes. This does not affect the invisibly returned density values themselves.}
 
 \item{col}{Colour of the plotted lines.}
 
