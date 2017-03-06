@@ -99,10 +99,11 @@
 
   # Iterate
     for(iter in seq_len(total)[-1]) {
-      if(verbose   && iter  < burnin) setTxtProgressBar(pb, iter)
+      if(verbose   && iter  < burnin)  setTxtProgressBar(pb, iter)
+      storage      <- is.element(iter, iters)
 
     # Mixing Proportions
-      pi.prop      <- rDirichlet(alpha=pi.alpha, G=G, nn=nn)
+      pi.prop      <- rDirichlet(G=G, alpha=pi.alpha, nn=nn)
 
     # Cluster Labels
       psi          <- 1/psi.inv
@@ -162,7 +163,7 @@
       if(zerr && !err.z) {                                    warning("Algorithm may slow due to corrections for Choleski decompositions of non-positive-definite covariance matrices", call.=FALSE)
         err.z      <- TRUE
       }
-      if(is.element(iter, iters))  {
+      if(storage)  {
         if(verbose)   setTxtProgressBar(pb, iter)
         new.it     <- which(iters == iter)
         if(sw["mu.sw"])            mu.store[,,new.it]      <- mu

@@ -127,7 +127,8 @@
 
   # Iterate
     for(iter in seq_len(total)[-1]) {
-      if(verbose     && iter  < burnin) setTxtProgressBar(pb, iter)
+      if(verbose     && iter  < burnin)  setTxtProgressBar(pb, iter)
+      storage        <- is.element(iter, iters)
 
     # Mixing Proportions
       weights        <- .sim_pi_inf(alpha=pi.alpha, nn=nn, N=N, len=trunc.G, lseq=Ts, discount=discount)
@@ -247,7 +248,7 @@
         err.z        <- TRUE
       }
 
-      if(is.element(iter, iters)) {
+      if(storage)    {
         if(verbose)     setTxtProgressBar(pb, iter)
         new.it       <- which(iters == iter)
         if(sw["mu.sw"])               mu.store[,,new.it]      <- mu

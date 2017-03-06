@@ -70,6 +70,7 @@
   # Iterate
     for(iter in seq_len(total)[-1]) {
       if(verbose && iter    < burnin) setTxtProgressBar(pb, iter)
+      storage    <- is.element(iter,  iters)
 
     # Scores & Loadings
       c.data     <- sweep(data, 2, mu, FUN="-")
@@ -85,7 +86,7 @@
     # Means
       mu[]       <- .sim_mu(N=N, P=P, mu.sigma=mu.sigma, psi.inv=psi.inv, sum.data=sum.data, sum.eta=colSums(eta), lmat=lmat, mu.zero=mu.zero)
 
-      if(is.element(iter, iters)) {
+      if(storage) {
         if(verbose) setTxtProgressBar(pb, iter)
         new.it   <- which(iters == iter)
         psi      <- 1/psi.inv

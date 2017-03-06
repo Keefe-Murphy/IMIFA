@@ -22,7 +22,7 @@ MGP_check(ad1, ad2, Q, nu, bd1 = 1L, bd2 = 1L, plus1 = TRUE,
 
 \item{plus1}{Logical indicator for whether the Gamma prior on the local shrinkage parameters is of the form Ga(\code{nu + 1, nu}), the default, or Ga(\code{nu, nu}).}
 
-\item{inverse}{Logical indicator for whether the increasing shrinkage property is assessed against the induced Inverse Gamma prior, the default. Always TRUE when used inside \code{\link{mcmc_IMIFA}}: the FALSE option exists only for demonstration purposes.}
+\item{inverse}{Logical indicator for whether the increasing shrinkage property is assessed against the induced Inverse Gamma prior, the default. Always \code{TRUE} when used inside \code{\link{mcmc_IMIFA}}: the \code{FALSE} option exists only for demonstration purposes.}
 }
 \value{
 A list of length 2 containing the following objects:

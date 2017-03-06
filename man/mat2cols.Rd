@@ -11,7 +11,7 @@ mat2cols(mat, cols = NULL, byrank = FALSE, breaks = length(cols))
 
 \item{cols}{The colour palette to be used. The default palette uses \code{\link[viridis]{viridis}}. Will be checked for validity.}
 
-\item{byrank}{Logical indicating whether to convert the matrix itself or the sample ranks of the values therein. Defaults to FALSE.}
+\item{byrank}{Logical indicating whether to convert the matrix itself or the sample ranks of the values therein. Defaults to \code{FALSE}.}
 
 \item{breaks}{Number of gradations in colour to use. Defaults to \code{length(cols)}.}
 }

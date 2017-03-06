@@ -27,21 +27,21 @@
 
 \item{g}{Optional argument that allows specification of exactly which cluster the plot of interest is to be produced for. If not supplied, the user will be prompted to cycle through plots for all clusters.}
 
-\item{mat}{Logical indicating whether a \code{\link{matplot}} is produced (defaults to TRUE). If given as FALSE, \code{ind} is invoked.}
+\item{mat}{Logical indicating whether a \code{\link{matplot}} is produced (defaults to \code{TRUE}). If given as \code{FALSE}, \code{ind} is invoked.}
 
-\item{ind}{Either a single number indicating which variable to plot when \code{param} is one of \code{means} or \code{uniquenesses}, or which cluster to plot if \code{param} is \code{pis}. If \code{scores} are plotted, a vector of length two giving which observation and factor to plot; If \code{loadings} are plotted, a vector of length two giving which variable and factor to plot. Only relevant when \code{mat} or \code{by.fac} is FALSE.}
+\item{ind}{Either a single number indicating which variable to plot when \code{param} is one of \code{means} or \code{uniquenesses}, or which cluster to plot if \code{param} is \code{pis}. If \code{scores} are plotted, a vector of length two giving which observation and factor to plot; If \code{loadings} are plotted, a vector of length two giving which variable and factor to plot. Only relevant when \code{mat} or \code{by.fac} is \code{FALSE}.}
 
-\item{fac}{Optional argument that provides an alternative way to specify \code{ind[2]} when \code{mat} is FALSE and \code{param} is one of \code{scores} or \code{loadings}.}
+\item{fac}{Optional argument that provides an alternative way to specify \code{ind[2]} when \code{mat} is \code{FALSE} and \code{param} is one of \code{scores} or \code{loadings}.}
 
-\item{by.fac}{Optionally allows (mat)plotting of scores and loadings by factor - i.e. observation(s) (scores) or variable(s) (loadings) for a given factor, respectively, controlled by \code{ind} or \code{fac}) when set to TRUE (the default). Otherwise factor(s) are plotted for a given observation or variable, again controlled by \code{ind} or \code{fac}.}
+\item{by.fac}{Optionally allows (mat)plotting of scores and loadings by factor - i.e. observation(s) (scores) or variable(s) (loadings) for a given factor, respectively, controlled by \code{ind} or \code{fac}) when set to \code{TRUE} (the default). Otherwise factor(s) are plotted for a given observation or variable, again controlled by \code{ind} or \code{fac}.}
 
 \item{type}{The manner in which the plot is to be drawn, as per the \code{type} argument to \code{\link{plot}}.}
 
-\item{intervals}{Logical indicating whether credible intervals around the posterior mean(s) are to be plotted when \code{is.element(plot.meth, c("all", "means"))}. Defaults to TRUE.}
+\item{intervals}{Logical indicating whether credible intervals around the posterior mean(s) are to be plotted when \code{is.element(plot.meth, c("all", "means"))}. Defaults to \code{TRUE}.}
 
-\item{partial}{Logical indicating whether plots of type "\code{correlation}" use the PACF. The default, FALSE, ensures the ACF is used. Only relevant when \code{plot.meth = "all"}, otherwise both plots are produced when \code{plot.meth = "correlation"}.}
+\item{partial}{Logical indicating whether plots of type "\code{correlation}" use the PACF. The default, \code{FALSE}, ensures the ACF is used. Only relevant when \code{plot.meth = "all"}, otherwise both plots are produced when \code{plot.meth = "correlation"}.}
 
-\item{titles}{Logical indicating whether default plot titles are to be used (TRUE), or suppressed (FALSE).}
+\item{titles}{Logical indicating whether default plot titles are to be used (\code{TRUE}), or suppressed (\code{FALSE}).}
 
 \item{transparency}{A factor in [0, 1] modifying the opacity for overplotted lines. Defaults to 0.75.}
 

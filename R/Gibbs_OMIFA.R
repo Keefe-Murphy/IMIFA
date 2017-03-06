@@ -106,9 +106,10 @@
   # Iterate
     for(iter in seq_len(total)[-1]) {
       if(verbose     && iter   < burnin) setTxtProgressBar(pb, iter)
+      storage        <- is.element(iter, iters)
 
     # Mixing Proportions & Re-ordering
-      pi.prop        <- if(G  == 1) 1 else rDirichlet(alpha=pi.alpha, G=G, nn=nn)
+      pi.prop        <- if(G  == 1) 1 else rDirichlet(G=G, alpha=pi.alpha, nn=nn)
       index          <- order(nn, decreasing=TRUE)
       pi.prop        <- pi.prop[index]
       mu             <- mu[,index, drop=FALSE]
@@ -153,13 +154,7 @@
         EtE          <- lapply(Gseq, function(g) if(nn0[g]) crossprod(eta.tmp[[g]]))
         lmat         <- lapply(Gseq, function(g) if(all(nn0[g], Q0[g])) matrix(unlist(lapply(Pseq, function(j) .sim_load_s(Q=Qs[g], c.data=c.data[[g]][,j], Q1=Q1[g],
                                EtE=EtE[[g]], eta=eta.tmp[[g]], psi.inv=psi.inv[,g][j], phi=phi[[g]][j,], tau=tau[[g]])), use.names=FALSE), nrow=P, byrow=TRUE) else
-                               matrix(unlist(lapply(Pseq, function(j) .sim_load_ps(Q=Qs[g], phi=phi[[g]][j,], tau=tau[[g]])), use.names=FALSE), nrow=P, byrow=FALSE))
-        eta.tmp      <- if(length(unique(Qs)) != 1) lapply(Gseq, function(g) cbind(eta.tmp[[g]], matrix(0, nrow=nn[g], ncol=max(Qs) - Qs[g]))) else eta.tmp
-        q0ng         <- !Q0 & nn0
-        if(any(q0ng)) {
-          eta.tmp[q0ng]       <- lapply(Gseq[q0ng], function(g, x=eta.tmp[[g]]) { row.names(x) <- row.names(dat.g[[g]]); x })
-        }
-        eta          <- do.call(rbind, eta.tmp)[obsnames,, drop=FALSE]
+                               base::matrix(unlist(lapply(Pseq, function(j) .sim_load_ps(Q=Qs[g], phi=phi[[g]][j,], tau=tau[[g]])), use.names=FALSE), nrow=P, byrow=FALSE))
       }
 
     # Uniquenesses
@@ -222,8 +217,7 @@
           Fmax       <- max(Qpop)
           Qmax       <- ifelse(all(Q.big), Fmax, max(Qpop[!Q.big]))
           Qmaxold    <- max(Qs.old)
-          eta        <- if(all(Fmax  > Qmaxold, !Q.bigs)) cbind(eta[,seq_len(Qmaxold)], rnorm(N)) else eta[,seq_len(Fmax), drop=FALSE]
-          if(Qmax     < max(Qemp, 0)) {
+          if(Qmax     < max(Qemp, 0))  {
             Qs[Qmax   < Qs & !nn0]  <- Qmax
             Qmaxseq  <- seq_len(Qmax)
             for(g in Gseq[!nn0][Qemp > Qmax]) {
@@ -232,6 +226,9 @@
               tau[[g]]        <- tau[[g]][Qmaxseq]
               lmat[[g]]       <- lmat[[g]][,Qmaxseq, drop=FALSE]
             }
+          }
+          if(all(sw["s.sw"], storage)) {
+            eta.tmp  <- lapply(Gseq,   function(g) if(nn0[g] && Qs[g] > Qs.old[which(nn.ind == g)]) cbind(eta.tmp[[g]], rnorm(nn[g])) else eta.tmp[[g]][,seq_len(Qs[g]), drop=FALSE])
           }
         }
       }
@@ -242,15 +239,24 @@
       if(z.err  && !err.z) {                              warning("Algorithm may slow due to corrections for Choleski decompositions of non-positive-definite covariance matrices", call.=FALSE)
         err.z        <- TRUE
       }
-      if(is.element(iter, iters))   {
+      if(storage)    {
         if(verbose)      setTxtProgressBar(pb, iter)
         new.it       <-  which(iters == iter)
         if(sw["mu.sw"])  mu.store[,,new.it]            <- mu
         if(all(sw["s.sw"],
-           any(Q0)))     eta.store[,seq_len(max(Qs)),new.it]  <- eta
+           any(Q0)))     {
+          max.Q      <-  max(Qs)
+          eta.tmp    <-  if(length(unique(Qs)) != 1)      lapply(Gseq,       function(g) cbind(eta.tmp[[g]], base::matrix(0, nrow=nn[g], ncol=max.Q - Qs[g]))) else eta.tmp
+          q0ng       <-  (!Q0  | Qs[Gseq] == 0) & nn0[Gseq]
+          if(any(q0ng))  {
+            eta.tmp[q0ng]     <-                          lapply(Gseq[q0ng], function(g, x=eta.tmp[[g]]) { row.names(x) <- row.names(dat.g[[g]]); x })
+          }
+                   eta.store[,seq_len(max.Q),new.it]   <- do.call(rbind, eta.tmp)[obsnames,, drop=FALSE]
+        }
         if(sw["l.sw"])   {
           for(g in Gseq) {
-            if(Q0[g])    load.store[,seq_len(Qs[g]),g,new.it] <- lmat[[g]]
+            Qseqg    <-  seq_len(Qs[g])
+            if(Q0[g])    load.store[,Qseqg,g,new.it]   <- lmat[[g]]
           }
         }
         if(sw["psi.sw"]) psi.store[,,new.it]           <- psi

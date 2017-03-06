@@ -74,6 +74,7 @@
   # Iterate
     for(iter in seq_len(total)[-1]) {
       if(verbose && iter    < burnin) setTxtProgressBar(pb, iter)
+      storage    <- is.element(iter,  iters)
       Q0         <- Q  > 0
       Q1         <- Q == 1
 
@@ -118,7 +119,7 @@
             if(Q.big) {
               Q     <- Q.star
             } else {
-              eta   <- cbind(eta,  rnorm(N))
+              eta   <- if(storage) cbind(eta,  rnorm(N))    else eta
               phi   <- cbind(phi,  rgamma(n=P, shape=nu + nuplus1, rate=nu))
               delta <- c(delta,    rgamma(n=1, shape=alpha.d2, rate=beta.d2))
               tau   <- cumprod(delta)
@@ -127,7 +128,7 @@
           } else          { # remove redundant columns
             nonred  <- which(colvec == 0)
             Q       <- Q - numred
-            eta     <- eta[,nonred, drop=FALSE]
+            eta     <- if(storage) eta[,nonred, drop=FALSE] else eta
             phi     <- phi[,nonred, drop=FALSE]
             delta   <- delta[nonred]
             tau     <- cumprod(delta)
@@ -139,7 +140,7 @@
       if(Q.big && !Q.large && iter > burnin) {       warning(paste0("Q has exceeded initial number of loadings columns since burnin: consider increasing range.Q from ", Q.star), call.=FALSE)
         Q.large  <- TRUE
       }
-      if(is.element(iter, iters))  {
+      if(storage) {
         if(verbose) setTxtProgressBar(pb, iter)
         new.it   <- which(iters == iter)
         psi      <- 1/psi.inv

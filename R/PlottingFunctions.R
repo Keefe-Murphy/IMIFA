@@ -7,14 +7,14 @@
 #' @param load.meth Switch which allows plotting posterior mean loadings as a heatmap (the default), or as something akin to \code{link{plot}} with \code{type = "h"}. Only relevant if \code{param = "loadings"}. Heatmaps are produced with the aid of \code{\link{mat2cols}} and \code{\link[gclus]{plotcolors}}.
 #' @param palette An optional colour palette to be supplied if overwriting the default palette set inside the function by \code{\link[viridis]{viridis}} is desired.
 #' @param g Optional argument that allows specification of exactly which cluster the plot of interest is to be produced for. If not supplied, the user will be prompted to cycle through plots for all clusters.
-#' @param mat Logical indicating whether a \code{\link{matplot}} is produced (defaults to TRUE). If given as FALSE, \code{ind} is invoked.
-#' @param ind Either a single number indicating which variable to plot when \code{param} is one of \code{means} or \code{uniquenesses}, or which cluster to plot if \code{param} is \code{pis}. If \code{scores} are plotted, a vector of length two giving which observation and factor to plot; If \code{loadings} are plotted, a vector of length two giving which variable and factor to plot. Only relevant when \code{mat} or \code{by.fac} is FALSE.
-#' @param fac Optional argument that provides an alternative way to specify \code{ind[2]} when \code{mat} is FALSE and \code{param} is one of \code{scores} or \code{loadings}.
-#' @param by.fac Optionally allows (mat)plotting of scores and loadings by factor - i.e. observation(s) (scores) or variable(s) (loadings) for a given factor, respectively, controlled by \code{ind} or \code{fac}) when set to TRUE (the default). Otherwise factor(s) are plotted for a given observation or variable, again controlled by \code{ind} or \code{fac}.
+#' @param mat Logical indicating whether a \code{\link{matplot}} is produced (defaults to \code{TRUE}). If given as \code{FALSE}, \code{ind} is invoked.
+#' @param ind Either a single number indicating which variable to plot when \code{param} is one of \code{means} or \code{uniquenesses}, or which cluster to plot if \code{param} is \code{pis}. If \code{scores} are plotted, a vector of length two giving which observation and factor to plot; If \code{loadings} are plotted, a vector of length two giving which variable and factor to plot. Only relevant when \code{mat} or \code{by.fac} is \code{FALSE}.
+#' @param fac Optional argument that provides an alternative way to specify \code{ind[2]} when \code{mat} is \code{FALSE} and \code{param} is one of \code{scores} or \code{loadings}.
+#' @param by.fac Optionally allows (mat)plotting of scores and loadings by factor - i.e. observation(s) (scores) or variable(s) (loadings) for a given factor, respectively, controlled by \code{ind} or \code{fac}) when set to \code{TRUE} (the default). Otherwise factor(s) are plotted for a given observation or variable, again controlled by \code{ind} or \code{fac}.
 #' @param type The manner in which the plot is to be drawn, as per the \code{type} argument to \code{\link{plot}}.
-#' @param intervals Logical indicating whether credible intervals around the posterior mean(s) are to be plotted when \code{is.element(plot.meth, c("all", "means"))}. Defaults to TRUE.
-#' @param partial Logical indicating whether plots of type "\code{correlation}" use the PACF. The default, FALSE, ensures the ACF is used. Only relevant when \code{plot.meth = "all"}, otherwise both plots are produced when \code{plot.meth = "correlation"}.
-#' @param titles Logical indicating whether default plot titles are to be used (TRUE), or suppressed (FALSE).
+#' @param intervals Logical indicating whether credible intervals around the posterior mean(s) are to be plotted when \code{is.element(plot.meth, c("all", "means"))}. Defaults to \code{TRUE}.
+#' @param partial Logical indicating whether plots of type "\code{correlation}" use the PACF. The default, \code{FALSE}, ensures the ACF is used. Only relevant when \code{plot.meth = "all"}, otherwise both plots are produced when \code{plot.meth = "correlation"}.
+#' @param titles Logical indicating whether default plot titles are to be used (\code{TRUE}), or suppressed (\code{FALSE}).
 #' @param transparency A factor in [0, 1] modifying the opacity for overplotted lines. Defaults to 0.75.
 #' @param ... Other arguments typically passed to \code{\link{plot}}.
 #'
@@ -92,7 +92,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
   on.exit(suppressWarnings(par(defpar)))
   on.exit(do.call(clip, as.list(defpar$usr)), add=TRUE)
   on.exit(palette("default"), add=TRUE)
-  on.exit(suppressWarnings(options(defopt)), add=TRUE)
+  on.exit(suppressWarnings(options(defopt)),  add=TRUE)
   n.grp   <- attr(GQ.res, "Groups")
   n.fac   <- attr(GQ.res, "Factors")
   G.supp  <- attr(GQ.res, "Supplied")["G"]
@@ -1014,7 +1014,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
 #' Converts a matrix to a hex colour code representation for plotting using \code{\link[gclus]{plotcolors}}. Used internally by \code{\link{plot.Results_IMIFA}} for plotting posterior mean loadings heatmaps.
 #' @param mat A matrix.
 #' @param cols The colour palette to be used. The default palette uses \code{\link[viridis]{viridis}}. Will be checked for validity.
-#' @param byrank Logical indicating whether to convert the matrix itself or the sample ranks of the values therein. Defaults to FALSE.
+#' @param byrank Logical indicating whether to convert the matrix itself or the sample ranks of the values therein. Defaults to \code{FALSE}.
 #' @param breaks Number of gradations in colour to use. Defaults to \code{length(cols)}.
 #'
 #' @return A matrix of hex colour code representations.
@@ -1059,13 +1059,13 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
 #' @param N The sample size.
 #' @param alpha The concentration parameter. Must be specified and must be strictly greater than \code{-discount}.
 #' @param discount The discount parameter for the Pitman-Yor process. Must lie in the interval [0, 1). Defaults to 0 (i.e. the Dirichlet process) as plotting with non-zero discount is not yet implement. However, users can still consult \code{\link{G_expected}} and \code{\link{G_variance}} in order to solicit sensible \code{discount} values.
-#' @param show.plot Logical indicating whether the plot should be displayed (default = TRUE).
+#' @param show.plot Logical indicating whether the plot should be displayed (default = \code{TRUE}).
 #' @param avg Logical indicating whether perpendicular lines should be dropped at the expected value, using \code{\link{G_expected}} with the supplied arguments.
 #' @param col Colour of the plotted lines.
 #' @param main Title of the plot.
 #' @param ... Other optional arguments typically passed to \code{\link{plot}}.
 #'
-#' @return A plot of the prior distribution if \code{show.plot} is TRUE. Density values are returned invisibly.
+#' @return A plot of the prior distribution if \code{show.plot} is \code{TRUE}. Density values are returned invisibly.
 #' @export
 #' @importFrom Rfast "colMaxs" "colsums"
 #' @importFrom viridis "viridis"

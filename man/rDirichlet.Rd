@@ -4,12 +4,12 @@
 \alias{rDirichlet}
 \title{Simulate Mixing Proportions from a Dirichlet Distribution}
 \usage{
-rDirichlet(alpha, G, nn = 0)
+rDirichlet(G, alpha, nn = 0)
 }
 \arguments{
-\item{alpha}{The Dirichlet hyperparameter, either of length 1 or \code{G}. When the length of \code{alpha} is 1, this amounts to assuming an exchangeable prior. Be warned that this will be recycled if necessary.}
-
 \item{G}{The number of groups for which weights need to be sampled.}
+
+\item{alpha}{The Dirichlet hyperparameter, either of length 1 or \code{G}. When the length of \code{alpha} is 1, this amounts to assuming an exchangeable prior. Be warned that this will be recycled if necessary.}
 
 \item{nn}{A vector giving the number of observations in each of G groups so that Dirichlet posteriors rather than priors can be sampled from. This defaults to 0, i.e. simulation from the prior. Be warned that this will be recycled if necessary.}
 }
@@ -20,8 +20,8 @@ A Dirichlet vector of \code{G} weights which sum to 1.
 Generates samples from the Dirichlet distrubution with parameter \code{alpha} efficiently by simulating Gamma(\code{alpha}, 1) random variables and normalising them. Please note that while this is available as a standalone function, no checks are performed in order to make its use for \emph{finite} mixture models in \code{\link{mcmc_IMIFA}} faster.
 }
 \examples{
-prior     <- rDirichlet(alpha=1, G=5)
-posterior <- rDirichlet(alpha=1, G=5, nn=c(20, 41, 32, 8, 12))
+prior     <- rDirichlet(G=5, alpha=1)
+posterior <- rDirichlet(G=5, alpha=1, nn=c(20, 41, 32, 8, 12))
 }
 \references{
 Devroye, L. (1986) \emph{Non-Uniform Random Variate Generation}, Springer-Verlag, New York, 1986, p.594.

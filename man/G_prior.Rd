@@ -14,7 +14,7 @@ G_prior(N, alpha, discount = 0L, show.plot = TRUE, avg = FALSE,
 
 \item{discount}{The discount parameter for the Pitman-Yor process. Must lie in the interval [0, 1). Defaults to 0 (i.e. the Dirichlet process) as plotting with non-zero discount is not yet implement. However, users can still consult \code{\link{G_expected}} and \code{\link{G_variance}} in order to solicit sensible \code{discount} values.}
 
-\item{show.plot}{Logical indicating whether the plot should be displayed (default = TRUE).}
+\item{show.plot}{Logical indicating whether the plot should be displayed (default = \code{TRUE}).}
 
 \item{avg}{Logical indicating whether perpendicular lines should be dropped at the expected value, using \code{\link{G_expected}} with the supplied arguments.}
 
@@ -25,7 +25,7 @@ G_prior(N, alpha, discount = 0L, show.plot = TRUE, avg = FALSE,
 \item{...}{Other optional arguments typically passed to \code{\link{plot}}.}
 }
 \value{
-A plot of the prior distribution if \code{show.plot} is TRUE. Density values are returned invisibly.
+A plot of the prior distribution if \code{show.plot} is \code{TRUE}. Density values are returned invisibly.
 }
 \description{
 Plots the prior distribution of the number of clusters under a Dirichlet / Pitman-Yor process prior, for a sample of size \code{N} at given values of the concentration parameter \code{alpha} and optionally also the \code{discount} parameter. Useful for soliciting sensible priors for \code{alpha} or suitable fixed values for \code{alpha} or \code{discount} under the "\code{IMFA}" and "\code{IMIFA}" methods for \code{\link{mcmc_IMIFA}}, All arguments are vectorised. Requires use of the \code{Rmpfr} and \code{gmp} libraries. Density values are returned invisibly.

@@ -96,10 +96,11 @@
 
   # Iterate
     for(iter in seq_len(total)[-1]) {
-      if(verbose   && iter  < burnin) setTxtProgressBar(pb, iter)
+      if(verbose   && iter  < burnin)  setTxtProgressBar(pb, iter)
+      storage      <- is.element(iter, iters)
 
     # Mixing Proportions & Re-ordering
-      pi.prop      <- if(G == 1) 1 else rDirichlet(alpha=pi.alpha, G=G, nn=nn)
+      pi.prop      <- if(G == 1) 1 else rDirichlet(G=G, alpha=pi.alpha, nn=nn)
       index        <- order(nn, decreasing=TRUE)
       pi.prop      <- pi.prop[index]
       mu           <- mu[,index, drop=FALSE]
@@ -152,7 +153,7 @@
       if(zerr && !err.z) {                                     warning("Algorithm may slow due to corrections for Choleski decompositions of non-positive-definite covariance matrices", call.=FALSE)
         err.z      <- TRUE
       }
-      if(is.element(iter, iters))   {
+      if(storage)  {
         if(verbose)   setTxtProgressBar(pb, iter)
         new.it     <- which(iters == iter)
         if(sw["mu.sw"])             mu.store[,,new.it]      <- mu
