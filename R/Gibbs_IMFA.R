@@ -254,7 +254,7 @@
         if(sw["mu.sw"])               mu.store[,,new.it]      <- mu
         if(all(sw["s.sw"], Q0))       eta.store[,,new.it]     <- eta
         if(all(sw["l.sw"], Q0))       load.store[,,,new.it]   <- lmat
-        if(sw["psi.sw"])              psi.store[,,new.it]     <- psi
+        if(sw["psi.sw"])              psi.store[,,new.it]     <- 1/psi.inv
         if(sw["pi.sw"])               pi.store[,new.it]       <- pi.prop
         if(not.fixed)                 alpha.store[new.it]     <- pi.alpha
         if(learn.d)                   d.store[new.it]         <- discount

@@ -288,7 +288,7 @@
             if(Q0[g]) load.store[,Qseqg,g,new.it]   <- lmat[[g]]
           }
         }
-        if(sw["psi.sw"])   psi.store[,,new.it]      <- psi
+        if(sw["psi.sw"])   psi.store[,,new.it]      <- 1/psi.inv
         if(sw["pi.sw"])    pi.store[,new.it]        <- pi.prop
                            z.store[,new.it]         <- z
                            ll.store[new.it]         <- sum(z.res$log.like)

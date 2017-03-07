@@ -566,7 +566,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       if(all(data.x, sizes[g] > 1)) {
         dat.gg   <- dat[z.ind[[g]],, drop=FALSE]
         cov.emp  <- if(n.var > 500) provideDimnames(cova(dat.gg), base=list(varnames)) else cov(dat.gg)
-      }
+      } else cov.emp     <- NULL
     } else {
       post.mu    <- sims[[G.ind]][[Q.ind]]$post.mu
       post.psi   <- sims[[G.ind]][[Q.ind]]$post.psi
@@ -578,7 +578,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       }
       cov.emp    <- sims[[G.ind]][[Q.ind]]$cov.emp
     }
-    emp.T[g]     <- exists("cov.emp", envir=environment())
+    emp.T[g]     <- !is.null(cov.emp)
     if(data.x)         {
       if(is.null(rownames(mu)))   {
         rownames(mu)     <- varnames
@@ -618,17 +618,20 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
 
   # Calculate estimated covariance matrices & compute error metrics
     if(clust.ind) {
-      if(all(sw["psi.sw"], any(sw["l.sw"], Q0g))) {
+      if(all(sw["psi.sw"], any(sw["l.sw"], Q0g)))  {
         cov.est  <- if(!Q0g)      tcrossprod(post.load) + diag(post.psi) else diag(post.psi)
         if(data.x)      {
           dimnames(cov.est)    <- list(varnames, varnames)
         }
-      } else if(g == 1) {
-        if(all(!sw["l.sw"], !Q0g, !sw["psi.sw"])) {
+      } else   {
+        cov.est  <- NULL
+        if(g == 1) {
+         if(all(!sw["l.sw"], !Q0g, !sw["psi.sw"])) {
                                   warning("Loadings & Uniquenesses not stored: can't estimate covariance matrix and compute error metrics", call.=FALSE)
-        } else if(all(!Q0g,
+         } else if(all(!Q0g,
                   !sw["l.sw"])) { warning("Loadings not stored: can't estimate covariance matrix and compute error metrics", call.=FALSE)
-        } else if(!sw["psi.sw"])  warning("Uniquenesses not stored: can't estimate covariance matrix and compute error metrics", call.=FALSE)
+         } else if(!sw["psi.sw"]) warning("Uniquenesses not stored: can't estimate covariance matrix and compute error metrics", call.=FALSE)
+        }
       }
     } else     {
       cov.est    <- sims[[G.ind]][[Q.ind]]$cov.est
@@ -646,7 +649,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
         } else if(!sw["psi.sw"])  warning("Uniquenesses not stored: can't re-estimate covariance matrix", call.=FALSE)
       }
     }
-    est.T[g]     <- exists("cov.est", envir=environment())
+    est.T[g]     <- !is.null(cov.est)
 
     if(all(emp.T[g], est.T[g])) {
       error      <- cov.emp - cov.est

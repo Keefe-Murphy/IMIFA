@@ -372,7 +372,7 @@
             if(Q0[g])   load.store[,Qseqg,g,new.it]    <- lmat[[g]]
           }
         }
-        if(sw["psi.sw"]) psi.store[,,new.it]           <- psi
+        if(sw["psi.sw"]) psi.store[,,new.it]           <- 1/psi.inv
         if(sw["pi.sw"])  pi.store[,new.it]             <- pi.prop
         if(not.fixed)    alpha.store[new.it]           <- pi.alpha
         if(learn.d)      d.store[new.it]               <- discount

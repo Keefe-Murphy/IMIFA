@@ -910,21 +910,18 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
       }
       pl.x   <- barplot(plot.x, beside=TRUE, col=col.e, main="", ylab="Deviation", density=dens)
       na.x   <- G > 1 & is.na(x.plot[[1]])
-      if(G > 1) points(x=Rfast::colMedians(pl.x[,which(na.x)]), y=rep(0, sum(na.x)), pch=16, col="red")
+      if(G > 1) points(x=Rfast::colMedians(pl.x[,which(na.x)]), y=rep(0, sum(na.x)), pch=8, col="red", cex=1.5)
       if(titles) title(main=list("Error Metrics"))
       if(titles) {
         par(mar=c(0, 0, 0, 0))
         plot.new()
-        ltxt <- c("MSE", "MAE", "MEDSE", "MEDAE", "RMSE", "NRMSE"
-                  #, "CVRMSE"
-                  )
+        ltxt <- c("MSE", "MAE", "MEDSE", "MEDAE", "RMSE", "NRMSE")
         lnc  <- length(col.e)
         lcol <- col.e
         xna  <- sum(na.x)   > 0
         lpch <- rep(15, nrow(plot.x))
         temp <- legend("center", legend=if(xna) c(ltxt, "Missing") else ltxt, ncol=ifelse(xna, lnc + 1, lnc), bty="n",
-                       pch=if(xna) c(lpch, 16) else lpch, col=if(xna) c(lcol, "red") else lcol, cex=0.8)
-        if(xna) text(x=temp$text$x[8] - 0.01, y=temp$text$y[8] + 0.01, "__")
+                       pch=if(xna) c(lpch, 8) else lpch, col=if(xna) c(lcol, "red") else lcol, cex=0.8)
       }
       if(G > 1) {
         avg  <- setNames(list(x.plot$Averages), "Average Error Metrics")
@@ -932,7 +929,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
       } else {
         avg  <- x.plot
       }
-      print(avg)
+        print(avg)
     }
 
     if(m.sw["C.sw"]) {

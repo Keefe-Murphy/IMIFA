@@ -169,7 +169,7 @@
         if(sw["mu.sw"])            mu.store[,,new.it]      <- mu
         if(all(sw["s.sw"], Q0))    eta.store[,,new.it]     <- eta
         if(all(sw["l.sw"], Q0))    load.store[,,,new.it]   <- lmat
-        if(sw["psi.sw"])           psi.store[,,new.it]     <- psi
+        if(sw["psi.sw"])           psi.store[,,new.it]     <- 1/psi.inv
         if(sw["pi.sw"])            pi.store[,new.it]       <- pi.prop
                                    z.store[,new.it]        <- z
                                    ll.store[new.it]        <- sum(z.res$log.like)
