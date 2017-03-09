@@ -25,7 +25,7 @@
 #' @param mu.zero The mean of the prior distribution for the mean parameter. Defaults to the sample mean of the data.
 #' @param sigma.mu The covariance of the prior distribution for the mean parameter. Can be a scalar times the identity or a matrix of appropriate dimension. Defaults to the sample covariance matrix.
 #' @param sigma.l The covariance of the prior distribution for the loadings. Defaults to 1. Only relevant for the finite factor methods.
-#' @param alpha Depending on the method employed, either the hyperparameter of the Dirichlet prior for the cluster mixing proportions, or the Dirichlet process concentration parameter. Defaults to 0.5/range.G for the Overfitted methods - if supplied for "\code{OMFA}" and "\code{OMIFA}" methods, you are supplying the numerator of \code{alpha/range.G}. Defaults to 1 for the finite mixture models "\code{MFA}" and "\code{MIFA}". Must be positive, unless \code{discount} is supplied for the "\code{IMFA}" or "\code{IMIFA}" methods.
+#' @param alpha Depending on the method employed, either the hyperparameter of the Dirichlet prior for the cluster mixing proportions, or the Dirichlet process concentration parameter. Defaults to 0.5/range.G for the Overfitted methods - if supplied for "\code{OMFA}" and "\code{OMIFA}" methods, you are supplying the numerator of \code{alpha/range.G}, which should be less than half the dimension (per group!) of the free parameters of the smallest model considered in order to ensure superfluous clusters are emptied (for "\code{OMFA}", this corresponds to the smallest \code{range.Q}; for "\code{OMIFA}", this corresponds to a zero-factor model) [see: \code{\link{PGMM_dfree}} and Rousseau and Mengersen (2011)]. Defaults to 1 for the finite mixture models "\code{MFA}" and "\code{MIFA}". Defaults to \code{1 - discount} for the "\code{IMFA}" and "\code{IMIFA}" models if \code{alpha.step="none"}. Must be positive, unless \code{discount} is supplied for the "\code{IMFA}" or "\code{IMIFA}" methods.
 #' @param psi.alpha The shape of the inverse gamma prior on the uniquenesses. Defaults to 2.5.
 #' @param psi.beta The rate of the inverse gamma prior on the uniquenesses. Can be either a single parameter or a vector of variable specific rates.  If this is not supplied, \code{\link{psi_hyper}} is invoked to choose sensible values, depending on the value of \code{uni.prior}.
 #' @param uni.type A switch indicating whether uniquenesses are to be "\code{unconstrained}" or "\code{isotropic}". Note that unconstrained here means variable-specific and group-specific. Defaults to "\code{unconstrained}" unless \code{N < P}, in which case the default is "\code{isotropic}".
@@ -82,6 +82,8 @@
 #' Bhattacharya, A. and Dunson, D. B. (2011) Sparse Bayesian infinite factor models, \emph{Biometrika}, 98(2): 291–306.
 #'
 #' Kalli, M., Griffin, J. E. and Walker, S. G. (2011) Slice sampling mixture models, \emph{Statistics and Computing}, 21(1): 93-105.
+#'
+#' Rousseau, J. and Mengersen, K. (2011) Asymptotic Behaviour of the posterior distribution in overfitted mixture models, \emph{Journal of the Royal Statistical Society: Series B (Statistical Methodology)}, 73(5): 689-710.
 #'
 #' @examples
 #' # data(olive)
@@ -242,8 +244,8 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
       if(G.x) {
         range.G    <- as.integer(min(N - 1, max(25, ceiling(3 * log(N)))))
       }
-      lnN2         <- ceiling(lnN - digamma(1))
-      if(range.G    < lnN2)         stop(paste0("'range.G' should be at least log(N) (=log(", N, "))", " for the ", method, " method"))
+      lnN2         <- ceiling(lnN)
+      if(range.G    < lnN2)         warning(paste0("'range.G' should be at least log(N) (=log(", N, "))", " for the ", method, " method"), call.=FALSE)
       if(is.element(method, c("IMFA", "IMIFA"))) {
         if(any(!is.logical(ind.slice),
            length(ind.slice) != 1)) stop("'ind.slice' must be TRUE or FALSE")
@@ -366,7 +368,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
            length(beta.d2) != 1))   stop("'beta.d1' and 'beta.d2' must both be numberic and of length 1")
     if(missing("b0"))        b0            <- 0.1
     if(any(length(b0) != 1, !is.numeric(b0),
-           b0  < 0))                stop("'b0' must be a single positive scalar to ensure valid adaptation probability")
+           b0  < 0))                stop("'b0' must be a non-negative scalar to ensure valid adaptation probability")
     if(missing("b1"))        b1            <- 0.00005
     if(any(length(b1) != 1, !is.numeric(b1),
            b1 <= 0))                stop("'b1' must be a single strictly positive scalar to ensure adaptation probability decreases")
@@ -437,11 +439,13 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
            delta0g))                stop("'delta0g' cannot be TRUE for the 'MFA' method")
     if(method == "classify") mu0g          <- TRUE
   }
-  dimension <- PGMM_dfree(Q=range.Q, P=P, method=switch(uni.type, unconstrained="UUU", isotropic="UUC"))
-  min.d2G   <- min(dimension)/(2 * range.G)
+  dimension <- PGMM_dfree(Q=switch(method, FA=, classify=, MFA=, OMFA=, IMFA=range.Q,
+               IFA=, MIFA=, OMIFA=, IMIFA=0), P=P, method=switch(uni.type, unconstrained="UUU", isotropic="UUC"))
+  min.d2    <- min(dimension)/2
+  min.d2G   <- min.d2 * range.G
   sw0gs     <- c(mu0g = mu0g, psi0g = psi0g, delta0g = delta0g)
   if(all(!is.element(method, c("MFA", "MIFA", "classify")),
-         any(sw0gs)))               stop(paste0(names(which(sw0gs)), " should be FALSE for the ", method, " method\n"))
+         any(sw0gs)))               stop(paste0("'", names(which(sw0gs)), "' should be FALSE for the ", method, " method\n"))
   if(!is.element(method, c("FA", "IFA", "classify"))) {
     if(missing("alpha"))   { alpha         <- switch(method, OMFA=, OMIFA=0.5/range.G, max(1 - discount, switch(alpha.step,
                                               gibbs=rgamma(1, a.hyp1, a.hyp2) - discount, metropolis=runif(1, a.hyp1, a.hyp2), 1 - discount)))
@@ -449,14 +453,18 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
       c("OMFA", "OMIFA")))   alpha         <- alpha/range.G
     if(length(alpha) != 1)          stop("'alpha' must be specified as a scalar to ensure an exchangeable prior")
     if(alpha <= -discount)          stop(paste0("'alpha' must be ", ifelse(discount != 0, paste0("greater than -discount (i.e. > ", - discount, ")"), "strictly positive")))
-    if(all(is.element(method,  c("IMIFA", "IMFA")),
+    if(all(is.element(method,  c("IMIFA",   "IMFA")),
        alpha.step == "fixed"))      warning(paste0("'alpha' fixed at ", alpha, " as it's not being learned via Gibbs/Metropolis-Hastings updates"), call.=FALSE)
-    if(all(is.element(method,  c("OMIFA", "OMFA")),
-       alpha  > min.d2G))           stop(paste0("'alpha' for the OMFA & OMIFA methods must be less than the dimension of the free parameters (", min(dimension), "),\n over twice the starting number of groups (", range.G, "), i.e. ", min.d2G))
-    if(all(is.element(method,  c("MFA",   "MIFA")),
-           alpha   > 1))            warning("Are you sure alpha should be greater than 1?", call.=FALSE)
+    if(all(is.element(method,  c("OMIFA",   "OMFA")),
+       alpha >= min.d2))            warning(paste0("'alpha' over 'range.G' for the OMFA & OMIFA methods must be less than half the dimension (per group!)\n of the free parameters of the smallest model considered (= ", min.d2, "): consider suppling 'alpha' < ", min.d2G), call.=FALSE)
+    if(any(all(is.element(method, c("MFA",  "MIFA")), alpha > 1),
+           all(is.element(method, c("OMFA", "OMIFA")),
+           alpha > 1/range.G)))     warning("Are you sure alpha should be greater than 1?", call.=FALSE)
                              z.init        <- match.arg(z.init)
-    if(all(is.element(method,  c("OMIFA", "OMFA")), is.element(z.init,
+    if(all(any(is.nan(rDirichlet(G=min(range.G), alpha = alpha))),
+           is.element(method,  c("MFA",     "MIFA",
+            "OMFA", "OMIFA"))))     stop("'alpha' is too small for simulated mixing proportions to be valid")
+    if(all(is.element(method,  c("OMIFA",   "OMFA")), is.element(z.init,
        "priors")))                  stop(paste0("'z.init' cannot be set to 'priors' for the ", method, " method to ensure all groups are populated at the initialisation stage"))
     if(!zli.miss) {
       if(length(z.list)   != len.G)  {
