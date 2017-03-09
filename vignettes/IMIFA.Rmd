@@ -49,7 +49,7 @@ it will load in all the IMIFA functions.
 The GitHub version contains a few more features but some of these may not yet be fully tested, and occasionally this version might be liable to break when it is in the process of being updated.
 
 ### The three main functions
-There exist several utility functions in the package to solicit good prior hyperparameters (e.g. `G_prior()`, `psi_hyper()`, `MGP_check()`) and to prepare results for producing nice plots (e.g. `mat2cols()`), this vignette focuses only on the three most important functions:
+There exist several utility functions in the package to solicit good prior hyperparameters (e.g. `G_priorDensity()`, `psi_hyper()`, `MGP_check()`) and to prepare results for producing nice plots (e.g. `mat2cols()`), this vignette focuses only on the three most important functions:
 
     1.  mcmc_IMIFA() 
     2.  get_IMIFA_results()
@@ -105,10 +105,10 @@ simOMIFA <- mcmc_IMIFA(olive, method="OMIFA", n.iters=10000, range.G=10, nu=3, a
                        alpha.d1=3.5, alpha.d2=7, prop=0.6, epsilon=0.12)
 ```
 
-Finally, let's run the flagship IMIFA model, on which all subsequent demonstrations and results will be based, for a greater number of iterations, accepting all argument defaults. Note that the `verbose` argument, which defaults to `TRUE` will ordinarily print a progress bar to the console window. We can avoid scoring the latent scores if we wish, as this can be a huge drain on memory, with the caveat that posterior inference on the scores won't be possible. The default implementation uses the independent rather than dependent slice-efficient sampler; we can override the default for the parameter governing the rate of geometric decay by specifying `rho`.
+Finally, let's run the flagship IMIFA model, on which all subsequent demonstrations and results will be based, for a greater number of iterations, accepting all argument defaults. Note that the `verbose` argument, which defaults to `TRUE` will ordinarily print a progress bar to the console window. We can avoid scoring the latent scores if we wish, as this can be a huge drain on memory, with the caveat that posterior inference on the scores won't be possible. The default implementation uses the independent rather than dependent slice-efficient sampler; we could override the default for the parameter governing the rate of geometric decay by specifying `rho`.
 
 ```{r, eval=FALSE}
-simIMIFA <- mcmc_IMIFA(olive, method="IMIFA", n.iters=50000, verbose=FALSE, s.sw=FALSE, rho=0.5)
+simIMIFA <- mcmc_IMIFA(olive, method="IMIFA", n.iters=50000, verbose=FALSE, s.sw=FALSE)
 ```
 
 ## Postprocessing and extracing optimum results

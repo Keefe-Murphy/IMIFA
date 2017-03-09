@@ -1068,29 +1068,30 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
 # Prior No. Groups (DP & PY)
 #' Plot Dirichlet / Pitman-Yor process Priors
 #'
-#' Plots the prior distribution of the number of clusters under a Dirichlet / Pitman-Yor process prior, for a sample of size \code{N} at given values of the concentration parameter \code{alpha} and optionally also the \code{discount} parameter. Useful for soliciting sensible priors for \code{alpha} or suitable fixed values for \code{alpha} or \code{discount} under the "\code{IMFA}" and "\code{IMIFA}" methods for \code{\link{mcmc_IMIFA}}, All arguments are vectorised. Requires use of the \code{Rmpfr} and \code{gmp} libraries. Density values are returned invisibly.
+#' Plots the prior distribution of the number of clusters under a Dirichlet / Pitman-Yor process prior, for a sample of size \code{N} at given values of the concentration parameter \code{alpha} and optionally also the \code{discount} parameter. Useful for soliciting sensible priors for \code{alpha} or suitable fixed values for \code{alpha} or \code{discount} under the "\code{IMFA}" and "\code{IMIFA}" methods for \code{\link{mcmc_IMIFA}}. All arguments are vectorised. Requires use of the \code{Rmpfr} and \code{gmp} libraries. Users can also consult \code{\link{G_expected}} and \code{\link{G_variance}} in order to solicit sensible priors.
 #' @param N The sample size.
 #' @param alpha The concentration parameter. Must be specified and must be strictly greater than \code{-discount}.
-#' @param discount The discount parameter for the Pitman-Yor process. Must lie in the interval [0, 1). Defaults to 0 (i.e. the Dirichlet process) as plotting with non-zero discount is not yet implement. However, users can still consult \code{\link{G_expected}} and \code{\link{G_variance}} in order to solicit sensible \code{discount} values.
+#' @param discount The discount parameter for the Pitman-Yor process. Must lie in the interval [0, 1). Defaults to 0 (i.e. the Dirichlet process).
 #' @param show.plot Logical indicating whether the plot should be displayed (default = \code{TRUE}).
-#' @param avg Logical indicating whether perpendicular lines should be dropped at the expected value, using \code{\link{G_expected}} with the supplied arguments.
-#' @param Q.probs A single number in [0,1] corresponding to the quantile of the density below which values will be considered as zero for plotting purposes. This does not affect the invisibly returned density values themselves.
 #' @param col Colour of the plotted lines.
 #' @param main Title of the plot.
 #' @param ... Other optional arguments typically passed to \code{\link{plot}}.
 #'
-#' @return A plot of the prior distribution if \code{show.plot} is \code{TRUE}. Density values are returned invisibly.
+#' @return A plot of the prior distribution if \code{show.plot} is \code{TRUE}. Density values are returned invisibly. Note that the density values may not strictly sum to one in certain cases, as values small enough to be represented as zero may well be returned.
 #' @export
-#' @importFrom Rfast "colMaxs" "colsums"
 #' @importFrom viridis "viridis"
 #' @seealso \code{\link{G_expected}}, \code{\link{G_variance}}, \code{\link[Rmpfr]{Rmpfr}}
 #'
 #' @examples
-#' # library(Rmpfr)
-#' # x <- G_prior(150, alpha=5)
+#' # install.packages("Rmpfr")
+#'
+#' # Verify that these alpha/discount values produce priors with the same mean
+#' # G_expected(N=50, alpha=c(19.23356, 12.21619, 1), discount=c(0, 0.25, 0.7300045))
+#'
+#' # Now plot them to examine tail behaviour as discount increases
+#' # x <- G_priorDensity(N=50, alpha=c(19.23356, 12.21619, 1), discount=c(0, 0.25, 0.7300045), col=2:4)
 #' # x
-  G_prior      <- function(N, alpha, discount = 0L, show.plot = TRUE, avg = FALSE,
-                           Q.probs = 0.75, col = NULL, main = NULL, ...) {
+  G_priorDensity      <- function(N, alpha, discount = 0L, show.plot = TRUE, col = NULL, main = NULL, ...) {
     firstex    <- suppressMessages(requireNamespace("Rmpfr", quietly=TRUE))
     if(isTRUE(firstex)) {
       on.exit(.detach_pkg("Rmpfr"))
@@ -1100,9 +1101,8 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
       main     <- paste0("Prior Distribution of G\nN=", N)
     } else if(!is.character(main))    stop("'main' title must be a character string")
     on.exit(palette("default"), add=!isTRUE(firstex))
-    on.exit(do.call(clip, as.list(par("usr"))), add=TRUE)
-    if(any(c(length(N), length(show.plot),
-             length(avg)) > 1))       stop("Arguments 'N', 'show.plot', and 'avg' must be strictly of length 1")
+    if(any(c(length(N),
+             length(show.plot)) > 1)) stop("Arguments 'N' and 'show.plot' must be strictly of length 1")
     if(!is.logical(show.plot))        stop("'show.plot' must be TRUE or FALSE")
     max.len    <- max(length(alpha),  length(discount))
     if(missing(col))    {
@@ -1121,43 +1121,32 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
     if(any(discount < 0,
        discount >= 1))                stop("'discount' must lie in the interval [0,1)")
     if(any(alpha < -discount))        stop("'alpha' must be strictly greater than -discount")
-    if(!is.logical(avg))              stop("'avg' must be TRUE or FALSE")
     if(length(alpha)    != max.len) {
       alpha    <- rep(alpha,    max.len)
     }
     if(length(discount) != max.len) {
       discount <- rep(discount, max.len)
     }
-    rx         <- matrix(0, nrow=N + 1, ncol=max.len)
+    rx         <- matrix(0, nrow=N, ncol=max.len)
     for(i in seq_len(max.len))      {
-      tmp      <- if(discount[i] == 0) alpha[i]^seq_len(N)/Rmpfr::pochMpfr(alpha[i], N) else       {
-                  exp(unlist(vapply(seq_len(N), function(k, Gs=seq_len(k - 1), x=0) { for(g in Gs) {
-                    x <- x + log(alpha[i] + g * discount[i]) }; x}, numeric(1L))) -
-                         log(Rmpfr::pochMpfr(alpha[i] + 1, N - 1))) / discount[i]^seq_len(N)       }
+      vnk      <- if(discount[i] == 0) exp(seq_len(N) * log(alpha[i]))/Rmpfr::pochMpfr(alpha[i], N) else  {
+                  exp(vapply(seq_len(N), function(k, Gs=seq_len(k - 1), x=0) { for(g in Gs)    {
+                    x <- x + log(alpha[i] + g * discount[i]) }; x}, numeric(1L)) -
+                    log(Rmpfr::pochMpfr(alpha[i] + 1, N - 1)) - seq_len(N) * log(discount[i])) }
       if(discount[i]  == 0) {
-        rx[,i] <- c(0, abs(gmp::asNumeric(gmp::Stirling1.all(N) * tmp)))
-      } else                          stop("Plotting with non-zero discount not yet implemented\nTry supplying the same arguments to G_expected() or G_variance()")
-    }
-    rx         <- scale(rx, center=FALSE, scale=Rfast::colsums(rx))
-    max.rx     <- Rfast::colMaxs(rx, value=TRUE)
-    if(isTRUE(show.plot))   {
-      if(length(Q.probs) != 1)          stop("'Q.probs' must be a single number")
-      if(any(length(Q.probs)   != 1,
-         Q.probs <= 0, Q.probs >= 1))  stop("'Q.probs' must be a single number in the interval [0,1]")
-      r2       <- replace(rx, rx < quantile(rx, probs=Q.probs), NA)
-      matplot(x=c(0, seq_len(N)), y=r2, type="h", col=col, xlab="Clusters", ylim=c(0, max(max.rx)),
-              ylab="Density", main=main, lwd=seq(3, 1, length.out=length(alpha)), lty=seq_len(2))
-    }
-    if(isTRUE(avg))         {
-      exp.g    <- G_expected(N, alpha, discount)
-      cat("\t");  cat(paste("E(G) = ", signif(exp.g, options()$digits), "\n"))
-      if(isTRUE(show.plot)) {
-        for(i in seq_len(max.len))  {
-          clip(exp.g[i], exp.g[i], 0, max.rx[i])
-          abline(v=exp.g[i], lty=2, col=i)
-        }
+        rx[,i] <- abs(gmp::asNumeric(gmp::Stirling1.all(N) * vnk))
+      } else  {
+        sign   <- seq_len(N + 1) %% 2
+        sign   <- replace(sign, sign == 0, -1)
+        lnkd   <- lapply(seq_len(N), function(k, Gs=c(0, seq_len(k)), x=0) { for(g in Gs) {
+                    x <- x + sign[g + 1] * Rmpfr::chooseMpfr(k, g) * Rmpfr::pochMpfr(-g * discount[i], N) }; x })
+        rx[,i] <- gmp::asNumeric(vnk/Rmpfr::factorialMpfr(seq_len(N)) * sapply(lnkd, as.double))
       }
     }
-      invisible(as.vector(rx))
+    if(isTRUE(show.plot))   {
+      matplot(x=seq_len(N), y=rx, type="h", col=col, xlab="Clusters", ylim=c(0, max(rx)),
+              ylab="Density", main=main, lwd=seq(3, 1, length.out=max.len), lty=seq_len(2), ...)
+    }
+      invisible(if(max.len == 1) as.vector(rx) else rx)
   }
 #

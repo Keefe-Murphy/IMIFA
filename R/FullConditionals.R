@@ -300,7 +300,7 @@
         check   <- !is.unsorted(exp.seq)
       }
         return(list(expectation = exp.seq, valid = check))
-    }, vectorize.args = c("ad1", "ad2", "nu", "bd1", "bd2"), SIMPLIFY=FALSE)
+    }, vectorize.args = c("ad1", "ad2", "nu", "bd1", "bd2"), SIMPLIFY = FALSE)
 
   # Number of 'free' parameters
 #' Estimate the Number of Free Parameters in a Finite Factor Analysis (Mixture) Model
@@ -322,12 +322,12 @@
     mixFac_free <- Vectorize(function(Q, P, G = 1, uni = c("unconstrained", "isotropic")) {
                              as.integer(G - 1 + G * (P * Q - 0.5 * Q *   (Q - 1) +
                              switch(match.arg(uni), unconstrained=2  * P, P + 1)))
-                             }, vectorize.args = "Q", SIMPLIFY=TRUE)
+                             }, vectorize.args = "Q")
 
   # Label Switching
     .lab_switch <- function(z.new, z.old, Gs, ng = tabulate(z.new)) {
       tab       <- table(z.new, z.old, dnn=NULL)
-      tab.tmp   <- tab[rowsums(tab) != 0,colsums(tab) != 0, drop=FALSE]
+      tab.tmp   <- tab[rowsums(tab) != 0,colSums(tab) != 0, drop=FALSE]
       nc        <- ncol(tab.tmp)
       nr        <- nrow(tab.tmp)
       if(nc > nr) {
@@ -416,10 +416,10 @@
 #'
 #' @return The expected number of clusters under the specified prior conditions.
 #' @export
-#' @seealso \code{\link{G_variance}}, \code{\link{G_prior}}, \code{\link[Rmpfr]{Rmpfr}}
+#' @seealso \code{\link{G_variance}}, \code{\link{G_priorDensity}}, \code{\link[Rmpfr]{Rmpfr}}
 #'
 #' @examples
-#' G_expected(N=150, alpha=c(3, 10, 25))
+#' G_expected(N=50, alpha=c(19.23356, 12.21619, 1), discount=c(0, 0.25, 0.7300045))
     G_expected  <- Vectorize(function(N, alpha, discount = 0L) {
       if(!all(is.numeric(N), is.numeric(discount),
          is.numeric(alpha)))               stop("All inputs must be numeric")
@@ -442,10 +442,10 @@
 #' @inheritParams G_expected
 #' @return The variance of the number of clusters under the specified prior conditions.
 #' @export
-#' @seealso \code{\link{G_expected}}, \code{\link{G_prior}}, \code{\link[Rmpfr]{Rmpfr}}
+#' @seealso \code{\link{G_expected}}, \code{\link{G_priorDensity}}, \code{\link[Rmpfr]{Rmpfr}}
 #'
 #' @examples
-#' G_variance(N=150, alpha=c(3, 10, 25))
+#' G_variance(N=50, alpha=c(19.23356, 12.21619, 1), discount=c(0, 0.25, 0.7300045))
     G_variance  <- Vectorize(function(N, alpha, discount = 0L) {
       if(!all(is.numeric(N), is.numeric(discount),
          is.numeric(alpha)))               stop("All inputs must be numeric")
