@@ -303,26 +303,31 @@
     }, vectorize.args = c("ad1", "ad2", "nu", "bd1", "bd2"), SIMPLIFY = FALSE)
 
   # Number of 'free' parameters
-#' Estimate the Number of Free Parameters in a Finite Factor Analysis (Mixture) Model
+#' Estimate the Number of Free Parameters in Finite Factor Analytic Mixture Models (PGMM)
 #'
-#' Estimates the dimension of the 'free' parameters in \emph{UUU} or \emph{UUC} factor analysis models, used to calculate the penalty terms for the \code{aic.mcmc} and \code{bic.mcmc} model selection criteria implemented in \code{\link{get_IMIFA_results}} for \emph{finite} factor models. Please note that while this available as a standalone function, no checks are performed in order to make its use in \code{\link{get_IMIFA_results}} faster.
+#' Estimates the dimension of the 'free' parameters in fully finite factor analytic mixture models, otherwise known as Parsimonious Gaussian Mixture Models (PGMM). This is used to calculate the penalty terms for the \code{aic.mcmc} and \code{bic.mcmc} model selection criteria implemented in \code{\link{get_IMIFA_results}} for \emph{finite} factor models (though \code{\link{mcmc_IMIFA}} currently only implements \code{UUU} and \code{UUC} covariance structures). Please note that while this available as a standalone function, no checks are performed in order to make its use in \code{\link{get_IMIFA_results}} faster.
 #' @param Q The number of latent factors (which can be 0, corresponding to a model with diagonal covariance). This argument is vectorised.
 #' @param P The number of variables.
 #' @param G The number of groups. This defaults to 1.
-#' @param uni By default, calculation assumes the \emph{UUU} model, with "\code{unconstrained}" uniquesses. It's also possible to calculate this quantity for the \emph{UUC} model, with "\code{isotropic}" uniquenesses.
+#' @param uni By default, calculation assumes the \code{UUU} model with unconstrained loadings and unconstrained isotropic uniquesses. The other seven models detailed in McNicholas and Murphy (2008) are also given. The first letter denotes whether loadings are constrained/unconstrained across groups; the second letter denotes the same for the uniquenesses; the final letter denotes whether uniquenesses are in turn constrained to be isotropic.
 #'
 #' @return A vector of length \code{length(Q)}.
 #' @export
 #' @references McNicholas, P. D. and Murphy, T. B. (2008) Parsimonious Gaussian Mixture Models, \emph{Statistics and Computing}, 18(3): 285-296.
+#' @seealso \code{\link{get_IMIFA_results}}, \code{\link{mcmc_IMIFA}}
 #'
 #' @examples
-#' mixFac_free(Q=4, P=50, G=3, uni="unconstrained")
+#' UUU <- PGMM_dfree(Q=4:5, P=50, G=3, method="UUU")
+#' CCC <- PGMM_dfree(Q=4:5, P=50, G=3, method="CCC")
 #'
-#' mixFac_free(Q=3:6, P=100, uni="isotropic")
-    mixFac_free <- Vectorize(function(Q, P, G = 1, uni = c("unconstrained", "isotropic")) {
-                             as.integer(G - 1 + G * (P * Q - 0.5 * Q *   (Q - 1) +
-                             switch(match.arg(uni), unconstrained=2  * P, P + 1)))
-                             }, vectorize.args = "Q")
+#' PGMM_dfree(Q=3:6, P=100, uni="isotropic")
+    PGMM_dfree   <- Vectorize(function(Q, P, G = 1, method = c("UUU", "UUC", "UCU", "UCC", "CUU", "CUC", "CCU", "CCC")) {
+      meth       <- unlist(strsplit(match.arg(method), ""))
+      lambda     <- P * Q - 0.5 * Q * (Q - 1)
+      lambda     <- switch(meth[1], C=lambda, U=G  * lambda)
+      psi        <- switch(meth[2], C=1,      U=G)
+      psi        <- switch(meth[3], C=1,      U=P) * psi
+        as.integer(G - 1 + G * P + lambda + psi) },  vectorize.args = "Q")
 
   # Label Switching
     .lab_switch <- function(z.new, z.old, Gs, ng = tabulate(z.new)) {

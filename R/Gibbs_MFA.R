@@ -184,6 +184,6 @@
                            z.store  = z.store,
                            ll.store = ll.store,
                            time     = init.time)
-    attr(returns, "K")  <- mixFac_free(Q=Q, P=P, G=G, uni=uni.type)
+    attr(returns, "K")  <- PGMM_dfree(Q=Q, P=P, G=G, method=switch(uni.type, unconstrained="UUU", isotropic="UUC"))
     return(returns)
   }

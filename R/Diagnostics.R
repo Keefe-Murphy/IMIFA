@@ -217,7 +217,8 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
         log.iLLH[g,q]    <- ll.mean - ll.var   * (log.N - 1)
         dic[g,q]         <- (ll.max - ll.mean) * 3 - ll.mean
         if(!inf.Q) {
-          K              <- switch(method, OMFA=, IMFA=mixFac_free(Q=n.fac[qi], P=n.var, G=G[ifelse(G.T, 1, qi)], uni=uni.type), attr(sims[[gi]][[qi]], "K"))
+          K              <- switch(method, OMFA=, IMFA=PGMM_dfree(Q=n.fac[qi], P=n.var, G=G[ifelse(G.T, 1, qi)],
+                            method=switch(uni.type, unconstrained="UUU", isotropic="UUC")), attr(sims[[gi]][[qi]], "K"))
           aic.mcmc[g,q]  <- ll.max  - K * 2
           bic.mcmc[g,q]  <- ll.max  - K * log.N
         }

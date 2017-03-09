@@ -112,6 +112,6 @@
                       cov.est  = tryCatch(provideDimnames(cov.est,  base=list(varnames)), error=function(e) cov.est),
                       ll.store = ll.store,
                       time     = init.time)
-    attr(returns, "K")        <- mixFac_free(Q=Q, P=P, uni=uni.type)
+    attr(returns, "K")        <- PGMM_dfree(Q=Q, P=P, method=switch(uni.type, unconstrained="UUU", isotropic="UUC"))
     return(returns)
   }
