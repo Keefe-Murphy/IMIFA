@@ -319,8 +319,6 @@
 #' @examples
 #' UUU <- PGMM_dfree(Q=4:5, P=50, G=3, method="UUU")
 #' CCC <- PGMM_dfree(Q=4:5, P=50, G=3, method="CCC")
-#'
-#' PGMM_dfree(Q=3:6, P=100, uni="isotropic")
     PGMM_dfree   <- Vectorize(function(Q, P, G = 1, method = c("UUU", "UUC", "UCU", "UCC", "CUU", "CUC", "CCU", "CCC")) {
       meth       <- unlist(strsplit(match.arg(method), ""))
       lambda     <- P * Q - 0.5 * Q * (Q - 1)
@@ -430,14 +428,22 @@
          is.numeric(alpha)))               stop("All inputs must be numeric")
       if(discount  < 0  || discount >= 1)  stop("Invalid discount value")
       if(alpha   < - discount)             stop("Invalid alpha value")
+      if(suppressMessages(requireNamespace("Rmpfr", quietly=TRUE))) {
+        mpfrind <- TRUE
+        on.exit(.detach_pkg("Rmpfr"))
+        on.exit(.detach_pkg("gmp"), add=TRUE)
+        alpha   <- Rmpfr::mpfr(alpha, precBits=256)
+      } else if(discount != 0)             stop("'Rmpfr' package not installed")
       if(discount == 0) {
-          alpha * (digamma(alpha + N) - digamma(alpha))
+        exp     <- alpha * (digamma(alpha + N) - digamma(alpha))
+        if(mpfrind)     {
+          gmp::asNumeric(exp)
+        } else {
+          exp
+        }
       } else {
-        if(suppressMessages(requireNamespace("Rmpfr", quietly=TRUE))) {
-          on.exit(.detach_pkg("Rmpfr"))
-          on.exit(.detach_pkg("gmp"), add=TRUE)
-        } else                             stop("'Rmpfr' package not installed")
-          gmp::asNumeric(alpha/discount * Rmpfr::pochMpfr(alpha + discount, N)/Rmpfr::pochMpfr(alpha, N) - alpha/discount)
+        adx     <- alpha/discount
+          gmp::asNumeric(adx * Rmpfr::pochMpfr(alpha + discount, N)/Rmpfr::pochMpfr(alpha, N) - adx)
       }
     })
 
@@ -456,18 +462,27 @@
          is.numeric(alpha)))               stop("All inputs must be numeric")
       if(discount  < 0  || discount >= 1)  stop("Invalid discount value")
       if(alpha   < - discount)             stop("Invalid alpha value")
+      if(suppressMessages(requireNamespace("Rmpfr", quietly=TRUE))) {
+        mpfrind <- TRUE
+        on.exit(.detach_pkg(Rmpfr))
+        on.exit(.detach_pkg(gmp), add=TRUE)
+        alpha   <- Rmpfr::mpfr(alpha, precBits=256)
+      } else if(discount != 0)             stop("'Rmpfr' package not installed")
+      alpha2    <- alpha * alpha
       if(discount == 0) {
-          alpha * (digamma(alpha + N) - digamma(alpha)) + (alpha^2) * (trigamma(alpha + N) - trigamma(alpha))
+        var     <- alpha  * (digamma(alpha + N) - digamma(alpha))
+        if(mpfrind)     {
+          alpha <- gmp::asNumeric(alpha)
+          gmp::asNumeric(var + alpha2 * (trigamma(alpha + N) - trigamma(alpha)))
+        } else {
+          var + alpha2 * (trigamma(alpha + N) - trigamma(alpha))
+        }
       } else {
-        if(suppressMessages(requireNamespace("Rmpfr", quietly=TRUE))) {
-          on.exit(.detach_pkg(Rmpfr))
-          on.exit(.detach_pkg(gmp), add=TRUE)
-        } else                             stop("'Rmpfr' package not installed")
         sum.ad  <- alpha + discount
         poch.a  <- Rmpfr::pochMpfr(alpha, N)
         poch.ad <- Rmpfr::pochMpfr(sum.ad, N)
         subterm <- alpha/discount * poch.ad/poch.a
-          gmp::asNumeric((alpha * sum.ad)/discount^2 * Rmpfr::pochMpfr(sum.ad + discount, N)/poch.a - subterm - subterm^2)
+          gmp::asNumeric((alpha * sum.ad)/(discount * discount) * Rmpfr::pochMpfr(sum.ad + discount, N)/poch.a - subterm - subterm * subterm)
       }
     })
 

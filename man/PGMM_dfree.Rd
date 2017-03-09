@@ -25,8 +25,6 @@ Estimates the dimension of the 'free' parameters in fully finite factor analytic
 \examples{
 UUU <- PGMM_dfree(Q=4:5, P=50, G=3, method="UUU")
 CCC <- PGMM_dfree(Q=4:5, P=50, G=3, method="CCC")
-
-PGMM_dfree(Q=3:6, P=100, uni="isotropic")
 }
 \references{
 McNicholas, P. D. and Murphy, T. B. (2008) Parsimonious Gaussian Mixture Models, \emph{Statistics and Computing}, 18(3): 285-296.

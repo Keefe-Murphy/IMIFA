@@ -1131,7 +1131,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
     for(i in seq_len(max.len))      {
       vnk      <- if(discount[i] == 0) exp(seq_len(N) * log(alpha[i]))/Rmpfr::pochMpfr(alpha[i], N) else  {
                   exp(vapply(seq_len(N), function(k, Gs=seq_len(k - 1), x=0) { for(g in Gs)    {
-                    x <- x + log(alpha[i] + g * discount[i]) }; x}, numeric(1L)) -
+                    x <- x + log(alpha[i] + g * discount[i]) }; x}, numeric(1L))     -
                     log(Rmpfr::pochMpfr(alpha[i] + 1, N - 1)) - seq_len(N) * log(discount[i])) }
       if(discount[i]  == 0) {
         rx[,i] <- abs(gmp::asNumeric(gmp::Stirling1.all(N) * vnk))
