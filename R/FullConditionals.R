@@ -309,7 +309,7 @@
 #' @param Q The number of latent factors (which can be 0, corresponding to a model with diagonal covariance). This argument is vectorised.
 #' @param P The number of variables.
 #' @param G The number of groups. This defaults to 1.
-#' @param uni By default, calculation assumes the \code{UUU} model with unconstrained loadings and unconstrained isotropic uniquesses. The other seven models detailed in McNicholas and Murphy (2008) are also given. The first letter denotes whether loadings are constrained/unconstrained across groups; the second letter denotes the same for the uniquenesses; the final letter denotes whether uniquenesses are in turn constrained to be isotropic.
+#' @param method By default, calculation assumes the \code{UUU} model with unconstrained loadings and unconstrained isotropic uniquesses. The other seven models detailed in McNicholas and Murphy (2008) are also given. The first letter denotes whether loadings are constrained/unconstrained across groups; the second letter denotes the same for the uniquenesses; the final letter denotes whether uniquenesses are in turn constrained to be isotropic.
 #'
 #' @return A vector of length \code{length(Q)}.
 #' @export
@@ -422,7 +422,10 @@
 #' @seealso \code{\link{G_variance}}, \code{\link{G_priorDensity}}, \code{\link[Rmpfr]{Rmpfr}}
 #'
 #' @examples
-#' G_expected(N=50, alpha=c(19.23356, 12.21619, 1), discount=c(0, 0.25, 0.7300045))
+#' # G_expected(N=50, alpha=19.23356)
+#'
+#' # install.packages("Rmpfr")
+#' # G_expected(N=50, alpha=c(19.23356, 12.21619, 1), discount=c(0, 0.25, 0.7300045))
     G_expected  <- Vectorize(function(N, alpha, discount = 0L) {
       if(!all(is.numeric(N), is.numeric(discount),
          is.numeric(alpha)))               stop("All inputs must be numeric")
@@ -456,7 +459,10 @@
 #' @seealso \code{\link{G_expected}}, \code{\link{G_priorDensity}}, \code{\link[Rmpfr]{Rmpfr}}
 #'
 #' @examples
-#' G_variance(N=50, alpha=c(19.23356, 12.21619, 1), discount=c(0, 0.25, 0.7300045))
+#' # G_variance(N=50, alpha=19.23356)
+#'
+#' # install.packages("Rmpfr")
+#' # G_variance(N=50, alpha=c(19.23356, 12.21619, 1), discount=c(0, 0.25, 0.7300045))
     G_variance  <- Vectorize(function(N, alpha, discount = 0L) {
       if(!all(is.numeric(N), is.numeric(discount),
          is.numeric(alpha)))               stop("All inputs must be numeric")

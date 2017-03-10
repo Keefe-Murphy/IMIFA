@@ -4,8 +4,7 @@
 \alias{G_priorDensity}
 \title{Plot Dirichlet / Pitman-Yor process Priors}
 \usage{
-G_priorDensity(N, alpha, discount = 0L, show.plot = TRUE, col = NULL,
-  main = NULL, ...)
+G_priorDensity(N, alpha, discount = 0L, show.plot = TRUE)
 }
 \arguments{
 \item{N}{The sample size.}
@@ -15,12 +14,6 @@ G_priorDensity(N, alpha, discount = 0L, show.plot = TRUE, col = NULL,
 \item{discount}{The discount parameter for the Pitman-Yor process. Must lie in the interval [0, 1). Defaults to 0 (i.e. the Dirichlet process).}
 
 \item{show.plot}{Logical indicating whether the plot should be displayed (default = \code{TRUE}).}
-
-\item{col}{Colour of the plotted lines.}
-
-\item{main}{Title of the plot.}
-
-\item{...}{Other optional arguments typically passed to \code{\link{plot}}.}
 }
 \value{
 A plot of the prior distribution if \code{show.plot} is \code{TRUE}. Density values are returned invisibly. Note that the density values may not strictly sum to one in certain cases, as values small enough to be represented as zero may well be returned.
@@ -35,7 +28,7 @@ Plots the prior distribution of the number of clusters under a Dirichlet / Pitma
 # G_expected(N=50, alpha=c(19.23356, 12.21619, 1), discount=c(0, 0.25, 0.7300045))
 
 # Now plot them to examine tail behaviour as discount increases
-# x <- G_priorDensity(N=50, alpha=c(19.23356, 12.21619, 1), discount=c(0, 0.25, 0.7300045), col=2:4)
+# x <- G_priorDensity(N=50, alpha=c(19.23356, 12.21619, 1), discount=c(0, 0.25, 0.7300045))
 # x
 }
 \seealso{

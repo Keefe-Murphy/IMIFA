@@ -1073,9 +1073,6 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
 #' @param alpha The concentration parameter. Must be specified and must be strictly greater than \code{-discount}.
 #' @param discount The discount parameter for the Pitman-Yor process. Must lie in the interval [0, 1). Defaults to 0 (i.e. the Dirichlet process).
 #' @param show.plot Logical indicating whether the plot should be displayed (default = \code{TRUE}).
-#' @param col Colour of the plotted lines.
-#' @param main Title of the plot.
-#' @param ... Other optional arguments typically passed to \code{\link{plot}}.
 #'
 #' @return A plot of the prior distribution if \code{show.plot} is \code{TRUE}. Density values are returned invisibly. Note that the density values may not strictly sum to one in certain cases, as values small enough to be represented as zero may well be returned.
 #' @export
@@ -1089,35 +1086,26 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
 #' # G_expected(N=50, alpha=c(19.23356, 12.21619, 1), discount=c(0, 0.25, 0.7300045))
 #'
 #' # Now plot them to examine tail behaviour as discount increases
-#' # x <- G_priorDensity(N=50, alpha=c(19.23356, 12.21619, 1), discount=c(0, 0.25, 0.7300045), col=2:4)
+#' # x <- G_priorDensity(N=50, alpha=c(19.23356, 12.21619, 1), discount=c(0, 0.25, 0.7300045))
 #' # x
-  G_priorDensity      <- function(N, alpha, discount = 0L, show.plot = TRUE, col = NULL, main = NULL, ...) {
+  G_priorDensity      <- function(N, alpha, discount = 0L, show.plot = TRUE) {
     firstex    <- suppressMessages(requireNamespace("Rmpfr", quietly=TRUE))
     if(isTRUE(firstex)) {
       on.exit(.detach_pkg("Rmpfr"))
       on.exit(.detach_pkg("gmp"), add=TRUE)
     } else                            stop("'Rmpfr' package not installed")
-    if(missing(main))   {
-      main     <- paste0("Prior Distribution of G\nN=", N)
-    } else if(!is.character(main))    stop("'main' title must be a character string")
     on.exit(palette("default"), add=!isTRUE(firstex))
     if(any(c(length(N),
              length(show.plot)) > 1)) stop("Arguments 'N' and 'show.plot' must be strictly of length 1")
     if(!is.logical(show.plot))        stop("'show.plot' must be TRUE or FALSE")
     max.len    <- max(length(alpha),  length(discount))
-    if(missing(col))    {
-      col      <- viridis(max.len + 1)
-    } else {
-      if(!all(.are_cols(col)))        stop("Supplied colour palette contains invalid colours")
-      palette(adjustcolor(rep(col, 2), alpha.f=0.5))
-    }
     if(max.len  > 10)                 stop("Can't plot more than ten distributions simultaneously")
     if(!is.element(length(alpha),
        c(1, max.len)))                stop("'alpha' must be of length 1 or length(discount)")
     if(!is.element(length(discount),
        c(1, max.len)))                stop("'discount' must be of length 1 or length(alpha)")
     if(!all(is.numeric(discount), is.numeric(alpha),
-            is.numeric(N)))           stop("All inputs must be numeric")
+            is.numeric(N)))           stop("'N', 'alpha', and 'discount' inputs must be numeric")
     if(any(discount < 0,
        discount >= 1))                stop("'discount' must lie in the interval [0,1)")
     if(any(alpha < -discount))        stop("'alpha' must be strictly greater than -discount")
@@ -1129,23 +1117,27 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
     }
     rx         <- matrix(0, nrow=N, ncol=max.len)
     for(i in seq_len(max.len))      {
-      vnk      <- if(discount[i] == 0) exp(seq_len(N) * log(alpha[i]))/Rmpfr::pochMpfr(alpha[i], N) else  {
-                  exp(vapply(seq_len(N), function(k, Gs=seq_len(k - 1), x=0) { for(g in Gs)    {
-                    x <- x + log(alpha[i] + g * discount[i]) }; x}, numeric(1L))     -
-                    log(Rmpfr::pochMpfr(alpha[i] + 1, N - 1)) - seq_len(N) * log(discount[i])) }
-      if(discount[i]  == 0) {
+      alphi    <- Rmpfr::mpfr(alpha[i],    precBits=256)
+      disci    <- Rmpfr::mpfr(discount[i], precBits=256)
+      vnk      <- if(disci == 0) exp(seq_len(N) * log(alphi))/Rmpfr::pochMpfr(alphi, N) else {
+                  exp(vapply(seq_len(N), function(k, Gs=seq_len(k - 1), x=0) {  for(g in Gs) {
+                  x <- x + log(alphi + g * disci) }; as.double(x) }, numeric(1L))  -
+                       log(Rmpfr::pochMpfr(alphi  + 1, N - 1)) - seq_len(N)  *  log(disci))  }
+      if(disci == 0) {
         rx[,i] <- abs(gmp::asNumeric(gmp::Stirling1.all(N) * vnk))
       } else  {
         sign   <- seq_len(N + 1) %% 2
         sign   <- replace(sign, sign == 0, -1)
-        lnkd   <- lapply(seq_len(N), function(k, Gs=c(0, seq_len(k)), x=0) { for(g in Gs) {
-                    x <- x + sign[g + 1] * Rmpfr::chooseMpfr(k, g) * Rmpfr::pochMpfr(-g * discount[i], N) }; x })
-        rx[,i] <- gmp::asNumeric(vnk/Rmpfr::factorialMpfr(seq_len(N)) * sapply(lnkd, as.double))
+        lnkd   <- lapply(seq_len(N), function(k, Gs=c(0, seq_len(k)), x=0)   {  for(g in Gs) {
+                  x <- x + sign[g + 1] * Rmpfr::chooseMpfr(k, g) * Rmpfr::pochMpfr(-g * disci, N) }; x })
+        rx[,i] <- gmp::asNumeric(vnk/Rmpfr::factorialMpfr(seq_len(N))  * sapply(lnkd, as.double))
       }
     }
     if(isTRUE(show.plot))   {
-      matplot(x=seq_len(N), y=rx, type="h", col=col, xlab="Clusters", ylim=c(0, max(rx)),
-              ylab="Density", main=main, lwd=seq(3, 1, length.out=max.len), lty=seq_len(2), ...)
+      col      <- seq(from=2, to=max.len + 1)
+      palette(adjustcolor(rep(col, 2), alpha.f=0.5))
+      matplot(x=seq_len(N), y=rx, type="h", col=col, xlab="Clusters", ylim=c(0, max(rx)), ylab="Density",
+              main=paste0("Prior Distribution of G\nN=", N), lwd=seq(3, 1, length.out=max.len), lty=seq_len(2))
     }
       invisible(if(max.len == 1) as.vector(rx) else rx)
   }
