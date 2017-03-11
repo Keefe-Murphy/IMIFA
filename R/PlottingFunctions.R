@@ -1116,21 +1116,19 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
       discount <- rep(discount, max.len)
     }
     rx         <- matrix(0, nrow=N, ncol=max.len)
-    for(i in seq_len(max.len))      {
+    for(i in seq_len(max.len))    {
       alphi    <- Rmpfr::mpfr(alpha[i],    precBits=256)
       disci    <- Rmpfr::mpfr(discount[i], precBits=256)
-      vnk      <- if(disci == 0) exp(seq_len(N) * log(alphi))/Rmpfr::pochMpfr(alphi, N) else {
-                  exp(vapply(seq_len(N), function(k, Gs=seq_len(k - 1), x=0) {  for(g in Gs) {
-                  x <- x + log(alphi + g * disci) }; as.double(x) }, numeric(1L))  -
-                       log(Rmpfr::pochMpfr(alphi  + 1, N - 1)) - seq_len(N)  *  log(disci))  }
       if(disci == 0) {
+        vnk    <- exp(seq_len(N)  * log(alphi)     - log(Rmpfr::pochMpfr(alphi, N)))
         rx[,i] <- abs(gmp::asNumeric(gmp::Stirling1.all(N) * vnk))
       } else  {
-        sign   <- seq_len(N + 1) %% 2
+        vnk    <- c(Rmpfr::mpfr(0,         precBits=256), cumsum(log(alphi +   seq_len(N - 1) * disci))) -
+                  log(Rmpfr::pochMpfr(alphi + 1, N - 1))   - seq_len(N)    *   log(disci)
+        sign   <- seq_len(N  + 1)    %% 2
         sign   <- replace(sign, sign == 0, -1)
-        lnkd   <- lapply(seq_len(N), function(k, Gs=c(0, seq_len(k)), x=0)   {  for(g in Gs) {
-                  x <- x + sign[g + 1] * Rmpfr::chooseMpfr(k, g) * Rmpfr::pochMpfr(-g * disci, N) }; x })
-        rx[,i] <- gmp::asNumeric(vnk/Rmpfr::factorialMpfr(seq_len(N))  * sapply(lnkd, as.double))
+        lnkd   <- lapply(seq_len(N), function(g) Rmpfr::sumBinomMpfr(g, f=function(k) Rmpfr::pochMpfr(-k * disci, N)))
+        rx[,i] <- gmp::asNumeric(abs(new("mpfr", unlist(lnkd))) * exp(vnk  -   log(Rmpfr::factorialMpfr(seq_len(N)))))
       }
     }
     if(isTRUE(show.plot))   {
