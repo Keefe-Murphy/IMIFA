@@ -435,12 +435,12 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     attr(uncertain, "Obs")     <- if(sum(uncert.obs) != 0) uncert.obs
     sizes        <- setNames(tabulate(post.z, nbins=G), gnames)
     if(any(sizes == 0))           warning("Empty group exists in modal clustering:\n examine trace plots and try supplying a lower G value to tune.imifa() or re-running the model", call.=FALSE)
-    if(alpha.step != "fixed") {
+    if(alpha.step) {
       alpha      <- sims[[G.ind]][[Q.ind]]$alpha
       post.alpha <- mean(alpha)
       var.alpha  <- Var(alpha)
       ci.alpha   <- quantile(alpha, conf.levels)
-      rate       <- switch(alpha.step, metropolis=sims[[G.ind]][[Q.ind]]$rate, 1)
+      rate       <- sims[[G.ind]][[Q.ind]]$a.rate
       DP.alpha   <- list(alpha = alpha, post.alpha = post.alpha, var.alpha = var.alpha, ci.alpha = ci.alpha, acceptance.rate = rate)
       class(DP.alpha)          <- "listof"
     }
@@ -448,7 +448,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     cluster      <- c(cluster, list(post.sizes = sizes, post.pi = post.pi/sum(post.pi)),
                       if(sw["pi.sw"]) list(pi.prop = pi.prop, var.pi = var.pi, ci.pi = ci.pi),
                       if(!label.miss) list(perf = tab.stat),
-                      if(alpha.step != "fixed") list(DP.alpha = DP.alpha),
+                      if(alpha.step)  list(DP.alpha = DP.alpha),
                       if(is.element(method, c("IMFA", "IMIFA"))) list(lab.rate = sims[[G.ind]][[Q.ind]]$lab.rate))
     attr(cluster, "Z.init")    <- attr(sims[[G.ind]], "Z.init")
     attr(cluster, "Init.Meth") <- attr(sims, "Init.Z")
@@ -749,7 +749,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
                       if(sw["psi.sw"]) list(Uniquenesses = uniquenesses))
 
   class(result)                <- "Results_IMIFA"
-  attr(result, "Alpha")        <- if(alpha.step == "fixed") attr(sims, "Alpha")
+  attr(result, "Alpha")        <- if(!alpha.step) attr(sims, "Alpha")
   attr(result, "Conf.Level")   <- conf.level
   attr(result, "Errors")       <- any(err.T)
   attr(result, "Method")       <- method

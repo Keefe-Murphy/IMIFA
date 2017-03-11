@@ -3,9 +3,9 @@
 ############################################################################
 
 # Gibbs Sampler Function
-  .gibbs_IMFA        <- function(Q, data, iters, N, P, G, mu.zero, rho, sigma.l, alpha.step, discount,  mu,
+  .gibbs_IMFA        <- function(Q, data, iters, N, P, G, mu.zero, rho, sigma.l, learn.alpha, discount,  mu,
                                  a.hyper, sigma.mu, burnin, thinning, d.hyper, learn.d, uni.type, uni.prior,
-                                 ind.slice, psi.alpha, psi.beta, verbose, sw, cluster, DP.lab.sw, ...) {
+                                 ind.slice, psi.alpha, psi.beta, verbose, sw, cluster, DP.lab.sw, zeta, ...) {
 
   # Define & initialise variables
     start.time       <- proc.time()
@@ -43,21 +43,21 @@
     err.z            <- zerr <- FALSE
     G.store          <- ll.store
     act.store        <- ll.store
-    not.fixed        <- alpha.step != "fixed"
-    if(not.fixed) {
+    if(learn.alpha) {
       alpha.store    <- ll.store
       alpha.shape    <- a.hyper[1]
       alpha.rate     <- a.hyper[2]
     }
-    if(learn.d)   {
+    if(learn.d)     {
       d.store        <- ll.store
       d.shape1       <- d.hyper[1]
       d.shape2       <- d.hyper[2]
-    }
-    MH.step          <- alpha.step == "metropolis"
-    if(MH.step)   {
-      rate           <- ll.store
-    }
+      d.rates        <- ll.store
+    } else d.rates   <- 1
+    MH.step          <- any(discount > 0, learn.d)
+    if(MH.step)     {
+      a.rates        <- ll.store
+    } else a.rates   <- 1
     if(DP.lab.sw) {
       lab.rate       <- matrix(0, nrow=2, ncol=n.store)
     }
@@ -116,10 +116,10 @@
       ll.store[1]            <- sum(gumbel_max(probs=log.probs, log.like=TRUE)$log.like)
       G.store[1]             <- G.non
       act.store[1]           <- G
-      if(not.fixed) {
+      if(learn.alpha) {
         alpha.store[1]       <- pi.alpha
       }
-      if(learn.d)   {
+      if(learn.d)     {
         d.store[1]           <- discount
       }
     }
@@ -195,12 +195,14 @@
                                lmat=if(Q1) as.matrix(lmat[,,g]) else lmat[,,g], N=nn[g], P=P) else .sim_mu_p(P=P, sig.mu.sqrt=sig.mu.sqrt, mu.zero=mu.zero), numeric(P))
 
     # Alpha
-      if(not.fixed) {
-        if(MH.step) {
-          MH.alpha   <- .sim_alpha_m(alpha=pi.alpha, lower=alpha.shape, upper=alpha.rate, trunc.G=trunc.G, Vs=Vs, discount=discount)
+      if(learn.alpha)      {
+        if(discount  != 0) {
+          MH.alpha   <- .sim_alpha_m(alpha=pi.alpha, discount=discount, alpha.shape=alpha.shape, alpha.rate=alpha.rate, N=N, G=G.non, zeta=zeta)
           pi.alpha   <- MH.alpha$alpha
+          a.rate     <- MH.alpha$rate
         } else {
-          pi.alpha   <- .sim_alpha_g(alpha=pi.alpha, shape=alpha.shape, rate=alpha.rate, G=G, N=N, discount=discount)
+          pi.alpha   <- .sim_alpha_g(alpha=pi.alpha, shape=alpha.shape, rate=alpha.rate, G=G, N=N)
+          a.rate     <- 1
         }
       }
 
@@ -256,9 +258,10 @@
         if(all(sw["l.sw"], Q0))       load.store[,,,new.it]   <- lmat
         if(sw["psi.sw"])              psi.store[,,new.it]     <- 1/psi.inv
         if(sw["pi.sw"])               pi.store[,new.it]       <- pi.prop
-        if(not.fixed)                 alpha.store[new.it]     <- pi.alpha
+        if(learn.alpha)               alpha.store[new.it]     <- pi.alpha
         if(learn.d)                   d.store[new.it]         <- discount
-        if(MH.step)                   rate[new.it]            <- MH.alpha$rate
+        if(MH.step)                   a.rates[new.it]         <- a.rate
+        if(learn.d)                   d.rates[new.it]         <- d.rate
         if(DP.lab.sw)                 lab.rate[,new.it]       <- c(acc1, acc2)
                                       z.store[,new.it]        <- z
                                       ll.store[new.it]        <- sum(z.res$log.like)
@@ -277,9 +280,10 @@
                              load      = if(all(sw["l.sw"], Q0)) tryCatch(provideDimnames(load.store, base=list(varnames, "", "", ""), unique=FALSE), error=function(e) load.store),
                              psi       = if(sw["psi.sw"])        tryCatch(provideDimnames(psi.store,  base=list(varnames, "", ""),     unique=FALSE), error=function(e) psi.store),
                              pi.prop   = if(sw["pi.sw"])         pi.store,
-                             alpha     = if(not.fixed)           alpha.store,
+                             alpha     = if(learn.alpha)         alpha.store,
                              discount  = if(learn.d)             d.store,
-                             rate      = if(MH.step)             mean(rate),
+                             a.rate    = if(MH.step)             mean(a.rates) else a.rates,
+                             d.rate    = if(learn.d)             mean(d.rates) else d.rates,
                              lab.rate  = if(DP.lab.sw)           setNames(rowmeans(lab.rate), c("Move1", "Move2")),
                              z.store   = z.store,
                              ll.store  = ll.store,

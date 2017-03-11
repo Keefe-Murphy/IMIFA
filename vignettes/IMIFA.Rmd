@@ -202,7 +202,7 @@ The error between the empirical and estimated covariance matrices (by group and 
 plot(resIMIFA, plot.meth="errors")
 ```
 
-Finally, inference can be conducted on the Dirichlet process concentration parameter $\alpha$ (assuming `alpha.step` was _not_ set to `"fixed"` when `mcmc_IMIFA` was initially run using the IMFA/IMIFA methods), where`all` below refers to trace, density, posterior mean, and ACF plots.
+Finally, inference can be conducted on the Dirichlet process concentration parameter $\alpha$ (assuming `learn.alpha` was _not_ set to `FALSE` when `mcmc_IMIFA` was initially run using the IMFA/IMIFA methods), where `all` below refers to trace, density, posterior mean, and ACF plots.
 ```{r}
 plot(resIMIFA, plot.meth="all", param="alpha")
 ```

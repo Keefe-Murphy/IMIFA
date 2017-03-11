@@ -14,10 +14,10 @@ mcmc_IMIFA(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA",
   z.list = NULL, adapt = TRUE, prop = NULL, epsilon = NULL,
   alpha.d1 = NULL, alpha.d2 = NULL, beta.d1 = NULL, beta.d2 = NULL,
   nu = NULL, nuplus1 = TRUE, adapt.at = NULL, b0 = NULL, b1 = NULL,
-  alpha.step = c("gibbs", "metropolis", "fixed"), alpha.hyper = NULL,
-  ind.slice = TRUE, rho = NULL, DP.lab.sw = TRUE, verbose = TRUE,
-  discount = NULL, learn.d = FALSE, d.hyper = NULL, mu0g = FALSE,
-  psi0g = FALSE, delta0g = FALSE, mu.switch = TRUE, score.switch = TRUE,
+  learn.alpha = TRUE, alpha.hyper = NULL, zeta = NULL, ind.slice = TRUE,
+  rho = NULL, DP.lab.sw = TRUE, verbose = TRUE, discount = NULL,
+  learn.d = FALSE, d.hyper = NULL, mu0g = FALSE, psi0g = FALSE,
+  delta0g = FALSE, mu.switch = TRUE, score.switch = TRUE,
   load.switch = TRUE, psi.switch = TRUE, pi.switch = TRUE)
 }
 \arguments{
@@ -56,7 +56,7 @@ mcmc_IMIFA(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA",
 
 \item{sigma.l}{The covariance of the prior distribution for the loadings. Defaults to 1. Only relevant for the finite factor methods.}
 
-\item{alpha}{Depending on the method employed, either the hyperparameter of the Dirichlet prior for the cluster mixing proportions, or the Dirichlet process concentration parameter. Defaults to 0.5/range.G for the Overfitted methods - if supplied for "\code{OMFA}" and "\code{OMIFA}" methods, you are supplying the numerator of \code{alpha/range.G}, which should be less than half the dimension (per group!) of the free parameters of the smallest model considered in order to ensure superfluous clusters are emptied (for "\code{OMFA}", this corresponds to the smallest \code{range.Q}; for "\code{OMIFA}", this corresponds to a zero-factor model) [see: \code{\link{PGMM_dfree}} and Rousseau and Mengersen (2011)]. Defaults to 1 for the finite mixture models "\code{MFA}" and "\code{MIFA}". Defaults to \code{1 - discount} for the "\code{IMFA}" and "\code{IMIFA}" models if \code{alpha.step="none"}. Must be positive, unless \code{discount} is supplied for the "\code{IMFA}" or "\code{IMIFA}" methods.}
+\item{alpha}{Depending on the method employed, either the hyperparameter of the Dirichlet prior for the cluster mixing proportions, or the Dirichlet process concentration parameter. Defaults to 0.5/range.G for the Overfitted methods - if supplied for "\code{OMFA}" and "\code{OMIFA}" methods, you are supplying the numerator of \code{alpha/range.G}, which should be less than half the dimension (per group!) of the free parameters of the smallest model considered in order to ensure superfluous clusters are emptied (for "\code{OMFA}", this corresponds to the smallest \code{range.Q}; for "\code{OMIFA}", this corresponds to a zero-factor model) [see: \code{\link{PGMM_dfree}} and Rousseau and Mengersen (2011)]. Defaults to 1 for the finite mixture models "\code{MFA}" and "\code{MIFA}". Defaults to \code{1 - discount} for the "\code{IMFA}" and "\code{IMIFA}" models if \code{learn.alpha=FALSE} or a simulation from the prior if \code{learn.alpha=TRUE}. Must be positive, unless \code{discount} is supplied for the "\code{IMFA}" or "\code{IMIFA}" methods.}
 
 \item{psi.alpha}{The shape of the inverse gamma prior on the uniquenesses. Defaults to 2.5.}
 
@@ -94,9 +94,11 @@ mcmc_IMIFA(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA",
 
 \item{b1}{Slope parameter for the exponentially decaying adaptation probability s.t. \code{p(iter) = 1/exp(b0 + b1(iter - adapt.at))}. Defaults to 0.00005. Only relevant for methods ending in IFA.}
 
-\item{alpha.step}{Switch indicating whether the Dirichlet process concentration parameter is to be learned by Gibbs sampling (with a Ga(a, b) prior), a Metropolis-Hastings step (with a Unif(a, b) prior), or remain fixed for the duration of the sampler. Defaults to Ga(2, 1). Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods.}
+\item{learn.alpha}{Logical indicating whether the Dirichlet process / Pitman concentration parameter is to be learned, or remain fixed for the duration of the chain. If being learned, a Ga(a, b) prior is assumed for \code{alpha}; updates take place via Gibbs sampling when \code{discount} is zero and via Metropolis-Hastings otherwise. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods.}
 
-\item{alpha.hyper}{A vector of length 2 giving hyperparameters for the Dirichlet  process concentration parameter. If \code{alpha.step = "gibbs"}, the shape and rate parameter of a Gamma distribution. If \code{alpha.step = "metropolis"}, the lower and upper limits of a Uniform distribution. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods when \code{alpha.step} is no "\code{fixed}".}
+\item{alpha.hyper}{A vector of length 2 giving hyperparameters for the Dirichlet process / Pitman-Yor concentration parameter \code{alpha}. If \code{isTRUE(learn.alpha)}, these are shape and rate parameter of a Gamma distribution. Defaults to Ga(2, 1). Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods, in which case the default is \code{TRUE}. The prior is shifted to have support on (-\code{discount}, \code{Inf}) when non-zero \code{discount} is supplied or \code{learn.d=TRUE}.}
+
+\item{zeta}{Tuning parameter controlling the acceptance rate of the random-walk proposal for the Metropolis-Hastings steps when \code{learn.alpha=TRUE}. These steps are only invoked when either \code{discount} is non-zero or \code{learn.d=TRUE}, otherwise \code{alpha} is learned by Gibbs updates. Must be strictly positive. Defauts to 2.}
 
 \item{ind.slice}{Logical indicitating whether the independent slice-efficient sampler is to be employed. If \code{FALSE} the dependent slice-efficient sampler is employed, whereby the slice sequence xi_1,...,xi_g is equal to the decreasingly ordered mixing proportions. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods. Defaults to \code{TRUE}.}
 

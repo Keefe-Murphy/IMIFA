@@ -621,16 +621,17 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         a.step <- attr(x, "Alph.step")
         conf   <- attr(x, "Conf.Level")
         digits <- options()$digits
+        MH     <- plot.x$acceptance.rate != 1
         a.adj  <- rep(0.5, 2)
-        a.cex  <- par()$fin[2]/switch(a.step, metropolis=5, 4)
-        pen    <- switch(a.step, metropolis=0, 0.125)
+        a.cex  <- par()$fin[2]/ifelse(MH, 5, 4)
+        pen    <- ifelse(MH, 0, 0.125)
         text(x=0.5, y=0.85 - pen, cex=a.cex, col="black", adj=a.adj, expression(bold("Posterior Mean:\n")))
         text(x=0.5, y=0.85 - pen, cex=a.cex, col="black", adj=a.adj, bquote(.(round(plot.x$post.alpha, digits))))
         text(x=0.5, y=0.57 - pen, cex=a.cex, col="black", adj=a.adj, expression(bold("\nVariance:\n")))
         text(x=0.5, y=0.57 - pen, cex=a.cex, col="black", adj=a.adj, bquote(.(round(plot.x$var.alpha, digits))))
         text(x=0.5, y=0.4  - pen, cex=a.cex, col="black", adj=a.adj, bquote(bold(.(100 * conf))~bold("% Confidence Interval:")))
         text(x=0.5, y=0.28 - pen, cex=a.cex, col="black", adj=a.adj, bquote(paste("[", .(round(plot.x$ci.alpha[1], digits)), ", ", .(round(plot.x$ci.alpha[2], digits)), "]")))
-        if(a.step == "metropolis") {
+        if(isTRUE(MH)) {
           text(x=0.5, y=0.17, cex=a.cex, col="black", adj=a.adj, expression(bold("Acceptance Rate:")))
           text(x=0.5, y=0.1,  cex=a.cex, col="black", adj=a.adj, bquote(paste(.(round(100 * plot.x$acceptance.rate, 2)), "%")))
         }
@@ -1127,8 +1128,8 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
                   log(Rmpfr::pochMpfr(alphi + 1, N - 1))   - seq_len(N)    *   log(disci)
         sign   <- seq_len(N  + 1)    %% 2
         sign   <- replace(sign, sign == 0, -1)
-        lnkd   <- lapply(seq_len(N), function(g) Rmpfr::sumBinomMpfr(g, f=function(k) Rmpfr::pochMpfr(-k * disci, N)))
-        rx[,i] <- gmp::asNumeric(abs(new("mpfr", unlist(lnkd))) * exp(vnk  -   log(Rmpfr::factorialMpfr(seq_len(N)))))
+        lnkd   <- lapply(seq_len(N), function(g) Rmpfr::sumBinomMpfr(g, f=function(k)  Rmpfr::pochMpfr(-k * disci, N)))
+        rx[,i] <- gmp::asNumeric(abs(methods::new("mpfr", unlist(lnkd)))   * exp(vnk - log(Rmpfr::factorialMpfr(seq_len(N)))))
       }
     }
     if(isTRUE(show.plot))   {

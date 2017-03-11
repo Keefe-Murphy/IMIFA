@@ -136,19 +136,29 @@
     }
 
   # Alpha
-    .sim_alpha_g <- function(alpha, shape, rate, G, N, discount = 0L) {
+    .sim_alpha_g <- function(alpha, shape, rate, G, N) {
       shape2     <- shape + G - 1
-      rate2      <- rate  - log(rbeta(1, alpha + discount + 1, N))
+      rate2      <- rate  - log(rbeta(1, alpha  + 1, N))
       weight     <- shape2/(shape2 + N * rate2)
-        weight    * rgamma(1, shape=shape2 + 1, rate=rate2) + (1 - weight) * rgamma(1, shape=shape2, rate=rate2) - discount
+        weight    * rgamma(1, shape=shape2 + 1, rate=rate2) + (1 - weight) * rgamma(1, shape=shape2, rate=rate2)
     }
 
-    .sim_alpha_m <- function(alpha, lower, upper, trunc.G, Vs, discount = 0L) {
-      alpha.old  <- alpha   + discount
-      alpha.new  <- runif(1, lower, upper) + discount
-      a.prob     <- trunc.G * (log(alpha.new) - log(alpha.old))    + (alpha.new - alpha.old) * sum(log((1 - Vs[-trunc.G])))
-      accept     <- a.prob >= 0 || - rexp(1)  < a.prob
-        return(list(alpha   = ifelse(accept, alpha.new, alpha.old) - discount, rate = accept))
+    .log_palpha  <- function(alpha, discount, alpha.shape, alpha.rate, N, G) {
+      l.prior    <- dgamma(alpha +  discount, shape=alpha.shape, rate=alpha.rate, log=TRUE)
+        lgamma(alpha + 1)  - lgamma(alpha + N) + sum(log(alpha + discount  * seq_len(G - 1))) + l.prior
+    }
+
+    .sim_alpha_m <- function(alpha, discount, alpha.shape, alpha.rate, N, G, zeta) {
+      inter      <- c(max( - discount, alpha   - zeta),  alpha + zeta)
+      propa      <- runif(1, inter[1], inter[2])
+      cprob      <- .log_palpha(alpha, discount, alpha.shape,  alpha.rate, N, G)
+      pprob      <- .log_palpha(propa, discount, alpha.shape,  alpha.rate, N, G)
+      curprop    <- c(max( - discount, propa   - zeta), propa  + zeta)
+      logpr      <- pprob  - cprob   - log(diff(curprop))      + log(diff(inter))
+      acpt       <- logpr >= 0  ||   - rexp(1) < logpr
+        return(list(alpha  = ifelse(acpt, propa, alpha), rate  = acpt))
+    }
+
     }
 
 # Priors

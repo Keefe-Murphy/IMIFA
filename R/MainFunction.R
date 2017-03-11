@@ -25,7 +25,7 @@
 #' @param mu.zero The mean of the prior distribution for the mean parameter. Defaults to the sample mean of the data.
 #' @param sigma.mu The covariance of the prior distribution for the mean parameter. Can be a scalar times the identity or a matrix of appropriate dimension. Defaults to the sample covariance matrix.
 #' @param sigma.l The covariance of the prior distribution for the loadings. Defaults to 1. Only relevant for the finite factor methods.
-#' @param alpha Depending on the method employed, either the hyperparameter of the Dirichlet prior for the cluster mixing proportions, or the Dirichlet process concentration parameter. Defaults to 0.5/range.G for the Overfitted methods - if supplied for "\code{OMFA}" and "\code{OMIFA}" methods, you are supplying the numerator of \code{alpha/range.G}, which should be less than half the dimension (per group!) of the free parameters of the smallest model considered in order to ensure superfluous clusters are emptied (for "\code{OMFA}", this corresponds to the smallest \code{range.Q}; for "\code{OMIFA}", this corresponds to a zero-factor model) [see: \code{\link{PGMM_dfree}} and Rousseau and Mengersen (2011)]. Defaults to 1 for the finite mixture models "\code{MFA}" and "\code{MIFA}". Defaults to \code{1 - discount} for the "\code{IMFA}" and "\code{IMIFA}" models if \code{alpha.step="none"}. Must be positive, unless \code{discount} is supplied for the "\code{IMFA}" or "\code{IMIFA}" methods.
+#' @param alpha Depending on the method employed, either the hyperparameter of the Dirichlet prior for the cluster mixing proportions, or the Dirichlet process concentration parameter. Defaults to 0.5/range.G for the Overfitted methods - if supplied for "\code{OMFA}" and "\code{OMIFA}" methods, you are supplying the numerator of \code{alpha/range.G}, which should be less than half the dimension (per group!) of the free parameters of the smallest model considered in order to ensure superfluous clusters are emptied (for "\code{OMFA}", this corresponds to the smallest \code{range.Q}; for "\code{OMIFA}", this corresponds to a zero-factor model) [see: \code{\link{PGMM_dfree}} and Rousseau and Mengersen (2011)]. Defaults to 1 for the finite mixture models "\code{MFA}" and "\code{MIFA}". Defaults to \code{1 - discount} for the "\code{IMFA}" and "\code{IMIFA}" models if \code{learn.alpha=FALSE} or a simulation from the prior if \code{learn.alpha=TRUE}. Must be positive, unless \code{discount} is supplied for the "\code{IMFA}" or "\code{IMIFA}" methods.
 #' @param psi.alpha The shape of the inverse gamma prior on the uniquenesses. Defaults to 2.5.
 #' @param psi.beta The rate of the inverse gamma prior on the uniquenesses. Can be either a single parameter or a vector of variable specific rates.  If this is not supplied, \code{\link{psi_hyper}} is invoked to choose sensible values, depending on the value of \code{uni.prior}.
 #' @param uni.type A switch indicating whether uniquenesses are to be "\code{unconstrained}" or "\code{isotropic}". Note that unconstrained here means variable-specific and group-specific. Defaults to "\code{unconstrained}" unless \code{N < P}, in which case the default is "\code{isotropic}".
@@ -44,8 +44,9 @@
 #' @param adapt.at The iteration at which adaptation is to begin. Defaults to \code{burnin} for the "\code{IFA}" and "\code{MIFA}" methods, defaults to 0 for the "\code{OMIFA}" and "\code{IMIFA}". Cannot exceed \code{burnin}. Only relevant for methods ending in IFA.
 #' @param b0 Intercept parameter for the exponentially decaying adaptation probability s.t. \code{p(iter) = 1/exp(b0 + b1(iter - adapt.at))}. Defaults to 0.1. Only relevant for methods ending in IFA.
 #' @param b1 Slope parameter for the exponentially decaying adaptation probability s.t. \code{p(iter) = 1/exp(b0 + b1(iter - adapt.at))}. Defaults to 0.00005. Only relevant for methods ending in IFA.
-#' @param alpha.step Switch indicating whether the Dirichlet process concentration parameter is to be learned by Gibbs sampling (with a Ga(a, b) prior), a Metropolis-Hastings step (with a Unif(a, b) prior), or remain fixed for the duration of the sampler. Defaults to Ga(2, 1). Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods.
-#' @param alpha.hyper A vector of length 2 giving hyperparameters for the Dirichlet  process concentration parameter. If \code{alpha.step = "gibbs"}, the shape and rate parameter of a Gamma distribution. If \code{alpha.step = "metropolis"}, the lower and upper limits of a Uniform distribution. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods when \code{alpha.step} is no "\code{fixed}".
+#' @param learn.alpha Logical indicating whether the Dirichlet process / Pitman concentration parameter is to be learned, or remain fixed for the duration of the chain. If being learned, a Ga(a, b) prior is assumed for \code{alpha}; updates take place via Gibbs sampling when \code{discount} is zero and via Metropolis-Hastings otherwise. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods.
+#' @param alpha.hyper A vector of length 2 giving hyperparameters for the Dirichlet process / Pitman-Yor concentration parameter \code{alpha}. If \code{isTRUE(learn.alpha)}, these are shape and rate parameter of a Gamma distribution. Defaults to Ga(2, 1). Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods, in which case the default is \code{TRUE}. The prior is shifted to have support on (-\code{discount}, \code{Inf}) when non-zero \code{discount} is supplied or \code{learn.d=TRUE}.
+#' @param zeta Tuning parameter controlling the acceptance rate of the random-walk proposal for the Metropolis-Hastings steps when \code{learn.alpha=TRUE}. These steps are only invoked when either \code{discount} is non-zero or \code{learn.d=TRUE}, otherwise \code{alpha} is learned by Gibbs updates. Must be strictly positive. Defauts to 2.
 #' @param ind.slice Logical indicitating whether the independent slice-efficient sampler is to be employed. If \code{FALSE} the dependent slice-efficient sampler is employed, whereby the slice sequence xi_1,...,xi_g is equal to the decreasingly ordered mixing proportions. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods. Defaults to \code{TRUE}.
 #' @param rho Parameter controlling the rate of geometric decay for the independent slice-efficient sampler, s.t. xi = (1 - rho)rho^(g-1). Must lie in the interval (0, 1]. Higher values are associated with better mixing but longer run times. Defaults to 0.75, but 0.5 is an interesting special case which guarantees that the slice sequence xi_1,...,xi_g is equal to the \emph{expectation} of the decreasingly ordered mixing proportions. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods when \code{ind.slice} is \code{TRUE}.
 #' @param DP.lab.sw Logial indicating whether the two forced label switching moves are to be implemented (defaults to \code{TRUE}). Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods.
@@ -117,8 +118,8 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
                         thinning = 2L, centering = TRUE, scaling = c("unit", "pareto", "none"), mu.zero = NULL, sigma.mu = NULL, sigma.l = NULL, alpha = NULL, psi.alpha = NULL, psi.beta = NULL,
                         uni.type = c("unconstrained", "isotropic"), uni.prior = c("unconstrained", "isotropic"), z.init = c("mclust", "kmeans", "list", "priors"), z.list = NULL, adapt = TRUE,
                         prop = NULL, epsilon = NULL, alpha.d1 = NULL, alpha.d2 = NULL, beta.d1 = NULL, beta.d2 = NULL, nu = NULL, nuplus1 = TRUE, adapt.at = NULL, b0 = NULL, b1 = NULL,
-                        alpha.step = c("gibbs", "metropolis", "fixed"), alpha.hyper = NULL, ind.slice = TRUE, rho = NULL, DP.lab.sw = TRUE, verbose = TRUE, discount = NULL, learn.d = FALSE,
-                        d.hyper = NULL, mu0g = FALSE, psi0g = FALSE, delta0g = FALSE, mu.switch = TRUE, score.switch = TRUE, load.switch = TRUE, psi.switch = TRUE, pi.switch = TRUE) {
+                        learn.alpha = TRUE, alpha.hyper = NULL, zeta = NULL, ind.slice = TRUE, rho = NULL, DP.lab.sw = TRUE, verbose = TRUE, discount = NULL, learn.d = FALSE, d.hyper = NULL,
+                        mu0g = FALSE, psi0g = FALSE, delta0g = FALSE, mu.switch = TRUE, score.switch = TRUE, load.switch = TRUE, psi.switch = TRUE, pi.switch = TRUE) {
 
   defopt    <- options()
   options(warn=1)
@@ -219,22 +220,23 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
          !is.logical(switches)))    stop("All logical parameter storage switches must be TRUE or FALSE")
   if(N < 2)                         stop("Must have more than one observation")
   G.x       <- missing(range.G)
-  alpha.x   <- missing(alpha.step)
-  alpha.step       <- match.arg(alpha.step)
+  alpha.x   <- missing(learn.alpha)
+  if(any(!is.logical(learn.alpha),
+         length(learn.alpha) != 1)) stop("'learn.alpha' must be TRUE or FALSE")
   if(any(!is.logical(learn.d),
-         length(learn.d)  != 1))    stop("'learn.d' must be TRUE or FALSE")
+         length(learn.d)     != 1)) stop("'learn.d' must be TRUE or FALSE")
   if(isTRUE(learn.d))               stop("Pitman-Yor discount hyperparameter must remain fixed; learning not yet implemented")
   if(missing(d.hyper))       d.hyper       <- c(1L, 1L)
-  if(length(d.hyper)      != 2)     stop("d.hyper' must be a vector of length 2")
+  if(length(d.hyper)         != 2)  stop("d.hyper' must be a vector of length 2")
   if(any(d.hyper   <= 0))           stop("'Discount Beta prior hyperparameters must be strictly positive")
   discount         <- switch(method, IMFA=, IMIFA=ifelse(missing(discount), ifelse(learn.d, rbeta(1, d.hyper[1], d.hyper[2]), 0), discount), 0)
   if(any(!is.numeric(discount),
          length(discount) != 1))    stop("'discount' must be a single number")
   if(discount       < 0   ||
      discount      >= 1)            stop("'discount' must lie in the interval [0, 1)")
-  if(all(!is.element(method, c("IMFA", "IMIFA")), alpha.step != "fixed"))  {
-    alpha.step     <- "fixed"
-    if(!alpha.x)                    warning(paste0("'alpha.step' must be given as 'fixed' for the ", method, " method"), call.=FALSE)
+  if(all(!is.element(method, c("IMFA", "IMIFA")), learn.alpha))  {
+    learn.alpha     <- FALSE
+    if(!alpha.x)                    warning(paste0("'learn.alpha' must be FALSE for the ", method, " method"), call.=FALSE)
   }
   if(!is.element(method, c("MFA", "MIFA")))      {
     if(length(range.G) > 1)         stop(paste0("Only one 'range.G' value can be specified for the ", method, " method"))
@@ -258,23 +260,24 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
            rho > 1 && rho <= 0))    stop("'rho' must be a single number in the interval (0, 1]")
         if(rho < 0.5)               warning("Are you sure 'rho' should be less than 0.5? This could adversely affect mixing", call.=FALSE)
         if(missing(alpha.hyper))    {
-          alpha.hyper     <- switch(alpha.step, gibbs=c(2L, 1L), metropolis=c(- discount, range.G/2), c(0L, 0L))
+          alpha.hyper     <- if(learn.alpha) c(2L, 1L) else c(0L, 0L)
         }
-        if(discount > 0) {
-          alpha.hyper     <- unlist(.shift_GA(shape=alpha.hyper[1], rate=alpha.hyper[2], shift=discount))
+        if(all(discount    > 0, !learn.d)) {
+          alpha.hyper     <- unname(unlist(.shift_GA(shape=alpha.hyper[1], rate=alpha.hyper[2], shift=discount)))
         }
+        if(missing(zeta)) {
+          zeta     <- 2
+        }
+        if(any(!is.numeric(zeta),
+               length(zeta) != 1,
+               zeta < 0))           stop(paste0("'zeta' must be single strictly positive number"))
         if(all(length(alpha.hyper)  != 2,
-           alpha.step != "fixed"))  stop(paste0("'alpha.hyper' must be a vector of length 2, giving the ", switch(alpha.step, gibbs="shape and rate hyperparameters of the gamma prior for alpha when alpha.step is given as 'gibbs'", metropolis="lower and upper limits of the uniform prior/proposal for alpha when alpha.step is given as 'metropolis'")))
+           learn.alpha))            stop(paste0("'alpha.hyper' must be a vector of length 2, giving the shape and rate hyperparameters of the gamma prior for alpha when 'learn.alpha' is TRUE"))
         a.hyp1     <- alpha.hyper[1]
         a.hyp2     <- alpha.hyper[2]
-        if(alpha.step == "gibbs")   {
+        if(learn.alpha)   {
           if(a.hyp1   <= 0)         stop("The shape of the gamma prior for alpha must be strictly positive")
           if(a.hyp2   <= 0)         stop("The rate of the gamma prior for alpha must be strictly positive")
-        }
-        if(alpha.step == "metropolis") {
-          if(a.hyp1    < -discount) stop(paste0("The lower limit of the uniform prior/proposal for alpha must be ", ifelse(discount == 0, "strictly positive", paste0("greater than -discount (=", - discount, ")"))))
-          if(a.hyp2    < 1)         stop("The upper limit of the uniform prior/proposal for alpha must be at least 1")
-          if(a.hyp2   <= a.hyp1)    stop(paste0("The upper limit (=", a.hyp2, ") of the uniform prior/proposal for alpha must be greater than the lower limit (=", a.hyp1, ")"))
         }
       }
     } else if(method == "classify") {
@@ -447,14 +450,13 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   if(all(!is.element(method, c("MFA", "MIFA", "classify")),
          any(sw0gs)))               stop(paste0("'", names(which(sw0gs)), "' should be FALSE for the ", method, " method\n"))
   if(!is.element(method, c("FA", "IFA", "classify"))) {
-    if(missing("alpha"))   { alpha         <- switch(method, OMFA=, OMIFA=0.5/range.G, max(1 - discount, switch(alpha.step,
-                                              gibbs=rgamma(1, a.hyp1, a.hyp2) - discount, metropolis=runif(1, a.hyp1, a.hyp2), 1 - discount)))
+    if(missing("alpha"))   { alpha         <- switch(method, MFA=, MIFA=1, OMFA=, OMIFA=0.5/range.G, if(learn.alpha) max(1 - discount, rgamma(1, a.hyp1, a.hyp2)) else 1 - discount)
     } else if(is.element(method,
       c("OMFA", "OMIFA")))   alpha         <- alpha/range.G
     if(length(alpha) != 1)          stop("'alpha' must be specified as a scalar to ensure an exchangeable prior")
-    if(alpha <= -discount)          stop(paste0("'alpha' must be ", ifelse(discount != 0, paste0("greater than -discount (i.e. > ", - discount, ")"), "strictly positive")))
+    if(alpha <= -discount)          stop(paste0("'alpha' must be ",     ifelse(discount != 0, paste0("greater than -discount (i.e. > ", - discount, ")"), "strictly positive")))
     if(all(is.element(method,  c("IMIFA",   "IMFA")),
-       alpha.step == "fixed"))      warning(paste0("'alpha' fixed at ", alpha, " as it's not being learned via Gibbs/Metropolis-Hastings updates"), call.=FALSE)
+       !learn.alpha))               warning(paste0("'alpha' fixed at ", ifelse(discount != 0, paste0("1 - 'discount' = "), ""), alpha, " as it's not being learned via Gibbs/Metropolis-Hastings updates"), call.=FALSE)
     if(all(is.element(method,  c("OMIFA",   "OMFA")),
        alpha >= min.d2))            warning(paste0("'alpha' over 'range.G' for the OMFA & OMIFA methods must be less than half the dimension (per group!)\n of the free parameters of the smallest model considered (= ", min.d2, "): consider suppling 'alpha' < ", min.d2G), call.=FALSE)
     if(any(all(is.element(method, c("MFA",  "MIFA")), alpha > 1),
@@ -487,7 +489,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   gibbs.arg <- list(P = P, sigma.mu = sigma.mu, psi.alpha = psi.alpha, burnin = burnin, sw = switches,
                     thinning = thinning, iters = iters, verbose = verbose, uni.type = uni.type, uni.prior = uni.prior)
   if(is.element(method, c("IMIFA", "IMFA"))) {
-    gibbs.arg      <- append(gibbs.arg, list(rho = rho, ind.slice = ind.slice, alpha.step = alpha.step, learn.d = learn.d,
+    gibbs.arg      <- append(gibbs.arg, list(rho = rho, ind.slice = ind.slice, learn.alpha = learn.alpha, learn.d = learn.d, zeta = zeta,
                                              DP.lab.sw = DP.lab.sw, a.hyper = alpha.hyper, discount = discount, d.hyper = d.hyper))
   }
   if(is.element(method, c("FA", "IFA", "MFA", "MIFA")))   {
@@ -730,8 +732,8 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   gnames    <- switch(method, classify=paste0("Group ", seq_len(range.G)), paste0(range.G, ifelse(range.G == 1, "Group", "Groups")))
   names(imifa)            <- gnames
   attr(imifa,
-       "Alph.step")       <- alpha.step
-  attr(imifa, "Alpha")    <- if(alpha.step == "fixed") alpha
+       "Alph.step")       <- learn.alpha
+  attr(imifa, "Alpha")    <- if(!learn.alpha) alpha
   if(method == "classify") {
     attr(imifa,
          "Class.Props")   <- tabulate(z.list[[1]], range.G)/N
@@ -761,7 +763,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   attr(attr(imifa,
   "Scaling"), "Method")   <- scaling
   attr(imifa, "Store")    <- length(iters)
-  switches                <- c(switches, a.sw = alpha.step != "fixed")
+  switches                <- c(switches, a.sw = learn.alpha)
   if(is.element(method, c("FA", "IFA"))) {
     switches["pi.sw"]     <- FALSE
   }
