@@ -182,7 +182,7 @@
         z            <- rep(1, N)
       }
       nn             <- tabulate(z, nbins=trunc.G)
-      nn0            <- nn[Gs] > 0
+      nn0            <- nn > 0
       nn.ind         <- which(nn0)
       G.non          <- length(nn.ind)
       dat.g          <- lapply(Gs, function(g) data[z == g,, drop=FALSE])
@@ -284,7 +284,7 @@
           pi.alpha   <- MH.alpha$alpha
           a.rate     <- MH.alpha$rate
         } else {
-          pi.alpha   <- .sim_alpha_g(alpha=pi.alpha, shape=alpha.shape, rate=alpha.rate, G=G, N=N)
+          pi.alpha   <- .sim_alpha_g(alpha=pi.alpha, shape=alpha.shape, rate=alpha.rate, G=G.non, N=N)
           a.rate     <- 1
         }
       }

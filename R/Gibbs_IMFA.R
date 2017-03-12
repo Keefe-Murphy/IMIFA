@@ -201,7 +201,7 @@
           pi.alpha   <- MH.alpha$alpha
           a.rate     <- MH.alpha$rate
         } else {
-          pi.alpha   <- .sim_alpha_g(alpha=pi.alpha, shape=alpha.shape, rate=alpha.rate, G=G, N=N)
+          pi.alpha   <- .sim_alpha_g(alpha=pi.alpha, shape=alpha.shape, rate=alpha.rate, G=G.non, N=N)
           a.rate     <- 1
         }
       }

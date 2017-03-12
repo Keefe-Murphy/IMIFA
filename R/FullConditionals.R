@@ -137,8 +137,8 @@
 
   # Alpha
     .sim_alpha_g <- function(alpha, shape, rate, G, N) {
-      shape2     <- shape + G - 1
-      rate2      <- rate  - log(rbeta(1, alpha  + 1, N))
+      shape2     <- shape  + G - 1
+      rate2      <- rate   - log(rbeta(1, alpha  + 1, N))
       weight     <- shape2/(shape2 + N * rate2)
         weight    * rgamma(1, shape=shape2 + 1, rate=rate2) + (1 - weight) * rgamma(1, shape=shape2, rate=rate2)
     }
@@ -160,16 +160,17 @@
     }
 
   # Discount
-    .log_pdisc   <- function(discount, alpha, disc.shape1, disc.shape2, N, G, kappa, nn) {
-      l.prior    <- ifelse(discount == 0, log(kappa), log(1 - kappa) + dbeta(discount, shape1=disc.shape1, shape2=disc.shape2, log=TRUE))
+    .log_pdisc   <- function(discount, alpha, disc.shape1, disc.shape2, N, G, kappa, nn, unif) {
+      l.prior    <- ifelse(discount == 0, log(kappa), log(1 - kappa) + ifelse(unif, 0, dbeta(discount, shape1=disc.shape1, shape2=disc.shape2, log=TRUE)))
         sum(log(alpha + discount * seq_len(G - 1))) + sum(lgamma(nn  - discount) - lgamma(1 - discount)) + l.prior
     }
 
     .sim_disc_mh <- function(discount, alpha, disc.shape1, disc.shape2, N, G, kappa, nn) {
-      propd      <- ifelse(alpha > 0,    ifelse(rbinom(1, 1, prob=1  - kappa) == 0,
-                    0, rbeta(1,  disc.shape1, disc.shape2)), runif(1, max(0,   - alpha), 1))
-      cprob      <- .log_pdisc(propd,    alpha, disc.shape1, disc.shape2, N, G,  kappa, nn)
-      pprob      <- .log_pdisc(discount, alpha, disc.shape1, disc.shape2, N, G,  kappa, nn)
+      unif       <- disc.shape1 == 1 & disc.shape2 == 1
+      propd      <- ifelse(alpha > 0,    ifelse(rbinom(1, 1, prob=1  - kappa)   == 0, 0, ifelse(unif,
+                           runif(1),   rbeta(1, disc.shape1, disc.shape2))), runif(1, max(0, - alpha), 1))
+      cprob      <- .log_pdisc(propd,    alpha, disc.shape1, disc.shape2, N, G,  kappa, nn, unif)
+      pprob      <- .log_pdisc(discount, alpha, disc.shape1, disc.shape2, N, G,  kappa, nn, unif)
       logpr      <- pprob  - cprob
       acpt       <- logpr >= 0  ||   - rexp(1) < logpr
         return(list(disc   = ifelse(acpt, propd, discount),  rate    = acpt))

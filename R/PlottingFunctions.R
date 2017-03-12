@@ -892,7 +892,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
       plot.x <- if(all(param == "uniquenesses", uni.type == "isotropic")) plot.x else apply(plot.x, 2L, function(x) (x - min(x, na.rm=TRUE))/(max(x, na.rm=TRUE) - min(x, na.rm=TRUE)))
       varnam <- paste0(toupper(substr(param, 1, 1)), substr(param, 2, nchar(param)))
       if(any(grp.ind, param == "loadings")) {
-        adjustcolor(palette(viridis(Q.max)), alpha.f=transparency)
+        palette(adjustcolor(viridis(Q.max), alpha.f=transparency))
         layout(rbind(1, 2), heights=c(9, 1))
         par(mar=c(3.1, 4.1, 4.1, 2.1))
       }
@@ -925,7 +925,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         layout(rbind(1, 2), heights=c(9, 1))
         par(mar=c(3.1, 4.1, 4.1, 2.1))
       }
-      adjustcolor(palette(viridis(nrow(plot.x), option="C")), alpha.f=transparency)
+      palette(viridis(nrow(plot.x), option="C"))
       col.e  <- if(G > 1) seq_len(nrow(plot.x)) else seq_along(plot.x)
       if(G    > 1)   {
         dens <- matrix(-1, nrow=nrow(plot.x), ncol=G + 1)
@@ -935,7 +935,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
       }
       pl.x   <- barplot(plot.x, beside=TRUE, col=col.e, main="", ylab="Deviation", density=dens)
       na.x   <- G > 1 & is.na(x.plot[[1]])
-      if(G > 1) points(x=Rfast::colMedians(pl.x[,which(na.x)]), y=rep(0, sum(na.x)), pch=8, col="red", cex=1.5)
+      if(G > 1) points(x=Rfast::colMedians(pl.x[,which(na.x), drop=FALSE]), y=rep(0, sum(na.x)), pch=8, col="red", cex=1.5)
       if(titles) title(main=list("Error Metrics"))
       if(titles) {
         par(mar=c(0, 0, 0, 0))
