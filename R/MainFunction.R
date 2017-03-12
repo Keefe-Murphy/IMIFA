@@ -122,6 +122,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
                         learn.alpha = TRUE, alpha.hyper = NULL, zeta = NULL, ind.slice = TRUE, rho = NULL, DP.lab.sw = TRUE, verbose = TRUE, discount = NULL, learn.d = FALSE, d.hyper = NULL,
                         kappa = NULL, mu0g = FALSE, psi0g = FALSE, delta0g = FALSE, mu.switch = TRUE, score.switch = TRUE, load.switch = TRUE, psi.switch = TRUE, pi.switch = TRUE) {
 
+  call      <- match.call()
   defopt    <- options()
   options(warn=1)
   on.exit(suppressWarnings(options(defopt)), add=TRUE)
@@ -744,6 +745,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     attr(imifa,
          "Class.Props")   <- tabulate(z.list[[1]], range.G)/N
   }
+  attr(imifa, "Call")     <- call
   attr(imifa, "Center")   <- any(centered, centering)
   attr(imifa, "Date")     <- format(Sys.Date(), "%d-%b-%Y")
   attr(imifa,

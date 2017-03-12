@@ -66,6 +66,7 @@ get_IMIFA_results              <- function(sims = NULL, burnin = 0L, thinning = 
 get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, Q = NULL, criterion = c("bicm", "aicm", "log.iLLH", "dic", "bic.mcmc", "aic.mcmc"),
                                            G.meth = c("mode", "median"), Q.meth = c("mode", "median"), dat = NULL, conf.level = 0.95, zlabels = NULL) {
 
+  call           <- match.call()
   defopt         <- options()
   options(warn=1)
   on.exit(suppressWarnings(options(defopt)), add=TRUE)
@@ -760,6 +761,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
 
   class(result)                <- "Results_IMIFA"
   attr(result, "Alpha")        <- if(!alpha.step) attr(sims, "Alpha")
+  attr(result, "Call")         <- call
   attr(result, "Conf.Level")   <- conf.level
   attr(result, "Errors")       <- any(err.T)
   attr(result, "Method")       <- method

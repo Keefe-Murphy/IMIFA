@@ -559,6 +559,7 @@
     summary.IMIFA        <- function(object, ...) {
       meth      <- attr(object, "Method")
       name      <- attr(object, "Name")
+      call      <- attr(object, "Call")
       fac       <- attr(object, "Factors")
       grp       <- attr(object, "Groups")
       Qmsg      <- Gmsg <- msg   <- NULL
@@ -577,6 +578,7 @@
       } else {
         msg     <- switch(meth, MFA=paste0(Gmsg, " and", Qmsg), MIFA=Gmsg)
       }
+        cat("Call:\t"); print(call); cat("\n")
         cat(paste0(meth, " simulations for '", name, "' dataset", msg, " to be passed to get_IMIFA_results(...)\n"))
     }
 
@@ -607,10 +609,12 @@
       criterion <- unlist(strsplit(toupper(attr(object$GQ.results, "Criterion")), "[.]"))
       criterion <- ifelse(length(criterion) > 1, ifelse(criterion[1] != "LOG", paste0(criterion[1], ".", tolower(criterion[2])), "LogIntegratedLikelihood"), criterion)
       crit.mat  <- object$GQ.results[[paste0(criterion, "s")]]
+      call      <- attr(object, "Call")
       msg       <- NULL
       if(any(dim(crit.mat) > 1)) {
         msg     <- paste0(", and ", ifelse(substr(criterion, 1, 1) == "A", "an ", "a "),  criterion, " of ", round(max(crit.mat), 2), "\n")
       }
+        cat("Call:\t"); print(call); cat("\n")
         cat(paste0(capture.output(print.Results_IMIFA(object)), msg))
     }
 
