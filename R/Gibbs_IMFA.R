@@ -5,7 +5,7 @@
 # Gibbs Sampler Function
   .gibbs_IMFA        <- function(Q, data, iters, N, P, G, mu.zero, rho, sigma.l, learn.alpha, discount,  mu,
                                  a.hyper, sigma.mu, burnin, thinning, d.hyper, learn.d, uni.type, uni.prior,
-                                 ind.slice, psi.alpha, psi.beta, verbose, sw, cluster, DP.lab.sw, zeta, ...) {
+                                 ind.slice, psi.alpha, psi.beta, verbose, sw, cluster, DP.lab.sw, zeta, kappa, ...) {
 
   # Define & initialise variables
     start.time       <- proc.time()
@@ -52,14 +52,14 @@
       d.store        <- ll.store
       d.shape1       <- d.hyper[1]
       d.shape2       <- d.hyper[2]
-      d.rates        <- ll.store
+      d.rates        <- rep(0, total)
     } else d.rates   <- 1
     MH.step          <- any(discount > 0, learn.d)
     if(MH.step)     {
-      a.rates        <- ll.store
+      a.rates        <- rep(0, total)
     } else a.rates   <- 1
     if(DP.lab.sw) {
-      lab.rate       <- matrix(0, nrow=2, ncol=n.store)
+      lab.rate       <- matrix(0, nrow=2, ncol=total)
     }
     mu.sigma         <- 1/sigma.mu
     sig.mu.sqrt      <- sqrt(sigma.mu)
@@ -166,8 +166,8 @@
       } else     {
         z            <- rep(1, N)
       }
-      nn             <- tabulate(z, nbins=G)
-      nn0            <- nn > 0
+      nn             <- tabulate(z, nbins=trunc.G)
+      nn0            <- nn[Gs] > 0
       nn.ind         <- which(nn0)
       G.non          <- length(nn.ind)
       dat.g          <- lapply(Gs, function(g) data[z == g,, drop=FALSE])
@@ -204,6 +204,13 @@
           pi.alpha   <- .sim_alpha_g(alpha=pi.alpha, shape=alpha.shape, rate=alpha.rate, G=G, N=N)
           a.rate     <- 1
         }
+      }
+
+    # Discount
+      if(learn.d) {
+        MH.disc      <- .sim_disc_mh(discount=discount, alpha=pi.alpha, disc.shape1=d.shape1, disc.shape2=d.shape2, N=N, G=G.non, kappa=kappa, nn)
+        discount     <- MH.disc$disc
+        d.rate       <- MH.disc$rate
       }
 
     # Label Switching
@@ -249,7 +256,9 @@
       if(zerr && !err.z) {                                       warning("Algorithm may slow due to corrections for Choleski decompositions of non-positive-definite covariance matrices", call.=FALSE)
         err.z        <- TRUE
       }
-
+      if(MH.step)       a.rates[iter]                         <- a.rate
+      if(learn.d)       d.rates[iter]                         <- d.rate
+      if(DP.lab.sw)     lab.rate[,iter]                       <- c(acc1, acc2)
       if(storage)    {
         if(verbose)     setTxtProgressBar(pb, iter)
         new.it       <- which(iters == iter)
@@ -260,9 +269,6 @@
         if(sw["pi.sw"])               pi.store[,new.it]       <- pi.prop
         if(learn.alpha)               alpha.store[new.it]     <- pi.alpha
         if(learn.d)                   d.store[new.it]         <- discount
-        if(MH.step)                   a.rates[new.it]         <- a.rate
-        if(learn.d)                   d.rates[new.it]         <- d.rate
-        if(DP.lab.sw)                 lab.rate[,new.it]       <- c(acc1, acc2)
                                       z.store[,new.it]        <- z
                                       ll.store[new.it]        <- sum(z.res$log.like)
                                       G.store[new.it]         <- G.non

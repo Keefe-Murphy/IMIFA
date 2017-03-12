@@ -6,7 +6,7 @@
   .gibbs_IMIFA       <- function(Q, data, iters, N, P, G, mu.zero, rho, sigma.l, learn.alpha, mu, sw, uni.type,
                                  uni.prior, sigma.mu, burnin, thinning, a.hyper, psi.alpha, psi.beta, verbose,
                                  adapt, ind.slice, alpha.d1, discount, alpha.d2, cluster, b0, b1, DP.lab.sw, zeta,
-                                 nu, prop, d.hyper, beta.d1, beta.d2, adapt.at, epsilon, learn.d, nuplus1, ...) {
+                                 nu, prop, d.hyper, beta.d1, beta.d2, adapt.at, epsilon, learn.d, nuplus1, kappa, ...) {
 
   # Define & initialise variables
     start.time       <- proc.time()
@@ -54,14 +54,14 @@
       d.store        <- ll.store
       d.shape1       <- d.hyper[1]
       d.shape2       <- d.hyper[2]
-      d.rates        <- ll.store
+      d.rates        <- rep(0, total)
     } else d.rates   <- 1
     MH.step          <- any(discount > 0, learn.d)
     if(MH.step)     {
-      a.rates        <- ll.store
+      a.rates        <- rep(0, total)
     } else a.rates   <- 1
     if(DP.lab.sw) {
-      lab.rate       <- matrix(0, nrow=2, ncol=n.store)
+      lab.rate       <- matrix(0, nrow=2, ncol=total)
     }
     mu.sigma         <- 1/sigma.mu
     sig.mu.sqrt      <- sqrt(sigma.mu)
@@ -182,7 +182,7 @@
         z            <- rep(1, N)
       }
       nn             <- tabulate(z, nbins=trunc.G)
-      nn0            <- nn   > 0
+      nn0            <- nn[Gs] > 0
       nn.ind         <- which(nn0)
       G.non          <- length(nn.ind)
       dat.g          <- lapply(Gs, function(g) data[z == g,, drop=FALSE])
@@ -289,6 +289,13 @@
         }
       }
 
+    # Discount
+      if(learn.d) {
+        MH.disc      <- .sim_disc_mh(discount=discount, alpha=pi.alpha, disc.shape1=d.shape1, disc.shape2=d.shape2, N=N, G=G.non, kappa=kappa, nn)
+        discount     <- MH.disc$disc
+        d.rate       <- MH.disc$rate
+      }
+
     # Label Switching
       if(DP.lab.sw)   {
         if(G.non > 1) {
@@ -354,6 +361,9 @@
       if(z.err  && !err.z) {                              warning("Algorithm may slow due to corrections for Choleski decompositions of non-positive-definite covariance matrices", call.=FALSE)
         err.z        <- TRUE
       }
+      if(MH.step)        a.rates[iter]                 <- a.rate
+      if(learn.d)        d.rates[iter]                 <- d.rate
+      if(DP.lab.sw)      lab.rate[,iter]               <- c(acc1, acc2)
       if(storage)    {
         if(verbose)      setTxtProgressBar(pb, iter)
         new.it       <-  which(iters == iter)
@@ -378,9 +388,6 @@
         if(sw["pi.sw"])  pi.store[,new.it]             <- pi.prop
         if(learn.alpha)  alpha.store[new.it]           <- pi.alpha
         if(learn.d)      d.store[new.it]               <- discount
-        if(MH.step)      a.rates[new.it]               <- a.rate
-        if(learn.d)      d.rates[new.it]               <- d.rate
-        if(DP.lab.sw)    lab.rate[,new.it]             <- c(acc1, acc2)
                          z.store[,new.it]              <- z
                          ll.store[new.it]              <- sum(z.res$log.like)
                          Q.store[,new.it]              <- Qs
@@ -402,7 +409,7 @@
                              psi       = if(sw["psi.sw"]) tryCatch(provideDimnames(psi.store, base=list(varnames, "", ""), unique=FALSE), error=function(e) psi.store),
                              pi.prop   = if(sw["pi.sw"])  pi.store,
                              alpha     = if(learn.alpha)  alpha.store,
-                             discount  = if(learn.d)      discount,
+                             discount  = if(learn.d)      d.store,
                              a.rate    = if(MH.step)      mean(a.rates) else a.rates,
                              d.rate    = if(learn.d)      mean(d.rates) else d.rates,
                              lab.rate  = if(DP.lab.sw)    setNames(rowmeans(lab.rate), c("Move1", "Move2")),

@@ -439,16 +439,26 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       alpha      <- sims[[G.ind]][[Q.ind]]$alpha
       post.alpha <- mean(alpha)
       var.alpha  <- Var(alpha)
-      ci.alpha   <- quantile(alpha, conf.levels)
+      ci.alpha   <- quantile(alpha,    conf.levels)
       rate       <- sims[[G.ind]][[Q.ind]]$a.rate
-      DP.alpha   <- list(alpha = alpha, post.alpha = post.alpha, var.alpha = var.alpha, ci.alpha = ci.alpha, acceptance.rate = rate)
+      DP.alpha   <- list(alpha = alpha, post.alpha = post.alpha, var.alpha = var.alpha, ci.alpha = ci.alpha, alpha.rate = rate)
       class(DP.alpha)          <- "listof"
+    }
+    if(learn.d)    {
+      discount   <- sims[[G.ind]][[Q.ind]]$discount
+      post.disc  <- mean(discount)
+      var.disc   <- Var(discount)
+      ci.disc    <- quantile(discount, conf.levels)
+      rate       <- sims[[G.ind]][[Q.ind]]$d.rate
+      PY.disc    <- list(discount = discount, post.disc = post.disc, var.disc = var.disc, ci.disc = ci.disc, disc.rate = rate)
+      class(PY.disc)           <- "listof"
     }
     cluster      <- list(map = post.z, z = z, uncertainty = uncertain)
     cluster      <- c(cluster, list(post.sizes = sizes, post.pi = post.pi/sum(post.pi)),
                       if(sw["pi.sw"]) list(pi.prop = pi.prop, var.pi = var.pi, ci.pi = ci.pi),
                       if(!label.miss) list(perf = tab.stat),
                       if(alpha.step)  list(DP.alpha = DP.alpha),
+                      if(learn.d)     list(PY.disc = PY.disc),
                       if(is.element(method, c("IMFA", "IMIFA"))) list(lab.rate = sims[[G.ind]][[Q.ind]]$lab.rate))
     attr(cluster, "Z.init")    <- attr(sims[[G.ind]], "Z.init")
     attr(cluster, "Init.Meth") <- attr(sims, "Init.Z")

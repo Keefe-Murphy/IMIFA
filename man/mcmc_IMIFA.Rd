@@ -16,8 +16,8 @@ mcmc_IMIFA(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA",
   nu = NULL, nuplus1 = TRUE, adapt.at = NULL, b0 = NULL, b1 = NULL,
   learn.alpha = TRUE, alpha.hyper = NULL, zeta = NULL, ind.slice = TRUE,
   rho = NULL, DP.lab.sw = TRUE, verbose = TRUE, discount = NULL,
-  learn.d = FALSE, d.hyper = NULL, mu0g = FALSE, psi0g = FALSE,
-  delta0g = FALSE, mu.switch = TRUE, score.switch = TRUE,
+  learn.d = FALSE, d.hyper = NULL, kappa = NULL, mu0g = FALSE,
+  psi0g = FALSE, delta0g = FALSE, mu.switch = TRUE, score.switch = TRUE,
   load.switch = TRUE, psi.switch = TRUE, pi.switch = TRUE)
 }
 \arguments{
@@ -94,7 +94,7 @@ mcmc_IMIFA(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA",
 
 \item{b1}{Slope parameter for the exponentially decaying adaptation probability s.t. \code{p(iter) = 1/exp(b0 + b1(iter - adapt.at))}. Defaults to 0.00005. Only relevant for methods ending in IFA.}
 
-\item{learn.alpha}{Logical indicating whether the Dirichlet process / Pitman concentration parameter is to be learned, or remain fixed for the duration of the chain. If being learned, a Ga(a, b) prior is assumed for \code{alpha}; updates take place via Gibbs sampling when \code{discount} is zero and via Metropolis-Hastings otherwise. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods.}
+\item{learn.alpha}{Logical indicating whether the Dirichlet process / Pitman concentration parameter is to be learned, or remain fixed for the duration of the chain. If being learned, a Ga(a, b) prior is assumed for \code{alpha}; updates take place via Gibbs sampling when \code{discount} is zero and via Metropolis-Hastings otherwise. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods, in which case the default is \code{TRUE}.}
 
 \item{alpha.hyper}{A vector of length 2 giving hyperparameters for the Dirichlet process / Pitman-Yor concentration parameter \code{alpha}. If \code{isTRUE(learn.alpha)}, these are shape and rate parameter of a Gamma distribution. Defaults to Ga(2, 1). Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods, in which case the default is \code{TRUE}. The prior is shifted to have support on (-\code{discount}, \code{Inf}) when non-zero \code{discount} is supplied or \code{learn.d=TRUE}.}
 
@@ -108,11 +108,13 @@ mcmc_IMIFA(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA",
 
 \item{verbose}{Logical indicating whether to print output (e.g. run times) and a progress bar to the screen while the sampler runs (defaults to \code{TRUE}). If \code{FALSE}, warnings and error messages will still be printed to the screen, but everything else will be suppressed.}
 
-\item{discount}{The discount parameter used when generalising the Dirichlet process to the Pitman-Yor process. Must lie in the interval (0, 1). If non-zero, \code{alpha} can be supplied greater than -discount. Defaults to 0. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods.}
+\item{discount}{The discount parameter used when generalising the Dirichlet process to the Pitman-Yor process. Must lie in the interval [0, 1). If non-zero, \code{alpha} can be supplied greater than -discount. Defaults to 0. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods.}
 
-\item{learn.d}{Logical indicating whether the \code{discount} parameter is to be updated. Not yet implemented.}
+\item{learn.d}{Logical indicating whether the \code{discount} parameter is to be updated via Metropolis-Hastings. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods, in which case the default is \code{FALSE}.}
 
-\item{d.hyper}{Hyperparameters for the Beta prior on the \code{discount} hyperparameter. However, learning this parameter is not yet implemented.}
+\item{d.hyper}{Hyperparameters for the Beta(a,b) prior on the \code{discount} hyperparameter. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods.}
+
+\item{kappa}{The prior distribution on the \code{discount} hyperparameter is assumed to be a mixture with point-mass at zero and a continuous Beta(a,b) distribution. \code{kappa} gives the weight of the point mass at zero. Must lie in the interval [0,1]. Defaults to 0.5. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods.}
 
 \item{mu0g}{Logical indicating whether the \code{mu.zero} hyperparameter can be cluster-specific. Defaults to \code{FALSE}. Only relevant for the "\code{MFA}" and "\code{MIFA}" methods when \code{z.list} is supplied.}
 

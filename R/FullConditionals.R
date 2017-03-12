@@ -81,7 +81,7 @@
 
     .sim_pi_inf  <- function(alpha, nn, N = sum(nn), len, lseq, discount = 0L) {
       vs         <- if(discount == 0) rbeta(len, 1 + nn, alpha + N - cumsum(nn)) else rbeta(len, 1 - discount + nn, alpha + lseq * discount + N - cumsum(nn))
-        return(list(Vs = vs, pi.prop = vapply(lseq, function(t) vs[t] * prod(1 - vs[seq_len(t - 1)]), numeric(1L))))
+        return(list(Vs = vs, pi.prop = vs[lseq] * cumprod(1 - c(0, vs[lseq[-len]]))))
     }
 
   # Cluster Labels
@@ -159,6 +159,20 @@
         return(list(alpha  = ifelse(acpt, propa, alpha), rate  = acpt))
     }
 
+  # Discount
+    .log_pdisc   <- function(discount, alpha, disc.shape1, disc.shape2, N, G, kappa, nn) {
+      l.prior    <- ifelse(discount == 0, log(kappa), log(1 - kappa) + dbeta(discount, shape1=disc.shape1, shape2=disc.shape2, log=TRUE))
+        sum(log(alpha + discount * seq_len(G - 1))) + sum(lgamma(nn  - discount) - lgamma(1 - discount)) + l.prior
+    }
+
+    .sim_disc_mh <- function(discount, alpha, disc.shape1, disc.shape2, N, G, kappa, nn) {
+      propd      <- ifelse(alpha > 0,    ifelse(rbinom(1, 1, prob=1  - kappa) == 0,
+                    0, rbeta(1,  disc.shape1, disc.shape2)), runif(1, max(0,   - alpha), 1))
+      cprob      <- .log_pdisc(propd,    alpha, disc.shape1, disc.shape2, N, G,  kappa, nn)
+      pprob      <- .log_pdisc(discount, alpha, disc.shape1, disc.shape2, N, G,  kappa, nn)
+      logpr      <- pprob  - cprob
+      acpt       <- logpr >= 0  ||   - rexp(1) < logpr
+        return(list(disc   = ifelse(acpt, propd, discount),  rate    = acpt))
     }
 
 # Priors

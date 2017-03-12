@@ -4,6 +4,8 @@
 ## New Features
 * Sped up simulating cluster labels from unnormalised log probabilities using the Gumbel-Max trick (Yellott, 1977):  
   `gumbel_max` replaces earlier function to sample cluster labels & is now unhidden/exported/documented.
+* Learning the Pitman-Yor `discount` hyperparameter via Metropolis-Hastings now implemented.  
+  Plotting function's `param` argument gains the option `discount` for posterior inference.
 * Simulated (finite) mixing proportions w/ _Gamma(alpha, 1)_ trick (Devroye 1986, p.594) instead of `MCMCpack:rdirichlet`:  
   `rDirichlet` replaces earlier function to sample mixing proportions & is now unhidden/exported/documented.
 * Fixed calculation of # 'free' parameters for `aic.mcmc` and `bic.mcmc` criteria when uniquenesses are isotropic:    
@@ -12,7 +14,7 @@
 * Added new plot when `plot.meth=GQ` for OM(I)FA/IM(I)FA methods depicting trace(s) of #s of active/non-empty groups.
 
 ## Improvements
-* Metropolis-Hastings updates implemented for `alpha` when `discount` is non-zero, rathern than Gibbs.
+* Metropolis-Hastings updates implemented for `alpha` when `discount` is non-zero, rather than usual Gibbs.
 * Deferred setting `dimnames` attributes in `mcmc_IMIFA` to `get_IMIFA_results`: lower memory burden/faster simulations.
 * Jettisoned superfluous duplicate material in object outputted from `get_IMIFA_results` to reduce size/simplify access.
 * Removed IMFA/IMIFA `trunc.G` arg, made `range.G` the max allowable # active groups & also stored # active groups.

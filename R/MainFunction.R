@@ -44,16 +44,17 @@
 #' @param adapt.at The iteration at which adaptation is to begin. Defaults to \code{burnin} for the "\code{IFA}" and "\code{MIFA}" methods, defaults to 0 for the "\code{OMIFA}" and "\code{IMIFA}". Cannot exceed \code{burnin}. Only relevant for methods ending in IFA.
 #' @param b0 Intercept parameter for the exponentially decaying adaptation probability s.t. \code{p(iter) = 1/exp(b0 + b1(iter - adapt.at))}. Defaults to 0.1. Only relevant for methods ending in IFA.
 #' @param b1 Slope parameter for the exponentially decaying adaptation probability s.t. \code{p(iter) = 1/exp(b0 + b1(iter - adapt.at))}. Defaults to 0.00005. Only relevant for methods ending in IFA.
-#' @param learn.alpha Logical indicating whether the Dirichlet process / Pitman concentration parameter is to be learned, or remain fixed for the duration of the chain. If being learned, a Ga(a, b) prior is assumed for \code{alpha}; updates take place via Gibbs sampling when \code{discount} is zero and via Metropolis-Hastings otherwise. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods.
+#' @param learn.alpha Logical indicating whether the Dirichlet process / Pitman concentration parameter is to be learned, or remain fixed for the duration of the chain. If being learned, a Ga(a, b) prior is assumed for \code{alpha}; updates take place via Gibbs sampling when \code{discount} is zero and via Metropolis-Hastings otherwise. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods, in which case the default is \code{TRUE}.
 #' @param alpha.hyper A vector of length 2 giving hyperparameters for the Dirichlet process / Pitman-Yor concentration parameter \code{alpha}. If \code{isTRUE(learn.alpha)}, these are shape and rate parameter of a Gamma distribution. Defaults to Ga(2, 1). Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods, in which case the default is \code{TRUE}. The prior is shifted to have support on (-\code{discount}, \code{Inf}) when non-zero \code{discount} is supplied or \code{learn.d=TRUE}.
 #' @param zeta Tuning parameter controlling the acceptance rate of the random-walk proposal for the Metropolis-Hastings steps when \code{learn.alpha=TRUE}. These steps are only invoked when either \code{discount} is non-zero or \code{learn.d=TRUE}, otherwise \code{alpha} is learned by Gibbs updates. Must be strictly positive. Defauts to 2.
 #' @param ind.slice Logical indicitating whether the independent slice-efficient sampler is to be employed. If \code{FALSE} the dependent slice-efficient sampler is employed, whereby the slice sequence xi_1,...,xi_g is equal to the decreasingly ordered mixing proportions. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods. Defaults to \code{TRUE}.
 #' @param rho Parameter controlling the rate of geometric decay for the independent slice-efficient sampler, s.t. xi = (1 - rho)rho^(g-1). Must lie in the interval (0, 1]. Higher values are associated with better mixing but longer run times. Defaults to 0.75, but 0.5 is an interesting special case which guarantees that the slice sequence xi_1,...,xi_g is equal to the \emph{expectation} of the decreasingly ordered mixing proportions. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods when \code{ind.slice} is \code{TRUE}.
 #' @param DP.lab.sw Logial indicating whether the two forced label switching moves are to be implemented (defaults to \code{TRUE}). Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods.
 #' @param verbose Logical indicating whether to print output (e.g. run times) and a progress bar to the screen while the sampler runs (defaults to \code{TRUE}). If \code{FALSE}, warnings and error messages will still be printed to the screen, but everything else will be suppressed.
-#' @param discount The discount parameter used when generalising the Dirichlet process to the Pitman-Yor process. Must lie in the interval (0, 1). If non-zero, \code{alpha} can be supplied greater than -discount. Defaults to 0. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods.
-#' @param learn.d Logical indicating whether the \code{discount} parameter is to be updated. Not yet implemented.
-#' @param d.hyper Hyperparameters for the Beta prior on the \code{discount} hyperparameter. However, learning this parameter is not yet implemented.
+#' @param discount The discount parameter used when generalising the Dirichlet process to the Pitman-Yor process. Must lie in the interval [0, 1). If non-zero, \code{alpha} can be supplied greater than -discount. Defaults to 0. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods.
+#' @param learn.d Logical indicating whether the \code{discount} parameter is to be updated via Metropolis-Hastings. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods, in which case the default is \code{FALSE}.
+#' @param d.hyper Hyperparameters for the Beta(a,b) prior on the \code{discount} hyperparameter. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods.
+#' @param kappa The prior distribution on the \code{discount} hyperparameter is assumed to be a mixture with point-mass at zero and a continuous Beta(a,b) distribution. \code{kappa} gives the weight of the point mass at zero. Must lie in the interval [0,1]. Defaults to 0.5. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods.
 #' @param mu0g Logical indicating whether the \code{mu.zero} hyperparameter can be cluster-specific. Defaults to \code{FALSE}. Only relevant for the "\code{MFA}" and "\code{MIFA}" methods when \code{z.list} is supplied.
 #' @param psi0g Logical indicating whether the \code{psi.beta} hyperparameter(s) can be cluster-specific. Defaults to \code{FALSE}. Only relevant for the "\code{MFA}" and "\code{MIFA}" methods when \code{z.list} is supplied.
 #' @param delta0g Logical indicating whether the \code{alpha.d1}  and \code{alpha.d2} hyperparameters can be cluster-specific. Defaults to \code{FALSE}. Only relevant for the "\code{MFA}" and "\code{MIFA}" methods when \code{z.list} is supplied.
@@ -119,7 +120,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
                         uni.type = c("unconstrained", "isotropic"), uni.prior = c("unconstrained", "isotropic"), z.init = c("mclust", "kmeans", "list", "priors"), z.list = NULL, adapt = TRUE,
                         prop = NULL, epsilon = NULL, alpha.d1 = NULL, alpha.d2 = NULL, beta.d1 = NULL, beta.d2 = NULL, nu = NULL, nuplus1 = TRUE, adapt.at = NULL, b0 = NULL, b1 = NULL,
                         learn.alpha = TRUE, alpha.hyper = NULL, zeta = NULL, ind.slice = TRUE, rho = NULL, DP.lab.sw = TRUE, verbose = TRUE, discount = NULL, learn.d = FALSE, d.hyper = NULL,
-                        mu0g = FALSE, psi0g = FALSE, delta0g = FALSE, mu.switch = TRUE, score.switch = TRUE, load.switch = TRUE, psi.switch = TRUE, pi.switch = TRUE) {
+                        kappa = NULL, mu0g = FALSE, psi0g = FALSE, delta0g = FALSE, mu.switch = TRUE, score.switch = TRUE, load.switch = TRUE, psi.switch = TRUE, pi.switch = TRUE) {
 
   defopt    <- options()
   options(warn=1)
@@ -225,17 +226,22 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
          length(learn.alpha) != 1)) stop("'learn.alpha' must be TRUE or FALSE")
   if(any(!is.logical(learn.d),
          length(learn.d)     != 1)) stop("'learn.d' must be TRUE or FALSE")
-  if(isTRUE(learn.d))               stop("Pitman-Yor discount hyperparameter must remain fixed; learning not yet implemented")
   if(missing(d.hyper))       d.hyper       <- c(1L, 1L)
   if(length(d.hyper)         != 2)  stop("d.hyper' must be a vector of length 2")
   if(any(d.hyper   <= 0))           stop("'Discount Beta prior hyperparameters must be strictly positive")
-  discount         <- switch(method, IMFA=, IMIFA=ifelse(missing(discount), ifelse(learn.d, rbeta(1, d.hyper[1], d.hyper[2]), 0), discount), 0)
+  if(missing(kappa)) {
+    kappa          <- 0.5
+  }
+  if(any(!is.numeric(kappa),
+         length(kappa)     != 1))   stop("'kappa' must be a single number")
+  if(kappa <- 0    || kappa > 1)    stop("'kappa' must lie in the interval [0, 1]")
+  discount         <- switch(method, IMFA=, IMIFA=ifelse(missing(discount), ifelse(learn.d, ifelse(rbinom(1, 1, prob=1 - kappa) == 0, 0, rbeta(1, d.hyper[1], d.hyper[2])), 0), discount))
   if(any(!is.numeric(discount),
-         length(discount) != 1))    stop("'discount' must be a single number")
-  if(discount       < 0   ||
+         length(discount)  != 1))   stop("'discount' must be a single number")
+  if(discount       < 0    ||
      discount      >= 1)            stop("'discount' must lie in the interval [0, 1)")
   if(all(!is.element(method, c("IMFA", "IMIFA")), learn.alpha))  {
-    learn.alpha     <- FALSE
+    learn.alpha    <- FALSE
     if(!alpha.x)                    warning(paste0("'learn.alpha' must be FALSE for the ", method, " method"), call.=FALSE)
   }
   if(!is.element(method, c("MFA", "MIFA")))      {
@@ -450,7 +456,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   if(all(!is.element(method, c("MFA", "MIFA", "classify")),
          any(sw0gs)))               stop(paste0("'", names(which(sw0gs)), "' should be FALSE for the ", method, " method\n"))
   if(!is.element(method, c("FA", "IFA", "classify"))) {
-    if(missing("alpha"))   { alpha         <- switch(method, MFA=, MIFA=1, OMFA=, OMIFA=0.5/range.G, if(learn.alpha) max(1 - discount, rgamma(1, a.hyp1, a.hyp2)) else 1 - discount)
+    if(missing("alpha"))   { alpha         <- switch(method, MFA=, MIFA=1, OMFA=, OMIFA=0.5/range.G, if(learn.alpha) max(1, rgamma(1, a.hyp1, a.hyp2)) - discount else 1 - discount)
     } else if(is.element(method,
       c("OMFA", "OMIFA")))   alpha         <- alpha/range.G
     if(length(alpha) != 1)          stop("'alpha' must be specified as a scalar to ensure an exchangeable prior")
@@ -489,8 +495,8 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   gibbs.arg <- list(P = P, sigma.mu = sigma.mu, psi.alpha = psi.alpha, burnin = burnin, sw = switches,
                     thinning = thinning, iters = iters, verbose = verbose, uni.type = uni.type, uni.prior = uni.prior)
   if(is.element(method, c("IMIFA", "IMFA"))) {
-    gibbs.arg      <- append(gibbs.arg, list(rho = rho, ind.slice = ind.slice, learn.alpha = learn.alpha, learn.d = learn.d, zeta = zeta,
-                                             DP.lab.sw = DP.lab.sw, a.hyper = alpha.hyper, discount = discount, d.hyper = d.hyper))
+    gibbs.arg      <- append(gibbs.arg, list(rho = rho, ind.slice = ind.slice, learn.alpha = learn.alpha, learn.d = learn.d, kappa = kappa,
+                                             zeta = zeta, DP.lab.sw = DP.lab.sw, a.hyper = alpha.hyper, discount = discount, d.hyper = d.hyper))
   }
   if(is.element(method, c("FA", "IFA", "MFA", "MIFA")))   {
     gibbs.arg      <- append(gibbs.arg, list(scaling = scaling))
@@ -763,7 +769,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   attr(attr(imifa,
   "Scaling"), "Method")   <- scaling
   attr(imifa, "Store")    <- length(iters)
-  switches                <- c(switches, a.sw = learn.alpha)
+  switches                <- c(switches, a.sw = learn.alpha, d.sw = learn.d)
   if(is.element(method, c("FA", "IFA"))) {
     switches["pi.sw"]     <- FALSE
   }
