@@ -6,18 +6,19 @@
 #' @param thinning Optional interval for extra thinning to be applied. Defaults to 1, corresponding to no thinning.
 #' @param G If this argument is not specified, results will be returned with the optimal number of clusters. If different numbers of clusters were explored in \code{sims} for the "\code{MFA}" or "\code{MIFA}" methods, supplying an integer value allows pulling out a specific solution with \code{G} clusters, even if the solution is sub-optimal. Similarly, this allows retrieval of samples corresponding to a solution, if visited, with \code{G} clusters for the "\code{OMFA}", "\code{OMIFA}", "\code{IMFA}" and "\code{IMIFA}" methods.
 #' @param Q If this argument is non specified, results will be returned with the optimal number of factors. If different numbers of factors were explored in \code{sims} for the "\code{FA}", "\code{MFA}", "\code{OMFA}" or "\code{IMFA}" methods, this allows pulling out a specific solution with \code{Q} factors, even if the solution is sub-optimal. Similarly, this allows retrieval of samples corresponding to a solution, if visited, with \code{Q} factors for the "\code{IFA}", "\code{MIFA}", "\code{OMIFA}" and "\code{IMIFA}" methods.
-#' @param criterion The criterion to use for model selection, where model selection is only required if more than one model was run under the "\code{FA}", "\code{MFA}", "\code{MIFA}", "\code{OMFA}" or "\code{IMFA}" methods when \code{sims} was created via \code{\link{mcmc_IMIFA}}. Note that these are \emph{all} calculated, this argument merely indicates which one will form the basis of the construction of the output. Note that the first three options here might exhibit bias in favour of zero-factor models for the finite factor "\code{FA}", "\code{MFA}", "\code{OMFA}" and "\code{IMFA}" methods and might exhibit bias in favour of one-group models for the "\code{MFA}" and "\code{MIFA}" methods.
+#' @param criterion The criterion to use for model selection, where model selection is only required if more than one model was run under the "\code{FA}", "\code{MFA}", "\code{MIFA}", "\code{OMFA}" or "\code{IMFA}" methods when \code{sims} was created via \code{\link{mcmc_IMIFA}}. Note that these are \emph{all} calculated, this argument merely indicates which one will form the basis of the construction of the output. Note that the first three options here might exhibit bias in favour of zero-factor models for the finite factor "\code{FA}", "\code{MFA}", "\code{OMFA}" and "\code{IMFA}" methods and might exhibit bias in favour of one-cluster models for the "\code{MFA}" and "\code{MIFA}" methods.
 #' @param G.meth If the object in \code{sims} arises from the "\code{OMFA}", "\code{OMIFA}", "\code{IMFA}" or "\code{IMIFA}" methods, this argument determines whether the optimal number of clusters is given by the mode or median of the posterior distribution of \code{G}. Defaults to "\code{Mode}".
 #' @param Q.meth If the object in \code{sims} arises from the "\code{IFA}", "\code{MIFA}", "\code{OMIFA}" or "\code{IMIFA}" methods, this argument determines whether the optimal number of latent factors is given by the mode or median of the posterior distribution of \code{Q}. Defaults to "\code{Mode}".
 #' @param dat The actual data set on which \code{\link{mcmc_IMIFA}} was originally run. This is necessary for computing error metrics between the estimated and empirical covariance matrix/matrices. If this is not supplied, the function will attempt to find the data set if it is still available in the global environment.
 #' @param conf.level The confidence level to be used throughout for credible intervals for all parameters of inferential interest. Defaults to 0.95.
+#' @param z_avgsim Logical indicating whether the clustering should also be summarised by the clustering with minimum squared distance to the similarity matrix obtained by averaging the stored adjacency matrices, in addition to the MAP estimate. Note that the MAP clustering is computed \emph{conditional} on the estimate of the number of clusters (whether that be the modal estimate or the estimate according to \code{criterion}) and other parameters are extracted conditional on this estimate of \code{G}: however, in constrast, the number of distinct clusters in the summarised labels obtained by \code{z_avgsim=TRUE} may not necessarily coincide with the estimate of \code{G}, but may provide a useful alternative summary of the partitions explored during the chain. This can take quite some time to compute, and may not even be possible if the number of observations &/or number of stored iterations is large and the resulting matrix isn't sufficiently sparse, so the default is \code{FALSE}, otherwise both the summarised clustering and the similarity matrix are stored: the latter can be passed to \code{\link{plot.Results_IMIFA}}.
 #' @param zlabels For any method that performs clustering, the true labels can be supplied if they are known in order to compute clustering performance metrics. This also has the effect of ordering the MAP labels (and thus the ordering of cluster-specific parameters) to most closely correspond to the true labels if supplied.
 #'
 #' @return An object of class "\code{Results_IMIFA}" to be passed to \code{\link{plot.Results_IMIFA}} for visualising results. Dedicated \code{print} and \code{summary} functions exist for objects of this class. The object, say \code{x}, is a list of lists, the most important components of which are:
 #' \describe{
-#' \item{Clust}{Everything pertaining to clustering performance can be found here for all but the "\code{FA}" and "\code{IFA}" methods. More detail is given if \code{zlabels} are supplied.}
+#' \item{Clust}{Everything pertaining to clustering performance can be found here for all but the "\code{FA}" and "\code{IFA}" methods, in particular \code{x$Clust$map}, the MAP summary of the posterior clustering. More detail is given if known \code{zlabels} are supplied: performance is always evaluated against the MAP clustering, with additional evaluation against the alternative clustering computed if \code{z_avgsim=TRUE}.}
 #' \item{Error}{Error metrics (e.g. MSE) between the empirical and estimated covariance matrix/matrices.}
-#' \item{GQ.results}{Everything pertaining to model choice can be found here, incl. posterior summaries for the estimated number of groups and estimated number of factors, if applicable to the method employed. Information criterion values are also accessible here.}
+#' \item{GQ.results}{Everything pertaining to model choice can be found here, incl. posterior summaries for the estimated number of clusters and estimated number of factors, if applicable to the method employed. Information criterion values are also accessible here.}
 #' \item{Means}{Posterior summaries for the means.}
 #' \item{Loadings}{Posterior summaries for the factor loadings matrix/matrices. Posterior mean loadings given by x$Loadings$post.load are given the \code{\link[stats]{loadings}} class for printing purposes and thus the manner in which they are displayed can be modified.}
 #' \item{Scores}{Posterior summaries for the latent factor scores.}
@@ -53,18 +54,18 @@
 #'
 #' # Extract optimum results
 #' # Estimate G & Q by the median of their posterior distributions
-#' # Construct 90% credible intervals.
-#' # resIMIFAolive <- get_IMIFA_results(simIMIFAolive, G.meth="median",
-#' #                                    Q.meth="median", conf.level=0.9)
+#' # Construct 90% credible intervals and try to return the similarity matrix.
+#' # resIMIFAolive <- get_IMIFA_results(simIMIFAolive, G.meth="median", Q.meth="median",
+#' #                                    conf.level=0.9, z_avgsim=TRUE)
 #' # summary(resIMIFAolive)
 get_IMIFA_results              <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, Q = NULL, criterion = c("bicm", "aicm", "log.iLLH", "dic", "bic.mcmc", "aic.mcmc"),
-                                           G.meth = c("mode", "median"), Q.meth = c("mode", "median"), dat = NULL, conf.level = 0.95, zlabels = NULL) {
+                                           G.meth = c("mode", "median"), Q.meth = c("mode", "median"), dat = NULL, conf.level = 0.95, z_avgsim = FALSE, zlabels = NULL) {
   UseMethod("get_IMIFA_results")
 }
 
 #' @export
 get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, Q = NULL, criterion = c("bicm", "aicm", "log.iLLH", "dic", "bic.mcmc", "aic.mcmc"),
-                                           G.meth = c("mode", "median"), Q.meth = c("mode", "median"), dat = NULL, conf.level = 0.95, zlabels = NULL) {
+                                           G.meth = c("mode", "median"), Q.meth = c("mode", "median"), dat = NULL, conf.level = 0.95, z_avgsim = FALSE, zlabels = NULL) {
 
   call           <- match.call()
   defopt         <- options()
@@ -114,6 +115,8 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
      c("aic.mcmc", "bic.mcmc")))) stop(paste0(ifelse(isTRUE(choice), "Model choice is", "Though model choice isn't"), " actually required -\n 'criterion' cannot be 'aic.mcmc' or 'bic.mcmc' for the ", method, " method"))
   recomp         <- any(burnin  > 0,
                     thinning    > 1)
+  if(any(!is.logical(z_avgsim),
+         length(z_avgsim) != 1))  stop("'z_avgsim' must be TRUE or FALSE")
 
   G.T            <- !missing(G)
   Q.T            <- !missing(Q)
@@ -353,7 +356,9 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     if(sw["pi.sw"])   {
       pies       <- sims[[G.ind]][[Q.ind]]$pi.prop[,tmp.store, drop=FALSE]
     }
-    z            <- as.matrix(sims[[G.ind]][[Q.ind]]$z.store[,tmp.store])
+    zadj         <- sims[[G.ind]][[Q.ind]]$z.store
+    z            <- as.matrix(zadj[,tmp.store])
+    zadj         <- zadj[,store]
     if(!label.switch) {
       z.temp     <- tryCatch(factor(z[,1], labels=Gseq), error=function(e) factor(z[,1], levels=Gseq))
       for(sl in seq_along(tmp.store)) {
@@ -379,7 +384,73 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
         }
       }
     }
-    post.z       <- apply(z, 1, function(x) factor(which.max(tabulate(x)), levels=Gseq))
+    map          <- apply(z, 1, function(x) factor(which.max(tabulate(x)), levels=Gseq))
+    if(isTRUE(z_avgsim)) {
+      z_simil    <- function() {
+        ztmp     <- matrix(0L, nrow=n.obs, ncol=n.obs)
+        zsum     <- as.simple_triplet_matrix(ztmp)
+        zis      <- list()
+        for(i in seq_len(n.store))    {
+          zi     <- ztmp
+          zj     <- zadj[,i]
+          for(j in seq_len(max(zj)))  {
+           zi[zj == j,zj == j] <- 1L
+          }
+          zsum   <- zsum  + as.simple_triplet_matrix(zi)
+          zis[[i]]       <- zi
+          rm(zi)
+          rm(zj)
+        }
+        zavg     <- zsum/n.store
+        rm(zsum)
+        zd       <- rep(0, n.store)
+        for(i in seq_len(n.store))    {
+          distz  <- zis[[i]]    - zavg
+          zd[i]  <- sum(distz   * distz)
+          rm(distz)
+        }
+        rm(zis)
+        ind.z    <- which.min(zd)
+        rm(zd)
+          return(list(zadj = zadj[,ind.z], zavg = zavg))
+      }
+      zlog       <- capture.output(znew <- try(z_simil(), silent=TRUE))
+      if(!inherits(znew, "try-error")) {
+        zadj     <- znew$zadj
+        zavg     <- znew$zavg
+        zadj     <- factor(zadj, labels=seq_along(unique(zadj)))
+        zadj     <- as.numeric(levels(zadj))[zadj]
+        zG       <- max(zadj)
+        if(!label.miss) {
+         zlabels <- factor(zlabels, labels=seq_along(unique(zlabels)))
+         levs    <- levels(zlabels)
+         if(length(levs) == zG) {
+           swlab <- .lab_switch(z.new=zadj, z.old=zlabels, Gs=seq_len(zG))
+           zadj  <- factor(swlab$z, levels=seq_len(zG))
+         }
+         tab     <- table(zadj, zlabels, dnn=list("Predicted", "Observed"))
+         tabstat <- c(classAgreement(tab), classError(map, zlabels))
+         if(nrow(tab) != ncol(tab))     {
+         tabstat <- tabstat[-seq_len(2)]
+           names(tabstat)[4]   <- "error.rate"
+         } else {
+           names(tabstat)[6]   <- "error.rate"
+         }
+         if(tabstat$error.rate == 0) {
+         tabstat$misclassified <- NULL
+         }
+         tabstat <- c(list(confusion.matrix = tab), tabstat)
+         if(length(levs) == zG)  {
+          names(tabstat)[1]    <- "confusion.matrix.matched"
+         }
+         class(tabstat)        <- "listof"
+        }
+        z_simavg <- list(z.avg = zadj, z.sim = zavg)
+        z_simavg <- c(z_simavg, if(!label.miss) list(avgsim.perf = tabstat))
+      } else {                    warning("Can't compute similarity matrix or 'average' clustering: forcing 'z_avgsim' to FALSE", call.=FALSE)
+        z_avgsim <- FALSE
+      }
+    }
     uncertain    <- 1 - Rfast::colMaxs(matrix(apply(z, 1, tabulate, nbins=G)/length(tmp.store), nrow=G, ncol=n.obs), value=TRUE)
     if(sw["pi.sw"]) {
       pi.prop    <- provideDimnames(pies[Gseq,seq_along(tmp.store), drop=FALSE], base=list(gnames, ""), unique=FALSE)
@@ -387,7 +458,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       ci.pi      <- rowQuantiles(pi.prop, probs=conf.levels)
       post.pi    <- setNames(rowmeans(pi.prop),        gnames)
     } else {
-      post.pi    <- setNames(prop.table(tabulate(post.z, nbins=G)), gnames)
+      post.pi    <- setNames(prop.table(tabulate(map, nbins=G)), gnames)
     }
     if(inf.Q)       {
       Q.store    <- provideDimnames(Q.store, base=list(gnames, ""), unique=FALSE)
@@ -396,8 +467,8 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       zlabels    <- factor(zlabels, labels=seq_along(unique(zlabels)))
       levs       <- levels(zlabels)
       if(length(levs) == G) {
-        sw.lab   <- .lab_switch(z.new=post.z, z.old=zlabels, Gs=Gseq)
-        post.z   <- factor(sw.lab$z, levels=Gseq)
+        sw.lab   <- .lab_switch(z.new=map, z.old=zlabels, Gs=Gseq)
+        map      <- factor(sw.lab$z, levels=Gseq)
         l.perm   <- sw.lab$z.perm
         z.tmp    <- apply(z, 2, factor, levels=l.perm)
         z        <- apply(z.tmp, 2, function(x) as.numeric(levels(as.factor(x)))[as.numeric(x)])
@@ -415,8 +486,8 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
          Q.store <- provideDimnames(unname(Q.store[index,, drop=FALSE]), base=list(gnames, ""), unique=FALSE)
         }
       }
-      tab        <- table(post.z, zlabels, dnn=list("Predicted", "Observed"))
-      tab.stat   <- c(classAgreement(tab), classError(post.z, zlabels))
+      tab        <- table(map, zlabels, dnn=list("Predicted", "Observed"))
+      tab.stat   <- c(classAgreement(tab), classError(map, zlabels))
       if(nrow(tab) != ncol(tab))     {
         tab.stat <- tab.stat[-seq_len(2)]
         names(tab.stat)[4]     <- "error.rate"
@@ -434,7 +505,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     }
     uncert.obs <- which(uncertain >= 1/G)
     attr(uncertain, "Obs")     <- if(sum(uncert.obs) != 0) uncert.obs
-    sizes        <- setNames(tabulate(post.z, nbins=G), gnames)
+    sizes        <- setNames(tabulate(map, nbins=G), gnames)
     if(any(sizes == 0))           warning("Empty group exists in modal clustering:\n examine trace plots and try supplying a lower G value to tune.imifa() or re-running the model", call.=FALSE)
     if(alpha.step) {
       alpha      <- sims[[G.ind]][[Q.ind]]$alpha
@@ -454,18 +525,19 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       PY.disc    <- list(discount = discount, post.disc = post.disc, var.disc = var.disc, ci.disc = ci.disc, disc.rate = rate)
       class(PY.disc)           <- "listof"
     }
-    cluster      <- list(map = post.z, z = z, uncertainty = uncertain)
+    map          <- as.numeric(levels(map))[map]
+    cluster      <- list(map = map, z = z, uncertainty = uncertain)
     cluster      <- c(cluster, list(post.sizes = sizes, post.pi = post.pi/sum(post.pi)),
                       if(sw["pi.sw"]) list(pi.prop = pi.prop, var.pi = var.pi, ci.pi = ci.pi),
                       if(!label.miss) list(perf = tab.stat),
                       if(alpha.step)  list(DP.alpha = DP.alpha),
                       if(learn.d)     list(PY.disc = PY.disc),
+                      if(z_avgsim)    list(Z.avgsim = z_simavg),
                       if(is.element(method, c("IMFA", "IMIFA"))) list(lab.rate = sims[[G.ind]][[Q.ind]]$lab.rate))
     attr(cluster, "Z.init")    <- attr(sims[[G.ind]], "Z.init")
     attr(cluster, "Init.Meth") <- attr(sims, "Init.Z")
     attr(cluster, "Label.Sup") <- !label.miss
-    post.z       <- as.numeric(levels(post.z))[post.z]
-    z.ind        <- lapply(Gseq, function(g) post.z == g)
+    z.ind        <- lapply(Gseq, function(g) map == g)
   }
   if(inf.Q)   {
     G1           <- G > 1
@@ -782,6 +854,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   attr(result, "Switch")       <- sw
   attr(result, "Uni.Meth")     <- uni.meth
   attr(result, "Vars")         <- n.var
+  attr(result, "Z.sim")        <- z_avgsim
   cat(print.Results_IMIFA(result))
   return(result)
 }

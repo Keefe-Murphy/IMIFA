@@ -21,7 +21,7 @@
 #' @return The desired plot with appropriate output and summary statistics printed to the console screen.
 #' @export
 #' @import graphics
-#' @importFrom grDevices "adjustcolor" "col2rgb" "palette"
+#' @importFrom grDevices "adjustcolor" "col2rgb" "palette" "heat.colors"
 #' @importFrom Rfast "Order" "med" "colMedians"
 #' @importFrom plotrix "plotCI"
 #' @importFrom gclus "plotcolors"
@@ -38,13 +38,14 @@
 #' # data(olive)
 #' # area     <- olive$area
 #' # simIMIFA <- mcmc_IMIFA(olive, method="IMIFA")
-#' # resIMIFA <- get_IMIFA_results(simIMIFA)
+#' # resIMIFA <- get_IMIFA_results(simIMIFA, z_avgsim=TRUE)
 #'
 #' # Examine the posterior distribution(s) of the number(s) of clusters (G) &/or latent factors (Q)
+#' # For the IM(I)FA and OM(I)FA methods, this also plots the trace of the active/non-empty clusters
 #' # plot(resIMIFA, plot.meth="GQ")
 #' # plot(resIMIFA, plot.meth="GQ", g=2)
 #'
-#' # Plot clustering uncertainty
+#' # Plot clustering uncertainty (and, if available, the similarity matrix)
 #' # plot(resIMIFA, plot.meth="zlabels", zlabels=area)
 #'
 #' # Visualise empirical vs. estimated covariance error metrics
@@ -101,6 +102,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
   store   <- attr(x, "Store")
   n.var   <- attr(x, "Vars")
   n.obs   <- attr(x, "Obs")
+  z.sim   <- attr(x, "Z.sim")
   if(missing(plot.meth))              stop("'plot.meth' not supplied:\nWhat type of plot would you like to produce?")
   if(is.element(plot.meth,
      c("G", "Q",
@@ -172,7 +174,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
   if(all(m.sw["E.sw"],
          !attr(x, "Errors")))         stop("Can't plot error metrics as they were not calculated due to storage switches")
   if(all(!m.sw["G.sw"], !m.sw["Z.sw"], !m.sw["E.sw"],
-     missing(param)))                  stop("What variable would you like to plot?")
+     missing(param)))                 stop("What variable would you like to plot?")
   if(all(any(m.sw["M.sw"], all.ind),
      is.element(param, c("means", "uniquenesses")),
      !v.sw[param],
@@ -215,11 +217,21 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
   if(!gx  && any(length(g) != 1,
                  !is.numeric(g)))     stop("If 'g' is supplied it must be of length 1")
   if(any(all(is.element(method, c("IMFA", "OMFA")), m.sw["G.sw"]), m.sw["Z.sw"])) {
-    Gs    <- if(gx) seq_len(2L) else ifelse(g <= 2, g,
+    if(m.sw["G.sw"]) {
+      Gs  <- if(gx) seq_len(2L) else ifelse(g <= 2, g,
                                       stop("Invalid 'g' value"))
+    } else if(m.sw["Z.sw"]) {
+      Gs  <- if(gx) (if(z.sim) seq_len(3L) else seq_len(2L)) else ifelse(g <=
+             ifelse(z.sim, 3, 2), g,  stop("Invalid 'g' value"))
+    }
   } else if(all(is.element(method, c("IMIFA", "OMIFA")), m.sw["G.sw"]))           {
-    Gs    <- if(gx) seq_len(3L) else ifelse(g <= 3, g,
+    if(m.sw["G.sw"]) {
+      Gs  <- if(gx) seq_len(3L) else ifelse(g <= 3, g,
                                       stop("Invalid 'g' value"))
+    } else if(m.sw["Z.sw"]) {
+      Gs  <- if(gx) (if(z.sim) seq_len(3L) else seq_len(2L)) else ifelse(g <=
+             ifelse(z.sim, 3, 2), g,  stop("Invalid 'g' value"))
+    }
   } else if(any(all(is.element(param, c("scores", "pis", "alpha", "discount")), any(all.ind, param != "scores", !m.sw["M.sw"])),
             m.sw["G.sw"], all(m.sw["P.sw"], param != "loadings"), m.sw["E.sw"]))  {
     Gs    <- 1L
@@ -574,16 +586,24 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
       }
       if(param == "loadings") {
         plot.x <- x$Loadings$post.load[[g]]
+        if(g   == min(Gs)) {
+          pxx  <- range(sapply(x$Loadings$post.load, range))
+        }
         if(load.meth == "heatmap") {
+          if(titles) par(mar=c(4.1, 4.1, 4.1, 4.1))
           if(Q  > 1) {
             plotcolors(mat2cols(plot.x))
           } else {
             graphics::image(z=t(plot.x[seq(n.var, 1),seq_len(Q)]), xlab="", ylab="", xaxt="n", yaxt="n", col=viridis(30, option="C"))
           }
-          if(titles) title(main=list(paste0("Posterior Mean", ifelse(!all.ind, " Loadings ", " "), "Heatmap", ifelse(all(!all.ind, grp.ind), paste0(" - Group ", g), ""))))
-          axis(1, line=-0.5, tick=FALSE, at=if(Q != 1) seq_len(Q) else 0, labels=seq_len(Q))
-          if(n.var < 100) {
-            axis(2, cex.axis=0.5, line=-0.5, tick=FALSE, las=1, at=if(Q > 1) seq_len(n.var) else seq(from=0, to=1, by=1/(n.var - 1)), labels=substring(var.names[n.var:1], 1, 10))
+          if(titles) {
+            title(main=list(paste0("Posterior Mean", ifelse(!all.ind, " Loadings ", " "), "Heatmap", ifelse(all(!all.ind, grp.ind), paste0(" - Group ", g), ""))))
+            axis(1, line=-0.5, tick=FALSE, at=if(Q != 1) seq_len(Q) else 0, labels=seq_len(Q))
+            if(n.var < 100) {
+              axis(2, cex.axis=0.5, line=-0.5, tick=FALSE, las=1, at=if(Q > 1) seq_len(n.var) else seq(from=0, to=1, by=1/(n.var - 1)), labels=substring(var.names[n.var:1], 1, 10))
+            }
+            .legend_heat(data=pxx, cols=viridis(30, option="C"))
+            par(xpd  = FALSE)
           }
           box(lwd=2)
           mtext(ifelse(Q > 1, "Factors", "Factor"), side=1, line=2)
@@ -825,7 +845,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           znam[plot.x == 0] <- ""
           text(x=seq_along(plot.x), y=plot.x, znam, col=col.x, cex=0.5)
         }
-      } else {
+      } else if(g == 2)  {
         if(titles) {
           layout(rbind(1, 2), heights=c(1, 6))
           par(mar=c(0, 4.1, 0.5, 2.1))
@@ -841,6 +861,20 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         plot(x.plot, main="", xlab="Uncertainties", xlim=c(0, 1 - 1/G), col=cols, xaxt="n", ylim=c(0, max(x.plot$counts)), yaxt="n")
         axis(1, at=c(breaks[round(breaks, 1) < min(0.8, 1 - 1/G)], 1 - 1/G), labels=(c(round(breaks[round(breaks, 1) < min(0.8, 1 - 1/G)], 3), "1 - 1/G")), las=2, pos=0, cex.axis=0.8)
         axis(2, at=if(sum(plot.x)  == 0) c(axTicks(2), max(x.plot$counts)) else axTicks(2), las=1, cex.axis=0.8)
+      }
+      if(all(g  == 3, z.sim)) {
+        plot.x  <- clust$Z.avgsim$z.sim
+        par(defpar)
+        if(titles) par(mar=c(4.1, 4.1, 4.1, 4.1))
+        z.col    <- heat.colors(12)[12:1]
+        plotcolors(mat2cols(replace(plot.x, plot.x == 0, NA), cols=z.col))
+        if(titles) {
+          title(main=list("Average Similarity Matrix"))
+          axis(1, at=n.obs/2, labels="Observation 1:N", tick=FALSE)
+          axis(2, at=n.obs/2, labels="Observation N:1", tick=FALSE)
+          .legend_heat(data=plot.x, cols = z.col)
+        }
+        box(lwd=2)
       }
       if(g == min(Gs)) {
         prf     <- NULL
@@ -1089,6 +1123,28 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
 # Colour Checker
   .are_cols    <- function(cols) {
     vapply(cols,  function(x) { tryCatch(is.matrix(col2rgb(x)), error = function(e) FALSE) }, logical(1L))
+  }
+
+# Heatmap Legends
+  .legend_heat <- function(data, cols) {
+    xpd        <- par()$xpd
+    bx         <- par("usr")
+    box.cx     <- c(bx[2] + (bx[2]  - bx[1])/1000, bx[2] + (bx[2] - bx[1])/1000 + (bx[2] - bx[1])/50)
+    box.cy     <- c(bx[3], bx[3])
+    box.sy     <- (bx[4]  - bx[3])/length(cols)
+    xx         <- rep(box.cx, each  = 2)
+    par(xpd = TRUE)
+    for(i in seq_along(cols)) {
+      yy   <- c(box.cy[1] + (box.sy * (i - 1)),
+                box.cy[1] + (box.sy * (i)),
+                box.cy[1] + (box.sy * (i)),
+                box.cy[1] + (box.sy * (i - 1)))
+      polygon(xx, yy, col = cols[i], border = cols[i])
+    }
+    par(new = TRUE)
+    plot(0, 0, type = "n", ylim = c(min(data), max(data)), yaxt = "n", ylab = "", xaxt = "n", xlab = "", frame.plot = FALSE)
+    axis(side=4, las=2, tick=FALSE, line=0.1)
+    par(xpd = xpd)
   }
 
 # Prior No. Groups (DP & PY)

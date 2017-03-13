@@ -12,16 +12,20 @@
   `PGMM_dfree`, which calculates # 'free' parameters for _finite_ factor analytic mixture models is exported/documented.  
   This function is also used to add checks on the Dirichlet hyperparameter for OM(I)FA methods.
 * Added new plot when `plot.meth=GQ` for OM(I)FA/IM(I)FA methods depicting trace(s) of #s of active/non-empty groups.
+* Added option to summarise clustering via the one with minimum squared distance to the similarity matrix constructed  
+  by averaging the adjacency matrices (which works fine when _N_ or the number of stored iterations is not too large).  
+  When the (sparse!) similarity matrix is available, it can now be plotted via `plot.meth="zlabels"`.
 
 ## Improvements
 * Metropolis-Hastings updates implemented for `alpha` when `discount` is non-zero, rather than usual Gibbs.
+* DIC model selection criterion now also available for infinite factor models (previously finite only).
+* `G_priorDensity` now better reflects discrete nature of the density and plots for non-zero PY discount values.
+* Posterior mean loadings heatmaps now also display a legend. 
 * Deferred setting `dimnames` attributes in `mcmc_IMIFA` to `get_IMIFA_results`: lower memory burden/faster simulations.
 * Jettisoned superfluous duplicate material in object outputted from `get_IMIFA_results` to reduce size/simplify access.
 * Removed IMFA/IMIFA `trunc.G` arg, made `range.G` the max allowable # active groups & also stored # active groups.
 * Code sped up when G=1 by not simulating labels for OM(I)FA/IM(I)FA & not simulating mixing proportions for OM(I)FA.
 * Reduced chance of crash by exceeding memory capacity; `score.switch` defaults to `FALSE` if # models ran is large.
-* DIC model selection criterion now also available for infinite factor models (previously finite only).
-* `G_priorDensity` now better reflects discrete nature of the density and plots for non-zero PY discount values.
 * Invisibly returned from `sim_IMIFA_data`.
 
 ## Bug Fixes 

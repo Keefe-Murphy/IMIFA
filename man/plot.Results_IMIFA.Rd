@@ -60,13 +60,14 @@ Plotting output and parameters of inferential interest for IMIFA and related mod
 # data(olive)
 # area     <- olive$area
 # simIMIFA <- mcmc_IMIFA(olive, method="IMIFA")
-# resIMIFA <- get_IMIFA_results(simIMIFA)
+# resIMIFA <- get_IMIFA_results(simIMIFA, z_avgsim=TRUE)
 
 # Examine the posterior distribution(s) of the number(s) of clusters (G) &/or latent factors (Q)
+# For the IM(I)FA and OM(I)FA methods, this also plots the trace of the active/non-empty clusters
 # plot(resIMIFA, plot.meth="GQ")
 # plot(resIMIFA, plot.meth="GQ", g=2)
 
-# Plot clustering uncertainty
+# Plot clustering uncertainty (and, if available, the similarity matrix)
 # plot(resIMIFA, plot.meth="zlabels", zlabels=area)
 
 # Visualise empirical vs. estimated covariance error metrics
