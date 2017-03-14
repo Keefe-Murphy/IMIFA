@@ -32,13 +32,13 @@
       psi.store    <- array(0, dim=c(P, G, n.store))
     }
     if(sw["pi.sw"])  {
-      pi.store     <- matrix(0, nrow=G, ncol=n.store)
+      pi.store     <- matrix(0,  nrow=G, ncol=n.store)
     }
-    z.store        <- matrix(0, nrow=N, ncol=n.store)
+    z.store        <- matrix(0L, nrow=N, ncol=n.store)
     ll.store       <- rep(0, n.store)
     Q.star         <- Q
     Qs             <- rep(Q, G)
-    Q.store        <- matrix(0, nrow=G, ncol=n.store)
+    Q.store        <- matrix(0L, nrow=G, ncol=n.store)
     Q.large        <- Q.big <- Q.bigs <- FALSE
     err.z          <- z.err <- FALSE
 
@@ -290,9 +290,9 @@
         }
         if(sw["psi.sw"])   psi.store[,,new.it]      <- 1/psi.inv
         if(sw["pi.sw"])    pi.store[,new.it]        <- pi.prop
-                           z.store[,new.it]         <- z
+                           z.store[,new.it]         <- as.integer(z)
                            ll.store[new.it]         <- sum(z.res$log.like)
-                           Q.store[,new.it]         <- Qs
+                           Q.store[,new.it]         <- as.integer(Qs)
       }
     }
     if(verbose)       close(pb)

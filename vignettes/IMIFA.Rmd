@@ -128,10 +128,10 @@ If we instead wanted to explore the 3-cluster solution, construct 90% credible i
 resMFA2 <- get_IMIFA_results(simMFA, G=3, criterion="aic.mcmc")
 ```
 
-For now, let's just extract results from our IMIFA run above so we can proceed to visually examine them. Though the IMIFA model obviates the need for model selection criteria, the syntax for extracting results is exactly the same
+For now, let's just extract results from our IMIFA run above so we can proceed to visually examine them. Though the IMIFA model obviates the need for model selection criteria, the syntax for extracting results is exactly the same. However, this time, let's also summarise the clustering via the N x N similarity matrix obtained by averaging the adjacency matrices (admittedly at the expense of slowing the function down!), so that we can visualise it later.
 
 ```{r, eval=FALSE}
-resIMIFA <- get_IMIFA_results(simIMIFA)
+resIMIFA <- get_IMIFA_results(simIMIFA, z_avgsim=TRUE)
 ```
 
 ```{r, include=FALSE}
@@ -165,10 +165,14 @@ plot(resIMIFA, plot.meth="GQ", g=2)
 plot(resIMIFA, plot.meth="GQ", g=3)
 ```
 
-Let's examine clustering performance against the known group labels. Note that the group labels could have been already supplied to `get_IMIFA_results` too, but plotting allows clustering performance to be evaluated against new labels without having to extract the full results object all over again. More specifically, the code below allows us to visualise the clustering uncertainty (with or without the labels being supplied, in fact). In this case, `g=2` would mean to instead visualise the uncertainties in the form of a histogram.
+Let's examine clustering performance against the known group labels. Note that the group labels could have been already supplied to `get_IMIFA_results` too, but plotting allows clustering performance to be evaluated against new labels without having to extract the full results object all over again. More specifically, the code below allows us to visualise the clustering uncertainty (with or without the labels being supplied, in fact). In this case, `g=2` would mean to instead visualise the uncertainties in the form of a histogram. We can visualise the N * N similarity matrix by supplying `g=3` when `plot.meth="zlabels"`. Had we not specified `g`, the function would cycle through the available plots.
 
 ```{r}
 plot(resIMIFA, plot.meth="zlabels", zlabels=olive$area, g=1)
+```
+
+```{r}
+plot(resIMIFA, plot.meth="zlabels", g=3)
 ```
 To examine the posterior mean estimates of the cluster means in a given cluster (say the 1st), we can set both `plot.meth` and `param` to `"means"`. If the cluster isn't specified using the argument `g`, the user will be prompted to hit RETURN at the onset of each plot in order to cycle through similar plots for all clusters. In the code below `mat=TRUE` means, in this case, to plot all variables simultaneously. Note that the data were originally mean-centered and unit-scaled when `mcmc_IMIFA` was called.
 

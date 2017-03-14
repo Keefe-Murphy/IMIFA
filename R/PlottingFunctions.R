@@ -223,7 +223,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
                                       stop("Invalid 'g' value"))
     } else if(m.sw["Z.sw"]) {
       Gs  <- if(gx) (if(z.sim) seq_len(3L) else seq_len(2L)) else ifelse(g <=
-             ifelse(z.sim, 3, 2), g,  stop("Invalid 'g' value"))
+             ifelse(z.sim, 3, 2), g,  stop(paste0("Invalid 'g' value", ifelse(z.sim, ": similarity matrix not available", ""))))
     }
   } else if(all(is.element(method, c("IMIFA", "OMIFA")), m.sw["G.sw"]))           {
     if(m.sw["G.sw"]) {
@@ -231,7 +231,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
                                       stop("Invalid 'g' value"))
     } else if(m.sw["Z.sw"]) {
       Gs  <- if(gx) (if(z.sim) seq_len(3L) else seq_len(2L)) else ifelse(g <=
-             ifelse(z.sim, 3, 2), g,  stop("Invalid 'g' value"))
+             ifelse(z.sim, 3, 2), g,  stop(paste0("Invalid 'g' value", ifelse(z.sim, ": similarity matrix not available", ""))))
     }
   } else if(any(all(is.element(param, c("scores", "pis", "alpha", "discount")), any(all.ind, param != "scores", !m.sw["M.sw"])),
             m.sw["G.sw"], all(m.sw["P.sw"], param != "loadings"), m.sw["E.sw"]))  {
@@ -593,9 +593,9 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         plot.x <- x$Loadings$post.load[[g]]
         if(g   == min(Gs)) {
           pxx  <- range(sapply(x$Loadings$post.load, range))
-          cixx <- if(all(intervals, ci.sw[param])) { if(by.fac) range(sapply(x$Loadings$ci.load, function(x) range(x[,,ind[2]]))) else range(sapply(x$Loadings$ci.load, function(x) range(x[,ind[1],]))) }
+          cixx <- if(all(intervals, ci.sw[param], load.meth == "raw")) { if(by.fac) range(sapply(x$Loadings$ci.load, function(x) range(x[,,ind[2]]))) else range(sapply(x$Loadings$ci.load, function(x) range(x[,ind[1],]))) }
         }
-        lcols  <- if(mispal) viridis(30, option="B") else palette
+        lcols  <- if(mispal) viridis(30, option="C") else palette
         if(load.meth == "heatmap") {
           if(titles) par(mar=c(4.1, 4.1, 4.1, 4.1))
           if(Q  > 1) {
@@ -874,7 +874,8 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         axis(2, at=if(sum(plot.x)  == 0) c(axTicks(2), max(x.plot$counts)) else axTicks(2), las=1, cex.axis=0.8)
       }
       if(all(g  == 3, z.sim)) {
-        plot.x  <- clust$Z.avgsim$z.sim
+        plot.x  <- as.matrix(clust$Z.avgsim$z.sim)
+        plot.x  <- t(plot.x[,seq(from=ncol(plot.x), to=1, by=-1)])
         par(defpar)
         if(titles) par(mar=c(4.1, 4.1, 4.1, 4.1))
         z.col   <- if(!any(mispal, gx)) palette else heat.colors(12)[12:1]
@@ -882,12 +883,12 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         if(titles) {
           title(main=list("Average Similarity Matrix"))
           axis(1, at=n.obs/2, labels="Observation 1:N", tick=FALSE)
-          axis(2, at=n.obs/2, labels="Observation N:1", tick=FALSE)
+          axis(2, at=n.obs/2, labels="Observation 1:N", tick=FALSE)
           .legend_heat(data=plot.x, cols = z.col)
         }
         box(lwd=2)
       }
-      if(g == min(Gs)) {
+      if(all(g  != 3, g == min(Gs))) {
         prf     <- NULL
         ucert   <- attr(plot.x, "Obs")
         if(any(!labelmiss,  !z.miss)) {

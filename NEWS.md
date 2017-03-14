@@ -12,9 +12,9 @@
   `PGMM_dfree`, which calculates # 'free' parameters for _finite_ factor analytic mixture models is exported/documented.  
   This function is also used to add checks on the Dirichlet hyperparameter for OM(I)FA methods.
 * Added new plot when `plot.meth=GQ` for OM(I)FA/IM(I)FA methods depicting trace(s) of #s of active/non-empty groups.
-* Added option to summarise clustering via the one with minimum squared distance to the similarity matrix constructed  
-  by averaging the adjacency matrices (which works fine when _N_ or the number of stored iterations is not too large).  
-  When the (sparse!) similarity matrix is available, it can now be plotted via `plot.meth="zlabels"`.
+* Added function `Zsimilarity` to summarise posterior clustering by the sampled labels with minimum  
+  squared distance to a sparse similarity matrix constructed by averaging the adjacency matrices.  
+  When optionally called inside `get_IMIFA_results`, the similarity matrix can be plotted via `plot.meth="zlabels"`.
 
 ## Improvements
 * Metropolis-Hastings updates implemented for `alpha` when `discount` is non-zero, rather than usual Gibbs.

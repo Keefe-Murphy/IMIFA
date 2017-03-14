@@ -34,16 +34,16 @@
       psi.store    <- array(0, dim=c(P, G, n.store))
     }
     if(sw["pi.sw"])  {
-      pi.store     <- matrix(0, nrow=G, ncol=n.store)
+      pi.store     <- matrix(0,  nrow=G, ncol=n.store)
     }
-    z.store        <- matrix(0, nrow=N, ncol=n.store)
+    z.store        <- matrix(0L, nrow=N, ncol=n.store)
     err.z          <- zerr <- FALSE
     ll.store       <- rep(0, n.store)
 
     mu.sigma       <- 1/sigma.mu
     sig.mu.sqrt    <- sqrt(sigma.mu)
     if(all(mu.zero  == 0)) {
-      mu.zero      <- matrix(0, nrow=1, ncol=G)
+      mu.zero      <- matrix(0,  nrow=1, ncol=G)
       cluster$l.switch[1]  <- FALSE
     }
     if(length(mu.zero)  == 1) {
@@ -171,7 +171,7 @@
         if(all(sw["l.sw"], Q0))    load.store[,,,new.it]   <- lmat
         if(sw["psi.sw"])           psi.store[,,new.it]     <- 1/psi.inv
         if(sw["pi.sw"])            pi.store[,new.it]       <- pi.prop
-                                   z.store[,new.it]        <- z
+                                   z.store[,new.it]        <- as.integer(z)
                                    ll.store[new.it]        <- sum(z.res$log.like)
       }
     }

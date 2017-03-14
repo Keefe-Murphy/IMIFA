@@ -31,11 +31,11 @@
     }
     post.mu      <- rep(0, P)
     post.psi     <- post.mu
-    ll.store     <- rep(0, n.store)
+    ll.store     <- rep(0,  n.store)
     cov.emp      <- if(P > 500) switch(scaling, unit=cora(as.matrix(data)), cova(as.matrix(data))) else switch(scaling, unit=cor(data), cov(data))
     cov.est      <- matrix(0, nrow=P, ncol=P)
     Q.star       <- Q
-    Q.store      <- ll.store
+    Q.store      <- rep(0L, n.store)
     Q.large      <- Q.big  <- FALSE
 
     mu.sigma     <- 1/sigma.mu
@@ -152,7 +152,7 @@
         if(all(sw["s.sw"], Q0))     eta.store[,seq_len(Q),new.it]  <- eta
         if(all(sw["l.sw"], Q0))     load.store[,seq_len(Q),new.it] <- lmat
         if(sw["psi.sw"])            psi.store[,new.it]             <- psi
-                                    Q.store[new.it]                <- Q
+                                    Q.store[new.it]                <- as.integer(Q)
                                     ll.store[new.it]               <- sum(dmvn(X=data, mu=mu, sigma=sigma, log=TRUE))
       }
     }

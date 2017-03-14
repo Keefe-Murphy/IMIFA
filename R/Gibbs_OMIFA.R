@@ -34,14 +34,14 @@
     if(sw["pi.sw"])  {
       pi.store       <- matrix(0, nrow=G, ncol=n.store)
     }
-    z.store          <- matrix(0, nrow=N, ncol=n.store)
-    ll.store         <- rep(0, n.store)
+    z.store          <- matrix(0L, nrow=N, ncol=n.store)
+    ll.store         <- rep(0,  n.store)
     Q.star           <- Q
     Qs               <- rep(Q, G)
-    Q.store          <- matrix(0, nrow=G, ncol=n.store)
+    Q.store          <- matrix(0L, nrow=G, ncol=n.store)
     Q.large          <- Q.big <- Q.bigs <- FALSE
     err.z            <- z.err <- FALSE
-    G.store          <- ll.store
+    G.store          <- rep(0L, n.store)
 
     mu.sigma         <- 1/sigma.mu
     sig.mu.sqrt      <- sqrt(sigma.mu)
@@ -261,10 +261,10 @@
         }
         if(sw["psi.sw"]) psi.store[,,new.it]           <- 1/psi.inv
         if(sw["pi.sw"])  pi.store[,new.it]             <- pi.prop
-                         z.store[,new.it]              <- z
+                         z.store[,new.it]              <- as.integer(z)
                          ll.store[new.it]              <- sum(z.res$log.like)
-                         Q.store[,new.it]              <- Qs
-                         G.store[new.it]               <- G.non
+                         Q.store[,new.it]              <- as.integer(Qs)
+                         G.store[new.it]               <- as.integer(G.non)
       }
     }
     if(verbose)         close(pb)

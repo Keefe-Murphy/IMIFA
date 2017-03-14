@@ -35,16 +35,16 @@
     if(sw["pi.sw"])  {
       pi.store       <- matrix(0, nrow=trunc.G, ncol=n.store)
     }
-    z.store          <- matrix(0, nrow=N, ncol=n.store)
-    ll.store         <- rep(0, n.store)
+    z.store          <- matrix(0L, nrow=N, ncol=n.store)
+    ll.store         <- rep(0,  n.store)
     Q.star           <- Q
-    Qs               <- rep(Q, trunc.G)
-    Q.store          <- matrix(0, nrow=trunc.G, ncol=n.store)
+    Qs               <- rep(Q,  trunc.G)
+    Q.store          <- matrix(0L, nrow=trunc.G, ncol=n.store)
     Q.large          <- Q.big <- Q.bigs <- FALSE
     acc1             <- acc2  <- FALSE
     err.z            <- z.err <- FALSE
-    G.store          <- ll.store
-    act.store        <- ll.store
+    G.store          <- rep(0L, n.store)
+    act.store        <- G.store
     if(learn.alpha) {
       alpha.store    <- ll.store
       alpha.shape    <- a.hyper[1]
@@ -388,11 +388,11 @@
         if(sw["pi.sw"])  pi.store[,new.it]             <- pi.prop
         if(learn.alpha)  alpha.store[new.it]           <- pi.alpha
         if(learn.d)      d.store[new.it]               <- discount
-                         z.store[,new.it]              <- z
+                         z.store[,new.it]              <- as.integer(z)
                          ll.store[new.it]              <- sum(z.res$log.like)
-                         Q.store[,new.it]              <- Qs
-                         G.store[new.it]               <- G.non
-                         act.store[new.it]             <- G
+                         Q.store[,new.it]              <- as.integer(Qs)
+                         G.store[new.it]               <- as.integer(G.non)
+                         act.store[new.it]             <- as.integer(G)
       }
     }
     if(verbose)         close(pb)

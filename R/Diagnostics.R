@@ -11,7 +11,7 @@
 #' @param Q.meth If the object in \code{sims} arises from the "\code{IFA}", "\code{MIFA}", "\code{OMIFA}" or "\code{IMIFA}" methods, this argument determines whether the optimal number of latent factors is given by the mode or median of the posterior distribution of \code{Q}. Defaults to "\code{Mode}".
 #' @param dat The actual data set on which \code{\link{mcmc_IMIFA}} was originally run. This is necessary for computing error metrics between the estimated and empirical covariance matrix/matrices. If this is not supplied, the function will attempt to find the data set if it is still available in the global environment.
 #' @param conf.level The confidence level to be used throughout for credible intervals for all parameters of inferential interest. Defaults to 0.95.
-#' @param z_avgsim Logical indicating whether the clustering should also be summarised by the clustering with minimum squared distance to the similarity matrix obtained by averaging the stored adjacency matrices, in addition to the MAP estimate. Note that the MAP clustering is computed \emph{conditional} on the estimate of the number of clusters (whether that be the modal estimate or the estimate according to \code{criterion}) and other parameters are extracted conditional on this estimate of \code{G}: however, in constrast, the number of distinct clusters in the summarised labels obtained by \code{z_avgsim=TRUE} may not necessarily coincide with the estimate of \code{G}, but may provide a useful alternative summary of the partitions explored during the chain. This can take quite some time to compute, and may not even be possible if the number of observations &/or number of stored iterations is large and the resulting matrix isn't sufficiently sparse, so the default is \code{FALSE}, otherwise both the summarised clustering and the similarity matrix are stored: the latter can be passed to \code{\link{plot.Results_IMIFA}}.
+#' @param z_avgsim Logical indicating whether the clustering should also be summarised with a call to \code{\link{Zsimilarity}} by the clustering with minimum squared distance to the similarity matrix obtained by averaging the stored adjacency matrices, in addition to the MAP estimate. Note that the MAP clustering is computed \emph{conditional} on the estimate of the number of clusters (whether that be the modal estimate or the estimate according to \code{criterion}) and other parameters are extracted conditional on this estimate of \code{G}: however, in constrast, the number of distinct clusters in the summarised labels obtained by \code{z_avgsim=TRUE} may not necessarily coincide with the estimate of \code{G}, but may provide a useful alternative summary of the partitions explored during the chain. This can take quite some time to compute, and may not even be possible if the number of observations &/or number of stored iterations is large and the resulting matrix isn't sufficiently sparse, so the default is \code{FALSE}, otherwise both the summarised clustering and the similarity matrix are stored: the latter can be passed to \code{\link{plot.Results_IMIFA}}.
 #' @param zlabels For any method that performs clustering, the true labels can be supplied if they are known in order to compute clustering performance metrics. This also has the effect of ordering the MAP labels (and thus the ordering of cluster-specific parameters) to most closely correspond to the true labels if supplied.
 #'
 #' @return An object of class "\code{Results_IMIFA}" to be passed to \code{\link{plot.Results_IMIFA}} for visualising results. Dedicated \code{print} and \code{summary} functions exist for objects of this class. The object, say \code{x}, is a list of lists, the most important components of which are:
@@ -32,7 +32,7 @@
 #' @importFrom mclust "classError"
 #' @importFrom matrixStats "rowMedians" "rowQuantiles"
 #'
-#' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{plot.Results_IMIFA}}
+#' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{plot.Results_IMIFA}}, \code{\link{Zsimilarity}}
 #' @references Murphy, K., Gormley, I.C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, \code{https://arxiv.org/abs/1701.07010}
 #'
 #' @examples
@@ -386,40 +386,17 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     }
     map          <- apply(z, 1, function(x) factor(which.max(tabulate(x)), levels=Gseq))
     if(isTRUE(z_avgsim)) {
-      z_simil    <- function() {
-        ztmp     <- matrix(0L, nrow=n.obs, ncol=n.obs)
-        zsum     <- as.simple_triplet_matrix(ztmp)
-        zis      <- list()
-        for(i in seq_len(n.store))    {
-          zi     <- ztmp
-          zj     <- zadj[,i]
-          for(j in seq_len(max(zj)))  {
-           zi[zj == j,zj == j] <- 1L
-          }
-          zsum   <- zsum  + as.simple_triplet_matrix(zi)
-          zis[[i]]       <- zi
-          rm(zi)
-          rm(zj)
-        }
-        zavg     <- zsum/n.store
-        rm(zsum)
-        zd       <- rep(0, n.store)
-        for(i in seq_len(n.store))    {
-          distz  <- zis[[i]]    - zavg
-          zd[i]  <- sum(distz   * distz)
-          rm(distz)
-        }
-        rm(zis)
-        ind.z    <- which.min(zd)
-        rm(zd)
-          return(list(zadj = zadj[,ind.z], zavg = zavg))
+      zlog       <- capture.output(znew <- try(Zsimilarity(zs=zadj), silent=TRUE))
+      condit     <- all(!is.element(method, c("MIFA", "MFA")), inherits(znew, "try-error"))
+      if(isTRUE(condit)) {
+        zlog     <- capture.output(znew <- try(Zsimilarity(zs=z),    silent=TRUE))
+                                  warning("Constructing the similarity matrix failed:\n trying again using iterations corresponding to the modal number of clusters", call.=FALSE)
       }
-      zlog       <- capture.output(znew <- try(z_simil(), silent=TRUE))
       if(!inherits(znew, "try-error")) {
-        zadj     <- znew$zadj
-        zavg     <- znew$zavg
+        zadj     <- znew$z.avg
         zadj     <- factor(zadj, labels=seq_along(unique(zadj)))
         zadj     <- as.numeric(levels(zadj))[zadj]
+        zavg     <- znew$z.sim
         zG       <- max(zadj)
         if(!label.miss) {
          zlabels <- factor(zlabels, labels=seq_along(unique(zlabels)))
@@ -427,6 +404,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
          if(length(levs) == zG) {
            swlab <- .lab_switch(z.new=zadj, z.old=zlabels, Gs=seq_len(zG))
            zadj  <- factor(swlab$z, levels=seq_len(zG))
+           zadj  <- as.numeric(levels(zadj))[zadj]
          }
          tab     <- table(zadj, zlabels, dnn=list("Predicted", "Observed"))
          tabstat <- c(classAgreement(tab), classError(map, zlabels))
@@ -447,6 +425,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
         }
         z_simavg <- list(z.avg = zadj, z.sim = zavg)
         z_simavg <- c(z_simavg, if(!label.miss) list(avgsim.perf = tabstat))
+        attr(z_simavg, "Conditional")   <- condit
       } else {                    warning("Can't compute similarity matrix or 'average' clustering: forcing 'z_avgsim' to FALSE", call.=FALSE)
         z_avgsim <- FALSE
       }

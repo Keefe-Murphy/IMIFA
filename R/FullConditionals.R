@@ -384,6 +384,46 @@
         return(list(z = as.numeric(levels(z.sw))[z.sw], z.perm = z.perm))
     }
 
+  # Similarity matrix and 'average' clustering
+#' Summarises MCMC clustering labels with a similarity matrix and finds the 'average' clustering
+#'
+#' This functions takes a Monte Carlo sample of cluster labels, converts them to adjacency matrices, and computes a similarity matrix as an average of the adjacency matrices. The dimension of the similarity matrix is invariant to label switching and the number of clusters in each sample. As a summary of the posterior clustering, the index of the clustering with minimum squared distance to this 'average' clustering is reported. Please note that this function can take quite some time, and may crash if the number of observations &/or number of iterations is so large that the similarity matrix is insufficiently sparse. This function can optionally be called inside \code{\link{get_IMIFA_results}}.
+#' @param zs A matrix containing samples of clustering labels where the rows correspond to the number of observations and the columns correspond to the number of iterations.
+#'
+#' @return A list containing three elements:
+#' \describe{
+#' \item{z.avg}{The 'average' clustering, with minimum squared distance to \code{z.sim}.}
+#' \item{z.sim}{The N x N similary matrix, in a sparse format (see \code{\link[slam]{as.simple_triplet_matrix}}). If the data have been previously ordered, a heatmap may provide a useful visualisation}
+#' \item{dist.z}{A vector of length N recording the distances between each clustering and the 'average' clustering}
+#' }
+#' @export
+#' @seealso \code{\link{get_IMIFA_results}}, \code{\link[slam]{as.simple_triplet_matrix}}
+#'
+#' @examples
+#' # Run a IMIFA model and extract the sampled cluster labels
+#' # data(olive)
+#' # sim    <- mcmc_IMIFA(olive, method="IMIFA", n.iters=5000)
+#' # zs     <- sim[[1]][[1]]$z.store
+#'
+#' # Get the similarity matrix and visualise it
+#' # zsimil <- Zsimilarity(zs)
+#' # z.sim  <- as.matrix(zsimil$z.sim)
+#' # z.sim  <- replace(z.sim, z.sim == 0, NA)
+#' # image(z.sim, col=heat.colors(30)[30:1]); box(lwd=2)
+#'
+#' # Extract the clustering with minimum squared distance to this
+#' # 'average' and evaluate its performance against the true labels
+#' # z.avg  <- zsimil$z.avg
+#' # table(z.avg, olive$area)
+    Zsimilarity <- function(zs) {
+      if(!is.matrix(zs))                   stop("'zs' must be a matrix with rows corresponding to the number of observations and columns corresponding to the number of iterations")
+      n.iters   <- ncol(zs)
+      zis       <- lapply(seq_len(n.iters), function(i, zi=zs[,i]) outer(zi, zi, FUN="=="))
+      zsim      <- Reduce('+', zis)/n.iters
+      dist.z    <- vapply(seq_len(n.iters), function(i, distz=zis[[i]] - zsim) sum(distz * distz), numeric(1L))
+        return(list(z.avg = zs[,which.min(dist.z)], z.sim = as.simple_triplet_matrix(zsim), dist.z = dist.z))
+    }
+
     # Move 1
     .lab_move1  <- function(nn.ind, pi.prop, nn) {
       sw        <- sample(nn.ind, 2L)
