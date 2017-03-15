@@ -27,7 +27,7 @@ cols <- mat2cols(mat)
 cols
 
 # Use plotcolors() to visualise the colours matrix
-# plotcolors(cols)
+# gclus::plotcolors(cols)
 }
 \seealso{
 \code{\link[gclus]{plotcolors}}

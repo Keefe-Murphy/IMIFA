@@ -9,7 +9,7 @@
   param = c("means", "scores", "loadings", "uniquenesses", "pis", "alpha",
   "discount"), zlabels = NULL, load.meth = c("heatmap", "raw"),
   palette = NULL, g = NULL, mat = TRUE, ind = NULL, fac = NULL,
-  by.fac = TRUE, type = c("h", "n", "p", "l"), intervals = TRUE,
+  by.fac = FALSE, type = c("h", "n", "p", "l"), intervals = TRUE,
   partial = FALSE, titles = TRUE, transparency = 0.75, ...)
 }
 \arguments{
@@ -33,7 +33,7 @@
 
 \item{fac}{Optional argument that provides an alternative way to specify \code{ind[2]} when \code{mat} is \code{FALSE} and \code{param} is one of \code{scores} or \code{loadings}.}
 
-\item{by.fac}{Optionally allows (mat)plotting of scores and loadings by factor - i.e. observation(s) (scores) or variable(s) (loadings) for a given factor, respectively, controlled by \code{ind} or \code{fac}) when set to \code{TRUE} (the default). Otherwise factor(s) are plotted for a given observation or variable, again controlled by \code{ind} or \code{fac}.}
+\item{by.fac}{Optionally allows (mat)plotting of scores and loadings by factor - i.e. observation(s) (scores) or variable(s) (loadings) for a given factor, respectively, controlled by \code{ind} or \code{fac}) when set to \code{TRUE}. Otherwise factor(s) are plotted for a given observation or variable when set to \code{FALSE} (the default), again controlled by \code{ind} or \code{fac}. Only relevant when \code{param} is one of \code{scores} or \code{loadings}.}
 
 \item{type}{The manner in which the plot is to be drawn, as per the \code{type} argument to \code{\link{plot}}.}
 

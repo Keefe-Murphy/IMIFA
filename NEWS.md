@@ -31,7 +31,7 @@
 
 ## Bug Fixes 
 * 2<sup>nd</sup> IM(I)FA label switching move sped up/properly weighted to ensure uniform sampling of neighbouring cluster pairs.
-* Fixed trace plots for factor scores by extracting indices of stored iterations properly using `Rfast::sort_unique`. 
+* Fixed factor score trace plots by extracting indices of stored samples using `Rfast::sort_unique` & rotating properly. 
 * Fixed way in which `rnorm` columns are added to scores matrix during adaptation when 'widest' loadings matrix grows.
 * Gibbs Updates of DP parameter `alpha` now correctly depend on current # non-empty rather than active groups.
 * Slightly rearranged order Gibbs updates take place, esp. to ensure means enter simulation of uniquenesses properly.

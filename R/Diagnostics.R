@@ -449,8 +449,8 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
         sw.lab   <- .lab_switch(z.new=map, z.old=zlabels, Gs=Gseq)
         map      <- factor(sw.lab$z, levels=Gseq)
         l.perm   <- sw.lab$z.perm
-        z.tmp    <- apply(z, 2, factor, levels=l.perm)
-        z        <- apply(z.tmp, 2, function(x) as.integer(levels(as.factor(x)))[as.integer(x)])
+        z.tmp    <- lapply(seq_along(tmp.store), function(i) factor(z[,i], levels=z.perm))
+        z        <- do.call(cbind, lapply(z.tmp, function(x) as.integer(levels(as.factor(x)))[as.integer(x)]))
         if(sw["mu.sw"])    mus <- mus[,l.perm,,     drop=FALSE]
         if(sw["l.sw"])   lmats <- lmats[,,l.perm,,  drop=FALSE]
         if(sw["psi.sw"])  psis <- psis[,l.perm,,    drop=FALSE]
@@ -554,17 +554,22 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     if(sw["s.sw"])                message("Scores & loadings not stored as model has zero factors")
     sw["s.sw"]   <- FALSE
   }
+  if(inf.Q) {
+    l.store      <- lapply(Gseq, function(g, ts=seq_along(tmp.store)) ts[which(Q.store[g,] >= Q[g])])
+    eta.store    <- sort_unique(unlist(l.store))
+  } else {
+    eta.store    <- tmp.store
+  }
   if(sw["s.sw"]) {
     eta          <- sims[[G.ind]][[Q.ind]]$eta
     if(inf.Q) {
       eta        <- as.array(eta)
     }
-    eta          <- eta[,,tmp.store, drop=FALSE]
+    eta          <- eta[,,eta.store, drop=FALSE]
   }
 
 # Loop over g in G to extract other results
   result         <- list(list())
-  e.store        <- list()
   mse   <- mae   <- medse  <-
   medae <- rmse  <- nrmse  <-
   emp.T <- est.T <- rep(NA, G)
@@ -578,44 +583,42 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
              !no.score))          message(paste0("Loadings ", ifelse(G > 1, paste0("for group ", g, " not stored as it"), " not stored as model"), " has zero factors"))
       sw["l.sw"] <- FALSE
     }
-    store        <- if(inf.Q) seq_along(tmp.store)[which(Q.store[g,] >= Qg)] else seq_along(tmp.store)
+    store        <- seq_along(tmp.store)
     n.store      <- length(store)
 
   # Retrieve (unrotated) loadings
     if(sw["l.sw"]) {
       if(clust.ind)  {
         lmat     <- adrop(lmats[,,g,store, drop=FALSE], drop=3)
-        l.temp   <- adrop(lmat[,,1, drop=FALSE], drop=3)
+        l.temp   <- adrop(lmat[,,1, drop=FALSE],        drop=3)
       } else {
         lmat     <- sims[[G.ind]][[Q.ind]]$load
         if(inf.Q) {
           lmat   <- as.array(lmat)
         }
-        lmat     <- lmat[,,store, drop=FALSE]
+        lmat     <- lmat[,,store,   drop=FALSE]
         l.temp   <- adrop(lmat[,,1, drop=FALSE], drop=3)
       }
     }
 
   # Loadings matrix / identifiability / error metrics / etc.
-    if(all(sw["s.sw"], clust.ind)) {
-      etag       <- eta[z.ind[[g]],,, drop=FALSE]
-    }
-    if(sw["l.sw"])      {
-      for(p in seq_len(n.store))   {
-        p2                 <- store[p]
-        rot                <- MCMCpack::procrustes(X=as.matrix(lmat[,,p]), Xstar=l.temp)$R
-        lmat[,,p]          <- lmat[,,p]  %*% rot
-        if(sw["s.sw"])  {
-          if(clust.ind) {
-            etag[,,p2]     <- etag[,,p2] %*% rot
-          } else {
-            eta[,,p2]      <- eta[,,p2]  %*% rot
+    if(sw["l.sw"])    {
+      for(p in store) {
+        if(p    %in% eta.store) {
+          proc   <- MCMCpack::procrustes(X=as.matrix(lmat[,,p]), Xstar=l.temp)
+          lmat[,,p]        <- proc$X.new
+          if(sw["s.sw"])  {
+            rot  <- proc$R
+            p2   <- ifelse(inf.Q, which(eta.store == p), p)
+            if(clust.ind) {
+              zp <- z[,p]  == g
+              eta[zp,,p2]  <- eta[zp,,p2] %*% rot
+            } else {
+              eta[,,p2]    <- eta[,,p2]   %*% rot
+            }
           }
         }
       }
-    }
-    if(all(sw["s.sw"], clust.ind)) {
-      eta[z.ind[[g]],,]    <- etag
     }
 
   # Retrieve means, uniquenesses & empirical covariance matrix
@@ -667,7 +670,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       ci.psi     <- rowQuantiles(psi, probs=conf.levels)
     }
     if(sw["l.sw"])   {
-      lmat       <- provideDimnames(lmat[,Qgs,, drop=FALSE], base=list("", paste0("Factor", Qgs), ""), unique=FALSE)
+      lmat       <- provideDimnames(lmat[,Qgs,if(inf.Q) l.store[[g]] else store, drop=FALSE], base=list("", paste0("Factor", Qgs), ""), unique=FALSE)
       post.load  <- rowMeans(lmat, dims=2)
       var.load   <- apply(lmat, c(1, 2), Var)
       ci.load    <- apply(lmat, c(1, 2), quantile, conf.levels)
@@ -749,15 +752,13 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
                          if(est.T[g])     list(cov.est   = cov.est))
     result[[g]]  <- unlist(results, recursive=FALSE)
     attr(result[[g]], "Store") <- n.store
-    e.store[[g]] <- store
   }
   if(sw["s.sw"])   {
-    eta.store    <- sort_unique(unlist(e.store))
     Qseq         <- seq_len(max(Q))
-    eta          <- provideDimnames(eta[,Qseq,eta.store, drop=FALSE], base=list("", paste0("Factor", Qseq), ""), unique=FALSE)
+    eta          <- provideDimnames(eta[,Qseq,, drop=FALSE], base=list("", paste0("Factor", Qseq), ""), unique=FALSE)
     scores       <- list(eta = eta, post.eta = rowMeans(eta, dims=2), var.eta = apply(eta,
                          c(1, 2), Var), ci.eta = apply(eta, c(1, 2), quantile, conf.levels))
-    attr(scores, "Eta.store")  <- eta.store
+    attr(scores, "Eta.store")  <- length(eta.store)
   }
   names(result)  <- gnames
   class(GQ.res)                <- "listof"
@@ -802,7 +803,6 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     ci.psi       <- Filter(Negate(is.null), lapply(result, "[[", "ci.psi"))
     uniquenesses <- list(psis = psis, post.psi = post.psi, var.psi = var.psi, ci.psi = ci.psi)
   }
-  load.store     <- vapply(result, attr, numeric(1L), "Store")
   result         <- c(if(exists("cluster", envir=environment())) list(Clust = cluster),
                       list(Error     = Err),   list(GQ.results = GQ.res),
                       if(sw["mu.sw"])  list(Means        =        means),
@@ -827,7 +827,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   attr(result, "range.G")      <- attr(sims, "Groups")
   attr(result, "range.Q")      <- attr(sims, "Factors")
   attr(result, "Varnames")     <- if(all(!sw["l.sw"], !sw["mu.sw"], !sw["psi.sw"], exists("varnames", envir=.GlobalEnv))) varnames
-  attr(result, "N.Loadstore")  <- unname(load.store)
+  attr(result, "N.Loadstore")  <- if(inf.Q) vapply(l.store, length, numeric(1L)) else rep(length(tmp.store), G)
   attr(result, "Obs")          <- n.obs
   attr(result, "Store")        <- tmp.store
   attr(result, "Switch")       <- sw

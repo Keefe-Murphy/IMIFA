@@ -10,7 +10,7 @@
 #' @param mat Logical indicating whether a \code{\link{matplot}} is produced (defaults to \code{TRUE}). If given as \code{FALSE}, \code{ind} is invoked.
 #' @param ind Either a single number indicating which variable to plot when \code{param} is one of \code{means} or \code{uniquenesses}, or which cluster to plot if \code{param} is \code{pis}. If \code{scores} are plotted, a vector of length two giving which observation and factor to plot; If \code{loadings} are plotted, a vector of length two giving which variable and factor to plot. Only relevant when \code{mat} or \code{by.fac} is \code{FALSE}.
 #' @param fac Optional argument that provides an alternative way to specify \code{ind[2]} when \code{mat} is \code{FALSE} and \code{param} is one of \code{scores} or \code{loadings}.
-#' @param by.fac Optionally allows (mat)plotting of scores and loadings by factor - i.e. observation(s) (scores) or variable(s) (loadings) for a given factor, respectively, controlled by \code{ind} or \code{fac}) when set to \code{TRUE} (the default). Otherwise factor(s) are plotted for a given observation or variable, again controlled by \code{ind} or \code{fac}.
+#' @param by.fac Optionally allows (mat)plotting of scores and loadings by factor - i.e. observation(s) (scores) or variable(s) (loadings) for a given factor, respectively, controlled by \code{ind} or \code{fac}) when set to \code{TRUE}. Otherwise factor(s) are plotted for a given observation or variable when set to \code{FALSE} (the default), again controlled by \code{ind} or \code{fac}. Only relevant when \code{param} is one of \code{scores} or \code{loadings}.
 #' @param type The manner in which the plot is to be drawn, as per the \code{type} argument to \code{\link{plot}}.
 #' @param intervals Logical indicating whether credible intervals around the posterior mean(s) are to be plotted when \code{is.element(plot.meth, c("all", "means"))}. Defaults to \code{TRUE}.
 #' @param partial Logical indicating whether plots of type "\code{correlation}" use the PACF. The default, \code{FALSE}, ensures the ACF is used. Only relevant when \code{plot.meth = "all"}, otherwise both plots are produced when \code{plot.meth = "correlation"}.
@@ -63,7 +63,7 @@
 #' # plot(resIMIFA, plot.meth="all", param="alpha")
 plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "density", "errors", "GQ", "means", "parallel.coords", "trace", "zlabels"),
                                 param = c("means", "scores", "loadings", "uniquenesses", "pis", "alpha", "discount"), zlabels = NULL, load.meth = c("heatmap", "raw"), palette = NULL, g = NULL,
-                                mat = TRUE, ind = NULL, fac = NULL, by.fac = TRUE, type = c("h", "n", "p", "l"), intervals = TRUE, partial = FALSE, titles = TRUE, transparency = 0.75, ...) {
+                                mat = TRUE, ind = NULL, fac = NULL, by.fac = FALSE, type = c("h", "n", "p", "l"), intervals = TRUE, partial = FALSE, titles = TRUE, transparency = 0.75, ...) {
 
   if(missing(x))                      stop("'x' must be supplied")
   if(!exists(deparse(substitute(x)),
@@ -278,7 +278,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
       matx     <- mat
     }
     if(!matx) {
-      iter     <- switch(param, scores=seq_along(attr(x$Score, "Eta.store")), pis=seq_along(store), seq_len(attr(x, "N.Loadstore")[g]))
+      iter     <- switch(param, scores=seq_len(attr(x$Score, "Eta.store")), pis=seq_along(store), seq_len(attr(x, "N.Loadstore")[g]))
     }
     if(is.element(param, c("scores", "loadings"))) {
       if(indx)               ind <- c(1L, 1L)
@@ -288,7 +288,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
       if(length(ind) != 2)            stop(paste0("Length of plotting indices must be 2 for the ", param, "parameter when 'mat' is FALSE"))
       if(param == "scores") {
         if(ind[1] >  n.obs)           stop(paste0("First index can't be greater than the number of observations: ",  n.obs))
-        if(ind[2] >  Q.max) {         warning(paste0("Second index can't be greater than ", Q.max, ", the total number of factors", if(grp.ind) paste0(" across groups"), ".\n Try specifying a vector of fac values with maximum entries ", paste0(Qs, collapse=", "), "."), call.=FALSE)
+        if(ind[2] >  Q.max) {         warning(paste0("Second index can't be greater than ", Q.max, ", the total number of factors", if(grp.ind) paste0(" in the widest loadings matrix")), call.=FALSE)
         if(isTRUE(msgx)) .ent_exit()
         next
         }
@@ -580,7 +580,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           if(type.s == "n") text(plot.x[,ind[1]], plot.x[,ind2], obs.names, col=col.s, cex=0.5)
         } else   {
           if(all(intervals, ci.sw[param])) {
-            plotCI(if(!g.score) seq_len(n.obs) else seq_len(sum(z.ind)), plot.x[,ind[1]], li=ci.x[1,,ind[1]], ui=ci.x[2,,ind[1]], gap=TRUE, pch=NA, scol=grey, slty=3, xlab="Observation", ylab=paste0("Factor ", ind[1]))
+            plotCI(if(!g.score) seq_len(n.obs) else seq_len(grp.size[g]), plot.x[,ind[1]], li=ci.x[1,,ind[1]], ui=ci.x[2,,ind[1]], gap=TRUE, pch=NA, scol=grey, slty=3, xlab="Observation", ylab=paste0("Factor ", ind[1]))
             points(plot.x[,ind[1]], type=type.s, col=col.s, pch=20)
           } else {
             plot(plot.x[,ind[1]], type=type.s, col=col.s, xlab="Observation", ylab=paste0("Factor ", ind[1]), pch=20)
@@ -601,7 +601,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           if(Q  > 1) {
             plotcolors(mat2cols(plot.x, cols=lcols))
           } else {
-            graphics::image(z=t(plot.x[seq(n.var, 1),seq_len(Q)]), col=lcols, xlab="", ylab="", xaxt="n", yaxt="n")
+            graphics::image(z=t(plot.x)[,seq(n.var, 1)], col=lcols, xlab="", ylab="", xaxt="n", yaxt="n")
           }
           if(titles) {
             title(main=list(paste0("Posterior Mean", ifelse(!all.ind, " Loadings ", " "), "Heatmap", ifelse(all(!all.ind, grp.ind), paste0(" - Group ", g), ""))))
@@ -1115,7 +1115,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
 #' cols
 #'
 #' # Use plotcolors() to visualise the colours matrix
-#' # plotcolors(cols)
+#' # gclus::plotcolors(cols)
   mat2cols     <- function(mat, cols = NULL, byrank = FALSE, breaks = length(cols)) {
     m          <- as.matrix(mat)
     if(missing(cols)) cols <- viridis(30L, option="C")
@@ -1149,9 +1149,12 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
 #'
 #' @seealso \code{\link[graphics]{image}}, \code{\link[gclus]{plotcolors}}, \code{\link{mat2cols}}
 #' @examples
-#' # data <- matrix(rnorm(100), nrow=10, ncol=10)
+#' # Generate a matrix, flip it, and plot it with a legend
+#' # data <- matrix(rnorm(50), nrow=10, ncol=5)
 #' # cols <- heat.colors(12)[12:1]
-#' # image(t(data)[ncol(data):1,], col=cols)
+#' # par(mar=c(5.1, 4.1, 4.1, 4.1))
+#'
+#' # image(t(data)[,nrow(data):1], col=cols)
 #' # box(lwd=2)
 #' # heat_legend(data, cols)
   heat_legend  <- function(data, cols) {

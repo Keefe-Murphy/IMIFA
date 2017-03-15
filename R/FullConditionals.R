@@ -429,8 +429,8 @@
       sw        <- sample(nn.ind, 2L)
       pis       <- pi.prop[sw]
       nns       <- nn[sw]
-      a.prob    <- (nns[1] - nns[2]) * (log(pis[1])  - log(pis[2]))
-        return(list(rate1  = a.prob >= 0 || - exp(1) < a.prob, sw = sw))
+      a.prob    <- (nns[1] - nns[2]) * (log(pis[1])    - log(pis[2]))
+        return(list(rate1  = a.prob >= 0 || - exp(1)   < a.prob, sw = sw))
     }
 
     # Move 2
@@ -439,8 +439,9 @@
       sw        <- if(is.element(sw, c(G, G - 1))) c(G - 1, G) else c(sw, sw + 1)
       nns       <- nn[sw]
       Vsw       <- Vs[sw]
-      a.prob    <- nns[1] * log(1 - Vsw[2]) - nns[2]  * log(1 - Vsw[1])
-        return(list(rate2 = a.prob >= 0  || - rexp(1) < a.prob, sw = sw))
+      a.prob    <- nns[1] * log(1 - Vsw[2]) - nns[2]   * log(1 - Vsw[1])
+      a.prob    <- ifelse(is.nan(a.prob),   - Inf, a.prob)
+        return(list(rate2 = a.prob >= 0  || - rexp(1)  < a.prob, sw = sw))
     }
 
   # Length Checker

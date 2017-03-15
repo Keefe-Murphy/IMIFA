@@ -18,9 +18,12 @@ Modifies an existing plot by adding a legend.
 Using only base graphics, this function appends a colour key legend for heatmaps produced by, for instance, \code{\link[graphics]{image}} or \code{\link[gclus]{plotcolors}}.
 }
 \examples{
-# data <- matrix(rnorm(100), nrow=10, ncol=10)
+# Generate a matrix, flip it, and plot it with a legend
+# data <- matrix(rnorm(50), nrow=10, ncol=5)
 # cols <- heat.colors(12)[12:1]
-# image(t(data)[ncol(data):1,], col=cols)
+# par(mar=c(5.1, 4.1, 4.1, 4.1))
+
+# image(t(data)[,nrow(data):1], col=cols)
 # box(lwd=2)
 # heat_legend(data, cols)
 }
