@@ -1,10 +1,11 @@
 # IMIFA v1.1.1 - (__2nd release: 2017-02-15__)
+% __Infinite Mixtures of Infinite Factor Analysers__
 ============================================
 
 ## New Features
 * Sped up simulating cluster labels from unnormalised log probabilities using the Gumbel-Max trick (Yellott, 1977):  
   `gumbel_max` replaces earlier function to sample cluster labels & is now unhidden/exported/documented.
-* Learning the Pitman-Yor `discount` hyperparameter via Metropolis-Hastings now implemented.  
+* Learning the Pitman-Yor `discount` and `alpha` hyperparameters via Metropolis-Hastings now implemented.  
   Plotting function's `param` argument gains the option `discount` for posterior inference.
 * Simulated (finite) mixing proportions w/ _Gamma(alpha, 1)_ trick (Devroye 1986, p.594) instead of `MCMCpack:rdirichlet`:  
   `rDirichlet` replaces earlier function to sample mixing proportions & is now unhidden/exported/documented.
@@ -20,7 +21,7 @@
 * Metropolis-Hastings updates implemented for `alpha` when `discount` is non-zero, rather than usual Gibbs.
 * DIC model selection criterion now also available for infinite factor models (previously finite only).
 * `G_priorDensity` now better reflects discrete nature of the density and plots for non-zero PY discount values.
-* Posterior mean loadings heatmaps now also display a legend. 
+* Posterior mean loadings heatmaps now also display a colour key legend via new function `heat_legend`.
 * Deferred setting `dimnames` attributes in `mcmc_IMIFA` to `get_IMIFA_results`: lower memory burden/faster simulations.
 * Jettisoned superfluous duplicate material in object outputted from `get_IMIFA_results` to reduce size/simplify access.
 * Removed IMFA/IMIFA `trunc.G` arg, made `range.G` the max allowable # active groups & also stored # active groups.
@@ -32,6 +33,7 @@
 * 2<sup>nd</sup> IM(I)FA label switching move sped up/properly weighted to ensure uniform sampling of neighbouring cluster pairs.
 * Fixed trace plots for factor scores by extracting indices of stored iterations properly using `Rfast::sort_unique`. 
 * Fixed way in which `rnorm` columns are added to scores matrix during adaptation when 'widest' loadings matrix grows.
+* Gibbs Updates of DP parameter `alpha` now correctly depend on current # non-empty rather than active groups.
 * Slightly rearranged order Gibbs updates take place, esp. to ensure means enter simulation of uniquenesses properly.
 * Edited/robustified subsetting of large objects when storing `mcmc_IMIFA` output.
 * Tightened controls for when certain parameters are not stored for posterior inference.
@@ -41,4 +43,4 @@
 * Fixed behaviour of progress bar when `verbose=FALSE`.
 * Fixed typos & expanded/clarified help documentation/vignette.
 
-# IMIFA v1.1.0 - (__1st release: 2017-02-02__)
+# IMIFA v1.1.0 - (_1st release: 2017-02-02_)

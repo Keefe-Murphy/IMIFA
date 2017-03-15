@@ -161,7 +161,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
     if(any(unlist(vapply(seq_along(ptrn), function(p) grepl(ptrn[p], nam.z, fixed=TRUE), logical(1L))),
            !identical(z.nam,   nam.z) && (any(grepl("[[:alpha:]]", gsub('c', '', nam.x))) || grepl(":",
            nam.x, fixed=TRUE))))      stop("Extremely inadvisable to supply 'zlabels' subsetted by any means other than row/column numbers or c() indexing: best to create new object")
-    labs  <- as.numeric(as.factor(zlabels))
+    labs  <- as.integer(as.factor(zlabels))
     if(length(labs) != n.obs)         stop(paste0("'zlabels' must be a factor of length N=",  n.obs))
   }
   if(m.sw["P.sw"]) {
@@ -565,7 +565,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           ind2   <- ifelse(any(!facx, Q.max <= 1), ind[2], if(Q.max > 1) max(2, ind[2]))
           if(ci.sw[param]) ci.x  <- x$Scores$ci.eta
         }
-        col.s  <- if(is.factor(labs)) as.numeric(levels(labs))[labs] else labs
+        col.s  <- if(is.factor(labs)) as.integer(levels(labs))[labs] else labs
         type.s <- ifelse(any(type.x, type == "l"), "p", type)
         if(ind2 != 1)  {
           if(all(intervals, ci.sw[param])) {
@@ -609,7 +609,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
             if(n.var < 100) {
               axis(2, cex.axis=0.5, line=-0.5, tick=FALSE, las=1, at=if(Q > 1) seq_len(n.var) else seq(from=0, to=1, by=1/(n.var - 1)), labels=substring(var.names[n.var:1], 1, 10))
             }
-            .legend_heat(data=pxx, cols=lcols)
+            heat_legend(data=pxx, cols=lcols)
             par(xpd  = FALSE)
           }
           box(lwd=2)
@@ -884,7 +884,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           title(main=list("Average Similarity Matrix"))
           axis(1, at=n.obs/2, labels="Observation 1:N", tick=FALSE)
           axis(2, at=n.obs/2, labels="Observation 1:N", tick=FALSE)
-          .legend_heat(data=plot.x, cols = z.col)
+          heat_legend(data=plot.x, cols = z.col)
         }
         box(lwd=2)
       }
@@ -1138,12 +1138,29 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
   }
 
 # Heatmap Legends
-  .legend_heat <- function(data, cols) {
-    xpd        <- par()$xpd
+#' Add a colour key legend to heatmap plots
+#'
+#' Using only base graphics, this function appends a colour key legend for heatmaps produced by, for instance, \code{\link[graphics]{image}} or \code{\link[gclus]{plotcolors}}.
+#' @param data Either the data with which the heatmap was created or a vector containing its minimum and maximum values.
+#' @param cols The palette used when the heatmap was created.
+#'
+#' @return Modifies an existing plot by adding a legend.
+#' @export
+#'
+#' @seealso \code{\link[graphics]{image}}, \code{\link[gclus]{plotcolors}}, \code{\link{mat2cols}}
+#'
+#' @examples
+#' # data <- matrix(rnorm(100), nrow=10, ncol=10)
+#' # cols <- heat.colors(12)[12:1]
+#' # image(t(data)[ncol(data):1,], col=cols)
+#' # box(lwd=2)
+#' # heat_legend(data, cols)
+  heat_legend  <- function(data, cols) {
+    on.exit(suppressWarnings(par(par(no.readonly=TRUE))))
     bx         <- par("usr")
     box.cx     <- c(bx[2] + (bx[2]  - bx[1])/1000, bx[2] + (bx[2] - bx[1])/1000 + (bx[2] - bx[1])/50)
-    box.cy     <- c(bx[3], bx[3])
-    box.sy     <- (bx[4]  - bx[3])/length(cols)
+    box.cy     <- c(bx[3],   bx[3])
+    box.sy     <- (bx[4]  -  bx[3]) / length(cols)
     xx         <- rep(box.cx, each  = 2)
     par(xpd = TRUE)
     for(i in seq_along(cols)) {
@@ -1151,12 +1168,11 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
                 box.cy[1] + (box.sy * (i)),
                 box.cy[1] + (box.sy * (i)),
                 box.cy[1] + (box.sy * (i - 1)))
-      polygon(xx, yy, col = cols[i], border = cols[i])
+      polygon(xx, yy, col =  cols[i], border = cols[i])
     }
     par(new = TRUE)
-    plot(0, 0, type = "n", ylim = c(min(data), max(data)), yaxt = "n", ylab = "", xaxt = "n", xlab = "", frame.plot = FALSE)
-    axis(side=4, las=2, tick=FALSE, line=0.1)
-    par(xpd = xpd)
+    plot(0, 0, type = "n",  ylim = c(min(data), max(data)), yaxt = "n", ylab = "", xaxt = "n", xlab = "", frame.plot = FALSE)
+    axis(side = 4, las = 2, tick = FALSE, line = 0.1, cex.axis = 1)
   }
 
 # Prior No. Groups (DP & PY)
@@ -1202,7 +1218,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
             is.numeric(N)))           stop("'N', 'alpha', and 'discount' inputs must be numeric")
     if(any(discount < 0,
        discount >= 1))                stop("'discount' must lie in the interval [0,1)")
-    if(any(alpha < -discount))        stop("'alpha' must be strictly greater than -discount")
+    if(any(alpha <= - discount))      stop("'alpha' must be strictly greater than -discount")
     if(length(alpha)    != max.len) {
       alpha    <- rep(alpha,    max.len)
     }

@@ -395,7 +395,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       if(!inherits(znew, "try-error")) {
         zadj     <- znew$z.avg
         zadj     <- factor(zadj, labels=seq_along(unique(zadj)))
-        zadj     <- as.numeric(levels(zadj))[zadj]
+        zadj     <- as.integer(levels(zadj))[zadj]
         zavg     <- znew$z.sim
         zG       <- max(zadj)
         if(!label.miss) {
@@ -404,7 +404,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
          if(length(levs) == zG) {
            swlab <- .lab_switch(z.new=zadj, z.old=zlabels, Gs=seq_len(zG))
            zadj  <- factor(swlab$z, levels=seq_len(zG))
-           zadj  <- as.numeric(levels(zadj))[zadj]
+           zadj  <- as.integer(levels(zadj))[zadj]
          }
          tab     <- table(zadj, zlabels, dnn=list("Predicted", "Observed"))
          tabstat <- c(classAgreement(tab), classError(map, zlabels))
@@ -450,7 +450,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
         map      <- factor(sw.lab$z, levels=Gseq)
         l.perm   <- sw.lab$z.perm
         z.tmp    <- apply(z, 2, factor, levels=l.perm)
-        z        <- apply(z.tmp, 2, function(x) as.numeric(levels(as.factor(x)))[as.numeric(x)])
+        z        <- apply(z.tmp, 2, function(x) as.integer(levels(as.factor(x)))[as.integer(x)])
         if(sw["mu.sw"])    mus <- mus[,l.perm,,     drop=FALSE]
         if(sw["l.sw"])   lmats <- lmats[,,l.perm,,  drop=FALSE]
         if(sw["psi.sw"])  psis <- psis[,l.perm,,    drop=FALSE]
@@ -504,7 +504,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       PY.disc    <- list(discount = discount, post.disc = post.disc, var.disc = var.disc, ci.disc = ci.disc, disc.rate = rate)
       class(PY.disc)           <- "listof"
     }
-    map          <- as.numeric(levels(map))[map]
+    map          <- as.integer(levels(map))[map]
     cluster      <- list(map = map, z = z, uncertainty = uncertain)
     cluster      <- c(cluster, list(post.sizes = sizes, post.pi = post.pi/sum(post.pi)),
                       if(sw["pi.sw"]) list(pi.prop = pi.prop, var.pi = var.pi, ci.pi = ci.pi),

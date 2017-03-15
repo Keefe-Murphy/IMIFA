@@ -461,7 +461,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     } else if(is.element(method,
       c("OMFA", "OMIFA")))   alpha         <- alpha/range.G
     if(length(alpha) != 1)          stop("'alpha' must be specified as a scalar to ensure an exchangeable prior")
-    if(alpha <= -discount)          stop(paste0("'alpha' must be ",     ifelse(discount != 0, paste0("greater than -discount (i.e. > ", - discount, ")"), "strictly positive")))
+    if(alpha <= -discount)          stop(paste0("'alpha' must be ",     ifelse(discount != 0, paste0("strictly greater than -discount (i.e. > ", - discount, ")"), "strictly positive")))
     if(all(is.element(method,  c("IMIFA",   "IMFA")),
        !learn.alpha))               warning(paste0("'alpha' fixed at ", ifelse(discount != 0, paste0("1 - 'discount' = "), ""), alpha, " as it's not being learned via Gibbs/Metropolis-Hastings updates"), call.=FALSE)
     if(all(is.element(method,  c("OMIFA",   "OMFA")),
@@ -543,14 +543,14 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
       if(z.init    == "kmeans")     {
         k.res      <- try(suppressWarnings(kmeans(dat, centers=G, iter.max=20, nstart=100)), silent=TRUE)
         if(!inherits(k.res, "try-error"))  {
-          zi[[g]]  <- as.numeric(factor(k.res$cluster, levels=seq_len(G)))
+          zi[[g]]  <- as.integer(factor(k.res$cluster,        levels=seq_len(G)))
         } else                      stop("Cannot initialise cluster labels using kmeans. Try another z.init method")
       } else if(z.init  == "list")   {
-        zi[[g]]    <- as.numeric(z.list[[g]])
+        zi[[g]]    <- as.integer(z.list[[g]])
       } else if(z.init  == "mclust") {
         m.res      <- try(Mclust(dat, G), silent=TRUE)
         if(!inherits(m.res, "try_error"))  {
-          zi[[g]]  <- as.numeric(m.res$classification)
+          zi[[g]]  <- as.integer(factor(m.res$classification, levels=seq_len(G)))
         } else                      stop("Cannot initialise cluster labels using mclust. Try another z.init method")
       } else {
         zips       <- rep(1, N)
@@ -564,7 +564,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
           pies     <- .sim_pi_inf(alpha=alpha, N=N, nn=rep(N/range.G, range.G), discount=discount, lseq=seq_len(range.G), len=range.G)$pi.prop
           zips     <- .sim_z_p(N=N, prob.z=pies)
         }
-        zi[[g]]    <- as.numeric(zips)
+        zi[[g]]    <- as.integer(zips)
         rm(zips)
       }
       nngs         <- tabulate(zi[[g]], nbins=G)

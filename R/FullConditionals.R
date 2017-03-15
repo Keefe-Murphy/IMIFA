@@ -381,7 +381,7 @@
       z.names   <- as.numeric(names(z.perm))
       z.perm    <- z.perm[Order(z.names)]
       z.sw      <- factor(z.new, labels=z.perm[seq_along(ng[ng > 0])])
-        return(list(z = as.numeric(levels(z.sw))[z.sw], z.perm = z.perm))
+        return(list(z = as.integer(levels(z.sw))[z.sw], z.perm = z.perm))
     }
 
   # Similarity matrix and 'average' clustering
@@ -494,8 +494,9 @@
     G_expected  <- Vectorize(function(N, alpha, discount = 0L) {
       if(!all(is.numeric(N), is.numeric(discount),
          is.numeric(alpha)))               stop("All inputs must be numeric")
-      if(discount  < 0  || discount >= 1)  stop("Invalid discount value")
-      if(alpha   < - discount)             stop("Invalid alpha value")
+      if(discount  < 0  || discount >= 1)  stop("'discount' must lie in the interval [0,1)")
+      if(alpha  <= - discount)             stop("'alpha' must be strictly greater than -discount")
+      if(alpha  == 0)                      stop("'alpha' equal to zero not yet implemented")
       if(suppressMessages(requireNamespace("Rmpfr", quietly=TRUE))) {
         mpfrind <- TRUE
         on.exit(.detach_pkg("Rmpfr"))
@@ -531,8 +532,9 @@
     G_variance  <- Vectorize(function(N, alpha, discount = 0L) {
       if(!all(is.numeric(N), is.numeric(discount),
          is.numeric(alpha)))               stop("All inputs must be numeric")
-      if(discount  < 0  || discount >= 1)  stop("Invalid discount value")
-      if(alpha   < - discount)             stop("Invalid alpha value")
+      if(discount  < 0  || discount >= 1)  stop("'discount' must lie in the interval [0,1)")
+      if(alpha  <= - discount)             stop("'alpha' must be strictly greater than -discount")
+      if(alpha  == 0)                      stop("'alpha' equal to zero not yet implemented")
       if(suppressMessages(requireNamespace("Rmpfr", quietly=TRUE))) {
         mpfrind <- TRUE
         on.exit(.detach_pkg(Rmpfr))

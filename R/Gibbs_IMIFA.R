@@ -106,7 +106,7 @@
     nn.ind           <- which(nn0)
     G.non            <- length(nn.ind)
     z                <- factor(z, labels=match(nn.ind, index))
-    z                <- as.numeric(levels(z))[z]
+    z                <- as.integer(levels(z))[z]
     ksi              <- (1 - rho) * rho^(Ts - 1)
     log.ksi          <- log(ksi)
     slice.logs       <- c(- Inf, 0)
@@ -155,7 +155,7 @@
       Qs             <- Qs[index]
       psi.inv        <- psi.inv[,index, drop=FALSE]
       z              <- factor(z, labels=match(nn.ind, index))
-      z              <- as.numeric(levels(z))[z]
+      z              <- as.integer(levels(z))[z]
       if(!ind.slice) {
         ksi          <- pi.prop
         log.ksi      <- log(ksi)
@@ -324,8 +324,8 @@
               dat.g[sw1]      <- dat.g[sw1x]
               Q0[sw1]         <- Q0[sw1x]
             }
-          } else        acc1  <- FALSE
-        }
+          }
+        } else  acc1 <- FALSE
         if(G     > 1) {
           move2      <- .lab_move2(G=G, Vs=Vs, nn=nn)
           acc2       <- move2$rate2
@@ -351,8 +351,8 @@
               dat.g[sw2]      <- dat.g[sw2x]
               Q0[sw2]         <- Q0[sw2x]
             }
-          } else        acc2  <- FALSE
-        }
+          }
+        } else  acc2 <- FALSE
       }
 
       if(Q.bigs && !Q.large   && iter > burnin) {         warning(paste0("Q has exceeded initial number of loadings columns since burnin: consider increasing range.Q from ", Q.star), call.=FALSE)
@@ -396,7 +396,7 @@
       }
     }
     if(verbose)         close(pb)
-    Gmax             <- seq_len(max(as.numeric(z.store)))
+    Gmax             <- seq_len(max(as.integer(z.store)))
     Qmax             <- seq_len(max(Q.store))
     mu.store         <- if(sw["mu.sw"])  tryCatch(mu.store[,Gmax,, drop=FALSE],        error=function(e) mu.store)
     eta.store        <- if(sw["s.sw"])   tryCatch(eta.store[,Qmax,, drop=FALSE],       error=function(e) eta.store)
