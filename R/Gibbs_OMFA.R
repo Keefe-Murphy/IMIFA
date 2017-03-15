@@ -78,7 +78,7 @@
     lmat           <- lmat[,,index, drop=FALSE]
     psi.inv        <- psi.inv[,index, drop=FALSE]
     z              <- factor(z, labels=match(nn.ind, index))
-    z              <- as.numeric(levels(z))[z]
+    z              <- as.integer(levels(z))[z]
     G.non          <- G
     if(burnin       < 1)  {
       mu.store[,,1]        <- mu
@@ -107,7 +107,7 @@
       lmat         <- lmat[,,index, drop=FALSE]
       psi.inv      <- psi.inv[,index, drop=FALSE]
       z            <- factor(z, labels=match(nn.ind, index))
-      z            <- as.numeric(levels(z))[z]
+      z            <- as.integer(levels(z))[z]
 
     # Cluster Labels
       psi          <- 1/psi.inv
@@ -167,7 +167,7 @@
       }
     }
     if(verbose)       close(pb)
-    Gmax           <- seq_len(max(as.numeric(z.store)))
+    Gmax           <- seq_len(max(as.integer(z.store)))
     mu.store       <- if(sw["mu.sw"])  tryCatch(mu.store[,Gmax,, drop=FALSE],    error=function(e) mu.store)
     load.store     <- if(sw["l.sw"])   tryCatch(load.store[,,Gmax,, drop=FALSE], error=function(e) load.store)
     psi.store      <- if(sw["psi.sw"]) tryCatch(psi.store[,Gmax,, drop=FALSE],   error=function(e) psi.store)

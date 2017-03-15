@@ -106,7 +106,7 @@
     nn.ind           <- which(nn0)
     G.non            <- length(nn.ind)
     z                <- factor(z, labels=match(nn.ind, index))
-    z                <- as.numeric(levels(z))[z]
+    z                <- as.integer(levels(z))[z]
     ksi              <- (1 - rho) * rho^(Ts - 1)
     log.ksi          <- log(ksi)
     slice.logs       <- c(- Inf, 0)
@@ -155,7 +155,7 @@
       Qs             <- Qs[index]
       psi.inv        <- psi.inv[,index, drop=FALSE]
       z              <- factor(z, labels=match(nn.ind, index))
-      z              <- as.numeric(levels(z))[z]
+      z              <- as.integer(levels(z))[z]
       if(!ind.slice) {
         ksi          <- pi.prop
         log.ksi      <- log(ksi)
@@ -396,7 +396,7 @@
       }
     }
     if(verbose)         close(pb)
-    Gmax             <- seq_len(max(as.numeric(z.store)))
+    Gmax             <- seq_len(max(as.integer(z.store)))
     Qmax             <- seq_len(max(Q.store))
     mu.store         <- if(sw["mu.sw"])  tryCatch(mu.store[,Gmax,, drop=FALSE],        error=function(e) mu.store)
     eta.store        <- if(sw["s.sw"])   tryCatch(eta.store[,Qmax,, drop=FALSE],       error=function(e) eta.store)
