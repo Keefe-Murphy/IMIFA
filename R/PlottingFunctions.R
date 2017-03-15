@@ -1148,7 +1148,6 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
 #' @export
 #'
 #' @seealso \code{\link[graphics]{image}}, \code{\link[gclus]{plotcolors}}, \code{\link{mat2cols}}
-#'
 #' @examples
 #' # data <- matrix(rnorm(100), nrow=10, ncol=10)
 #' # cols <- heat.colors(12)[12:1]
