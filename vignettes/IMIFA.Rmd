@@ -174,7 +174,7 @@ plot(resIMIFA, plot.meth="zlabels", zlabels=olive$area, g=1)
 ```{r}
 plot(resIMIFA, plot.meth="zlabels", g=3)
 ```
-To examine the posterior mean estimates of the cluster means in a given cluster (say the 1st), we can set both `plot.meth` and `param` to `"means"`. If the cluster isn't specified using the argument `g`, the user will be prompted to hit RETURN at the onset of each plot in order to cycle through similar plots for all clusters. In the code below `mat=TRUE` means, in this case, to plot all variables simultaneously. Note that the data were originally mean-centered and unit-scaled when `mcmc_IMIFA` was called.
+To examine the posterior mean estimates of the cluster means in a given cluster (say the 1st), we can set both `plot.meth` and `param` to `"means"`. If the cluster isn't specified using the argument `g`, the user will be prompted to hit &lt;Return&gt; at the onset of each plot in order to cycle through similar plots for all clusters. In the code below `mat=TRUE` means, in this case, to plot all variables simultaneously. By default, credible intervals are also plotted. Note that the data were originally mean-centered and unit-scaled when `mcmc_IMIFA` was called.
 
 ```{r}
 plot(resIMIFA, plot.meth="means", param="means", mat=TRUE, g=1)

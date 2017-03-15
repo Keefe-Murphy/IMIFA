@@ -11,7 +11,7 @@
 #' @param Q.meth If the object in \code{sims} arises from the "\code{IFA}", "\code{MIFA}", "\code{OMIFA}" or "\code{IMIFA}" methods, this argument determines whether the optimal number of latent factors is given by the mode or median of the posterior distribution of \code{Q}. Defaults to "\code{Mode}".
 #' @param dat The actual data set on which \code{\link{mcmc_IMIFA}} was originally run. This is necessary for computing error metrics between the estimated and empirical covariance matrix/matrices. If this is not supplied, the function will attempt to find the data set if it is still available in the global environment.
 #' @param conf.level The confidence level to be used throughout for credible intervals for all parameters of inferential interest. Defaults to 0.95.
-#' @param z_avgsim Logical indicating whether the clustering should also be summarised with a call to \code{\link{Zsimilarity}} by the clustering with minimum squared distance to the similarity matrix obtained by averaging the stored adjacency matrices, in addition to the MAP estimate. Note that the MAP clustering is computed \emph{conditional} on the estimate of the number of clusters (whether that be the modal estimate or the estimate according to \code{criterion}) and other parameters are extracted conditional on this estimate of \code{G}: however, in constrast, the number of distinct clusters in the summarised labels obtained by \code{z_avgsim=TRUE} may not necessarily coincide with the estimate of \code{G}, but may provide a useful alternative summary of the partitions explored during the chain. This can take quite some time to compute, and may not even be possible if the number of observations &/or number of stored iterations is large and the resulting matrix isn't sufficiently sparse, so the default is \code{FALSE}, otherwise both the summarised clustering and the similarity matrix are stored: the latter can be passed to \code{\link{plot.Results_IMIFA}}.
+#' @param z_avgsim Logical indicating whether the clustering should also be summarised with a call to \code{\link{Zsimilarity}} by the clustering with minimum squared distance to the similarity matrix obtained by averaging the stored adjacency matrices, in addition to the MAP estimate. Note that the MAP clustering is computed \emph{conditional} on the estimate of the number of clusters (whether that be the modal estimate or the estimate according to \code{criterion}) and other parameters are extracted conditional on this estimate of \code{G}: however, in constrast, the number of distinct clusters in the summarised labels obtained by \code{z_avgsim=TRUE} may not necessarily coincide with the estimate of \code{G}, but may provide a useful alternative summary of the partitions explored during the chain. Please be warned that this can take considerable time to compute, and may not even be possible if the number of observations &/or number of stored iterations is large and the resulting matrix isn't sufficiently sparse, so the default is \code{FALSE}, otherwise both the summarised clustering and the similarity matrix are stored: the latter can be passed to \code{\link{plot.Results_IMIFA}}.
 #' @param zlabels For any method that performs clustering, the true labels can be supplied if they are known in order to compute clustering performance metrics. This also has the effect of ordering the MAP labels (and thus the ordering of cluster-specific parameters) to most closely correspond to the true labels if supplied.
 #'
 #' @return An object of class "\code{Results_IMIFA}" to be passed to \code{\link{plot.Results_IMIFA}} for visualising results. Dedicated \code{print} and \code{summary} functions exist for objects of this class. The object, say \code{x}, is a list of lists, the most important components of which are:
@@ -556,7 +556,10 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   }
   if(inf.Q) {
     l.store      <- lapply(Gseq, function(g, ts=seq_along(tmp.store)) ts[which(Q.store[g,] >= Q[g])])
-    eta.store    <- sort_unique(unlist(l.store))
+    eta.store    <- sort_unique(unlist(l.store))                                   # current approach (union)
+   #eta.store    <- tmp.store                                                      # 2nd approach     (all)
+   #eta.store    <- eta.store[colMaxs(Q.store[,eta.store], value=TRUE) >= max(Q)]  # 3rd approach     (applied to ~union~)
+   #eta.store    <- sort_unique(Reduce(intersect, l.store))                        # 4th approach     (intersection)
   } else {
     eta.store    <- tmp.store
   }
@@ -588,16 +591,17 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
 
   # Retrieve (unrotated) loadings
     if(sw["l.sw"]) {
+      tmpind     <- ifelse(inf.Q, which.max(Q.store[g,] == Qg), 1)
       if(clust.ind)  {
         lmat     <- adrop(lmats[,,g,store, drop=FALSE], drop=3)
-        l.temp   <- adrop(lmat[,,1, drop=FALSE],        drop=3)
+        l.temp   <- adrop(lmat[,,tmpind,   drop=FALSE], drop=3)
       } else {
         lmat     <- sims[[G.ind]][[Q.ind]]$load
         if(inf.Q) {
           lmat   <- as.array(lmat)
         }
-        lmat     <- lmat[,,store,   drop=FALSE]
-        l.temp   <- adrop(lmat[,,1, drop=FALSE], drop=3)
+        lmat     <- lmat[,,store,          drop=FALSE]
+        l.temp   <- adrop(lmat[,,tmpind,   drop=FALSE], drop=3)
       }
     }
 
@@ -610,6 +614,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
           if(sw["s.sw"])  {
             rot  <- proc$R
             p2   <- ifelse(inf.Q, which(eta.store == p), p)
+           #p2   <- p
             if(clust.ind) {
               zp <- z[,p]  == g
               eta[zp,,p2]  <- eta[zp,,p2] %*% rot

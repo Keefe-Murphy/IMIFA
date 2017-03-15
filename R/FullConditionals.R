@@ -387,7 +387,7 @@
   # Similarity matrix and 'average' clustering
 #' Summarises MCMC clustering labels with a similarity matrix and finds the 'average' clustering
 #'
-#' This functions takes a Monte Carlo sample of cluster labels, converts them to adjacency matrices, and computes a similarity matrix as an average of the adjacency matrices. The dimension of the similarity matrix is invariant to label switching and the number of clusters in each sample. As a summary of the posterior clustering, the index of the clustering with minimum squared distance to this 'average' clustering is reported. Please note that this function can take quite some time, and may crash if the number of observations &/or number of iterations is so large that the similarity matrix is insufficiently sparse. This function can optionally be called inside \code{\link{get_IMIFA_results}}.
+#' This functions takes a Monte Carlo sample of cluster labels, converts them to adjacency matrices, and computes a similarity matrix as an average of the adjacency matrices. The dimension of the similarity matrix is invariant to label switching and the number of clusters in each sample. As a summary of the posterior clustering, the index of the clustering with minimum squared distance to this 'average' clustering is reported. Please note that this function is implemented purely in R and as such its performance in terms of speed and memory may not be optimal; it can take quite a considerable amount of time to run, and may crash if the number of observations &/or number of iterations is so large that the similarity matrix is insufficiently sparse. This function can optionally be called inside \code{\link{get_IMIFA_results}}.
 #' @param zs A matrix containing samples of clustering labels where the rows correspond to the number of observations and the columns correspond to the number of iterations.
 #'
 #' @return A list containing three elements:
@@ -417,10 +417,11 @@
 #' # table(z.avg, olive$area)
     Zsimilarity <- function(zs) {
       if(!is.matrix(zs))                   stop("'zs' must be a matrix with rows corresponding to the number of observations and columns corresponding to the number of iterations")
-      n.iters   <- ncol(zs)
-      zis       <- lapply(seq_len(n.iters), function(i, zi=zs[,i]) outer(zi, zi, FUN="=="))
-      zsim      <- Reduce('+', zis)/n.iters
-      dist.z    <- vapply(seq_len(n.iters), function(i, distz=zis[[i]] - zsim) sum(distz * distz), numeric(1L))
+      .tryouter <- function(x) tryCatch(suppressWarnings(outer(x, x, FUN="==")),              error=function(e) NULL)
+      .trysum2  <- function(x) tryCatch(suppressWarnings(sum(as.simple_triplet_matrix(x)^2)), error=function(e) NULL)
+      zis       <- lapply(seq_len(ncol(zs)), function(i) .tryouter(zs[,i]))
+      zsim      <- tryCatch(Reduce('+', zis)/length(zis), error=function(e) stop())
+      dist.z    <- vapply(seq_along(zis),    function(i) .trysum2(zis[[i]] - zsim), numeric(1L))
         return(list(z.avg = zs[,which.min(dist.z)], z.sim = as.simple_triplet_matrix(zsim), dist.z = dist.z))
     }
 

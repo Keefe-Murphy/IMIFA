@@ -325,10 +325,10 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         x.plot <- x$Scores$eta
         if(by.fac) {
           plot.x  <- x.plot[,ind[2],]
-          if(mispal) palette(viridis(min(10, n.obs)))
+          if(mispal) palette(viridis(min(10, max(2, n.obs))))
         } else {
           plot.x  <- if(Q.max > 1) x.plot[ind[1],,] else t(x.plot[ind[1],,])
-          if(mispal) palette(viridis(min(10, Q.max)))
+          if(mispal) palette(viridis(min(10, max(2, Q.max))))
         }
         if(matx) {
           matplot(t(plot.x), type="l", ylab="", xlab="Iteration", lty=1, col=seq_along(palette()))
@@ -346,10 +346,10 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         x.plot <- x$Loadings$lmats[[g]]
         if(by.fac) {
           plot.x  <- x.plot[,ind[2],]
-          if(mispal) palette(viridis(min(10, n.var)))
+          if(mispal) palette(viridis(min(10, max(2, n.var))))
         } else {
           plot.x  <- x.plot[ind[1],,]
-          if(mispal) palette(viridis(min(10, Q)))
+          if(mispal) palette(viridis(min(10, max(2, Q))))
         }
         if(matx) {
           matplot(t(plot.x), type="l", ylab="", xlab="Iteration", lty=1, col=seq_along(palette()))
@@ -430,10 +430,10 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         x.plot <- x$Scores$eta
         if(by.fac) {
           plot.x  <- x.plot[,ind[2],]
-          if(mispal) palette(viridis(min(10, n.obs)))
+          if(mispal) palette(viridis(min(10, max(2, n.obs))))
         } else   {
           plot.x  <- if(Q > 1) x.plot[ind[1],,] else t(x.plot[ind[1],,])
-          if(mispal) palette(viridis(min(10, Q.max)))
+          if(mispal) palette(viridis(min(10, max(2, Q.max))))
         }
         if(matx) {
           plot.x  <- sapply(apply(plot.x, 1, density), "[[", "y")
@@ -454,10 +454,10 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         x.plot <- x$Loadings$lmats[[g]]
         if(by.fac) {
           plot.x  <- x.plot[,ind[2],]
-          if(mispal) palette(viridis(min(10, n.var)))
+          if(mispal) palette(viridis(min(10, max(2, n.var))))
         } else {
           plot.x  <- x.plot[ind[1],,]
-          if(mispal) palette(viridis(min(10, Q)))
+          if(mispal) palette(viridis(min(10, max(2, Q))))
         }
         if(matx) {
           plot.x  <- sapply(apply(plot.x, 1, density), "[[", "y")
@@ -601,7 +601,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           if(Q  > 1) {
             plotcolors(mat2cols(plot.x, cols=lcols))
           } else {
-            graphics::image(z=t(plot.x)[,seq(n.var, 1)], col=lcols, xlab="", ylab="", xaxt="n", yaxt="n")
+            graphics::image(z=t(plot.x)[,seq(n.var, 1), drop=FALSE], col=lcols, xlab="", ylab="", xaxt="n", yaxt="n")
           }
           if(titles) {
             title(main=list(paste0("Posterior Mean", ifelse(!all.ind, " Loadings ", " "), "Heatmap", ifelse(all(!all.ind, grp.ind), paste0(" - Group ", g), ""))))
@@ -610,7 +610,6 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
               axis(2, cex.axis=0.5, line=-0.5, tick=FALSE, las=1, at=if(Q > 1) seq_len(n.var) else seq(from=0, to=1, by=1/(n.var - 1)), labels=substring(var.names[n.var:1], 1, 10))
             }
             heat_legend(data=pxx, cols=lcols)
-            par(xpd  = FALSE)
           }
           box(lwd=2)
           mtext(ifelse(Q > 1, "Factors", "Factor"), side=1, line=2)
@@ -618,7 +617,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         } else {
           if(ci.sw[param]) ci.x  <- x$Loadings$ci.load[[g]]
           if(!by.fac) {
-           if(ci.sw[param]) ci.x <- ci.x[,ind[1],]
+           if(ci.sw[param]) ci.x <- as.matrix(ci.x[,ind[1],])
             plot(plot.x[ind[1],], type=type, xaxt="n", xlab="", ylab="Loading", ylim=if(all(intervals, ci.sw[param])) cixx else pxx)
             if(all(intervals, ci.sw[param])) plotCI(plot.x[ind[1],], li=ci.x[1,], ui=ci.x[2,], slty=3, scol=grey, add=TRUE, gap=TRUE, pch=ifelse(type == "n", NA, 20))
             axis(1, line=-0.5, tick=FALSE, at=seq_len(Q), labels=seq_len(Q))
@@ -626,7 +625,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
             if(titles) title(main=list(paste0(ifelse(!all.ind, paste0("Loadings - ", ifelse(grp.ind, paste0("Group ", g, " - "), "")), ""), var.names[ind[1]], " Variable")))
             if(type == "n") text(x=plot.x[ind[1],], paste0("Factor ", seq_len(Q)), cex=0.5)
           } else     {
-           if(ci.sw[param]) ci.x <- ci.x[,,ind[2]]
+           if(ci.sw[param]) ci.x <- as.matrix(ci.x[,,ind[2],])
             plot(plot.x[,ind[2]], type=type, xaxt="n", xlab="", ylab="Loading", ylim=if(all(intervals, ci.sw[param])) cixx else pxx)
             if(all(intervals, ci.sw[param])) plotCI(plot.x[,ind[2]], li=ci.x[1,], ui=ci.x[2,], slty=3, scol=grey, add=TRUE, gap=TRUE, pch=ifelse(type == "n", NA, 20))
             axis(1, line=-0.5, tick=FALSE, at=seq_len(n.var), labels=seq_len(n.var))
@@ -938,7 +937,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
       plot.x <- if(all(param == "uniquenesses", uni.type == "isotropic")) plot.x else apply(plot.x, 2L, function(x) (x - min(x, na.rm=TRUE))/(max(x, na.rm=TRUE) - min(x, na.rm=TRUE)))
       varnam <- paste0(toupper(substr(param, 1, 1)), substr(param, 2, nchar(param)))
       if(any(grp.ind, param == "loadings")) {
-        if(mispal) palette(adjustcolor(viridis(Q), alpha.f=transparency))
+        if(mispal) palette(adjustcolor(viridis(max(Q, 2)), alpha.f=transparency))
         layout(rbind(1, 2), heights=c(9, 1))
         par(mar=c(3.1, 4.1, 4.1, 2.1))
       }
@@ -1004,6 +1003,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
     }
 
     if(m.sw["C.sw"]) {
+      palette(tmp.pal)
       if(!all.ind)   {
        partial <- FALSE
        par(mai=c(1.25, 1, 0.75, 0.5), mfrow=c(1, 2), oma=c(0, 0, 2, 0))
@@ -1158,8 +1158,8 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
 #' # box(lwd=2)
 #' # heat_legend(data, cols)
   heat_legend  <- function(data, cols) {
-    on.exit(suppressWarnings(par(par(no.readonly=TRUE))))
     bx         <- par("usr")
+    xpd        <- par()$xpd
     box.cx     <- c(bx[2] + (bx[2]  - bx[1])/1000, bx[2] + (bx[2] - bx[1])/1000 + (bx[2] - bx[1])/50)
     box.cy     <- c(bx[3],   bx[3])
     box.sy     <- (bx[4]  -  bx[3]) / length(cols)
@@ -1175,6 +1175,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
     par(new = TRUE)
     plot(0, 0, type = "n",  ylim = c(min(data), max(data)), yaxt = "n", ylab = "", xaxt = "n", xlab = "", frame.plot = FALSE)
     axis(side = 4, las = 2, tick = FALSE, line = 0.1, cex.axis = 1)
+    suppressWarnings(par(xpd = xpd))
   }
 
 # Prior No. Groups (DP & PY)
