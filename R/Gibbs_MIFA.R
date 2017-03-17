@@ -65,7 +65,7 @@
     alpha.d1       <- cluster$alpha.d1
     alpha.d2       <- cluster$alpha.d2
     ad1.x          <- length(unique(alpha.d1)) == 1
-    adk.x          <- length(unique(alpha.d2)) == 1
+    ad2.x          <- length(unique(alpha.d2)) == 1
     mu0g           <- cluster$l.switch[1]
     psi0g          <- cluster$l.switch[2]
     delta0g        <- cluster$l.switch[3]
@@ -224,41 +224,43 @@
 
     # Label Switching
       if(label.switch)   {
-        switch.lab <- .lab_switch(z.new=z, z.old=z.temp, Gs=Gseq)
-        z          <- switch.lab$z
+        switch.lab <- .lab_switch(z.new=z, z.old=z.temp)
         z.perm     <- switch.lab$z.perm
-        if(!identical(as.integer(z.perm), Gseq)) {
-         if(length(unique(Qs)) != 1)  {
-          Qs       <- Qs[z.perm]
-         }
-         mu        <- mu[,z.perm, drop=FALSE]
-         lmat      <- lmat[z.perm]
-         delta     <- delta[z.perm]
-         phi       <- phi[z.perm]
-         tau       <- tau[z.perm]
-         psi.inv   <- psi.inv[,z.perm, drop=FALSE]
-         pi.prop   <- pi.prop[z.perm]
-         nn        <- nn[z.perm]
-         if(all(sw["s.sw"], storage)) {
-           eta.tmp <- eta.tmp[z.perm]
-           dat.g   <- dat.g[z.perm]
-           Q0      <- Q0[z.perm]
-           nn0     <- nn0[z.perm]
-         }
-         if(mu0g)        {
-          mu.zero  <- mu.zero[,z.perm, drop=FALSE]
-         }
-         if(psi0g)       {
-          psi.beta <- psi.beta[,z.perm, drop=FALSE]
-         }
-         if(all(delta0g,
-                !ad1.x)) {
-          alpha.d1 <- alpha.d1[z.perm]
-         }
-         if(all(delta0g,
-                !adk.x)) {
-          alpha.d2 <- alpha.d2[z.perm]
-         }
+        left       <- as.integer(unname(z.perm))
+        right      <- as.integer(names(z.perm))
+        if(!identical(left, right))   {
+          z        <- switch.lab$z
+          if(length(unique(Qs)) != 1) {
+            Qs[left]        <- Qs[right]
+          }
+          mu[,left]         <- mu[,right, drop=FALSE]
+          lmat[left]        <- lmat[right]
+          delta[left]       <- delta[right]
+          phi[left]         <- phi[right]
+          tau[left]         <- tau[right]
+          psi.inv[,left]    <- psi.inv[,right, drop=FALSE]
+          pi.prop[left]     <- pi.prop[right]
+          nn[left]          <- nn[right]
+          if(all(sw["s.sw"], storage)) {
+            eta.tmp[left]   <- eta.tmp[right]
+            dat.g[left]     <- dat.g[right]
+            Q0[left]        <- Q0[right]
+            nn0[left]       <- nn0[right]
+          }
+          if(mu0g)         {
+           mu.zero[,left]   <- mu.zero[,right, drop=FALSE]
+          }
+          if(psi0g)        {
+           psi.beta[,left]  <- psi.beta[,right, drop=FALSE]
+          }
+          if(all(delta0g,
+                 !ad1.x))  {
+           alpha.d1[left]   <- alpha.d1[right]
+          }
+          if(all(delta0g,
+                 !ad2.x))  {
+           alpha.d2[left]   <- alpha.d2[right]
+          }
         }
       }
 

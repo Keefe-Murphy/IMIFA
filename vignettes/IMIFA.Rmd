@@ -131,7 +131,7 @@ resMFA2 <- get_IMIFA_results(simMFA, G=3, criterion="aic.mcmc")
 For now, let's just extract results from our IMIFA run above so we can proceed to visually examine them. Though the IMIFA model obviates the need for model selection criteria, the syntax for extracting results is exactly the same. However, this time, let's also summarise the clustering via the N x N similarity matrix obtained by averaging the adjacency matrices (admittedly at the expense of slowing the function down!), so that we can visualise it later.
 
 ```{r, eval=FALSE}
-resIMIFA <- get_IMIFA_results(simIMIFA, z_avgsim=TRUE)
+resIMIFA <- get_IMIFA_results(simIMIFA, z.avgsim=TRUE)
 ```
 
 ```{r, include=FALSE}

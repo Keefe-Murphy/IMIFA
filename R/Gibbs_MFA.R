@@ -142,20 +142,22 @@
 
     # Label Switching
       if(label.switch) {
-        switch.lab <- .lab_switch(z.new=z, z.old=z.temp, Gs=Gseq)
-        z          <- switch.lab$z
+        switch.lab <- .lab_switch(z.new=z, z.old=z.temp)
         z.perm     <- switch.lab$z.perm
-        if(!identical(as.integer(z.perm), Gseq)) {
-          mu       <- mu[,z.perm, drop=FALSE]
-          lmat     <- lmat[,,z.perm, drop=FALSE]
-          psi.inv  <- psi.inv[,z.perm, drop=FALSE]
-          pi.prop  <- pi.prop[z.perm]
-          nn       <- nn[z.perm]
+        left       <- as.integer(unname(z.perm))
+        right      <- as.integer(names(z.perm))
+        if(!identical(left, right)) {
+          z        <- switch.lab$z
+          mu[,left]        <- mu[,right, drop=FALSE]
+          lmat[,,left]     <- lmat[,,right, drop=FALSE]
+          psi.inv[,left]   <- psi.inv[,right, drop=FALSE]
+          pi.prop[left]    <- pi.prop[right]
+          nn[left]         <- nn[right]
          if(mu0g)  {
-          mu.zero  <- mu.zero[,z.perm, drop=FALSE]
+          mu.zero[,left]   <- mu.zero[,right, drop=FALSE]
          }
          if(psi0g) {
-          psi.beta <- psi.beta[,z.perm, drop=FALSE]
+          psi.beta[,left]  <- psi.beta[,right, drop=FALSE]
          }
         }
       }

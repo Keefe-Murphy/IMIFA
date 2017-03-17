@@ -353,11 +353,13 @@
         as.integer(G - 1 + G * P + lambda + psi) },  vectorize.args = "Q")
 
   # Label Switching
-    .lab_switch <- function(z.new, z.old, Gs, ng = tabulate(z.new)) {
+    .lab_switch <- function(z.new, z.old) {
       tab       <- table(z.new, z.old, dnn=NULL)
       tab.tmp   <- tab[rowsums(tab) != 0,colSums(tab) != 0, drop=FALSE]
+      Gs        <- tryCatch(seq_len(max(unique(z.new))), error=function(e) stop())
       nc        <- ncol(tab.tmp)
       nr        <- nrow(tab.tmp)
+      ng        <- tabulate(z.new, length(Gs))
       if(nc > nr) {
         tmp.mat <- matrix(rep(0, nc), nrow=nc - nr, ncol=nc)
         rownames(tmp.mat) <- setdiff(as.numeric(colnames(tab.tmp)), as.numeric(rownames(tab.tmp)))[seq_len(nc - nr)]
@@ -372,7 +374,8 @@
       } else if(nc == 1) {
         z.perm  <- setNames(as.numeric(colnames(tab.tmp)), as.numeric(colnames(tab.tmp)))
       } else {
-        z.perm  <- suppressWarnings(matchClasses(tab.tmp, method="exact", verbose=FALSE))
+        z.perm  <- tryCatch(suppressWarnings(matchClasses(tab.tmp, method="exact",  verbose=FALSE)),
+          error=function(e) suppressWarnings(matchClasses(tab.tmp, method="greedy", verbose=FALSE)))
         z.perm  <- setNames(as.numeric(z.perm), names(z.perm))
       }
       if(length(Gs) > length(z.perm)) {
@@ -380,7 +383,7 @@
       }
       z.names   <- as.numeric(names(z.perm))
       z.perm    <- z.perm[Order(z.names)]
-      z.sw      <- factor(z.new, labels=z.perm[seq_along(ng[ng > 0])])
+      z.sw      <- factor(z.new, labels=z.perm[which(ng > 0)])
         return(list(z = as.integer(levels(z.sw))[z.sw], z.perm = z.perm))
     }
 
