@@ -15,7 +15,7 @@ mcmc_IMIFA(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA",
   alpha.d1 = NULL, alpha.d2 = NULL, beta.d1 = NULL, beta.d2 = NULL,
   nu = NULL, nuplus1 = TRUE, adapt.at = NULL, b0 = NULL, b1 = NULL,
   learn.alpha = TRUE, alpha.hyper = NULL, zeta = NULL, ind.slice = TRUE,
-  rho = NULL, DP.lab.sw = TRUE, verbose = TRUE, discount = NULL,
+  rho = NULL, IM.lab.sw = TRUE, verbose = TRUE, discount = NULL,
   learn.d = FALSE, d.hyper = NULL, kappa = NULL, mu0g = FALSE,
   psi0g = FALSE, delta0g = FALSE, mu.switch = TRUE, score.switch = TRUE,
   load.switch = TRUE, psi.switch = TRUE, pi.switch = TRUE)
@@ -38,7 +38,7 @@ mcmc_IMIFA(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA",
 
 \item{n.iters}{The number of iterations to run the Gibbs sampler for.}
 
-\item{range.G}{Depending on the method employed, either the range of values for the number of clusters, or the conseratively high starting value for the number of clusters. Defaults to 1 for the "\code{FA}" and "\code{IFA}" methods. For the "\code{MFA}" and "\code{MIFA}" models this is to be given as a range of candidate models to explore. For the "\code{OMFA}", "\code{OMIFA}", "\code{IMFA}", and "\code{IMIFA}" models, this is the number of clusters with which the chain is to be initialised, in which case the default is \code{min(N - 1, floor(3 * log(N)))}. For the "\code{OMFA}", and "\code{OMIFA}" models this remains fixed for the entire length of the chain, whereas for the "\code{IMFA}", and "\code{IMIFA}" models this acts as the maximum allowable number of active components. If \code{length(range.G) * length(range.Q)} is large, consider not storing unnecessary parameters, or breaking up the range of models to be explored into chunks, and send each chunk to \code{\link{get_IMIFA_results}}.}
+\item{range.G}{Depending on the method employed, either the range of values for the number of clusters, or the conseratively high starting value for the number of clusters. Defaults to 1 for the "\code{FA}" and "\code{IFA}" methods. For the "\code{MFA}" and "\code{MIFA}" models this is to be given as a range of candidate models to explore. For the "\code{OMFA}", "\code{OMIFA}", "\code{IMFA}", and "\code{IMIFA}" models, this is the number of clusters with which the chain is to be initialised, in which case the default is \code{min(N - 1, ceiling(3 * log(N)))}. For the "\code{OMFA}", and "\code{OMIFA}" models this remains fixed for the entire length of the chain, whereas for the "\code{IMFA}", and "\code{IMIFA}" models this acts as the maximum allowable number of active components. If \code{length(range.G) * length(range.Q)} is large, consider not storing unnecessary parameters, or breaking up the range of models to be explored into chunks, and send each chunk to \code{\link{get_IMIFA_results}}.}
 
 \item{range.Q}{Depending on the method employed, either the range of values for the number of latent factors, or, for methods ending in IFA the conservatively high starting value for the number of cluster-specific factors, in which case the default starting value is \code{floor(3 * log(P))}. For methods ending in IFA, different clusters can be modelled using different numbers of latent factors (incl. zero); for methods not ending in IFA it is possible to fit zero-factor models, corresponding to simple diagonal covariance structures. For instance, fitting the "\code{IMFA}" model with \code{range.Q=0} corresponds to a vanilla Dirichlet Process Mixture Model. If \code{length(range.G) * length(range.Q)} is large, consider not storing unnecessary parameters or breaking up the range of models to be explored into chunks, and send each chunk to \code{\link{get_IMIFA_results}}.}
 
@@ -104,7 +104,7 @@ mcmc_IMIFA(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA",
 
 \item{rho}{Parameter controlling the rate of geometric decay for the independent slice-efficient sampler, s.t. xi = (1 - rho)rho^(g-1). Must lie in the interval (0, 1]. Higher values are associated with better mixing but longer run times. Defaults to 0.75, but 0.5 is an interesting special case which guarantees that the slice sequence xi_1,...,xi_g is equal to the \emph{expectation} of the decreasingly ordered mixing proportions. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods when \code{ind.slice} is \code{TRUE}.}
 
-\item{DP.lab.sw}{Logial indicating whether the two forced label switching moves are to be implemented (defaults to \code{TRUE}). Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods.}
+\item{IM.lab.sw}{Logial indicating whether the two forced label switching moves are to be implemented (defaults to \code{TRUE}) when running one of the infinite mixture models, with Dirichlet process or Pitman-Yor process priors. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods.}
 
 \item{verbose}{Logical indicating whether to print output (e.g. run times) and a progress bar to the screen while the sampler runs (defaults to \code{TRUE}). If \code{FALSE}, warnings and error messages will still be printed to the screen, but everything else will be suppressed.}
 

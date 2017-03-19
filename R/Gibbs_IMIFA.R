@@ -5,7 +5,7 @@
 # Gibbs Sampler Function
   .gibbs_IMIFA       <- function(Q, data, iters, N, P, G, mu.zero, rho, sigma.l, learn.alpha, mu, sw, uni.type,
                                  uni.prior, sigma.mu, burnin, thinning, a.hyper, psi.alpha, psi.beta, verbose,
-                                 adapt, ind.slice, alpha.d1, discount, alpha.d2, cluster, b0, b1, DP.lab.sw, zeta,
+                                 adapt, ind.slice, alpha.d1, discount, alpha.d2, cluster, b0, b1, IM.lab.sw, zeta,
                                  nu, prop, d.hyper, beta.d1, beta.d2, adapt.at, epsilon, learn.d, nuplus1, kappa, ...) {
 
   # Define & initialise variables
@@ -60,7 +60,7 @@
     if(MH.step)     {
       a.rates        <- rep(0, total)
     } else a.rates   <- 1
-    if(DP.lab.sw) {
+    if(IM.lab.sw) {
       lab.rate       <- matrix(0, nrow=2, ncol=total)
     }
     mu.sigma         <- 1/sigma.mu
@@ -172,11 +172,11 @@
       Q1             <- Qgs == 1
       if(G > 1)   {
         sigma        <- lapply(Gs, function(g) tcrossprod(lmat[[g]]) + diag(psi[,g]))
-        log.check    <- capture.output(log.probs <- try(vapply(Gs, function(g, Q=Q0[g]) dmvn(data, mu[,g], if(Q) sigma[[g]] else sqrt(sigma[[g]]), log=TRUE, isChol=!Q) + log(pi.prop[g]), numeric(N)), silent=TRUE))
+        log.check    <- capture.output(log.probs  <- try(vapply(Gs, function(g, Q=Q0[g]) dmvn(data, mu[,g], if(Q) sigma[[g]] else sqrt(sigma[[g]]), log=TRUE, isChol=!Q) + log(pi.prop[g]), numeric(N)), silent=TRUE))
         if(inherits(log.probs, "try-error")) {
           log.probs  <- vapply(Gs, function(g, Q=Q0[g]) dmvn(data, mu[,g], if(Q) make.positive.definite(sigma[[g]]) else make.positive.definite(sqrt(sigma[[g]])), log=TRUE, isChol=!Q) + log(pi.prop[g]), numeric(N))
         }
-        z.res        <- gumbel_max(probs=log.probs, log.like=TRUE, slice=TRUE)
+        z.res        <- gumbel_max(probs=log.probs + log.slice.ind, log.like=TRUE, slice=TRUE)
         z            <- z.res$z
       } else      {
         z            <- rep(1, N)
@@ -297,7 +297,7 @@
       }
 
     # Label Switching
-      if(DP.lab.sw)   {
+      if(IM.lab.sw)   {
         if(G.non > 1) {
           move1      <- .lab_move1(nn.ind=nn.ind, pi.prop=pi.prop, nn=nn)
           acc1       <- move1$rate1
@@ -363,7 +363,7 @@
       }
       if(MH.step)        a.rates[iter]                 <- a.rate
       if(learn.d)        d.rates[iter]                 <- d.rate
-      if(DP.lab.sw)      lab.rate[,iter]               <- c(acc1, acc2)
+      if(IM.lab.sw)      lab.rate[,iter]               <- c(acc1, acc2)
       if(storage)    {
         if(verbose)      setTxtProgressBar(pb, iter)
         new.it       <-  which(iters == iter)
@@ -389,7 +389,7 @@
         if(learn.alpha)  alpha.store[new.it]           <- pi.alpha
         if(learn.d)      d.store[new.it]               <- discount
                          z.store[,new.it]              <- as.integer(z)
-                         ll.store[new.it]              <- sum(z.res$log.like)
+                         ll.store[new.it]              <- if(G > 1) sum(z.res$log.like) else sum(dmvn(X=data, mu=mu[,nn.ind], sigma=tcrossprod(lmat[[nn.ind]]) + diag(psi.store[,nn.ind,new.it]), log=TRUE))
                          Q.store[,new.it]              <- as.integer(Qs)
                          G.store[new.it]               <- as.integer(G.non)
                          act.store[new.it]             <- as.integer(G)
@@ -412,7 +412,7 @@
                              discount  = if(learn.d)      d.store,
                              a.rate    = if(MH.step)      mean(a.rates) else a.rates,
                              d.rate    = if(learn.d)      mean(d.rates) else d.rates,
-                             lab.rate  = if(DP.lab.sw)    setNames(rowmeans(lab.rate), c("Move1", "Move2")),
+                             lab.rate  = if(IM.lab.sw)    setNames(rowmeans(lab.rate), c("Move1", "Move2")),
                              z.store   = z.store,
                              ll.store  = ll.store,
                              Q.store   = tryCatch(Q.store[Gmax,, drop=FALSE],          error=function(e) Q.store),

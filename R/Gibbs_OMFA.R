@@ -162,7 +162,7 @@
         if(sw["psi.sw"])            psi.store[,,new.it]     <- 1/psi.inv
         if(sw["pi.sw"])             pi.store[,new.it]       <- pi.prop
                                     z.store[,new.it]        <- as.integer(z)
-                                    ll.store[new.it]        <- sum(z.res$log.like)
+                                    ll.store[new.it]        <- if(G > 1) sum(z.res$log.like) else sum(dmvn(X=data, mu=mu[,nn.ind], sigma=tcrossprod(as.matrix(lmat[,,nn.ind])) + diag(psi.store[,nn.ind,new.it]), log=TRUE))
                                     G.store[new.it]         <- as.integer(G.non)
       }
     }

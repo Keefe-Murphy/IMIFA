@@ -784,13 +784,15 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         col.G  <- c(ceiling(length(palette)/2), 1)
         x.plot <- GQ.res$Stored.G
         plot.x <- if(is.element(method, c("IMFA", "IMIFA"))) t(x.plot) else cbind(as.vector(x.plot), rep(attr(x, "range.G"), ncol(x.plot)))
-        matplot(plot.x, type="l", col=col.G, ylab="G", xlab="Iteration", main="", lty=if(is.element(method, c("IMFA", "IMIFA"))) 1 else 1:2, ylim=c(0, max(plot.x) + 1))
+        matplot(plot.x, type="l", col=col.G, ylab="G", xlab="Iteration", main="", lty=if(is.element(method, c("IMFA", "IMIFA"))) 1 else 1:2, ylim=c(1, max(plot.x) + 1), yaxt="n")
+        axis(2, at=c(1, max(plot.x) + 1))
         if(titles) {
           title(main=list("Trace:     \n\n"))
           title(expression("Active" * phantom(" and Non-empty Groups")), col.main = 1)
           title(expression(phantom("Active ") * "and" * phantom(" Non-empty Groups")), col.main="black")
           title(expression(phantom("Active and ") * "Non-empty" * phantom(" Groups")), col.main = col.G[1])
           title(expression(phantom("Active and Non-empty ") * "Groups"), col.main="black")
+          lines(x=c(0, nrow(plot.x)), y=rep(G, 2), lty=2, col=grey, lwd=1)
         }
       }
       if(!any(plotQ.ind,
