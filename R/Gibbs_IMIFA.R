@@ -4,7 +4,7 @@
 
 # Gibbs Sampler Function
   .gibbs_IMIFA       <- function(Q, data, iters, N, P, G, mu.zero, rho, sigma.l, learn.alpha, mu, sw, uni.type,
-                                 uni.prior, sigma.mu, burnin, thinning, a.hyper, psi.alpha, psi.beta, verbose,
+                                 uni.prior, sigma.mu, burnin, thinning, a.hyper, psi.alpha, psi.beta, verbose, trunc.G,
                                  adapt, ind.slice, alpha.d1, discount, alpha.d2, cluster, b0, b1, IM.lab.sw, zeta,
                                  nu, prop, d.hyper, beta.d1, beta.d2, adapt.at, epsilon, learn.d, nuplus1, kappa, ...) {
 
@@ -13,8 +13,8 @@
     total            <- max(iters)
     if(verbose)         pb    <- txtProgressBar(min=0, max=total, style=3)
     n.store          <- length(iters)
-    trunc.G          <- G
-    Gs               <- Ts    <- seq_len(G)
+    Gs               <- seq_len(G)
+    Ts               <- seq_len(trunc.G)
     Ps               <- seq_len(P)
     Ns               <- seq_len(N)
     obsnames         <- rownames(data)
@@ -72,6 +72,7 @@
     psi.beta         <- switch(uni.prior, isotropic=unique(round(psi.beta, min(nchar(psi.beta)))), psi.beta)
     pi.prop          <- cluster$pi.prop
     nn               <- tabulate(z, nbins=trunc.G)
+    mu               <- cbind(mu, vapply(seq_len(trunc.G - G), function(g) .sim_mu_p(P=P, sig.mu.sqrt=sig.mu.sqrt, mu.zero=mu.zero), numeric(P)))
     eta              <- .sim_eta_p(N=N, Q=Q)
     phi              <- lapply(Ts, function(t) .sim_phi_p(Q=Q, P=P, nu=nu, plus1=nuplus1))
     delta            <- lapply(Ts, function(t) c(.sim_delta_p(alpha=alpha.d1, beta=beta.d1), .sim_delta_p(Q=Q, alpha=alpha.d2, beta=beta.d2)))
@@ -89,7 +90,7 @@
       }
     } else {
       psi.tmp        <- psi.inv
-      psi.inv        <- vapply(Gs, function(g) if(nn[g] > 1) 1/Rfast::colVars(data[z == g,, drop=FALSE]) else psi.tmp[,g], numeric(P))
+      psi.inv[,Gs]   <- vapply(Gs, function(g) if(nn[g] > 1) 1/Rfast::colVars(data[z == g,, drop=FALSE]) else psi.tmp[,g], numeric(P))
       inf.ind        <- is.infinite(psi.inv)
       psi.inv[inf.ind]        <- psi.tmp[inf.ind]
     }

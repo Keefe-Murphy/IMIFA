@@ -4,7 +4,7 @@
 
 # Gibbs Sampler Function
   .gibbs_IMFA        <- function(Q, data, iters, N, P, G, mu.zero, rho, sigma.l, learn.alpha, discount,  mu,
-                                 a.hyper, sigma.mu, burnin, thinning, d.hyper, learn.d, uni.type, uni.prior,
+                                 a.hyper, sigma.mu, burnin, thinning, d.hyper, learn.d, uni.type, uni.prior, trunc.G,
                                  ind.slice, psi.alpha, psi.beta, verbose, sw, cluster, IM.lab.sw, zeta, kappa, ...) {
 
   # Define & initialise variables
@@ -12,8 +12,8 @@
     total            <- max(iters)
     if(verbose)         pb   <- txtProgressBar(min=0, max=total, style=3)
     n.store          <- length(iters)
-    trunc.G          <- G
-    Gs               <- Ts   <- seq_len(G)
+    Gs               <- seq_len(G)
+    Ts               <- seq_len(trunc.G)
     Ps               <- seq_len(P)
     Ns               <- seq_len(N)
     obsnames         <- rownames(data)
@@ -70,6 +70,7 @@
     psi.beta         <- switch(uni.prior, isotropic=unique(round(psi.beta, min(nchar(psi.beta)))), psi.beta)
     pi.prop          <- cluster$pi.prop
     nn               <- tabulate(z, nbins=trunc.G)
+    mu               <- cbind(mu, vapply(seq_len(trunc.G - G), function(g) .sim_mu_p(P=P, sig.mu.sqrt=sig.mu.sqrt, mu.zero=mu.zero), numeric(P)))
     eta              <- .sim_eta_p(N=N, Q=Q)
     lmat             <- lapply(Ts, function(t) .sim_load_p(Q=Q, P=P, sigma.l=sigma.l))
     psi.inv          <- vapply(Ts, function(t) .sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), numeric(P))
@@ -84,7 +85,7 @@
       }
     } else {
       psi.tmp        <- psi.inv
-      psi.inv        <- vapply(Gs, function(g) if(nn[g] > 1) 1/Rfast::colVars(data[z == g,, drop=FALSE]) else psi.tmp[,g], numeric(P))
+      psi.inv[,Gs]   <- vapply(Gs, function(g) if(nn[g] > 1) 1/Rfast::colVars(data[z == g,, drop=FALSE]) else psi.tmp[,g], numeric(P))
       inf.ind        <- is.infinite(psi.inv)
       psi.inv[inf.ind]       <- psi.tmp[inf.ind]
     }

@@ -77,7 +77,7 @@ Plotting output and parameters of inferential interest for IMIFA and related mod
 # plot(resIMIFA, plot.meth="all", param="means", g=1)
 # plot(resIMIFA, plot.meth="all", param="means", g=1, ind=2)
 # plot(resIMIFA, plot.meth="all", param="scores")
-# plot(resIMIFA, plot.meth="all", param="scores", by.fac=FALSE)
+# plot(resIMIFA, plot.meth="all", param="scores", by.fac=TRUE)
 # plot(resIMIFA, plot.meth="all", param="loadings", g=1)
 # plot(resIMIFA, plot.meth="all", param="loadings", g=1, load.meth="raw")
 # plot(resIMIFA, plot.meth="parallel.coords", param="uniquenesses")

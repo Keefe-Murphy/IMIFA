@@ -24,7 +24,7 @@
 * Posterior mean loadings heatmaps now also display a colour key legend via new function `heat_legend`.
 * Deferred setting `dimnames` attributes in `mcmc_IMIFA` to `get_IMIFA_results`: lower memory burden/faster simulations.
 * Jettisoned superfluous duplicate material in object outputted from `get_IMIFA_results` to reduce size/simplify access.
-* Removed IMFA/IMIFA `trunc.G` arg, made `range.G` the max allowable # active groups & also stored # active groups.
+* IMFA/IMIFA `trunc.G` arg, the max allowable # active groups, defaults to `range.G` & # active groups now stored.
 * Code sped up when G=1 by not simulating labels for OM(I)FA/IM(I)FA & not simulating mixing proportions for OM(I)FA.
 * Reduced chance of crash by exceeding memory capacity; `score.switch` defaults to `FALSE` if # models ran is large.
 * Invisibly returned from `sim_IMIFA_data`.

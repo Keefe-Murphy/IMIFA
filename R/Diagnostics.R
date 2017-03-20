@@ -459,7 +459,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
         if(sw["mu.sw"])    mus <- mus[,right,,     drop=FALSE]
         if(sw["l.sw"])   lmats <- lmats[,,right,,  drop=FALSE]
         if(sw["psi.sw"])  psis <- psis[,right,,    drop=FALSE]
-        index    <- Order(right)
+        index    <- Order(left)
         post.pi  <- setNames(post.pi[index], gnames)
         if(sw["pi.sw"]) {
          pi.prop <- provideDimnames(unname(pi.prop[index,, drop=FALSE]), base=list(gnames, ""), unique=FALSE)

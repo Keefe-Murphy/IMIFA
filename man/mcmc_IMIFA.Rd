@@ -14,11 +14,12 @@ mcmc_IMIFA(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA",
   z.list = NULL, adapt = TRUE, prop = NULL, epsilon = NULL,
   alpha.d1 = NULL, alpha.d2 = NULL, beta.d1 = NULL, beta.d2 = NULL,
   nu = NULL, nuplus1 = TRUE, adapt.at = NULL, b0 = NULL, b1 = NULL,
-  learn.alpha = TRUE, alpha.hyper = NULL, zeta = NULL, ind.slice = TRUE,
-  rho = NULL, IM.lab.sw = TRUE, verbose = TRUE, discount = NULL,
-  learn.d = FALSE, d.hyper = NULL, kappa = NULL, mu0g = FALSE,
-  psi0g = FALSE, delta0g = FALSE, mu.switch = TRUE, score.switch = TRUE,
-  load.switch = TRUE, psi.switch = TRUE, pi.switch = TRUE)
+  trunc.G = NULL, learn.alpha = TRUE, alpha.hyper = NULL, zeta = NULL,
+  ind.slice = TRUE, rho = NULL, IM.lab.sw = TRUE, verbose = TRUE,
+  discount = NULL, learn.d = FALSE, d.hyper = NULL, kappa = NULL,
+  mu0g = FALSE, psi0g = FALSE, delta0g = FALSE, mu.switch = TRUE,
+  score.switch = TRUE, load.switch = TRUE, psi.switch = TRUE,
+  pi.switch = TRUE)
 }
 \arguments{
 \item{dat}{A matrix or data frame such that rows correspond to observations (\code{N}) and columns correspond to variables (\code{P}). Non-numeric variables and rows with missing entries will be removed.}
@@ -38,7 +39,7 @@ mcmc_IMIFA(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA",
 
 \item{n.iters}{The number of iterations to run the Gibbs sampler for.}
 
-\item{range.G}{Depending on the method employed, either the range of values for the number of clusters, or the conseratively high starting value for the number of clusters. Defaults to 1 for the "\code{FA}" and "\code{IFA}" methods. For the "\code{MFA}" and "\code{MIFA}" models this is to be given as a range of candidate models to explore. For the "\code{OMFA}", "\code{OMIFA}", "\code{IMFA}", and "\code{IMIFA}" models, this is the number of clusters with which the chain is to be initialised, in which case the default is \code{min(N - 1, ceiling(3 * log(N)))}. For the "\code{OMFA}", and "\code{OMIFA}" models this remains fixed for the entire length of the chain, whereas for the "\code{IMFA}", and "\code{IMIFA}" models this acts as the maximum allowable number of active components. If \code{length(range.G) * length(range.Q)} is large, consider not storing unnecessary parameters, or breaking up the range of models to be explored into chunks, and send each chunk to \code{\link{get_IMIFA_results}}.}
+\item{range.G}{Depending on the method employed, either the range of values for the number of clusters, or the conseratively high starting value for the number of clusters. Defaults to 1 for the "\code{FA}" and "\code{IFA}" methods. For the "\code{MFA}" and "\code{MIFA}" models this is to be given as a range of candidate models to explore. For the "\code{OMFA}", "\code{OMIFA}", "\code{IMFA}", and "\code{IMIFA}" models, this is the number of clusters with which the chain is to be initialised, in which case the default is \code{min(N - 1, ceiling(3 * log(N)))}. For the "\code{OMFA}", and "\code{OMIFA}" models this upper limit remains fixed for the entire length of the chain. If \code{length(range.G) * length(range.Q)} is large, consider not storing unnecessary parameters, or breaking up the range of models to be explored into chunks, and send each chunk to \code{\link{get_IMIFA_results}}.}
 
 \item{range.Q}{Depending on the method employed, either the range of values for the number of latent factors, or, for methods ending in IFA the conservatively high starting value for the number of cluster-specific factors, in which case the default starting value is \code{floor(3 * log(P))}. For methods ending in IFA, different clusters can be modelled using different numbers of latent factors (incl. zero); for methods not ending in IFA it is possible to fit zero-factor models, corresponding to simple diagonal covariance structures. For instance, fitting the "\code{IMFA}" model with \code{range.Q=0} corresponds to a vanilla Dirichlet Process Mixture Model. If \code{length(range.G) * length(range.Q)} is large, consider not storing unnecessary parameters or breaking up the range of models to be explored into chunks, and send each chunk to \code{\link{get_IMIFA_results}}.}
 
@@ -93,6 +94,8 @@ mcmc_IMIFA(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA",
 \item{b0}{Intercept parameter for the exponentially decaying adaptation probability s.t. \code{p(iter) = 1/exp(b0 + b1(iter - adapt.at))}. Defaults to 0.1. Only relevant for methods ending in IFA.}
 
 \item{b1}{Slope parameter for the exponentially decaying adaptation probability s.t. \code{p(iter) = 1/exp(b0 + b1(iter - adapt.at))}. Defaults to 0.00005. Only relevant for methods ending in IFA.}
+
+\item{trunc.G}{The maximum number of allowable and storable groups if the "\code{IMFA}" or "\code{IMIFA}" method is employed. Defaults to the same value as \code{range.G} and must be greater than or equal to this value. The number of active group to be sampled at each iteration is adaptively truncated, with \code{trunc.G} as an upper limit for storage reasons. Note that large values of \code{trunc.G} may lead to memory capacity issues.}
 
 \item{learn.alpha}{Logical indicating whether the Dirichlet process / Pitman concentration parameter is to be learned, or remain fixed for the duration of the chain. If being learned, a Ga(a, b) prior is assumed for \code{alpha}; updates take place via Gibbs sampling when \code{discount} is zero and via Metropolis-Hastings otherwise. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods, in which case the default is \code{TRUE}.}
 

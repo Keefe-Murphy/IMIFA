@@ -55,7 +55,7 @@
 #' # plot(resIMIFA, plot.meth="all", param="means", g=1)
 #' # plot(resIMIFA, plot.meth="all", param="means", g=1, ind=2)
 #' # plot(resIMIFA, plot.meth="all", param="scores")
-#' # plot(resIMIFA, plot.meth="all", param="scores", by.fac=FALSE)
+#' # plot(resIMIFA, plot.meth="all", param="scores", by.fac=TRUE)
 #' # plot(resIMIFA, plot.meth="all", param="loadings", g=1)
 #' # plot(resIMIFA, plot.meth="all", param="loadings", g=1, load.meth="raw")
 #' # plot(resIMIFA, plot.meth="parallel.coords", param="uniquenesses")
@@ -784,8 +784,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         col.G  <- c(ceiling(length(palette)/2), 1)
         x.plot <- GQ.res$Stored.G
         plot.x <- if(is.element(method, c("IMFA", "IMIFA"))) t(x.plot) else cbind(as.vector(x.plot), rep(attr(x, "range.G"), ncol(x.plot)))
-        matplot(plot.x, type="l", col=col.G, ylab="G", xlab="Iteration", main="", lty=if(is.element(method, c("IMFA", "IMIFA"))) 1 else 1:2, ylim=c(1, max(plot.x) + 1), yaxt="n")
-        axis(2, at=c(1, max(plot.x) + 1))
+        matplot(plot.x, type="l", col=col.G, ylab="G", xlab="Iteration", main="", lty=if(is.element(method, c("IMFA", "IMIFA"))) 1 else 1:2, ylim=c(1, max(plot.x)))
         if(titles) {
           title(main=list("Trace:     \n\n"))
           title(expression("Active" * phantom(" and Non-empty Groups")), col.main = 1)
@@ -803,8 +802,6 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           print(GQ.res[gq.nam == "G"])
         } else if(g == 2) {
           print(GQ.res[gq.nam == "Q"])
-        } else if(g == 3) {
-          print(GQ.res[gq.nam != "G" & gq.nam != "Q" & gq.nam != "S"])
         }
       } else if(is.element(method, c("OMFA", "IMFA"))) {
           if(g == 1) {
@@ -819,7 +816,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         },
           cat(paste0("Q = ", Q, "\n"))
       )
-      if(any(dim(bicm) > 1)) {
+      if(all(g == max(Gs), any(dim(bicm) > 1))) {
         G.ind  <- ifelse(any(G.supp, !is.element(method, c("MFA", "MIFA"))), 1, which(n.grp == G))
         Q.ind  <- ifelse(any(Q.supp, !is.element(method, c("FA", "MFA"))),   1, which(n.fac == Q))
         if(!is.element(method, c("IFA", "MIFA"))) {
@@ -907,7 +904,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
            prf  <- clust$perf
           } else   {
            pzs  <- clust$map
-           if(length(unique(pzs)) == nlevels(labs)) {
+           if(length(unique(pzs)) == length(unique(labs))) {
             pzs <- factor(.lab_switch(z.new=pzs, z.old=labs)$z)
            }
            tab  <- table(pzs, labs, dnn=list("Predicted", "Observed"))
@@ -922,7 +919,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
             prf$misclassified    <- NULL
            }
            prf  <- c(list(confusion.matrix = tab), prf)
-           if(nlevels(pzs) == nlevels(labs)) {
+           if(length(unique(pzs)) == length(unique(labs))) {
             names(prf)[1]  <- "matched.confusion.matrix"
            }
           }
@@ -953,7 +950,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         par(mar=c(3.1, 4.1, 4.1, 2.1))
       }
       jitcol <- switch(param, loadings=Q, G)
-      matplot(seq_len(n.var) + matrix(rnorm(jitcol * n.var, 0, min(0.1, 0.75/n.var^2)), nrow=n.var, ncol=jitcol), plot.x, type=switch(param, uniquenesses=switch(uni.type, unconstrained="p", isotropic="l"), "p"),
+      matplot(seq_len(n.var) + matrix(rnorm(jitcol * n.var, 0, min(0.1, 1/n.var^2)), nrow=n.var, ncol=jitcol), plot.x, type=switch(param, uniquenesses=switch(uni.type, unconstrained="p", isotropic="l"), "p"),
                         col=switch(param, loadings=seq_len(Q), seq_len(G)), pch=15, xlab="Variable", ylab=paste0("Standardised ", varnam), axes=FALSE, main=paste0("Parallel Coordinates: ", varnam, ifelse(all(grp.ind, param == "loadings"), paste0("\n Group ", g), "")), lty=1)
       axis(1, at=seq_len(n.var), labels=if(titles && n.var < 100) rownames(plot.x) else rep("", n.var), cex.axis=0.5, tick=FALSE)
       for(i in seq_len(n.var))    {

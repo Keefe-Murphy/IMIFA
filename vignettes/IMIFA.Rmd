@@ -179,15 +179,15 @@ To examine the posterior mean estimates of the cluster means in a given cluster 
 ```{r}
 plot(resIMIFA, plot.meth="means", param="means", mat=TRUE, g=1)
 ```
-Had the factor scores been stored, we could examine the trace plots for them using the code below, where `mat=TRUE` and `by.fac=FALSE` means, in this case, to plot all factors simultaneously for a given observation, say the 1st (however this is not shown, as the scores were not stored).
+Had the factor scores been stored, we could examine the trace plots for them using the code below, where `mat=TRUE` and `by.fac=FALSE` (the default) means, in this case, to plot all factors simultaneously for a given observation, say the 1st (however this is not shown, as the scores were not stored).
 
 ```{r, eval=FALSE}
-plot(resIMIFA, plot.meth="trace", param="scores", mat=TRUE, by.fac=FALSE, ind=1)
+plot(resIMIFA, plot.meth="trace", param="scores", mat=TRUE, ind=1)
 ```
 
 We could instead plot all observations simultaneously for a given factor, say the 2nd (also not shown).
 ```{r, eval=FALSE}
-plot(resIMIFA, plot.meth="trace", param="scores", mat=TRUE, fac=2)
+plot(resIMIFA, plot.meth="trace", param="scores", mat=TRUE, by.fac=TRUE, fac=2)
 ```
 
 The code below will produce only a heatmap of the loadings matrix in the first cluster. Darker colours correspond to entries which are more negatively loaded and _vice versa_.
