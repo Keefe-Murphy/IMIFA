@@ -167,13 +167,13 @@
 
     .sim_disc_mh <- function(discount, alpha, disc.shape1, disc.shape2, N, G, kappa, nn) {
       unif       <- disc.shape1 == 1 & disc.shape2 == 1
-      propd      <- ifelse(alpha > 0,    ifelse(rbinom(1, 1, prob=1  - kappa)   == 0, 0, ifelse(unif,
+      propd      <- ifelse(alpha > 0,    ifelse(rbinom(1, 1, prob=1  - kappa)  ==  0, 0, ifelse(unif,
                            runif(1),   rbeta(1, disc.shape1, disc.shape2))), runif(1, max(0, - alpha), 1))
       cprob      <- .log_pdisc(propd,    alpha, disc.shape1, disc.shape2, N, G,  kappa, nn, unif)
       pprob      <- .log_pdisc(discount, alpha, disc.shape1, disc.shape2, N, G,  kappa, nn, unif)
       logpr      <- pprob  - cprob
       acpt       <- logpr >= 0  ||   - rexp(1) < logpr
-        return(list(disc   = ifelse(acpt, propd, discount),  rate    = acpt))
+        return(list(disc   = ifelse(acpt, propd, discount),  rate    = all(acpt, discount   != propd)))
     }
 
 # Priors

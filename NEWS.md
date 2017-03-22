@@ -19,6 +19,7 @@
 
 ## Improvements
 * Metropolis-Hastings updates implemented for `alpha` when `discount` is non-zero, rather than usual Gibbs.
+* Mutation rather monitored rather than acceptance rate for Metropolis-Hastings updates of `discount` parameter.
 * DIC model selection criterion now also available for infinite factor models (previously finite only).
 * `G_priorDensity` now better reflects discrete nature of the density and plots for non-zero PY discount values.
 * Posterior mean loadings heatmaps now also display a colour key legend via new function `heat_legend`.

@@ -692,8 +692,9 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         text(x=0.5, y=0.4  - pen, cex=a.cex, col="black", adj=a.adj, bquote(bold(.(100 * conf))~bold("% Confidence Interval:")))
         text(x=0.5, y=0.28 - pen, cex=a.cex, col="black", adj=a.adj, bquote(paste("[", .(round(switch(param, alpha=plot.x$ci.alpha[1], discount=plot.x$ci.disc[1]), digits)), ", ", .(round(switch(param, alpha=plot.x$ci.alpha[2], discount=plot.x$ci.disc[2]), digits)), "]")))
         if(isTRUE(MH)) {
-          text(x=0.5, y=0.17, cex=a.cex, col="black", adj=a.adj, expression(bold("Acceptance Rate:")))
-          text(x=0.5, y=0.1,  cex=a.cex, col="black", adj=a.adj, bquote(paste(.(round(100 * switch(param, alpha=plot.x$alpha.rate, discount=plot.x$disc.rate), 2)), "%")))
+          rate <- switch(param, alpha="Acceptance Rate:", discount="Mutation Rate:")
+          text(x=0.5, y=0.17,     cex=a.cex, col="black", adj=a.adj, substitute(bold(rate)))
+          text(x=0.5, y=0.1,      cex=a.cex, col="black", adj=a.adj, bquote(paste(.(round(100 * switch(param, alpha=plot.x$alpha.rate, discount=plot.x$disc.rate), 2)), "%")))
         }
       }
       if(!indx) {         ind[1] <- xind[1]
@@ -1080,7 +1081,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         plot.x <- switch(param, alpha=clust$DP.alpha$alpha, discount=clust$PY.disc$discount)
         if(any(switch(param, alpha=clust$DP.alpha$alpha.rate, discount=clust$PY.disc$disc.rate) == 0,
            length(unique(round(plot.x, nchar(plot.x)))) == 1)) {
-                                      warning(paste0("Acceptance rate too low: can't plot ", ifelse(all.ind, ifelse(partial, "partial-", "auto-"), ""), "correlation function", ifelse(all.ind, "", "s")), call.=FALSE)
+                                      warning(paste0(switch(param, alpha="Acceptance", discount="Mutation"), " rate too low: can't plot ", ifelse(all.ind, ifelse(partial, "partial-", "auto-"), ""), "correlation function", ifelse(all.ind, "", "s")), call.=FALSE)
           next
         }
         if(!partial) {
