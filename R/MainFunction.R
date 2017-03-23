@@ -96,6 +96,10 @@
 #' # simIMIFA <- mcmc_IMIFA(olive, method="IMIFA")
 #' # summary(simIMIFA)
 #'
+#' # Fit an IMIFA model assuming a Pitman-Yor prior, allowing the discount parameter to be learned.
+#' # simPY    <- mcmc_IMIFA(olive, method="IMIFA", learn.d=TRUE)
+#' # summary(simPY)
+#'
 #' # Fit a MFA model to the scaled olive data, with isotropic uniquenesses.
 #' # Allow diagonal covariance as a special case where range.Q = 0. Accept all other defaults.
 #' # simMFA   <- mcmc_IMIFA(olive, method="MFA", n.iters=10000, range.G=3:6,

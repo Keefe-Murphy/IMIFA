@@ -843,7 +843,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
       plot.x <- clust$uncertainty
       if(g == 1) {
         col.x  <- c(1, ceiling(length(palette)/2))[(plot.x >= 1/G) + 1]
-        if(type != "h") col.x[plot.x == 0] <- NA
+        if(type != "n") col.x[plot.x == 0] <- NA
         if(titles) {
           layout(rbind(1, 2), heights=c(1, 6))
           par(mar=c(0, 4.1, 0.5, 2.1))
@@ -853,13 +853,12 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           par(mar=c(5.1, 4.1, 0.5, 2.1))
         }
         plot(plot.x, type=type, ylim=c(0, 1 - 1/G), col=col.x, axes=FALSE, ylab="Uncertainty", xlab="Observation", pch=ifelse(type == "n", NA, 16))
-        rect(0, 0, n.obs, 1 - 1/G)
         if(G == 2) {
           abline(h=0.5, col=par()$bg)
           abline(v=0,   col=par()$bg)
         }
         lines(x=c(0, n.obs), y=c(1/G, 1/G), lty=2, col=2)
-        axis(1, las=1, pos=0, cex.axis=0.9)
+        axis(1, las=1, pos=0, cex.axis=0.9, lty=0)
         axis(2, at=c(seq(from=0, to=min(1 - 1/G - 1/1000, 0.8), by=0.1), 1 - 1/G), labels=c(seq(from=0, to=min(1 - 1/G - 1/1000, 0.8), by=0.1), "1 - 1/G"), las=2, pos=0, cex.axis=0.9)
         if(type == "n")  {
           znam  <- obs.names

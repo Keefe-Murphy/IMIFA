@@ -153,8 +153,8 @@
       propa      <- runif(1, inter[1], inter[2])
       cprob      <- .log_palpha(alpha, discount, alpha.shape,  alpha.rate, N, G)
       pprob      <- .log_palpha(propa, discount, alpha.shape,  alpha.rate, N, G)
-      curprop    <- c(max( - discount, propa   - zeta), propa  + zeta)
-      logpr      <- pprob  - cprob   - log(diff(curprop))      + log(diff(inter))
+      propinter  <- c(max( - discount, propa   - zeta), propa  + zeta)
+      logpr      <- pprob  - cprob   - log(diff(propinter))    + log(diff(inter))
       acpt       <- logpr >= 0  ||   - rexp(1) < logpr
         return(list(alpha  = ifelse(acpt, propa, alpha), rate  = acpt))
     }
@@ -169,11 +169,15 @@
       unif       <- disc.shape1 == 1 & disc.shape2 == 1
       propd      <- ifelse(alpha > 0,    ifelse(rbinom(1, 1, prob=1  - kappa)  ==  0, 0, ifelse(unif,
                            runif(1),   rbeta(1, disc.shape1, disc.shape2))), runif(1, max(0, - alpha), 1))
-      cprob      <- .log_pdisc(propd,    alpha, disc.shape1, disc.shape2, N, G,  kappa, nn, unif)
-      pprob      <- .log_pdisc(discount, alpha, disc.shape1, disc.shape2, N, G,  kappa, nn, unif)
-      logpr      <- pprob  - cprob
-      acpt       <- logpr >= 0  ||   - rexp(1) < logpr
-        return(list(disc   = ifelse(acpt, propd, discount),  rate    = all(acpt, discount   != propd)))
+      if(identical(discount, propd)) {
+          return(list(disc = discount, rate    = 0L))
+      } else {
+        cprob    <- .log_pdisc(discount, alpha, disc.shape1, disc.shape2, N, G,  kappa, nn, unif)
+        pprob    <- .log_pdisc(propd,    alpha, disc.shape1, disc.shape2, N, G,  kappa, nn, unif)
+        logpr    <- pprob  - cprob
+        acpt     <- logpr >= 0  ||   - rexp(1) < logpr
+          return(list(disc = ifelse(acpt, propd, discount),  rate    = acpt))
+      }
     }
 
 # Priors
