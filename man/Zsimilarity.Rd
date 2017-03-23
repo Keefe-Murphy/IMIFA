@@ -13,8 +13,8 @@ Zsimilarity(zs)
 A list containing three elements:
 \describe{
 \item{z.avg}{The 'average' clustering, with minimum squared distance to \code{z.sim}.}
-\item{z.sim}{The N x N similary matrix, in a sparse format (see \code{\link[slam]{as.simple_triplet_matrix}}). If the data have been previously ordered, a heatmap may provide a useful visualisation}
-\item{dist.z}{A vector of length N recording the distances between each clustering and the 'average' clustering}
+\item{z.sim}{The N x N similary matrix, in a sparse format (see \code{\link[slam]{as.simple_triplet_matrix}}). If the data have been previously ordered, a (ordered) heatmap may provide a useful visualisation. The user is also invited to perform hierarchical clustering using \code{\link[stats]{hclust}} after first converting this similarity matrix to a distance matrix - "complete" linkage is recommended.}
+\item{dist.z}{A vector of length N recording the distances between each clustering and the 'average' clustering.}
 }
 }
 \description{
@@ -29,14 +29,20 @@ This functions takes a Monte Carlo sample of cluster labels, converts them to ad
 # Get the similarity matrix and visualise it
 # zsimil <- Zsimilarity(zs)
 # z.sim  <- as.matrix(zsimil$z.sim)
-# z.sim  <- replace(z.sim, z.sim == 0, NA)
-# image(z.sim, col=heat.colors(30)[30:1]); box(lwd=2)
+# z.sim2 <- replace(z.sim, z.sim == 0, NA)
+# image(z.sim2, col=heat.colors(30)[30:1]); box(lwd=2)
 
 # Extract the clustering with minimum squared distance to this
 # 'average' and evaluate its performance against the true labels
 # z.avg  <- zsimil$z.avg
 # table(z.avg, olive$area)
+
+# Perform hierarchical clustering on the distance matrix
+# Hcl    <- hclust(as.dist(1 - z.sim), method="complete")
+# plot(Hcl)
+# hier.z <- cutree(Hcl, k=3)
+# table(hier.z, olive$area)
 }
 \seealso{
-\code{\link{get_IMIFA_results}}, \code{\link[slam]{as.simple_triplet_matrix}}
+\code{\link{get_IMIFA_results}}, \code{\link[slam]{as.simple_triplet_matrix}}, \code{\link[stats]{hclust}}
 }

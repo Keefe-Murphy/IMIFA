@@ -792,7 +792,12 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           title(expression(phantom("Active ") * "and" * phantom(" Non-empty Groups")), col.main="black")
           title(expression(phantom("Active and ") * "Non-empty" * phantom(" Groups")), col.main = col.G[1])
           title(expression(phantom("Active and Non-empty ") * "Groups"), col.main="black")
-          lines(x=c(0, nrow(plot.x)), y=rep(G, 2), lty=2, col=grey, lwd=1)
+          if(length(unique(plot.x[,1])) > 1) {
+            G.ci    <- GQ.res$G.CI
+            lines(x=c(0, nrow(plot.x)), y=rep(G, 2), col=length(palette),   lty=2, lwd=1)
+            if(G.ci[1] != G) lines(x=c(0, nrow(plot.x)), y=rep(G.ci[1], 2), lty=2, lwd=0.5, col=grey)
+            if(G.ci[2] != G) lines(x=c(0, nrow(plot.x)), y=rep(G.ci[2], 2), lty=2, lwd=0.5, col=grey)
+          }
         }
       }
       if(!any(plotQ.ind,
