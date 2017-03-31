@@ -782,6 +782,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   attr(imifa, "Name")     <- dat.nam
   attr(imifa, "Nuplus1")  <- all(is.element(method, c("IFA", "MIFA", "OMIFA", "IMIFA")), nuplus1)
   attr(imifa, "Obs")      <- N
+  attr(imifa, "Pitman")   <- all(is.element(method, c("IMFA", "IMIFA")), any(learn.d, discount > 0))
   attr(imifa, "Rho")      <- rho
   attr(imifa, "Scaling")  <- scal
   attr(attr(imifa,

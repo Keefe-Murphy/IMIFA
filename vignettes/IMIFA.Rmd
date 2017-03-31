@@ -18,7 +18,7 @@ IMIFA is an R package that provides flexible efficient Gibbs sampling functions 
 
 Typically one would run FA or MFA models over ranges of values for the numbers of clusters and factors, with the pair which optimises some model selection criteria typically chosen. IMIFA instead enables Bayesian nonparametric model-based clustering with factor analytic covariance structures, _without_ recourse to model selection criteria, to automatically choose the number of clusters &/or cluster-specific latent factors. 
 
-The main features of the IMIFA model are the multiplicative gamma process shrinkage prior on the factor loadings, which allows theoretically infinitely many factors (this can also be employed in a MIFA context, for instance, where the number of clusters is fixed but cluster-specific factors are estimated) and the Dirichlet process prior, which utilises the stick-breaking construction and slice-efficient sampling, and allows theoretically infinitely many clusters. Tools are provided for soliciting sensible hyperparameters for these priors. As of IMIFA v1.2.0, it's now also possible to assume a Pitman-Yor process prior on the number of mixture components, and to learn it's concentration and discount parameters via Metropolis-Hastings updates.
+The main features of the IMIFA model are the multiplicative gamma process shrinkage prior on the factor loadings, which allows theoretically infinitely many factors (this can also be employed in a MIFA context, for instance, where the number of clusters is fixed but cluster-specific factors are estimated) and the Dirichlet process prior, which utilises the stick-breaking construction and slice-efficient sampling, and allows theoretically infinitely many clusters. Tools are provided for soliciting sensible hyperparameters for these priors. As of IMIFA v1.2.0, it's now also possible to assume a Pitman-Yor process prior on the number of mixture components, and to learn its concentration and discount parameters via Metropolis-Hastings updates.
 
 Model-specific diagnostic tools are also provided, as well as many extensive options for plotting results and conducting posterior inference on parameters of interest. The functions are typically verbose, offering plenty of messages and warnings to the user where appropriate. Please see [Murphy et al. (2017)](https://arxiv.org/abs/1701.07010) for more info.
 
@@ -105,10 +105,10 @@ simOMIFA <- mcmc_IMIFA(olive, method="OMIFA", n.iters=10000, range.G=10, nu=3, a
                        alpha.d1=3.5, alpha.d2=7, prop=0.6, epsilon=0.12)
 ```
 
-Finally, let's run the flagship IMIFA model, on which all subsequent demonstrations and results will be based, for a greater number of iterations, accepting all argument defaults. Note that the `verbose` argument, which defaults to `TRUE` will ordinarily print a progress bar to the console window. We can avoid scoring the latent scores if we wish, as this can be a huge drain on memory, with the caveat that posterior inference on the scores won't be possible. The default implementation uses the independent rather than dependent slice-efficient sampler; we could override the default for the parameter governing the rate of geometric decay by specifying `rho`. Furthermore, the default implementation assumes a Dirichlet process prior - we could override this and assume instead a Pitman-Yor process prior, either by supplying a fixed `discount`, or by learning this parameter via the `learn.d` argument.
+Finally, let's run the flagship IMIFA model, on which all subsequent demonstrations and results will be based, for a greater number of iterations, accepting the defaults for most arguments. Note that the `verbose` argument, which defaults to `TRUE` will ordinarily print a progress bar to the console window. We can avoid scoring the latent scores if we wish, as this can be a huge drain on memory, with the caveat that posterior inference on the scores won't be possible. The default implementation uses the independent rather than dependent slice-efficient sampler; we could override the default for the parameter governing the rate of geometric decay by specifying `rho`. Furthermore, the default implementation assumes a Dirichlet process prior - let's override this and assume instead a Pitman-Yor process prior, and also learn its discount parameter $d$ via the `learn.d` argument.
 
 ```{r, eval=FALSE}
-simIMIFA <- mcmc_IMIFA(olive, method="IMIFA", n.iters=50000, verbose=FALSE, s.sw=FALSE)
+simIMIFA <- mcmc_IMIFA(olive, method="IMIFA", n.iters=50000, verbose=FALSE, s.sw=FALSE, learn.d=TRUE)
 ```
 
 ## Postprocessing and extracing optimum results
@@ -128,7 +128,7 @@ If we instead wanted to explore the 3-cluster solution, construct 90% credible i
 resMFA2 <- get_IMIFA_results(simMFA, G=3, criterion="aic.mcmc")
 ```
 
-For now, let's just extract results from our IMIFA run above so we can proceed to visually examine them. Though the IMIFA model obviates the need for model selection criteria, the syntax for extracting results is exactly the same. However, this time, let's also summarise the clustering via the N x N similarity matrix obtained by averaging the adjacency matrices (admittedly at the expense of slowing the function down!), so that we can visualise it later.
+For now, let's just extract results from our IMIFA run above so we can proceed to visually examine them. Though the IMIFA model obviates the need for model selection criteria, the syntax for extracting results is exactly the same. However, this time, let's also summarise the clustering via the N x N similarity matrix obtained by averaging the adjacency matrices (admittedly at the expense of slowing the function down considerably!), so that we can visualise it later.
 
 ```{r, eval=FALSE}
 resIMIFA <- get_IMIFA_results(simIMIFA, z.avgsim=TRUE)
@@ -206,9 +206,12 @@ The error between the empirical and estimated covariance matrices (by group and 
 plot(resIMIFA, plot.meth="errors")
 ```
 
-Finally, inference can be conducted on the Dirichlet process concentration parameter $\alpha$ (assuming `learn.alpha` was _not_ set to `FALSE` when `mcmc_IMIFA` was initially run using the IMFA/IMIFA methods), where `all` below refers to trace, density, posterior mean, and ACF plots. Had we instead assumed a Pitman-Yor prior, we could conduct inference in much the same way for the discount parameter.
+Finally, inference can be conducted on the Pitman-Yor concentration parameter $\alpha$ and discount parameter $d$ (assuming `learn.alpha` and `learn.d`, respectively, were _not_ set to `FALSE` when `mcmc_IMIFA` was initially run using the IMFA/IMIFA methods),  where `all` below refers to trace, density, posterior mean, and ACF plots. 
 ```{r}
 plot(resIMIFA, plot.meth="all", param="alpha")
+```
+```{r}
+plot(resIMIFA, plot.meth="all", param="discount")
 ```
 
 # References

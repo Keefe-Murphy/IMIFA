@@ -502,17 +502,19 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       class(DP.alpha)          <- "listof"
     }
     if(learn.d)    {
-      discount   <- sims[[G.ind]][[Q.ind]]$discount
+      discount   <- as.vector(sims[[G.ind]][[Q.ind]]$discount)
       post.disc  <- mean(discount)
       var.disc   <- Var(discount)
       ci.disc    <- quantile(discount, conf.levels)
       rate       <- sims[[G.ind]][[Q.ind]]$d.rate
+      discount   <- if(sum(discount  == 0)/n.store > 0.5) as.simple_triplet_matrix(discount)  else discount
       PY.disc    <- list(discount = discount, post.disc = post.disc, var.disc = var.disc, ci.disc = ci.disc, disc.rate = rate)
       class(PY.disc)           <- "listof"
     }
     map          <- as.integer(levels(map))[map]
+    uncertain    <- if(sum(uncertain == 0)/n.obs   > 0.5) as.simple_triplet_matrix(uncertain) else uncertain
     cluster      <- list(map = map, z = z, uncertainty = uncertain)
-    cluster      <- c(cluster, list(post.sizes = sizes, post.pi = post.pi/sum(post.pi)),
+    cluster      <- c(cluster, list(post.sizes  = sizes, post.pi = post.pi/sum(post.pi)),
                       if(sw["pi.sw"]) list(pi.prop = pi.prop, var.pi = var.pi, ci.pi = ci.pi),
                       if(!label.miss) list(perf = tab.stat),
                       if(alpha.step)  list(DP.alpha = DP.alpha),
@@ -547,9 +549,9 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   }
   Q0             <- Q == 0
   if(all(isTRUE(choice), is.element(criterion, c("aicm", "bicm", "log.iLLH")))) {
-    if(all(!is.element(method,
+    if(all(!G.T, !is.element(method,
        c("FA", "IFA")), G == 1))  warning(paste0("Chosen model has only one group:\n Note that the ", criterion, " criterion may exhibit bias toward one-group models"),   call.=FALSE)
-    if(method    == "MIFA") {
+    if(all(!Q.T, method   == "MIFA")) {
       if(any(Q0))                 warning(paste0("Chosen model has ", ifelse(sum(Q0) == G, "zero factors", "a group with zero factors"), ":\n Note that the ", criterion, " criterion may exhibit bias toward models ", ifelse(sum(Q0) == G, "with zero factors", "where some groups have zero factors")), call.=FALSE)
     } else if(all(Q0))            warning(paste0("Chosen model has zero factors:\n Note that the ",   criterion, " criterion may exhibit bias toward zero-factor models"), call.=FALSE)
   }
@@ -837,6 +839,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   attr(result, "Varnames")     <- if(all(!sw["l.sw"], !sw["mu.sw"], !sw["psi.sw"], exists("varnames", envir=.GlobalEnv))) varnames
   attr(result, "N.Loadstore")  <- if(inf.Q) vapply(l.store, length, numeric(1L)) else rep(length(tmp.store), G)
   attr(result, "Obs")          <- n.obs
+  attr(result, "Pitman")       <- attr(sims, "Pitman")
   attr(result, "Store")        <- tmp.store
   attr(result, "Switch")       <- sw
   attr(result, "Uni.Meth")     <- uni.meth

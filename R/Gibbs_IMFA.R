@@ -288,7 +288,7 @@
                              psi       = if(sw["psi.sw"])        tryCatch(provideDimnames(psi.store,  base=list(varnames, "", ""),     unique=FALSE), error=function(e) psi.store),
                              pi.prop   = if(sw["pi.sw"])         pi.store,
                              alpha     = if(learn.alpha)         alpha.store,
-                             discount  = if(learn.d)             d.store,
+                             discount  = if(learn.d) {           if(sum(d.store == 0)/n.store > 0.5) as.simple_triplet_matrix(d.store) else d.store },
                              a.rate    = if(MH.step)             mean(a.rates) else a.rates,
                              d.rate    = if(learn.d)             mean(d.rates) else d.rates,
                              lab.rate  = if(IM.lab.sw)           setNames(rowmeans(lab.rate), c("Move1", "Move2")),

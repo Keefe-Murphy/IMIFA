@@ -137,7 +137,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
     if(v.sw[param]) {
       m.sw[-(1:4)]  <- !m.sw[-(1:4)]
       layout(matrix(c(1, 2, 3, 4), nrow=2, ncol=2, byrow=TRUE))
-      par(cex=0.8, mai=c(0.7, 0.7, 0.5, 0.2), mgp=c(2, 1, 0), oma=c(0, 0, 2, 0))
+      par(cex=0.8, mai=c(0.5, 0.5, 0.5, 0.2), mgp=c(2, 1, 0), oma=c(0, 0, 2, 0))
     }
   } else {
     sw.n  <- paste0(toupper(substring(plot.meth, 1, 1)), ".sw")
@@ -278,7 +278,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
       matx     <- mat
     }
     if(!matx) {
-      iter     <- switch(param, scores=seq_len(attr(x$Score, "Eta.store")), pis=seq_along(store), seq_len(attr(x, "N.Loadstore")[g]))
+      iter     <- switch(param, scores=seq_len(attr(x$Score, "Eta.store")), loadings=seq_len(attr(x, "N.Loadstore")[g]), seq_along(store))
     }
     if(is.element(param, c("scores", "loadings"))) {
       if(indx)               ind <- c(1L, 1L)
@@ -399,7 +399,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
       }
       if(param == "discount") {
         plot.x <- clust$PY.disc
-        plot(plot.x$discount, ylab="", type="l", xlab="Iteration", main="", ylim=c(0, 1))
+        plot(as.vector(plot.x$discount), ylab="", type="l", xlab="Iteration", main="", ylim=c(0, 1))
         if(titles) title(main=list(paste0("Trace", ifelse(all.ind, "", paste0(":\nDiscount")))))
         if(all(intervals, ci.sw[param])) {
           ci.x <- plot.x$ci.disc
@@ -427,7 +427,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           plot.d  <- density(x.plot[ind,])
           plot(plot.d, main="", ylab="")
           if(titles) title(main=list(paste0("Density", ifelse(all.ind, ":\n", paste0(":\nMeans - ", ifelse(grp.ind, paste0("Group ", g, " - "), ""))), var.names[ind], " Variable")))
-          polygon(plot.d, col=grey)
+          polygon(plot.d, col=grey, border=NA)
         }
       }
       if(param == "scores") {
@@ -451,7 +451,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           plot.d  <- density(x.plot[ind[1],ind[2],])
           plot(plot.d, main="", ylab="")
           if(titles) title(main=list(paste0("Density", ifelse(all.ind, ":\n", ":\nScores - "), "Observation ", obs.names[ind[1]], ", Factor ", ind[2])))
-          polygon(plot.d, col=grey)
+          polygon(plot.d, col=grey, border=NA)
         }
       }
       if(param == "loadings") {
@@ -475,7 +475,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           plot.d  <- density(x.plot[ind[1],ind[2],])
           plot(plot.d, main="", ylab="")
           if(titles) title(main=list(paste0("Density", ifelse(all.ind, ":\n", paste0(":\nLoadings - ", ifelse(grp.ind, paste0("Group ", g, " - "), ""))), var.names[ind[1]], " Variable, Factor ", ind[2])))
-          polygon(plot.d, col=grey)
+          polygon(plot.d, col=grey, border=NA)
         }
       }
       if(param == "uniquenesses") {
@@ -487,9 +487,13 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           if(titles) title(main=list(paste0("Density", ifelse(all.ind, "", paste0(":\nUniquenesses", ifelse(grp.ind, paste0(" - Group ", g), ""))))))
         } else   {
           plot.d  <- density(x.plot[ind,])
+          h       <- plot.d$bw
+          w       <- 1/pnorm(0, mean=x.plot[ind,], sd=h, lower.tail=FALSE)
+          plot.d  <- suppressWarnings(density(x.plot[ind,], bw=h, kernel="gaussian", weights=w/length(x.plot[ind,])))
+          plot.d$y[plot.d$x < 0] <- 0
           plot(plot.d, main="", ylab="")
           if(titles) title(main=list(paste0("Density", ifelse(all.ind, ":\n", paste0(":\nUniquenesses - ", ifelse(grp.ind, paste0("Group ", g, " - "), ""))), var.names[ind], " Variable")))
-          polygon(plot.d, col=grey)
+          polygon(plot.d, col=grey, border=NA)
         }
       }
       if(param == "pis") {
@@ -501,17 +505,26 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           if(titles) title(main=list(paste0("Density", ifelse(all.ind, "", paste0(":\nMixing Proportions")))))
         } else   {
           plot.d  <- density(x.plot[ind,])
+          h       <- plot.d$bw
+          w       <- 1/pnorm(0, mean=x.plot[ind,], sd=h, lower.tail=FALSE)
+          plot.d  <- suppressWarnings(density(x.plot[ind,], bw=h, kernel="gaussian", weights=w/length(x.plot[ind,])))
+          plot.d$y[plot.d$x < 0] <- 0
           plot(plot.d, main="", ylab="")
           if(titles) title(main=list(paste0("Density", ifelse(all.ind, "", paste0(":\nMixing Proportions - Group ", ind)))))
-          polygon(plot.d, col=grey)
+          polygon(plot.d, col=grey, border=NA)
         }
       }
       if(param == "alpha") {
         plot.x <- clust$DP.alpha
         plot.d <- density(plot.x$alpha)
+        h      <- plot.d$bw
+        tr     <- ifelse(attr(x, "Pitman"), - max(x$Clust$PY.disc$discount), 0)
+        w      <- 1/pnorm(tr, mean=plot.x$alpha, sd=h, lower.tail=FALSE)
+        plot.d <- suppressWarnings(density(plot.x$alpha, bw=h, kernel="gaussian", weights=w/length(plot.x$alpha)))
+        plot.d$y[plot.d$x < tr]  <- tr
         plot(plot.d, main="", ylab="")
         if(titles) title(main=list(paste0("Density", ifelse(all.ind, "", paste0(":\nAlpha")))))
-        polygon(plot.d, col=grey)
+        polygon(plot.d, col=grey, border=NA)
         if(intervals) {
           avg  <- plot.x$post.alpha
           clip(avg, avg, 0, plot.d$y[which.min(abs(plot.d$x - avg))])
@@ -520,10 +533,15 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
       }
       if(param == "discount") {
         plot.x <- clust$PY.disc
-        plot.d <- density(plot.x$discount)
+        x.plot <- as.vector(plot.x$discount)
+        plot.d <- density(x.plot)
+        h      <- plot.d$bw
+        w      <- 1/pnorm(0, mean=x.plot, sd=h, lower.tail=FALSE)
+        plot.d <- suppressWarnings(density(x.plot, bw=h, kernel="gaussian", weights=w/length(x.plot)))
+        plot.d$y[plot.d$x < 0]   <- 0
         plot(plot.d, main="", ylab="")
         if(titles) title(main=list(paste0("Density", ifelse(all.ind, "", paste0(":\nDiscount")))))
-        polygon(plot.d, col=grey)
+        polygon(plot.d, col=grey, border=NA)
         if(intervals) {
           avg  <- plot.x$post.disc
           clip(avg, avg, 0, plot.d$y[which.min(abs(plot.d$x - avg))])
@@ -667,7 +685,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         } else {
           if(all(intervals, ci.sw[param])) {
             plotCI(barplot(plot.x[ind], ylab="", xlab="", ylim=c(0, 1), cex.names=0.7),
-                   plot.x[ind], li=ci.x[1,ind], ui=ci.x[2,ind], slty=3, scol=2, add=TRUE, gap=TRUE, pch=20)
+                   plot.x[ind], li=ci.x[ind,1], ui=ci.x[ind,2], slty=3, scol=2, add=TRUE, gap=TRUE, pch=20)
           } else {
             barplot(plot.x[ind], ylab="", xlab="Variable", ylim=c(0, 1), cex.names=0.7)
           }
@@ -683,18 +701,20 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         digits <- options()$digits
         MH     <- switch(param, alpha=plot.x$alpha.rate != 1, discount=plot.x$disc.rate != 1)
         a.adj  <- rep(0.5, 2)
-        a.cex  <- par()$fin[2]/ifelse(MH, 5, 4)
-        pen    <- ifelse(MH, 0, 0.125)
-        text(x=0.5, y=0.85 - pen, cex=a.cex, col="black", adj=a.adj, expression(bold("Posterior Mean:\n")))
-        text(x=0.5, y=0.85 - pen, cex=a.cex, col="black", adj=a.adj, bquote(.(round(switch(param, alpha=plot.x$post.alpha, discount=plot.x$post.disc), digits))))
-        text(x=0.5, y=0.57 - pen, cex=a.cex, col="black", adj=a.adj, expression(bold("\nVariance:\n")))
-        text(x=0.5, y=0.57 - pen, cex=a.cex, col="black", adj=a.adj, bquote(.(round(switch(param, alpha=plot.x$var.alpha,  discount=plot.x$var.disc),  digits))))
-        text(x=0.5, y=0.4  - pen, cex=a.cex, col="black", adj=a.adj, bquote(bold(.(100 * conf))~bold("% Confidence Interval:")))
-        text(x=0.5, y=0.28 - pen, cex=a.cex, col="black", adj=a.adj, bquote(paste("[", .(round(switch(param, alpha=plot.x$ci.alpha[1], discount=plot.x$ci.disc[1]), digits)), ", ", .(round(switch(param, alpha=plot.x$ci.alpha[2], discount=plot.x$ci.disc[2]), digits)), "]")))
+        a.cex  <- par()$fin[2]/ifelse(MH, 4, 3)
+        pen    <- ifelse(MH, 0,    0.15)
+        ciy1   <- ifelse(MH, 0.45, 0.55)
+        ciy2   <- ifelse(MH, 0.35, 0.45)
+        text(x=0.5, y=0.85  - pen, cex=a.cex, col="black", adj=a.adj, expression(bold("Posterior Mean:\n")))
+        text(x=0.5, y=0.85  - pen, cex=a.cex, col="black", adj=a.adj, bquote(.(round(switch(param, alpha=plot.x$post.alpha, discount=plot.x$post.disc), digits))))
+        text(x=0.5, y=0.65  - pen, cex=a.cex, col="black", adj=a.adj, expression(bold("\nVariance:\n")))
+        text(x=0.5, y=0.65  - pen, cex=a.cex, col="black", adj=a.adj, bquote(.(round(switch(param, alpha=plot.x$var.alpha,  discount=plot.x$var.disc),  digits))))
+        text(x=0.5, y=ciy1  - pen, cex=a.cex, col="black", adj=a.adj, bquote(bold(.(100 * conf))~bold("% Confidence Interval:")))
+        text(x=0.5, y=ciy2  - pen, cex=a.cex, col="black", adj=a.adj, bquote(paste("[", .(round(switch(param, alpha=plot.x$ci.alpha[1], discount=plot.x$ci.disc[1]), digits)), ", ", .(round(switch(param, alpha=plot.x$ci.alpha[2], discount=plot.x$ci.disc[2]), digits)), "]")))
         if(isTRUE(MH)) {
           rate <- switch(param, alpha="Acceptance Rate:", discount="Mutation Rate:")
-          text(x=0.5, y=0.17,     cex=a.cex, col="black", adj=a.adj, substitute(bold(rate)))
-          text(x=0.5, y=0.1,      cex=a.cex, col="black", adj=a.adj, bquote(paste(.(round(100 * switch(param, alpha=plot.x$alpha.rate, discount=plot.x$disc.rate), 2)), "%")))
+          text(x=0.5, y=0.2,       cex=a.cex, col="black", adj=a.adj, substitute(bold(rate)))
+          text(x=0.5, y=0.15,      cex=a.cex, col="black", adj=a.adj, bquote(paste(.(round(100 * switch(param, alpha=plot.x$alpha.rate, discount=plot.x$disc.rate), 2)), "%")))
         }
       }
       if(!indx) {         ind[1] <- xind[1]
@@ -785,7 +805,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         col.G  <- c(ceiling(length(palette)/2), 1)
         x.plot <- GQ.res$Stored.G
         plot.x <- if(is.element(method, c("IMFA", "IMIFA"))) t(x.plot) else cbind(as.vector(x.plot), rep(attr(x, "range.G"), ncol(x.plot)))
-        matplot(plot.x, type="l", col=col.G, ylab="G", xlab="Iteration", main="", lty=if(is.element(method, c("IMFA", "IMIFA"))) 1 else 1:2, ylim=c(1, max(plot.x)))
+        matplot(plot.x, type="l", col=col.G, ylab="G", xlab="Iteration", main="", lty=if(is.element(method, c("IMFA", "IMIFA"))) 1 else 1:2, ylim=c(1, max(plot.x)), las=1)
         if(titles) {
           title(main=list("Trace:     \n\n"))
           title(expression("Active" * phantom(" and Non-empty Groups")), col.main = 1)
@@ -840,7 +860,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
 
     if(m.sw["Z.sw"]) {
       if(type == "l")                 stop("'type' cannot be 'l' for clustering uncertainty plots")
-      plot.x <- clust$uncertainty
+      plot.x <- as.vector(clust$uncertainty)
       if(g == 1) {
         col.x  <- c(1, ceiling(length(palette)/2))[(plot.x >= 1/G) + 1]
         if(type != "n") col.x[plot.x == 0] <- NA
@@ -1082,7 +1102,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         }
       }
       if(is.element(param, c("alpha", "discount"))) {
-        plot.x <- switch(param, alpha=clust$DP.alpha$alpha, discount=clust$PY.disc$discount)
+        plot.x <- switch(param, alpha=clust$DP.alpha$alpha,   discount=as.vector(clust$PY.disc$discount))
         if(any(switch(param, alpha=clust$DP.alpha$alpha.rate, discount=clust$PY.disc$disc.rate) == 0,
            length(unique(round(plot.x, nchar(plot.x)))) == 1)) {
                                       warning(paste0(switch(param, alpha="Acceptance", discount="Mutation"), " rate too low: can't plot ", ifelse(all.ind, ifelse(partial, "partial-", "auto-"), ""), "correlation function", ifelse(all.ind, "", "s")), call.=FALSE)
