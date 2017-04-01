@@ -518,7 +518,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         plot.x <- clust$DP.alpha
         plot.d <- density(plot.x$alpha)
         h      <- plot.d$bw
-        tr     <- ifelse(attr(x, "Pitman"), - max(x$Clust$PY.disc$discount), 0)
+        tr     <- ifelse(attr(x, "Pitman"), - max(clust$PY.disc$discount), 0)
         w      <- 1/pnorm(tr, mean=plot.x$alpha, sd=h, lower.tail=FALSE)
         plot.d <- suppressWarnings(density(plot.x$alpha, bw=h, kernel="gaussian", weights=w/length(plot.x$alpha)))
         plot.d$y[plot.d$x < tr]  <- tr
@@ -534,17 +534,20 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
       if(param == "discount") {
         plot.x <- clust$PY.disc
         x.plot <- as.vector(plot.x$discount)
-        plot.d <- density(x.plot)
-        h      <- plot.d$bw
-        w      <- 1/pnorm(0, mean=x.plot, sd=h, lower.tail=FALSE)
-        plot.d <- suppressWarnings(density(x.plot, bw=h, kernel="gaussian", weights=w/length(x.plot)))
-        plot.d$y[plot.d$x < 0]   <- 0
-        plot(plot.d, main="", ylab="")
+        fit    <- .logdensity(x.plot[x.plot > 0])
+        fitx   <- pmin(fit$x, 1)
+        fity   <- fit$y * (1 - plot.x$post.kappa)
+        plot(fitx, fity, type="l", main="", ylab="", xlab="")
+        if(plot.x$post.kappa > 0)  {
+          usr  <- par("usr")
+          clip(usr[1], usr[2], 0, usr[4])
+          abline(v=0, col=3, lwd=2)
+        }
         if(titles) title(main=list(paste0("Density", ifelse(all.ind, "", paste0(":\nDiscount")))))
-        polygon(plot.d, col=grey, border=NA)
+        polygon(fitx, fity, col=grey, border=NA)
         if(intervals) {
           avg  <- plot.x$post.disc
-          clip(avg, avg, 0, plot.d$y[which.min(abs(plot.d$x - avg))])
+          clip(avg, avg, 0, fity[which.min(abs(fitx - avg))])
           abline(v=avg, col=2, lty=2)
         }
       }
@@ -703,18 +706,28 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         a.adj  <- rep(0.5, 2)
         a.cex  <- par()$fin[2]/ifelse(MH, 4, 3)
         pen    <- ifelse(MH, 0,    0.15)
-        ciy1   <- ifelse(MH, 0.45, 0.55)
-        ciy2   <- ifelse(MH, 0.35, 0.45)
-        text(x=0.5, y=0.85  - pen, cex=a.cex, col="black", adj=a.adj, expression(bold("Posterior Mean:\n")))
-        text(x=0.5, y=0.85  - pen, cex=a.cex, col="black", adj=a.adj, bquote(.(round(switch(param, alpha=plot.x$post.alpha, discount=plot.x$post.disc), digits))))
-        text(x=0.5, y=0.65  - pen, cex=a.cex, col="black", adj=a.adj, expression(bold("\nVariance:\n")))
-        text(x=0.5, y=0.65  - pen, cex=a.cex, col="black", adj=a.adj, bquote(.(round(switch(param, alpha=plot.x$var.alpha,  discount=plot.x$var.disc),  digits))))
-        text(x=0.5, y=ciy1  - pen, cex=a.cex, col="black", adj=a.adj, bquote(bold(.(100 * conf))~bold("% Confidence Interval:")))
-        text(x=0.5, y=ciy2  - pen, cex=a.cex, col="black", adj=a.adj, bquote(paste("[", .(round(switch(param, alpha=plot.x$ci.alpha[1], discount=plot.x$ci.disc[1]), digits)), ", ", .(round(switch(param, alpha=plot.x$ci.alpha[2], discount=plot.x$ci.disc[2]), digits)), "]")))
+        y1     <- switch(param, alpha=0.8, discount=0.85)
+        y2     <- switch(param, alpha=0.8, discount=0.85)
+        y3     <- switch(param, alpha=0.6, discount=0.65)
+        y4     <- switch(param, alpha=0.6, discount=0.65)
+        y5     <- ifelse(MH, switch(param, alpha=0.45, discount=0.5),  0.475)
+        y6     <- ifelse(MH, switch(param, alpha=0.4,  discount=0.45), 0.4)
+        text(x=0.5, y=y1  - pen, cex=a.cex, col="black", adj=a.adj, expression(bold("Posterior Mean:\n")))
+        text(x=0.5, y=y2  - pen, cex=a.cex, col="black", adj=a.adj, bquote(.(round(switch(param, alpha=plot.x$post.alpha, discount=plot.x$post.disc), digits))))
+        text(x=0.5, y=y3  - pen, cex=a.cex, col="black", adj=a.adj, expression(bold("\nVariance:\n")))
+        text(x=0.5, y=y4  - pen, cex=a.cex, col="black", adj=a.adj, bquote(.(round(switch(param, alpha=plot.x$var.alpha,  discount=plot.x$var.disc),  digits))))
+        text(x=0.5, y=y5  - pen, cex=a.cex, col="black", adj=a.adj, bquote(bold(.(100 * conf))*bold("% Confidence Interval:")))
+        text(x=0.5, y=y6  - pen, cex=a.cex, col="black", adj=a.adj, bquote(paste("[", .(round(switch(param, alpha=plot.x$ci.alpha[1], discount=plot.x$ci.disc[1]), digits)), ", ", .(round(switch(param, alpha=plot.x$ci.alpha[2], discount=plot.x$ci.disc[2]), digits)), "]")))
         if(isTRUE(MH)) {
-          rate <- switch(param, alpha="Acceptance Rate:", discount="Mutation Rate:")
-          text(x=0.5, y=0.2,       cex=a.cex, col="black", adj=a.adj, substitute(bold(rate)))
-          text(x=0.5, y=0.15,      cex=a.cex, col="black", adj=a.adj, bquote(paste(.(round(100 * switch(param, alpha=plot.x$alpha.rate, discount=plot.x$disc.rate), 2)), "%")))
+          rate <- switch(param,  alpha="Acceptance Rate:", discount="Mutation Rate:")
+          y7   <- switch(param,  alpha=0.25, discount=0.325)
+          y8   <- switch(param,  alpha=0.2,  discount=0.275)
+          text(x=0.5, y=y7,      cex=a.cex, col="black", adj=a.adj, substitute(bold(rate)))
+          text(x=0.5, y=y8,      cex=a.cex, col="black", adj=a.adj, bquote(paste(.(round(100 * switch(param, alpha=plot.x$alpha.rate, discount=plot.x$disc.rate), 2)), "%")))
+        }
+        if(param == "discount") {
+          text(x=0.5, y=0.15,    cex=a.cex, col="black", adj=a.adj, bquote(.(bold(hat(kappa))~bold(" - Posterior Proportion of Zeros:"))))
+          text(x=0.5, y=0.1,     cex=a.cex, col="black", adj=a.adj, bquote(.(round(plot.x$post.kappa, digits))))
         }
       }
       if(!indx) {         ind[1] <- xind[1]

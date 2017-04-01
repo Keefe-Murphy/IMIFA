@@ -206,11 +206,11 @@ The error between the empirical and estimated covariance matrices (by group and 
 plot(resIMIFA, plot.meth="errors")
 ```
 
-Finally, inference can be conducted on the Pitman-Yor concentration parameter $\alpha$ and discount parameter $d$ (assuming `learn.alpha` and `learn.d`, respectively, were _not_ set to `FALSE` when `mcmc_IMIFA` was initially run using the IMFA/IMIFA methods),  where `all` below refers to trace, density, posterior mean, and ACF plots. 
-```{r}
+Finally, inference can be conducted on the Pitman-Yor concentration parameter $\alpha$ and discount parameter $d$ (assuming `learn.alpha` and `learn.d`, respectively, were _not_ set to `FALSE` when `mcmc_IMIFA` was initially run using the IMFA/IMIFA methods),  where `all` below refers to `trace`, `density`, posterior `means`, and ACF (`correlation`) plots. Note that the `density` for `discount` accounts for the point-mass at zero built into its prior.
+```{r, fig.height=7}
 plot(resIMIFA, plot.meth="all", param="alpha")
 ```
-```{r}
+```{r, fig.height=7}
 plot(resIMIFA, plot.meth="all", param="discount")
 ```
 

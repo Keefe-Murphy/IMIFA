@@ -504,11 +504,14 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     if(learn.d)    {
       discount   <- as.vector(sims[[G.ind]][[Q.ind]]$discount)
       post.disc  <- mean(discount)
+      post.kappa <- sum(discount == 0)/n.store
       var.disc   <- Var(discount)
       ci.disc    <- quantile(discount, conf.levels)
       rate       <- sims[[G.ind]][[Q.ind]]$d.rate
+      post.dzero <- post.disc/(1  - post.kappa)
       discount   <- if(sum(discount  == 0)/n.store > 0.5) as.simple_triplet_matrix(discount)  else discount
-      PY.disc    <- list(discount = discount, post.disc = post.disc, var.disc = var.disc, ci.disc = ci.disc, disc.rate = rate)
+      PY.disc    <- list(discount = discount, post.disc = post.disc, post.kappa = post.kappa, var.disc = var.disc,
+                         ci.disc  = ci.disc,  disc.rate = rate,  post.d_nonzero = post.dzero)
       class(PY.disc)           <- "listof"
     }
     map          <- as.integer(levels(map))[map]

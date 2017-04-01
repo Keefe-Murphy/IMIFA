@@ -36,7 +36,7 @@
 * Fixed factor score trace plots by extracting indices of stored samples using `Rfast::sort_unique` & rotating properly. 
 * Fixed way in which `rnorm` columns are added to scores matrix during adaptation when 'widest' loadings matrix grows.
 * Gibbs Updates of DP parameter `alpha` now correctly depend on current # non-empty rather than active groups.
-* Fixed density plots for parameters with strictly non-negative support.
+* Fixed density plots for parameters with strictly non-negative support, accounting for spike at zero for `discount`.
 * Slightly rearranged order Gibbs updates take place, esp. to ensure means enter simulation of uniquenesses properly.
 * Edited/robustified subsetting of large objects when storing `mcmc_IMIFA` output.
 * Tightened controls for when certain parameters are not stored for posterior inference.
