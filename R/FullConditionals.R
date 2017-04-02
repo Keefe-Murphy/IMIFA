@@ -682,12 +682,12 @@
       R         <- P + 0.5 - (0.5  * sqrt(8 * P + 1))
         as.integer(floor(min(N - 1, ifelse(1e-10 > abs(R - round(R)), round(R), R))))
     }
-    .logdensity <- function(x) {
-      y         <- log(x)
-      g         <- density(y, bw = "SJ")
-      xgrid     <- exp(g$x)
-      g$y       <- c(0, g$y/xgrid)
-      g$x       <- c(0, xgrid)
-      return(g)
+      .logitdensity <- function(x)  {
+      y         <- qlogis(x)
+      g         <- density(y, bw    = "SJ")
+      xgrid     <- plogis(g$x)
+      g$y       <- g$y/(xgrid  * (1 - xgrid))
+      g$x       <- xgrid
+        return(g)
     }
     #

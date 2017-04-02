@@ -420,8 +420,10 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         x.plot <- x$Means$mus[[g]]
         if(matx) {
           if(mispal) palette(viridis(n.var))
-          plot.x  <- sapply(apply(x.plot, 1, density), "[[", "y")
-          matplot(plot.x, type="l", ylab="", lty=1, col=seq_along(palette()))
+          plot.x  <- apply(x.plot, 1, density)
+          fitx    <- sapply(plot.x, "[[", "x")
+          fity    <- sapply(plot.x, "[[", "y")
+          matplot(fitx, fity, type="l", ylab="", lty=1, col=seq_along(palette()))
           if(titles) title(main=list(paste0("Density", ifelse(all.ind, "", paste0(":\nMeans", ifelse(grp.ind, paste0(" - Group ", g), ""))))))
         } else   {
           plot.d  <- density(x.plot[ind,])
@@ -440,8 +442,10 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           if(mispal) palette(viridis(min(10, max(2, Q.max))))
         }
         if(matx) {
-          plot.x  <- sapply(apply(plot.x, 1, density), "[[", "y")
-          matplot(plot.x, type="l", ylab="", lty=1, col=seq_along(palette()))
+          plot.x  <- apply(plot.x, 1, density)
+          fitx    <- sapply(plot.x, "[[", "x")
+          fity    <- sapply(plot.x, "[[", "y")
+          matplot(fitx, fity, type="l", ylab="", lty=1, col=seq_along(palette()))
           if(by.fac) {
             if(titles) title(main=list(paste0("Density", ifelse(all.ind, ":\n", ":\nScores - "), "Factor ", ind[2])))
           } else {
@@ -464,8 +468,10 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           if(mispal) palette(viridis(min(10, max(2, Q))))
         }
         if(matx) {
-          plot.x  <- sapply(apply(plot.x, 1, density), "[[", "y")
-          matplot(plot.x, type="l", ylab="", lty=1, col=seq_along(palette()))
+          plot.x  <- apply(plot.x, 1, density)
+          fitx    <- sapply(plot.x, "[[", "x")
+          fity    <- sapply(plot.x, "[[", "y")
+          matplot(fitx, fity, type="l", ylab="", lty=1, col=seq_along(palette()))
           if(by.fac) {
             if(titles) title(main=list(paste0("Density", ifelse(all.ind, ":\n", paste0(":\nLoadings - ", ifelse(grp.ind, paste0("Group ", g, " - "), ""))), "Factor ", ind[2])))
           } else {
@@ -482,8 +488,13 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         x.plot <- x$Uniquenesses$psis[[g]]
         if(matx) {
           if(mispal) palette(viridis(n.var))
-          plot.x  <- sapply(apply(x.plot, 1, density), "[[", "y")
-          matplot(plot.x, type="l", ylab="", lty=1, col=seq_along(palette()))
+          plot.x  <- apply(x.plot, 1, density)
+          h       <- sapply(plot.x, "[[", "bw")
+          w       <- lapply(seq_along(plot.x), function(d) 1/pnorm(0, mean=x.plot[d,], sd=h[d], lower.tail=FALSE))
+          plot.x  <- lapply(seq_along(plot.x), function(d) suppressWarnings(density(x.plot[d,], bw=h[d], kernel="gaussian", weights=w[[d]]/length(x.plot[d,]))))
+          fitx    <- sapply(plot.x, "[[", "x")
+          fity    <- sapply(plot.x, "[[", "y")
+          matplot(fitx, fity, type="l", ylab="", lty=1, col=seq_along(palette()))
           if(titles) title(main=list(paste0("Density", ifelse(all.ind, "", paste0(":\nUniquenesses", ifelse(grp.ind, paste0(" - Group ", g), ""))))))
         } else   {
           plot.d  <- density(x.plot[ind,])
@@ -499,19 +510,20 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
       if(param == "pis") {
         x.plot <- clust$pi.prop
         if(matx) {
-          if(mispal) palette(viridis(n.var))
-          plot.x  <- sapply(apply(x.plot, 1, density), "[[", "y")
-          matplot(plot.x, type="l", ylab="", lty=1, col=seq_along(palette()))
+          if(mispal) palette(viridis(G))
+          plot.x  <- lapply(seq_len(G), function(g, x=x.plot[g,]) .logitdensity(x[x > 0 & x < 1]))
+          fitx    <- sapply(plot.x, "[[", "x")
+          fity    <- sapply(plot.x, "[[", "y")
+          matplot(fitx, fity, type="l", ylab="", lty=1, col=seq_along(palette()))
           if(titles) title(main=list(paste0("Density", ifelse(all.ind, "", paste0(":\nMixing Proportions")))))
         } else   {
-          plot.d  <- density(x.plot[ind,])
-          h       <- plot.d$bw
-          w       <- 1/pnorm(0, mean=x.plot[ind,], sd=h, lower.tail=FALSE)
-          plot.d  <- suppressWarnings(density(x.plot[ind,], bw=h, kernel="gaussian", weights=w/length(x.plot[ind,])))
-          plot.d$y[plot.d$x < 0] <- 0
-          plot(plot.d, main="", ylab="")
+          x.plot  <- x.plot[ind,]
+          fit     <- .logitdensity(x.plot[x.plot > 0 & x.plot < 1])
+          fitx    <- fit$x
+          fity    <- fit$y
+          plot(fitx, fity, type="l", main="", ylab="", xlab="")
           if(titles) title(main=list(paste0("Density", ifelse(all.ind, "", paste0(":\nMixing Proportions - Group ", ind)))))
-          polygon(plot.d, col=grey, border=NA)
+          polygon(c(min(fitx), fitx), c(0, fity), col=grey, border=NA)
         }
       }
       if(param == "alpha") {
@@ -534,8 +546,8 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
       if(param == "discount") {
         plot.x <- clust$PY.disc
         x.plot <- as.vector(plot.x$discount)
-        fit    <- .logdensity(x.plot[x.plot > 0])
-        fitx   <- pmin(fit$x, 1)
+        fit    <- .logitdensity(x.plot[x.plot > 0])
+        fitx   <- fit$x
         fity   <- fit$y * (1 - plot.x$post.kappa)
         plot(fitx, fity, type="l", main="", ylab="", xlab="")
         if(plot.x$post.kappa > 0)  {
@@ -544,7 +556,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           abline(v=0, col=3, lwd=2)
         }
         if(titles) title(main=list(paste0("Density", ifelse(all.ind, "", paste0(":\nDiscount")))))
-        polygon(fitx, fity, col=grey, border=NA)
+        polygon(c(min(fitx), fitx), c(0, fity), col=grey, border=NA)
         if(intervals) {
           avg  <- plot.x$post.disc
           clip(avg, avg, 0, fity[which.min(abs(fitx - avg))])
