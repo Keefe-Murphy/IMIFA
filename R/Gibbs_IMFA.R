@@ -53,8 +53,9 @@
       d.shape1       <- d.hyper[1]
       d.shape2       <- d.hyper[2]
       d.rates        <- rep(0L, total)
+      d.unif         <- d.shape1 == 1 & d.shape2 == 1
     } else d.rates   <- 1
-    MH.step          <- any(discount > 0, learn.d)
+    MH.step          <- any(discount  > 0, learn.d)
     if(MH.step)     {
       a.rates        <- rep(0L, total)
     } else a.rates   <- 1
@@ -209,7 +210,7 @@
 
     # Discount
       if(learn.d) {
-        MH.disc      <- .sim_disc_mh(discount=discount, alpha=pi.alpha, disc.shape1=d.shape1, disc.shape2=d.shape2, N=N, G=G.non, kappa=kappa, nn=nn[nn0])
+        MH.disc      <- .sim_disc_mh(discount=discount, alpha=pi.alpha, disc.shape1=d.shape1, disc.shape2=d.shape2, N=N, G=G.non, kappa=kappa, unif=d.unif, nn=nn[nn0])
         discount     <- MH.disc$disc
         d.rate       <- MH.disc$rate
       }

@@ -238,10 +238,16 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   if(missing(kappa)) {
     kappa          <- 0.5
   }
+  kappa            <- ifelse(all(!learn.d, discount == 0), 1, kappa)
   if(any(!is.numeric(kappa),
-         length(kappa)     != 1))   stop("'kappa' must be a single number")
-  if(kappa   <  0  || kappa > 1)    stop("'kappa' must lie in the interval [0, 1]")
-  discount         <- switch(method, IMFA=, IMIFA=ifelse(missing(discount), ifelse(learn.d, ifelse(rbinom(1, 1, prob=1 - kappa) == 0, 0, rbeta(1, d.hyper[1], d.hyper[2])), 0), discount), 0)
+         length(kappa)       != 1)) stop("'kappa' must be a single number")
+  if(kappa   <  0  || kappa   > 1)  stop("'kappa' must lie in the interval [0, 1]")
+  if(kappa  ==  0) {
+   if(all(!learn.d, discount == 0)) stop("'kappa' is zero and yet 'discount' is fixed at zero:\n either learn the discount parameter or specify a non-zero value")
+  } else if(kappa  == 1) {
+   if(any(learn.d,  discount != 0)) stop(paste0("'kappa' is exactly 1 and yet", ifelse(learn.d, " 'discount' is being learned ", if(discount != 0) " the discount is fixed at a non-zero value"), ":\n the discount should remain fixed at zero"))
+  }
+  discount         <- switch(method, IMFA=, IMIFA=ifelse(missing(discount), ifelse(learn.d, ifelse(kappa != 0 && runif(1) <= kappa, 0, rbeta(1, d.hyper[1], d.hyper[2])), 0), discount), 0)
   if(any(!is.numeric(discount),
          length(discount)  != 1))   stop("'discount' must be a single number")
   if(discount       < 0    ||

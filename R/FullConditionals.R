@@ -151,32 +151,31 @@
     .sim_alpha_m <- function(alpha, discount, alpha.shape, alpha.rate, N, G, zeta) {
       inter      <- c(max( - discount, alpha   - zeta),  alpha + zeta)
       propa      <- runif(1, inter[1], inter[2])
-      cprob      <- .log_palpha(alpha, discount, alpha.shape,  alpha.rate, N, G)
-      pprob      <- .log_palpha(propa, discount, alpha.shape,  alpha.rate, N, G)
-      propinter  <- c(max( - discount, propa   - zeta), propa  + zeta)
+      cprob      <- .log_palpha(alpha, discount, alpha.shape,    alpha.rate, N, G)
+      pprob      <- .log_palpha(propa, discount, alpha.shape,    alpha.rate, N, G)
+      propinter  <- c(max( - discount, propa   - zeta),  propa + zeta)
       logpr      <- pprob  - cprob   - log(diff(propinter))    + log(diff(inter))
       acpt       <- logpr >= 0  ||   - rexp(1) < logpr
         return(list(alpha  = ifelse(acpt, propa, alpha), rate  = acpt))
     }
 
   # Discount
-    .log_pdisc   <- function(discount, alpha, disc.shape1, disc.shape2, N, G, kappa, nn, unif) {
-      l.prior    <- ifelse(discount == 0, log(kappa), log(1 - kappa) + ifelse(unif, 0, dbeta(discount, shape1=disc.shape1, shape2=disc.shape2, log=TRUE)))
-        sum(log(alpha + discount * seq_len(G - 1))) + sum(lgamma(nn  - discount) - lgamma(1 - discount)) + l.prior
+    .log_pdisc   <- function(discount, alpha, disc.shape1, disc.shape2, N, G, kappa, unif, nn) {
+      l.prior    <- ifelse(discount == 0, log(kappa),  log(1 - kappa) + ifelse(unif, 0, dbeta(discount, shape1=disc.shape1, shape2=disc.shape2, log=TRUE)))
+        sum(log(alpha + discount * seq_len(G - 1)))  + sum(lgamma(nn  - discount) -  lgamma(1  - discount)) + l.prior
     }
 
-    .sim_disc_mh <- function(discount, alpha, disc.shape1, disc.shape2, N, G, kappa, nn) {
-      unif       <- disc.shape1 == 1 & disc.shape2 == 1
-      propd      <- ifelse(alpha > 0,    ifelse(rbinom(1, 1, prob=1  - kappa)  ==  0, 0, ifelse(unif,
-                           runif(1),   rbeta(1, disc.shape1, disc.shape2))), runif(1, max(0, - alpha), 1))
+    .sim_disc_mh <- function(discount, alpha, disc.shape1, disc.shape2, N, G, kappa, unif, nn) {
+      propd      <- ifelse(alpha > 0,  ifelse(kappa != 0 && runif(1) <= kappa, 0, ifelse(unif,
+                           runif(1),   rbeta(1,  disc.shape1, disc.shape2))), runif(1, max(0,  - alpha), 1))
       if(identical(discount, propd)) {
           return(list(disc = discount, rate    = 0L))
       } else {
-        cprob    <- .log_pdisc(discount, alpha, disc.shape1, disc.shape2, N, G,  kappa, nn, unif)
-        pprob    <- .log_pdisc(propd,    alpha, disc.shape1, disc.shape2, N, G,  kappa, nn, unif)
+        cprob    <- .log_pdisc(discount,  alpha, disc.shape1, disc.shape2, N, G,  kappa, unif, nn)
+        pprob    <- .log_pdisc(propd,     alpha, disc.shape1, disc.shape2, N, G,  kappa, unif, nn)
         logpr    <- pprob  - cprob
         acpt     <- logpr >= 0  ||   - rexp(1) < logpr
-          return(list(disc = ifelse(acpt, propd, discount),  rate    = acpt))
+          return(list(disc = ifelse(acpt, propd, discount),   rate   = acpt))
       }
     }
 

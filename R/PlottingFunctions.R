@@ -530,7 +530,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         plot.x <- clust$DP.alpha
         plot.d <- density(plot.x$alpha)
         h      <- plot.d$bw
-        tr     <- ifelse(attr(x, "Pitman"), - max(clust$PY.disc$discount), 0)
+        tr     <- ifelse(attr(x, "Pitman"), - max(clust$PY.disc$discount, 0), 0)
         w      <- 1/pnorm(tr, mean=plot.x$alpha, sd=h, lower.tail=FALSE)
         plot.d <- suppressWarnings(density(plot.x$alpha, bw=h, kernel="gaussian", weights=w/length(plot.x$alpha)))
         plot.d$y[plot.d$x < tr]  <- 0
