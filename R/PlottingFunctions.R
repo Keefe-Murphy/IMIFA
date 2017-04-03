@@ -272,8 +272,8 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
     }
     if(any(is.element(param, c("alpha", "discount")),
            all(is.element(param, c("means", "uniquenesses")), !indx),
-           all(is.element(param, c("scores", "loadings")),
-               Q  == 1))) { matx <- FALSE
+           all(param == "loadings", Q == 1), all(param == "scores",
+           Q.max == 1)))  { matx <- FALSE
     } else   {
       matx     <- mat
     }
@@ -423,7 +423,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           plot.x  <- apply(x.plot, 1, density)
           fitx    <- sapply(plot.x, "[[", "x")
           fity    <- sapply(plot.x, "[[", "y")
-          matplot(fitx, fity, type="l", ylab="", lty=1, col=seq_along(palette()))
+          matplot(fitx, fity, type="l", xlab="", ylab="", lty=1, col=seq_along)
           if(titles) title(main=list(paste0("Density", ifelse(all.ind, "", paste0(":\nMeans", ifelse(grp.ind, paste0(" - Group ", g), ""))))))
         } else   {
           plot.d  <- density(x.plot[ind,])
@@ -445,7 +445,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           plot.x  <- apply(plot.x, 1, density)
           fitx    <- sapply(plot.x, "[[", "x")
           fity    <- sapply(plot.x, "[[", "y")
-          matplot(fitx, fity, type="l", ylab="", lty=1, col=seq_along(palette()))
+          matplot(fitx, fity, type="l", xlab="", ylab="", lty=1, col=seq_along(palette()))
           if(by.fac) {
             if(titles) title(main=list(paste0("Density", ifelse(all.ind, ":\n", ":\nScores - "), "Factor ", ind[2])))
           } else {
@@ -471,7 +471,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           plot.x  <- apply(plot.x, 1, density)
           fitx    <- sapply(plot.x, "[[", "x")
           fity    <- sapply(plot.x, "[[", "y")
-          matplot(fitx, fity, type="l", ylab="", lty=1, col=seq_along(palette()))
+          matplot(fitx, fity, type="l", xlab="", ylab="", lty=1, col=seq_along(palette()))
           if(by.fac) {
             if(titles) title(main=list(paste0("Density", ifelse(all.ind, ":\n", paste0(":\nLoadings - ", ifelse(grp.ind, paste0("Group ", g, " - "), ""))), "Factor ", ind[2])))
           } else {
@@ -494,7 +494,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           plot.x  <- lapply(seq_along(plot.x), function(d) suppressWarnings(density(x.plot[d,], bw=h[d], kernel="gaussian", weights=w[[d]]/length(x.plot[d,]))))
           fitx    <- sapply(plot.x, "[[", "x")
           fity    <- sapply(plot.x, "[[", "y")
-          matplot(fitx, fity, type="l", ylab="", lty=1, col=seq_along(palette()))
+          matplot(fitx, fity, type="l", xlab="", ylab="", lty=1, col=seq_along(palette()))
           if(titles) title(main=list(paste0("Density", ifelse(all.ind, "", paste0(":\nUniquenesses", ifelse(grp.ind, paste0(" - Group ", g), ""))))))
         } else   {
           plot.d  <- density(x.plot[ind,])
@@ -514,7 +514,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           plot.x  <- lapply(seq_len(G), function(g, x=x.plot[g,]) .logitdensity(x[x > 0 & x < 1]))
           fitx    <- sapply(plot.x, "[[", "x")
           fity    <- sapply(plot.x, "[[", "y")
-          matplot(fitx, fity, type="l", ylab="", lty=1, col=seq_along(palette()))
+          matplot(fitx, fity, type="l", ylab="", lty=1, col=seq_along(palette()), xlab="")
           if(titles) title(main=list(paste0("Density", ifelse(all.ind, "", paste0(":\nMixing Proportions")))))
         } else   {
           x.plot  <- x.plot[ind,]
@@ -533,7 +533,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         tr     <- ifelse(attr(x, "Pitman"), - max(clust$PY.disc$discount), 0)
         w      <- 1/pnorm(tr, mean=plot.x$alpha, sd=h, lower.tail=FALSE)
         plot.d <- suppressWarnings(density(plot.x$alpha, bw=h, kernel="gaussian", weights=w/length(plot.x$alpha)))
-        plot.d$y[plot.d$x < tr]  <- tr
+        plot.d$y[plot.d$x < tr]  <- 0
         plot(plot.d, main="", ylab="")
         if(titles) title(main=list(paste0("Density", ifelse(all.ind, "", paste0(":\nAlpha")))))
         polygon(plot.d, col=grey, border=NA)
@@ -549,11 +549,12 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         fit    <- .logitdensity(x.plot[x.plot > 0])
         fitx   <- fit$x
         fity   <- fit$y * (1 - plot.x$post.kappa)
-        plot(fitx, fity, type="l", main="", ylab="", xlab="")
+        plot(fitx, fity, type="l", main="", xlab="", ylab="")
+        usr    <- par("usr")
         if(plot.x$post.kappa > 0)  {
-          usr  <- par("usr")
           clip(usr[1], usr[2], 0, usr[4])
           abline(v=0, col=3, lwd=2)
+          clip(usr[1], usr[2], usr[3], usr[4])
         }
         if(titles) title(main=list(paste0("Density", ifelse(all.ind, "", paste0(":\nDiscount")))))
         polygon(c(min(fitx), fitx), c(0, fity), col=grey, border=NA)
@@ -561,6 +562,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           avg  <- plot.x$post.disc
           clip(avg, avg, 0, fity[which.min(abs(fitx - avg))])
           abline(v=avg, col=2, lty=2)
+          clip(usr[1], usr[2], usr[3], usr[4])
         }
       }
     }
@@ -728,7 +730,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         text(x=0.5, y=y2  - pen, cex=a.cex, col="black", adj=a.adj, bquote(.(round(switch(param, alpha=plot.x$post.alpha, discount=plot.x$post.disc), digits))))
         text(x=0.5, y=y3  - pen, cex=a.cex, col="black", adj=a.adj, expression(bold("\nVariance:\n")))
         text(x=0.5, y=y4  - pen, cex=a.cex, col="black", adj=a.adj, bquote(.(round(switch(param, alpha=plot.x$var.alpha,  discount=plot.x$var.disc),  digits))))
-        text(x=0.5, y=y5  - pen, cex=a.cex, col="black", adj=a.adj, bquote(bold(.(100 * conf))*bold("% Confidence Interval:")))
+        text(x=0.5, y=y5  - pen, cex=a.cex, col="black", adj=a.adj, bquote(bold(.(100 * conf)) * bold("% Confidence Interval:")))
         text(x=0.5, y=y6  - pen, cex=a.cex, col="black", adj=a.adj, bquote(paste("[", .(round(switch(param, alpha=plot.x$ci.alpha[1], discount=plot.x$ci.disc[1]), digits)), ", ", .(round(switch(param, alpha=plot.x$ci.alpha[2], discount=plot.x$ci.disc[2]), digits)), "]")))
         if(isTRUE(MH)) {
           rate <- switch(param,  alpha="Acceptance Rate:", discount="Mutation Rate:")
@@ -738,7 +740,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           text(x=0.5, y=y8,      cex=a.cex, col="black", adj=a.adj, bquote(paste(.(round(100 * switch(param, alpha=plot.x$alpha.rate, discount=plot.x$disc.rate), 2)), "%")))
         }
         if(param == "discount") {
-          text(x=0.5, y=0.15,    cex=a.cex, col="black", adj=a.adj, bquote(.(bold(hat(kappa))~bold(" - Posterior Proportion of Zeros:"))))
+          text(x=0.5, y=0.15,    cex=a.cex, col="black", adj=a.adj, bquote(bold(hat(kappa)) * bold(" - Posterior Proportion of Zeros:")))
           text(x=0.5, y=0.1,     cex=a.cex, col="black", adj=a.adj, bquote(.(round(plot.x$post.kappa, digits))))
         }
       }

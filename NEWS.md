@@ -33,7 +33,7 @@ __Infinite Mixtures of Infinite Factor Analysers__
 * 2<sup>nd</sup> IM(I)FA label switching move sped up/properly weighted to ensure uniform sampling of neighbouring cluster pairs.
 * Offline label switching square assignment correction now permutes properly.
 * Fixed factor score trace plots by extracting indices of stored samples using `Rfast::sort_unique` & rotating properly. 
-* Fixed way in which `rnorm` columns are added to scores matrix during adaptation, esp. when 'widest' loadings matrix grows.
+* Fixed adding of `rnorm` columns to scores matrix during adaptation, esp. when 'widest' loadings matrix grows.
 * Gibbs Updates of DP parameter `alpha` now correctly depend on current # non-empty rather than active groups.
 * Fixed density plots for parameters with bounded support, accounting for spike at zero for `discount`.
 * Slightly rearranged order Gibbs updates take place, esp. to ensure means enter simulation of uniquenesses properly.

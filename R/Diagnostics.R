@@ -493,7 +493,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     sizes        <- setNames(tabulate(map, nbins=G), gnames)
     if(any(sizes == 0))           warning("Empty group exists in modal clustering:\n examine trace plots and try supplying a lower G value to tune.imifa() or re-running the model", call.=FALSE)
     if(alpha.step) {
-      alpha      <- sims[[G.ind]][[Q.ind]]$alpha
+      alpha      <- sims[[G.ind]][[Q.ind]]$alpha[store]
       post.alpha <- mean(alpha)
       var.alpha  <- Var(alpha)
       ci.alpha   <- quantile(alpha,    conf.levels)
@@ -502,7 +502,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       class(DP.alpha)          <- "listof"
     }
     if(learn.d)    {
-      discount   <- as.vector(sims[[G.ind]][[Q.ind]]$discount)
+      discount   <- as.vector(sims[[G.ind]][[Q.ind]]$discount[store])
       post.disc  <- mean(discount)
       post.kappa <- sum(discount == 0)/n.store
       var.disc   <- Var(discount)
