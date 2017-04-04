@@ -156,27 +156,28 @@
       mu           <- vapply(Gseq, function(g) if(nn0[g]) .sim_mu(mu.sigma=mu.sigma, psi.inv=psi.inv[,g], mu.zero=mu.zero[,g], sum.eta=sum.eta[[g]][seq_len(Qs[g])],
                              sum.data=sum.data[,g], lmat=lmat[[g]], N=nn[g], P=P) else .sim_mu_p(P=P, sig.mu.sqrt=sig.mu.sqrt, mu.zero=mu.zero[,g]), numeric(P))
 
-    # Local Shrinkage
-      load.2       <- lapply(lmat, .power2)
-      phi          <- lapply(Gseq, function(g) if(nn0[g]) .sim_phi(Q=Qs[g], P=P, nu=nu, plus1=nuplus1,
+    # Shrinkage
+      if(all(Q0))     {
+        load.2     <- lapply(lmat, .power2)
+        phi        <- lapply(Gseq, function(g) if(nn0[g]) .sim_phi(Q=Qs[g], P=P, nu=nu, plus1=nuplus1,
                       tau=tau[[g]], load.2=load.2[[g]]) else .sim_phi_p(Q=Qs[g], P=P, nu=nu, plus1=nuplus1))
 
-    # Global Shrinkage
-      sum.terms    <- lapply(Gseq, function(g) diag(crossprod(phi[[g]], load.2[[g]])))
-      for(g in Gseq)  {
-        Qg         <- Qs[g]
-        Q1g        <- Q1[g]
-        if(nn0[g])    {
-          for(k in seq_len(Qg)) {
-            delta[[g]][k]   <- if(k > 1) .sim_deltak(alpha.d2=alpha.d2[g], beta.d2=beta.d2, delta.k=delta[[g]][k], tau.kq=tau[[g]][k:Qg], P=P,
+        sum.terms  <- lapply(Gseq, function(g) diag(crossprod(phi[[g]], load.2[[g]])))
+        for(g in Gseq)  {
+          Qg       <- Qs[g]
+          Q1g      <- Q1[g]
+          if(nn0[g])    {
+            for(k in seq_len(Qg)) {
+              delta[[g]][k] <- if(k > 1) .sim_deltak(alpha.d2=alpha.d2[g], beta.d2=beta.d2, delta.k=delta[[g]][k], tau.kq=tau[[g]][k:Qg], P=P,
                                Q=Qg, k=k, sum.term.kq=sum.terms[[g]][k:Qg]) else .sim_delta1(Q=Qg, P=P, tau=tau[[g]], sum.term=sum.terms[[g]],
                                alpha.d1=ifelse(Q1g, alpha.d2[g], alpha.d1[g]), beta.d1=ifelse(Q1g, beta.d2, beta.d1), delta.1=delta[[g]][1])
-            tau[[g]]        <- cumprod(delta[[g]])
-          }
-        } else {
-          for(k in seq_len(Qg)) {
-            delta[[g]][k]   <- if(k > 1) .sim_delta_p(alpha=alpha.d2[g], beta=beta.d2) else .sim_delta_p(alpha=ifelse(Q1g, alpha.d2[g], alpha.d1[g]), beta=ifelse(Q1g, beta.d2, beta.d1))
-            tau[[g]]        <- cumprod(delta[[g]])
+              tau[[g]]      <- cumprod(delta[[g]])
+            }
+          } else {
+            for(k in seq_len(Qg)) {
+              delta[[g]][k] <- if(k > 1) .sim_delta_p(alpha=alpha.d2[g], beta=beta.d2) else .sim_delta_p(alpha=ifelse(Q1g, alpha.d2[g], alpha.d1[g]), beta=ifelse(Q1g, beta.d2, beta.d1))
+              tau[[g]]      <- cumprod(delta[[g]])
+            }
           }
         }
       }
@@ -203,20 +204,34 @@
           lmat[nn0]         <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) cbind(lmat[[g]][,seq_len(Qs.old[h])], rnorm(n=P, mean=0, sd=sqrt(1/(phi[[g]][,Qs[g]] * tau[[g]][Qs[g]])))) else lmat[[g]][,nonred[[h]], drop=FALSE])
           Qemp     <- Qs[!nn0]
           Qpop     <- Qs[nn0]
-          Fmax     <- max(Qpop)
-          Qmax     <- ifelse(all(Q.big), Fmax, max(Qpop[!Q.big]))
+          Qmax     <- ifelse(all(Q.big), max(Qpop), max(Qpop[!Q.big]))
           Qmaxold  <- max(Qs.old)
-          if(Qmax   < max(Qemp, 0))    {
-           Qs[Qmax  < Qs & !nn0]  <- Qmax
+         store.eta <- all(sw["s.sw"], storage)
+          if(any(!nn0)  && Qmax  != max(Qemp))  {
            Qmaxseq <- seq_len(Qmax)
-            for(g  in Gseq[!nn0][Qemp  > Qmax]) {
-              phi[[g]]      <- phi[[g]][,Qmaxseq,  drop=FALSE]
-              delta[[g]]    <- delta[[g]][Qmaxseq]
-              tau[[g]]      <- tau[[g]][Qmaxseq]
-              lmat[[g]]     <- lmat[[g]][,Qmaxseq, drop=FALSE]
+            for(g  in Gseq[!nn0][Qemp != Qmax]) {
+              Qg   <- Qs[g]
+              if(Qg > Qmax)  {
+                phi[[g]]    <- phi[[g]][,Qmaxseq,  drop=FALSE]
+                delta[[g]]  <- delta[[g]][Qmaxseq]
+                tau[[g]]    <- tau[[g]][Qmaxseq]
+                lmat[[g]]   <- lmat[[g]][,Qmaxseq, drop=FALSE]
+              } else {
+                while(Qg    != Qmax)   {
+                 phi[[g]]   <- cbind(phi[[g]],  rgamma(n=P, shape=nu + nuplus1, rate=nu))
+                 delta[[g]] <- c(delta[[g]],    rgamma(n=1, shape=alpha.d2, rate=beta.d2))
+                 tau[[g]]   <- cumprod(delta[[g]])
+                 if(store.eta)         {
+                  eta.tmp[[g]]   <- cbind(eta.tmp[[g]], base::matrix(0, nr=0, nc=1))
+                 }
+                 Qg         <- Qg + 1
+                 lmat[[g]]  <- cbind(lmat[[g]], rnorm(n=P, mean=0, sd=sqrt(1/(phi[[g]][,Qg] * tau[[g]][Qg]))))
+                }
+              }
             }
+           Qs[Qmax  != Qs    & !nn0]  <- Qmax
           }
-          if(all(sw["s.sw"], storage)) {
+          if(store.eta)  {
             eta.tmp <- lapply(Gseq,  function(g) if(nn0[g] && Qs[g] > Qs.old[which(nn.ind == g)]) cbind(eta.tmp[[g]], rnorm(nn[g])) else eta.tmp[[g]][,seq_len(Qs[g]), drop=FALSE])
           }
         }

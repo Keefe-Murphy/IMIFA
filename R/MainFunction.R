@@ -228,6 +228,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   if(N < 2)                         stop("Must have more than one observation")
   G.x       <- missing(range.G)
   alpha.x   <- missing(learn.alpha)
+  disc.x    <- missing(learn.d)
   if(any(!is.logical(learn.alpha),
          length(learn.alpha) != 1)) stop("'learn.alpha' must be TRUE or FALSE")
   if(any(!is.logical(learn.d),
@@ -252,9 +253,15 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
          length(discount)  != 1))   stop("'discount' must be a single number")
   if(discount       < 0    ||
      discount      >= 1)            stop("'discount' must lie in the interval [0, 1)")
-  if(all(!is.element(method, c("IMFA", "IMIFA")), learn.alpha))  {
-    learn.alpha    <- FALSE
-    if(!alpha.x)                    warning(paste0("'learn.alpha' must be FALSE for the ", method, " method"), call.=FALSE)
+  if(!is.element(method, c("IMFA", "IMIFA"))) {
+    if(learn.alpha) {
+      learn.alpha  <- FALSE
+      if(!alpha.x)                  message(paste0("'learn.alpha' forced to FALSE for the ", method, " method"))
+    }
+    if(learn.d)     {
+      learn.d      <- FALSE
+      if(!disc.x)                   message(paste0("'learn.d' must be FALSE for the ", method, " method"))
+    }
   }
   if(!is.element(method, c("MFA", "MIFA")))      {
     if(length(range.G) > 1)         stop(paste0("Only one 'range.G' value can be specified for the ", method, " method"))

@@ -553,7 +553,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         usr    <- par("usr")
         if(plot.x$post.kappa > 0)  {
           clip(usr[1], usr[2], 0, usr[4])
-          abline(v=0, col=3, lwd=2)
+          abline(v=0,  col=3,  lwd=2)
           clip(usr[1], usr[2], usr[3], usr[4])
         }
         if(titles) title(main=list(paste0("Density", ifelse(all.ind, "", paste0(":\nDiscount")))))
@@ -1215,8 +1215,8 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
 #' # par(mar=c(5.1, 4.1, 4.1, 4.1))
 #'
 #' # image(t(data)[,nrow(data):1], col=cols)
-#' # box(lwd=2)
 #' # heat_legend(data, cols)
+#' # box(lwd=2)
   heat_legend  <- function(data, cols) {
     bx         <- par("usr")
     xpd        <- par()$xpd

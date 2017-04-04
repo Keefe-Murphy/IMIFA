@@ -88,7 +88,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   tmp.store      <- store
   label.switch   <- attr(sims, "Label.Switch")
   method         <- attr(sims, "Method")
-  alpha.step     <- attr(sims, "Alph.step")
+  learn.alpha    <- attr(sims, "Alph.step")
   learn.d        <- attr(sims, "Disc.step")
   inf.G          <- is.element(method, c("IMIFA", "OMIFA", "IMFA", "OMFA"))
   inf.Q          <- is.element(method, c("IMIFA", "OMIFA", "MIFA",  "IFA"))
@@ -387,10 +387,10 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
         }
       }
     }
-    if(sw["mu.sw"])        mus <- mus[,Gseq,,     drop=FALSE]
-    if(sw["l.sw"])       lmats <- lmats[,,Gseq,,  drop=FALSE]
-    if(sw["psi.sw"])      psis <- psis[,Gseq,,    drop=FALSE]
-    map          <- apply(z, 1, function(x) factor(which.max(tabulate(x)), levels=Gseq))
+    if(sw["mu.sw"])        mus <- tryCatch(mus[,Gseq,,     drop=FALSE], error=function(e) mus)
+    if(sw["l.sw"])       lmats <- tryCatch(lmats[,,Gseq,,  drop=FALSE], error=function(e) lmats)
+    if(sw["psi.sw"])      psis <- tryCatch(psis[,Gseq,,    drop=FALSE], error=function(e) psis)
+    map          <- apply(z, 1,   function(x) factor(which.max(tabulate(x)), levels=Gseq))
     if(isTRUE(z.avgsim)) {
       zlog       <- capture.output(znew <- try(Zsimilarity(zs=zadj), silent=TRUE))
       condit     <- all(!is.element(method, c("MIFA", "MFA")), inherits(znew, "try-error"))
@@ -492,7 +492,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     attr(uncertain, "Obs")     <- if(sum(uncert.obs) != 0) uncert.obs
     sizes        <- setNames(tabulate(map, nbins=G), gnames)
     if(any(sizes == 0))           warning("Empty group exists in modal clustering:\n examine trace plots and try supplying a lower G value to tune.imifa() or re-running the model", call.=FALSE)
-    if(alpha.step) {
+    if(learn.alpha) {
       alpha      <- sims[[G.ind]][[Q.ind]]$alpha[store]
       post.alpha <- mean(alpha)
       var.alpha  <- Var(alpha)
@@ -501,7 +501,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       DP.alpha   <- list(alpha = alpha, post.alpha = post.alpha, var.alpha = var.alpha, ci.alpha = ci.alpha, alpha.rate = rate)
       class(DP.alpha)          <- "listof"
     }
-    if(learn.d)    {
+    if(learn.d)     {
       discount   <- as.vector(sims[[G.ind]][[Q.ind]]$discount[store])
       post.disc  <- mean(discount)
       post.kappa <- sum(discount == 0)/n.store
@@ -520,7 +520,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     cluster      <- c(cluster, list(post.sizes  = sizes, post.pi = post.pi/sum(post.pi)),
                       if(sw["pi.sw"]) list(pi.prop = pi.prop, var.pi = var.pi, ci.pi = ci.pi),
                       if(!label.miss) list(perf = tab.stat),
-                      if(alpha.step)  list(DP.alpha = DP.alpha),
+                      if(learn.alpha) list(DP.alpha = DP.alpha),
                       if(learn.d)     list(PY.disc = PY.disc),
                       if(z.avgsim)    list(Z.avgsim = z_simavg),
                       if(is.element(method, c("IMFA", "IMIFA"))) list(lab.rate = sims[[G.ind]][[Q.ind]]$lab.rate))
@@ -824,13 +824,13 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
                       if(sw["psi.sw"]) list(Uniquenesses = uniquenesses))
 
   class(result)                <- "Results_IMIFA"
-  attr(result, "Alpha")        <- if(!alpha.step) attr(sims, "Alpha")
+  attr(result, "Alpha")        <- if(!learn.alpha) attr(sims, "Alpha")
   attr(result, "Call")         <- call
   attr(result, "Conf.Level")   <- conf.level
   attr(result, "Errors")       <- any(err.T)
   attr(result, "Method")       <- method
   if(is.element(method, c("IMFA", "IMIFA"))) {
-    attr(result, "Alph.step")  <- alpha.step
+    attr(result, "Alph.step")  <- learn.alpha
     attr(result, "Disc.step")  <- learn.d
     attr(result, "Discount")   <- if(!learn.d) attr(sims, "Discount")
     attr(result, "Ind.Slice")  <- attr(sims, "Ind.Slice")

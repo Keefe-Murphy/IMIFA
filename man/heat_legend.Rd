@@ -24,8 +24,8 @@ Using only base graphics, this function appends a colour key legend for heatmaps
 # par(mar=c(5.1, 4.1, 4.1, 4.1))
 
 # image(t(data)[,nrow(data):1], col=cols)
-# box(lwd=2)
 # heat_legend(data, cols)
+# box(lwd=2)
 }
 \seealso{
 \code{\link[graphics]{image}}, \code{\link[gclus]{plotcolors}}, \code{\link{mat2cols}}
