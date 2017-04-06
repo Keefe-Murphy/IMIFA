@@ -549,7 +549,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         fit    <- .logitdensity(x.plot[x.plot > 0])
         fitx   <- fit$x
         fity   <- fit$y * (1 - plot.x$post.kappa)
-        plot(fitx, fity, type="l", main="", xlab="", ylab="")
+        plot(fitx, fity, type="l", main="", xlab="", ylab="", xlim=c(0, max(fitx)))
         usr    <- par("usr")
         if(plot.x$post.kappa > 0)  {
           clip(usr[1], usr[2], 0, usr[4])
@@ -955,9 +955,9 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           if(all(!labelmiss, z.miss)) {
            prf  <- clust$perf
           } else   {
-           pzs  <- clust$map
-           if(length(unique(pzs)) == length(unique(labs))) {
-            pzs <- factor(.lab_switch(z.new=pzs, z.old=labs)$z)
+           pzs  <- factor(clust$map, levels=seq_len(G))
+           if(nlevels(pzs) == length(unique(labs))) {
+            pzs <- factor(.lab_switch(z.new=as.numeric(levels(pzs))[pzs], z.old=labs)$z)
            }
            tab  <- table(pzs, labs, dnn=list("Predicted", "Observed"))
            prf  <- c(classAgreement(tab), classError(pzs, labs))
@@ -1241,7 +1241,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
 # Prior No. Groups (DP & PY)
 #' Plot Dirichlet / Pitman-Yor process Priors
 #'
-#' Plots the prior distribution of the number of clusters under a Dirichlet / Pitman-Yor process prior, for a sample of size \code{N} at given values of the concentration parameter \code{alpha} and optionally also the \code{discount} parameter. Useful for soliciting sensible priors for \code{alpha} or suitable fixed values for \code{alpha} or \code{discount} under the "\code{IMFA}" and "\code{IMIFA}" methods for \code{\link{mcmc_IMIFA}}. All arguments are vectorised. Requires use of the \code{Rmpfr} and \code{gmp} libraries. Users can also consult \code{\link{G_expected}} and \code{\link{G_variance}} in order to solicit sensible priors.
+#' Plots the prior distribution of the number of clusters under a Dirichlet / Pitman-Yor process prior, for a sample of size \code{N} at given values of the concentration parameter \code{alpha} and optionally also the \code{discount} parameter. Useful for soliciting sensible priors for \code{alpha} or suitable fixed values for \code{alpha} or \code{discount} under the "\code{IMFA}" and "\code{IMIFA}" methods for \code{\link{mcmc_IMIFA}}. All arguments are vectorised. Requires use of the \code{Rmpfr} and \code{gmp} libraries. May encounter difficulty and slowness for large \code{N}, especially with non-zero \code{discount}. Users can also consult \code{\link{G_expected}} and \code{\link{G_variance}} in order to solicit sensible priors.
 #' @param N The sample size.
 #' @param alpha The concentration parameter. Must be specified and must be strictly greater than \code{-discount}.
 #' @param discount The discount parameter for the Pitman-Yor process. Must lie in the interval [0, 1). Defaults to 0 (i.e. the Dirichlet process).
@@ -1255,19 +1255,26 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
 #' @examples
 #' # install.packages("Rmpfr")
 #'
-#' # Verify that these alpha/discount values produce priors with the same mean
-#' # G_expected(N=50, alpha=c(19.23356, 12.21619, 1), discount=c(0, 0.25, 0.7300045))
+#' # Plot Dirichlet process priors for different values of alpha
+#' # DP <- G_priorDensity(N=50, alpha=c(3, 10, 25))
+#' # DP
+#'
+#' # Verify that these alpha/discount values produce Pitman-Yor process priors with the same mean
+#' # G_expected(N=50, alpha=c(19.23356, 6.47006, 1), discount=c(0, 0.47002, 0.7300045))
 #'
 #' # Now plot them to examine tail behaviour as discount increases
-#' # x <- G_priorDensity(N=50, alpha=c(19.23356, 12.21619, 1), discount=c(0, 0.25, 0.7300045))
-#' # x
+#' # PY <- G_priorDensity(N=50, alpha=c(19.23356, 6.47006, 1), discount=c(0, 0.47002, 0.7300045))
+#' # PY
   G_priorDensity      <- function(N, alpha, discount = 0L, show.plot = TRUE) {
     firstex    <- suppressMessages(requireNamespace("Rmpfr", quietly=TRUE))
     if(isTRUE(firstex)) {
       on.exit(.detach_pkg("Rmpfr"))
       on.exit(.detach_pkg("gmp"), add=TRUE)
     } else                            stop("'Rmpfr' package not installed")
-    on.exit(palette("default"), add=!isTRUE(firstex))
+    on.exit(palette("default"),   add=!isTRUE(firstex))
+    defopt     <- options()
+    options(expressions = 500000)
+    on.exit(options(defopt),      add=TRUE)
     if(any(c(length(N),
              length(show.plot)) > 1)) stop("Arguments 'N' and 'show.plot' must be strictly of length 1")
     if(!is.logical(show.plot))        stop("'show.plot' must be TRUE or FALSE")
@@ -1289,19 +1296,19 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
       discount <- rep(discount, max.len)
     }
     rx         <- matrix(0, nrow=N, ncol=max.len)
-    for(i in seq_len(max.len))    {
+    Nseq       <- seq_len(N)
+    Nsq2       <- Rmpfr::mpfr(Nseq,        precBits=256)
+    for(i in seq_len(max.len)) {
       alphi    <- Rmpfr::mpfr(alpha[i],    precBits=256)
       disci    <- Rmpfr::mpfr(discount[i], precBits=256)
       if(disci == 0) {
-        vnk    <- exp(seq_len(N)  * log(alphi)     - log(Rmpfr::pochMpfr(alphi, N)))
-        rx[,i] <- abs(gmp::asNumeric(gmp::Stirling1.all(N) * vnk))
+        vnk    <- exp(Nsq2 * log(alphi)     - log(Rmpfr::pochMpfr(alphi, N)))
+        rx[,i] <- gmp::asNumeric(abs(vnk    * Rmpfr:::.bigz2mpfr(gmp::Stirling1.all(N))))
       } else  {
-        vnk    <- c(Rmpfr::mpfr(0,         precBits=256), cumsum(log(alphi +   seq_len(N - 1) * disci))) -
-                  log(Rmpfr::pochMpfr(alphi + 1, N - 1))   - seq_len(N)    *   log(disci)
-        sign   <- seq_len(N  + 1)    %% 2
-        sign   <- replace(sign, sign == 0, -1)
-        lnkd   <- lapply(seq_len(N), function(g) Rmpfr::sumBinomMpfr(g, f=function(k)  Rmpfr::pochMpfr(-k * disci, N)))
-        rx[,i] <- gmp::asNumeric(abs(methods::new("mpfr", unlist(lnkd)))   * exp(vnk - log(Rmpfr::factorialMpfr(seq_len(N)))))
+        vnk    <- c(Rmpfr::mpfr(0,         precBits=256),  cumsum(log(alphi + Nseq[-N] * disci)))   -
+                  log(Rmpfr::pochMpfr(alphi + 1, N - 1)) - Nsq2 * log(disci)
+        lnkd   <- lapply(Nseq, function(g) Rmpfr::sumBinomMpfr(g, f=function(k)  Rmpfr::pochMpfr(-k * disci, N)))
+        rx[,i] <- gmp::asNumeric(exp(vnk    - lfactorial(Nsq2)) * abs(methods::new("mpfr", unlist(lnkd))))
       }
     }
     if(isTRUE(show.plot))   {

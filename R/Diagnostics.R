@@ -541,7 +541,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       Q          <- if(G.T) Q else setNames(rep(Q, G), gnames)
     }
     leder.b      <- .ledermann(n.obs, n.var)
-    if(any(unlist(Q) > leder.b))  warning(paste0("Estimate of Q", ifelse(G > 1, " in one or more of the groups ", " "), "is greater than the suggested Ledermann upper bound (", leder.b, "):\nsolution may be invalid"), call.=FALSE)
+    if(any(unlist(Q) > leder.b))  warning(paste0("Estimate of Q", ifelse(G > 1, " in one or more of the groups ", " "), "is greater than ", ifelse(any(unlist(Q) > n.var), paste0("the number of variables (", n.var, ")"), paste0("the suggested Ledermann upper bound (", leder.b, ")")), ":\nsolution may be invalid"), call.=FALSE)
     Q.CI         <- if(G1) round(rowQuantiles(Q.store, probs=conf.levels)) else round(quantile(Q.store, conf.levels))
     GQ.temp4     <- list(Q = Q, Q.Mode = Q.mode, Q.Median = Q.med,
                          Q.CI = Q.CI, Q.Probs = Q.prob, Q.Counts = Q.tab,

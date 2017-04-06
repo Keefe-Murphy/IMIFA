@@ -264,9 +264,9 @@
           Qmax       <- ifelse(all(Q.big), max(Qpop), max(Qpop[!Q.big]))
           Qmaxold    <- max(Qs.old)
           store.eta  <- all(sw["s.sw"], storage)
-          if(any(!nn0)    && Qmax  != max(Qemp)) {
+          if(any(!nn0)    && Qmax  !=  max(Qemp)) {
             Qmaxseq  <- seq_len(Qmax)
-            for(t in Ts[!nn0][Qemp !=  Qmax])    {
+            for(t in Ts[!nn0][Qemp !=  Qmax])     {
               Qt     <- Qs[t]
               if(Qt   > Qmax)  {
                 phi[[t]]      <- phi[[t]][,Qmaxseq,  drop=FALSE]

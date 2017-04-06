@@ -229,8 +229,8 @@
 #'
 #' Takes a shape hyperparameter and covariance matrix, and finds data-driven rate hyperparameters in such a way that Heywood problems are avoided. Rates are allowed to be variable-specific. Used internally by \code{\link{mcmc_IMIFA}} when it's argument \code{psi_beta} is not supplied.
 #' @param shape A positive shape hyperparameter.
-#' @param covar A square, positive-semidefinite covariance matrix
-#' @param type A switch indicating whether a single rate (\code{isotropic}) or variable-specific rates (\code{unconstrained}) are to be derived. uniquenesses are allowed to be variable specific
+#' @param covar A square, positive-semidefinite covariance matrix.
+#' @param type A switch indicating whether a single rate (\code{isotropic}) or variable-specific rates (\code{unconstrained}) are to be derived. uniquenesses are allowed to be variable specific.
 #'
 #' @return Either a single rate hyperparameter or \code{ncol(covar)} variable specific hyperparameters.
 #' @export
@@ -272,22 +272,22 @@
     }
 
   # Check Shrinkage Hyperparemeters
-#' Check the validity of MGP hyperparameters
+#' Check the validity of Multiplicative Gamma Process (MGP) hyperparameters
 #'
 #' Checks the hyperparameters for the multiplicative gamma process (MGP) shrinkage prior in order to ensure that the property of cumulative shrinkage holds. This is called inside \code{\link{mcmc_IMIFA}} for the "\code{IFA}", "\code{MIFA}", "\code{OMIFA}" and "\code{IMIFA}" methods. The arguments \code{ad1, ad2, nu, bd1} and \code{bd2} are vectorised.
-#' @param ad1 Shape hyperparameter for delta_1
-#' @param ad2 Shape hyperparameter for delta_2
-#' @param Q Number of latent factors
-#' @param nu Hyperparameter for the local shrinkage parameters
+#' @param ad1 Shape hyperparameter for delta_1.
+#' @param ad2 Shape hyperparameter for delta_2.
+#' @param Q Number of latent factors.
+#' @param nu Hyperparameter for the local shrinkage parameters.
 #' @param bd1 Rate hyperparameter for delta_1. Defaults to 1.
 #' @param bd2 Rate hyperparameter for delta_2. Defaults to 1.
 #' @param plus1 Logical indicator for whether the Gamma prior on the local shrinkage parameters is of the form Ga(\code{nu + 1, nu}), the default, or Ga(\code{nu, nu}).
-#' @param inverse Logical indicator for whether the increasing shrinkage property is assessed against the induced Inverse Gamma prior, the default. Always \code{TRUE} when used inside \code{\link{mcmc_IMIFA}}: the \code{FALSE} option exists only for demonstration purposes.
+#' @param inverse Logical indicator for whether the cumulative shrinkage property is assessed against the induced Inverse Gamma prior, the default, or in terms of the Gamma prior (which is incorrect). This is always \code{TRUE} when used inside \code{\link{mcmc_IMIFA}}: the \code{FALSE} option exists only for demonstration purposes.
 #'
 #' @return A list of length 2 containing the following objects:
 #' \describe{
-#'   \item{expectation}{The vector of actual expected shrinkage factors}
-#'   \item{valid}{A logical indicating whether the cumulative shrinkage property holds}
+#'   \item{expectation}{The vector of actual expected shrinkage factors, i.e. the inverse of the global shrinkage parameters.}
+#'   \item{valid}{A logical indicating whether the cumulative shrinkage property holds.}
 #' }
 #' @export
 #' @seealso \code{\link{mcmc_IMIFA}}
@@ -297,11 +297,17 @@
 #' Durante, D. (2017). A note on the multiplicative gamma process, \emph{Statistics & Probability Letters}, 122: 198–204.
 #'
 #' @examples
-#' # Check if the MGP global shrinkage parameters are increasing as the column index increases.
-#' MGP_check(ad1=1.5, ad2=1.8, Q=10, nu=2, inverse=FALSE)[[1]]$valid
+#' # Check if expected shrinkage under the MGP increases with the column index (WRONG!).
+#' # MGP_check(ad1=1.5, ad2=1.8, Q=10, nu=2, inverse=FALSE)[[1]]$valid
 #'
-#' # Check if the induced IG prior on the MGP global shrinkage parameters is stochastically increasing.
-#' MGP_check(ad1=1.5, ad2=1.8, Q=10, nu=2, inverse=TRUE)[[1]]$valid
+#' # Check if the induced IG prior on the MGP global shrinkage parameters
+#' # is stochastically increasing, thereby inducing cumulative shrinkage (CORRECT!).
+#' # MGP_check(ad1=1.5, ad2=1.8, Q=10, nu=2, inverse=TRUE)[[1]]$valid
+#'
+#' # Check again with a parameterisation that IS valid and examine the expected shrinkage values.
+#' # shrink <- MGP_check(ad1=1.5, ad2=2.8, Q=10, nu=2, inverse=TRUE)[[1]]
+#' # shrink$valid
+#' # shrink$expectation
     MGP_check   <- Vectorize(function(ad1, ad2, Q, nu, bd1 = 1L, bd2 = 1L, plus1 = TRUE, inverse = TRUE) {
       if(any(!is.logical(plus1),
              length(plus1)    != 1))       stop("'plus1' must be TRUE or FALSE")
@@ -312,12 +318,13 @@
              !is.numeric(nu)))             stop(paste0("'nu' must be a single ", ifelse(plus1,
                                                 "strictly positive number for the Ga(nu + 1, nu) parameterisation",
                                                 "number strictly greater than 1 for the Ga(nu, nu) parameterisation")))
+      if(missing(ad1) || missing(ad2))     stop("Shrinkage shape hyperparameters 'ad1' and 'ad2' must be supplied")
+      if(missing(nu))                      stop("Local shrinkage parameter 'nu' must be supplied")
+      if(missing(Q))                       stop("Number of latent factors 'Q' must be supplied")
       if(any(c(ad1, ad2)  < 1))            stop("All shrinkage shape hyperparameter values must be at least 1")
       if(any(c(bd1, bd2) <= 0))            stop("All shrinkage rate hyperparameter values must be strictly positive")
-      if(any(ad1 < bd1, ad2 < bd2))        warning("Shrinkage shape hyperparameters should be greater than associated shrinkage rate hyperparameters", call.=FALSE)
-      if(bd2/(ad2 - 1)   >= bd1/(ad1 - 1)) warning("Shrinkage in column k should be greater than shrinkage in column 1", call.=FALSE)
       rate      <- nu
-      shape     <- ifelse(plus1, rate + 1, rate)
+      shape     <- ifelse(plus1, rate   + 1, rate)
       if(inverse) {
         ad1     <- ifelse(ad1 == 1, ad1 + .Machine$double.eps, ad1)
         ad2     <- ifelse(ad2 == 1, ad2 + .Machine$double.eps, ad2)
@@ -359,7 +366,7 @@
     .lab_switch <- function(z.new, z.old) {
       tab       <- table(z.new, z.old, dnn=NULL)
       tab.tmp   <- tab[rowsums(tab) != 0,colSums(tab) != 0, drop=FALSE]
-      Gs        <- tryCatch(seq_len(max(unique(z.new))), error=function(e) stop())
+      Gs        <- seq_len(max(unique(as.numeric(z.new))))
       nc        <- ncol(tab.tmp)
       nr        <- nrow(tab.tmp)
       ng        <- tabulate(z.new, length(Gs))

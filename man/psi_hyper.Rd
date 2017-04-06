@@ -9,9 +9,9 @@ psi_hyper(shape, covar, type = c("unconstrained", "isotropic"))
 \arguments{
 \item{shape}{A positive shape hyperparameter.}
 
-\item{covar}{A square, positive-semidefinite covariance matrix}
+\item{covar}{A square, positive-semidefinite covariance matrix.}
 
-\item{type}{A switch indicating whether a single rate (\code{isotropic}) or variable-specific rates (\code{unconstrained}) are to be derived. uniquenesses are allowed to be variable specific}
+\item{type}{A switch indicating whether a single rate (\code{isotropic}) or variable-specific rates (\code{unconstrained}) are to be derived. uniquenesses are allowed to be variable specific.}
 }
 \value{
 Either a single rate hyperparameter or \code{ncol(covar)} variable specific hyperparameters.

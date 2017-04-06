@@ -426,10 +426,10 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   Q.warn       <- .ledermann(N=N, P=P)
   if(any(range.Q > Q.warn))   {
     if(all(is.element(method, c("IFA", "MIFA", "OMIFA", "IMIFA")),
-       isTRUE(adapt)))        {     warning(paste0("Starting value for number of factors is greater than the suggested Ledermann upper bound = ", Q.warn), call.=FALSE)
+       isTRUE(adapt)))        {     warning(paste0("Starting value for number of factors is greater than ", ifelse(any(range.Q > P), paste0("the number of variables (", P, ")"), paste0("the suggested Ledermann upper bound (", Q.warn, ")"))), call.=FALSE)
     } else if(any(is.element(method, c("FA", "MFA", "OMFA", "IMFA")),
               all(is.element(method, c("IFA", "MIFA", "OMIFA", "IMIFA")),
-                  isTRUE(!adapt)))) warning(paste0("Number of factors is greater than the suggested Ledermann upper bound = ", Q.warn), call.=FALSE)
+                  isTRUE(!adapt)))) warning(paste0("Number of factors is greater than ", ifelse(any(range.Q > P), paste0("the number of variables (", P, ")"), paste0("the suggested Ledermann upper bound (", Q.warn, ")"))), call.=FALSE)
   }
   if(any(all(method == "MFA",  any(range.G > 1)) && any(range.Q > 0),
          all(method == "MIFA", any(range.G > 1)), is.element(method, c("IMIFA",

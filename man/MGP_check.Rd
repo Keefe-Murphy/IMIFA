@@ -2,19 +2,19 @@
 % Please edit documentation in R/FullConditionals.R
 \name{MGP_check}
 \alias{MGP_check}
-\title{Check the validity of MGP hyperparameters}
+\title{Check the validity of Multiplicative Gamma Process (MGP) hyperparameters}
 \usage{
 MGP_check(ad1, ad2, Q, nu, bd1 = 1L, bd2 = 1L, plus1 = TRUE,
   inverse = TRUE)
 }
 \arguments{
-\item{ad1}{Shape hyperparameter for delta_1}
+\item{ad1}{Shape hyperparameter for delta_1.}
 
-\item{ad2}{Shape hyperparameter for delta_2}
+\item{ad2}{Shape hyperparameter for delta_2.}
 
-\item{Q}{Number of latent factors}
+\item{Q}{Number of latent factors.}
 
-\item{nu}{Hyperparameter for the local shrinkage parameters}
+\item{nu}{Hyperparameter for the local shrinkage parameters.}
 
 \item{bd1}{Rate hyperparameter for delta_1. Defaults to 1.}
 
@@ -22,24 +22,30 @@ MGP_check(ad1, ad2, Q, nu, bd1 = 1L, bd2 = 1L, plus1 = TRUE,
 
 \item{plus1}{Logical indicator for whether the Gamma prior on the local shrinkage parameters is of the form Ga(\code{nu + 1, nu}), the default, or Ga(\code{nu, nu}).}
 
-\item{inverse}{Logical indicator for whether the increasing shrinkage property is assessed against the induced Inverse Gamma prior, the default. Always \code{TRUE} when used inside \code{\link{mcmc_IMIFA}}: the \code{FALSE} option exists only for demonstration purposes.}
+\item{inverse}{Logical indicator for whether the cumulative shrinkage property is assessed against the induced Inverse Gamma prior, the default, or in terms of the Gamma prior (which is incorrect). This is always \code{TRUE} when used inside \code{\link{mcmc_IMIFA}}: the \code{FALSE} option exists only for demonstration purposes.}
 }
 \value{
 A list of length 2 containing the following objects:
 \describe{
-  \item{expectation}{The vector of actual expected shrinkage factors}
-  \item{valid}{A logical indicating whether the cumulative shrinkage property holds}
+  \item{expectation}{The vector of actual expected shrinkage factors, i.e. the inverse of the global shrinkage parameters.}
+  \item{valid}{A logical indicating whether the cumulative shrinkage property holds.}
 }
 }
 \description{
 Checks the hyperparameters for the multiplicative gamma process (MGP) shrinkage prior in order to ensure that the property of cumulative shrinkage holds. This is called inside \code{\link{mcmc_IMIFA}} for the "\code{IFA}", "\code{MIFA}", "\code{OMIFA}" and "\code{IMIFA}" methods. The arguments \code{ad1, ad2, nu, bd1} and \code{bd2} are vectorised.
 }
 \examples{
-# Check if the MGP global shrinkage parameters are increasing as the column index increases.
-MGP_check(ad1=1.5, ad2=1.8, Q=10, nu=2, inverse=FALSE)[[1]]$valid
+# Check if expected shrinkage under the MGP increases with the column index (WRONG!).
+# MGP_check(ad1=1.5, ad2=1.8, Q=10, nu=2, inverse=FALSE)[[1]]$valid
 
-# Check if the induced IG prior on the MGP global shrinkage parameters is stochastically increasing.
-MGP_check(ad1=1.5, ad2=1.8, Q=10, nu=2, inverse=TRUE)[[1]]$valid
+# Check if the induced IG prior on the MGP global shrinkage parameters
+# is stochastically increasing, thereby inducing cumulative shrinkage (CORRECT!).
+# MGP_check(ad1=1.5, ad2=1.8, Q=10, nu=2, inverse=TRUE)[[1]]$valid
+
+# Check again with a parameterisation that IS valid and examine the expected shrinkage values.
+# shrink <- MGP_check(ad1=1.5, ad2=2.8, Q=10, nu=2, inverse=TRUE)[[1]]
+# shrink$valid
+# shrink$expectation
 }
 \references{
 Bhattacharya, A. and Dunson, D. B. (2011). Sparse Bayesian infinite factor models, \emph{Biometrika}, 98(2): 291–306.

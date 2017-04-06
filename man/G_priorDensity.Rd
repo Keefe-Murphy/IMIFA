@@ -19,17 +19,21 @@ G_priorDensity(N, alpha, discount = 0L, show.plot = TRUE)
 A plot of the prior distribution if \code{show.plot} is \code{TRUE}. Density values are returned invisibly. Note that the density values may not strictly sum to one in certain cases, as values small enough to be represented as zero may well be returned.
 }
 \description{
-Plots the prior distribution of the number of clusters under a Dirichlet / Pitman-Yor process prior, for a sample of size \code{N} at given values of the concentration parameter \code{alpha} and optionally also the \code{discount} parameter. Useful for soliciting sensible priors for \code{alpha} or suitable fixed values for \code{alpha} or \code{discount} under the "\code{IMFA}" and "\code{IMIFA}" methods for \code{\link{mcmc_IMIFA}}. All arguments are vectorised. Requires use of the \code{Rmpfr} and \code{gmp} libraries. Users can also consult \code{\link{G_expected}} and \code{\link{G_variance}} in order to solicit sensible priors.
+Plots the prior distribution of the number of clusters under a Dirichlet / Pitman-Yor process prior, for a sample of size \code{N} at given values of the concentration parameter \code{alpha} and optionally also the \code{discount} parameter. Useful for soliciting sensible priors for \code{alpha} or suitable fixed values for \code{alpha} or \code{discount} under the "\code{IMFA}" and "\code{IMIFA}" methods for \code{\link{mcmc_IMIFA}}. All arguments are vectorised. Requires use of the \code{Rmpfr} and \code{gmp} libraries. May encounter difficulty and slowness for large \code{N}, especially with non-zero \code{discount}. Users can also consult \code{\link{G_expected}} and \code{\link{G_variance}} in order to solicit sensible priors.
 }
 \examples{
 # install.packages("Rmpfr")
 
-# Verify that these alpha/discount values produce priors with the same mean
-# G_expected(N=50, alpha=c(19.23356, 12.21619, 1), discount=c(0, 0.25, 0.7300045))
+# Plot Dirichlet process priors for different values of alpha
+# DP <- G_priorDensity(N=50, alpha=c(3, 10, 25))
+# DP
+
+# Verify that these alpha/discount values produce Pitman-Yor process priors with the same mean
+# G_expected(N=50, alpha=c(19.23356, 6.47006, 1), discount=c(0, 0.47002, 0.7300045))
 
 # Now plot them to examine tail behaviour as discount increases
-# x <- G_priorDensity(N=50, alpha=c(19.23356, 12.21619, 1), discount=c(0, 0.25, 0.7300045))
-# x
+# PY <- G_priorDensity(N=50, alpha=c(19.23356, 6.47006, 1), discount=c(0, 0.47002, 0.7300045))
+# PY
 }
 \seealso{
 \code{\link{G_expected}}, \code{\link{G_variance}}, \code{\link[Rmpfr]{Rmpfr}}
