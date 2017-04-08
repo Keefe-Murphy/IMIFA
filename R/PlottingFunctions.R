@@ -1303,7 +1303,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
       disci    <- Rmpfr::mpfr(discount[i], precBits=256)
       if(disci == 0) {
         vnk    <- exp(Nsq2 * log(alphi)     - log(Rmpfr::pochMpfr(alphi, N)))
-        rx[,i] <- gmp::asNumeric(abs(vnk    * Rmpfr:::.bigz2mpfr(gmp::Stirling1.all(N))))
+        rx[,i] <- gmp::asNumeric(abs(vnk    * Rmpfr::.bigz2mpfr(gmp::Stirling1.all(N))))
       } else  {
         vnk    <- c(Rmpfr::mpfr(0,         precBits=256),  cumsum(log(alphi + Nseq[-N] * disci)))   -
                   log(Rmpfr::pochMpfr(alphi + 1, N - 1)) - Nsq2 * log(disci)

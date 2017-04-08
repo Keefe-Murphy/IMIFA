@@ -81,7 +81,7 @@
 
     .sim_pi_inf  <- function(alpha, nn, N = sum(nn), len, lseq, discount = 0L) {
       vs         <- if(discount == 0) rbeta(len, 1 + nn, alpha + N - cumsum(nn)) else rbeta(len, 1 - discount + nn, alpha + lseq * discount + N - cumsum(nn))
-        return(list(Vs = vs, pi.prop = vs[lseq] * cumprod(1 - c(0, vs[lseq[-len]]))))
+        return(list(Vs = vs, pi.prop = vs * cumprod(1 - c(0, vs[lseq[-len]]))))
     }
 
   # Cluster Labels

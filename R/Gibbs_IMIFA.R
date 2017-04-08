@@ -109,8 +109,10 @@
     G.non            <- length(nn.ind)
     z                <- factor(z, labels=match(nn.ind, index))
     z                <- as.integer(levels(z))[z]
-    ksi              <- (1 - rho) * rho^(Ts - 1)
-    log.ksi          <- log(ksi)
+    if(ind.slice) {
+      ksi            <- (1 - rho) * rho^(Ts - 1)
+      log.ksi        <- log(ksi)
+    }
     slice.logs       <- c(- Inf, 0)
     if(burnin         < 1)  {
       mu.store[,,1]           <- mu
@@ -141,21 +143,22 @@
       storage        <- is.element(iter, iters)
 
     # Mixing Proportions
-      weights        <- .sim_pi_inf(alpha=pi.alpha, nn=nn, N=N, len=trunc.G, lseq=Ts, discount=discount)
+      weights        <- if(ind.slice) .sim_pi_inf(alpha=pi.alpha, nn=nn[Gs], N=N, len=G, lseq=Gs, discount=discount) else .sim_pi_inf(alpha=pi.alpha, nn=nn, N=N, len=trunc.G, lseq=Ts, discount=discount)
       pi.prop        <- weights$pi.prop
       Vs             <- weights$Vs
 
     # Re-ordering & Slice Sampler
-      index          <- order(pi.prop, decreasing=TRUE)
-      pi.prop        <- pi.prop[index]
-      Vs             <- Vs[index]
-      mu             <- mu[,index, drop=FALSE]
-      phi            <- phi[index]
-      delta          <- delta[index]
-      tau            <- tau[index]
-      lmat           <- lmat[index]
-      Qs             <- Qs[index]
-      psi.inv        <- psi.inv[,index, drop=FALSE]
+      index          <- order(pi.prop[Gs], decreasing=TRUE)
+      pi.prop[Gs]    <- pi.prop[index]
+      iVg            <- 1/Vs[G]
+      Vs[Gs]         <- Vs[index]
+      mu[,Gs]        <- mu[,index, drop=FALSE]
+      phi[Gs]        <- phi[index]
+      delta[Gs]      <- delta[index]
+      tau[Gs]        <- tau[index]
+      lmat[Gs]       <- lmat[index]
+      Qs[Gs]         <- Qs[index]
+      psi.inv[,Gs]   <- psi.inv[,index, drop=FALSE]
       z              <- factor(z, labels=match(nn.ind, index))
       z              <- as.integer(levels(z))[z]
       if(!ind.slice) {
@@ -163,8 +166,15 @@
         log.ksi      <- log(ksi)
       }
       u.slice        <- runif(N, 0, ksi[z])
+      G.old          <- G
       G              <- max(vapply(Ns, function(i) sum(u.slice[i] < ksi), integer(1L)))
       Gs             <- seq_len(G)
+      if(ind.slice   && G.old < G) {
+        newVs        <- if(discount == 0) rbeta(G - G.old, 1, pi.alpha) else rbeta(G - G.old, 1 - discount, pi.alpha + seq(G.old, G, 1) * discount)
+        Vs           <- c(Vs,      newVs)
+        newPis       <- newVs *    cumprod(c(pi.prop[G.old] * (iVg - 1), 1 - newVs[G.old - G]))
+        pi.prop      <- c(pi.prop, newPis)
+      } else pi.prop <- pi.prop[Gs]
       log.slice.ind  <- vapply(Gs, function(g) slice.logs[1 + (u.slice < ksi[g])] - log.ksi[g], numeric(N))
 
     # Cluster Labels
@@ -402,7 +412,7 @@
           }
         }
         if(sw["psi.sw"]) psi.store[,,new.it]           <- 1/psi.inv
-        if(sw["pi.sw"])  pi.store[,new.it]             <- pi.prop
+        if(sw["pi.sw"])  pi.store[Gs,new.it]           <- pi.prop
         if(learn.alpha)  alpha.store[new.it]           <- pi.alpha
         if(learn.d)      d.store[new.it]               <- discount
                          z.store[,new.it]              <- as.integer(z)
