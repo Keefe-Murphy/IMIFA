@@ -22,7 +22,7 @@ A plot of the prior distribution if \code{show.plot} is \code{TRUE}. Density val
 Plots the prior distribution of the number of clusters under a Dirichlet / Pitman-Yor process prior, for a sample of size \code{N} at given values of the concentration parameter \code{alpha} and optionally also the \code{discount} parameter. Useful for soliciting sensible priors for \code{alpha} or suitable fixed values for \code{alpha} or \code{discount} under the "\code{IMFA}" and "\code{IMIFA}" methods for \code{\link{mcmc_IMIFA}}. All arguments are vectorised. Requires use of the \code{Rmpfr} and \code{gmp} libraries. May encounter difficulty and slowness for large \code{N}, especially with non-zero \code{discount}. Users can also consult \code{\link{G_expected}} and \code{\link{G_variance}} in order to solicit sensible priors.
 }
 \examples{
-# install.packages("Rmpfr")
+# require("Rmpfr")
 
 # Plot Dirichlet process priors for different values of alpha
 # DP <- G_priorDensity(N=50, alpha=c(3, 10, 25))

@@ -589,7 +589,8 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
             zips   <- .sim_z_p(N=N, prob.z=pies)
           }
         } else {
-          pies     <- .sim_pi_inf(alpha=alpha, N=N, nn=rep(N/range.G, range.G), discount=discount, lseq=seq_len(range.G), len=range.G)$pi.prop
+          vies     <- .sim_vs_inf(alpha=alpha, N=N, nn=rep(N/range.G, range.G), discount=discount, len=range.G, lseq=seq_len(range.G))
+          pies     <- .sim_pi_inf(vs=vies, len=range.G)
           zips     <- .sim_z_p(N=N, prob.z=pies)
         }
         zi[[g]]    <- as.integer(zips)

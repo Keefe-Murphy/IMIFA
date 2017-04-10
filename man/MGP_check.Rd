@@ -36,16 +36,16 @@ Checks the hyperparameters for the multiplicative gamma process (MGP) shrinkage 
 }
 \examples{
 # Check if expected shrinkage under the MGP increases with the column index (WRONG!).
-# MGP_check(ad1=1.5, ad2=1.8, Q=10, nu=2, inverse=FALSE)[[1]]$valid
+MGP_check(ad1=1.5, ad2=1.8, Q=10, nu=2, inverse=FALSE)[[1]]$valid
 
 # Check if the induced IG prior on the MGP global shrinkage parameters
 # is stochastically increasing, thereby inducing cumulative shrinkage (CORRECT!).
-# MGP_check(ad1=1.5, ad2=1.8, Q=10, nu=2, inverse=TRUE)[[1]]$valid
+MGP_check(ad1=1.5, ad2=1.8, Q=10, nu=2, inverse=TRUE)[[1]]$valid
 
 # Check again with a parameterisation that IS valid and examine the expected shrinkage values.
-# shrink <- MGP_check(ad1=1.5, ad2=2.8, Q=10, nu=2, inverse=TRUE)[[1]]
-# shrink$valid
-# shrink$expectation
+shrink <- MGP_check(ad1=1.5, ad2=2.8, Q=10, nu=2, inverse=TRUE)[[1]]
+shrink$valid
+shrink$expectation
 }
 \references{
 Bhattacharya, A. and Dunson, D. B. (2011). Sparse Bayesian infinite factor models, \emph{Biometrika}, 98(2): 291–306.

@@ -79,9 +79,12 @@
         tmp/sum(tmp)
     }
 
-    .sim_pi_inf  <- function(alpha, nn, N = sum(nn), len, lseq, discount = 0L) {
-      vs         <- if(discount == 0) rbeta(len, 1 + nn, alpha + N - cumsum(nn)) else rbeta(len, 1 - discount + nn, alpha + lseq * discount + N - cumsum(nn))
-        return(list(Vs = vs, pi.prop = vs * cumprod(1 - c(0, vs[lseq[-len]]))))
+    .sim_vs_inf  <- function(alpha, nn = 0, N = sum(nn), discount, len, lseq = NULL) {
+        if(discount == 0) rbeta(len, 1 + nn, alpha + N - cumsum(nn)) else rbeta(len, 1 - discount + nn, alpha + lseq * discount + N - cumsum(nn))
+    }
+
+    .sim_pi_inf  <- function(vs, len, init = 0) {
+        vs * cumprod(1 - c(init, vs[-len]))
     }
 
   # Cluster Labels
@@ -119,9 +122,9 @@
 #'
 #' # Simulate a matrix of dirichlet weights & the associated vector of N labels
 #'   N       <- 400
-#'   G       <- 10
-#'   tmp     <- matrix(rgamma(N * G, shape=1), nrow=N, ncol=G)
-#'   weights <- sweep(tmp, 1, rowSums(tmp), FUN="/")
+#'   G       <- 8
+#'   sizes   <- seq(from=85, to=15, by=-10)
+#'   weights <- matrix(rDirichlet(N * G, alpha=1, nn=sizes), byrow=TRUE, nrow=N, ncol=G)
 #'   zs      <- gumbel_max(probs=log(weights))
     gumbel_max   <- function(probs, log.like = FALSE, slice = FALSE) {
       if(isTRUE(slice))    {
@@ -298,16 +301,16 @@
 #'
 #' @examples
 #' # Check if expected shrinkage under the MGP increases with the column index (WRONG!).
-#' # MGP_check(ad1=1.5, ad2=1.8, Q=10, nu=2, inverse=FALSE)[[1]]$valid
+#' MGP_check(ad1=1.5, ad2=1.8, Q=10, nu=2, inverse=FALSE)[[1]]$valid
 #'
 #' # Check if the induced IG prior on the MGP global shrinkage parameters
 #' # is stochastically increasing, thereby inducing cumulative shrinkage (CORRECT!).
-#' # MGP_check(ad1=1.5, ad2=1.8, Q=10, nu=2, inverse=TRUE)[[1]]$valid
+#' MGP_check(ad1=1.5, ad2=1.8, Q=10, nu=2, inverse=TRUE)[[1]]$valid
 #'
 #' # Check again with a parameterisation that IS valid and examine the expected shrinkage values.
-#' # shrink <- MGP_check(ad1=1.5, ad2=2.8, Q=10, nu=2, inverse=TRUE)[[1]]
-#' # shrink$valid
-#' # shrink$expectation
+#' shrink <- MGP_check(ad1=1.5, ad2=2.8, Q=10, nu=2, inverse=TRUE)[[1]]
+#' shrink$valid
+#' shrink$expectation
     MGP_check   <- Vectorize(function(ad1, ad2, Q, nu, bd1 = 1L, bd2 = 1L, plus1 = TRUE, inverse = TRUE) {
       if(any(!is.logical(plus1),
              length(plus1)    != 1))       stop("'plus1' must be TRUE or FALSE")
@@ -444,7 +447,7 @@
         return(list(z.avg = zs[,which.min(dist.z)], z.sim = as.simple_triplet_matrix(zsim), dist.z = dist.z))
     }
 
-    # Move 1
+  # Move 1
     .lab_move1  <- function(nn.ind, pi.prop, nn) {
       sw        <- sample(nn.ind, 2L)
       pis       <- pi.prop[sw]
@@ -453,7 +456,7 @@
         return(list(rate1  = a.prob >= 0 || - exp(1)   < a.prob, sw = sw))
     }
 
-    # Move 2
+  # Move 2
     .lab_move2  <- function(G, Vs, nn) {
       sw        <- sample(G, 1L, prob=c(rep(1, G - 2), 0.5, 0.5))
       sw        <- if(is.element(sw, c(G, G - 1))) c(G - 1, G) else c(sw, sw + 1)
@@ -508,9 +511,9 @@
 #' @seealso \code{\link{G_variance}}, \code{\link{G_priorDensity}}, \code{\link[Rmpfr]{Rmpfr}}
 #'
 #' @examples
-#' # G_expected(N=50, alpha=19.23356)
+#' G_expected(N=50, alpha=19.23356)
 #'
-#' # install.packages("Rmpfr")
+#' # require("Rmpfr")
 #' # G_expected(N=50, alpha=c(19.23356, 12.21619, 1), discount=c(0, 0.25, 0.7300045))
     G_expected  <- Vectorize(function(N, alpha, discount = 0L) {
       if(!all(is.numeric(N), is.numeric(discount),
@@ -546,9 +549,9 @@
 #' @seealso \code{\link{G_expected}}, \code{\link{G_priorDensity}}, \code{\link[Rmpfr]{Rmpfr}}
 #'
 #' @examples
-#' # G_variance(N=50, alpha=19.23356)
+#' G_variance(N=50, alpha=19.23356)
 #'
-#' # install.packages("Rmpfr")
+#' # require("Rmpfr")
 #' # G_variance(N=50, alpha=c(19.23356, 12.21619, 1), discount=c(0, 0.25, 0.7300045))
     G_variance  <- Vectorize(function(N, alpha, discount = 0L) {
       if(!all(is.numeric(N), is.numeric(discount),

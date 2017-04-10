@@ -7,7 +7,7 @@
 heat_legend(data, cols)
 }
 \arguments{
-\item{data}{Either the data with which the heatmap was created or a vector containing its minimum and maximum values.}
+\item{data}{Either the data with which the heatmap was created or a vector containing its minimum and maximum values. Missing values are ignored.}
 
 \item{cols}{The palette used when the heatmap was created.}
 }
@@ -19,13 +19,12 @@ Using only base graphics, this function appends a colour key legend for heatmaps
 }
 \examples{
 # Generate a matrix, flip it, and plot it with a legend
-# data <- matrix(rnorm(50), nrow=10, ncol=5)
-# cols <- heat.colors(12)[12:1]
-# par(mar=c(5.1, 4.1, 4.1, 4.1))
+data <- matrix(rnorm(50), nrow=10, ncol=5)
+cols <- heat.colors(12)[12:1]
+par(mar=c(5.1, 4.1, 4.1, 4.1))
 
-# image(t(data)[,nrow(data):1], col=cols)
-# heat_legend(data, cols)
-# box(lwd=2)
+image(t(data)[,nrow(data):1], col=cols)
+heat_legend(data, cols); box(lwd=2)
 }
 \seealso{
 \code{\link[graphics]{image}}, \code{\link[gclus]{plotcolors}}, \code{\link{mat2cols}}

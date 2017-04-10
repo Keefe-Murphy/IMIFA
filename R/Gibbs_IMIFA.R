@@ -143,9 +143,8 @@
       storage        <- is.element(iter, iters)
 
     # Mixing Proportions
-      weights        <- if(ind.slice) .sim_pi_inf(alpha=pi.alpha, nn=nn[Gs], N=N, len=G, lseq=Gs, discount=discount) else .sim_pi_inf(alpha=pi.alpha, nn=nn, N=N, len=trunc.G, lseq=Ts, discount=discount)
-      pi.prop        <- weights$pi.prop
-      Vs             <- weights$Vs
+      Vs             <- if(ind.slice) .sim_vs_inf(alpha=pi.alpha, nn=nn[Gs], N=N, discount=discount, len=G, lseq=Gs) else .sim_vs_inf(alpha=pi.alpha, nn=nn, N=N, discount=discount, len=trunc.G, lseq=Ts)
+      pi.prop        <- .sim_pi_inf(Vs, len=ifelse(ind.slice, G, trunc.G))
 
     # Re-ordering & Slice Sampler
       index          <- order(pi.prop[Gs], decreasing=TRUE)
@@ -167,12 +166,12 @@
       }
       u.slice        <- runif(N, 0, ksi[z])
       G.old          <- G
-      G              <- max(vapply(Ns, function(i) sum(u.slice[i] < ksi), integer(1L)))
+      G              <- sum(min(u.slice) < ksi)
       Gs             <- seq_len(G)
       if(ind.slice   && G.old < G) {
-        newVs        <- if(discount == 0) rbeta(G - G.old, 1, pi.alpha) else rbeta(G - G.old, 1 - discount, pi.alpha + seq(G.old, G, 1) * discount)
+        newVs        <- .sim_vs_inf(alpha=pi.alpha, discount=discount, len=G - G.old, lseq=if(discount != 0) seq(G.old + 1, G, 1))
         Vs           <- c(Vs,      newVs)
-        newPis       <- newVs *    cumprod(c(pi.prop[G.old] * (iVg - 1), 1 - newVs[G.old - G]))
+        newPis       <- .sim_pi_inf(vs=newVs, len=G - G.old, init=pi.prop[G.old] * (1 - iVg) + 1)
         pi.prop      <- c(pi.prop, newPis)
       } else pi.prop <- pi.prop[Gs]
       log.slice.ind  <- vapply(Gs, function(g) slice.logs[1 + (u.slice < ksi[g])] - log.ksi[g], numeric(N))

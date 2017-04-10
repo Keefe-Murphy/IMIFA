@@ -20,6 +20,8 @@
 #' # sim_data <- sim_IMIFA_data(N=100, G=3, P=20, Q=c(2, 2, 5))
 #' # names(attributes(sim_data))
 #' # attr(sim_data, "Labels")
+#'
+#' # Fit a MIFA model to this data
 #' # tmp      <- mcmc_IMIFA(sim_data, method="MIFA", range.G=3, n.iters=5000)
 #' @seealso The function \code{\link{mcmc_IMIFA}} for fitting an IMIFA related model to the simulated data set.
 sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(4L, G), pis = rep(1/G, G),
