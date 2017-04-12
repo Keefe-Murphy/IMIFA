@@ -22,22 +22,22 @@
     Q0s            <- rep(Q0, G)
     Q1             <- Q == 1
     if(sw["mu.sw"])  {
-      mu.store     <- array(0, dim=c(P, G, n.store))
+      mu.store     <- array(0L,  dim=c(P, G, n.store))
     }
     if(sw["s.sw"])   {
-      eta.store    <- array(0, dim=c(N, Q, n.store))
+      eta.store    <- array(0L,  dim=c(N, Q, n.store))
     }
     if(sw["l.sw"])   {
-      load.store   <- array(0, dim=c(P, Q, G, n.store))
+      load.store   <- array(0L,  dim=c(P, Q, G, n.store))
     }
     if(sw["psi.sw"]) {
-      psi.store    <- array(0, dim=c(P, G, n.store))
+      psi.store    <- array(0L,  dim=c(P, G, n.store))
     }
     if(sw["pi.sw"])  {
-      pi.store     <- matrix(0,  nrow=G, ncol=n.store)
+      pi.store     <- matrix(0L, nrow=G, ncol=n.store)
     }
     z.store        <- matrix(0L, nrow=N, ncol=n.store)
-    ll.store       <- rep(0,  n.store)
+    ll.store       <- rep(0L, n.store)
     err.z          <- zerr <- FALSE
     G.store        <- rep(0L, n.store)
 
@@ -120,7 +120,7 @@
         z.res      <- gumbel_max(probs=log.probs, log.like=TRUE)
         z          <- z.res$z
       } else     {
-        z          <- rep(1, N)
+        z          <- rep(1L, N)
       }
       nn           <- tabulate(z, nbins=G)
       nn0          <- nn > 0

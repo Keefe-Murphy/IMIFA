@@ -141,7 +141,7 @@
   # Alpha
     .sim_alpha_g <- function(alpha, shape, rate, G, N) {
       shape2     <- shape  + G - 1
-      rate2      <- rate   - log(rbeta(1, alpha  + 1, N))
+      rate2      <- rate   - log(rbeta(1, alpha + 1, N))
       weight     <- shape2/(shape2 + N * rate2)
         weight    * rgamma(1, shape=shape2 + 1, rate=rate2) + (1 - weight) * rgamma(1, shape=shape2, rate=rate2)
     }
@@ -164,7 +164,7 @@
 
   # Discount
     .log_pdisc   <- function(discount, alpha, disc.shape1, disc.shape2, N, G, kappa, unif, nn) {
-      l.prior    <- ifelse(discount == 0, log(kappa),  log(1 - kappa) + ifelse(unif, 0, dbeta(discount, shape1=disc.shape1, shape2=disc.shape2, log=TRUE)))
+      l.prior    <- ifelse(discount == 0, log(kappa),  log1p(- kappa) + ifelse(unif, 0, dbeta(discount, shape1=disc.shape1, shape2=disc.shape2, log=TRUE)))
         sum(log(alpha + discount * seq_len(G - 1)))  + sum(lgamma(nn  - discount) -  lgamma(1  - discount)) + l.prior
     }
 
@@ -453,7 +453,7 @@
       pis       <- pi.prop[sw]
       nns       <- nn[sw]
       a.prob    <- (nns[1] - nns[2]) * (log(pis[1])    - log(pis[2]))
-        return(list(rate1  = a.prob >= 0 || - exp(1)   < a.prob, sw = sw))
+        return(list(rate1  = a.prob >= 0 || - rexp(1)  < a.prob, sw = sw))
     }
 
   # Move 2
@@ -462,7 +462,7 @@
       sw        <- if(is.element(sw, c(G, G - 1))) c(G - 1, G) else c(sw, sw + 1)
       nns       <- nn[sw]
       Vsw       <- Vs[sw]
-      a.prob    <- nns[1] * log(1 - Vsw[2]) - nns[2]   * log(1 - Vsw[1])
+      a.prob    <- nns[1] * log1p(- Vsw[2]) - nns[2]   * log1p(- Vsw[1])
       a.prob    <- ifelse(is.nan(a.prob),   - Inf, a.prob)
         return(list(rate2 = a.prob >= 0  || - rexp(1)  < a.prob, sw = sw))
     }

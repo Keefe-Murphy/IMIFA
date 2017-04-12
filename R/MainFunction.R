@@ -558,7 +558,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   if(!is.element(method, c("FA", "MFA", "OMFA", "IMFA"))) {
     alpha.d1       <- if(ad1.x) list(3L) else .len_check(alpha.d1, delta0g, method, P, range.G, P.dim=FALSE)
     alpha.d2       <- if(ad2.x) list(6L) else .len_check(alpha.d2, delta0g, method, P, range.G, P.dim=FALSE)
-    if(all(NlP, any(ad1.x, ad2.x))) warning("Consider applying more shrinkage with higher 'alpha.d1' and 'alpha.d2' hyperparameter values when N << P", call.=FALSE)
+    if(all(NlP, any(ad1.x, ad2.x))) message("Consider applying more shrinkage with higher 'alpha.d1' and 'alpha.d2' hyperparameter values when N << P")
   }
   if(!is.element(method, c("FA", "IFA"))) {
     if(verbose)                     cat(paste0("Initialising...\n"))

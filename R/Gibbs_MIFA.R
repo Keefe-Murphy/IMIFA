@@ -20,19 +20,19 @@
     varnames       <- colnames(data)
     colnames(data) <- NULL
     if(sw["mu.sw"])  {
-      mu.store     <- array(0, dim=c(P, G, n.store))
+      mu.store     <- array(0L,  dim=c(P, G, n.store))
     }
     if(sw["s.sw"])   {
-      eta.store    <- array(0, dim=c(N, Q, n.store))
+      eta.store    <- array(0L,  dim=c(N, Q, n.store))
     }
     if(sw["l.sw"])   {
-      load.store   <- array(0, dim=c(P, Q, G, n.store))
+      load.store   <- array(0L,  dim=c(P, Q, G, n.store))
     }
     if(sw["psi.sw"]) {
-      psi.store    <- array(0, dim=c(P, G, n.store))
+      psi.store    <- array(0L,  dim=c(P, G, n.store))
     }
     if(sw["pi.sw"])  {
-      pi.store     <- matrix(0,  nrow=G, ncol=n.store)
+      pi.store     <- matrix(0L, nrow=G, ncol=n.store)
     }
     z.store        <- matrix(0L, nrow=N, ncol=n.store)
     ll.store       <- rep(0, n.store)
@@ -45,7 +45,7 @@
     mu.sigma       <- 1/sigma.mu
     sig.mu.sqrt    <- sqrt(sigma.mu)
     if(all(mu.zero == 0)) {
-      mu.zero      <- matrix(0, nrow=1, ncol=G)
+      mu.zero      <- matrix(0L, nrow=1, ncol=G)
       cluster$l.switch[1]   <- FALSE
     }
     if(length(mu.zero)  == 1) {
@@ -135,9 +135,9 @@
     # Scores & Loadings
       c.data       <- lapply(Gseq, function(g) sweep(dat.g[[g]], 2, mu[,g], FUN="-"))
       if(!any(Q0))    {
-        eta        <- base::matrix(0, nrow=N, ncol=0)
+        eta        <- base::matrix(0L, nrow=N, ncol=0)
         eta.tmp    <- lapply(Gseq, function(g) eta[z == g,, drop=FALSE])
-        lmat       <- lapply(Gseq, base::matrix, 0, nrow=P, ncol=0)
+        lmat       <- lapply(Gseq, base::matrix, 0L, nrow=P, ncol=0)
       } else {
         eta.tmp    <- lapply(Gseq, function(g) if(all(nn0[g], Q0[g])) .sim_score(N=nn[g], lmat=lmat[[g]], Q=Qs[g], Q1=Q1[g], c.data=c.data[[g]], psi.inv=psi.inv[,g]) else base::matrix(0, nrow=ifelse(Q0[g], 0, nn[g]), ncol=Qs[g]))
         EtE        <- lapply(Gseq, function(g) if(nn0[g]) crossprod(eta.tmp[[g]]))
@@ -184,7 +184,7 @@
 
     # Adaptation
       if(all(adapt, iter > adapt.at)) {
-        if(runif(1) < ifelse(iter < burnin, 0.5, 1/exp(b0 + b1 * (iter - adapt.at)))) {
+        if(runif(1) < ifelse(iter < burnin, 0.5, exp(-b0 - b1 * (iter - adapt.at)))) {
           colvec   <- lapply(nn.ind, function(g) (if(Q0[g]) colSums(abs(lmat[[g]]) < epsilon)/P else 0) >= prop)
           nonred   <- lapply(colvec, .which0)
           numred   <- lengths(colvec) - lengths(nonred)

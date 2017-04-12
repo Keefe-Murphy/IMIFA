@@ -21,22 +21,22 @@
     varnames         <- colnames(data)
     colnames(data)   <- NULL
     if(sw["mu.sw"])  {
-      mu.store       <- array(0, dim=c(P, trunc.G, n.store))
+      mu.store       <- array(0L,  dim=c(P, trunc.G, n.store))
     }
     if(sw["s.sw"])   {
-      eta.store      <- array(0, dim=c(N, Q, n.store))
+      eta.store      <- array(0L,  dim=c(N, Q, n.store))
     }
     if(sw["l.sw"])   {
-      load.store     <- array(0, dim=c(P, Q, trunc.G, n.store))
+      load.store     <- array(0L,  dim=c(P, Q, trunc.G, n.store))
     }
     if(sw["psi.sw"]) {
-      psi.store      <- array(0, dim=c(P, trunc.G, n.store))
+      psi.store      <- array(0L,  dim=c(P, trunc.G, n.store))
     }
     if(sw["pi.sw"])  {
-      pi.store       <- matrix(0, nrow=trunc.G, ncol=n.store)
+      pi.store       <- matrix(0L, nrow=trunc.G, ncol=n.store)
     }
     z.store          <- matrix(0L, nrow=N, ncol=n.store)
-    ll.store         <- rep(0,  n.store)
+    ll.store         <- rep(0L, n.store)
     Q.star           <- Q
     Qs               <- rep(Q,  trunc.G)
     Q.store          <- matrix(0L, nrow=trunc.G, ncol=n.store)
@@ -113,7 +113,7 @@
       ksi            <- (1 - rho) * rho^(Ts - 1)
       log.ksi        <- log(ksi)
     }
-    slice.logs       <- c(- Inf, 0)
+    slice.logs       <- c(- Inf, 0L)
     if(burnin         < 1)  {
       mu.store[,,1]           <- mu
       eta.store[,,1]          <- eta
@@ -143,13 +143,13 @@
       storage        <- is.element(iter, iters)
 
     # Mixing Proportions
-      Vs             <- if(ind.slice) .sim_vs_inf(alpha=pi.alpha, nn=nn[Gs], N=N, discount=discount, len=G, lseq=Gs) else .sim_vs_inf(alpha=pi.alpha, nn=nn, N=N, discount=discount, len=trunc.G, lseq=Ts)
-      pi.prop        <- .sim_pi_inf(Vs, len=ifelse(ind.slice, G, trunc.G))
+      Vs             <- .sim_vs_inf(alpha=pi.alpha, nn=nn[Gs], N=N, discount=discount, len=G, lseq=Gs)
+      pi.prop        <- .sim_pi_inf(Vs, len=G)
 
     # Re-ordering & Slice Sampler
       index          <- order(pi.prop[Gs], decreasing=TRUE)
+      prev.prod      <- pi.prop[G]  * (1/Vs[G] - 1)
       pi.prop[Gs]    <- pi.prop[index]
-      iVg            <- 1/Vs[G]
       Vs[Gs]         <- Vs[index]
       mu[,Gs]        <- mu[,index, drop=FALSE]
       phi[Gs]        <- phi[index]
@@ -165,15 +165,47 @@
         log.ksi      <- log(ksi)
       }
       u.slice        <- runif(N, 0, ksi[z])
+      min.u          <- min(u.slice)
       G.old          <- G
-      G              <- sum(min(u.slice) < ksi)
-      Gs             <- seq_len(G)
-      if(ind.slice   && G.old < G) {
-        newVs        <- .sim_vs_inf(alpha=pi.alpha, discount=discount, len=G - G.old, lseq=if(discount != 0) seq(G.old + 1, G, 1))
-        Vs           <- c(Vs,      newVs)
-        newPis       <- .sim_pi_inf(vs=newVs, len=G - G.old, init=pi.prop[G.old] * (1 - iVg) + 1)
-        pi.prop      <- c(pi.prop, newPis)
-      } else pi.prop <- pi.prop[Gs]
+      if(ind.slice)   {
+        G.new        <- sum(min.u   < ksi)
+        G.trunc      <- G.new < G.old
+        while(G  < G.new && (Vs[G] != 1 || pi.prop[G] != 0)) {
+          newVs      <- .sim_vs_inf(alpha=pi.alpha, discount=discount, len=1, lseq=G + 1)
+          Vs         <- c(Vs,      newVs)
+          pi.prop    <- c(pi.prop, newVs * prev.prod)
+          G          <- G + 1
+          prev.prod  <- pi.prop[G]  * (1/Vs[G] - 1)
+        }
+        G            <- ifelse(!G.trunc, G, G.new)
+        Gs           <- seq_len(G)
+        if(G.trunc)   {
+          pi.prop    <- pi.prop[Gs]
+          Vs         <- Vs[Gs]
+        }
+      } else     {
+        cum.pi       <- sum(pi.prop)
+        u.max        <- 1 - min.u
+        G.trunc      <- cum.pi > u.max
+        while(cum.pi  < u.max && trunc.G > G && (pi.prop[G] != 0 || Vs[G] != 1)) {
+          newVs      <- .sim_vs_inf(alpha=pi.alpha, discount=discount, len=1, lseq=G + 1)
+          Vs         <- c(Vs,      newVs)
+          newPis     <- newVs  *   prev.prod
+          pi.prop    <- c(pi.prop, newPis)
+          cum.pi     <- cum.pi +   newPis
+          ksi        <- pi.prop
+          log.ksi    <- c(log.ksi, log(newPis))
+          G          <- G + 1
+          prev.prod  <- pi.prop[G] * (1/Vs[G] - 1)
+        }
+        G            <- ifelse(G.trunc, which.max(cumsum(pi.prop) > u.max), G)
+        Gs           <- seq_len(G)
+        if(G.trunc) {
+          pi.prop    <- ksi   <-   pi.prop[Gs]
+          log.ksi    <- log.ksi[Gs]
+          Vs         <- Vs[Gs]
+        }
+      }
       log.slice.ind  <- vapply(Gs, function(g) slice.logs[1 + (u.slice < ksi[g])] - log.ksi[g], numeric(N))
 
     # Cluster Labels
@@ -181,16 +213,17 @@
       Qgs            <- Qs[Gs]
       Q0             <- Qgs  > 0
       Q1             <- Qgs == 1
-      if(G > 1)   {
+      if(G > 1)     {
         sigma        <- lapply(Gs, function(g) tcrossprod(lmat[[g]]) + diag(psi[,g]))
-        log.check    <- capture.output(log.probs  <- try(vapply(Gs, function(g, Q=Q0[g]) dmvn(data, mu[,g], if(Q) sigma[[g]] else sqrt(sigma[[g]]), log=TRUE, isChol=!Q) + log(pi.prop[g]), numeric(N)), silent=TRUE))
+        log.pis      <- if(ind.slice)  log(pi.prop)  else log.ksi
+        log.check    <- capture.output(log.probs  <- try(vapply(Gs, function(g, Q=Q0[g]) dmvn(data, mu[,g], if(Q) sigma[[g]] else sqrt(sigma[[g]]), log=TRUE, isChol=!Q) + log.pis[g], numeric(N)), silent=TRUE))
         if(inherits(log.probs, "try-error")) {
-          log.probs  <- vapply(Gs, function(g, Q=Q0[g]) dmvn(data, mu[,g], if(Q) make.positive.definite(sigma[[g]]) else make.positive.definite(sqrt(sigma[[g]])), log=TRUE, isChol=!Q) + log(pi.prop[g]), numeric(N))
+          log.probs  <- vapply(Gs, function(g, Q=Q0[g]) dmvn(data, mu[,g], if(Q) make.positive.definite(sigma[[g]]) else make.positive.definite(sqrt(sigma[[g]])), log=TRUE, isChol=!Q) + log.pis[g], numeric(N))
         }
         z.res        <- gumbel_max(probs=log.probs + log.slice.ind, log.like=TRUE, slice=TRUE)
         z            <- z.res$z
-      } else      {
-        z            <- rep(1, N)
+      } else   {
+        z            <- rep(1L, N)
       }
       nn             <- tabulate(z, nbins=trunc.G)
       nn0            <- nn > 0
@@ -201,9 +234,9 @@
     # Scores & Loadings
       c.data         <- lapply(Gs, function(g) sweep(dat.g[[g]], 2, mu[,g], FUN="-"))
       if(!any(Q0))    {
-        eta          <- base::matrix(0, nrow=N, ncol=0)
+        eta          <- base::matrix(0L, nrow=N, ncol=0)
         eta.tmp      <- lapply(Gs, function(g) eta[z == g,, drop=FALSE])
-        lmat[Gs]     <- lapply(Gs, base::matrix, 0, nrow=P, ncol=0)
+        lmat[Gs]     <- lapply(Gs, base::matrix, 0L, nrow=P, ncol=0)
       } else {
         eta.tmp      <- lapply(Gs, function(g) if(all(nn0[g], Q0[g])) .sim_score(N=nn[g], lmat=lmat[[g]], Q=Qs[g], Q1=Q1[g], c.data=c.data[[g]], psi.inv=psi.inv[,g]) else base::matrix(0, nrow=ifelse(Q0[g], 0, nn[g]), ncol=Qs[g]))
         EtE          <- lapply(Gs, function(g) if(nn0[g]) crossprod(eta.tmp[[g]]))
@@ -250,7 +283,7 @@
 
     # Adaptation
       if(all(adapt, iter > adapt.at)) {
-        if(runif(1)   < ifelse(iter < burnin, 0.5, 1/exp(b0 + b1 * (iter - adapt.at)))) {
+        if(runif(1)   < ifelse(iter < burnin, 0.5, exp(-b0 - b1 * (iter - adapt.at)))) {
           colvec     <- lapply(nn.ind, function(g) (if(Q0[g]) colSums(abs(lmat[[g]]) < epsilon)/P else 0) >= prop)
           nonred     <- lapply(colvec, .which0)
           numred     <- lengths(colvec) - lengths(nonred)

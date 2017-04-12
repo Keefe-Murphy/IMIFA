@@ -21,6 +21,7 @@ __Infinite Mixtures of Infinite Factor Analysers__
 * DIC model selection criterion now also available for infinite factor models (previously finite only).
 * `G_priorDensity` now better reflects discrete nature of the density and plots for non-zero PY discount values.
 * Posterior mean loadings heatmaps now also display a colour key legend via new function `heat_legend`.
+* Avoided redundant simulation of stick-breaking/mixing proportions under both types of IM(I)FA slice sampler.
 * Simulated (finite) mixing proportions w/ _Gamma(alpha, 1)_ trick (Devroye 1986, p.594) instead of `MCMCpack:rdirichlet`:  
   `rDirichlet` replaces earlier function to sample mixing proportions & is now unhidden/exported/documented.
 * Deferred setting `dimnames` attributes in `mcmc_IMIFA` to `get_IMIFA_results`: lower memory burden/faster simulations.

@@ -18,22 +18,22 @@
     varnames     <- colnames(data)
     dimnames(data)         <- NULL
     if(sw["mu.sw"])  {
-      mu.store   <- matrix(0, nrow=P, ncol=n.store)
+      mu.store   <- matrix(0L, nrow=P, ncol=n.store)
     }
     if(sw["s.sw"])   {
-      eta.store  <- array(0, dim=c(N, Q, n.store))
+      eta.store  <- array(0L,  dim=c(N, Q, n.store))
     }
     if(sw["l.sw"])   {
-      load.store <- array(0, dim=c(P, Q, n.store))
+      load.store <- array(0L,  dim=c(P, Q, n.store))
     }
     if(sw["psi.sw"]) {
-      psi.store  <- matrix(0, nrow=P, ncol=n.store)
+      psi.store  <- matrix(0L, nrow=P, ncol=n.store)
     }
-    post.mu      <- rep(0, P)
+    post.mu      <- rep(0L, P)
     post.psi     <- post.mu
-    ll.store     <- rep(0,  n.store)
+    ll.store     <- rep(0L, n.store)
     cov.emp      <- if(P > 500) switch(scaling, unit=cora(as.matrix(data)), cova(as.matrix(data))) else switch(scaling, unit=cor(data), cov(data))
-    cov.est      <- matrix(0, nrow=P, ncol=P)
+    cov.est      <- matrix(0L, nrow=P, ncol=P)
     Q.star       <- Q
     Q.store      <- rep(0L, n.store)
     Q.large      <- Q.big  <- FALSE
@@ -85,8 +85,8 @@
         lmat     <- matrix(unlist(lapply(Pseq, function(j) .sim_load_s(Q=Q, tau=tau, eta=eta, c.data=c.data[,j], Q1=Q1,
                            phi=phi[j,], psi.inv=psi.inv[j], EtE=crossprod(eta))), use.names=FALSE), nrow=P, byrow=TRUE)
       } else {
-        eta      <- base::matrix(0, nrow=N, ncol=0)
-        lmat     <- base::matrix(0, nrow=P, ncol=0)
+        eta      <- base::matrix(0L, nrow=N, ncol=0)
+        lmat     <- base::matrix(0L, nrow=P, ncol=0)
       }
 
     # Uniquenesses
@@ -111,7 +111,7 @@
 
     # Adaptation
       if(all(adapt, iter > adapt.at)) {
-        if(runif(1) < ifelse(iter < burnin, 0.5, 1/exp(b0 + b1 * (iter - adapt.at)))) {
+        if(runif(1) < ifelse(iter < burnin, 0.5, exp(-b0 - b1 * (iter - adapt.at)))) {
           colvec <- (if(Q0) colSums(abs(lmat) < epsilon) / P else 0) >= prop
           numred <- sum(colvec)
           if(numred == 0)  { # simulate extra columns from priors

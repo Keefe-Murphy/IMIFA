@@ -19,22 +19,22 @@
     Q1           <- Q == 1
     dimnames(data)         <- NULL
     if(sw["mu.sw"])  {
-      mu.store   <- matrix(0, nrow=P, ncol=n.store)
+      mu.store   <- matrix(0L, nrow=P, ncol=n.store)
     }
     if(sw["s.sw"])   {
-      eta.store  <- array(0, dim=c(N, Q, n.store))
+      eta.store  <- array(0L,  dim=c(N, Q, n.store))
     }
     if(sw["l.sw"])   {
-      load.store <- array(0, dim=c(P, Q, n.store))
+      load.store <- array(0L,  dim=c(P, Q, n.store))
     }
     if(sw["psi.sw"]) {
-      psi.store  <- matrix(0, nrow=P, ncol=n.store)
+      psi.store  <- matrix(0L, nrow=P, ncol=n.store)
     }
-    post.mu      <- rep(0, P)
+    post.mu      <- rep(0L, P)
     post.psi     <- post.mu
-    ll.store     <- rep(0, n.store)
+    ll.store     <- rep(0L, n.store)
     cov.emp      <- if(P > 500) switch(scaling, unit=cora(as.matrix(data)), cova(as.matrix(data))) else switch(scaling, unit=cor(data), cov(data))
-    cov.est      <- matrix(0, nrow=P, ncol=P)
+    cov.est      <- matrix(0L, nrow=P, ncol=P)
 
     mu.sigma     <- 1/sigma.mu
     .sim_psi_inv <- switch(uni.type,  unconstrained=.sim_psi_iu,  isotropic=.sim_psi_ii)
