@@ -33,7 +33,7 @@
 #' @importFrom matrixStats "rowMedians" "rowQuantiles"
 #'
 #' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{plot.Results_IMIFA}}, \code{\link{Zsimilarity}}
-#' @references Murphy, K., Gormley, I.C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, \code{https://arxiv.org/abs/1701.07010}
+#' @references Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, \code{https://arxiv.org/abs/1701.07010}
 #'
 #' @examples
 #' # data(coffee)
@@ -488,8 +488,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       }
       class(tab.stat)          <- "listof"
     }
-    uncert.obs <- which(uncertain >= 1/G)
-    attr(uncertain, "Obs")     <- if(sum(uncert.obs) != 0) uncert.obs
+    uncert.obs   <- which(uncertain >= 1/G)
     sizes        <- setNames(tabulate(map, nbins=G), gnames)
     if(any(sizes == 0))           warning("Empty group exists in modal clustering:\n examine trace plots and try supplying a lower G value to tune.imifa() or re-running the model", call.=FALSE)
     if(learn.alpha) {
@@ -516,6 +515,10 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     }
     map          <- as.integer(levels(map))[map]
     uncertain    <- if(sum(uncertain == 0)/n.obs   > 0.5) as.simple_triplet_matrix(uncertain) else uncertain
+    attr(uncertain, "Obs")     <- if(sum(uncert.obs) != 0) uncert.obs
+    if(!label.miss) {
+      tab.stat$uncertain       <- attr(uncertain, "Obs")
+    }
     cluster      <- list(map = map, z = z, uncertainty = uncertain)
     cluster      <- c(cluster, list(post.sizes  = sizes, post.pi = post.pi/sum(post.pi)),
                       if(sw["pi.sw"]) list(pi.prop = pi.prop, var.pi = var.pi, ci.pi = ci.pi),
@@ -834,6 +837,9 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     attr(result, "Disc.step")  <- learn.d
     attr(result, "Discount")   <- if(!learn.d) attr(sims, "Discount")
     attr(result, "Ind.Slice")  <- attr(sims, "Ind.Slice")
+  }
+  if(inf.G) {
+    attr(result, "G.init")     <- attr(sims, "G.init")
   }
   attr(result, "Name")         <- attr(sims, "Name")
   attr(result, "Obsnames")     <- if(all(!sw["s.sw"], exists("obsnames", envir=.GlobalEnv))) obsnames

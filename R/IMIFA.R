@@ -33,7 +33,7 @@
 #' Maintainer: Keefe Murphy <keefe.murphy@ucd.ie>
 #'
 #' @section References:
-#' Murphy, K., Gormley, I.C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, https://arxiv.org/abs/1701.07010
+#' Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, https://arxiv.org/abs/1701.07010
 #'
 #' @section See Also:
 #' Further details and examples are given in the associated vignette document:\cr
@@ -42,4 +42,3 @@
 #' @name IMIFA
 NULL
 
-.onAttach <- function(...) packageStartupMessage(paste("   ________  __________________\n  /_  __/  |/   /_  __/ ___/ _ \\  \n   / / / /|_// / / / / /__/ /_\\ \\ \n _/ /_/ /   / /_/ /_/ ___/ /___\\ \\ \n/____/_/   /_/_____/_/  /_/     \\_\\               version 1.1.1\nType '?IMIFA' to see a brief guide to how to use this R package.\nType", sQuote(paste0("citation(", dQuote("IMIFA"),")")) ,"for citing the package in publications."))

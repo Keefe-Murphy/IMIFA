@@ -28,19 +28,21 @@ __Infinite Mixtures of Infinite Factor Analysers__
 * Jettisoned superfluous duplicate material in object outputted from `get_IMIFA_results` to reduce size/simplify access.
 * IMFA/IMIFA `trunc.G` arg, the max allowable # active groups, defaults to `range.G` & # active groups now stored.
 * Code sped up when G=1 by not simulating labels for OM(I)FA/IM(I)FA & not simulating mixing proportions for OM(I)FA.
-* Reduced chance of crash by exceeding memory capacity; `score.switch` defaults to `FALSE` if # models ran is large..
+* Reduced chance of crash by exceeding memory capacity; `score.switch` defaults to `FALSE` if # models ran is large.
 
 ## Bug Fixes 
 * 2<sup>nd</sup> IM(I)FA label switching move sped up/properly weighted to ensure uniform sampling of neighbouring cluster pairs.
 * Offline label switching square assignment correction now permutes properly.
 * Fixed factor score trace plots by extracting indices of stored samples using `Rfast::sort_unique` & rotating properly. 
 * Fixed adding of `rnorm` columns to scores matrix during adaptation, esp. when widest loadings matrix grows/shrinks.
+* Fixed initialisation (& upper limit) of number of clusters for OM(I)FA/IM(I)FA, esp. when `N < P`.
 * Updates of DP/PY `alpha` parameter now correctly depend on current # non-empty rather than active groups.
 * Fixed density plots for parameters with bounded support, accounting for spike at zero for `discount`.
 * Slightly rearranged order Gibbs updates take place, esp. to ensure means enter simulation of uniquenesses properly.
 * Edited/robustified subsetting of large objects when storing `mcmc_IMIFA` output.
 * Tightened controls for when certain parameters are not stored for posterior inference.
 * Edited Ledermann upper bound `stop(...)` for finite factor models to `warning(...)`.
+* Geometric rather than arithmetic mean used in derivation of single rate hyperparameter for PPCA's isotropic uniquenesses.
 * Uniquenesses now stored correctly for all clustering methods.
 * Indices of uncertain obs. returned (`get_IMIFA_results`)/printed (`plot.Results_IMIFA`) even when `zlabels` not supplied.
 * Fixed behaviour of progress bar when `verbose=FALSE`.

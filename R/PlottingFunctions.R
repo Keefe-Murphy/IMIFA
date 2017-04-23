@@ -29,7 +29,7 @@
 #' @importFrom mclust "classError"
 #' @importFrom viridis "viridis"
 #' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{get_IMIFA_results}}, \code{\link{mat2cols}}, \code{\link[gclus]{plotcolors}}
-#' @references Murphy, K., Gormley, I.C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, \code{https://arxiv.org/abs/1701.07010}
+#' @references Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, \code{https://arxiv.org/abs/1701.07010}
 #'
 #' @examples
 #' # See the vignette associated with the package for more graphical examples:
@@ -950,7 +950,6 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
       }
       if(all(g  != 3, g == min(Gs))) {
         prf     <- NULL
-        ucert   <- attr(plot.x, "Obs")
         if(any(!labelmiss,  !z.miss)) {
           if(all(!labelmiss, z.miss)) {
            prf  <- clust$perf
@@ -975,14 +974,9 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
             names(prf)[1]  <- "matched.confusion.matrix"
            }
           }
-          if(!is.null(ucert)) {
-           prf  <- c(prf, list(uncertain = ucert))
-          }
           prf$error.rate   <- paste0(round(100 * prf$error.rate, 2), "%")
-        } else       {
-          if(!is.null(ucert)) {      message("Try supplying true cluster labels, if known, for more printed output")
-            prf <- list(uncertain = ucert)
-          } else                     message("Nothing to print: try supplying known cluster labels")
+        } else {
+          prf     <- list(uncertain = attr(clust$uncertainty, "Obs"))
         }
         if(!is.null(prf))     {
           class(prf)       <- "listof"
@@ -1014,7 +1008,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
       if(any(grp.ind, param  == "loadings")) {
         par(mar=c(0, 0, 0, 0))
         plot.new()
-        Xp   <- ifelse(param == "loadings", Q, G)
+        Xp   <- switch(param, loadings=Q, G)
         Xseq <- seq_len(Xp)
         tmp  <- if(Xp > 5) unlist(lapply(Xseq, function(x) c(Xseq[x], Xseq[x + ceiling(Xp/2)])))[Xseq] else Xseq
         ltxt <- paste0(switch(param, loadings="Factor", "Group"), tmp)

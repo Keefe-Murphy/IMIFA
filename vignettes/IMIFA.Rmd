@@ -84,7 +84,7 @@ There are many, many options for specifying hyperparameters, specifying running 
 ?mcmc_IMIFA
 ```
 
-Be warned that the `mcmc_IMIFA` function calls in this section may take quite some time to run. Let's begin by fitting a Mixture of Factor Analysers model (MFA) to the unit-scaled `olive` data. For this, we must specify sequences of values for `range.G`, the number of clusters, and `range.Q`, the number of latent factors. Let's assume that uniquenesses are `isotropic` rather than `unconstrained`. Let's also allow diagonal covariance as a special case where `range.Q` is `0`, and accept all other defaults (for instance, cluster labels will be initialised by `mclust`).
+Be warned that the `mcmc_IMIFA` function calls in this section may take quite some time to run. Let's begin by fitting a Mixture of Factor Analysers model (MFA) to the unit-scaled `olive` data. For this, we must specify sequences of values for `range.G`, the number of clusters, and `range.Q`, the number of latent factors. Let's assume that uniquenesses are `isotropic` rather than `unconstrained`. This isotropic constraint provides the link between factor analysis and the probabilistic principal component analysis model. Let's also allow diagonal covariance as a special case where `range.Q` is `0`, and accept all other defaults (for instance, cluster labels will be initialised by `mclust`).
 
 ```{r, eval=FALSE}
 simMFA   <- mcmc_IMIFA(olive, method="MFA", n.iters=10000, range.G=3:6, range.Q=0:3, 
@@ -217,6 +217,6 @@ plot(resIMIFA, plot.meth="all", param="discount")
 # References
 For a more detailed description of the kind of things IMIFA can do and the purposes for which the model was developed, please consult the followng papers:
 
-Murphy, K., Gormley, I.C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, [_to appear_](https://arxiv.org/abs/1701.07010).
+Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, [_to appear_](https://arxiv.org/abs/1701.07010).
 
-Bhattacharya, A. and Dunson, D. B. (2011). Sparse Bayesian infinite factor models. _Biometrika_, 98(2): 291–306.
+Bhattacharya, A. and Dunson, D. B. (2011). Sparse Bayesian infinite factor models. _Biometrika_, 98(2): 291-306.

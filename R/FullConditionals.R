@@ -100,7 +100,7 @@
 #' \item{log.like}{The log-likelihood(s), given by the normalising constant(s), computed with the aid of \code{\link[matrixStats]{rowLogSumExps}}.}
 #' }
 #' @seealso \code{\link{mcmc_IMIFA}}, \code{\link[matrixStats]{rowLogSumExps}}
-#' @references Murphy, K., Gormley, I.C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, \code{https://arxiv.org/abs/1701.07010}.
+#' @references Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, \code{https://arxiv.org/abs/1701.07010}.
 #'
 #' Yellot, J. I. Jr. (1977) The relationship between Luce's choice axiom, Thurstone's theory of comparative judgment, and the double exponential distribution, \emph{Journal of Mathematical Psychology}, 15: 109-144.
 #' @export
@@ -230,17 +230,20 @@
   # Uniqueness Hyperparameters
 #' Find sensible inverse gamma hyperparameters for variance/uniqueness parameters
 #'
-#' Takes a shape hyperparameter and covariance matrix, and finds data-driven rate hyperparameters in such a way that Heywood problems are avoided. Rates are allowed to be variable-specific. Used internally by \code{\link{mcmc_IMIFA}} when it's argument \code{psi_beta} is not supplied.
+#' Takes a shape hyperparameter and covariance matrix, and finds data-driven rate hyperparameters in such a way that Heywood problems are avoided for factor analysis or probabilistic principal components analysis (and mixtures thereof). Rates are allowed to be variable-specific or a single value under the factor analysis model, but must be a single value for the PPCA model. Used internally by \code{\link{mcmc_IMIFA}} when its argument \code{psi_beta} is not supplied.
 #' @param shape A positive shape hyperparameter.
 #' @param covar A square, positive-semidefinite covariance matrix.
-#' @param type A switch indicating whether a single rate (\code{isotropic}) or variable-specific rates (\code{unconstrained}) are to be derived. uniquenesses are allowed to be variable specific.
+#' @param type A switch indicating whether a single rate (\code{isotropic}) or variable-specific rates (\code{unconstrained}) are to be derived. The isotropic constraint provides the link between factor analysis and the probabilistic principal components analysis model. Uniquenesses are only allowed to be variable specific under the factor analysis model.
 #'
 #' @return Either a single rate hyperparameter or \code{ncol(covar)} variable specific hyperparameters.
 #' @export
 #' @importFrom matrixcalc "is.positive.semi.definite"
+#' @importFrom MASS "ginv"
 #'
 #' @seealso \code{\link{mcmc_IMIFA}}
-#' @references Fruwirth-Schnatter, S.  and Lopes, H.F. (2010). Parsimonious Bayesian factor analysis when the number of factors is unknown, \emph{Technical Report}. The University of Chicago Booth School of Business.
+#' @references Fruwirth-Schnatter, S. and Lopes, H. F. (2010). Parsimonious Bayesian factor analysis when the number of factors is unknown, \emph{Technical Report}. The University of Chicago Booth School of Business.
+#'
+#' Tipping, M. E. and Bishop, C. M. (1999). Probabilistic principal component analysis, \emph{Journal of the Royal Statistical Society: Series B (Statistical Methodology)}, 61(3): 611-622.
 #'
 #' @examples
 #' data(olive)
@@ -257,12 +260,12 @@
               is.double(covar)))           stop("Invalid covariance matrix supplied")
       if(any(!is.numeric(shape),
              length(shape) != 1))          stop("'shape' must be a single digit")
-      P         <- ncol(covar)
       inv.cov   <- try(base::solve(covar), silent=TRUE)
       if(inherits(inv.cov, "try-error"))  {
-        inv.cov <- 1/covar
+        inv.cov <- ginv(covar)
       }
-        unname((shape - 1)/switch(match.arg(type), unconstrained=diag(inv.cov), isotropic=rep(sum(diag(inv.cov))/P, P)))
+        unname((shape - 1)/switch(match.arg(type), unconstrained=diag(inv.cov),
+                                  isotropic=rep(exp(mean(log(diag(inv.cov)))), ncol(covar))))
     }
 
   # Alpha/Discount Shifted Gamma Hyperparameters
@@ -295,9 +298,9 @@
 #' @export
 #' @seealso \code{\link{mcmc_IMIFA}}
 #' @references
-#' Bhattacharya, A. and Dunson, D. B. (2011). Sparse Bayesian infinite factor models, \emph{Biometrika}, 98(2): 291–306.
+#' Bhattacharya, A. and Dunson, D. B. (2011). Sparse Bayesian infinite factor models, \emph{Biometrika}, 98(2): 291-306.
 #'
-#' Durante, D. (2017). A note on the multiplicative gamma process, \emph{Statistics & Probability Letters}, 122: 198–204.
+#' Durante, D. (2017). A note on the multiplicative gamma process, \emph{Statistics & Probability Letters}, 122: 198-204.
 #'
 #' @examples
 #' # Check if expected shrinkage under the MGP increases with the column index (WRONG!).

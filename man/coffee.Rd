@@ -12,6 +12,6 @@ data(coffee)
 Data on the chemical composition of coffee samples collected from around the world, comprising 43 samples from 29 countries. Each sample is either of the Arabica or Robusta variety. Twelve of the thirteen chemical constituents reported in the study are given. The omitted variable is total chlorogenic acid; it is generally the sum of the chlorogenic, neochlorogenic and isochlorogenic acid values.
 }
 \references{
-Streuli, H. (1973). Der heutige stand der kaffeechemie, \emph{Association Scientifique International du Cafe, 6th International Colloquium on Coffee Chemistry}, Bogata, Columbia, pp. 61–72.
+Streuli, H. (1973). Der heutige stand der kaffeechemie, \emph{Association Scientifique International du Cafe, 6th International Colloquium on Coffee Chemistry}, Bogata, Columbia, pp. 61-72.
 }
 \keyword{datasets}

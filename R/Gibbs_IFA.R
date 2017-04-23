@@ -57,7 +57,7 @@
       }
     } else {
       psi.tmp    <- psi.inv
-      psi.inv    <- 1/Rfast::colVars(data)
+      psi.inv    <- switch(uni.type, unconstrained=1/Rfast::colVars(data), 1/exp(mean(log(Rfast::colVars(data)))))
       inf.ind    <- is.infinite(psi.inv)
       psi.inv[inf.ind]     <- psi.tmp[inf.ind]
     }

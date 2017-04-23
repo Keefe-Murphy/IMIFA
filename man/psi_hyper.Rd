@@ -11,13 +11,13 @@ psi_hyper(shape, covar, type = c("unconstrained", "isotropic"))
 
 \item{covar}{A square, positive-semidefinite covariance matrix.}
 
-\item{type}{A switch indicating whether a single rate (\code{isotropic}) or variable-specific rates (\code{unconstrained}) are to be derived. uniquenesses are allowed to be variable specific.}
+\item{type}{A switch indicating whether a single rate (\code{isotropic}) or variable-specific rates (\code{unconstrained}) are to be derived. The isotropic constraint provides the link between factor analysis and the probabilistic principal components analysis model. Uniquenesses are only allowed to be variable specific under the factor analysis model.}
 }
 \value{
 Either a single rate hyperparameter or \code{ncol(covar)} variable specific hyperparameters.
 }
 \description{
-Takes a shape hyperparameter and covariance matrix, and finds data-driven rate hyperparameters in such a way that Heywood problems are avoided. Rates are allowed to be variable-specific. Used internally by \code{\link{mcmc_IMIFA}} when it's argument \code{psi_beta} is not supplied.
+Takes a shape hyperparameter and covariance matrix, and finds data-driven rate hyperparameters in such a way that Heywood problems are avoided for factor analysis or probabilistic principal components analysis (and mixtures thereof). Rates are allowed to be variable-specific or a single value under the factor analysis model, but must be a single value for the PPCA model. Used internally by \code{\link{mcmc_IMIFA}} when its argument \code{psi_beta} is not supplied.
 }
 \examples{
 data(olive)
@@ -30,7 +30,9 @@ rate   <- psi_hyper(shape=3, covar=cov(olive_scaled), type="unconstrained")
 rate
 }
 \references{
-Fruwirth-Schnatter, S.  and Lopes, H.F. (2010). Parsimonious Bayesian factor analysis when the number of factors is unknown, \emph{Technical Report}. The University of Chicago Booth School of Business.
+Fruwirth-Schnatter, S. and Lopes, H. F. (2010). Parsimonious Bayesian factor analysis when the number of factors is unknown, \emph{Technical Report}. The University of Chicago Booth School of Business.
+
+Tipping, M. E. and Bishop, C. M. (1999). Probabilistic principal component analysis, \emph{Journal of the Royal Statistical Society: Series B (Statistical Methodology)}, 61(3): 611-622.
 }
 \seealso{
 \code{\link{mcmc_IMIFA}}

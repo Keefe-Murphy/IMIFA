@@ -49,11 +49,12 @@
     z.temp           <- factor(z, levels=Gseq)
     nn               <- tabulate(z, nbins=G)
     nn.ind           <- which(nn > 0)
-    pi.prop          <- cluster$pi.prop
     pi.alpha         <- cluster$pi.alpha
     .sim_psi_inv     <- switch(uni.type,  unconstrained=.sim_psi_iu,  isotropic=.sim_psi_ii)
     .sim_psi_ip      <- switch(uni.type,  unconstrained=.sim_psi_ipu, isotropic=.sim_psi_ipi)
     psi.beta         <- switch(uni.prior, isotropic=unique(round(psi.beta, min(nchar(psi.beta)))), psi.beta)
+    pi.prop          <- c(cluster$pi.prop, rep(0, G - length(cluster$pi.prop)))
+    mu               <- cbind(mu,  vapply(seq_len(G - length(cluster$pi.prop)), function(g) .sim_mu_p(P=P, sig.mu.sqrt=sig.mu.sqrt, mu.zero=mu.zero), numeric(P)))
     eta              <- .sim_eta_p(N=N, Q=Q)
     phi              <- lapply(Gseq, function(g) .sim_phi_p(Q=Q, P=P, nu=nu, plus1=nuplus1))
     delta            <- lapply(Gseq, function(g) c(.sim_delta_p(alpha=alpha.d1, beta=beta.d1), .sim_delta_p(Q=Q, alpha=alpha.d2, beta=beta.d2)))
@@ -71,7 +72,7 @@
       }
     } else {
       psi.tmp        <- psi.inv
-      psi.inv        <- vapply(Gseq, function(g) if(nn[g] > 1) 1/Rfast::colVars(data[z == g,, drop=FALSE]) else psi.tmp[,g], numeric(P))
+      psi.inv[,Gseq] <- vapply(Gseq, function(g) if(nn[g] > 1) switch(uni.type, unconstrained=1/Rfast::colVars(data[z == g,, drop=FALSE]), rep(1/exp(mean(log(Rfast::colVars(data[z == g,, drop=FALSE])))), P)) else psi.tmp[,g], numeric(P))
       inf.ind        <- is.infinite(psi.inv)
       psi.inv[inf.ind]        <- psi.tmp[inf.ind]
     }
