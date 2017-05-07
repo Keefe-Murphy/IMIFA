@@ -1,6 +1,6 @@
 __Infinite Mixtures of Infinite Factor Analysers__
 ==================================================
-# IMIFA v1.2.0 - (_2nd release: 2017-03-31_)
+# IMIFA v1.2.0 - (_2nd release: 2017-05-09_)
 
 ## New Features
 * Learning the Pitman-Yor `discount` and `alpha` parameters via Metropolis-Hastings now implemented.  

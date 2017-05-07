@@ -13,3 +13,4 @@ inst/doc
 *.tar.gz
 IMIFA_old.R
 PackageSetup_old.R
+revdep
