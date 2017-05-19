@@ -1,6 +1,16 @@
 __Infinite Mixtures of Infinite Factor Analysers__
 ==================================================
-# IMIFA v1.2.0 - (_2nd release: 2017-05-09_)
+## Improvements
+* Posterior mean scores can now also be plotted in the form of a heat map (previously loadings only).  
+  `load.meth` argument replaced by logical `heat.map` in `plot.Results_IMIFA`.
+  
+## Bug Fixes 
+* Used `par()$bg` (i.e. default `"white"`) for plotting zero-valued entries of similarity matrix.
+* Range of data for labelling in `heat_legend` calculated correctly.
+* `mcmc_IMIFA`'s `verbose` argument now governs printing of `message` & `cat` calls, but not `stop` or `warning`.
+* Added `NEWS.md` to build.
+
+# IMIFA v1.2.0 - (_2nd release [minor update]: 2017-05-09_)
 
 ## New Features
 * Learning the Pitman-Yor `discount` and `alpha` parameters via Metropolis-Hastings now implemented.  

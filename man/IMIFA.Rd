@@ -21,7 +21,7 @@ Package: IMIFA
 
 Type: Package
 
-Version: 1.2.0
+Version: 1.2.1
 
 Date: 2017-05-09 (this version), 2017-02-02 (original release)
 

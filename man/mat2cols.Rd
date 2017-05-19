@@ -5,7 +5,7 @@
 \title{Convert a numeric matrix to colours}
 \usage{
 mat2cols(mat, cols = NULL, byrank = FALSE, breaks = length(cols),
-  na.color = "#808080FF")
+  na.col = "#808080FF")
 }
 \arguments{
 \item{mat}{A matrix.}
@@ -16,7 +16,7 @@ mat2cols(mat, cols = NULL, byrank = FALSE, breaks = length(cols),
 
 \item{breaks}{Number of gradations in colour to use. Defaults to \code{length(cols)}.}
 
-\item{na.color}{Colour to be used to represent missing data.}
+\item{na.col}{Colour to be used to represent missing data.}
 }
 \value{
 A matrix of hex colour code representations.

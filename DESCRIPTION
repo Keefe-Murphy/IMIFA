@@ -3,7 +3,7 @@ Type: Package
 Date: 2017-05-09
 Title: Fitting, Diagnostics, and Plotting Functions for Infinite Mixtures of
     Infinite Factor Analysers and Related Models
-Version: 1.2.0
+Version: 1.2.1
 Authors@R: c(person("Keefe", "Murphy", email = "keefe.murphy@ucd.ie", role = c("aut", "cre")),
              person("Isobel Claire", "Gormley", role = "ctb"),
              person("Cinzia", "Viroli", role = "ctb"))

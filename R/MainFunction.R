@@ -219,7 +219,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
          uni.type  == "isotropic")) stop("'uni.prior' can only be 'unconstrained' when 'uni.type' is 'unconstrained'")
   if(all(uni.prior == "unconstrained",
          uni.type  == "unconstrained",
-         NlP, miss.uni))            message("Consider setting 'uni.type', or at least 'uni.prior', to 'isotropic' in N << P cases")
+         NlP, miss.uni, verbose))   message("Consider setting 'uni.type', or at least 'uni.prior', to 'isotropic' in N << P cases")
 
 # Manage storage switches & warnings for other function inputs
   if(!missing(mu.switch)  && all(!mu.switch, ifelse(method == "classify",
@@ -259,11 +259,11 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   if(!is.element(method, c("IMFA", "IMIFA"))) {
     if(learn.alpha) {
       learn.alpha  <- FALSE
-      if(!alpha.x)                  message(paste0("'learn.alpha' forced to FALSE for the ", method, " method"))
+      if(verbose   && !alpha.x)     message(paste0("'learn.alpha' forced to FALSE for the ", method, " method"))
     }
     if(learn.d)     {
       learn.d      <- FALSE
-      if(!disc.x)                   message(paste0("'learn.d' must be FALSE for the ", method, " method"))
+      if(verbose   && !disc.x)      message(paste0("'learn.d' must be FALSE for the ", method, " method"))
     }
   }
   if(!is.element(method, c("MFA", "MIFA")))      {
@@ -275,7 +275,8 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
       tmp.G        <- as.integer(min(N - 1, max(25, ceiling(3 * lnN))))
       if(G.x)   {
         range.G    <- G.init <- tmp.G
-        if(NlP) {                   message(paste0("Since N < P, the sampler will be initialised with a different default of ceiling(log(N)) = ", lnN2, " groups (unless 'range.G' is supplied)"))
+        if(NlP) {
+          if(verbose)               message(paste0("Since N < P, the sampler will be initialised with a different default of ceiling(log(N)) = ", lnN2, " groups (unless 'range.G' is supplied)"))
           G.init   <- max(2, lnN2)
         }
       }
@@ -569,7 +570,8 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   if(!is.element(method, c("FA", "MFA", "OMFA", "IMFA"))) {
     alpha.d1       <- if(ad1.x) list(3L) else .len_check(alpha.d1, delta0g, method, P, G.init, P.dim=FALSE)
     alpha.d2       <- if(ad2.x) list(6L) else .len_check(alpha.d2, delta0g, method, P, G.init, P.dim=FALSE)
-    if(all(NlP, any(ad1.x, ad2.x))) message("Consider applying more shrinkage with higher 'alpha.d1' and 'alpha.d2' hyperparameter values when N << P")
+    if(all(NlP, verbose,
+           any(ad1.x, ad2.x)))      message("Consider applying more shrinkage with higher 'alpha.d1' and 'alpha.d2' hyperparameter values when N << P")
   }
   if(!is.element(method, c("FA", "IFA"))) {
     if(verbose)                     cat(paste0("Initialising...\n"))

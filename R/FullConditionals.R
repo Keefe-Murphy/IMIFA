@@ -123,8 +123,7 @@
 #' # Simulate a matrix of dirichlet weights & the associated vector of N labels
 #'   N       <- 400
 #'   G       <- 8
-#'   sizes   <- seq(from=85, to=15, by=-10)
-#'   weights <- matrix(rDirichlet(N * G, alpha=1, nn=sizes), byrow=TRUE, nrow=N, ncol=G)
+#'   weights <- matrix(rDirichlet(N * G, alpha=1, nn=seq(from=85, to=15, by=-10)), byrow=TRUE, nrow=N, ncol=G)
 #'   zs      <- gumbel_max(probs=log(weights))
     gumbel_max   <- function(probs, log.like = FALSE, slice = FALSE) {
       if(isTRUE(slice))    {
@@ -586,17 +585,6 @@
       }
     })
 
-  # Detach packages
-    .detach_pkg <- function(pkg, character.only = FALSE) {
-      if(!character.only) {
-        pkg     <- deparse(substitute(pkg))
-      }
-      searches  <- paste("package", pkg, sep=":")
-      while(searches %in% search()) {
-        detach(searches, unload=TRUE, character.only=TRUE)
-      }
-    }
-
   # Print functions
 #' @method print IMIFA
 #' @export
@@ -687,14 +675,32 @@
         cat(paste0(capture.output(print.Results_IMIFA(object)), msg))
     }
 
-    .power2     <- function(x) x * x
-    .which0     <- function(x) which(x == 0)
+  # Other Hidden Functions
     .chol       <- function(x) tryCatch(chol(x), error=function(e) chol(make.positive.definite(x)))
+
+    .detach_pkg <- function(pkg, character.only = FALSE) {
+      if(!character.only) {
+        pkg     <- deparse(substitute(pkg))
+      }
+      searches  <- paste("package", pkg, sep=":")
+      while(searches %in% search()) {
+        detach(searches, unload=TRUE, character.only=TRUE)
+      }
+    }
+
+    .ent_exit  <- function(opts = options()) {
+      ent      <- readline("Hit <Return> to see next plot or type 'EXIT'/hit <Esc> to exit: ")
+      options(show.error.messages=FALSE)
+      on.exit(suppressWarnings(options(opts)), add=TRUE)
+        if(ent  %in% c("exit", "EXIT"))    stop()
+    }
+
     .ledermann  <- function(N, P) {
       R         <- P + 0.5 - (0.5  * sqrt(8 * P + 1))
         as.integer(floor(min(N - 1, ifelse(1e-10 > abs(R - round(R)), round(R), R))))
     }
-      .logitdensity <- function(x)  {
+
+    .logitdensity   <- function(x)  {
       y         <- qlogis(x)
       g         <- density(y, bw    = "SJ")
       xgrid     <- plogis(g$x)
@@ -702,4 +708,8 @@
       g$x       <- xgrid
         return(g)
     }
+
+    .power2     <- function(x) x * x
+
+    .which0     <- function(x) which(x == 0)
     #

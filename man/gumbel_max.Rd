@@ -41,8 +41,7 @@ Samples cluster labels for N observations from G groups efficiently using log-pr
 # Simulate a matrix of dirichlet weights & the associated vector of N labels
   N       <- 400
   G       <- 8
-  sizes   <- seq(from=85, to=15, by=-10)
-  weights <- matrix(rDirichlet(N * G, alpha=1, nn=sizes), byrow=TRUE, nrow=N, ncol=G)
+  weights <- matrix(rDirichlet(N * G, alpha=1, nn=seq(from=85, to=15, by=-10)), byrow=TRUE, nrow=N, ncol=G)
   zs      <- gumbel_max(probs=log(weights))
 }
 \references{

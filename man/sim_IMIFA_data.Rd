@@ -33,9 +33,9 @@ Function to simulate data of any size and dimension from a mixture of (infinite)
 }
 \examples{
 # Simulate 100 observations from 3 balanced groups with cluster-specific numbers of latent factors
-# sim_data <- sim_IMIFA_data(N=100, G=3, P=20, Q=c(2, 2, 5))
-# names(attributes(sim_data))
-# attr(sim_data, "Labels")
+sim_data <- sim_IMIFA_data(N=100, G=3, P=20, Q=c(2, 2, 5))
+names(attributes(sim_data))
+attr(sim_data, "Labels")
 
 # Fit a MIFA model to this data
 # tmp      <- mcmc_IMIFA(sim_data, method="MIFA", range.G=3, n.iters=5000)

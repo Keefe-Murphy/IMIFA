@@ -262,9 +262,9 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       tmp.store  <- tmp.store[[Q.ind]]
     }
     if(!inf.Q)   {
-      Q          <- if(length(n.fac)   > 1)  Q else  n.fac
+      Q          <- if(length(n.fac)   > 1)  Q             else  n.fac
       Q.ind      <- if(all(!Q.T, length(n.fac) > 1)) Q.ind else which(n.fac == Q)
-      Q          <- setNames(if(length(Q) != G) rep(Q, G) else Q, gnames)
+      Q          <- setNames(if(length(Q) != G) rep(Q, G)  else Q, gnames)
       if(all(inf.G, Q.T))  GQ.temp1$G <- rep(G, GQs)
       if(is.element(method, c("OMFA", "IMFA")) && GQ1) {
         GQ.temp1$G.CI     <- lapply(seq_len(GQs), function(gq) GQ.temp1$G.CI[gq,])

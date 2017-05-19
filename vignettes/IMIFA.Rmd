@@ -190,10 +190,10 @@ We could instead plot all observations simultaneously for a given factor, say th
 plot(resIMIFA, plot.meth="trace", param="scores", mat=TRUE, by.fac=TRUE, fac=2)
 ```
 
-The code below will produce only a heatmap of the loadings matrix in the first cluster. Darker colours correspond to entries which are more negatively loaded and _vice versa_.
+The code below will produce only a heatmap of the loadings matrix in the first cluster: note, however, that `heat.map=TRUE` by default for loadings (whereas the opposite is true for the scores). Darker colours correspond to entries which are more negatively loaded and _vice versa_.
 
 ```{r}
-plot(resIMIFA, plot.meth="means", param="loadings", load.meth="heatmap", g=1)
+plot(resIMIFA, plot.meth="means", param="loadings", heat.map=TRUE, g=1)
 ```
 To examine uniquenesses from all clusters in the form of a parellel coordinates plot, type
 
