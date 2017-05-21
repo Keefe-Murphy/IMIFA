@@ -13,7 +13,7 @@ __Infinite Mixtures of Infinite Factor Analysers__
 # IMIFA v1.2.0 - (_2nd release [minor update]: 2017-05-09_)
 
 ## New Features
-* Learning the Pitman-Yor `discount` and `alpha` parameters via Metropolis-Hastings now implemented.  
+* Learning the Pitman-Yor `discount` & `alpha` parameters via Metropolis-Hastings now implemented.  
   Plotting function's `param` argument gains the option `discount` for posterior inference.
 * Sped up simulating cluster labels from unnormalised log probabilities using the Gumbel-Max trick (Yellott, 1977):  
   `gumbel_max` replaces earlier function to sample cluster labels & is now unhidden/exported/documented.
@@ -25,11 +25,11 @@ __Infinite Mixtures of Infinite Factor Analysers__
 ## Improvements
 * Metropolis-Hastings updates implemented for `alpha` when `discount` is non-zero, rather than usual Gibbs.  
   Mutation rate monitored rather than acceptance rate for Metropolis-Hastings updates of `discount` parameter.
-* Fixed calculation of # 'free' parameters for `aic.mcmc` and `bic.mcmc` criteria when uniquenesses are isotropic:    
+* Fixed calculation of # 'free' parameters for `aic.mcmc` & `bic.mcmc` criteria when uniquenesses are isotropic:    
   `PGMM_dfree`, which calculates # 'free' parameters for _finite_ factor analytic mixture models is exported/documented.  
   This function is also used to add checks on the Dirichlet hyperparameter for OM(I)FA methods.
 * DIC model selection criterion now also available for infinite factor models (previously finite only).
-* `G_priorDensity` now better reflects discrete nature of the density and plots for non-zero PY discount values.
+* `G_priorDensity` now better reflects discrete nature of the density, and plots for non-zero PY discount values.
 * Posterior mean loadings heatmaps now also display a colour key legend via new function `heat_legend`.
 * Avoided redundant simulation of stick-breaking/mixing proportions under both types of IM(I)FA slice sampler.
 * Simulated (finite) mixing proportions w/ _Gamma(alpha, 1)_ trick (Devroye 1986, p.594) instead of `MCMCpack:rdirichlet`:  

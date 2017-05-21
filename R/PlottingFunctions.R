@@ -4,7 +4,7 @@
 #' @param plot.meth The type of plot to be produced for the \code{param} of interest, where \code{correlation} refers to ACF/PACF plots, \code{means} refers to posterior means, \code{density}, \code{trace} and \code{parallel.coords} are self-explanatory. "\code{all}" in this case, the default, refers to {\code{trace, density, means, correlation}}. \code{parallel.coords} is only available when \code{param} is one of \code{means}, \code{loadings} or \code{uniquenesses} - note that this method applies a small amount of horizontal jitter to avoid overplotting. Special types of plots which don't require a \code{param} are \code{GQ}, for plotting the posterior summaries of the numbers of groups/factors, if available, \code{zlabels} for plotting clustering uncertainties if clustering has taken place (and, if available, the average similarity matrix, reorder according to the map labels) with or without the clustering labels being supplied via the \code{zlabels} argument), and \code{errors} for visualing the difference between the estimated and empirical covariance matrix/matrices.
 #' @param param The parameter of interest for any of the following \code{plot.meth} options: \code{trace}, \code{density}, \code{means}, \code{correlation}. The \code{param} must have been stored when \code{\link{mcmc_IMIFA}} was initially ran. Includes \code{pis} for methods where clustering takes place, and allows posterior inference on \code{alpha} and \code{discount} for the "\code{IMFA}" and "\code{IMIFA}" methods.
 #' @param zlabels The true labels can be supplied if they are known. If this is not supplied, the function uses the labels that were supplied, if any, to \code{\link{get_IMIFA_results}}. Only relevant when \code{plot.meth = "zlabels"}.
-#' @param heat.map Switch which allows plotting posterior mean loadings or posterior mean scores as a heatmap, or else as something akin to \code{link{plot(..., type="h")}}. Only relevant if \code{param = "loadings"} (in which case the default is \code{TRUE}) or \code{param = "scores"} (in which case the default is \code{FALSE}). Heatmaps are produced with the aid of \code{\link{mat2cols}} and \code{\link[gclus]{plotcolors}}.
+#' @param heat.map Switch which allows plotting posterior mean loadings or posterior mean scores as a heatmap, or else as something akin to \code{link{plot(..., type="h")}}. Only relevant if \code{param = "loadings"} (in which case the default is \code{TRUE}) or \code{param = "scores"} (in which case the default is \code{FALSE}). Heatmaps are produced with the aid of \code{\link{mat2cols}} and \code{\link{plot_cols}}.
 #' @param palette An optional colour palette to be supplied if overwriting the default palette set inside the function by \code{\link[viridis]{viridis}} is desired.
 #' @param g Optional argument that allows specification of exactly which cluster the plot of interest is to be produced for. If not supplied, the user will be prompted to cycle through plots for all clusters. Also functions as an index for which plot to return when \code{plot.meth} is \code{GQ} or \code{zlabels} in much the same way.
 #' @param mat Logical indicating whether a \code{\link{matplot}} is produced (defaults to \code{TRUE}). If given as \code{FALSE}, \code{ind} is invoked.
@@ -24,12 +24,13 @@
 #' @importFrom grDevices "adjustcolor" "col2rgb" "palette" "heat.colors"
 #' @importFrom Rfast "Order" "med" "colMedians"
 #' @importFrom plotrix "plotCI"
-#' @importFrom gclus "plotcolors"
 #' @importFrom e1071 "classAgreement"
 #' @importFrom mclust "classError"
 #' @importFrom viridis "viridis"
-#' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{get_IMIFA_results}}, \code{\link{mat2cols}}, \code{\link[gclus]{plotcolors}}
+#' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{get_IMIFA_results}}, \code{\link{mat2cols}}, \code{\link{plot_cols}}
 #' @references Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, \code{https://arxiv.org/abs/1701.07010}
+#'
+#' @author Keefe Murphy
 #'
 #' @examples
 #' # See the vignette associated with the package for more graphical examples:
@@ -87,7 +88,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
   tmp.pal <- palette
   palette <- adjustcolor(palette, alpha.f=transparency)
   palette(palette)
-  grey    <- adjustcolor("#999999", alpha.f=0.3)
+  grey    <- "#9999994D"
   defopt  <- options()
   options(warn=1)
   suppressWarnings(par(cex.axis=0.8, new=FALSE))
@@ -608,11 +609,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           if(g   == min(Gs)) {
             pxx  <- range(x$Scores$post.eta)
           }
-          if(all(Q.max > 1, n.eta > 1)) {
-            plotcolors(mat2cols(plot.x, cols=hcols, na.col=par()$bg))
-          } else {
-            graphics::image(z=t(plot.x)[,seq(n.eta, 1), drop=FALSE], col=hcols, xlab="", ylab="", xaxt="n", yaxt="n")
-          }
+          plot_cols(mat2cols(plot.x, cols=hcols, na.col=par()$bg))
           if(!is.element(Q.max, c(1, Q))) abline(v=ifelse(n.eta == 1, (Q - diff(par("usr")[1:2]) + 1)/Q.max, Q + 0.5), lty=2, lwd=1)
           if(titles) {
             title(main=list(paste0("Posterior Mean", ifelse(!all.ind, " Scores ", " "), "Heatmap", ifelse(all(!all.ind, grp.ind), paste0(" - Group ", g), ""))))
@@ -659,11 +656,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         }
         if(isTRUE(heat.map))  {
           if(titles) par(mar=c(4.1, 4.1, 4.1, 4.1))
-          if(Q  > 1) {
-            plotcolors(mat2cols(plot.x, cols=hcols, na.col=par()$bg))
-          } else {
-            graphics::image(z=t(plot.x)[,seq(n.var, 1), drop=FALSE], col=hcols, xlab="", ylab="", xaxt="n", yaxt="n")
-          }
+          plot_cols(mat2cols(plot.x, cols=hcols, na.col=par()$bg))
           if(titles) {
             title(main=list(paste0("Posterior Mean", ifelse(!all.ind, " Loadings ", " "), "Heatmap", ifelse(all(!all.ind, grp.ind), paste0(" - Group ", g), ""))))
             axis(1, line=-0.5, tick=FALSE, at=if(Q != 1) seq_len(Q) else 0, labels=seq_len(Q))
@@ -957,7 +950,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         par(defpar)
         if(titles) par(mar=c(4.1, 4.1, 4.1, 4.1))
         z.col   <- if(!any(mispal, gx)) palette else heat.colors(12)[12:1]
-        plotcolors(mat2cols(replace(plot.x, plot.x == 0, NA), cols=z.col, na.col=par()$bg))
+        plot_cols(mat2cols(replace(plot.x, plot.x == 0, NA), cols=z.col, na.col=par()$bg))
         if(titles) {
           title(main=list("Average Similarity Matrix"))
           axis(1, at=n.obs/2, labels=paste0("Observation 1:N", if(p.ind) " (Reordered)"), tick=FALSE)
@@ -1169,7 +1162,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
 # Loadings Heatmaps
 #' Convert a numeric matrix to colours
 #'
-#' Converts a matrix to a hex colour code representation for plotting using \code{\link[gclus]{plotcolors}}. Used internally by \code{\link{plot.Results_IMIFA}} for plotting posterior mean loadings heatmaps.
+#' Converts a matrix to a hex colour code representation for plotting using \code{\link{plot_cols}}. Used internally by \code{\link{plot.Results_IMIFA}} for plotting posterior mean loadings heatmaps.
 #' @param mat A matrix.
 #' @param cols The colour palette to be used. The default palette uses \code{\link[viridis]{viridis}}. Will be checked for validity.
 #' @param byrank Logical indicating whether to convert the matrix itself or the sample ranks of the values therein. Defaults to \code{FALSE}.
@@ -1178,23 +1171,23 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
 #'
 #' @return A matrix of hex colour code representations.
 #' @export
-#' @importFrom gclus "plotcolors"
 #' @importFrom viridis "viridis"
 #'
-#' @seealso \code{\link[gclus]{plotcolors}}
+#' @seealso \code{\link{plot_cols}}, \code{\link{heat_legend}}
 #'
 #' @examples
+#' # Generate a colour matrix using mat2cols()
 #' mat      <- matrix(rnorm(100), nrow=10, ncol=10)
 #' mat[2,3] <- NA
 #' cols     <- heat.colors(12)[12:1]
 #' matcol   <- mat2cols(mat, cols=cols)
 #' matcol
 #'
-#' # Use plotcolors() to visualise the colours matrix
+#' # Use plot_cols() to visualise the colours matrix
 #' par(mar=c(5.1, 4.1, 4.1, 4.1))
-#' gclus::plotcolors(matcol)
+#' plot_cols(matcol)
 #'
-#' # Add a legend
+#' # Add a legend using heat_legend()
 #' heat_legend(mat, cols=cols); box(lwd=2)
   mat2cols     <- function(mat, cols = NULL, byrank = FALSE, breaks = length(cols), na.col = "#808080FF") {
     m          <- as.matrix(mat)
@@ -1226,14 +1219,14 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
 # Heatmap Legends
 #' Add a colour key legend to heatmap plots
 #'
-#' Using only base graphics, this function appends a colour key legend for heatmaps produced by, for instance, \code{\link[graphics]{image}} or \code{\link[gclus]{plotcolors}}.
+#' Using only base graphics, this function appends a colour key legend for heatmaps produced by, for instance, \code{\link{plot_cols}} or \code{\link[graphics]{image}}.
 #' @param data Either the data with which the heatmap was created or a vector containing its minimum and maximum values. Missing values are ignored.
 #' @param cols The palette used when the heatmap was created.
 #'
 #' @return Modifies an existing plot by adding a legend.
 #' @export
 #'
-#' @seealso \code{\link[graphics]{image}}, \code{\link[gclus]{plotcolors}}, \code{\link{mat2cols}}
+#' @seealso \code{\link[graphics]{image}}, \code{\link{plot_cols}}, \code{\link{mat2cols}}
 #' @examples
 #' # Generate a matrix, flip it, and plot it with a legend
 #' data <- matrix(rnorm(50), nrow=10, ncol=5)
@@ -1276,6 +1269,8 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
 #' @export
 #' @importFrom viridis "viridis"
 #' @seealso \code{\link{G_expected}}, \code{\link{G_variance}}, \code{\link[Rmpfr]{Rmpfr}}
+#'
+#' @author Keefe Murphy
 #'
 #' @examples
 #'
@@ -1339,11 +1334,75 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
       }
     }
     if(isTRUE(show.plot))   {
-      col      <- seq(from=2, to=max.len + 1)
-      palette(adjustcolor(rep(col, 2), alpha.f=0.5))
-      matplot(x=seq_len(N), y=rx, type="h", col=col, xlab="Clusters", ylim=c(0, max(rx)), ylab="Density",
+      cols     <- seq(from=2, to=max.len + 1)
+      palette(adjustcolor(rep(cols, 2), alpha.f=0.5))
+      matplot(x=seq_len(N), y=rx, type="h", col=cols, xlab="Clusters", ylim=c(0, max(rx)), ylab="Density",
               main=paste0("Prior Distribution of G\nN=", N), lwd=seq(3, 1, length.out=max.len), lty=seq_len(2))
     }
       invisible(if(max.len == 1) as.vector(rx) else rx)
+  }
+
+#' Plots a matrix of colours
+#'
+#' Plots a matrix of colours as a heat map type image or as points. Intended for joint use with \code{mat2cols}.
+#' @param cmat A matrix of valid colours, with missing values coded as \code{NA} allowed. Vectors should be supplied as matrices with 1 row or column, as appropriate.
+#' @param na.col Colour used for missing \code{NA} entries in \code{cmat}.
+#' @param ptype Switch controlling output as either a heat map \code{"image"} (the default) or as \code{"points"}.
+#' @param border.col Colour of border drawn around the plot.
+#' @param dlabels Vector of labels for the diagonals.
+#' @param rlabels Vector of labels for the rows.
+#' @param clabels Vector of labels for the columns.
+#' @param pch Point type used when \code{ptype="points"}.
+#' @param cex Point cex used when \code{ptype="points"}.
+#' @param label.cex Govens cex parameter used for labels.
+#' @param ... Further graphical parameters.
+#'
+#' @return Either an \code{"image"} or \code{"points"} plot of the supplied colours.
+#' @export
+#'
+#' @seealso \code{\link{mat2cols}}, \code{\link[graphics]{image}}
+#'
+#' @examples
+#' # Generate a colour matrix using mat2cols()
+#' mat      <- matrix(rnorm(100), nrow=10, ncol=10)
+#' mat[2,3] <- NA
+#' cols     <- heat.colors(12)[12:1]
+#' matcol   <- mat2cols(mat, cols=cols)
+#' matcol
+#'
+#' # Use plot_cols() to visualise the colours matrix
+#' par(mar=c(5.1, 4.1, 4.1, 4.1))
+#' plot_cols(matcol)
+#'
+#' # Add a legend using heat_legend()
+#' heat_legend(mat, cols=cols); box(lwd=2)
+  plot_cols    <- function(cmat, na.col = "#808080FF", ptype = c("image", "points"), border.col = "#808080FF",
+                           dlabels = NULL, rlabels = FALSE, clabels = FALSE, pch = 15, cex = 3, label.cex = 0.6, ...) {
+    if(!all(.are_cols(cmat),
+            is.matrix(cmat)))         stop("'cmat' needs to be a valid colour matrix:\ntry supplying a vector as a matrix with 1 row or column, as appropriate")
+    if(!all(.are_cols(na.col),
+            length(na.col)     == 1)) stop("'na.col' needs to a valid single colour")
+    if(!all(.are_cols(border.col),
+            length(border.col) == 1)) stop("'border.col' needs to a valid single colour")
+    ptype      <- match.arg(ptype)
+    N          <- nrow(cmat)
+    P          <- ncol(cmat)
+    cmat       <- replace(cmat, is.na(cmat), na.col)
+    if(ptype   == "image") {
+      levels   <- sort(unique(as.vector(cmat)))
+      z        <- matrix(unclass(factor(cmat, levels = levels, labels = seq_along(levels))), nrow=N, ncol=P)
+      info     <- list(x = seq_len(P), y=seq_len(N), z=t(z), col = levels)
+      image(info$x, info$y, info$z[, N:1, drop=FALSE], col = info$col, axes = FALSE, xlab = "", ylab = "", ...)
+    } else {
+      plot(rep(seq_len(P), rep(N, P)), rep(N:1, P), col = as.vector(cmat), cex = cex, pch = pch,
+           axes = FALSE, xlab = "", ylab = "", xlim = c(0.5, P + 0.5), ylim = c(0.5, N + 0.5), ...)
+    }
+    axis(3,  at = seq_len(P), tick = FALSE, labels = clabels, las = 2, cex.axis = label.cex)
+    axis(2,  at = N:1, tick = FALSE, labels = rlabels, las = 2, cex.axis = label.cex)
+    if(is.vector(dlabels)) {
+      Nd       <- length(dlabels)
+      text(seq_len(Nd), Nd:1, dlabels, cex = label.cex)
+    }
+    box(col = border.col)
   }
 #

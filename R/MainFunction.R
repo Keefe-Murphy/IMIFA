@@ -90,6 +90,8 @@
 #'
 #' Tipping, M. E. and Bishop, C. M. (1999). Probabilistic principal component analysis, \emph{Journal of the Royal Statistical Society: Series B (Statistical Methodology)}, 61(3): 611-622.
 #'
+#' @author Keefe Murphy
+#'
 #' @examples
 #' # data(olive)
 #' # data(coffee)

@@ -35,6 +35,8 @@
 #' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{plot.Results_IMIFA}}, \code{\link{Zsimilarity}}
 #' @references Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, \code{https://arxiv.org/abs/1701.07010}
 #'
+#' @author Keefe Murphy
+#'
 #' @examples
 #' # data(coffee)
 #' # data(olive)

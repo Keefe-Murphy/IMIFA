@@ -55,3 +55,6 @@ Durante, D. (2017). A note on the multiplicative gamma process, \emph{Statistics
 \seealso{
 \code{\link{mcmc_IMIFA}}
 }
+\author{
+Keefe Murphy
+}

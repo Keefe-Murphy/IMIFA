@@ -188,3 +188,6 @@ Tipping, M. E. and Bishop, C. M. (1999). Probabilistic principal component analy
 \seealso{
 \code{\link{get_IMIFA_results}}, \code{\link{psi_hyper}}, \code{\link{MGP_check}}
 }
+\author{
+Keefe Murphy
+}

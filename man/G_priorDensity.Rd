@@ -40,3 +40,6 @@ DP
 \seealso{
 \code{\link{G_expected}}, \code{\link{G_variance}}, \code{\link[Rmpfr]{Rmpfr}}
 }
+\author{
+Keefe Murphy
+}

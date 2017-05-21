@@ -15,7 +15,7 @@ heat_legend(data, cols)
 Modifies an existing plot by adding a legend.
 }
 \description{
-Using only base graphics, this function appends a colour key legend for heatmaps produced by, for instance, \code{\link[graphics]{image}} or \code{\link[gclus]{plotcolors}}.
+Using only base graphics, this function appends a colour key legend for heatmaps produced by, for instance, \code{\link{plot_cols}} or \code{\link[graphics]{image}}.
 }
 \examples{
 # Generate a matrix, flip it, and plot it with a legend
@@ -27,5 +27,5 @@ image(t(data)[,nrow(data):1], col=cols)
 heat_legend(data, cols); box(lwd=2)
 }
 \seealso{
-\code{\link[graphics]{image}}, \code{\link[gclus]{plotcolors}}, \code{\link{mat2cols}}
+\code{\link[graphics]{image}}, \code{\link{plot_cols}}, \code{\link{mat2cols}}
 }

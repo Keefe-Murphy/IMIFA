@@ -105,6 +105,8 @@
 #' Yellot, J. I. Jr. (1977) The relationship between Luce's choice axiom, Thurstone's theory of comparative judgment, and the double exponential distribution, \emph{Journal of Mathematical Psychology}, 15: 109-144.
 #' @export
 #'
+#' @author Keefe Murphy
+#'
 #' @examples
 #' # Set the dimensions & simulate a matrix of weights
 #'   N         <- 1
@@ -123,7 +125,8 @@
 #' # Simulate a matrix of dirichlet weights & the associated vector of N labels
 #'   N       <- 400
 #'   G       <- 8
-#'   weights <- matrix(rDirichlet(N * G, alpha=1, nn=seq(from=85, to=15, by=-10)), byrow=TRUE, nrow=N, ncol=G)
+#'   sizes   <- seq(from=85, to=15, by=-10)
+#'   weights <- matrix(rDirichlet(N * G, alpha=1, nn=sizes), byrow=TRUE, nrow=N, ncol=G)
 #'   zs      <- gumbel_max(probs=log(weights))
     gumbel_max   <- function(probs, log.like = FALSE, slice = FALSE) {
       if(isTRUE(slice))    {
@@ -244,6 +247,8 @@
 #'
 #' Tipping, M. E. and Bishop, C. M. (1999). Probabilistic principal component analysis, \emph{Journal of the Royal Statistical Society: Series B (Statistical Methodology)}, 61(3): 611-622.
 #'
+#' @author Keefe Murphy
+#'
 #' @examples
 #' data(olive)
 #' olive2 <- olive[,-(1:2)]
@@ -301,6 +306,8 @@
 #'
 #' Durante, D. (2017). A note on the multiplicative gamma process, \emph{Statistics & Probability Letters}, 122: 198-204.
 #'
+#' @author Keefe Murphy
+#'
 #' @examples
 #' # Check if expected shrinkage under the MGP increases with the column index (WRONG!).
 #' MGP_check(ad1=1.5, ad2=1.8, Q=10, nu=2, inverse=FALSE)[[1]]$valid
@@ -355,6 +362,8 @@
 #' @export
 #' @references McNicholas, P. D. and Murphy, T. B. (2008) Parsimonious Gaussian Mixture Models, \emph{Statistics and Computing}, 18(3): 285-296.
 #' @seealso \code{\link{get_IMIFA_results}}, \code{\link{mcmc_IMIFA}}
+#'
+#' @author Keefe Murphy
 #'
 #' @examples
 #' UUU <- PGMM_dfree(Q=4:5, P=50, G=3, method="UUU")
@@ -416,6 +425,8 @@
 #' }
 #' @export
 #' @seealso \code{\link{get_IMIFA_results}}, \code{\link[slam]{as.simple_triplet_matrix}}, \code{\link[stats]{hclust}}
+#'
+#' @author Keefe Murphy
 #'
 #' @examples
 #' # Run a IMIFA model and extract the sampled cluster labels
@@ -512,6 +523,8 @@
 #' @export
 #' @seealso \code{\link{G_variance}}, \code{\link{G_priorDensity}}, \code{\link[Rmpfr]{Rmpfr}}
 #'
+#' @author Keefe Murphy
+#'
 #' @examples
 #' G_expected(N=50, alpha=19.23356)
 #'
@@ -549,6 +562,8 @@
 #' @return The variance of the number of clusters under the specified prior conditions.
 #' @export
 #' @seealso \code{\link{G_expected}}, \code{\link{G_priorDensity}}, \code{\link[Rmpfr]{Rmpfr}}
+#'
+#' @author Keefe Murphy
 #'
 #' @examples
 #' G_variance(N=50, alpha=19.23356)

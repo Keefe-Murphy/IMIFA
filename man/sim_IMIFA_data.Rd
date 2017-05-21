@@ -43,3 +43,6 @@ attr(sim_data, "Labels")
 \seealso{
 The function \code{\link{mcmc_IMIFA}} for fitting an IMIFA related model to the simulated data set.
 }
+\author{
+Keefe Murphy
+}

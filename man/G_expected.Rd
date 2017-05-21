@@ -28,3 +28,6 @@ G_expected(N=50, alpha=19.23356)
 \seealso{
 \code{\link{G_variance}}, \code{\link{G_priorDensity}}, \code{\link[Rmpfr]{Rmpfr}}
 }
+\author{
+Keefe Murphy
+}

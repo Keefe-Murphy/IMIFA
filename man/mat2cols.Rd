@@ -22,22 +22,23 @@ mat2cols(mat, cols = NULL, byrank = FALSE, breaks = length(cols),
 A matrix of hex colour code representations.
 }
 \description{
-Converts a matrix to a hex colour code representation for plotting using \code{\link[gclus]{plotcolors}}. Used internally by \code{\link{plot.Results_IMIFA}} for plotting posterior mean loadings heatmaps.
+Converts a matrix to a hex colour code representation for plotting using \code{\link{plot_cols}}. Used internally by \code{\link{plot.Results_IMIFA}} for plotting posterior mean loadings heatmaps.
 }
 \examples{
+# Generate a colour matrix using mat2cols()
 mat      <- matrix(rnorm(100), nrow=10, ncol=10)
 mat[2,3] <- NA
 cols     <- heat.colors(12)[12:1]
 matcol   <- mat2cols(mat, cols=cols)
 matcol
 
-# Use plotcolors() to visualise the colours matrix
+# Use plot_cols() to visualise the colours matrix
 par(mar=c(5.1, 4.1, 4.1, 4.1))
-gclus::plotcolors(matcol)
+plot_cols(matcol)
 
-# Add a legend
+# Add a legend using heat_legend()
 heat_legend(mat, cols=cols); box(lwd=2)
 }
 \seealso{
-\code{\link[gclus]{plotcolors}}
+\code{\link{plot_cols}}, \code{\link{heat_legend}}
 }

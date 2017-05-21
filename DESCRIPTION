@@ -18,7 +18,6 @@ Imports:
     abind,
     corpcor,
     e1071,
-    gclus,
     graphics,
     grDevices,
     MASS,

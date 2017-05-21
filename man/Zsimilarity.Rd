@@ -46,3 +46,6 @@ This functions takes a Monte Carlo sample of cluster labels, converts them to ad
 \seealso{
 \code{\link{get_IMIFA_results}}, \code{\link[slam]{as.simple_triplet_matrix}}, \code{\link[stats]{hclust}}
 }
+\author{
+Keefe Murphy
+}

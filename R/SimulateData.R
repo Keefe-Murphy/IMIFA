@@ -15,6 +15,8 @@
 #' @importFrom corpcor "is.positive.definite" "make.positive.definite"
 #' @importFrom Rfast "is.symmetric"
 #'
+#' @author Keefe Murphy
+#'
 #' @examples
 #' # Simulate 100 observations from 3 balanced groups with cluster-specific numbers of latent factors
 #' sim_data <- sim_IMIFA_data(N=100, G=3, P=20, Q=c(2, 2, 5))
