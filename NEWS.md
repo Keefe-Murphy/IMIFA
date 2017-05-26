@@ -3,6 +3,8 @@ __Infinite Mixtures of Infinite Factor Analysers__
 ## Improvements
 * Posterior mean scores can now also be plotted in the form of a heat map (previously loadings only).  
   `load.meth` argument replaced by logical `heat.map` in `plot.Results_IMIFA`.
+* `mat2cols` gains `compare` argument to yield common palettes/breaks for heat maps of multiple matries:  
+  `plot_cols` function also fixed, and now unhidden.
   
 ## Bug Fixes 
 * Used `par()$bg` (i.e. default `"white"`) for plotting zero-valued entries of similarity matrix.

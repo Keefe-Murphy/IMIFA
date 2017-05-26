@@ -590,16 +590,17 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
       }
       if(param == "scores") {
         labs   <- if(grp.ind) clust$map else 1
+        p.eta  <- x$Scores$post.eta
         if(g.score)  {
           if(g.ind == 1)  tmplab <- labs
           z.ind  <- tmplab %in% g
-          plot.x <- x$Scores$post.eta[z.ind,,drop=FALSE]
+          plot.x <- p.eta[z.ind,,drop=FALSE]
           ind2   <- ifelse(any(!facx, Q <= 1), ind[2], if(Q > 1) max(2, ind[2]))
           if(ci.sw[param]) ci.x  <- x$Scores$ci.eta[,z.ind,, drop=FALSE]
           labs   <- g
           n.eta  <- grp.size[g]
         } else       {
-          plot.x <- x$Scores$post.eta
+          plot.x <- p.eta
           ind2   <- ifelse(any(!facx, Q.max <= 1), ind[2], if(Q.max > 1) max(2, ind[2]))
           if(ci.sw[param]) ci.x  <- x$Scores$ci.eta
           n.eta  <- n.obs
@@ -607,9 +608,11 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         if(isTRUE(heat.map)) {
           if(titles) par(mar=c(4.1, 4.1, 4.1, 4.1))
           if(g   == min(Gs)) {
+            sxx  <- mat2cols(p.eta, cols=hcols, na.col=par()$bg)
+            sxx  <- if(g.score) lapply(split(sxx, matrix(rep(seq_along(grp.size), grp.size), nrow=n.obs, ncol=ncol(sxx), byrow=FALSE)), matrix, ncol=ncol(sxx)) else sxx
             pxx  <- range(x$Scores$post.eta)
           }
-          plot_cols(mat2cols(plot.x, cols=hcols, na.col=par()$bg))
+          plot_cols(if(g.score) sxx[[g]] else sxx)
           if(!is.element(Q.max, c(1, Q))) abline(v=ifelse(n.eta == 1, (Q - diff(par("usr")[1:2]) + 1)/Q.max, Q + 0.5), lty=2, lwd=1)
           if(titles) {
             title(main=list(paste0("Posterior Mean", ifelse(!all.ind, " Scores ", " "), "Heatmap", ifelse(all(!all.ind, grp.ind), paste0(" - Group ", g), ""))))
@@ -649,14 +652,17 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         }
       }
       if(param == "loadings") {
-        plot.x <- x$Loadings$post.load[[g]]
+        plot.x <- x$Loadings$post.load
         if(g   == min(Gs)) {
+         if(isTRUE(heat.map)) {
+          lxx  <- mat2cols(plot.x, cols=hcols, compare=G > 1, na.col=par()$bg)
+         }
           pxx  <- range(sapply(x$Loadings$post.load, range))
           cixx <- if(all(intervals, ci.sw[param], !heat.map)) { if(by.fac) range(sapply(x$Loadings$ci.load, function(x) range(x[,,ind[2]]))) else range(sapply(x$Loadings$ci.load, function(x) range(x[,ind[1],]))) }
         }
         if(isTRUE(heat.map))  {
           if(titles) par(mar=c(4.1, 4.1, 4.1, 4.1))
-          plot_cols(mat2cols(plot.x, cols=hcols, na.col=par()$bg))
+          plot_cols(if(G > 1) lxx[[g]] else lxx)
           if(titles) {
             title(main=list(paste0("Posterior Mean", ifelse(!all.ind, " Loadings ", " "), "Heatmap", ifelse(all(!all.ind, grp.ind), paste0(" - Group ", g), ""))))
             axis(1, line=-0.5, tick=FALSE, at=if(Q != 1) seq_len(Q) else 0, labels=seq_len(Q))
@@ -1163,13 +1169,14 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
 #' Convert a numeric matrix to colours
 #'
 #' Converts a matrix to a hex colour code representation for plotting using \code{\link{plot_cols}}. Used internally by \code{\link{plot.Results_IMIFA}} for plotting posterior mean loadings heatmaps.
-#' @param mat A matrix.
+#' @param mat Either a matrix or, when \code{compare} is \code{TRUE}, a list of matrices.
 #' @param cols The colour palette to be used. The default palette uses \code{\link[viridis]{viridis}}. Will be checked for validity.
+#' @param compare Logical switch used when desiring comparable colour representations (usually for comparable heat maps) across multiple matrices. Ensures, for instance, that the colour on the heat map of an entry valued at 0.7 in Matrix A corresponds exactly to the colour of a similar value in Matrix B. When \code{TRUE}, \code{mat} must be supplied as a list of matrices, which must have either the same number of rows, or the same number of columns.
 #' @param byrank Logical indicating whether to convert the matrix itself or the sample ranks of the values therein. Defaults to \code{FALSE}.
 #' @param breaks Number of gradations in colour to use. Defaults to \code{length(cols)}.
 #' @param na.col Colour to be used to represent missing data.
 #'
-#' @return A matrix of hex colour code representations.
+#' @return A matrix of hex colour code representations, or a list of such matrices when \code{compare} is \code{TRUE}.
 #' @export
 #' @importFrom viridis "viridis"
 #'
@@ -1189,25 +1196,66 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
 #'
 #' # Add a legend using heat_legend()
 #' heat_legend(mat, cols=cols); box(lwd=2)
-  mat2cols     <- function(mat, cols = NULL, byrank = FALSE, breaks = length(cols), na.col = "#808080FF") {
-    m          <- as.matrix(mat)
-    if(missing(cols)) cols <- viridis(30L, option="C")
+#'
+#' # Try comparing heat maps of multiple matrices
+#' mat1     <- matrix(rnorm(100), nr=50, nc=2)
+#' mat2     <- matrix(rnorm(150), nr=50, nc=3)
+#' mat3     <- matrix(rnorm(50),  nr=50, nc=1)
+#' mats     <- list(mat1, mat2, mat3)
+#' colmats  <- mat2cols(mats, cols=cols, compare=TRUE)
+#' par(mfrow=c(2, 3), mar=c(1, 2, 1, 2))
+#'
+#' # Use common palettes (top row)
+#' plot_cols(colmats[[1]]); heat_legend(range(mats), cols=cols); box(lwd=2)
+#' plot_cols(colmats[[2]]); heat_legend(range(mats), cols=cols); box(lwd=2)
+#' plot_cols(colmats[[3]]); heat_legend(range(mats), cols=cols); box(lwd=2)
+#'
+#' # Use uncommon palettes (bottom row)
+#' plot_cols(mat2cols(mat1, cols=cols)); heat_legend(range(mats), cols=cols); box(lwd=2)
+#' plot_cols(mat2cols(mat2, cols=cols)); heat_legend(range(mats), cols=cols); box(lwd=2)
+#' plot_cols(mat2cols(mat3, cols=cols)); heat_legend(range(mats), cols=cols); box(lwd=2)
+  mat2cols     <- function(mat, cols = NULL, compare = FALSE, byrank = FALSE, breaks = length(cols), na.col = "#808080FF") {
+    if(isTRUE(compare)) {
+      if(!is.list(mat) && !all(vapply(mat,
+          is.matrix, logical(1L))))   stop("'mat' must be a list of matrices when 'compare' is TRUE")
+      nc       <- vapply(mat, ncol, numeric(1L))
+      nr       <- vapply(mat, nrow, numeric(1L))
+      uc       <- unique(nc)
+      ur       <- unique(nr)
+      if(length(ur)    == 1) {
+        mat    <- do.call(cbind, mat)
+        spl    <- matrix(rep(seq_along(nc), nc), nrow=ur, ncol=ncol(mat), byrow=TRUE)
+      } else if(length(uc)  == 1)  {
+        mat    <- do.call(rbind, mat)
+        spl    <- matrix(rep(seq_along(nr), nr), nrow=nrow(mat), ncol=uc, byrow=FALSE)
+      } else                          stop("Matrices must have either the same number of rows or the same number of columns")
+    } else if(!is.matrix(mat))        stop("'mat' must be a matrix when 'comparse' is FALSE")
+    if(missing(cols))   {
+      cols     <- viridis(30L, option="C")
+      if(missing(breaks))   {
+        breaks <- length(cols)
+      }
+    }
     if(!all(.are_cols(cols)))         stop("Invalid colours supplied")
     if(any(!is.logical(byrank),
            length(byrank)  != 1))     stop("'byrank' must be TRUE or FALSE")
     if(any(!is.numeric(breaks),
            length(breaks)  != 1))     stop("'breaks' must be a single digit")
-    m1         <- if(isTRUE(byrank))  rank(m) else m
+    m1         <- if(isTRUE(byrank))  rank(mat) else mat
     facs       <- cut(m1, breaks, include.lowest=TRUE)
-    answer     <- matrix(cols[as.numeric(facs)], nrow=nrow(m), ncol=ncol(m))
-    NM         <- is.na(m)
+    answer     <- matrix(cols[as.numeric(facs)], nrow=nrow(mat), ncol=ncol(mat))
+    NM         <- is.na(mat)
     if(any(NM)) {
       if(length(na.col     != 1)  &&
          !.are_cols(na.col))          stop("'na.col' must be a valid colour in the presence of missing data")
       answer   <- replace(answer, NM, na.col)
     }
-    rownames(answer)       <- rownames(m)
-    colnames(answer)       <- colnames(m)
+    rownames(answer)       <- rownames(mat)
+    colnames(answer)       <- colnames(mat)
+    if(isTRUE(compare))     {
+      splans   <- split(answer, spl)
+      answer   <- if(length(ur)   == 1) lapply(splans, matrix, nrow=nr) else lapply(splans, matrix, ncol=nc)
+    }
       answer
   }
 

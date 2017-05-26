@@ -51,7 +51,7 @@
 #' @param ind.slice Logical indicitating whether the independent slice-efficient sampler is to be employed. If \code{FALSE} the dependent slice-efficient sampler is employed, whereby the slice sequence xi_1,...,xi_g is equal to the decreasingly ordered mixing proportions. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods. Defaults to \code{TRUE}.
 #' @param rho Parameter controlling the rate of geometric decay for the independent slice-efficient sampler, s.t. xi = (1 - rho)rho^(g-1). Must lie in the interval (0, 1]. Higher values are associated with better mixing but longer run times. Defaults to 0.75, but 0.5 is an interesting special case which guarantees that the slice sequence xi_1,...,xi_g is equal to the \emph{expectation} of the decreasingly ordered mixing proportions. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods when \code{ind.slice} is \code{TRUE}.
 #' @param IM.lab.sw Logial indicating whether the two forced label switching moves are to be implemented (defaults to \code{TRUE}) when running one of the infinite mixture models, with Dirichlet process or Pitman-Yor process priors. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods.
-#' @param verbose Logical indicating whether to print output (e.g. run times) and a progress bar to the screen while the sampler runs (defaults to \code{TRUE}). If \code{FALSE}, warnings and error messages will still be printed to the screen, but everything else will be suppressed.
+#' @param verbose Logical indicating whether to print output (e.g. run times) and a progress bar to the screen while the sampler runs. By default is \code{TRUE} if the session is interactive, and \code{FALSE} otherwise. If \code{FALSE}, warnings and error messages will still be printed to the screen, but everything else will be suppressed.
 #' @param discount The discount parameter used when generalising the Dirichlet process to the Pitman-Yor process. Must lie in the interval [0, 1). If non-zero, \code{alpha} can be supplied greater than -discount. Defaults to 0. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods.
 #' @param learn.d Logical indicating whether the \code{discount} parameter is to be updated via Metropolis-Hastings. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods, in which case the default is \code{FALSE}.
 #' @param d.hyper Hyperparameters for the Beta(a,b) prior on the \code{discount} hyperparameter. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods.
@@ -128,7 +128,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
                         thinning = 2L, centering = TRUE, scaling = c("unit", "pareto", "none"), mu.zero = NULL, sigma.mu = NULL, sigma.l = NULL, alpha = NULL, psi.alpha = NULL, psi.beta = NULL,
                         uni.type = c("unconstrained", "isotropic"), uni.prior = c("unconstrained", "isotropic"), z.init = c("mclust", "kmeans", "list", "priors"), z.list = NULL, adapt = TRUE,
                         prop = NULL, epsilon = NULL, alpha.d1 = NULL, alpha.d2 = NULL, beta.d1 = NULL, beta.d2 = NULL, nu = NULL, nuplus1 = TRUE, adapt.at = NULL, b0 = NULL, b1 = NULL,
-                        trunc.G = NULL, learn.alpha = TRUE, alpha.hyper = NULL, zeta = NULL, ind.slice = TRUE, rho = NULL, IM.lab.sw = TRUE, verbose = TRUE, discount = NULL, learn.d = FALSE,
+                        trunc.G = NULL, learn.alpha = TRUE, alpha.hyper = NULL, zeta = NULL, ind.slice = TRUE, rho = NULL, IM.lab.sw = TRUE, verbose = interactive(), discount = NULL, learn.d = FALSE,
                         d.hyper = NULL, kappa = NULL, mu0g = FALSE, psi0g = FALSE, delta0g = FALSE, mu.switch = TRUE, score.switch = TRUE, load.switch = TRUE, psi.switch = TRUE, pi.switch = TRUE) {
 
   call      <- match.call()
@@ -591,7 +591,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
       } else if(z.init  == "list")   {
         zi[[g]]    <- as.integer(z.list[[g]])
       } else if(z.init  == "mclust") {
-        m.res      <- try(Mclust(dat, G), silent=TRUE)
+        m.res      <- try(Mclust(dat, G, verbose=FALSE), silent=TRUE)
         if(!inherits(m.res, "try_error"))  {
           zi[[g]]  <- as.integer(factor(m.res$classification, levels=seq_len(G)))
         } else                      stop("Cannot initialise cluster labels using mclust. Try another z.init method")

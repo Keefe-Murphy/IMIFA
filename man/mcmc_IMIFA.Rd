@@ -15,11 +15,11 @@ mcmc_IMIFA(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA",
   alpha.d1 = NULL, alpha.d2 = NULL, beta.d1 = NULL, beta.d2 = NULL,
   nu = NULL, nuplus1 = TRUE, adapt.at = NULL, b0 = NULL, b1 = NULL,
   trunc.G = NULL, learn.alpha = TRUE, alpha.hyper = NULL, zeta = NULL,
-  ind.slice = TRUE, rho = NULL, IM.lab.sw = TRUE, verbose = TRUE,
-  discount = NULL, learn.d = FALSE, d.hyper = NULL, kappa = NULL,
-  mu0g = FALSE, psi0g = FALSE, delta0g = FALSE, mu.switch = TRUE,
-  score.switch = TRUE, load.switch = TRUE, psi.switch = TRUE,
-  pi.switch = TRUE)
+  ind.slice = TRUE, rho = NULL, IM.lab.sw = TRUE,
+  verbose = interactive(), discount = NULL, learn.d = FALSE,
+  d.hyper = NULL, kappa = NULL, mu0g = FALSE, psi0g = FALSE,
+  delta0g = FALSE, mu.switch = TRUE, score.switch = TRUE,
+  load.switch = TRUE, psi.switch = TRUE, pi.switch = TRUE)
 }
 \arguments{
 \item{dat}{A matrix or data frame such that rows correspond to observations (\code{N}) and columns correspond to variables (\code{P}). Non-numeric variables and rows with missing entries will be removed.}
@@ -109,7 +109,7 @@ mcmc_IMIFA(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA",
 
 \item{IM.lab.sw}{Logial indicating whether the two forced label switching moves are to be implemented (defaults to \code{TRUE}) when running one of the infinite mixture models, with Dirichlet process or Pitman-Yor process priors. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods.}
 
-\item{verbose}{Logical indicating whether to print output (e.g. run times) and a progress bar to the screen while the sampler runs (defaults to \code{TRUE}). If \code{FALSE}, warnings and error messages will still be printed to the screen, but everything else will be suppressed.}
+\item{verbose}{Logical indicating whether to print output (e.g. run times) and a progress bar to the screen while the sampler runs. By default is \code{TRUE} if the session is interactive, and \code{FALSE} otherwise. If \code{FALSE}, warnings and error messages will still be printed to the screen, but everything else will be suppressed.}
 
 \item{discount}{The discount parameter used when generalising the Dirichlet process to the Pitman-Yor process. Must lie in the interval [0, 1). If non-zero, \code{alpha} can be supplied greater than -discount. Defaults to 0. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods.}
 
