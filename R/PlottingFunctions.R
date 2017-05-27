@@ -143,6 +143,14 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
     sw.n  <- paste0(toupper(substring(plot.meth, 1, 1)), ".sw")
     m.sw[sw.n] <- TRUE
   }
+  if(param == "loadings" && any(Qs == 0)) {
+    llist <- vector("list", length(Qs))
+    Q0x   <- which(Qs    != 0)
+    x$Loadings$lmats     <- replace(llist, Q0x, x$Loadings$lmats)
+    x$Loadings$ci.load   <- replace(llist, Q0x, x$Loadings$ci.load)
+    x$Loadings$post.load <- replace(llist, Q0x, x$Loadings$post.load)
+    x$Loadings$var.load  <- replace(llist, Q0x, x$Loadings$var.load)
+  }
   z.miss  <- missing(zlabels)
   if(!z.miss) {
     z.nam <- gsub("[[:space:]]", "", deparse(substitute(zlabels)))
@@ -241,10 +249,10 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
     if(!is.element(method, c("FA", "IFA"))) {
       if(!is.element(g, Gseq))        stop("This g value was not used during simulation")
       Gs  <- g
-    } else if(g > 1)     {            message(paste0("Forced g=1 for the ", method, " method"))
+    } else if(g > 1)        {         message(paste0("Forced g=1 for the ", method, " method"))
       Gs  <- 1L
     }
-  } else if(!interactive())  {        stop("g must be supplied for non-interactive sessions")
+  } else if(!interactive()) {         stop("g must be supplied for non-interactive sessions")
   } else {
     Gs    <- Gseq
   }
@@ -617,9 +625,9 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           if(titles) {
             title(main=list(paste0("Posterior Mean", ifelse(!all.ind, " Scores ", " "), "Heatmap", ifelse(all(!all.ind, grp.ind), paste0(" - Group ", g), ""))))
             if(all.ind) {
-              axis(1, line=-0.5, tick=FALSE, at=if(Q.max != 1) { if(n.eta == 1) seq(0, 1, 1/(Q.max - 1)) else seq_len(Q.max) } else 0, labels=seq_len(Q.max))
+              axis(1, line=-0.5, tick=FALSE, at=seq_len(Q.max), labels=seq_len(Q.max))
             } else   {
-              axis(1, line=-0.5, tick=FALSE, at=if(Q.max != 1) { if(n.eta == 1) seq(0, 1, 1/(Q.max - 1)) else seq_len(Q.max) } else 0, labels=replace(seq_len(Q.max), Q, NA))
+              axis(1, line=-0.5, tick=FALSE, at=seq_len(Q.max), labels=replace(seq_len(Q.max), Q, NA))
               axis(1, line=-0.5, tick=FALSE, at=Q, labels=Q, cex.axis=1.5)
             }
             heat_legend(data=pxx, cols=hcols)
@@ -655,25 +663,31 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         plot.x <- x$Loadings$post.load
         if(g   == min(Gs)) {
          if(isTRUE(heat.map)) {
-          lxx  <- mat2cols(plot.x, cols=hcols, compare=G > 1, na.col=par()$bg)
+          if(any(Qs == 0)) {
+           lxx <- mat2cols(Filter(Negate(is.null), plot.x), cols=hcols, compare=G > 1, na.col=par()$bg)
+           lxx <- replace(llist, Q0x, lxx)
+          } else {
+           lxx <- mat2cols(plot.x, cols=hcols, compare=G > 1, na.col=par()$bg)
+          }
          }
-          pxx  <- range(sapply(x$Loadings$post.load, range))
-          cixx <- if(all(intervals, ci.sw[param], !heat.map)) { if(by.fac) range(sapply(x$Loadings$ci.load, function(x) range(x[,,ind[2]]))) else range(sapply(x$Loadings$ci.load, function(x) range(x[,ind[1],]))) }
+          pxx  <- range(sapply(Filter(Negate(is.null), plot.x), range))
+          cixx <- if(all(intervals, ci.sw[param], !heat.map)) { if(by.fac) range(sapply(Filter(Negate(is.null), x$Loadings$ci.load), function(x) range(x[,,ind[2]]))) else range(sapply(Filter(Negate(is.null), x$Loadings$ci.load), function(x) range(x[,ind[1],]))) }
         }
         if(isTRUE(heat.map))  {
           if(titles) par(mar=c(4.1, 4.1, 4.1, 4.1))
           plot_cols(if(G > 1) lxx[[g]] else lxx)
           if(titles) {
             title(main=list(paste0("Posterior Mean", ifelse(!all.ind, " Loadings ", " "), "Heatmap", ifelse(all(!all.ind, grp.ind), paste0(" - Group ", g), ""))))
-            axis(1, line=-0.5, tick=FALSE, at=if(Q != 1) seq_len(Q) else 0, labels=seq_len(Q))
+            axis(1, line=-0.5, tick=FALSE, at=seq_len(Q), labels=seq_len(Q))
             if(n.var < 100) {
-              axis(2, cex.axis=0.5, line=-0.5, tick=FALSE, las=1, at=if(Q > 1) seq_len(n.var) else seq(from=0, to=1, by=1/(n.var - 1)), labels=substring(var.names[n.var:1], 1, 10))
+              axis(2, cex.axis=0.5, line=-0.5, tick=FALSE, las=1, at=seq_len(n.var), labels=substring(var.names[n.var:1], 1, 10))
             }
             heat_legend(data=pxx, cols=hcols)
           }
           box(lwd=2)
           mtext(ifelse(Q > 1, "Factors", "Factor"), side=1, line=2)
         } else {
+          plot.x <- plot.x[[g]]
           if(ci.sw[param]) ci.x  <- x$Loadings$ci.load[[g]]
           if(!by.fac) {
            if(ci.sw[param]) ci.x <- as.matrix(ci.x[,ind[1],])
@@ -1229,7 +1243,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         mat    <- do.call(rbind, mat)
         spl    <- matrix(rep(seq_along(nr), nr), nrow=nrow(mat), ncol=uc, byrow=FALSE)
       } else                          stop("Matrices must have either the same number of rows or the same number of columns")
-    } else if(!is.matrix(mat))        stop("'mat' must be a matrix when 'comparse' is FALSE")
+    } else if(!is.matrix(mat))        stop("'mat' must be a matrix when 'compare' is FALSE")
     if(missing(cols))   {
       cols     <- viridis(30L, option="C")
       if(missing(breaks))   {

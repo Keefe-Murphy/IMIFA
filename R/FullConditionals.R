@@ -239,8 +239,6 @@
 #'
 #' @return Either a single rate hyperparameter or \code{ncol(covar)} variable specific hyperparameters.
 #' @export
-#' @importFrom matrixcalc "is.positive.semi.definite"
-#' @importFrom MASS "ginv"
 #'
 #' @seealso \code{\link{mcmc_IMIFA}}
 #' @references Fruwirth-Schnatter, S. and Lopes, H. F. (2010). Parsimonious Bayesian factor analysis when the number of factors is unknown, \emph{Technical Report}. The University of Chicago Booth School of Business.
@@ -259,14 +257,14 @@
 #' rate   <- psi_hyper(shape=3, covar=cov(olive_scaled), type="unconstrained")
 #' rate
     psi_hyper   <- function(shape, covar, type=c("unconstrained", "isotropic")) {
-      if(!all(is.positive.semi.definite(covar),
+      if(!all(is.posi_def(covar, semi=TRUE),
               is.symmetric(covar),
               is.double(covar)))           stop("Invalid covariance matrix supplied")
       if(any(!is.numeric(shape),
              length(shape) != 1))          stop("'shape' must be a single digit")
       inv.cov   <- try(base::solve(covar), silent=TRUE)
       if(inherits(inv.cov, "try-error"))  {
-        inv.cov <- ginv(covar)
+        inv.cov <- .moore_inv(covar)
       }
         unname((shape - 1)/switch(match.arg(type), unconstrained=diag(inv.cov),
                                   isotropic=rep(exp(mean(log(diag(inv.cov)))), ncol(covar))))
@@ -480,6 +478,36 @@
         return(list(rate2 = a.prob >= 0  || - rexp(1)  < a.prob, sw = sw))
     }
 
+  # Positive-(Semi)Definite Checker
+
+    #' Check Postive-(Semi)definiteness of a matrix
+    #'
+    #' Tests whether all eigenvalues of a symmetric matrix are positive (or strictly non-negative).
+    #' @param x A matrix, assumed to be real and symmetric.
+    #' @param tol Tolerance for singular values and for absolute eigenvalues - only those with values larger than tol are considered non-zero (default: tol = \code{max(dim(x))*max(E)*.Machine$double.eps}, where \code{E} is the vector of absolute eigenvalues).
+    #' @param semi Logical switch to test for positive-semidefiniteness when \code{TRUE} or positive-definiteness when \code{FALSE} (the default).
+    #'
+    #' @return A logical value (\code{TRUE} or \code{FALSE})
+    #' @export
+    #'
+    #' @examples
+    #' x <- cov(matrix(rnorm(100), nrow=10, ncol=10))
+    #' is.posi_def(x)
+    #' is.posi_def(x, semi=TRUE)
+    is.posi_def <- function(x, tol = NULL,   semi = FALSE)  {
+      if(!is.matrix(x)   &&
+         nrow(x) != ncol(x))               stop("argument x is not a square matrix")
+      if(!is.symmetric(x))                 stop("argument x is not a symmetric matrix")
+      if(!is.numeric(x))                   stop("argument x is not a numeric matrix")
+      eigs      <- eigen(x,  only.values = TRUE,  symmetric = TRUE)$values
+      abseigs   <- abs(eigs)
+      tol       <- if(missing(tol)) max(abseigs)  * nrow(x) * .Machine$double.eps else tol
+      if(length(tol) > 1 ||
+         !is.numeric(tol))                 stop("argument tol is not a single number")
+      test      <- replace(eigs, abseigs < tol, 0)
+        !any(if(isTRUE(semi)) test < 0 else test <= 0)
+    }
+
   # Length Checker
     .len_check  <- function(obj0g, switch0g, method, P, range.G, P.dim = TRUE) {
       V         <- ifelse(P.dim, P, 1L)
@@ -691,7 +719,7 @@
     }
 
   # Other Hidden Functions
-    .chol       <- function(x) tryCatch(chol(x), error=function(e) chol(make.positive.definite(x)))
+    .chol       <- function(x) tryCatch(chol(x), error=function(e) chol(.make_posdef(x)))
 
     .detach_pkg <- function(pkg, character.only = FALSE) {
       if(!character.only) {
@@ -724,7 +752,52 @@
         return(g)
     }
 
+   .make_posdef <- function(x, tol = NULL) {
+      if(!is.matrix(x)   &&
+        nrow(x) != ncol(x))                stop("argument x is not a square matrix")
+      if(!is.symmetric(x))                 stop("argument x is not a symmetric matrix")
+      if(!is.numeric(x))                   stop("argument x is not a numeric matrix")
+      d         <- nrow(x)
+      eigs      <- eigen(x, symmetric = TRUE)
+      eval      <- eigs$values
+      evec      <- eigs$vectors
+      tol       <- if(missing(tol)) max(abs(eval)) * d * .Machine$double.eps else tol
+        return(x + evec %*% tcrossprod(diag(pmax(0,  2 * tol - eval), d), evec))
+    }
+
+    .moore_inv  <- function(X, tol = sqrt(.Machine$double.eps)) {
+      if(length(dim(X)) > 2L ||
+         !(is.numeric(X)     ||
+           is.complex(X)))                 stop("'X' must be a numeric or complex matrix")
+      if(!is.matrix(X))    X <- as.matrix(X)
+      Xs        <- svd(X)
+      if(is.complex(X)) Xs$u <- Conj(Xs$u)
+      Posi      <- Xs$d > max(tol * Xs$d[1L], 0)
+      if(all(Posi))     {
+          Xs$v %*% (t(Xs$u)/Xs$d)
+      } else if(!any(Posi))   {
+          array(0, dim(X)[2L:1L])
+      } else {
+          Xs$v[,Posi,drop=FALSE] %*% (t(Xs$u[,Posi,drop=FALSE])/Xs$d[Posi])
+      }
+    }
+
     .power2     <- function(x) x * x
+
+    .Procrustes <- function(X, Xstar, translate = FALSE, dilate = FALSE) {
+      n         <- nrow(X)
+      p         <- ncol(X)
+      if(n      != nrow(Xstar))            stop("X and Xstar do not have the same number of rows")
+      if(p      != ncol(Xstar))            stop("X and Xstar do not have the same number of columns")
+      J         <- if(translate) diag(n) - matrix(1/n, n, n)                         else diag(n)
+      C         <- crossprod(Xstar, J) %*% X
+      svdX      <- svd(C)
+      R         <- tcrossprod(svdX$v, svdX$u)
+      s         <- if(dilate)    sum(diag(C %*% R))/sum(diag(crossprod(X, J) %*% X)) else 1
+      tt        <- if(translate) crossprod(Xstar - s * X %*% R, matrix(1, n, 1))/n   else 0
+      Xnew      <- s * X %*% R + if(translate) matrix(tt, n, p, byrow = TRUE)        else tt
+        return(c(list(X.new = Xnew), list(R = R), if(translate) list(tt = tt), if(dilate) list(s = s)))
+    }
 
     .which0     <- function(x) which(x == 0)
     #

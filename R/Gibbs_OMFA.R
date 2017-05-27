@@ -88,8 +88,8 @@
       psi.store[,,1]       <- 1/psi.inv
       pi.store[,1]         <- pi.prop
       z.store[,1]          <- z
-      sigma                <- lapply(Gseq, function(g) make.positive.definite(tcrossprod(lmat[,,g]) + diag(1/psi.inv[,g])))
-      log.probs            <- vapply(Gseq, function(g, Q=Q0s[g]) dmvn(data, mu[,g], if(Q) sigma[[g]] else sqrt(sigma[[g]]), log=TRUE, isChol=!Q) + log(pi.prop[g]), numeric(N))
+      sigma                <- lapply(Gseq, function(g) tcrossprod(lmat[,,g]) + diag(1/psi.inv[,g]))
+      log.probs            <- vapply(Gseq, function(g, Q=Q0[g]) { sigma <- if(Q) sigma[[g]] else sqrt(sigma[[g]]); dmvn(data, mu[,g], if(is.posi_def(sigma)) sigma else .make_posdef(sigma), log=TRUE, isChol=!Q) + log(pi.prop[g]) }, numeric(N))
       ll.store[1]          <- sum(gumbel_max(probs=log.probs, log.like=TRUE)$log.like)
       G.store[1]           <- G.non
     }
@@ -116,7 +116,7 @@
         sigma      <- lapply(Gseq, function(g) tcrossprod(lmat[,,g]) + diag(psi[,g]))
         log.check  <- capture.output(log.probs <- try(vapply(Gseq, function(g, Q=Q0s[g]) dmvn(data, mu[,g], if(Q) sigma[[g]] else sqrt(sigma[[g]]), log=TRUE, isChol=!Q) + log(pi.prop[g]), numeric(N)), silent=TRUE))
         if(inherits(log.probs, "try-error")) {
-         log.probs <- vapply(Gseq, function(g, Q=Q0s[g]) dmvn(data, mu[,g], if(Q) make.positive.definite(sigma[[g]]) else make.positive.definite(sqrt(sigma[[g]])), log=TRUE, isChol=!Q) + log(pi.prop[g]), numeric(N))
+         log.probs <- vapply(Gseq, function(g, Q=Q0[g]) { sigma <- if(Q) sigma[[g]] else sqrt(sigma[[g]]); dmvn(data, mu[,g], if(is.posi_def(sigma)) sigma else .make_posdef(sigma), log=TRUE, isChol=!Q) + log(pi.prop[g]) }, numeric(N))
         }
         z.res      <- gumbel_max(probs=log.probs, log.like=TRUE)
         z          <- z.res$z

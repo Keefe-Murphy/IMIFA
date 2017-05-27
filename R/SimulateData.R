@@ -12,7 +12,6 @@
 #'
 #' @return Invisibly returns a data.frame with \code{N} observations (rows) of \code{P} variables (columns). The true values of the parameters which generated these data are also stored.
 #' @export
-#' @importFrom corpcor "is.positive.definite" "make.positive.definite"
 #' @importFrom Rfast "is.symmetric"
 #'
 #' @author Keefe Murphy
@@ -93,8 +92,8 @@ sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(4L, G), pis = rep(
     covmat     <- provideDimnames(diag(psi.true) + switch(method, marginal=tcrossprod(l.true), 0), base=list(vnames))
     if(!all(is.symmetric(covmat),
             is.double(covmat)))           stop("Invalid covariance matrix")
-    if(!is.positive.definite(covmat)) {
-      covmat   <- make.positive.definite(covmat)
+    if(!is.posi_def(covmat)) {
+      covmat   <- .make_posdef(covmat)
     }
     sigma      <- if(any(Q.g > 0, method == "conditional")) .chol(covmat) else sqrt(covmat)
     means      <- matrix(mu.true, nrow=N.g, ncol=P, byrow=TRUE) + switch(method, conditional=tcrossprod(eta.true[true.zlab == g, seq_len(Q.g), drop=FALSE], l.true), 0)

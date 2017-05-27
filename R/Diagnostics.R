@@ -27,7 +27,6 @@
 #' @export
 #' @importFrom Rfast "med" "rowMaxs" "standardise" "colMaxs" "rowVars" "rowmeans" "Order" "cova" "Var"
 #' @importFrom abind "adrop"
-#' @importFrom MCMCpack "procrustes"
 #' @importFrom e1071 "matchClasses" "classAgreement"
 #' @importFrom mclust "classError"
 #' @importFrom matrixStats "rowMedians" "rowQuantiles"
@@ -623,7 +622,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     if(sw["l.sw"])    {
       for(p in store) {
         if(p    %in% eta.store) {
-          proc   <- MCMCpack::procrustes(X=as.matrix(lmat[,,p]), Xstar=l.temp)
+          proc   <- .Procrustes(X=as.matrix(lmat[,,p]), Xstar=l.temp)
           lmat[,,p]        <- proc$X.new
           if(sw["s.sw"])  {
             rot  <- proc$R
@@ -807,6 +806,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     ci.mu        <- Filter(Negate(is.null), lapply(result, "[[", "ci.mu"))
     means        <- list(mus = mus, post.mu = post.mu, var.mu = var.mu, ci.mu = ci.mu)
   }
+  sw["l.sw"]     <- attr(sims, "Switch")["l.sw"] && !all(Q == 0)
   if(sw["l.sw"])   {
     lmats        <- Filter(Negate(is.null), lapply(result, "[[", "loadings"))
     post.load    <- Filter(Negate(is.null), lapply(result, "[[", "post.load"))

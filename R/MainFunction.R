@@ -74,7 +74,6 @@
 #' @importFrom e1071 "matchClasses"
 #' @importFrom mvnfast "dmvn"
 #' @importFrom slam "as.simple_sparse_array" "as.simple_triplet_matrix"
-#' @importFrom corpcor "make.positive.definite"
 #' @importFrom mclust "Mclust" "mclustBIC"
 #' @importFrom utils "memory.limit"
 #'

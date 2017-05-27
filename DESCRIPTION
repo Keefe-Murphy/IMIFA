@@ -16,15 +16,11 @@ URL: https://cran.r-project.org/package=IMIFA
 BugReports: https://github.com/Keefe-Murphy/IMIFA
 Imports:
     abind,
-    corpcor,
     e1071,
     graphics,
     grDevices,
-    MASS,
-    matrixcalc,
     matrixStats,
     mclust,
-    MCMCpack,
     mvnfast,
     plotrix,
     Rfast,

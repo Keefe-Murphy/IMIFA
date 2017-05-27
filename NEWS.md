@@ -3,13 +3,16 @@ __Infinite Mixtures of Infinite Factor Analysers__
 ## Improvements
 * Posterior mean scores can now also be plotted in the form of a heat map (previously loadings only).  
   `load.meth` argument replaced by logical `heat.map` in `plot.Results_IMIFA`.
-* `mat2cols` gains `compare` argument to yield common palettes/breaks for heat maps of multiple matries:  
-  `plot_cols` function also fixed, and now unhidden.
+* `mat2cols` gains `compare` argument to yield common palettes/breaks for heat maps of multiple matrices:  
+  Associated `plot_cols` function also fixed, and now unhidden.
+* Removed certain dependencies with faster personal code: e.g. Procrustes rotation now quicker:  
+  `IMIFA` no longer depends on the `corpcor`, `gclus`, `MASS`, `matrixcalc`, or `MCMCpack` libraries.
   
 ## Bug Fixes 
 * Used `par()$bg` (i.e. default `"white"`) for plotting zero-valued entries of similarity matrix.
 * Range of data for labelling in `heat_legend` calculated correctly.
 * `mcmc_IMIFA`'s `verbose` argument now governs printing of `message` & `cat` calls, but not `stop` or `warning`.
+* Fixed storage and plotting of loadings, particularly when some but not all clusters have zero factors.
 * Added `NEWS.md` to build.
 
 # IMIFA v1.2.0 - (_2nd release [minor update]: 2017-05-09_)
