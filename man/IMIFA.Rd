@@ -39,7 +39,7 @@ Results obtained from get_IMIFA_Results are passed to this function with the typ
 
 \section{References}{
 
-Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, https://arxiv.org/abs/1701.07010
+Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, \href{https://arxiv.org/abs/1701.07010}{arXiv:1701.07010}
 }
 
 \section{See Also}{
@@ -51,5 +51,5 @@ Further details and examples are given in the associated vignette document:\cr
 \author{
 Keefe Murphy [aut, cre], Isobel Claire Gormley [ctb], Cinzia Viroli [ctb]
 
-Maintainer: Keefe Murphy <keefe.murphy@ucd.ie>
+Maintainer: Keefe Murphy - \href{keefe.murphy@ucd.ie}{<keefe.murphy@ucd.ie>}
 }
