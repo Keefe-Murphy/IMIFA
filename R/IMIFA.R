@@ -14,7 +14,7 @@
 #'
 #' Version: 1.2.1
 #'
-#' Date: 2017-05-09 (this version), 2017-02-02 (original release)
+#' Date: 2017-05-29 (this version), 2017-02-02 (original release)
 #'
 #' Licence: GPL (>=2)
 #'

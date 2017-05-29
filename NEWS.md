@@ -1,5 +1,7 @@
 __Infinite Mixtures of Infinite Factor Analysers__
-==================================================
+==================================================  
+
+# IMIFA v1.2.1 - (_3rd release [patch update]: 2017-05-29_)
 ## Improvements
 * Posterior mean scores can now also be plotted in the form of a heat map (previously loadings only).  
   `load.meth` argument replaced by logical `heat.map` in `plot.Results_IMIFA`.
