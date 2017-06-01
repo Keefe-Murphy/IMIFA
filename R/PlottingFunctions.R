@@ -79,7 +79,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
   defpar$new        <- FALSE
   mispal            <- missing(palette)
   if(mispal)             palette <- viridis(min(10, max(G, Q.max, 5)))
-  if(!all(.are_cols(cols=palette)))   stop("Supplied colour palette contains invalid colours")
+  if(!all(is.cols(cols=palette)))     stop("Supplied colour palette contains invalid colours")
   if(length(palette) < 5)             warning("Palette should contain 5 or more colours", call.=FALSE)
   if(length(transparency) != 1   &&
      any(!is.numeric(transparency),
@@ -424,13 +424,13 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         x.plot <- x$Means$mus[[g]]
         if(matx) {
           if(mispal) palette(viridis(n.var, alpha=transparency))
-          plot.x  <- apply(x.plot, 1, density)
+          plot.x  <- apply(x.plot, 1, density, bw="SJ")
           fitx    <- sapply(plot.x, "[[", "x")
           fity    <- sapply(plot.x, "[[", "y")
           matplot(fitx, fity, type="l", xlab="", ylab="", lty=1, col=seq_along(palette()))
           if(titles) title(main=list(paste0("Density", ifelse(all.ind, "", paste0(":\nMeans", ifelse(grp.ind, paste0(" - Group ", g), ""))))))
         } else   {
-          plot.d  <- density(x.plot[ind,])
+          plot.d  <- density(x.plot[ind,], bw="SJ")
           plot(plot.d, main="", ylab="")
           if(titles) title(main=list(paste0("Density", ifelse(all.ind, ":\n", paste0(":\nMeans - ", ifelse(grp.ind, paste0("Group ", g, " - "), ""))), var.names[ind], " Variable")))
           polygon(plot.d, col=grey, border=NA)
@@ -446,7 +446,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           if(mispal) palette(viridis(min(10, max(2, Q.max)), alpha=transparency))
         }
         if(matx) {
-          plot.x  <- apply(plot.x, 1, density)
+          plot.x  <- apply(plot.x, 1, density, bw="SJ")
           fitx    <- sapply(plot.x, "[[", "x")
           fity    <- sapply(plot.x, "[[", "y")
           matplot(fitx, fity, type="l", xlab="", ylab="", lty=1, col=seq_along(palette()))
@@ -456,7 +456,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
             if(titles) title(main=list(paste0("Density", ifelse(all.ind, ":\n", ":\nScores - "), "Observation ", obs.names[ind[1]])))
           }
         } else   {
-          plot.d  <- density(x.plot[ind[1],ind[2],])
+          plot.d  <- density(x.plot[ind[1],ind[2],], bw="SJ")
           plot(plot.d, main="", ylab="")
           if(titles) title(main=list(paste0("Density", ifelse(all.ind, ":\n", ":\nScores - "), "Observation ", obs.names[ind[1]], ", Factor ", ind[2])))
           polygon(plot.d, col=grey, border=NA)
@@ -472,7 +472,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           if(mispal) palette(viridis(min(10, max(2, Q)), alpha=transparency))
         }
         if(matx) {
-          plot.x  <- apply(plot.x, 1, density)
+          plot.x  <- apply(plot.x, 1, density, bw="SJ")
           fitx    <- sapply(plot.x, "[[", "x")
           fity    <- sapply(plot.x, "[[", "y")
           matplot(fitx, fity, type="l", xlab="", ylab="", lty=1, col=seq_along(palette()))
@@ -482,7 +482,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
             if(titles) title(main=list(paste0("Density", ifelse(all.ind, ":\n", paste0(":\nLoadings - ", ifelse(grp.ind, paste0("Group ", g, " - "), ""))), var.names[ind[1]], " Variable")))
           }
         } else   {
-          plot.d  <- density(x.plot[ind[1],ind[2],])
+          plot.d  <- density(x.plot[ind[1],ind[2],], bw="SJ")
           plot(plot.d, main="", ylab="")
           if(titles) title(main=list(paste0("Density", ifelse(all.ind, ":\n", paste0(":\nLoadings - ", ifelse(grp.ind, paste0("Group ", g, " - "), ""))), var.names[ind[1]], " Variable, Factor ", ind[2])))
           polygon(plot.d, col=grey, border=NA)
@@ -492,19 +492,13 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         x.plot <- x$Uniquenesses$psis[[g]]
         if(matx) {
           if(mispal) palette(viridis(n.var, alpha=transparency))
-          plot.x  <- apply(x.plot, 1, density)
-          h       <- sapply(plot.x, "[[", "bw")
-          w       <- lapply(seq_along(plot.x), function(d) 1/pnorm(0, mean=x.plot[d,], sd=h[d], lower.tail=FALSE))
-          plot.x  <- lapply(seq_along(plot.x), function(d) suppressWarnings(density(x.plot[d,], bw=h[d], kernel="gaussian", weights=w[[d]]/length(x.plot[d,]))))
+          plot.x  <- apply(x.plot, 1, .logdensity)
           fitx    <- sapply(plot.x, "[[", "x")
           fity    <- sapply(plot.x, "[[", "y")
           matplot(fitx, fity, type="l", xlab="", ylab="", lty=1, col=seq_along(palette()))
           if(titles) title(main=list(paste0("Density", ifelse(all.ind, "", paste0(":\nUniquenesses", ifelse(grp.ind, paste0(" - Group ", g), ""))))))
         } else   {
-          plot.d  <- density(x.plot[ind,])
-          h       <- plot.d$bw
-          w       <- 1/pnorm(0, mean=x.plot[ind,], sd=h, lower.tail=FALSE)
-          plot.d  <- suppressWarnings(density(x.plot[ind,], bw=h, kernel="gaussian", weights=w/length(x.plot[ind,])))
+          plot.d  <- .logdensity(x.plot[ind,])
           plot.d$y[plot.d$x < 0] <- 0
           plot(plot.d, main="", ylab="")
           if(titles) title(main=list(paste0("Density", ifelse(all.ind, ":\n", paste0(":\nUniquenesses - ", ifelse(grp.ind, paste0("Group ", g, " - "), ""))), var.names[ind], " Variable")))
@@ -515,14 +509,14 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         x.plot <- clust$pi.prop
         if(matx) {
           if(mispal) palette(viridis(G, alpha=transparency))
-          plot.x  <- lapply(seq_len(G), function(g, x=x.plot[g,]) .logitdensity(x[x > 0 & x < 1]))
+          plot.x  <- lapply(seq_len(G), function(g, x=x.plot[g,]) .logitdensity(x))
           fitx    <- sapply(plot.x, "[[", "x")
           fity    <- sapply(plot.x, "[[", "y")
           matplot(fitx, fity, type="l", ylab="", lty=1, col=seq_along(palette()), xlab="")
           if(titles) title(main=list(paste0("Density", ifelse(all.ind, "", paste0(":\nMixing Proportions")))))
         } else   {
           x.plot  <- x.plot[ind,]
-          fit     <- .logitdensity(x.plot[x.plot > 0 & x.plot < 1])
+          fit     <- .logitdensity(x.plot)
           fitx    <- fit$x
           fity    <- fit$y
           plot(fitx, fity, type="l", main="", ylab="", xlab="")
@@ -532,11 +526,8 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
       }
       if(param == "alpha") {
         plot.x <- clust$DP.alpha
-        plot.d <- density(plot.x$alpha)
-        h      <- plot.d$bw
         tr     <- ifelse(attr(x, "Pitman"), - max(clust$PY.disc$discount, 0), 0)
-        w      <- 1/pnorm(tr, mean=plot.x$alpha, sd=h, lower.tail=FALSE)
-        plot.d <- suppressWarnings(density(plot.x$alpha, bw=h, kernel="gaussian", weights=w/length(plot.x$alpha)))
+        plot.d <- .logdensity(plot.x$alpha, left=tr)
         plot.d$y[plot.d$x < tr]  <- 0
         plot(plot.d, main="", ylab="")
         if(titles) title(main=list(paste0("Density", ifelse(all.ind, "", paste0(":\nAlpha")))))
@@ -550,7 +541,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
       if(param == "discount") {
         plot.x <- clust$PY.disc
         x.plot <- as.vector(plot.x$discount)
-        fit    <- .logitdensity(x.plot[x.plot > 0])
+        fit    <- .logitdensity(x.plot)
         fitx   <- fit$x
         fity   <- fit$y * (1 - plot.x$post.kappa)
         plot(fitx, fity, type="l", main="", xlab="", ylab="", xlim=c(0, max(fitx)))
@@ -1194,7 +1185,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
 #' @export
 #' @importFrom viridis "viridis"
 #'
-#' @seealso \code{\link{plot_cols}}, \code{\link{heat_legend}}
+#' @seealso \code{\link{plot_cols}}, \code{\link{heat_legend}}, \code{\link{is.cols}}
 #'
 #' @examples
 #' # Generate a colour matrix using mat2cols()
@@ -1250,7 +1241,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         breaks <- length(cols)
       }
     }
-    if(!all(.are_cols(cols)))         stop("Invalid colours supplied")
+    if(!all(is.cols(cols)))           stop("Invalid colours supplied")
     if(any(!is.logical(byrank),
            length(byrank)  != 1))     stop("'byrank' must be TRUE or FALSE")
     if(any(!is.numeric(breaks),
@@ -1261,7 +1252,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
     NM         <- is.na(mat)
     if(any(NM)) {
       if(length(na.col     != 1)  &&
-         !.are_cols(na.col))          stop("'na.col' must be a valid colour in the presence of missing data")
+         !is.cols(na.col))            stop("'na.col' must be a valid colour in the presence of missing data")
       answer   <- replace(answer, NM, na.col)
     }
     rownames(answer)       <- rownames(mat)
@@ -1274,8 +1265,22 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
   }
 
 # Colour Checker
-  .are_cols    <- function(cols) {
-    vapply(cols,  function(x) { tryCatch(is.matrix(col2rgb(x)), error = function(e) FALSE) }, logical(1L))
+#' Check for Valid Colours
+#'
+#' Checks if the supplied vector contains valid colours.
+#' @param cols A vector of colours, usually as a character string.
+#'
+#' @return A logical vector of length \code{length(cols)} which is \code{TRUE} for entries which are valid colours and \code{FALSE} otherwise.
+#' @export
+#'
+#' @examples
+#' all(is.cols(1:5))
+#'
+#' all(is.cols(heat.colors(30)))
+#'
+#' any(!is.cols(c("red", "green", "aquamarine")))
+  is.cols      <- function(cols) {
+    vapply(cols,  function(x)    { tryCatch(is.matrix(col2rgb(x)), error = function(e) FALSE) }, logical(1L))
   }
 
 # Heatmap Legends
@@ -1288,7 +1293,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
 #' @return Modifies an existing plot by adding a legend.
 #' @export
 #'
-#' @seealso \code{\link[graphics]{image}}, \code{\link{plot_cols}}, \code{\link{mat2cols}}
+#' @seealso \code{\link[graphics]{image}}, \code{\link{plot_cols}}, \code{\link{mat2cols}}, \code{\link{is.cols}}
 #' @examples
 #' # Generate a matrix, flip it, and plot it with a legend
 #' data <- matrix(rnorm(50), nrow=10, ncol=5)
@@ -1422,7 +1427,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
 #' @return Either an \code{"image"} or \code{"points"} plot of the supplied colours.
 #' @export
 #'
-#' @seealso \code{\link{mat2cols}}, \code{\link[graphics]{image}}
+#' @seealso \code{\link{mat2cols}}, \code{\link[graphics]{image}}, \code{\link{heat_legend}}, \code{\link{is.cols}}
 #'
 #' @examples
 #' # Generate a colour matrix using mat2cols()
@@ -1440,11 +1445,11 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
 #' heat_legend(mat, cols=cols); box(lwd=2)
   plot_cols    <- function(cmat, na.col = "#808080FF", ptype = c("image", "points"), border.col = "#808080FF",
                            dlabels = NULL, rlabels = FALSE, clabels = FALSE, pch = 15, cex = 3, label.cex = 0.6, ...) {
-    if(!all(.are_cols(cmat),
+    if(!all(is.cols(cmat),
             is.matrix(cmat)))         stop("'cmat' needs to be a valid colour matrix:\ntry supplying a vector as a matrix with 1 row or column, as appropriate")
-    if(!all(.are_cols(na.col),
+    if(!all(is.cols(na.col),
             length(na.col)     == 1)) stop("'na.col' needs to a valid single colour")
-    if(!all(.are_cols(border.col),
+    if(!all(is.cols(border.col),
             length(border.col) == 1)) stop("'border.col' needs to a valid single colour")
     ptype      <- match.arg(ptype)
     N          <- nrow(cmat)

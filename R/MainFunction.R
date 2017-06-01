@@ -301,7 +301,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
           alpha.hyper     <- if(learn.alpha) c(2L, 1L) else c(0L, 0L)
         }
         if(all(discount    > 0, !learn.d)) {
-          alpha.hyper     <- unname(unlist(.shift_GA(shape=alpha.hyper[1], rate=alpha.hyper[2], shift=discount)))
+          alpha.hyper     <- unname(unlist(shift_GA(shape=alpha.hyper[1], rate=alpha.hyper[2], shift=-discount)))
         }
         if(missing(zeta)) {
           zeta     <- 2
@@ -436,7 +436,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(epsilon <= 0 ||
        epsilon >= 1)                stop("'epsilon' must be lie in the interval (0, 1)")
   }
-  Q.warn       <- .ledermann(N=N, P=P)
+  Q.warn       <- min(N - 1, Ledermann(P))
   if(any(range.Q > Q.warn))   {
     if(all(is.element(method, c("IFA", "MIFA", "OMIFA", "IMIFA")),
        isTRUE(adapt)))        {     warning(paste0("Starting value for number of factors is greater than ", ifelse(any(range.Q > P), paste0("the number of variables (", P, ")"), paste0("the suggested Ledermann upper bound (", Q.warn, ")"))), call.=FALSE)

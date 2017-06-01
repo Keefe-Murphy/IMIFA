@@ -4,7 +4,7 @@
 \alias{is.posi_def}
 \title{Check Postive-(Semi)definiteness of a matrix}
 \usage{
-is.posi_def(x, tol = NULL, semi = FALSE)
+is.posi_def(x, tol = NULL, semi = FALSE, make = FALSE)
 }
 \arguments{
 \item{x}{A matrix, assumed to be real and symmetric.}
@@ -12,15 +12,26 @@ is.posi_def(x, tol = NULL, semi = FALSE)
 \item{tol}{Tolerance for singular values and for absolute eigenvalues - only those with values larger than tol are considered non-zero (default: tol = \code{max(dim(x))*max(E)*.Machine$double.eps}, where \code{E} is the vector of absolute eigenvalues).}
 
 \item{semi}{Logical switch to test for positive-semidefiniteness when \code{TRUE} or positive-definiteness when \code{FALSE} (the default).}
+
+\item{make}{Logical switch to return the nearest matrix which satisifies the test - if the test has been passed, this is of course just \code{x} itself, otherwise the nearest positive-(semi)definite matrix. Note that for reasons due to finite precision arithmetic, finding the nearest positive-definite and nearest positive-semidefinite matrices are effectively equivalent tasks.}
 }
 \value{
-A logical value (\code{TRUE} or \code{FALSE})
+If \code{isTRUE(make)}, a list with two components:
+\describe{
+\item{check}{A logical value indicating whether the matrix satisfies the test.}
+\item{X.new}{The nearest matrix which satisfies the test (which may just be the input matrix itself.)}
+}
+Otherwise, only the logical value indicating whether the matrix satisfies the test is returned.
 }
 \description{
-Tests whether all eigenvalues of a symmetric matrix are positive (or strictly non-negative).
+Tests whether all eigenvalues of a symmetric matrix are positive (or strictly non-negative) to check for positive-definiteness and positive-semidefiniteness, respectively. If the supplied matrix doesn't satisfy the test, the nearest matrix which does can optionally be returned.
 }
 \examples{
-x <- cov(matrix(rnorm(100), nrow=10, ncol=10))
+x    <- cov(matrix(rnorm(100), nrow=10, ncol=10))
 is.posi_def(x)
 is.posi_def(x, semi=TRUE)
+
+Xnew <- is.posi_def(x, semi=FALSE, make=TRUE)$X.new
+identical(x, Xnew)
+identical(x, is.posi_def(x, semi=TRUE, make=TRUE)$X.new)
 }

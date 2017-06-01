@@ -60,5 +60,5 @@ plot_cols(mat2cols(mat2, cols=cols)); heat_legend(range(mats), cols=cols); box(l
 plot_cols(mat2cols(mat3, cols=cols)); heat_legend(range(mats), cols=cols); box(lwd=2)
 }
 \seealso{
-\code{\link{plot_cols}}, \code{\link{heat_legend}}
+\code{\link{plot_cols}}, \code{\link{heat_legend}}, \code{\link{is.cols}}
 }

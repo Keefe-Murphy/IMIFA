@@ -43,7 +43,7 @@
     eta          <- .sim_eta_p(Q=Q, N=N)
     lmat         <- .sim_load_p(Q=Q, P=P, sigma.l=sigma.l)
     psi.inv      <- .sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
-    if(all(Q0, Q  < .ledermann(N, P))) {
+    if(all(Q0, Q  < min(N - 1, Ledermann(P)))) {
       fact       <- try(factanal(data, factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
       if(!inherits(fact, "try-error")) {
         eta      <- fact$scores

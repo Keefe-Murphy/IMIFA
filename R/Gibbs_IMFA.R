@@ -75,8 +75,8 @@
     eta              <- .sim_eta_p(N=N, Q=Q)
     lmat             <- lapply(Ts, function(t) .sim_load_p(Q=Q, P=P, sigma.l=sigma.l))
     psi.inv          <- vapply(Ts, function(t) .sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), numeric(P))
-    if(Q0 && Q   < .ledermann(N, P)) {
-      for(g in which(nn       > P))  {
+    if(Q0 &&   Q      < min(N - 1, Ledermann(P))) {
+      for(g in which(nn       > P)) {
         fact         <- try(factanal(data[z == g,, drop=FALSE], factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
         if(!inherits(fact, "try-error")) {
           eta[z == g,]       <- fact$scores
@@ -116,7 +116,7 @@
       pi.store[,1]           <- pi.prop
       z.store[,1]            <- z
       sigma                  <- lapply(Gs, function(g) tcrossprod(lmat[,,g]) + diag(1/psi.inv[,g]))
-      log.probs              <- vapply(Gs, function(g, Q=Q0[g]) { sigma <- if(Q) sigma[[g]] else sqrt(sigma[[g]]); dmvn(data, mu[,g], if(is.posi_def(sigma)) sigma else .make_posdef(sigma), log=TRUE, isChol=!Q) + log(pi.prop[g]) }, numeric(N))
+      log.probs              <- vapply(Gs, function(g, Q=Q0[g]) { sigma <- if(Q) sigma[[g]] else sqrt(sigma[[g]]); dmvn(data, mu[,g], is.posi_def(sigma, make=TRUE)$X.new, log=TRUE, isChol=!Q) + log(pi.prop[g]) }, numeric(N))
       ll.store[1]            <- sum(gumbel_max(probs=log.probs, log.like=TRUE)$log.like)
       G.store[1]             <- G.non
       act.store[1]           <- G
@@ -203,7 +203,7 @@
         log.pis      <- if(ind.slice)  log(pi.prop)  else log.ksi
         log.check    <- capture.output(log.probs  <- try(vapply(Gs, function(g, Q=Q0s[g]) dmvn(data, mu[,g], if(Q) sigma[[g]] else sqrt(sigma[[g]]), log=TRUE, isChol=!Q) + log.pis[g], numeric(N)), silent=TRUE))
         if(inherits(log.probs, "try-error")) {
-          log.probs  <- vapply(Gs, function(g, Q=Q0[g]) { sigma <- if(Q) sigma[[g]] else sqrt(sigma[[g]]); dmvn(data, mu[,g], if(is.posi_def(sigma)) sigma else .make_posdef(sigma), log=TRUE, isChol=!Q) + log.pis[g] }, numeric(N))
+          log.probs  <- vapply(Gs, function(g, Q=Q0[g]) { sigma <- if(Q) sigma[[g]] else sqrt(sigma[[g]]); dmvn(data, mu[,g], is.posi_def(sigma, make=TRUE)$X.new, log=TRUE, isChol=!Q) + log.pis[g] }, numeric(N))
         }
         z.res        <- gumbel_max(probs=log.probs + log.slice.ind, log.like=TRUE, slice=TRUE)
         z            <- z.res$z

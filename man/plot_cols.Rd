@@ -53,5 +53,5 @@ plot_cols(matcol)
 heat_legend(mat, cols=cols); box(lwd=2)
 }
 \seealso{
-\code{\link{mat2cols}}, \code{\link[graphics]{image}}
+\code{\link{mat2cols}}, \code{\link[graphics]{image}}, \code{\link{heat_legend}}, \code{\link{is.cols}}
 }

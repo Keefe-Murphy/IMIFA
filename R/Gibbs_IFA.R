@@ -48,7 +48,7 @@
     tau          <- cumprod(delta)
     lmat         <- matrix(unlist(lapply(Pseq, function(j) .sim_load_ps(Q=Q, phi=phi[j,], tau=tau)), use.names=FALSE), nrow=P, byrow=TRUE)
     psi.inv      <- .sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
-    if(all(Q      < .ledermann(N, P))) {
+    if(all(Q      < min(N - 1, Ledermann(P)))) {
       fact       <- try(factanal(data, factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
       if(!inherits(fact, "try-error")) {
         eta      <- fact$scores

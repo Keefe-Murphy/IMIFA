@@ -1,6 +1,15 @@
 __Infinite Mixtures of Infinite Factor Analysers__
 ==================================================  
 
+## Improvements
+* Previously hidden functions improved, exported & documented:  
+  `is.cols`, `Ledermann`, `Procrustes` & `shift_GA`.
+* `is.posi_def` gains `make` argument, merging it with previously hidden function `.make_posdef`:  
+  Thus the 'nearest' positive-(semi)definite matrix and the usual check can be returned in a single call.
+  
+## Bug Fixes
+* Used `bw="SJ"` everywhere `density` is invoked for plotting.
+
 # IMIFA v1.2.1 - (_3rd release [patch update]: 2017-05-29_)
 ## Improvements
 * Posterior mean scores can now also be plotted in the form of a heat map (previously loadings only).  
