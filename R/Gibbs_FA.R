@@ -37,7 +37,7 @@
     cov.est      <- matrix(0L, nrow=P, ncol=P)
 
     mu.sigma     <- 1/sigma.mu
-    .sim_psi_inv <- switch(uni.type,  unconstrained=.sim_psi_iu,  isotropic=.sim_psi_ii)
+    .sim_psi_inv <- switch(uni.type,  unconstrained=.sim_psi_uuu, isotropic=.sim_psi_uuc)
     .sim_psi_ip  <- switch(uni.type,  unconstrained=.sim_psi_ipu, isotropic=.sim_psi_ipi)
     psi.beta     <- switch(uni.prior, isotropic=unique(round(psi.beta, min(nchar(psi.beta)))), psi.beta)
     eta          <- .sim_eta_p(Q=Q, N=N)
@@ -52,7 +52,7 @@
       }
     } else {
       psi.tmp    <- psi.inv
-      psi.inv    <- switch(uni.type, unconstrained=1/Rfast::colVars(data), 1/exp(mean(log(Rfast::colVars(data)))))
+      psi.inv    <- switch(uni.type, unconstrained=1/Rfast::colVars(data), rep(1/exp(mean(log(Rfast::colVars(data)))), P))
       inf.ind    <- is.infinite(psi.inv)
       psi.inv[inf.ind]     <- psi.tmp[inf.ind]
     }

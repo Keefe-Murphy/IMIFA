@@ -276,14 +276,15 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
       tmp.G        <- as.integer(min(N - 1, max(25, ceiling(3 * lnN))))
       if(G.x)   {
         range.G    <- G.init <- tmp.G
-        if(NlP) {
-          if(verbose)               message(paste0("Since N < P, the sampler will be initialised with a different default of ceiling(log(N)) = ", lnN2, " groups (unless 'range.G' is supplied)"))
+        if(NlP) {     if(verbose)   message(paste0("Since N < P, the sampler will be initialised with a different default of ceiling(log(N)) = ", lnN2, " groups (unless 'range.G' is supplied)"))
           G.init   <- max(2, lnN2)
         }
       }
-      if(all(!G.x, NlP))  {
+      if(!G.x)  {
         G.init     <- range.G
-        range.G    <- tmp.G
+        if(NlP) {
+          range.G  <- tmp.G
+        }
       }
       if(range.G    < lnN2)         warning(paste0("'range.G' should be at least log(N) (=log(", N, "))", " for the ", method, " method"), call.=FALSE)
       if(is.element(method, c("IMFA", "IMIFA"))) {
@@ -340,9 +341,9 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
       if(all(verbose, !G.x) && any(length(range.G > 1),
           range.G  != levs))   {    message("Forced 'range.G' equal to the number of levels in 'zlabels' for the 'classify' method")
       }
-      range.G      <- levs
+     G.init <- range.G    <- levs
     } else {
-      range.G      <- 1L
+     G.init <- range.G    <- 1L
     }
     meth    <- method
   } else {

@@ -68,7 +68,7 @@
     sig.mu.sqrt      <- sqrt(sigma.mu)
     z                <- cluster$z
     pi.alpha         <- cluster$pi.alpha
-    .sim_psi_inv     <- switch(uni.type,  unconstrained=.sim_psi_iu,  isotropic=.sim_psi_ii)
+    .sim_psi_inv     <- switch(uni.type,  unconstrained=.sim_psi_uuu, isotropic=.sim_psi_uuc)
     .sim_psi_ip      <- switch(uni.type,  unconstrained=.sim_psi_ipu, isotropic=.sim_psi_ipi)
     psi.beta         <- switch(uni.prior, isotropic=unique(round(psi.beta, min(nchar(psi.beta)))), psi.beta)
     pi.prop          <- cluster$pi.prop
@@ -234,9 +234,9 @@
     # Scores & Loadings
       c.data         <- lapply(Gs, function(g) sweep(dat.g[[g]], 2, mu[,g], FUN="-"))
       if(!any(Q0))    {
-        eta          <- base::matrix(0L, nrow=N, ncol=0)
         eta.tmp      <- lapply(Gs, function(g) eta[z == g,, drop=FALSE])
-        lmat[Gs]     <- lapply(Gs, base::matrix, 0L, nrow=P, ncol=0)
+        eta          <- .empty_mat(N)
+        lmat[Gs]     <- lapply(Gs, .empty_mat, P)
       } else {
         eta.tmp      <- lapply(Gs, function(g) if(all(nn0[g], Q0[g])) .sim_score(N=nn[g], lmat=lmat[[g]], Q=Qs[g], Q1=Q1[g], c.data=c.data[[g]], psi.inv=psi.inv[,g]) else base::matrix(0, nrow=ifelse(Q0[g], 0, nn[g]), ncol=Qs[g]))
         EtE          <- lapply(Gs, function(g) if(nn0[g]) crossprod(eta.tmp[[g]]))
@@ -315,7 +315,7 @@
                 delta[[t]]    <- delta[[t]][Qmaxseq]
                 tau[[t]]      <- tau[[t]][Qmaxseq]
                 lmat[[t]]     <- lmat[[t]][,Qmaxseq, drop=FALSE]
-              } else {
+              } else  {
                 while(Qt  != Qmax)  {
                  phi[[t]]     <- cbind(phi[[t]],     rgamma(n=P, shape=nu + nuplus1, rate=nu))
                  delta[[t]]   <- c(delta[[t]],       rgamma(n=1, shape=alpha.d2, rate=beta.d2))

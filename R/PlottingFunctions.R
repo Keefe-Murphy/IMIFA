@@ -110,7 +110,6 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
      c("G", "Q",
        "QG")))  {      plot.meth <- "GQ"
   }
-  uni.type     <- unname(attr(x, "Uni.Meth")['Uni.Type'])
   plot.meth    <- match.arg(plot.meth)
   if(!is.element(plot.meth, c("errors", "GQ", "zlabels")) &&
      missing(param))                  stop("'param' not supplied:\nWhat variable would you like to plot?")
@@ -150,6 +149,10 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
     x$Loadings$ci.load   <- replace(llist, Q0x, x$Loadings$ci.load)
     x$Loadings$post.load <- replace(llist, Q0x, x$Loadings$post.load)
     x$Loadings$var.load  <- replace(llist, Q0x, x$Loadings$var.load)
+  }
+  if(param == "uniquenesses") {
+    uni.type             <- unname(attr(x, "Uni.Meth")['Uni.Type'])
+    mat    <- switch(uni.type, unconstrained=mat, FALSE)
   }
   z.miss  <- missing(zlabels)
   if(!z.miss) {
@@ -376,7 +379,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           if(titles) title(main=list(paste0("Trace", ifelse(all.ind, "", paste0(":\nUniquenesses", ifelse(grp.ind, paste0(" - Group ", g), ""))))))
         } else   {
           plot(x=iter, y=plot.x[ind,], ylab="", type="l", xlab="Iteration")
-          if(titles) title(main=list(paste0("Trace", ifelse(all.ind, ":\n", paste0(":\nUniqueness - ", ifelse(grp.ind, paste0("Group ", g, " - "), ""))), var.names[ind], " Variable")))
+          if(titles) title(main=list(paste0("Trace", ifelse(all.ind, switch(uni.type, unconstrained=paste0(":\n"), ""), paste0(":\nUniquenesses - ", ifelse(grp.ind, paste0("Group ", g, " - "), ""))), switch(uni.type, unconstrained=paste0(var.names[ind], " Variable"), ""))))
         }
       }
       if(param == "pis") {
@@ -501,7 +504,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           plot.d  <- .logdensity(x.plot[ind,])
           plot.d$y[plot.d$x < 0] <- 0
           plot(plot.d, main="", ylab="")
-          if(titles) title(main=list(paste0("Density", ifelse(all.ind, ":\n", paste0(":\nUniquenesses - ", ifelse(grp.ind, paste0("Group ", g, " - "), ""))), var.names[ind], " Variable")))
+          if(titles) title(main=list(paste0("Density", ifelse(all.ind, switch(uni.type, unconstrained=paste0(":\n"), ""), paste0(":\nUniquenesses - ", ifelse(grp.ind, paste0("Group ", g, " - "), ""))), switch(uni.type, unconstrained=paste0(var.names[ind], " Variable"), ""))))
           polygon(plot.d, col=grey, border=NA)
         }
       }
@@ -658,7 +661,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
            lxx <- mat2cols(Filter(Negate(is.null), plot.x), cols=hcols, compare=G > 1, na.col=par()$bg)
            lxx <- replace(llist, Q0x, lxx)
           } else {
-           lxx <- mat2cols(plot.x, cols=hcols, compare=G > 1, na.col=par()$bg)
+           lxx <- mat2cols(if(G > 1) plot.x else plot.x[[g]], cols=hcols, compare=G > 1, na.col=par()$bg)
           }
          }
           pxx  <- range(sapply(Filter(Negate(is.null), plot.x), range))
@@ -1011,7 +1014,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
     if(m.sw["P.sw"]) {
       plot.x <- switch(param, means=x$Means$post.mu, uniquenesses=x$Uniquenesses$post.psi, x$Loadings$post.load[[g]])
       x.plot <- apply(plot.x, 1L, range, na.rm=TRUE)
-      plot.x <- if(all(param == "uniquenesses", uni.type == "isotropic")) plot.x else apply(plot.x, 2L, function(x) (x - min(x, na.rm=TRUE))/(max(x, na.rm=TRUE) - min(x, na.rm=TRUE)))
+      plot.x <- if(param == "uniquenesses" && uni.type == "isotropic") plot.x else apply(plot.x, 2L, function(x) (x - min(x, na.rm=TRUE))/(max(x, na.rm=TRUE) - min(x, na.rm=TRUE)))
       varnam <- paste0(toupper(substr(param, 1, 1)), substr(param, 2, nchar(param)))
       if(any(grp.ind, param == "loadings")) {
         if(mispal) palette(viridis(max(Q, 2), alpha=transparency))
@@ -1020,7 +1023,8 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
       }
       jitcol <- switch(param, loadings=Q, G)
       matplot(seq_len(n.var) + matrix(rnorm(jitcol * n.var, 0, min(0.1, 1/n.var^2)), nrow=n.var, ncol=jitcol), plot.x, type=switch(param, uniquenesses=switch(uni.type, unconstrained="p", isotropic="l"), "p"),
-                        col=switch(param, loadings=seq_len(Q), seq_len(G)), pch=15, xlab="Variable", ylab=paste0("Standardised ", varnam), axes=FALSE, main=paste0("Parallel Coordinates: ", varnam, ifelse(all(grp.ind, param == "loadings"), paste0("\n Group ", g), "")), lty=1)
+                        col=switch(param, loadings=seq_len(Q), seq_len(G)), pch=15, xlab="Variable", ylab=paste0("Standardised ", varnam), xaxt="n", bty="n", yaxt=ifelse(param == "uniquenesses" && uni.type == "isotropic", "s", "n"),
+                        main=paste0("Parallel Coordinates: ", varnam, ifelse(all(grp.ind, param == "loadings"), paste0("\n Group ", g), "")), lty=1)
       axis(1, at=seq_len(n.var), labels=if(titles && n.var < 100) rownames(plot.x) else rep("", n.var), cex.axis=0.5, tick=FALSE)
       for(i in seq_len(n.var))    {
         lines(c(i, i), c(0, 1), col=grey)
@@ -1125,12 +1129,12 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         plot.x <- x$Uniquenesses$psis[[g]]
         if(!partial) {
           acf(plot.x[ind,], main="", ci.col=4, ylab="")
-          if(titles) title(main=list(paste0("ACF", ifelse(all.ind, paste0(":\n", var.names[ind], " Variable"), ""))))
+          if(titles) title(main=list(paste0("ACF",  ifelse(all.ind, switch(uni.type, unconstrained=paste0(":\n", var.names[ind], " Variable"), ""), ""))))
         }
         if(any(!all.ind, partial)) {
           acf(plot.x[ind,], main="", type="partial", ci.col=4, ylab="")
-          if(titles) title(main=list(paste0("PACF", ifelse(partial, paste0(":\n", var.names[ind], " Variable"), ""))))
-          if(all(!all.ind, titles)) title(main=list(paste0("Uniquenesses - ", ifelse(grp.ind, paste0("Group ", g, ":\n "), ""), var.names[ind], " Variable")), outer=TRUE)
+          if(titles) title(main=list(paste0("PACF", ifelse(partial, switch(uni.type, unconstrained=paste0(":\n", var.names[ind], " Variable"), ""), ""))))
+          if(all(!all.ind, titles)) title(main=list(paste0("Uniquenesses - ", ifelse(grp.ind, paste0("Group ", g, ":\n "), ""), switch(uni.type, unconstrained=paste0(var.names[ind], " Variable"), ""))), outer=TRUE)
         }
       }
       if(param == "pis")  {

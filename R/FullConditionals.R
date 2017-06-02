@@ -35,12 +35,12 @@
     }
 
   # Uniquenesses
-    .sim_psi_iu  <- function(N, P, psi.alpha, psi.beta, c.data, eta, lmat) {
+    .sim_psi_uuu <- function(N, P, psi.alpha, psi.beta, c.data, eta, lmat) {
       S.mat      <- c.data - tcrossprod(eta, lmat)
         rgamma(P, shape=N/2 + psi.alpha, rate=colSums(S.mat * S.mat)/2 + psi.beta)
     }
 
-    .sim_psi_ii  <- function(N, P, psi.alpha, psi.beta, c.data, eta, lmat) {
+    .sim_psi_uuc <- function(N, P, psi.alpha, psi.beta, c.data, eta, lmat) {
       S.mat      <- c.data - tcrossprod(eta, lmat)
         rep(rgamma(1, shape=(N * P)/2 + psi.alpha, rate=sum(S.mat * S.mat)/2 + psi.beta), P)
     }
@@ -855,18 +855,19 @@
       eigs      <- eigen(x, symmetric = TRUE)
       eval      <- eigs$values
       evec      <- eigs$vectors
-        return(chol(x + evec %*% tcrossprod(diag(pmax(0,  2 * max(abs(eval)) * d * .Machine$double.eps - eval), d), evec)))
+        return(chol(x + evec %*% tcrossprod(diag(pmax(0, 2 * max(abs(eval)) * d * .Machine$double.eps - eval), d), evec)))
       }
     )
 
     .detach_pkg <- function(pkg, character.only = FALSE) {
-      if(!character.only) {
-        pkg     <- deparse(substitute(pkg))
-      }
-      searches  <- paste("package", pkg, sep=":")
+      searches  <- paste("package", if(!character.only) deparse(substitute(pkg)) else pkg, sep=":")
       while(searches %in% search()) {
         detach(searches, unload=TRUE, character.only=TRUE)
       }
+    }
+
+    .empty_mat <- function(nr) {
+      base::matrix(0L, nrow=nr, ncol=0)
     }
 
     .ent_exit  <- function(opts = options()) {

@@ -9,6 +9,10 @@ __Infinite Mixtures of Infinite Factor Analysers__
   
 ## Bug Fixes
 * Used `bw="SJ"` everywhere `density` is invoked for plotting.
+* Fixed initialisation of uniquenesses for isotropic (I)FA models.
+* Fixed parallel coordinates plot axes and labels for all isotropic uniquenesses plots.
+* Fixed silly error re: way in which (I)FA models are treated as 1-cluster models to ensure they run:  
+  Related bug fixed for OM(I)FA/IM(I)FA models when starting number of groups is actually supplied.
 
 # IMIFA v1.2.1 - (_3rd release [patch update]: 2017-05-29_)
 ## Improvements

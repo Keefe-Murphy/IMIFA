@@ -48,7 +48,7 @@
     nn             <- tabulate(z, nbins=G)
     nn.ind         <- which(nn > 0)
     pi.alpha       <- cluster$pi.alpha
-    .sim_psi_inv   <- switch(uni.type, unconstrained=.sim_psi_iu,  isotropic=.sim_psi_ii)
+    .sim_psi_inv   <- switch(uni.type, unconstrained=.sim_psi_uuu, isotropic=.sim_psi_uuc)
     .sim_psi_ip    <- switch(uni.type, unconstrained=.sim_psi_ipu, isotropic=.sim_psi_ipi)
     psi.beta       <- switch(uni.prior, isotropic=unique(round(psi.beta, min(nchar(psi.beta)))), psi.beta)
     pi.prop        <- c(cluster$pi.prop, rep(0, G - length(cluster$pi.prop)))
