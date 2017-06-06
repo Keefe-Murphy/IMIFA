@@ -101,7 +101,7 @@
       storage      <- is.element(iter, iters)
 
     # Mixing Proportions & Re-ordering
-      pi.prop      <- if(G == 1) 1 else rDirichlet(G=G, alpha=pi.alpha, nn=nn)
+      pi.prop      <- rDirichlet(G=G, alpha=pi.alpha, nn=nn)
       index        <- order(nn, decreasing=TRUE)
       pi.prop      <- pi.prop[index]
       mu           <- mu[,index, drop=FALSE]
@@ -112,17 +112,14 @@
 
     # Cluster Labels
       psi          <- 1/psi.inv
-      if(G > 1)  {
-        sigma      <- lapply(Gseq, function(g) tcrossprod(lmat[,,g]) + diag(psi[,g]))
-        log.check  <- capture.output(log.probs <- try(vapply(Gseq, function(g, Q=Q0s[g]) dmvn(data, mu[,g], if(Q) sigma[[g]] else sqrt(sigma[[g]]), log=TRUE, isChol=!Q) + log(pi.prop[g]), numeric(N)), silent=TRUE))
-        if(inherits(log.probs, "try-error")) {
-         log.probs <- vapply(Gseq, function(g, Q=Q0[g]) { sigma <- if(Q) sigma[[g]] else sqrt(sigma[[g]]); dmvn(data, mu[,g], is.posi_def(sigma, make=TRUE)$X.new, log=TRUE, isChol=!Q) + log(pi.prop[g]) }, numeric(N))
-        }
-        z.res      <- gumbel_max(probs=log.probs, log.like=TRUE)
-        z          <- z.res$z
-      } else     {
-        z          <- rep(1L, N)
+      sigma        <- lapply(Gseq, function(g) tcrossprod(lmat[,,g]) + diag(psi[,g]))
+      log.pis      <- log(pi.prop)
+      log.check    <- capture.output(log.probs <- try(vapply(Gseq, function(g, Q=Q0s[g]) dmvn(data, mu[,g], if(Q) sigma[[g]] else sqrt(sigma[[g]]), log=TRUE, isChol=!Q) + log.pis[g], numeric(N)), silent=TRUE))
+      if(inherits(log.probs, "try-error")) {
+       log.probs   <- vapply(Gseq, function(g, Q=Q0[g]) { sigma <- if(Q) sigma[[g]] else sqrt(sigma[[g]]); dmvn(data, mu[,g], is.posi_def(sigma, make=TRUE)$X.new, log=TRUE, isChol=!Q) + log.pis[g] }, numeric(N))
       }
+      z.res        <- gumbel_max(probs=log.probs, log.like=TRUE)
+      z            <- z.res$z
       nn           <- tabulate(z, nbins=G)
       nn0          <- nn > 0
       nn.ind       <- which(nn0)

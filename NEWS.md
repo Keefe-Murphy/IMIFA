@@ -11,6 +11,7 @@ __Infinite Mixtures of Infinite Factor Analysers__
 * Used `bw="SJ"` everywhere `density` is invoked for plotting.
 * Fixed initialisation of uniquenesses for isotropic (I)FA models.
 * Fixed parallel coordinates plot axes and labels for all isotropic uniquenesses plots.
+* Sped-up sampling IM(I)FA labels, esp. when 'active' G=1, or the _dependent_ slice-sampler is used.
 * Fixed silly error re: way in which (I)FA models are treated as 1-cluster models to ensure they run:  
   Related bug fixed for OM(I)FA/IM(I)FA models when starting number of groups is actually supplied.
 
@@ -57,7 +58,7 @@ __Infinite Mixtures of Infinite Factor Analysers__
 * Deferred setting `dimnames` attributes in `mcmc_IMIFA` to `get_IMIFA_results`: lower memory burden/faster simulations.
 * Jettisoned superfluous duplicate material in object outputted from `get_IMIFA_results` to reduce size/simplify access.
 * IMFA/IMIFA `trunc.G` arg, the max allowable # active groups, defaults to `range.G` & # active groups now stored.
-* Code sped up when G=1 by not simulating labels for OM(I)FA/IM(I)FA & not simulating mixing proportions for OM(I)FA.
+* Code sped up when `active` G=1 by not simulating labels for IM(I)FA models.
 * Reduced chance of crash by exceeding memory capacity; `score.switch` defaults to `FALSE` if # models ran is large.
 
 ## Bug Fixes 

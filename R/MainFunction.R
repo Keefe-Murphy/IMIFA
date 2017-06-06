@@ -357,7 +357,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   if(any(range.G >= N))             stop(paste0("'range.G' must be less than the number of observations N=", N))
   if(G.init[1]   == 1)     {
     if(is.element(method, c("IMIFA", "IMFA",
-       "OMIFA", "OMFA")))  {        stop(paste0("'method' must be FA or IFA for a one group model under the ", method, " method"))
+       "OMIFA", "OMFA")))  {        stop(paste0("'method' should be ", switch(method, IMFA=, OMFA="FA", OMIFA=, IMIFA="IFA"), " for a one group model under the ", method, " method"))
     } else {
       meth[1]    <- switch(method,  MFA=, FA="FA", MIFA=, IFA="IFA")
     }
