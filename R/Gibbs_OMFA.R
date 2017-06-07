@@ -90,7 +90,7 @@
       z.store[,1]          <- z
       sigma                <- lapply(Gseq, function(g) tcrossprod(lmat[,,g]) + diag(1/psi.inv[,g]))
       log.probs            <- vapply(Gseq, function(g, Q=Q0[g]) { sigma <- if(Q) sigma[[g]] else sqrt(sigma[[g]]); dmvn(data, mu[,g], is.posi_def(sigma, make=TRUE)$X.new, log=TRUE, isChol=!Q) + log(pi.prop[g]) }, numeric(N))
-      ll.store[1]          <- sum(gumbel_max(probs=log.probs, log.like=TRUE)$log.like)
+      ll.store[1]          <- sum(rowLogSumExps(log.probs))
       G.store[1]           <- G.non
     }
     init.time      <- proc.time() - start.time
@@ -118,8 +118,7 @@
       if(inherits(log.probs, "try-error")) {
        log.probs   <- vapply(Gseq, function(g, Q=Q0[g]) { sigma <- if(Q) sigma[[g]] else sqrt(sigma[[g]]); dmvn(data, mu[,g], is.posi_def(sigma, make=TRUE)$X.new, log=TRUE, isChol=!Q) + log.pis[g] }, numeric(N))
       }
-      z.res        <- gumbel_max(probs=log.probs, log.like=TRUE)
-      z            <- z.res$z
+      z            <- gumbel_max(probs=log.probs)
       nn           <- tabulate(z, nbins=G)
       nn0          <- nn > 0
       nn.ind       <- which(nn0)
@@ -160,7 +159,7 @@
         if(sw["psi.sw"])            psi.store[,,new.it]     <- 1/psi.inv
         if(sw["pi.sw"])             pi.store[,new.it]       <- pi.prop
                                     z.store[,new.it]        <- as.integer(z)
-                                    ll.store[new.it]        <- if(G > 1) sum(z.res$log.like) else sum(dmvn(X=data, mu=mu[,nn.ind], sigma=tcrossprod(as.matrix(lmat[,,nn.ind])) + diag(psi.store[,nn.ind,new.it]), log=TRUE))
+                                    ll.store[new.it]        <- sum(rowLogSumExps(log.probs))
                                     G.store[new.it]         <- as.integer(G.non)
       }
     }

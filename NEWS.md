@@ -6,12 +6,13 @@ __Infinite Mixtures of Infinite Factor Analysers__
   `is.cols`, `Ledermann`, `Procrustes` & `shift_GA`.
 * `is.posi_def` gains `make` argument, merging it with previously hidden function `.make_posdef`:  
   Thus the 'nearest' positive-(semi)definite matrix and the usual check can be returned in a single call.
+* Sped-up sampling IM(I)FA labels, esp. when 'active' G=1, or the _dependent_ slice-sampler is used:  
+  `log.like` arg. removed from `gumbel_max`; function stands alone, now only stored log-likelihoods computed.
   
 ## Bug Fixes
 * Used `bw="SJ"` everywhere `density` is invoked for plotting.
 * Fixed initialisation of uniquenesses for isotropic (I)FA models.
 * Fixed parallel coordinates plot axes and labels for all isotropic uniquenesses plots.
-* Sped-up sampling IM(I)FA labels, esp. when 'active' G=1, or the _dependent_ slice-sampler is used.
 * Fixed silly error re: way in which (I)FA models are treated as 1-cluster models to ensure they run:  
   Related bug fixed for OM(I)FA/IM(I)FA models when starting number of groups is actually supplied.
 

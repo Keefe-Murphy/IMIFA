@@ -4,30 +4,27 @@
 \alias{gumbel_max}
 \title{Simulate Cluster Labels from Unnormalised Log-Probabilities using the Gumbel-Max Trick}
 \usage{
-gumbel_max(probs, log.like = FALSE, slice = FALSE)
+gumbel_max(probs, slice = FALSE)
 }
 \arguments{
 \item{probs}{An N x G matrix of unnormalised probabilities on the log scale, where N is he number of observations that require labels to be sampled and G is the number of active clusters s.t. sampled labels can take values in \code{1:G}.}
 
-\item{log.like}{A logical indicating whether the normalising constant is to be computed. Defaults to \code{FALSE} but is \code{TRUE} for all methods under \code{\link{mcmc_IMIFA}} where it's necessary for computation of the log-likelihoods required for model choice.}
-
-\item{slice}{A logical indicating whether or not the indicator correction for slice sampling has been applied to \code{probs}. Defaults to \code{FALSE} but is \code{TRUE} for the "\code{IMIFA}" and "\code{IMFA}" methods under \code{\link{mcmc_IMIFA}}. Details of this correction are given in Murphy et. al. (2017).}
+\item{slice}{A logical indicating whether or not the indicator correction for slice sampling has been applied to \code{probs}. Defaults to \code{FALSE} but is \code{TRUE} for the "\code{IMIFA}" and "\code{IMFA}" methods under \code{\link{mcmc_IMIFA}}. Details of this correction are given in Murphy et. al. (2017). When set to \code{TRUE}, this results in a speed-improvement when \code{probs} contains non-finite values (e.g. \code{-Inf}, corresponding to zero on the probability scale).}
 }
 \value{
-Either a N-vector of sampled cluster labels, or if \code{isTRUE(log.like)}, a list with two elements:
-\describe{
-\item{z}{The numeric vector of \code{N} sampled cluster labels, with the largest label no greater than \code{G}.}
-\item{log.like}{The log-likelihood(s), given by the normalising constant(s), computed with the aid of \code{\link[matrixStats]{rowLogSumExps}}.}
-}
+A vector of N sampled cluster labels, with the largest label no greater than G.
 }
 \description{
-Samples cluster labels for N observations from G groups efficiently using log-probabilities and the so-called Gumbel-Max trick, without requiring that the log-probabilities need to be normalised; thus redunant computation can be avoided. Computation takes place on the log scale for stability/underflow reasons (to ensure negligible probabilities won't cause computational difficulties); in any case, many functions for calculating multivariate normal densities already output on the log scale. Please note that while the function is available for standalone use that no checks take place, in order to speed up repeated calls to the function inside \code{\link{mcmc_IMIFA}}.
+Samples cluster labels for N observations from G groups efficiently using log-probabilities and the so-called Gumbel-Max trick, without requiring that the log-probabilities be normalised; thus redunant computation can be avoided. Computation takes place on the log scale for stability/underflow reasons (to ensure negligible probabilities won't cause computational difficulties); in any case, many functions for calculating multivariate normal densities already output on the log scale.
+}
+\note{
+Though the function is available for standalone use, note that no checks take place, in order to speed up repeated calls to the function inside \code{\link{mcmc_IMIFA}}.\cr
+If the normalising constant is required for another reason, e.g. to compute the log-likelihood, it can be calculated by summing the output obtained by calling \code{\link[matrixStats]{rowLogSumExps}} on \code{probs}.
 }
 \examples{
-# Set the dimensions & simulate a matrix of weights
-  N         <- 1
+# Create a 1-row matrix of weights
   G         <- 3
-  weights   <- matrix(c(1, 2, 3), nrow=N, ncol=G)
+  weights   <- matrix(c(1, 2, 3), nrow=1, ncol=G)
 
 # Call gumbel_max() repeatedly to obtain samples of the labels, zs
   iters     <- 10000

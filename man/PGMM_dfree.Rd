@@ -20,7 +20,10 @@ PGMM_dfree(Q, P, G = 1, method = c("UUU", "UUC", "UCU", "UCC", "CUU", "CUC",
 A vector of length \code{length(Q)}.
 }
 \description{
-Estimates the dimension of the 'free' parameters in fully finite factor analytic mixture models, otherwise known as Parsimonious Gaussian Mixture Models (PGMM). This is used to calculate the penalty terms for the \code{aic.mcmc} and \code{bic.mcmc} model selection criteria implemented in \code{\link{get_IMIFA_results}} for \emph{finite} factor models (though \code{\link{mcmc_IMIFA}} currently only implements \code{UUU} and \code{UUC} covariance structures). Please note that while this available as a standalone function, no checks are performed in order to make its use in \code{\link{get_IMIFA_results}} faster.
+Estimates the dimension of the 'free' parameters in fully finite factor analytic mixture models, otherwise known as Parsimonious Gaussian Mixture Models (PGMM). This is used to calculate the penalty terms for the \code{aic.mcmc} and \code{bic.mcmc} model selection criteria implemented in \code{\link{get_IMIFA_results}} for \emph{finite} factor models (though \code{\link{mcmc_IMIFA}} currently only implements \code{UUU} and \code{UUC} covariance structures).
+}
+\note{
+Though the function is available for standalone use, note that no checks take place, in order to speed up repeated calls to the function inside \code{\link{mcmc_IMIFA}}.
 }
 \examples{
 UUU <- PGMM_dfree(Q=4:5, P=50, G=3, method="UUU")

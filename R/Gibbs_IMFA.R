@@ -117,7 +117,7 @@
       z.store[,1]            <- z
       sigma                  <- lapply(Gs, function(g) tcrossprod(lmat[,,g]) + diag(1/psi.inv[,g]))
       log.probs              <- vapply(Gs, function(g, Q=Q0[g]) { sigma <- if(Q) sigma[[g]] else sqrt(sigma[[g]]); dmvn(data, mu[,g], is.posi_def(sigma, make=TRUE)$X.new, log=TRUE, isChol=!Q) + log(pi.prop[g]) }, numeric(N))
-      ll.store[1]            <- sum(gumbel_max(probs=log.probs, log.like=TRUE)$log.like)
+      ll.store[1]            <- sum(rowLogSumExps(log.probs))
       G.store[1]             <- G.non
       act.store[1]           <- G
       if(learn.alpha) {
@@ -199,14 +199,17 @@
       if(G > 1)  {
         psi          <- 1/psi.inv
         sigma        <- lapply(Gs, function(g) tcrossprod(lmat[,,g]) + diag(psi[,g]))
-        log.pixi     <- if(ind.slice) log(pi.prop) - log(ksi[Gs])  else  rep(0, G)
-        logslice.ind <- vapply(Gs, function(g) slice.logs[1 + (u.slice < ksi[g])] + log.pixi[g], numeric(N))
         log.check    <- capture.output(log.probs  <- try(vapply(Gs, function(g, Q=Q0s[g]) dmvn(data, mu[,g], if(Q) sigma[[g]] else sqrt(sigma[[g]]), log=TRUE, isChol=!Q), numeric(N)), silent=TRUE))
         if(inherits(log.probs, "try-error")) {
           log.probs  <- vapply(Gs, function(g, Q=Q0[g]) { sigma <- if(Q) sigma[[g]] else sqrt(sigma[[g]]); dmvn(data, mu[,g], is.posi_def(sigma, make=TRUE)$X.new, log=TRUE, isChol=!Q) }, numeric(N))
         }
-        z.res        <- gumbel_max(probs=log.probs + logslice.ind, log.like=TRUE, slice=TRUE)
-        z            <- z.res$z
+        if(ind.slice) {
+          log.pixi   <- log(pi.prop) - log(ksi[Gs])
+          log.probs  <- vapply(Gs, function(g) slice.logs[1 + (u.slice < ksi[g])] + log.pixi[g], numeric(N)) + log.probs
+        } else   {
+          log.probs  <- vapply(Gs, function(g) slice.logs[1 + (u.slice < ksi[g])], numeric(N)) + log.probs
+        }
+        z            <- gumbel_max(probs=log.probs, slice=TRUE)
       } else     {
         z            <- rep(1L, N)
       }
@@ -314,7 +317,7 @@
         if(learn.alpha)               alpha.store[new.it]     <- pi.alpha
         if(learn.d)                   d.store[new.it]         <- discount
                                       z.store[,new.it]        <- as.integer(z)
-                                      ll.store[new.it]        <- if(G > 1) sum(z.res$log.like) else sum(dmvn(X=data, mu=mu[,nn.ind], sigma=tcrossprod(as.matrix(lmat[,,nn.ind])) + diag(psi.store[,nn.ind,new.it]), log=TRUE))
+                                      ll.store[new.it]        <- if(G > 1) sum(rowLogSumExps(log.probs)) else sum(dmvn(X=data, mu=mu[,nn.ind], sigma=tcrossprod(as.matrix(lmat[,,nn.ind])) + diag(psi.store[,nn.ind,new.it]), log=TRUE))
                                       G.store[new.it]         <- as.integer(G.non)
                                       act.store[new.it]       <- as.integer(G)
       }

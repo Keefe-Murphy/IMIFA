@@ -17,7 +17,10 @@ rDirichlet(G, alpha, nn = 0)
 A Dirichlet vector of \code{G} weights which sum to 1.
 }
 \description{
-Generates samples from the Dirichlet distrubution with parameter \code{alpha} efficiently by simulating Gamma(\code{alpha}, 1) random variables and normalising them. Please note that while this is available as a standalone function, no checks are performed in order to make its use for \emph{finite} mixture models in \code{\link{mcmc_IMIFA}} faster.
+Generates samples from the Dirichlet distrubution with parameter \code{alpha} efficiently by simulating Gamma(\code{alpha}, 1) random variables and normalising them.
+}
+\note{
+Though the function is available for standalone use, note that no checks take place, in order to speed up repeated calls to the function inside \code{\link{mcmc_IMIFA}}.
 }
 \examples{
 prior     <- rDirichlet(G=5, alpha=1)

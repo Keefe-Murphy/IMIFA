@@ -18,7 +18,10 @@ A list containing three elements:
 }
 }
 \description{
-This functions takes a Monte Carlo sample of cluster labels, converts them to adjacency matrices, and computes a similarity matrix as an average of the adjacency matrices. The dimension of the similarity matrix is invariant to label switching and the number of clusters in each sample. As a summary of the posterior clustering, the index of the clustering with minimum squared distance to this 'average' clustering is reported. Please note that this function is implemented purely in R and as such its performance in terms of speed and memory may not be optimal; it can take quite a considerable amount of time to run, and may crash if the number of observations &/or number of iterations is so large that the similarity matrix is insufficiently sparse. This function can optionally be called inside \code{\link{get_IMIFA_results}}.
+This functions takes a Monte Carlo sample of cluster labels, converts them to adjacency matrices, and computes a similarity matrix as an average of the adjacency matrices. The dimension of the similarity matrix is invariant to label switching and the number of clusters in each sample. As a summary of the posterior clustering, the index of the clustering with minimum squared distance to this 'average' clustering is reported.
+}
+\note{
+This function is implemented purely in R and as such its performance in terms of speed and memory may not be optimal; it can take quite a considerable amount of time to run, and may crash if the number of observations &/or number of iterations is so large that the similarity matrix is insufficiently sparse. This function can optionally be called inside \code{\link{get_IMIFA_results}}.
 }
 \examples{
 # Run a IMIFA model and extract the sampled cluster labels

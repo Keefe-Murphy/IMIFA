@@ -1330,7 +1330,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
 # Prior No. Groups (DP & PY)
 #' Plot Dirichlet / Pitman-Yor process Priors
 #'
-#' Plots the prior distribution of the number of clusters under a Dirichlet / Pitman-Yor process prior, for a sample of size \code{N} at given values of the concentration parameter \code{alpha} and optionally also the \code{discount} parameter. Useful for soliciting sensible priors for \code{alpha} or suitable fixed values for \code{alpha} or \code{discount} under the "\code{IMFA}" and "\code{IMIFA}" methods for \code{\link{mcmc_IMIFA}}. All arguments are vectorised. Requires use of the \code{Rmpfr} and \code{gmp} libraries. May encounter difficulty and slowness for large \code{N}, especially with non-zero \code{discount}. Users can also consult \code{\link{G_expected}} and \code{\link{G_variance}} in order to solicit sensible priors.
+#' Plots the prior distribution of the number of clusters under a Dirichlet / Pitman-Yor process prior, for a sample of size \code{N} at given values of the concentration parameter \code{alpha} and optionally also the \code{discount} parameter. Useful for soliciting sensible priors for \code{alpha} or suitable fixed values for \code{alpha} or \code{discount} under the "\code{IMFA}" and "\code{IMIFA}" methods for \code{\link{mcmc_IMIFA}}. All arguments are vectorised. Users can also consult \code{\link{G_expected}} and \code{\link{G_variance}} in order to solicit sensible priors.
 #' @param N The sample size.
 #' @param alpha The concentration parameter. Must be specified and must be strictly greater than \code{-discount}.
 #' @param discount The discount parameter for the Pitman-Yor process. Must lie in the interval [0, 1). Defaults to 0 (i.e. the Dirichlet process).
@@ -1340,6 +1340,8 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
 #' @export
 #' @importFrom viridis "viridis"
 #' @seealso \code{\link{G_expected}}, \code{\link{G_variance}}, \code{\link[Rmpfr]{Rmpfr}}
+#'
+#' @note Requires use of the \code{Rmpfr} and \code{gmp} libraries; may encounter difficulty and slowness for large \code{N}, especially with non-zero \code{discount} values.
 #'
 #' @author Keefe Murphy
 #'
