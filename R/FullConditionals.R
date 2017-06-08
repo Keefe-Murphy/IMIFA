@@ -129,8 +129,14 @@
 #'   sizes   <- seq(from=85, to=15, by=-10)
 #'   weights <- matrix(rDirichlet(N * G, alpha=1, nn=sizes), byrow=TRUE, nrow=N, ncol=G)
 #'   zs      <- gumbel_max(probs=log(weights))
-    gumbel_max   <- function(probs, slice  = FALSE) {
-      max.col(if(isTRUE(slice)) ifelse(is.finite(probs), probs - log(rexp(1)), probs) else probs - log(rexp(length(probs))))
+    gumbel_max   <- function(probs, slice = FALSE) {
+     if(isTRUE(slice)) {
+      fps        <- is.finite(probs)
+      probs[fps] <- probs[fps] - log(rexp(sum(fps)))
+     } else   {
+      probs      <- probs - log(rexp(length(probs)))
+     }
+      max.col(probs)
     }
 
   # Alpha
