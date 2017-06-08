@@ -23,15 +23,13 @@
     .sim_load    <- function(l.sigma, Q, c.data, eta, psi.inv, EtE, Q1)  {
       u.load     <- l.sigma + psi.inv * EtE
       u.load     <- if(Q1) sqrt(u.load) else .chol(u.load)
-      mu.load    <- psi.inv * (if(Q1) 1/(u.load * u.load) else chol2inv(u.load)) %*% crossprod(eta, c.data)
-        mu.load   + backsolve(u.load, rnorm(Q))
+        psi.inv   * (if(Q1) 1/(u.load * u.load) else chol2inv(u.load)) %*% crossprod(eta, c.data) + backsolve(u.load, rnorm(Q))
     }
 
     .sim_load_s  <- function(Q, c.data, eta, phi, tau, psi.inv, EtE, Q1) {
       u.load     <- diag(phi * tau, Q) + psi.inv * EtE
       u.load     <- if(Q1) sqrt(u.load) else .chol(u.load)
-      mu.load    <- psi.inv  * (if(Q1) 1/(u.load * u.load) else chol2inv(u.load)) %*% crossprod(eta, c.data)
-        mu.load   + backsolve(u.load, rnorm(Q))
+        psi.inv   * (if(Q1) 1/(u.load * u.load) else chol2inv(u.load)) %*% crossprod(eta, c.data) + backsolve(u.load, rnorm(Q))
     }
 
   # Uniquenesses
@@ -196,7 +194,7 @@
 
   # Loadings
     .sim_load_p  <- function(Q, P, sigma.l) {
-        sqrt(sigma.l) * base::matrix(rnorm(P * Q), nrow=P, ncol=Q)
+        sqrt(sigma.l) * rnorm(P * Q)
     }
 
     .sim_load_ps <- function(Q, sigma.l, phi, tau) {
@@ -614,24 +612,22 @@
 #'
 #' @examples
 #' # Match two matrices, allowing translation and dilation
-#' mat1    <- diag(rnorm(10))
-#' mat2    <- 0.05 * matrix(rnorm(100), 10, 10) + mat1
-#' proc    <- Procrustes(X=mat1, Xstar=mat2, translate=TRUE, dilate=TRUE, sumsq=TRUE)
+#' mat1     <- diag(rnorm(10))
+#' mat2     <- 0.05 * matrix(rnorm(100), 10, 10) + mat1
+#' proc     <- Procrustes(X=mat1, Xstar=mat2, translate=TRUE, dilate=TRUE, sumsq=TRUE)
 #'
 #' # Extract the transformed matrix, rotation matrix, translation vector and scaling factor
-#' mat_new <- proc$X.new
-#' mat_rot <- proc$R
-#' mat_t   <- proc$t
-#' mat_d   <- proc$d
+#' mat_new  <- proc$X.new
+#' mat_rot  <- proc$R
+#' mat_t    <- proc$t
+#' mat_d    <- proc$d
 #'
 #' # Compare the sum of squared differences to a Procestean transformation with rotation only
-#' mat_ss  <- proc$ss
-#' mat_ss2 <- Procrustes(X=mat1, Xstar=mat2, sumsq=TRUE)$ss
+#' mat_ss   <- proc$ss
+#' mat_ss2  <- Procrustes(X=mat1, Xstar=mat2, sumsq=TRUE)$ss
     Procrustes  <- function(X, Xstar, translate = FALSE, dilate = FALSE, sumsq = FALSE) {
-      N         <- nrow(X)
-      P         <- ncol(X)
-      if(N      != nrow(Xstar))            stop("X and Xstar do not have the same number of rows")
-      if(P      != ncol(Xstar))            stop("X and Xstar do not have the same number of columns")
+      if((N <- nrow(X)) != nrow(Xstar))    stop("X and Xstar do not have the same number of rows")
+      if((P <- ncol(X)) != ncol(Xstar))    stop("X and Xstar do not have the same number of columns")
       J         <- if(translate) diag(N) - matrix(1/N, N, N)                         else diag(N)
       C         <- crossprod(Xstar, J) %*% X
       svdX      <- svd(C)

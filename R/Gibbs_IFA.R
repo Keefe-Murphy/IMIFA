@@ -52,7 +52,7 @@
       fact       <- try(factanal(data, factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
       if(!inherits(fact, "try-error")) {
         eta      <- fact$scores
-        lmat     <- fact$loadings
+        lmat     <- unclass(fact$loadings)
         psi.inv  <- 1/fact$uniquenesses
       }
     } else {

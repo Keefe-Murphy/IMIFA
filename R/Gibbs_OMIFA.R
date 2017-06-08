@@ -66,7 +66,7 @@
         fact         <- try(factanal(data[z == g,, drop=FALSE], factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
         if(!inherits(fact, "try-error")) {
           eta[z == g,]        <- fact$scores
-          lmat[[g]]           <- fact$loadings
+          lmat[[g]]           <- unclass(fact$loadings)
           psi.inv[,g]         <- 1/fact$uniquenesses
         }
       }
@@ -201,8 +201,7 @@
           Qs.old     <- Qs[nn0]
           Qs[nn0]    <- vapply(ng.ind, function(h) if(notred[h]) Qs.old[h] + 1 else Qs.old[h] - numred[h], numeric(1L))
           Q.big      <- Qs[nn0] > Q.star
-          Q.bigs     <- any(Q.big)
-          if(Q.bigs) {
+          if((Q.bigs <- any(Q.big))) {
             notred   <- notred & !Q.big
             Qs[nn0][Q.big]    <- Q.star
           }

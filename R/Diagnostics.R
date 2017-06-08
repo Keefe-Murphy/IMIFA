@@ -76,7 +76,6 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   if(class(sims) != "IMIFA")      stop("Object of class 'IMIFA' must be supplied")
   if(!exists(deparse(substitute(sims)),
              envir=.GlobalEnv))   stop(paste0("Object ", match.call()$sims, " not found\n"))
-  if(class(sims) != "IMIFA")      stop(paste0("Simulations object of class 'IMIFA' must be supplied"))
   burnin         <- as.integer(burnin)
   thinning       <- as.integer(thinning)
   if(any(c(length(thinning),
@@ -565,8 +564,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
 
 
 # Retrieve (unrotated) scores
-  no.score       <- all(Q0)
-  if(no.score)   {
+  if((no.score   <- all(Q0))) {
     if(sw["s.sw"])                message("Scores & loadings not stored as model has zero factors")
     sw["s.sw"]   <- FALSE
   }

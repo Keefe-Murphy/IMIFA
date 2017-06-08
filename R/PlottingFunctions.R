@@ -124,15 +124,13 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
   var.names    <- if(is.null(var.names)) seq_len(n.var) else var.names
   names(v.sw)  <- formals(sys.function(sys.parent()))$param
   ci.sw        <- v.sw
-  all.ind      <- plot.meth == "all"
-  grp.ind      <- !is.element(method, c("FA", "IFA"))
-  if(grp.ind)   {
+  if((grp.ind  <- !is.element(method, c("FA", "IFA")))) {
     clust      <- x$Clust
     grp.size   <- clust$post.sizes
     labelmiss  <- !is.null(attr(clust, "Label.Sup")) && !attr(clust, "Label.Sup")
   }
   grp.ind      <- all(G != 1, grp.ind)
-  if(all.ind)   {
+  if((all.ind  <- plot.meth == "all"))    {
     if(v.sw[param]) {
       m.sw[-(1:4)]  <- !m.sw[-(1:4)]
       layout(matrix(c(1, 2, 3, 4), nrow=2, ncol=2, byrow=TRUE))
@@ -152,7 +150,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
   }
   if(param == "uniquenesses") {
     uni.type             <- unname(attr(x, "Uni.Meth")['Uni.Type'])
-    mat    <- switch(uni.type, unconstrained=mat, FALSE)
+    mat   <- switch(uni.type, unconstrained=mat, FALSE)
   }
   z.miss  <- missing(zlabels)
   if(!z.miss) {
@@ -958,8 +956,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
       if(all(g  == 3, z.sim)) {
         plot.x  <- as.matrix(clust$Z.avgsim$z.sim)
         perm    <- order(clust$map)
-        p.ind   <- !identical(perm, clust$map)
-        plot.x  <- if(p.ind) plot.x[perm,perm] else plot.x
+        plot.x  <- if((p.ind <- !identical(perm, clust$map))) plot.x[perm,perm] else plot.x
         plot.x  <- t(plot.x[,seq(from=ncol(plot.x), to=1, by=-1)])
         par(defpar)
         if(titles) par(mar=c(4.1, 4.1, 4.1, 4.1))
@@ -1253,8 +1250,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
     m1         <- if(isTRUE(byrank))  rank(mat) else mat
     facs       <- cut(m1, breaks, include.lowest=TRUE)
     answer     <- matrix(cols[as.numeric(facs)], nrow=nrow(mat), ncol=ncol(mat))
-    NM         <- is.na(mat)
-    if(any(NM)) {
+    if(any((NM <- is.na(mat)))) {
       if(length(na.col     != 1)  &&
          !is.cols(na.col))            stop("'na.col' must be a valid colour in the presence of missing data")
       answer   <- replace(answer, NM, na.col)

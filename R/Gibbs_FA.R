@@ -41,13 +41,13 @@
     .sim_psi_ip  <- switch(uni.type,  unconstrained=.sim_psi_ipu, isotropic=.sim_psi_ipi)
     psi.beta     <- switch(uni.prior, isotropic=unique(round(psi.beta, min(nchar(psi.beta)))), psi.beta)
     eta          <- .sim_eta_p(Q=Q, N=N)
-    lmat         <- .sim_load_p(Q=Q, P=P, sigma.l=sigma.l)
+    lmat         <- matrix(.sim_load_p(Q=Q, P=P, sigma.l=sigma.l), nrow=P, ncol=Q)
     psi.inv      <- .sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
     if(all(Q0, Q  < min(N - 1, Ledermann(P)))) {
       fact       <- try(factanal(data, factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
       if(!inherits(fact, "try-error")) {
         eta      <- fact$scores
-        lmat     <- fact$loadings
+        lmat     <- unclass(fact$loadings)
         psi.inv  <- 1/fact$uniquenesses
       }
     } else {

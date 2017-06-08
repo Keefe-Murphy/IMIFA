@@ -318,8 +318,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
           if(a.hyp1   <= 0)         stop("The shape of the gamma prior for alpha must be strictly positive")
           if(a.hyp2   <= 0)         stop("The rate of the gamma prior for alpha must be strictly positive")
         }
-        t.miss <- missing(trunc.G)
-        if(t.miss)        {
+        if((t.miss <- missing(trunc.G))) {
           trunc.G  <- range.G
         }
         if(length(trunc.G) > 1)     stop("'trunc.G' must be a single number")

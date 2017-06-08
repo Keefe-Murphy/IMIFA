@@ -85,7 +85,7 @@ sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(4L, G), pis = rep(
     Q.g        <- Q[g]
     N.g        <- nn[g]
     mu.true    <- setNames(.sim_mu_p(P=P, mu.zero=prior.mu[g] * loc.diff, sig.mu.sqrt=1), vnames)
-    l.true     <- .sim_load_p(Q=Q.g, P=P, sigma.l=1)
+    l.true     <- matrix(.sim_load_p(Q=Q.g, P=P, sigma.l=1), nrow=P, ncol=Q.g)
     psi.true   <- setNames(rgamma(P, 1, 1), vnames)
 
   # Simulate data

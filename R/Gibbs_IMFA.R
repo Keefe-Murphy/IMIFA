@@ -80,7 +80,7 @@
         fact         <- try(factanal(data[z == g,, drop=FALSE], factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
         if(!inherits(fact, "try-error")) {
           eta[z == g,]       <- fact$scores
-          lmat[[g]]          <- fact$loadings
+          lmat[[g]]          <- unclass(fact$loadings)
           psi.inv[,g]        <- 1/fact$uniquenesses
         }
       }
@@ -224,8 +224,8 @@
       if(Q0)     {
         eta.tmp      <- lapply(Gs, function(g) if(nn0[g]) .sim_score(N=nn[g], lmat=lmat[,,g], Q=Q, c.data=c.data[[g]], psi.inv=psi.inv[,g], Q1=Q1) else base::matrix(0, nrow=0, ncol=Q))
         EtE          <- lapply(Gs, function(g) if(nn0[g]) crossprod(eta.tmp[[g]]))
-        lmat[,,Gs]   <- array(unlist(lapply(Gs, function(g) if(nn0[g]) matrix(unlist(lapply(Ps, function(j) .sim_load(l.sigma=l.sigma, Q=Q, c.data=c.data[[g]][,j], eta=eta.tmp[[g]],
-                        EtE=EtE[[g]], Q1=Q1, psi.inv=psi.inv[,g][j])), use.names=FALSE), nrow=P, byrow=TRUE) else .sim_load_p(Q=Q, P=P, sigma.l=sigma.l)), use.names=FALSE), dim=c(P, Q, G))
+        lmat[,,Gs]   <- array(unlist(lapply(Gs, function(g) matrix(if(nn0[g]) unlist(lapply(Ps, function(j) .sim_load(l.sigma=l.sigma, Q=Q, c.data=c.data[[g]][,j], eta=eta.tmp[[g]],
+                        EtE=EtE[[g]], Q1=Q1, psi.inv=psi.inv[,g][j])), use.names=FALSE) else .sim_load_p(Q=Q, P=P, sigma.l=sigma.l), nrow=P, byrow=TRUE)), use.names=FALSE), dim=c(P, Q, G))
         eta          <- do.call(rbind, eta.tmp)[obsnames,, drop=FALSE]
       } else   {
         eta.tmp      <- lapply(Gs, function(g) eta[z == g,, drop=FALSE])
@@ -264,8 +264,7 @@
       if(IM.lab.sw)   {
         if(G.non > 1) {
           move1      <- .lab_move1(nn.ind=nn.ind, pi.prop=pi.prop, nn=nn)
-          acc1       <- move1$rate1
-          if(acc1)    {
+          if((acc1   <- move1$rate1)) {
             sw1      <- move1$sw
             sw1x     <- c(sw1[2], sw1[1])
             nn[sw1]  <- nn[sw1x]
@@ -283,8 +282,7 @@
         } else  acc1 <- FALSE
         if(G     > 1) {
           move2      <- .lab_move2(G=G, Vs=Vs, nn=nn)
-          acc2       <- move2$rate2
-          if(acc2)    {
+          if((acc2   <- move2$rate2)) {
             sw2      <- move2$sw
             sw2x     <- c(sw2[2], sw2[1])
             nn[sw2]  <- nn[sw2x]

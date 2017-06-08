@@ -43,19 +43,19 @@ This function performs a Procrustes transformation on a matrix \code{X} to minim
 }
 \examples{
 # Match two matrices, allowing translation and dilation
-mat1    <- diag(rnorm(10))
-mat2    <- 0.05 * matrix(rnorm(100), 10, 10) + mat1
-proc    <- Procrustes(X=mat1, Xstar=mat2, translate=TRUE, dilate=TRUE, sumsq=TRUE)
+mat1     <- diag(rnorm(10))
+mat2     <- 0.05 * matrix(rnorm(100), 10, 10) + mat1
+proc     <- Procrustes(X=mat1, Xstar=mat2, translate=TRUE, dilate=TRUE, sumsq=TRUE)
 
 # Extract the transformed matrix, rotation matrix, translation vector and scaling factor
-mat_new <- proc$X.new
-mat_rot <- proc$R
-mat_t   <- proc$t
-mat_d   <- proc$d
+mat_new  <- proc$X.new
+mat_rot  <- proc$R
+mat_t    <- proc$t
+mat_d    <- proc$d
 
 # Compare the sum of squared differences to a Procestean transformation with rotation only
-mat_ss  <- proc$ss
-mat_ss2 <- Procrustes(X=mat1, Xstar=mat2, sumsq=TRUE)$ss
+mat_ss   <- proc$ss
+mat_ss2  <- Procrustes(X=mat1, Xstar=mat2, sumsq=TRUE)$ss
 }
 \references{
 Borg, I. and Groenen, P. J. F. (1997) \emph{Modern Multidimensional Scaling}. Springer-Verlag, New York, pp. 340-342.
