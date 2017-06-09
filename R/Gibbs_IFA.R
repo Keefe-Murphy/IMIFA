@@ -10,6 +10,7 @@
 
   # Define & initialise variables
     start.time   <- proc.time()
+    matrix       <- base::matrix
     total        <- max(iters)
     if(verbose)     pb     <- txtProgressBar(min=0, max=total, style=3)
     n.store      <- length(iters)
@@ -46,7 +47,7 @@
     phi          <- .sim_phi_p(Q=Q, P=P, nu=nu, plus1=nuplus1)
     delta        <- c(.sim_delta_p(alpha=alpha.d1, beta=beta.d1), .sim_delta_p(Q=Q, alpha=alpha.d2, beta=beta.d2))
     tau          <- cumprod(delta)
-    lmat         <- matrix(unlist(lapply(Pseq, function(j) .sim_load_ps(Q=Q, phi=phi[j,], tau=tau)), use.names=FALSE), nrow=P, byrow=TRUE)
+    lmat         <- matrix(vapply(Pseq, function(j) .sim_load_ps(Q=Q, phi=phi[j,], tau=tau), numeric(Q)), nrow=P, byrow=TRUE)
     psi.inv      <- .sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
     if(all(Q      < min(N - 1, Ledermann(P)))) {
       fact       <- try(factanal(data, factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
@@ -82,8 +83,8 @@
       c.data     <- sweep(data, 2, mu, FUN="-")
       if(Q0) {
         eta      <- .sim_score(N=N, Q=Q, lmat=lmat, psi.inv=psi.inv, c.data=c.data, Q1=Q1)
-        lmat     <- matrix(unlist(lapply(Pseq, function(j) .sim_load_s(Q=Q, tau=tau, eta=eta, c.data=c.data[,j], Q1=Q1,
-                           phi=phi[j,], psi.inv=psi.inv[j], EtE=crossprod(eta))), use.names=FALSE), nrow=P, byrow=TRUE)
+        lmat     <- matrix(vapply(Pseq, function(j) .sim_load_s(Q=Q, tau=tau, eta=eta, c.data=c.data[,j], Q1=Q1,
+                           phi=phi[j,], psi.inv=psi.inv[j], EtE=crossprod(eta)), numeric(Q)), nrow=P, byrow=TRUE)
       } else {
         eta      <- .empty_mat(N)
         lmat     <- .empty_mat(P)
@@ -159,7 +160,7 @@
     }
     if(verbose)     close(pb)
     Qmax         <- seq_len(max(Q.store))
-    eta.store    <- if(sw["s.sw"])  tryCatch(eta.store[,Qmax,, drop=FALSE],  error=function(e) eta.store)
+    eta.store    <- if(sw["s.sw"])  tryCatch(eta.store[,Qmax,,  drop=FALSE], error=function(e) eta.store)
     load.store   <- if(sw["l.sw"])  tryCatch(load.store[,Qmax,, drop=FALSE], error=function(e) load.store)
     returns      <- list(mu       = if(sw["mu.sw"])  tryCatch(provideDimnames(mu.store,  base=list(varnames, ""), unique=FALSE), error=function(e) mu.store),
                          eta      = if(sw["s.sw"])   tryCatch(provideDimnames(tryCatch(as.simple_sparse_array(eta.store),        error=function(e) eta.store),  base=list(obsnames, "", ""), unique=FALSE), error=function(e) eta.store),

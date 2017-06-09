@@ -13,6 +13,8 @@ __Infinite Mixtures of Infinite Factor Analysers__
 * Used `bw="SJ"` everywhere `density` is invoked for plotting.
 * Fixed initialisation of uniquenesses for isotropic (I)FA models.
 * Fixed parallel coordinates plot axes and labels for all isotropic uniquenesses plots.
+* Fixed simulation of loadings matrices for empty MIFA/OMIFA/IMIFA clusters using `byrow=TRUE`:  
+  Loop to simulate loadings matrices now generally faster also for all models.
 * Fixed silly error re: way in which (I)FA models are treated as 1-cluster models to ensure they run:  
   Related bug fixed for OM(I)FA/IM(I)FA models when starting number of groups is actually supplied.
 

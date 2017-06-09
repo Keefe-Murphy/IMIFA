@@ -9,6 +9,7 @@
 
   # Define & initialise variables
     start.time   <- proc.time()
+    matrix       <- base::matrix
     total        <- max(iters)
     if(verbose)     pb     <- txtProgressBar(min=0, max=total, style=3)
     n.store      <- length(iters)
@@ -76,8 +77,8 @@
       c.data     <- sweep(data, 2, mu, FUN="-")
       if(Q0) {
         eta      <- .sim_score(N=N, Q=Q, lmat=lmat, psi.inv=psi.inv, c.data=c.data, Q1=Q1)
-        lmat     <- matrix(unlist(lapply(Pseq, function(j) .sim_load(l.sigma=l.sigma, Q=Q, Q1=Q1, c.data=c.data[,j],
-                           eta=eta, psi.inv=psi.inv[j], EtE=crossprod(eta))), use.names=FALSE), nrow=P, byrow=TRUE)
+        lmat     <- matrix(vapply(Pseq, function(j) .sim_load(l.sigma=l.sigma, Q=Q, c.data=c.data[,j], Q1=Q1,
+                           eta=eta, psi.inv=psi.inv[j], EtE=crossprod(eta)), numeric(Q)), nrow=P, byrow=TRUE)
       }
 
     # Uniquenesses

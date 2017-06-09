@@ -10,6 +10,7 @@
 
   # Define & initialise variables
     start.time       <- proc.time()
+    matrix           <- base::matrix
     total            <- max(iters)
     if(verbose)         pb    <- txtProgressBar(min=0, max=total, style=3)
     n.store          <- length(iters)
@@ -78,7 +79,7 @@
     phi              <- lapply(Ts, function(t) .sim_phi_p(Q=Q, P=P, nu=nu, plus1=nuplus1))
     delta            <- lapply(Ts, function(t) c(.sim_delta_p(alpha=alpha.d1, beta=beta.d1), .sim_delta_p(Q=Q, alpha=alpha.d2, beta=beta.d2)))
     tau              <- lapply(delta, cumprod)
-    lmat             <- lapply(Ts, function(t) matrix(unlist(lapply(Ps, function(j) .sim_load_ps(Q=Q, phi=phi[[t]][j,], tau=tau[[t]])), use.names=FALSE), nrow=P, byrow=TRUE))
+    lmat             <- lapply(Ts, function(t) matrix(vapply(Ps, function(j) .sim_load_ps(Q=Q, phi=phi[[t]][j,], tau=tau[[t]]), numeric(Q)), nrow=P, byrow=TRUE))
     psi.inv          <- vapply(Ts, function(t) .sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), numeric(P))
     if(Q < min(N - 1, Ledermann(P)))     {
       for(g in which(nn > P)) {
@@ -241,11 +242,11 @@
         eta          <- .empty_mat(N)
         lmat[Gs]     <- lapply(Gs, .empty_mat, P)
       } else {
-        eta.tmp      <- lapply(Gs, function(g) if(all(nn0[g], Q0[g])) .sim_score(N=nn[g], lmat=lmat[[g]], Q=Qs[g], Q1=Q1[g], c.data=c.data[[g]], psi.inv=psi.inv[,g]) else base::matrix(0, nrow=ifelse(Q0[g], 0, nn[g]), ncol=Qs[g]))
+        eta.tmp      <- lapply(Gs, function(g) if(all(nn0[g], Q0[g])) .sim_score(N=nn[g], lmat=lmat[[g]], Q=Qs[g], Q1=Q1[g], c.data=c.data[[g]], psi.inv=psi.inv[,g]) else matrix(0, nrow=ifelse(Q0[g], 0, nn[g]), ncol=Qs[g]))
         EtE          <- lapply(Gs, function(g) if(nn0[g]) crossprod(eta.tmp[[g]]))
-        lmat[Gs]     <- lapply(Gs, function(g) if(all(nn0[g], Q0[g])) matrix(unlist(lapply(Ps, function(j) .sim_load_s(Q=Qs[g], Q1=Q1[g], c.data=c.data[[g]][,j],
-                               EtE=EtE[[g]], eta=eta.tmp[[g]], psi.inv=psi.inv[,g][j], phi=phi[[g]][j,], tau=tau[[g]])), use.names=FALSE), nrow=P, byrow=TRUE) else
-                               base::matrix(unlist(lapply(Ps, function(j) .sim_load_ps(Q=Qs[g], phi=phi[[g]][j,], tau=tau[[g]])), use.names=FALSE), nrow=P, byrow=FALSE))
+        lmat[Gs]     <- lapply(Gs, function(g) matrix(if(all(nn0[g], Q0[g])) vapply(Ps, function(j) .sim_load_s(Q=Qs[g], c.data=c.data[[g]][,j],
+                               Q1=Q1[g], EtE=EtE[[g]], eta=eta.tmp[[g]], psi.inv=psi.inv[,g][j], phi=phi[[g]][j,], tau=tau[[g]]), numeric(Qs[g])) else
+                               vapply(Ps, function(j) .sim_load_ps(Q=Qs[g], phi=phi[[g]][j,], tau=tau[[g]]), numeric(Qs[g])), nrow=P, byrow=TRUE))
       }
 
     # Uniquenesses
@@ -323,7 +324,7 @@
                  delta[[t]]   <- c(delta[[t]],       rgamma(n=1, shape=alpha.d2, rate=beta.d2))
                  tau[[t]]     <- cumprod(delta[[t]])
                  if(store.eta && t %in% Gs)   {
-                 eta.tmp[[t]] <- cbind(eta.tmp[[t]], base::matrix(0, nr=0, nc=1))
+                 eta.tmp[[t]] <- cbind(eta.tmp[[t]], matrix(0, nr=0, nc=1))
                  }
                  Qt  <- Qt + 1
                  lmat[[t]]    <- cbind(lmat[[t]],    rnorm(n=P, mean=0, sd=sqrt(1/(phi[[t]][,Qt] * tau[[t]][Qt]))))
@@ -430,7 +431,7 @@
         if(all(sw["s.sw"],
            any(Q0)))    {
           max.Q      <-  max(Qs)
-          eta.tmp    <-  if(length(unique(Qs)) != 1)      lapply(Gs,       function(g) cbind(eta.tmp[[g]], base::matrix(0, nrow=nn[g], ncol=max.Q - Qs[g]))) else eta.tmp
+          eta.tmp    <-  if(length(unique(Qs)) != 1)      lapply(Gs,       function(g) cbind(eta.tmp[[g]], matrix(0, nrow=nn[g], ncol=max.Q - Qs[g]))) else eta.tmp
           q0ng       <-  (!Q0  | Qs[Gs] == 0)   & nn0[Gs]
           if(any(q0ng)) {
             eta.tmp[q0ng]     <-                          lapply(Gs[q0ng], function(g, x=eta.tmp[[g]]) { row.names(x) <- row.names(dat.g[[g]]); x })

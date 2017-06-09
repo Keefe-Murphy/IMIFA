@@ -10,6 +10,7 @@
 
   # Define & initialise variables
     start.time     <- proc.time()
+    matrix         <- base::matrix
     total          <- max(iters)
     if(verbose)       pb    <- txtProgressBar(min=0, max=total, style=3)
     n.store        <- length(iters)
@@ -75,7 +76,7 @@
     phi            <- lapply(Gseq, function(g) .sim_phi_p(Q=Q, P=P, nu=nu, plus1=nuplus1))
     delta          <- lapply(Gseq, function(g) c(.sim_delta_p(alpha=alpha.d1[g], beta=beta.d1), .sim_delta_p(Q=Q, alpha=alpha.d2[g], beta=beta.d2)))
     tau            <- lapply(delta, cumprod)
-    lmat           <- lapply(Gseq, function(g) matrix(unlist(lapply(Pseq, function(j) .sim_load_ps(Q=Q, phi=phi[[g]][j,], tau=tau[[g]])), use.names=FALSE), nrow=P, byrow=TRUE))
+    lmat           <- lapply(Gseq, function(g) matrix(vapply(Pseq, function(j) .sim_load_ps(Q=Q, phi=phi[[g]][j,], tau=tau[[g]]), numeric(Q)), nrow=P, byrow=TRUE))
     psi.inv        <- vapply(Gseq, function(g) .sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta[,g]), numeric(P))
     if(Q < min(N - 1, Ledermann(P)))     {
       fact.ind     <- nn    <= P
@@ -139,11 +140,11 @@
         eta        <- .empty_mat(N)
         lmat       <- lapply(Gseq, .empty_mat, P)
       } else {
-        eta.tmp    <- lapply(Gseq, function(g) if(all(nn0[g], Q0[g])) .sim_score(N=nn[g], lmat=lmat[[g]], Q=Qs[g], Q1=Q1[g], c.data=c.data[[g]], psi.inv=psi.inv[,g]) else base::matrix(0, nrow=ifelse(Q0[g], 0, nn[g]), ncol=Qs[g]))
+        eta.tmp    <- lapply(Gseq, function(g) if(all(nn0[g], Q0[g])) .sim_score(N=nn[g], lmat=lmat[[g]], Q=Qs[g], Q1=Q1[g], c.data=c.data[[g]], psi.inv=psi.inv[,g]) else matrix(0, nrow=ifelse(Q0[g], 0, nn[g]), ncol=Qs[g]))
         EtE        <- lapply(Gseq, function(g) if(nn0[g]) crossprod(eta.tmp[[g]]))
-        lmat       <- lapply(Gseq, function(g) if(all(nn0[g], Q0[g])) matrix(unlist(lapply(Pseq, function(j) .sim_load_s(Q=Qs[g], Q1=Q1[g], c.data=c.data[[g]][,j],
-                             EtE=EtE[[g]], eta=eta.tmp[[g]], psi.inv=psi.inv[,g][j], phi=phi[[g]][j,], tau=tau[[g]])), use.names=FALSE), nrow=P, byrow=TRUE) else
-                             base::matrix(unlist(lapply(Pseq, function(j) .sim_load_ps(Q=Qs[g], phi=phi[[g]][j,], tau=tau[[g]])), use.names=FALSE), nrow=P, byrow=FALSE))
+        lmat       <- lapply(Gseq, function(g) matrix(if(all(nn0[g], Q0[g])) vapply(Pseq, function(j) .sim_load_s(Q=Qs[g], c.data=c.data[[g]][,j],
+                             Q1=Q1[g], EtE=EtE[[g]], eta=eta.tmp[[g]], psi.inv=psi.inv[,g][j], phi=phi[[g]][j,], tau=tau[[g]]), numeric(Qs[g])) else
+                             vapply(Pseq, function(j) .sim_load_ps(Q=Qs[g], phi=phi[[g]][j,], tau=tau[[g]]), numeric(Qs[g])), nrow=P, byrow=TRUE))
       }
 
       # Uniquenesses
@@ -221,7 +222,7 @@
                  delta[[g]] <- c(delta[[g]],    rgamma(n=1, shape=alpha.d2, rate=beta.d2))
                  tau[[g]]   <- cumprod(delta[[g]])
                  if(store.eta)         {
-                  eta.tmp[[g]]   <- cbind(eta.tmp[[g]], base::matrix(0, nr=0, nc=1))
+                  eta.tmp[[g]]   <- cbind(eta.tmp[[g]], matrix(0, nr=0, nc=1))
                  }
                  Qg         <- Qg + 1
                  lmat[[g]]  <- cbind(lmat[[g]], rnorm(n=P, mean=0, sd=sqrt(1/(phi[[g]][,Qg] * tau[[g]][Qg]))))
@@ -291,7 +292,7 @@
         if(all(sw["s.sw"],
            any(Q0)))     {
           max.Q    <- max(Qs)
-          eta.tmp  <- if(length(unique(Qs))  != 1)     lapply(Gseq,       function(g) cbind(eta.tmp[[g]], base::matrix(0, nrow=nn[g], ncol=max.Q - Qs[g]))) else eta.tmp
+          eta.tmp  <- if(length(unique(Qs))  != 1)     lapply(Gseq,       function(g) cbind(eta.tmp[[g]], matrix(0, nrow=nn[g], ncol=max.Q - Qs[g]))) else eta.tmp
           q0ng     <- (!Q0   | Qs[Gseq] == 0) & nn0[Gseq]
           if(any(q0ng))  {
             eta.tmp[q0ng]   <-                         lapply(Gseq[q0ng], function(g, x=eta.tmp[[g]]) { row.names(x) <- row.names(dat.g[[g]]); x })

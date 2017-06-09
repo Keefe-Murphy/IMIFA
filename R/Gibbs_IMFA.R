@@ -9,6 +9,7 @@
 
   # Define & initialise variables
     start.time       <- proc.time()
+    matrix           <- base::matrix
     total            <- max(iters)
     if(verbose)         pb   <- txtProgressBar(min=0, max=total, style=3)
     n.store          <- length(iters)
@@ -73,14 +74,14 @@
     nn               <- tabulate(z, nbins=trunc.G)
     mu               <- cbind(mu, vapply(seq_len(trunc.G - G), function(g) .sim_mu_p(P=P, sig.mu.sqrt=sig.mu.sqrt, mu.zero=mu.zero), numeric(P)))
     eta              <- .sim_eta_p(N=N, Q=Q)
-    lmat             <- lapply(Ts, function(t) .sim_load_p(Q=Q, P=P, sigma.l=sigma.l))
+    lmat             <- array(sapply(Ts, function(t) .sim_load_p(Q=Q, P=P, sigma.l=sigma.l)), dim=c(P, Q, trunc.G))
     psi.inv          <- vapply(Ts, function(t) .sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), numeric(P))
     if(Q0 &&   Q      < min(N - 1, Ledermann(P))) {
       for(g in which(nn       > P)) {
         fact         <- try(factanal(data[z == g,, drop=FALSE], factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
         if(!inherits(fact, "try-error")) {
           eta[z == g,]       <- fact$scores
-          lmat[[g]]          <- unclass(fact$loadings)
+          lmat[,,g]          <- unclass(fact$loadings)
           psi.inv[,g]        <- 1/fact$uniquenesses
         }
       }
@@ -91,7 +92,6 @@
       psi.inv[inf.ind]       <- psi.tmp[inf.ind]
     }
     l.sigma          <- diag(1/sigma.l, Q)
-    lmat             <- array(unlist(lmat, use.names=FALSE), dim=c(P, Q, trunc.G))
     index            <- order(pi.prop, decreasing=TRUE)
     pi.prop          <- pi.prop[index]
     mu               <- mu[,index, drop=FALSE]
@@ -116,7 +116,7 @@
       pi.store[,1]           <- pi.prop
       z.store[,1]            <- z
       sigma                  <- lapply(Gs, function(g) tcrossprod(lmat[,,g]) + diag(1/psi.inv[,g]))
-      log.probs              <- vapply(Gs, function(g, Q=Q0[g]) { sigma <- if(Q) sigma[[g]] else sqrt(sigma[[g]]); dmvn(data, mu[,g], is.posi_def(sigma, make=TRUE)$X.new, log=TRUE, isChol=!Q) + log(pi.prop[g]) }, numeric(N))
+      log.probs              <- vapply(Gs, function(g, Q=Q0s[g]) { sigma <- if(Q) sigma[[g]] else sqrt(sigma[[g]]); dmvn(data, mu[,g], is.posi_def(sigma, make=TRUE)$X.new, log=TRUE, isChol=!Q) + log(pi.prop[g]) }, numeric(N))
       ll.store[1]            <- sum(rowLogSumExps(log.probs))
       G.store[1]             <- G.non
       act.store[1]           <- G
@@ -201,7 +201,7 @@
         sigma        <- lapply(Gs, function(g) tcrossprod(lmat[,,g]) + diag(psi[,g]))
         log.check    <- capture.output(log.probs  <- try(vapply(Gs, function(g, Q=Q0s[g]) dmvn(data, mu[,g], if(Q) sigma[[g]] else sqrt(sigma[[g]]), log=TRUE, isChol=!Q), numeric(N)), silent=TRUE))
         if(inherits(log.probs, "try-error")) {
-          log.probs  <- vapply(Gs, function(g, Q=Q0[g]) { sigma <- if(Q) sigma[[g]] else sqrt(sigma[[g]]); dmvn(data, mu[,g], is.posi_def(sigma, make=TRUE)$X.new, log=TRUE, isChol=!Q) }, numeric(N))
+          log.probs  <- vapply(Gs, function(g, Q=Q0s[g]) { sigma <- if(Q) sigma[[g]] else sqrt(sigma[[g]]); dmvn(data, mu[,g], is.posi_def(sigma, make=TRUE)$X.new, log=TRUE, isChol=!Q) }, numeric(N))
         }
         if(ind.slice) {
           log.pixi   <- log(pi.prop) - log(ksi[Gs])
@@ -222,10 +222,10 @@
     # Scores & Loadings
       c.data         <- lapply(Gs, function(g) sweep(dat.g[[g]], 2, mu[,g], FUN="-"))
       if(Q0)     {
-        eta.tmp      <- lapply(Gs, function(g) if(nn0[g]) .sim_score(N=nn[g], lmat=lmat[,,g], Q=Q, c.data=c.data[[g]], psi.inv=psi.inv[,g], Q1=Q1) else base::matrix(0, nrow=0, ncol=Q))
+        eta.tmp      <- lapply(Gs, function(g) if(nn0[g]) .sim_score(N=nn[g], lmat=lmat[,,g], Q=Q, c.data=c.data[[g]], psi.inv=psi.inv[,g], Q1=Q1) else matrix(0, nrow=0, ncol=Q))
         EtE          <- lapply(Gs, function(g) if(nn0[g]) crossprod(eta.tmp[[g]]))
-        lmat[,,Gs]   <- array(unlist(lapply(Gs, function(g) matrix(if(nn0[g]) unlist(lapply(Ps, function(j) .sim_load(l.sigma=l.sigma, Q=Q, c.data=c.data[[g]][,j], eta=eta.tmp[[g]],
-                        EtE=EtE[[g]], Q1=Q1, psi.inv=psi.inv[,g][j])), use.names=FALSE) else .sim_load_p(Q=Q, P=P, sigma.l=sigma.l), nrow=P, byrow=TRUE)), use.names=FALSE), dim=c(P, Q, G))
+        lmat[,,Gs]   <- array(unlist(lapply(Gs, function(g) matrix(if(nn0[g]) vapply(Ps, function(j) .sim_load(l.sigma=l.sigma, Q=Q, c.data=c.data[[g]][,j], eta=eta.tmp[[g]],
+                        EtE=EtE[[g]], Q1=Q1, psi.inv=psi.inv[,g][j]), numeric(Q)) else .sim_load_p(Q=Q, P=P, sigma.l=sigma.l), nrow=P, byrow=TRUE)), use.names=FALSE), dim=c(P, Q, G))
         eta          <- do.call(rbind, eta.tmp)[obsnames,, drop=FALSE]
       } else   {
         eta.tmp      <- lapply(Gs, function(g) eta[z == g,, drop=FALSE])

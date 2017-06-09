@@ -29,12 +29,12 @@
     .sim_load_s  <- function(Q, c.data, eta, phi, tau, psi.inv, EtE, Q1) {
       u.load     <- diag(phi * tau, Q) + psi.inv * EtE
       u.load     <- if(Q1) sqrt(u.load) else .chol(u.load)
-        psi.inv   * (if(Q1) 1/(u.load * u.load) else chol2inv(u.load)) %*% crossprod(eta, c.data) + backsolve(u.load, rnorm(Q))
+        psi.inv   * (if(Q1) 1/(u.load  * u.load) else chol2inv(u.load)) %*% crossprod(eta, c.data) + backsolve(u.load, rnorm(Q))
     }
 
   # Uniquenesses
     .sim_psi_uuu <- function(N, P, psi.alpha, psi.beta, c.data, eta, lmat) {
-      S.mat      <- c.data - tcrossprod(eta, lmat)
+      S.mat      <- c.data  - tcrossprod(eta, lmat)
         rgamma(P, shape=N/2 + psi.alpha, rate=colSums(S.mat * S.mat)/2 + psi.beta)
     }
 
