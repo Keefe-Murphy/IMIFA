@@ -7,34 +7,33 @@
 mcmc_IMIFA(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA",
   "MFA", "IFA", "FA", "classify"), n.iters = 25000L, range.G = NULL,
   range.Q = NULL, burnin = n.iters/5, thinning = 2L, centering = TRUE,
-  scaling = c("unit", "pareto", "none"), mu.zero = NULL, sigma.mu = NULL,
-  sigma.l = NULL, alpha = NULL, psi.alpha = NULL, psi.beta = NULL,
-  uni.type = c("unconstrained", "isotropic"), uni.prior = c("unconstrained",
-  "isotropic"), z.init = c("mclust", "kmeans", "list", "priors"),
-  z.list = NULL, adapt = TRUE, prop = NULL, epsilon = NULL,
-  alpha.d1 = NULL, alpha.d2 = NULL, beta.d1 = NULL, beta.d2 = NULL,
-  nu = NULL, nuplus1 = TRUE, adapt.at = NULL, b0 = NULL, b1 = NULL,
-  trunc.G = NULL, learn.alpha = TRUE, alpha.hyper = NULL, zeta = NULL,
-  ind.slice = TRUE, rho = NULL, IM.lab.sw = TRUE,
-  verbose = interactive(), discount = NULL, learn.d = FALSE,
-  d.hyper = NULL, kappa = NULL, mu0g = FALSE, psi0g = FALSE,
-  delta0g = FALSE, mu.switch = TRUE, score.switch = TRUE,
+  scaling = c("unit", "pareto", "none"), uni.type = c("unconstrained",
+  "isotropic", "constrained", "single"), uni.prior = c("unconstrained",
+  "isotropic"), alpha = NULL, psi.alpha = NULL, psi.beta = NULL,
+  mu.zero = NULL, sigma.mu = NULL, sigma.l = NULL, z.init = c("mclust",
+  "kmeans", "list", "priors"), z.list = NULL, adapt = TRUE, prop = NULL,
+  epsilon = NULL, alpha.d1 = NULL, alpha.d2 = NULL, beta.d1 = NULL,
+  beta.d2 = NULL, nu = NULL, nuplus1 = TRUE, adapt.at = NULL,
+  b0 = NULL, b1 = NULL, trunc.G = NULL, learn.alpha = TRUE,
+  alpha.hyper = NULL, zeta = NULL, ind.slice = TRUE, rho = NULL,
+  IM.lab.sw = TRUE, verbose = interactive(), discount = NULL,
+  learn.d = FALSE, d.hyper = NULL, kappa = NULL, mu0g = FALSE,
+  psi0g = FALSE, delta0g = FALSE, mu.switch = TRUE, score.switch = TRUE,
   load.switch = TRUE, psi.switch = TRUE, pi.switch = TRUE)
 }
 \arguments{
 \item{dat}{A matrix or data frame such that rows correspond to observations (\code{N}) and columns correspond to variables (\code{P}). Non-numeric variables and rows with missing entries will be removed.}
 
-\item{method}{An acronym for the type of model to fit where: \cr
-\cr
- "\code{FA}" = Factor Analysis \cr
- "\code{IFA}" = Infinite Factor Analysis \cr
- "\code{MFA}" = Mixtures of Factor Analysers \cr
- "\code{MIFA}" = Mixtures of Infinite Factor Analysers \cr
- "\code{OMFA}" = Overfitted Mixtures of Factor Analysers \cr
- "\code{OMIFA}" = Overfitted Mixtures of Infinite Factor Analysers \cr
- "\code{IMFA}" = Infinite Mixtures of Factor Analysers \cr
- "\code{IMIFA}" = Infinite Mixtures of Infinite Factor Analysers \cr
- \cr
+\item{method}{An acronym for the type of model to fit where:
+\describe{
+ \item{"\code{FA}"}{Factor Analysis}
+ \item{"\code{MFA}"}{Mixtures of Factor Analysers}
+ \item{"\code{MIFA}"}{Mixtures of Infinite Factor Analysers}
+ \item{"\code{OMFA}"}{Overfitted Mixtures of Factor Analysers}
+ \item{"\code{OMIFA}"}{Overfitted Mixtures of Infinite Factor Analysers}
+ \item{"\code{IMFA}"}{Infinite Mixtures of Factor Analysers}
+ \item{"\code{IMIFA}"}{Infinite Mixtures of Infinite Factor Analysers}
+}
  The "\code{classify}" method is not yet implemented.}
 
 \item{n.iters}{The number of iterations to run the Gibbs sampler for.}
@@ -51,21 +50,28 @@ mcmc_IMIFA(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA",
 
 \item{scaling}{The scaling to be applied - one of "\code{unit}", "\code{none}" or "\code{pareto}".}
 
-\item{mu.zero}{The mean of the prior distribution for the mean parameter. Defaults to the sample mean of the data.}
+\item{uni.type}{This argument specifies the type of constraint, if any, to be placed on the uniquenesses/idiosyncratic variances, i.e. whether a general diaonal matrix or isotropic diagonal matrix is to be assumed, and in turn whether these matrices are constrained to be equal across groups. The default "\code{unconstrained}" corresponds to factor analysis (and mixtures thereof), whereas "\code{isotropic}" corresponds to probabilistic principal components analysers (and mixtures thereof). Constraints are particularly recommended when \code{N < P}, though caution is advised when employing constraints for any of the infinite factor models. The four options correspond to the following 4 parsimonious Gaussian mixture models:
+\describe{
+\item{\code{unconstrained}}{\strong{UUU} - variable-specific and cluster-specific: \eqn{\Psi_g = \Psi_g}{Psi_g = Psi_g}.}
+\item{\code{isotropic}}{\strong{UUC} - cluster-specific, equal across variables: \eqn{\Psi_g = \sigma_g^2 \mathcal{I}_p}{Psi_g = (sigma^2)_g I_p}.}
+\item{\code{constrained}}{\strong{UCU} - variable-specific, equal across clusters: \eqn{\Psi_g = \Psi}{Psi_g = Psi}.}
+\item{\code{single}}{\strong{UCC} - a single value equal across clusters and variables: \eqn{\Psi_g = \sigma^2 \mathcal{I}_p}{Psi_g = sigma^2 I_p}.}
+}
+The first letter \strong{U} here corresponds to constraints on loadings (not yet implemented), the second letter corresponds to constrained/unconstrained across clusters, and the third letter corresponds to the isotropic constraint. Of course, only the third letter is of relevance for the single-cluster "\code{FA}" and "\code{IFA}" models, such that "\code{unconstrained}" and "\code{constrained}" are equivalent for these models, and so too are "\code{isotropic}" and "\code{single}".}
 
-\item{sigma.mu}{The covariance of the prior distribution for the mean parameter. Can be a scalar times the identity or a matrix of appropriate dimension. Defaults to the sample covariance matrix.}
-
-\item{sigma.l}{The covariance of the prior distribution for the loadings. Defaults to 1. Only relevant for the finite factor methods.}
+\item{uni.prior}{A switch indicating whether uniquenesses rate hyperparameters are to be "\code{unconstrained}" or "\code{isotropic}", i.e. variable-specific or not. "\code{uni.prior}" must be "\code{isotropic}" if the last letter of "\code{uni.type}" is \strong{C}, but can take either value otherwise. Defaults to correspond to the last letter of \code{uni.type} if that is supplied and \code{uni.prior} is not, otherwise defaults to "\code{unconstrained}", but "\code{isotropic}" is recommended when \code{N < P}. Only relevant when "\code{psi.beta}" is not supplied and \code{\link{psi_hyper}} is therefore invoked.}
 
 \item{alpha}{Depending on the method employed, either the hyperparameter of the Dirichlet prior for the cluster mixing proportions, or the Dirichlet process concentration parameter. Defaults to 0.5/range.G for the Overfitted methods - if supplied for "\code{OMFA}" and "\code{OMIFA}" methods, you are supplying the numerator of \code{alpha/range.G}, which should be less than half the dimension (per group!) of the free parameters of the smallest model considered in order to ensure superfluous clusters are emptied (for "\code{OMFA}", this corresponds to the smallest \code{range.Q}; for "\code{OMIFA}", this corresponds to a zero-factor model) [see: \code{\link{PGMM_dfree}} and Rousseau and Mengersen (2011)]. Defaults to 1 for the finite mixture models "\code{MFA}" and "\code{MIFA}". Defaults to \code{1 - discount} for the "\code{IMFA}" and "\code{IMIFA}" models if \code{learn.alpha=FALSE} or a simulation from the prior if \code{learn.alpha=TRUE}. Must be positive, unless \code{discount} is supplied for the "\code{IMFA}" or "\code{IMIFA}" methods.}
 
 \item{psi.alpha}{The shape of the inverse gamma prior on the uniquenesses. Defaults to 2.5.}
 
-\item{psi.beta}{The rate of the inverse gamma prior on the uniquenesses. Can be either a single parameter or a vector of variable specific rates.  If this is not supplied, \code{\link{psi_hyper}} is invoked to choose sensible values, depending on the value of \code{uni.prior}.}
+\item{psi.beta}{The rate of the inverse gamma prior on the uniquenesses. Can be either a single parameter, a vector of variable specific rates, or a matrix of variable and group-specific rates. If this is not supplied, \code{\link{psi_hyper}} is invoked to choose sensible values, depending on the value of \code{uni.prior} and, for the "\code{MFA}" and "\code{MIFA}" models, the value of \code{psi0g}.}
 
-\item{uni.type}{A switch indicating whether uniquenesses are to be "\code{unconstrained}" or "\code{isotropic}". Note that "\code{unconstrained}" here means variable-specific and group-specific, whereas "\code{isotropic}" here means isotropic but still group-specific. The "\code{isotropic}" constraint provides the link between factor analysis and the probabilistic principal component analysis model. Defaults to "\code{unconstrained}", but "\code{isotropic}" is recommended when \code{N < P}.}
+\item{mu.zero}{The mean of the prior distribution for the mean parameter. Defaults to the sample mean of the data.}
 
-\item{uni.prior}{A switch indicating whether uniquenesses rate hyperparameters are to be "\code{unconstrained}" or "\code{isotropic}". "\code{uni.prior}" must be "\code{isotropic}" if "\code{uni.type}" is "\code{isotropic}", but can take either value when "\code{uni.type}" is "\code{unconstrained}". Defaults to \code{uni.type} if that is supplied and \code{uni.prior} is not, otherwise defaults to "\code{unconstrained}", but "\code{isotropic}" is recommended when \code{N < P}. Only relevant when "\code{psi.beta}" is not supplied and \code{\link{psi_hyper}} is invoked.}
+\item{sigma.mu}{The covariance of the prior distribution for the mean parameter. Can be a scalar times the identity or a matrix of appropriate dimension. Defaults to the sample covariance matrix.}
+
+\item{sigma.l}{The covariance of the prior distribution for the loadings. Defaults to 1. Only relevant for the finite factor methods.}
 
 \item{z.init}{The method used to initialise the cluster labels. Defaults to \code{\link[mclust]{Mclust}}. Not relevant for the "\code{FA}" and "\code{"IFA"} methods.}
 
@@ -121,7 +127,7 @@ mcmc_IMIFA(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA",
 
 \item{mu0g}{Logical indicating whether the \code{mu.zero} hyperparameter can be cluster-specific. Defaults to \code{FALSE}. Only relevant for the "\code{MFA}" and "\code{MIFA}" methods when \code{z.list} is supplied.}
 
-\item{psi0g}{Logical indicating whether the \code{psi.beta} hyperparameter(s) can be cluster-specific. Defaults to \code{FALSE}. Only relevant for the "\code{MFA}" and "\code{MIFA}" methods when \code{z.list} is supplied.}
+\item{psi0g}{Logical indicating whether the \code{psi.beta} hyperparameter(s) can be cluster-specific. Defaults to \code{FALSE}. Only relevant for the "\code{MFA}" and "\code{MIFA}" methods when \code{z.list} is supplied, and only allowable when \code{uni.type} is one of \code{unconstrained} or \code{isotropic}.}
 
 \item{delta0g}{Logical indicating whether the \code{alpha.d1}  and \code{alpha.d2} hyperparameters can be cluster-specific. Defaults to \code{FALSE}. Only relevant for the "\code{MFA}" and "\code{MIFA}" methods when \code{z.list} is supplied.}
 
@@ -172,7 +178,9 @@ Carries out Gibbs sampling for all models from the IMIFA family, facilitating mo
 # Supply a sufficiently small alpha value. Try varying other hyperparameters.
 # Accept the default value for the starting number of factors,
 # but supply a value for the starting number of clusters.
-# simOMIFA <- mcmc_IMIFA(coffee, method="OMIFA", range.G=10, psi.alpha=3, nu=3, alpha=0.8)
+# Try contraining uniquenesses to be common across both variables and clusters.
+# simOMIFA <- mcmc_IMIFA(coffee, method="OMIFA", range.G=10, psi.alpha=3,
+#                        nu=3, alpha=0.8, uni.type="single")
 }
 \references{
 Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, \href{https://arxiv.org/abs/1701.07010}{arXiv:1701.07010}.
@@ -180,6 +188,8 @@ Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite F
 Bhattacharya, A. and Dunson, D. B. (2011) Sparse Bayesian infinite factor models, \emph{Biometrika}, 98(2): 291-306.
 
 Kalli, M., Griffin, J. E. and Walker, S. G. (2011) Slice sampling mixture models, \emph{Statistics and Computing}, 21(1): 93-105.
+
+McNicholas, P. D. and Murphy, T. B. (2008) Parsimonious Gaussian Mixture Models, \emph{Statistics and Computing}, 18(3): 285-296.
 
 Rousseau, J. and Mengersen, K. (2011) Asymptotic Behaviour of the posterior distribution in overfitted mixture models, \emph{Journal of the Royal Statistical Society: Series B (Statistical Methodology)}, 73(5): 689-710.
 

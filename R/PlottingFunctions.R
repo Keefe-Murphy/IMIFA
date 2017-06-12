@@ -124,10 +124,11 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
   var.names    <- if(is.null(var.names)) seq_len(n.var) else var.names
   names(v.sw)  <- formals(sys.function(sys.parent()))$param
   ci.sw        <- v.sw
-  if((grp.ind  <- !is.element(method, c("FA", "IFA")))) {
+  uni.type     <- unname(attr(x, "Uni.Meth")['Uni.Type'])
+  if((grp.ind  <- !is.element(method, c("FA", "IFA")) && !(param == "uniquenesses" && is.element(uni.type, c("constrained", "single"))))) {
     clust      <- x$Clust
     grp.size   <- clust$post.sizes
-    labelmiss  <- !is.null(attr(clust, "Label.Sup")) && !attr(clust, "Label.Sup")
+    labelmiss  <- !is.null(attr(clust, "Label.Sup"))  && !attr(clust, "Label.Sup")
   }
   grp.ind      <- all(G != 1, grp.ind)
   if((all.ind  <- plot.meth == "all"))    {
@@ -149,8 +150,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
     x$Loadings$var.load  <- replace(llist, Q0x, x$Loadings$var.load)
   }
   if(param == "uniquenesses") {
-    uni.type             <- unname(attr(x, "Uni.Meth")['Uni.Type'])
-    mat   <- switch(uni.type, unconstrained=mat, FALSE)
+    mat   <- switch(uni.type, constrained=, unconstrained=mat, FALSE)
   }
   z.miss  <- missing(zlabels)
   if(!z.miss) {
@@ -243,8 +243,8 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
       Gs  <- if(gx) (if(z.sim) seq_len(3L) else seq_len(2L)) else ifelse(g <=
              ifelse(z.sim, 3, 2), g,  stop(paste0("Invalid 'g' value", ifelse(z.sim, ": similarity matrix not available", ""))))
     }
-  } else if(any(all(is.element(param, c("scores", "pis", "alpha", "discount")), any(all.ind, param != "scores", !m.sw["M.sw"])),
-            m.sw["G.sw"], all(m.sw["P.sw"], param != "loadings"), m.sw["E.sw"]))  {
+  } else if(any(all(is.element(param, c("scores", "pis", "alpha", "discount")), any(all.ind, param != "scores", !m.sw["M.sw"])), m.sw["G.sw"],
+            all(m.sw["P.sw"], param != "loadings"), m.sw["E.sw"], all(param == "uniquenesses", is.element(uni.type, c("constrained", "single")))))  {
     Gs    <- 1L
   } else if(!gx) {
     if(!is.element(method, c("FA", "IFA"))) {
@@ -377,7 +377,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           if(titles) title(main=list(paste0("Trace", ifelse(all.ind, "", paste0(":\nUniquenesses", ifelse(grp.ind, paste0(" - Group ", g), ""))))))
         } else   {
           plot(x=iter, y=plot.x[ind,], ylab="", type="l", xlab="Iteration")
-          if(titles) title(main=list(paste0("Trace", ifelse(all.ind, switch(uni.type, unconstrained=paste0(":\n"), ""), paste0(":\nUniquenesses - ", ifelse(grp.ind, paste0("Group ", g, " - "), ""))), switch(uni.type, unconstrained=paste0(var.names[ind], " Variable"), ""))))
+          if(titles) title(main=list(paste0("Trace", ifelse(all.ind, switch(uni.type, constrained=, unconstrained=paste0(":\n"), ""), paste0(":\nUniquenesses - ", ifelse(grp.ind, paste0("Group ", g, " - "), ""))), switch(uni.type, constrained=, unconstrained=paste0(var.names[ind], " Variable"), ""))))
         }
       }
       if(param == "pis") {
@@ -502,7 +502,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           plot.d  <- .logdensity(x.plot[ind,])
           plot.d$y[plot.d$x < 0] <- 0
           plot(plot.d, main="", ylab="")
-          if(titles) title(main=list(paste0("Density", ifelse(all.ind, switch(uni.type, unconstrained=paste0(":\n"), ""), paste0(":\nUniquenesses - ", ifelse(grp.ind, paste0("Group ", g, " - "), ""))), switch(uni.type, unconstrained=paste0(var.names[ind], " Variable"), ""))))
+          if(titles) title(main=list(paste0("Density", ifelse(all.ind, switch(uni.type, constrained=, unconstrained=paste0(":\n"), ""), paste0(":\nUniquenesses - ", ifelse(grp.ind, paste0("Group ", g, " - "), ""))), switch(uni.type, constrained=, unconstrained=paste0(var.names[ind], " Variable"), ""))))
           polygon(plot.d, col=grey, border=NA)
         }
       }
@@ -971,7 +971,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         box(lwd=2)
         if(p.ind)                     message("Rows and columns of similarity matrix reordered to correspond to MAP clustering")
       }
-      if(all(g  != 3, g == min(Gs))) {
+      if(all(g  != 3, g == min(Gs)))  {
         prf     <- NULL
         if(any(!labelmiss,  !z.miss)) {
           if(all(!labelmiss, z.miss)) {
@@ -1011,22 +1011,28 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
     if(m.sw["P.sw"]) {
       plot.x <- switch(param, means=x$Means$post.mu, uniquenesses=x$Uniquenesses$post.psi, x$Loadings$post.load[[g]])
       x.plot <- apply(plot.x, 1L, range, na.rm=TRUE)
-      plot.x <- if(param == "uniquenesses" && uni.type == "isotropic") plot.x else apply(plot.x, 2L, function(x) (x - min(x, na.rm=TRUE))/(max(x, na.rm=TRUE) - min(x, na.rm=TRUE)))
+      plot.x <- if(param == "uniquenesses" && is.element(uni.type, c("isotropic", "single"))) plot.x else apply(plot.x, 2L, function(x) (x - min(x, na.rm=TRUE))/(max(x, na.rm=TRUE) - min(x, na.rm=TRUE)))
       varnam <- paste0(toupper(substr(param, 1, 1)), substr(param, 2, nchar(param)))
       if(any(grp.ind, param == "loadings")) {
-        if(mispal) palette(viridis(max(Q, 2), alpha=transparency))
+        if(mispal) palette(viridis(max(switch(param, loadings=Q, n.var), 2), alpha=transparency))
         layout(rbind(1, 2), heights=c(9, 1))
         par(mar=c(3.1, 4.1, 4.1, 2.1))
       }
       jitcol <- switch(param, loadings=Q, G)
-      matplot(seq_len(n.var) + matrix(rnorm(jitcol * n.var, 0, min(0.1, 1/n.var^2)), nrow=n.var, ncol=jitcol), plot.x, type=switch(param, uniquenesses=switch(uni.type, unconstrained="p", isotropic="l"), "p"),
-                        col=switch(param, loadings=seq_len(Q), seq_len(G)), pch=15, xlab="Variable", ylab=paste0("Standardised ", varnam), xaxt="n", bty="n", yaxt=ifelse(param == "uniquenesses" && uni.type == "isotropic", "s", "n"),
-                        main=paste0("Parallel Coordinates: ", varnam, ifelse(all(grp.ind, param == "loadings"), paste0("\n Group ", g), "")), lty=1)
-      axis(1, at=seq_len(n.var), labels=if(titles && n.var < 100) rownames(plot.x) else rep("", n.var), cex.axis=0.5, tick=FALSE)
+      type.u <- ifelse(type.x, switch(param, uniquenesses=switch(uni.type, constrained=, unconstrained="p", single=, isotropic="l"), "p"), type)
+      if(!is.element(type.u,
+                     c("l", "p")))    stop("Invalid 'type' for parallel coordinates plot")
+      matplot(seq_len(n.var) + if(uni.type != "constrained") switch(type.u, p=matrix(rnorm(jitcol * n.var, 0, min(0.1, 1/n.var^2)), nrow=n.var, ncol=jitcol), 0) else 0,
+              plot.x, type=type.u, pch=15, col=switch(param, loadings=seq_len(Q), seq_len(G)), xlab=switch(uni.type, constrained=, unconstrained="Variable", ""),
+              lty=1, ylab=paste0(switch(param, uniquenesses=switch(uni.type, constrained=, unconstrained="Standardised ", ""), "Standardised "), varnam),
+              xaxt="n", bty="n", main=paste0("Parallel Coordinates: ", varnam, ifelse(all(grp.ind, param == "loadings"), paste0("\n Group ", g), "")))
+      axis(1, at=seq_len(n.var), labels=if(titles && n.var < 100) rownames(plot.x) else rep("", n.var), cex.axis=0.5, tick=FALSE, line=-0.5)
       for(i in seq_len(n.var))    {
         lines(c(i, i), c(0, 1), col=grey)
         if(titles && n.var < 100) {
-          text(c(i, i), c(0, 1), labels=format(x.plot[,i], digits=3), xpd=NA, offset=0.3, pos=c(1, 3), cex=0.5)
+          text(c(i, i), c(switch(param, uniquenesses=switch(uni.type, single=, isotropic=par("usr")[3], 0), 0),
+               switch(param, uniquenesses=switch(uni.type, single=, isotropic=par("usr")[4], 1), 1)),
+               labels=format(x.plot[,i], digits=3), xpd=NA, offset=0.3, pos=c(1, 3), cex=0.5)
         }
       }
       if(any(grp.ind, param  == "loadings")) {
@@ -1126,12 +1132,12 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         plot.x <- x$Uniquenesses$psis[[g]]
         if(!partial) {
           acf(plot.x[ind,], main="", ci.col=4, ylab="")
-          if(titles) title(main=list(paste0("ACF",  ifelse(all.ind, switch(uni.type, unconstrained=paste0(":\n", var.names[ind], " Variable"), ""), ""))))
+          if(titles) title(main=list(paste0("ACF",  ifelse(all.ind, switch(uni.type, constrained=, unconstrained=paste0(":\n", var.names[ind], " Variable"), ""), ""))))
         }
         if(any(!all.ind, partial)) {
           acf(plot.x[ind,], main="", type="partial", ci.col=4, ylab="")
-          if(titles) title(main=list(paste0("PACF", ifelse(partial, switch(uni.type, unconstrained=paste0(":\n", var.names[ind], " Variable"), ""), ""))))
-          if(all(!all.ind, titles)) title(main=list(paste0("Uniquenesses - ", ifelse(grp.ind, paste0("Group ", g, ":\n "), ""), switch(uni.type, unconstrained=paste0(var.names[ind], " Variable"), ""))), outer=TRUE)
+          if(titles) title(main=list(paste0("PACF", ifelse(partial, switch(uni.type, constrained=, unconstrained=paste0(":\n", var.names[ind], " Variable"), ""), ""))))
+          if(all(!all.ind, titles)) title(main=list(paste0("Uniquenesses - ", ifelse(grp.ind, paste0("Group ", g, ":\n "), ""), switch(uni.type, constrained=, unconstrained=paste0(var.names[ind], " Variable"), ""))), outer=TRUE)
         }
       }
       if(param == "pis")  {

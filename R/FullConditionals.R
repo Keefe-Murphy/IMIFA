@@ -43,6 +43,22 @@
         rep(rgamma(1, shape=(N * P)/2 + psi.alpha, rate=sum(S.mat * S.mat)/2 + psi.beta), P)
     }
 
+    .sim_psi_ucu <- function(u.shape, psi.beta, S.mat, V) {
+      rgamma(V, shape=u.shape, rate=colSums(do.call(rbind, S.mat))/2 + psi.beta)
+    }
+
+    .sim_psi_ucc <- function(u.shape, psi.beta, S.mat, V = 1) {
+      rgamma(V, shape=u.shape, rate=sum(unlist(S.mat))/2 + psi.beta)
+    }
+
+    .sim_psi_u1  <- function(u.shape, psi.beta, S.mat, V) {
+      rgamma(V, shape=u.shape, rate=colSums(S.mat * S.mat)/2 + psi.beta)
+    }
+
+    .sim_psi_c1  <- function(u.shape, psi.beta, S.mat, V = 1) {
+      rgamma(V, shape=u.shape, rate=sum(S.mat * S.mat)/2 + psi.beta)
+    }
+
   # Local Shrinkage
     .sim_phi     <- function(Q, P, nu, tau, load.2, plus1) {
         base::matrix(rgamma(P * Q, shape=0.5 + nu + plus1, rate=(nu + sweep(load.2, 2, tau, FUN="*"))/2), nrow=P, ncol=Q)
@@ -206,7 +222,7 @@
         rgamma(n=P, shape=psi.alpha, rate=psi.beta)
     }
 
-    .sim_psi_ipi <- function(P, psi.alpha, psi.beta) {
+    .sim_psi_ipc <- function(P, psi.alpha, psi.beta) {
         rep(rgamma(1, shape=psi.alpha, rate=psi.beta), P)
     }
 
@@ -882,14 +898,14 @@
         if(ent  %in% c("exit", "EXIT"))    stop()
     }
 
-    .logdensity     <- function(x, left = 0)  {
+    .logdensity     <- function(x, left = 0)  { # export
       d        <- density(x,     bw   = "SJ")
       h        <- d$bw
       w        <- 1/pnorm(left,  mean = x, sd = h, lower.tail = FALSE)
         return(suppressWarnings(density(x, bw = h, kernel = "gaussian", weights = w/length(x))))
     }
 
-    .logitdensity   <- function(x)  {
+    .logitdensity   <- function(x)  { # export
       y         <- qlogis(x[x  > 0  & x < 1])
       g         <- density(y, bw    = "SJ")
       xgrid     <- plogis(g$x)

@@ -38,9 +38,12 @@
     cov.est      <- matrix(0L, nrow=P, ncol=P)
 
     mu.sigma     <- 1/sigma.mu
-    .sim_psi_inv <- switch(uni.type,  unconstrained=.sim_psi_uuu, isotropic=.sim_psi_uuc)
-    .sim_psi_ip  <- switch(uni.type,  unconstrained=.sim_psi_ipu, isotropic=.sim_psi_ipi)
-    psi.beta     <- switch(uni.prior, isotropic=unique(round(psi.beta, min(nchar(psi.beta)))), psi.beta)
+    uni.type     <- switch(uni.type,   unconstrained=,               constrained="constrained", "single")
+    .sim_psi_inv <- switch(uni.type,   constrained=.sim_psi_u1,      single=.sim_psi_c1)
+    .sim_psi_ip  <- switch(uni.type,   constrained=.sim_psi_ipu,     single=.sim_psi_ipc)
+    psi.beta     <- switch(uni.prior,  single=unique(round(psi.beta, min(nchar(psi.beta)))),    psi.beta)
+    uni.shape    <- switch(uni.type,   constrained=N/2 + psi.alpha,  single=(N * P)/2 + psi.alpha)
+    V            <- switch(uni.type,   constrained=P,                single=1)
     eta          <- .sim_eta_p(Q=Q, N=N)
     lmat         <- matrix(.sim_load_p(Q=Q, P=P, sigma.l=sigma.l), nrow=P, ncol=Q)
     psi.inv      <- .sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
@@ -53,7 +56,7 @@
       }
     } else {
       psi.tmp    <- psi.inv
-      psi.inv    <- switch(uni.type, unconstrained=1/Rfast::colVars(data), rep(1/exp(mean(log(Rfast::colVars(data)))), P))
+      psi.inv[]  <- 1/switch(uni.type, constrained=Rfast::colVars(data), exp(mean(log(Rfast::colVars(data)))))
       inf.ind    <- is.infinite(psi.inv)
       psi.inv[inf.ind]     <- psi.tmp[inf.ind]
     }
@@ -82,7 +85,8 @@
       }
 
     # Uniquenesses
-      psi.inv    <- .sim_psi_inv(N=N, P=P, psi.alpha=psi.alpha, psi.beta=psi.beta, c.data=c.data, eta=eta, lmat=lmat)
+      S.mat      <- c.data  - tcrossprod(eta, lmat)
+      psi.inv[]  <- .sim_psi_inv(uni.shape, psi.beta, S.mat, V)
 
     # Means
       mu[]       <- .sim_mu(N=N, P=P, mu.sigma=mu.sigma, psi.inv=psi.inv, sum.data=sum.data, sum.eta=colSums(eta), lmat=lmat, mu.zero=mu.zero)

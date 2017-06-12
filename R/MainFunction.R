@@ -3,17 +3,16 @@
 #' Carries out Gibbs sampling for all models from the IMIFA family, facilitating model-based clustering with dimensionally reduced factor-analytic covariance structures, with automatic estimation of the number of clusters and cluster-specific factors as appropriate to the method employed. Factor analysis with one group (FA/IFA), finite mixtures (MFA/MIFA), overfitted mixtures (OMFA/OMIFA), infinite factor models which employ the multiplicative gamma process (MGP) shrinkage prior (IFA/MIFA/OMIFA/IMIFA), and infinite mixtures which employ Dirichlet Process Mixture Models (IMFA/IMIFA) are all provided. Creates a raw object of class 'IMIFA' from which the optimal/modal model can be extracted by \code{\link{get_IMIFA_results}}.
 #'
 #' @param dat A matrix or data frame such that rows correspond to observations (\code{N}) and columns correspond to variables (\code{P}). Non-numeric variables and rows with missing entries will be removed.
-#' @param method An acronym for the type of model to fit where: \cr
-#' \cr
-#'  "\code{FA}" = Factor Analysis \cr
-#'  "\code{IFA}" = Infinite Factor Analysis \cr
-#'  "\code{MFA}" = Mixtures of Factor Analysers \cr
-#'  "\code{MIFA}" = Mixtures of Infinite Factor Analysers \cr
-#'  "\code{OMFA}" = Overfitted Mixtures of Factor Analysers \cr
-#'  "\code{OMIFA}" = Overfitted Mixtures of Infinite Factor Analysers \cr
-#'  "\code{IMFA}" = Infinite Mixtures of Factor Analysers \cr
-#'  "\code{IMIFA}" = Infinite Mixtures of Infinite Factor Analysers \cr
-#'  \cr
+#' @param method An acronym for the type of model to fit where:
+#' \describe{
+#'  \item{"\code{FA}"}{Factor Analysis}
+#'  \item{"\code{MFA}"}{Mixtures of Factor Analysers}
+#'  \item{"\code{MIFA}"}{Mixtures of Infinite Factor Analysers}
+#'  \item{"\code{OMFA}"}{Overfitted Mixtures of Factor Analysers}
+#'  \item{"\code{OMIFA}"}{Overfitted Mixtures of Infinite Factor Analysers}
+#'  \item{"\code{IMFA}"}{Infinite Mixtures of Factor Analysers}
+#'  \item{"\code{IMIFA}"}{Infinite Mixtures of Infinite Factor Analysers}
+#' }
 #'  The "\code{classify}" method is not yet implemented.
 #' @param n.iters The number of iterations to run the Gibbs sampler for.
 #' @param range.G Depending on the method employed, either the range of values for the number of clusters, or the conseratively high starting value for the number of clusters. Defaults to 1 for the "\code{FA}" and "\code{IFA}" methods. For the "\code{MFA}" and "\code{MIFA}" models this is to be given as a range of candidate models to explore. For the "\code{OMFA}", "\code{OMIFA}", "\code{IMFA}", and "\code{IMIFA}" models, this is the number of clusters with which the chain is to be initialised, in which case the default is \code{min(N - 1, max(25, ceiling(3 * log(N))))}. For the "\code{OMFA}", and "\code{OMIFA}" models this upper limit remains fixed for the entire length of the chain; \code{range.G} also doubles as the default \code{trunc.G} for the "\code{IMFA}" and "\code{IMIFA}" models. However, when \code{N < P}, or when this bound is close to or exceeds \code{N} for any of these overfitted/infinite mixture models, it is better to initialise at a value closer to the truth (i.e. \code{ceiling(log(N))} by default), though the upper bound remains the same - as a result the role of \code{range.G} when \code{N < P} is no longer to specify the upper bound (which can still be modified via \code{trunc.G}, at least for the "\code{IMFA}" and "\code{IMIFA}" methods) and the number of groups used for initialisation, but rather just the number of groups used for initialisation only. If \code{length(range.G) * length(range.Q)} is large, consider not storing unnecessary parameters, or breaking up the range of models to be explored into chunks, and sending each chunk to \code{\link{get_IMIFA_results}}.
@@ -22,14 +21,22 @@
 #' @param thinning The thinning interval used in the simulation. Defaults to 2. No thinning corresponds to 1. Note that chains can also be thinned later, using \code{\link{get_IMIFA_results}}.
 #' @param centering A logical value indicating whether mean centering should be applied to the data, defaulting to \code{TRUE}.
 #' @param scaling The scaling to be applied - one of "\code{unit}", "\code{none}" or "\code{pareto}".
+#' @param uni.type This argument specifies the type of constraint, if any, to be placed on the uniquenesses/idiosyncratic variances, i.e. whether a general diaonal matrix or isotropic diagonal matrix is to be assumed, and in turn whether these matrices are constrained to be equal across groups. The default "\code{unconstrained}" corresponds to factor analysis (and mixtures thereof), whereas "\code{isotropic}" corresponds to probabilistic principal components analysers (and mixtures thereof). Constraints are particularly recommended when \code{N < P}, though caution is advised when employing constraints for any of the infinite factor models. The four options correspond to the following 4 parsimonious Gaussian mixture models:
+#' \describe{
+#' \item{\code{unconstrained}}{\strong{UUU} - variable-specific and cluster-specific: \eqn{\Psi_g = \Psi_g}{Psi_g = Psi_g}.}
+#' \item{\code{isotropic}}{\strong{UUC} - cluster-specific, equal across variables: \eqn{\Psi_g = \sigma_g^2 \mathcal{I}_p}{Psi_g = (sigma^2)_g I_p}.}
+#' \item{\code{constrained}}{\strong{UCU} - variable-specific, equal across clusters: \eqn{\Psi_g = \Psi}{Psi_g = Psi}.}
+#' \item{\code{single}}{\strong{UCC} - a single value equal across clusters and variables: \eqn{\Psi_g = \sigma^2 \mathcal{I}_p}{Psi_g = sigma^2 I_p}.}
+#' }
+#' The first letter \strong{U} here corresponds to constraints on loadings (not yet implemented), the second letter corresponds to constrained/unconstrained across clusters, and the third letter corresponds to the isotropic constraint. Of course, only the third letter is of relevance for the single-cluster "\code{FA}" and "\code{IFA}" models, such that "\code{unconstrained}" and "\code{constrained}" are equivalent for these models, and so too are "\code{isotropic}" and "\code{single}".
+#'
+#' @param uni.prior A switch indicating whether uniquenesses rate hyperparameters are to be "\code{unconstrained}" or "\code{isotropic}", i.e. variable-specific or not. "\code{uni.prior}" must be "\code{isotropic}" if the last letter of "\code{uni.type}" is \strong{C}, but can take either value otherwise. Defaults to correspond to the last letter of \code{uni.type} if that is supplied and \code{uni.prior} is not, otherwise defaults to "\code{unconstrained}", but "\code{isotropic}" is recommended when \code{N < P}. Only relevant when "\code{psi.beta}" is not supplied and \code{\link{psi_hyper}} is therefore invoked.
+#' @param alpha Depending on the method employed, either the hyperparameter of the Dirichlet prior for the cluster mixing proportions, or the Dirichlet process concentration parameter. Defaults to 0.5/range.G for the Overfitted methods - if supplied for "\code{OMFA}" and "\code{OMIFA}" methods, you are supplying the numerator of \code{alpha/range.G}, which should be less than half the dimension (per group!) of the free parameters of the smallest model considered in order to ensure superfluous clusters are emptied (for "\code{OMFA}", this corresponds to the smallest \code{range.Q}; for "\code{OMIFA}", this corresponds to a zero-factor model) [see: \code{\link{PGMM_dfree}} and Rousseau and Mengersen (2011)]. Defaults to 1 for the finite mixture models "\code{MFA}" and "\code{MIFA}". Defaults to \code{1 - discount} for the "\code{IMFA}" and "\code{IMIFA}" models if \code{learn.alpha=FALSE} or a simulation from the prior if \code{learn.alpha=TRUE}. Must be positive, unless \code{discount} is supplied for the "\code{IMFA}" or "\code{IMIFA}" methods.
 #' @param mu.zero The mean of the prior distribution for the mean parameter. Defaults to the sample mean of the data.
 #' @param sigma.mu The covariance of the prior distribution for the mean parameter. Can be a scalar times the identity or a matrix of appropriate dimension. Defaults to the sample covariance matrix.
 #' @param sigma.l The covariance of the prior distribution for the loadings. Defaults to 1. Only relevant for the finite factor methods.
-#' @param alpha Depending on the method employed, either the hyperparameter of the Dirichlet prior for the cluster mixing proportions, or the Dirichlet process concentration parameter. Defaults to 0.5/range.G for the Overfitted methods - if supplied for "\code{OMFA}" and "\code{OMIFA}" methods, you are supplying the numerator of \code{alpha/range.G}, which should be less than half the dimension (per group!) of the free parameters of the smallest model considered in order to ensure superfluous clusters are emptied (for "\code{OMFA}", this corresponds to the smallest \code{range.Q}; for "\code{OMIFA}", this corresponds to a zero-factor model) [see: \code{\link{PGMM_dfree}} and Rousseau and Mengersen (2011)]. Defaults to 1 for the finite mixture models "\code{MFA}" and "\code{MIFA}". Defaults to \code{1 - discount} for the "\code{IMFA}" and "\code{IMIFA}" models if \code{learn.alpha=FALSE} or a simulation from the prior if \code{learn.alpha=TRUE}. Must be positive, unless \code{discount} is supplied for the "\code{IMFA}" or "\code{IMIFA}" methods.
 #' @param psi.alpha The shape of the inverse gamma prior on the uniquenesses. Defaults to 2.5.
-#' @param psi.beta The rate of the inverse gamma prior on the uniquenesses. Can be either a single parameter or a vector of variable specific rates.  If this is not supplied, \code{\link{psi_hyper}} is invoked to choose sensible values, depending on the value of \code{uni.prior}.
-#' @param uni.type A switch indicating whether uniquenesses are to be "\code{unconstrained}" or "\code{isotropic}". Note that "\code{unconstrained}" here means variable-specific and group-specific, whereas "\code{isotropic}" here means isotropic but still group-specific. The "\code{isotropic}" constraint provides the link between factor analysis and the probabilistic principal component analysis model. Defaults to "\code{unconstrained}", but "\code{isotropic}" is recommended when \code{N < P}.
-#' @param uni.prior A switch indicating whether uniquenesses rate hyperparameters are to be "\code{unconstrained}" or "\code{isotropic}". "\code{uni.prior}" must be "\code{isotropic}" if "\code{uni.type}" is "\code{isotropic}", but can take either value when "\code{uni.type}" is "\code{unconstrained}". Defaults to \code{uni.type} if that is supplied and \code{uni.prior} is not, otherwise defaults to "\code{unconstrained}", but "\code{isotropic}" is recommended when \code{N < P}. Only relevant when "\code{psi.beta}" is not supplied and \code{\link{psi_hyper}} is invoked.
+#' @param psi.beta The rate of the inverse gamma prior on the uniquenesses. Can be either a single parameter, a vector of variable specific rates, or a matrix of variable and group-specific rates. If this is not supplied, \code{\link{psi_hyper}} is invoked to choose sensible values, depending on the value of \code{uni.prior} and, for the "\code{MFA}" and "\code{MIFA}" models, the value of \code{psi0g}.
 #' @param z.init The method used to initialise the cluster labels. Defaults to \code{\link[mclust]{Mclust}}. Not relevant for the "\code{FA}" and "\code{"IFA"} methods.
 #' @param z.list A user supplied list of cluster labels. Only relevant if \code{z.init == "z.list"}.
 #' @param adapt A logical value indicating whether adaptation of the number of cluster-specific factors is to take place. Only relevant for methods ending in IFA, in which case the default is \code{TRUE}. Specifying \code{FALSE} and supplying \code{range.Q} provides a means to use the MGP prior in a finite factor context.
@@ -57,7 +64,7 @@
 #' @param d.hyper Hyperparameters for the Beta(a,b) prior on the \code{discount} hyperparameter. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods.
 #' @param kappa The prior distribution on the \code{discount} hyperparameter is assumed to be a mixture with point-mass at zero and a continuous Beta(a,b) distribution. \code{kappa} gives the weight of the point mass at zero. Must lie in the interval [0,1]. Defaults to 0.5. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods.
 #' @param mu0g Logical indicating whether the \code{mu.zero} hyperparameter can be cluster-specific. Defaults to \code{FALSE}. Only relevant for the "\code{MFA}" and "\code{MIFA}" methods when \code{z.list} is supplied.
-#' @param psi0g Logical indicating whether the \code{psi.beta} hyperparameter(s) can be cluster-specific. Defaults to \code{FALSE}. Only relevant for the "\code{MFA}" and "\code{MIFA}" methods when \code{z.list} is supplied.
+#' @param psi0g Logical indicating whether the \code{psi.beta} hyperparameter(s) can be cluster-specific. Defaults to \code{FALSE}. Only relevant for the "\code{MFA}" and "\code{MIFA}" methods when \code{z.list} is supplied, and only allowable when \code{uni.type} is one of \code{unconstrained} or \code{isotropic}.
 #' @param delta0g Logical indicating whether the \code{alpha.d1}  and \code{alpha.d2} hyperparameters can be cluster-specific. Defaults to \code{FALSE}. Only relevant for the "\code{MFA}" and "\code{MIFA}" methods when \code{z.list} is supplied.
 #' @param mu.switch Logical indicating whether the means are to be stored (defaults to \code{TRUE}). May be useful not to store if memory is an issue. Warning: posterior inference won't be posssible.
 #' @param score.switch Logical indicating whether the factor scores are to be stored. As the array containing each sampled scores matrix tends to be amongst the largest objects to be stored, this defaults to \code{FALSE} when \code{length(range.G) * length(range.Q) > 10}, otherwise the default is \code{TRUE}. May be useful not to store if memory is an issue - for the "\code{MIFA}", "\code{OMIFA}", and "\code{IMIFA}" methods, setting this switch to \code{FALSE} also offers a slight speed-up. Warning: posterior inference won't be posssible.
@@ -84,6 +91,8 @@
 #' Bhattacharya, A. and Dunson, D. B. (2011) Sparse Bayesian infinite factor models, \emph{Biometrika}, 98(2): 291-306.
 #'
 #' Kalli, M., Griffin, J. E. and Walker, S. G. (2011) Slice sampling mixture models, \emph{Statistics and Computing}, 21(1): 93-105.
+#'
+#' McNicholas, P. D. and Murphy, T. B. (2008) Parsimonious Gaussian Mixture Models, \emph{Statistics and Computing}, 18(3): 285-296.
 #'
 #' Rousseau, J. and Mengersen, K. (2011) Asymptotic Behaviour of the posterior distribution in overfitted mixture models, \emph{Journal of the Royal Statistical Society: Series B (Statistical Methodology)}, 73(5): 689-710.
 #'
@@ -122,10 +131,12 @@
 #' # Supply a sufficiently small alpha value. Try varying other hyperparameters.
 #' # Accept the default value for the starting number of factors,
 #' # but supply a value for the starting number of clusters.
-#' # simOMIFA <- mcmc_IMIFA(coffee, method="OMIFA", range.G=10, psi.alpha=3, nu=3, alpha=0.8)
+#' # Try contraining uniquenesses to be common across both variables and clusters.
+#' # simOMIFA <- mcmc_IMIFA(coffee, method="OMIFA", range.G=10, psi.alpha=3,
+#' #                        nu=3, alpha=0.8, uni.type="single")
 mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA", "MFA", "IFA", "FA", "classify"), n.iters = 25000L, range.G = NULL, range.Q = NULL, burnin = n.iters/5,
-                        thinning = 2L, centering = TRUE, scaling = c("unit", "pareto", "none"), mu.zero = NULL, sigma.mu = NULL, sigma.l = NULL, alpha = NULL, psi.alpha = NULL, psi.beta = NULL,
-                        uni.type = c("unconstrained", "isotropic"), uni.prior = c("unconstrained", "isotropic"), z.init = c("mclust", "kmeans", "list", "priors"), z.list = NULL, adapt = TRUE,
+                        thinning = 2L, centering = TRUE, scaling = c("unit", "pareto", "none"), uni.type = c("unconstrained", "isotropic", "constrained", "single"), uni.prior = c("unconstrained", "isotropic"),
+                        alpha = NULL, psi.alpha = NULL, psi.beta = NULL, mu.zero = NULL, sigma.mu = NULL, sigma.l = NULL, z.init = c("mclust", "kmeans", "list", "priors"), z.list = NULL, adapt = TRUE,
                         prop = NULL, epsilon = NULL, alpha.d1 = NULL, alpha.d2 = NULL, beta.d1 = NULL, beta.d2 = NULL, nu = NULL, nuplus1 = TRUE, adapt.at = NULL, b0 = NULL, b1 = NULL,
                         trunc.G = NULL, learn.alpha = TRUE, alpha.hyper = NULL, zeta = NULL, ind.slice = TRUE, rho = NULL, IM.lab.sw = TRUE, verbose = interactive(), discount = NULL, learn.d = FALSE,
                         d.hyper = NULL, kappa = NULL, mu0g = FALSE, psi0g = FALSE, delta0g = FALSE, mu.switch = TRUE, score.switch = TRUE, load.switch = TRUE, psi.switch = TRUE, pi.switch = TRUE) {
@@ -210,17 +221,13 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   lnN       <- log(N)
   NlP       <- N < P
   miss.uni  <- missing("uni.type")
-  if(miss.uni) uni.type      <- "unconstrained"
-  if(missing("uni.prior")) {
-    uni.prior      <- uni.type
-  }
-  uni.type  <- match.arg(uni.type)
-  uni.prior <- match.arg(uni.prior)
+  uni.type  <- ifelse(miss.uni, "unconstrained", match.arg(uni.type))
+  uni.prior <- ifelse(missing(uni.prior), switch(uni.type, constrained=, unconstrained="unconstrained", "isotropic"), match.arg(uni.prior))
+  if(all(is.element(uni.type, c("isotropic", "single")),
+     uni.prior == "unconstrained")) stop("'uni.prior' can only be 'unconstrained' when 'uni.type' is 'unconstrained' or 'constrained'")
   if(all(uni.prior == "unconstrained",
-         uni.type  == "isotropic")) stop("'uni.prior' can only be 'unconstrained' when 'uni.type' is 'unconstrained'")
-  if(all(uni.prior == "unconstrained",
-         uni.type  == "unconstrained",
-         NlP, miss.uni, verbose))   message("Consider setting 'uni.type', or at least 'uni.prior', to 'isotropic' in N << P cases")
+         is.element(uni.type, c("unconstrained", "constrained")),
+         NlP, miss.uni, verbose))   message("Consider setting 'uni.type' to 'isotropic' or 'single', or at least 'uni.prior' to 'isotropic', in N << P cases")
 
 # Manage storage switches & warnings for other function inputs
   if(!missing(mu.switch)  && all(!mu.switch, ifelse(method == "classify",
@@ -375,7 +382,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   if(any(sigma.mu  <= 0, !is.numeric(sigma.mu),
      !is.element(length(sigma.mu),
      c(1, P))))                     stop(paste0("'sigma.mu' must be strictly positive, and of length 1 or P=", P))
-  if(missing("psi.alpha"))   psi.alpha     <- 2.5
+  if(missing("psi.alpha"))   psi.alpha     <- 2.5 + is.element(uni.type, c("isotropic", "single"))
   if(any(psi.alpha <= 1, !is.numeric(psi.alpha),
      length(psi.alpha)   != 1))     stop("'psi.alpha' must be a single number strictly greater than 1 in order to bound uniquenesses away from zero")
   Q.miss    <- missing(range.Q)
@@ -424,7 +431,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(any(length(b1) != 1, !is.numeric(b1),
            b1 <= 0))                stop("'b1' must be a single strictly positive scalar to ensure adaptation probability decreases")
     if(missing("prop"))      prop          <- floor(0.7 * P)/P
-    if(missing("adapt.at"))  adapt.at      <- switch(method, IFA=, MIFA=burnin, 0)
+    if(missing("adapt.at"))  adapt.at      <- switch(method, IFA=, MIFA=burnin, 0L)
     if(missing("epsilon"))   epsilon       <- ifelse(any(centered, centering), 0.1, 0.05)
     if(any(length(prop)    != 1, length(adapt.at) != 1,
            length(epsilon) != 1))   stop("'prop', 'adapt.at', and 'epsilon' must all be of length 1")
@@ -486,12 +493,16 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
            length(delta0g) != 1))   stop("'delta0g' must be TRUE or FALSE")
     if(any(!is.logical(psi0g),
            length(psi0g)   != 1))   stop("'psi0g' must be TRUE or FALSE")
+    if(all(is.element(uni.type, c("constrained", "single")),
+           isTRUE(psi0g)))  {       warning(paste0("'psi0g' forced to FALSE as uniquenesses are constrained across groups (i.e. 'uni.type' = ", uni.type, ")"), call.=FALSE)
+      psi0G <- FALSE
+    }
     if(all(method == "MFA",
            delta0g))                stop("'delta0g' cannot be TRUE for the 'MFA' method")
     if(method == "classify") mu0g          <- TRUE
   }
   dimension <- PGMM_dfree(Q=switch(method, FA=, classify=, MFA=, OMFA=, IMFA=range.Q,
-               IFA=, MIFA=, OMIFA=, IMIFA=0), P=P, method=switch(uni.type, unconstrained="UUU", isotropic="UUC"))
+               IFA=, MIFA=, OMIFA=, IMIFA=0L), P=P, method=switch(uni.type, unconstrained="UUU", isotropic="UUC", constrained="UCU", single="UCC"))
   min.d2    <- min(dimension)/2
   min.d2G   <- min.d2 * G.init
   sw0gs     <- c(mu0g = mu0g, psi0g = psi0g, delta0g = delta0g)
@@ -618,7 +629,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
       }
       if(beta.x)  {
         if(psi0g) {
-          cov.gg   <- lapply(seq_len(G), function(gg, dat.gg = dat[zi[[g]] == gg,, drop=FALSE]) if(all(nngs[gg] > 1, P > nngs[g])) { if(P > 500) cova(as.matrix(dat.gg)) else cov(dat.gg) } else cov.mat)
+          cov.gg   <- lapply(seq_len(G), function(gg, dat.gg = dat[zi[[g]] == gg,, drop=FALSE]) if(all(nngs[gg] > 1, P <= nngs[g])) { if(P > 500) cova(as.matrix(dat.gg)) else cov(dat.gg) } else cov.mat)
           psi.beta[[g]] <- vapply(seq_len(G), function(gg) psi_hyper(shape=psi.alpha, covar=cov.gg[[gg]], type=uni.prior), numeric(P))
         } else {
           psi.beta[[g]] <- replicate(G, temp.psi[[1]])
@@ -647,7 +658,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   if(is.element(method, c("IMIFA", "IMFA", "OMIFA", "OMFA"))) {
     mu.zero        <- if(all(lengths(mu.zero)  == 1)) list(mu.zero[[1]])  else list(mu.zero[[1]][,1])
     psi.beta       <- if(all(lengths(psi.beta) == 1)) list(psi.beta[[1]]) else list(psi.beta[[1]][,1])
-    if(!is.element(method, c("OMFA", "IMFA"))) {
+    if(!is.element(method, c("OMFA", "IMFA")))   {
       alpha.d1     <- list(alpha.d1[[1]][1])
       alpha.d2     <- list(alpha.d2[[1]][1])
     }
@@ -658,11 +669,12 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   if(anyNA(unlist(psi.beta))) {
     psi.beta       <- lapply(psi.beta, function(x) replace(x, is.na(x), 0))
   }
-  if(all(uni.type == "isotropic", unlist(lapply(psi.beta, function(x) {
+  if(all(is.element(uni.type, c("isotropic", "single")),
+         unlist(lapply(psi.beta, function(x)     {
     if(is.matrix(x)) any(apply(x, 2, function(y) {
       length(unique(round(y, nchar(y)))) }) != 1)  else  {
       length(unique(round(x,
-      nchar(x)))) != 1 } } ))))     stop("'psi.beta' cannot be variable specific if 'uni.type' is 'isotropic'")
+      nchar(x)))) != 1 } } ))))     stop("'psi.beta' cannot be variable specific if 'uni.type' is 'isotropic' or 'single'")
   if(any(unlist(psi.beta)   <= 0))  stop("'psi.beta' must be strictly positive")
   if(is.element(method, c("classify", "IFA", "MIFA", "IMIFA", "OMIFA"))) {
     if(!all(MGP_check(ad1=unlist(alpha.d1), ad2=unlist(alpha.d2), Q=unique(range.Q), nu=nu, bd1=beta.d1, bd2=beta.d2,

@@ -49,9 +49,16 @@
     nn             <- tabulate(z, nbins=G)
     nn.ind         <- which(nn > 0)
     pi.alpha       <- cluster$pi.alpha
-    .sim_psi_inv   <- switch(uni.type, unconstrained=.sim_psi_uuu, isotropic=.sim_psi_uuc)
-    .sim_psi_ip    <- switch(uni.type, unconstrained=.sim_psi_ipu, isotropic=.sim_psi_ipi)
-    psi.beta       <- switch(uni.prior, isotropic=unique(round(psi.beta, min(nchar(psi.beta)))), psi.beta)
+    one.uni        <- is.element(uni.type, c("constrained", "single"))
+    .sim_psi_inv   <- switch(uni.type,   unconstrained=.sim_psi_uuu,  isotropic=.sim_psi_uuc,
+                                         constrained=.sim_psi_ucu,    single=.sim_psi_ucc)
+    .sim_psi_ip    <- switch(uni.type,   unconstrained=,              constrained=.sim_psi_ipu,
+                                         isotropic=,                  single=.sim_psi_ipc)
+    if(isTRUE(one.uni)) {
+      uni.shape    <- switch(uni.type,   constrained=N/2 + psi.alpha, single=(N * P)/2 + psi.alpha)
+      V            <- switch(uni.type,   constrained=P, single=1)
+    }
+    psi.beta       <- switch(uni.prior,  isotropic=unique(round(psi.beta, min(nchar(psi.beta)))), psi.beta)
     pi.prop        <- c(cluster$pi.prop, rep(0, G - length(cluster$pi.prop)))
     mu             <- cbind(mu,  vapply(seq_len(G - length(cluster$pi.prop)), function(g) .sim_mu_p(P=P, sig.mu.sqrt=sig.mu.sqrt, mu.zero=mu.zero), numeric(P)))
     eta            <- .sim_eta_p(N=N, Q=Q)
@@ -68,7 +75,11 @@
       }
     } else {
       psi.tmp      <- psi.inv
-      psi.inv[,Gseq]       <- vapply(Gseq, function(g) if(nn[g] > 1) switch(uni.type, unconstrained=1/Rfast::colVars(data[z == g,, drop=FALSE]), rep(1/exp(mean(log(Rfast::colVars(data[z == g,, drop=FALSE])))), P)) else psi.tmp[,g], numeric(P))
+      if(isTRUE(one.uni)) {
+        psi.inv[,] <- 1/switch(uni.type, constrained=Rfast::colVars(data), exp(mean(log(Rfast::colVars(data)))))
+      } else   {
+        psi.inv[,] <- 1/vapply(Gseq, function(g) if(nn[g] > 1) switch(uni.type, unconstrained=Rfast::colVars(data[z == g,, drop=FALSE]), rep(exp(mean(log(Rfast::colVars(data[z == g,, drop=FALSE])))), P)) else psi.tmp[,g], numeric(P))
+      }
       inf.ind      <- is.infinite(psi.inv)
       psi.inv[inf.ind]     <- psi.tmp[inf.ind]
     }
@@ -138,8 +149,13 @@
       }
 
     # Uniquenesses
-      psi.inv      <- vapply(Gseq, function(g) if(nn0[g]) .sim_psi_inv(N=nn[g], psi.alpha=psi.alpha, c.data=c.data[[g]], eta=eta.tmp[[g]], psi.beta=psi.beta,
+      if(isTRUE(one.uni)) {
+        S.mat      <- lapply(Gseq, function(g) { S   <- c.data[[g]] - tcrossprod(eta.tmp[[g]], if(Q1) as.matrix(lmat[,,g]) else lmat[,,g]); S * S } )
+        psi.inv[,] <- .sim_psi_inv(uni.shape, psi.beta, S.mat, V)
+      } else {
+        psi.inv    <- vapply(Gseq, function(g) if(nn0[g]) .sim_psi_inv(N=nn[g], psi.alpha=psi.alpha, c.data=c.data[[g]], eta=eta.tmp[[g]], psi.beta=psi.beta,
                              P=P, lmat=if(Q1) as.matrix(lmat[,,g]) else lmat[,,g]) else .sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), numeric(P))
+      }
 
     # Means
       sum.data     <- vapply(dat.g, colSums, numeric(P))
