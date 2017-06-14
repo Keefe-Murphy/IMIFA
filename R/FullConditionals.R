@@ -898,16 +898,16 @@
         if(ent  %in% c("exit", "EXIT"))    stop()
     }
 
-    .logdensity     <- function(x, left = 0)  { # export
-      d        <- density(x,     bw   = "SJ")
+    .logdensity     <- function(x,  left = 0) { # export?
+      d        <- tryCatch(density(x, bw = "SJ"),  error  = function(e) density(x))
       h        <- d$bw
       w        <- 1/pnorm(left,  mean = x, sd = h, lower.tail = FALSE)
         return(suppressWarnings(density(x, bw = h, kernel = "gaussian", weights = w/length(x))))
     }
 
-    .logitdensity   <- function(x)  { # export
-      y         <- qlogis(x[x  > 0  & x < 1])
-      g         <- density(y, bw    = "SJ")
+    .logitdensity   <- function(x)  { # export?
+      y         <- qlogis(x[x  > 0  &   x < 1])
+      g         <- tryCatch(density(y, bw = "SJ"), error  = function(e) density(y))
       xgrid     <- plogis(g$x)
       g$y       <- g$y/(xgrid  * (1 - xgrid))
       g$x       <- xgrid

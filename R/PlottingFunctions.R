@@ -425,13 +425,13 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         x.plot <- x$Means$mus[[g]]
         if(matx) {
           if(mispal) palette(viridis(n.var, alpha=transparency))
-          plot.x  <- apply(x.plot, 1, density, bw="SJ")
+          plot.x  <- tryCatch(apply(x.plot, 1, density, bw="SJ"), error = function(e) apply(x.plot, 1, density))
           fitx    <- sapply(plot.x, "[[", "x")
           fity    <- sapply(plot.x, "[[", "y")
           matplot(fitx, fity, type="l", xlab="", ylab="", lty=1, col=seq_along(palette()))
           if(titles) title(main=list(paste0("Density", ifelse(all.ind, "", paste0(":\nMeans", ifelse(grp.ind, paste0(" - Group ", g), ""))))))
         } else   {
-          plot.d  <- density(x.plot[ind,], bw="SJ")
+          plot.d  <- tryCatch(density(x.plot[ind,], bw="SJ"),     error = function(e) density(x.plot[ind,]))
           plot(plot.d, main="", ylab="")
           if(titles) title(main=list(paste0("Density", ifelse(all.ind, ":\n", paste0(":\nMeans - ", ifelse(grp.ind, paste0("Group ", g, " - "), ""))), var.names[ind], " Variable")))
           polygon(plot.d, col=grey, border=NA)
@@ -447,7 +447,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           if(mispal) palette(viridis(min(10, max(2, Q.max)), alpha=transparency))
         }
         if(matx) {
-          plot.x  <- apply(plot.x, 1, density, bw="SJ")
+          plot.x  <- tryCatch(apply(x.plot, 1, density, bw="SJ"),       error = function(e) apply(x.plot, 1, density))
           fitx    <- sapply(plot.x, "[[", "x")
           fity    <- sapply(plot.x, "[[", "y")
           matplot(fitx, fity, type="l", xlab="", ylab="", lty=1, col=seq_along(palette()))
@@ -457,7 +457,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
             if(titles) title(main=list(paste0("Density", ifelse(all.ind, ":\n", ":\nScores - "), "Observation ", obs.names[ind[1]])))
           }
         } else   {
-          plot.d  <- density(x.plot[ind[1],ind[2],], bw="SJ")
+          plot.d  <- tryCatch(density(x.plot[ind[1],ind[2],], bw="SJ"), error = function(e) density(x.plot[ind[1],ind[2],]))
           plot(plot.d, main="", ylab="")
           if(titles) title(main=list(paste0("Density", ifelse(all.ind, ":\n", ":\nScores - "), "Observation ", obs.names[ind[1]], ", Factor ", ind[2])))
           polygon(plot.d, col=grey, border=NA)
@@ -473,7 +473,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           if(mispal) palette(viridis(min(10, max(2, Q)), alpha=transparency))
         }
         if(matx) {
-          plot.x  <- apply(plot.x, 1, density, bw="SJ")
+          plot.x  <- tryCatch(apply(plot.x, 1, density, bw="SJ"),       error = function(e) apply(plot.x, 1, density))
           fitx    <- sapply(plot.x, "[[", "x")
           fity    <- sapply(plot.x, "[[", "y")
           matplot(fitx, fity, type="l", xlab="", ylab="", lty=1, col=seq_along(palette()))
@@ -483,7 +483,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
             if(titles) title(main=list(paste0("Density", ifelse(all.ind, ":\n", paste0(":\nLoadings - ", ifelse(grp.ind, paste0("Group ", g, " - "), ""))), var.names[ind[1]], " Variable")))
           }
         } else   {
-          plot.d  <- density(x.plot[ind[1],ind[2],], bw="SJ")
+          plot.d  <- tryCatch(density(x.plot[ind[1],ind[2],], bw="SJ"), error = function(e) density(x.plot[ind[1],ind[2],]))
           plot(plot.d, main="", ylab="")
           if(titles) title(main=list(paste0("Density", ifelse(all.ind, ":\n", paste0(":\nLoadings - ", ifelse(grp.ind, paste0("Group ", g, " - "), ""))), var.names[ind[1]], " Variable, Factor ", ind[2])))
           polygon(plot.d, col=grey, border=NA)
@@ -1014,15 +1014,16 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
       plot.x <- if(param == "uniquenesses" && is.element(uni.type, c("isotropic", "single"))) plot.x else apply(plot.x, 2L, function(x) (x - min(x, na.rm=TRUE))/(max(x, na.rm=TRUE) - min(x, na.rm=TRUE)))
       varnam <- paste0(toupper(substr(param, 1, 1)), substr(param, 2, nchar(param)))
       if(any(grp.ind, param == "loadings")) {
-        if(mispal) palette(viridis(max(switch(param, loadings=Q, n.var), 2), alpha=transparency))
+        if(mispal) palette(viridis(max(switch(param, loadings=Q, G), 2), alpha=transparency))
         layout(rbind(1, 2), heights=c(9, 1))
         par(mar=c(3.1, 4.1, 4.1, 2.1))
       }
       jitcol <- switch(param, loadings=Q, G)
+      jit.x  <- G == 1 || (param == "uniquenesses" && uni.type == "constrained")
       type.u <- ifelse(type.x, switch(param, uniquenesses=switch(uni.type, constrained=, unconstrained="p", single=, isotropic="l"), "p"), type)
       if(!is.element(type.u,
                      c("l", "p")))    stop("Invalid 'type' for parallel coordinates plot")
-      matplot(seq_len(n.var) + if(uni.type != "constrained") switch(type.u, p=matrix(rnorm(jitcol * n.var, 0, min(0.1, 1/n.var^2)), nrow=n.var, ncol=jitcol), 0) else 0,
+      matplot(seq_len(n.var) + if(!jit.x) switch(type.u, p=matrix(rnorm(jitcol * n.var, 0, min(0.1, max(1e-02, 1/n.var^2))), nrow=n.var, ncol=jitcol), 0) else 0,
               plot.x, type=type.u, pch=15, col=switch(param, loadings=seq_len(Q), seq_len(G)), xlab=switch(uni.type, constrained=, unconstrained="Variable", ""),
               lty=1, ylab=paste0(switch(param, uniquenesses=switch(uni.type, constrained=, unconstrained="Standardised ", ""), "Standardised "), varnam),
               xaxt="n", bty="n", main=paste0("Parallel Coordinates: ", varnam, ifelse(all(grp.ind, param == "loadings"), paste0("\n Group ", g), "")))

@@ -18,11 +18,11 @@ __Infinite Mixtures of Infinite Factor Analysers__
   `log.like` arg. removed from `gumbel_max`; function stands alone, now only stored log-likelihoods computed.
   
 ## Bug Fixes
-* Used `bw="SJ"` everywhere `density` is invoked for plotting.
-* Fixed initialisation of uniquenesses for isotropic (I)FA models.
-* Fixed parallel coordinates plot axes and labels for all isotropic uniquenesses plots.
+* Used `bw="SJ"` everywhere `density` is invoked for plotting (`bw="nrd0"` is invoked if this fails).
+* Fixed initialisation of uniquenesses for `isotropic` (I)FA models.
+* Fixed parallel coordinates plot axes and labels for all `isotropic` uniquenesses plots.
 * Fixed simulation of loadings matrices for empty MIFA/OMIFA/IMIFA clusters using `byrow=TRUE`:  
-  Loop to simulate loadings matrices now generally faster also for all models.
+  loop to simulate loadings matrices now generally faster also for all models.
 * Fixed silly error re: way in which (I)FA models are treated as 1-cluster models to ensure they run:  
   Related bug fixed for OM(I)FA/IM(I)FA models when starting number of clusters is actually supplied.
 
@@ -51,13 +51,13 @@ __Infinite Mixtures of Infinite Factor Analysers__
   `gumbel_max` replaces earlier function to sample cluster labels and is now unhidden/exported/documented.
 * Added new plot when `plot.meth=GQ` for OM(I)FA/IM(I)FA models depicting trace of #s of active/non-empty clusters.
 * Added function `Zsimilarity` to summarise posterior clustering by the sampled labels with minimum  
-  squared distance to a sparse similarity matrix constructed by averaging the adjacency matrices.  
-  When optionally called inside `get_IMIFA_results`, the similarity matrix can be plotted via `plot.meth="zlabels"`.
+  squared distance to a sparse similarity matrix constructed by averaging the adjacency matrices:  
+  when optionally called inside `get_IMIFA_results`, the similarity matrix can be plotted via `plot.meth="zlabels"`.
 
 ## Improvements
 * Metropolis-Hastings updates implemented for `alpha` when `discount` is non-zero, rather than usual Gibbs.  
   Mutation rate monitored rather than acceptance rate for Metropolis-Hastings updates of `discount` parameter.
-* Fixed calculation of # 'free' parameters for `aic.mcmc` & `bic.mcmc` criteria when uniquenesses are isotropic:    
+* Fixed calculation of # '_free_' parameters for `aic.mcmc` & `bic.mcmc` criteria when uniquenesses are isotropic:    
   `PGMM_dfree`, which calculates # 'free' parameters for _finite_ factor analytic mixture models is exported/documented.  
   This function is also used to add checks on the Dirichlet hyperparameter for OM(I)FA methods.
 * DIC model selection criterion now also available for infinite factor models (previously finite only).
@@ -84,7 +84,7 @@ __Infinite Mixtures of Infinite Factor Analysers__
 * Edited/robustified subsetting of large objects when storing `mcmc_IMIFA` output.
 * Tightened controls for when certain parameters are not stored for posterior inference.
 * Edited Ledermann upper bound `stop(...)` for finite factor models to `warning(...)`.
-* Geometric rather than arithmetic mean used in derivation of single rate hyperparameter for PPCA's isotropic uniquenesses.
+* Geometric rather than arithmetic mean used to derive single rate hyperparameter for PPCA's isotropic uniquenesses.
 * Uniquenesses now stored correctly for all clustering methods.
 * Indices of uncertain obs. returned (`get_IMIFA_results`)/printed (`plot.Results_IMIFA`) even when `zlabels` not supplied.
 * Fixed behaviour of progress bar when `verbose=FALSE`.
