@@ -72,7 +72,7 @@
     psi0g          <- cluster$l.switch[2]
     label.switch   <- any(cluster$l.switch)
     eta            <- .sim_eta_p(N=N, Q=Q)
-    lmat           <- array(sapply(Gseq, function(g) .sim_load_p(Q=Q, P=P, sigma.l=sigma.l)), dim=c(P, Q, G))
+    lmat           <- if(Q0) array(sapply(Gseq, function(g) .sim_load_p(Q=Q, P=P, sigma.l=sigma.l)), dim=c(P, Q, G)) else array(0, dim=c(P, 0, G))
     psi.inv        <- vapply(Gseq, function(g) .sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta[,g]), numeric(P))
     if(Q0     && Q  < min(N - 1, Ledermann(P))) {
       fact.ind     <- nn   <= P

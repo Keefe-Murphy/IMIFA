@@ -16,11 +16,13 @@ __Infinite Mixtures of Infinite Factor Analysers__
   Thus the 'nearest' positive-(semi)definite matrix and the usual check can be returned in a single call.
 * Sped-up sampling IM(I)FA labels, esp. when 'active' G falls to 1, or the _dependent_ slice-sampler is used:  
   `log.like` arg. removed from `gumbel_max`; function stands alone, now only stored log-likelihoods computed.
+* `psi` argument added to `sim_IMIFA_data` to allow supplying true uniqueness parameter values directly.
   
 ## Bug Fixes
 * Used `bw="SJ"` everywhere `density` is invoked for plotting (`bw="nrd0"` is invoked if this fails).
 * Fixed initialisation of uniquenesses for `isotropic` (I)FA models.
 * Fixed parallel coordinates plot axes and labels for all `isotropic` uniquenesses plots.
+* Fixed adaptation for MIFA/OMIFA/IMIFA when all clusters simultaneously have zero factors.
 * Fixed simulation of loadings matrices for empty MIFA/OMIFA/IMIFA clusters using `byrow=TRUE`:  
   loop to simulate loadings matrices now generally faster also for all models.
 * Fixed silly error re: way in which (I)FA models are treated as 1-cluster models to ensure they run:  

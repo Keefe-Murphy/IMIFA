@@ -62,7 +62,7 @@
     pi.prop        <- c(cluster$pi.prop, rep(0, G - length(cluster$pi.prop)))
     mu             <- cbind(mu,  vapply(seq_len(G - length(cluster$pi.prop)), function(g) .sim_mu_p(P=P, sig.mu.sqrt=sig.mu.sqrt, mu.zero=mu.zero), numeric(P)))
     eta            <- .sim_eta_p(N=N, Q=Q)
-    lmat           <- array(sapply(Gseq, function(g) .sim_load_p(Q=Q, P=P, sigma.l=sigma.l)), dim=c(P, Q, G))
+    lmat           <- if(Q0) array(sapply(Gseq, function(g) .sim_load_p(Q=Q, P=P, sigma.l=sigma.l)), dim=c(P, Q, G)) else array(0, dim=c(P, 0, G))
     psi.inv        <- vapply(Gseq, function(g) .sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), numeric(P))
     if(Q0 &&   Q    < min(N - 1, Ledermann(P))) {
       for(g in which(nn     > P))   {

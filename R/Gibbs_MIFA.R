@@ -147,9 +147,9 @@
     # Scores & Loadings
       c.data       <- lapply(Gseq, function(g) sweep(dat.g[[g]], 2, mu[,g], FUN="-"))
       if(!any(Q0))    {
-        eta.tmp    <- lapply(Gseq, function(g) eta[z == g,, drop=FALSE])
         eta        <- .empty_mat(N)
-        lmat       <- lapply(Gseq, .empty_mat, P)
+        eta.tmp    <- lapply(Gseq, function(g) eta[z == g,, drop=FALSE])
+        lmat       <- replicate(G, .empty_mat(P))
       } else {
         eta.tmp    <- lapply(Gseq, function(g) if(all(nn0[g], Q0[g])) .sim_score(N=nn[g], lmat=lmat[[g]], Q=Qs[g], Q1=Q1[g], c.data=c.data[[g]], psi.inv=psi.inv[,g]) else matrix(0, nrow=ifelse(Q0[g], 0, nn[g]), ncol=Qs[g]))
         EtE        <- lapply(Gseq, function(g) if(nn0[g]) crossprod(eta.tmp[[g]]))

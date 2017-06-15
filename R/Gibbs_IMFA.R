@@ -81,7 +81,7 @@
     nn               <- tabulate(z, nbins=trunc.G)
     mu               <- cbind(mu, vapply(seq_len(trunc.G - G), function(g) .sim_mu_p(P=P, sig.mu.sqrt=sig.mu.sqrt, mu.zero=mu.zero), numeric(P)))
     eta              <- .sim_eta_p(N=N, Q=Q)
-    lmat             <- array(sapply(Ts, function(t) .sim_load_p(Q=Q, P=P, sigma.l=sigma.l)), dim=c(P, Q, trunc.G))
+    lmat             <- if(Q0) array(sapply(Ts, function(t) .sim_load_p(Q=Q, P=P, sigma.l=sigma.l)), dim=c(P, Q, trunc.G)) else array(0, dim=c(P, 0, trunc.G))
     psi.inv          <- vapply(Ts, function(t) .sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), numeric(P))
     if(Q0 &&   Q      < min(N - 1, Ledermann(P))) {
       for(g in which(nn       > P)) {

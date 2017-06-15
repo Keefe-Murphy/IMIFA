@@ -4,8 +4,9 @@
 #' @param N Desired overall number of observations in the simulated data set - a single integer.
 #' @param G Desired number of clusters in the simulated data set - a single integer.
 #' @param P Desired number of variables in the simulated dataset - a single integer.
-#' @param Q Desired number of cluster-specific latent factors in the simulated data set. Can be specified either as a single integer if all clusters are to have the same number of factors, or a vector of length \code{G}.
+#' @param Q Desired number of cluster-specific latent factors in the simulated data set. Can be specified either as a single integer if all clusters are to have the same number of factors, or a vector of length \code{G}. Defaults to \code{floor(log(P))} in each group.
 #' @param pis Mixing proportions of the clusters in the dataset if \code{G} > 1. Must sum to 1. Defaults to \code{rep(1/G, G)}.
+#' @param psi True values of uniqueness parameters, either as a single value, a vector of length \code{G}, a vector of length \code{P}, or a \code{G * P} matrix: as such the user can specify uniquenesses as a diagonal or isotropic matrix, and further constrain uniquenesses across groups if desired. If \code{psi} is missing, uniquenesses are simulated via \code{rgamma(P, 1, 1)} within each group.
 #' @param nn An alternative way to specify the size of each cluster, by giving the exact number of observations in each group explicitly. Must sum to \code{N}.
 #' @param loc.diff A parameter to control the closeness of the clusters in terms of the difference in their location vectors. Defaults to 1.
 #' @param method A switch indicating whether the mixture to be simulated from is the conditional distribution of the data given the latent variables (default), or simply the marginal distribution of the data.
@@ -18,14 +19,18 @@
 #'
 #' @examples
 #' # Simulate 100 observations from 3 balanced groups with cluster-specific numbers of latent factors
-#' sim_data <- sim_IMIFA_data(N=100, G=3, P=20, Q=c(2, 2, 5))
+#' # Specify isotropic uniquenesses within each cluster
+#' sim_data <- sim_IMIFA_data(N=100, G=3, P=20, Q=c(2, 2, 5), psi=1:3)
 #' names(attributes(sim_data))
-#' attr(sim_data, "Labels")
+#' labels   <- attr(sim_data, "Labels")
+#'
+#' # Visualise the data in two-dimensions
+#' plot(cmdscale(dist(sim_data), k=2), col=labels)
 #'
 #' # Fit a MIFA model to this data
 #' # tmp      <- mcmc_IMIFA(sim_data, method="MIFA", range.G=3, n.iters=5000)
 #' @seealso The function \code{\link{mcmc_IMIFA}} for fitting an IMIFA related model to the simulated data set.
-sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(4L, G), pis = rep(1/G, G),
+sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(floor(log(P)), G), pis = rep(1/G, G), psi = NULL,
                            nn = NULL, loc.diff = 1L, method = c("conditional", "marginal")) {
 
   N            <- as.integer(N)
@@ -67,6 +72,11 @@ sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(4L, G), pis = rep(
       nn       <- tabulate(labs, nbins=G)
     }
   }
+  psi.miss     <- missing(psi)
+  if(!psi.miss) {
+    psi.supp   <- .len_check(as.matrix(psi), switch0g = TRUE, method = ifelse(G > 1, "MFA", "FA"), P, G)[[1]]
+    psi.supp   <- if(length(psi.supp) == 1) matrix(psi.supp, nrow=P, ncol=G) else if(nrow(psi.supp) == 1) matrix(psi.supp, nrow=P, ncol=G, byrow=TRUE) else psi.supp
+  }
 
   simdata      <- base::matrix(0, nrow=0, ncol=P)
   prior.mu     <- as.integer(scale(Gseq, center=TRUE, scale=FALSE))
@@ -86,7 +96,7 @@ sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(4L, G), pis = rep(
     N.g        <- nn[g]
     mu.true    <- setNames(.sim_mu_p(P=P, mu.zero=prior.mu[g] * loc.diff, sig.mu.sqrt=1), vnames)
     l.true     <- matrix(.sim_load_p(Q=Q.g, P=P, sigma.l=1), nrow=P, ncol=Q.g)
-    psi.true   <- setNames(rgamma(P, 1, 1), vnames)
+    psi.true   <- if(psi.miss) setNames(rgamma(P, 1, 1), vnames) else psi.supp[,g]
 
   # Simulate data
     covmat     <- provideDimnames(diag(psi.true) + switch(method, marginal=tcrossprod(l.true), 0), base=list(vnames))
