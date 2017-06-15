@@ -498,6 +498,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       ci.alpha   <- quantile(alpha,    conf.levels)
       rate       <- sims[[G.ind]][[Q.ind]]$a.rate
       DP.alpha   <- list(alpha = alpha, post.alpha = post.alpha, var.alpha = var.alpha, ci.alpha = ci.alpha, alpha.rate = rate)
+      DP.alpha   <- c(DP.alpha, if(isTRUE(attr(sims, "TuneZeta"))) list(avg.zeta = sims[[G.ind]][[Q.ind]]$avg.zeta))
       class(DP.alpha)          <- "listof"
     }
     if(learn.d)     {
@@ -514,11 +515,9 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       class(PY.disc)           <- "listof"
     }
     map          <- as.integer(levels(map))[map]
-    uncertain    <- if(sum(uncertain == 0)/n.obs   > 0.5) as.simple_triplet_matrix(uncertain) else uncertain
+    uncertain    <- if(sum(uncertain == 0)/n.obs   > 0.5)  as.simple_triplet_matrix(uncertain) else uncertain
     attr(uncertain, "Obs")     <- if(sum(uncert.obs) != 0) uncert.obs
-    if(!label.miss) {
-      tab.stat$uncertain       <- attr(uncertain, "Obs")
-    }
+    tab.stat$uncertain         <- if(!label.miss)          attr(uncertain, "Obs")
     cluster      <- list(map = map, z = z, uncertainty = uncertain)
     cluster      <- c(cluster, list(post.sizes  = sizes, post.pi = post.pi/sum(post.pi)),
                       if(sw["pi.sw"]) list(pi.prop = pi.prop, var.pi = var.pi, ci.pi = ci.pi),
@@ -826,34 +825,31 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
                       if(sw["s.sw"])   list(Scores       =       scores),
                       if(sw["psi.sw"]) list(Uniquenesses = uniquenesses))
 
-  class(result)                <- "Results_IMIFA"
+  attr(result, "Alph.step")    <- if(is.element(method, c("IMFA", "IMIFA"))) learn.alpha
   attr(result, "Alpha")        <- if(!learn.alpha) attr(sims, "Alpha")
   attr(result, "Call")         <- call
   attr(result, "Conf.Level")   <- conf.level
+  attr(result, "Disc.step")    <- if(is.element(method, c("IMFA", "IMIFA"))) learn.alpha
+  attr(result, "Discount")     <- if(is.element(method, c("IMFA", "IMIFA")) && !learn.d) attr(sims, "Discount")
   attr(result, "Errors")       <- any(err.T)
+  attr(result, "G.init")       <- if(inf.G) attr(sims, "G.init")
+  attr(result, "Ind.Slice")    <- if(is.element(method, c("IMFA", "IMIFA"))) attr(sims, "Ind.Slice")
   attr(result, "Method")       <- method
-  if(is.element(method, c("IMFA", "IMIFA"))) {
-    attr(result, "Alph.step")  <- learn.alpha
-    attr(result, "Disc.step")  <- learn.d
-    attr(result, "Discount")   <- if(!learn.d) attr(sims, "Discount")
-    attr(result, "Ind.Slice")  <- attr(sims, "Ind.Slice")
-  }
-  if(inf.G) {
-    attr(result, "G.init")     <- attr(sims, "G.init")
-  }
+  attr(result, "N.Loadstore")  <- if(inf.Q) vapply(l.store, length, numeric(1L)) else rep(length(tmp.store), G)
   attr(result, "Name")         <- attr(sims, "Name")
+  attr(result, "Obs")          <- n.obs
   attr(result, "Obsnames")     <- if(all(!sw["s.sw"], exists("obsnames", envir=.GlobalEnv))) obsnames
+  attr(result, "Pitman")       <- attr(sims, "Pitman")
   attr(result, "range.G")      <- attr(sims, "Groups")
   attr(result, "range.Q")      <- attr(sims, "Factors")
-  attr(result, "Varnames")     <- if(all(!sw["l.sw"], !sw["mu.sw"], !sw["psi.sw"], exists("varnames", envir=.GlobalEnv))) varnames
-  attr(result, "N.Loadstore")  <- if(inf.Q) vapply(l.store, length, numeric(1L)) else rep(length(tmp.store), G)
-  attr(result, "Obs")          <- n.obs
-  attr(result, "Pitman")       <- attr(sims, "Pitman")
   attr(result, "Store")        <- tmp.store
   attr(result, "Switch")       <- sw
+  attr(result, "TuneZeta")     <- attr(sims, "TuneZeta")
   attr(result, "Uni.Meth")     <- uni.meth
+  attr(result, "Varnames")     <- if(all(!sw["l.sw"], !sw["mu.sw"], !sw["psi.sw"], exists("varnames", envir=.GlobalEnv))) varnames
   attr(result, "Vars")         <- n.var
   attr(result, "Z.sim")        <- z.avgsim
+  class(result)                <- "Results_IMIFA"
   cat(print.Results_IMIFA(result))
   return(result)
 }

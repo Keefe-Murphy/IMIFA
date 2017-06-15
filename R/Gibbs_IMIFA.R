@@ -5,7 +5,7 @@
 # Gibbs Sampler Function
   .gibbs_IMIFA       <- function(Q, data, iters, N, P, G, mu.zero, rho, sigma.l, learn.alpha, mu, sw, uni.type,
                                  uni.prior, sigma.mu, burnin, thinning, a.hyper, psi.alpha, psi.beta, verbose, trunc.G,
-                                 adapt, ind.slice, alpha.d1, discount, alpha.d2, cluster, b0, b1, IM.lab.sw, zeta,
+                                 adapt, ind.slice, alpha.d1, discount, alpha.d2, cluster, b0, b1, IM.lab.sw, zeta, tune.zeta,
                                  nu, prop, d.hyper, beta.d1, beta.d2, adapt.at, epsilon, learn.d, nuplus1, kappa, ...) {
 
   # Define & initialise variables
@@ -65,6 +65,12 @@
     if(IM.lab.sw)   {
       lab.rate       <- matrix(0L, nrow=2, ncol=total)
     }
+    d.count          <- 0
+    avgzeta          <- rep(zeta, 100)
+    heat             <- tune.zeta$heat
+    lambda           <- tune.zeta$lambda
+    target           <- tune.zeta$target
+    zeta.tune        <- heat > 0 && tune.zeta$do
     mu.sigma         <- 1/sigma.mu
     sig.mu.sqrt      <- sqrt(sigma.mu)
     z                <- cluster$z
@@ -357,10 +363,18 @@
 
     # Alpha
       if(learn.alpha)      {
-        if(discount  != 0) {
+        non.zero.d   <- discount != 0
+        if(isTRUE(non.zero.d))  {
           MH.alpha   <- .sim_alpha_m(alpha=pi.alpha, discount=discount, alpha.shape=alpha.shape, alpha.rate=alpha.rate, N=N, G=G.non, zeta=zeta)
           pi.alpha   <- MH.alpha$alpha
           a.rate     <- MH.alpha$rate
+          if(isTRUE(zeta.tune)) {
+            d.count  <- d.count + non.zero.d
+            if(iter   > 100)    {
+              zeta   <- .tune_zeta(zeta=zeta, time=d.count, l.rate=MH.alpha$l.prob, heat=heat, target=target, lambda=lambda)
+            }
+            avgzeta  <- c(avgzeta, zeta)
+          }
         } else {
           pi.alpha   <- .sim_alpha_g(alpha=pi.alpha, shape=alpha.shape, rate=alpha.rate, G=G.non, N=N)
           a.rate     <- 1
@@ -494,6 +508,7 @@
                              Q.store   = tryCatch(Q.store[Gmax,, drop=FALSE],          error=function(e) Q.store),
                              G.store   = G.store,
                              act.store = act.store,
+                             avg.zeta  = if(zeta.tune)    mean(avgzeta),
                              time      = init.time)
     attr(returns, "Q.big")    <- Q.large
     return(returns)

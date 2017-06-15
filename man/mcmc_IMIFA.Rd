@@ -15,11 +15,12 @@ mcmc_IMIFA(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA",
   epsilon = NULL, alpha.d1 = NULL, alpha.d2 = NULL, beta.d1 = NULL,
   beta.d2 = NULL, nu = NULL, nuplus1 = TRUE, adapt.at = NULL,
   b0 = NULL, b1 = NULL, trunc.G = NULL, learn.alpha = TRUE,
-  alpha.hyper = NULL, zeta = NULL, ind.slice = TRUE, rho = NULL,
-  IM.lab.sw = TRUE, verbose = interactive(), discount = NULL,
-  learn.d = FALSE, d.hyper = NULL, kappa = NULL, mu0g = FALSE,
-  psi0g = FALSE, delta0g = FALSE, mu.switch = TRUE, score.switch = TRUE,
-  load.switch = TRUE, psi.switch = TRUE, pi.switch = TRUE)
+  alpha.hyper = NULL, ind.slice = TRUE, rho = NULL, IM.lab.sw = TRUE,
+  discount = NULL, learn.d = FALSE, d.hyper = NULL, kappa = NULL,
+  zeta = NULL, tune.zeta = NULL, mu0g = FALSE, psi0g = FALSE,
+  delta0g = FALSE, mu.switch = TRUE, score.switch = TRUE,
+  load.switch = TRUE, psi.switch = TRUE, pi.switch = TRUE,
+  verbose = interactive())
 }
 \arguments{
 \item{dat}{A matrix or data frame such that rows correspond to observations (\code{N}) and columns correspond to variables (\code{P}). Non-numeric variables and rows with missing entries will be removed.}
@@ -52,12 +53,12 @@ mcmc_IMIFA(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA",
 
 \item{uni.type}{This argument specifies the type of constraint, if any, to be placed on the uniquenesses/idiosyncratic variances, i.e. whether a general diagonal matrix or isotropic diagonal matrix is to be assumed, and in turn whether these matrices are constrained to be equal across groups. The default "\code{unconstrained}" corresponds to factor analysis (and mixtures thereof), whereas "\code{isotropic}" corresponds to probabilistic principal components analysers (and mixtures thereof). Constraints \emph{may} be particularly useful when \code{N < P}, though caution is advised when employing constraints for any of the infinite factor models, especially "\code{isotropic}" and "\code{single}", which may lead to overestimation of the number of clusters &/or factors if this specification is inappropriate. The four options correspond to the following 4 parsimonious Gaussian mixture models:
 \describe{
-\item{\code{unconstrained}}{\strong{UUU} - variable-specific and cluster-specific: \eqn{\Psi_g = \Psi_g}{Psi_g = Psi_g}.}
-\item{\code{isotropic}}{\strong{UUC} - cluster-specific, equal across variables: \eqn{\Psi_g = \sigma_g^2 \mathcal{I}_p}{Psi_g = (sigma^2)_g I_p}.}
-\item{\code{constrained}}{\strong{UCU} - variable-specific, equal across clusters: \eqn{\Psi_g = \Psi}{Psi_g = Psi}.}
-\item{\code{single}}{\strong{UCC} - a single value equal across clusters and variables: \eqn{\Psi_g = \sigma^2 \mathcal{I}_p}{Psi_g = sigma^2 I_p}.}
+\item{"\code{unconstrained}"}{\strong{UUU} - variable-specific and cluster-specific: \eqn{\Psi_g = \Psi_g}{Psi_g = Psi_g}.}
+\item{"\code{isotropic}"}{\strong{UUC} - cluster-specific, equal across variables: \eqn{\Psi_g = \sigma_g^2 \mathcal{I}_p}{Psi_g = (sigma^2)_g I_p}.}
+\item{"\code{constrained}"}{\strong{UCU} - variable-specific, equal across clusters: \eqn{\Psi_g = \Psi}{Psi_g = Psi}.}
+\item{"\code{single}"}{\strong{UCC} - a single value equal across clusters and variables: \eqn{\Psi_g = \sigma^2 \mathcal{I}_p}{Psi_g = sigma^2 I_p}.}
 }
-The first letter \strong{U} here corresponds to constraints on loadings (not yet implemented), the second letter corresponds to constrained/unconstrained across clusters, and the third letter corresponds to the isotropic constraint. Of course, only the third letter is of relevance for the single-cluster "\code{FA}" and "\code{IFA}" models, such that "\code{unconstrained}" and "\code{constrained}" are equivalent for these models, and so too are "\code{isotropic}" and "\code{single}".}
+ The first letter \strong{U} here corresponds to constraints on loadings (not yet implemented), the second letter corresponds to constrained/unconstrained across clusters, and the third letter corresponds to the isotropic constraint. Of course, only the third letter is of relevance for the single-cluster "\code{FA}" and "\code{IFA}" models, such that "\code{unconstrained}" and "\code{constrained}" are equivalent for these models, and so too are "\code{isotropic}" and "\code{single}".}
 
 \item{uni.prior}{A switch indicating whether uniquenesses rate hyperparameters are to be "\code{unconstrained}" or "\code{isotropic}", i.e. variable-specific or not. "\code{uni.prior}" must be "\code{isotropic}" if the last letter of "\code{uni.type}" is \strong{C}, but can take either value otherwise. Defaults to correspond to the last letter of \code{uni.type} if that is supplied and \code{uni.prior} is not, otherwise defaults to "\code{unconstrained}", but "\code{isotropic}" is recommended when \code{N < P}. Only relevant when "\code{psi.beta}" is not supplied and \code{\link{psi_hyper}} is therefore invoked.}
 
@@ -107,15 +108,11 @@ The first letter \strong{U} here corresponds to constraints on loadings (not yet
 
 \item{alpha.hyper}{A vector of length 2 giving hyperparameters for the Dirichlet process / Pitman-Yor concentration parameter \code{alpha}. If \code{isTRUE(learn.alpha)}, these are shape and rate parameter of a Gamma distribution. Defaults to Ga(2, 1). Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods, in which case the default is \code{TRUE}. The prior is shifted to have support on (-\code{discount}, \code{Inf}) when non-zero \code{discount} is supplied or \code{learn.d=TRUE}.}
 
-\item{zeta}{Tuning parameter controlling the acceptance rate of the random-walk proposal for the Metropolis-Hastings steps when \code{learn.alpha=TRUE}. These steps are only invoked when either \code{discount} is non-zero or \code{learn.d=TRUE}, otherwise \code{alpha} is learned by Gibbs updates. Must be strictly positive. Defauts to 2.}
-
 \item{ind.slice}{Logical indicitating whether the independent slice-efficient sampler is to be employed. If \code{FALSE} the dependent slice-efficient sampler is employed, whereby the slice sequence xi_1,...,xi_g is equal to the decreasingly ordered mixing proportions. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods. Defaults to \code{TRUE}.}
 
 \item{rho}{Parameter controlling the rate of geometric decay for the independent slice-efficient sampler, s.t. xi = (1 - rho)rho^(g-1). Must lie in the interval (0, 1]. Higher values are associated with better mixing but longer run times. Defaults to 0.75, but 0.5 is an interesting special case which guarantees that the slice sequence xi_1,...,xi_g is equal to the \emph{expectation} of the decreasingly ordered mixing proportions. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods when \code{ind.slice} is \code{TRUE}.}
 
 \item{IM.lab.sw}{Logial indicating whether the two forced label switching moves are to be implemented (defaults to \code{TRUE}) when running one of the infinite mixture models, with Dirichlet process or Pitman-Yor process priors. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods.}
-
-\item{verbose}{Logical indicating whether to print output (e.g. run times) and a progress bar to the screen while the sampler runs. By default is \code{TRUE} if the session is interactive, and \code{FALSE} otherwise. If \code{FALSE}, warnings and error messages will still be printed to the screen, but everything else will be suppressed.}
 
 \item{discount}{The discount parameter used when generalising the Dirichlet process to the Pitman-Yor process. Must lie in the interval [0, 1). If non-zero, \code{alpha} can be supplied greater than -discount. Defaults to 0. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods.}
 
@@ -123,13 +120,23 @@ The first letter \strong{U} here corresponds to constraints on loadings (not yet
 
 \item{d.hyper}{Hyperparameters for the Beta(a,b) prior on the \code{discount} hyperparameter. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods.}
 
-\item{kappa}{The prior distribution on the \code{discount} hyperparameter is assumed to be a mixture with point-mass at zero and a continuous Beta(a,b) distribution. \code{kappa} gives the weight of the point mass at zero. Must lie in the interval [0,1]. Defaults to 0.5. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods.}
+\item{kappa}{The prior distribution on the \code{discount} hyperparameter is assumed to be a mixture with point-mass at zero and a continuous Beta(a,b) distribution. \code{kappa} gives the weight of the point mass at zero. Must lie in the interval [0,1]. Defaults to 0.5. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods when \code{isTRUE(learn.d)}. A value of 1 ensures non-zero discount values (i.e. Pitman-Yor) at all times.}
+
+\item{zeta}{Tuning parameter controlling the acceptance rate of the random-walk proposal for the Metropolis-Hastings steps when \code{learn.alpha=TRUE}, where \code{2 * zeta} gives the full width of the uniform proposal distribution. These steps are only invoked when either \code{discount} is non-zero and fixed or \code{learn.d=TRUE}, otherwise \code{alpha} is learned by Gibbs updates. Must be strictly positive. Defauts to 2.}
+
+\item{tune.zeta}{Used for tuning \code{zeta} & the width of the uniform proposal for \code{alpha} via diminishing Robbins-Monro type adaptation, when that parameter is learned via Metropolis-Hastings. Must be given in the form of a list with the following \emph{named} elements:
+\describe{
+\item{"\code{heat}"}{The initial adaptation intensity/step-size, such that larger values lead to larger updates. Must be strictly greater than zero. Defaults to 1 if not supplied but other elements of \code{tune.zeta} are.}
+\item{"\code{lambda}"}{Iteration rescaling parameter which controls the speed at which adaptation diminishes, such that lower values cause the contribution of later iterations to diminish more slowly. Must lie in the interval (0.5, 1]. Defaults to 1 if not supplied but other elements of \code{tune.zeta} are.}
+\item{"\code{target}"}{The target acceptance rate. Must lie in the interval [0, 1]. Defaults to 0.441, which is optimum for univariate targets, if not supplied but other elements of \code{tune.zeta} are.}
+}
+ \code{tune.zeta} is only relevant when \code{isTRUE(learn.alpha)} under the "\code{IMFA}" or "\code{IMIFA}" models, and either the \code{discount} remains fixed at a non-zero value, or when \code{isTRUE(learn.d)} and \code{kappa < 1}. Since Gibbs steps are invoked for updated \code{alpha} when \code{discount == 0}, adaption occurs according to a running count of the number of iterations with non-zero sampled \code{discount} values. If diminishing adaptation invoked, the posterior mean \code{zeta} will be stored. Since caution is advised when employing adaptation, note that acceptance rates of between 10-50\% are generally considered adequate.}
 
 \item{mu0g}{Logical indicating whether the \code{mu.zero} hyperparameter can be cluster-specific. Defaults to \code{FALSE}. Only relevant for the "\code{MFA}" and "\code{MIFA}" methods when \code{z.list} is supplied.}
 
 \item{psi0g}{Logical indicating whether the \code{psi.beta} hyperparameter(s) can be cluster-specific. Defaults to \code{FALSE}. Only relevant for the "\code{MFA}" and "\code{MIFA}" methods when \code{z.list} is supplied, and only allowable when \code{uni.type} is one of \code{unconstrained} or \code{isotropic}.}
 
-\item{delta0g}{Logical indicating whether the \code{alpha.d1}  and \code{alpha.d2} hyperparameters can be cluster-specific. Defaults to \code{FALSE}. Only relevant for the "\code{MFA}" and "\code{MIFA}" methods when \code{z.list} is supplied.}
+\item{delta0g}{Logical indicating whether the \code{alpha.d1}  and \code{alpha.d2} hyperparameters can be cluster-specific. Defaults to \code{FALSE}. Only relevant for the "\code{MIFA}" method when \code{z.list} is supplied.}
 
 \item{mu.switch}{Logical indicating whether the means are to be stored (defaults to \code{TRUE}). May be useful not to store if memory is an issue. Warning: posterior inference won't be posssible.}
 
@@ -140,6 +147,8 @@ The first letter \strong{U} here corresponds to constraints on loadings (not yet
 \item{psi.switch}{Logical indicating whether the uniquenesses are to be stored (defaults to \code{TRUE}). May be useful not to store if memory is an issue. Warning: posterior inference won't be posssible.}
 
 \item{pi.switch}{Logical indicating whether the mixing proportions are to be stored (defaults to \code{TRUE}). May be useful not to store if memory is an issue. Warning: posterior inference won't be posssible.}
+
+\item{verbose}{Logical indicating whether to print output (e.g. run times) and a progress bar to the screen while the sampler runs. By default is \code{TRUE} if the session is interactive, and \code{FALSE} otherwise. If \code{FALSE}, warnings and error messages will still be printed to the screen, but everything else will be suppressed.}
 }
 \value{
 A list of lists of lists of class "IMIFA" to be passed to \code{\link{get_IMIFA_results}}. If the returned object is x, candidate models accesible via subsetting, where x is of the form x[[1:length(range.G)]][[1:length(range.Q)]]. However, these objects of class "IMIFA" should rarely if ever be manipulated by hand - use of the \code{\link{get_IMIFA_results}} function is \emph{strongly} advised. Dedicated \code{print} and \code{summary} functions exist for objects of class "\code{IMIFA}".
@@ -155,8 +164,10 @@ Carries out Gibbs sampling for all models from the IMIFA family, facilitating mo
 # simIMIFA <- mcmc_IMIFA(olive, method="IMIFA")
 # summary(simIMIFA)
 
-# Fit an IMIFA model assuming a Pitman-Yor prior, allowing the discount parameter to be learned.
-# simPY    <- mcmc_IMIFA(olive, method="IMIFA", learn.d=TRUE)
+# Fit an IMIFA model assuming a Pitman-Yor prior.
+# Allow the alpha and discount parameter to be learned.
+# Control the balance between the DP and PY priors using the kappa parameter.
+# simPY    <- mcmc_IMIFA(olive, method="IMIFA", learn.d=TRUE, kappa=0.5)
 # summary(simPY)
 
 # Fit a MFA model to the scaled olive data, with isotropic uniquenesses (i.e. MPPCA).
@@ -171,7 +182,7 @@ Carries out Gibbs sampling for all models from the IMIFA family, facilitating mo
 # Fit an IFA model to the centered and pareto scaled olive data.
 # Note that range.G doesn't need to be specified. We can optionally supply a range.Q starting value.
 # We can also enforce additional shrinkage using alpha.d1, alpha.d2, prop, and epsilon.
-# simIFA   <- mcmc_IMIFA(olive, method="IFA", n.iters=10000, range.Q=4,
+# simIFA   <- mcmc_IMIFA(olive, method="IFA", n.iters=10000, range.Q=4, scaling="pareto",
 #                        alpha.d1=3.5, alpha.d2=7, prop=0.6, epsilon=0.12)
 
 # Fit an OMIFA model to the centered & scaled coffee data.

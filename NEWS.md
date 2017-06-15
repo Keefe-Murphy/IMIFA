@@ -3,9 +3,12 @@ __Infinite Mixtures of Infinite Factor Analysers__
 
 ## New Features
 * Added options `"constrained"` & `"single"` to `mcmc_IMIFA`'s `uni.type` argument:  
-  as well as being either diagonal or isotropic (UUU/UUC), uniquenesses can now further be  
-  constrained across clusters (UCU/UCC), with appropriate warnings, defaults, checks,  
+  as well as being either diagonal or isotropic (UUU / UUC), uniquenesses can now further be  
+  constrained across clusters (UCU / UCC), with appropriate warnings, defaults, checks,  
   initialisations, computation of model choice penalties, and plotting behaviour in all 4 cases.
+* `mcmc_IMIFA` gains the `tune.zeta` argument, a list of `heat`, `lambda` & `target` parameters, to invoke  
+  diminishing adaptation for tuning the uniform proposal to achieve a target acceptance rate when `alpha`  
+  is learned via  Metropolis-Hastings when the Pitman-Yor Process prior is employed for the IM(I)FA models.
   
 ## Improvements
 * (I)FA models sped up by considering uniquenesses under 1-cluster models as `"constrained"` or `"single"`,  
@@ -22,7 +25,7 @@ __Infinite Mixtures of Infinite Factor Analysers__
 * Used `bw="SJ"` everywhere `density` is invoked for plotting (`bw="nrd0"` is invoked if this fails).
 * Fixed initialisation of uniquenesses for `isotropic` (I)FA models.
 * Fixed parallel coordinates plot axes and labels for all `isotropic` uniquenesses plots.
-* Fixed adaptation for MIFA/OMIFA/IMIFA when all clusters simultaneously have zero factors.
+* Fixed adaptation for MIFA/OMIFA/IMIFA models when all clusters simultaneously have zero factors.
 * Fixed simulation of loadings matrices for empty MIFA/OMIFA/IMIFA clusters using `byrow=TRUE`:  
   loop to simulate loadings matrices now generally faster also for all models.
 * Fixed silly error re: way in which (I)FA models are treated as 1-cluster models to ensure they run:  

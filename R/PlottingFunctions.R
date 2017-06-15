@@ -744,12 +744,13 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         a.adj  <- rep(0.5, 2)
         a.cex  <- par()$fin[2]/ifelse(MH, 4, 3)
         pen    <- ifelse(MH, 0,    0.15)
+        tz     <- isTRUE(attr(x, "TuneZeta"))
         y1     <- switch(param, alpha=0.8, discount=0.85)
         y2     <- switch(param, alpha=0.8, discount=0.85)
         y3     <- switch(param, alpha=0.6, discount=0.65)
         y4     <- switch(param, alpha=0.6, discount=0.65)
-        y5     <- ifelse(MH, switch(param, alpha=0.45, discount=0.5),  0.475)
-        y6     <- ifelse(MH, switch(param, alpha=0.4,  discount=0.45), 0.4)
+        y5     <- ifelse(MH, switch(param, alpha=ifelse(tz, 0.5, 0.45), discount=0.5),  0.475)
+        y6     <- ifelse(MH, switch(param, alpha=ifelse(tz, 0.45, 0.4), discount=0.45), 0.4)
         text(x=0.5, y=y1  - pen, cex=a.cex, col="black", adj=a.adj, expression(bold("Posterior Mean:\n")))
         text(x=0.5, y=y2  - pen, cex=a.cex, col="black", adj=a.adj, bquote(.(round(switch(param, alpha=plot.x$post.alpha, discount=plot.x$post.disc), digits))))
         text(x=0.5, y=y3  - pen, cex=a.cex, col="black", adj=a.adj, expression(bold("\nVariance:\n")))
@@ -758,14 +759,18 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         text(x=0.5, y=y6  - pen, cex=a.cex, col="black", adj=a.adj, bquote(paste("[", .(round(switch(param, alpha=plot.x$ci.alpha[1], discount=plot.x$ci.disc[1]), digits)), ", ", .(round(switch(param, alpha=plot.x$ci.alpha[2], discount=plot.x$ci.disc[2]), digits)), "]")))
         if(isTRUE(MH)) {
           rate <- switch(param,  alpha="Acceptance Rate:", discount="Mutation Rate:")
-          y7   <- switch(param,  alpha=0.25, discount=0.325)
-          y8   <- switch(param,  alpha=0.2,  discount=0.275)
+          y7   <- switch(param,  alpha=ifelse(tz, 0.325, 0.25), discount=0.325)
+          y8   <- switch(param,  alpha=ifelse(tz, 0.275, 0.2),  discount=0.275)
           text(x=0.5, y=y7,      cex=a.cex, col="black", adj=a.adj, substitute(bold(rate)))
           text(x=0.5, y=y8,      cex=a.cex, col="black", adj=a.adj, bquote(paste(.(round(100 * switch(param, alpha=plot.x$alpha.rate, discount=plot.x$disc.rate), 2)), "%")))
         }
         if(param == "discount") {
           text(x=0.5, y=0.15,    cex=a.cex, col="black", adj=a.adj, bquote(bold(hat(kappa)) * bold(" - Posterior Proportion of Zeros:")))
           text(x=0.5, y=0.1,     cex=a.cex, col="black", adj=a.adj, bquote(.(round(plot.x$post.kappa, digits))))
+        }
+        if(param == "alpha" && tz) {
+          text(x=0.5, y=0.175,   cex=a.cex, col="black", adj=a.adj, bquote(bold(hat(zeta)) * bold(" - Posterior Mean Zeta:")))
+          text(x=0.5, y=0.1,     cex=a.cex, col="black", adj=a.adj, bquote(.(round(plot.x$avg.zeta, digits))))
         }
       }
       if(!indx) {         ind[1] <- xind[1]

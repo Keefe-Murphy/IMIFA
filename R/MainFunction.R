@@ -23,13 +23,12 @@
 #' @param scaling The scaling to be applied - one of "\code{unit}", "\code{none}" or "\code{pareto}".
 #' @param uni.type This argument specifies the type of constraint, if any, to be placed on the uniquenesses/idiosyncratic variances, i.e. whether a general diagonal matrix or isotropic diagonal matrix is to be assumed, and in turn whether these matrices are constrained to be equal across groups. The default "\code{unconstrained}" corresponds to factor analysis (and mixtures thereof), whereas "\code{isotropic}" corresponds to probabilistic principal components analysers (and mixtures thereof). Constraints \emph{may} be particularly useful when \code{N < P}, though caution is advised when employing constraints for any of the infinite factor models, especially "\code{isotropic}" and "\code{single}", which may lead to overestimation of the number of clusters &/or factors if this specification is inappropriate. The four options correspond to the following 4 parsimonious Gaussian mixture models:
 #' \describe{
-#' \item{\code{unconstrained}}{\strong{UUU} - variable-specific and cluster-specific: \eqn{\Psi_g = \Psi_g}{Psi_g = Psi_g}.}
-#' \item{\code{isotropic}}{\strong{UUC} - cluster-specific, equal across variables: \eqn{\Psi_g = \sigma_g^2 \mathcal{I}_p}{Psi_g = (sigma^2)_g I_p}.}
-#' \item{\code{constrained}}{\strong{UCU} - variable-specific, equal across clusters: \eqn{\Psi_g = \Psi}{Psi_g = Psi}.}
-#' \item{\code{single}}{\strong{UCC} - a single value equal across clusters and variables: \eqn{\Psi_g = \sigma^2 \mathcal{I}_p}{Psi_g = sigma^2 I_p}.}
+#' \item{"\code{unconstrained}"}{\strong{UUU} - variable-specific and cluster-specific: \eqn{\Psi_g = \Psi_g}{Psi_g = Psi_g}.}
+#' \item{"\code{isotropic}"}{\strong{UUC} - cluster-specific, equal across variables: \eqn{\Psi_g = \sigma_g^2 \mathcal{I}_p}{Psi_g = (sigma^2)_g I_p}.}
+#' \item{"\code{constrained}"}{\strong{UCU} - variable-specific, equal across clusters: \eqn{\Psi_g = \Psi}{Psi_g = Psi}.}
+#' \item{"\code{single}"}{\strong{UCC} - a single value equal across clusters and variables: \eqn{\Psi_g = \sigma^2 \mathcal{I}_p}{Psi_g = sigma^2 I_p}.}
 #' }
-#' The first letter \strong{U} here corresponds to constraints on loadings (not yet implemented), the second letter corresponds to constrained/unconstrained across clusters, and the third letter corresponds to the isotropic constraint. Of course, only the third letter is of relevance for the single-cluster "\code{FA}" and "\code{IFA}" models, such that "\code{unconstrained}" and "\code{constrained}" are equivalent for these models, and so too are "\code{isotropic}" and "\code{single}".
-#'
+#'  The first letter \strong{U} here corresponds to constraints on loadings (not yet implemented), the second letter corresponds to constrained/unconstrained across clusters, and the third letter corresponds to the isotropic constraint. Of course, only the third letter is of relevance for the single-cluster "\code{FA}" and "\code{IFA}" models, such that "\code{unconstrained}" and "\code{constrained}" are equivalent for these models, and so too are "\code{isotropic}" and "\code{single}".
 #' @param uni.prior A switch indicating whether uniquenesses rate hyperparameters are to be "\code{unconstrained}" or "\code{isotropic}", i.e. variable-specific or not. "\code{uni.prior}" must be "\code{isotropic}" if the last letter of "\code{uni.type}" is \strong{C}, but can take either value otherwise. Defaults to correspond to the last letter of \code{uni.type} if that is supplied and \code{uni.prior} is not, otherwise defaults to "\code{unconstrained}", but "\code{isotropic}" is recommended when \code{N < P}. Only relevant when "\code{psi.beta}" is not supplied and \code{\link{psi_hyper}} is therefore invoked.
 #' @param alpha Depending on the method employed, either the hyperparameter of the Dirichlet prior for the cluster mixing proportions, or the Dirichlet process concentration parameter. Defaults to 0.5/range.G for the Overfitted methods - if supplied for "\code{OMFA}" and "\code{OMIFA}" methods, you are supplying the numerator of \code{alpha/range.G}, which should be less than half the dimension (per group!) of the free parameters of the smallest model considered in order to ensure superfluous clusters are emptied (for "\code{OMFA}", this corresponds to the smallest \code{range.Q}; for "\code{OMIFA}", this corresponds to a zero-factor model) [see: \code{\link{PGMM_dfree}} and Rousseau and Mengersen (2011)]. Defaults to 1 for the finite mixture models "\code{MFA}" and "\code{MIFA}". Defaults to \code{1 - discount} for the "\code{IMFA}" and "\code{IMIFA}" models if \code{learn.alpha=FALSE} or a simulation from the prior if \code{learn.alpha=TRUE}. Must be positive, unless \code{discount} is supplied for the "\code{IMFA}" or "\code{IMIFA}" methods.
 #' @param mu.zero The mean of the prior distribution for the mean parameter. Defaults to the sample mean of the data.
@@ -54,23 +53,30 @@
 #' @param trunc.G The maximum number of allowable and storable groups if the "\code{IMFA}" or "\code{IMIFA}" method is employed. Defaults to the same value as \code{range.G} (unless \code{N < P}, see \code{range.G} for details) and must be greater than or equal to this value. The number of active groups to be sampled at each iteration is adaptively truncated, with \code{trunc.G} as an upper limit for storage reasons. Note that large values of \code{trunc.G} may lead to memory capacity issues.
 #' @param learn.alpha Logical indicating whether the Dirichlet process / Pitman concentration parameter is to be learned, or remain fixed for the duration of the chain. If being learned, a Ga(a, b) prior is assumed for \code{alpha}; updates take place via Gibbs sampling when \code{discount} is zero and via Metropolis-Hastings otherwise. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods, in which case the default is \code{TRUE}.
 #' @param alpha.hyper A vector of length 2 giving hyperparameters for the Dirichlet process / Pitman-Yor concentration parameter \code{alpha}. If \code{isTRUE(learn.alpha)}, these are shape and rate parameter of a Gamma distribution. Defaults to Ga(2, 1). Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods, in which case the default is \code{TRUE}. The prior is shifted to have support on (-\code{discount}, \code{Inf}) when non-zero \code{discount} is supplied or \code{learn.d=TRUE}.
-#' @param zeta Tuning parameter controlling the acceptance rate of the random-walk proposal for the Metropolis-Hastings steps when \code{learn.alpha=TRUE}. These steps are only invoked when either \code{discount} is non-zero or \code{learn.d=TRUE}, otherwise \code{alpha} is learned by Gibbs updates. Must be strictly positive. Defauts to 2.
 #' @param ind.slice Logical indicitating whether the independent slice-efficient sampler is to be employed. If \code{FALSE} the dependent slice-efficient sampler is employed, whereby the slice sequence xi_1,...,xi_g is equal to the decreasingly ordered mixing proportions. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods. Defaults to \code{TRUE}.
 #' @param rho Parameter controlling the rate of geometric decay for the independent slice-efficient sampler, s.t. xi = (1 - rho)rho^(g-1). Must lie in the interval (0, 1]. Higher values are associated with better mixing but longer run times. Defaults to 0.75, but 0.5 is an interesting special case which guarantees that the slice sequence xi_1,...,xi_g is equal to the \emph{expectation} of the decreasingly ordered mixing proportions. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods when \code{ind.slice} is \code{TRUE}.
 #' @param IM.lab.sw Logial indicating whether the two forced label switching moves are to be implemented (defaults to \code{TRUE}) when running one of the infinite mixture models, with Dirichlet process or Pitman-Yor process priors. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods.
-#' @param verbose Logical indicating whether to print output (e.g. run times) and a progress bar to the screen while the sampler runs. By default is \code{TRUE} if the session is interactive, and \code{FALSE} otherwise. If \code{FALSE}, warnings and error messages will still be printed to the screen, but everything else will be suppressed.
 #' @param discount The discount parameter used when generalising the Dirichlet process to the Pitman-Yor process. Must lie in the interval [0, 1). If non-zero, \code{alpha} can be supplied greater than -discount. Defaults to 0. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods.
 #' @param learn.d Logical indicating whether the \code{discount} parameter is to be updated via Metropolis-Hastings. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods, in which case the default is \code{FALSE}.
 #' @param d.hyper Hyperparameters for the Beta(a,b) prior on the \code{discount} hyperparameter. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods.
-#' @param kappa The prior distribution on the \code{discount} hyperparameter is assumed to be a mixture with point-mass at zero and a continuous Beta(a,b) distribution. \code{kappa} gives the weight of the point mass at zero. Must lie in the interval [0,1]. Defaults to 0.5. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods.
+#' @param kappa The prior distribution on the \code{discount} hyperparameter is assumed to be a mixture with point-mass at zero and a continuous Beta(a,b) distribution. \code{kappa} gives the weight of the point mass at zero. Must lie in the interval [0,1]. Defaults to 0.5. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods when \code{isTRUE(learn.d)}. A value of 1 ensures non-zero discount values (i.e. Pitman-Yor) at all times.
+#' @param zeta Tuning parameter controlling the acceptance rate of the random-walk proposal for the Metropolis-Hastings steps when \code{learn.alpha=TRUE}, where \code{2 * zeta} gives the full width of the uniform proposal distribution. These steps are only invoked when either \code{discount} is non-zero and fixed or \code{learn.d=TRUE}, otherwise \code{alpha} is learned by Gibbs updates. Must be strictly positive. Defauts to 2.
+#' @param tune.zeta Used for tuning \code{zeta} & the width of the uniform proposal for \code{alpha} via diminishing Robbins-Monro type adaptation, when that parameter is learned via Metropolis-Hastings. Must be given in the form of a list with the following \emph{named} elements:
+#' \describe{
+#' \item{"\code{heat}"}{The initial adaptation intensity/step-size, such that larger values lead to larger updates. Must be strictly greater than zero. Defaults to 1 if not supplied but other elements of \code{tune.zeta} are.}
+#' \item{"\code{lambda}"}{Iteration rescaling parameter which controls the speed at which adaptation diminishes, such that lower values cause the contribution of later iterations to diminish more slowly. Must lie in the interval (0.5, 1]. Defaults to 1 if not supplied but other elements of \code{tune.zeta} are.}
+#' \item{"\code{target}"}{The target acceptance rate. Must lie in the interval [0, 1]. Defaults to 0.441, which is optimum for univariate targets, if not supplied but other elements of \code{tune.zeta} are.}
+#' }
+#'  \code{tune.zeta} is only relevant when \code{isTRUE(learn.alpha)} under the "\code{IMFA}" or "\code{IMIFA}" models, and either the \code{discount} remains fixed at a non-zero value, or when \code{isTRUE(learn.d)} and \code{kappa < 1}. Since Gibbs steps are invoked for updated \code{alpha} when \code{discount == 0}, adaption occurs according to a running count of the number of iterations with non-zero sampled \code{discount} values. If diminishing adaptation invoked, the posterior mean \code{zeta} will be stored. Since caution is advised when employing adaptation, note that acceptance rates of between 10-50\% are generally considered adequate.
 #' @param mu0g Logical indicating whether the \code{mu.zero} hyperparameter can be cluster-specific. Defaults to \code{FALSE}. Only relevant for the "\code{MFA}" and "\code{MIFA}" methods when \code{z.list} is supplied.
 #' @param psi0g Logical indicating whether the \code{psi.beta} hyperparameter(s) can be cluster-specific. Defaults to \code{FALSE}. Only relevant for the "\code{MFA}" and "\code{MIFA}" methods when \code{z.list} is supplied, and only allowable when \code{uni.type} is one of \code{unconstrained} or \code{isotropic}.
-#' @param delta0g Logical indicating whether the \code{alpha.d1}  and \code{alpha.d2} hyperparameters can be cluster-specific. Defaults to \code{FALSE}. Only relevant for the "\code{MFA}" and "\code{MIFA}" methods when \code{z.list} is supplied.
+#' @param delta0g Logical indicating whether the \code{alpha.d1}  and \code{alpha.d2} hyperparameters can be cluster-specific. Defaults to \code{FALSE}. Only relevant for the "\code{MIFA}" method when \code{z.list} is supplied.
 #' @param mu.switch Logical indicating whether the means are to be stored (defaults to \code{TRUE}). May be useful not to store if memory is an issue. Warning: posterior inference won't be posssible.
 #' @param score.switch Logical indicating whether the factor scores are to be stored. As the array containing each sampled scores matrix tends to be amongst the largest objects to be stored, this defaults to \code{FALSE} when \code{length(range.G) * length(range.Q) > 10}, otherwise the default is \code{TRUE}. May be useful not to store if memory is an issue - for the "\code{MIFA}", "\code{OMIFA}", and "\code{IMIFA}" methods, setting this switch to \code{FALSE} also offers a slight speed-up. Warning: posterior inference won't be posssible.
 #' @param load.switch Logical indicating whether the factor loadings are to be stored (defaults to \code{TRUE}). May be useful not to store if memory is an issue. Warning: posterior inference won't be posssible.
 #' @param psi.switch Logical indicating whether the uniquenesses are to be stored (defaults to \code{TRUE}). May be useful not to store if memory is an issue. Warning: posterior inference won't be posssible.
 #' @param pi.switch Logical indicating whether the mixing proportions are to be stored (defaults to \code{TRUE}). May be useful not to store if memory is an issue. Warning: posterior inference won't be posssible.
+#' @param verbose Logical indicating whether to print output (e.g. run times) and a progress bar to the screen while the sampler runs. By default is \code{TRUE} if the session is interactive, and \code{FALSE} otherwise. If \code{FALSE}, warnings and error messages will still be printed to the screen, but everything else will be suppressed.
 #'
 #' @return A list of lists of lists of class "IMIFA" to be passed to \code{\link{get_IMIFA_results}}. If the returned object is x, candidate models accesible via subsetting, where x is of the form x[[1:length(range.G)]][[1:length(range.Q)]]. However, these objects of class "IMIFA" should rarely if ever be manipulated by hand - use of the \code{\link{get_IMIFA_results}} function is \emph{strongly} advised. Dedicated \code{print} and \code{summary} functions exist for objects of class "\code{IMIFA}".
 #' @export
@@ -108,8 +114,10 @@
 #' # simIMIFA <- mcmc_IMIFA(olive, method="IMIFA")
 #' # summary(simIMIFA)
 #'
-#' # Fit an IMIFA model assuming a Pitman-Yor prior, allowing the discount parameter to be learned.
-#' # simPY    <- mcmc_IMIFA(olive, method="IMIFA", learn.d=TRUE)
+#' # Fit an IMIFA model assuming a Pitman-Yor prior.
+#' # Allow the alpha and discount parameter to be learned.
+#' # Control the balance between the DP and PY priors using the kappa parameter.
+#' # simPY    <- mcmc_IMIFA(olive, method="IMIFA", learn.d=TRUE, kappa=0.5)
 #' # summary(simPY)
 #'
 #' # Fit a MFA model to the scaled olive data, with isotropic uniquenesses (i.e. MPPCA).
@@ -124,7 +132,7 @@
 #' # Fit an IFA model to the centered and pareto scaled olive data.
 #' # Note that range.G doesn't need to be specified. We can optionally supply a range.Q starting value.
 #' # We can also enforce additional shrinkage using alpha.d1, alpha.d2, prop, and epsilon.
-#' # simIFA   <- mcmc_IMIFA(olive, method="IFA", n.iters=10000, range.Q=4,
+#' # simIFA   <- mcmc_IMIFA(olive, method="IFA", n.iters=10000, range.Q=4, scaling="pareto",
 #' #                        alpha.d1=3.5, alpha.d2=7, prop=0.6, epsilon=0.12)
 #'
 #' # Fit an OMIFA model to the centered & scaled coffee data.
@@ -137,9 +145,9 @@
 mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA", "MFA", "IFA", "FA", "classify"), n.iters = 25000L, range.G = NULL, range.Q = NULL, burnin = n.iters/5,
                         thinning = 2L, centering = TRUE, scaling = c("unit", "pareto", "none"), uni.type = c("unconstrained", "isotropic", "constrained", "single"), uni.prior = c("unconstrained", "isotropic"),
                         alpha = NULL, psi.alpha = NULL, psi.beta = NULL, mu.zero = NULL, sigma.mu = NULL, sigma.l = NULL, z.init = c("mclust", "kmeans", "list", "priors"), z.list = NULL, adapt = TRUE,
-                        prop = NULL, epsilon = NULL, alpha.d1 = NULL, alpha.d2 = NULL, beta.d1 = NULL, beta.d2 = NULL, nu = NULL, nuplus1 = TRUE, adapt.at = NULL, b0 = NULL, b1 = NULL,
-                        trunc.G = NULL, learn.alpha = TRUE, alpha.hyper = NULL, zeta = NULL, ind.slice = TRUE, rho = NULL, IM.lab.sw = TRUE, verbose = interactive(), discount = NULL, learn.d = FALSE,
-                        d.hyper = NULL, kappa = NULL, mu0g = FALSE, psi0g = FALSE, delta0g = FALSE, mu.switch = TRUE, score.switch = TRUE, load.switch = TRUE, psi.switch = TRUE, pi.switch = TRUE) {
+                        prop = NULL, epsilon = NULL, alpha.d1 = NULL, alpha.d2 = NULL, beta.d1 = NULL, beta.d2 = NULL, nu = NULL, nuplus1 = TRUE, adapt.at = NULL, b0 = NULL, b1 = NULL, trunc.G = NULL,
+                        learn.alpha = TRUE, alpha.hyper = NULL, ind.slice = TRUE, rho = NULL, IM.lab.sw = TRUE, discount = NULL, learn.d = FALSE, d.hyper = NULL, kappa = NULL, zeta = NULL, tune.zeta = NULL,
+                        mu0g = FALSE, psi0g = FALSE, delta0g = FALSE, mu.switch = TRUE, score.switch = TRUE, load.switch = TRUE, psi.switch = TRUE, pi.switch = TRUE, verbose = interactive()) {
 
   call      <- match.call()
   defopt    <- options()
@@ -498,7 +506,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
       psi0G <- FALSE
     }
     if(all(method == "MFA",
-           delta0g))                stop("'delta0g' cannot be TRUE for the 'MFA' method")
+           delta0g))                warning("'delta0g' cannot be TRUE for the 'MFA' method", call.=FALSE)
     if(method == "classify") mu0g          <- TRUE
   }
   dimension <- PGMM_dfree(Q=switch(method, FA=, classify=, MFA=, OMFA=, IMFA=range.Q,
@@ -548,10 +556,39 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   gibbs.arg <- list(P = P, sigma.mu = sigma.mu, psi.alpha = psi.alpha, burnin = burnin, sw = switches,
                     thinning = thinning, iters = iters, verbose = verbose, uni.type = uni.type, uni.prior = uni.prior)
   if(is.element(method, c("IMIFA", "IMFA"))) {
+    gibbs.def      <- all(kappa     < 1,  learn.d, learn.alpha)
+    gibbs.may      <- gibbs.def    &&     kappa > 0
+    non.py         <- all(discount == 0, !learn.d, learn.alpha)
+    def.py         <- all(discount != 0, !learn.d, learn.alpha)
+    if(missing(tune.zeta)) {
+      tune.zeta    <- list(heat = 0, lambda = NULL, target = NULL, do = FALSE)
+    } else   {
+      tz    <- tune.zeta
+      if(!is.list(tz) || (!all(is.element(names(tz), c("heat", "lambda", "target"))) ||
+         !all(lengths(tz) == 1)))   stop("'tune.zeta' must be a list with named elements 'heat', 'lambda' and 'target', all of length 1")
+      if(is.null(tz$heat))   tz$heat   <- 1
+      if(is.null(tz$lambda)) tz$lambda <- 1
+      if(is.null(tz$target)) tz$target <- 0.441
+      if(!all(vapply(tz,
+         is.numeric, logical(1L)))) stop("Not all elements of 'tune.zeta' are numeric")
+      tz$do <- any(gibbs.def, def.py)
+      if(tz$heat    < 0)            stop("Invalid 'heat': must be >= 0")
+      if(tz$target  < 0   ||
+         tz$target  > 1)            stop("Invalid 'target': must lie in the interval [0, 1]")
+      if(tz$lambda <= 0.5 ||
+         tz$lambda  > 1)            stop("Invalid 'lambda': must lie in the interval (0.5, 1]")
+      if(learn.alpha)  {
+        if(tz$heat  > 0)   {
+          if(isTRUE(gibbs.may))     warning("Are you sure you want to tune zeta?: Gibbs updates are possible as 'kappa' is between zero and 1", call.=FALSE)
+          if(isTRUE(non.py))        message("Tuning zeta will have no effect as 'discount' is fixed at 0")
+        } else if(tz$do)            warning("'heat' of 0 corresponds to no tuning: are you sure?", call.=FALSE)
+      }
+      tune.zeta    <- tz
+    }
     gibbs.arg      <- append(gibbs.arg, list(trunc.G = trunc.G, rho = rho, ind.slice = ind.slice, learn.alpha = learn.alpha, learn.d = learn.d, kappa = kappa,
-                                             zeta = zeta, IM.lab.sw = IM.lab.sw, a.hyper = alpha.hyper, discount = discount, d.hyper = d.hyper))
+                                             zeta = zeta, IM.lab.sw = IM.lab.sw, a.hyper = alpha.hyper, discount = discount, d.hyper = d.hyper, tune.zeta = tune.zeta))
   }
-  if(is.element(method, c("FA", "IFA", "MFA", "MIFA")))   {
+  if(is.element(method, c("FA", "IFA"))) {
     gibbs.arg      <- append(gibbs.arg, list(scaling = scaling))
   }
   if(!is.element(method, c("FA", "MFA", "OMFA", "IMFA"))) {
@@ -786,21 +823,13 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   imifa     <- switch(method, FA=, MFA=, OMFA=, IMFA={
      lapply(seq_along(imifa), function(x) setNames(imifa[[x]], paste0(range.Q, ifelse(range.Q == 1, "Factor", "Factors"))))
   }, lapply(seq_along(imifa), function(x) setNames(imifa[[x]], "IFA")))
-  if(!is.element(method, c("FA", "IFA"))) {
-    for(g in seq_along(G.init)) {
-      attr(imifa[[g]],
-           "Z.init")      <- factor(zi[[g]], levels=seq_len(G.init[g]))
-    }
-  }
   gnames    <- switch(method, classify=paste0("Group ", seq_len(range.G)), paste0(G.init, ifelse(G.init == 1, "Group", "Groups")))
   names(imifa)            <- gnames
   attr(imifa,
        "Alph.step")       <- learn.alpha
   attr(imifa, "Alpha")    <- if(!learn.alpha) alpha
-  if(method == "classify") {
-    attr(imifa,
-         "Class.Props")   <- tabulate(z.list[[1]], range.G)/N
-  }
+  attr(imifa,
+       "Class.Props")     <- if(method == "classify") tabulate(z.list[[1]], range.G)/N
   attr(imifa, "Call")     <- call
   attr(imifa, "Center")   <- any(centered, centering)
   attr(imifa, "Date")     <- format(Sys.Date(), "%d-%b-%Y")
@@ -808,15 +837,14 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
        "Disc.step")       <- learn.d
   attr(imifa, "Discount") <- if(!learn.d) discount
   attr(imifa, "Factors")  <- range.Q
+  attr(imifa, "G.init")   <- G.init
+  attr(imifa, "Groups")   <- range.G
   attr(imifa, "IM.labsw") <- all(is.element(method, c("IMFA", "IMIFA")), IM.lab.sw)
   attr(imifa,
        "Ind.Slice")       <- all(is.element(method, c("IMFA", "IMIFA")), ind.slice)
-  attr(imifa, "Groups")   <- range.G
-  if(!is.element(method, c("FA", "IFA"))) {
-    attr(imifa, "Init.Z") <- z.init
-    attr(imifa,
-         "Label.Switch")  <- any(sw0gs)
-  }
+  attr(imifa, "Init.Z")   <- if(!is.element(method, c("FA", "IFA")))     z.init
+  attr(imifa,
+       "Label.Switch")    <- if(!is.element(method, c("FA", "IFA")))     any(sw0gs)
   method                  <- names(table(meth)[which.max(table(meth))])
   attr(imifa, "Method")   <- paste0(toupper(substr(method, 1, 1)),
                                     substr(method, 2, nchar(method)))
@@ -839,15 +867,17 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
          len.Q  == 1)) {
     times                 <- times[-2]
   }
-  if(is.element(method, c("FA", "IFA", "classify"))) {
-    times                 <- times[-length(times)]
-  } else {
-    attr(imifa, "G.init") <- G.init
-  }
   class(times)            <- "listof"
-  attr(imifa, "Time")     <- times
+  attr(imifa, "Time")     <- if(is.element(method, c("FA", "IFA", "classify"))) times[-length(times)] else times
+  attr(imifa, "TuneZeta") <- all(is.element(method, c("IMFA", "IMIFA")), tune.zeta$heat > 0 && tune.zeta$do)
   attr(imifa, "Uni.Meth") <- c(Uni.Prior = uni.prior, Uni.Type = uni.type)
   attr(imifa, "Vars")     <- P
+  if(!is.element(method, c("FA", "IFA"))) {
+    for(g in seq_along(G.init)) {
+      attr(imifa[[g]],
+           "Z.init")      <- factor(zi[[g]], levels=seq_len(G.init[g]))
+    }
+  }
   if(verbose)                print(attr(imifa, "Time"))
   class(imifa)            <- "IMIFA"
     return(imifa)

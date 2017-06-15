@@ -174,7 +174,12 @@
       propinter  <- c(max( - discount, propa   - zeta),  propa + zeta)
       logpr      <- pprob  - cprob   - log(diff(propinter))    + log(diff(inter))
       acpt       <- logpr >= 0  ||   - rexp(1) < logpr
-        return(list(alpha  = ifelse(acpt, propa, alpha), rate  = acpt))
+        return(list(alpha  = ifelse(acpt, propa, alpha), rate  = acpt, l.prob = logpr))
+    }
+
+  # Adaptively Tune Zeta
+    .tune_zeta   <- function(zeta, time, l.rate, heat = 1, target = 0.441, lambda = 1) {
+      exp(heat/time^lambda * (exp(min(0, l.rate)) - target)) * zeta
     }
 
   # Discount

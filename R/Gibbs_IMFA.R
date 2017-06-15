@@ -3,7 +3,7 @@
 ############################################################################
 
 # Gibbs Sampler Function
-  .gibbs_IMFA        <- function(Q, data, iters, N, P, G, mu.zero, rho, sigma.l, learn.alpha, discount,  mu,
+  .gibbs_IMFA        <- function(Q, data, iters, N, P, G, mu.zero, rho, sigma.l, learn.alpha, discount,  mu, tune.zeta,
                                  a.hyper, sigma.mu, burnin, thinning, d.hyper, learn.d, uni.type, uni.prior, trunc.G,
                                  ind.slice, psi.alpha, psi.beta, verbose, sw, cluster, IM.lab.sw, zeta, kappa, ...) {
 
@@ -63,6 +63,12 @@
     if(IM.lab.sw)   {
       lab.rate       <- matrix(0L, nrow=2, ncol=total)
     }
+    d.count          <- 0
+    avgzeta          <- rep(zeta, 100)
+    heat             <- tune.zeta$heat
+    lambda           <- tune.zeta$lambda
+    target           <- tune.zeta$target
+    zeta.tune        <- heat > 0 && tune.zeta$do
     mu.sigma         <- 1/sigma.mu
     sig.mu.sqrt      <- sqrt(sigma.mu)
     z                <- cluster$z
@@ -259,10 +265,18 @@
 
     # Alpha
       if(learn.alpha)      {
-        if(discount  != 0) {
+        non.zero.d   <- discount != 0
+        if(isTRUE(non.zero.d))  {
           MH.alpha   <- .sim_alpha_m(alpha=pi.alpha, discount=discount, alpha.shape=alpha.shape, alpha.rate=alpha.rate, N=N, G=G.non, zeta=zeta)
           pi.alpha   <- MH.alpha$alpha
           a.rate     <- MH.alpha$rate
+          if(isTRUE(zeta.tune)) {
+            d.count  <- d.count + non.zero.d
+            if(iter   > 100)    {
+              zeta   <- .tune_zeta(zeta=zeta, time=d.count, l.rate=MH.alpha$l.prob, heat=heat, target=target, lambda=lambda)
+            }
+            avgzeta  <- c(avgzeta, zeta)
+          }
         } else {
           pi.alpha   <- .sim_alpha_g(alpha=pi.alpha, shape=alpha.shape, rate=alpha.rate, G=G.non, N=N)
           a.rate     <- 1
@@ -356,6 +370,7 @@
                              ll.store  = ll.store,
                              G.store   = G.store,
                              act.store = act.store,
+                             avg.zeta  = if(zeta.tune)           mean(avgzeta),
                              time      = init.time)
     return(returns)
   }
