@@ -1,6 +1,7 @@
 __Infinite Mixtures of Infinite Factor Analysers__
 ==================================================  
 
+# IMIFA v1.3.0 - (_4th release [minor update]: 2017-06-22_)
 ## New Features
 * Added options `"constrained"` & `"single"` to `mcmc_IMIFA`'s `uni.type` argument:  
   as well as being either diagonal or isotropic (UUU / UUC), uniquenesses can now further be  
@@ -26,6 +27,8 @@ __Infinite Mixtures of Infinite Factor Analysers__
 * Fixed initialisation of uniquenesses for `isotropic` (I)FA models.
 * Fixed parallel coordinates plot axes and labels for all `isotropic` uniquenesses plots.
 * Fixed adaptation for MIFA/OMIFA/IMIFA models when all clusters simultaneously have zero factors.
+* Fixed storage bug in IM(I)FA models when `learn.d` is `TRUE` but `learn.alpha` is `FALSE`.
+* Fixed density plot for `discount` when mutation rate is too low (i.e. too many zeros).
 * Fixed simulation of loadings matrices for empty MIFA/OMIFA/IMIFA clusters using `byrow=TRUE`:  
   loop to simulate loadings matrices now generally faster also for all models.
 * Fixed silly error re: way in which (I)FA models are treated as 1-cluster models to ensure they run:  

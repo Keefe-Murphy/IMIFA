@@ -59,7 +59,7 @@
 #' @param discount The discount parameter used when generalising the Dirichlet process to the Pitman-Yor process. Must lie in the interval [0, 1). If non-zero, \code{alpha} can be supplied greater than -discount. Defaults to 0. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods.
 #' @param learn.d Logical indicating whether the \code{discount} parameter is to be updated via Metropolis-Hastings. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods, in which case the default is \code{FALSE}.
 #' @param d.hyper Hyperparameters for the Beta(a,b) prior on the \code{discount} hyperparameter. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods.
-#' @param kappa The prior distribution on the \code{discount} hyperparameter is assumed to be a mixture with point-mass at zero and a continuous Beta(a,b) distribution. \code{kappa} gives the weight of the point mass at zero. Must lie in the interval [0,1]. Defaults to 0.5. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods when \code{isTRUE(learn.d)}. A value of 1 ensures non-zero discount values (i.e. Pitman-Yor) at all times.
+#' @param kappa The spike-and-slab prior distribution on the \code{discount} hyperparameter is assumed to be a mixture with point-mass at zero and a continuous Beta(a,b) distribution. \code{kappa} gives the weight of the point mass at zero (the 'spike'). Must lie in the interval [0,1]. Defaults to 0.5. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods when \code{isTRUE(learn.d)}. A value of 0 ensures non-zero discount values (i.e. Pitman-Yor) at all times, and \emph{vice versa}.
 #' @param zeta Tuning parameter controlling the acceptance rate of the random-walk proposal for the Metropolis-Hastings steps when \code{learn.alpha=TRUE}, where \code{2 * zeta} gives the full width of the uniform proposal distribution. These steps are only invoked when either \code{discount} is non-zero and fixed or \code{learn.d=TRUE}, otherwise \code{alpha} is learned by Gibbs updates. Must be strictly positive. Defauts to 2.
 #' @param tune.zeta Used for tuning \code{zeta} & the width of the uniform proposal for \code{alpha} via diminishing Robbins-Monro type adaptation, when that parameter is learned via Metropolis-Hastings. Must be given in the form of a list with the following \emph{named} elements:
 #' \describe{
@@ -255,10 +255,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   if(missing(d.hyper))       d.hyper       <- c(1L, 1L)
   if(length(d.hyper)         != 2)  stop("d.hyper' must be a vector of length 2")
   if(any(d.hyper   <= 0))           stop("'Discount Beta prior hyperparameters must be strictly positive")
-  if(missing(kappa)) {
-    kappa          <- 0.5
-  }
-  kappa            <- ifelse(all(!learn.d, discount == 0), 1, kappa)
+  kappa            <- ifelse(all(!learn.d, discount == 0), 1, ifelse(missing(kappa), 0.5, kappa))
   if(any(!is.numeric(kappa),
          length(kappa)       != 1)) stop("'kappa' must be a single number")
   if(kappa   <  0  || kappa   > 1)  stop("'kappa' must lie in the interval [0, 1]")
@@ -279,7 +276,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     }
     if(learn.d)     {
       learn.d      <- FALSE
-      if(verbose   && !disc.x)      message(paste0("'learn.d' must be FALSE for the ", method, " method"))
+      if(verbose   && !disc.x)      message(paste0("'learn.d' forced to FALSE for the ", method, " method"))
     }
   }
   if(!is.element(method, c("MFA", "MIFA")))      {
@@ -517,13 +514,13 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   if(all(!is.element(method, c("MFA", "MIFA", "classify")),
          any(sw0gs)))               stop(paste0("'", names(which(sw0gs)), "' should be FALSE for the ", method, " method\n"))
   if(!is.element(method, c("FA", "IFA", "classify"))) {
-    if(missing("alpha"))   { alpha         <- switch(method, MFA=, MIFA=1, OMFA=, OMIFA=0.5/G.init, if(learn.alpha) max(1, rgamma(1, a.hyp1, a.hyp2)) - discount else 1 - discount)
+    if(missing("alpha"))   { alpha         <- switch(method, MFA=, MIFA=1, OMFA=, OMIFA=0.5/G.init, ifelse(learn.alpha, max(1, rgamma(1, a.hyp1, a.hyp2)) - discount, 1))
     } else if(is.element(method,
       c("OMFA", "OMIFA")))   alpha         <- alpha/G.init
     if(length(alpha) != 1)          stop("'alpha' must be specified as a scalar to ensure an exchangeable prior")
     if(alpha <= -discount)          stop(paste0("'alpha' must be ",     ifelse(discount != 0, paste0("strictly greater than -discount (i.e. > ", - discount, ")"), "strictly positive")))
     if(all(is.element(method,  c("IMIFA",   "IMFA")),
-       !learn.alpha))               warning(paste0("'alpha' fixed at ", ifelse(discount != 0, paste0("1 - 'discount' = "), ""), alpha, " as it's not being learned via Gibbs/Metropolis-Hastings updates"), call.=FALSE)
+       !learn.alpha))               warning(paste0("'alpha' fixed at ", round(alpha, options()$digits), " as it's not being learned via Gibbs/Metropolis-Hastings updates"), call.=FALSE)
     if(all(is.element(method,  c("OMIFA",   "OMFA")),
        alpha >= min.d2))            warning(paste0("'alpha' over 'range.G' for the OMFA & OMIFA methods must be less than half the dimension (per group!)\n of the free parameters of the smallest model considered (= ", min.d2, "): consider suppling 'alpha' < ", min.d2G), call.=FALSE)
     if(any(all(is.element(method, c("MFA",  "MIFA")), alpha > 1),

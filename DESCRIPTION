@@ -1,9 +1,9 @@
 Package: IMIFA
 Type: Package
-Date: 2017-05-29
+Date: 2017-06-22
 Title: Fitting, Diagnostics, and Plotting Functions for Infinite Mixtures of
     Infinite Factor Analysers and Related Models
-Version: 1.2.1
+Version: 1.3.0
 Authors@R: c(person("Keefe", "Murphy", email = "keefe.murphy@ucd.ie", role = c("aut", "cre")),
              person("Isobel Claire", "Gormley", role = "ctb"),
              person("Cinzia", "Viroli", role = "ctb"))

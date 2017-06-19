@@ -58,7 +58,7 @@
       d.rates        <- rep(0L, total)
       d.unif         <- d.shape1 == 1 & d.shape2 == 1
     } else d.rates   <- 1
-    MH.step          <- any(discount  > 0, learn.d)
+    MH.step          <- any(discount  > 0, learn.d) && learn.alpha
     if(MH.step)     {
       a.rates        <- rep(0L, total)
     } else a.rates   <- 1
@@ -493,22 +493,22 @@
     load.store       <- if(sw["l.sw"])   tryCatch(load.store[,Qmax,Gmax,, drop=FALSE], error=function(e) load.store)
     psi.store        <- if(sw["psi.sw"]) tryCatch(psi.store[,Gmax,, drop=FALSE],       error=function(e) psi.store)
     pi.store         <- if(sw["pi.sw"])  tryCatch(pi.store[Gmax,, drop=FALSE],         error=function(e) pi.store)
-    returns          <- list(mu        = if(sw["mu.sw"])  tryCatch(provideDimnames(mu.store,  base=list(varnames, "", ""), unique=FALSE), error=function(e) mu.store),
-                             eta       = if(sw["s.sw"])   tryCatch(provideDimnames(tryCatch(as.simple_sparse_array(eta.store),            error=function(e) eta.store),  base=list(obsnames, "", ""),     unique=FALSE), error=function(e) eta.store),
-                             load      = if(sw["l.sw"])   tryCatch(provideDimnames(tryCatch(as.simple_sparse_array(load.store),           error=function(e) load.store), base=list(varnames, "", "", ""), unique=FALSE), error=function(e) load.store),
-                             psi       = if(sw["psi.sw"]) tryCatch(provideDimnames(psi.store, base=list(varnames, "", ""), unique=FALSE), error=function(e) psi.store),
-                             pi.prop   = if(sw["pi.sw"])  pi.store,
-                             alpha     = if(learn.alpha)  alpha.store,
-                             discount  = if(learn.d) {    if(sum(d.store == 0)/n.store > 0.5) as.simple_triplet_matrix(d.store) else d.store },
-                             a.rate    = if(MH.step)      mean(a.rates) else a.rates,
-                             d.rate    = if(learn.d)      mean(d.rates) else d.rates,
-                             lab.rate  = if(IM.lab.sw)    setNames(rowmeans(lab.rate), c("Move1", "Move2")),
+    returns          <- list(mu        = if(sw["mu.sw"])   tryCatch(provideDimnames(mu.store,  base=list(varnames, "", ""), unique=FALSE), error=function(e) mu.store),
+                             eta       = if(sw["s.sw"])    tryCatch(provideDimnames(tryCatch(as.simple_sparse_array(eta.store),            error=function(e) eta.store),  base=list(obsnames, "", ""),     unique=FALSE), error=function(e) eta.store),
+                             load      = if(sw["l.sw"])    tryCatch(provideDimnames(tryCatch(as.simple_sparse_array(load.store),           error=function(e) load.store), base=list(varnames, "", "", ""), unique=FALSE), error=function(e) load.store),
+                             psi       = if(sw["psi.sw"])  tryCatch(provideDimnames(psi.store, base=list(varnames, "", ""), unique=FALSE), error=function(e) psi.store),
+                             pi.prop   = if(sw["pi.sw"])   pi.store,
+                             alpha     = if(learn.alpha)   alpha.store,
+                             discount  = if(learn.d) {     if(sum(d.store == 0)/n.store > 0.5) as.simple_triplet_matrix(d.store) else d.store },
+                             a.rate    = ifelse(MH.step,   mean(a.rates), a.rates),
+                             d.rate    = ifelse(learn.d,   mean(d.rates), d.rates),
+                             lab.rate  = if(IM.lab.sw)     setNames(rowmeans(lab.rate), c("Move1", "Move2")),
                              z.store   = z.store,
                              ll.store  = ll.store,
                              Q.store   = tryCatch(Q.store[Gmax,, drop=FALSE],          error=function(e) Q.store),
                              G.store   = G.store,
                              act.store = act.store,
-                             avg.zeta  = if(zeta.tune)    mean(avgzeta),
+                             avg.zeta  = if(MH.step)       ifelse(zeta.tune, mean(avgzeta), zeta),
                              time      = init.time)
     attr(returns, "Q.big")    <- Q.large
     return(returns)

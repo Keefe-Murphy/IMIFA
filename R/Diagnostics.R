@@ -159,7 +159,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
          unique(G.store[tmpQ,]))) stop("This 'G' value was not visited during simulation")
     }
   }
-  G              <- if(any(inf.G, all(G.T, !is.element(method, c("FA", "IFA"))))) G else 1L
+  G              <- ifelse(any(inf.G, all(G.T, !is.element(method, c("FA", "IFA")))), G, 1L)
   if(Q.T)    {
     Q            <- as.integer(Q)
     if(!is.integer(Q))            stop("'Q' must of integer type")

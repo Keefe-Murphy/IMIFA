@@ -542,23 +542,27 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
       if(param == "discount") {
         plot.x <- clust$PY.disc
         x.plot <- as.vector(plot.x$discount)
-        fit    <- .logitdensity(x.plot)
-        fitx   <- fit$x
-        fity   <- fit$y * (1 - plot.x$post.kappa)
-        plot(fitx, fity, type="l", main="", xlab="", ylab="", xlim=c(0, max(fitx)))
-        usr    <- par("usr")
-        if(plot.x$post.kappa > 0)  {
-          clip(usr[1], usr[2], 0, usr[4])
-          abline(v=0,  col=3,  lwd=2)
-          clip(usr[1], usr[2], usr[3], usr[4])
-        }
-        if(titles) title(main=list(paste0("Density", ifelse(all.ind, "", paste0(":\nDiscount")))))
-        polygon(c(min(fitx), fitx), c(0, fity), col=grey, border=NA)
-        if(intervals) {
-          avg  <- plot.x$post.disc
-          clip(avg, avg, 0, fity[which.min(abs(fitx - avg))])
-          abline(v=avg, col=2, lty=2)
-          clip(usr[1], usr[2], usr[3], usr[4])
+        fit    <- try(.logitdensity(x.plot), silent = TRUE)
+        if(!inherits(fit, "try-error")) {
+          fitx <- fit$x
+          fity <- fit$y * (1 - plot.x$post.kappa)
+          plot(fitx, fity, type="l", main="", xlab="", ylab="", xlim=c(0, max(fitx)))
+          usr  <- par("usr")
+          if(plot.x$post.kappa > 0)     {
+            clip(usr[1], usr[2], 0,      usr[4])
+            abline(v=0,  col=3,  lwd=2)
+            clip(usr[1], usr[2], usr[3], usr[4])
+          }
+          if(titles) title(main=list(paste0("Density", ifelse(all.ind, "", paste0(":\nDiscount")))))
+          polygon(c(min(fitx), fitx), c(0, fity), col=grey, border=NA)
+          if(intervals) {
+            D  <- plot.x$post.disc
+            clip(D, D, 0, fity[which.min(abs(fitx - D))])
+            abline(v=D, col=2, lty=2)
+            clip(usr[1], usr[2], usr[3], usr[4])
+          }
+        } else {                      warning("Mutation rate too low: can't plot density", call.=FALSE)
+          if(all.ind) plot.new()
         }
       }
     }
