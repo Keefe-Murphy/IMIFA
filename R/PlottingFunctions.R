@@ -299,7 +299,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         }
       } else {
         if(ind[1] > n.var)            stop(paste0("First index can't be greater than the number of variables: ",  n.var))
-        if(ind[2] > Q) {              warning(paste0("Second index can't be greater than ", Q, ", the number of factors", if(grp.ind) paste0(" in group ", g), ".\n Try specifying a vector of fac values with maximum entries ", paste0(Qs, collapse=", "), "."), call.=FALSE)
+        if(ind[2] > Q) {              warning(paste0("Second index can't be greater than ", Q, ", the number of factors", if(grp.ind) paste0(" in group ", g), ".\nTry specifying a vector of fac values with maximum entries ", paste0(Qs, collapse=", "), "."), call.=FALSE)
         if(isTRUE(msgx)) .ent_exit(opts = defopt)
         next
         }
@@ -915,7 +915,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           cat(paste0("DIC = ", dic[G.ind,Q.ind], "\n"))
       }
       if(all(plotQ.ind,
-             attr(GQ.res, "Q.big")))  warning("Q had to be prevented from exceeding its initial value.\n Consider re-running the model with a higher value for 'range.Q'", call.=FALSE)
+             attr(GQ.res, "Q.big")))  warning("Q had to be prevented from exceeding its initial value.\nConsider re-running the model with a higher value for 'range.Q'", call.=FALSE)
     }
 
     if(m.sw["Z.sw"]) {
@@ -1035,7 +1035,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
       matplot(seq_len(n.var) + if(!jit.x) switch(type.u, p=matrix(rnorm(jitcol * n.var, 0, min(0.1, max(1e-02, 1/n.var^2))), nrow=n.var, ncol=jitcol), 0) else 0,
               plot.x, type=type.u, pch=15, col=switch(param, loadings=seq_len(Q), seq_len(G)), xlab=switch(uni.type, constrained=, unconstrained="Variable", ""),
               lty=1, ylab=paste0(switch(param, uniquenesses=switch(uni.type, constrained=, unconstrained="Standardised ", ""), "Standardised "), varnam),
-              xaxt="n", bty="n", main=paste0("Parallel Coordinates: ", varnam, ifelse(all(grp.ind, param == "loadings"), paste0("\n Group ", g), "")))
+              xaxt="n", bty="n", main=paste0("Parallel Coordinates: ", varnam, ifelse(all(grp.ind, param == "loadings"), paste0("\nGroup ", g), "")))
       axis(1, at=seq_len(n.var), labels=if(titles && n.var < 100) rownames(plot.x) else rep("", n.var), cex.axis=0.5, tick=FALSE, line=-0.5)
       for(i in seq_len(n.var))    {
         lines(c(i, i), c(0, 1), col=grey)
@@ -1111,7 +1111,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         if(any(!all.ind, partial)) {
           acf(plot.x[ind,], main="", type="partial", ci.col=4, ylab="")
           if(titles) title(main=list(paste0("PACF", ifelse(partial, paste0(":\n", var.names[ind], " Variable"), ""))))
-          if(all(!all.ind, titles)) title(main=list(paste0("Means - ", ifelse(grp.ind, paste0("Group ", g, ":\n "), ""), var.names[ind], " Variable")), outer=TRUE)
+          if(all(!all.ind, titles)) title(main=list(paste0("Means - ", ifelse(grp.ind, paste0("Group ", g, ":\n"), ""), var.names[ind], " Variable")), outer=TRUE)
         }
       }
       if(param == "scores")   {
@@ -1135,7 +1135,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         if(any(!all.ind, partial)) {
           acf(plot.x[ind[1],ind[2],], main="", type="partial", ci.col=4, ylab="")
           if(titles) title(main=list(paste0("PACF", ifelse(partial, paste0(":\n", var.names[ind[1]], " Variable, Factor ", ind[2]), ""))))
-          if(all(!all.ind, titles)) title(main=list(paste0("Loadings - ", ifelse(grp.ind, paste0("Group ", g, ":\n "), ""), var.names[ind[1]], " Variable, Factor ", ind[2])), outer=TRUE)
+          if(all(!all.ind, titles)) title(main=list(paste0("Loadings - ", ifelse(grp.ind, paste0("Group ", g, ":\n"), ""), var.names[ind[1]], " Variable, Factor ", ind[2])), outer=TRUE)
         }
       }
       if(param == "uniquenesses")  {
@@ -1147,7 +1147,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         if(any(!all.ind, partial)) {
           acf(plot.x[ind,], main="", type="partial", ci.col=4, ylab="")
           if(titles) title(main=list(paste0("PACF", ifelse(partial, switch(uni.type, constrained=, unconstrained=paste0(":\n", var.names[ind], " Variable"), ""), ""))))
-          if(all(!all.ind, titles)) title(main=list(paste0("Uniquenesses - ", ifelse(grp.ind, paste0("Group ", g, ":\n "), ""), switch(uni.type, constrained=, unconstrained=paste0(var.names[ind], " Variable"), ""))), outer=TRUE)
+          if(all(!all.ind, titles)) title(main=list(paste0("Uniquenesses - ", ifelse(grp.ind, paste0("Group ", g, ":\n"), ""), switch(uni.type, constrained=, unconstrained=paste0(var.names[ind], " Variable"), ""))), outer=TRUE)
         }
       }
       if(param == "pis")  {

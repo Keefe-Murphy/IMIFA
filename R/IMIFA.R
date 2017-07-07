@@ -12,9 +12,9 @@
 #'
 #' Type: Package
 #'
-#' Version: 1.3.0
+#' Version: 1.3.1
 #'
-#' Date: 2017-06-22 (this version), 2017-02-02 (original release)
+#' Date: 2017-07-07 (this version), 2017-02-02 (original release)
 #'
 #' Licence: GPL (>=2)
 #'
@@ -42,4 +42,4 @@
 #' @name IMIFA
 NULL
 
-.onAttach <- function(...) packageStartupMessage(paste("   ________  __________________\n  /_  __/  |/   /_  __/ ___/ _ \\  \n   / / / /|_// / / / / /__/ /_\\ \\ \n _/ /_/ /   / /_/ /_/ ___/ /___\\ \\ \n/____/_/   /_/_____/_/  /_/     \\_\\               version 1.3.0\nType '?IMIFA' to see a brief guide to how to use this R package.\nType", sQuote(paste0("citation(", dQuote("IMIFA"),")")) ,"for citing the package in publications."))
+.onAttach <- function(...) packageStartupMessage(paste("   ________  __________________\n  /_  __/  |/   /_  __/ ___/ _ \\  \n   / / / /|_// / / / / /__/ /_\\ \\ \n _/ /_/ /   / /_/ /_/ ___/ /___\\ \\ \n/____/_/   /_/_____/_/  /_/     \\_\\               version 1.3.1\nType '?IMIFA' to see a brief guide to how to use this R package.\nType", sQuote(paste0("citation(", dQuote("IMIFA"),")")) ,"for citing the package in publications."))

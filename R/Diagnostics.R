@@ -112,7 +112,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   choice         <- length(n.grp) * length(n.fac) > 1
   criterion      <- match.arg(criterion)
   if(all(inf.Q, is.element(criterion,
-     c("aic.mcmc", "bic.mcmc")))) stop(paste0(ifelse(isTRUE(choice), "Model choice is", "Though model choice isn't"), " actually required -\n 'criterion' cannot be 'aic.mcmc' or 'bic.mcmc' for the ", method, " method"))
+     c("aic.mcmc", "bic.mcmc")))) stop(paste0(ifelse(isTRUE(choice), "Model choice is", "Though model choice isn't"), " actually required -\n'criterion' cannot be 'aic.mcmc' or 'bic.mcmc' for the ", method, " method"))
   recomp         <- any(burnin  > 0,
                     thinning    > 1)
   if(any(!is.logical(z.avgsim),
@@ -297,7 +297,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       nam.x      <- gsub(".*\\[(.*)\\].*", "(\\1)",  dat.nam)
       if(any(unlist(vapply(seq_along(pattern), function(p) grepl(pattern[p], nam.dat, fixed=TRUE), logical(1L))),
          !identical(dat.nam, nam.dat) && (any(grepl("[[:alpha:]]", gsub('c', '', nam.x))) || grepl(":",
-         nam.x, fixed=TRUE)))) {  warning("Extremely inadvisable to supply 'dat' subsetted by any means other than row/column numbers or c() indexing:\n can't compute empirical covariance and error metrics, best to create new data object", call.=FALSE)
+         nam.x, fixed=TRUE)))) {  warning("Extremely inadvisable to supply 'dat' subsetted by any means other than row/column numbers or c() indexing:\ncan't compute empirical covariance and error metrics, best to create new data object", call.=FALSE)
       } else  {
         spl.ind          <- if(grepl("(,", nam.x, fixed=TRUE)) sapply(gregexpr("\\(,", nam.x), head, 1L) else sapply(gregexpr("\\)", nam.x), head, 1L)
         spl.tmp          <- c(substring(nam.x, 1, spl.ind), substring(nam.x, spl.ind + 2L, nchar(nam.x)))
@@ -316,7 +316,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       obsnames   <- rownames(dat)
       varnames   <- colnames(dat)
       if(!identical(dim(dat),
-         c(n.obs, n.var)))        warning("Dimensions of data don't match those in the dataset supplied to mcmc_IMIFA():\n be careful using subsetted data, best to create new object", call.=FALSE)
+         c(n.obs, n.var)))        warning("Dimensions of data don't match those in the dataset supplied to mcmc_IMIFA():\nbe careful using subsetted data, best to create new object", call.=FALSE)
       n.obs      <- nrow(dat)
     }
 
@@ -396,7 +396,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       condit     <- all(!is.element(method, c("MIFA", "MFA")), inherits(znew, "try-error"))
       if(isTRUE(condit)) {
         zlog     <- capture.output(znew <- try(Zsimilarity(zs=z),    silent=TRUE))
-                                  warning("Constructing the similarity matrix failed:\n trying again using iterations corresponding to the modal number of clusters", call.=FALSE)
+                                  warning("Constructing the similarity matrix failed:\ntrying again using iterations corresponding to the modal number of clusters", call.=FALSE)
       }
       if(!inherits(znew, "try-error")) {
         zadj     <- znew$z.avg
@@ -490,7 +490,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     }
     uncert.obs   <- which(uncertain >= 1/G)
     sizes        <- setNames(tabulate(map, nbins=G), gnames)
-    if(any(sizes == 0))           warning("Empty group exists in modal clustering:\n examine trace plots and try supplying a lower G value to tune.imifa() or re-running the model", call.=FALSE)
+    if(any(sizes == 0))           warning("Empty group exists in modal clustering:\nexamine trace plots and try supplying a lower G value to tune.imifa() or re-running the model", call.=FALSE)
     if(learn.alpha) {
       alpha      <- sims[[G.ind]][[Q.ind]]$alpha[store]
       post.alpha <- mean(alpha)
@@ -517,7 +517,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     map          <- as.integer(levels(map))[map]
     uncertain    <- if(sum(uncertain == 0)/n.obs   > 0.5)  as.simple_triplet_matrix(uncertain) else uncertain
     attr(uncertain, "Obs")     <- if(sum(uncert.obs) != 0) uncert.obs
-    tab.stat$uncertain         <- if(!label.miss)          attr(uncertain, "Obs")
+    if(!label.miss) tab.stat$uncertain            <-       attr(uncertain, "Obs")
     cluster      <- list(map = map, z = z, uncertainty = uncertain)
     cluster      <- c(cluster, list(post.sizes  = sizes, post.pi = post.pi/sum(post.pi)),
                       if(sw["pi.sw"]) list(pi.prop = pi.prop, var.pi = var.pi, ci.pi = ci.pi),
@@ -555,10 +555,10 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   Q0             <- Q == 0
   if(all(isTRUE(choice), is.element(criterion, c("aicm", "bicm", "log.iLLH")))) {
     if(all(!G.T, !is.element(method,
-       c("FA", "IFA")), G == 1))  warning(paste0("Chosen model has only one group:\n Note that the ", criterion, " criterion may exhibit bias toward one-group models"),   call.=FALSE)
+       c("FA", "IFA")), G == 1))  warning(paste0("Chosen model has only one group:\nNote that the ", criterion, " criterion may exhibit bias toward one-group models"),   call.=FALSE)
     if(all(!Q.T, method   == "MIFA")) {
-      if(any(Q0))                 warning(paste0("Chosen model has ", ifelse(sum(Q0) == G, "zero factors", "a group with zero factors"), ":\n Note that the ", criterion, " criterion may exhibit bias toward models ", ifelse(sum(Q0) == G, "with zero factors", "where some groups have zero factors")), call.=FALSE)
-    } else if(all(Q0))            warning(paste0("Chosen model has zero factors:\n Note that the ",   criterion, " criterion may exhibit bias toward zero-factor models"), call.=FALSE)
+      if(any(Q0))                 warning(paste0("Chosen model has ", ifelse(sum(Q0) == G, "zero factors", "a group with zero factors"), ":\nNote that the ", criterion, " criterion may exhibit bias toward models ", ifelse(sum(Q0) == G, "with zero factors", "where some groups have zero factors")), call.=FALSE)
+    } else if(all(Q0))            warning(paste0("Chosen model has zero factors:\nNote that the ",   criterion, " criterion may exhibit bias toward zero-factor models"), call.=FALSE)
   }
 
 
@@ -851,5 +851,5 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   attr(result, "Z.sim")        <- z.avgsim
   class(result)                <- "Results_IMIFA"
   cat(print.Results_IMIFA(result))
-  return(result)
+    return(result)
 }

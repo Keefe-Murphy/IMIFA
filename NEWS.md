@@ -1,6 +1,11 @@
 __Infinite Mixtures of Infinite Factor Analysers__
 ==================================================  
 
+# IMIFA v1.3.1 - (_5th release [patch update]: 2017-07-07_)
+## Bug Fixes
+* Fixed bug preventing M(I)FA models from being treated as (I)FA models when `range.G` contains 1.
+* Fixed bug preventing `get_IMIFA_results` from working properly when true labels are NOT supplied.
+
 # IMIFA v1.3.0 - (_4th release [minor update]: 2017-06-22_)
 ## New Features
 * Added options `"constrained"` & `"single"` to `mcmc_IMIFA`'s `uni.type` argument:  

@@ -260,9 +260,9 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
          length(kappa)       != 1)) stop("'kappa' must be a single number")
   if(kappa   <  0  || kappa   > 1)  stop("'kappa' must lie in the interval [0, 1]")
   if(kappa  ==  0) {
-   if(all(!learn.d, discount == 0)) stop("'kappa' is zero and yet 'discount' is fixed at zero:\n either learn the discount parameter or specify a non-zero value")
+   if(all(!learn.d, discount == 0)) stop("'kappa' is zero and yet 'discount' is fixed at zero:\neither learn the discount parameter or specify a non-zero value")
   } else if(kappa  == 1) {
-   if(any(learn.d,  discount != 0)) stop(paste0("'kappa' is exactly 1 and yet", ifelse(learn.d, " 'discount' is being learned ", if(discount != 0) " the discount is fixed at a non-zero value"), ":\n the discount should remain fixed at zero"))
+   if(any(learn.d,  discount != 0)) stop(paste0("'kappa' is exactly 1 and yet", ifelse(learn.d, " 'discount' is being learned ", if(discount != 0) " the discount is fixed at a non-zero value"), ":\nthe discount should remain fixed at zero"))
   }
   discount         <- switch(method, IMFA=, IMIFA=ifelse(missing(discount), ifelse(learn.d, ifelse(kappa != 0 && runif(1) <= kappa, 0, rbeta(1, d.hyper[1], d.hyper[2])), 0), discount), 0)
   if(any(!is.numeric(discount),
@@ -361,7 +361,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     alp3    <- 3L   * alpha
     if(G.x)                         stop("'range.G' must be specified")
     if(any(range.G  < 1))           stop("'range.G' must be strictly positive")
-    if(any(range.G  > alp3 * lnN))  warning(paste0("'range.G' MUCH greater than log(N) (=log(", N, ")):\n Empty clusters are likely, consider running an overfitted or infinite mixture"), call.=FALSE)
+    if(any(range.G  > alp3 * lnN))  warning(paste0("'range.G' MUCH greater than log(N) (=log(", N, ")):\nEmpty clusters are likely, consider running an overfitted or infinite mixture"), call.=FALSE)
     range.G <- G.init     <- sort_unique(range.G)
     meth    <- rep(method, length(range.G))
   }
@@ -522,7 +522,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(all(is.element(method,  c("IMIFA",   "IMFA")),
        !learn.alpha))               warning(paste0("'alpha' fixed at ", round(alpha, options()$digits), " as it's not being learned via Gibbs/Metropolis-Hastings updates"), call.=FALSE)
     if(all(is.element(method,  c("OMIFA",   "OMFA")),
-       alpha >= min.d2))            warning(paste0("'alpha' over 'range.G' for the OMFA & OMIFA methods must be less than half the dimension (per group!)\n of the free parameters of the smallest model considered (= ", min.d2, "): consider suppling 'alpha' < ", min.d2G), call.=FALSE)
+       alpha >= min.d2))            warning(paste0("'alpha' over 'range.G' for the OMFA & OMIFA methods must be less than half the dimension (per group!)\nof the free parameters of the smallest model considered (= ", min.d2, "): consider suppling 'alpha' < ", min.d2G), call.=FALSE)
     if(any(all(is.element(method, c("MFA",  "MIFA")), alpha > 1),
            all(is.element(method, c("OMFA", "OMIFA")),
            alpha > 1/G.init)))      warning("Are you sure alpha should be greater than 1?", call.=FALSE)
@@ -540,7 +540,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
         if(!is.element(method, c("IMIFA",
                        "IMFA", "OMIFA", "OMFA"))) {
                                     stop(paste0("Each element of 'z.list' must have the same number of levels as 'range.G'"))
-        } else                      stop(paste0("Only ", list.levels, " groups are populated according to z.list, but 'range.G' has been set to ", G.init, ":\n  Reset 'range.G' to this value to avoid redunandtly carrying around empty groups or supply a list with ", G.init, " levels"))
+        } else                      stop(paste0("Only ", list.levels, " groups are populated according to z.list, but 'range.G' has been set to ", G.init, ":\nReset 'range.G' to this value to avoid redunandtly carrying around empty groups or supply a list with ", G.init, " levels"))
       }
       if(!all(lengths(z.list) == N)) {
                                     stop(paste0("Each element of 'z.list' must be a vector of length N=", N)) }
@@ -585,7 +585,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     gibbs.arg      <- append(gibbs.arg, list(trunc.G = trunc.G, rho = rho, ind.slice = ind.slice, learn.alpha = learn.alpha, learn.d = learn.d, kappa = kappa,
                                              zeta = zeta, IM.lab.sw = IM.lab.sw, a.hyper = alpha.hyper, discount = discount, d.hyper = d.hyper, tune.zeta = tune.zeta))
   }
-  if(is.element(method, c("FA", "IFA"))) {
+  if(any(is.element(meth, c("FA", "IFA")))) {
     gibbs.arg      <- append(gibbs.arg, list(scaling = scaling))
   }
   if(!is.element(method, c("FA", "MFA", "OMFA", "IMFA"))) {
@@ -712,7 +712,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   if(any(unlist(psi.beta)   <= 0))  stop("'psi.beta' must be strictly positive")
   if(is.element(method, c("classify", "IFA", "MIFA", "IMIFA", "OMIFA"))) {
     if(!all(MGP_check(ad1=unlist(alpha.d1), ad2=unlist(alpha.d2), Q=unique(range.Q), nu=nu, bd1=beta.d1, bd2=beta.d2,
-        plus1=nuplus1)[[1]]$valid)) stop("Invalid shrinkage hyperparameter values will not encourage loadings column removal.\n Try using the MGP_check() function in advance to ensure cumulative shrinkage property holds.")
+        plus1=nuplus1)[[1]]$valid)) stop("Invalid shrinkage hyperparameter values will not encourage loadings column removal.\nTry using the MGP_check() function in advance to ensure cumulative shrinkage property holds.")
     deltas         <- lapply(seq_along(G.init), function(g) list(alpha.d1 = alpha.d1[[g]], alpha.d2 = alpha.d2[[g]]))
   }
   init.time        <- proc.time() - init.start
@@ -866,7 +866,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   }
   class(times)            <- "listof"
   attr(imifa, "Time")     <- if(is.element(method, c("FA", "IFA", "classify"))) times[-length(times)] else times
-  attr(imifa, "TuneZeta") <- all(is.element(method, c("IMFA", "IMIFA")), tune.zeta$heat > 0 && tune.zeta$do)
+  attr(imifa, "TuneZeta") <- is.element(method, c("IMFA", "IMIFA")) && (tune.zeta$heat > 0 && tune.zeta$do)
   attr(imifa, "Uni.Meth") <- c(Uni.Prior = uni.prior, Uni.Type = uni.type)
   attr(imifa, "Vars")     <- P
   if(!is.element(method, c("FA", "IFA"))) {
