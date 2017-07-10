@@ -1,12 +1,15 @@
 __Infinite Mixtures of Infinite Factor Analysers__
 ==================================================  
 
-# IMIFA v1.3.1 - (_5th release [patch update]: 2017-07-07_)
+## Improvements
+* Variance of AICM/BICM model selection criteria now computed and returned.
+
+# IMIFA v1.3.1 - (_5<sup>th</sup> release [patch update]: 2017-07-07_)
 ## Bug Fixes
 * Fixed bug preventing M(I)FA models from being treated as (I)FA models when `range.G` contains 1.
 * Fixed bug preventing `get_IMIFA_results` from working properly when true labels are NOT supplied.
 
-# IMIFA v1.3.0 - (_4th release [minor update]: 2017-06-22_)
+# IMIFA v1.3.0 - (_4<sup>th</sup> release [minor update]: 2017-06-22_)
 ## New Features
 * Added options `"constrained"` & `"single"` to `mcmc_IMIFA`'s `uni.type` argument:  
   as well as being either diagonal or isotropic (UUU / UUC), uniquenesses can now further be  
@@ -39,7 +42,7 @@ __Infinite Mixtures of Infinite Factor Analysers__
 * Fixed silly error re: way in which (I)FA models are treated as 1-cluster models to ensure they run:  
   Related bug fixed for OM(I)FA/IM(I)FA models when starting number of clusters is actually supplied.
 
-# IMIFA v1.2.1 - (_3rd release [patch update]: 2017-05-29_)
+# IMIFA v1.2.1 - (_3<sup>rd</sup> release [patch update]: 2017-05-29_)
 ## Improvements
 * Posterior mean scores can now also be plotted in the form of a heat map (previously loadings only).  
   `load.meth` argument replaced by logical `heat.map` in `plot.Results_IMIFA`.
@@ -55,7 +58,7 @@ __Infinite Mixtures of Infinite Factor Analysers__
 * Fixed storage and plotting of loadings, particularly when some but not all clusters have zero factors.
 * Added `NEWS.md` to build.
 
-# IMIFA v1.2.0 - (_2nd release [minor update]: 2017-05-09_)
+# IMIFA v1.2.0 - (_2<sup>nd</sup> release [minor update]: 2017-05-09_)
 
 ## New Features
 * Learning the Pitman-Yor `discount` & `alpha` parameters via Metropolis-Hastings now implemented.  
@@ -103,4 +106,4 @@ __Infinite Mixtures of Infinite Factor Analysers__
 * Fixed behaviour of progress bar when `verbose=FALSE`.
 * Fixed typos and expanded/clarified help documentation/vignette.
 
-# IMIFA v1.1.0 - (_1st release: 2017-02-02_)
+# IMIFA v1.1.0 - (_1<sup>st</sup> release: 2017-02-02_)

@@ -469,13 +469,13 @@
 #' @return A list containing three elements:
 #' \describe{
 #' \item{z.avg}{The 'average' clustering, with minimum squared distance to \code{z.sim}.}
-#' \item{z.sim}{The N x N similary matrix, in a sparse format (see \code{\link[slam]{as.simple_triplet_matrix}}). If the data have been previously ordered, a (ordered) heatmap may provide a useful visualisation. The user is also invited to perform hierarchical clustering using \code{\link[stats]{hclust}} after first converting this similarity matrix to a distance matrix - "complete" linkage is recommended.}
+#' \item{z.sim}{The N x N similary matrix, in a sparse format (see \code{\link[slam]{simple_triplet_matrix}}). If the data have been previously ordered, a (ordered) heatmap may provide a useful visualisation. The user is also invited to perform hierarchical clustering using \code{\link[stats]{hclust}} after first converting this similarity matrix to a distance matrix - "complete" linkage is recommended.}
 #' \item{dist.z}{A vector of length N recording the distances between each clustering and the 'average' clustering.}
 #' }
 #' @export
 #'
 #' @note This function is implemented purely in R and as such its performance in terms of speed and memory may not be optimal; it can take quite a considerable amount of time to run, and may crash if the number of observations &/or number of iterations is so large that the similarity matrix is insufficiently sparse. This function can optionally be called inside \code{\link{get_IMIFA_results}}.
-#' @seealso \code{\link{get_IMIFA_results}}, \code{\link[slam]{as.simple_triplet_matrix}}, \code{\link[stats]{hclust}}
+#' @seealso \code{\link{get_IMIFA_results}}, \code{\link[slam]{simple_triplet_matrix}}, \code{\link[stats]{hclust}}
 #'
 #' @author Keefe Murphy
 #'

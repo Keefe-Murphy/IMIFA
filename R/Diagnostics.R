@@ -204,8 +204,8 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       dimnames(crit.mat) <- list(paste0("G", n.grp), if(inf.Q) "IFA" else paste0("Q", n.fac))
     }
     rownames(crit.mat)   <- switch(method, IMFA=, IMIFA="IM", OMFA=, OMIFA="OM", rownames(crit.mat))
-    aicm         <- bicm       <- log.iLLH <-
-    dic          <- aic.mcmc   <- bic.mcmc <- crit.mat
+    aicm         <- bicm       <- log.iLLH <- aicm.var <-
+    dic          <- aic.mcmc   <- bic.mcmc <- bicm.var <- crit.mat
     log.N        <- log(n.obs)
     for(g in seq_len(G.range))   {
       gi                 <- ifelse(G.T, G.ind, g)
@@ -213,18 +213,22 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
         qi               <- ifelse(Q.T, Q.ind, q)
         log.likes        <- if(is.element(method, c("OMFA", "IMFA")) && GQ1) sims[[gi]][[qi]]$ll.store[tmp.store[[qi]]] else sims[[gi]][[qi]]$ll.store[tmp.store]
         log.likes        <- log.likes[complete.cases(log.likes)]
-        ll.max           <- 2 * max(log.likes)
-        ll.var           <- ifelse(length(log.likes) != 1, 2 * Var(log.likes), 0)
+        ll.max2          <- 2 * max(log.likes)
+        S2               <- ifelse(length(log.likes) != 1, Var(log.likes), 0)
+        ll.var           <- 2 * S2
         ll.mean          <- mean(log.likes)
-        aicm[g,q]        <- ll.max  - ll.var   * 2
-        bicm[g,q]        <- ll.max  - ll.var   * log.N
-        log.iLLH[g,q]    <- ll.mean - ll.var   * (log.N - 1)
-        dic[g,q]         <- (ll.max - ll.mean) * 3 - ll.mean
+        aicm[g,q]        <- ll.max2  - ll.var   * 2
+        bicm[g,q]        <- ll.max2  - ll.var   * log.N
+        log.iLLH[g,q]    <- ll.mean  - S2       * (log.N - 1)
+        dic[g,q]         <- (ll.max2 - ll.mean) * 3 - ll.mean
+        ci.tmp           <- S2 * (11 * S2 + 24)
+        aicm.var[g,q]    <- sqrt((2 * ll.var + 4 * ci.tmp)/length(log.likes))
+        bicm.var[g,q]    <- sqrt((2 * ll.var + (log.N - 1)^2 * ci.tmp)/length(log.likes))
         if(!inf.Q) {
           K              <- switch(method, OMFA=, IMFA=PGMM_dfree(Q=n.fac[qi], P=n.var, G=G[ifelse(G.T, 1, qi)],
                             method=switch(uni.type, unconstrained="UUU", isotropic="UUC", constrained="UCU", single="UCC")), attr(sims[[gi]][[qi]], "K"))
-          aic.mcmc[g,q]  <- ll.max  - K * 2
-          bic.mcmc[g,q]  <- ll.max  - K * log.N
+          aic.mcmc[g,q]  <- ll.max2  - K * 2
+          bic.mcmc[g,q]  <- ll.max2  - K * log.N
         }
       }
     }
@@ -775,6 +779,9 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     attr(scores, "Eta.store")  <- length(eta.store)
   }
   names(result)  <- gnames
+  GQ.res$Criteria              <- c(GQ.res$Criteria, list(var.AICMs = aicm.var, var.BICMs = bicm.var,
+                                                          best.models = t(vapply(GQ.res$Criteria, function(x) { inds <- arrayInd(which.max(x), dim(x));
+                                                          c(clusters = rownames(x)[inds[1]], factors = colnames(x)[inds[2]]) }, character(2L)))))
   class(GQ.res)                <- "listof"
   attr(GQ.res, "Criterion")    <- criterion
   attr(GQ.res, "Factors")      <- n.fac

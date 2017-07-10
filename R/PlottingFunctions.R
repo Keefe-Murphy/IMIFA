@@ -5,7 +5,7 @@
 #' @param param The parameter of interest for any of the following \code{plot.meth} options: \code{trace}, \code{density}, \code{means}, \code{correlation}. The \code{param} must have been stored when \code{\link{mcmc_IMIFA}} was initially ran. Includes \code{pis} for methods where clustering takes place, and allows posterior inference on \code{alpha} and \code{discount} for the "\code{IMFA}" and "\code{IMIFA}" methods.
 #' @param zlabels The true labels can be supplied if they are known. If this is not supplied, the function uses the labels that were supplied, if any, to \code{\link{get_IMIFA_results}}. Only relevant when \code{plot.meth = "zlabels"}.
 #' @param heat.map Switch which allows plotting posterior mean loadings or posterior mean scores as a heatmap, or else as something akin to \code{link{plot(..., type="h")}}. Only relevant if \code{param = "loadings"} (in which case the default is \code{TRUE}) or \code{param = "scores"} (in which case the default is \code{FALSE}). Heatmaps are produced with the aid of \code{\link{mat2cols}} and \code{\link{plot_cols}}.
-#' @param palette An optional colour palette to be supplied if overwriting the default palette set inside the function by \code{\link[viridis]{viridis}} is desired.
+#' @param palette An optional colour palette to be supplied if overwriting the default palette set inside the function by \code{\link[viridisLite]{viridis}} is desired.
 #' @param g Optional argument that allows specification of exactly which cluster the plot of interest is to be produced for. If not supplied, the user will be prompted to cycle through plots for all clusters. Also functions as an index for which plot to return when \code{plot.meth} is \code{GQ} or \code{zlabels} in much the same way.
 #' @param mat Logical indicating whether a \code{\link{matplot}} is produced (defaults to \code{TRUE}). If given as \code{FALSE}, \code{ind} is invoked.
 #' @param ind Either a single number indicating which variable to plot when \code{param} is one of \code{means} or \code{uniquenesses}, or which cluster to plot if \code{param} is \code{pis}. If \code{scores} are plotted, a vector of length two giving which observation and factor to plot; If \code{loadings} are plotted, a vector of length two giving which variable and factor to plot. Only relevant when \code{mat} or \code{by.fac} is \code{FALSE}.
@@ -788,13 +788,14 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
       plotG.ind  <- is.element(method, c("IMIFA", "IMFA", "OMIFA", "OMFA"))
       plotQ.ind  <- any(is.element(method, c("IFA", "MIFA")), all(is.element(method, c("IMIFA", "OMIFA")), g == 2))
       plotT.ind  <- any(all(g == 2, is.element(method, c("IMFA", "OMFA"))), all(is.element(method, c("IMIFA", "OMIFA")), g == 3))
-      aicm       <- round(GQ.res$Criteria$AICMs, 2)
-      bicm       <- round(GQ.res$Criteria$BICMs, 2)
-      log.iLLH   <- round(GQ.res$Criteria$LogIntegratedLikelihoods, 2)
-      dic        <- round(GQ.res$Criteria$DICs, 2)
+      crit       <- GQ.res$Criteria
+      aicm       <- round(crit$AICMs, 2)
+      bicm       <- round(crit$BICMs, 2)
+      log.iLLH   <- round(crit$LogIntegratedLikelihoods, 2)
+      dic        <- round(crit$DICs, 2)
       if(is.element(method, c("FA", "MFA", "OMFA", "IMFA"))) {
-        aic.mcmc <- round(GQ.res$Criteria$AIC.mcmcs, 2)
-        bic.mcmc <- round(GQ.res$Criteria$BIC.mcmcs, 2)
+        aic.mcmc <- round(crit$AIC.mcmcs, 2)
+        bic.mcmc <- round(crit$BIC.mcmcs, 2)
       }
       if(all(plotG.ind, g == 1))  {
         layout(1)
@@ -1192,7 +1193,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
 #'
 #' Converts a matrix to a hex colour code representation for plotting using \code{\link{plot_cols}}. Used internally by \code{\link{plot.Results_IMIFA}} for plotting posterior mean loadings heatmaps.
 #' @param mat Either a matrix or, when \code{compare} is \code{TRUE}, a list of matrices.
-#' @param cols The colour palette to be used. The default palette uses \code{\link[viridis]{viridis}}. Will be checked for validity.
+#' @param cols The colour palette to be used. The default palette uses \code{\link[viridisLite]{viridis}}. Will be checked for validity.
 #' @param compare Logical switch used when desiring comparable colour representations (usually for comparable heat maps) across multiple matrices. Ensures plots will be calibrated to a common colour scale so that, for instance, the colour on the heat map of an entry valued at 0.7 in Matrix A corresponds exactly to the colour of a similar value in Matrix B. When \code{TRUE}, \code{mat} must be supplied as a list of matrices, which must have either the same number of rows, or the same number of columns.
 #' @param byrank Logical indicating whether to convert the matrix itself or the sample ranks of the values therein. Defaults to \code{FALSE}.
 #' @param breaks Number of gradations in colour to use. Defaults to \code{length(cols)}.

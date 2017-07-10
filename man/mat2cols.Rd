@@ -10,7 +10,7 @@ mat2cols(mat, cols = NULL, compare = FALSE, byrank = FALSE,
 \arguments{
 \item{mat}{Either a matrix or, when \code{compare} is \code{TRUE}, a list of matrices.}
 
-\item{cols}{The colour palette to be used. The default palette uses \code{\link[viridis]{viridis}}. Will be checked for validity.}
+\item{cols}{The colour palette to be used. The default palette uses \code{\link[viridisLite]{viridis}}. Will be checked for validity.}
 
 \item{compare}{Logical switch used when desiring comparable colour representations (usually for comparable heat maps) across multiple matrices. Ensures plots will be calibrated to a common colour scale so that, for instance, the colour on the heat map of an entry valued at 0.7 in Matrix A corresponds exactly to the colour of a similar value in Matrix B. When \code{TRUE}, \code{mat} must be supplied as a list of matrices, which must have either the same number of rows, or the same number of columns.}
 
