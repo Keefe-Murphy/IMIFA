@@ -55,11 +55,11 @@ There exist several utility functions in the package to solicit good prior hyper
     2.  get_IMIFA_results()
     3.  and a dedicated S3 plot() method for objects of class "Results_IMIFA"
 
-While it is possible to simulate data from a factor analytic mixture using the `sim_IMIFA_data()` function, specifying, among other things, the sample size `N`, the number of groups `G`, and the number of variables `P`, e.g. 
+While it is possible to simulate data from a factor analytic mixture using the `sim_IMIFA_data()` function, specifying, among other things, the sample size `N`, the number of clusters `G`, and the number of variables `P`, e.g. 
 
 
 ```{r, eval=FALSE}
-# Simulate 100 observations from 3 balanced groups with group-specific numbers of latent factors
+# Simulate 100 observations from 3 balanced clusters with cluster-specific numbers of latent factors
 sim.data <- sim_IMIFA_data(N=100, G=3, P=20, Q=c(2, 2, 5))
 ```
 the well-known Italian olive oil data set will be used throughout this vignette instead. You can load this data set after loading the IMIFA package by typing
@@ -84,7 +84,7 @@ There are many, many options for specifying hyperparameters, specifying running 
 ?mcmc_IMIFA
 ```
 
-Be warned that the `mcmc_IMIFA` function calls in this section may take quite some time to run. Let's begin by fitting a Mixture of Factor Analysers model (MFA) to the unit-scaled `olive` data. For this, we must specify sequences of values for `range.G`, the number of clusters, and `range.Q`, the number of latent factors. Let's assume that uniquenesses are `isotropic` rather than `unconstrained`. This isotropic constraint provides the link between factor analysis and the probabilistic principal component analysis model: note that we could also constrain uniqueness across groups (but still be diagonal within each group) by specifiying `uni.type="constrained"` or constrain uniquenesses to a single value (i.e. equal across all groups and all variables) by specifying `uni.type="single"`. Let's also allow diagonal covariance as a special case where `range.Q` is `0`, and accept all other defaults (for instance, cluster labels will be initialised by `mclust`).
+Be warned that the `mcmc_IMIFA` function calls in this section may take quite some time to run. Let's begin by fitting a Mixture of Factor Analysers model (MFA) to the unit-scaled `olive` data. For this, we must specify sequences of values for `range.G`, the number of clusters, and `range.Q`, the number of latent factors. Let's assume that uniquenesses are `isotropic` rather than `unconstrained`. This isotropic constraint provides the link between factor analysis and the probabilistic principal component analysis model: note that we could also constrain uniqueness across clusters (but still be diagonal within each cluster) by specifiying `uni.type="constrained"` or constrain uniquenesses to a single value (i.e. equal across all clusters and all variables) by specifying `uni.type="single"`. Let's also allow diagonal covariance as a special case where `range.Q` is `0`, and accept all other defaults (for instance, cluster labels will be initialised by `mclust`).
 
 ```{r, eval=FALSE}
 simMFA   <- mcmc_IMIFA(olive, method="MFA", n.iters=10000, range.G=3:6, range.Q=0:3, 
@@ -147,7 +147,7 @@ summary(resIMIFA)
 ## Visualing IMIFA results
 The object `resIMIFA` above is of the class `Results_IMIFA`. We can call `plot` an objects of this class to access a dedicated function for visualising output and parameters of inferential interest for IMIFA and related models. The two most important arguments, beyond the `Results_IMIFA` object itself, are `plot.meth` and `param`, where the former dictates the type of plot to be produced (one of `c("all", "correlation", "density", "errors", "GQ", "means", "parallel.coords", "trace", "zlabels")`, depending on the `method` employed originally by `mcmc_IMIFA`) for the `param`eter of interest (one of `c("means", "scores", "loadings", "uniquenesses", "pis", "alpha")`, depending on the `method` employed originally by `mcmc_IMIFA`). Note that many of the function calls below will also print relevant output to the console window that is not always shown here. Please see the function's help manual by typing `plot.Results_IMIFA` for further assistance with the various function arguments.
 
-Let's examine the posterior distribution of $G$ and the posterior distribution of $Q_g$ for each of the `r resIMIFA$GQ.results$G` groups. The third plot below, depicting the trace of the numbers of active and non-empty groups, allows us to examine mixing of the chain with respect to $G$.
+Let's examine the posterior distribution of $G$ and the posterior distribution of $Q_g$ for each of the `r resIMIFA$GQ.results$G` clusters. The third plot below, depicting the trace of the numbers of active and non-empty clusters, allows us to examine mixing of the chain with respect to $G$.
 
 ```{r, results='hide', eval=FALSE}
 plot(resIMIFA, plot.meth="GQ")
@@ -165,7 +165,7 @@ plot(resIMIFA, plot.meth="GQ", g=2)
 plot(resIMIFA, plot.meth="GQ", g=3)
 ```
 
-Let's examine clustering performance against the known group labels. Note that the group labels could have been already supplied to `get_IMIFA_results` too, but plotting allows clustering performance to be evaluated against new labels without having to extract the full results object all over again. More specifically, the code below allows us to visualise the clustering uncertainty (with or without the labels being supplied, in fact). In this case, `g=2` would mean to instead visualise the uncertainties in the form of a histogram. We can visualise the N * N similarity matrix by supplying `g=3` when `plot.meth="zlabels"`. Had we not specified `g`, the function would cycle through the available plots.
+Let's examine clustering performance against the known cluster labels. Note that the cluster labels could have been already supplied to `get_IMIFA_results` too, but plotting allows clustering performance to be evaluated against new labels without having to extract the full results object all over again. More specifically, the code below allows us to visualise the clustering uncertainty (with or without the labels being supplied, in fact). In this case, `g=2` would mean to instead visualise the uncertainties in the form of a histogram. We can visualise the N * N similarity matrix by supplying `g=3` when `plot.meth="zlabels"`. Had we not specified `g`, the function would cycle through the available plots.
 
 ```{r}
 plot(resIMIFA, plot.meth="zlabels", zlabels=olive$area, g=1)
@@ -201,7 +201,7 @@ To examine uniquenesses from all clusters in the form of a parellel coordinates 
 plot(resIMIFA, plot.meth="parallel.coords", param="uniquenesses")
 ```
 
-The error between the empirical and estimated covariance matrices (by group and averaged across groups) can sometimes provide a useful indicator of the validity of a clustering solution, and can be visualised as follows:
+The error between the empirical and estimated covariance matrices (by cluster and averaged across clusters) can sometimes provide a useful indicator of the validity of a clustering solution, and can be visualised as follows:
 ```{r}
 plot(resIMIFA, plot.meth="errors")
 ```

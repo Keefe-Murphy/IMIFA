@@ -18,6 +18,7 @@
     varnames     <- colnames(data)
     Q0           <- Q  > 0
     Q1           <- Q == 1
+    uni          <- P == 1
     dimnames(data)         <- NULL
     if(sw["mu.sw"])  {
       mu.store   <- matrix(0L, nrow=P, ncol=n.store)
@@ -40,8 +41,8 @@
     mu.sigma     <- 1/sigma.mu
     uni.type     <- switch(uni.type,   unconstrained=,               constrained="constrained", "single")
     .sim_psi_inv <- switch(uni.type,   constrained=.sim_psi_u1,      single=.sim_psi_c1)
-    .sim_psi_ip  <- switch(uni.type,   constrained=.sim_psi_ipu,     single=.sim_psi_ipc)
-    psi.beta     <- switch(uni.prior,  single=unique(round(psi.beta, min(nchar(psi.beta)))),    psi.beta)
+    .sim_psi_ip  <- switch(uni.prior,  unconstrained=.sim_psi_ipu,   isotropic=.sim_psi_ipc)
+    psi.beta     <- switch(uni.prior,  isotropic=as.vector(unique(round(psi.beta, min(nchar(psi.beta))))), psi.beta)
     uni.shape    <- switch(uni.type,   constrained=N/2 + psi.alpha,  single=(N * P)/2 + psi.alpha)
     V            <- switch(uni.type,   constrained=P,                single=1)
     eta          <- .sim_eta_p(Q=Q, N=N)
@@ -97,7 +98,7 @@
         psi      <- 1/psi.inv
         post.mu  <- post.mu + mu/n.store
         post.psi <- post.psi + psi/n.store
-        sigma    <- tcrossprod(lmat) + diag(psi)
+        sigma    <- tcrossprod(lmat) + if(uni) psi else diag(psi)
         cov.est  <- cov.est + sigma/n.store
         if(sw["mu.sw"])          mu.store[,new.it]      <- mu
         if(all(sw["s.sw"], Q0))  eta.store[,,new.it]    <- eta

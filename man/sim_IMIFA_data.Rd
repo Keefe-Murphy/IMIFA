@@ -15,13 +15,13 @@ sim_IMIFA_data(N = 300L, G = 3L, P = 50L, Q = rep(floor(log(P)), G),
 
 \item{P}{Desired number of variables in the simulated dataset - a single integer.}
 
-\item{Q}{Desired number of cluster-specific latent factors in the simulated data set. Can be specified either as a single integer if all clusters are to have the same number of factors, or a vector of length \code{G}. Defaults to \code{floor(log(P))} in each group.}
+\item{Q}{Desired number of cluster-specific latent factors in the simulated data set. Can be specified either as a single integer if all clusters are to have the same number of factors, or a vector of length \code{G}. Defaults to \code{floor(log(P))} in each cluster.}
 
 \item{pis}{Mixing proportions of the clusters in the dataset if \code{G} > 1. Must sum to 1. Defaults to \code{rep(1/G, G)}.}
 
-\item{psi}{True values of uniqueness parameters, either as a single value, a vector of length \code{G}, a vector of length \code{P}, or a \code{G * P} matrix: as such the user can specify uniquenesses as a diagonal or isotropic matrix, and further constrain uniquenesses across groups if desired. If \code{psi} is missing, uniquenesses are simulated via \code{rgamma(P, 1, 1)} within each group.}
+\item{psi}{True values of uniqueness parameters, either as a single value, a vector of length \code{G}, a vector of length \code{P}, or a \code{G * P} matrix: as such the user can specify uniquenesses as a diagonal or isotropic matrix, and further constrain uniquenesses across clusters if desired. If \code{psi} is missing, uniquenesses are simulated via \code{rgamma(P, 1, 1)} within each cluster.}
 
-\item{nn}{An alternative way to specify the size of each cluster, by giving the exact number of observations in each group explicitly. Must sum to \code{N}.}
+\item{nn}{An alternative way to specify the size of each cluster, by giving the exact number of observations in each cluster explicitly. Must sum to \code{N}.}
 
 \item{loc.diff}{A parameter to control the closeness of the clusters in terms of the difference in their location vectors. Defaults to 1.}
 
@@ -34,7 +34,7 @@ Invisibly returns a data.frame with \code{N} observations (rows) of \code{P} var
 Function to simulate data of any size and dimension from a mixture of (infinite) factor analysers structure.
 }
 \examples{
-# Simulate 100 observations from 3 balanced groups with cluster-specific numbers of latent factors
+# Simulate 100 observations from 3 balanced clusters with cluster-specific numbers of latent factors
 # Specify isotropic uniquenesses within each cluster
 sim_data <- sim_IMIFA_data(N=100, G=3, P=20, Q=c(2, 2, 5), psi=1:3)
 names(attributes(sim_data))

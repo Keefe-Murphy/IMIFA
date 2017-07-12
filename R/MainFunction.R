@@ -6,6 +6,7 @@
 #' @param method An acronym for the type of model to fit where:
 #' \describe{
 #'  \item{"\code{FA}"}{Factor Analysis}
+#'  \item{"\code{IFA}"}{Infinite Factor Analysis}
 #'  \item{"\code{MFA}"}{Mixtures of Factor Analysers}
 #'  \item{"\code{MIFA}"}{Mixtures of Infinite Factor Analysers}
 #'  \item{"\code{OMFA}"}{Overfitted Mixtures of Factor Analysers}
@@ -13,15 +14,15 @@
 #'  \item{"\code{IMFA}"}{Infinite Mixtures of Factor Analysers}
 #'  \item{"\code{IMIFA}"}{Infinite Mixtures of Infinite Factor Analysers}
 #' }
-#'  The "\code{classify}" method is not yet implemented.
+#'  The "\code{classify}" method is not yet implemented. In principle, of course, one could overfit the "\code{MFA}" or "\code{MIFA}" models, but it is recommend to use the corresponding model options which begin with 'O' instead.
 #' @param n.iters The number of iterations to run the Gibbs sampler for.
-#' @param range.G Depending on the method employed, either the range of values for the number of clusters, or the conseratively high starting value for the number of clusters. Defaults to 1 for the "\code{FA}" and "\code{IFA}" methods. For the "\code{MFA}" and "\code{MIFA}" models this is to be given as a range of candidate models to explore. For the "\code{OMFA}", "\code{OMIFA}", "\code{IMFA}", and "\code{IMIFA}" models, this is the number of clusters with which the chain is to be initialised, in which case the default is \code{min(N - 1, max(25, ceiling(3 * log(N))))}. For the "\code{OMFA}", and "\code{OMIFA}" models this upper limit remains fixed for the entire length of the chain; \code{range.G} also doubles as the default \code{trunc.G} for the "\code{IMFA}" and "\code{IMIFA}" models. However, when \code{N < P}, or when this bound is close to or exceeds \code{N} for any of these overfitted/infinite mixture models, it is better to initialise at a value closer to the truth (i.e. \code{ceiling(log(N))} by default), though the upper bound remains the same - as a result the role of \code{range.G} when \code{N < P} is no longer to specify the upper bound (which can still be modified via \code{trunc.G}, at least for the "\code{IMFA}" and "\code{IMIFA}" methods) and the number of groups used for initialisation, but rather just the number of groups used for initialisation only. If \code{length(range.G) * length(range.Q)} is large, consider not storing unnecessary parameters, or breaking up the range of models to be explored into chunks, and sending each chunk to \code{\link{get_IMIFA_results}}.
+#' @param range.G Depending on the method employed, either the range of values for the number of clusters, or the conseratively high starting value for the number of clusters. Defaults to 1 for the "\code{FA}" and "\code{IFA}" methods. For the "\code{MFA}" and "\code{MIFA}" models this is to be given as a range of candidate models to explore. For the "\code{OMFA}", "\code{OMIFA}", "\code{IMFA}", and "\code{IMIFA}" models, this is the number of clusters with which the chain is to be initialised, in which case the default is \code{min(N - 1, max(25, ceiling(3 * log(N))))}. For the "\code{OMFA}", and "\code{OMIFA}" models this upper limit remains fixed for the entire length of the chain; \code{range.G} also doubles as the default \code{trunc.G} for the "\code{IMFA}" and "\code{IMIFA}" models. However, when \code{N < P}, or when this bound is close to or exceeds \code{N} for any of these overfitted/infinite mixture models, it is better to initialise at a value closer to the truth (i.e. \code{ceiling(log(N))} by default), though the upper bound remains the same - as a result the role of \code{range.G} when \code{N < P} is no longer to specify the upper bound (which can still be modified via \code{trunc.G}, at least for the "\code{IMFA}" and "\code{IMIFA}" methods) and the number of clusters used for initialisation, but rather just the number of clusters used for initialisation only. If \code{length(range.G) * length(range.Q)} is large, consider not storing unnecessary parameters, or breaking up the range of models to be explored into chunks, and sending each chunk to \code{\link{get_IMIFA_results}}.
 #' @param range.Q Depending on the method employed, either the range of values for the number of latent factors, or, for methods ending in IFA the conservatively high starting value for the number of cluster-specific factors, in which case the default starting value is \code{floor(3 * log(P))}. For methods ending in IFA, different clusters can be modelled using different numbers of latent factors (incl. zero); for methods not ending in IFA it is possible to fit zero-factor models, corresponding to simple diagonal covariance structures. For instance, fitting the "\code{IMFA}" model with \code{range.Q=0} corresponds to a vanilla Dirichlet Process Mixture Model. If \code{length(range.G) * length(range.Q)} is large, consider not storing unnecessary parameters or breaking up the range of models to be explored into chunks, and sending each chunk to \code{\link{get_IMIFA_results}}.
 #' @param burnin The number of burn-in iterations for the sampler. Defaults to \code{n.iters/5}. Note that chains can also be burned in later, using \code{\link{get_IMIFA_results}}.
 #' @param thinning The thinning interval used in the simulation. Defaults to 2. No thinning corresponds to 1. Note that chains can also be thinned later, using \code{\link{get_IMIFA_results}}.
 #' @param centering A logical value indicating whether mean centering should be applied to the data, defaulting to \code{TRUE}.
 #' @param scaling The scaling to be applied - one of "\code{unit}", "\code{none}" or "\code{pareto}".
-#' @param uni.type This argument specifies the type of constraint, if any, to be placed on the uniquenesses/idiosyncratic variances, i.e. whether a general diagonal matrix or isotropic diagonal matrix is to be assumed, and in turn whether these matrices are constrained to be equal across groups. The default "\code{unconstrained}" corresponds to factor analysis (and mixtures thereof), whereas "\code{isotropic}" corresponds to probabilistic principal components analysers (and mixtures thereof). Constraints \emph{may} be particularly useful when \code{N < P}, though caution is advised when employing constraints for any of the infinite factor models, especially "\code{isotropic}" and "\code{single}", which may lead to overestimation of the number of clusters &/or factors if this specification is inappropriate. The four options correspond to the following 4 parsimonious Gaussian mixture models:
+#' @param uni.type This argument specifies the type of constraint, if any, to be placed on the uniquenesses/idiosyncratic variances, i.e. whether a general diagonal matrix or isotropic diagonal matrix is to be assumed, and in turn whether these matrices are constrained to be equal across clusters. The default "\code{unconstrained}" corresponds to factor analysis (and mixtures thereof), whereas "\code{isotropic}" corresponds to probabilistic principal components analysers (and mixtures thereof). Constraints \emph{may} be particularly useful when \code{N < P}, though caution is advised when employing constraints for any of the infinite factor models, especially "\code{isotropic}" and "\code{single}", which may lead to overestimation of the number of clusters &/or factors if this specification is inappropriate. The four options correspond to the following 4 parsimonious Gaussian mixture models:
 #' \describe{
 #' \item{"\code{unconstrained}"}{\strong{UUU} - variable-specific and cluster-specific: \eqn{\Psi_g = \Psi_g}{Psi_g = Psi_g}.}
 #' \item{"\code{isotropic}"}{\strong{UUC} - cluster-specific, equal across variables: \eqn{\Psi_g = \sigma_g^2 \mathcal{I}_p}{Psi_g = (sigma^2)_g I_p}.}
@@ -30,12 +31,12 @@
 #' }
 #'  The first letter \strong{U} here corresponds to constraints on loadings (not yet implemented), the second letter corresponds to constrained/unconstrained across clusters, and the third letter corresponds to the isotropic constraint. Of course, only the third letter is of relevance for the single-cluster "\code{FA}" and "\code{IFA}" models, such that "\code{unconstrained}" and "\code{constrained}" are equivalent for these models, and so too are "\code{isotropic}" and "\code{single}".
 #' @param uni.prior A switch indicating whether uniquenesses rate hyperparameters are to be "\code{unconstrained}" or "\code{isotropic}", i.e. variable-specific or not. "\code{uni.prior}" must be "\code{isotropic}" if the last letter of "\code{uni.type}" is \strong{C}, but can take either value otherwise. Defaults to correspond to the last letter of \code{uni.type} if that is supplied and \code{uni.prior} is not, otherwise defaults to "\code{unconstrained}", but "\code{isotropic}" is recommended when \code{N < P}. Only relevant when "\code{psi.beta}" is not supplied and \code{\link{psi_hyper}} is therefore invoked.
-#' @param alpha Depending on the method employed, either the hyperparameter of the Dirichlet prior for the cluster mixing proportions, or the Dirichlet process concentration parameter. Defaults to 0.5/range.G for the Overfitted methods - if supplied for "\code{OMFA}" and "\code{OMIFA}" methods, you are supplying the numerator of \code{alpha/range.G}, which should be less than half the dimension (per group!) of the free parameters of the smallest model considered in order to ensure superfluous clusters are emptied (for "\code{OMFA}", this corresponds to the smallest \code{range.Q}; for "\code{OMIFA}", this corresponds to a zero-factor model) [see: \code{\link{PGMM_dfree}} and Rousseau and Mengersen (2011)]. Defaults to 1 for the finite mixture models "\code{MFA}" and "\code{MIFA}". Defaults to \code{1 - discount} for the "\code{IMFA}" and "\code{IMIFA}" models if \code{learn.alpha=FALSE} or a simulation from the prior if \code{learn.alpha=TRUE}. Must be positive, unless \code{discount} is supplied for the "\code{IMFA}" or "\code{IMIFA}" methods.
+#' @param alpha Depending on the method employed, either the hyperparameter of the Dirichlet prior for the cluster mixing proportions, or the Dirichlet process concentration parameter. Defaults to 0.5/range.G for the Overfitted methods - if supplied for "\code{OMFA}" and "\code{OMIFA}" methods, you are supplying the numerator of \code{alpha/range.G}, which should be less than half the dimension (per cluster!) of the free parameters of the smallest model considered in order to ensure superfluous clusters are emptied (for "\code{OMFA}", this corresponds to the smallest \code{range.Q}; for "\code{OMIFA}", this corresponds to a zero-factor model) [see: \code{\link{PGMM_dfree}} and Rousseau and Mengersen (2011)]. Defaults to 1 for the finite mixture models "\code{MFA}" and "\code{MIFA}". Defaults to \code{1 - discount} for the "\code{IMFA}" and "\code{IMIFA}" models if \code{learn.alpha=FALSE} or a simulation from the prior if \code{learn.alpha=TRUE}. Must be positive, unless \code{discount} is supplied for the "\code{IMFA}" or "\code{IMIFA}" methods.
 #' @param mu.zero The mean of the prior distribution for the mean parameter. Defaults to the sample mean of the data.
 #' @param sigma.mu The covariance of the prior distribution for the mean parameter. Can be a scalar times the identity or a matrix of appropriate dimension. Defaults to the sample covariance matrix.
 #' @param sigma.l The covariance of the prior distribution for the loadings. Defaults to 1. Only relevant for the finite factor methods.
 #' @param psi.alpha The shape of the inverse gamma prior on the uniquenesses. Defaults to 2.5 if \code{uni.type} is one of "\code{unconstrained}" or "\code{constrained}", otherwise defaults to 3.5.
-#' @param psi.beta The rate of the inverse gamma prior on the uniquenesses. Can be either a single parameter, a vector of variable specific rates, or a matrix of variable and group-specific rates. If this is not supplied, \code{\link{psi_hyper}} is invoked to choose sensible values, depending on the value of \code{uni.prior} and, for the "\code{MFA}" and "\code{MIFA}" models, the value of \code{psi0g}.
+#' @param psi.beta The rate of the inverse gamma prior on the uniquenesses. Can be either a single parameter, a vector of variable specific rates, or a matrix of variable and cluster-specific rates. If this is not supplied, \code{\link{psi_hyper}} is invoked to choose sensible values, depending on the value of \code{uni.prior} and, for the "\code{MFA}" and "\code{MIFA}" models, the value of \code{psi0g}.
 #' @param z.init The method used to initialise the cluster labels. Defaults to \code{\link[mclust]{Mclust}}. Not relevant for the "\code{FA}" and "\code{"IFA"} methods.
 #' @param z.list A user supplied list of cluster labels. Only relevant if \code{z.init == "z.list"}.
 #' @param adapt A logical value indicating whether adaptation of the number of cluster-specific factors is to take place. Only relevant for methods ending in IFA, in which case the default is \code{TRUE}. Specifying \code{FALSE} and supplying \code{range.Q} provides a means to use the MGP prior in a finite factor context.
@@ -50,7 +51,7 @@
 #' @param adapt.at The iteration at which adaptation is to begin. Defaults to \code{burnin} for the "\code{IFA}" and "\code{MIFA}" methods, defaults to 0 for the "\code{OMIFA}" and "\code{IMIFA}". Cannot exceed \code{burnin}. Only relevant for methods ending in IFA.
 #' @param b0 Intercept parameter for the exponentially decaying adaptation probability s.t. \code{p(iter) = 1/exp(b0 + b1 * (iter - adapt.at))}. Defaults to 0.1. Only relevant for methods ending in IFA.
 #' @param b1 Slope parameter for the exponentially decaying adaptation probability s.t. \code{p(iter) = 1/exp(b0 + b1 * (iter - adapt.at))}. Defaults to 0.00005. Only relevant for methods ending in IFA.
-#' @param trunc.G The maximum number of allowable and storable groups if the "\code{IMFA}" or "\code{IMIFA}" method is employed. Defaults to the same value as \code{range.G} (unless \code{N < P}, see \code{range.G} for details) and must be greater than or equal to this value. The number of active groups to be sampled at each iteration is adaptively truncated, with \code{trunc.G} as an upper limit for storage reasons. Note that large values of \code{trunc.G} may lead to memory capacity issues.
+#' @param trunc.G The maximum number of allowable and storable clusters if the "\code{IMFA}" or "\code{IMIFA}" method is employed. Defaults to the same value as \code{range.G} (unless \code{N < P}, see \code{range.G} for details) and must be greater than or equal to this value. The number of active clusters to be sampled at each iteration is adaptively truncated, with \code{trunc.G} as an upper limit for storage reasons. Note that large values of \code{trunc.G} may lead to memory capacity issues.
 #' @param learn.alpha Logical indicating whether the Dirichlet process / Pitman concentration parameter is to be learned, or remain fixed for the duration of the chain. If being learned, a Ga(a, b) prior is assumed for \code{alpha}; updates take place via Gibbs sampling when \code{discount} is zero and via Metropolis-Hastings otherwise. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods, in which case the default is \code{TRUE}.
 #' @param alpha.hyper A vector of length 2 giving hyperparameters for the Dirichlet process / Pitman-Yor concentration parameter \code{alpha}. If \code{isTRUE(learn.alpha)}, these are shape and rate parameter of a Gamma distribution. Defaults to Ga(2, 1). Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods, in which case the default is \code{TRUE}. The prior is shifted to have support on (-\code{discount}, \code{Inf}) when non-zero \code{discount} is supplied or \code{learn.d=TRUE}.
 #' @param ind.slice Logical indicitating whether the independent slice-efficient sampler is to be employed. If \code{FALSE} the dependent slice-efficient sampler is employed, whereby the slice sequence xi_1,...,xi_g is equal to the decreasingly ordered mixing proportions. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods. Defaults to \code{TRUE}.
@@ -207,7 +208,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   iters     <- iters[iters > 0]
   raw.dat   <- as.data.frame(dat)
   num.check <- vapply(raw.dat, is.numeric, logical(1L))
-  if(sum(num.check) != ncol(dat)) {
+  if(sum(num.check) != ncol(raw.dat)) {
     if(verbose)                     message("Non-numeric columns removed")
     raw.dat <- raw.dat[num.check]
   }
@@ -226,11 +227,22 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   centered  <- switch(method, classify=all(round(colSums(dat)) == 0), any(centering, all(round(colSums(dat)) == 0)))
   N         <- as.integer(nrow(dat))
   P         <- as.integer(ncol(dat))
+  uni       <- P == 1
   lnN       <- log(N)
-  NlP       <- N < P
-  miss.uni  <- missing("uni.type")
-  uni.type  <- ifelse(miss.uni, "unconstrained", match.arg(uni.type))
+  NlP       <- N  < P
+  miss.uni  <- missing(uni.type)
+  uni.type  <- ifelse(miss.uni, ifelse(uni, "isotropic", "unconstrained"), match.arg(uni.type))
+  if(uni) {
+    if(is.element(uni.type, c("unconstrained", "constrained"))) {
+      uni.new     <- switch(uni.type, unconstrained=, isotropic="isotropic", constrained=, single="single")
+                                    message(paste0("'uni.type' coerced to ", uni.new, " as the dataset is univariate"))
+      uni.type    <- uni.new
+    }
+  }
   uni.prior <- ifelse(missing(uni.prior), switch(uni.type, constrained=, unconstrained="unconstrained", "isotropic"), match.arg(uni.prior))
+  if(uni    && uni.prior  == "unconstrained") {
+    uni.prior     <- "isotropic";   message("'uni.prior' coerced to isotropic as the dataset is univariate")
+  }
   if(all(is.element(uni.type, c("isotropic", "single")),
      uni.prior == "unconstrained")) stop("'uni.prior' can only be 'unconstrained' when 'uni.type' is 'unconstrained' or 'constrained'")
   if(all(uni.prior == "unconstrained",
@@ -282,13 +294,13 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   if(!is.element(method, c("MFA", "MIFA")))      {
     if(length(range.G) > 1)         stop(paste0("Only one 'range.G' value can be specified for the ", method, " method"))
     if(all(!G.x, is.element(method, c("FA", "IFA"))) &&
-       range.G  > 1)                warning(paste0("'range.G' must be 1 for the ", method, " method"), call.=FALSE)
+       range.G  > 1)                message(paste0("'range.G' forced to 1 for the ", method, " method"))
     if(is.element(method, c("OMIFA", "OMFA", "IMFA", "IMIFA"))) {
       lnN2         <- ceiling(lnN)
       tmp.G        <- as.integer(min(N - 1, max(25, ceiling(3 * lnN))))
       if(G.x)   {
         range.G    <- G.init <- tmp.G
-        if(NlP) {     if(verbose)   message(paste0("Since N < P, the sampler will be initialised with a different default of ceiling(log(N)) = ", lnN2, " groups (unless 'range.G' is supplied)"))
+        if(NlP) {     if(verbose)   message(paste0("Since N < P, the sampler will be initialised with a different default of ceiling(log(N)) = ", lnN2, " clusters (unless 'range.G' is supplied)"))
           G.init   <- max(2, lnN2)
         }
       }
@@ -302,8 +314,11 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
       if(is.element(method, c("IMFA", "IMIFA"))) {
         if(any(!is.logical(ind.slice),
            length(ind.slice) != 1)) stop("'ind.slice' must be TRUE or FALSE")
+        x.IM.sw    <- missing(IM.lab.sw)
         if(any(!is.logical(IM.lab.sw),
            length(IM.lab.sw) != 1)) stop("'IM.lab.sw' must be TRUE or FALSE")
+        if(all(!x.IM.sw, isTRUE(IM.lab.sw), !isTRUE(learn.alpha),
+               !isTRUE(learn.d)))   message("May not be necessary to set 'IM.lab.sw' to TRUE when neither 'alpha' nor 'discount' are being learned")
         if(missing(rho)) {
           rho      <- 0.75
         }
@@ -381,13 +396,13 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   datname          <- rownames(dat)
   if(any(length(unique(datname)) != N,
      is.null(datname)))      rownames(dat) <- seq_len(N)
-  sigmu.miss       <- missing("sigma.mu")
+  sigmu.miss       <- missing(sigma.mu)
   if(sigmu.miss)             sigma.mu      <- diag(cov.mat)
   if(scaling == "unit")      sigma.mu      <- sigma.mu[1]
   if(any(sigma.mu  <= 0, !is.numeric(sigma.mu),
      !is.element(length(sigma.mu),
      c(1, P))))                     stop(paste0("'sigma.mu' must be strictly positive, and of length 1 or P=", P))
-  if(missing("psi.alpha"))   psi.alpha     <- 2.5 + is.element(uni.type, c("isotropic", "single"))
+  if(missing(psi.alpha))     psi.alpha     <- 2.5 + is.element(uni.type, c("isotropic", "single"))
   if(any(psi.alpha <= 1, !is.numeric(psi.alpha),
      length(psi.alpha)   != 1))     stop("'psi.alpha' must be a single number strictly greater than 1 in order to bound uniquenesses away from zero")
   Q.miss    <- missing(range.Q)
@@ -397,7 +412,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(any(range.Q < 0))            stop(paste0("'range.Q' must be non-negative for the ", method, " method"))
     range.Q <- sort_unique(range.Q)
   } else {
-    if(Q.miss)        range.Q    <- as.integer(min(ifelse(P > 500, 12 + floor(log(P)), floor(3 * log(P))), N - 1))
+    if(Q.miss)        range.Q    <- as.integer(ifelse(uni, 1, min(ifelse(P > 500, 12 + floor(log(P)), floor(3 * log(P))), N - 1)))
     if(any(!is.logical(adapt),
            length(adapt) != 1))     stop("'adapt' must be TRUE or FALSE")
     if(length(range.Q)    > 1)      stop(paste0("Only one starting value for 'range.Q' can be supplied for the ", method, " method"))
@@ -416,28 +431,28 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     }
   }
   if(is.element(method, c("FA", "MFA", "OMFA", "IMFA"))) {
-    if(missing("sigma.l"))   sigma.l       <- 1L
+    if(missing(sigma.l))     sigma.l       <- 1L
     if(any(sigma.l <= 0, !is.numeric(sigma.l),
            length(sigma.l) != 1))   stop("'sigma.l' must be a single strictly positive number")
   } else {
-    if(missing("nu"))        nu            <- 2L
+    if(missing(nu))          nu            <- 2L
     if(any(nu <= !nuplus1, !is.numeric(nu),
            length(nu) != 1))        stop(paste0("'nu' must be a single ", ifelse(nuplus1, "strictly positive number for the Ga(nu + 1, nu) parameterisation", "number strictly greater than 1 for the Ga(nu, nu) parameterisation")))
-    if(missing("beta.d1"))   beta.d1       <- 1L
-    if(missing("beta.d2"))   beta.d2       <- 1L
+    if(missing(beta.d1))     beta.d1       <- 1L
+    if(missing(beta.d2))     beta.d2       <- 1L
     if(any(!is.numeric(beta.d1),
            !is.numeric(beta.d1),
            length(beta.d1) != 1,
            length(beta.d2) != 1))   stop("'beta.d1' and 'beta.d2' must both be numberic and of length 1")
-    if(missing("b0"))        b0            <- 0.1
+    if(missing(b0))          b0            <- 0.1
     if(any(length(b0) != 1, !is.numeric(b0),
            b0  < 0))                stop("'b0' must be a non-negative scalar to ensure valid adaptation probability")
-    if(missing("b1"))        b1            <- 0.00005
+    if(missing(b1))          b1            <- 0.00005
     if(any(length(b1) != 1, !is.numeric(b1),
            b1 <= 0))                stop("'b1' must be a single strictly positive scalar to ensure adaptation probability decreases")
-    if(missing("prop"))      prop          <- floor(0.7 * P)/P
-    if(missing("adapt.at"))  adapt.at      <- switch(method, IFA=, MIFA=burnin, 0L)
-    if(missing("epsilon"))   epsilon       <- ifelse(any(centered, centering), 0.1, 0.05)
+    if(missing(prop))        prop          <- ifelse(uni, 0.5, floor(0.7 * P)/P)
+    if(missing(adapt.at))    adapt.at      <- switch(method, IFA=, MIFA=burnin, 0L)
+    if(missing(epsilon))     epsilon       <- ifelse(any(centered, centering), 0.1, 0.05)
     if(any(length(prop)    != 1, length(adapt.at) != 1,
            length(epsilon) != 1))   stop("'prop', 'adapt.at', and 'epsilon' must all be of length 1")
     if(any(!is.numeric(prop), !is.numeric(adapt.at),
@@ -499,7 +514,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(any(!is.logical(psi0g),
            length(psi0g)   != 1))   stop("'psi0g' must be TRUE or FALSE")
     if(all(is.element(uni.type, c("constrained", "single")),
-           isTRUE(psi0g)))  {       warning(paste0("'psi0g' forced to FALSE as uniquenesses are constrained across groups (i.e. 'uni.type' = ", uni.type, ")"), call.=FALSE)
+           isTRUE(psi0g)))  {       warning(paste0("'psi0g' forced to FALSE as uniquenesses are constrained across clusters (i.e. 'uni.type' = ", uni.type, ")"), call.=FALSE)
       psi0G <- FALSE
     }
     if(all(method == "MFA",
@@ -514,7 +529,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   if(all(!is.element(method, c("MFA", "MIFA", "classify")),
          any(sw0gs)))               stop(paste0("'", names(which(sw0gs)), "' should be FALSE for the ", method, " method\n"))
   if(!is.element(method, c("FA", "IFA", "classify"))) {
-    if(missing("alpha"))   { alpha         <- switch(method, MFA=, MIFA=1, OMFA=, OMIFA=0.5/G.init, ifelse(learn.alpha, max(1, rgamma(1, a.hyp1, a.hyp2)) - discount, 1))
+    if(missing(alpha))     { alpha         <- switch(method, MFA=, MIFA=1, OMFA=, OMIFA=0.5/G.init, ifelse(learn.alpha, max(1, rgamma(1, a.hyp1, a.hyp2)), 1))
     } else if(is.element(method,
       c("OMFA", "OMIFA")))   alpha         <- alpha/G.init
     if(length(alpha) != 1)          stop("'alpha' must be specified as a scalar to ensure an exchangeable prior")
@@ -522,7 +537,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(all(is.element(method,  c("IMIFA",   "IMFA")),
        !learn.alpha))               warning(paste0("'alpha' fixed at ", round(alpha, options()$digits), " as it's not being learned via Gibbs/Metropolis-Hastings updates"), call.=FALSE)
     if(all(is.element(method,  c("OMIFA",   "OMFA")),
-       alpha >= min.d2))            warning(paste0("'alpha' over 'range.G' for the OMFA & OMIFA methods must be less than half the dimension (per group!)\nof the free parameters of the smallest model considered (= ", min.d2, "): consider suppling 'alpha' < ", min.d2G), call.=FALSE)
+       alpha >= min.d2))            warning(paste0("'alpha' over 'range.G' for the OMFA & OMIFA methods must be less than half the dimension (per cluster!)\nof the free parameters of the smallest model considered (= ", min.d2, "): consider suppling 'alpha' < ", min.d2G), call.=FALSE)
     if(any(all(is.element(method, c("MFA",  "MIFA")), alpha > 1),
            all(is.element(method, c("OMFA", "OMIFA")),
            alpha > 1/G.init)))      warning("Are you sure alpha should be greater than 1?", call.=FALSE)
@@ -531,7 +546,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
            is.element(method,  c("MFA",     "MIFA",
             "OMFA", "OMIFA"))))     stop("'alpha' is too small for simulated mixing proportions to be valid")
     if(all(is.element(method,  c("OMIFA",   "OMFA")), is.element(z.init,
-       "priors")))                  stop(paste0("'z.init' cannot be set to 'priors' for the ", method, " method to ensure all groups are populated at the initialisation stage"))
+       "priors")))                  stop(paste0("'z.init' cannot be set to 'priors' for the ", method, " method to ensure all clusters are populated at the initialisation stage"))
     if(!zli.miss) {
       if(length(z.list)   != len.G)  {
                                     stop(paste0("'z.list' must be a list of length ", len.G))  }
@@ -540,7 +555,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
         if(!is.element(method, c("IMIFA",
                        "IMFA", "OMIFA", "OMFA"))) {
                                     stop(paste0("Each element of 'z.list' must have the same number of levels as 'range.G'"))
-        } else                      stop(paste0("Only ", list.levels, " groups are populated according to z.list, but 'range.G' has been set to ", G.init, ":\nReset 'range.G' to this value to avoid redunandtly carrying around empty groups or supply a list with ", G.init, " levels"))
+        } else                      stop(paste0("Only ", list.levels, " clusters are populated according to z.list, but 'range.G' has been set to ", G.init, ":\nReset 'range.G' to this value to avoid redunandtly carrying around empty clusters or supply a list with ", G.init, " levels"))
       }
       if(!all(lengths(z.list) == N)) {
                                     stop(paste0("Each element of 'z.list' must be a vector of length N=", N)) }
@@ -597,20 +612,20 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   }
 
   init.start       <- proc.time()
-  mu               <- list(colMeans(dat))
-  beta.x           <- missing("psi.beta")
-  mu0.x            <- missing("mu.zero")
-  ad1.x            <- all(missing("alpha.d1"), is.element(method, c("IFA", "MIFA", "OMIFA", "IMIFA", "classify")))
-  ad2.x            <- all(missing("alpha.d2"), is.element(method, c("IFA", "MIFA", "OMIFA", "IMIFA", "classify")))
+  mu               <- list(as.matrix(colMeans(dat)))
+  beta.x           <- missing(psi.beta)
+  mu0.x            <- missing(mu.zero)
+  ad1.x            <- all(missing(alpha.d1), is.element(method, c("IFA", "MIFA", "OMIFA", "IMIFA", "classify")))
+  ad2.x            <- all(missing(alpha.d2), is.element(method, c("IFA", "MIFA", "OMIFA", "IMIFA", "classify")))
   if(all(z.init != "list", any(sw0gs))) {
     if(delta0g)                     stop("'delta0g' can only be TRUE if z.init=list\n")
-    if(all(!mu0.x, mu0g))           stop("'mu.zero' can only be supplied for each group if z.init=list")
-    if(all(!beta.x, psi0g))         stop("'psi.beta' can only be supplied for each group if z.init=list")
+    if(all(!mu0.x, mu0g))           stop("'mu.zero' can only be supplied for each cluster if z.init=list")
+    if(all(!beta.x, psi0g))         stop("'psi.beta' can only be supplied for each cluster if z.init=list")
   }
   if(beta.x) {
     psi.beta       <- temp.psi <- list(psi_hyper(shape=psi.alpha, covar=cov.mat, type=uni.prior))
   } else {
-    psi.beta       <- .len_check(psi.beta, psi0g, method, P, G.init)
+    psi.beta       <- lapply(.len_check(psi.beta, psi0g, method, P, G.init), as.matrix)
   }
   mu.zero          <- if(mu0.x) mu else .len_check(mu.zero, mu0g, method, P, G.init)
   if(!is.element(method, c("FA", "MFA", "OMFA", "IMFA"))) {
@@ -658,8 +673,10 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
       nngs         <- tabulate(zi[[g]], nbins=switch(method, IMFA=, IMIFA=trunc.G, G))
       pi.prop[[g]] <- prop.table(nngs)
       mu[[g]]      <- vapply(seq_len(G), function(gg) if(nngs[gg] > 0) colMeans(dat[zi[[g]] == gg,, drop=FALSE]) else rep(0, P), numeric(P))
+      mu[[g]]      <- if(uni) t(mu[[g]]) else mu[[g]]
       if(mu0.x)   {
         mu.zero[[g]]    <- if(mu0g) mu[[g]] else vapply(seq_len(G), function(gg) colMeans(dat), numeric(P))
+        mu.zero[[g]]    <- if(uni) t(mu.zero[[g]])   else mu.zero[[g]]
       }
       if(beta.x)  {
         if(psi0g) {
@@ -668,6 +685,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
         } else {
           psi.beta[[g]] <- replicate(G, temp.psi[[1]])
         }
+        psi.beta[[g]] <- if(uni) t(psi.beta[[g]])    else psi.beta[[g]]
       }
       if(ad1.x)   {
         alpha.d1[[g]]   <- rep(unlist(alpha.d1), G)
@@ -690,8 +708,8 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     }
   }
   if(is.element(method, c("IMIFA", "IMFA", "OMIFA", "OMFA"))) {
-    mu.zero        <- if(all(lengths(mu.zero)  == 1)) list(mu.zero[[1]])  else list(mu.zero[[1]][,1])
-    psi.beta       <- if(all(lengths(psi.beta) == 1)) list(psi.beta[[1]]) else list(psi.beta[[1]][,1])
+    mu.zero        <- if(all(lengths(mu.zero)  == 1)) list(mu.zero[[1]])  else list(mu.zero[[1]][,1,  drop=FALSE])
+    psi.beta       <- if(all(lengths(psi.beta) == 1)) list(psi.beta[[1]]) else list(psi.beta[[1]][,1, drop=FALSE])
     if(!is.element(method, c("OMFA", "IMFA")))   {
       alpha.d1     <- list(alpha.d1[[1]][1])
       alpha.d2     <- list(alpha.d2[[1]][1])
@@ -820,7 +838,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   imifa     <- switch(method, FA=, MFA=, OMFA=, IMFA={
      lapply(seq_along(imifa), function(x) setNames(imifa[[x]], paste0(range.Q, ifelse(range.Q == 1, "Factor", "Factors"))))
   }, lapply(seq_along(imifa), function(x) setNames(imifa[[x]], "IFA")))
-  gnames    <- switch(method, classify=paste0("Group ", seq_len(range.G)), paste0(G.init, ifelse(G.init == 1, "Group", "Groups")))
+  gnames    <- switch(method, classify=paste0("Cluster ", seq_len(range.G)), paste0(G.init, ifelse(G.init == 1, "Cluster", "Clusters")))
   names(imifa)            <- gnames
   attr(imifa,
        "Alph.step")       <- learn.alpha
@@ -835,7 +853,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   attr(imifa, "Discount") <- if(!learn.d) discount
   attr(imifa, "Factors")  <- range.Q
   attr(imifa, "G.init")   <- G.init
-  attr(imifa, "Groups")   <- range.G
+  attr(imifa, "Clusters") <- range.G
   attr(imifa, "IM.labsw") <- all(is.element(method, c("IMFA", "IMIFA")), IM.lab.sw)
   attr(imifa,
        "Ind.Slice")       <- all(is.element(method, c("IMFA", "IMIFA")), ind.slice)

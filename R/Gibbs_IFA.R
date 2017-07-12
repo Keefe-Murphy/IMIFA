@@ -17,6 +17,7 @@
     Pseq         <- seq_len(P)
     obsnames     <- rownames(data)
     varnames     <- colnames(data)
+    uni          <- P == 1
     dimnames(data)         <- NULL
     if(sw["mu.sw"])  {
       mu.store   <- matrix(0L, nrow=P, ncol=n.store)
@@ -42,8 +43,8 @@
     mu.sigma     <- 1/sigma.mu
     uni.type     <- switch(uni.type,   unconstrained=,               constrained="constrained", "single")
     .sim_psi_inv <- switch(uni.type,   constrained=.sim_psi_u1,      single=.sim_psi_c1)
-    .sim_psi_ip  <- switch(uni.type,   constrained=.sim_psi_ipu,     single=.sim_psi_ipc)
-    psi.beta     <- switch(uni.prior,  single=unique(round(psi.beta, min(nchar(psi.beta)))),    psi.beta)
+    .sim_psi_ip  <- switch(uni.prior,  unconstrained=.sim_psi_ipu,   isotropic=.sim_psi_ipc)
+    psi.beta     <- switch(uni.prior,  isotropic=as.vector(unique(round(psi.beta, min(nchar(psi.beta))))), psi.beta)
     uni.shape    <- switch(uni.type,   constrained=N/2 + psi.alpha,  single=(N * P)/2 + psi.alpha)
     V            <- switch(uni.type,   constrained=P,                single=1)
     eta          <- .sim_eta_p(Q=Q, N=N)
@@ -133,7 +134,7 @@
             }
           } else          { # remove redundant columns
             nonred  <- which(colvec == 0)
-            Q       <- Q - numred
+            Q       <- max(0, Q - numred)
             eta     <- if(storage) eta[,nonred, drop=FALSE] else eta
             phi     <- phi[,nonred, drop=FALSE]
             delta   <- delta[nonred]
@@ -152,7 +153,7 @@
         psi      <- 1/psi.inv
         post.mu  <- post.mu + mu/n.store
         post.psi <- post.psi + psi/n.store
-        sigma    <- tcrossprod(lmat) + diag(psi)
+        sigma    <- tcrossprod(lmat) + if(uni) psi else diag(psi)
         cov.est  <- cov.est + sigma/n.store
         if(sw["mu.sw"])             mu.store[,new.it]              <- mu
         if(all(sw["s.sw"], Q0))     eta.store[,seq_len(Q),new.it]  <- eta

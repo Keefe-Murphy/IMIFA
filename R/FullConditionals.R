@@ -33,21 +33,21 @@
     }
 
   # Uniquenesses
-    .sim_psi_uuu <- function(N, P, psi.alpha, psi.beta, c.data, eta, lmat) {
-      S.mat      <- c.data  - tcrossprod(eta, lmat)
+    .sim_psi_uu  <- function(N, P, psi.alpha, psi.beta, c.data, eta, lmat, Q0) {
+      S.mat      <- c.data  - if(Q0) tcrossprod(eta, lmat) else 0
         rgamma(P, shape=N/2 + psi.alpha, rate=colSums(S.mat * S.mat)/2 + psi.beta)
     }
 
-    .sim_psi_uuc <- function(N, P, psi.alpha, psi.beta, c.data, eta, lmat) {
-      S.mat      <- c.data - tcrossprod(eta, lmat)
+    .sim_psi_uc  <- function(N, P, psi.alpha, psi.beta, c.data, eta, lmat, Q0) {
+      S.mat      <- c.data  - if(Q0) tcrossprod(eta, lmat) else 0
         rep(rgamma(1, shape=(N * P)/2 + psi.alpha, rate=sum(S.mat * S.mat)/2 + psi.beta), P)
     }
 
-    .sim_psi_ucu <- function(u.shape, psi.beta, S.mat, V) {
+    .sim_psi_cu  <- function(u.shape, psi.beta, S.mat, V) {
       rgamma(V, shape=u.shape, rate=colSums(do.call(rbind, S.mat))/2 + psi.beta)
     }
 
-    .sim_psi_ucc <- function(u.shape, psi.beta, S.mat, V = 1) {
+    .sim_psi_cc  <- function(u.shape, psi.beta, S.mat, V = 1) {
       rgamma(V, shape=u.shape, rate=sum(unlist(S.mat))/2 + psi.beta)
     }
 
@@ -77,9 +77,9 @@
 #' Simulate Mixing Proportions from a Dirichlet Distribution
 #'
 #' Generates samples from the Dirichlet distrubution with parameter \code{alpha} efficiently by simulating Gamma(\code{alpha}, 1) random variables and normalising them.
-#' @param G The number of groups for which weights need to be sampled.
+#' @param G The number of clusters for which weights need to be sampled.
 #' @param alpha The Dirichlet hyperparameter, either of length 1 or \code{G}. When the length of \code{alpha} is 1, this amounts to assuming an exchangeable prior. Be warned that this will be recycled if necessary.
-#' @param nn A vector giving the number of observations in each of G groups so that Dirichlet posteriors rather than priors can be sampled from. This defaults to 0, i.e. simulation from the prior. Be warned that this will be recycled if necessary.
+#' @param nn A vector giving the number of observations in each of G clusters so that Dirichlet posteriors rather than priors can be sampled from. This defaults to 0, i.e. simulation from the prior. Be warned that this will be recycled if necessary.
 #'
 #' @return A Dirichlet vector of \code{G} weights which sum to 1.
 #'
@@ -107,7 +107,7 @@
   # Cluster Labels
 #' Simulate Cluster Labels from Unnormalised Log-Probabilities using the Gumbel-Max Trick
 #'
-#' Samples cluster labels for N observations from G groups efficiently using log-probabilities and the so-called Gumbel-Max trick, without requiring that the log-probabilities be normalised; thus redunant computation can be avoided. Computation takes place on the log scale for stability/underflow reasons (to ensure negligible probabilities won't cause computational difficulties); in any case, many functions for calculating multivariate normal densities already output on the log scale.
+#' Samples cluster labels for N observations from G clusters efficiently using log-probabilities and the so-called Gumbel-Max trick, without requiring that the log-probabilities be normalised; thus redunant computation can be avoided. Computation takes place on the log scale for stability/underflow reasons (to ensure negligible probabilities won't cause computational difficulties); in any case, many functions for calculating multivariate normal densities already output on the log scale.
 #' @param probs An N x G matrix of unnormalised probabilities on the log scale, where N is he number of observations that require labels to be sampled and G is the number of active clusters s.t. sampled labels can take values in \code{1:G}.
 #' @param slice A logical indicating whether or not the indicator correction for slice sampling has been applied to \code{probs}. Defaults to \code{FALSE} but is \code{TRUE} for the "\code{IMIFA}" and "\code{IMFA}" methods under \code{\link{mcmc_IMIFA}}. Details of this correction are given in Murphy et. al. (2017). When set to \code{TRUE}, this results in a speed-improvement when \code{probs} contains non-finite values (e.g. \code{-Inf}, corresponding to zero on the probability scale).
 #' @return A vector of N sampled cluster labels, with the largest label no greater than G.
@@ -371,14 +371,13 @@
              length(plus1)    != 1))       stop("'plus1' must be TRUE or FALSE")
       if(any(!is.logical(inverse),
              length(inverse)  != 1))       stop("'inverse' must be TRUE or FALSE")
-      if(any(length(Q) > 1, Q  < 2))       stop("Q must be single value, greater than or equal to 2")
+      if(missing(ad1) || missing(ad2))     stop("Shrinkage shape hyperparameters 'ad1' and 'ad2' must be supplied")
+      if(missing(nu))                      stop("Local shrinkage parameter 'nu' must be supplied")
+      if(missing(Q))                       stop("Number of latent factors 'Q' must be supplied")
       if(any(nu <= !plus1,
              !is.numeric(nu)))             stop(paste0("'nu' must be a single ", ifelse(plus1,
                                                 "strictly positive number for the Ga(nu + 1, nu) parameterisation",
                                                 "number strictly greater than 1 for the Ga(nu, nu) parameterisation")))
-      if(missing(ad1) || missing(ad2))     stop("Shrinkage shape hyperparameters 'ad1' and 'ad2' must be supplied")
-      if(missing(nu))                      stop("Local shrinkage parameter 'nu' must be supplied")
-      if(missing(Q))                       stop("Number of latent factors 'Q' must be supplied")
       if(any(c(ad1, ad2)  < 1))            stop("All shrinkage shape hyperparameter values must be at least 1")
       if(any(c(bd1, bd2) <= 0))            stop("All shrinkage rate hyperparameter values must be strictly positive")
       rate      <- nu
@@ -392,7 +391,7 @@
         exp.seq <- shape/rate * ad1/bd1 * (ad2/bd2)^(seq_len(Q) - 1)
         check   <- !is.unsorted(exp.seq)
       }
-        return(list(expectation = exp.seq, valid = check))
+        return(list(expectation = exp.seq, valid = ifelse(Q < 2, TRUE, check)))
     }, vectorize.args = c("ad1", "ad2", "nu", "bd1", "bd2"), SIMPLIFY = FALSE)
 
   # Number of 'free' parameters
@@ -401,8 +400,8 @@
 #' Estimates the dimension of the 'free' parameters in fully finite factor analytic mixture models, otherwise known as Parsimonious Gaussian Mixture Models (PGMM). This is used to calculate the penalty terms for the \code{aic.mcmc} and \code{bic.mcmc} model selection criteria implemented in \code{\link{get_IMIFA_results}} for \emph{finite} factor models (though \code{\link{mcmc_IMIFA}} currently only implements \code{UUU} and \code{UUC} covariance structures).
 #' @param Q The number of latent factors (which can be 0, corresponding to a model with diagonal covariance). This argument is vectorised.
 #' @param P The number of variables.
-#' @param G The number of groups. This defaults to 1.
-#' @param method By default, calculation assumes the \code{UUU} model with unconstrained loadings and unconstrained isotropic uniquesses. The other seven models detailed in McNicholas and Murphy (2008) are also given. The first letter denotes whether loadings are constrained/unconstrained across groups; the second letter denotes the same for the uniquenesses; the final letter denotes whether uniquenesses are in turn constrained to be isotropic.
+#' @param G The number of clusters. This defaults to 1.
+#' @param method By default, calculation assumes the \code{UUU} model with unconstrained loadings and unconstrained isotropic uniquesses. The other seven models detailed in McNicholas and Murphy (2008) are also given. The first letter denotes whether loadings are constrained/unconstrained across clusters; the second letter denotes the same for the uniquenesses; the final letter denotes whether uniquenesses are in turn constrained to be isotropic.
 #'
 #' @return A vector of length \code{length(Q)}.
 #'
@@ -792,7 +791,7 @@
       meth      <- attr(x, "Method")
       name      <- attr(x, "Name")
       fac       <- attr(x, "Factors")
-      grp       <- attr(x, "Groups")
+      grp       <- attr(x, "Clusters")
       Qmsg      <- Gmsg <- msg   <- NULL
       for(i in seq_along(fac[-length(fac)])) {
         Qmsg    <- c(Qmsg, (paste0(fac[i], ifelse(i + 1 < length(fac), ", ", " "))))
@@ -818,7 +817,7 @@
       name      <- attr(object, "Name")
       call      <- attr(object, "Call")
       fac       <- attr(object, "Factors")
-      grp       <- attr(object, "Groups")
+      grp       <- attr(object, "Clusters")
       Qmsg      <- Gmsg <- msg   <- NULL
       for(i in seq_along(fac[-length(fac)])) {
         Qmsg    <- c(Qmsg, (paste0(fac[i], ifelse(i + 1 < length(fac), ", ", " "))))
@@ -846,18 +845,18 @@
       G         <- x$GQ.results$G
       Q         <- x$GQ.results$Q
       if(is.element(method, c("FA", "IFA")))  {
-        msg     <- paste0("The chosen ", method, " model has ", Q, " factor", ifelse(Q == 1, "\n", "s\n"))
+        msg     <- paste0("The chosen ", method, " model has ", Q, " factor", ifelse(Q == 1, "", "s"))
       } else if(is.element(method, c("MFA", "OMFA", "IMFA"))) {
-        msg     <- paste0("The chosen ", method, " model has ", G, " group",  ifelse(G == 1, " with ", "s, each with "), unique(Q), " factor", ifelse(unique(Q) == 1, "\n", "s\n"))
+        msg     <- paste0("The chosen ", method, " model has ", G, " group",  ifelse(G == 1, " with ", "s, each with "), unique(Q), " factor", ifelse(unique(Q) == 1, "", "s"))
       } else {
         Q.msg   <- NULL
         for(i in seq_along(Q[-length(Q)])) {
           Q.msg <- c(Q.msg, (paste0(Q[i], ifelse(i + 1 < length(Q), ", ", " "))))
         }
         Q.msg   <- if(length(Q) > 1) paste(c(Q.msg, paste0("and ", Q[length(Q)])), sep="", collapse="") else Q
-        msg     <- paste0("The chosen ", method, " model has ", G, " group",  ifelse(G == 1, " with ", "s, with "), Q.msg, " factor", ifelse(G == 1 && Q == 1, "\n", paste0("s", ifelse(G == 1, "\n", " respectively\n"))), sep="")
+        msg     <- paste0("The chosen ", method, " model has ", G, " group",  ifelse(G == 1, " with ", "s, with "), Q.msg, " factor", ifelse(G == 1 && Q == 1, "", paste0("s", ifelse(G == 1, "", " respectively"))), sep="")
       }
-        cat(msg)
+        cat(paste0(msg, ": this Results_IMIFA object can be passed to plot(...)\n"))
     }
 
 #' @method summary Results_IMIFA

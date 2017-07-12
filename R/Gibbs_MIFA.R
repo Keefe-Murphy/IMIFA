@@ -20,6 +20,7 @@
     obsnames       <- rownames(data)
     varnames       <- colnames(data)
     colnames(data) <- NULL
+    uni            <- P == 1
     if(sw["mu.sw"])  {
       mu.store     <- array(0L,  dim=c(P, G, n.store))
     }
@@ -58,10 +59,9 @@
     pi.prop        <- cluster$pi.prop
     pi.alpha       <- cluster$pi.alpha
     one.uni        <- is.element(uni.type, c("constrained", "single"))
-    .sim_psi_inv   <- switch(uni.type,   unconstrained=.sim_psi_uuu,  isotropic=.sim_psi_uuc,
-                                         constrained=.sim_psi_ucu,    single=.sim_psi_ucc)
-    .sim_psi_ip    <- switch(uni.type,   unconstrained=,              constrained=.sim_psi_ipu,
-                                         isotropic=,                  single=.sim_psi_ipc)
+    .sim_psi_inv   <- switch(uni.type,   unconstrained=.sim_psi_uu,   isotropic=.sim_psi_uc,
+                                         constrained=.sim_psi_cu,     single=.sim_psi_cc)
+    .sim_psi_ip    <- switch(uni.prior,  unconstrained=.sim_psi_ipu,  isotropic=.sim_psi_ipc)
     if(isTRUE(one.uni))       {
       uni.shape    <- switch(uni.type,   constrained=N/2 + psi.alpha, single=(N * P)/2 + psi.alpha)
       V            <- switch(uni.type,   constrained=P, single=1)
@@ -85,6 +85,8 @@
     tau            <- lapply(delta, cumprod)
     lmat           <- lapply(Gseq, function(g) matrix(vapply(Pseq, function(j) .sim_load_ps(Q=Q, phi=phi[[g]][j,], tau=tau[[g]]), numeric(Q)), nrow=P, byrow=TRUE))
     psi.inv        <- vapply(Gseq, function(g) .sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta[,g]), numeric(P))
+    psi.inv        <- if(uni)     t(psi.inv)   else psi.inv
+    psi.beta       <- if(one.uni) psi.beta[,1] else psi.beta
     if(Q < min(N - 1, Ledermann(P)))     {
       fact.ind     <- nn    <= P
       for(g in which(!fact.ind)) {
@@ -106,15 +108,15 @@
       psi.inv[inf.ind]      <- psi.tmp[inf.ind]
     }
     if(burnin       < 1)  {
-      mu.store[,,1]         <- mu
-      eta.store[,,1]        <- eta
-      load.store[,,,1]      <- array(unlist(lmat, use.names=FALSE), dim=c(P, Q, G))
-      psi.store[,,1]        <- 1/psi.inv
-      pi.store[,1]          <- pi.prop
+      if(sw["mu.sw"])  mu.store[,,1]    <- mu
+      if(sw["s.sw"])   eta.store[,,1]   <- eta
+      if(sw["l.sw"])   load.store[,,,1] <- array(unlist(lmat, use.names=FALSE), dim=c(P, Q, G))
+      if(sw["psi.sw"]) psi.store[,,1]   <- 1/psi.inv
+      if(sw["pi.sw"])  pi.store[,1]     <- pi.prop
       z.store[,1]           <- z
-      sigma                 <- lapply(Gseq, function(g) tcrossprod(lmat[[g]]) + diag(1/psi.inv[,g]))
       Q0                    <- Qs > 0
-      log.probs             <- vapply(Gseq, function(g, Q=Q0[g]) { sigma <- if(Q) sigma[[g]] else sqrt(sigma[[g]]); dmvn(data, mu[,g], is.posi_def(sigma, make=TRUE)$X.new, log=TRUE, isChol=!Q) + log(pi.prop[g]) }, numeric(N))
+      sigma                 <- if(uni) lapply(Gseq, function(g) as.matrix(1/psi.inv[,g] + if(Q0[g]) tcrossprod(lmat[[g]]) else 0)) else lapply(Gseq, function(g) tcrossprod(lmat[[g]]) + diag(1/psi.inv[,g]))
+      log.probs             <- if(uni) vapply(Gseq, function(g) dnorm(data, mu[,g], sqrt(sigma[[g]]), log=TRUE) + log(pi.prop[g]), numeric(N)) else vapply(Gseq, function(g, Q=Q0[g]) { sigma <- if(Q) sigma[[g]] else sqrt(sigma[[g]]); dmvn(data, mu[,g], is.posi_def(sigma, make=TRUE)$X.new, log=TRUE, isChol=!Q) + log(pi.prop[g]) }, numeric(N))
       ll.store[1]           <- sum(rowLogSumExps(log.probs))
       Q.store[,1]           <- Qs
     }
@@ -132,9 +134,13 @@
       psi          <- 1/psi.inv
       Q0           <- Qs  > 0
       Q1           <- Qs == 1
-      sigma        <- lapply(Gseq, function(g) tcrossprod(lmat[[g]]) + diag(psi[,g]))
+      sigma        <- if(uni) lapply(Gseq, function(g) as.matrix(psi[,g] + if(Q0[g]) tcrossprod(lmat[[g]]) else 0)) else lapply(Gseq, function(g) tcrossprod(lmat[[g]]) + diag(psi[,g]))
       log.pis      <- log(pi.prop)
-      log.check    <- capture.output(log.probs <- try(vapply(Gseq, function(g, Q=Q0[g]) dmvn(data, mu[,g], if(Q) sigma[[g]] else sqrt(sigma[[g]]), log=TRUE, isChol=!Q) + log.pis[g], numeric(N)), silent=TRUE))
+      if(uni) {
+        log.probs  <- vapply(Gseq, function(g) dnorm(data, mu[,g], sqrt(sigma[[g]]), log=TRUE) + log.pis[g], numeric(N))
+      } else  {
+        log.check  <- capture.output(log.probs <- try(vapply(Gseq, function(g, Q=Q0[g]) dmvn(data, mu[,g], if(Q) sigma[[g]] else sqrt(sigma[[g]]), log=TRUE, isChol=!Q) + log.pis[g], numeric(N)), silent=TRUE))
+      }
       if(inherits(log.probs, "try-error")) {
         log.probs  <- vapply(Gseq, function(g, Q=Q0[g]) { sigma <- if(Q) sigma[[g]] else sqrt(sigma[[g]]); dmvn(data, mu[,g], is.posi_def(sigma, make=TRUE)$X.new, log=TRUE, isChol=!Q) + log.pis[g] }, numeric(N))
       }
@@ -160,17 +166,18 @@
 
       # Uniquenesses
       if(isTRUE(one.uni)) {
-        S.mat      <- lapply(Gseq, function(g) { S <- c.data[[g]] - tcrossprod(eta.tmp[[g]], lmat[[g]]); S * S } )
+        S.mat      <- lapply(Gseq, function(g) { S <- c.data[[g]] - if(Q0[g]) tcrossprod(eta.tmp[[g]], lmat[[g]]) else 0; S * S } )
         psi.inv[,] <- .sim_psi_inv(uni.shape, psi.beta, S.mat, V)
       } else {
-        psi.inv    <- vapply(Gseq, function(g) if(nn0[g]) .sim_psi_inv(N=nn[g], psi.alpha=psi.alpha, c.data=c.data[[g]], psi.beta=psi.beta[,g], lmat=lmat[[g]],
-                             P=P, eta=eta.tmp[[g]][,seq_len(Qs[g]), drop=FALSE]) else .sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta[,g]), numeric(P))
+        psi.inv[,] <- vapply(Gseq, function(g) if(nn0[g]) .sim_psi_inv(N=nn[g], psi.alpha=psi.alpha, c.data=c.data[[g]], psi.beta=psi.beta[,g], lmat=lmat[[g]],
+                      P=P, Q0=Q0[g], eta=eta.tmp[[g]][,seq_len(Qs[g]), drop=FALSE]) else .sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta[,g]), numeric(P))
       }
 
     # Means
       sum.data     <- vapply(dat.g, colSums, numeric(P))
+      sum.data     <- if(uni) t(sum.data) else sum.data
       sum.eta      <- lapply(eta.tmp, colSums)
-      mu           <- vapply(Gseq, function(g) if(nn0[g]) .sim_mu(mu.sigma=mu.sigma, psi.inv=psi.inv[,g], mu.zero=mu.zero[,g], sum.eta=sum.eta[[g]][seq_len(Qs[g])],
+      mu[,]        <- vapply(Gseq, function(g) if(nn0[g]) .sim_mu(mu.sigma=mu.sigma, psi.inv=psi.inv[,g], mu.zero=mu.zero[,g], sum.eta=sum.eta[[g]][seq_len(Qs[g])],
                              sum.data=sum.data[,g], lmat=lmat[[g]], N=nn[g], P=P) else .sim_mu_p(P=P, sig.mu.sqrt=sig.mu.sqrt, mu.zero=mu.zero[,g]), numeric(P))
 
     # Shrinkage
@@ -208,7 +215,7 @@
           notred   <- numred == 0
           ng.ind   <- seq_along(nn.ind)
           Qs.old   <- Qs[nn0]
-          Qs[nn0]  <- vapply(ng.ind, function(h) if(notred[h]) Qs.old[h] + 1 else Qs.old[h] - numred[h], numeric(1L))
+          Qs[nn0]  <- pmax(0, vapply(ng.ind, function(h) if(notred[h]) Qs.old[h] + 1 else Qs.old[h] - numred[h], numeric(1L)))
           Q.big    <- Qs[nn0] > Q.star
           if((Q.bigs        <-  any(Q.big))) {
             notred <- notred & !Q.big

@@ -93,9 +93,10 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   inf.G          <- is.element(method, c("IMIFA", "OMIFA", "IMFA", "OMFA"))
   inf.Q          <- is.element(method, c("IMIFA", "OMIFA", "MIFA",  "IFA"))
   n.fac          <- attr(sims, "Factors")
-  n.grp          <- attr(sims, "Groups")
+  n.grp          <- attr(sims, "Clusters")
   n.obs          <- attr(sims, "Obs")
   n.var          <- attr(sims, "Vars")
+  uni            <- n.var == 1
   sw             <- attr(sims, "Switch")
   cent           <- attr(sims, "Center")
   scaling        <- attr(sims, "Scaling")
@@ -159,17 +160,17 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
          unique(G.store[tmpQ,]))) stop("This 'G' value was not visited during simulation")
     }
   }
-  G              <- ifelse(any(inf.G, all(G.T, !is.element(method, c("FA", "IFA")))), G, 1L)
+  G              <- if(any(inf.G, all(G.T, !is.element(method, c("FA", "IFA"))))) G else 1L
   if(Q.T)    {
     Q            <- as.integer(Q)
     if(!is.integer(Q))            stop("'Q' must of integer type")
     if(G.T)  {
       if(length(Q) == 1)     Q <- rep(Q, G)
-      if(length(Q) != G)          stop(paste0("'Q' must be supplied for each group, as a scalar or vector of length G=", G))
+      if(length(Q) != G)          stop(paste0("'Q' must be supplied for each cluster, as a scalar or vector of length G=", G))
     } else if(length(n.grp)    != 1 && all(!is.element(length(Q),
               c(1,  n.grp))))     stop("'Q' must be a scalar if G=1, 'G' is not suppplied, or a range of G values were explored")
     if(all(is.element(method, c("FA", "MFA", "OMFA", "IMFA")))) {
-      if(length(unique(Q)) != 1)  stop(paste0("'Q' cannot vary across groups for the ", method, " method"))
+      if(length(unique(Q)) != 1)  stop(paste0("'Q' cannot vary across clusters for the ", method, " method"))
       Q          <- unique(Q)
       if(!is.element(Q,   n.fac)) stop("This 'Q' value was not used during simulation")
       Q.ind      <- which(n.fac == Q)
@@ -178,7 +179,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       if(any((Q  != 0) + (Q *
         (n.var - Q)   <= 0) > 1)) stop(paste0("'Q' must be less than the number of variables ", n.var))
       Qtmp       <- if(inf.G) Rfast::rowMaxs(sims[[1]][[1]]$Q.store[seq_len(G),, drop=FALSE], value=TRUE) else switch(method, MIFA=Rfast::rowMaxs(sims[[ifelse(G.T, which(G == n.grp), G.ind)]][[1]]$Q.store, value=TRUE), max(sims[[1]][[1]]$Q.store))
-      if(any(Q * (Qtmp - Q) < 0)) stop(paste0("'Q' can't be greater than the maximum number of factors stored in ", ifelse(method == "IFA", "", "any group of "), match.call()$sims))
+      if(any(Q * (Qtmp - Q) < 0)) stop(paste0("'Q' can't be greater than the maximum number of factors stored in ", ifelse(method == "IFA", "", "any cluster of "), match.call()$sims))
     }
   }
   if(inf.G)    {
@@ -204,8 +205,8 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       dimnames(crit.mat) <- list(paste0("G", n.grp), if(inf.Q) "IFA" else paste0("Q", n.fac))
     }
     rownames(crit.mat)   <- switch(method, IMFA=, IMIFA="IM", OMFA=, OMIFA="OM", rownames(crit.mat))
-    aicm         <- bicm       <- log.iLLH <- aicm.var <-
-    dic          <- aic.mcmc   <- bic.mcmc <- bicm.var <- crit.mat
+    aicm         <- bicm       <- log.iLLH <- aicm.sd <-
+    dic          <- aic.mcmc   <- bic.mcmc <- bicm.sd <- crit.mat
     log.N        <- log(n.obs)
     for(g in seq_len(G.range))   {
       gi                 <- ifelse(G.T, G.ind, g)
@@ -222,8 +223,8 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
         log.iLLH[g,q]    <- ll.mean  - S2       * (log.N - 1)
         dic[g,q]         <- (ll.max2 - ll.mean) * 3 - ll.mean
         ci.tmp           <- S2 * (11 * S2 + 24)
-        aicm.var[g,q]    <- sqrt((2 * ll.var + 4 * ci.tmp)/length(log.likes))
-        bicm.var[g,q]    <- sqrt((2 * ll.var + (log.N - 1)^2 * ci.tmp)/length(log.likes))
+        aicm.sd[g,q]     <- sqrt((2 * ll.var + 4 * ci.tmp)/length(log.likes))
+        bicm.sd[g,q]     <- sqrt((2 * ll.var + (log.N - 1)^2 * ci.tmp)/length(log.likes))
         if(!inf.Q) {
           K              <- switch(method, OMFA=, IMFA=PGMM_dfree(Q=n.fac[qi], P=n.var, G=G[ifelse(G.T, 1, qi)],
                             method=switch(uni.type, unconstrained="UUU", isotropic="UUC", constrained="UCU", single="UCC")), attr(sims[[gi]][[qi]], "K"))
@@ -258,7 +259,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     }
     G            <- ifelse(inf.G, ifelse(G.T, G, G[Q.ind]), ifelse(length(n.grp) == 1, n.grp, G))
     Gseq         <- seq_len(G)
-    gnames       <- paste0("Group", Gseq)
+    gnames       <- paste0("Cluster", Gseq)
     G.ind        <- ifelse(all(length(n.grp) == 1, !inf.G), which(n.grp == G), G.ind)
     GQ.temp2     <- list(AICMs = aicm, BICMs = bicm, LogIntegratedLikelihoods = log.iLLH, DICs = dic)
     if(is.element(method, c("OMFA", "IMFA")) &&
@@ -314,7 +315,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
         rowseq[rowx]     <- !rowseq[rowx]
         dat              <- subset(dat, select=if(any(spl.ind <= 0, sum(colseq) %in% 0)) seq_len(ncol(dat)) else colseq, subset=rowseq, drop=!grepl("drop=F", dat.nam))
       }
-      dat        <- dat[complete.cases(dat),]
+      dat        <- if(uni) as.matrix(dat)[complete.cases(dat),, drop=FALSE] else dat[complete.cases(dat),]
       dat        <- dat[vapply(dat, is.numeric, logical(1L))]
       dat        <- if(is.logical(scaling)) standardise(as.matrix(dat), center=cent, scale=scaling) else scale(dat, center=cent, scale=scaling)
       obsnames   <- rownames(dat)
@@ -494,7 +495,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     }
     uncert.obs   <- which(uncertain >= 1/G)
     sizes        <- setNames(tabulate(map, nbins=G), gnames)
-    if(any(sizes == 0))           warning("Empty group exists in modal clustering:\nexamine trace plots and try supplying a lower G value to tune.imifa() or re-running the model", call.=FALSE)
+    if(any(sizes == 0))           warning("Empty cluster exists in modal clustering:\nexamine trace plots and try supplying a lower G value to tune.imifa() or re-running the model", call.=FALSE)
     if(learn.alpha) {
       alpha      <- sims[[G.ind]][[Q.ind]]$alpha[store]
       post.alpha <- mean(alpha)
@@ -547,7 +548,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       Q          <- if(G.T) Q else setNames(rep(Q, G), gnames)
     }
     leder.b      <- min(n.obs - 1, Ledermann(n.var))
-    if(any(unlist(Q) > leder.b))  warning(paste0("Estimate of Q", ifelse(G > 1, " in one or more of the groups ", " "), "is greater than ", ifelse(any(unlist(Q) > n.var), paste0("the number of variables (", n.var, ")"), paste0("the suggested Ledermann upper bound (", leder.b, ")")), ":\nsolution may be invalid"), call.=FALSE)
+    if(any(unlist(Q) > leder.b))  warning(paste0("Estimate of Q", ifelse(G > 1, " in one or more of the clusters ", " "), "is greater than ", ifelse(any(unlist(Q) > n.var), paste0("the number of variables (", n.var, ")"), paste0("the suggested Ledermann upper bound (", leder.b, ")")), ":\nsolution may be invalid"), call.=FALSE)
     Q.CI         <- if(G1) round(rowQuantiles(Q.store, probs=conf.levels)) else round(quantile(Q.store, conf.levels))
     GQ.temp4     <- list(Q = Q, Q.Mode = Q.mode, Q.Median = Q.med,
                          Q.CI = Q.CI, Q.Probs = Q.prob, Q.Counts = Q.tab,
@@ -561,7 +562,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     if(all(!G.T, !is.element(method,
        c("FA", "IFA")), G == 1))  warning(paste0("Chosen model has only one group:\nNote that the ", criterion, " criterion may exhibit bias toward one-group models"),   call.=FALSE)
     if(all(!Q.T, method   == "MIFA")) {
-      if(any(Q0))                 warning(paste0("Chosen model has ", ifelse(sum(Q0) == G, "zero factors", "a group with zero factors"), ":\nNote that the ", criterion, " criterion may exhibit bias toward models ", ifelse(sum(Q0) == G, "with zero factors", "where some groups have zero factors")), call.=FALSE)
+      if(any(Q0))                 warning(paste0("Chosen model has ", ifelse(sum(Q0) == G, "zero factors", "a cluster with zero factors"), ":\nNote that the ", criterion, " criterion may exhibit bias toward models ", ifelse(sum(Q0) == G, "with zero factors", "where some clusters have zero factors")), call.=FALSE)
     } else if(all(Q0))            warning(paste0("Chosen model has zero factors:\nNote that the ",   criterion, " criterion may exhibit bias toward zero-factor models"), call.=FALSE)
   }
 
@@ -597,7 +598,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     sw["l.sw"]   <- attr(sims, "Switch")["l.sw"]
     if(Q0g)      {
       if(all(sw["l.sw"],
-             !no.score))          message(paste0("Loadings ", ifelse(G > 1, paste0("for group ", g, " not stored as it"), " not stored as model"), " has zero factors"))
+             !no.score))          message(paste0("Loadings ", ifelse(G > 1, paste0("for cluster ", g, " not stored as it"), " not stored as model"), " has zero factors"))
       sw["l.sw"] <- FALSE
     }
     store        <- seq_along(tmp.store)
@@ -678,14 +679,18 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
 
   # Compute posterior means and % variation explained
     if(sw["mu.sw"])  {
+      mu         <- if(uni)       t(mu)         else mu
       post.mu    <- if(clust.ind) rowmeans(mu)  else post.mu
-      var.mu     <- Rfast::rowVars(mu)
-      ci.mu      <- rowQuantiles(mu,  probs=conf.levels)
+      var.mu     <- if(uni)       Var(mu)       else Rfast::rowVars(mu)
+      ci.tmp     <- rowQuantiles(mu,  probs=conf.levels)
+      ci.mu      <- if(uni)       t(ci.tmp)     else ci.tmp
     }
     if(sw["psi.sw"]) {
+      psi        <- if(uni)       t(psi)        else psi
       post.psi   <- if(clust.ind) rowmeans(psi) else post.psi
-      var.psi    <- Rfast::rowVars(psi)
-      ci.psi     <- rowQuantiles(psi, probs=conf.levels)
+      var.psi    <- if(uni)       Var(psi)      else Rfast::rowVars(psi)
+      ci.tmp     <- rowQuantiles(psi, probs=conf.levels)
+      ci.psi     <- if(uni)       t(ci.tmp)     else ci.tmp
     }
     if(sw["l.sw"])   {
       lmat       <- provideDimnames(lmat[,Qgs,if(inf.Q) l.store[[g]] else store, drop=FALSE], base=list("", paste0("Factor", Qgs), ""), unique=FALSE)
@@ -703,7 +708,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   # Calculate estimated covariance matrices & compute error metrics
     if(clust.ind) {
       if(all(sw["psi.sw"], any(sw["l.sw"], Q0g)))  {
-        cov.est  <- if(!Q0g)      tcrossprod(post.load) + diag(post.psi) else diag(post.psi)
+        cov.est  <- if(!Q0g)    { tcrossprod(post.load) + if(uni) post.psi else diag(post.psi) } else { if(uni) as.matrix(post.psi) else diag(post.psi) }
         if(data.x)      {
           dimnames(cov.est)    <- list(varnames, varnames)
         }
@@ -744,12 +749,12 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       medse[g]   <- med(sq.error)
       medae[g]   <- med(abs.error)
       rmse[g]    <- sqrt(mse[g])
-      nrmse[g]   <- rmse[g]/(max(cov.emp) - min(cov.emp))
+      nrmse[g]   <- rmse[g]/(ifelse(uni, 1, max(cov.emp) - min(cov.emp)))
       if(any(all(scal.meth != "none", cent) &&
                  sum(round(diag(cov.est))   !=
                  round(diag(cov.emp)))      != 0,
          sum(abs(post.psi  - (1 - post.psi)) < 0) != 0,
-         var.exp  > 1))           warning(paste0(ifelse(G == 1, "C", paste0("Group ", g, "'s c")), "hain may not have fully converged"), call.=FALSE)
+         var.exp  > 1))           warning(paste0(ifelse(G == 1, "C", paste0("Cluster ", g, "'s c")), "hain may not have fully converged"), call.=FALSE)
     }
 
     results      <- list(if(sw["mu.sw"])  list(means     = mu,
@@ -779,13 +784,13 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     attr(scores, "Eta.store")  <- length(eta.store)
   }
   names(result)  <- gnames
-  GQ.res$Criteria              <- c(GQ.res$Criteria, list(var.AICMs = aicm.var, var.BICMs = bicm.var,
+  GQ.res$Criteria              <- c(GQ.res$Criteria, list(sd.AICMs = aicm.sd, sd.BICMs = bicm.sd,
                                                           best.models = t(vapply(GQ.res$Criteria, function(x) { inds <- arrayInd(which.max(x), dim(x));
                                                           c(clusters = rownames(x)[inds[1]], factors = colnames(x)[inds[2]]) }, character(2L)))))
   class(GQ.res)                <- "listof"
   attr(GQ.res, "Criterion")    <- criterion
   attr(GQ.res, "Factors")      <- n.fac
-  attr(GQ.res, "Groups")       <- n.grp
+  attr(GQ.res, "Clusters")     <- n.grp
   attr(GQ.res, "Supplied")     <- c(Q=Q.T, G=G.T)
   err.T                        <- vapply(Gseq, function(g) all(emp.T[g], est.T[g]), logical(1L))
   var.exps       <- vapply(lapply(result, "[[", "var.exp"), function(x) ifelse(is.null(x), NA, x), numeric(1L))
@@ -805,8 +810,8 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   if(!is.null(Err)) class(Err) <- "listof"
   if(sw["mu.sw"])  {
     mus          <- Filter(Negate(is.null), lapply(result, "[[", "means"))
-    post.mu      <- provideDimnames(do.call(cbind, lapply(result, "[[", "post.mu")),  base=list(rownames(mus[[1]]),  gnames))
-    var.mu       <- provideDimnames(do.call(cbind, lapply(result, "[[", "var.mu")),   base=list(rownames(mus[[1]]),  gnames))
+    post.mu      <- provideDimnames(do.call(cbind, lapply(result, "[[", "post.mu")),  base=list(if(uni) "" else rownames(mus[[1]]),  gnames))
+    var.mu       <- provideDimnames(do.call(cbind, lapply(result, "[[", "var.mu")),   base=list(if(uni) "" else rownames(mus[[1]]),  gnames))
     ci.mu        <- Filter(Negate(is.null), lapply(result, "[[", "ci.mu"))
     means        <- list(mus = mus, post.mu = post.mu, var.mu = var.mu, ci.mu = ci.mu)
   }
@@ -820,8 +825,8 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   }
   if(sw["psi.sw"]) {
     psis         <- Filter(Negate(is.null), lapply(result, "[[", "psis"))
-    post.psi     <- provideDimnames(do.call(cbind, lapply(result, "[[", "post.psi")), base=list(rownames(psis[[1]]), gnames))
-    var.psi      <- provideDimnames(do.call(cbind, lapply(result, "[[", "var.psi")),  base=list(rownames(psis[[1]]), gnames))
+    post.psi     <- provideDimnames(do.call(cbind, lapply(result, "[[", "post.psi")), base=list(if(uni) "" else rownames(psis[[1]]), gnames))
+    var.psi      <- provideDimnames(do.call(cbind, lapply(result, "[[", "var.psi")),  base=list(if(uni) "" else rownames(psis[[1]]), gnames))
     ci.psi       <- Filter(Negate(is.null), lapply(result, "[[", "ci.psi"))
     uniquenesses <- list(psis = psis, post.psi = post.psi, var.psi = var.psi, ci.psi = ci.psi)
   }
@@ -847,7 +852,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   attr(result, "Obs")          <- n.obs
   attr(result, "Obsnames")     <- if(all(!sw["s.sw"], exists("obsnames", envir=.GlobalEnv))) obsnames
   attr(result, "Pitman")       <- attr(sims, "Pitman")
-  attr(result, "range.G")      <- attr(sims, "Groups")
+  attr(result, "range.G")      <- attr(sims, "Clusters")
   attr(result, "range.Q")      <- attr(sims, "Factors")
   attr(result, "Store")        <- tmp.store
   attr(result, "Switch")       <- sw

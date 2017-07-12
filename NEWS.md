@@ -1,8 +1,16 @@
 __Infinite Mixtures of Infinite Factor Analysers__
 ==================================================  
 
+# IMIFA v1.3.2 - (_6<sup>th</sup> release [patch update]: 2017-07-10_)
 ## Improvements
-* Variance of AICM/BICM model selection criteria now computed and returned.
+* Standard deviation of AICM/BICM model selection criteria now computed and returned.
+* `heat_legend` gains `cex.lab` argument to control magnification of legend text.
+* All methods now work for univariate data also (with apt. edits to plots & uniqueness defaults etc.).
+
+## Bug Fixes
+* Fixed bug preventing `uni.prior="isotropic"` when `uni.type` is `(un)constrained`.
+* Fixed odel selection in `get_IMIFA_results` for IMFA/OMFA models when `range.Q` is a range.
+* Fixed storage switches to account for `burnin=0`.
 
 # IMIFA v1.3.1 - (_5<sup>th</sup> release [patch update]: 2017-07-07_)
 ## Bug Fixes

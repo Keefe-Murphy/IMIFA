@@ -4,10 +4,10 @@
 #' @param N Desired overall number of observations in the simulated data set - a single integer.
 #' @param G Desired number of clusters in the simulated data set - a single integer.
 #' @param P Desired number of variables in the simulated dataset - a single integer.
-#' @param Q Desired number of cluster-specific latent factors in the simulated data set. Can be specified either as a single integer if all clusters are to have the same number of factors, or a vector of length \code{G}. Defaults to \code{floor(log(P))} in each group.
+#' @param Q Desired number of cluster-specific latent factors in the simulated data set. Can be specified either as a single integer if all clusters are to have the same number of factors, or a vector of length \code{G}. Defaults to \code{floor(log(P))} in each cluster.
 #' @param pis Mixing proportions of the clusters in the dataset if \code{G} > 1. Must sum to 1. Defaults to \code{rep(1/G, G)}.
-#' @param psi True values of uniqueness parameters, either as a single value, a vector of length \code{G}, a vector of length \code{P}, or a \code{G * P} matrix: as such the user can specify uniquenesses as a diagonal or isotropic matrix, and further constrain uniquenesses across groups if desired. If \code{psi} is missing, uniquenesses are simulated via \code{rgamma(P, 1, 1)} within each group.
-#' @param nn An alternative way to specify the size of each cluster, by giving the exact number of observations in each group explicitly. Must sum to \code{N}.
+#' @param psi True values of uniqueness parameters, either as a single value, a vector of length \code{G}, a vector of length \code{P}, or a \code{G * P} matrix: as such the user can specify uniquenesses as a diagonal or isotropic matrix, and further constrain uniquenesses across clusters if desired. If \code{psi} is missing, uniquenesses are simulated via \code{rgamma(P, 1, 1)} within each cluster.
+#' @param nn An alternative way to specify the size of each cluster, by giving the exact number of observations in each cluster explicitly. Must sum to \code{N}.
 #' @param loc.diff A parameter to control the closeness of the clusters in terms of the difference in their location vectors. Defaults to 1.
 #' @param method A switch indicating whether the mixture to be simulated from is the conditional distribution of the data given the latent variables (default), or simply the marginal distribution of the data.
 #'
@@ -18,7 +18,7 @@
 #' @author Keefe Murphy
 #'
 #' @examples
-#' # Simulate 100 observations from 3 balanced groups with cluster-specific numbers of latent factors
+#' # Simulate 100 observations from 3 balanced clusters with cluster-specific numbers of latent factors
 #' # Specify isotropic uniquenesses within each cluster
 #' sim_data <- sim_IMIFA_data(N=100, G=3, P=20, Q=c(2, 2, 5), psi=1:3)
 #' names(attributes(sim_data))
@@ -41,13 +41,13 @@ sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(floor(log(P)), G),
   if(any(length(N) != 1, length(loc.diff) != 1,
          length(G) != 1, length(P) != 1)) stop("'N', 'P', 'G', and 'loc.diff' must be of length 1")
   if(!is.numeric(loc.diff))               stop("'loc.diff' must be numeric")
-  if(any(N  < 2, N <= G))                 stop("Must simulate more than one data-point and the number of groups cannot exceed N")
+  if(any(N  < 2, N <= G))                 stop("Must simulate more than one data-point and the number of clusters cannot exceed N")
   if(any(Q  > min(N - 1, Ledermann(P))))  warning(paste0("Are you sure you want to generate this many factors relative to N=", N, " and P=", P, "?"), call.=FALSE)
   if(length(Q) != G) {
     if(!missing(Q))  {
       if(length(Q) == 1) {
         Q      <- rep(Q, G)
-      } else if(length(Q != G))           stop(paste0("'Q' must supplied for each of the G=", G, " groups"))
+      } else if(length(Q != G))           stop(paste0("'Q' must supplied for each of the G=", G, " clusters"))
     }
   }
   method       <- match.arg(method)
@@ -58,7 +58,7 @@ sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(floor(log(P)), G),
   vnames       <- paste0("Var ", Pseq)
   if(!missing(nn) && missing(pis))     {
     nn         <- as.integer(nn)
-    if(any(nn  == 0))                     stop("All 'nn' values must be strictly positive; simulating empty groups not allowed")
+    if(any(nn  == 0))                     stop("All 'nn' values must be strictly positive; simulating empty clusters not allowed")
     if(any(length(nn)  != G,
            sum(nn)     != N,
            !is.integer(nn)))              stop(paste0("'nn' must be an integer vector of length G=", G, " which sums to N=", N))
@@ -80,7 +80,7 @@ sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(floor(log(P)), G),
 
   simdata      <- base::matrix(0, nrow=0, ncol=P)
   prior.mu     <- as.integer(scale(Gseq, center=TRUE, scale=FALSE))
-  true.mu      <- setNames(vector("list", G), paste0("Group", Gseq))
+  true.mu      <- setNames(vector("list", G), paste0("Cluster", Gseq))
   true.l       <- true.mu
   true.psi     <- true.mu
   true.cov     <- true.mu
@@ -122,7 +122,7 @@ sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(floor(log(P)), G),
   attr(simdata,
        "Factors")      <- Q
   attr(simdata,
-       "Groups")       <- G
+       "Clusters")     <- G
   attr(simdata,
        "Means")        <- do.call(cbind, true.mu)
   if(method == "conditional") {

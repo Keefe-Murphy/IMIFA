@@ -12,9 +12,9 @@ PGMM_dfree(Q, P, G = 1, method = c("UUU", "UUC", "UCU", "UCC", "CUU", "CUC",
 
 \item{P}{The number of variables.}
 
-\item{G}{The number of groups. This defaults to 1.}
+\item{G}{The number of clusters. This defaults to 1.}
 
-\item{method}{By default, calculation assumes the \code{UUU} model with unconstrained loadings and unconstrained isotropic uniquesses. The other seven models detailed in McNicholas and Murphy (2008) are also given. The first letter denotes whether loadings are constrained/unconstrained across groups; the second letter denotes the same for the uniquenesses; the final letter denotes whether uniquenesses are in turn constrained to be isotropic.}
+\item{method}{By default, calculation assumes the \code{UUU} model with unconstrained loadings and unconstrained isotropic uniquesses. The other seven models detailed in McNicholas and Murphy (2008) are also given. The first letter denotes whether loadings are constrained/unconstrained across clusters; the second letter denotes the same for the uniquenesses; the final letter denotes whether uniquenesses are in turn constrained to be isotropic.}
 }
 \value{
 A vector of length \code{length(Q)}.
