@@ -6,6 +6,7 @@ __Infinite Mixtures of Infinite Factor Analysers__
 * Standard deviation of AICM/BICM model selection criteria now computed and returned.
 * `heat_legend` gains `cex.lab` argument to control magnification of legend text.
 * All methods now work for univariate data also (with apt. edits to plots & uniqueness defaults etc.).
+* `Zsimilarity` sped-up via `mcclust::comp.psm` s.t. `z.avgsim=TRUE` now by default in `get_IMIFA_results`.
 
 ## Bug Fixes
 * Fixed bug preventing `uni.prior="isotropic"` when `uni.type` is `(un)constrained`.

@@ -36,7 +36,7 @@
     if(sw["pi.sw"])  {
       pi.store     <- matrix(0L, nrow=G, ncol=n.store)
     }
-    z.store        <- matrix(0L, nrow=N, ncol=n.store)
+    z.store        <- matrix(0L, nrow=n.store, ncol=N)
     ll.store       <- rep(0, n.store)
     Q.star         <- Q
     Qs             <- rep(Q, G)
@@ -113,7 +113,7 @@
       if(sw["l.sw"])   load.store[,,,1] <- array(unlist(lmat, use.names=FALSE), dim=c(P, Q, G))
       if(sw["psi.sw"]) psi.store[,,1]   <- 1/psi.inv
       if(sw["pi.sw"])  pi.store[,1]     <- pi.prop
-      z.store[,1]           <- z
+      z.store[1,]           <- z
       Q0                    <- Qs > 0
       sigma                 <- if(uni) lapply(Gseq, function(g) as.matrix(1/psi.inv[,g] + if(Q0[g]) tcrossprod(lmat[[g]]) else 0)) else lapply(Gseq, function(g) tcrossprod(lmat[[g]]) + diag(1/psi.inv[,g]))
       log.probs             <- if(uni) vapply(Gseq, function(g) dnorm(data, mu[,g], sqrt(sigma[[g]]), log=TRUE) + log(pi.prop[g]), numeric(N)) else vapply(Gseq, function(g, Q=Q0[g]) { sigma <- if(Q) sigma[[g]] else sqrt(sigma[[g]]); dmvn(data, mu[,g], is.posi_def(sigma, make=TRUE)$X.new, log=TRUE, isChol=!Q) + log(pi.prop[g]) }, numeric(N))
@@ -330,7 +330,7 @@
         }
         if(sw["psi.sw"])   psi.store[,,new.it]      <- 1/psi.inv
         if(sw["pi.sw"])    pi.store[,new.it]        <- pi.prop
-                           z.store[,new.it]         <- as.integer(z)
+                           z.store[new.it,]         <- as.integer(z)
                            ll.store[new.it]         <- sum(rowLogSumExps(log.probs))
                            Q.store[,new.it]         <- as.integer(Qs)
       }

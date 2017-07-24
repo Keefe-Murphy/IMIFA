@@ -11,7 +11,7 @@
 #' @param Q.meth If the object in \code{sims} arises from the "\code{IFA}", "\code{MIFA}", "\code{OMIFA}" or "\code{IMIFA}" methods, this argument determines whether the optimal number of latent factors is given by the mode or median of the posterior distribution of \code{Q}. Defaults to "\code{Mode}".
 #' @param dat The actual data set on which \code{\link{mcmc_IMIFA}} was originally run. This is necessary for computing error metrics between the estimated and empirical covariance matrix/matrices. If this is not supplied, the function will attempt to find the data set if it is still available in the global environment.
 #' @param conf.level The confidence level to be used throughout for credible intervals for all parameters of inferential interest. Defaults to 0.95.
-#' @param z.avgsim Logical indicating whether the clustering should also be summarised with a call to \code{\link{Zsimilarity}} by the clustering with minimum squared distance to the similarity matrix obtained by averaging the stored adjacency matrices, in addition to the MAP estimate. Note that the MAP clustering is computed \emph{conditional} on the estimate of the number of clusters (whether that be the modal estimate or the estimate according to \code{criterion}) and other parameters are extracted conditional on this estimate of \code{G}: however, in constrast, the number of distinct clusters in the summarised labels obtained by \code{z.avgsim=TRUE} may not necessarily coincide with the estimate of \code{G}, but may provide a useful alternative summary of the partitions explored during the chain. Please be warned that this can take considerable time to compute, and may not even be possible if the number of observations &/or number of stored iterations is large and the resulting matrix isn't sufficiently sparse, so the default is \code{FALSE}, otherwise both the summarised clustering and the similarity matrix are stored: the latter can be passed to \code{\link{plot.Results_IMIFA}}.
+#' @param z.avgsim Logical indicating whether the clustering should also be summarised with a call to \code{\link{Zsimilarity}} by the clustering with minimum squared distance to the similarity matrix obtained by averaging the stored adjacency matrices, in addition to the MAP estimate. Note that the MAP clustering is computed \emph{conditional} on the estimate of the number of clusters (whether that be the modal estimate or the estimate according to \code{criterion}) and other parameters are extracted conditional on this estimate of \code{G}: however, in constrast, the number of distinct clusters in the summarised labels obtained by \code{z.avgsim=TRUE} may not necessarily coincide with the estimate of \code{G}, but may provide a useful alternative summary of the partitions explored during the chain. Please be warned that though this defaults to \code{TRUE}, this is liable to take considerable time to compute, and may not even be possible if the number of observations &/or number of stored iterations is large and the resulting matrix isn't sufficiently sparse. When \code{TRUE}, both the summarised clustering and the similarity matrix are stored: the latter can be passed to \code{\link{plot.Results_IMIFA}}.
 #' @param zlabels For any method that performs clustering, the true labels can be supplied if they are known in order to compute clustering performance metrics. This also has the effect of ordering the MAP labels (and thus the ordering of cluster-specific parameters) to most closely correspond to the true labels if supplied.
 #'
 #' @return An object of class "\code{Results_IMIFA}" to be passed to \code{\link{plot.Results_IMIFA}} for visualising results. Dedicated \code{print} and \code{summary} functions exist for objects of this class. The object, say \code{x}, is a list of lists, the most important components of which are:
@@ -66,7 +66,7 @@ get_IMIFA_results              <- function(sims = NULL, burnin = 0L, thinning = 
 
 #' @export
 get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, Q = NULL, criterion = c("bicm", "aicm", "log.iLLH", "dic", "bic.mcmc", "aic.mcmc"),
-                                           G.meth = c("mode", "median"), Q.meth = c("mode", "median"), dat = NULL, conf.level = 0.95, z.avgsim = FALSE, zlabels = NULL) {
+                                           G.meth = c("mode", "median"), Q.meth = c("mode", "median"), dat = NULL, conf.level = 0.95, z.avgsim = TRUE, zlabels = NULL) {
 
   call           <- match.call()
   defopt         <- options()
@@ -363,17 +363,17 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       pies       <- sims[[G.ind]][[Q.ind]]$pi.prop[,tmp.store, drop=FALSE]
     }
     zadj         <- sims[[G.ind]][[Q.ind]]$z.store
-    z            <- as.matrix(zadj[,tmp.store])
-    zadj         <- zadj[,store]
+    z            <- as.matrix(zadj[tmp.store,])
+    zadj         <- zadj[store,]
     if(!label.switch) {
-      z.temp     <- tryCatch(factor(z[,1], labels=Gseq), error=function(e) factor(z[,1], levels=Gseq))
+      z.temp     <- tryCatch(factor(z[1,], labels=Gseq), error=function(e) factor(z[1,], levels=Gseq))
       for(sl in seq_along(tmp.store)) {
-        sw.lab   <- .lab_switch(z.new=z[,sl], z.old=z.temp)
+        sw.lab   <- .lab_switch(z.new=z[sl,], z.old=z.temp)
         z.perm   <- sw.lab$z.perm
         left     <- as.integer(unname(z.perm))
         right    <- as.integer(names(z.perm))
         if(!identical(left, right))   {
-          z[,sl] <- sw.lab$z
+          z[sl,] <- sw.lab$z
           if(sw["mu.sw"])  {
             mus[,left,sl]      <- mus[,right,sl]
           }
@@ -395,7 +395,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     if(sw["mu.sw"])        mus <- tryCatch(mus[,Gseq,,     drop=FALSE], error=function(e) mus)
     if(sw["l.sw"])       lmats <- tryCatch(lmats[,,Gseq,,  drop=FALSE], error=function(e) lmats)
     if(sw["psi.sw"])      psis <- tryCatch(psis[,Gseq,,    drop=FALSE], error=function(e) psis)
-    map          <- apply(z, 1,   function(x) factor(which.max(tabulate(x)), levels=Gseq))
+    map          <- apply(z, 2,   function(x) factor(which.max(tabulate(x)), levels=Gseq))
     if(isTRUE(z.avgsim)) {
       zlog       <- capture.output(znew <- try(Zsimilarity(zs=zadj), silent=TRUE))
       condit     <- all(!is.element(method, c("MIFA", "MFA")), inherits(znew, "try-error"))
@@ -439,7 +439,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
         z.avgsim <- FALSE
       }
     }
-    uncertain    <- 1 - Rfast::colMaxs(matrix(apply(z, 1, tabulate, nbins=G)/length(tmp.store), nrow=G, ncol=n.obs), value=TRUE)
+    uncertain    <- 1 - Rfast::colMaxs(matrix(apply(z, 2, tabulate, nbins=G)/length(tmp.store), nrow=G, ncol=n.obs), value=TRUE)
     if(sw["pi.sw"]) {
       pi.prop    <- provideDimnames(pies[Gseq,seq_along(tmp.store), drop=FALSE], base=list(gnames, ""), unique=FALSE)
       var.pi     <- setNames(Rfast::rowVars(pi.prop),  gnames)
@@ -460,8 +460,8 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
         l.perm   <- sw.lab$z.perm
         left     <- as.integer(unname(l.perm))
         right    <- as.integer(names(l.perm))
-        z.tmp    <- lapply(seq_along(tmp.store), function(i) factor(factor(z[,i], labels=left[which(tabulate(z[,i], nbins=G) > 0)]), levels=right))
-        z        <- do.call(cbind, lapply(z.tmp, function(x) as.integer(levels(as.factor(x)))[as.integer(x)]))
+        z.tmp    <- lapply(seq_along(tmp.store), function(i) factor(factor(z[i,], labels=left[which(tabulate(z[i,], nbins=G) > 0)]), levels=right))
+        z        <- do.call(rbind, lapply(z.tmp, function(x) as.integer(levels(as.factor(x)))[as.integer(x)]))
         if(sw["mu.sw"])    mus <- mus[,right,,     drop=FALSE]
         if(sw["l.sw"])   lmats <- lmats[,,right,,  drop=FALSE]
         if(sw["psi.sw"])  psis <- psis[,right,,    drop=FALSE]
@@ -630,7 +630,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
             rot  <- proc$R
             p2   <- ifelse(inf.Q, which(eta.store == p), p)
             if(clust.ind) {
-              zp <- z[,p]  == g
+              zp <- z[p,]  == g
               eta[zp,,p2]  <- eta[zp,,p2] %*% rot
             } else {
               eta[,,p2]    <- eta[,,p2]   %*% rot

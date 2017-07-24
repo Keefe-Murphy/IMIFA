@@ -462,8 +462,8 @@
   # Similarity matrix and 'average' clustering
 #' Summarises MCMC clustering labels with a similarity matrix and finds the 'average' clustering
 #'
-#' This functions takes a Monte Carlo sample of cluster labels, converts them to adjacency matrices, and computes a similarity matrix as an average of the adjacency matrices. The dimension of the similarity matrix is invariant to label switching and the number of clusters in each sample. As a summary of the posterior clustering, the index of the clustering with minimum squared distance to this 'average' clustering is reported.
-#' @param zs A matrix containing samples of clustering labels where the rows correspond to the number of observations and the columns correspond to the number of iterations.
+#' This functions takes a Monte Carlo sample of cluster labels, converts them to adjacency matrices, and computes a similarity matrix as an average of the adjacency matrices. The dimension of the similarity matrix is invariant to label switching and the number of clusters in each sample. As a summary of the posterior clustering, the clustering with minimum squared distance to this 'average' clustering is reported.
+#' @param zs A matrix containing samples of clustering labels where the columns correspond to the number of observations and the rows correspond to the number of iterations.
 #'
 #' @return A list containing three elements:
 #' \describe{
@@ -472,9 +472,10 @@
 #' \item{dist.z}{A vector of length N recording the distances between each clustering and the 'average' clustering.}
 #' }
 #' @export
+#' @importFrom mcclust "cltoSim" "comp.psm"
 #'
 #' @note This function is implemented purely in R and as such its performance in terms of speed and memory may not be optimal; it can take quite a considerable amount of time to run, and may crash if the number of observations &/or number of iterations is so large that the similarity matrix is insufficiently sparse. This function can optionally be called inside \code{\link{get_IMIFA_results}}.
-#' @seealso \code{\link{get_IMIFA_results}}, \code{\link[slam]{simple_triplet_matrix}}, \code{\link[stats]{hclust}}
+#' @seealso \code{\link{get_IMIFA_results}}, \code{\link[slam]{simple_triplet_matrix}}, \code{\link[stats]{hclust}}, \code{\link[mcclust]{comp.psm}}, \code{\link[mcclust]{cltoSim}}
 #'
 #' @author Keefe Murphy
 #'
@@ -502,12 +503,9 @@
 #' # table(hier.z, olive$area)
     Zsimilarity <- function(zs) {
       if(!is.matrix(zs))                   stop("'zs' must be a matrix with rows corresponding to the number of observations and columns corresponding to the number of iterations")
-      .tryouter <- function(x) tryCatch(suppressWarnings(methods::as(outer(x, x, FUN="=="), "nMatrix")), error=function(e) NULL)
-      .trysum2  <- function(x) tryCatch(suppressWarnings(sum(x  * x)),      error=function(e) Inf)
-      zis       <- lapply(seq_len(ncol(zs)), function(i) .tryouter(zs[,i]))
-      zsim      <- tryCatch(suppressMessages(Reduce('+', zis)/length(zis)), error=function(e) stop())
-      dist.z    <- vapply(seq_along(zis),    function(i) .trysum2(suppressMessages(zis[[i]] - zsim)), numeric(1L))
-        return(list(z.avg = zs[,which.min(dist.z)], z.sim = as.simple_triplet_matrix(zsim), dist.z = dist.z))
+      zsim      <- comp.psm(zs)
+      dist.z    <- vapply(seq_len(nrow(zs)), function(i, x=cltoSim(zs[i,]) - zsim) tryCatch(suppressWarnings(sum(x * x)), error=function(e) Inf), numeric(1L))
+        return(list(z.avg = zs[which.min(dist.z),], z.sim = as.simple_triplet_matrix(zsim), dist.z = dist.z))
     }
 
   # Move 1

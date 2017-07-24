@@ -7,7 +7,7 @@
 Zsimilarity(zs)
 }
 \arguments{
-\item{zs}{A matrix containing samples of clustering labels where the rows correspond to the number of observations and the columns correspond to the number of iterations.}
+\item{zs}{A matrix containing samples of clustering labels where the columns correspond to the number of observations and the rows correspond to the number of iterations.}
 }
 \value{
 A list containing three elements:
@@ -18,7 +18,7 @@ A list containing three elements:
 }
 }
 \description{
-This functions takes a Monte Carlo sample of cluster labels, converts them to adjacency matrices, and computes a similarity matrix as an average of the adjacency matrices. The dimension of the similarity matrix is invariant to label switching and the number of clusters in each sample. As a summary of the posterior clustering, the index of the clustering with minimum squared distance to this 'average' clustering is reported.
+This functions takes a Monte Carlo sample of cluster labels, converts them to adjacency matrices, and computes a similarity matrix as an average of the adjacency matrices. The dimension of the similarity matrix is invariant to label switching and the number of clusters in each sample. As a summary of the posterior clustering, the clustering with minimum squared distance to this 'average' clustering is reported.
 }
 \note{
 This function is implemented purely in R and as such its performance in terms of speed and memory may not be optimal; it can take quite a considerable amount of time to run, and may crash if the number of observations &/or number of iterations is so large that the similarity matrix is insufficiently sparse. This function can optionally be called inside \code{\link{get_IMIFA_results}}.
@@ -47,7 +47,7 @@ This function is implemented purely in R and as such its performance in terms of
 # table(hier.z, olive$area)
 }
 \seealso{
-\code{\link{get_IMIFA_results}}, \code{\link[slam]{simple_triplet_matrix}}, \code{\link[stats]{hclust}}
+\code{\link{get_IMIFA_results}}, \code{\link[slam]{simple_triplet_matrix}}, \code{\link[stats]{hclust}}, \code{\link[mcclust]{comp.psm}}, \code{\link[mcclust]{cltoSim}}
 }
 \author{
 Keefe Murphy

@@ -37,7 +37,7 @@
     if(sw["pi.sw"])  {
       pi.store     <- matrix(0L, nrow=G, ncol=n.store)
     }
-    z.store        <- matrix(0L, nrow=N, ncol=n.store)
+    z.store        <- matrix(0L, nrow=n.store, ncol=N)
     err.z          <- zerr <- FALSE
     ll.store       <- rep(0L, n.store)
 
@@ -102,7 +102,7 @@
       if(sw["l.sw"])   load.store[,,,1] <- lmat
       if(sw["psi.sw"]) psi.store[,,1]   <- 1/psi.inv
       if(sw["pi.sw"])  pi.store[,1]     <- pi.prop
-      z.store[,1]          <- z
+      z.store[1,]          <- z
       sigma                <- if(uni) lapply(Gseq, function(g) as.matrix(1/psi.inv[,g] + if(Q0) tcrossprod(as.matrix(lmat[,,g])) else 0)) else lapply(Gseq, function(g) tcrossprod(lmat[,,g]) + diag(1/psi.inv[,g]))
       log.probs            <- if(uni) vapply(Gseq, function(g) dnorm(data, mu[,g], sqrt(sigma[[g]]), log=TRUE) + log(pi.prop[g]), numeric(N)) else vapply(Gseq, function(g) { sigma <- if(Q0) sigma[[g]] else sqrt(sigma[[g]]); dmvn(data, mu[,g], is.posi_def(sigma, make=TRUE)$X.new, log=TRUE, isChol=!Q0) + log(pi.prop[g]) }, numeric(N))
       ll.store[1]          <- sum(rowLogSumExps(log.probs))
@@ -195,7 +195,7 @@
         if(all(sw["l.sw"], Q0))    load.store[,,,new.it]   <- lmat
         if(sw["psi.sw"])           psi.store[,,new.it]     <- 1/psi.inv
         if(sw["pi.sw"])            pi.store[,new.it]       <- pi.prop
-                                   z.store[,new.it]        <- as.integer(z)
+                                   z.store[new.it,]        <- as.integer(z)
                                    ll.store[new.it]        <- sum(rowLogSumExps(log.probs))
       }
     }
