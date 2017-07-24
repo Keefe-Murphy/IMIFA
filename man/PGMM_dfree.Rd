@@ -5,7 +5,7 @@
 \title{Estimate the Number of Free Parameters in Finite Factor Analytic Mixture Models (PGMM)}
 \usage{
 PGMM_dfree(Q, P, G = 1, method = c("UUU", "UUC", "UCU", "UCC", "CUU", "CUC",
-  "CCU", "CCC"))
+  "CCU", "CCC"), equal.pro = FALSE)
 }
 \arguments{
 \item{Q}{The number of latent factors (which can be 0, corresponding to a model with diagonal covariance). This argument is vectorised.}
@@ -15,6 +15,8 @@ PGMM_dfree(Q, P, G = 1, method = c("UUU", "UUC", "UCU", "UCC", "CUU", "CUC",
 \item{G}{The number of clusters. This defaults to 1.}
 
 \item{method}{By default, calculation assumes the \code{UUU} model with unconstrained loadings and unconstrained isotropic uniquesses. The other seven models detailed in McNicholas and Murphy (2008) are also given. The first letter denotes whether loadings are constrained/unconstrained across clusters; the second letter denotes the same for the uniquenesses; the final letter denotes whether uniquenesses are in turn constrained to be isotropic.}
+
+\item{equal.pro}{Logical variable indicating whether or not the mixing mixing proportions are equal across clusters in the model (default = \code{FALSE}).}
 }
 \value{
 A vector of length \code{length(Q)}.
@@ -27,7 +29,7 @@ Though the function is available for standalone use, note that no checks take pl
 }
 \examples{
 UUU <- PGMM_dfree(Q=4:5, P=50, G=3, method="UUU")
-CCC <- PGMM_dfree(Q=4:5, P=50, G=3, method="CCC")
+CCC <- PGMM_dfree(Q=4:5, P=50, G=3, method="CCC", equal.pro=TRUE)
 }
 \references{
 McNicholas, P. D. and Murphy, T. B. (2008) Parsimonious Gaussian Mixture Models, \emph{Statistics and Computing}, 18(3): 285-296.

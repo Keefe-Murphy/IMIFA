@@ -86,6 +86,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   if(length(store) < 10)          stop("Not enough stored samples to proceed")
   n.store        <- length(store)
   tmp.store      <- store
+  equal.pro      <- attr(sims, "Equal.Pi")
   label.switch   <- attr(sims, "Label.Switch")
   method         <- attr(sims, "Method")
   learn.alpha    <- attr(sims, "Alph.step")
@@ -227,7 +228,8 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
         bicm.sd[g,q]     <- sqrt((2 * ll.var + (log.N - 1)^2 * ci.tmp)/length(log.likes))
         if(!inf.Q) {
           K              <- switch(method, OMFA=, IMFA=PGMM_dfree(Q=n.fac[qi], P=n.var, G=G[ifelse(G.T, 1, qi)],
-                            method=switch(uni.type, unconstrained="UUU", isotropic="UUC", constrained="UCU", single="UCC")), attr(sims[[gi]][[qi]], "K"))
+                            method=switch(uni.type, unconstrained="UUU", isotropic="UUC", constrained="UCU", single="UCC"),
+                            equal.pro=equal.pro), attr(sims[[gi]][[qi]], "K"))
           aic.mcmc[g,q]  <- ll.max2  - K * 2
           bic.mcmc[g,q]  <- ll.max2  - K * log.N
         }
@@ -788,9 +790,9 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
                                                           best.models = t(vapply(GQ.res$Criteria, function(x) { inds <- arrayInd(which.max(x), dim(x));
                                                           c(clusters = rownames(x)[inds[1]], factors = colnames(x)[inds[2]]) }, character(2L)))))
   class(GQ.res)                <- "listof"
+  attr(GQ.res, "Clusters")     <- n.grp
   attr(GQ.res, "Criterion")    <- criterion
   attr(GQ.res, "Factors")      <- n.fac
-  attr(GQ.res, "Clusters")     <- n.grp
   attr(GQ.res, "Supplied")     <- c(Q=Q.T, G=G.T)
   err.T                        <- vapply(Gseq, function(g) all(emp.T[g], est.T[g]), logical(1L))
   var.exps       <- vapply(lapply(result, "[[", "var.exp"), function(x) ifelse(is.null(x), NA, x), numeric(1L))

@@ -3,14 +3,17 @@ __Infinite Mixtures of Infinite Factor Analysers__
 
 # IMIFA v1.3.2 - (_6<sup>th</sup> release [patch update]: 2017-07-10_)
 ## Improvements
-* Standard deviation of AICM/BICM model selection criteria now computed and returned.
-* `heat_legend` gains `cex.lab` argument to control magnification of legend text.
+* Added ability to constrain mixing proportions across clusters using `equal.pro` argument for M(I)FA models:  
+  modified PGMM_dfree accordingly and forced non-storage of mixing proportions when `equal.pro` is TRUE.  
 * All methods now work for univariate data also (with apt. edits to plots & uniqueness defaults etc.).
 * `Zsimilarity` sped-up via `mcclust::comp.psm` s.t. `z.avgsim=TRUE` now by default in `get_IMIFA_results`.
+* Added "`hc`" option to `z.init` to initialise allocations via hierarchical clustering (using `mclust::hc`).
+* Standard deviation of AICM/BICM model selection criteria now computed and returned.
+* `heat_legend` gains `cex.lab` argument to control magnification of legend text.
 
 ## Bug Fixes
 * Fixed bug preventing `uni.prior="isotropic"` when `uni.type` is `(un)constrained`.
-* Fixed odel selection in `get_IMIFA_results` for IMFA/OMFA models when `range.Q` is a range.
+* Fixed model selection in `get_IMIFA_results` for IMFA/OMFA models when `range.Q` is a range.
 * Fixed storage switches to account for `burnin=0`.
 
 # IMIFA v1.3.1 - (_5<sup>th</sup> release [patch update]: 2017-07-07_)

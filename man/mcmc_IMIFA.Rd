@@ -11,16 +11,16 @@ mcmc_IMIFA(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA",
   "isotropic", "constrained", "single"), uni.prior = c("unconstrained",
   "isotropic"), alpha = NULL, psi.alpha = NULL, psi.beta = NULL,
   mu.zero = NULL, sigma.mu = NULL, sigma.l = NULL, z.init = c("mclust",
-  "kmeans", "list", "priors"), z.list = NULL, adapt = TRUE, prop = NULL,
-  epsilon = NULL, alpha.d1 = NULL, alpha.d2 = NULL, beta.d1 = NULL,
-  beta.d2 = NULL, nu = NULL, nuplus1 = TRUE, adapt.at = NULL,
-  b0 = NULL, b1 = NULL, trunc.G = NULL, learn.alpha = TRUE,
-  alpha.hyper = NULL, ind.slice = TRUE, rho = NULL, IM.lab.sw = TRUE,
-  discount = NULL, learn.d = FALSE, d.hyper = NULL, kappa = NULL,
-  zeta = NULL, tune.zeta = NULL, mu0g = FALSE, psi0g = FALSE,
-  delta0g = FALSE, mu.switch = TRUE, score.switch = TRUE,
-  load.switch = TRUE, psi.switch = TRUE, pi.switch = TRUE,
-  verbose = interactive())
+  "hc", "kmeans", "list", "priors"), z.list = NULL, adapt = TRUE,
+  prop = NULL, epsilon = NULL, alpha.d1 = NULL, alpha.d2 = NULL,
+  beta.d1 = NULL, beta.d2 = NULL, nu = NULL, nuplus1 = TRUE,
+  adapt.at = NULL, b0 = NULL, b1 = NULL, trunc.G = NULL,
+  learn.alpha = TRUE, alpha.hyper = NULL, ind.slice = TRUE, rho = NULL,
+  IM.lab.sw = TRUE, discount = NULL, learn.d = FALSE, d.hyper = NULL,
+  kappa = NULL, zeta = NULL, tune.zeta = NULL, equal.pro = FALSE,
+  mu0g = FALSE, psi0g = FALSE, delta0g = FALSE, mu.switch = TRUE,
+  score.switch = TRUE, load.switch = TRUE, psi.switch = TRUE,
+  pi.switch = TRUE, verbose = interactive())
 }
 \arguments{
 \item{dat}{A matrix or data frame such that rows correspond to observations (\code{N}) and columns correspond to variables (\code{P}). Non-numeric variables and rows with missing entries will be removed.}
@@ -75,7 +75,7 @@ mcmc_IMIFA(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA",
 
 \item{sigma.l}{The covariance of the prior distribution for the loadings. Defaults to 1. Only relevant for the finite factor methods.}
 
-\item{z.init}{The method used to initialise the cluster labels. Defaults to \code{\link[mclust]{Mclust}}. Not relevant for the "\code{FA}" and "\code{"IFA"} methods.}
+\item{z.init}{The method used to initialise the cluster labels. Defaults to \code{\link[mclust]{Mclust}}. Other options include \code{kmeans}, hierarchical clustering via \code{\link[mclust]{hc}}, random initialisation via \code{priors}, and a user-supplied \code{list}. Not relevant for the "\code{FA}" and "\code{"IFA"} methods.}
 
 \item{z.list}{A user supplied list of cluster labels. Only relevant if \code{z.init == "z.list"}.}
 
@@ -132,6 +132,8 @@ mcmc_IMIFA(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA",
 \item{"\code{target}"}{The target acceptance rate. Must lie in the interval [0, 1]. Defaults to 0.441, which is optimum for univariate targets, if not supplied but other elements of \code{tune.zeta} are.}
 }
  \code{tune.zeta} is only relevant when \code{isTRUE(learn.alpha)} under the "\code{IMFA}" or "\code{IMIFA}" models, and either the \code{discount} remains fixed at a non-zero value, or when \code{isTRUE(learn.d)} and \code{kappa < 1}. Since Gibbs steps are invoked for updated \code{alpha} when \code{discount == 0}, adaption occurs according to a running count of the number of iterations with non-zero sampled \code{discount} values. If diminishing adaptation invoked, the posterior mean \code{zeta} will be stored. Since caution is advised when employing adaptation, note that acceptance rates of between 10-50\% are generally considered adequate.}
+
+\item{equal.pro}{Logical variable indicating whether or not the mixing mixing proportions are equal across clusters in the model (default = \code{FALSE}).}
 
 \item{mu0g}{Logical indicating whether the \code{mu.zero} hyperparameter can be cluster-specific. Defaults to \code{FALSE}. Only relevant for the "\code{MFA}" and "\code{MIFA}" methods when \code{z.list} is supplied.}
 

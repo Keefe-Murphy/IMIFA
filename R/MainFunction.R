@@ -37,7 +37,7 @@
 #' @param sigma.l The covariance of the prior distribution for the loadings. Defaults to 1. Only relevant for the finite factor methods.
 #' @param psi.alpha The shape of the inverse gamma prior on the uniquenesses. Defaults to 2.5 if \code{uni.type} is one of "\code{unconstrained}" or "\code{constrained}", otherwise defaults to 3.5.
 #' @param psi.beta The rate of the inverse gamma prior on the uniquenesses. Can be either a single parameter, a vector of variable specific rates, or a matrix of variable and cluster-specific rates. If this is not supplied, \code{\link{psi_hyper}} is invoked to choose sensible values, depending on the value of \code{uni.prior} and, for the "\code{MFA}" and "\code{MIFA}" models, the value of \code{psi0g}.
-#' @param z.init The method used to initialise the cluster labels. Defaults to \code{\link[mclust]{Mclust}}. Not relevant for the "\code{FA}" and "\code{"IFA"} methods.
+#' @param z.init The method used to initialise the cluster labels. Defaults to \code{\link[mclust]{Mclust}}. Other options include \code{kmeans}, hierarchical clustering via \code{\link[mclust]{hc}}, random initialisation via \code{priors}, and a user-supplied \code{list}. Not relevant for the "\code{FA}" and "\code{"IFA"} methods.
 #' @param z.list A user supplied list of cluster labels. Only relevant if \code{z.init == "z.list"}.
 #' @param adapt A logical value indicating whether adaptation of the number of cluster-specific factors is to take place. Only relevant for methods ending in IFA, in which case the default is \code{TRUE}. Specifying \code{FALSE} and supplying \code{range.Q} provides a means to use the MGP prior in a finite factor context.
 #' @param prop Proportion of elements within the neighbourhood \code{epsilon} of zero necessary to consider a loadings column redundant. Defaults to \code{floor(0.7 * P)/P}. Only relevant for methods ending in IFA.
@@ -69,6 +69,7 @@
 #' \item{"\code{target}"}{The target acceptance rate. Must lie in the interval [0, 1]. Defaults to 0.441, which is optimum for univariate targets, if not supplied but other elements of \code{tune.zeta} are.}
 #' }
 #'  \code{tune.zeta} is only relevant when \code{isTRUE(learn.alpha)} under the "\code{IMFA}" or "\code{IMIFA}" models, and either the \code{discount} remains fixed at a non-zero value, or when \code{isTRUE(learn.d)} and \code{kappa < 1}. Since Gibbs steps are invoked for updated \code{alpha} when \code{discount == 0}, adaption occurs according to a running count of the number of iterations with non-zero sampled \code{discount} values. If diminishing adaptation invoked, the posterior mean \code{zeta} will be stored. Since caution is advised when employing adaptation, note that acceptance rates of between 10-50\% are generally considered adequate.
+#' @param equal.pro Logical variable indicating whether or not the mixing mixing proportions are equal across clusters in the model (default = \code{FALSE}).
 #' @param mu0g Logical indicating whether the \code{mu.zero} hyperparameter can be cluster-specific. Defaults to \code{FALSE}. Only relevant for the "\code{MFA}" and "\code{MIFA}" methods when \code{z.list} is supplied.
 #' @param psi0g Logical indicating whether the \code{psi.beta} hyperparameter(s) can be cluster-specific. Defaults to \code{FALSE}. Only relevant for the "\code{MFA}" and "\code{MIFA}" methods when \code{z.list} is supplied, and only allowable when \code{uni.type} is one of \code{unconstrained} or \code{isotropic}.
 #' @param delta0g Logical indicating whether the \code{alpha.d1}  and \code{alpha.d2} hyperparameters can be cluster-specific. Defaults to \code{FALSE}. Only relevant for the "\code{MIFA}" method when \code{z.list} is supplied.
@@ -88,7 +89,7 @@
 #' @importFrom e1071 "matchClasses"
 #' @importFrom mvnfast "dmvn"
 #' @importFrom slam "as.simple_sparse_array" "as.simple_triplet_matrix"
-#' @importFrom mclust "Mclust" "mclustBIC"
+#' @importFrom mclust "Mclust" "mclustBIC" "hc" "hclass"
 #' @importFrom utils "memory.limit"
 #'
 #' @seealso \code{\link{get_IMIFA_results}}, \code{\link{psi_hyper}}, \code{\link{MGP_check}}
@@ -145,10 +146,10 @@
 #' #                        nu=3, alpha=0.8, uni.type="single")
 mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA", "MFA", "IFA", "FA", "classify"), n.iters = 25000L, range.G = NULL, range.Q = NULL, burnin = n.iters/5,
                         thinning = 2L, centering = TRUE, scaling = c("unit", "pareto", "none"), uni.type = c("unconstrained", "isotropic", "constrained", "single"), uni.prior = c("unconstrained", "isotropic"),
-                        alpha = NULL, psi.alpha = NULL, psi.beta = NULL, mu.zero = NULL, sigma.mu = NULL, sigma.l = NULL, z.init = c("mclust", "kmeans", "list", "priors"), z.list = NULL, adapt = TRUE,
+                        alpha = NULL, psi.alpha = NULL, psi.beta = NULL, mu.zero = NULL, sigma.mu = NULL, sigma.l = NULL, z.init = c("mclust", "hc", "kmeans", "list", "priors"), z.list = NULL, adapt = TRUE,
                         prop = NULL, epsilon = NULL, alpha.d1 = NULL, alpha.d2 = NULL, beta.d1 = NULL, beta.d2 = NULL, nu = NULL, nuplus1 = TRUE, adapt.at = NULL, b0 = NULL, b1 = NULL, trunc.G = NULL,
                         learn.alpha = TRUE, alpha.hyper = NULL, ind.slice = TRUE, rho = NULL, IM.lab.sw = TRUE, discount = NULL, learn.d = FALSE, d.hyper = NULL, kappa = NULL, zeta = NULL, tune.zeta = NULL,
-                        mu0g = FALSE, psi0g = FALSE, delta0g = FALSE, mu.switch = TRUE, score.switch = TRUE, load.switch = TRUE, psi.switch = TRUE, pi.switch = TRUE, verbose = interactive()) {
+                        equal.pro = FALSE, mu0g = FALSE, psi0g = FALSE, delta0g = FALSE, mu.switch = TRUE, score.switch = TRUE, load.switch = TRUE, psi.switch = TRUE, pi.switch = TRUE, verbose = interactive()) {
 
   call      <- match.call()
   defopt    <- options()
@@ -253,6 +254,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   if(!missing(mu.switch)  && all(!mu.switch, ifelse(method == "classify",
      !centering, !centered)))       warning("Centering hasn't been applied - are you sure you want mu.switch=FALSE?", call.=FALSE)
   score.x   <- missing(score.switch)
+  pi.x      <- missing(pi.switch)
   switches  <- c(mu.sw=mu.switch, s.sw=score.switch, l.sw=load.switch, psi.sw=psi.switch, pi.sw=pi.switch)
   if(any(length(switches) != 5,
          !is.logical(switches)))    stop("All logical parameter storage switches must be TRUE or FALSE")
@@ -371,9 +373,16 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     } else {
      G.init <- range.G    <- 1L
     }
+    equal.pro      <- FALSE
     meth    <- method
   } else {
     alp3    <- 3L   * alpha
+    if(length(equal.pro) > 1 ||
+       !is.logical(equal.pro))      stop("'equal.pro' must be a single logical indicator")
+    if(switches["pi.sw"]  &&
+       equal.pro)   { if(!pi.x)     message("Forced non-storage of mixing proportions as 'equal.pro' is TRUE")
+      switches["pi.sw"]   <- FALSE
+    }
     if(G.x)                         stop("'range.G' must be specified")
     if(any(range.G  < 1))           stop("'range.G' must be strictly positive")
     if(any(range.G  > alp3 * lnN))  warning(paste0("'range.G' MUCH greater than log(N) (=log(", N, ")):\nEmpty clusters are likely, consider running an overfitted or infinite mixture"), call.=FALSE)
@@ -521,8 +530,8 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
            delta0g))                warning("'delta0g' cannot be TRUE for the 'MFA' method", call.=FALSE)
     if(method == "classify") mu0g          <- TRUE
   }
-  dimension <- PGMM_dfree(Q=switch(method, FA=, classify=, MFA=, OMFA=, IMFA=range.Q,
-               IFA=, MIFA=, OMIFA=, IMIFA=0L), P=P, method=switch(uni.type, unconstrained="UUU", isotropic="UUC", constrained="UCU", single="UCC"))
+  dimension <- PGMM_dfree(P=P, Q=switch(method, FA=, classify=, MFA=, OMFA=, IMFA=range.Q,
+               IFA=, MIFA=, OMIFA=, IMIFA=0L), equal.pro=equal.pro, method=switch(uni.type, unconstrained="UUU", isotropic="UUC", constrained="UCU", single="UCC"))
   min.d2    <- min(dimension)/2
   min.d2G   <- min.d2 * G.init
   sw0gs     <- c(mu0g = mu0g, psi0g = psi0g, delta0g = delta0g)
@@ -600,8 +609,11 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     gibbs.arg      <- append(gibbs.arg, list(trunc.G = trunc.G, rho = rho, ind.slice = ind.slice, learn.alpha = learn.alpha, learn.d = learn.d, kappa = kappa,
                                              zeta = zeta, IM.lab.sw = IM.lab.sw, a.hyper = alpha.hyper, discount = discount, d.hyper = d.hyper, tune.zeta = tune.zeta))
   }
-  if(any(is.element(meth, c("FA", "IFA")))) {
-    gibbs.arg      <- append(gibbs.arg, list(scaling = scaling))
+  if(is.element(meth, c("FA",  "IFA")))  {
+    gibbs.arg      <- append(gibbs.arg, list(scaling   = scaling))
+  }
+  if(is.element(meth, c("MFA", "MIFA"))) {
+    gibbs.arg      <- append(gibbs.arg, list(equal.pro = equal.pro))
   }
   if(!is.element(method, c("FA", "MFA", "OMFA", "IMFA"))) {
     gibbs.arg      <- append(gibbs.arg, list(nu = nu, beta.d1 = beta.d1, beta.d2 = beta.d2, adapt.at = adapt.at, adapt = adapt,
@@ -649,9 +661,14 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
         } else                      stop("Cannot initialise cluster labels using kmeans. Try another z.init method")
       } else if(z.init  == "list")   {
         zi[[g]]    <- as.integer(z.list[[g]])
+      } else if(z.init  == "hc")     {
+        h.res      <- try(hc(dat), silent=TRUE)
+        if(!inherits(h.res, "try-error"))  {
+          zi[[g]]  <- as.integer(factor(hclass(h.res, G),     levels=seq_len(G)))
+        } else                      stop("Cannot initialise cluster labels using hc. Try another z.init method")
       } else if(z.init  == "mclust") {
         m.res      <- try(Mclust(dat, G, verbose=FALSE), silent=TRUE)
-        if(!inherits(m.res, "try_error"))  {
+        if(!inherits(m.res, "try-error"))  {
           zi[[g]]  <- as.integer(factor(m.res$classification, levels=seq_len(G)))
         } else                      stop("Cannot initialise cluster labels using mclust. Try another z.init method")
       } else {
@@ -671,7 +688,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
         rm(zips)
       }
       nngs         <- tabulate(zi[[g]], nbins=switch(method, IMFA=, IMIFA=trunc.G, G))
-      pi.prop[[g]] <- prop.table(nngs)
+      pi.prop[[g]] <- if(equal.pro) rep(1/G, G) else prop.table(nngs)
       mu[[g]]      <- vapply(seq_len(G), function(gg) if(nngs[gg] > 0) colMeans(dat[zi[[g]] == gg,, drop=FALSE]) else rep(0, P), numeric(P))
       mu[[g]]      <- if(uni) t(mu[[g]]) else mu[[g]]
       if(mu0.x)   {
@@ -847,13 +864,14 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
        "Class.Props")     <- if(method == "classify") tabulate(z.list[[1]], range.G)/N
   attr(imifa, "Call")     <- call
   attr(imifa, "Center")   <- any(centered, centering)
+  attr(imifa, "Clusters") <- range.G
   attr(imifa, "Date")     <- format(Sys.Date(), "%d-%b-%Y")
   attr(imifa,
        "Disc.step")       <- learn.d
   attr(imifa, "Discount") <- if(!learn.d) discount
+  attr(imifa, "Equal.Pi") <- equal.pro
   attr(imifa, "Factors")  <- range.Q
   attr(imifa, "G.init")   <- G.init
-  attr(imifa, "Clusters") <- range.G
   attr(imifa, "IM.labsw") <- all(is.element(method, c("IMFA", "IMIFA")), IM.lab.sw)
   attr(imifa,
        "Ind.Slice")       <- all(is.element(method, c("IMFA", "IMIFA")), ind.slice)

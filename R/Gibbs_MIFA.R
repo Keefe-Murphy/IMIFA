@@ -6,7 +6,7 @@
   .gibbs_MIFA      <- function(Q, data, iters, N, P, G, sw, mu, mu.zero, uni.type,
                                uni.prior, sigma.mu, burnin, thinning, verbose, nu,
                                cluster, psi.alpha, psi.beta, adapt, adapt.at, prop,
-                               b0, b1, beta.d1, beta.d2, epsilon, nuplus1, ...) {
+                               b0, b1, beta.d1, beta.d2, epsilon, nuplus1, equal.pro, ...) {
 
   # Define & initialise variables
     start.time     <- proc.time()
@@ -57,6 +57,7 @@
     z.temp         <- factor(z, levels=Gseq)
     nn             <- tabulate(z, nbins=G)
     pi.prop        <- cluster$pi.prop
+    log.pis        <- log(pi.prop)
     pi.alpha       <- cluster$pi.alpha
     one.uni        <- is.element(uni.type, c("constrained", "single"))
     .sim_psi_inv   <- switch(uni.type,   unconstrained=.sim_psi_uu,   isotropic=.sim_psi_uc,
@@ -128,14 +129,14 @@
       storage      <- is.element(iter, iters)
 
     # Mixing Proportions
-      pi.prop      <- rDirichlet(G=G, alpha=pi.alpha, nn=nn)
+      pi.prop      <- if(equal.pro) pi.prop else rDirichlet(G=G, alpha=pi.alpha, nn=nn)
 
     # Cluster Labels
       psi          <- 1/psi.inv
       Q0           <- Qs  > 0
       Q1           <- Qs == 1
       sigma        <- if(uni) lapply(Gseq, function(g) as.matrix(psi[,g] + if(Q0[g]) tcrossprod(lmat[[g]]) else 0)) else lapply(Gseq, function(g) tcrossprod(lmat[[g]]) + diag(psi[,g]))
-      log.pis      <- log(pi.prop)
+      log.pis      <- if(equal.pro) log.pis else log(pi.prop)
       if(uni) {
         log.probs  <- vapply(Gseq, function(g) dnorm(data, mu[,g], sqrt(sigma[[g]]), log=TRUE) + log.pis[g], numeric(N))
       } else  {

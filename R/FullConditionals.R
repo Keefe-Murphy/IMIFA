@@ -402,6 +402,7 @@
 #' @param P The number of variables.
 #' @param G The number of clusters. This defaults to 1.
 #' @param method By default, calculation assumes the \code{UUU} model with unconstrained loadings and unconstrained isotropic uniquesses. The other seven models detailed in McNicholas and Murphy (2008) are also given. The first letter denotes whether loadings are constrained/unconstrained across clusters; the second letter denotes the same for the uniquenesses; the final letter denotes whether uniquenesses are in turn constrained to be isotropic.
+#' @param equal.pro Logical variable indicating whether or not the mixing mixing proportions are equal across clusters in the model (default = \code{FALSE}).
 #'
 #' @return A vector of length \code{length(Q)}.
 #'
@@ -415,14 +416,16 @@
 #'
 #' @examples
 #' UUU <- PGMM_dfree(Q=4:5, P=50, G=3, method="UUU")
-#' CCC <- PGMM_dfree(Q=4:5, P=50, G=3, method="CCC")
-    PGMM_dfree   <- Vectorize(function(Q, P, G = 1, method = c("UUU", "UUC", "UCU", "UCC", "CUU", "CUC", "CCU", "CCC")) {
+#' CCC <- PGMM_dfree(Q=4:5, P=50, G=3, method="CCC", equal.pro=TRUE)
+    PGMM_dfree   <- Vectorize(function(Q, P, G = 1, method = c("UUU", "UUC", "UCU", "UCC", "CUU", "CUC", "CCU", "CCC"), equal.pro = FALSE) {
+      if(length(equal.pro) > 1 ||
+         !is.logical(equal.pro))           stop("'equal.pro' must be a single logical indicator")
       meth       <- unlist(strsplit(match.arg(method), ""))
       lambda     <- P * Q - 0.5 * Q * (Q - 1)
       lambda     <- switch(meth[1], C=lambda, U=G  * lambda)
       psi        <- switch(meth[2], C=1,      U=G)
       psi        <- switch(meth[3], C=1,      U=P) * psi
-        as.integer(G - 1 + G * P + lambda + psi) },  vectorize.args = "Q")
+        as.integer(ifelse(equal.pro, 0, G - 1) + G * P + lambda + psi) },  vectorize.args = "Q")
 
   # Label Switching
     .lab_switch <- function(z.new, z.old) {

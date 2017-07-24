@@ -5,7 +5,7 @@
 # Gibbs Sampler Function
   .gibbs_MFA       <- function(Q, data, iters, N, P, G, mu.zero, sigma.mu, mu,
                                sigma.l, burnin, thinning, uni.type, uni.prior,
-                               sw, psi.alpha, psi.beta, verbose, cluster, ...) {
+                               sw, psi.alpha, psi.beta, verbose, cluster, equal.pro, ...) {
 
   # Define & initialise variables
     start.time     <- proc.time()
@@ -54,6 +54,7 @@
     z.temp         <- factor(z, levels=Gseq)
     nn             <- tabulate(z, nbins=G)
     pi.prop        <- cluster$pi.prop
+    log.pis        <- log(pi.prop)
     pi.alpha       <- cluster$pi.alpha
     one.uni        <- is.element(uni.type, c("constrained", "single"))
     .sim_psi_inv   <- switch(uni.type,   unconstrained=.sim_psi_uu,   isotropic=.sim_psi_uc,
@@ -115,12 +116,12 @@
       storage      <- is.element(iter, iters)
 
     # Mixing Proportions
-      pi.prop      <- rDirichlet(G=G, alpha=pi.alpha, nn=nn)
+      pi.prop      <- if(equal.pro) pi.prop else rDirichlet(G=G, alpha=pi.alpha, nn=nn)
 
     # Cluster Labels
       psi          <- 1/psi.inv
       sigma        <- if(uni) lapply(Gseq, function(g) as.matrix(psi[,g] + if(Q0) tcrossprod(as.matrix(lmat[,,g])) else 0)) else lapply(Gseq, function(g) tcrossprod(lmat[,,g]) + diag(psi[,g]))
-      log.pis      <- log(pi.prop)
+      log.pis      <- if(equal.pro) log.pis else log(pi.prop)
       if(uni) {
         log.probs  <- vapply(Gseq, function(g) dnorm(data, mu[,g], sqrt(sigma[[g]]), log=TRUE) + log.pis[g], numeric(N))
       } else  {
@@ -208,6 +209,6 @@
                            z.store  = z.store,
                            ll.store = ll.store,
                            time     = init.time)
-    attr(returns, "K")  <- PGMM_dfree(Q=Q, P=P, G=G, method=switch(uni.type, unconstrained="UUU", isotropic="UUC", constrained="UCU", single="UCC"))
+    attr(returns, "K")  <- PGMM_dfree(Q=Q, P=P, G=G, method=switch(uni.type, unconstrained="UUU", isotropic="UUC", constrained="UCU", single="UCC"), equal.pro=equal.pro)
     return(returns)
   }
