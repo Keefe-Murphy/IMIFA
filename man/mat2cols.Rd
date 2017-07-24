@@ -31,8 +31,7 @@ Converts a matrix to a hex colour code representation for plotting using \code{\
 mat      <- matrix(rnorm(100), nrow=10, ncol=10)
 mat[2,3] <- NA
 cols     <- heat.colors(12)[12:1]
-matcol   <- mat2cols(mat, cols=cols)
-matcol
+(matcol  <- mat2cols(mat, cols=cols))
 
 # Use plot_cols() to visualise the colours matrix
 par(mar=c(5.1, 4.1, 4.1, 4.1))

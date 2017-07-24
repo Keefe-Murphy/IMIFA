@@ -17,17 +17,18 @@ psi_hyper(shape, covar, type = c("unconstrained", "isotropic"))
 Either a single rate hyperparameter or \code{ncol(covar)} variable specific hyperparameters.
 }
 \description{
-Takes a shape hyperparameter and covariance matrix, and finds data-driven rate hyperparameters in such a way that Heywood problems are avoided for factor analysis or probabilistic principal components analysis (and mixtures thereof). Rates are allowed to be variable-specific or a single value under the factor analysis model, but must be a single value for the PPCA model. Used internally by \code{\link{mcmc_IMIFA}} when its argument \code{psi_beta} is not supplied.
+Takes a shape hyperparameter and covariance matrix, and finds data-driven rate hyperparameters in such a way that Heywood problems are avoided for factor analysis or probabilistic principal components analysis (and mixtures thereof).
+}
+\details{
+Rates are allowed to be variable-specific or a single value under the factor analysis model, but \emph{must} be a single value for the PPCA model. Used internally by \code{\link{mcmc_IMIFA}} when its argument \code{psi_beta} is not supplied.
 }
 \examples{
 data(olive)
 olive2 <- olive[,-(1:2)]
-rates  <- psi_hyper(shape=2.5, covar=cov(olive2), type="isotropic")
-rates
+(rates <- psi_hyper(shape=2.5, covar=cov(olive2), type="isotropic"))
 
 olive_scaled <- scale(olive2, center=TRUE, scale=TRUE)
-rate   <- psi_hyper(shape=3, covar=cov(olive_scaled), type="unconstrained")
-rate
+(rate  <- psi_hyper(shape=3, covar=cov(olive_scaled), type="unconstrained"))
 }
 \references{
 Fruwirth-Schnatter, S. and Lopes, H. F. (2010). Parsimonious Bayesian factor analysis when the number of factors is unknown, \emph{Technical Report}. The University of Chicago Booth School of Business.

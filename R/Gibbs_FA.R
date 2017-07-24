@@ -19,6 +19,8 @@
     Q0           <- Q  > 0
     Q1           <- Q == 1
     uni          <- P == 1
+    sw["s.sw"]   <- sw["s.sw"] && Q0
+    sw["l.sw"]   <- sw["l.sw"] && Q0
     dimnames(data)         <- NULL
     if(sw["mu.sw"])  {
       mu.store   <- matrix(0L, nrow=P, ncol=n.store)

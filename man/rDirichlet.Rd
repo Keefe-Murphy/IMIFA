@@ -23,8 +23,8 @@ Generates samples from the Dirichlet distrubution with parameter \code{alpha} ef
 Though the function is available for standalone use, note that no checks take place, in order to speed up repeated calls to the function inside \code{\link{mcmc_IMIFA}}.
 }
 \examples{
-prior     <- rDirichlet(G=5, alpha=1)
-posterior <- rDirichlet(G=5, alpha=1, nn=c(20, 41, 32, 8, 12))
+(prior     <- rDirichlet(G=5, alpha=1))
+(posterior <- rDirichlet(G=5, alpha=1, nn=c(20, 41, 32, 8, 12)))
 }
 \references{
 Devroye, L. (1986) \emph{Non-Uniform Random Variate Generation}, Springer-Verlag, New York, p. 594.

@@ -7,8 +7,8 @@
 \method{plot}{Results_IMIFA}(x = NULL, plot.meth = c("all", "correlation",
   "density", "errors", "GQ", "means", "parallel.coords", "trace", "zlabels"),
   param = c("means", "scores", "loadings", "uniquenesses", "pis", "alpha",
-  "discount"), zlabels = NULL, heat.map = TRUE, palette = NULL,
-  g = NULL, mat = TRUE, ind = NULL, fac = NULL, by.fac = FALSE,
+  "discount"), g = NULL, mat = TRUE, zlabels = NULL, heat.map = TRUE,
+  palette = NULL, ind = NULL, fac = NULL, by.fac = FALSE,
   type = c("h", "n", "p", "l"), intervals = TRUE, partial = FALSE,
   titles = TRUE, transparency = 0.75, ...)
 }
@@ -19,15 +19,15 @@
 
 \item{param}{The parameter of interest for any of the following \code{plot.meth} options: \code{trace}, \code{density}, \code{means}, \code{correlation}. The \code{param} must have been stored when \code{\link{mcmc_IMIFA}} was initially ran. Includes \code{pis} for methods where clustering takes place, and allows posterior inference on \code{alpha} and \code{discount} for the "\code{IMFA}" and "\code{IMIFA}" methods.}
 
+\item{g}{Optional argument that allows specification of exactly which cluster the plot of interest is to be produced for. If not supplied, the user will be prompted to cycle through plots for all clusters. Also functions as an index for which plot to return when \code{plot.meth} is \code{GQ} or \code{zlabels} in much the same way.}
+
+\item{mat}{Logical indicating whether a \code{\link{matplot}} is produced (defaults to \code{TRUE}). If given as \code{FALSE}, \code{ind} is invoked.}
+
 \item{zlabels}{The true labels can be supplied if they are known. If this is not supplied, the function uses the labels that were supplied, if any, to \code{\link{get_IMIFA_results}}. Only relevant when \code{plot.meth = "zlabels"}.}
 
 \item{heat.map}{Switch which allows plotting posterior mean loadings or posterior mean scores as a heatmap, or else as something akin to \code{link{plot(..., type="h")}}. Only relevant if \code{param = "loadings"} (in which case the default is \code{TRUE}) or \code{param = "scores"} (in which case the default is \code{FALSE}). Heatmaps are produced with the aid of \code{\link{mat2cols}} and \code{\link{plot_cols}}.}
 
 \item{palette}{An optional colour palette to be supplied if overwriting the default palette set inside the function by \code{\link[viridisLite]{viridis}} is desired.}
-
-\item{g}{Optional argument that allows specification of exactly which cluster the plot of interest is to be produced for. If not supplied, the user will be prompted to cycle through plots for all clusters. Also functions as an index for which plot to return when \code{plot.meth} is \code{GQ} or \code{zlabels} in much the same way.}
-
-\item{mat}{Logical indicating whether a \code{\link{matplot}} is produced (defaults to \code{TRUE}). If given as \code{FALSE}, \code{ind} is invoked.}
 
 \item{ind}{Either a single number indicating which variable to plot when \code{param} is one of \code{means} or \code{uniquenesses}, or which cluster to plot if \code{param} is \code{pis}. If \code{scores} are plotted, a vector of length two giving which observation and factor to plot; If \code{loadings} are plotted, a vector of length two giving which variable and factor to plot. Only relevant when \code{mat} or \code{by.fac} is \code{FALSE}.}
 

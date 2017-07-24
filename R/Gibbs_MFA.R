@@ -22,6 +22,8 @@
     Q0             <- Q  > 0
     Q1             <- Q == 1
     uni            <- P == 1
+    sw["s.sw"]     <- sw["s.sw"] && Q0
+    sw["l.sw"]     <- sw["l.sw"] && Q0
     if(sw["mu.sw"])  {
       mu.store     <- array(0L,  dim=c(P, G, n.store))
     }

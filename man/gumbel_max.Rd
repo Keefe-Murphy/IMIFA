@@ -22,9 +22,9 @@ Though the function is available for standalone use, note that no checks take pl
 If the normalising constant is required for another reason, e.g. to compute the log-likelihood, it can be calculated by summing the output obtained by calling \code{\link[matrixStats]{rowLogSumExps}} on \code{probs}.
 }
 \examples{
-# Create a 1-row matrix of weights
+# Create weights for 3 components
   G         <- 3
-  weights   <- matrix(c(1, 2, 3), nrow=1, ncol=G)
+  weights   <- seq_len(G)
 
 # Call gumbel_max() repeatedly to obtain samples of the labels, zs
   iters     <- 10000
@@ -33,14 +33,14 @@ If the normalising constant is required for another reason, e.g. to compute the 
 
 # Compare answer to the normalised weights
   tabulate(zs, nbins=G)/iters
-  normalised <- as.numeric(weights/sum(weights))
+  (normalised <- as.numeric(weights/sum(weights)))
 
 # Simulate a matrix of dirichlet weights & the associated vector of N labels
   N       <- 400
   G       <- 8
   sizes   <- seq(from=85, to=15, by=-10)
   weights <- matrix(rDirichlet(N * G, alpha=1, nn=sizes), byrow=TRUE, nrow=N, ncol=G)
-  zs      <- gumbel_max(probs=log(weights))
+  (zs     <- gumbel_max(probs=log(weights)))
 }
 \references{
 Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, <\href{https://arxiv.org/abs/1701.07010}{arXiv:1701.07010}>.

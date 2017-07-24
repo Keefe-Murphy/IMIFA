@@ -8,6 +8,7 @@ __Infinite Mixtures of Infinite Factor Analysers__
 * All methods now work for univariate data also (with apt. edits to plots & uniqueness defaults etc.).
 * `Zsimilarity` sped-up via `mcclust::comp.psm` s.t. `z.avgsim=TRUE` now by default in `get_IMIFA_results`.
 * Added "`hc`" option to `z.init` to initialise allocations via hierarchical clustering (using `mclust::hc`).
+* Simplified `mcmc_IMIFA` by consolidating storage switch arguments using new function `storeControl`.
 * Standard deviation of AICM/BICM model selection criteria now computed and returned.
 * `heat_legend` gains `cex.lab` argument to control magnification of legend text.
 

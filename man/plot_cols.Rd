@@ -32,7 +32,7 @@ plot_cols(cmat, na.col = "#808080FF", ptype = c("image", "points"),
 \item{...}{Further graphical parameters.}
 }
 \value{
-Either an \code{"image"} or \code{"points"} plot of the supplied colours.
+Either an \code{"image"} or \code{"points"} type plot of the supplied colours.
 }
 \description{
 Plots a matrix of colours as a heat map type image or as points. Intended for joint use with \code{mat2cols}.
@@ -42,8 +42,7 @@ Plots a matrix of colours as a heat map type image or as points. Intended for jo
 mat      <- matrix(rnorm(100), nrow=10, ncol=10)
 mat[2,3] <- NA
 cols     <- heat.colors(12)[12:1]
-matcol   <- mat2cols(mat, cols=cols)
-matcol
+(matcol  <- mat2cols(mat, cols=cols))
 
 # Use plot_cols() to visualise the colours matrix
 par(mar=c(5.1, 4.1, 4.1, 4.1))

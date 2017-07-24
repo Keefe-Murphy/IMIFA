@@ -89,8 +89,8 @@
 #' @export
 #'
 #' @examples
-#' prior     <- rDirichlet(G=5, alpha=1)
-#' posterior <- rDirichlet(G=5, alpha=1, nn=c(20, 41, 32, 8, 12))
+#' (prior     <- rDirichlet(G=5, alpha=1))
+#' (posterior <- rDirichlet(G=5, alpha=1, nn=c(20, 41, 32, 8, 12)))
     rDirichlet   <- function(G, alpha, nn = 0) {
       tmp        <- rgamma(G, shape=alpha + nn, rate=1)
         tmp/sum(tmp)
@@ -124,9 +124,9 @@
 #' @author Keefe Murphy
 #'
 #' @examples
-#' # Create a 1-row matrix of weights
+#' # Create weights for 3 components
 #'   G         <- 3
-#'   weights   <- matrix(c(1, 2, 3), nrow=1, ncol=G)
+#'   weights   <- seq_len(G)
 #'
 #' # Call gumbel_max() repeatedly to obtain samples of the labels, zs
 #'   iters     <- 10000
@@ -135,15 +135,16 @@
 #'
 #' # Compare answer to the normalised weights
 #'   tabulate(zs, nbins=G)/iters
-#'   normalised <- as.numeric(weights/sum(weights))
+#'   (normalised <- as.numeric(weights/sum(weights)))
 #'
 #' # Simulate a matrix of dirichlet weights & the associated vector of N labels
 #'   N       <- 400
 #'   G       <- 8
 #'   sizes   <- seq(from=85, to=15, by=-10)
 #'   weights <- matrix(rDirichlet(N * G, alpha=1, nn=sizes), byrow=TRUE, nrow=N, ncol=G)
-#'   zs      <- gumbel_max(probs=log(weights))
+#'   (zs     <- gumbel_max(probs=log(weights)))
     gumbel_max   <- function(probs, slice = FALSE) {
+     if(is.vector(probs)) probs <- t(probs)
      if(isTRUE(slice)) {
       fps        <- is.finite(probs)
       probs[fps] <- probs[fps] - log(rexp(sum(fps)))
@@ -250,10 +251,12 @@
   # Uniqueness Hyperparameters
 #' Find sensible inverse gamma hyperparameters for variance/uniqueness parameters
 #'
-#' Takes a shape hyperparameter and covariance matrix, and finds data-driven rate hyperparameters in such a way that Heywood problems are avoided for factor analysis or probabilistic principal components analysis (and mixtures thereof). Rates are allowed to be variable-specific or a single value under the factor analysis model, but must be a single value for the PPCA model. Used internally by \code{\link{mcmc_IMIFA}} when its argument \code{psi_beta} is not supplied.
+#' Takes a shape hyperparameter and covariance matrix, and finds data-driven rate hyperparameters in such a way that Heywood problems are avoided for factor analysis or probabilistic principal components analysis (and mixtures thereof).
 #' @param shape A positive shape hyperparameter.
 #' @param covar A square, positive-semidefinite covariance matrix.
 #' @param type A switch indicating whether a single rate (\code{isotropic}) or variable-specific rates (\code{unconstrained}) are to be derived. The isotropic constraint provides the link between factor analysis and the probabilistic principal components analysis model. Uniquenesses are only allowed to be variable specific under the factor analysis model.
+#'
+#' @details Rates are allowed to be variable-specific or a single value under the factor analysis model, but \emph{must} be a single value for the PPCA model. Used internally by \code{\link{mcmc_IMIFA}} when its argument \code{psi_beta} is not supplied.
 #'
 #' @return Either a single rate hyperparameter or \code{ncol(covar)} variable specific hyperparameters.
 #' @export
@@ -268,12 +271,10 @@
 #' @examples
 #' data(olive)
 #' olive2 <- olive[,-(1:2)]
-#' rates  <- psi_hyper(shape=2.5, covar=cov(olive2), type="isotropic")
-#' rates
+#' (rates <- psi_hyper(shape=2.5, covar=cov(olive2), type="isotropic"))
 #'
 #' olive_scaled <- scale(olive2, center=TRUE, scale=TRUE)
-#' rate   <- psi_hyper(shape=3, covar=cov(olive_scaled), type="unconstrained")
-#' rate
+#' (rate  <- psi_hyper(shape=3, covar=cov(olive_scaled), type="unconstrained"))
     psi_hyper   <- function(shape, covar, type=c("unconstrained", "isotropic")) {
       if(!all(is.posi_def(covar, semi=TRUE),
               is.symmetric(covar),
@@ -330,19 +331,21 @@
   # Check Shrinkage Hyperparemeters
 #' Check the validity of Multiplicative Gamma Process (MGP) hyperparameters
 #'
-#' Checks the hyperparameters for the multiplicative gamma process (MGP) shrinkage prior in order to ensure that the property of cumulative shrinkage holds. This is called inside \code{\link{mcmc_IMIFA}} for the "\code{IFA}", "\code{MIFA}", "\code{OMIFA}" and "\code{IMIFA}" methods. The arguments \code{ad1, ad2, nu, bd1} and \code{bd2} are vectorised.
-#' @param ad1 Shape hyperparameter for delta_1.
-#' @param ad2 Shape hyperparameter for delta_2.
-#' @param Q Number of latent factors.
-#' @param nu Hyperparameter for the local shrinkage parameters.
-#' @param bd1 Rate hyperparameter for delta_1. Defaults to 1.
-#' @param bd2 Rate hyperparameter for delta_2. Defaults to 1.
+#' Checks the hyperparameters for the multiplicative gamma process (MGP) shrinkage prior in order to ensure that the property of cumulative shrinkage holds.
+#' @param ad1 Shape hyperparameter for \eqn{\delta_1}{delta_1}.
+#' @param ad2 Shape hyperparameter for \eqn{\delta_2}{delta_2}.
+#' @param Q Number of latent factors. Defaults to 3, which is enough to check if the cumulative shrinkage property holds. Supply \code{Q} if the actual \emph{a priori} expected shrinkage factors are of interest.
+#' @param nu Hyperparameter for the local shrinkage parameters. Defaults to 2. Not necessary for checking if the cumulative shrinkage property holds, but worth supplying if the actual \emph{a priori} expected shrinkage factors are of interest.
+#' @param bd1 Rate hyperparameter for \eqn{\delta_1}{delta_1}. Defaults to 1.
+#' @param bd2 Rate hyperparameter for \eqn{\delta_2}{delta_2}. Defaults to 1.
 #' @param plus1 Logical indicator for whether the Gamma prior on the local shrinkage parameters is of the form Ga(\code{nu + 1, nu}), the default, or Ga(\code{nu, nu}).
 #' @param inverse Logical indicator for whether the cumulative shrinkage property is assessed against the induced Inverse Gamma prior, the default, or in terms of the Gamma prior (which is incorrect). This is always \code{TRUE} when used inside \code{\link{mcmc_IMIFA}}: the \code{FALSE} option exists only for demonstration purposes.
 #'
+#' @details This is called inside \code{\link{mcmc_IMIFA}} for the "\code{IFA}", "\code{MIFA}", "\code{OMIFA}" and "\code{IMIFA}" methods. The arguments \code{ad1, ad2, nu, bd1} and \code{bd2} are vectorised.
+#'
 #' @return A list of length 2 containing the following objects:
 #' \describe{
-#'   \item{expectation}{The vector of actual expected shrinkage factors, i.e. the inverse of the global shrinkage parameters.}
+#'   \item{expectation}{The vector of actual expected shrinkage factors, \emph{a priori}.}
 #'   \item{valid}{A logical indicating whether the cumulative shrinkage property holds.}
 #' }
 #' @export
@@ -355,18 +358,16 @@
 #' @author Keefe Murphy
 #'
 #' @examples
-#' # Check if expected shrinkage under the MGP increases with the column index (WRONG!).
+#' # Check if expected shrinkage under the MGP increases with the column index (WRONG approach!).
 #' MGP_check(ad1=1.5, ad2=1.8, Q=10, nu=2, inverse=FALSE)[[1]]$valid
 #'
 #' # Check if the induced IG prior on the MGP global shrinkage parameters
-#' # is stochastically increasing, thereby inducing cumulative shrinkage (CORRECT!).
+#' # is stochastically increasing, thereby inducing cumulative shrinkage (CORRECT approach!).
 #' MGP_check(ad1=1.5, ad2=1.8, Q=10, nu=2, inverse=TRUE)[[1]]$valid
 #'
 #' # Check again with a parameterisation that IS valid and examine the expected shrinkage values.
-#' shrink <- MGP_check(ad1=1.5, ad2=2.8, Q=10, nu=2, inverse=TRUE)[[1]]
-#' shrink$valid
-#' shrink$expectation
-    MGP_check   <- Vectorize(function(ad1, ad2, Q, nu, bd1 = 1L, bd2 = 1L, plus1 = TRUE, inverse = TRUE) {
+#' (shrink <- MGP_check(ad1=1.5, ad2=2.8, Q=10, nu=2, inverse=TRUE)[[1]])
+    MGP_check   <- Vectorize(function(ad1, ad2, Q = 3, nu = 2, bd1 = 1L, bd2 = 1L, plus1 = TRUE, inverse = TRUE) {
       if(any(!is.logical(plus1),
              length(plus1)    != 1))       stop("'plus1' must be TRUE or FALSE")
       if(any(!is.logical(inverse),
@@ -397,13 +398,15 @@
   # Number of 'free' parameters
 #' Estimate the Number of Free Parameters in Finite Factor Analytic Mixture Models (PGMM)
 #'
-#' Estimates the dimension of the 'free' parameters in fully finite factor analytic mixture models, otherwise known as Parsimonious Gaussian Mixture Models (PGMM). This is used to calculate the penalty terms for the \code{aic.mcmc} and \code{bic.mcmc} model selection criteria implemented in \code{\link{get_IMIFA_results}} for \emph{finite} factor models (though \code{\link{mcmc_IMIFA}} currently only implements \code{UUU} and \code{UUC} covariance structures).
+#' Estimates the dimension of the 'free' parameters in fully finite factor analytic mixture models, otherwise known as Parsimonious Gaussian Mixture Models (PGMM), typically necessary for the penalty term of various model selection criteria.
 #' @param Q The number of latent factors (which can be 0, corresponding to a model with diagonal covariance). This argument is vectorised.
 #' @param P The number of variables.
 #' @param G The number of clusters. This defaults to 1.
 #' @param method By default, calculation assumes the \code{UUU} model with unconstrained loadings and unconstrained isotropic uniquesses. The other seven models detailed in McNicholas and Murphy (2008) are also given. The first letter denotes whether loadings are constrained/unconstrained across clusters; the second letter denotes the same for the uniquenesses; the final letter denotes whether uniquenesses are in turn constrained to be isotropic.
 #' @param equal.pro Logical variable indicating whether or not the mixing mixing proportions are equal across clusters in the model (default = \code{FALSE}).
 #'
+#' @details This function is used to calculate the penalty terms for the \code{aic.mcmc} and \code{bic.mcmc} model selection criteria implemented in \code{\link{get_IMIFA_results}} for \emph{finite} factor models (though \code{\link{mcmc_IMIFA}} currently only implements the \code{UUU}, \code{UUC}, \code{UCU}, and \code{UCC} covariance structures). The function is vectorized with respect to the argument \code{Q}.
+
 #' @return A vector of length \code{length(Q)}.
 #'
 #' @note Though the function is available for standalone use, note that no checks take place, in order to speed up repeated calls to the function inside \code{\link{mcmc_IMIFA}}.
@@ -415,8 +418,8 @@
 #' @author Keefe Murphy
 #'
 #' @examples
-#' UUU <- PGMM_dfree(Q=4:5, P=50, G=3, method="UUU")
-#' CCC <- PGMM_dfree(Q=4:5, P=50, G=3, method="CCC", equal.pro=TRUE)
+#' (UUU <- PGMM_dfree(Q=4:5, P=50, G=3, method="UUU"))
+#' (CCC <- PGMM_dfree(Q=4:5, P=50, G=3, method="CCC", equal.pro=TRUE))
     PGMM_dfree   <- Vectorize(function(Q, P, G = 1, method = c("UUU", "UUC", "UCU", "UCC", "CUU", "CUC", "CCU", "CCC"), equal.pro = FALSE) {
       if(length(equal.pro) > 1 ||
          !is.logical(equal.pro))           stop("'equal.pro' must be a single logical indicator")
@@ -463,21 +466,25 @@
     }
 
   # Similarity matrix and 'average' clustering
-#' Summarises MCMC clustering labels with a similarity matrix and finds the 'average' clustering
+#' Summarise MCMC samples of clustering labels with a similarity matrix and find the 'average' clustering
 #'
-#' This functions takes a Monte Carlo sample of cluster labels, converts them to adjacency matrices, and computes a similarity matrix as an average of the adjacency matrices. The dimension of the similarity matrix is invariant to label switching and the number of clusters in each sample. As a summary of the posterior clustering, the clustering with minimum squared distance to this 'average' clustering is reported.
-#' @param zs A matrix containing samples of clustering labels where the columns correspond to the number of observations and the rows correspond to the number of iterations.
+#' This function takes a Monte Carlo sample of cluster labels, computes an average similarity matrixand returns the clustering with minimum squared distance to this average.
+#' @param zs A matrix containing samples of clustering labels where the columns correspond to the number of observations (N) and the rows correspond to the number of iterations (M).
+#'
+#' @details This function takes a Monte Carlo sample of cluster labels, converts them to adjacency matrices, and computes a similarity matrix as an average of the adjacency matrices. The dimension of the similarity matrix is invariant to label switching and the number of clusters in each sample, desirable features when summarising partitions of Bayesian nonparametric models such as IMIFA. As a summary of the posterior clustering, the clustering with minimum squared distance to this 'average' clustering is reported.\cr
+#'
+#' A heatmap of \code{z.sim} may provide a useful visualisation, if appropriately ordered. The user is also invited to perform hierarchical clustering using \code{\link[stats]{hclust}} after first converting this similarity matrix to a distance matrix - "complete" linkage is recommended.
 #'
 #' @return A list containing three elements:
 #' \describe{
 #' \item{z.avg}{The 'average' clustering, with minimum squared distance to \code{z.sim}.}
-#' \item{z.sim}{The N x N similary matrix, in a sparse format (see \code{\link[slam]{simple_triplet_matrix}}). If the data have been previously ordered, a (ordered) heatmap may provide a useful visualisation. The user is also invited to perform hierarchical clustering using \code{\link[stats]{hclust}} after first converting this similarity matrix to a distance matrix - "complete" linkage is recommended.}
-#' \item{dist.z}{A vector of length N recording the distances between each clustering and the 'average' clustering.}
+#' \item{z.sim}{The N x N similary matrix, in a sparse format (see \code{\link[slam]{simple_triplet_matrix}}).}
+#' \item{dist.z}{A vector of length M recording the distances between each clustering and the 'average' clustering.}
 #' }
 #' @export
 #' @importFrom mcclust "cltoSim" "comp.psm"
 #'
-#' @note This function is implemented purely in R and as such its performance in terms of speed and memory may not be optimal; it can take quite a considerable amount of time to run, and may crash if the number of observations &/or number of iterations is so large that the similarity matrix is insufficiently sparse. This function can optionally be called inside \code{\link{get_IMIFA_results}}.
+#' @note This is liable to take quite some time to run, especially if the number of observations &/or number of iterations is large. Depending on how distinct the clusters are, \code{z.sim} may be stored better in a non-sparse format. This function can optionally be called inside \code{\link{get_IMIFA_results}}.
 #' @seealso \code{\link{get_IMIFA_results}}, \code{\link[slam]{simple_triplet_matrix}}, \code{\link[stats]{hclust}}, \code{\link[mcclust]{comp.psm}}, \code{\link[mcclust]{cltoSim}}
 #'
 #' @author Keefe Murphy
@@ -508,7 +515,9 @@
       if(!is.matrix(zs))                   stop("'zs' must be a matrix with rows corresponding to the number of observations and columns corresponding to the number of iterations")
       zsim      <- comp.psm(zs)
       dist.z    <- vapply(seq_len(nrow(zs)), function(i, x=cltoSim(zs[i,]) - zsim) tryCatch(suppressWarnings(sum(x * x)), error=function(e) Inf), numeric(1L))
-        return(list(z.avg = zs[which.min(dist.z),], z.sim = as.simple_triplet_matrix(zsim), dist.z = dist.z))
+      Z.avg     <- zs[which.min(dist.z),]
+      attr(Z.avg, "Distance")  <-  min(dist.z)
+        return(list(z.avg = Z.avg, z.sim = as.simple_triplet_matrix(zsim), dist.z = dist.z))
     }
 
   # Move 1
@@ -694,10 +703,12 @@
   # Moments of Dirichlet / Pitman-Yor Processes
 #' 1st Moment of the Dirichlet / Pitman-Yor processes
 #'
-#' Calculates the expected number of clusters under a Dirichlet process or Pitman-Yor process prior for a sample of size \code{N} at given values of the concentration parameter \code{alpha} and optionally also the \code{discount} parameter. Useful for soliciting sensible priors for \code{alpha} or suitable fixed values for \code{alpha} or \code{discount} under the "\code{IMFA}" and "\code{IMIFA}" methods for \code{\link{mcmc_IMIFA}}, All arguments are vectorised.
+#' Calculates the expected number of clusters under a Dirichlet process or Pitman-Yor process prior for a sample of size \code{N} at given values of the concentration parameter \code{alpha} and optionally also the \code{discount} parameter. Useful for soliciting sensible priors (or fixed values) for \code{alpha} or \code{discount} under the "\code{IMFA}" and "\code{IMIFA}" methods for \code{\link{mcmc_IMIFA}}.
 #' @param N The sample size.
 #' @param alpha The concentration parameter. Must be specified and must be strictly greater than \code{-discount}.
 #' @param discount The discount parameter for the Pitman-Yor process. Must lie in the interval [0, 1). Defaults to 0 (i.e. the Dirichlet process).
+#'
+#' @details All arguments are vectorised. Users can also consult \code{\link{G_variance}} and \code{\link{G_priorDensity}} in order to solicit sensible priors.
 #'
 #' @return The expected number of clusters under the specified prior conditions.
 #' @export
@@ -740,8 +751,10 @@
 
 #' 2nd Moment of Dirichlet / Pitman-Yor processes
 #'
-#' Calculates the variance in the number of clusters under a Dirichlet process or Pitman-Yor process prior for a sample of size \code{N} at given values of the concentration parameter \code{alpha} and optionally also the \code{discount} parameter. Useful for soliciting sensible priors for \code{alpha} or suitable fixed values for \code{alpha} or \code{discount} under the "\code{IMFA}" and "\code{IMIFA}" methods for \code{\link{mcmc_IMIFA}}, All arguments are vectorised.
+#' Calculates the variance in the number of clusters under a Dirichlet process or Pitman-Yor process prior for a sample of size \code{N} at given values of the concentration parameter \code{alpha} and optionally also the \code{discount} parameter. Useful for soliciting sensible priors (or fixed values) for \code{alpha} or \code{discount} under the "\code{IMFA}" and "\code{IMIFA}" methods for \code{\link{mcmc_IMIFA}}.
 #' @inheritParams G_expected
+#' @details All arguments are vectorised. Users can also consult \code{\link{G_expected}} or \code{\link{G_priorDensity}} in order to solicit sensible priors.
+#'
 #' @return The variance of the number of clusters under the specified prior conditions.
 #' @export
 #'
@@ -874,6 +887,35 @@
         cat("Call:\t"); print(call); cat("\n")
         cat(paste0(capture.output(print.Results_IMIFA(object)), msg))
     }
+
+  # Control functions
+#' Set storage values for use with the IMIFA family of models
+#'
+#' Supplies a list of values for logical switches indicating whether parameters of interest (means, scores, loadings, uniquenesses, and mixing proportions) should be stored when running models from the IMIFA family via \code{\link{mcmc_IMIFA}}.
+#' @param load.switch Logical indicating whether the factor loadings are to be stored (defaults to \code{TRUE}).
+#' @param mu.switch Logical indicating whether the means are to be stored (defaults to \code{TRUE}).
+#' @param pi.switch Logical indicating whether the mixing proportions are to be stored (defaults to \code{TRUE}).
+#' @param psi.switch Logical indicating whether the uniquenesses are to be stored (defaults to \code{TRUE}).
+#' @param score.switch Logical indicating whether the factor scores are to be stored. As the array containing each sampled scores matrix tends to be amongst the largest objects to be stored, this defaults to \code{FALSE} inside \code{\link{mcmc_IMIFA}} when \code{length(range.G) * length(range.Q) > 10}, otherwise the default is \code{TRUE}. For the "\code{MIFA}", "\code{OMIFA}", and "\code{IMIFA}" methods, setting this switch to \code{FALSE} also offers a slight speed-up.
+#'
+#' @details \code{\link{storeControl}} is provided for assigning values for IMIFA models within \code{\link{mcmc_IMIFA}}. It may be useful not to store certain parameters if memory is an issue. Warning: posterior inference and plotting won't be posssible for parameters not stored. In particular, when loadings and uniquenesses are not stored, it will not be possible to estimate covariance matrices and compute error metrics.
+#'
+#' @note Further warning messages may appear when \code{\link{mcmc_IMIFA}} is called depending on the particularities of the data set and the IMIFA method employed etc. as additional checks occur.
+
+#' @return A named list in which the names are the names of the storage switches and the values are logicals indicating whether that parameter is to be stored. The list also contains as an attribute a logical for each switch indicating whether it was actually supplied (\code{TRUE}) or the default was accepted (\code{FALSE}).
+#' @export
+#'
+#' @seealso \code{\link{mcmc_IMIFA}}
+#' @author Keefe Murphy
+#' @examples
+#' storeControl(score.switch=FALSE)
+   storeControl <- function(load.switch = TRUE, mu.switch = TRUE, pi.switch = TRUE, psi.switch = TRUE, score.switch = TRUE) {
+      switches  <- c(l.sw=load.switch, mu.sw=mu.switch, pi.sw=pi.switch, psi.sw=psi.switch, s.sw=score.switch)
+      attr(switches, "Missing") <- c(l.sw=missing(load.switch), mu.sw=missing(mu.switch), pi.sw=missing(pi.switch), psi.sw=missing(psi.switch), s.sw=missing(score.switch))
+      if(any(length(switches)   != 5,
+             !is.logical(switches)))       stop("All logical parameter storage switches must be TRUE or FALSE")
+        switches
+   }
 
   # Other Hidden Functions
     .chol       <- function(x) tryCatch(chol(x), error=function(e) {

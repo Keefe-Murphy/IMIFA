@@ -17,7 +17,10 @@ G_variance(N, alpha, discount = 0L)
 The variance of the number of clusters under the specified prior conditions.
 }
 \description{
-Calculates the variance in the number of clusters under a Dirichlet process or Pitman-Yor process prior for a sample of size \code{N} at given values of the concentration parameter \code{alpha} and optionally also the \code{discount} parameter. Useful for soliciting sensible priors for \code{alpha} or suitable fixed values for \code{alpha} or \code{discount} under the "\code{IMFA}" and "\code{IMIFA}" methods for \code{\link{mcmc_IMIFA}}, All arguments are vectorised.
+Calculates the variance in the number of clusters under a Dirichlet process or Pitman-Yor process prior for a sample of size \code{N} at given values of the concentration parameter \code{alpha} and optionally also the \code{discount} parameter. Useful for soliciting sensible priors (or fixed values) for \code{alpha} or \code{discount} under the "\code{IMFA}" and "\code{IMIFA}" methods for \code{\link{mcmc_IMIFA}}.
+}
+\details{
+All arguments are vectorised. Users can also consult \code{\link{G_expected}} or \code{\link{G_priorDensity}} in order to solicit sensible priors.
 }
 \note{
 Requires use of the \code{Rmpfr} and \code{gmp} libraries for non-zero \code{discount} values.

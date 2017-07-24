@@ -1,6 +1,6 @@
 #' Adaptive Gibbs Sampler for Nonparameteric Model-based Clustering using models from the IMIFA family
 #'
-#' Carries out Gibbs sampling for all models from the IMIFA family, facilitating model-based clustering with dimensionally reduced factor-analytic covariance structures, with automatic estimation of the number of clusters and cluster-specific factors as appropriate to the method employed. Factor analysis with one group (FA/IFA), finite mixtures (MFA/MIFA), overfitted mixtures (OMFA/OMIFA), infinite factor models which employ the multiplicative gamma process (MGP) shrinkage prior (IFA/MIFA/OMIFA/IMIFA), and infinite mixtures which employ Dirichlet Process Mixture Models (IMFA/IMIFA) are all provided. Creates a raw object of class 'IMIFA' from which the optimal/modal model can be extracted by \code{\link{get_IMIFA_results}}.
+#' Carries out Gibbs sampling for all models from the IMIFA family, facilitating model-based clustering with dimensionally reduced factor-analytic covariance structures, with automatic estimation of the number of clusters and cluster-specific factors as appropriate to the method employed. Factor analysis with one group (FA/IFA), finite mixtures (MFA/MIFA), overfitted mixtures (OMFA/OMIFA), infinite factor models which employ the multiplicative gamma process (MGP) shrinkage prior (IFA/MIFA/OMIFA/IMIFA), and infinite mixtures which employ Dirichlet/Pitman-Yor Process Mixture Models (IMFA/IMIFA) are all provided.
 #'
 #' @param dat A matrix or data frame such that rows correspond to observations (\code{N}) and columns correspond to variables (\code{P}). Non-numeric variables and rows with missing entries will be removed.
 #' @param method An acronym for the type of model to fit where:
@@ -14,7 +14,7 @@
 #'  \item{"\code{IMFA}"}{Infinite Mixtures of Factor Analysers}
 #'  \item{"\code{IMIFA}"}{Infinite Mixtures of Infinite Factor Analysers}
 #' }
-#'  The "\code{classify}" method is not yet implemented. In principle, of course, one could overfit the "\code{MFA}" or "\code{MIFA}" models, but it is recommend to use the corresponding model options which begin with 'O' instead.
+#'  In principle, of course, one could overfit the "\code{MFA}" or "\code{MIFA}" models, but it is recommend to use the corresponding model options which begin with 'O' instead. Note that the "\code{classify}" method is not yet implemented.
 #' @param n.iters The number of iterations to run the Gibbs sampler for.
 #' @param range.G Depending on the method employed, either the range of values for the number of clusters, or the conseratively high starting value for the number of clusters. Defaults to 1 for the "\code{FA}" and "\code{IFA}" methods. For the "\code{MFA}" and "\code{MIFA}" models this is to be given as a range of candidate models to explore. For the "\code{OMFA}", "\code{OMIFA}", "\code{IMFA}", and "\code{IMIFA}" models, this is the number of clusters with which the chain is to be initialised, in which case the default is \code{min(N - 1, max(25, ceiling(3 * log(N))))}. For the "\code{OMFA}", and "\code{OMIFA}" models this upper limit remains fixed for the entire length of the chain; \code{range.G} also doubles as the default \code{trunc.G} for the "\code{IMFA}" and "\code{IMIFA}" models. However, when \code{N < P}, or when this bound is close to or exceeds \code{N} for any of these overfitted/infinite mixture models, it is better to initialise at a value closer to the truth (i.e. \code{ceiling(log(N))} by default), though the upper bound remains the same - as a result the role of \code{range.G} when \code{N < P} is no longer to specify the upper bound (which can still be modified via \code{trunc.G}, at least for the "\code{IMFA}" and "\code{IMIFA}" methods) and the number of clusters used for initialisation, but rather just the number of clusters used for initialisation only. If \code{length(range.G) * length(range.Q)} is large, consider not storing unnecessary parameters, or breaking up the range of models to be explored into chunks, and sending each chunk to \code{\link{get_IMIFA_results}}.
 #' @param range.Q Depending on the method employed, either the range of values for the number of latent factors, or, for methods ending in IFA the conservatively high starting value for the number of cluster-specific factors, in which case the default starting value is \code{floor(3 * log(P))}. For methods ending in IFA, different clusters can be modelled using different numbers of latent factors (incl. zero); for methods not ending in IFA it is possible to fit zero-factor models, corresponding to simple diagonal covariance structures. For instance, fitting the "\code{IMFA}" model with \code{range.Q=0} corresponds to a vanilla Dirichlet Process Mixture Model. If \code{length(range.G) * length(range.Q)} is large, consider not storing unnecessary parameters or breaking up the range of models to be explored into chunks, and sending each chunk to \code{\link{get_IMIFA_results}}.
@@ -27,7 +27,7 @@
 #' \item{"\code{unconstrained}"}{\strong{UUU} - variable-specific and cluster-specific: \eqn{\Psi_g = \Psi_g}{Psi_g = Psi_g}.}
 #' \item{"\code{isotropic}"}{\strong{UUC} - cluster-specific, equal across variables: \eqn{\Psi_g = \sigma_g^2 \mathcal{I}_p}{Psi_g = (sigma^2)_g I_p}.}
 #' \item{"\code{constrained}"}{\strong{UCU} - variable-specific, equal across clusters: \eqn{\Psi_g = \Psi}{Psi_g = Psi}.}
-#' \item{"\code{single}"}{\strong{UCC} - a single value equal across clusters and variables: \eqn{\Psi_g = \sigma^2 \mathcal{I}_p}{Psi_g = sigma^2 I_p}.}
+#' \item{"\code{single}"}{\strong{UCC} - single value equal across clusters and variables: \eqn{\Psi_g = \sigma^2 \mathcal{I}_p}{Psi_g = sigma^2 I_p}.}
 #' }
 #'  The first letter \strong{U} here corresponds to constraints on loadings (not yet implemented), the second letter corresponds to constrained/unconstrained across clusters, and the third letter corresponds to the isotropic constraint. Of course, only the third letter is of relevance for the single-cluster "\code{FA}" and "\code{IFA}" models, such that "\code{unconstrained}" and "\code{constrained}" are equivalent for these models, and so too are "\code{isotropic}" and "\code{single}".
 #' @param uni.prior A switch indicating whether uniquenesses rate hyperparameters are to be "\code{unconstrained}" or "\code{isotropic}", i.e. variable-specific or not. "\code{uni.prior}" must be "\code{isotropic}" if the last letter of "\code{uni.type}" is \strong{C}, but can take either value otherwise. Defaults to correspond to the last letter of \code{uni.type} if that is supplied and \code{uni.prior} is not, otherwise defaults to "\code{unconstrained}", but "\code{isotropic}" is recommended when \code{N < P}. Only relevant when "\code{psi.beta}" is not supplied and \code{\link{psi_hyper}} is therefore invoked.
@@ -68,19 +68,17 @@
 #' \item{"\code{lambda}"}{Iteration rescaling parameter which controls the speed at which adaptation diminishes, such that lower values cause the contribution of later iterations to diminish more slowly. Must lie in the interval (0.5, 1]. Defaults to 1 if not supplied but other elements of \code{tune.zeta} are.}
 #' \item{"\code{target}"}{The target acceptance rate. Must lie in the interval [0, 1]. Defaults to 0.441, which is optimum for univariate targets, if not supplied but other elements of \code{tune.zeta} are.}
 #' }
-#'  \code{tune.zeta} is only relevant when \code{isTRUE(learn.alpha)} under the "\code{IMFA}" or "\code{IMIFA}" models, and either the \code{discount} remains fixed at a non-zero value, or when \code{isTRUE(learn.d)} and \code{kappa < 1}. Since Gibbs steps are invoked for updated \code{alpha} when \code{discount == 0}, adaption occurs according to a running count of the number of iterations with non-zero sampled \code{discount} values. If diminishing adaptation invoked, the posterior mean \code{zeta} will be stored. Since caution is advised when employing adaptation, note that acceptance rates of between 10-50\% are generally considered adequate.
+#'  \code{tune.zeta} is only relevant when \code{isTRUE(learn.alpha)} under the "\code{IMFA}" or "\code{IMIFA}" models, and either the \code{discount} remains fixed at a non-zero value, or when \code{isTRUE(learn.d)} and \code{kappa < 1}. Since Gibbs steps are invoked for updated \code{alpha} when \code{discount == 0}, adaption occurs according to a running count of the number of iterations with non-zero sampled \code{discount} values. If diminishing adaptation is invoked, the posterior mean \code{zeta} will be stored. Since caution is advised when employing adaptation, note that acceptance rates of between 10-50\% are generally considered adequate.
 #' @param equal.pro Logical variable indicating whether or not the mixing mixing proportions are equal across clusters in the model (default = \code{FALSE}).
 #' @param mu0g Logical indicating whether the \code{mu.zero} hyperparameter can be cluster-specific. Defaults to \code{FALSE}. Only relevant for the "\code{MFA}" and "\code{MIFA}" methods when \code{z.list} is supplied.
 #' @param psi0g Logical indicating whether the \code{psi.beta} hyperparameter(s) can be cluster-specific. Defaults to \code{FALSE}. Only relevant for the "\code{MFA}" and "\code{MIFA}" methods when \code{z.list} is supplied, and only allowable when \code{uni.type} is one of \code{unconstrained} or \code{isotropic}.
-#' @param delta0g Logical indicating whether the \code{alpha.d1}  and \code{alpha.d2} hyperparameters can be cluster-specific. Defaults to \code{FALSE}. Only relevant for the "\code{MIFA}" method when \code{z.list} is supplied.
-#' @param mu.switch Logical indicating whether the means are to be stored (defaults to \code{TRUE}). May be useful not to store if memory is an issue. Warning: posterior inference won't be posssible.
-#' @param score.switch Logical indicating whether the factor scores are to be stored. As the array containing each sampled scores matrix tends to be amongst the largest objects to be stored, this defaults to \code{FALSE} when \code{length(range.G) * length(range.Q) > 10}, otherwise the default is \code{TRUE}. May be useful not to store if memory is an issue - for the "\code{MIFA}", "\code{OMIFA}", and "\code{IMIFA}" methods, setting this switch to \code{FALSE} also offers a slight speed-up. Warning: posterior inference won't be posssible.
-#' @param load.switch Logical indicating whether the factor loadings are to be stored (defaults to \code{TRUE}). May be useful not to store if memory is an issue. Warning: posterior inference won't be posssible.
-#' @param psi.switch Logical indicating whether the uniquenesses are to be stored (defaults to \code{TRUE}). May be useful not to store if memory is an issue. Warning: posterior inference won't be posssible.
-#' @param pi.switch Logical indicating whether the mixing proportions are to be stored (defaults to \code{TRUE}). May be useful not to store if memory is an issue. Warning: posterior inference won't be posssible.
+#' @param delta0g Logical indicating whether the \code{alpha.d1} and \code{alpha.d2} hyperparameters can be cluster-specific. Defaults to \code{FALSE}. Only relevant for the "\code{MIFA}" method when \code{z.list} is supplied.
+#' @param storage A list of logical indicators governing storage of parameters of interest for all models in the IMIFA family. Defaults are set by a call to \code{\link{storeControl}}.
 #' @param verbose Logical indicating whether to print output (e.g. run times) and a progress bar to the screen while the sampler runs. By default is \code{TRUE} if the session is interactive, and \code{FALSE} otherwise. If \code{FALSE}, warnings and error messages will still be printed to the screen, but everything else will be suppressed.
 #'
-#' @return A list of lists of lists of class "IMIFA" to be passed to \code{\link{get_IMIFA_results}}. If the returned object is x, candidate models accesible via subsetting, where x is of the form x[[1:length(range.G)]][[1:length(range.Q)]]. However, these objects of class "IMIFA" should rarely if ever be manipulated by hand - use of the \code{\link{get_IMIFA_results}} function is \emph{strongly} advised. Dedicated \code{print} and \code{summary} functions exist for objects of class "\code{IMIFA}".
+#' @details Creates a raw object of class 'IMIFA' from which the optimal/modal model can be extracted by \code{\link{get_IMIFA_results}}. If the returned object is x, candidate models are accesible via subsetting, where x is of the form x[[1:length(range.G)]][[1:length(range.Q)]]. However, these objects of class "IMIFA" should rarely if ever be manipulated by hand - use of the \code{\link{get_IMIFA_results}} function is \emph{strongly} advised.
+#'
+#' @return A list of lists of lists of class "IMIFA" to be passed to \code{\link{get_IMIFA_results}}. Dedicated \code{print} and \code{summary} functions exist for objects of class "\code{IMIFA}".
 #' @export
 #' @import stats
 #' @importFrom utils "capture.output" "head" "setTxtProgressBar" "tail" "txtProgressBar"
@@ -92,7 +90,7 @@
 #' @importFrom mclust "Mclust" "mclustBIC" "hc" "hclass"
 #' @importFrom utils "memory.limit"
 #'
-#' @seealso \code{\link{get_IMIFA_results}}, \code{\link{psi_hyper}}, \code{\link{MGP_check}}
+#' @seealso \code{\link{get_IMIFA_results}}, \code{\link{psi_hyper}}, \code{\link{MGP_check}}, \code{\link{storeControl}}
 #' @references
 #' Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, <\href{https://arxiv.org/abs/1701.07010}{arXiv:1701.07010}>.
 #'
@@ -123,9 +121,11 @@
 #' # summary(simPY)
 #'
 #' # Fit a MFA model to the scaled olive data, with isotropic uniquenesses (i.e. MPPCA).
-#' # Allow diagonal covariance as a special case where range.Q = 0. Accept all other defaults.
+#' # Allow diagonal covariance as a special case where range.Q = 0.
+#' # Don't store the scores. Accept all other defaults.
 #' # simMFA   <- mcmc_IMIFA(olive, method="MFA", n.iters=10000, range.G=3:6,
-#' #                        range.Q=0:3, centering=FALSE, uni.type="isotropic")
+#' #                        range.Q=0:3, storage=storeControl(store.switch=FALSE),
+#' #                        centering=FALSE, uni.type="isotropic")
 #'
 #' # Fit a MIFA model to the centered & scaled coffee data, w/ cluster labels initialised by K-Means.
 #' # Note that range.Q doesn't need to be specified. Allow IFA as a special case where range.G=1.
@@ -144,12 +144,11 @@
 #' # Try contraining uniquenesses to be common across both variables and clusters.
 #' # simOMIFA <- mcmc_IMIFA(coffee, method="OMIFA", range.G=10, psi.alpha=3,
 #' #                        nu=3, alpha=0.8, uni.type="single")
-mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA", "MFA", "IFA", "FA", "classify"), n.iters = 25000L, range.G = NULL, range.Q = NULL, burnin = n.iters/5,
-                        thinning = 2L, centering = TRUE, scaling = c("unit", "pareto", "none"), uni.type = c("unconstrained", "isotropic", "constrained", "single"), uni.prior = c("unconstrained", "isotropic"),
-                        alpha = NULL, psi.alpha = NULL, psi.beta = NULL, mu.zero = NULL, sigma.mu = NULL, sigma.l = NULL, z.init = c("mclust", "hc", "kmeans", "list", "priors"), z.list = NULL, adapt = TRUE,
-                        prop = NULL, epsilon = NULL, alpha.d1 = NULL, alpha.d2 = NULL, beta.d1 = NULL, beta.d2 = NULL, nu = NULL, nuplus1 = TRUE, adapt.at = NULL, b0 = NULL, b1 = NULL, trunc.G = NULL,
-                        learn.alpha = TRUE, alpha.hyper = NULL, ind.slice = TRUE, rho = NULL, IM.lab.sw = TRUE, discount = NULL, learn.d = FALSE, d.hyper = NULL, kappa = NULL, zeta = NULL, tune.zeta = NULL,
-                        equal.pro = FALSE, mu0g = FALSE, psi0g = FALSE, delta0g = FALSE, mu.switch = TRUE, score.switch = TRUE, load.switch = TRUE, psi.switch = TRUE, pi.switch = TRUE, verbose = interactive()) {
+mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA", "MFA", "IFA", "FA", "classify"), n.iters = 25000L, range.G = NULL, range.Q = NULL, burnin = n.iters/5, thinning = 2L, centering = TRUE,
+                        scaling = c("unit", "pareto", "none"), uni.type = c("unconstrained", "isotropic", "constrained", "single"), uni.prior = c("unconstrained", "isotropic"), alpha = NULL, psi.alpha = NULL, psi.beta = NULL,
+                        mu.zero = NULL, sigma.mu = NULL, sigma.l = NULL, z.init = c("mclust", "hc", "kmeans", "list", "priors"), z.list = NULL, adapt = TRUE, prop = NULL, epsilon = NULL, alpha.d1 = NULL, alpha.d2 = NULL,
+                        beta.d1 = NULL, beta.d2 = NULL, nu = NULL, nuplus1 = TRUE, adapt.at = NULL, b0 = NULL, b1 = NULL, trunc.G = NULL, learn.alpha = TRUE, alpha.hyper = NULL, ind.slice = TRUE, rho = NULL, IM.lab.sw = TRUE,
+                        discount = NULL, learn.d = FALSE, d.hyper = NULL, kappa = NULL, zeta = NULL, tune.zeta = NULL, equal.pro = FALSE, mu0g = FALSE, psi0g = FALSE, delta0g = FALSE, storage = storeControl(), verbose = interactive()) {
 
   call      <- match.call()
   defopt    <- options()
@@ -251,13 +250,9 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
          NlP, miss.uni, verbose))   message("Consider setting 'uni.type' to 'isotropic' or 'single', or at least 'uni.prior' to 'isotropic', in N << P cases")
 
 # Manage storage switches & warnings for other function inputs
-  if(!missing(mu.switch)  && all(!mu.switch, ifelse(method == "classify",
+  store.x   <- attr(storage, "Missing")
+  if(!store.x["mu.sw"] && all(!storage["mu.sw"], ifelse(method == "classify",
      !centering, !centered)))       warning("Centering hasn't been applied - are you sure you want mu.switch=FALSE?", call.=FALSE)
-  score.x   <- missing(score.switch)
-  pi.x      <- missing(pi.switch)
-  switches  <- c(mu.sw=mu.switch, s.sw=score.switch, l.sw=load.switch, psi.sw=psi.switch, pi.sw=pi.switch)
-  if(any(length(switches) != 5,
-         !is.logical(switches)))    stop("All logical parameter storage switches must be TRUE or FALSE")
   if(N < 2)                         stop("Must have more than one observation")
   G.x       <- missing(range.G)
   alpha.x   <- missing(learn.alpha)
@@ -372,6 +367,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
      G.init <- range.G    <- levs
     } else {
      G.init <- range.G    <- 1L
+     storage["pi.sw"]     <- FALSE
     }
     equal.pro      <- FALSE
     meth    <- method
@@ -379,9 +375,9 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     alp3    <- 3L   * alpha
     if(length(equal.pro) > 1 ||
        !is.logical(equal.pro))      stop("'equal.pro' must be a single logical indicator")
-    if(switches["pi.sw"]  &&
-       equal.pro)   { if(!pi.x)     message("Forced non-storage of mixing proportions as 'equal.pro' is TRUE")
-      switches["pi.sw"]   <- FALSE
+    if(storage["pi.sw"]   && equal.pro) {
+      if(!store.x["pi.sw"])         message("Forced non-storage of mixing proportions as 'equal.pro' is TRUE: only posterior mean estimates will be available")
+      storage["pi.sw"]    <- FALSE
     }
     if(G.x)                         stop("'range.G' must be specified")
     if(any(range.G  < 1))           stop("'range.G' must be strictly positive")
@@ -433,10 +429,10 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   len.X     <- len.G * len.Q
   if(all(len.X > 10,
          suppressWarnings(memory.limit())  <= 16256,
-         switches["s.sw"])) {
-    if(!score.x)            {       warning(paste0("The large number of candidate models being explored (", len.X, ") could lead to memory issues\nConsider setting 'score.switch' to FALSE or breaking up the task into chunks and calling get_IMIFA_results() on each chunk"), call.=FALSE)
+         storage["s.sw"]))  {
+    if(!store.x["s.sw"])    {       warning(paste0("The large number of candidate models being explored (", len.X, ") could lead to memory issues\nConsider setting 'score.switch' to FALSE or breaking up the task into chunks and calling get_IMIFA_results() on each chunk"), call.=FALSE)
     } else                  {       warning(paste0("'score.switch' set to FALSE as too many candidate models are being explored (", len.X, ")\nPosterior inference on the scores will not be possible, though you can risk forcing storage by supplying score.switch=TRUE\nConsider breaking up the task into chunks and calling get_IMIFA_results() on each chunk"), call.=FALSE)
-      switches["s.sw"]   <- FALSE
+      storage["s.sw"]    <- FALSE
     }
   }
   if(is.element(method, c("FA", "MFA", "OMFA", "IMFA"))) {
@@ -483,34 +479,27 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   if(any(all(method == "MFA",  any(range.G > 1)) && any(range.Q > 0),
          all(method == "MIFA", any(range.G > 1)), is.element(method, c("IMIFA",
      "IMFA", "OMIFA", "OMFA"))))  {
-    if(all(!switches["l.sw"],
-           !switches["psi.sw"]))  {
-                                    warning("Loadings & Uniquenesses not stored: will be unable to estimate covariance matrix and compute error metrics", call.=FALSE)
-    } else if(!switches["l.sw"])  { warning("Loadings not stored: may be unable to estimate covariance matrix and compute error metrics", call.=FALSE)
-    } else if(!switches["psi.sw"])  warning("Uniquenesses not stored: will be unable to estimate covariance matrix and compute error metrics", call.=FALSE)
+    if(all(!storage["l.sw"],
+           !storage["psi.sw"]))   {
+                                    message("Loadings & Uniquenesses not stored: will be unable to estimate covariance matrices and compute error metrics")
+    } else if(!storage["l.sw"])   { message("Loadings not stored: will be unable to estimate covariance matrices and compute error metrics")
+    } else if(!storage["psi.sw"])   message("Uniquenesses not stored: will be unable to estimate covariance matrices and compute error metrics")
   }
-  if(any(all(method == "MFA",  any(range.G > 1)),
-         all(method == "MIFA", any(range.G > 1)), is.element(method, c("IMIFA",
-     "IMFA", "OMIFA", "OMFA"))))  {
-    if(all(!switches["mu.sw"],
-           !switches["psi.sw"]))  {
-                                    warning("Means & Uniquenesses not stored: posterior mean estimates won't be available", call.=FALSE)
-    } else if(!switches["mu.sw"]) { warning("Means not stored: posterior mean estimates won't be available", call.=FALSE)
-    } else if(!switches["psi.sw"])  warning("Uniquenesses not stored: posterior mean estimates won't be available", call.=FALSE)
+  if(is.element(method,
+                c("FA", "IFA")))  {
+    if(all(!storage["mu.sw"],
+           !storage["psi.sw"]))   {
+                                    message("Means & Uniquenesses not stored, but posterior mean estimates will still be available")
+    } else if(!storage["mu.sw"])  { message("Means not stored, but posterior mean estimates will still be available")
+    } else if(!storage["psi.sw"])   message("Uniquenesses not stored, but posterior mean estimates will still be available")
   }
-  if(is.element(method, c("FA", "MFA", "OMFA", "IMFA")) && all(range.Q == 0)) {
-    if(all(switches[c("s.sw", "l.sw")]))  {
-                                    warning("Scores & Loadings not stored as model has zero factors", call.=FALSE)
-    } else if(switches["s.sw"])   { warning("Scores not stored as model has zero factors", call.=FALSE)
-    } else if(switches["l.sw"])   { warning("Loadings not stored as model has zero factors", call.=FALSE)
+  if(is.element(method, c("FA", "MFA", "OMFA", "IMFA")) && any(range.Q == 0)) {
+    if(all(storage[c("s.sw", "l.sw")]))   {
+                                    warning("Scores & Loadings not stored where 'range.Q==0' as model has zero factors", call.=FALSE)
+    } else if(storage["s.sw"])    { warning("Scores not stored where 'range.Q==0' as model has zero factors", call.=FALSE)
+    } else if(storage["l.sw"])    { warning("Loadings not stored where 'range.Q==0' as model has zero factors", call.=FALSE)
     }
-    switches[c("s.sw", "l.sw")]  <- FALSE
-  } else {
-    if(all(!switches[c("s.sw", "l.sw")])) {
-                                    warning("Posterior Scores & Loadings won't be available as they're not being stored", call.=FALSE)
-    } else if(!switches["s.sw"])  { warning("Posterior Scores won't be available as they're not being stored", call.=FALSE)
-    } else if(!switches["l.sw"])  { warning("Posterior Loadings won't be available as they're not being stored", call.=FALSE)
-    }
+    if(all(range.Q == 0))    storage[c("s.sw", "l.sw")] <- FALSE
   }
   if(all(is.element(method, c("FA", "IFA")), verbose,
          !zin.miss ||
@@ -574,7 +563,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   }
   imifa     <- list(list())
   Gi        <- Qi  <- 1L
-  gibbs.arg <- list(P = P, sigma.mu = sigma.mu, psi.alpha = psi.alpha, burnin = burnin, sw = switches,
+  gibbs.arg <- list(P = P, sigma.mu = sigma.mu, psi.alpha = psi.alpha, burnin = burnin, sw = storage,
                     thinning = thinning, iters = iters, verbose = verbose, uni.type = uni.type, uni.prior = uni.prior)
   if(is.element(method, c("IMIFA", "IMFA"))) {
     gibbs.def      <- all(kappa     < 1,  learn.d, learn.alpha)
@@ -609,10 +598,10 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     gibbs.arg      <- append(gibbs.arg, list(trunc.G = trunc.G, rho = rho, ind.slice = ind.slice, learn.alpha = learn.alpha, learn.d = learn.d, kappa = kappa,
                                              zeta = zeta, IM.lab.sw = IM.lab.sw, a.hyper = alpha.hyper, discount = discount, d.hyper = d.hyper, tune.zeta = tune.zeta))
   }
-  if(is.element(meth, c("FA",  "IFA")))  {
+  if(any(is.element(meth, c("FA",  "IFA")))) {
     gibbs.arg      <- append(gibbs.arg, list(scaling   = scaling))
   }
-  if(is.element(meth, c("MFA", "MIFA"))) {
+  if(is.element(method, c("MFA", "MIFA")))   {
     gibbs.arg      <- append(gibbs.arg, list(equal.pro = equal.pro))
   }
   if(!is.element(method, c("FA", "MFA", "OMFA", "IMFA"))) {
@@ -846,7 +835,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   avg.time  <- tot.time/switch(method, MFA=len.X, MIFA=len.G, classify=range.G, len.Q)
   tot.time  <- tot.time    + init.time
   init.time <- init.time   + fac.time
-  for(g in length(imifa)) {
+  for(g  in length(imifa)) {
    for(q in length(imifa[[g]])) {
      imifa[[g]][[q]]$time <- NULL
    }
@@ -890,11 +879,8 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   attr(attr(imifa,
   "Scaling"), "Method")   <- scaling
   attr(imifa, "Store")    <- length(iters)
-  switches                <- c(switches, a.sw = learn.alpha, d.sw = learn.d)
-  if(is.element(method, c("FA", "IFA"))) {
-    switches["pi.sw"]     <- FALSE
-  }
-  attr(imifa, "Switch")   <- switches
+  storage                 <- c(storage, a.sw = learn.alpha, d.sw = learn.d)
+  attr(imifa, "Switch")   <- storage
   times                   <- lapply(list(Total = tot.time, Average = avg.time, Initialisation = init.time), round, 2)
   if(all(len.G  == 1,
          len.Q  == 1)) {
