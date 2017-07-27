@@ -47,7 +47,7 @@
       rgamma(V, shape=u.shape, rate=colSums(do.call(rbind, S.mat))/2 + psi.beta)
     }
 
-    .sim_psi_cc  <- function(u.shape, psi.beta, S.mat, V = 1) {
+    .sim_psi_cc  <- function(u.shape, psi.beta, S.mat, V = 1L) {
       rgamma(V, shape=u.shape, rate=sum(unlist(S.mat))/2 + psi.beta)
     }
 
@@ -55,7 +55,7 @@
       rgamma(V, shape=u.shape, rate=colSums(S.mat * S.mat)/2 + psi.beta)
     }
 
-    .sim_psi_c1  <- function(u.shape, psi.beta, S.mat, V = 1) {
+    .sim_psi_c1  <- function(u.shape, psi.beta, S.mat, V = 1L) {
       rgamma(V, shape=u.shape, rate=sum(S.mat * S.mat)/2 + psi.beta)
     }
 
@@ -91,12 +91,12 @@
 #' @examples
 #' (prior     <- rDirichlet(G=5, alpha=1))
 #' (posterior <- rDirichlet(G=5, alpha=1, nn=c(20, 41, 32, 8, 12)))
-    rDirichlet   <- function(G, alpha, nn = 0) {
+    rDirichlet   <- function(G, alpha, nn = 0L) {
       tmp        <- rgamma(G, shape=alpha + nn, rate=1)
         tmp/sum(tmp)
     }
 
-    .sim_vs_inf  <- function(alpha, nn = 0, N = sum(nn), discount, len, lseq = NULL) {
+    .sim_vs_inf  <- function(alpha, nn = 0L, N = sum(nn), discount, len, lseq = NULL) {
         if(discount == 0) rbeta(len, 1 + nn, alpha + N - cumsum(nn)) else rbeta(len, 1 - discount + nn, alpha + lseq * discount + N - cumsum(nn))
     }
 
@@ -335,7 +335,7 @@
 #' @param ad1 Shape hyperparameter for \eqn{\delta_1}{delta_1}.
 #' @param ad2 Shape hyperparameter for \eqn{\delta_2}{delta_2}.
 #' @param Q Number of latent factors. Defaults to 3, which is enough to check if the cumulative shrinkage property holds. Supply \code{Q} if the actual \emph{a priori} expected shrinkage factors are of interest.
-#' @param nu Hyperparameter for the local shrinkage parameters. Defaults to 2. Not necessary for checking if the cumulative shrinkage property holds, but worth supplying if the actual \emph{a priori} expected shrinkage factors are of interest.
+#' @param nu Hyperparameter for the local shrinkage parameters. Defaults to 2. Not necessary for checking if the cumulative shrinkage property holds, but worth supplying when \code{plus1} is \code{FALSE} if the actual \emph{a priori} expected shrinkage factors are of interest.
 #' @param bd1 Rate hyperparameter for \eqn{\delta_1}{delta_1}. Defaults to 1.
 #' @param bd2 Rate hyperparameter for \eqn{\delta_2}{delta_2}. Defaults to 1.
 #' @param plus1 Logical indicator for whether the Gamma prior on the local shrinkage parameters is of the form Ga(\code{nu + 1, nu}), the default, or Ga(\code{nu, nu}).
@@ -367,14 +367,12 @@
 #'
 #' # Check again with a parameterisation that IS valid and examine the expected shrinkage values.
 #' (shrink <- MGP_check(ad1=1.5, ad2=2.8, Q=10, nu=2, inverse=TRUE)[[1]])
-    MGP_check   <- Vectorize(function(ad1, ad2, Q = 3, nu = 2, bd1 = 1L, bd2 = 1L, plus1 = TRUE, inverse = TRUE) {
+    MGP_check   <- Vectorize(function(ad1, ad2, Q = 3L, nu = 2, bd1 = 1, bd2 = 1, plus1 = TRUE, inverse = TRUE) {
       if(any(!is.logical(plus1),
              length(plus1)    != 1))       stop("'plus1' must be TRUE or FALSE")
       if(any(!is.logical(inverse),
              length(inverse)  != 1))       stop("'inverse' must be TRUE or FALSE")
       if(missing(ad1) || missing(ad2))     stop("Shrinkage shape hyperparameters 'ad1' and 'ad2' must be supplied")
-      if(missing(nu))                      stop("Local shrinkage parameter 'nu' must be supplied")
-      if(missing(Q))                       stop("Number of latent factors 'Q' must be supplied")
       if(any(nu <= !plus1,
              !is.numeric(nu)))             stop(paste0("'nu' must be a single ", ifelse(plus1,
                                                 "strictly positive number for the Ga(nu + 1, nu) parameterisation",
@@ -420,7 +418,7 @@
 #' @examples
 #' (UUU <- PGMM_dfree(Q=4:5, P=50, G=3, method="UUU"))
 #' (CCC <- PGMM_dfree(Q=4:5, P=50, G=3, method="CCC", equal.pro=TRUE))
-    PGMM_dfree   <- Vectorize(function(Q, P, G = 1, method = c("UUU", "UUC", "UCU", "UCC", "CUU", "CUC", "CCU", "CCC"), equal.pro = FALSE) {
+    PGMM_dfree   <- Vectorize(function(Q, P, G = 1L, method = c("UUU", "UUC", "UCU", "UCC", "CUU", "CUC", "CCU", "CCC"), equal.pro = FALSE) {
       if(length(equal.pro) > 1 ||
          !is.logical(equal.pro))           stop("'equal.pro' must be a single logical indicator")
       meth       <- unlist(strsplit(match.arg(method), ""))
@@ -468,10 +466,10 @@
   # Similarity matrix and 'average' clustering
 #' Summarise MCMC samples of clustering labels with a similarity matrix and find the 'average' clustering
 #'
-#' This function takes a Monte Carlo sample of cluster labels, computes an average similarity matrixand returns the clustering with minimum squared distance to this average.
+#' This function takes a Monte Carlo sample of cluster labels, computes an average similarity matrix and returns the clustering with minimum mean squared error to this average.
 #' @param zs A matrix containing samples of clustering labels where the columns correspond to the number of observations (N) and the rows correspond to the number of iterations (M).
 #'
-#' @details This function takes a Monte Carlo sample of cluster labels, converts them to adjacency matrices, and computes a similarity matrix as an average of the adjacency matrices. The dimension of the similarity matrix is invariant to label switching and the number of clusters in each sample, desirable features when summarising partitions of Bayesian nonparametric models such as IMIFA. As a summary of the posterior clustering, the clustering with minimum squared distance to this 'average' clustering is reported.\cr
+#' @details This function takes a Monte Carlo sample of cluster labels, converts them to adjacency matrices, and computes a similarity matrix as an average of the adjacency matrices. The dimension of the similarity matrix is invariant to label switching and the number of clusters in each sample, desirable features when summarising partitions of Bayesian nonparametric models such as IMIFA. As a summary of the posterior clustering, the clustering with minimum mean squared error to this 'average' clustering is reported.\cr
 #'
 #' A heatmap of \code{z.sim} may provide a useful visualisation, if appropriately ordered. The user is also invited to perform hierarchical clustering using \code{\link[stats]{hclust}} after first converting this similarity matrix to a distance matrix - "complete" linkage is recommended.
 #'
@@ -479,7 +477,7 @@
 #' \describe{
 #' \item{z.avg}{The 'average' clustering, with minimum squared distance to \code{z.sim}.}
 #' \item{z.sim}{The N x N similary matrix, in a sparse format (see \code{\link[slam]{simple_triplet_matrix}}).}
-#' \item{dist.z}{A vector of length M recording the distances between each clustering and the 'average' clustering.}
+#' \item{MSE.z}{A vector of length M recording the MSEs between each clustering and the 'average' clustering.}
 #' }
 #' @export
 #' @importFrom mcclust "cltoSim" "comp.psm"
@@ -498,26 +496,25 @@
 #' # Get the similarity matrix and visualise it
 #' # zsimil <- Zsimilarity(zs)
 #' # z.sim  <- as.matrix(zsimil$z.sim)
-#' # z.sim2 <- replace(z.sim, z.sim == 0, NA)
-#' # image(z.sim2, col=heat.colors(30)[30:1]); box(lwd=2)
+#' # z.col  <- mat2cols(z.sim, cols=heat.colors(30)[30:1])
+#' # z.col[z.sim == 0] <- NA
+#' # plot_cols(z.col, na.col=par()$bg); box(lwd=2)
 #'
 #' # Extract the clustering with minimum squared distance to this
 #' # 'average' and evaluate its performance against the true labels
-#' # z.avg  <- zsimil$z.avg
-#' # table(z.avg, olive$area)
+#' # table(zsimil$z.avg, olive$area)
 #'
 #' # Perform hierarchical clustering on the distance matrix
 #' # Hcl    <- hclust(as.dist(1 - z.sim), method="complete")
 #' # plot(Hcl)
-#' # hier.z <- cutree(Hcl, k=3)
-#' # table(hier.z, olive$area)
+#' # table(cutree(Hcl, k=3), olive$area)
     Zsimilarity <- function(zs) {
       if(!is.matrix(zs))                   stop("'zs' must be a matrix with rows corresponding to the number of observations and columns corresponding to the number of iterations")
       zsim      <- comp.psm(zs)
-      dist.z    <- vapply(seq_len(nrow(zs)), function(i, x=cltoSim(zs[i,]) - zsim) tryCatch(suppressWarnings(sum(x * x)), error=function(e) Inf), numeric(1L))
-      Z.avg     <- zs[which.min(dist.z),]
-      attr(Z.avg, "Distance")  <-  min(dist.z)
-        return(list(z.avg = Z.avg, z.sim = as.simple_triplet_matrix(zsim), dist.z = dist.z))
+      mse.z     <- vapply(seq_len(nrow(zs)), function(i, x=cltoSim(zs[i,]) - zsim) tryCatch(suppressWarnings(mean(x * x)), error=function(e) Inf), numeric(1L))
+      Z.avg     <- zs[which.min(mse.z),]
+      attr(Z.avg, "MSE") <- min(mse.z)
+        return(list(z.avg = Z.avg, z.sim = as.simple_triplet_matrix(zsim), MSE.z = mse.z))
     }
 
   # Move 1
@@ -724,7 +721,7 @@
 #'
 #' # require("Rmpfr")
 #' # G_expected(N=50, alpha=c(19.23356, 12.21619, 1), discount=c(0, 0.25, 0.7300045))
-    G_expected  <- Vectorize(function(N, alpha, discount = 0L) {
+    G_expected  <- Vectorize(function(N, alpha, discount = 0) {
       if(!all(is.numeric(N), is.numeric(discount),
          is.numeric(alpha)))               stop("All inputs must be numeric")
       if(discount  < 0  || discount >= 1)  stop("'discount' must lie in the interval [0,1)")
@@ -768,7 +765,7 @@
 #'
 #' # require("Rmpfr")
 #' # G_variance(N=50, alpha=c(19.23356, 12.21619, 1), discount=c(0, 0.25, 0.7300045))
-    G_variance  <- Vectorize(function(N, alpha, discount = 0L) {
+    G_variance  <- Vectorize(function(N, alpha, discount = 0) {
       if(!all(is.numeric(N), is.numeric(discount),
          is.numeric(alpha)))               stop("All inputs must be numeric")
       if(discount  < 0  || discount >= 1)  stop("'discount' must lie in the interval [0,1)")
@@ -898,14 +895,14 @@
 #' @param psi.switch Logical indicating whether the uniquenesses are to be stored (defaults to \code{TRUE}).
 #' @param score.switch Logical indicating whether the factor scores are to be stored. As the array containing each sampled scores matrix tends to be amongst the largest objects to be stored, this defaults to \code{FALSE} inside \code{\link{mcmc_IMIFA}} when \code{length(range.G) * length(range.Q) > 10}, otherwise the default is \code{TRUE}. For the "\code{MIFA}", "\code{OMIFA}", and "\code{IMIFA}" methods, setting this switch to \code{FALSE} also offers a slight speed-up.
 #'
-#' @details \code{\link{storeControl}} is provided for assigning values for IMIFA models within \code{\link{mcmc_IMIFA}}. It may be useful not to store certain parameters if memory is an issue. Warning: posterior inference and plotting won't be posssible for parameters not stored. In particular, when loadings and uniquenesses are not stored, it will not be possible to estimate covariance matrices and compute error metrics.
+#' @details \code{\link{storeControl}} is provided for assigning values for IMIFA models within \code{\link{mcmc_IMIFA}}. It may be useful not to store certain parameters if memory is an issue. Warning: posterior inference and plotting won't be posssible for parameters not stored. In particular, when loadings and uniquenesses are not stored, it will not be possible to estimate covariance matrices and compute error metrics. If loadings are not stored but scores are, caution is advised when examining posterior scores as Procrustes rotation will not occur within \code{\link{get_IMIFA_results}}.
 #'
 #' @note Further warning messages may appear when \code{\link{mcmc_IMIFA}} is called depending on the particularities of the data set and the IMIFA method employed etc. as additional checks occur.
 
 #' @return A named list in which the names are the names of the storage switches and the values are logicals indicating whether that parameter is to be stored. The list also contains as an attribute a logical for each switch indicating whether it was actually supplied (\code{TRUE}) or the default was accepted (\code{FALSE}).
 #' @export
 #'
-#' @seealso \code{\link{mcmc_IMIFA}}
+#' @seealso \code{\link{mcmc_IMIFA}} \code{\link{get_IMIFA_results}}
 #' @author Keefe Murphy
 #' @examples
 #' storeControl(score.switch=FALSE)

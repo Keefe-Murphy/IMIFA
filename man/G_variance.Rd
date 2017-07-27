@@ -4,7 +4,7 @@
 \alias{G_variance}
 \title{2nd Moment of Dirichlet / Pitman-Yor processes}
 \usage{
-G_variance(N, alpha, discount = 0L)
+G_variance(N, alpha, discount = 0)
 }
 \arguments{
 \item{N}{The sample size.}

@@ -4,7 +4,7 @@
 \alias{G_priorDensity}
 \title{Plot Dirichlet / Pitman-Yor process Priors}
 \usage{
-G_priorDensity(N, alpha, discount = 0L, show.plot = TRUE)
+G_priorDensity(N, alpha, discount = 0, show.plot = TRUE)
 }
 \arguments{
 \item{N}{The sample size.}

@@ -4,7 +4,7 @@
 \alias{G_expected}
 \title{1st Moment of the Dirichlet / Pitman-Yor processes}
 \usage{
-G_expected(N, alpha, discount = 0L)
+G_expected(N, alpha, discount = 0)
 }
 \arguments{
 \item{N}{The sample size.}

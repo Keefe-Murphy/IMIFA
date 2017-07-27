@@ -1,7 +1,7 @@
 __Infinite Mixtures of Infinite Factor Analysers__
 ==================================================  
 
-# IMIFA v1.3.2 - (_6<sup>th</sup> release [patch update]: 2017-07-10_)
+# IMIFA v1.3.2 - (_6<sup>th</sup> release [patch update]: 2017-07-26_)
 ## Improvements
 * Added ability to constrain mixing proportions across clusters using `equal.pro` argument for M(I)FA models:  
   modified PGMM_dfree accordingly and forced non-storage of mixing proportions when `equal.pro` is TRUE.  
@@ -15,7 +15,12 @@ __Infinite Mixtures of Infinite Factor Analysers__
 ## Bug Fixes
 * Fixed bug preventing `uni.prior="isotropic"` when `uni.type` is `(un)constrained`.
 * Fixed model selection in `get_IMIFA_results` for IMFA/OMFA models when `range.Q` is a range.
+* Fixed treatment of exact zeros when plotting average clustering similarity matrix.
+* Fixed tiny bug when neither centering nor scaling (of any kind) are applied to data within `mcmc_IMIFA`.
+* Fixed plotting of posterior mean scores when one or more clusters are empty.
 * Fixed storage switches to account for `burnin=0`.
+* Fixed bug with default plotting palette for data sets with >1024 variables.
+* Transparency default in `plot.Results_IMIFA` now depends on device's support of semi-transparency.
 
 # IMIFA v1.3.1 - (_5<sup>th</sup> release [patch update]: 2017-07-07_)
 ## Bug Fixes

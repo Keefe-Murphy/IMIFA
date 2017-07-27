@@ -43,7 +43,7 @@
 
 \item{titles}{Logical indicating whether default plot titles are to be used (\code{TRUE}), or suppressed (\code{FALSE}).}
 
-\item{transparency}{A factor in [0, 1] modifying the opacity for overplotted lines. Defaults to 0.75.}
+\item{transparency}{A factor in [0, 1] modifying the opacity for overplotted lines. Defaults to 0.75, unless semi-transparency is not supported.}
 
 \item{...}{Other arguments typically passed to \code{\link{plot}}.}
 }

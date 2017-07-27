@@ -5,7 +5,7 @@
 \title{Simulating Data from a Mixture of Factor Analysers Structure}
 \usage{
 sim_IMIFA_data(N = 300L, G = 3L, P = 50L, Q = rep(floor(log(P)), G),
-  pis = rep(1/G, G), psi = NULL, nn = NULL, loc.diff = 1L,
+  pis = rep(1/G, G), psi = NULL, nn = NULL, loc.diff = 1,
   method = c("conditional", "marginal"))
 }
 \arguments{

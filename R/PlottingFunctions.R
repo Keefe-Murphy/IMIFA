@@ -15,13 +15,13 @@
 #' @param intervals Logical indicating whether credible intervals around the posterior mean(s) are to be plotted when \code{is.element(plot.meth, c("all", "means"))}. Defaults to \code{TRUE}.
 #' @param partial Logical indicating whether plots of type "\code{correlation}" use the PACF. The default, \code{FALSE}, ensures the ACF is used. Only relevant when \code{plot.meth = "all"}, otherwise both plots are produced when \code{plot.meth = "correlation"}.
 #' @param titles Logical indicating whether default plot titles are to be used (\code{TRUE}), or suppressed (\code{FALSE}).
-#' @param transparency A factor in [0, 1] modifying the opacity for overplotted lines. Defaults to 0.75.
+#' @param transparency A factor in [0, 1] modifying the opacity for overplotted lines. Defaults to 0.75, unless semi-transparency is not supported.
 #' @param ... Other arguments typically passed to \code{\link{plot}}.
 #'
 #' @return The desired plot with appropriate output and summary statistics printed to the console screen.
 #' @export
 #' @import graphics
-#' @importFrom grDevices "adjustcolor" "col2rgb" "palette" "heat.colors"
+#' @importFrom grDevices "adjustcolor" "col2rgb" "dev.capabilities" "palette" "heat.colors"
 #' @importFrom Rfast "Order" "med" "colMedians"
 #' @importFrom plotrix "plotCI"
 #' @importFrom e1071 "classAgreement"
@@ -81,14 +81,20 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
   if(mispal)             palette <- viridis(min(10, max(G, Q.max, 5)))
   if(!all(is.cols(cols=palette)))     stop("Supplied colour palette contains invalid colours")
   if(length(palette) < 5)             warning("Palette should contain 5 or more colours", call.=FALSE)
+  trx     <- dev.capabilities()$semiTransparency
+  xtr     <- missing(transparency)
   if(length(transparency) != 1   &&
      any(!is.numeric(transparency),
          (transparency     < 0 ||
           transparency     > 1)))     stop("'transparency' must be a single number in [0, 1]")
+  if(transparency   != 1   && !trx) {
+    if(!xtr)                          message("'transparency' not supported on this device")
+     transparency   <- 1
+  }
   tmp.pal <- palette
   palette <- adjustcolor(palette, alpha.f=transparency)
   palette(palette)
-  grey    <- "#9999994D"
+  grey    <- ifelse(trx, "#9999994D", "#999999")
   defopt  <- options()
   options(warn=1)
   suppressWarnings(par(cex.axis=0.8, new=FALSE))
@@ -103,7 +109,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
   method  <- attr(x, "Method")
   store   <- attr(x, "Store")
   n.var   <- attr(x, "Vars")
-  var.pal <- max(n.var, 2)
+  var.pal <- max(min(n.var, 1024), 2)
   n.obs   <- attr(x, "Obs")
   z.sim   <- attr(x, "Z.sim")
   equalpi <- attr(x, "Equal.Pi")
@@ -273,7 +279,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
     msgx  <- all(interactive(), g != max(Gs))
     if(any(all(Qs == 0, param == "scores"),
            all(Q  == 0, param == "loadings"),
-           all(ng == 0, param == "scores", m.sw["M.sw"]))) {
+           all(ng == 0, param == "scores", m.sw["M.sw"] && !all.ind))) {
                                       warning(paste0("Can't plot ", param, paste0(ifelse(any(all(param == "scores", ng == 0), all(param == "loadings", grp.ind)), paste0(" for cluster ", g), "")), " as they contain no ", ifelse(all(param == "scores", ng == 0), "rows/observations", "columns/factors")), call.=FALSE)
       if(g == max(Gs)) {
         break
@@ -363,7 +369,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           if(mispal) palette(viridis(min(10, max(2, n.var)), alpha=transparency))
         } else {
           plot.x  <- x.plot[ind[1],,]
-          if(mispal) palette(viridis(min(10, max(2, Q)), alpha=transparency))
+          if(mispal) palette(viridis(min(10, max(2, Q)),     alpha=transparency))
         }
         if(matx) {
           matplot(t(plot.x), type="l", ylab="", xlab="Iteration", lty=1, col=seq_along(palette()))
@@ -478,7 +484,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           if(mispal) palette(viridis(min(10, max(2, n.var)), alpha=transparency))
         } else {
           plot.x  <- x.plot[ind[1],,]
-          if(mispal) palette(viridis(min(10, max(2, Q)), alpha=transparency))
+          if(mispal) palette(viridis(min(10, max(2, Q)),     alpha=transparency))
         }
         if(matx) {
           plot.x  <- tryCatch(apply(plot.x, 1, density, bw="SJ"),       error = function(e) apply(plot.x, 1, density))
@@ -601,10 +607,11 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         if(type  == "n") text(x=seq_along(plot.x), y=plot.x, var.names, cex=0.5)
       }
       if(param == "scores") {
-        labs   <- if(grp.ind) clust$map else 1
+        labs   <- if(grp.ind) clust$map      else 1
         p.eta  <- x$Scores$post.eta
+        eta1st <- if(plot.meth   == "all" || !gx) 1 else min(which(grp.size > 0))
         if(g.score)  {
-          if(g.ind == 1)  tmplab <- labs
+          if(g.ind == eta1st)   tmplab    <- labs
           z.ind  <- tmplab %in% g
           plot.x <- p.eta[z.ind,,drop=FALSE]
           ind2   <- ifelse(any(!facx, Q     <= 1), ind[2], if(Q > 1)     max(2, ind[2]))
@@ -617,15 +624,15 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           if(ci.sw[param]) ci.x  <- x$Scores$ci.eta
           n.eta  <- n.obs
         }
-        if(isTRUE(heat.map)) {
+        if(isTRUE(heat.map))    {
           if(titles) par(mar=c(4.1, 4.1, 4.1, 4.1))
-          if(g   == min(Gs)) {
+          if(g.ind  == eta1st)  {
             sxx  <- mat2cols(p.eta, cols=hcols, na.col=par()$bg)
-            sxx  <- if(g.score) lapply(split(sxx, matrix(rep(seq_along(grp.size), grp.size), nrow=n.obs, ncol=ncol(sxx), byrow=FALSE)), matrix, ncol=ncol(sxx)) else sxx
-            pxx  <- range(x$Scores$post.eta)
+            sxx  <- if(g.score) lapply(split(sxx, factor(clust$map, levels=Gseq)), matrix, ncol=ncol(sxx)) else sxx
+            pxx  <- range(p.eta)
           }
           plot_cols(if(g.score) sxx[[g]] else sxx)
-          if(!is.element(Q.max, c(1, Q))) abline(v=ifelse(n.eta == 1, (Q - diff(par("usr")[1:2]) + 1)/Q.max, Q + 0.5), lty=2, lwd=1)
+          if(!is.element(Q.max, c(1, Q)) && plot.meth != "all") abline(v=Q + 0.5, lty=2, lwd=1)
           if(titles) {
             title(main=list(paste0("Posterior Mean", ifelse(!all.ind, " Scores ", " "), "Heatmap", ifelse(all(!all.ind, grp.ind), paste0(" - Cluster ", g), ""))))
             if(all.ind) {
@@ -635,10 +642,13 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
               axis(1, line=-0.5, tick=FALSE, at=Q, labels=Q, cex.axis=1.5)
             }
             heat_legend(data=pxx, cols=hcols)
+            if(Q.max != 1) {
+              absq   <- seq(from=par("usr")[1], to=par("usr")[2], length.out=Q.max + 1)
+              abline(v=absq[-c(1, length(absq))], lty=2, lwd=1, col=grey)
+            }
           }
           box(lwd=2)
           mtext(ifelse(Q.max > 1, "Factors", "Factor"), side=1, line=2)
-          if(Q.max != 1 && titles) abline(v=seq(from=par("usr")[1], to=par("usr")[2], length.out=Q.max + 1), lty=2, lwd=1, col=grey)
         } else {
           col.s  <- if(is.factor(labs)) as.integer(levels(labs))[labs] else labs
           type.s <- ifelse(any(type.x, type == "l"), "p", type)
@@ -669,7 +679,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         if(g   == min(Gs)) {
          if(isTRUE(heat.map)) {
           if(any(Qs == 0)) {
-           lxx <- mat2cols(Filter(Negate(is.null), plot.x), cols=hcols, compare=G > 1, na.col=par()$bg)
+           lxx <- mat2cols(Filter(Negate(is.null), plot.x),   cols=hcols, compare=G > 1, na.col=par()$bg)
            lxx <- replace(llist, Q0x, lxx)
           } else {
            lxx <- mat2cols(if(G > 1) plot.x else plot.x[[g]], cols=hcols, compare=G > 1, na.col=par()$bg)
@@ -691,7 +701,10 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           }
           box(lwd=2)
           mtext(ifelse(Q > 1, "Factors", "Factor"), side=1, line=2)
-          if(Q != 1 && titles) abline(v=seq(from=par("usr")[1], to=par("usr")[2], length.out=Q + 1), lty=2, lwd=1, col=grey)
+          if(Q != 1 && titles) {
+            absq <- seq(from=par("usr")[1], to=par("usr")[2], length.out=Q + 1)
+            abline(v=absq[-c(1, length(absq))], lty=2, lwd=1, col=grey)
+          }
         } else {
           plot.x <- plot.x[[g]]
           if(ci.sw[param]) ci.x  <- x$Loadings$ci.load[[g]]
@@ -981,7 +994,9 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         par(defpar)
         if(titles) par(mar=c(4.1, 4.1, 4.1, 4.1))
         z.col   <- if(!any(mispal, gx)) palette else heat.colors(12)[12:1]
-        plot_cols(mat2cols(replace(plot.x, plot.x == 0, NA), cols=z.col, na.col=par()$bg))
+        col.mat <- mat2cols(plot.x, cols=z.col, na.col=par()$bg)
+        col.mat[plot.x == 0] <- NA
+        plot_cols(col.mat, na.col=par()$bg)
         if(titles) {
           title(main=list("Average Similarity Matrix"))
           axis(1, at=n.obs/2, labels=paste0("Observation 1:N", if(p.ind) " (Reordered)"), tick=FALSE)
@@ -1385,7 +1400,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
 #'
 #' # Now plot them to examine tail behaviour as discount increases
 #' # (PY <- G_priorDensity(N=50, alpha=c(19.23356, 6.47006, 1), discount=c(0, 0.47002, 0.7300045)))
-  G_priorDensity      <- function(N, alpha, discount = 0L, show.plot = TRUE) {
+  G_priorDensity      <- function(N, alpha, discount = 0, show.plot = TRUE) {
     firstex    <- suppressMessages(requireNamespace("Rmpfr", quietly=TRUE))
     if(isTRUE(firstex)) {
       on.exit(.detach_pkg("Rmpfr"))
@@ -1433,7 +1448,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
     }
     if(isTRUE(show.plot))   {
       cols     <- seq(from=2, to=max.len + 1)
-      palette(adjustcolor(rep(cols, 2), alpha.f=0.5))
+      palette(adjustcolor(rep(cols, 2), alpha.f=ifelse(dev.capabilities()$semiTransparency, 0.5, 1)))
       matplot(x=seq_len(N), y=rx, type="h", col=cols, xlab="Clusters", ylim=c(0, max(rx)), ylab="Density",
               main=paste0("Prior Distribution of G\nN=", N), lwd=seq(3, 1, length.out=max.len), lty=seq_len(2))
     }

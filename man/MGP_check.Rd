@@ -4,7 +4,7 @@
 \alias{MGP_check}
 \title{Check the validity of Multiplicative Gamma Process (MGP) hyperparameters}
 \usage{
-MGP_check(ad1, ad2, Q = 3, nu = 2, bd1 = 1L, bd2 = 1L, plus1 = TRUE,
+MGP_check(ad1, ad2, Q = 3L, nu = 2, bd1 = 1, bd2 = 1, plus1 = TRUE,
   inverse = TRUE)
 }
 \arguments{
@@ -14,7 +14,7 @@ MGP_check(ad1, ad2, Q = 3, nu = 2, bd1 = 1L, bd2 = 1L, plus1 = TRUE,
 
 \item{Q}{Number of latent factors. Defaults to 3, which is enough to check if the cumulative shrinkage property holds. Supply \code{Q} if the actual \emph{a priori} expected shrinkage factors are of interest.}
 
-\item{nu}{Hyperparameter for the local shrinkage parameters. Defaults to 2. Not necessary for checking if the cumulative shrinkage property holds, but worth supplying if the actual \emph{a priori} expected shrinkage factors are of interest.}
+\item{nu}{Hyperparameter for the local shrinkage parameters. Defaults to 2. Not necessary for checking if the cumulative shrinkage property holds, but worth supplying when \code{plus1} is \code{FALSE} if the actual \emph{a priori} expected shrinkage factors are of interest.}
 
 \item{bd1}{Rate hyperparameter for \eqn{\delta_1}{delta_1}. Defaults to 1.}
 

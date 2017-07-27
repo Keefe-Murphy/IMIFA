@@ -25,7 +25,7 @@ A named list in which the names are the names of the storage switches and the va
 Supplies a list of values for logical switches indicating whether parameters of interest (means, scores, loadings, uniquenesses, and mixing proportions) should be stored when running models from the IMIFA family via \code{\link{mcmc_IMIFA}}.
 }
 \details{
-\code{\link{storeControl}} is provided for assigning values for IMIFA models within \code{\link{mcmc_IMIFA}}. It may be useful not to store certain parameters if memory is an issue. Warning: posterior inference and plotting won't be posssible for parameters not stored. In particular, when loadings and uniquenesses are not stored, it will not be possible to estimate covariance matrices and compute error metrics.
+\code{\link{storeControl}} is provided for assigning values for IMIFA models within \code{\link{mcmc_IMIFA}}. It may be useful not to store certain parameters if memory is an issue. Warning: posterior inference and plotting won't be posssible for parameters not stored. In particular, when loadings and uniquenesses are not stored, it will not be possible to estimate covariance matrices and compute error metrics. If loadings are not stored but scores are, caution is advised when examining posterior scores as Procrustes rotation will not occur within \code{\link{get_IMIFA_results}}.
 }
 \note{
 Further warning messages may appear when \code{\link{mcmc_IMIFA}} is called depending on the particularities of the data set and the IMIFA method employed etc. as additional checks occur.
@@ -34,7 +34,7 @@ Further warning messages may appear when \code{\link{mcmc_IMIFA}} is called depe
 storeControl(score.switch=FALSE)
 }
 \seealso{
-\code{\link{mcmc_IMIFA}}
+\code{\link{mcmc_IMIFA}} \code{\link{get_IMIFA_results}}
 }
 \author{
 Keefe Murphy

@@ -14,14 +14,14 @@ A list containing three elements:
 \describe{
 \item{z.avg}{The 'average' clustering, with minimum squared distance to \code{z.sim}.}
 \item{z.sim}{The N x N similary matrix, in a sparse format (see \code{\link[slam]{simple_triplet_matrix}}).}
-\item{dist.z}{A vector of length M recording the distances between each clustering and the 'average' clustering.}
+\item{MSE.z}{A vector of length M recording the MSEs between each clustering and the 'average' clustering.}
 }
 }
 \description{
-This function takes a Monte Carlo sample of cluster labels, computes an average similarity matrixand returns the clustering with minimum squared distance to this average.
+This function takes a Monte Carlo sample of cluster labels, computes an average similarity matrix and returns the clustering with minimum mean squared error to this average.
 }
 \details{
-This function takes a Monte Carlo sample of cluster labels, converts them to adjacency matrices, and computes a similarity matrix as an average of the adjacency matrices. The dimension of the similarity matrix is invariant to label switching and the number of clusters in each sample, desirable features when summarising partitions of Bayesian nonparametric models such as IMIFA. As a summary of the posterior clustering, the clustering with minimum squared distance to this 'average' clustering is reported.\cr
+This function takes a Monte Carlo sample of cluster labels, converts them to adjacency matrices, and computes a similarity matrix as an average of the adjacency matrices. The dimension of the similarity matrix is invariant to label switching and the number of clusters in each sample, desirable features when summarising partitions of Bayesian nonparametric models such as IMIFA. As a summary of the posterior clustering, the clustering with minimum mean squared error to this 'average' clustering is reported.\cr
 
 A heatmap of \code{z.sim} may provide a useful visualisation, if appropriately ordered. The user is also invited to perform hierarchical clustering using \code{\link[stats]{hclust}} after first converting this similarity matrix to a distance matrix - "complete" linkage is recommended.
 }
@@ -37,19 +37,18 @@ This is liable to take quite some time to run, especially if the number of obser
 # Get the similarity matrix and visualise it
 # zsimil <- Zsimilarity(zs)
 # z.sim  <- as.matrix(zsimil$z.sim)
-# z.sim2 <- replace(z.sim, z.sim == 0, NA)
-# image(z.sim2, col=heat.colors(30)[30:1]); box(lwd=2)
+# z.col  <- mat2cols(z.sim, cols=heat.colors(30)[30:1])
+# z.col[z.sim == 0] <- NA
+# plot_cols(z.col, na.col=par()$bg); box(lwd=2)
 
 # Extract the clustering with minimum squared distance to this
 # 'average' and evaluate its performance against the true labels
-# z.avg  <- zsimil$z.avg
-# table(z.avg, olive$area)
+# table(zsimil$z.avg, olive$area)
 
 # Perform hierarchical clustering on the distance matrix
 # Hcl    <- hclust(as.dist(1 - z.sim), method="complete")
 # plot(Hcl)
-# hier.z <- cutree(Hcl, k=3)
-# table(hier.z, olive$area)
+# table(cutree(Hcl, k=3), olive$area)
 }
 \seealso{
 \code{\link{get_IMIFA_results}}, \code{\link[slam]{simple_triplet_matrix}}, \code{\link[stats]{hclust}}, \code{\link[mcclust]{comp.psm}}, \code{\link[mcclust]{cltoSim}}

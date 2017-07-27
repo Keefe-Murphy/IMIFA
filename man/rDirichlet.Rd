@@ -4,7 +4,7 @@
 \alias{rDirichlet}
 \title{Simulate Mixing Proportions from a Dirichlet Distribution}
 \usage{
-rDirichlet(G, alpha, nn = 0)
+rDirichlet(G, alpha, nn = 0L)
 }
 \arguments{
 \item{G}{The number of clusters for which weights need to be sampled.}

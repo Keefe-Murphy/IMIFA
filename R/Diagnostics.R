@@ -11,7 +11,7 @@
 #' @param Q.meth If the object in \code{sims} arises from the "\code{IFA}", "\code{MIFA}", "\code{OMIFA}" or "\code{IMIFA}" methods, this argument determines whether the optimal number of latent factors is given by the mode or median of the posterior distribution of \code{Q}. Defaults to "\code{mode}".
 #' @param dat The actual data set on which \code{\link{mcmc_IMIFA}} was originally run. This is necessary for computing error metrics between the estimated and empirical covariance matrix/matrices. If this is not supplied, the function will attempt to find the data set if it is still available in the global environment.
 #' @param conf.level The confidence level to be used throughout for credible intervals for all parameters of inferential interest. Defaults to 0.95.
-#' @param z.avgsim Logical indicating whether the clustering should also be summarised with a call to \code{\link{Zsimilarity}} by the clustering with minimum squared distance to the similarity matrix obtained by averaging the stored adjacency matrices, in addition to the MAP estimate. Note that the MAP clustering is computed \emph{conditional} on the estimate of the number of clusters (whether that be the modal estimate or the estimate according to \code{criterion}) and other parameters are extracted conditional on this estimate of \code{G}: however, in constrast, the number of distinct clusters in the summarised labels obtained by specifying \code{z.avgsim=TRUE} may not necessarily coincide with the estimate of \code{G}, but may provide a useful alternative summary of the partitions explored during the chain. Please be warned that though this defaults to \code{TRUE}, this is liable to take considerable time to compute, and may not even be possible if the number of observations &/or number of stored iterations is large and the resulting matrix isn't sufficiently sparse. When \code{TRUE}, both the summarised clustering and the similarity matrix are stored: the latter can be passed to \code{\link{plot.Results_IMIFA}}.
+#' @param z.avgsim Logical indicating whether the clustering should also be summarised with a call to \code{\link{Zsimilarity}} by the clustering with minimum mean squared error to the similarity matrix obtained by averaging the stored adjacency matrices, in addition to the MAP estimate. Note that the MAP clustering is computed \emph{conditional} on the estimate of the number of clusters (whether that be the modal estimate or the estimate according to \code{criterion}) and other parameters are extracted conditional on this estimate of \code{G}: however, in constrast, the number of distinct clusters in the summarised labels obtained by specifying \code{z.avgsim=TRUE} may not necessarily coincide with the MAP estimate of \code{G}, but it may provide a useful alternative summary of the partitions explored during the chain, and the user is free to call \code{\link{get_IMIFA_results}} again with the new suggested \code{G} value. Please be warned that though this defaults to \code{TRUE}, this is liable to take considerable time to compute, and may not even be possible if the number of observations &/or number of stored iterations is large and the resulting matrix isn't sufficiently sparse. When \code{TRUE}, both the summarised clustering and the similarity matrix are stored: the latter can be visualised as part of a call to \code{\link{plot.Results_IMIFA}}.
 #' @param zlabels For any method that performs clustering, the true labels can be supplied if they are known in order to compute clustering performance metrics. This also has the effect of ordering the MAP labels (and thus the ordering of cluster-specific parameters) to most closely correspond to the true labels if supplied.
 #'
 #' @details The function also performs post-hoc corrections for label switching, as well as post-hoc Procrustes rotation of loadings matrices and scores, in order to ensure sensible posterior parameter estimates, constructs credible intervals, and generally transforms the raw \code{sims} object into an object of class "\code{Results_IMIFA}" in order to prepare the results for plotting via \code{\link{plot.Results_IMIFA}}.
@@ -111,7 +111,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   if(any(length(conf.level) != 1,
      !is.numeric(conf.level),
      (conf.level <= 0   ||
-      conf.level >= 1)))          stop("'conf.level' must be a single number between 0 and 1")
+      conf.level >= 1)))          stop("'conf.level' must be a single number in the interval (0, 1)")
   conf.levels    <- c((1 - conf.level)/2, (1 + conf.level)/2)
   choice         <- length(n.grp) * length(n.fac) > 1
   criterion      <- match.arg(criterion)
@@ -321,7 +321,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       }
       dat        <- if(uni) as.matrix(dat)[complete.cases(dat),, drop=FALSE] else dat[complete.cases(dat),]
       dat        <- dat[vapply(dat, is.numeric, logical(1L))]
-      dat        <- if(is.logical(scaling)) standardise(as.matrix(dat), center=cent, scale=scaling) else scale(dat, center=cent, scale=scaling)
+      dat        <- if(is.logical(scaling)) { if(any(cent, scaling)) standardise(as.matrix(dat), center=cent, scale=scaling) else as.matrix(dat) } else scale(dat, center=cent, scale=scaling)
       obsnames   <- rownames(dat)
       varnames   <- colnames(dat)
       if(!identical(dim(dat),
@@ -499,7 +499,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     }
     uncert.obs   <- which(uncertain >= 1/G)
     sizes        <- setNames(tabulate(map, nbins=G), gnames)
-    if(any(sizes == 0))           warning("Empty cluster exists in modal clustering:\nexamine trace plots and try supplying a lower G value to tune.imifa() or re-running the model", call.=FALSE)
+    if(any(sizes == 0))           warning(paste0("Empty cluster exists in modal clustering:\nexamine trace plots", ifelse(any(is.element(method, c("OMFA", "IMFA", "OMIFA", "IMIFA")), is.element(method, c("MFA", "MIFA")) && any(n.grp < G)), ", try to supply a lower G value to get_IMIFA_results(),", ""), " or re-run the model"), call.=FALSE)
     if(learn.alpha) {
       alpha      <- sims[[G.ind]][[Q.ind]]$alpha[store]
       post.alpha <- mean(alpha)
@@ -552,7 +552,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       Q          <- if(G.T) Q else setNames(rep(Q, G), gnames)
     }
     leder.b      <- min(n.obs - 1, Ledermann(n.var))
-    if(any(unlist(Q) > leder.b))  warning(paste0("Estimate of Q", ifelse(G > 1, " in one or more of the clusters ", " "), "is greater than ", ifelse(any(unlist(Q) > n.var), paste0("the number of variables (", n.var, ")"), paste0("the suggested Ledermann upper bound (", leder.b, ")")), ":\nsolution may be invalid"), call.=FALSE)
+    if(any(unlist(Q) > leder.b))  warning(paste0("Estimate of Q", ifelse(G > 1, " in one or more clusters ", " "), "is greater than ", ifelse(any(unlist(Q) > n.var), paste0("the number of variables (", n.var, ")"), paste0("the suggested Ledermann upper bound (", leder.b, ")")), ":\nsolution may be invalid"), call.=FALSE)
     Q.CI         <- if(G1) round(rowQuantiles(Q.store, probs=conf.levels)) else round(quantile(Q.store, conf.levels))
     GQ.temp4     <- list(Q = Q, Q.Mode = Q.mode, Q.Median = Q.med,
                          Q.CI = Q.CI, Q.Probs = Q.prob, Q.Counts = Q.tab,
@@ -588,6 +588,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       eta        <- as.array(eta)
     }
     eta          <- eta[,,eta.store, drop=FALSE]
+    if(!sw["l.sw"])               message("Caution advised when examining posterior factor scores: Procrustes rotation has not taken place because loadings weren't stored")
   }
 
 # Loop over g in G to extract other results
@@ -669,10 +670,12 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     }
     emp.T[g]     <- !is.null(cov.emp)
     if(data.x)         {
-      if(is.null(rownames(mu)))   {
+      if(sw["mu.sw"]     &&
+         is.null(rownames(mu)))   {
         rownames(mu)     <- varnames
       }
-      if(is.null(rownames(psi)))  {
+      if(sw["psi.sw"]    &&
+         is.null(rownames(psi)))  {
         rownames(psi)    <- varnames
       }
       if(sw["l.sw"]      &&
@@ -720,10 +723,10 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
         cov.est  <- NULL
         if(g == 1) {
          if(all(!sw["l.sw"], !Q0g, !sw["psi.sw"])) {
-                                  warning("Loadings & Uniquenesses not stored: can't estimate covariance matrix and compute error metrics", call.=FALSE)
+                                  message("Loadings & Uniquenesses not stored: can't estimate covariance matrix and compute error metrics")
          } else if(all(!Q0g,
-                  !sw["l.sw"])) { warning("Loadings not stored: can't estimate covariance matrix and compute error metrics", call.=FALSE)
-         } else if(!sw["psi.sw"]) warning("Uniquenesses not stored: can't estimate covariance matrix and compute error metrics", call.=FALSE)
+                  !sw["l.sw"])) { message("Loadings not stored: can't estimate covariance matrix and compute error metrics")
+         } else if(!sw["psi.sw"]) message("Uniquenesses not stored: can't estimate covariance matrix and compute error metrics")
         }
       }
     } else     {

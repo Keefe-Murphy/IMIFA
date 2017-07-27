@@ -39,7 +39,7 @@
 #' @param psi.beta The rate of the inverse gamma prior on the uniquenesses. Can be either a single parameter, a vector of variable specific rates, or a matrix of variable and cluster-specific rates. If this is not supplied, \code{\link{psi_hyper}} is invoked to choose sensible values, depending on the value of \code{uni.prior} and, for the "\code{MFA}" and "\code{MIFA}" models, the value of \code{psi0g}.
 #' @param z.init The method used to initialise the cluster labels. Defaults to \code{\link[mclust]{Mclust}}. Other options include \code{kmeans}, hierarchical clustering via \code{\link[mclust]{hc}}, random initialisation via \code{priors}, and a user-supplied \code{list}. Not relevant for the "\code{FA}" and "\code{"IFA"} methods.
 #' @param z.list A user supplied list of cluster labels. Only relevant if \code{z.init == "z.list"}.
-#' @param adapt A logical value indicating whether adaptation of the number of cluster-specific factors is to take place. Only relevant for methods ending in IFA, in which case the default is \code{TRUE}. Specifying \code{FALSE} and supplying \code{range.Q} provides a means to use the MGP prior in a finite factor context.
+#' @param adapt A logical value indicating whether adaptation of the number of cluster-specific factors is to take place when the MGP prior is employed. Only relevant for methods ending in IFA, in which case the default is \code{TRUE}. Specifying \code{FALSE} and supplying \code{range.Q} provides a means to either approximate the infinite factor model with a fixed high truncation level, or to use the MGP prior in a finite factor context.
 #' @param prop Proportion of elements within the neighbourhood \code{epsilon} of zero necessary to consider a loadings column redundant. Defaults to \code{floor(0.7 * P)/P}. Only relevant for methods ending in IFA.
 #' @param epsilon Neighbourhood of zero within which a loadings entry is considered negligible according to \code{prop}. Defaults to 0.1. Only relevant for methods ending in IFA.
 #' @param alpha.d1 Shape hyperparameter of the global shrinkage on the first column of the loadings according to the MGP shrinkage prior. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to 3. Only relevant for methods ending in IFA.
@@ -76,9 +76,11 @@
 #' @param storage A list of logical indicators governing storage of parameters of interest for all models in the IMIFA family. Defaults are set by a call to \code{\link{storeControl}}.
 #' @param verbose Logical indicating whether to print output (e.g. run times) and a progress bar to the screen while the sampler runs. By default is \code{TRUE} if the session is interactive, and \code{FALSE} otherwise. If \code{FALSE}, warnings and error messages will still be printed to the screen, but everything else will be suppressed.
 #'
-#' @details Creates a raw object of class 'IMIFA' from which the optimal/modal model can be extracted by \code{\link{get_IMIFA_results}}. If the returned object is x, candidate models are accesible via subsetting, where x is of the form x[[1:length(range.G)]][[1:length(range.Q)]]. However, these objects of class "IMIFA" should rarely if ever be manipulated by hand - use of the \code{\link{get_IMIFA_results}} function is \emph{strongly} advised.
+#' @details Creates a raw object of class "\code{IMIFA}" from which the optimal/modal model can be extracted by \code{\link{get_IMIFA_results}}. Dedicated \code{print} and \code{summary} functions exist for objects of class "\code{IMIFA}".
 #'
-#' @return A list of lists of lists of class "IMIFA" to be passed to \code{\link{get_IMIFA_results}}. Dedicated \code{print} and \code{summary} functions exist for objects of class "\code{IMIFA}".
+#' @note Further control over the specification of advanced function arguments can be obtained with recourse to the function \code{\link{storeControl}}.
+#'
+#' @return A list of lists of lists of class "\code{IMIFA}" to be passed to \code{\link{get_IMIFA_results}}. If the returned object is x, candidate models are accesible via subsetting, where x is of the form x[[1:length(range.G)]][[1:length(range.Q)]]. However, these objects of class "IMIFA" should rarely if ever be manipulated by hand - use of the \code{\link{get_IMIFA_results}} function is \emph{strongly} advised.
 #' @export
 #' @import stats
 #' @importFrom utils "capture.output" "head" "setTxtProgressBar" "tail" "txtProgressBar"
@@ -220,34 +222,36 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   if(method != "classify") {
     scal    <- switch(scaling, none=FALSE, Rfast::colVars(as.matrix(raw.dat), std=TRUE))
     scal    <- switch(scaling, pareto=sqrt(scal), scal)
-    dat     <- if(is.logical(scal)) standardise(as.matrix(raw.dat), center=centering, scale=scal) else scale(raw.dat, center=centering, scale=scal)
+    dat     <- if(is.logical(scal)) { if(any(centering, scal)) standardise(as.matrix(raw.dat), center=centering, scale=scal) else as.matrix(raw.dat) } else scale(raw.dat, center=centering, scale=scal)
   } else   {
-    dat     <- raw.dat
+    dat     <- as.matrix(raw.dat)
   }
   centered  <- switch(method, classify=all(round(colSums(dat)) == 0), any(centering, all(round(colSums(dat)) == 0)))
+  if(!any(centered, centering) && all(verbose,
+    scaling != "none"))             message("Are you sure you want to apply scaling without centering?")
   N         <- as.integer(nrow(dat))
   P         <- as.integer(ncol(dat))
   uni       <- P == 1
   lnN       <- log(N)
   NlP       <- N  < P
   miss.uni  <- missing(uni.type)
+  miss.pri  <- missing(uni.prior)
   uni.type  <- ifelse(miss.uni, ifelse(uni, "isotropic", "unconstrained"), match.arg(uni.type))
   if(uni) {
     if(is.element(uni.type, c("unconstrained", "constrained"))) {
       uni.new     <- switch(uni.type, unconstrained=, isotropic="isotropic", constrained=, single="single")
-                                    message(paste0("'uni.type' coerced to ", uni.new, " as the dataset is univariate"))
+      if(verbose)                   message(paste0("'uni.type' coerced to ", uni.new, " as the dataset is univariate"))
       uni.type    <- uni.new
     }
   }
   uni.prior <- ifelse(missing(uni.prior), switch(uni.type, constrained=, unconstrained="unconstrained", "isotropic"), match.arg(uni.prior))
-  if(uni    && uni.prior  == "unconstrained") {
+  if(uni    && all(uni.prior  == "unconstrained", verbose)) {
     uni.prior     <- "isotropic";   message("'uni.prior' coerced to isotropic as the dataset is univariate")
   }
   if(all(is.element(uni.type, c("isotropic", "single")),
      uni.prior == "unconstrained")) stop("'uni.prior' can only be 'unconstrained' when 'uni.type' is 'unconstrained' or 'constrained'")
-  if(all(uni.prior == "unconstrained",
-         is.element(uni.type, c("unconstrained", "constrained")),
-         NlP, miss.uni, verbose))   message("Consider setting 'uni.type' to 'isotropic' or 'single', or at least 'uni.prior' to 'isotropic', in N << P cases")
+  if(all(is.element(uni.type, c("unconstrained", "constrained")), any(miss.uni, miss.pri),
+         NlP, verbose))             message(paste0("Consider setting 'uni.type' to 'isotropic' or 'single'", ifelse(miss.pri && uni.prior == "unconstrained", ", or at least 'uni.prior' to 'isotropic', ", " "), "in N << P cases"))
 
 # Manage storage switches & warnings for other function inputs
   store.x   <- attr(storage, "Missing")
@@ -290,14 +294,14 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   }
   if(!is.element(method, c("MFA", "MIFA")))      {
     if(length(range.G) > 1)         stop(paste0("Only one 'range.G' value can be specified for the ", method, " method"))
-    if(all(!G.x, is.element(method, c("FA", "IFA"))) &&
+    if(all(!G.x, verbose, is.element(method, c("FA", "IFA"))) &&
        range.G  > 1)                message(paste0("'range.G' forced to 1 for the ", method, " method"))
     if(is.element(method, c("OMIFA", "OMFA", "IMFA", "IMIFA"))) {
       lnN2         <- ceiling(lnN)
       tmp.G        <- as.integer(min(N - 1, max(25, ceiling(3 * lnN))))
       if(G.x)   {
         range.G    <- G.init <- tmp.G
-        if(NlP) {     if(verbose)   message(paste0("Since N < P, the sampler will be initialised with a different default of ceiling(log(N)) = ", lnN2, " clusters (unless 'range.G' is supplied)"))
+        if(NlP) {     if(verbose)   message(paste0("Since N << P, the sampler will be initialised with a different default of ceiling(log(N)) = ", lnN2, " clusters (unless 'range.G' is supplied)"))
           G.init   <- max(2, lnN2)
         }
       }
@@ -314,13 +318,13 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
         x.IM.sw    <- missing(IM.lab.sw)
         if(any(!is.logical(IM.lab.sw),
            length(IM.lab.sw) != 1)) stop("'IM.lab.sw' must be TRUE or FALSE")
-        if(all(!x.IM.sw, isTRUE(IM.lab.sw), !isTRUE(learn.alpha),
+        if(all(!x.IM.sw, isTRUE(IM.lab.sw), !isTRUE(learn.alpha), verbose,
                !isTRUE(learn.d)))   message("May not be necessary to set 'IM.lab.sw' to TRUE when neither 'alpha' nor 'discount' are being learned")
         if(missing(rho)) {
           rho      <- 0.75
         }
         if(all(length(rho) > 1,
-           rho > 1 && rho <= 0))    stop("'rho' must be a single number in the interval (0, 1]")
+           rho > 1 || rho <= 0))    stop("'rho' must be a single number in the interval (0, 1]")
         if(rho < 0.5)               warning("Are you sure 'rho' should be less than 0.5? This could adversely affect mixing", call.=FALSE)
         if(missing(alpha.hyper))    {
           alpha.hyper     <- if(learn.alpha) c(2L, 1L) else c(0L, 0L)
@@ -347,7 +351,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
         }
         if(length(trunc.G) > 1)     stop("'trunc.G' must be a single number")
         if(all(ifelse(N > 50, trunc.G < 50,
-           trunc.G  < N), !t.miss)) warning(paste0("'trunc.G' should only be less than min(N=", N, ", 50) for practical reasons in heavy computational/memory burden cases"), call.=FALSE)
+           trunc.G  < N), !t.miss)) message(paste0("Consider setting 'trunc.G' to min(N=", N, ", 50) unless practical reasons in heavy computational/memory burden cases prohibit it"))
         if(trunc.G  < range.G)      stop(paste0("'trunc.G' must be at least range.G=", range.G))
         if(trunc.G  > N)            stop(paste0("'trunc.G' cannot be greater than N=", N))
         if(trunc.G  > 50)           warning(paste0("'trunc.G' is large: this may lead to memory capacity issues"), call.=FALSE)
@@ -376,7 +380,8 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(length(equal.pro) > 1 ||
        !is.logical(equal.pro))      stop("'equal.pro' must be a single logical indicator")
     if(storage["pi.sw"]   && equal.pro) {
-      if(!store.x["pi.sw"])         message("Forced non-storage of mixing proportions as 'equal.pro' is TRUE: only posterior mean estimates will be available")
+      if(all(!store.x["pi.sw"],
+             verbose))              message("Forced non-storage of mixing proportions as 'equal.pro' is TRUE: only posterior mean estimates will be available")
       storage["pi.sw"]    <- FALSE
     }
     if(G.x)                         stop("'range.G' must be specified")
@@ -448,7 +453,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(any(!is.numeric(beta.d1),
            !is.numeric(beta.d1),
            length(beta.d1) != 1,
-           length(beta.d2) != 1))   stop("'beta.d1' and 'beta.d2' must both be numberic and of length 1")
+           length(beta.d2) != 1))   stop("'beta.d1' and 'beta.d2' must both be numeric and of length 1")
     if(missing(b0))          b0            <- 0.1
     if(any(length(b0) != 1, !is.numeric(b0),
            b0  < 0))                stop("'b0' must be a non-negative scalar to ensure valid adaptation probability")
@@ -457,12 +462,13 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
            b1 <= 0))                stop("'b1' must be a single strictly positive scalar to ensure adaptation probability decreases")
     if(missing(prop))        prop          <- ifelse(uni, 0.5, floor(0.7 * P)/P)
     if(missing(adapt.at))    adapt.at      <- switch(method, IFA=, MIFA=burnin, 0L)
-    if(missing(epsilon))     epsilon       <- ifelse(any(centered, centering), 0.1, 0.05)
+    if(missing(epsilon))     epsilon       <- 1e-01
     if(any(length(prop)    != 1, length(adapt.at) != 1,
            length(epsilon) != 1))   stop("'prop', 'adapt.at', and 'epsilon' must all be of length 1")
     if(any(!is.numeric(prop), !is.numeric(adapt.at),
            !is.numeric(epsilon)))   stop("'prop', 'adapt.at', and 'epsilon' must all be numeric")
-    if(abs(prop - (1 - prop)) < 0)  stop("'prop' must be lie in the interval (0, 1)")
+    if(prop    >= 1 ||
+       prop    <= 0)                stop("'prop' must be lie in the interval (0, 1)")
     if(adapt.at < 0 ||
        adapt.at > burnin)           stop("'adapt.at' must be lie in the interval [0, burnin]")
     if(epsilon <= 0 ||
@@ -476,8 +482,8 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
               all(is.element(method, c("IFA", "MIFA", "OMIFA", "IMIFA")),
                   isTRUE(!adapt)))) warning(paste0("Number of factors is greater than ", ifelse(any(range.Q > P), paste0("the number of variables (", P, ")"), paste0("the suggested Ledermann upper bound (", Q.warn, ")"))), call.=FALSE)
   }
-  if(any(all(method == "MFA",  any(range.G > 1)) && any(range.Q > 0),
-         all(method == "MIFA", any(range.G > 1)), is.element(method, c("IMIFA",
+  if(verbose   && any(all(method == "MFA",  any(range.G > 1)) && any(range.Q > 0),
+                      all(method == "MIFA", any(range.G > 1)), is.element(method, c("IMIFA",
      "IMFA", "OMIFA", "OMFA"))))  {
     if(all(!storage["l.sw"],
            !storage["psi.sw"]))   {
@@ -485,8 +491,10 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     } else if(!storage["l.sw"])   { message("Loadings not stored: will be unable to estimate covariance matrices and compute error metrics")
     } else if(!storage["psi.sw"])   message("Uniquenesses not stored: will be unable to estimate covariance matrices and compute error metrics")
   }
-  if(is.element(method,
-                c("FA", "IFA")))  {
+  if(all(storage["s.sw"], !storage["l.sw"],
+     any(range.Q   != 0)))          message("Loadings not stored but scores are: Procrustes rotation of scores will not occur when passing results to get_IMIFA_results()")
+  if(verbose   && is.element(method,
+               c("FA", "IFA")))   {
     if(all(!storage["mu.sw"],
            !storage["psi.sw"]))   {
                                     message("Means & Uniquenesses not stored, but posterior mean estimates will still be available")
@@ -495,9 +503,9 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   }
   if(is.element(method, c("FA", "MFA", "OMFA", "IMFA")) && any(range.Q == 0)) {
     if(all(storage[c("s.sw", "l.sw")]))   {
-                                    warning("Scores & Loadings not stored where 'range.Q==0' as model has zero factors", call.=FALSE)
-    } else if(storage["s.sw"])    { warning("Scores not stored where 'range.Q==0' as model has zero factors", call.=FALSE)
-    } else if(storage["l.sw"])    { warning("Loadings not stored where 'range.Q==0' as model has zero factors", call.=FALSE)
+                                    message("Scores & Loadings not stored where 'range.Q==0' as model has zero factors", call)
+    } else if(storage["s.sw"])    { message("Scores not stored where 'range.Q==0' as model has zero factors")
+    } else if(storage["l.sw"])    { message("Loadings not stored where 'range.Q==0' as model has zero factors")
     }
     if(all(range.Q == 0))    storage[c("s.sw", "l.sw")] <- FALSE
   }
@@ -589,9 +597,9 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
          tz$lambda  > 1)            stop("Invalid 'lambda': must lie in the interval (0.5, 1]")
       if(learn.alpha)  {
         if(tz$heat  > 0)   {
-          if(isTRUE(gibbs.may))     warning("Are you sure you want to tune zeta?: Gibbs updates are possible as 'kappa' is between zero and 1", call.=FALSE)
-          if(isTRUE(non.py))        message("Tuning zeta will have no effect as 'discount' is fixed at 0")
-        } else if(tz$do)            warning("'heat' of 0 corresponds to no tuning: are you sure?", call.=FALSE)
+         if(isTRUE(gibbs.may))      warning("Are you sure you want to tune zeta?: Gibbs updates are possible as 'kappa' is between zero and 1", call.=FALSE)
+         if(non.py && verbose)      message("Tuning zeta will have no effect as 'discount' is fixed at 0")
+       } else if(tz$do)             warning("'heat' of 0 corresponds to no tuning: are you sure?", call.=FALSE)
       }
       tune.zeta    <- tz
     }
@@ -630,10 +638,8 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   }
   mu.zero          <- if(mu0.x) mu else .len_check(mu.zero, mu0g, method, P, G.init)
   if(!is.element(method, c("FA", "MFA", "OMFA", "IMFA"))) {
-    alpha.d1       <- if(ad1.x) list(3L) else .len_check(alpha.d1, delta0g, method, P, G.init, P.dim=FALSE)
+    alpha.d1       <- if(ad1.x) list(2L) else .len_check(alpha.d1, delta0g, method, P, G.init, P.dim=FALSE)
     alpha.d2       <- if(ad2.x) list(6L) else .len_check(alpha.d2, delta0g, method, P, G.init, P.dim=FALSE)
-    if(all(NlP, verbose,
-           any(ad1.x, ad2.x)))      message("Consider applying more shrinkage with higher 'alpha.d1' and 'alpha.d2' hyperparameter values when N << P")
   }
   if(!is.element(method, c("FA", "IFA"))) {
     if(verbose)                     cat(paste0("Initialising...\n"))
@@ -663,10 +669,12 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
       } else {
         zips       <- rep(1, N)
         if(!is.element(method, c("IMFA", "IMIFA"))) {
-          while(all(length(unique(zips)) != G,
+          iter     <- 0
+          while(all(length(unique(zips)) != G, iter < 100,
                 any(prop.table(tabulate(zips, nbins=G)) < 1/G^2))) {
             pies   <- rDirichlet(alpha=alpha, G)
             zips   <- .sim_z_p(N=N, prob.z=pies)
+            iter   <- iter + 1
           }
         } else {
           vies     <- .sim_vs_inf(alpha=alpha, N=N, nn=rep(N/G.init, G.init), discount=discount, len=G.init, lseq=seq_len(G.init))
@@ -728,7 +736,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     psi.beta       <- lapply(psi.beta, function(x) replace(x, is.na(x), 0))
   }
   if(all(is.element(uni.type, c("isotropic", "single")),
-         unlist(lapply(psi.beta, function(x)     {
+         unlist(lapply(psi.beta,     function(x) {
     if(is.matrix(x)) any(apply(x, 2, function(y) {
       length(unique(round(y, nchar(y)))) }) != 1)  else  {
       length(unique(round(x,

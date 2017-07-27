@@ -31,7 +31,7 @@
 #' # tmp      <- mcmc_IMIFA(sim_data, method="MIFA", range.G=3, n.iters=5000)
 #' @seealso The function \code{\link{mcmc_IMIFA}} for fitting an IMIFA related model to the simulated data set.
 sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(floor(log(P)), G), pis = rep(1/G, G), psi = NULL,
-                           nn = NULL, loc.diff = 1L, method = c("conditional", "marginal")) {
+                           nn = NULL, loc.diff = 1, method = c("conditional", "marginal")) {
 
   N            <- as.integer(N)
   G            <- as.integer(G)
