@@ -1,4 +1,4 @@
-#' Simulating Data from a Mixture of Factor Analysers Structure
+#' Simulate Data from a Mixture of Factor Analysers Structure
 #'
 #' Function to simulate data of any size and dimension from a mixture of (infinite) factor analysers structure.
 #' @param N Desired overall number of observations in the simulated data set - a single integer.
@@ -56,6 +56,7 @@ sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(floor(log(P)), G),
   Pseq         <- seq_len(P)
   nnames       <- paste0("Obs ", Nseq)
   vnames       <- paste0("Var ", Pseq)
+
   if(!missing(nn) && missing(pis))     {
     nn         <- as.integer(nn)
     if(any(nn  == 0))                     stop("All 'nn' values must be strictly positive; simulating empty clusters not allowed")

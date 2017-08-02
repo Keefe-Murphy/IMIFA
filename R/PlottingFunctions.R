@@ -102,6 +102,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
   on.exit(do.call(clip, as.list(defpar$usr)), add=TRUE)
   on.exit(palette("default"), add=TRUE)
   on.exit(suppressWarnings(options(defopt)),  add=TRUE)
+
   n.grp   <- attr(GQ.res, "Clusters")
   n.fac   <- attr(GQ.res, "Factors")
   G.supp  <- attr(GQ.res, "Supplied")["G"]
@@ -128,6 +129,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
   param        <- match.arg(param)
   type.x       <- missing(type)
   type         <- match.arg(type)
+
   m.sw         <- c(G.sw = FALSE, Z.sw = FALSE, E.sw = FALSE, P.sw = FALSE, C.sw = FALSE, D.sw = FALSE, M.sw = FALSE, T.sw = FALSE)
   v.sw         <- attr(x, "Switch")
   obs.names    <- if(v.sw["s.sw"]) rownames(x$Scores$post.eta) else attr(x, "Obsnames")
@@ -165,17 +167,18 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
     mat   <- switch(uni.type, constrained=, unconstrained=mat, FALSE)
   }
   mat     <- ifelse(n.var == 1, FALSE, mat)
+
   z.miss  <- missing(zlabels)
   if(!z.miss) {
     z.nam <- gsub("[[:space:]]", "", deparse(substitute(zlabels)))
     nam.z <- gsub("\\[.*", "", z.nam)
     nam.x <- gsub(".*\\[(.*)\\].*", "\\1)", z.nam)
     if(grepl("$", z.nam, fixed=TRUE)) {
-      x.nam    <- strsplit(nam.z, "$", fixed=TRUE)[[1]]
-      nam.z    <- z.nam  <- x.nam[1]
-      if(x.nam[2] %in% colnames(get(nam.z))) {
-        zlabels <- get(nam.z)[x.nam[2]][,1]
-      } else                          stop(paste0("'", x.nam[2], "' not found within '", nam.z, "'"))
+     x.nam     <- strsplit(nam.z, "$", fixed=TRUE)[[1]]
+     nam.z     <- z.nam  <- x.nam[1]
+     if(x.nam[2] %in% colnames(get(nam.z))) {
+       zlabels <- get(nam.z)[x.nam[2]][,1]
+     } else                           stop(paste0("'", x.nam[2], "' not found within '", nam.z, "'"))
     }
     ptrn  <- c("(", ")")
     if(!exists(nam.z,
@@ -186,12 +189,13 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
     labs  <- as.integer(as.factor(zlabels))
     if(length(labs) != n.obs)         stop(paste0("'zlabels' must be a factor of length N=",  n.obs))
   }
+
   if(m.sw["P.sw"]) {
     if(!is.element(param, c("means",
        "loadings", "uniquenesses")))  stop("Can only plot parallel coordinates for means, loadings or uniquenesses")
   }
   if(!grp.ind)  {
-    if(m.sw["Z.sw"])                  stop("Can't use 'Z' for 'plot.meth' as no clustering has taken place")
+    if(m.sw["Z.sw"])                  stop("Can't use 'zlabels' for 'plot.meth' as no clustering has taken place")
     if(param == "pis")                stop("Can't plot mixing proportions as no clustering has taken place")
   }
   if(all(m.sw["E.sw"],
@@ -211,17 +215,18 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
                                            attr(x, "Alpha"), attr(x, "Discount")))), " weren't stored"), ifelse(param == "pis" && equalpi, " as mixing proportions were constrained to be equal across clusters", "")))
   heat.map     <- ifelse(missing(heat.map), param == "loadings", heat.map)
   if(any(!is.logical(heat.map),
-         length(heat.map)  != 1))     stop("'heat.map' must be TRUE or FALSE")
+         length(heat.map)  != 1))     stop("'heat.map' must be a single logical indicator")
   if(any(!is.logical(intervals),
-         length(intervals) != 1))     stop("'intervals' must be TRUE or FALSE")
+         length(intervals) != 1))     stop("'intervals' must be a single logical indicator")
   if(any(!is.logical(mat),
-         length(mat)       != 1))     stop("'mat' must be TRUE or FALSE")
+         length(mat)       != 1))     stop("'mat' must be a single logical indicator")
   if(any(!is.logical(partial),
-         length(partial)   != 1))     stop("'partial' must be TRUE or FALSE")
+         length(partial)   != 1))     stop("'partial' must be a single logical indicator")
   if(any(!is.logical(titles),
-         length(titles)    != 1))     stop("'titles' must be TRUE or FALSE")
+         length(titles)    != 1))     stop("'titles' must be a single logical indicator")
   if(any(!is.logical(by.fac),
-         length(by.fac)    != 1))     stop("'by.fac' must be TRUE or FALSE")
+         length(by.fac)    != 1))     stop("'by.fac' must be a single logical indicator")
+
   indx    <- missing(ind)
   facx    <- missing(fac)
   gx      <- missing(g)
@@ -298,6 +303,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
     if(!matx) {
       iter     <- switch(param, scores=seq_len(attr(x$Score, "Eta.store")), loadings=seq_len(attr(x, "N.Loadstore")[g]), seq_along(store))
     }
+
     if(is.element(param, c("scores", "loadings"))) {
       if(m.sw["M.sw"])     hcols <- if(mispal) viridis(30, option="C") else palette
       if(indx)               ind <- c(1L, 1L)
@@ -341,6 +347,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           if(titles) title(main=list(paste0("Trace", ifelse(all.ind, ":\n", paste0(":\nMean - ", ifelse(grp.ind, paste0("Cluster ", g, " - "), ""))), var.names[ind], " Variable")))
         }
       }
+
       if(param == "scores") {
         x.plot <- x$Scores$eta
         if(by.fac) {
@@ -362,6 +369,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           if(titles) title(main=list(paste0("Trace", ifelse(all.ind, ":\n", ":\nScores - "), "Observation ", obs.names[ind[1]], ", Factor ", ind[2])))
         }
       }
+
       if(param == "loadings") {
         x.plot <- x$Loadings$lmats[[g]]
         if(by.fac) {
@@ -383,6 +391,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           if(titles) title(main=list(paste0("Trace", ifelse(all.ind, ":\n", paste0(":\nLoadings - ", ifelse(grp.ind, paste0("Cluster ", g, " - "), ""))), var.names[ind[1]], " Variable, Factor ", ind[2])))
         }
       }
+
       if(param == "uniquenesses") {
         plot.x <- x$Uniquenesses$psis[[g]]
         if(matx) {
@@ -394,6 +403,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           if(titles) title(main=list(paste0("Trace", ifelse(all.ind, switch(uni.type, constrained=, unconstrained=paste0(":\n"), ""), paste0(":\nUniquenesses - ", ifelse(grp.ind, paste0("Cluster ", g, " - "), ""))), switch(uni.type, constrained=, unconstrained=paste0(var.names[ind], " Variable"), ""))))
         }
       }
+
       if(param == "pis") {
         plot.x <- clust$pi.prop
         if(matx) {
@@ -405,6 +415,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           if(titles) title(main=list(paste0("Trace", ifelse(all.ind, "", paste0(":\nMixing Proportion - Cluster ", ind)))))
         }
       }
+
       if(param == "alpha") {
         plot.x <- clust$DP.alpha
         plot(plot.x$alpha, ylab="", type="l", xlab="Iteration", main="")
@@ -416,6 +427,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           abline(h=ci.x[2], col=grey, lty=2)
         }
       }
+
       if(param == "discount") {
         plot.x <- clust$PY.disc
         plot(as.vector(plot.x$discount), ylab="", type="l", xlab="Iteration", main="", ylim=c(0, 1))
@@ -427,6 +439,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           abline(h=ci.x[2], col=grey, lty=2)
         }
       }
+
       if(!indx) {         ind[1] <- xind[1]
         if(all(facx, is.element(param, c("scores",
            "loadings")))) ind[2] <- xind[2]
@@ -451,6 +464,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           polygon(plot.d, col=grey, border=NA)
         }
       }
+
       if(param == "scores") {
         x.plot <- x$Scores$eta
         if(by.fac) {
@@ -477,6 +491,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           polygon(plot.d, col=grey, border=NA)
         }
       }
+
       if(param == "loadings") {
         x.plot <- x$Loadings$lmats[[g]]
         if(by.fac) {
@@ -503,6 +518,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           polygon(plot.d, col=grey, border=NA)
         }
       }
+
       if(param == "uniquenesses") {
         x.plot <- x$Uniquenesses$psis[[g]]
         if(matx) {
@@ -520,6 +536,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           polygon(plot.d, col=grey, border=NA)
         }
       }
+
       if(param == "pis") {
         x.plot <- clust$pi.prop
         if(matx) {
@@ -539,6 +556,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           polygon(c(min(fitx), fitx), c(0, fity), col=grey, border=NA)
         }
       }
+
       if(param == "alpha") {
         plot.x <- clust$DP.alpha
         tr     <- ifelse(attr(x, "Pitman"), - max(clust$PY.disc$discount, 0), 0)
@@ -553,6 +571,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           abline(v=avg, col=2, lty=2)
         }
       }
+
       if(param == "discount") {
         plot.x <- clust$PY.disc
         x.plot <- as.vector(plot.x$discount)
@@ -594,6 +613,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
                  ind[2]  > Q.max))    stop(paste0("Only the first ", Q.max, " columns can be plotted"))
         } else if(ind[2] > Q)         stop(paste0("Only the first ", Q, " columns can be plotted"))
       }
+
       if(param == "means") {
         plot.x <- x$Means$post.mu[,g]
         if(g   == min(Gs)) {
@@ -606,6 +626,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         if(titles) title(main=list(paste0("Posterior Mean", ifelse(all.ind, "", paste0(":\nMeans", ifelse(grp.ind, paste0(" - Cluster ", g), ""))))))
         if(type  == "n") text(x=seq_along(plot.x), y=plot.x, var.names, cex=0.5)
       }
+
       if(param == "scores") {
         labs   <- if(grp.ind) clust$map      else 1
         p.eta  <- x$Scores$post.eta
@@ -674,6 +695,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           if(titles) title(main=list(paste0("Posterior Mean", ifelse(all.ind, "", ":\nScores"), ifelse(g.score, paste0(" - Cluster ", g), ""))))
         }
       }
+
       if(param == "loadings") {
         plot.x <- x$Loadings$post.load
         if(g   == min(Gs)) {
@@ -727,6 +749,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           }
         }
       }
+
       if(param == "uniquenesses") {
         plot.x <- x$Uniquenesses$post.psi[,g]
         if(g   == min(Gs)) {
@@ -739,6 +762,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         if(titles) title(main=list(paste0("Posterior Mean", ifelse(all.ind, "", paste0(":\nUniquenesses", ifelse(grp.ind, paste0(" - Cluster ", g), ""))))))
         if(type  == "n") text(seq_along(plot.x), plot.x, var.names, cex=0.5)
       }
+
       if(param == "pis") {
         plot.x <- clust$post.pi
         if(ci.sw[param])  ci.x   <- clust$ci.pi
@@ -760,6 +784,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           if(titles) title(main=list(paste0("Posterior Mean", ifelse(all.ind, "", paste0(":\nMixing Proportions - Cluster ", ind)))))
         }
       }
+
       if(is.element(param, c("alpha", "discount"))) {
         plot(c(0, 1), c(0, 1), ann=FALSE, bty='n', type='n', xaxt='n', yaxt='n')
         if(titles) title(main=list(paste0("Summary Statistics", ifelse(all.ind, "", paste0(":\n", switch(param, alpha="Alpha", discount="Discount"))))))
@@ -800,6 +825,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           text(x=0.5, y=0.1,     cex=a.cex, col="black", adj=a.adj, bquote(.(round(plot.x$avg.zeta, digits))))
         }
       }
+
       if(!indx) {         ind[1] <- xind[1]
         if(all(facx, is.element(param, c("scores",
            "loadings")))) ind[2] <- xind[2]
@@ -820,6 +846,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         aic.mcmc <- round(crit$AIC.mcmcs, 2)
         bic.mcmc <- round(crit$BIC.mcmcs, 2)
       }
+
       if(all(plotG.ind, g == 1))  {
         layout(1)
         par(mar=c(5.1, 4.1, 4.1, 2.1))
@@ -837,7 +864,10 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         axis(1, at=G.plot, labels=names(plot.G), tick=FALSE)
         axis(1, at=med(G.plot), labels="G", tick=FALSE, line=1.5)
       }
-      if(all(method == "IFA", plotQ.ind)) {
+
+    if(plotQ.ind) {
+      adapt    <- attr(x, "Adapt")
+      if(method == "IFA") {
         layout(1)
         par(mar=c(5.1, 4.1, 4.1, 2.1))
         plot.Q <- GQ.res$Q.Counts
@@ -853,8 +883,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         if(titles) title(main=list("Posterior Distribution of Q"))
         axis(1, at=Q.plot, labels=names(plot.Q), tick=FALSE)
         axis(1, at=med(Q.plot), labels="Q", tick=FALSE, line=1.5)
-      }
-      if(all(method != "IFA", plotQ.ind)) {
+      } else {
         layout(1)
         par(mar=c(5.1, 4.1, 4.1, 2.1))
         plot.Q <- GQ.res$Q.Counts
@@ -883,6 +912,8 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           legend("center", legend=ltxt, ncol=if(G > 5) ceiling(G/2) else G, bty="n", pch=15, col=lcol, cex=max(0.7, 1 - 0.03 * G))
         }
       }
+    }
+
       if(plotT.ind) {
         layout(1)
         par(mar=c(5.1, 4.1, 4.1, 2.1))
@@ -904,6 +935,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           }
         }
       }
+
       if(!any(plotQ.ind,
               plotG.ind, plotT.ind))  message("Nothing to plot")
       gq.nam <- substring(names(GQ.res), 1, 1)
@@ -911,18 +943,30 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         if(g == 1)   {
           print(GQ.res[gq.nam == "G"])
         } else if(g == 2) {
-          print(GQ.res[gq.nam == "Q"])
+          if(adapt)  {
+            print(GQ.res[gq.nam == "Q"])
+          }
+        } else if(g == 3) {
+          print(GQ.res[gq.nam == "C"])
         }
       } else if(is.element(method, c("OMFA", "IMFA"))) {
           if(g == 1) {
             print(GQ.res[gq.nam == "G"])
-          } else {
+          } else     {
             print(GQ.res[gq.nam != "G" & gq.nam != "S"])
           }
       } else switch(method, MFA=, MIFA={
-          print(GQ.res[gq.nam != "S"])
-        }, IFA=  {
-          print(tail(GQ.res[gq.nam != "S"], -1))
+          if(adapt)  {
+            print(GQ.res[gq.nam != "S"])
+          } else     {
+            print(GQ.res[gq.nam != "Q" & gq.nam != "S"])
+          }
+        }, IFA=      {
+          if(adapt)  {
+            print(tail(GQ.res[gq.nam != "S"], -1))
+          } else     {
+            print(GQ.res[gq.nam == "C"])
+          }
         },
           cat(paste0("Q = ", Q, "\n"))
       )
@@ -938,8 +982,10 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           cat(paste0("Log Integrated Likelihood = ", log.iLLH[G.ind,Q.ind], "\n"))
           cat(paste0("DIC = ", dic[G.ind,Q.ind], "\n"))
       }
-      if(all(plotQ.ind,
-             attr(GQ.res, "Q.big")))  warning("Q had to be prevented from exceeding its initial value.\nConsider re-running the model with a higher value for 'range.Q'", call.=FALSE)
+      if(plotQ.ind) {
+        if(!adapt)                    message("No adaptation took place")
+        if(attr(GQ.res, "Q.big"))     warning("Q had to be prevented from exceeding its initial value.\nConsider re-running the model with a higher value for 'range.Q'", call.=FALSE)
+      }
     }
 
     if(m.sw["Z.sw"]) {
@@ -986,6 +1032,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         axis(1, at=c(breaks[round(breaks, 1) < min(0.8, 1 - 1/G)], 1 - 1/G), labels=(c(round(breaks[round(breaks, 1) < min(0.8, 1 - 1/G)], 3), "1 - 1/G")), las=2, pos=0, cex.axis=0.8)
         axis(2, at=if(sum(plot.x)  == 0) c(axTicks(2), max(x.plot$counts)) else axTicks(2), las=1, cex.axis=0.8)
       }
+
       if(all(g  == 3, z.sim)) {
         plot.x  <- as.matrix(clust$Z.avgsim$z.sim)
         perm    <- order(clust$map)
@@ -1006,6 +1053,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         box(lwd=2)
         if(p.ind)                     message("Rows and columns of similarity matrix reordered to correspond to MAP clustering")
       }
+
       if(all(g  != 3, g == min(Gs)))  {
         prf     <- NULL
         if(any(!labelmiss,  !z.miss)) {
@@ -1058,6 +1106,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
       type.u <- ifelse(type.x, switch(param, uniquenesses=switch(uni.type, constrained=, unconstrained="p", single=, isotropic="l"), "p"), type)
       if(!is.element(type.u,
                      c("l", "p")))    stop("Invalid 'type' for parallel coordinates plot")
+
       matplot(seq_len(n.var) + if(!jit.x) switch(type.u, p=matrix(rnorm(jitcol * n.var, 0, min(0.1, max(1e-02, 1/n.var^2))), nrow=n.var, ncol=jitcol), 0) else 0,
               plot.x, type=type.u, pch=15, col=switch(param, loadings=seq_len(Q), seq_len(G)), xlab=switch(uni.type, constrained=, unconstrained="Variable", ""),
               lty=1, ylab=paste0(switch(param, uniquenesses=switch(uni.type, constrained=, unconstrained="Standardised ", ""), "Standardised "), varnam),
@@ -1128,6 +1177,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
        partial <- FALSE
        par(mai=c(1.25, 1, 0.75, 0.5), mfrow=c(1, 2), oma=c(0, 0, 2, 0))
       }
+
       if(param == "means")    {
         plot.x <- x$Means$mus[[g]]
         if(!partial) {
@@ -1140,6 +1190,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           if(all(!all.ind, titles)) title(main=list(paste0("Means - ", ifelse(grp.ind, paste0("Cluster ", g, ":\n"), ""), var.names[ind], " Variable")), outer=TRUE)
         }
       }
+
       if(param == "scores")   {
         plot.x <- x$Scores$eta
         if(!partial) {
@@ -1152,6 +1203,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           if(all(!all.ind, titles)) title(main=list(paste0("Scores - ", "Observation ", obs.names[ind[1]], ", Factor ", ind[2])), outer=TRUE)
         }
       }
+
       if(param == "loadings") {
         plot.x <- x$Loadings$lmats[[g]]
         if(!partial) {
@@ -1164,6 +1216,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           if(all(!all.ind, titles)) title(main=list(paste0("Loadings - ", ifelse(grp.ind, paste0("Cluster ", g, ":\n"), ""), var.names[ind[1]], " Variable, Factor ", ind[2])), outer=TRUE)
         }
       }
+
       if(param == "uniquenesses")  {
         plot.x <- x$Uniquenesses$psis[[g]]
         if(!partial) {
@@ -1176,6 +1229,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           if(all(!all.ind, titles)) title(main=list(paste0("Uniquenesses - ", ifelse(grp.ind, paste0("Cluster ", g, ":\n"), ""), switch(uni.type, constrained=, unconstrained=paste0(var.names[ind], " Variable"), ""))), outer=TRUE)
         }
       }
+
       if(param == "pis")  {
         plot.x <- clust$pi.prop
         if(!partial) {
@@ -1188,6 +1242,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           if(all(!all.ind, titles)) title(main=list(paste0("Mixing Proportions - Cluster ", ind)), outer=TRUE)
         }
       }
+
       if(is.element(param, c("alpha", "discount"))) {
         plot.x <- switch(param, alpha=clust$DP.alpha$alpha,   discount=as.vector(clust$PY.disc$discount))
         if(any(switch(param, alpha=clust$DP.alpha$alpha.rate, discount=clust$PY.disc$disc.rate) == 0,
@@ -1206,6 +1261,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         }
       }
     }
+
     if(all(all.ind, titles)) title(ifelse(param != "pis", paste0(toupper(substr(param, 1, 1)), substr(param, 2, nchar(param)),
                              ifelse(all(grp.ind, !is.element(param, c("scores", "pis", "alpha", "discount"))), paste0(" - Cluster ", g), "")),
                              paste0("Mixing Proportions", ifelse(matx, "", paste0(" - Cluster ", ind)))), outer=TRUE)
@@ -1285,9 +1341,10 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
     }
     if(!all(is.cols(cols)))           stop("Invalid colours supplied")
     if(any(!is.logical(byrank),
-           length(byrank)  != 1))     stop("'byrank' must be TRUE or FALSE")
+           length(byrank)  != 1))     stop("'byrank' must be a single logical indicator")
     if(any(!is.numeric(breaks),
            length(breaks)  != 1))     stop("'breaks' must be a single digit")
+
     m1         <- if(isTRUE(byrank))  rank(mat) else mat
     facs       <- cut(m1, breaks, include.lowest=TRUE)
     answer     <- matrix(cols[as.numeric(facs)], nrow=nrow(mat), ncol=ncol(mat))
@@ -1354,6 +1411,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
     box.sy     <- (bx[4]  -  bx[3]) / length(cols)
     xx         <- rep(box.cx, each  = 2)
     par(xpd = TRUE)
+
     for(i in seq_along(cols)) {
       yy   <- c(box.cy[1] + (box.sy * (i - 1)),
                 box.cy[1] + (box.sy * (i)),
@@ -1361,6 +1419,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
                 box.cy[1] + (box.sy * (i - 1)))
       polygon(xx, yy, col =  cols[i], border = cols[i])
     }
+
     par(new = TRUE)
     plot(0, 0, type = "n",  ylim = range(data, na.rm = TRUE), yaxt = "n", ylab = "", xaxt = "n", xlab = "", frame.plot = FALSE)
     axis(side = 4, las = 2, tick = FALSE, line = 0.1, cex.axis = cex.lab)
@@ -1410,9 +1469,10 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
     defopt     <- options()
     options(expressions = 500000)
     on.exit(options(defopt),      add=TRUE)
+
     if(any(c(length(N),
              length(show.plot)) > 1)) stop("Arguments 'N' and 'show.plot' must be strictly of length 1")
-    if(!is.logical(show.plot))        stop("'show.plot' must be TRUE or FALSE")
+    if(!is.logical(show.plot))        stop("'show.plot' must be a single logical indicator")
     max.len    <- max(length(alpha),  length(discount))
     if(max.len  > 10)                 stop("Can't plot more than ten distributions simultaneously")
     if(!is.element(length(alpha),
@@ -1430,6 +1490,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
     if(length(discount) != max.len) {
       discount <- rep(discount, max.len)
     }
+
     rx         <- matrix(0, nrow=N, ncol=max.len)
     Nseq       <- seq_len(N)
     Nsq2       <- Rmpfr::mpfr(Nseq,        precBits=256)
@@ -1446,6 +1507,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         rx[,i] <- gmp::asNumeric(exp(vnk    - lfactorial(Nsq2)) * abs(methods::new("mpfr", unlist(lnkd))))
       }
     }
+
     if(isTRUE(show.plot))   {
       cols     <- seq(from=2, to=max.len + 1)
       palette(adjustcolor(rep(cols, 2), alpha.f=ifelse(dev.capabilities()$semiTransparency, 0.5, 1)))
@@ -1500,6 +1562,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
     N          <- nrow(cmat)
     P          <- ncol(cmat)
     cmat       <- replace(cmat, is.na(cmat), na.col)
+
     if(ptype   == "image") {
       levels   <- sort(unique(as.vector(cmat)))
       z        <- matrix(unclass(factor(cmat, levels = levels, labels = seq_along(levels))), nrow=N, ncol=P)
@@ -1509,6 +1572,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
       plot(rep(seq_len(P), rep(N, P)), rep(N:1, P), col = as.vector(cmat), cex = cex, pch = pch,
            axes = FALSE, xlab = "", ylab = "", xlim = c(0.5, P + 0.5), ylim = c(0.5, N + 0.5), ...)
     }
+
     axis(3,  at = seq_len(P), tick = FALSE, labels = clabels, las = 2, cex.axis = label.cex)
     axis(2,  at = N:1, tick = FALSE, labels = rlabels, las = 2, cex.axis = label.cex)
     if(is.vector(dlabels)) {

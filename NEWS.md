@@ -4,13 +4,16 @@ __Infinite Mixtures of Infinite Factor Analysers__
 # IMIFA v1.3.2 - (_6<sup>th</sup> release [patch update]: 2017-07-26_)
 ## Improvements
 * Added ability to constrain mixing proportions across clusters using `equal.pro` argument for M(I)FA models:  
-  modified PGMM_dfree accordingly and forced non-storage of mixing proportions when `equal.pro` is TRUE.  
+  Modified PGMM_dfree accordingly and forced non-storage of mixing proportions when `equal.pro` is TRUE.  
 * All methods now work for univariate data also (with apt. edits to plots & uniqueness defaults etc.).
 * `Zsimilarity` sped-up via `mcclust::comp.psm` s.t. `z.avgsim=TRUE` now by default in `get_IMIFA_results`.
 * Added "`hc`" option to `z.init` to initialise allocations via hierarchical clustering (using `mclust::hc`).
-* Simplified `mcmc_IMIFA` by consolidating storage switch arguments using new function `storeControl`.
+* Simplified `mcmc_IMIFA` by consolidating arguments:  
+    * MGP & AGS args. supplied using new function `mgpControl` for infinite factor models (with defaults).  
+    * Storage switch args. supplied using new function `storeControl` (with defaults).
 * Standard deviation of AICM/BICM model selection criteria now computed and returned.
 * `heat_legend` gains `cex.lab` argument to control magnification of legend text.
+* Slight improvements when `adapt=FALSE` for infinite factor models with fixed high truncation level.
 
 ## Bug Fixes
 * Fixed bug preventing `uni.prior="isotropic"` when `uni.type` is `(un)constrained`.
@@ -56,7 +59,7 @@ __Infinite Mixtures of Infinite Factor Analysers__
 * Fixed storage bug in IM(I)FA models when `learn.d` is `TRUE` but `learn.alpha` is `FALSE`.
 * Fixed density plot for `discount` when mutation rate is too low (i.e. too many zeros).
 * Fixed simulation of loadings matrices for empty MIFA/OMIFA/IMIFA clusters using `byrow=TRUE`:  
-  loop to simulate loadings matrices now generally faster also for all models.
+  Loop to simulate loadings matrices now generally faster also for all models.
 * Fixed silly error re: way in which (I)FA models are treated as 1-cluster models to ensure they run:  
   Related bug fixed for OM(I)FA/IM(I)FA models when starting number of clusters is actually supplied.
 

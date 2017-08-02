@@ -251,14 +251,16 @@
   # Uniqueness Hyperparameters
 #' Find sensible inverse gamma hyperparameters for variance/uniqueness parameters
 #'
-#' Takes a shape hyperparameter and covariance matrix, and finds data-driven rate hyperparameters in such a way that Heywood problems are avoided for factor analysis or probabilistic principal components analysis (and mixtures thereof).
+#' Takes an inverse-Gamma shape hyperparameter, and a covariance matrix, and finds data-driven rate hyperparameters in such a way that Heywood problems are avoided for factor analysis or probabilistic principal components analysis (and mixtures thereof).
 #' @param shape A positive shape hyperparameter.
-#' @param covar A square, positive-semidefinite covariance matrix.
-#' @param type A switch indicating whether a single rate (\code{isotropic}) or variable-specific rates (\code{unconstrained}) are to be derived. The isotropic constraint provides the link between factor analysis and the probabilistic principal components analysis model. Uniquenesses are only allowed to be variable specific under the factor analysis model.
+#' @param covar A square, positive-semidefinite covariance matrix. If manually supplying the rate(s) to \code{\link{mcmc_IMIFA}} be careful to ensure that data are scaled in the same way when supplying \code{covar} here.
+#' @param type A switch indicating whether a single rate (\code{isotropic}) or variable-specific rates (\code{unconstrained}) are to be derived. Both options are allowed under models in \code{\link{mcmc_IMIFA}} with "constrained" or "unconstrained" uniquenesses, but only a single rate can be specified for models with "isotropic" or "single" uniquenesses.
 #'
-#' @details Rates are allowed to be variable-specific or a single value under the factor analysis model, but \emph{must} be a single value for the PPCA model. Used internally by \code{\link{mcmc_IMIFA}} when its argument \code{psi_beta} is not supplied.
+#' @details Constraining uniquenesses to be isotropic provides the link between factor analysis and the probabilistic PCA model. When used in conjunction with \code{\link{mcmc_IMIFA}} with "isotropic" or "single" uniquenesses, \code{type} must be \code{isotropic}, but for "unconstrained" or "constrained" uniquenesses, it's possible to specify either a single rate (\code{type="isotropic"}) or variable-specific rates (\code{type="unconstrained"}). \cr
 #'
-#' @return Either a single rate hyperparameter or \code{ncol(covar)} variable specific hyperparameters.
+#' Used internally by \code{\link{mcmc_IMIFA}} when its argument \code{psi_beta} is not supplied.
+#'
+#' @return Either a single rate hyperparameter or \code{ncol(covar)} variable-specific rate hyperparameters.
 #' @export
 #'
 #' @seealso \code{\link{mcmc_IMIFA}}
@@ -282,6 +284,7 @@
       if(any(!is.numeric(shape),
              length(shape) != 1))          stop("'shape' must be a single digit")
       inv.cov   <- try(base::solve(covar), silent=TRUE)
+
       if(inherits(inv.cov, "try-error"))   {
         covsvd  <- svd(covar)
         posi    <- covsvd$d > max(sqrt(.Machine$double.eps) * covsvd$d[1L], 0)
@@ -318,6 +321,7 @@
       if(length(shift) > 1 ||
         !is.numeric(shift))               stop("Argument 'shift' must be a single number")
       param     <- match.arg(param)
+
       rate      <- switch(param, rate=rate, 1/rate)
       exp       <- shape/rate
       if(shift  >= exp)                   warning("This expected value is not achievable with the supplied 'shift'", call.=FALSE)
@@ -369,9 +373,9 @@
 #' (shrink <- MGP_check(ad1=1.5, ad2=2.8, Q=10, nu=2, inverse=TRUE)[[1]])
     MGP_check   <- Vectorize(function(ad1, ad2, Q = 3L, nu = 2, bd1 = 1, bd2 = 1, plus1 = TRUE, inverse = TRUE) {
       if(any(!is.logical(plus1),
-             length(plus1)    != 1))       stop("'plus1' must be TRUE or FALSE")
+             length(plus1)    != 1))       stop("'plus1' must be a single logical indicator")
       if(any(!is.logical(inverse),
-             length(inverse)  != 1))       stop("'inverse' must be TRUE or FALSE")
+             length(inverse)  != 1))       stop("'inverse' must be a single logical indicator")
       if(missing(ad1) || missing(ad2))     stop("Shrinkage shape hyperparameters 'ad1' and 'ad2' must be supplied")
       if(any(nu <= !plus1,
              !is.numeric(nu)))             stop(paste0("'nu' must be a single ", ifelse(plus1,
@@ -379,6 +383,7 @@
                                                 "number strictly greater than 1 for the Ga(nu, nu) parameterisation")))
       if(any(c(ad1, ad2)  < 1))            stop("All shrinkage shape hyperparameter values must be at least 1")
       if(any(c(bd1, bd2) <= 0))            stop("All shrinkage rate hyperparameter values must be strictly positive")
+
       rate      <- nu
       shape     <- ifelse(plus1, rate   + 1, rate)
       if(inverse) {
@@ -445,6 +450,7 @@
         colnames(tmp.mat) <- setdiff(as.numeric(rownames(tab.tmp)), as.numeric(colnames(tab.tmp)))[seq_len(nr - nc)]
         tab.tmp <- cbind(tab.tmp, tmp.mat)
       }
+
       if(nr == 1) {
         z.perm  <- setNames(as.numeric(colnames(tab.tmp)), as.numeric(colnames(tab.tmp)))
       } else if(nc == 1) {
@@ -572,6 +578,7 @@
          length(semi) > 1)                 stop("argument semi is not a single logical indicator")
       if(!is.logical(make) ||
          length(make) > 1)                 stop("argument make is not a single logical indicator")
+
       d         <- nrow(x)
       eigs      <- eigen(x, symmetric = TRUE)
       eval      <- eigs$values
@@ -671,6 +678,7 @@
       V         <- ifelse(P.dim, P, 1L)
       rGseq     <- seq_along(range.G)
       obj.name  <- deparse(substitute(obj0g))
+      obj.name  <- ifelse(grepl("$", obj.name, fixed=TRUE), sapply(strsplit(obj.name, "$", fixed=TRUE), "[[", 2), obj.name)
       sw.name   <- deparse(substitute(switch0g))
       if(!is.list(obj0g))        obj0g  <- list(obj0g)
       if(length(obj0g) != length(range.G))    {
@@ -679,6 +687,7 @@
         } else                             stop(paste0(obj.name, " must be a list of length ", length(range.G)))
       }
       len       <- lengths(obj0g)
+
       if(is.element(method, c("FA", "IFA")))  {
         if(any(!is.element(len, c(1, V)))) stop(paste0(obj.name, " must be list of length 1 containing a scalar", ifelse(P.dim, paste0(" or a vector of length P=", V), ""), " for a 1-group model"))
       } else {
@@ -686,8 +695,8 @@
            c(1, range.G, V)))) {
           if(all(len == range.G)) obj0g <- if(switch0g) lapply(rGseq, function(g) matrix(obj0g[[g]], nrow=1))  else stop(paste0(sw.name, " must be TRUE if the dimension of ", obj.name, " depends on G"))
           if(all(len == V))       obj0g <- if(V == 1)   lapply(rGseq, function(g) rep(obj0g[[g]], range.G[g])) else lapply(rGseq, function(g) matrix(obj0g[[g]], nrow=V, ncol=range.G[g]))
-        } else if(!all(vapply(rGseq, function(g) is.matrix(obj0g[[g]]) && any(identical(dim(obj0g[[g]]), c(1, range.G[g])), identical(dim(obj0g[[g]]), c(V, range.G[g]))), logical(1L)))) {
-                                           stop(paste0(ifelse(length(range.G) > 1, "Each element of ", ""), obj.name, " must be either of length 1, ", ifelse(P.dim, paste0("P=", V, ", or it's corresponding range.G, or a matrix with P rows and it's corresponding range.G columns"), paste0("or G=", range.G))))
+        } else if(!all(vapply(rGseq, function(g, dimG=as.numeric(dim(obj0g[[g]]))) is.matrix(obj0g[[g]]) && any(identical(dimG, c(1, range.G[g])), identical(dimG, c(V, range.G[g]))), logical(1L)))) {
+                                           stop(paste0(ifelse(length(range.G) > 1, "Each element of ", ""), obj.name, " must be of length 1", ifelse(P.dim, paste0(", P=", V, ", or it's corresponding range.G, or a matrix with P rows and it's corresponding range.G columns"), ifelse(switch0g, paste0(", or G=", range.G), ""))))
         } else if(all(vapply(obj0g, is.matrix, logical(1L)), !switch0g) && any(vapply(rGseq, function(g) any(dim(obj0g[[g]]) == range.G[g]), logical(1L)))) {
                                            stop(paste0(sw.name, " must be TRUE if the dimension of ", obj.name, " depends on G"))
         }
@@ -777,17 +786,18 @@
         on.exit(.detach_pkg(gmp), add=TRUE)
         alpha   <- Rmpfr::mpfr(alpha, precBits=256)
       } else if(discount != 0)             stop("'Rmpfr' package not installed")
-      alpha2    <- alpha * alpha
-      if(discount == 0) {
+
+      alpha2    <- alpha  * alpha
+      if(discount == 0)   {
         var     <- alpha  * (digamma(alpha + N) - digamma(alpha))
-        if(mpfrind)     {
+        if(mpfrind)       {
           alpha <- gmp::asNumeric(alpha)
           gmp::asNumeric(var + alpha2 * (trigamma(alpha + N) - trigamma(alpha)))
         } else {
-          var + alpha2 * (trigamma(alpha + N) - trigamma(alpha))
+          var  + alpha2   * (trigamma(alpha + N) - trigamma(alpha))
         }
       } else {
-        sum.ad  <- alpha + discount
+        sum.ad  <- alpha  + discount
         poch.a  <- Rmpfr::pochMpfr(alpha, N)
         poch.ad <- Rmpfr::pochMpfr(sum.ad, N)
         subterm <- alpha/discount * poch.ad/poch.a
@@ -810,6 +820,7 @@
       for(i in seq_along(grp[-length(grp)])) {
         Gmsg    <- c(Gmsg, (paste0(grp[i], ifelse(i + 1 < length(grp), ", ", " "))))
       }
+
       Qmsg      <- if(length(fac) > 1) paste(c(Qmsg, paste0("and ", fac[length(fac)])), sep="", collapse="") else fac
       Gmsg      <- if(length(grp) > 1) paste(c(Gmsg, paste0("and ", grp[length(grp)])), sep="", collapse="") else grp
       Qmsg      <- paste0(" with ", Qmsg, " factor", ifelse(length(fac) == 1, "", "s"))
@@ -836,6 +847,7 @@
       for(i in seq_along(grp[-length(grp)])) {
         Gmsg    <- c(Gmsg, (paste0(grp[i], ifelse(i + 1 < length(grp), ", ", " "))))
       }
+
       Qmsg      <- if(length(fac) > 1) paste(c(Qmsg, paste0("and ", fac[length(fac)])), sep="", collapse="") else fac
       Gmsg      <- if(length(grp) > 1) paste(c(Gmsg, paste0("and ", grp[length(grp)])), sep="", collapse="") else grp
       Qmsg      <- paste0(" with ", Qmsg, " factor", ifelse(length(fac) == 1, "", "s"))
@@ -853,10 +865,11 @@
 #' @export
     print.Results_IMIFA  <- function(x, ...) {
       method    <- attr(x, "Method")
+      adapt     <- attr(x, "Adapt") || !is.element(method, c("IFA", "MIFA", "OMIFA", "IMIFA"))
       G         <- x$GQ.results$G
       Q         <- x$GQ.results$Q
       if(is.element(method, c("FA", "IFA")))  {
-        msg     <- paste0("The chosen ", method, " model has ", Q, " factor", ifelse(Q == 1, "", "s"))
+        msg     <- paste0("The chosen ", method, " model has ", Q, " factor", ifelse(Q == 1, "", "s"), ifelse(adapt, "", " (no adaptation took place)"))
       } else if(is.element(method, c("MFA", "OMFA", "IMFA"))) {
         msg     <- paste0("The chosen ", method, " model has ", G, " group",  ifelse(G == 1, " with ", "s, each with "), unique(Q), " factor", ifelse(unique(Q) == 1, "", "s"))
       } else {
@@ -864,8 +877,8 @@
         for(i in seq_along(Q[-length(Q)])) {
           Q.msg <- c(Q.msg, (paste0(Q[i], ifelse(i + 1 < length(Q), ", ", " "))))
         }
-        Q.msg   <- if(length(Q) > 1) paste(c(Q.msg, paste0("and ", Q[length(Q)])), sep="", collapse="") else Q
-        msg     <- paste0("The chosen ", method, " model has ", G, " group",  ifelse(G == 1, " with ", "s, with "), Q.msg, " factor", ifelse(G == 1 && Q == 1, "", paste0("s", ifelse(G == 1, "", " respectively"))), sep="")
+        Q.msg   <- if(!adapt) paste0(unique(Q)) else { if(length(Q) > 1) paste(c(Q.msg, paste0("and ", Q[length(Q)])), sep="", collapse="") else Q }
+        msg     <- paste0("The chosen ", method, " model has ", G, " group", ifelse(G == 1, " with ", paste0("s, ", ifelse(adapt, "", "each"), " with ")), Q.msg, " factor", ifelse(G == 1 && Q == 1, "", paste0("s", ifelse(G == 1, "", " respectively"))), ifelse(adapt, "", " (no adaptation took place)"), sep="")
       }
         cat(paste0(msg, ": this Results_IMIFA object can be passed to plot(...)\n"))
     }
@@ -886,6 +899,78 @@
     }
 
   # Control functions
+#' Control settings for the MGP prior and AGS for infinite factor models
+#'
+#' Supplies a list of arguments for use in \code{\link{mcmc_IMIFA}} pertaining to the use of the multiplicative gamma process (MGP) shrinkage prior and adaptive Gibbs sampler (AGS) for use with the infinite factor models "\code{IFA}", "\code{MIFA}", "\code{OMIFA}", and "\code{IMIFA}".
+#' @param alpha.d1 Shape hyperparameter of the global shrinkage on the first column of the loadings according to the MGP shrinkage prior. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to 2.
+#' @param alpha.d2 Shape hyperparameter of the global shrinkage on the subsequent columns of the loadings according to the MGP shrinkage prior. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to 6.
+#' @param nu Hyperparameter for the gamma prior on the local shrinkage parameters. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to 2.
+#' @param prop Proportion of elements within the neighbourhood \code{eps} of zero necessary to consider a loadings column redundant. Defaults to \code{floor(0.7 * P)/P}, where \code{P} is the number of variables in the data set.
+#' @param eps Neighbourhood epsilon of zero within which a loadings entry is considered negligible according to \code{prop}. Defaults to 0.1.
+#' @param adapt A logical value indicating whether adaptation of the number of cluster-specific factors is to take place when the MGP prior is employed. Defaults to \code{TRUE}. Specifying \code{FALSE} and supplying \code{range.Q} within \code{\link{mcmc_IMIFA}} provides a means to either approximate the infinite factor model with a fixed high truncation level, or to use the MGP prior in a finite factor context, however this is NOT recommended for the "\code{OMIFA}" and "\code{IMIFA}" methods.
+#' @param b0 Intercept parameter for the exponentially decaying adaptation probability s.t. \code{p(iter) = 1/exp(b0 + b1 * (iter - adapt.at))}. Defaults to 0.1. Must be non-negative to ensure diminishing adaptation.
+#' @param b1 Slope parameter for the exponentially decaying adaptation probability s.t. \code{p(iter) = 1/exp(b0 + b1 * (iter - adapt.at))}. Defaults to 0.00005. Must be positive to ensure diminishing adaptation.
+#' @param nuplus1 Logical switch indicating whether the shape hyperparameter of the prior on the local shrinkage parameters is equal to \code{nu + 1} (i.e. Ga(\code{nu + 1}, \code{nu})). If \code{FALSE}, it is simply equal to \code{nu} (i.e. Ga(\code{nu}, \code{nu})).
+#' @param beta.d1 Rate hyperparameter of the global shrinkage on the first column of the loadings according to the MGP shrinkage prior. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to 1.
+#' @param beta.d2 Rate hyperparameter of the global shrinkage on the subsequent columns of the loadings according to the MGP shrinkage prior. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to 1.
+#' @param adapt.at The iteration at which adaptation is to begin. Defaults to \code{burnin} for the "\code{IFA}" and "\code{MIFA}" methods, defaults to 0 for the "\code{OMIFA}" and "\code{IMIFA}" methods. Cannot exceed \code{burnin}.
+#' @param delta0g Logical indicating whether the \code{alpha.d1} and \code{alpha.d2} hyperparameters can be cluster-specific. Defaults to \code{FALSE}. Only relevant for the "\code{MIFA}" method and only allowed when \code{z.list} is supplied within \code{\link{mcmc_IMIFA}}.
+#'
+#' @return A named list in which the names are the names of the arguments related to the MGP and AGS and the values are the values supplied to the arguments.
+#' @export
+#'
+#' @note Certain supplied arguments will be subject to further checks by \code{\link{MGP_check}} to ensure the cumulative shrinkage property of the MGP prior holds according to the given parameterisation.
+#'
+#' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{MGP_check}}
+#' @references Bhattacharya, A. and Dunson, D. B. (2011) Sparse Bayesian infinite factor models, \emph{Biometrika}, 98(2): 291-306.
+#' @author Keefe Murphy
+#'
+#' @examples
+#' mgpControl(nu=2.5, eps=1e-02)
+#'
+#' # data(olive)
+#' # sim <- mcmc_IMIFA(olive, "IMIFA", n.iters=5000,
+#' #                   MGP=mgpControl(nu=2.5, eps=1e-02))
+    mgpControl  <- function(alpha.d1 = 2, alpha.d2 = 6, nu = 2, prop = 0.7, eps = 1e-01, adapt = TRUE, b0 = 0.1,
+                            b1 = 5e-05, nuplus1 = TRUE, beta.d1 = 1, beta.d2 = 1, adapt.at = 0L, delta0g = FALSE) {
+      miss.args <- c(ad1x = missing(alpha.d1), ad2x = missing(alpha.d2), adaptx = missing(adapt.at))
+      if(any(!is.numeric(alpha.d1),
+             !is.numeric(alpha.d2),
+             c(alpha.d1, alpha.d2) < 1))   stop("All shrinkage shape hyperparameter values must be numeric and at least 1")
+      if(prop    > 1          ||
+         prop   <= 0)                      stop("'prop' must be lie in the interval (0, 1]")
+      if(eps    <= 0 ||
+         eps    >= 1)                      stop("'eps' must be lie in the interval (0, 1)")
+      if(any(length(adapt)    != 1,
+             !is.logical(adapt)))          stop("'adapt' must be a single logical indicator")
+      if(any(length(b0)       != 1,
+             !is.numeric(b0), b0   < 0))   stop("'b0' must be a non-negative scalar to ensure valid adaptation probability")
+      if(any(length(b1)       != 1,
+             !is.numeric(b1), b1  <= 0))   stop("'b1' must be a single strictly positive scalar to ensure adaptation probability decreases")
+      if(any(length(nuplus1)  != 1,
+             !is.logical(nuplus1)))        stop("'nuplus1' must be a singe logical indicator")
+      if(any(nu <= !nuplus1,
+             !is.numeric(nu),
+             length(nu)       != 1))       stop(paste0("'nu' must be a single ", ifelse(nuplus1, "strictly positive number for the Ga(nu + 1, nu) parameterisation", "number strictly greater than 1 for the Ga(nu, nu) parameterisation")))
+      if(any(!is.numeric(beta.d1),
+             !is.numeric(beta.d2),
+             length(beta.d1)  != 1,
+             length(beta.d2)  != 1,
+             c(beta.d1,  beta.d2) <= 0))   stop("'beta.d1' and 'beta.d2' must both be numeric, of length 1, and strictly positive")
+      if(any(!is.numeric(prop),
+             !is.numeric(adapt.at),
+             !is.numeric(eps),
+             length(prop)     != 1,
+             length(adapt.at) != 1,
+             length(eps)      != 1))       stop("'prop', 'adapt.at', and 'eps' must all be numeric and of length 1")
+      if(any(length(delta0g)  != 1,
+             !is.logical(delta0g)))        stop("'delta0g' must be a single logical indicator")
+      MGPAGS    <- list(alpha.d1 = alpha.d1, alpha.d2 = alpha.d2, delta0g = delta0g, nu = nu, prop = prop, epsilon = eps,
+                        adapt = adapt, b0 = b0, b1 = b1, nuplus1 = nuplus1, beta.d1 = beta.d1, beta.d2 = beta.d2, adaptat = adapt.at)
+      attr(MGPAGS, "Missing") <- miss.args
+        MGPAGS
+    }
+
 #' Set storage values for use with the IMIFA family of models
 #'
 #' Supplies a list of values for logical switches indicating whether parameters of interest (means, scores, loadings, uniquenesses, and mixing proportions) should be stored when running models from the IMIFA family via \code{\link{mcmc_IMIFA}}.
@@ -899,18 +984,22 @@
 #'
 #' @note Further warning messages may appear when \code{\link{mcmc_IMIFA}} is called depending on the particularities of the data set and the IMIFA method employed etc. as additional checks occur.
 
-#' @return A named list in which the names are the names of the storage switches and the values are logicals indicating whether that parameter is to be stored. The list also contains as an attribute a logical for each switch indicating whether it was actually supplied (\code{TRUE}) or the default was accepted (\code{FALSE}).
+#' @return A named vector in which the names are the names of the storage switches and the values are logicals indicating whether that parameter is to be stored. The list also contains as an attribute a logical for each switch indicating whether it was actually supplied (\code{TRUE}) or the default was accepted (\code{FALSE}).
 #' @export
 #'
 #' @seealso \code{\link{mcmc_IMIFA}} \code{\link{get_IMIFA_results}}
 #' @author Keefe Murphy
 #' @examples
 #' storeControl(score.switch=FALSE)
+#'
+#' # data(olive)
+#' # sim <- mcmc_IMIFA(olive, "IMIFA", n.iters=5000,
+#' #                   storage=storeControl(score.switch=FALSE))
    storeControl <- function(load.switch = TRUE, mu.switch = TRUE, pi.switch = TRUE, psi.switch = TRUE, score.switch = TRUE) {
       switches  <- c(l.sw=load.switch, mu.sw=mu.switch, pi.sw=pi.switch, psi.sw=psi.switch, s.sw=score.switch)
       attr(switches, "Missing") <- c(l.sw=missing(load.switch), mu.sw=missing(mu.switch), pi.sw=missing(pi.switch), psi.sw=missing(psi.switch), s.sw=missing(score.switch))
       if(any(length(switches)   != 5,
-             !is.logical(switches)))       stop("All logical parameter storage switches must be TRUE or FALSE")
+             !is.logical(switches)))       stop("All logical parameter storage switches must be single logical indicators")
         switches
    }
 

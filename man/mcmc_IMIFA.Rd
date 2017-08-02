@@ -6,20 +6,17 @@
 \usage{
 mcmc_IMIFA(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA",
   "MFA", "IFA", "FA", "classify"), n.iters = 25000L, range.G = NULL,
-  range.Q = NULL, burnin = n.iters/5, thinning = 2L, centering = TRUE,
-  scaling = c("unit", "pareto", "none"), uni.type = c("unconstrained",
-  "isotropic", "constrained", "single"), uni.prior = c("unconstrained",
-  "isotropic"), alpha = NULL, psi.alpha = NULL, psi.beta = NULL,
+  range.Q = NULL, burnin = n.iters/5, thinning = 2L, MGP = mgpControl(),
+  centering = TRUE, scaling = c("unit", "pareto", "none"),
+  uni.type = c("unconstrained", "isotropic", "constrained", "single"),
+  uni.prior = c("unconstrained", "isotropic"), alpha = NULL,
+  storage = storeControl(), psi.alpha = NULL, psi.beta = NULL,
   mu.zero = NULL, sigma.mu = NULL, sigma.l = NULL, z.init = c("mclust",
-  "hc", "kmeans", "list", "priors"), z.list = NULL, adapt = TRUE,
-  prop = NULL, epsilon = NULL, alpha.d1 = NULL, alpha.d2 = NULL,
-  beta.d1 = NULL, beta.d2 = NULL, nu = NULL, nuplus1 = TRUE,
-  adapt.at = NULL, b0 = NULL, b1 = NULL, trunc.G = NULL,
+  "hc", "kmeans", "list", "priors"), z.list = NULL, trunc.G = NULL,
   learn.alpha = TRUE, alpha.hyper = NULL, ind.slice = TRUE, rho = NULL,
   IM.lab.sw = TRUE, discount = NULL, learn.d = FALSE, d.hyper = NULL,
   kappa = NULL, zeta = NULL, tune.zeta = NULL, equal.pro = FALSE,
-  mu0g = FALSE, psi0g = FALSE, delta0g = FALSE,
-  storage = storeControl(), verbose = interactive())
+  mu0g = FALSE, psi0g = FALSE, verbose = interactive())
 }
 \arguments{
 \item{dat}{A matrix or data frame such that rows correspond to observations (\code{N}) and columns correspond to variables (\code{P}). Non-numeric variables and rows with missing entries will be removed.}
@@ -47,6 +44,8 @@ mcmc_IMIFA(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA",
 
 \item{thinning}{The thinning interval used in the simulation. Defaults to 2. No thinning corresponds to 1. Note that chains can also be thinned later, using \code{\link{get_IMIFA_results}}.}
 
+\item{MGP}{A list of arguments pertaining to the multiplicative gamma process (MGP) shrinkage prior and adaptive Gibbs sampler (AGS) for use with the infinite factor models "\code{IFA}", "\code{MIFA}", "\code{OMIFA}", and "\code{IMIFA}". Defaults are set by a call to \code{\link{mgpControl}}, with further checking of validity by \code{\link{MGP_check}}}
+
 \item{centering}{A logical value indicating whether mean centering should be applied to the data, defaulting to \code{TRUE}.}
 
 \item{scaling}{The scaling to be applied - one of "\code{unit}", "\code{none}" or "\code{pareto}".}
@@ -64,6 +63,8 @@ mcmc_IMIFA(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA",
 
 \item{alpha}{Depending on the method employed, either the hyperparameter of the Dirichlet prior for the cluster mixing proportions, or the Dirichlet process concentration parameter. Defaults to 0.5/range.G for the Overfitted methods - if supplied for "\code{OMFA}" and "\code{OMIFA}" methods, you are supplying the numerator of \code{alpha/range.G}, which should be less than half the dimension (per cluster!) of the free parameters of the smallest model considered in order to ensure superfluous clusters are emptied (for "\code{OMFA}", this corresponds to the smallest \code{range.Q}; for "\code{OMIFA}", this corresponds to a zero-factor model) [see: \code{\link{PGMM_dfree}} and Rousseau and Mengersen (2011)]. Defaults to 1 for the finite mixture models "\code{MFA}" and "\code{MIFA}". Defaults to \code{1 - discount} for the "\code{IMFA}" and "\code{IMIFA}" models if \code{learn.alpha=FALSE} or a simulation from the prior if \code{learn.alpha=TRUE}. Must be positive, unless \code{discount} is supplied for the "\code{IMFA}" or "\code{IMIFA}" methods.}
 
+\item{storage}{A vector of named logical indicators governing storage of parameters of interest for all models in the IMIFA family. Defaults are set by a call to \code{\link{storeControl}}.}
+
 \item{psi.alpha}{The shape of the inverse gamma prior on the uniquenesses. Defaults to 2.5 if \code{uni.type} is one of "\code{unconstrained}" or "\code{constrained}", otherwise defaults to 3.5.}
 
 \item{psi.beta}{The rate of the inverse gamma prior on the uniquenesses. Can be either a single parameter, a vector of variable specific rates, or a matrix of variable and cluster-specific rates. If this is not supplied, \code{\link{psi_hyper}} is invoked to choose sensible values, depending on the value of \code{uni.prior} and, for the "\code{MFA}" and "\code{MIFA}" models, the value of \code{psi0g}.}
@@ -77,30 +78,6 @@ mcmc_IMIFA(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA",
 \item{z.init}{The method used to initialise the cluster labels. Defaults to \code{\link[mclust]{Mclust}}. Other options include \code{kmeans}, hierarchical clustering via \code{\link[mclust]{hc}}, random initialisation via \code{priors}, and a user-supplied \code{list}. Not relevant for the "\code{FA}" and "\code{"IFA"} methods.}
 
 \item{z.list}{A user supplied list of cluster labels. Only relevant if \code{z.init == "z.list"}.}
-
-\item{adapt}{A logical value indicating whether adaptation of the number of cluster-specific factors is to take place when the MGP prior is employed. Only relevant for methods ending in IFA, in which case the default is \code{TRUE}. Specifying \code{FALSE} and supplying \code{range.Q} provides a means to either approximate the infinite factor model with a fixed high truncation level, or to use the MGP prior in a finite factor context.}
-
-\item{prop}{Proportion of elements within the neighbourhood \code{epsilon} of zero necessary to consider a loadings column redundant. Defaults to \code{floor(0.7 * P)/P}. Only relevant for methods ending in IFA.}
-
-\item{epsilon}{Neighbourhood of zero within which a loadings entry is considered negligible according to \code{prop}. Defaults to 0.1. Only relevant for methods ending in IFA.}
-
-\item{alpha.d1}{Shape hyperparameter of the global shrinkage on the first column of the loadings according to the MGP shrinkage prior. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to 3. Only relevant for methods ending in IFA.}
-
-\item{alpha.d2}{Shape hyperparameter of the global shrinkage on subsequent columns of the loadings according to the MGP shrinkage prior. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to 6. Only relevant for methods ending in IFA.}
-
-\item{beta.d1}{Rate hyperparameter of the global shrinkage on the first column of the loadings according to the MGP shrinkage prior. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to 1. Only relevant for methods ending in IFA.}
-
-\item{beta.d2}{Rate hyperparameter of the global shrinkage on the first column of the loadings according to the MGP shrinkage prior. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to 1. Only relevant for methods ending in IFA.}
-
-\item{nu}{Hyperparameter for the gamma prior on the local shrinkage parameters. Defaults to 2. Passed to \code{\link{MGP_check}} to ensure validity. Only relevant for methods ending in IFA.}
-
-\item{nuplus1}{Logical switch indicating whether the shape hyperparameter of the prior on the local shrinkage parameters is equal to \code{nu + 1}. If \code{FALSE}, it is simply equal to \code{nu}. Only relevant for methods ending in IFA.}
-
-\item{adapt.at}{The iteration at which adaptation is to begin. Defaults to \code{burnin} for the "\code{IFA}" and "\code{MIFA}" methods, defaults to 0 for the "\code{OMIFA}" and "\code{IMIFA}". Cannot exceed \code{burnin}. Only relevant for methods ending in IFA.}
-
-\item{b0}{Intercept parameter for the exponentially decaying adaptation probability s.t. \code{p(iter) = 1/exp(b0 + b1 * (iter - adapt.at))}. Defaults to 0.1. Only relevant for methods ending in IFA.}
-
-\item{b1}{Slope parameter for the exponentially decaying adaptation probability s.t. \code{p(iter) = 1/exp(b0 + b1 * (iter - adapt.at))}. Defaults to 0.00005. Only relevant for methods ending in IFA.}
 
 \item{trunc.G}{The maximum number of allowable and storable clusters if the "\code{IMFA}" or "\code{IMIFA}" method is employed. Defaults to the same value as \code{range.G} (unless \code{N < P}, see \code{range.G} for details) and must be greater than or equal to this value. The number of active clusters to be sampled at each iteration is adaptively truncated, with \code{trunc.G} as an upper limit for storage reasons. Note that large values of \code{trunc.G} may lead to memory capacity issues.}
 
@@ -132,15 +109,11 @@ mcmc_IMIFA(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA",
 }
  \code{tune.zeta} is only relevant when \code{isTRUE(learn.alpha)} under the "\code{IMFA}" or "\code{IMIFA}" models, and either the \code{discount} remains fixed at a non-zero value, or when \code{isTRUE(learn.d)} and \code{kappa < 1}. Since Gibbs steps are invoked for updated \code{alpha} when \code{discount == 0}, adaption occurs according to a running count of the number of iterations with non-zero sampled \code{discount} values. If diminishing adaptation is invoked, the posterior mean \code{zeta} will be stored. Since caution is advised when employing adaptation, note that acceptance rates of between 10-50\% are generally considered adequate.}
 
-\item{equal.pro}{Logical variable indicating whether or not the mixing mixing proportions are equal across clusters in the model (default = \code{FALSE}).}
+\item{equal.pro}{Logical variable indicating whether or not the mixing mixing proportions are to be equal across clusters in the model (default = \code{FALSE}).}
 
 \item{mu0g}{Logical indicating whether the \code{mu.zero} hyperparameter can be cluster-specific. Defaults to \code{FALSE}. Only relevant for the "\code{MFA}" and "\code{MIFA}" methods when \code{z.list} is supplied.}
 
 \item{psi0g}{Logical indicating whether the \code{psi.beta} hyperparameter(s) can be cluster-specific. Defaults to \code{FALSE}. Only relevant for the "\code{MFA}" and "\code{MIFA}" methods when \code{z.list} is supplied, and only allowable when \code{uni.type} is one of \code{unconstrained} or \code{isotropic}.}
-
-\item{delta0g}{Logical indicating whether the \code{alpha.d1} and \code{alpha.d2} hyperparameters can be cluster-specific. Defaults to \code{FALSE}. Only relevant for the "\code{MIFA}" method when \code{z.list} is supplied.}
-
-\item{storage}{A list of logical indicators governing storage of parameters of interest for all models in the IMIFA family. Defaults are set by a call to \code{\link{storeControl}}.}
 
 \item{verbose}{Logical indicating whether to print output (e.g. run times) and a progress bar to the screen while the sampler runs. By default is \code{TRUE} if the session is interactive, and \code{FALSE} otherwise. If \code{FALSE}, warnings and error messages will still be printed to the screen, but everything else will be suppressed.}
 }
@@ -154,7 +127,11 @@ Carries out Gibbs sampling for all models from the IMIFA family, facilitating mo
 Creates a raw object of class "\code{IMIFA}" from which the optimal/modal model can be extracted by \code{\link{get_IMIFA_results}}. Dedicated \code{print} and \code{summary} functions exist for objects of class "\code{IMIFA}".
 }
 \note{
-Further control over the specification of advanced function arguments can be obtained with recourse to the function \code{\link{storeControl}}.
+Further control over the specification of advanced function arguments can be obtained with recourse to the following functions:\cr
+\describe{
+\item{\strong{\code{\link{mgpControl}}}}{Supply arguments (with defaults) pertaining to the multiplicative gamma process (MGP) shrinkage prior and adaptive Gibbs sampler (AGS) for use with the infinite factor models "\code{IFA}", "\code{MIFA}", "\code{OMIFA}", and "\code{IMIFA}".}
+\item{\strong{\code{\link{storeControl}}}}{Supply logical indicators governing storage of parameters of interest for all models in the IMIFA family.}
+}
 }
 \examples{
 # data(olive)
@@ -183,9 +160,9 @@ Further control over the specification of advanced function arguments can be obt
 
 # Fit an IFA model to the centered and pareto scaled olive data.
 # Note that range.G doesn't need to be specified. We can optionally supply a range.Q starting value.
-# We can also enforce additional shrinkage using alpha.d1, alpha.d2, prop, and epsilon.
+# Enforce additional shrinkage using alpha.d1, alpha.d2, prop, and epsilon via mgpControl().
 # simIFA   <- mcmc_IMIFA(olive, method="IFA", n.iters=10000, range.Q=4, scaling="pareto",
-#                        alpha.d1=3.5, alpha.d2=7, prop=0.6, epsilon=0.12)
+#                        MGP=mgpControl(alpha.d1=3.5, alpha.d2=7, prop=0.6, epsilon=0.12))
 
 # Fit an OMIFA model to the centered & scaled coffee data.
 # Supply a sufficiently small alpha value. Try varying other hyperparameters.
@@ -193,7 +170,7 @@ Further control over the specification of advanced function arguments can be obt
 # but supply a value for the starting number of clusters.
 # Try contraining uniquenesses to be common across both variables and clusters.
 # simOMIFA <- mcmc_IMIFA(coffee, method="OMIFA", range.G=10, psi.alpha=3,
-#                        nu=3, alpha=0.8, uni.type="single")
+#                        MGP=mgpControl(nu=3), alpha=0.8, uni.type="single")
 }
 \references{
 Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, <\href{https://arxiv.org/abs/1701.07010}{arXiv:1701.07010}>.
@@ -209,7 +186,7 @@ Rousseau, J. and Mengersen, K. (2011) Asymptotic Behaviour of the posterior dist
 Tipping, M. E. and Bishop, C. M. (1999). Probabilistic principal component analysis, \emph{Journal of the Royal Statistical Society: Series B (Statistical Methodology)}, 61(3): 611-622.
 }
 \seealso{
-\code{\link{get_IMIFA_results}}, \code{\link{psi_hyper}}, \code{\link{MGP_check}}, \code{\link{storeControl}}
+\code{\link{get_IMIFA_results}}, \code{\link{psi_hyper}}, \code{\link{mgpControl}}, \code{\link{storeControl}}
 }
 \author{
 Keefe Murphy

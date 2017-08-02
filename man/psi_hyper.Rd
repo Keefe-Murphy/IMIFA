@@ -9,18 +9,20 @@ psi_hyper(shape, covar, type = c("unconstrained", "isotropic"))
 \arguments{
 \item{shape}{A positive shape hyperparameter.}
 
-\item{covar}{A square, positive-semidefinite covariance matrix.}
+\item{covar}{A square, positive-semidefinite covariance matrix. If manually supplying the rate(s) to \code{\link{mcmc_IMIFA}} be careful to ensure that data are scaled in the same way when supplying \code{covar} here.}
 
-\item{type}{A switch indicating whether a single rate (\code{isotropic}) or variable-specific rates (\code{unconstrained}) are to be derived. The isotropic constraint provides the link between factor analysis and the probabilistic principal components analysis model. Uniquenesses are only allowed to be variable specific under the factor analysis model.}
+\item{type}{A switch indicating whether a single rate (\code{isotropic}) or variable-specific rates (\code{unconstrained}) are to be derived. Both options are allowed under models in \code{\link{mcmc_IMIFA}} with "constrained" or "unconstrained" uniquenesses, but only a single rate can be specified for models with "isotropic" or "single" uniquenesses.}
 }
 \value{
-Either a single rate hyperparameter or \code{ncol(covar)} variable specific hyperparameters.
+Either a single rate hyperparameter or \code{ncol(covar)} variable-specific rate hyperparameters.
 }
 \description{
-Takes a shape hyperparameter and covariance matrix, and finds data-driven rate hyperparameters in such a way that Heywood problems are avoided for factor analysis or probabilistic principal components analysis (and mixtures thereof).
+Takes an inverse-Gamma shape hyperparameter, and a covariance matrix, and finds data-driven rate hyperparameters in such a way that Heywood problems are avoided for factor analysis or probabilistic principal components analysis (and mixtures thereof).
 }
 \details{
-Rates are allowed to be variable-specific or a single value under the factor analysis model, but \emph{must} be a single value for the PPCA model. Used internally by \code{\link{mcmc_IMIFA}} when its argument \code{psi_beta} is not supplied.
+Constraining uniquenesses to be isotropic provides the link between factor analysis and the probabilistic PCA model. When used in conjunction with \code{\link{mcmc_IMIFA}} with "isotropic" or "single" uniquenesses, \code{type} must be \code{isotropic}, but for "unconstrained" or "constrained" uniquenesses, it's possible to specify either a single rate (\code{type="isotropic"}) or variable-specific rates (\code{type="unconstrained"}). \cr
+
+Used internally by \code{\link{mcmc_IMIFA}} when its argument \code{psi_beta} is not supplied.
 }
 \examples{
 data(olive)

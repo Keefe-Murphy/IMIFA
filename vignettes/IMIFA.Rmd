@@ -84,7 +84,7 @@ There are many, many options for specifying hyperparameters, specifying running 
 ?mcmc_IMIFA
 ```
 
-Be warned that the `mcmc_IMIFA` function calls in this section may take quite some time to run. Let's begin by fitting a Mixture of Factor Analysers model (MFA) to the unit-scaled `olive` data. For this, we must specify sequences of values for `range.G`, the number of clusters, and `range.Q`, the number of latent factors. Let's assume that uniquenesses are `isotropic` rather than `unconstrained`. This isotropic constraint provides the link between factor analysis and the probabilistic principal component analysis model: note that we could also constrain uniqueness across clusters (but still be diagonal within each cluster) by specifiying `uni.type="constrained"` or constrain uniquenesses to a single value (i.e. equal across all clusters and all variables) by specifying `uni.type="single"`. Let's also allow diagonal covariance as a special case where `range.Q` is `0`, elect not to store the factor scores, and accept all other defaults (for instance, cluster labels will be initialised by `mclust`).
+Be warned that the `mcmc_IMIFA` function calls in this section may take quite some time to run. Let's begin by fitting a Mixture of Factor Analysers model (MFA) to the unit-scaled `olive` data. For this, we must specify sequences of values for `range.G`, the number of clusters, and `range.Q`, the number of latent factors. Let's assume that uniquenesses are `isotropic` rather than `unconstrained`. This isotropic constraint provides the link between factor analysis and the probabilistic principal component analysis model: note that we could also constrain uniqueness across clusters (but still be diagonal within each cluster) by specifiying `uni.type="constrained"` or constrain uniquenesses to a single value (i.e. equal across all clusters and all variables) by specifying `uni.type="single"`. Let's elect not to store the latent factor scores, as this can be a huge drain on memory, with the caveat that posterior inference on the scores won't be possible. Let's also allow diagonal covariance as a special case where `range.Q` is `0`, and accept all other defaults (for instance, cluster labels will be initialised by `mclust`).
 
 ```{r, eval=FALSE}
 simMFA   <- mcmc_IMIFA(olive, method="MFA", n.iters=10000, range.G=3:6, range.Q=0:3, centering=FALSE, 
@@ -98,17 +98,17 @@ simMIFA  <- mcmc_IMIFA(olive, method="MIFA", n.iters=10000, centering=TRUE,
                        range.G=1:3, z.init="kmeans")
 ```
 
-MIFA doesn't entirely solve the issue of model choice, as you can see; `range.G` still needs to be specified. We can allow the number of clusters to instead/also be estimated automatically by fitting one of the overfitted mixture models (OMFA/OMIFA) or one of the infinite mixture models (IMFA/IMIFA). Let's fit an Overfitted Mixture of Infinite Factor Analysers, and override the default value for the starting value / upper limit for the number of clusters (`range.G`) and supply a sufficiently small dirichlet hyperparameter (`alpha`) for the cluster mixing proportions. We can enforce additional shrinkage by varying other hyperparameters.
+MIFA doesn't entirely solve the issue of model choice, as you can see; `range.G` still needs to be specified. We can allow the number of clusters to instead/also be estimated automatically by fitting one of the overfitted mixture models (OMFA/OMIFA) or one of the infinite mixture models (IMFA/IMIFA). Let's fit an Overfitted Mixture of Infinite Factor Analysers, and override the default value for the starting value / upper limit for the number of clusters (`range.G`) and supply a sufficiently small dirichlet hyperparameter (`alpha`) for the cluster mixing proportions. We can enforce additional shrinkage by varying other MGP hyperparameters using `mgpControl()`.
 
 ```{r, eval=FALSE}
-simOMIFA <- mcmc_IMIFA(olive, method="OMIFA", n.iters=10000, range.G=10, nu=3, alpha=0.8,
-                       alpha.d1=3.5, alpha.d2=7, prop=0.6, epsilon=0.12)
+simOMIFA <- mcmc_IMIFA(olive, method="OMIFA", n.iters=10000, range.G=10, alpha=0.8,
+                       MGP=mgpControl(alpha.d1=3.5, nu=3, alpha.d2=7, prop=0.6, epsilon=0.12))
 ```
 
-Finally, let's run the flagship IMIFA model, on which all subsequent demonstrations and results will be based, for a greater number of iterations, accepting the defaults for most arguments. Note that the `verbose` argument, which defaults to `TRUE` will ordinarily print a progress bar to the console window. We can avoid scoring the latent scores if we wish, as this can be a huge drain on memory, with the caveat that posterior inference on the scores won't be possible. The default implementation uses the independent rather than dependent slice-efficient sampler; we could override the default for the parameter governing the rate of geometric decay by specifying `rho`. Furthermore, the default implementation assumes a Dirichlet process prior - let's override this and assume instead a Pitman-Yor process prior, and also learn its discount parameter $d$ via the `learn.d` argument.
+Finally, let's run the flagship IMIFA model, on which all subsequent demonstrations and results will be based, for a greater number of iterations, accepting the defaults for most arguments. Note that the `verbose` argument, which defaults to `TRUE` will ordinarily print a progress bar to the console window. The default implementation uses the independent rather than dependent slice-efficient sampler; we could override the default for the parameter governing the rate of geometric decay by specifying `rho`. Furthermore, the default implementation assumes a Dirichlet process prior - let's override this and assume instead a Pitman-Yor process prior, and also learn its discount parameter $d$ via the `learn.d` argument.
 
 ```{r, eval=FALSE}
-simIMIFA <- mcmc_IMIFA(olive, method="IMIFA", n.iters=50000, verbose=FALSE, s.sw=FALSE, learn.d=TRUE)
+simIMIFA <- mcmc_IMIFA(olive, method="IMIFA", n.iters=50000, verbose=FALSE, learn.d=TRUE)
 ```
 
 ## Postprocessing and extracing optimum results

@@ -6,7 +6,7 @@
   .gibbs_OMIFA       <- function(Q, data, iters, N, P, G, mu.zero, sigma.mu, uni.type,
                                  uni.prior, burnin, thinning, adapt, psi.alpha, psi.beta,
                                  verbose, alpha.d1, alpha.d2, sw, cluster, nu, b0, b1, mu,
-                                 prop, beta.d1, beta.d2, adapt.at, epsilon, nuplus1, ...) {
+                                 prop, beta.d1, beta.d2, adaptat, epsilon, nuplus1, ...) {
 
   # Define & initialise variables
     start.time       <- proc.time()
@@ -214,9 +214,9 @@
       }
 
     # Adaptation
-      if(all(adapt, iter > adapt.at)) {
-        if(runif(1)   < ifelse(iter < burnin, 0.5, exp(-b0 - b1 * (iter - adapt.at)))) {
-          colvec     <- lapply(nn.ind, function(g) (if(Q0[g]) colSums(abs(lmat[[g]]) < epsilon)/P else 0) >= prop)
+      if(all(adapt, iter > adaptat)) {
+        if(runif(1)   < ifelse(iter < burnin, 0.5, exp(-b0 - b1 * (iter - adaptat)))) {
+          colvec     <- lapply(nn.ind, function(g) (if(Q0[g]) colSums(abs(lmat[[g]])  < epsilon)/P else 0) >= prop)
           nonred     <- lapply(colvec, .which0)
           numred     <- lengths(colvec) - lengths(nonred)
           notred     <- numred == 0

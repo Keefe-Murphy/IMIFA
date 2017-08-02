@@ -19,7 +19,7 @@ storeControl(load.switch = TRUE, mu.switch = TRUE, pi.switch = TRUE,
 \item{score.switch}{Logical indicating whether the factor scores are to be stored. As the array containing each sampled scores matrix tends to be amongst the largest objects to be stored, this defaults to \code{FALSE} inside \code{\link{mcmc_IMIFA}} when \code{length(range.G) * length(range.Q) > 10}, otherwise the default is \code{TRUE}. For the "\code{MIFA}", "\code{OMIFA}", and "\code{IMIFA}" methods, setting this switch to \code{FALSE} also offers a slight speed-up.}
 }
 \value{
-A named list in which the names are the names of the storage switches and the values are logicals indicating whether that parameter is to be stored. The list also contains as an attribute a logical for each switch indicating whether it was actually supplied (\code{TRUE}) or the default was accepted (\code{FALSE}).
+A named vector in which the names are the names of the storage switches and the values are logicals indicating whether that parameter is to be stored. The list also contains as an attribute a logical for each switch indicating whether it was actually supplied (\code{TRUE}) or the default was accepted (\code{FALSE}).
 }
 \description{
 Supplies a list of values for logical switches indicating whether parameters of interest (means, scores, loadings, uniquenesses, and mixing proportions) should be stored when running models from the IMIFA family via \code{\link{mcmc_IMIFA}}.
@@ -32,6 +32,10 @@ Further warning messages may appear when \code{\link{mcmc_IMIFA}} is called depe
 }
 \examples{
 storeControl(score.switch=FALSE)
+
+# data(olive)
+# sim <- mcmc_IMIFA(olive, "IMIFA", n.iters=5000,
+#                   storage=storeControl(score.switch=FALSE))
 }
 \seealso{
 \code{\link{mcmc_IMIFA}} \code{\link{get_IMIFA_results}}

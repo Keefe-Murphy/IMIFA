@@ -5,7 +5,7 @@
 # Gibbs Sampler Function
   .gibbs_IFA     <- function(Q, data, iters, N, P, sigma.mu, mu, prop, uni.type,
                              uni.prior, psi.alpha, psi.beta, burnin, thinning, verbose,
-                             sw, epsilon, mu.zero, nu, adapt, adapt.at, b0, b1, nuplus1,
+                             sw, epsilon, mu.zero, nu, adapt, adaptat, b0, b1, nuplus1,
                              alpha.d1, alpha.d2, beta.d1, beta.d2, scaling, ...) {
 
   # Define & initialise variables
@@ -116,8 +116,8 @@
       }
 
     # Adaptation
-      if(all(adapt, iter > adapt.at)) {
-        if(runif(1) < ifelse(iter < burnin, 0.5, exp(-b0 - b1 * (iter - adapt.at)))) {
+      if(all(adapt, iter > adaptat)) {
+        if(runif(1) < ifelse(iter < burnin, 0.5, exp(-b0 - b1 * (iter - adaptat)))) {
           colvec <- (if(Q0) colSums(abs(lmat) < epsilon) / P else 0) >= prop
           numred <- sum(colvec)
           if(numred == 0)  { # simulate extra columns from priors
