@@ -16,11 +16,11 @@
 #' }
 #'  In principle, of course, one could overfit the "\code{MFA}" or "\code{MIFA}" models, but it is recommend to use the corresponding model options which begin with 'O' instead. Note that the "\code{classify}" method is not yet implemented.
 #' @param n.iters The number of iterations to run the Gibbs sampler for.
-#' @param range.G Depending on the method employed, either the range of values for the number of clusters, or the conseratively high starting value for the number of clusters. Defaults to 1 for the "\code{FA}" and "\code{IFA}" methods. For the "\code{MFA}" and "\code{MIFA}" models this is to be given as a range of candidate models to explore. For the "\code{OMFA}", "\code{OMIFA}", "\code{IMFA}", and "\code{IMIFA}" models, this is the number of clusters with which the chain is to be initialised, in which case the default is \code{min(N - 1, max(25, ceiling(3 * log(N))))}. For the "\code{OMFA}", and "\code{OMIFA}" models this upper limit remains fixed for the entire length of the chain; \code{range.G} also doubles as the default \code{trunc.G} for the "\code{IMFA}" and "\code{IMIFA}" models. However, when \code{N < P}, or when this bound is close to or exceeds \code{N} for any of these overfitted/infinite mixture models, it is better to initialise at a value closer to the truth (i.e. \code{ceiling(log(N))} by default), though the upper bound remains the same - as a result the role of \code{range.G} when \code{N < P} is no longer to specify the upper bound (which can still be modified via \code{trunc.G}, at least for the "\code{IMFA}" and "\code{IMIFA}" methods) and the number of clusters used for initialisation, but rather just the number of clusters used for initialisation only. If \code{length(range.G) * length(range.Q)} is large, consider not storing unnecessary parameters, or breaking up the range of models to be explored into chunks, and sending each chunk to \code{\link{get_IMIFA_results}}.
-#' @param range.Q Depending on the method employed, either the range of values for the number of latent factors, or, for methods ending in IFA the conservatively high starting value for the number of cluster-specific factors, in which case the default starting value is \code{floor(3 * log(P))}. For methods ending in IFA, different clusters can be modelled using different numbers of latent factors (incl. zero); for methods not ending in IFA it is possible to fit zero-factor models, corresponding to simple diagonal covariance structures. For instance, fitting the "\code{IMFA}" model with \code{range.Q=0} corresponds to a vanilla Dirichlet Process Mixture Model. If \code{length(range.G) * length(range.Q)} is large, consider not storing unnecessary parameters or breaking up the range of models to be explored into chunks, and sending each chunk to \code{\link{get_IMIFA_results}}.
+#' @param range.G Depending on the method employed, either the range of values for the number of clusters, or the conseratively high starting value for the number of clusters. Defaults to 1 for the "\code{FA}" and "\code{IFA}" methods. For the "\code{MFA}" and "\code{MIFA}" models this is to be given as a range of candidate models to explore. For the "\code{OMFA}", "\code{OMIFA}", "\code{IMFA}", and "\code{IMIFA}" models, this is the number of clusters with which the chain is to be initialised, in which case the default is \code{min(N - 1, max(25, ceiling(3 * log(N))))}. For the "\code{OMFA}", and "\code{OMIFA}" models this upper limit remains fixed for the entire length of the chain; \code{range.G} also doubles as the default \code{trunc.G} for the "\code{IMFA}" and "\code{IMIFA}" models. However, when \code{N < P}, or when this bound is close to or exceeds \code{N} for any of these overfitted/infinite mixture models, it is better to initialise at a value closer to the truth (i.e. \code{ceiling(log(N))} by default), though the upper bound remains the same - as a result the role of \code{range.G} when \code{N < P} is no longer to specify the upper bound (which can still be modified via \code{trunc.G}, at least for the "\code{IMFA}" and "\code{IMIFA}" methods) and the number of clusters used for initialisation, but rather just the number of clusters used for initialisation only. If \code{length(range.G) * length(range.Q)} is large, consider not storing unnecessary parameters (via \code{\link{storeControl}}), or breaking up the range of models to be explored into chunks and sending each chunk to \code{\link{get_IMIFA_results}}.
+#' @param range.Q Depending on the method employed, either the range of values for the number of latent factors, or, for methods ending in IFA the conservatively high starting value for the number of cluster-specific factors, in which case the default starting value is \code{floor(3 * log(P))}. For methods ending in IFA, different clusters can be modelled using different numbers of latent factors (incl. zero); for methods not ending in IFA it is possible to fit zero-factor models, corresponding to simple diagonal covariance structures. For instance, fitting the "\code{IMFA}" model with \code{range.Q=0} corresponds to a vanilla Dirichlet Process Mixture Model. If \code{length(range.G) * length(range.Q)} is large, consider not storing unnecessary parameters (via \code{\link{storeControl}}), or breaking up the range of models to be explored into chunks and sending each chunk to \code{\link{get_IMIFA_results}}.
 #' @param burnin The number of burn-in iterations for the sampler. Defaults to \code{n.iters/5}. Note that chains can also be burned in later, using \code{\link{get_IMIFA_results}}.
 #' @param thinning The thinning interval used in the simulation. Defaults to 2. No thinning corresponds to 1. Note that chains can also be thinned later, using \code{\link{get_IMIFA_results}}.
-#' @param MGP A list of arguments pertaining to the multiplicative gamma process (MGP) shrinkage prior and adaptive Gibbs sampler (AGS) for use with the infinite factor models "\code{IFA}", "\code{MIFA}", "\code{OMIFA}", and "\code{IMIFA}". Defaults are set by a call to \code{\link{mgpControl}}, with further checking of validity by \code{\link{MGP_check}}
+#' @param MGP A list of arguments pertaining to the multiplicative gamma process (MGP) shrinkage prior and adaptive Gibbs sampler (AGS). For use with the infinite factor models "\code{IFA}", "\code{MIFA}", "\code{OMIFA}", and "\code{IMIFA}" only. Defaults are set by a call to \code{\link{mgpControl}}, with further checking of validity by \code{\link{MGP_check}}
 #' @param centering A logical value indicating whether mean centering should be applied to the data, defaulting to \code{TRUE}.
 #' @param scaling The scaling to be applied - one of "\code{unit}", "\code{none}" or "\code{pareto}".
 #' @param uni.type This argument specifies the type of constraint, if any, to be placed on the uniquenesses/idiosyncratic variances, i.e. whether a general diagonal matrix or isotropic diagonal matrix is to be assumed, and in turn whether these matrices are constrained to be equal across clusters. The default "\code{unconstrained}" corresponds to factor analysis (and mixtures thereof), whereas "\code{isotropic}" corresponds to probabilistic principal components analysers (and mixtures thereof). Constraints \emph{may} be particularly useful when \code{N < P}, though caution is advised when employing constraints for any of the infinite factor models, especially "\code{isotropic}" and "\code{single}", which may lead to overestimation of the number of clusters &/or factors if this specification is inappropriate. The four options correspond to the following 4 parsimonious Gaussian mixture models:
@@ -33,7 +33,7 @@
 #'  The first letter \strong{U} here corresponds to constraints on loadings (not yet implemented), the second letter corresponds to constrained/unconstrained across clusters, and the third letter corresponds to the isotropic constraint. Of course, only the third letter is of relevance for the single-cluster "\code{FA}" and "\code{IFA}" models, such that "\code{unconstrained}" and "\code{constrained}" are equivalent for these models, and so too are "\code{isotropic}" and "\code{single}".
 #' @param uni.prior A switch indicating whether uniquenesses rate hyperparameters are to be "\code{unconstrained}" or "\code{isotropic}", i.e. variable-specific or not. "\code{uni.prior}" must be "\code{isotropic}" if the last letter of "\code{uni.type}" is \strong{C}, but can take either value otherwise. Defaults to correspond to the last letter of \code{uni.type} if that is supplied and \code{uni.prior} is not, otherwise defaults to "\code{unconstrained}", but "\code{isotropic}" is recommended when \code{N < P}. Only relevant when "\code{psi.beta}" is not supplied and \code{\link{psi_hyper}} is therefore invoked.
 #' @param alpha Depending on the method employed, either the hyperparameter of the Dirichlet prior for the cluster mixing proportions, or the Dirichlet process concentration parameter. Defaults to 0.5/range.G for the Overfitted methods - if supplied for "\code{OMFA}" and "\code{OMIFA}" methods, you are supplying the numerator of \code{alpha/range.G}, which should be less than half the dimension (per cluster!) of the free parameters of the smallest model considered in order to ensure superfluous clusters are emptied (for "\code{OMFA}", this corresponds to the smallest \code{range.Q}; for "\code{OMIFA}", this corresponds to a zero-factor model) [see: \code{\link{PGMM_dfree}} and Rousseau and Mengersen (2011)]. Defaults to 1 for the finite mixture models "\code{MFA}" and "\code{MIFA}". Defaults to \code{1 - discount} for the "\code{IMFA}" and "\code{IMIFA}" models if \code{learn.alpha=FALSE} or a simulation from the prior if \code{learn.alpha=TRUE}. Must be positive, unless \code{discount} is supplied for the "\code{IMFA}" or "\code{IMIFA}" methods.
-#' @param storage A vector of named logical indicators governing storage of parameters of interest for all models in the IMIFA family. Defaults are set by a call to \code{\link{storeControl}}.
+#' @param storage A vector of named logical indicators governing storage of parameters of interest for all models in the IMIFA family. Defaults are set by a call to \code{\link{storeControl}}. It may be useful not to store certain parameters if memory is an issue.
 #' @param psi.alpha The shape of the inverse gamma prior on the uniquenesses. Defaults to 2.5 if \code{uni.type} is one of "\code{unconstrained}" or "\code{constrained}", otherwise defaults to 3.5.
 #' @param psi.beta The rate of the inverse gamma prior on the uniquenesses. Can be either a single parameter, a vector of variable specific rates, or a matrix of variable and cluster-specific rates. If this is not supplied, \code{\link{psi_hyper}} is invoked to choose sensible values, depending on the value of \code{uni.prior} and, for the "\code{MFA}" and "\code{MIFA}" models, the value of \code{psi0g}.
 #' @param mu.zero The mean of the prior distribution for the mean parameter. Defaults to the sample mean of the data.
@@ -68,8 +68,8 @@
 #'
 #' @note Further control over the specification of advanced function arguments can be obtained with recourse to the following functions:\cr
 #' \describe{
-#' \item{\strong{\code{\link{mgpControl}}}}{Supply arguments (with defaults) pertaining to the multiplicative gamma process (MGP) shrinkage prior and adaptive Gibbs sampler (AGS) for use with the infinite factor models "\code{IFA}", "\code{MIFA}", "\code{OMIFA}", and "\code{IMIFA}".}
-#' \item{\strong{\code{\link{storeControl}}}}{Supply logical indicators governing storage of parameters of interest for all models in the IMIFA family.}
+#' \item{\strong{\code{\link{mgpControl}}}}{Supply arguments (with defaults) pertaining to the multiplicative gamma process (MGP) shrinkage prior and adaptive Gibbs sampler (AGS). For use with the infinite factor models "\code{IFA}", "\code{MIFA}", "\code{OMIFA}", and "\code{IMIFA}" only.}
+#' \item{\strong{\code{\link{storeControl}}}}{Supply logical indicators governing storage of parameters of interest for all models in the IMIFA family. It may be useful not to store certain parameters if memory is an issue (e.g. for large data sets or for a large number of MCMC iterations after burnin and thinning).}
 #' }
 #'
 #' @return A list of lists of lists of class "\code{IMIFA}" to be passed to \code{\link{get_IMIFA_results}}. If the returned object is x, candidate models are accesible via subsetting, where x is of the form x[[1:length(range.G)]][[1:length(range.Q)]]. However, these objects of class "IMIFA" should rarely if ever be manipulated by hand - use of the \code{\link{get_IMIFA_results}} function is \emph{strongly} advised.
@@ -150,18 +150,15 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   if(!missing(method) && method == "classification") {
     method  <- "classify"
   }
+  if(!is.character(method))         stop("'method' must be a character vector of length 1")
+  if(!is.character(scaling))        stop("'scaling' must be a character vector of length 1")
   method    <- match.arg(method)
   scaling   <- match.arg(scaling)
   if(missing(dat))                  stop("Dataset must be supplied")
   dat.nam   <- gsub("[[:space:]]", "", deparse(substitute(dat)))
   nam.dat   <- gsub("\\[.*", "", dat.nam)
-  pattern   <- c("(", ")")
-  nam.x     <- gsub(".*\\[(.*)\\].*", "\\1)", dat.nam)
   if(!exists(nam.dat,
      envir=.GlobalEnv))             stop(paste0("Object ", match.call()$dat, " not found\n"))
-  if(any(unlist(vapply(seq_along(pattern), function(p) grepl(pattern[p], nam.dat, fixed=TRUE), logical(1L))),
-         !identical(dat.nam, nam.dat) && (any(grepl("[[:alpha:]]", gsub('c', '',  nam.x))) || grepl(":",
-         nam.x,    fixed=TRUE))))   stop("Extremely inadvisable to supply 'dat' subsetted by any means other than row/column numbers or c() indexing: best to create new data object")
   if(any(!is.logical(centering),
          length(centering) != 1))   stop("'centering' must be a single logical indicator")
   if(any(!is.logical(verbose),
@@ -186,7 +183,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(verbose)                     message("Non-numeric columns removed")
     raw.dat <- raw.dat[num.check]
   }
-  if(length(iters)  <= 1)           stop("Run a longer chain!")
+  if(length(iters)   < 10)          stop("Run a longer chain!")
   if(anyNA(raw.dat)) {
     if(verbose)                     message("Rows with missing values removed from data")
     raw.dat <- raw.dat[complete.cases(raw.dat),]
@@ -209,15 +206,16 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   NlP       <- N  < P
   miss.uni  <- missing(uni.type)
   miss.pri  <- missing(uni.prior)
+  if(!is.character(uni.type))       stop("'uni.type' must be a character vector of length 1")
+  if(!is.character(uni.prior))      stop("'uni.prior' must be a character vector of length 1")
   uni.type  <- ifelse(miss.uni, ifelse(uni, "isotropic", "unconstrained"), match.arg(uni.type))
   if(uni) {
     if(is.element(uni.type, c("unconstrained", "constrained"))) {
-      uni.new     <- switch(uni.type, unconstrained=, isotropic="isotropic", constrained=, single="single")
-      if(verbose)                   message(paste0("'uni.type' coerced to ", uni.new, " as the dataset is univariate"))
-      uni.type    <- uni.new
+      uni.type     <- switch(uni.type, unconstrained=, isotropic="isotropic", constrained=, single="single")
+      if(verbose)                   message(paste0("'uni.type' coerced to ", uni.type, " as the dataset is univariate"))
     }
   }
-  uni.prior <- ifelse(missing(uni.prior), switch(uni.type, constrained=, unconstrained="unconstrained", "isotropic"), match.arg(uni.prior))
+  uni.prior <- ifelse(miss.pri, switch(uni.type, constrained=, unconstrained="unconstrained", "isotropic"), match.arg(uni.prior))
   if(uni    && all(uni.prior  == "unconstrained", verbose)) {
     uni.prior     <- "isotropic";   message("'uni.prior' coerced to isotropic as the dataset is univariate")
   }
@@ -233,6 +231,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   if(N < 2)                         stop("Must have more than one observation")
   zin.miss  <- missing(z.init)
   zli.miss  <- missing(z.list)
+  if(!is.character(z.init))         stop("'z.init' must be a character vector of length 1")
   z.init    <- match.arg(z.init)
   if(all(is.element(method, c("FA", "IFA")), verbose,
          !zin.miss || !zli.miss)) { message(paste0("z does not need to be initialised for the ", method, " method"))

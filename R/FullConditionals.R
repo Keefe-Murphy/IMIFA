@@ -278,6 +278,7 @@
 #' olive_scaled <- scale(olive2, center=TRUE, scale=TRUE)
 #' (rate  <- psi_hyper(shape=3, covar=cov(olive_scaled), type="unconstrained"))
     psi_hyper   <- function(shape, covar, type=c("unconstrained", "isotropic")) {
+      if(!is.character(type))              stop("'type' must be a character vector of length 1")
       if(!all(is.posi_def(covar, semi=TRUE),
               is.symmetric(covar),
               is.double(covar)))           stop("Invalid covariance matrix supplied")
@@ -320,6 +321,7 @@
         !is.numeric(rate)  || rate  <= 0) stop("Argument 'rate' must be a single strictly positive number")
       if(length(shift) > 1 ||
         !is.numeric(shift))               stop("Argument 'shift' must be a single number")
+      if(!is.character(param))            stop("'param' must be a character vector of length 1")
       param     <- match.arg(param)
 
       rate      <- switch(param, rate=rate, 1/rate)
@@ -424,14 +426,15 @@
 #' (UUU <- PGMM_dfree(Q=4:5, P=50, G=3, method="UUU"))
 #' (CCC <- PGMM_dfree(Q=4:5, P=50, G=3, method="CCC", equal.pro=TRUE))
     PGMM_dfree   <- Vectorize(function(Q, P, G = 1L, method = c("UUU", "UUC", "UCU", "UCC", "CUU", "CUC", "CCU", "CCC"), equal.pro = FALSE) {
-      if(length(equal.pro) > 1 ||
+      if(length(equal.pro)  > 1  ||
          !is.logical(equal.pro))           stop("'equal.pro' must be a single logical indicator")
+      if(!is.character(method))            stop("'method' must be a character vector of length 1")
       meth       <- unlist(strsplit(match.arg(method), ""))
-      lambda     <- P * Q - 0.5 * Q * (Q - 1)
-      lambda     <- switch(meth[1], C=lambda, U=G  * lambda)
-      psi        <- switch(meth[2], C=1,      U=G)
-      psi        <- switch(meth[3], C=1,      U=P) * psi
-        as.integer(ifelse(equal.pro, 0, G - 1) + G * P + lambda + psi) },  vectorize.args = "Q")
+      lambda     <- P * Q   - 0.5 * Q * (Q - 1)
+      lambda     <- switch(meth[1], C = lambda,   U = G  * lambda)
+      psi        <- switch(meth[2], C = 1,        U = G)
+      psi        <- switch(meth[3], C = 1,        U = P) * psi
+        as.integer(ifelse(equal.pro, 0, G  - 1) + G * P  + lambda + psi) },  vectorize.args = "Q")
 
   # Label Switching
     .lab_switch <- function(z.new, z.old) {
@@ -878,7 +881,7 @@
           Q.msg <- c(Q.msg, (paste0(Q[i], ifelse(i + 1 < length(Q), ", ", " "))))
         }
         Q.msg   <- if(!adapt) paste0(unique(Q)) else { if(length(Q) > 1) paste(c(Q.msg, paste0("and ", Q[length(Q)])), sep="", collapse="") else Q }
-        msg     <- paste0("The chosen ", method, " model has ", G, " group", ifelse(G == 1, " with ", paste0("s, ", ifelse(adapt, "", "each"), " with ")), Q.msg, " factor", ifelse(G == 1 && Q == 1, "", paste0("s", ifelse(G == 1, "", " respectively"))), ifelse(adapt, "", " (no adaptation took place)"), sep="")
+        msg     <- paste0("The chosen ", method, " model has ", G, " group", ifelse(G == 1, " with ", paste0("s,", ifelse(adapt, "", "each"), " with ")), Q.msg, " factor", ifelse(G == 1 && Q == 1, "", paste0("s", ifelse(G == 1, "", " respectively"))), ifelse(adapt, "", " (no adaptation took place)"), sep="")
       }
         cat(paste0(msg, ": this Results_IMIFA object can be passed to plot(...)\n"))
     }
@@ -973,21 +976,21 @@
 
 #' Set storage values for use with the IMIFA family of models
 #'
-#' Supplies a list of values for logical switches indicating whether parameters of interest (means, scores, loadings, uniquenesses, and mixing proportions) should be stored when running models from the IMIFA family via \code{\link{mcmc_IMIFA}}.
+#' Supplies a list of values for logical switches indicating whether parameters of interest (means, scores, loadings, uniquenesses, and mixing proportions) should be stored when running models from the IMIFA family via \code{\link{mcmc_IMIFA}}. It may be useful not to store certain parameters if memory is an issue.
 #' @param load.switch Logical indicating whether the factor loadings are to be stored (defaults to \code{TRUE}).
 #' @param mu.switch Logical indicating whether the means are to be stored (defaults to \code{TRUE}).
 #' @param pi.switch Logical indicating whether the mixing proportions are to be stored (defaults to \code{TRUE}).
 #' @param psi.switch Logical indicating whether the uniquenesses are to be stored (defaults to \code{TRUE}).
 #' @param score.switch Logical indicating whether the factor scores are to be stored. As the array containing each sampled scores matrix tends to be amongst the largest objects to be stored, this defaults to \code{FALSE} inside \code{\link{mcmc_IMIFA}} when \code{length(range.G) * length(range.Q) > 10}, otherwise the default is \code{TRUE}. For the "\code{MIFA}", "\code{OMIFA}", and "\code{IMIFA}" methods, setting this switch to \code{FALSE} also offers a slight speed-up.
 #'
-#' @details \code{\link{storeControl}} is provided for assigning values for IMIFA models within \code{\link{mcmc_IMIFA}}. It may be useful not to store certain parameters if memory is an issue. Warning: posterior inference and plotting won't be posssible for parameters not stored. In particular, when loadings and uniquenesses are not stored, it will not be possible to estimate covariance matrices and compute error metrics. If loadings are not stored but scores are, caution is advised when examining posterior scores as Procrustes rotation will not occur within \code{\link{get_IMIFA_results}}.
+#' @details \code{\link{storeControl}} is provided for assigning values for IMIFA models within \code{\link{mcmc_IMIFA}}. It may be useful not to store certain parameters if memory is an issue (e.g. for large data sets or for a large number of MCMC iterations after burnin and thinning). Warning: posterior inference and plotting won't be posssible for parameters not stored. In particular, when loadings and uniquenesses are not stored, it will not be possible to estimate covariance matrices and compute error metrics. If loadings are not stored but scores are, caution is advised when examining posterior scores as Procrustes rotation will not occur within \code{\link{get_IMIFA_results}}.
 #'
 #' @note Further warning messages may appear when \code{\link{mcmc_IMIFA}} is called depending on the particularities of the data set and the IMIFA method employed etc. as additional checks occur.
 
 #' @return A named vector in which the names are the names of the storage switches and the values are logicals indicating whether that parameter is to be stored. The list also contains as an attribute a logical for each switch indicating whether it was actually supplied (\code{TRUE}) or the default was accepted (\code{FALSE}).
 #' @export
 #'
-#' @seealso \code{\link{mcmc_IMIFA}} \code{\link{get_IMIFA_results}}
+#' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{get_IMIFA_results}}
 #' @author Keefe Murphy
 #' @examples
 #' storeControl(score.switch=FALSE)

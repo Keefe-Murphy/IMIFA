@@ -29,7 +29,7 @@
 #'
 #' # Fit a MIFA model to this data
 #' # tmp      <- mcmc_IMIFA(sim_data, method="MIFA", range.G=3, n.iters=5000)
-#' @seealso The function \code{\link{mcmc_IMIFA}} for fitting an IMIFA related model to the simulated data set.
+#' @seealso \code{\link{mcmc_IMIFA}} for fitting an IMIFA related model to the simulated data set.
 sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(floor(log(P)), G), pis = rep(1/G, G), psi = NULL,
                            nn = NULL, loc.diff = 1, method = c("conditional", "marginal")) {
 
@@ -50,6 +50,7 @@ sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(floor(log(P)), G),
       } else if(length(Q != G))           stop(paste0("'Q' must supplied for each of the G=", G, " clusters"))
     }
   }
+  if(!is.character(method))               stop("'method' must be a character vector of length 1")
   method       <- match.arg(method)
   Gseq         <- seq_len(G)
   Nseq         <- seq_len(N)
@@ -59,18 +60,22 @@ sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(floor(log(P)), G),
 
   if(!missing(nn) && missing(pis))     {
     nn         <- as.integer(nn)
-    if(any(nn  == 0))                     stop("All 'nn' values must be strictly positive; simulating empty clusters not allowed")
-    if(any(length(nn)  != G,
-           sum(nn)     != N,
-           !is.integer(nn)))              stop(paste0("'nn' must be an integer vector of length G=", G, " which sums to N=", N))
+    if(!is.integer(nn)   ||
+       any(length(nn)    != G,
+           sum(nn)       != N))           stop(paste0("'nn' must be an integer vector of length G=", G, " which sums to N=", N))
+    if(any(nn  <= 0))                     stop("All 'nn' values must be strictly positive; simulating empty clusters not allowed")
   } else {
-    if(any(length(pis) != G,
-           sum(pis)    != 1,
-           !is.numeric(pis)))             stop(paste0("'pis' must be a numeric vector of length G=", G, " which sums to ", 1))
+    if(!is.numeric(pis)  ||
+       any(length(pis)   != G,
+           sum(pis)      != 1))           stop(paste0("'pis' must be a numeric vector of length G=", G, " which sums to ", 1))
+    if(any(pis <= 0))                     stop("All 'pis' values must be strictly positive")
     nn         <- rep(0,  G)
-    while(any(nn < floor(N/(G * G))))  {
+    iter       <- 0
+    while(any(nn   < floor(N/(G * G)),
+              iter < 1000))            {
       labs     <- .sim_z_p(N=N, prob.z=pis)
       nn       <- tabulate(labs, nbins=G)
+      iter     <- iter    + 1
     }
   }
   psi.miss     <- missing(psi)

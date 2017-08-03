@@ -47,7 +47,7 @@ plot(cmdscale(dist(sim_data), k=2), col=labels)
 # tmp      <- mcmc_IMIFA(sim_data, method="MIFA", range.G=3, n.iters=5000)
 }
 \seealso{
-The function \code{\link{mcmc_IMIFA}} for fitting an IMIFA related model to the simulated data set.
+\code{\link{mcmc_IMIFA}} for fitting an IMIFA related model to the simulated data set.
 }
 \author{
 Keefe Murphy

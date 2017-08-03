@@ -22,10 +22,10 @@ storeControl(load.switch = TRUE, mu.switch = TRUE, pi.switch = TRUE,
 A named vector in which the names are the names of the storage switches and the values are logicals indicating whether that parameter is to be stored. The list also contains as an attribute a logical for each switch indicating whether it was actually supplied (\code{TRUE}) or the default was accepted (\code{FALSE}).
 }
 \description{
-Supplies a list of values for logical switches indicating whether parameters of interest (means, scores, loadings, uniquenesses, and mixing proportions) should be stored when running models from the IMIFA family via \code{\link{mcmc_IMIFA}}.
+Supplies a list of values for logical switches indicating whether parameters of interest (means, scores, loadings, uniquenesses, and mixing proportions) should be stored when running models from the IMIFA family via \code{\link{mcmc_IMIFA}}. It may be useful not to store certain parameters if memory is an issue.
 }
 \details{
-\code{\link{storeControl}} is provided for assigning values for IMIFA models within \code{\link{mcmc_IMIFA}}. It may be useful not to store certain parameters if memory is an issue. Warning: posterior inference and plotting won't be posssible for parameters not stored. In particular, when loadings and uniquenesses are not stored, it will not be possible to estimate covariance matrices and compute error metrics. If loadings are not stored but scores are, caution is advised when examining posterior scores as Procrustes rotation will not occur within \code{\link{get_IMIFA_results}}.
+\code{\link{storeControl}} is provided for assigning values for IMIFA models within \code{\link{mcmc_IMIFA}}. It may be useful not to store certain parameters if memory is an issue (e.g. for large data sets or for a large number of MCMC iterations after burnin and thinning). Warning: posterior inference and plotting won't be posssible for parameters not stored. In particular, when loadings and uniquenesses are not stored, it will not be possible to estimate covariance matrices and compute error metrics. If loadings are not stored but scores are, caution is advised when examining posterior scores as Procrustes rotation will not occur within \code{\link{get_IMIFA_results}}.
 }
 \note{
 Further warning messages may appear when \code{\link{mcmc_IMIFA}} is called depending on the particularities of the data set and the IMIFA method employed etc. as additional checks occur.
@@ -38,7 +38,7 @@ storeControl(score.switch=FALSE)
 #                   storage=storeControl(score.switch=FALSE))
 }
 \seealso{
-\code{\link{mcmc_IMIFA}} \code{\link{get_IMIFA_results}}
+\code{\link{mcmc_IMIFA}}, \code{\link{get_IMIFA_results}}
 }
 \author{
 Keefe Murphy
