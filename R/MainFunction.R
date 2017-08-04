@@ -428,23 +428,24 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     delta0g <- FALSE
   } else {
     mgpmiss <- attr(MGP, "Missing")
-    MGP$prop       <- ifelse(uni, 0.5, floor(MGP$prop * P)/P)
+    fQ0     <- uni || P    == 2
+    MGP$prop   <- ifelse(fQ0 && mgpmiss$propx, 0, floor(MGP$prop * P)/P)
     adapt   <- MGP$adapt
+    adaptat <- MGP$adaptat <- ifelse(mgpmiss$adaptatx, ifelse(fQ0, 0L, switch(method, IFA=, MIFA=burnin, 0L)), MGP$adaptat)
     nuplus1 <- MGP$nuplus1
-    adaptat <- MGP$adaptat <- ifelse(isTRUE(mgpmiss["adaptx"]), switch(method, IFA=, MIFA=burnin, 0L), MGP$adaptat)
     delta0g <- MGP$delta0g
     delta0x <- switch(method, MIFA=delta0g, FALSE)
-    alpha.d1   <- .len_check(MGP$alpha.d1, delta0x, method, P, G.init, P.dim=FALSE) #
-    alpha.d2   <- .len_check(MGP$alpha.d2, delta0x, method, P, G.init, P.dim=FALSE) #
+    alpha.d1   <- .len_check(MGP$alpha.d1, delta0x, method, P, G.init, P.dim=FALSE)
+    alpha.d2   <- .len_check(MGP$alpha.d2, delta0x, method, P, G.init, P.dim=FALSE)
     MGP     <- MGP[-c(1:3)]
-    if(Q.miss)               range.Q       <- as.integer(ifelse(uni, 1, min(ifelse(P > 500, 12 + floor(log(P)), floor(3 * log(P))), N - 1)))
-    if(length(range.Q)    > 1)      stop(paste0("Only one starting value for 'range.Q' can be supplied for the ", method, " method"))
+    if(Q.miss)               range.Q       <- as.integer(ifelse(fQ0, 1, min(ifelse(P > 500, 12 + floor(log(P)), floor(3 * log(P))), N - 1)))
+    if(length(range.Q)      > 1)    stop(paste0("Only one starting value for 'range.Q' can be supplied for the ", method, " method"))
     if(range.Q <= 0)                stop(paste0("'range.Q' must be strictly positive for the ", method, " method"))
     if(isTRUE(adapt)) {
-     if(adaptat < 0      ||
+     if(adaptat < 0        ||
         adaptat > burnin)           stop("'adapt.at' must be lie in the interval [0, burnin] if 'adapt' is TRUE")
      if(Q.min   > range.Q)          stop(paste0("'range.Q' must be at least min(log(P), log(N)) for the ", method, " method when 'adapt' is TRUE"))
-    } else if(is.element(method,
+    } else if(!fQ0 && is.element(method,
               c("OMIFA", "IMIFA"))) warning("'adapt=FALSE' is NOT recommended for the 'OMIFA' or 'IMIFA' methods", call.=FALSE)
   }
 
@@ -488,7 +489,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   }
   if(is.element(method, c("FA", "MFA", "OMFA", "IMFA")) && any(range.Q == 0)) {
     if(all(storage[c("s.sw", "l.sw")]))   {
-                                    message("Scores & Loadings not stored where 'range.Q==0' as model has zero factors", call)
+                                    message("Scores & Loadings not stored where 'range.Q=0' as model has zero factors", call)
     } else if(storage["s.sw"])    { message("Scores not stored where 'range.Q==0' as model has zero factors")
     } else if(storage["l.sw"])    { message("Loadings not stored where 'range.Q==0' as model has zero factors")
     }
@@ -660,10 +661,10 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
         }
         psi.beta[[g]]   <- if(uni)  t(psi.beta[[g]])   else psi.beta[[g]]
       }
-      if(is.element(method, c("MIFA", "OMIFA", "IMIFA")) && mgpmiss["ad1x"]) {
+      if(is.element(method, c("MIFA", "OMIFA", "IMIFA")) && mgpmiss$ad1x) {
         alpha.d1[[g]]   <- rep(unlist(alpha.d1), G)
       }
-      if(is.element(method, c("MIFA", "OMIFA", "IMIFA")) && mgpmiss["ad1x"]) {
+      if(is.element(method, c("MIFA", "OMIFA", "IMIFA")) && mgpmiss$ad2x) {
         alpha.d2[[g]]   <- rep(unlist(alpha.d2), G)
       }
       clust[[g]]   <- list(z = zi[[g]], pi.alpha = alpha, pi.prop = pi.prop[[g]])

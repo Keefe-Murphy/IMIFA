@@ -7,10 +7,10 @@
 Ledermann(P)
 }
 \arguments{
-\item{P}{Integer number of variables in data set.}
+\item{P}{Integer number of variables in data set. This argument is vectorized.}
 }
 \value{
-The Ledermann bound, a non-negative integer.
+The Ledermann bound, a non-negative integer, or a vector of \code{length(P)} such bounds.
 }
 \description{
 Returns the maximum possible number of latent factors in a factor analysis model for data of dimension \code{P}. This Ledermann bound is given by the largest integer smaller than or equal to the solution \eqn{k}{k} of \eqn{(M - k)^2 \geq M + k}{(M - k)^2 >= M + k}.

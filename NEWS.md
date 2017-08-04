@@ -2,15 +2,18 @@ __Infinite Mixtures of Infinite Factor Analysers__
 ==================================================  
 
 # IMIFA v1.3.2 - (_6<sup>th</sup> release [patch update]: 2017-07-26_)
-## Improvements
+## New Features
+* Simplified `mcmc_IMIFA` by consolidating arguments using new helper functions (with defaults):  
+    * MGP & AGS args. supplied using `mgpControl` for infinite factor models.  
+    * Storage switch args. supplied using `storeControl`.
 * Added ability to constrain mixing proportions across clusters using `equal.pro` argument for M(I)FA models:  
   Modified PGMM_dfree accordingly and forced non-storage of mixing proportions when `equal.pro` is TRUE.  
+
+## Improvements
 * All methods now work for univariate data also (with apt. edits to plots & uniqueness defaults etc.).
 * `Zsimilarity` sped-up via `mcclust::comp.psm` s.t. `z.avgsim=TRUE` now by default in `get_IMIFA_results`.
 * Added "`hc`" option to `z.init` to initialise allocations via hierarchical clustering (using `mclust::hc`).
-* Simplified `mcmc_IMIFA` by consolidating arguments:  
-    * MGP & AGS args. supplied using new function `mgpControl` for infinite factor models (with defaults).  
-    * Storage switch args. supplied using new function `storeControl` (with defaults).
+* `mu` argument added to `sim_IMIFA_data` to allow supplying true mean parameter values directly.
 * Standard deviation of AICM/BICM model selection criteria now computed and returned.
 * `heat_legend` gains `cex.lab` argument to control magnification of legend text.
 * Slight improvements when `adapt=FALSE` for infinite factor models with fixed high truncation level.
@@ -24,6 +27,7 @@ __Infinite Mixtures of Infinite Factor Analysers__
 * Fixed storage switches to account for `burnin=0`.
 * Fixed bug with default plotting palette for data sets with >1024 variables.
 * Transparency default in `plot.Results_IMIFA` now depends on device's support of semi-transparency.
+* `Ledermann(P)` is now properly vectorised.
 
 # IMIFA v1.3.1 - (_5<sup>th</sup> release [patch update]: 2017-07-07_)
 ## Bug Fixes

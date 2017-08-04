@@ -5,7 +5,7 @@
 \title{Simulate Data from a Mixture of Factor Analysers Structure}
 \usage{
 sim_IMIFA_data(N = 300L, G = 3L, P = 50L, Q = rep(floor(log(P)), G),
-  pis = rep(1/G, G), psi = NULL, nn = NULL, loc.diff = 1,
+  pis = rep(1/G, G), mu = NULL, psi = NULL, nn = NULL, loc.diff = 1,
   method = c("conditional", "marginal"))
 }
 \arguments{
@@ -19,11 +19,13 @@ sim_IMIFA_data(N = 300L, G = 3L, P = 50L, Q = rep(floor(log(P)), G),
 
 \item{pis}{Mixing proportions of the clusters in the dataset if \code{G} > 1. Must sum to 1. Defaults to \code{rep(1/G, G)}.}
 
-\item{psi}{True values of uniqueness parameters, either as a single value, a vector of length \code{G}, a vector of length \code{P}, or a \code{G * P} matrix: as such the user can specify uniquenesses as a diagonal or isotropic matrix, and further constrain uniquenesses across clusters if desired. If \code{psi} is missing, uniquenesses are simulated via \code{rgamma(P, 1, 1)} within each cluster.}
+\item{mu}{True values of the mean parameters, either as a single value, a vector of length \code{G}, a vector of length \code{P}, or a \code{G * P} matrix. If \code{mu} is missing, \code{loc.diff} is invoked to simulate distinct means for each cluster.}
+
+\item{psi}{True values of uniqueness parameters, either as a single value, a vector of length \code{G}, a vector of length \code{P}, or a \code{G * P} matrix. As such the user can specify uniquenesses as a diagonal or isotropic matrix, and further constrain uniquenesses across clusters if desired. If \code{psi} is missing, uniquenesses are simulated via \code{rgamma(P, 1, 1)} within each cluster.}
 
 \item{nn}{An alternative way to specify the size of each cluster, by giving the exact number of observations in each cluster explicitly. Must sum to \code{N}.}
 
-\item{loc.diff}{A parameter to control the closeness of the clusters in terms of the difference in their location vectors. Defaults to 1.}
+\item{loc.diff}{A parameter to control the closeness of the clusters in terms of the difference in their location vectors. Only relevant if \code{mu} is NOT supplied. Defaults to 1.}
 
 \item{method}{A switch indicating whether the mixture to be simulated from is the conditional distribution of the data given the latent variables (default), or simply the marginal distribution of the data.}
 }

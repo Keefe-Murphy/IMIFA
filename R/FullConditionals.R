@@ -601,19 +601,19 @@
 #' Ledermann Bound
 #'
 #' Returns the maximum possible number of latent factors in a factor analysis model for data of dimension \code{P}. This Ledermann bound is given by the largest integer smaller than or equal to the solution \eqn{k}{k} of \eqn{(M - k)^2 \geq M + k}{(M - k)^2 >= M + k}.
-#' @param P Integer number of variables in data set.
+#' @param P Integer number of variables in data set. This argument is vectorized.
 #'
-#' @return The Ledermann bound, a non-negative integer.
+#' @return The Ledermann bound, a non-negative integer, or a vector of \code{length(P)} such bounds.
 #' @export
 #'
 #' @examples
 #' Ledermann(25)
-    Ledermann   <- function(P) {
+    Ledermann   <- Vectorize(function(P) {
       P         <- as.integer(P)
       if(length(P)   > 1  || P <= 0)       stop('argument P is a not a single positive integer')
       R         <- P + 0.5 * (1 - sqrt(8 * P  + 1))
         as.integer(floor(ifelse(1e-10 > abs(R - round(R)), round(R), R)))
-    }
+    }, vectorize.args= "P")
 
   # Procrustes Transformation
 #' Procrustes Transformation
@@ -698,8 +698,9 @@
            c(1, range.G, V)))) {
           if(all(len == range.G)) obj0g <- if(switch0g) lapply(rGseq, function(g) matrix(obj0g[[g]], nrow=1))  else stop(paste0(sw.name, " must be TRUE if the dimension of ", obj.name, " depends on G"))
           if(all(len == V))       obj0g <- if(V == 1)   lapply(rGseq, function(g) rep(obj0g[[g]], range.G[g])) else lapply(rGseq, function(g) matrix(obj0g[[g]], nrow=V, ncol=range.G[g]))
-        } else if(!all(vapply(rGseq, function(g, dimG=as.numeric(dim(obj0g[[g]]))) is.matrix(obj0g[[g]]) && any(identical(dimG, c(1, range.G[g])), identical(dimG, c(V, range.G[g]))), logical(1L)))) {
-                                           stop(paste0(ifelse(length(range.G) > 1, "Each element of ", ""), obj.name, " must be of length 1", ifelse(P.dim, paste0(", P=", V, ", or it's corresponding range.G, or a matrix with P rows and it's corresponding range.G columns"), ifelse(switch0g, paste0(", or G=", range.G), ""))))
+        } else if(!all(vapply(rGseq, function(g, dimG=as.integer(dim(obj0g[[g]]))) is.matrix(obj0g[[g]]) && any(identical(dimG, as.integer(c(1, range.G[g]))), identical(dimG, as.integer(c(V, range.G[g])))), logical(1L)))) {
+                                           stop(paste0(ifelse(length(rGseq) > 1, "Each element of ", ""), obj.name, " must be of length 1", ifelse(P.dim, paste0(", P=", V, ifelse(length(rGseq) == 1, paste0(", or G=", range.G),  ", or its corresponding range.G,"),
+                                                ", or a matrix with P rows and ", ifelse(length(rGseq) == 1, "G columns", "its corresponding range.G")),  ifelse(switch0g,  ifelse(length(rGseq) == 1, paste0( " or G=",  range.G),  " or its corresponding range.G,"), ""))))
         } else if(all(vapply(obj0g, is.matrix, logical(1L)), !switch0g) && any(vapply(rGseq, function(g) any(dim(obj0g[[g]]) == range.G[g]), logical(1L)))) {
                                            stop(paste0(sw.name, " must be TRUE if the dimension of ", obj.name, " depends on G"))
         }
@@ -881,7 +882,7 @@
           Q.msg <- c(Q.msg, (paste0(Q[i], ifelse(i + 1 < length(Q), ", ", " "))))
         }
         Q.msg   <- if(!adapt) paste0(unique(Q)) else { if(length(Q) > 1) paste(c(Q.msg, paste0("and ", Q[length(Q)])), sep="", collapse="") else Q }
-        msg     <- paste0("The chosen ", method, " model has ", G, " group", ifelse(G == 1, " with ", paste0("s,", ifelse(adapt, "", "each"), " with ")), Q.msg, " factor", ifelse(G == 1 && Q == 1, "", paste0("s", ifelse(G == 1, "", " respectively"))), ifelse(adapt, "", " (no adaptation took place)"), sep="")
+        msg     <- paste0("The chosen ", method, " model has ", G, " group", ifelse(G == 1, " with ", paste0("s,", ifelse(adapt, "", " each"), " with ")), Q.msg, " factor", ifelse(G == 1 && Q == 1, "", paste0("s", ifelse(G == 1, "", " respectively"))), ifelse(adapt, "", " (no adaptation took place)"), sep="")
       }
         cat(paste0(msg, ": this Results_IMIFA object can be passed to plot(...)\n"))
     }
@@ -936,7 +937,8 @@
 #' #                   MGP=mgpControl(nu=2.5, eps=1e-02))
     mgpControl  <- function(alpha.d1 = 2, alpha.d2 = 6, nu = 2, prop = 0.7, eps = 1e-01, adapt = TRUE, b0 = 0.1,
                             b1 = 5e-05, nuplus1 = TRUE, beta.d1 = 1, beta.d2 = 1, adapt.at = 0L, delta0g = FALSE) {
-      miss.args <- c(ad1x = missing(alpha.d1), ad2x = missing(alpha.d2), adaptx = missing(adapt.at))
+      miss.args <- list(ad1x = missing(alpha.d1), ad2x = missing(alpha.d2), propx = missing(prop),
+                        adaptx = missing(adapt), adaptatx = missing(adapt.at))
       if(any(!is.numeric(alpha.d1),
              !is.numeric(alpha.d2),
              c(alpha.d1, alpha.d2) < 1))   stop("All shrinkage shape hyperparameter values must be numeric and at least 1")
@@ -977,11 +979,11 @@
 #' Set storage values for use with the IMIFA family of models
 #'
 #' Supplies a list of values for logical switches indicating whether parameters of interest (means, scores, loadings, uniquenesses, and mixing proportions) should be stored when running models from the IMIFA family via \code{\link{mcmc_IMIFA}}. It may be useful not to store certain parameters if memory is an issue.
-#' @param load.switch Logical indicating whether the factor loadings are to be stored (defaults to \code{TRUE}).
 #' @param mu.switch Logical indicating whether the means are to be stored (defaults to \code{TRUE}).
-#' @param pi.switch Logical indicating whether the mixing proportions are to be stored (defaults to \code{TRUE}).
-#' @param psi.switch Logical indicating whether the uniquenesses are to be stored (defaults to \code{TRUE}).
 #' @param score.switch Logical indicating whether the factor scores are to be stored. As the array containing each sampled scores matrix tends to be amongst the largest objects to be stored, this defaults to \code{FALSE} inside \code{\link{mcmc_IMIFA}} when \code{length(range.G) * length(range.Q) > 10}, otherwise the default is \code{TRUE}. For the "\code{MIFA}", "\code{OMIFA}", and "\code{IMIFA}" methods, setting this switch to \code{FALSE} also offers a slight speed-up.
+#' @param load.switch Logical indicating whether the factor loadings are to be stored (defaults to \code{TRUE}).
+#' @param psi.switch Logical indicating whether the uniquenesses are to be stored (defaults to \code{TRUE}).
+#' @param pi.switch Logical indicating whether the mixing proportions are to be stored (defaults to \code{TRUE}).
 #'
 #' @details \code{\link{storeControl}} is provided for assigning values for IMIFA models within \code{\link{mcmc_IMIFA}}. It may be useful not to store certain parameters if memory is an issue (e.g. for large data sets or for a large number of MCMC iterations after burnin and thinning). Warning: posterior inference and plotting won't be posssible for parameters not stored. In particular, when loadings and uniquenesses are not stored, it will not be possible to estimate covariance matrices and compute error metrics. If loadings are not stored but scores are, caution is advised when examining posterior scores as Procrustes rotation will not occur within \code{\link{get_IMIFA_results}}.
 #'
@@ -998,9 +1000,9 @@
 #' # data(olive)
 #' # sim <- mcmc_IMIFA(olive, "IMIFA", n.iters=5000,
 #' #                   storage=storeControl(score.switch=FALSE))
-   storeControl <- function(load.switch = TRUE, mu.switch = TRUE, pi.switch = TRUE, psi.switch = TRUE, score.switch = TRUE) {
-      switches  <- c(l.sw=load.switch, mu.sw=mu.switch, pi.sw=pi.switch, psi.sw=psi.switch, s.sw=score.switch)
-      attr(switches, "Missing") <- c(l.sw=missing(load.switch), mu.sw=missing(mu.switch), pi.sw=missing(pi.switch), psi.sw=missing(psi.switch), s.sw=missing(score.switch))
+   storeControl <- function(mu.switch = TRUE, score.switch = TRUE, load.switch = TRUE, psi.switch = TRUE, pi.switch = TRUE) {
+      switches  <- c(mu.sw=mu.switch, s.sw=score.switch, l.sw=load.switch, psi.sw=psi.switch,pi.sw=pi.switch)
+      attr(switches, "Missing") <- c(mu.sw=missing(mu.switch), s.sw=missing(score.switch), l.sw=missing(load.switch), psi.sw=missing(psi.switch), pi.sw=missing(pi.switch))
       if(any(length(switches)   != 5,
              !is.logical(switches)))       stop("All logical parameter storage switches must be single logical indicators")
         switches

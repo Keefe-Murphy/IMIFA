@@ -50,7 +50,7 @@
     eta          <- .sim_eta_p(Q=Q, N=N)
     lmat         <- matrix(.sim_load_p(Q=Q, P=P, sigma.l=sigma.l), nrow=P, ncol=Q)
     psi.inv      <- .sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
-    if(all(Q0, Q  < min(N - 1, Ledermann(P)))) {
+    if(Q0 &&   Q  < min(N - 1, Ledermann(P))) {
       fact       <- try(factanal(data, factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
       if(!inherits(fact, "try-error")) {
         eta      <- fact$scores
@@ -120,6 +120,6 @@
                       cov.est  = tryCatch(provideDimnames(cov.est,  base=list(varnames)), error=function(e) cov.est),
                       ll.store = ll.store,
                       time     = init.time)
-    attr(returns, "K")        <- PGMM_dfree(Q=Q, P=P, method=switch(uni.type, unconstrained="UUU", isotropic="UUC"))
+    attr(returns, "K")        <- PGMM_dfree(Q=Q, P=P, method=switch(uni.type, constrained="UCU", single="UCC"))
     return(returns)
   }

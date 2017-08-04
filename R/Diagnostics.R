@@ -327,8 +327,8 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       dataX      <- TRUE
     }
     if(dataX) {
-      dat        <- if(uni) as.matrix(dat)[complete.cases(dat),,       drop=FALSE] else dat[complete.cases(dat),]
-      dat        <- if(uni) dat[vapply(dat, is.numeric, logical(1L)),, drop=FALSE] else dat[vapply(dat, is.numeric, logical(1L))]
+      dat        <- as.data.frame(dat)[complete.cases(dat),,   drop=FALSE]
+      dat        <- dat[,vapply(dat, is.numeric, logical(1L)), drop=FALSE]
       if(!identical(dim(dat),
           c(n.obs, n.var)))       stop("Dimensions of data don't match those in the dataset supplied to mcmc_IMIFA()")
       dat        <- if(is.logical(scaling)) { if(any(cent, scaling)) standardise(as.matrix(dat), center=cent, scale=scaling) else as.matrix(dat) } else scale(dat, center=cent, scale=scaling)

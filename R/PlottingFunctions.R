@@ -140,7 +140,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
   var.names    <- if(v.sw["l.sw"]) rownames(x$Loadings$post.load[[1]]) else if(v.sw["mu.sw"]) rownames(x$Means$post.mu) else if(v.sw["psi.sw"]) rownames(x$Uniquenesses$post.psi) else attr(x, "Varnames")
   obs.names    <- if(is.null(obs.names)) seq_len(n.obs) else obs.names
   var.names    <- if(is.null(var.names)) seq_len(n.var) else var.names
-  names(v.sw)  <- formals(sys.function(sys.parent()))$param
+  names(v.sw)  <- formals()$param
   ci.sw        <- v.sw
   uni.type     <- unname(attr(x, "Uni.Meth")['Uni.Type'])
   if((grp.ind  <- !is.element(method, c("FA", "IFA")) && !(param == "uniquenesses" && is.element(uni.type, c("constrained", "single"))))) {
@@ -853,7 +853,6 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
       }
 
     if(plotQ.ind) {
-      adapt    <- attr(x, "Adapt")
       if(method == "IFA") {
         layout(1)
         par(mar=c(5.1, 4.1, 4.1, 2.1))
@@ -899,6 +898,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           legend("center", legend=ltxt, ncol=if(G > 5) ceiling(G/2) else G, bty="n", pch=15, col=lcol, cex=max(0.7, 1 - 0.03 * G))
         }
       }
+      adapt    <- attr(x, "Adapt") || length(unique(plot.Q)) == 1
     }
 
       if(plotT.ind) {
@@ -928,13 +928,13 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
       gq.nam <- substring(names(GQ.res), 1, 1)
       if(is.element(method, c("IMIFA", "OMIFA")))      {
         if(g == 1)   {
-          print(GQ.res[gq.nam == "G"])
+          print(GQ.res[gq.nam   == "G"])
         } else if(g == 2) {
           if(adapt)  {
             print(GQ.res[gq.nam == "Q"])
           }
         } else if(g == 3) {
-          print(GQ.res[gq.nam == "C"])
+          print(GQ.res[gq.nam   == "C"])
         }
       } else if(is.element(method, c("OMFA", "IMFA"))) {
           if(g == 1) {
