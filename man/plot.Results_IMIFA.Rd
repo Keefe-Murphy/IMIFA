@@ -58,7 +58,6 @@ Plotting output and parameters of inferential interest for IMIFA and related mod
 # vignette("IMIFA", package = "IMIFA")
 
 # data(olive)
-# area     <- olive$area
 # simIMIFA <- mcmc_IMIFA(olive, method="IMIFA")
 # resIMIFA <- get_IMIFA_results(simIMIFA, z.avgsim=TRUE)
 
@@ -68,7 +67,7 @@ Plotting output and parameters of inferential interest for IMIFA and related mod
 # plot(resIMIFA, plot.meth="GQ", g=2)
 
 # Plot clustering uncertainty (and, if available, the similarity matrix)
-# plot(resIMIFA, plot.meth="zlabels", zlabels=area)
+# plot(resIMIFA, plot.meth="zlabels", zlabels=olive$area)
 
 # Visualise empirical vs. estimated covariance error metrics
 # plot(resIMIFA, plot.meth="errors")
@@ -91,5 +90,5 @@ Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite F
 \code{\link{mcmc_IMIFA}}, \code{\link{get_IMIFA_results}}, \code{\link{mat2cols}}, \code{\link{plot_cols}}
 }
 \author{
-Keefe Murphy
+Keefe Murphy - \href{keefe.murphy@ucd.ie}{<keefe.murphy@ucd.ie>}
 }

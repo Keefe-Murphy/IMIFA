@@ -41,5 +41,5 @@ Tipping, M. E. and Bishop, C. M. (1999). Probabilistic principal component analy
 \code{\link{mcmc_IMIFA}}
 }
 \author{
-Keefe Murphy
+Keefe Murphy - \href{keefe.murphy@ucd.ie}{<keefe.murphy@ucd.ie>}
 }

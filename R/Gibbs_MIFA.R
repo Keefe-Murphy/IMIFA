@@ -67,7 +67,7 @@
       uni.shape    <- switch(uni.type,   constrained=N/2 + psi.alpha, single=(N * P)/2 + psi.alpha)
       V            <- switch(uni.type,   constrained=P, single=1)
     }
-    psi.beta       <- switch(uni.prior,  isotropic=unique(round(psi.beta, min(nchar(psi.beta)))), psi.beta)
+    psi.beta       <- switch(uni.prior,  isotropic=unique(Round(psi.beta, min(nchar(psi.beta)))), psi.beta)
     if(length(psi.beta) == 1) {
       psi.beta     <- matrix(psi.beta, nrow=1, ncol=G)
     }
@@ -216,7 +216,7 @@
           notred   <- numred == 0
           ng.ind   <- seq_along(nn.ind)
           Qs.old   <- Qs[nn0]
-          Qs[nn0]  <- pmax(0, vapply(ng.ind, function(h) if(notred[h]) Qs.old[h] + 1 else Qs.old[h] - numred[h], numeric(1L)))
+          Qs[nn0]  <- Pmax(0, vapply(ng.ind, function(h) if(notred[h]) Qs.old[h] + 1 else Qs.old[h] - numred[h], numeric(1L)))
           Q.big    <- Qs[nn0] > Q.star
           if((Q.bigs        <-  any(Q.big))) {
             notred <- notred & !Q.big

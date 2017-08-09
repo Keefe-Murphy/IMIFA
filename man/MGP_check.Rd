@@ -26,9 +26,9 @@ MGP_check(ad1, ad2, Q = 3L, nu = 2, bd1 = 1, bd2 = 1, plus1 = TRUE,
 }
 \value{
 A list of length 2 containing the following objects:
-\describe{
-  \item{expectation}{The vector of actual expected shrinkage factors, \emph{a priori}.}
-  \item{valid}{A logical indicating whether the cumulative shrinkage property holds.}
+\itemize{
+  \item{\strong{expectation} - }{The vector of actual expected shrinkage factors, \emph{a priori}.}
+  \item{\strong{valid} - }{A logical indicating whether the cumulative shrinkage property holds.}
 }
 }
 \description{
@@ -57,5 +57,5 @@ Durante, D. (2017). A note on the multiplicative gamma process, \emph{Statistics
 \code{\link{mcmc_IMIFA}}
 }
 \author{
-Keefe Murphy
+Keefe Murphy - \href{keefe.murphy@ucd.ie}{<keefe.murphy@ucd.ie>}
 }

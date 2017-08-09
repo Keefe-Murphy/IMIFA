@@ -59,7 +59,7 @@
       uni.shape    <- switch(uni.type,   constrained=N/2 + psi.alpha, single=(N * P)/2 + psi.alpha)
       V            <- switch(uni.type,   constrained=P, single=1)
     }
-    psi.beta       <- switch(uni.prior,  isotropic=as.vector(unique(round(psi.beta, min(nchar(psi.beta))))), psi.beta)
+    psi.beta       <- switch(uni.prior,  isotropic=as.vector(unique(Round(psi.beta, min(nchar(psi.beta))))), psi.beta)
     pi.prop        <- c(cluster$pi.prop, rep(0, G - length(cluster$pi.prop)))
     mu             <- cbind(mu,  vapply(seq_len(G - length(cluster$pi.prop)), function(g) .sim_mu_p(P=P, sig.mu.sqrt=sig.mu.sqrt, mu.zero=mu.zero), numeric(P)))
     eta            <- .sim_eta_p(N=N, Q=Q)

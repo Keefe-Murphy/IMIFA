@@ -36,14 +36,14 @@ get_IMIFA_results(sims = NULL, burnin = 0L, thinning = 1L, G = NULL,
 }
 \value{
 An object of class "\code{Results_IMIFA}" to be passed to \code{\link{plot.Results_IMIFA}} for visualising results. Dedicated \code{print} and \code{summary} functions exist for objects of this class. The object, say \code{x}, is a list of lists, the most important components of which are:
-\describe{
-\item{\strong{Clust}}{Everything pertaining to clustering performance can be found here for all but the "\code{FA}" and "\code{IFA}" methods, in particular \code{x$Clust$MAP}, the MAP summary of the posterior clustering. More detail is given if known \code{zlabels} are supplied: performance is always evaluated against the MAP clustering, with additional evaluation against the alternative clustering computed if \code{z.avgsim=TRUE}.}
-\item{\strong{Error}}{Error metrics (e.g. MSE, RMSE) between the empirical and estimated covariance matrix/matrices.}
-\item{\strong{GQ.results}}{Everything pertaining to model choice can be found here, incl. posterior summaries for the estimated number of clusters and estimated number of factors, if applicable to the method employed. Information criterion values are also accessible here.}
-\item{\strong{Means}}{Posterior summaries for the means.}
-\item{\strong{Loadings}}{Posterior summaries for the factor loadings matrix/matrices. Posterior mean loadings given by x$Loadings$post.load are given the \code{\link[stats]{loadings}} class for printing purposes and thus the manner in which they are displayed can be modified.}
-\item{\strong{Scores}}{Posterior summaries for the latent factor scores.}
-\item{\strong{Uniquenesses}}{Posterior summaries for the uniquenesses.}
+\itemize{
+\item{\strong{Clust} - }{Everything pertaining to clustering performance can be found here for all but the "\code{FA}" and "\code{IFA}" methods, in particular \code{x$Clust$MAP}, the MAP summary of the posterior clustering. More detail is given if known \code{zlabels} are supplied: performance is always evaluated against the MAP clustering, with additional evaluation against the alternative clustering computed if \code{z.avgsim=TRUE}.}
+\item{\strong{Error} - }{Error metrics (e.g. MSE, RMSE) between the empirical and estimated covariance matrix/matrices.}
+\item{\strong{GQ.results} - }{Everything pertaining to model choice can be found here, incl. posterior summaries for the estimated number of clusters and estimated number of factors, if applicable to the method employed. Information criterion values are also accessible here.}
+\item{\strong{Means} - }{Posterior summaries for the means.}
+\item{\strong{Loadings} - }{Posterior summaries for the factor loadings matrix/matrices. Posterior mean loadings given by x$Loadings$post.load are given the \code{\link[stats]{loadings}} class for printing purposes and thus the manner in which they are displayed can be modified.}
+\item{\strong{Scores} - }{Posterior summaries for the latent factor scores.}
+\item{\strong{Uniquenesses} - }{Posterior summaries for the uniquenesses.}
 }
 }
 \description{
@@ -65,7 +65,6 @@ Due to the way the offline label-switching correction is performed, different ru
 # Accept all defaults to extract the optimal model.
 # resMFAcoffee  <- get_IMIFA_results(simMFAcoffee)
 
-
 # Instead let's get results for a 3-cluster model, allowing Q be chosen by aic.mcmc.
 # resMFAcoffee2 <- get_IMIFA_results(simMFAcoffee, G=3, criterion="aic.mcmc")
 
@@ -86,5 +85,5 @@ Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite F
 \code{\link{mcmc_IMIFA}}, \code{\link{plot.Results_IMIFA}}, \code{\link{Procrustes}}, \code{\link{Zsimilarity}}
 }
 \author{
-Keefe Murphy
+Keefe Murphy - \href{keefe.murphy@ucd.ie}{<keefe.murphy@ucd.ie>}
 }

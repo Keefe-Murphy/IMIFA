@@ -45,5 +45,5 @@ Requires use of the \code{Rmpfr} and \code{gmp} libraries; may encounter difficu
 \code{\link{G_expected}}, \code{\link{G_variance}}, \code{\link[Rmpfr]{Rmpfr}}
 }
 \author{
-Keefe Murphy
+Keefe Murphy - \href{keefe.murphy@ucd.ie}{<keefe.murphy@ucd.ie>}
 }

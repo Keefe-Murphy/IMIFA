@@ -30,7 +30,7 @@ sim_IMIFA_data(N = 300L, G = 3L, P = 50L, Q = rep(floor(log(P)), G),
 \item{method}{A switch indicating whether the mixture to be simulated from is the conditional distribution of the data given the latent variables (default), or simply the marginal distribution of the data.}
 }
 \value{
-Invisibly returns a \code{data.frame} with \code{N} observations (rows) of \code{P} variables (columns). The true values of the parameters which generated these data are also stored.
+Invisibly returns a \code{data.frame} with \code{N} observations (rows) of \code{P} variables (columns). The true values of the parameters which generated these data are also stored as attributes.
 }
 \description{
 Function to simulate data of any size and dimension from a mixture of (infinite) factor analysers structure.
@@ -52,5 +52,5 @@ plot(cmdscale(dist(sim_data), k=2), col=labels)
 \code{\link{mcmc_IMIFA}} for fitting an IMIFA related model to the simulated data set.
 }
 \author{
-Keefe Murphy
+Keefe Murphy - \href{keefe.murphy@ucd.ie}{<keefe.murphy@ucd.ie>}
 }

@@ -54,5 +54,5 @@ This is liable to take quite some time to run, especially if the number of obser
 \code{\link{get_IMIFA_results}}, \code{\link[slam]{simple_triplet_matrix}}, \code{\link[stats]{hclust}}, \code{\link[mcclust]{comp.psm}}, \code{\link[mcclust]{cltoSim}}
 }
 \author{
-Keefe Murphy
+Keefe Murphy - \href{keefe.murphy@ucd.ie}{<keefe.murphy@ucd.ie>}
 }

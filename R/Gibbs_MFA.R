@@ -66,7 +66,7 @@
       uni.shape    <- switch(uni.type,   constrained=N/2 + psi.alpha, single=(N * P)/2 + psi.alpha)
       V            <- switch(uni.type,   constrained=P, single=1)
     }
-    psi.beta       <- switch(uni.prior,  isotropic=unique(round(psi.beta, min(nchar(psi.beta)))), psi.beta)
+    psi.beta       <- switch(uni.prior,  isotropic=unique(Round(psi.beta, min(nchar(psi.beta)))), psi.beta)
     if(length(psi.beta) == 1) {
       psi.beta     <- matrix(psi.beta, nrow=1, ncol=G)
     }

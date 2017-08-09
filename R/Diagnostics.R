@@ -17,20 +17,20 @@
 #' @details The function also performs post-hoc corrections for label switching, as well as post-hoc Procrustes rotation of loadings matrices and scores, in order to ensure sensible posterior parameter estimates, constructs credible intervals, and generally transforms the raw \code{sims} object into an object of class "\code{Results_IMIFA}" in order to prepare the results for plotting via \code{\link{plot.Results_IMIFA}}.
 #'
 #' @return An object of class "\code{Results_IMIFA}" to be passed to \code{\link{plot.Results_IMIFA}} for visualising results. Dedicated \code{print} and \code{summary} functions exist for objects of this class. The object, say \code{x}, is a list of lists, the most important components of which are:
-#' \describe{
-#' \item{\strong{Clust}}{Everything pertaining to clustering performance can be found here for all but the "\code{FA}" and "\code{IFA}" methods, in particular \code{x$Clust$MAP}, the MAP summary of the posterior clustering. More detail is given if known \code{zlabels} are supplied: performance is always evaluated against the MAP clustering, with additional evaluation against the alternative clustering computed if \code{z.avgsim=TRUE}.}
-#' \item{\strong{Error}}{Error metrics (e.g. MSE, RMSE) between the empirical and estimated covariance matrix/matrices.}
-#' \item{\strong{GQ.results}}{Everything pertaining to model choice can be found here, incl. posterior summaries for the estimated number of clusters and estimated number of factors, if applicable to the method employed. Information criterion values are also accessible here.}
-#' \item{\strong{Means}}{Posterior summaries for the means.}
-#' \item{\strong{Loadings}}{Posterior summaries for the factor loadings matrix/matrices. Posterior mean loadings given by x$Loadings$post.load are given the \code{\link[stats]{loadings}} class for printing purposes and thus the manner in which they are displayed can be modified.}
-#' \item{\strong{Scores}}{Posterior summaries for the latent factor scores.}
-#' \item{\strong{Uniquenesses}}{Posterior summaries for the uniquenesses.}
+#' \itemize{
+#' \item{\strong{Clust} - }{Everything pertaining to clustering performance can be found here for all but the "\code{FA}" and "\code{IFA}" methods, in particular \code{x$Clust$MAP}, the MAP summary of the posterior clustering. More detail is given if known \code{zlabels} are supplied: performance is always evaluated against the MAP clustering, with additional evaluation against the alternative clustering computed if \code{z.avgsim=TRUE}.}
+#' \item{\strong{Error} - }{Error metrics (e.g. MSE, RMSE) between the empirical and estimated covariance matrix/matrices.}
+#' \item{\strong{GQ.results} - }{Everything pertaining to model choice can be found here, incl. posterior summaries for the estimated number of clusters and estimated number of factors, if applicable to the method employed. Information criterion values are also accessible here.}
+#' \item{\strong{Means} - }{Posterior summaries for the means.}
+#' \item{\strong{Loadings} - }{Posterior summaries for the factor loadings matrix/matrices. Posterior mean loadings given by x$Loadings$post.load are given the \code{\link[stats]{loadings}} class for printing purposes and thus the manner in which they are displayed can be modified.}
+#' \item{\strong{Scores} - }{Posterior summaries for the latent factor scores.}
+#' \item{\strong{Uniquenesses} - }{Posterior summaries for the uniquenesses.}
 #' }
 #'
 #' @note Due to the way the offline label-switching correction is performed, different runs of this function may give \emph{very slightly} different results, but only if the chain was run for an extremely small number of iterations, well below the number required for convergence, and samples of the cluster labels match poorly across iterations (particularly if the number of clusters suggested by those sampled labels is high).
 #'
 #' @export
-#' @importFrom Rfast "med" "rowMaxs" "standardise" "colMaxs" "rowVars" "rowmeans" "Order" "cova" "Var"
+#' @importFrom Rfast "med" "rowMaxs" "standardise" "colMaxs" "rowVars" "rowmeans" "Order" "cova" "Var" "colTabulate"
 #' @importFrom abind "adrop"
 #' @importFrom e1071 "matchClasses" "classAgreement"
 #' @importFrom mclust "classError"
@@ -39,7 +39,7 @@
 #' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{plot.Results_IMIFA}}, \code{\link{Procrustes}}, \code{\link{Zsimilarity}}
 #' @references Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, <\href{https://arxiv.org/abs/1701.07010}{arXiv:1701.07010}>.
 #'
-#' @author Keefe Murphy
+#' @author Keefe Murphy - \href{keefe.murphy@ucd.ie}{<keefe.murphy@ucd.ie>}
 #'
 #' @examples
 #' # data(coffee)
@@ -50,7 +50,6 @@
 #'
 #' # Accept all defaults to extract the optimal model.
 #' # resMFAcoffee  <- get_IMIFA_results(simMFAcoffee)
-#'
 #'
 #' # Instead let's get results for a 3-cluster model, allowing Q be chosen by aic.mcmc.
 #' # resMFAcoffee2 <- get_IMIFA_results(simMFAcoffee, G=3, criterion="aic.mcmc")
@@ -148,7 +147,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     if(!G.T) {
       G          <- switch(G.meth, mode=G.mode, floor(G.med))
     }
-    G.CI         <- if(GQ1) round(rowQuantiles(G.store, probs=conf.levels)) else round(quantile(G.store, conf.levels))
+    G.CI         <- if(GQ1) Round(rowQuantiles(G.store, probs=conf.levels)) else Round(quantile(G.store, conf.levels))
   }
 
   if(G.T)    {
@@ -437,7 +436,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       }
     }
 
-    uncertain    <- 1 - Rfast::colMaxs(matrix(apply(z, 2, tabulate, nbins=G)/length(tmp.store), nrow=G, ncol=n.obs), value=TRUE)
+    uncertain    <- 1 - Rfast::colMaxs(matrix(colTabulate(z, max_number=G)/length(tmp.store), nrow=G, ncol=n.obs), value=TRUE)
     if(sw["pi.sw"]) {
       pi.prop    <- provideDimnames(pies[Gseq,seq_along(tmp.store), drop=FALSE], base=list(gnames, ""), unique=FALSE)
       var.pi     <- setNames(Rfast::rowVars(pi.prop),  gnames)
@@ -552,7 +551,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     }
     leder.b      <- min(n.obs - 1, Ledermann(n.var))
     if(any(unlist(Q) > leder.b))  warning(paste0("Estimate of Q", ifelse(G > 1, " in one or more clusters ", " "), "is greater than ", ifelse(any(unlist(Q) > n.var), paste0("the number of variables (", n.var, ")"), paste0("the suggested Ledermann upper bound (", leder.b, ")")), ":\nsolution may be invalid"), call.=FALSE)
-    Q.CI         <- if(G1) round(rowQuantiles(Q.store, probs=conf.levels)) else round(quantile(Q.store, conf.levels))
+    Q.CI         <- if(G1) Round(rowQuantiles(Q.store, probs=conf.levels)) else Round(quantile(Q.store, conf.levels))
     GQ.temp4     <- list(Q = Q, Q.Mode = Q.mode, Q.Median = Q.med,
                          Q.CI = Q.CI, Q.Probs = Q.prob, Q.Counts = Q.tab,
                          Stored.Q = if(clust.ind) Q.store else as.vector(Q.store))
@@ -763,8 +762,8 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       rmse[g]    <- sqrt(mse[g])
       nrmse[g]   <- rmse[g]/(ifelse(uni, 1, max(cov.emp) - min(cov.emp)))
       if(any(all(scal.meth != "none", cent) &&
-                 sum(round(diag(cov.est))   !=
-                 round(diag(cov.emp)))      != 0,
+                 sum(Round(diag(cov.est))   !=
+                 Round(diag(cov.emp)))      != 0,
          sum(abs(post.psi  - (1 - post.psi)) < 0) != 0,
          var.exp  > 1))           warning(paste0(ifelse(G == 1, "C", paste0("Cluster ", g, "'s c")), "hain may not have fully converged"), call.=FALSE)
     }

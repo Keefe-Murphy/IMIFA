@@ -41,5 +41,5 @@ storeControl(score.switch=FALSE)
 \code{\link{mcmc_IMIFA}}, \code{\link{get_IMIFA_results}}
 }
 \author{
-Keefe Murphy
+Keefe Murphy - \href{keefe.murphy@ucd.ie}{<keefe.murphy@ucd.ie>}
 }

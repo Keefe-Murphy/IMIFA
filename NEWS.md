@@ -1,24 +1,26 @@
 __Infinite Mixtures of Infinite Factor Analysers__
 ==================================================  
 
-# IMIFA v1.3.2 - (_6<sup>th</sup> release [patch update]: 2017-07-26_)
-## New Features
+## IMIFA v1.4.0 - (_6<sup>th</sup> release [minor update]: 2017-08-03_)
+### New Features
 * Simplified `mcmc_IMIFA` by consolidating arguments using new helper functions (with defaults):  
     * MGP & AGS args. supplied using `mgpControl` for infinite factor models.  
     * Storage switch args. supplied using `storeControl`.
 * Added ability to constrain mixing proportions across clusters using `equal.pro` argument for M(I)FA models:  
   Modified PGMM_dfree accordingly and forced non-storage of mixing proportions when `equal.pro` is TRUE.  
 
-## Improvements
+### Improvements
 * All methods now work for univariate data also (with apt. edits to plots & uniqueness defaults etc.).
 * `Zsimilarity` sped-up via `mcclust::comp.psm` s.t. `z.avgsim=TRUE` now by default in `get_IMIFA_results`.
 * Added "`hc`" option to `z.init` to initialise allocations via hierarchical clustering (using `mclust::hc`).
 * `mu` argument added to `sim_IMIFA_data` to allow supplying true mean parameter values directly.
 * Standard deviation of AICM/BICM model selection criteria now computed and returned.
+* Speed-ups due to new `Rfast` package functions: `colTabulate`, `Pmax`, `Round`.
 * `heat_legend` gains `cex.lab` argument to control magnification of legend text.
 * Slight improvements when `adapt=FALSE` for infinite factor models with fixed high truncation level.
+* Optimised compression of `olive`, `coffee` and vignette data and used LazyData: true.
 
-## Bug Fixes
+### Bug Fixes
 * Fixed bug preventing `uni.prior="isotropic"` when `uni.type` is `(un)constrained`.
 * Fixed model selection in `get_IMIFA_results` for IMFA/OMFA models when `range.Q` is a range.
 * Fixed treatment of exact zeros when plotting average clustering similarity matrix.
@@ -28,14 +30,15 @@ __Infinite Mixtures of Infinite Factor Analysers__
 * Fixed bug with default plotting palette for data sets with >1024 variables.
 * Transparency default in `plot.Results_IMIFA` now depends on device's support of semi-transparency.
 * `Ledermann(P)` is now properly vectorised.
+* Used `@importFrom` rather than `@import` for `stats` and `graphics` libraries.
 
-# IMIFA v1.3.1 - (_5<sup>th</sup> release [patch update]: 2017-07-07_)
-## Bug Fixes
+## IMIFA v1.3.1 - (_5<sup>th</sup> release [patch update]: 2017-07-07_)
+### Bug Fixes
 * Fixed bug preventing M(I)FA models from being treated as (I)FA models when `range.G` contains 1.
 * Fixed bug preventing `get_IMIFA_results` from working properly when true labels are NOT supplied.
 
-# IMIFA v1.3.0 - (_4<sup>th</sup> release [minor update]: 2017-06-22_)
-## New Features
+## IMIFA v1.3.0 - (_4<sup>th</sup> release [minor update]: 2017-06-22_)
+### New Features
 * Added options `"constrained"` & `"single"` to `mcmc_IMIFA`'s `uni.type` argument:  
   as well as being either diagonal or isotropic (UUU / UUC), uniquenesses can now further be  
   constrained across clusters (UCU / UCC), with appropriate warnings, defaults, checks,  
@@ -44,7 +47,7 @@ __Infinite Mixtures of Infinite Factor Analysers__
   diminishing adaptation for tuning the uniform proposal to achieve a target acceptance rate when `alpha`  
   is learned via  Metropolis-Hastings when the Pitman-Yor Process prior is employed for the IM(I)FA models.
   
-## Improvements
+### Improvements
 * (I)FA models sped up by considering uniquenesses under 1-cluster models as `"constrained"` or `"single"`,  
   rather than previously `"unconstrained"` or `"isotropic"`, utilising pre-computation and empty assignment.
 * Previously hidden functions improved, exported and documented with examples:  
@@ -55,7 +58,7 @@ __Infinite Mixtures of Infinite Factor Analysers__
   `log.like` arg. removed from `gumbel_max`; function stands alone, now only stored log-likelihoods computed.
 * `psi` argument added to `sim_IMIFA_data` to allow supplying true uniqueness parameter values directly.
   
-## Bug Fixes
+### Bug Fixes
 * Used `bw="SJ"` everywhere `density` is invoked for plotting (`bw="nrd0"` is invoked if this fails).
 * Fixed initialisation of uniquenesses for `isotropic` (I)FA models.
 * Fixed parallel coordinates plot axes and labels for all `isotropic` uniquenesses plots.
@@ -67,8 +70,8 @@ __Infinite Mixtures of Infinite Factor Analysers__
 * Fixed silly error re: way in which (I)FA models are treated as 1-cluster models to ensure they run:  
   Related bug fixed for OM(I)FA/IM(I)FA models when starting number of clusters is actually supplied.
 
-# IMIFA v1.2.1 - (_3<sup>rd</sup> release [patch update]: 2017-05-29_)
-## Improvements
+## IMIFA v1.2.1 - (_3<sup>rd</sup> release [patch update]: 2017-05-29_)
+### Improvements
 * Posterior mean scores can now also be plotted in the form of a heat map (previously loadings only).  
   `load.meth` argument replaced by logical `heat.map` in `plot.Results_IMIFA`.
 * `mat2cols` gains `compare` argument to yield common palettes/breaks for heat maps of multiple matrices:  
@@ -76,16 +79,15 @@ __Infinite Mixtures of Infinite Factor Analysers__
 * Removed certain dependencies with faster personal code: e.g. Procrustes rotation now quicker:  
   `IMIFA` no longer depends on the `corpcor`, `gclus`, `MASS`, `matrixcalc`, or `MCMCpack` libraries.
   
-## Bug Fixes 
+### Bug Fixes 
 * Used `par()$bg` (i.e. default `"white"`) for plotting zero-valued entries of similarity matrix.
 * Range of data for labelling in `heat_legend` calculated correctly.
 * `mcmc_IMIFA`'s `verbose` argument now governs printing of `message` & `cat` calls, but not `stop` or `warning`.
 * Fixed storage and plotting of loadings, particularly when some but not all clusters have zero factors.
 * Added `NEWS.md` to build.
 
-# IMIFA v1.2.0 - (_2<sup>nd</sup> release [minor update]: 2017-05-09_)
-
-## New Features
+## IMIFA v1.2.0 - (_2<sup>nd</sup> release [minor update]: 2017-05-09_)
+### New Features
 * Learning the Pitman-Yor `discount` & `alpha` parameters via Metropolis-Hastings now implemented.  
   Plotting function's `param` argument gains the option `discount` for posterior inference.
 * Sped up simulating cluster labels from unnormalised log probabilities using the Gumbel-Max trick (Yellott, 1977):  
@@ -95,7 +97,7 @@ __Infinite Mixtures of Infinite Factor Analysers__
   squared distance to a sparse similarity matrix constructed by averaging the adjacency matrices:  
   when optionally called inside `get_IMIFA_results`, the similarity matrix can be plotted via `plot.meth="zlabels"`.
 
-## Improvements
+### Improvements
 * Metropolis-Hastings updates implemented for `alpha` when `discount` is non-zero, rather than usual Gibbs.  
   Mutation rate monitored rather than acceptance rate for Metropolis-Hastings updates of `discount` parameter.
 * Fixed calculation of # '_free_' parameters for `aic.mcmc` & `bic.mcmc` criteria when uniquenesses are isotropic:    
@@ -113,7 +115,7 @@ __Infinite Mixtures of Infinite Factor Analysers__
 * Code sped up when `active` G=1 by not simulating labels for IM(I)FA models.
 * Reduced chance of crash by exceeding memory capacity; `score.switch` defaults to `FALSE` if # models ran is large.
 
-## Bug Fixes 
+### Bug Fixes 
 * 2<sup>nd</sup> IM(I)FA label switching move sped up/properly weighted to ensure uniform sampling of neighbouring cluster pairs.
 * Offline label switching square assignment correction now permutes properly.
 * Fixed factor score trace plots by extracting indices of stored samples using `Rfast::sort_unique` and rotating properly. 
@@ -131,4 +133,4 @@ __Infinite Mixtures of Infinite Factor Analysers__
 * Fixed behaviour of progress bar when `verbose=FALSE`.
 * Fixed typos and expanded/clarified help documentation/vignette.
 
-# IMIFA v1.1.0 - (_1<sup>st</sup> release: 2017-02-02_)
+## IMIFA v1.1.0 - (_1<sup>st</sup> release: 2017-02-02_)

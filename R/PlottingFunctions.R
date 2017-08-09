@@ -20,7 +20,7 @@
 #'
 #' @return The desired plot with appropriate output and summary statistics printed to the console screen.
 #' @export
-#' @import graphics
+#' @importFrom graphics "abline" "axTicks" "axis" "barplot" "box" "clip" "hist" "image" "layout" "legend" "lines" "matplot" "mtext" "par" "plot" "plot.new" "points" "polygon" "text" "title"
 #' @importFrom grDevices "adjustcolor" "col2rgb" "dev.capabilities" "palette" "heat.colors"
 #' @importFrom Rfast "Order" "med" "colMedians"
 #' @importFrom plotrix "plotCI"
@@ -30,14 +30,13 @@
 #' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{get_IMIFA_results}}, \code{\link{mat2cols}}, \code{\link{plot_cols}}
 #' @references Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, <\href{https://arxiv.org/abs/1701.07010}{arXiv:1701.07010}>.
 #'
-#' @author Keefe Murphy
+#' @author Keefe Murphy - \href{keefe.murphy@ucd.ie}{<keefe.murphy@ucd.ie>}
 #'
 #' @examples
 #' # See the vignette associated with the package for more graphical examples:
 #' # vignette("IMIFA", package = "IMIFA")
 #'
 #' # data(olive)
-#' # area     <- olive$area
 #' # simIMIFA <- mcmc_IMIFA(olive, method="IMIFA")
 #' # resIMIFA <- get_IMIFA_results(simIMIFA, z.avgsim=TRUE)
 #'
@@ -47,7 +46,7 @@
 #' # plot(resIMIFA, plot.meth="GQ", g=2)
 #'
 #' # Plot clustering uncertainty (and, if available, the similarity matrix)
-#' # plot(resIMIFA, plot.meth="zlabels", zlabels=area)
+#' # plot(resIMIFA, plot.meth="zlabels", zlabels=olive$area)
 #'
 #' # Visualise empirical vs. estimated covariance error metrics
 #' # plot(resIMIFA, plot.meth="errors")
@@ -791,25 +790,25 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         y5     <- ifelse(MH, switch(param, alpha=ifelse(tz, 0.5, 0.45), discount=0.5),  0.475)
         y6     <- ifelse(MH, switch(param, alpha=ifelse(tz, 0.45, 0.4), discount=0.45), 0.4)
         text(x=0.5, y=y1  - pen, cex=a.cex, col="black", adj=a.adj, expression(bold("Posterior Mean:\n")))
-        text(x=0.5, y=y2  - pen, cex=a.cex, col="black", adj=a.adj, bquote(.(round(switch(param, alpha=plot.x$post.alpha, discount=plot.x$post.disc), digits))))
+        text(x=0.5, y=y2  - pen, cex=a.cex, col="black", adj=a.adj, bquote(.(Round(switch(param, alpha=plot.x$post.alpha, discount=plot.x$post.disc), digits))))
         text(x=0.5, y=y3  - pen, cex=a.cex, col="black", adj=a.adj, expression(bold("\nVariance:\n")))
-        text(x=0.5, y=y4  - pen, cex=a.cex, col="black", adj=a.adj, bquote(.(round(switch(param, alpha=plot.x$var.alpha,  discount=plot.x$var.disc),  digits))))
+        text(x=0.5, y=y4  - pen, cex=a.cex, col="black", adj=a.adj, bquote(.(Round(switch(param, alpha=plot.x$var.alpha,  discount=plot.x$var.disc),  digits))))
         text(x=0.5, y=y5  - pen, cex=a.cex, col="black", adj=a.adj, bquote(bold(.(100 * conf)) * bold("% Confidence Interval:")))
-        text(x=0.5, y=y6  - pen, cex=a.cex, col="black", adj=a.adj, bquote(paste("[", .(round(switch(param, alpha=plot.x$ci.alpha[1], discount=plot.x$ci.disc[1]), digits)), ", ", .(round(switch(param, alpha=plot.x$ci.alpha[2], discount=plot.x$ci.disc[2]), digits)), "]")))
+        text(x=0.5, y=y6  - pen, cex=a.cex, col="black", adj=a.adj, bquote(paste("[", .(Round(switch(param, alpha=plot.x$ci.alpha[1], discount=plot.x$ci.disc[1]), digits)), ", ", .(Round(switch(param, alpha=plot.x$ci.alpha[2], discount=plot.x$ci.disc[2]), digits)), "]")))
         if(isTRUE(MH)) {
           rate <- switch(param,  alpha="Acceptance Rate:", discount="Mutation Rate:")
           y7   <- switch(param,  alpha=ifelse(tz, 0.325, 0.25), discount=0.325)
           y8   <- switch(param,  alpha=ifelse(tz, 0.275, 0.2),  discount=0.275)
           text(x=0.5, y=y7,      cex=a.cex, col="black", adj=a.adj, substitute(bold(rate)))
-          text(x=0.5, y=y8,      cex=a.cex, col="black", adj=a.adj, bquote(paste(.(round(100 * switch(param, alpha=plot.x$alpha.rate, discount=plot.x$disc.rate), 2)), "%")))
+          text(x=0.5, y=y8,      cex=a.cex, col="black", adj=a.adj, bquote(paste(.(Round(100 * switch(param, alpha=plot.x$alpha.rate, discount=plot.x$disc.rate), 2)), "%")))
         }
         if(param == "discount") {
           text(x=0.5, y=0.15,    cex=a.cex, col="black", adj=a.adj, bquote(bold(hat(kappa)) * bold(" - Posterior Proportion of Zeros:")))
-          text(x=0.5, y=0.1,     cex=a.cex, col="black", adj=a.adj, bquote(.(round(plot.x$post.kappa, digits))))
+          text(x=0.5, y=0.1,     cex=a.cex, col="black", adj=a.adj, bquote(.(Round(plot.x$post.kappa, digits))))
         }
         if(param == "alpha" && tz) {
           text(x=0.5, y=0.175,   cex=a.cex, col="black", adj=a.adj, bquote(bold(hat(zeta)) * bold(" - Posterior Mean Zeta:")))
-          text(x=0.5, y=0.1,     cex=a.cex, col="black", adj=a.adj, bquote(.(round(plot.x$avg.zeta, digits))))
+          text(x=0.5, y=0.1,     cex=a.cex, col="black", adj=a.adj, bquote(.(Round(plot.x$avg.zeta, digits))))
         }
       }
 
@@ -825,13 +824,13 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
       plotQ.ind  <- any(is.element(method, c("IFA", "MIFA")), all(is.element(method, c("IMIFA", "OMIFA")), g == 2))
       plotT.ind  <- any(all(g == 2, is.element(method, c("IMFA", "OMFA"))), all(is.element(method, c("IMIFA", "OMIFA")), g == 3))
       crit       <- GQ.res$Criteria
-      aicm       <- round(crit$AICMs, 2)
-      bicm       <- round(crit$BICMs, 2)
-      log.iLLH   <- round(crit$LogIntegratedLikelihoods, 2)
-      dic        <- round(crit$DICs, 2)
+      aicm       <- Round(crit$AICMs, 2)
+      bicm       <- Round(crit$BICMs, 2)
+      log.iLLH   <- Round(crit$LogIntegratedLikelihoods, 2)
+      dic        <- Round(crit$DICs, 2)
       if(is.element(method, c("FA", "MFA", "OMFA", "IMFA"))) {
-        aic.mcmc <- round(crit$AIC.mcmcs, 2)
-        bic.mcmc <- round(crit$BIC.mcmcs, 2)
+        aic.mcmc <- Round(crit$AIC.mcmcs, 2)
+        bic.mcmc <- Round(crit$BIC.mcmcs, 2)
       }
 
       if(all(plotG.ind, g == 1))  {
@@ -1016,7 +1015,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         cols    <- 2     + (breaks >= 1/G)
         cols[cols == 2] <- grey
         plot(x.plot, main="", xlab="Uncertainties", xlim=c(0, 1 - 1/G), col=cols, xaxt="n", ylim=c(0, max(x.plot$counts)), yaxt="n")
-        axis(1, at=c(breaks[round(breaks, 1) < min(0.8, 1 - 1/G)], 1 - 1/G), labels=(c(round(breaks[round(breaks, 1) < min(0.8, 1 - 1/G)], 3), "1 - 1/G")), las=2, pos=0, cex.axis=0.8)
+        axis(1, at=c(breaks[Round(breaks, 1) < min(0.8, 1 - 1/G)], 1 - 1/G), labels=(c(Round(breaks[Round(breaks, 1) < min(0.8, 1 - 1/G)], 3), "1 - 1/G")), las=2, pos=0, cex.axis=0.8)
         axis(2, at=if(sum(plot.x)  == 0) c(axTicks(2), max(x.plot$counts)) else axTicks(2), las=1, cex.axis=0.8)
       }
 
@@ -1067,7 +1066,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
             names(prf)[1]  <- "matched.confusion.matrix"
            }
           }
-          prf$error.rate   <- paste0(round(100 * prf$error.rate, 2), "%")
+          prf$error.rate   <- paste0(Round(100 * prf$error.rate, 2), "%")
         } else {
           prf     <- list(uncertain = attr(clust$uncertainty, "Obs"))
         }
@@ -1232,8 +1231,8 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
 
       if(is.element(param, c("alpha", "discount"))) {
         plot.x <- switch(param, alpha=clust$DP.alpha$alpha,   discount=as.vector(clust$PY.disc$discount))
-        if(any(switch(param, alpha=clust$DP.alpha$alpha.rate, discount=clust$PY.disc$disc.rate) == 0,
-           length(unique(round(plot.x, nchar(plot.x)))) == 1)) {
+        if(switch(param, alpha=clust$DP.alpha$alpha.rate, discount=clust$PY.disc$disc.rate) == 0 ||
+           length(unique(Round(plot.x, min(nchar(plot.x))))) == 1) {
                                       warning(paste0(switch(param, alpha="Acceptance", discount="Mutation"), " rate too low: can't plot ", ifelse(all.ind, ifelse(partial, "partial-", "auto-"), ""), "correlation function", ifelse(all.ind, "", "s")), call.=FALSE)
           next
         }
@@ -1431,7 +1430,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
 #'
 #' @note Requires use of the \code{Rmpfr} and \code{gmp} libraries; may encounter difficulty and slowness for large \code{N}, especially with non-zero \code{discount} values.
 #'
-#' @author Keefe Murphy
+#' @author Keefe Murphy - \href{keefe.murphy@ucd.ie}{<keefe.murphy@ucd.ie>}
 #'
 #' @examples
 #'

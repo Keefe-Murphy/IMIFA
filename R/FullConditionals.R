@@ -21,9 +21,9 @@
 
   # Loadings
     .sim_load    <- function(l.sigma, Q, c.data, eta, psi.inv, EtE, Q1)  {
-      u.load     <- l.sigma + psi.inv * EtE
+      u.load     <- l.sigma  + psi.inv * EtE
       u.load     <- if(Q1) sqrt(u.load) else .chol(u.load)
-        psi.inv   * (if(Q1) 1/(u.load * u.load) else chol2inv(u.load)) %*% crossprod(eta, c.data) + backsolve(u.load, rnorm(Q))
+        psi.inv   * (if(Q1) 1/(u.load  * u.load) else chol2inv(u.load)) %*% crossprod(eta, c.data) + backsolve(u.load, rnorm(Q))
     }
 
     .sim_load_s  <- function(Q, c.data, eta, phi, tau, psi.inv, EtE, Q1) {
@@ -107,13 +107,16 @@
   # Cluster Labels
 #' Simulate Cluster Labels from Unnormalised Log-Probabilities using the Gumbel-Max Trick
 #'
-#' Samples cluster labels for N observations from G clusters efficiently using log-probabilities and the so-called Gumbel-Max trick, without requiring that the log-probabilities be normalised; thus redunant computation can be avoided. Computation takes place on the log scale for stability/underflow reasons (to ensure negligible probabilities won't cause computational difficulties); in any case, many functions for calculating multivariate normal densities already output on the log scale.
-#' @param probs An N x G matrix of unnormalised probabilities on the log scale, where N is he number of observations that require labels to be sampled and G is the number of active clusters s.t. sampled labels can take values in \code{1:G}.
+#' Samples cluster labels for N observations from G clusters efficiently using log-probabilities and the so-called Gumbel-Max trick, without requiring that the log-probabilities be normalised; thus redunant computation can be avoided.
+#' @param probs An N x G matrix of unnormalised probabilities on the log scale, where N is he number of observations that require labels to be sampled and G is the number of active clusters s.t. sampled labels can take values in \code{1:G}. Typically \code{N > G}.
 #' @param slice A logical indicating whether or not the indicator correction for slice sampling has been applied to \code{probs}. Defaults to \code{FALSE} but is \code{TRUE} for the "\code{IMIFA}" and "\code{IMFA}" methods under \code{\link{mcmc_IMIFA}}. Details of this correction are given in Murphy et. al. (2017). When set to \code{TRUE}, this results in a speed-improvement when \code{probs} contains non-finite values (e.g. \code{-Inf}, corresponding to zero on the probability scale).
 #' @return A vector of N sampled cluster labels, with the largest label no greater than G.
 #' @seealso \code{\link{mcmc_IMIFA}}, \code{\link[matrixStats]{rowLogSumExps}}
 #'
+#' @details Computation takes place on the log scale for stability/underflow reasons (to ensure negligible probabilities won't cause computational difficulties); in any case, many functions for calculating multivariate normal densities already output on the log scale.
+#'
 #' @note Though the function is available for standalone use, note that no checks take place, in order to speed up repeated calls to the function inside \code{\link{mcmc_IMIFA}}.\cr
+#'
 #' If the normalising constant is required for another reason, e.g. to compute the log-likelihood, it can be calculated by summing the output obtained by calling \code{\link[matrixStats]{rowLogSumExps}} on \code{probs}.
 #'
 #' @references Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, <\href{https://arxiv.org/abs/1701.07010}{arXiv:1701.07010}>.
@@ -121,7 +124,7 @@
 #' Yellot, J. I. Jr. (1977) The relationship between Luce's choice axiom, Thurstone's theory of comparative judgment, and the double exponential distribution, \emph{Journal of Mathematical Psychology}, 15: 109-144.
 #' @export
 #'
-#' @author Keefe Murphy
+#' @author Keefe Murphy - \href{keefe.murphy@ucd.ie}{<keefe.murphy@ucd.ie>}
 #'
 #' @examples
 #' # Create weights for 3 components
@@ -268,7 +271,7 @@
 #'
 #' Tipping, M. E. and Bishop, C. M. (1999). Probabilistic principal component analysis, \emph{Journal of the Royal Statistical Society: Series B (Statistical Methodology)}, 61(3): 611-622.
 #'
-#' @author Keefe Murphy
+#' @author Keefe Murphy - \href{keefe.murphy@ucd.ie}{<keefe.murphy@ucd.ie>}
 #'
 #' @examples
 #' data(olive)
@@ -308,7 +311,7 @@
 #' @return A list of length 2, containing the modified shape and rate parameters, respectively.
 #' @export
 #'
-#' @author Keefe Murphy
+#' @author Keefe Murphy - \href{keefe.murphy@ucd.ie}{<keefe.murphy@ucd.ie>}
 #'
 #' @examples
 #' # Shift a Ga(shape=4, rate=2) distribution to the left by 1;
@@ -328,7 +331,7 @@
       exp       <- shape/rate
       if(shift  >= exp)                   warning("This expected value is not achievable with the supplied 'shift'", call.=FALSE)
       var       <- exp/rate
-      exp       <- pmax(var * rate   - shift, 0)
+      exp       <- max(var * rate    - shift, 0)
       rate      <- exp/var
       shape     <- rate * exp
         return(list(shape   = shape, rate = switch(param, rate=rate, 1/rate)))
@@ -350,9 +353,9 @@
 #' @details This is called inside \code{\link{mcmc_IMIFA}} for the "\code{IFA}", "\code{MIFA}", "\code{OMIFA}" and "\code{IMIFA}" methods. The arguments \code{ad1, ad2, nu, bd1} and \code{bd2} are vectorised.
 #'
 #' @return A list of length 2 containing the following objects:
-#' \describe{
-#'   \item{expectation}{The vector of actual expected shrinkage factors, \emph{a priori}.}
-#'   \item{valid}{A logical indicating whether the cumulative shrinkage property holds.}
+#' \itemize{
+#'   \item{\strong{expectation} - }{The vector of actual expected shrinkage factors, \emph{a priori}.}
+#'   \item{\strong{valid} - }{A logical indicating whether the cumulative shrinkage property holds.}
 #' }
 #' @export
 #' @seealso \code{\link{mcmc_IMIFA}}
@@ -361,7 +364,7 @@
 #'
 #' Durante, D. (2017). A note on the multiplicative gamma process, \emph{Statistics & Probability Letters}, 122: 198-204.
 #'
-#' @author Keefe Murphy
+#' @author Keefe Murphy - \href{keefe.murphy@ucd.ie}{<keefe.murphy@ucd.ie>}
 #'
 #' @examples
 #' # Check if expected shrinkage under the MGP increases with the column index (WRONG approach!).
@@ -420,7 +423,7 @@
 #' @references McNicholas, P. D. and Murphy, T. B. (2008) Parsimonious Gaussian Mixture Models, \emph{Statistics and Computing}, 18(3): 285-296.
 #' @seealso \code{\link{get_IMIFA_results}}, \code{\link{mcmc_IMIFA}}
 #'
-#' @author Keefe Murphy
+#' @author Keefe Murphy - \href{keefe.murphy@ucd.ie}{<keefe.murphy@ucd.ie>}
 #'
 #' @examples
 #' (UUU <- PGMM_dfree(Q=4:5, P=50, G=3, method="UUU"))
@@ -494,7 +497,7 @@
 #' @note This is liable to take quite some time to run, especially if the number of observations &/or number of iterations is large. Depending on how distinct the clusters are, \code{z.sim} may be stored better in a non-sparse format. This function can optionally be called inside \code{\link{get_IMIFA_results}}.
 #' @seealso \code{\link{get_IMIFA_results}}, \code{\link[slam]{simple_triplet_matrix}}, \code{\link[stats]{hclust}}, \code{\link[mcclust]{comp.psm}}, \code{\link[mcclust]{cltoSim}}
 #'
-#' @author Keefe Murphy
+#' @author Keefe Murphy - \href{keefe.murphy@ucd.ie}{<keefe.murphy@ucd.ie>}
 #'
 #' @examples
 #' # Run a IMIFA model and extract the sampled cluster labels
@@ -593,7 +596,7 @@
       check     <- !any(if(isTRUE(semi)) test < 0 else test <= 0)
       if(isTRUE(make))  {
         evec    <- eigs$vectors
-        return(list(check = check, X.new = if(all(check)) x else x + evec %*% tcrossprod(diag(pmax(ifelse(isTRUE(semi), 0, .Machine$double.eps), 2 * tol - eval), d), evec)))
+        return(list(check = check, X.new = if(all(check)) x else x + evec %*% tcrossprod(diag(Pmax(ifelse(isTRUE(semi), 0, .Machine$double.eps), 2 * tol - eval), d), evec)))
       } else check
     }
 
@@ -612,7 +615,7 @@
       P         <- as.integer(P)
       if(length(P)   > 1  || P <= 0)       stop('argument P is a not a single positive integer')
       R         <- P + 0.5 * (1 - sqrt(8 * P  + 1))
-        as.integer(floor(ifelse(1e-10 > abs(R - round(R)), round(R), R)))
+        as.integer(floor(ifelse(1e-10 > abs(R - Round(R)), Round(R), R)))
     }, vectorize.args= "P")
 
   # Procrustes Transformation
@@ -727,7 +730,7 @@
 #'
 #' @seealso \code{\link{G_variance}}, \code{\link{G_priorDensity}}, \code{\link[Rmpfr]{Rmpfr}}
 #'
-#' @author Keefe Murphy
+#' @author Keefe Murphy - \href{keefe.murphy@ucd.ie}{<keefe.murphy@ucd.ie>}
 #'
 #' @examples
 #' G_expected(N=50, alpha=19.23356)
@@ -771,7 +774,7 @@
 #' @note Requires use of the \code{Rmpfr} and \code{gmp} libraries for non-zero \code{discount} values.
 #' @seealso \code{\link{G_expected}}, \code{\link{G_priorDensity}}, \code{\link[Rmpfr]{Rmpfr}}
 #'
-#' @author Keefe Murphy
+#' @author Keefe Murphy - \href{keefe.murphy@ucd.ie}{<keefe.murphy@ucd.ie>}
 #'
 #' @examples
 #' G_variance(N=50, alpha=19.23356)
@@ -896,7 +899,7 @@
       call      <- attr(object, "Call")
       msg       <- NULL
       if(any(dim(crit.mat) > 1)) {
-        msg     <- paste0(", and ", ifelse(substr(criterion, 1, 1) == "A", "an ", "a "),  criterion, " of ", round(max(crit.mat), 2), "\n")
+        msg     <- paste0(", and ", ifelse(substr(criterion, 1, 1) == "A", "an ", "a "),  criterion, " of ", Round(max(crit.mat), 2), "\n")
       }
         cat("Call:\t"); print(call); cat("\n")
         cat(paste0(capture.output(print.Results_IMIFA(object)), msg))
@@ -927,7 +930,7 @@
 #'
 #' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{MGP_check}}
 #' @references Bhattacharya, A. and Dunson, D. B. (2011) Sparse Bayesian infinite factor models, \emph{Biometrika}, 98(2): 291-306.
-#' @author Keefe Murphy
+#' @author Keefe Murphy - \href{keefe.murphy@ucd.ie}{<keefe.murphy@ucd.ie>}
 #'
 #' @examples
 #' mgpControl(nu=2.5, eps=1e-02)
@@ -993,7 +996,7 @@
 #' @export
 #'
 #' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{get_IMIFA_results}}
-#' @author Keefe Murphy
+#' @author Keefe Murphy - \href{keefe.murphy@ucd.ie}{<keefe.murphy@ucd.ie>}
 #' @examples
 #' storeControl(score.switch=FALSE)
 #'
@@ -1014,7 +1017,7 @@
       eigs      <- eigen(x, symmetric = TRUE)
       eval      <- eigs$values
       evec      <- eigs$vectors
-        return(chol(x + evec %*% tcrossprod(diag(pmax(0, 2 * max(abs(eval)) * d * .Machine$double.eps - eval), d), evec)))
+        return(chol(x + evec %*% tcrossprod(diag(Pmax(0, 2 * max(abs(eval)) * d * .Machine$double.eps - eval), d), evec)))
       }
     )
 

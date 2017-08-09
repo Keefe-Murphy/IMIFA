@@ -41,5 +41,5 @@ McNicholas, P. D. and Murphy, T. B. (2008) Parsimonious Gaussian Mixture Models,
 \code{\link{get_IMIFA_results}}, \code{\link{mcmc_IMIFA}}
 }
 \author{
-Keefe Murphy
+Keefe Murphy - \href{keefe.murphy@ucd.ie}{<keefe.murphy@ucd.ie>}
 }

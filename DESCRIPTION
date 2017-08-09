@@ -13,6 +13,7 @@ License: GPL (>= 2)
 Encoding: UTF-8
 URL: https://cran.r-project.org/package=IMIFA
 BugReports: https://github.com/Keefe-Murphy/IMIFA
+LazyData: true
 Imports:
     abind,
     e1071,
@@ -20,10 +21,10 @@ Imports:
     grDevices,
     matrixStats,
     mcclust,
-    mclust,
+    mclust (>= 5.1),
     mvnfast,
     plotrix,
-    Rfast,
+    Rfast (>= 1.8.2),
     slam,
     stats,
     utils,

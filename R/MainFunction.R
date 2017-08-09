@@ -67,22 +67,21 @@
 #' @details Creates a raw object of class "\code{IMIFA}" from which the optimal/modal model can be extracted by \code{\link{get_IMIFA_results}}. Dedicated \code{print} and \code{summary} functions exist for objects of class "\code{IMIFA}".
 #'
 #' @note Further control over the specification of advanced function arguments can be obtained with recourse to the following functions:\cr
-#' \describe{
-#' \item{\strong{\code{\link{mgpControl}}}}{Supply arguments (with defaults) pertaining to the multiplicative gamma process (MGP) shrinkage prior and adaptive Gibbs sampler (AGS). For use with the infinite factor models "\code{IFA}", "\code{MIFA}", "\code{OMIFA}", and "\code{IMIFA}" only.}
-#' \item{\strong{\code{\link{storeControl}}}}{Supply logical indicators governing storage of parameters of interest for all models in the IMIFA family. It may be useful not to store certain parameters if memory is an issue (e.g. for large data sets or for a large number of MCMC iterations after burnin and thinning).}
+#' \itemize{
+#' \item{\strong{\code{\link{mgpControl}}} - }{Supply arguments (with defaults) pertaining to the multiplicative gamma process (MGP) shrinkage prior and adaptive Gibbs sampler (AGS). For use with the infinite factor models "\code{IFA}", "\code{MIFA}", "\code{OMIFA}", and "\code{IMIFA}" only.}
+#' \item{\strong{\code{\link{storeControl}}} - }{Supply logical indicators governing storage of parameters of interest for all models in the IMIFA family. It may be useful not to store certain parameters if memory is an issue (e.g. for large data sets or for a large number of MCMC iterations after burnin and thinning).}
 #' }
 #'
 #' @return A list of lists of lists of class "\code{IMIFA}" to be passed to \code{\link{get_IMIFA_results}}. If the returned object is x, candidate models are accesible via subsetting, where x is of the form x[[1:length(range.G)]][[1:length(range.Q)]]. However, these objects of class "IMIFA" should rarely if ever be manipulated by hand - use of the \code{\link{get_IMIFA_results}} function is \emph{strongly} advised.
 #' @export
-#' @import stats
-#' @importFrom utils "capture.output" "head" "setTxtProgressBar" "tail" "txtProgressBar"
+#' @importFrom stats "acf" "complete.cases" "cor" "cov" "dbeta" "density" "dgamma" "dnorm" "factanal" "kmeans" "plogis" "pnorm" "qlogis" "quantile" "rbeta" "rexp" "rgamma" "rmultinom" "rnorm" "runif" "setNames"
+#' @importFrom utils "capture.output" "head" "setTxtProgressBar" "tail" "txtProgressBar" "memory.limit"
 #' @importFrom matrixStats "rowLogSumExps"
-#' @importFrom Rfast "rowsums" "Order" "colVars" "rowmeans" "standardise" "sort_unique" "cora" "cova"
+#' @importFrom Rfast "rowsums" "Order" "colVars" "rowmeans" "standardise" "sort_unique" "cora" "cova" "Pmax" "Round"
 #' @importFrom e1071 "matchClasses"
 #' @importFrom mvnfast "dmvn"
 #' @importFrom slam "as.simple_sparse_array" "as.simple_triplet_matrix"
 #' @importFrom mclust "Mclust" "mclustBIC" "hc" "hclass"
-#' @importFrom utils "memory.limit"
 #'
 #' @seealso \code{\link{get_IMIFA_results}}, \code{\link{psi_hyper}}, \code{\link{mgpControl}}, \code{\link{storeControl}}
 #' @references
@@ -98,7 +97,7 @@
 #'
 #' Tipping, M. E. and Bishop, C. M. (1999). Probabilistic principal component analysis, \emph{Journal of the Royal Statistical Society: Series B (Statistical Methodology)}, 61(3): 611-622.
 #'
-#' @author Keefe Murphy
+#' @author Keefe Murphy - \href{keefe.murphy@ucd.ie}{<keefe.murphy@ucd.ie>}
 #'
 #' @examples
 #' # data(olive)
@@ -177,16 +176,16 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   n.iters   <- max(burnin + 1, as.integer(n.iters))
   iters     <- seq(from=burnin + 1, to=n.iters, by=thinning)
   iters     <- iters[iters > 0]
+  if(length(iters)   < 10)          stop("Run a longer chain!")
   raw.dat   <- as.data.frame(dat)
   num.check <- vapply(raw.dat, is.numeric, logical(1L))
-  if(sum(num.check) != ncol(raw.dat)) {
-    if(verbose)                     message("Non-numeric columns removed")
-    raw.dat <- raw.dat[num.check]
-  }
-  if(length(iters)   < 10)          stop("Run a longer chain!")
   if(anyNA(raw.dat)) {
     if(verbose)                     message("Rows with missing values removed from data")
-    raw.dat <- raw.dat[complete.cases(raw.dat),]
+    raw.dat <- raw.dat[complete.cases(raw.dat),, drop=FALSE]
+  }
+  if(sum(num.check) != ncol(raw.dat)) {
+    if(verbose)                     message("Non-numeric columns removed from data")
+    raw.dat <- raw.dat[,num.check, drop=FALSE]
   }
   if(method != "classify") {
     scal    <- switch(scaling, none=FALSE, Rfast::colVars(as.matrix(raw.dat), std=TRUE))
@@ -195,7 +194,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   } else   {
     dat     <- as.matrix(raw.dat)
   }
-  centered  <- switch(method, classify=all(round(colSums(dat)) == 0), any(centering, all(round(colSums(dat)) == 0)))
+  centered  <- switch(method, classify=all(Round(colSums(dat)) == 0), any(centering, all(Round(colSums(dat)) == 0)))
   if(!any(centered, centering) && all(verbose,
     scaling != "none"))             message("Are you sure you want to apply scaling without centering?")
 
@@ -523,7 +522,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(length(alpha) != 1)          stop("'alpha' must be specified as a scalar to ensure an exchangeable prior")
     if(alpha <= -discount)          stop(paste0("'alpha' must be ",     ifelse(discount != 0, paste0("strictly greater than -discount (i.e. > ", - discount, ")"), "strictly positive")))
     if(all(is.element(method,  c("IMIFA",   "IMFA")),
-       !learn.alpha))               warning(paste0("'alpha' fixed at ", round(alpha, options()$digits), " as it's not being learned via Gibbs/Metropolis-Hastings updates"), call.=FALSE)
+       !learn.alpha))               warning(paste0("'alpha' fixed at ", Round(alpha, options()$digits), " as it's not being learned via Gibbs/Metropolis-Hastings updates"), call.=FALSE)
     if(all(is.element(method,  c("OMIFA",   "OMFA")),
        alpha >= min.d2))            warning(paste0("'alpha' over 'range.G' for the OMFA & OMIFA methods must be less than half the dimension (per cluster!)\nof the free parameters of the smallest model considered (= ", min.d2, "): consider suppling 'alpha' < ", min.d2G), call.=FALSE)
     if(any(all(is.element(method, c("MFA",  "MIFA")), alpha > 1),
@@ -617,10 +616,10 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
       } else if(z.init  == "list")   {
         zi[[g]]    <- as.integer(z.list[[g]])
       } else if(z.init  == "hc")     {
-        h.res      <- try(hc(dat), silent=TRUE)
+        h.res      <- try(hc(dat, minclus=G), silent=TRUE)
         if(!inherits(h.res, "try-error"))  {
           zi[[g]]  <- as.integer(factor(hclass(h.res, G),     levels=seq_len(G)))
-        } else                      stop("Cannot initialise cluster labels using hc. Try another z.init method")
+        } else                      stop("Cannot initialise cluster labels using hierarchical clustering. Try another z.init method")
       } else if(z.init  == "mclust") {
         m.res      <- try(Mclust(dat, G, verbose=FALSE), silent=TRUE)
         if(!inherits(m.res, "try-error"))  {
@@ -690,29 +689,29 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
       alpha.d2     <- list(alpha.d2[[1]][1])
     }
   }
-  if(all(round(vapply(mu.zero, sum, numeric(1L))) == 0)) {
+  if(all(Round(vapply(mu.zero, sum, numeric(1L))) == 0)) {
     mu.zero        <- switch(method, classify=base::matrix(0, nr=1, nc=range.G), lapply(mu.zero, function(x) 0))
   }
   if(mu0g && unlist(lapply(mu.zero,  function(x) {
     if(is.matrix(x)) any(apply(x, 1, function(y) {
-      length(unique(round(y, nchar(y)))) }) == 1)  else  {
-      length(unique(round(x,
-      nchar(x))))  == 1 } } )))     stop("'mu0g' must be FALSE if 'mu.zero' is not group-specific")
+      length(unique(Round(y, min(nchar(y))))) }) == 1)  else  {
+      length(unique(Round(x,
+      min(nchar(x))))) == 1 }})))   stop("'mu0g' must be FALSE if 'mu.zero' is not group-specific")
   if(anyNA(unlist(psi.beta))) {
     psi.beta       <- lapply(psi.beta, function(x) replace(x, is.na(x), 0))
   }
   if(all(is.element(uni.type, c("isotropic",   "single")),
          unlist(lapply(psi.beta,     function(x) {
     if(is.matrix(x)) any(apply(x, 2, function(y) {
-      length(unique(round(y, nchar(y)))) }) != 1)  else  {
-      length(unique(round(x,
-      nchar(x))))  != 1 } } ))))    stop("'psi.beta' cannot be variable-specific if 'uni.type' is 'isotropic' or 'single'")
+      length(unique(Round(y, min(nchar(y))))) }) != 1)  else  {
+      length(unique(Round(x,
+      min(nchar(x))))) != 1 }}))))  stop("'psi.beta' cannot be variable-specific if 'uni.type' is 'isotropic' or 'single'")
   if(is.element(uni.type, c("constrained", "single"))) {
       if(unlist(lapply(psi.beta,     function(x) {
     if(is.matrix(x)) any(apply(x, 1, function(y) {
-      length(unique(round(y, nchar(y)))) }) != 1)  else  {
-      length(unique(round(x,
-      nchar(x))))  != 1 } } )))  {  stop("'psi.beta' cannot be group-specific if 'uni.type' is 'constrained' or 'single'")
+      length(unique(Round(y, min(nchar(y))))) }) != 1)  else  {
+      length(unique(Round(x,
+      min(nchar(x))))) != 1 }}))) { stop("'psi.beta' cannot be group-specific if 'uni.type' is 'constrained' or 'single'")
     } else if(isTRUE(psi0g) && is.element(method,
               c("MFA", "MIFA")))    stop("'psi0g' must be FALSE if 'psi.beta' is not group-specific")
   }

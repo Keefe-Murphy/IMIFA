@@ -35,5 +35,5 @@ G_expected(N=50, alpha=19.23356)
 \code{\link{G_variance}}, \code{\link{G_priorDensity}}, \code{\link[Rmpfr]{Rmpfr}}
 }
 \author{
-Keefe Murphy
+Keefe Murphy - \href{keefe.murphy@ucd.ie}{<keefe.murphy@ucd.ie>}
 }

@@ -84,7 +84,7 @@
       uni.shape      <- switch(uni.type,   constrained=N/2 + psi.alpha, single=(N * P)/2 + psi.alpha)
       V              <- switch(uni.type,   constrained=P, single=1)
     }
-    psi.beta         <- switch(uni.prior,  isotropic=as.vector(unique(round(psi.beta, min(nchar(psi.beta))))), psi.beta)
+    psi.beta         <- switch(uni.prior,  isotropic=as.vector(unique(Round(psi.beta, min(nchar(psi.beta))))), psi.beta)
     pi.prop          <- cluster$pi.prop
     nn               <- tabulate(z, nbins=trunc.G)
     mu.tmp           <- vapply(seq_len(trunc.G - G), function(g) .sim_mu_p(P=P, sig.mu.sqrt=sig.mu.sqrt, mu.zero=mu.zero), numeric(P))
@@ -323,7 +323,7 @@
           notred     <- numred == 0
           ng.ind     <- seq_along(nn.ind)
           Qs.old     <- Qs[nn0]
-          Qs[nn0]    <- pmax(0, vapply(ng.ind, function(h) if(notred[h]) Qs.old[h] + 1 else Qs.old[h] - numred[h], numeric(1L)))
+          Qs[nn0]    <- Pmax(0, vapply(ng.ind, function(h) if(notred[h]) Qs.old[h] + 1 else Qs.old[h] - numred[h], numeric(1L)))
           Q.big      <- Qs[nn0] > Q.star
           if((Q.bigs <- any(Q.big))) {
             notred   <- notred & !Q.big

@@ -44,7 +44,7 @@
     uni.type     <- switch(uni.type,   unconstrained=,               constrained="constrained", "single")
     .sim_psi_inv <- switch(uni.type,   constrained=.sim_psi_u1,      single=.sim_psi_c1)
     .sim_psi_ip  <- switch(uni.prior,  unconstrained=.sim_psi_ipu,   isotropic=.sim_psi_ipc)
-    psi.beta     <- switch(uni.prior,  isotropic=as.vector(unique(round(psi.beta, min(nchar(psi.beta))))), psi.beta)
+    psi.beta     <- switch(uni.prior,  isotropic=as.vector(unique(Round(psi.beta, min(nchar(psi.beta))))), psi.beta)
     uni.shape    <- switch(uni.type,   constrained=N/2 + psi.alpha,  single=(N * P)/2 + psi.alpha)
     V            <- switch(uni.type,   constrained=P,                single=1)
     eta          <- .sim_eta_p(Q=Q, N=N)

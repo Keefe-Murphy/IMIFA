@@ -58,5 +58,5 @@ Bhattacharya, A. and Dunson, D. B. (2011) Sparse Bayesian infinite factor models
 \code{\link{mcmc_IMIFA}}, \code{\link{MGP_check}}
 }
 \author{
-Keefe Murphy
+Keefe Murphy - \href{keefe.murphy@ucd.ie}{<keefe.murphy@ucd.ie>}
 }

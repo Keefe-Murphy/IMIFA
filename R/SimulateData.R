@@ -12,11 +12,11 @@
 #' @param loc.diff A parameter to control the closeness of the clusters in terms of the difference in their location vectors. Only relevant if \code{mu} is NOT supplied. Defaults to 1.
 #' @param method A switch indicating whether the mixture to be simulated from is the conditional distribution of the data given the latent variables (default), or simply the marginal distribution of the data.
 #'
-#' @return Invisibly returns a \code{data.frame} with \code{N} observations (rows) of \code{P} variables (columns). The true values of the parameters which generated these data are also stored.
+#' @return Invisibly returns a \code{data.frame} with \code{N} observations (rows) of \code{P} variables (columns). The true values of the parameters which generated these data are also stored as attributes.
 #' @export
 #' @importFrom Rfast "is.symmetric"
 #'
-#' @author Keefe Murphy
+#' @author Keefe Murphy - \href{keefe.murphy@ucd.ie}{<keefe.murphy@ucd.ie>}
 #'
 #' @examples
 #' # Simulate 100 observations from 3 balanced clusters with cluster-specific numbers of latent factors
