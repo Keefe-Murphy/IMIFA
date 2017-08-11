@@ -37,7 +37,7 @@
 #' @param psi.alpha The shape of the inverse gamma prior on the uniquenesses. Defaults to 2.5 if \code{uni.type} is one of "\code{unconstrained}" or "\code{constrained}", otherwise defaults to 3.5.
 #' @param psi.beta The rate of the inverse gamma prior on the uniquenesses. Can be either a single parameter, a vector of variable specific rates, or a matrix of variable and cluster-specific rates. If this is not supplied, \code{\link{psi_hyper}} is invoked to choose sensible values, depending on the value of \code{uni.prior} and, for the "\code{MFA}" and "\code{MIFA}" models, the value of \code{psi0g}.
 #' @param mu.zero The mean of the prior distribution for the mean parameter. Defaults to the sample mean of the data.
-#' @param sigma.mu The covariance of the prior distribution for the mean parameter. Can be a scalar times the identity or a matrix of appropriate dimension. Defaults to the sample covariance matrix.
+#' @param sigma.mu The covariance of the prior distribution for the mean parameter. Always assumed to be a diagonal matrix. Can be a scalar times the identity or a vector of appropriate dimension. If supplied as a matrix, only the diagonal elements will be extracted. Defaults to the diagonal entries of the sample covariance matrix.
 #' @param sigma.l The covariance of the prior distribution for the loadings. Defaults to 1. Only relevant for the finite factor methods.
 #' @param z.init The method used to initialise the cluster labels. Defaults to \code{\link[mclust]{Mclust}}. Other options include \code{kmeans}, hierarchical clustering via \code{\link[mclust]{hc}}, random initialisation via \code{priors}, and a user-supplied \code{list}. Not relevant for the "\code{FA}" and "\code{"IFA"} methods.
 #' @param z.list A user supplied list of cluster labels. Only relevant if \code{z.init == "z.list"}.
@@ -75,9 +75,9 @@
 #' @return A list of lists of lists of class "\code{IMIFA}" to be passed to \code{\link{get_IMIFA_results}}. If the returned object is x, candidate models are accesible via subsetting, where x is of the form x[[1:length(range.G)]][[1:length(range.Q)]]. However, these objects of class "IMIFA" should rarely if ever be manipulated by hand - use of the \code{\link{get_IMIFA_results}} function is \emph{strongly} advised.
 #' @export
 #' @importFrom stats "acf" "complete.cases" "cor" "cov" "dbeta" "density" "dgamma" "dnorm" "factanal" "kmeans" "plogis" "pnorm" "qlogis" "quantile" "rbeta" "rexp" "rgamma" "rmultinom" "rnorm" "runif" "setNames"
-#' @importFrom utils "capture.output" "head" "setTxtProgressBar" "tail" "txtProgressBar" "memory.limit"
+#' @importFrom utils "capture.output" "setTxtProgressBar" "txtProgressBar" "memory.limit"
 #' @importFrom matrixStats "rowLogSumExps"
-#' @importFrom Rfast "rowsums" "Order" "colVars" "rowmeans" "standardise" "sort_unique" "cora" "cova" "Pmax" "Round"
+#' @importFrom Rfast "Order" "colVars" "rowmeans" "standardise" "sort_unique" "cora" "cova" "Round" "groupcolVars"
 #' @importFrom e1071 "matchClasses"
 #' @importFrom mvnfast "dmvn"
 #' @importFrom slam "as.simple_sparse_array" "as.simple_triplet_matrix"
@@ -187,6 +187,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(verbose)                     message("Non-numeric columns removed from data")
     raw.dat <- raw.dat[,num.check, drop=FALSE]
   }
+  if(any(dim(raw.dat) == 0))        stop("Empty data set after removal of ineligble rows/columns")
   if(method != "classify") {
     scal    <- switch(scaling, none=FALSE, Rfast::colVars(as.matrix(raw.dat), std=TRUE))
     scal    <- switch(scaling, pareto=sqrt(scal), scal)
@@ -399,8 +400,9 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   mu.zero          <- if(mu0.x) mu  else     .len_check(mu.zero, mu0g, method, P, G.init)
   sigmu.miss       <- missing(sigma.mu)
   cov.mat          <- if(P > 500) switch(scaling, unit=cora(as.matrix(dat)), cova(as.matrix(dat))) else switch(scaling, unit=cor(dat), cov(dat))
-  if(sigmu.miss)             sigma.mu      <- diag(cov.mat)
-  if(scaling == "unit")      sigma.mu      <- sigma.mu[1]
+  sigma.mu         <- if(sigmu.miss) diag(cov.mat) else if(is.matrix(sigma.mu)) diag(sigma.mu) else sigma.mu
+  sigmu.len        <- length(unique(sigma.mu))
+  if(sigmu.len     == 1)     sigma.mu      <- sigma.mu[1]
   if(any(sigma.mu  <= 0, !is.numeric(sigma.mu),
      !is.element(length(sigma.mu),
      c(1, P))))                     stop(paste0("'sigma.mu' must be strictly positive, and of length 1 or P=", P))
@@ -803,7 +805,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
       scal         <- switch(scaling, none=FALSE, Rfast::colVars(as.matrix(tmp.dat), std=TRUE))
       scal         <- switch(scaling, pareto=sqrt(scal), scal)
       tmp.dat <- if(is.logical(scal)) standardise(as.matrix(tmp.dat), center=centering, scale=scal) else scale(tmp.dat, center=centering, scale=scal)
-      if(sigmu.miss)   gibbs.arg$sigma.mu  <- if(nrow(tmp.dat) > 1) { if(P > 500) cova(as.matrix(tmp.dat)) else cov(tmp.dat) } else cov.mat
+      if(sigmu.miss)   gibbs.arg$sigma.mu  <- diag(if(nrow(tmp.dat) > 1) { if(P > 500) cova(as.matrix(tmp.dat)) else cov(tmp.dat) } else cov.mat)
       imifa[[g]]          <- list()
       gibbs.arg    <- append(temp.args, lapply(deltas[[Gi]], "[[", g))
       imifa[[g]][[Qi]]    <- do.call(paste0(".gibbs_", "IFA"),

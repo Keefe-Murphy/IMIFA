@@ -9,6 +9,7 @@
 
   # Define & initialise variables
     start.time       <- proc.time()
+    sq_mat           <- if(P  > 50) function(x) diag(sqrt(diag(x))) else sqrt
     matrix           <- base::matrix
     total            <- max(iters)
     if(verbose)         pb   <- txtProgressBar(min=0, max=total, style=3)
@@ -106,9 +107,9 @@
       if(isTRUE(one.uni)) {
         psi.inv[,Gs] <- 1/switch(uni.type, constrained=Rfast::colVars(data), exp(mean(log(Rfast::colVars(data)))))
       } else   {
-        psi.inv[,Gs] <- 1/vapply(Gs, function(g) if(nn[g] > 1) switch(uni.type, unconstrained=Rfast::colVars(data[z == g,, drop=FALSE]), rep(exp(mean(log(Rfast::colVars(data[z == g,, drop=FALSE])))), P)) else psi.tmp[,g], numeric(P))
+        psi.inv[,Gs] <- 1/groupcolVars(data, ina=z)
       }
-      inf.ind        <- is.infinite(psi.inv)
+      inf.ind        <- is.infinite(psi.inv) | is.nan(psi.inv)
       psi.inv[inf.ind]       <- psi.tmp[inf.ind]
     }
     l.sigma          <- diag(1/sigma.l, Q)
@@ -136,7 +137,7 @@
       if(sw["pi.sw"])   pi.store[,1]     <- pi.prop
       z.store[1,]            <- z
       sigma                  <- if(uni) lapply(Gs, function(g) as.matrix(1/psi.inv[,g] + if(Q0) tcrossprod(as.matrix(lmat[,,g])) else 0)) else lapply(Gs, function(g) tcrossprod(lmat[,,g]) + diag(1/psi.inv[,g]))
-      log.probs              <- if(uni) vapply(Gs, function(g) dnorm(data, mu[,g], sqrt(sigma[[g]]), log=TRUE) + log(pi.prop[g]), numeric(N)) else vapply(Gs, function(g) { sigma <- if(Q0) sigma[[g]] else sqrt(sigma[[g]]); dmvn(data, mu[,g], is.posi_def(sigma, make=TRUE)$X.new, log=TRUE, isChol=!Q0) + log(pi.prop[g]) }, numeric(N))
+      log.probs              <- if(uni) vapply(Gs, function(g) dnorm(data, mu[,g], sq_mat(sigma[[g]]), log=TRUE) + log(pi.prop[g]), numeric(N)) else vapply(Gs, function(g) { sigma <- if(Q0) sigma[[g]] else sq_mat(sigma[[g]]); dmvn(data, mu[,g], is.posi_def(sigma, make=TRUE)$X.new, log=TRUE, isChol=!Q0) + log(pi.prop[g]) }, numeric(N))
       ll.store[1]            <- sum(rowLogSumExps(log.probs))
       G.store[1]             <- G.non
       act.store[1]           <- G
@@ -220,12 +221,12 @@
         psi          <- 1/psi.inv
         sigma        <- if(uni) lapply(Gs, function(g) as.matrix(psi[,g] + if(Q0) tcrossprod(as.matrix(lmat[,,g])) else 0)) else lapply(Gs, function(g) tcrossprod(lmat[,,g]) + diag(psi[,g]))
         if(uni) {
-          log.probs  <- vapply(Gs, function(g) dnorm(data, mu[,g], sqrt(sigma[[g]]), log=TRUE), numeric(N))
+          log.probs  <- vapply(Gs, function(g) dnorm(data, mu[,g], sq_mat(sigma[[g]]), log=TRUE), numeric(N))
         } else  {
-          log.check  <- capture.output(log.probs <- try(vapply(Gs, function(g) dmvn(data, mu[,g], if(Q0) sigma[[g]] else sqrt(sigma[[g]]), log=TRUE, isChol=!Q0), numeric(N)), silent=TRUE))
+          log.check  <- capture.output(log.probs <- try(vapply(Gs, function(g) dmvn(data, mu[,g], if(Q0) sigma[[g]] else sq_mat(sigma[[g]]), log=TRUE, isChol=!Q0), numeric(N)), silent=TRUE))
         }
         if(inherits(log.probs, "try-error")) {
-          log.probs  <- vapply(Gs, function(g) { sigma <- if(Q0) sigma[[g]] else sqrt(sigma[[g]]); dmvn(data, mu[,g], is.posi_def(sigma, make=TRUE)$X.new, log=TRUE, isChol=!Q0) }, numeric(N))
+          log.probs  <- vapply(Gs, function(g) { sigma <- if(Q0) sigma[[g]] else sq_mat(sigma[[g]]); dmvn(data, mu[,g], is.posi_def(sigma, make=TRUE)$X.new, log=TRUE, isChol=!Q0) }, numeric(N))
         }
         if(ind.slice) {
           log.pixi   <- log(pi.prop) - log(ksi[Gs])

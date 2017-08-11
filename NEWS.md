@@ -10,12 +10,13 @@ __Infinite Mixtures of Infinite Factor Analysers__
   Modified PGMM_dfree accordingly and forced non-storage of mixing proportions when `equal.pro` is TRUE.  
 
 ### Improvements
-* All methods now work for univariate data also (with apt. edits to plots & uniqueness defaults etc.).
+* All methods now work for univariate data also (with apt. edits to plots & uniqueness defaults etc.).  
+  `sim_IMIFA_data` also extended to work for univariate data, as well as sped-up.
 * `Zsimilarity` sped-up via `mcclust::comp.psm` s.t. `z.avgsim=TRUE` now by default in `get_IMIFA_results`.
 * Added "`hc`" option to `z.init` to initialise allocations via hierarchical clustering (using `mclust::hc`).
 * `mu` argument added to `sim_IMIFA_data` to allow supplying true mean parameter values directly.
 * Standard deviation of AICM/BICM model selection criteria now computed and returned.
-* Speed-ups due to new `Rfast` package functions: `colTabulate`, `Pmax`, `Round`.
+* Speed-ups due to new `Rfast` package functions: `colTabulate`. `groupcolVars`, and`Round`.
 * `heat_legend` gains `cex.lab` argument to control magnification of legend text.
 * Slight improvements when `adapt=FALSE` for infinite factor models with fixed high truncation level.
 * Optimised compression of `olive`, `coffee` and vignette data and used LazyData: true.
@@ -28,6 +29,8 @@ __Infinite Mixtures of Infinite Factor Analysers__
 * Fixed plotting of posterior mean scores when one or more clusters are empty.
 * Fixed storage switches to account for `burnin=0`.
 * Fixed bug with default plotting palette for data sets with >1024 variables.
+* Fixed `print` and `summary` functions for objects of class `IMIFA` and `Results_IMIFA`.
+* Ensured `sigma.mu` hyperparameter arg. is always coerced to diagonal entries of a covariance matrix.
 * Transparency default in `plot.Results_IMIFA` now depends on device's support of semi-transparency.
 * `Ledermann(P)` is now properly vectorised.
 * Used `@importFrom` rather than `@import` for `stats` and `graphics` libraries.

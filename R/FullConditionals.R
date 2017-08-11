@@ -154,7 +154,7 @@
      } else   {
       probs      <- probs - log(rexp(length(probs)))
      }
-      max.col(probs)
+      Rfast::rowMaxs(probs)    # i.e. max.col(probs)
     }
 
   # Alpha
@@ -292,8 +292,8 @@
       if(inherits(inv.cov, "try-error"))   {
         covsvd  <- svd(covar)
         posi    <- covsvd$d > max(sqrt(.Machine$double.eps) * covsvd$d[1L], 0)
-        inv.cov <- if(all(posi)) covsvd$v %*% (t(covsvd$u)/covsvd$d) else if(!any(posi))
-                   array(0, dim(covar)[2L:1L]) else covsvd$v[,posi, drop=FALSE] %*% (t(covsvd$u[,posi, drop=FALSE])/covsvd$d[posi])
+        inv.cov <- if(all(posi)) covsvd$v %*% (t(covsvd$u)/covsvd$d) else if(any(posi))
+                   covsvd$v[,posi, drop=FALSE] %*% (t(covsvd$u[,posi, drop=FALSE])/covsvd$d[posi]) else array(0, dim(covar)[2L:1L])
       }
         unname((shape - 1)/switch(match.arg(type), unconstrained=diag(inv.cov),
                                   isotropic=rep(exp(mean(log(diag(inv.cov)))), ncol(covar))))
@@ -442,17 +442,17 @@
   # Label Switching
     .lab_switch <- function(z.new, z.old) {
       tab       <- table(z.new, z.old, dnn=NULL)
-      tab.tmp   <- tab[rowsums(tab) != 0,colSums(tab) != 0, drop=FALSE]
+      tab.tmp   <- tab[rowSums(tab) != 0,colSums(tab) != 0, drop=FALSE]
       Gs        <- seq_len(max(unique(as.numeric(z.new))))
       nc        <- ncol(tab.tmp)
       nr        <- nrow(tab.tmp)
       ng        <- tabulate(z.new, length(Gs))
       if(nc > nr) {
-        tmp.mat <- matrix(rep(0, nc), nrow=nc - nr, ncol=nc)
+        tmp.mat <- matrix(0L, nrow=nc - nr, ncol=nc)
         rownames(tmp.mat) <- setdiff(as.numeric(colnames(tab.tmp)), as.numeric(rownames(tab.tmp)))[seq_len(nc - nr)]
         tab.tmp <- rbind(tab.tmp, tmp.mat)
       } else if(nr > nc) {
-        tmp.mat <- matrix(rep(0, nr), nrow=nr, ncol=nr - nc)
+        tmp.mat <- matrix(0L, nrow=nr, ncol=nr - nc)
         colnames(tmp.mat) <- setdiff(as.numeric(rownames(tab.tmp)), as.numeric(colnames(tab.tmp)))[seq_len(nr - nc)]
         tab.tmp <- cbind(tab.tmp, tmp.mat)
       }
@@ -593,10 +593,10 @@
       if(length(tol)  > 1  ||
          !is.numeric(tol))                 stop("argument tol is not a single number")
       test      <- replace(eval, abseigs < tol, 0)
-      check     <- !any(if(isTRUE(semi)) test < 0 else test <= 0)
+      check     <- all(if(isTRUE(semi)) test >= 0 else test > 0)
       if(isTRUE(make))  {
         evec    <- eigs$vectors
-        return(list(check = check, X.new = if(all(check)) x else x + evec %*% tcrossprod(diag(Pmax(ifelse(isTRUE(semi), 0, .Machine$double.eps), 2 * tol - eval), d), evec)))
+        return(list(check = check, X.new = if(check) x else x + evec %*% tcrossprod(diag(pmax(2 * tol - eval, ifelse(isTRUE(semi), 0, .Machine$double.eps)), d), evec)))
       } else check
     }
 
@@ -668,13 +668,13 @@
     Procrustes  <- function(X, Xstar, translate = FALSE, dilate = FALSE, sumsq = FALSE) {
       if((N <- nrow(X)) != nrow(Xstar))    stop("X and Xstar do not have the same number of rows")
       if((P <- ncol(X)) != ncol(Xstar))    stop("X and Xstar do not have the same number of columns")
-      J         <- if(translate) diag(N) - matrix(1/N, N, N)                         else diag(N)
+      J         <- if(translate) diag(N) - matrix(1/N, N, N)                           else diag(N)
       C         <- crossprod(Xstar, J) %*% X
       svdX      <- svd(C)
       R         <- tcrossprod(svdX$v, svdX$u)
-      d         <- if(dilate)    sum(diag(C %*% R))/sum(diag(crossprod(X, J) %*% X)) else 1
-      tt        <- if(translate) crossprod(Xstar - d * X %*% R, matrix(1, N, 1))/N   else 0
-      X.new     <- d * X %*% R + if(translate) matrix(tt, N, P, byrow = TRUE)        else tt
+      d         <- if(dilate)    sum(colSums(C * R))/sum(colSums(crossprod(J, X) * X)) else 1
+      tt        <- if(translate) crossprod(Xstar - d * X %*% R, matrix(1, N, 1))/N     else 0
+      X.new     <- d * X %*% R + if(translate) matrix(tt, N, P, byrow = TRUE)          else tt
         return(c(list(X.new = X.new), list(R = R), if(translate) list(t = tt),
                  if(dilate) list(d = d), if(sumsq) list(ss = sum((X - X.new)^2))))
     }
@@ -837,8 +837,10 @@
       } else {
         msg     <- switch(meth, MFA=paste0(Gmsg, " and", Qmsg), MIFA=Gmsg)
       }
-        cat(paste0(meth, " simulations for '", name, "' dataset", msg, " to be passed to get_IMIFA_results(...)\n"))
+      cat(paste0(meth, " simulations for '", name, "' dataset", msg, " to be passed to get_IMIFA_results(...)\n"))
+        invisible()
     }
+
 #' @method summary IMIFA
 #' @export
     summary.IMIFA        <- function(object, ...) {
@@ -864,9 +866,18 @@
       } else {
         msg     <- switch(meth, MFA=paste0(Gmsg, " and", Qmsg), MIFA=Gmsg)
       }
-        cat("Call:\t"); print(call); cat("\n")
-        cat(paste0(meth, " simulations for '", name, "' dataset", msg, " to be passed to get_IMIFA_results(...)\n"))
+      summ      <- list(call = call, details = paste0(meth, " simulations for '", name, "' dataset", msg, " to be passed to get_IMIFA_results(...)\n"))
+      class(summ)        <- "summary_IMIFA"
+        summ
     }
+
+#' @method print summary_IMIFA
+#' @export
+  print.summary_IMIFA    <- function(x, ...) {
+    cat("Call:\t")
+    print(x$call)
+    cat(paste0("\n", x$details))
+  }
 
 #' @method print Results_IMIFA
 #' @export
@@ -887,7 +898,8 @@
         Q.msg   <- if(!adapt) paste0(unique(Q)) else { if(length(Q) > 1) paste(c(Q.msg, paste0("and ", Q[length(Q)])), sep="", collapse="") else Q }
         msg     <- paste0("The chosen ", method, " model has ", G, " group", ifelse(G == 1, " with ", paste0("s,", ifelse(adapt, "", " each"), " with ")), Q.msg, " factor", ifelse(G == 1 && Q == 1, "", paste0("s", ifelse(G == 1, "", " respectively"))), ifelse(adapt, "", " (no adaptation took place)"), sep="")
       }
-        cat(paste0(msg, ": this Results_IMIFA object can be passed to plot(...)\n"))
+      cat(paste0(msg, ": this Results_IMIFA object can be passed to plot(...)\n"))
+        invisible()
     }
 
 #' @method summary Results_IMIFA
@@ -901,8 +913,9 @@
       if(any(dim(crit.mat) > 1)) {
         msg     <- paste0(", and ", ifelse(substr(criterion, 1, 1) == "A", "an ", "a "),  criterion, " of ", Round(max(crit.mat), 2), "\n")
       }
-        cat("Call:\t"); print(call); cat("\n")
-        cat(paste0(capture.output(print.Results_IMIFA(object)), msg))
+      summ      <- list(call = call, details = paste0(paste0(capture.output(print(object)), msg)))
+      class(summ)        <- "summary_IMIFA"
+        summ
     }
 
   # Control functions
@@ -1017,7 +1030,7 @@
       eigs      <- eigen(x, symmetric = TRUE)
       eval      <- eigs$values
       evec      <- eigs$vectors
-        return(chol(x + evec %*% tcrossprod(diag(Pmax(0, 2 * max(abs(eval)) * d * .Machine$double.eps - eval), d), evec)))
+        return(chol(x + evec %*% tcrossprod(diag(pmax(0, 2 * max(abs(eval)) * d * .Machine$double.eps - eval), d), evec)))
       }
     )
 

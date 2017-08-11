@@ -949,7 +949,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           }
         }, IFA=      {
           if(adapt)  {
-            print(tail(GQ.res[gq.nam != "S"], -1))
+            print(GQ.res[gq.nam != "S"][-1])
           } else     {
             print(GQ.res[gq.nam == "C"])
           }
@@ -1135,7 +1135,8 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
       }
       pl.x   <- barplot(plot.x, beside=TRUE, col=col.e, main="", ylab="Deviation", density=dens)
       na.x   <- G > 1 & is.na(x.plot[[1]])
-      if(G > 1) points(x=Rfast::colMedians(pl.x[,which(na.x), drop=FALSE]), y=rep(0, sum(na.x)), pch=8, col="red", cex=1.5)
+      sumna  <- sum(na.x)
+      if(G > 1) points(x=Rfast::colMedians(pl.x[,which(na.x), drop=FALSE]), y=rep(0, sumna), pch=8, col="red", cex=1.5)
       if(titles) title(main=list("Error Metrics"))
       if(titles) {
         par(mar=c(0, 0, 0, 0))
@@ -1143,7 +1144,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         ltxt <- c("MSE", "MAE", "MEDSE", "MEDAE", "RMSE", "NRMSE")
         lnc  <- length(col.e)
         lcol <- col.e
-        xna  <- sum(na.x)   > 0
+        xna  <- sumna > 0
         lpch <- rep(15, nrow(plot.x))
         temp <- legend("center", legend=if(xna) c(ltxt, "Missing") else ltxt, ncol=ifelse(xna, lnc + 1, lnc), bty="n",
                        pch=if(xna) c(lpch, 8) else lpch, col=if(xna) c(lcol, "red") else lcol, cex=0.8)

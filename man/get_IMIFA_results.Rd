@@ -26,7 +26,7 @@ get_IMIFA_results(sims = NULL, burnin = 0L, thinning = 1L, G = NULL,
 
 \item{Q.meth}{If the object in \code{sims} arises from the "\code{IFA}", "\code{MIFA}", "\code{OMIFA}" or "\code{IMIFA}" methods, this argument determines whether the optimal number of latent factors is given by the mode or median of the posterior distribution of \code{Q}. Defaults to "\code{mode}". Often the mode and median will agree in any case.}
 
-\item{dat}{The actual data set on which \code{\link{mcmc_IMIFA}} was originally run. This is necessary if one wishes to compute error metrics between the estimated and empirical covariance matrix/matrices. If this is not supplied, the function will \emph{attempt} to find the data set if it is still available in the global environment.}
+\item{dat}{The actual data set on which \code{\link{mcmc_IMIFA}} was originally run. If this is not supplied, the function will \emph{attempt} to find the data set if it is still available in the global environment. This is necessary if one wishes to compute error metrics between the estimated and empirical covariance matrix/matrices, although it's not required for the "\code{FA}" and "\code{IFA}" methods.}
 
 \item{conf.level}{The confidence level to be used throughout for credible intervals for all parameters of inferential interest. Defaults to 0.95.}
 

@@ -62,7 +62,7 @@
       }
     } else {
       psi.tmp    <- psi.inv
-      psi.inv[]  <- 1/switch(uni.type, constrained=Rfast::colVars(data), 1/exp(mean(log(Rfast::colVars(data)))))
+      psi.inv[]  <- 1/switch(uni.type, constrained=Rfast::colVars(data, suma=mu), exp(mean(log(Rfast::colVars(data, suma=mu)))))
       inf.ind    <- is.infinite(psi.inv)
       psi.inv[inf.ind]     <- psi.tmp[inf.ind]
     }
@@ -106,7 +106,7 @@
         load.2   <- lmat * lmat
         phi      <- .sim_phi(Q=Q, P=P, nu=nu, tau=tau, load.2=load.2, plus1=nuplus1)
 
-        sum.term <- diag(crossprod(phi, load.2))
+        sum.term <- colSums(phi * load.2)
         for(k in seq_len(Q)) {
           delta[k]  <- if(k > 1) .sim_deltak(alpha.d2=alpha.d2, beta.d2=beta.d2, delta.k=delta[k], Q=Q, P=P, k=k,
                        tau.kq=tau[k:Q], sum.term.kq=sum.term[k:Q]) else .sim_delta1(Q=Q, P=P, tau=tau, sum.term=sum.term,

@@ -9,7 +9,7 @@
 #' @param criterion The criterion to use for model selection, where model selection is only required if more than one model was run under the "\code{FA}", "\code{MFA}", "\code{MIFA}", "\code{OMFA}" or "\code{IMFA}" methods when \code{sims} was created via \code{\link{mcmc_IMIFA}}. Defaults to \code{bicm}, but note that these are \emph{all} calculated; this argument merely indicates which one will form the basis of the construction of the output. Note that the first three options here might exhibit bias in favour of zero-factor models for the finite factor "\code{FA}", "\code{MFA}", "\code{OMFA}" and "\code{IMFA}" methods and might exhibit bias in favour of one-cluster models for the "\code{MFA}" and "\code{MIFA}" methods.
 #' @param G.meth If the object in \code{sims} arises from the "\code{OMFA}", "\code{OMIFA}", "\code{IMFA}" or "\code{IMIFA}" methods, this argument determines whether the optimal number of clusters is given by the mode or median of the posterior distribution of \code{G}. Defaults to "\code{mode}". Often the mode and median will agree in any case.
 #' @param Q.meth If the object in \code{sims} arises from the "\code{IFA}", "\code{MIFA}", "\code{OMIFA}" or "\code{IMIFA}" methods, this argument determines whether the optimal number of latent factors is given by the mode or median of the posterior distribution of \code{Q}. Defaults to "\code{mode}". Often the mode and median will agree in any case.
-#' @param dat The actual data set on which \code{\link{mcmc_IMIFA}} was originally run. This is necessary if one wishes to compute error metrics between the estimated and empirical covariance matrix/matrices. If this is not supplied, the function will \emph{attempt} to find the data set if it is still available in the global environment.
+#' @param dat The actual data set on which \code{\link{mcmc_IMIFA}} was originally run. If this is not supplied, the function will \emph{attempt} to find the data set if it is still available in the global environment. This is necessary if one wishes to compute error metrics between the estimated and empirical covariance matrix/matrices, although it's not required for the "\code{FA}" and "\code{IFA}" methods.
 #' @param conf.level The confidence level to be used throughout for credible intervals for all parameters of inferential interest. Defaults to 0.95.
 #' @param z.avgsim Logical indicating whether the clustering should also be summarised with a call to \code{\link{Zsimilarity}} by the clustering with minimum mean squared error to the similarity matrix obtained by averaging the stored adjacency matrices, in addition to the MAP estimate. Note that the MAP clustering is computed \emph{conditional} on the estimate of the number of clusters (whether that be the modal estimate or the estimate according to \code{criterion}) and other parameters are extracted conditional on this estimate of \code{G}: however, in constrast, the number of distinct clusters in the summarised labels obtained by specifying \code{z.avgsim=TRUE} may not necessarily coincide with the MAP estimate of \code{G}, but it may provide a useful alternative summary of the partitions explored during the chain, and the user is free to call \code{\link{get_IMIFA_results}} again with the new suggested \code{G} value. Please be warned that though this defaults to \code{TRUE}, this is liable to take considerable time to compute, and may not even be possible if the number of observations &/or number of stored iterations is large and the resulting matrix isn't sufficiently sparse. When \code{TRUE}, both the summarised clustering and the similarity matrix are stored: the latter can be visualised as part of a call to \code{\link{plot.Results_IMIFA}}.
 #' @param zlabels For any method that performs clustering, the true labels can be supplied if they are known in order to compute clustering performance metrics. This also has the effect of ordering the MAP labels (and thus the ordering of cluster-specific parameters) to most closely correspond to the true labels if supplied.
@@ -189,7 +189,8 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     if(inf.Q)  {
       if(any((Q  != 0) + (Q *
         (n.var - Q)   <= 0) > 1)) stop(paste0("'Q' must be less than the number of variables ", n.var))
-      Qtmp       <- if(inf.G) Rfast::rowMaxs(sims[[1]][[1]]$Q.store[seq_len(G),, drop=FALSE], value=TRUE) else switch(method, MIFA=Rfast::rowMaxs(sims[[ifelse(G.T, which(G == n.grp), G.ind)]][[1]]$Q.store, value=TRUE), max(sims[[1]][[1]]$Q.store))
+      Qtmp       <- if(inf.G) sims[[1]][[1]]$Q.store[seq_len(G),, drop=FALSE] else switch(method, MIFA=sims[[ifelse(G.T, which(G == n.grp), G.ind)]][[1]]$.store, sims[[1]][[1]]$Q.store)
+      storage.mode(Qtmp)   <- switch(method, IFA="integer", "numeric")
       if(any(Q * (Qtmp - Q) < 0)) stop(paste0("'Q' can't be greater than the maximum number of factors stored in ", ifelse(method == "IFA", "", "any cluster of "), match.call()$sims))
     }
   }
@@ -308,32 +309,34 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     if(length(tmp.store)   < 2)   stop(paste0("Not enough samples stored to proceed", ifelse(any(G.T, Q.T), paste0(": try supplying different Q or G values"), "")))
 
   # Retrieve dataset
-    if(missing(dat)) {
-      nam.dat    <- gsub("\\[.*", "", data.name)
-      if(nam.dat != data.name) {  warning("Can't find data supplied to mcmc_IMIFA() in .GlobalEnv: can't compute empirical covariance & error metrics without manually supplying 'dat'", call.=FALSE)
-        dataX    <- FALSE
-      } else {
-        dataX    <- exists(nam.dat, envir=.GlobalEnv)
-        if(!any(is.element(method, c("FA", "IFA")),
-                dataX)) {         warning(paste0("Object ", nam.dat, " not found in .GlobalEnv: can't compute empirical covariance and error metrics"), call.=FALSE)
-        } else if(!is.element(method, c("FA", "IFA"))) {
-          dat    <- as.data.frame(get(nam.dat))
+    if(!is.element(method, c("FA", "IFA"))) {
+      if(missing(dat)) {
+        namdat   <- gsub("\\[.*", "", data.name)
+        if(namdat != data.name) { warning("Can't find data supplied to mcmc_IMIFA() in .GlobalEnv: can't compute empirical covariance & error metrics without manually supplying 'dat'", call.=FALSE)
+          dataX  <- FALSE
+        } else   {
+          dataX  <- exists(namdat, envir=.GlobalEnv)
+          if(!any(is.element(method, c("FA", "IFA")),
+            dataX)) {             warning(paste0("Object ", namdat, " not found in .GlobalEnv: can't compute empirical covariance and error metrics"), call.=FALSE)
+          } else    {
+            dat  <- as.data.frame(get(namdat))
+          }
         }
+      } else     {
+        dat.nam  <- gsub("[[:space:]]", "", deparse(substitute(dat)))
+        if(dat.nam != data.name)  warning("Name of supplied data set doesn't match data set originally supplied to mcmc_IMIFA()", call.=FALSE)
+        dataX    <- TRUE
       }
-    } else {
-      dat.nam    <- gsub("[[:space:]]", "", deparse(substitute(dat)))
-      if(dat.nam != data.name)    warning("Name of supplied data set doesn't match data set originally supplied to mcmc_IMIFA()", call.=FALSE)
-      dataX      <- TRUE
-    }
-    if(dataX) {
-      dat        <- as.data.frame(dat)[complete.cases(dat),,   drop=FALSE]
-      dat        <- dat[,vapply(dat, is.numeric, logical(1L)), drop=FALSE]
-      if(!identical(dim(dat),
-          c(n.obs, n.var)))       stop("Dimensions of data don't match those in the dataset supplied to mcmc_IMIFA()")
-      dat        <- if(is.logical(scaling)) { if(any(cent, scaling)) standardise(as.matrix(dat), center=cent, scale=scaling) else as.matrix(dat) } else scale(dat, center=cent, scale=scaling)
-      obsnames   <- rownames(dat)
-      varnames   <- colnames(dat)
-    }
+      if(dataX)  {
+        dat      <- as.data.frame(dat)[complete.cases(dat),,   drop=FALSE]
+        dat      <- dat[,vapply(dat, is.numeric, logical(1L)), drop=FALSE]
+        if(!identical(dim(dat),
+           c(n.obs, n.var)))      stop("Dimensions of data don't match those in the dataset supplied to mcmc_IMIFA()")
+        dat      <- if(is.logical(scaling)) { if(any(cent, scaling)) standardise(as.matrix(dat), center=cent, scale=scaling) else as.matrix(dat) } else scale(dat, center=cent, scale=scaling)
+        obsnames <- rownames(dat)
+        varnames <- colnames(dat)
+      }
+    } else dataX <- FALSE
 
 # Manage Label Switching & retrieve cluster labels/mixing proportions
   if(clust.ind) {
@@ -525,7 +528,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     attr(uncertain, "Obs")     <- if(sum(uncert.obs) != 0) uncert.obs
     if(!label.miss) tab.stat$uncertain            <-       attr(uncertain, "Obs")
     cluster      <- list(MAP = MAP, z = z, uncertainty = uncertain)
-    cluster      <- c(cluster, list(post.sizes  = sizes, post.pi = post.pi/sum(post.pi)),
+    cluster      <- c(cluster, list(post.sizes  = sizes, post.ratio = sizes/n.obs, post.pi = post.pi/sum(post.pi)),
                       if(sw["pi.sw"]) list(pi.prop = pi.prop, var.pi = var.pi, ci.pi = ci.pi),
                       if(!label.miss) list(perf = tab.stat),
                       if(learn.alpha) list(DP.alpha = DP.alpha),
@@ -708,7 +711,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       post.load  <- rowMeans(lmat, dims=2)
       var.load   <- apply(lmat, c(1, 2), Var)
       ci.load    <- apply(lmat, c(1, 2), quantile, conf.levels)
-      var.exp    <- sum(colSums(post.load * post.load))/n.var
+      var.exp    <- sum(post.load * post.load)/n.var
       class(post.load)     <- "loadings"
     } else if(all(emp.T[g], sw["psi.sw"])) {
       var.exp    <- ifelse(exists("z.ind", envir=.GlobalEnv) && sizes[g] == 0, 0, max(0, (sum(diag(cov.emp)) - sum(post.psi))/n.var))
@@ -881,6 +884,6 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   attr(result, "Vars")         <- n.var
   attr(result, "Z.sim")        <- z.avgsim
   class(result)                <- "Results_IMIFA"
-  cat(print.Results_IMIFA(result))
+  cat(print(result))
     return(result)
 }

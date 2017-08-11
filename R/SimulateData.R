@@ -94,6 +94,7 @@ sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(floor(log(P)), G),
   simdata      <- base::matrix(0, nrow=0, ncol=P)
   true.mu      <- true.l   <-
   true.psi     <- true.cov <- setNames(vector("list", G), paste0("Cluster", Gseq))
+  sq_mat       <- if(P > 50)  function(x) diag(sqrt(diag(x))) else sqrt
 
 # Simulate true parameter values
   true.zlab    <- factor(rep(Gseq, nn), labels=Gseq)
@@ -109,11 +110,11 @@ sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(floor(log(P)), G),
     psi.true   <- setNames(if(psi.miss) rgamma(P, 1, 1) else psisup[,g], vnames)
 
   # Simulate data
-    covmat     <- provideDimnames(diag(psi.true) + switch(method, marginal=tcrossprod(l.true), 0), base=list(vnames))
+    covmat     <- provideDimnames({ if(P > 1) diag(psi.true) else as.matrix(psi.true) } + { if(Q.g > 0) switch(method, marginal=tcrossprod(l.true), 0) else 0}, base=list(vnames))
     if(!all(is.symmetric(covmat),
             is.double(covmat)))           stop("Invalid covariance matrix!")
     covmat     <- is.posi_def(covmat, make=TRUE)$X.new
-    sigma      <- if(any(Q.g > 0, method == "conditional")) .chol(covmat) else sqrt(covmat)
+    sigma      <- if(all(Q.g > 0, P > 1, method == "marginal")) .chol(covmat) else sq_mat(covmat)
     means      <- matrix(mu.true, nrow=N.g, ncol=P, byrow=TRUE) + switch(method, conditional=tcrossprod(eta.true[true.zlab == g, seq_len(Q.g), drop=FALSE], l.true), 0)
     simdata    <- rbind(simdata, means + matrix(rnorm(N.g * P), nrow=N.g, ncol=P) %*% sigma)
     dimnames(l.true)   <- list(vnames, if(Q.g > 0) paste0("Factor ", seq_len(Q.g)))

@@ -59,7 +59,7 @@
       }
     } else {
       psi.tmp    <- psi.inv
-      psi.inv[]  <- 1/switch(uni.type, constrained=Rfast::colVars(data), exp(mean(log(Rfast::colVars(data)))))
+      psi.inv[]  <- 1/switch(uni.type, constrained=Rfast::colVars(data, suma=mu), exp(mean(log(Rfast::colVars(data, suma=mu)))))
       inf.ind    <- is.infinite(psi.inv)
       psi.inv[inf.ind]     <- psi.tmp[inf.ind]
     }

@@ -9,6 +9,7 @@
 
   # Define & initialise variables
     start.time     <- proc.time()
+    sq_mat         <- if(P  > 50) function(x) diag(sqrt(diag(x))) else sqrt
     matrix         <- base::matrix
     total          <- max(iters)
     if(verbose)       pb   <- txtProgressBar(min=0, max=total, style=3)
@@ -93,9 +94,9 @@
       if(isTRUE(one.uni)) {
         psi.inv[,] <- 1/switch(uni.type, constrained=Rfast::colVars(data), exp(mean(log(Rfast::colVars(data)))))
       } else   {
-        psi.inv[,] <- 1/vapply(Gseq, function(g) if(nn[g] > 1) switch(uni.type, unconstrained=Rfast::colVars(data[z == g,, drop=FALSE]), rep(exp(mean(log(Rfast::colVars(data[z == g,, drop=FALSE])))), P)) else psi.tmp[,g], numeric(P))
+        psi.inv[,] <- 1/groupcolVars(data, ina=z)
       }
-      inf.ind      <- is.infinite(psi.inv)
+      inf.ind      <- is.infinite(psi.inv) | is.nan(psi.inv)
       psi.inv[inf.ind]     <- psi.tmp[inf.ind]
     }
     l.sigma        <- diag(1/sigma.l, Q)
@@ -107,7 +108,7 @@
       if(sw["pi.sw"])  pi.store[,1]     <- pi.prop
       z.store[1,]          <- z
       sigma                <- if(uni) lapply(Gseq, function(g) as.matrix(1/psi.inv[,g] + if(Q0) tcrossprod(as.matrix(lmat[,,g])) else 0)) else lapply(Gseq, function(g) tcrossprod(lmat[,,g]) + diag(1/psi.inv[,g]))
-      log.probs            <- if(uni) vapply(Gseq, function(g) dnorm(data, mu[,g], sqrt(sigma[[g]]), log=TRUE) + log(pi.prop[g]), numeric(N)) else vapply(Gseq, function(g) { sigma <- if(Q0) sigma[[g]] else sqrt(sigma[[g]]); dmvn(data, mu[,g], is.posi_def(sigma, make=TRUE)$X.new, log=TRUE, isChol=!Q0) + log(pi.prop[g]) }, numeric(N))
+      log.probs            <- if(uni) vapply(Gseq, function(g) dnorm(data, mu[,g], sq_mat(sigma[[g]]), log=TRUE) + log(pi.prop[g]), numeric(N)) else vapply(Gseq, function(g) { sigma <- if(Q0) sigma[[g]] else sq_mat(sigma[[g]]); dmvn(data, mu[,g], is.posi_def(sigma, make=TRUE)$X.new, log=TRUE, isChol=!Q0) + log(pi.prop[g]) }, numeric(N))
       ll.store[1]          <- sum(rowLogSumExps(log.probs))
     }
     init.time      <- proc.time() - start.time
@@ -125,12 +126,12 @@
       sigma        <- if(uni) lapply(Gseq, function(g) as.matrix(psi[,g] + if(Q0) tcrossprod(as.matrix(lmat[,,g])) else 0)) else lapply(Gseq, function(g) tcrossprod(lmat[,,g]) + diag(psi[,g]))
       log.pis      <- if(equal.pro) log.pis else log(pi.prop)
       if(uni) {
-        log.probs  <- vapply(Gseq, function(g) dnorm(data, mu[,g], sqrt(sigma[[g]]), log=TRUE) + log.pis[g], numeric(N))
+        log.probs  <- vapply(Gseq, function(g) dnorm(data, mu[,g], sq_mat(sigma[[g]]), log=TRUE) + log.pis[g], numeric(N))
       } else  {
-        log.check  <- capture.output(log.probs <- try(vapply(Gseq, function(g) dmvn(data, mu[,g], if(Q0) sigma[[g]] else sqrt(sigma[[g]]), log=TRUE, isChol=!Q0) + log.pis[g], numeric(N)), silent=TRUE))
+        log.check  <- capture.output(log.probs <- try(vapply(Gseq, function(g) dmvn(data, mu[,g], if(Q0) sigma[[g]] else sq_mat(sigma[[g]]), log=TRUE, isChol=!Q0) + log.pis[g], numeric(N)), silent=TRUE))
       }
       if(inherits(log.probs, "try-error")) {
-        log.probs  <- vapply(Gseq, function(g) { sigma <- if(Q0) sigma[[g]] else sqrt(sigma[[g]]); dmvn(data, mu[,g], is.posi_def(sigma, make=TRUE)$X.new, log=TRUE, isChol=!Q0) + log.pis[g] }, numeric(N))
+        log.probs  <- vapply(Gseq, function(g) { sigma <- if(Q0) sigma[[g]] else sq_mat(sigma[[g]]); dmvn(data, mu[,g], is.posi_def(sigma, make=TRUE)$X.new, log=TRUE, isChol=!Q0) + log.pis[g] }, numeric(N))
       }
       z            <- gumbel_max(probs=log.probs)
       nn           <- tabulate(z, nbins=G)
