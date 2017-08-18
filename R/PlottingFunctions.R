@@ -22,7 +22,7 @@
 #' @export
 #' @importFrom graphics "abline" "axTicks" "axis" "barplot" "box" "clip" "hist" "image" "layout" "legend" "lines" "matplot" "mtext" "par" "plot" "plot.new" "points" "polygon" "text" "title"
 #' @importFrom grDevices "adjustcolor" "col2rgb" "dev.capabilities" "palette" "heat.colors"
-#' @importFrom Rfast "Order" "med" "colMedians"
+#' @importFrom Rfast "Order" "med" "colMedians" "Round"
 #' @importFrom plotrix "plotCI"
 #' @importFrom e1071 "classAgreement"
 #' @importFrom mclust "classError"
@@ -1261,11 +1261,11 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
 #'
 #' Converts a matrix to a hex colour code representation for plotting using \code{\link{plot_cols}}. Used internally by \code{\link{plot.Results_IMIFA}} for plotting posterior mean loadings heatmaps.
 #' @param mat Either a matrix or, when \code{compare} is \code{TRUE}, a list of matrices.
-#' @param cols The colour palette to be used. The default palette uses \code{\link[viridisLite]{viridis}}. Will be checked for validity.
+#' @param cols The colour palette to be used. The default palette uses \code{\link[viridisLite]{viridis}}. Will be checked for validity by \code{\link{is.cols}}.
 #' @param compare Logical switch used when desiring comparable colour representations (usually for comparable heat maps) across multiple matrices. Ensures plots will be calibrated to a common colour scale so that, for instance, the colour on the heat map of an entry valued at 0.7 in Matrix A corresponds exactly to the colour of a similar value in Matrix B. When \code{TRUE}, \code{mat} must be supplied as a list of matrices, which must have either the same number of rows, or the same number of columns.
 #' @param byrank Logical indicating whether to convert the matrix itself or the sample ranks of the values therein. Defaults to \code{FALSE}.
 #' @param breaks Number of gradations in colour to use. Defaults to \code{length(cols)}.
-#' @param na.col Colour to be used to represent missing data.
+#' @param na.col Colour to be used to represent missing data. Will be checked for validity by \code{\link{is.cols}}.
 #'
 #' @return A matrix of hex colour code representations, or a list of such matrices when \code{compare} is \code{TRUE}.
 #' @export
@@ -1423,6 +1423,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
 #' @param show.plot Logical indicating whether the plot should be displayed (default = \code{TRUE}).
 #'
 #' @details All arguments are vectorised. Users can also consult \code{\link{G_expected}} and \code{\link{G_variance}} in order to solicit sensible priors.
+#' @note The actual density values are returned invisibly. Therefore, they can be visualised as desired by the user even if \code{show.plot} is \code{FALSE}.
 #'
 #' @return A plot of the prior distribution if \code{show.plot} is \code{TRUE}. Density values are returned invisibly. Note that the density values may not strictly sum to one in certain cases, as values small enough to be represented as zero may well be returned.
 #' @export
@@ -1511,9 +1512,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
 #' @param na.col Colour used for missing \code{NA} entries in \code{cmat}.
 #' @param ptype Switch controlling output as either a heat map \code{"image"} (the default) or as \code{"points"}.
 #' @param border.col Colour of border drawn around the plot.
-#' @param dlabels Vector of labels for the diagonals.
-#' @param rlabels Vector of labels for the rows.
-#' @param clabels Vector of labels for the columns.
+#' @param dlabels,rlabels,clabels Vector of labels for the diagonals, rows, and columns, respectively.
 #' @param pch Point type used when \code{ptype="points"}.
 #' @param cex Point cex used when \code{ptype="points"}.
 #' @param label.cex Govens cex parameter used for labels.

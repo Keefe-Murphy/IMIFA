@@ -90,8 +90,8 @@
         lmat     <- matrix(vapply(Pseq, function(j) .sim_load_s(Q=Q, tau=tau, eta=eta, c.data=c.data[,j], Q1=Q1,
                            phi=phi[j,], psi.inv=psi.inv[j], EtE=crossprod(eta)), numeric(Q)), nrow=P, byrow=TRUE)
       } else {
-        eta      <- .empty_mat(N)
-        lmat     <- .empty_mat(P)
+        eta      <- .empty_mat(nr=N)
+        lmat     <- .empty_mat(nr=P)
       }
 
     # Uniquenesses

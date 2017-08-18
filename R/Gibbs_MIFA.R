@@ -155,9 +155,9 @@
     # Scores & Loadings
       c.data       <- lapply(Gseq, function(g) sweep(dat.g[[g]], 2, mu[,g], FUN="-"))
       if(!any(Q0))    {
-        eta        <- .empty_mat(N)
+        eta        <- .empty_mat(nr=N)
         eta.tmp    <- lapply(Gseq, function(g) eta[z == g,, drop=FALSE])
-        lmat       <- replicate(G, .empty_mat(P))
+        lmat       <- replicate(G, .empty_mat(nr=P))
       } else {
         eta.tmp    <- lapply(Gseq, function(g) if(all(nn0[g], Q0[g])) .sim_score(N=nn[g], lmat=lmat[[g]], Q=Qs[g], Q1=Q1[g], c.data=c.data[[g]], psi.inv=psi.inv[,g]) else matrix(0, nrow=ifelse(Q0[g], 0, nn[g]), ncol=Qs[g]))
         EtE        <- lapply(Gseq, function(g) if(nn0[g]) crossprod(eta.tmp[[g]]))
@@ -217,7 +217,7 @@
           notred   <- numred == 0
           ng.ind   <- seq_along(nn.ind)
           Qs.old   <- Qs[nn0]
-          Qs[nn0]  <- pmax(0, vapply(ng.ind, function(h) if(notred[h]) Qs.old[h] + 1 else Qs.old[h] - numred[h], numeric(1L)))
+          Qs[nn0]  <- pmax.int(0, vapply(ng.ind, function(h) if(notred[h]) Qs.old[h] + 1 else Qs.old[h] - numred[h], numeric(1L)))
           Q.big    <- Qs[nn0] > Q.star
           if((Q.bigs        <-  any(Q.big))) {
             notred <- notred & !Q.big
@@ -247,7 +247,7 @@
                  delta[[g]] <- c(delta[[g]],    rgamma(n=1, shape=alpha.d2, rate=beta.d2))
                  tau[[g]]   <- cumprod(delta[[g]])
                  if(store.eta)         {
-                  eta.tmp[[g]]   <- cbind(eta.tmp[[g]], matrix(0, nr=0, nc=1))
+                  eta.tmp[[g]]   <- cbind(eta.tmp[[g]], .empty_mat(nc=1))
                  }
                  Qg         <- Qg + 1
                  lmat[[g]]  <- cbind(lmat[[g]], rnorm(n=P, mean=0, sd=sqrt(1/(phi[[g]][,Qg] * tau[[g]][Qg]))))

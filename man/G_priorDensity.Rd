@@ -25,6 +25,8 @@ Plots the prior distribution of the number of clusters under a Dirichlet / Pitma
 All arguments are vectorised. Users can also consult \code{\link{G_expected}} and \code{\link{G_variance}} in order to solicit sensible priors.
 }
 \note{
+The actual density values are returned invisibly. Therefore, they can be visualised as desired by the user even if \code{show.plot} is \code{FALSE}.
+
 Requires use of the \code{Rmpfr} and \code{gmp} libraries; may encounter difficulty and slowness for large \code{N}, especially with non-zero \code{discount} values.
 }
 \examples{

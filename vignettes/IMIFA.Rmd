@@ -11,28 +11,28 @@ vignette: >
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(fig.width=7, fig.height = 5, fig.align = 'center', fig.show='hold',
-                      warning=FALSE, message=FALSE, progress=FALSE)
+                      warning=FALSE, message=FALSE, progress=FALSE, collapse=TRUE, comments="#>")
 ```
 ## Introduction
-IMIFA is an R package that provides flexible efficient Gibbs sampling functions for fitting Infinite Mixtures of Infinite Factor Analysers (IMIFA) and related models. The main model, IMIFA itself, conducts Bayesian nonparametric clustering via latent Gaussian models. While the package offers a Bayesian implementation of the Factor Analysis (FA) and Mixtures of Factor Analysers (MFA) models, among others, these require pre-specification of the number of latent factors &/or the number of components, which must remain fixed, the main advantages of IMIFA are that a) these quantities are estimated automatically, and b) the number of latent factors is allowed to be cluster-specific.
+__IMIFA__ is an R package that provides flexible efficient Gibbs sampling functions for fitting Infinite Mixtures of Infinite Factor Analysers (__IMIFA__) and related models. The main model, IMIFA itself, conducts Bayesian nonparametric clustering via latent Gaussian models. While the package offers a Bayesian implementation of the Factor Analysis (FA) and Mixtures of Factor Analysers (MFA) models, among others, these require pre-specification of the number of latent factors &/or the number of components, which must remain fixed, the main advantages of the IMIFA model are that a) these quantities are estimated automatically, and b) the number of latent factors is allowed to be cluster-specific.
 
-Typically one would run FA or MFA models over ranges of values for the numbers of clusters and factors, with the pair which optimises some model selection criteria typically chosen. IMIFA instead enables Bayesian nonparametric model-based clustering with factor analytic covariance structures, _without_ recourse to model selection criteria, to automatically choose the number of clusters &/or cluster-specific latent factors. 
+Typically one would run FA or MFA models over ranges of values for the numbers of clusters and factors, with the pair which optimises some model selection criteria typically chosen. __IMIFA__ instead enables Bayesian nonparametric model-based clustering with factor analytic covariance structures, _without_ recourse to model selection criteria, to automatically choose the number of clusters &/or cluster-specific latent factors. 
 
 The main features of the IMIFA model are the multiplicative gamma process shrinkage prior on the factor loadings, which allows theoretically infinitely many factors (this can also be employed in a MIFA context, for instance, where the number of clusters is fixed but cluster-specific factors are estimated) and the Dirichlet process prior, which utilises the stick-breaking construction and slice-efficient sampling, and allows theoretically infinitely many clusters. Tools are provided for soliciting sensible hyperparameters for these priors. As of IMIFA v1.2.0, it's now also possible to assume a Pitman-Yor process prior on the number of mixture components, and to learn its concentration and discount parameters via Metropolis-Hastings updates.
 
 Model-specific diagnostic tools are also provided, as well as many extensive options for plotting results and conducting posterior inference on parameters of interest. The functions are typically verbose, offering plenty of messages and warnings to the user where appropriate. Please see [Murphy et al. (2017)](https://arxiv.org/abs/1701.07010) for more info.
 
-If you find bugs or want to suggest new features please visit the IMIFA [GitHub issues page](https://github.com/Keefe-Murphy/IMIFA/issues). This vignette aims to reproduce some results in the Murphy et al. (2017) paper using the `mcmc_IMIFA()` and `get_IMIFA_results()` functions and demonstrates how the plots therein were created using the dedicated S3 `plot` method, while also demonstrating how to fit other models in the IMIFA family.
+If you find bugs or want to suggest new features please visit the __IMIFA__ [GitHub issues page](https://github.com/Keefe-Murphy/IMIFA/issues). This vignette aims to reproduce some results in the Murphy et al. (2017) paper using the `mcmc_IMIFA()` and `get_IMIFA_results()` functions and demonstrates how the plots therein were created using the dedicated S3 `plot` method, while also demonstrating how to fit other models in the IMIFA family.
 
 ### Installing IMIFA
-IMIFA will run in Windows, Mac OS X or Linux. To install IMIFA you first need to install [R](https://cran.r-project.org/). I would also recommend installing [Rstudio](https://www.rstudio.com/) as a nice desktop environment for using R. 
+__IMIFA__ will run in Windows, Mac OS X or Linux. To install __IMIFA__ you first need to install [R](https://cran.r-project.org/). Installing [Rstudio](https://www.rstudio.com/) as a nice desktop environment for using R is also recommended.
 
 Once in R you can type:
 ```{r, eval=FALSE}
 install.packages('devtools')
 devtools::install_github('Keefe-Murphy/IMIFA')
 ```
-at the R command prompt to install the latest development version of the package from the IMIFA [GitHub page](https://github.com/Keefe-Murphy/IMIFA). 
+at the R command prompt to install the latest development version of the package from the __IMIFA__ [GitHub page](https://github.com/Keefe-Murphy/IMIFA). 
 
 To instead install the latest stable official release of the package from CRAN go to R and type:
 
@@ -44,7 +44,7 @@ In either case, if you then type:
 ```{r}
 library(IMIFA)
 ```
-it will load in all the IMIFA functions.
+it will load in all the __IMIFA__ functions.
 
 The GitHub version contains a few more features but some of these may not yet be fully tested, and occasionally this version might be liable to break when it is in the process of being updated.
 
@@ -62,7 +62,7 @@ While it is possible to simulate data from a factor analytic mixture using the `
 # Simulate 100 observations from 3 balanced clusters with cluster-specific numbers of latent factors
 sim.data <- sim_IMIFA_data(N=100, G=3, P=20, Q=c(2, 2, 5))
 ```
-the well-known Italian olive oil data set will be used throughout this vignette instead. You can load this data set after loading the IMIFA package by typing
+the well-known Italian olive oil data set will be used throughout this vignette instead. You can load this data set after loading the __IMIFA__ package by typing
 
 ```{r}
 data(olive)
@@ -76,7 +76,7 @@ and learn more about this data set by typing
 
 ## Fitting the model & running the MCMC chain
 
-The `mcmc_IMIFA` function provides an adaptive Gibbs sampler for nonparameteric model-based clustering using models from the IMIFA family. The function facilitates model-based clustering with dimensionally reduced factor-analytic covariance structures, with automatic estimation of the number of clusters and cluster-specific factors as appropriate to the method employed. Factor analysis with one group (FA/IFA), finite mixtures (MFA/MIFA), overfitted mixtures (OMFA/OMIFA), infinite factor models which employ the multiplicative gamma process (MGP) shrinkage prior (IFA/MIFA/OMIFA/IMIFA), and infinite mixtures which employ Dirichlet Process Mixture Models (IMFA/IMIFA) are all provided. The function creates a raw object of class `'IMIFA'` from which the optimal/modal model can be extracted by `get_IMIFA_results`.
+The `mcmc_IMIFA` function provides an adaptive Gibbs sampler for nonparameteric model-based clustering using models from the __IMIFA__ family. The function facilitates model-based clustering with dimensionally reduced factor-analytic covariance structures, with automatic estimation of the number of clusters and cluster-specific factors as appropriate to the method employed. Factor analysis with one group (FA/IFA), finite mixtures (MFA/MIFA), overfitted mixtures (OMFA/OMIFA), infinite factor models which employ the multiplicative gamma process (MGP) shrinkage prior (IFA/MIFA/OMIFA/IMIFA), and infinite mixtures which employ Dirichlet Process Mixture Models (IMFA/IMIFA) are all provided. The function creates a raw object of class `'IMIFA'` from which the optimal/modal model can be extracted by `get_IMIFA_results`.
 
 There are many, many options for specifying hyperparameters, specifying running conditions and pre-processing the data that are deferred, for brevity, to the function's help file. Great care was taken to ensure the default function arguments would be appropriate in most applications, but you can nevertheless access further helpful instructions by typing
 
@@ -112,7 +112,7 @@ simIMIFA <- mcmc_IMIFA(olive, method="IMIFA", n.iters=50000, verbose=FALSE, lear
 ```
 
 ## Postprocessing and extracing optimum results
-In order to extract results, conduct posterior inference and compute performance metrics for MCMC samples of models from the IMIFA family, we can pass the output of `mcmc_IMIFA` to the function `get_IMIFA_results()`. If, for instance, `simMFA` above was supplied, this function would find the pair of $G$ and $Q$ values which optimises a model selection criteria of our choosing and prepare results from that model only. If `simIMIFA` is supplied, this function finds the _modal_ estimates of $G$ and each $Q_g$ (the cluster-specific number of latent factors), and likewise prepares results accordingly. 
+In order to extract results, conduct posterior inference and compute performance metrics for MCMC samples of models from the __IMIFA__ family, we can pass the output of `mcmc_IMIFA` to the function `get_IMIFA_results()`. If, for instance, `simMFA` above was supplied, this function would find the pair of $G$ and $Q$ values which optimises a model selection criteria of our choosing and prepare results from that model only. If `simIMIFA` is supplied, this function finds the _modal_ estimates of $G$ and each $Q_g$ (the cluster-specific number of latent factors), and likewise prepares results accordingly. 
 
 This function can be re-ran at little computational cost in order to extract different models explored by the sampler used by `mcmc_IMIFA`, without having to re-run the model itself. New results objects using different numbers of clusters and different numbers of factors (if visited by the model in question), or using different model selection criteria (if necessary) can be generated with ease. The function also performs post-hoc corrections for label switching, as well as post-hoc Procrustes rotation, to ensure sensible posterior parameter estimates, and constructs credible intervals. Please see the function's help manual by typing `?get_IMIFA_results` for further assistance with the various function arguments.
 
@@ -215,7 +215,7 @@ plot(resIMIFA, plot.meth="all", param="discount")
 ```
 
 # References
-For a more detailed description of the kind of things IMIFA can do and the purposes for which the model was developed, please consult the followng papers:
+For a more detailed description of the kind of things __IMIFA__ can do and the purposes for which the model was developed, please consult the followng papers:
 
 Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, _to appear_, [arXiv:1701.07010](https://arxiv.org/abs/1701.07010).
 

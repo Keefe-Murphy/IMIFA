@@ -20,6 +20,7 @@ __Infinite Mixtures of Infinite Factor Analysers__
 * `heat_legend` gains `cex.lab` argument to control magnification of legend text.
 * Slight improvements when `adapt=FALSE` for infinite factor models with fixed high truncation level.
 * Optimised compression of `olive`, `coffee` and vignette data and used LazyData: true.
+* Extensively improved package help documentation.
 
 ### Bug Fixes
 * Fixed bug preventing `uni.prior="isotropic"` when `uni.type` is `(un)constrained`.
@@ -30,6 +31,7 @@ __Infinite Mixtures of Infinite Factor Analysers__
 * Fixed storage switches to account for `burnin=0`.
 * Fixed bug with default plotting palette for data sets with >1024 variables.
 * Fixed `print` and `summary` functions for objects of class `IMIFA` and `Results_IMIFA`.
+* Fixed calculating posterior mean `zeta` when adaptively targeting `alpha`'s optimal MH acceptance rate.
 * Ensured `sigma.mu` hyperparameter arg. is always coerced to diagonal entries of a covariance matrix.
 * Transparency default in `plot.Results_IMIFA` now depends on device's support of semi-transparency.
 * `Ledermann(P)` is now properly vectorised.

@@ -81,7 +81,7 @@
 #' @importFrom e1071 "matchClasses"
 #' @importFrom mvnfast "dmvn"
 #' @importFrom slam "as.simple_sparse_array" "as.simple_triplet_matrix"
-#' @importFrom mclust "Mclust" "mclustBIC" "hc" "hclass"
+#' @importFrom mclust "Mclust" "mclustBIC" "hc" "hclass" "hcVVV"
 #'
 #' @seealso \code{\link{get_IMIFA_results}}, \code{\link{psi_hyper}}, \code{\link{mgpControl}}, \code{\link{storeControl}}
 #' @references

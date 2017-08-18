@@ -1,9 +1,7 @@
 #' Simulate Data from a Mixture of Factor Analysers Structure
 #'
 #' Function to simulate data of any size and dimension from a mixture of (infinite) factor analysers structure.
-#' @param N Desired overall number of observations in the simulated data set - a single integer.
-#' @param G Desired number of clusters in the simulated data set - a single integer.
-#' @param P Desired number of variables in the simulated dataset - a single integer.
+#' @param N,G,P Desired overall number of observations, number of clusters, and number of variables in the simulated data set. All must be a single integer.
 #' @param Q Desired number of cluster-specific latent factors in the simulated data set. Can be specified either as a single integer if all clusters are to have the same number of factors, or a vector of length \code{G}. Defaults to \code{floor(log(P))} in each cluster.
 #' @param pis Mixing proportions of the clusters in the dataset if \code{G} > 1. Must sum to 1. Defaults to \code{rep(1/G, G)}.
 #' @param mu True values of the mean parameters, either as a single value, a vector of length \code{G}, a vector of length \code{P}, or a \code{G * P} matrix. If \code{mu} is missing, \code{loc.diff} is invoked to simulate distinct means for each cluster.

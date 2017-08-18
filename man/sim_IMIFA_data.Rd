@@ -9,11 +9,7 @@ sim_IMIFA_data(N = 300L, G = 3L, P = 50L, Q = rep(floor(log(P)), G),
   method = c("conditional", "marginal"))
 }
 \arguments{
-\item{N}{Desired overall number of observations in the simulated data set - a single integer.}
-
-\item{G}{Desired number of clusters in the simulated data set - a single integer.}
-
-\item{P}{Desired number of variables in the simulated dataset - a single integer.}
+\item{N, G, P}{Desired overall number of observations, number of clusters, and number of variables in the simulated data set. All must be a single integer.}
 
 \item{Q}{Desired number of cluster-specific latent factors in the simulated data set. Can be specified either as a single integer if all clusters are to have the same number of factors, or a vector of length \code{G}. Defaults to \code{floor(log(P))} in each cluster.}
 

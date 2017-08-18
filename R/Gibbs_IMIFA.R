@@ -68,7 +68,7 @@
       lab.rate       <- matrix(0L, nrow=2, ncol=total)
     }
     d.count          <- 0
-    avgzeta          <- rep(zeta, 100)
+    avgzeta          <- zeta
     heat             <- tune.zeta$heat
     lambda           <- tune.zeta$lambda
     target           <- tune.zeta$target
@@ -262,9 +262,9 @@
     # Scores & Loadings
       c.data         <- lapply(Gs, function(g) sweep(dat.g[[g]], 2, mu[,g], FUN="-"))
       if(!any(Q0))    {
-        eta          <- .empty_mat(N)
+        eta          <- .empty_mat(nr=N)
         eta.tmp      <- lapply(Gs, function(g) eta[z == g,, drop=FALSE])
-        lmat[Gs]     <- replicate(G, .empty_mat(P))
+        lmat[Gs]     <- replicate(G, .empty_mat(nr=P))
       } else {
         eta.tmp      <- lapply(Gs, function(g) if(all(nn0[g], Q0[g])) .sim_score(N=nn[g], lmat=lmat[[g]], Q=Qs[g], Q1=Q1[g], c.data=c.data[[g]], psi.inv=psi.inv[,g]) else matrix(0, nrow=ifelse(Q0[g], 0, nn[g]), ncol=Qs[g]))
         EtE          <- lapply(Gs, function(g) if(nn0[g]) crossprod(eta.tmp[[g]]))
@@ -324,7 +324,7 @@
           notred     <- numred == 0
           ng.ind     <- seq_along(nn.ind)
           Qs.old     <- Qs[nn0]
-          Qs[nn0]    <- pmax(0, vapply(ng.ind, function(h) if(notred[h]) Qs.old[h] + 1 else Qs.old[h] - numred[h], numeric(1L)))
+          Qs[nn0]    <- pmax.int(0, vapply(ng.ind, function(h) if(notred[h]) Qs.old[h] + 1 else Qs.old[h] - numred[h], numeric(1L)))
           Q.big      <- Qs[nn0] > Q.star
           if((Q.bigs <- any(Q.big))) {
             notred   <- notred & !Q.big
@@ -354,7 +354,7 @@
                  delta[[t]]   <- c(delta[[t]],       rgamma(n=1, shape=alpha.d2, rate=beta.d2))
                  tau[[t]]     <- cumprod(delta[[t]])
                  if(store.eta && t %in% Gs)   {
-                 eta.tmp[[t]] <- cbind(eta.tmp[[t]], matrix(0, nr=0, nc=1))
+                 eta.tmp[[t]] <- cbind(eta.tmp[[t]], .empty_mat(nc=1))
                  }
                  Qt  <- Qt + 1
                  lmat[[t]]    <- cbind(lmat[[t]],    rnorm(n=P, mean=0, sd=sqrt(1/(phi[[t]][,Qt] * tau[[t]][Qt]))))

@@ -111,6 +111,7 @@
 #' @param probs An N x G matrix of unnormalised probabilities on the log scale, where N is he number of observations that require labels to be sampled and G is the number of active clusters s.t. sampled labels can take values in \code{1:G}. Typically \code{N > G}.
 #' @param slice A logical indicating whether or not the indicator correction for slice sampling has been applied to \code{probs}. Defaults to \code{FALSE} but is \code{TRUE} for the "\code{IMIFA}" and "\code{IMFA}" methods under \code{\link{mcmc_IMIFA}}. Details of this correction are given in Murphy et. al. (2017). When set to \code{TRUE}, this results in a speed-improvement when \code{probs} contains non-finite values (e.g. \code{-Inf}, corresponding to zero on the probability scale).
 #' @return A vector of N sampled cluster labels, with the largest label no greater than G.
+#' @importFrom Rfast "rowMaxs"
 #' @seealso \code{\link{mcmc_IMIFA}}, \code{\link[matrixStats]{rowLogSumExps}}
 #'
 #' @details Computation takes place on the log scale for stability/underflow reasons (to ensure negligible probabilities won't cause computational difficulties); in any case, many functions for calculating multivariate normal densities already output on the log scale.
@@ -264,6 +265,7 @@
 #' Used internally by \code{\link{mcmc_IMIFA}} when its argument \code{psi_beta} is not supplied.
 #'
 #' @return Either a single rate hyperparameter or \code{ncol(covar)} variable-specific rate hyperparameters.
+#' @importFrom Rfast "is.symmetric"
 #' @export
 #'
 #' @seealso \code{\link{mcmc_IMIFA}}
@@ -303,8 +305,7 @@
 #' Moment Matching Parameters of Shifted Gamma Distributions
 #'
 #' This function takes shape and rate parameters of a Gamma distribution and modifies them to achieve the same expected value and variance when the left extent of the support of the distribution is shifted up or down.
-#' @param shape Shape parameter a of a Gamma(a, b) distribution. Must be strictly positive.
-#' @param rate Rate parameter b of a Gamma(a, b) distribution. Must be strictly positive.
+#' @param shape,rate Shape and rate parameters a and b, respectibely, of a Gamma(a, b) distribution. Both must be strictly positive.
 #' @param shift Modifier, such that the Gamma distribution has support on (\code{shift}, \eqn{\infty}). Can be positive or negative, though typically negative and small.
 #' @param param Switch controlling whether the supplied \code{rate} parameter is indeed a rate, or actually a scale parameter. Also governs whether the output is given in terms of rate or scale. Defaults to "\code{rate}".
 #'
@@ -341,12 +342,10 @@
 #' Check the validity of Multiplicative Gamma Process (MGP) hyperparameters
 #'
 #' Checks the hyperparameters for the multiplicative gamma process (MGP) shrinkage prior in order to ensure that the property of cumulative shrinkage holds.
-#' @param ad1 Shape hyperparameter for \eqn{\delta_1}{delta_1}.
-#' @param ad2 Shape hyperparameter for \eqn{\delta_2}{delta_2}.
+#' @param ad1,ad2 Shape hyperparameters for \eqn{\delta_1}{delta_1} and \eqn{\delta_2}{delta_2}, respectively.
 #' @param Q Number of latent factors. Defaults to 3, which is enough to check if the cumulative shrinkage property holds. Supply \code{Q} if the actual \emph{a priori} expected shrinkage factors are of interest.
 #' @param nu Hyperparameter for the local shrinkage parameters. Defaults to 2. Not necessary for checking if the cumulative shrinkage property holds, but worth supplying when \code{plus1} is \code{FALSE} if the actual \emph{a priori} expected shrinkage factors are of interest.
-#' @param bd1 Rate hyperparameter for \eqn{\delta_1}{delta_1}. Defaults to 1.
-#' @param bd2 Rate hyperparameter for \eqn{\delta_2}{delta_2}. Defaults to 1.
+#' @param bd1,bd2 Rate hyperparameters for \eqn{\delta_1}{delta_1} and \eqn{\delta_2}{delta_2}, respectively. Both default to 1.
 #' @param plus1 Logical indicator for whether the Gamma prior on the local shrinkage parameters is of the form Ga(\code{nu + 1, nu}), the default, or Ga(\code{nu, nu}).
 #' @param inverse Logical indicator for whether the cumulative shrinkage property is assessed against the induced Inverse Gamma prior, the default, or in terms of the Gamma prior (which is incorrect). This is always \code{TRUE} when used inside \code{\link{mcmc_IMIFA}}: the \code{FALSE} option exists only for demonstration purposes.
 #'
@@ -493,6 +492,7 @@
 #' }
 #' @export
 #' @importFrom mcclust "cltoSim" "comp.psm"
+#' @importFrom slam "as.simple_triplet_matrix"
 #'
 #' @note This is liable to take quite some time to run, especially if the number of observations &/or number of iterations is large. Depending on how distinct the clusters are, \code{z.sim} may be stored better in a non-sparse format. This function can optionally be called inside \code{\link{get_IMIFA_results}}.
 #' @seealso \code{\link{get_IMIFA_results}}, \code{\link[slam]{simple_triplet_matrix}}, \code{\link[stats]{hclust}}, \code{\link[mcclust]{comp.psm}}, \code{\link[mcclust]{cltoSim}}
@@ -596,7 +596,7 @@
       check     <- all(if(isTRUE(semi)) test >= 0 else test > 0)
       if(isTRUE(make))  {
         evec    <- eigs$vectors
-        return(list(check = check, X.new = if(check) x else x + evec %*% tcrossprod(diag(pmax(2 * tol - eval, ifelse(isTRUE(semi), 0, .Machine$double.eps)), d), evec)))
+        return(list(check = check, X.new = if(check) x else x + evec %*% tcrossprod(diag(pmax.int(2 * tol - eval, ifelse(isTRUE(semi), 0, .Machine$double.eps)), d), evec)))
       } else check
     }
 
@@ -607,6 +607,7 @@
 #' @param P Integer number of variables in data set. This argument is vectorized.
 #'
 #' @return The Ledermann bound, a non-negative integer, or a vector of \code{length(P)} such bounds.
+#' @importFrom Rfast "Round"
 #' @export
 #'
 #' @examples
@@ -903,6 +904,7 @@
     }
 
 #' @method summary Results_IMIFA
+#' @importFrom Rfast "Round"
 #' @export
     summary.Results_IMIFA <- function(object, ...) {
       criterion <- unlist(strsplit(toupper(attr(object$GQ.results, "Criterion")), "[.]"))
@@ -1030,7 +1032,7 @@
       eigs      <- eigen(x, symmetric = TRUE)
       eval      <- eigs$values
       evec      <- eigs$vectors
-        return(chol(x + evec %*% tcrossprod(diag(pmax(0, 2 * max(abs(eval)) * d * .Machine$double.eps - eval), d), evec)))
+        return(chol(x + evec %*% tcrossprod(diag(pmax.int(0, 2 * max(abs(eval)) * d * .Machine$double.eps - eval), d), evec)))
       }
     )
 
@@ -1041,8 +1043,8 @@
       }
     }
 
-    .empty_mat <- function(nr) {
-      base::matrix(0L, nrow=nr, ncol=0)
+    .empty_mat <- function(nr = 0, nc = 0) {
+      base::matrix(0L, nrow=nr, ncol=nc)
     }
 
     .ent_exit  <- function(opts = options()) {

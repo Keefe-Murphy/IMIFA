@@ -30,11 +30,12 @@
 #' @note Due to the way the offline label-switching correction is performed, different runs of this function may give \emph{very slightly} different results, but only if the chain was run for an extremely small number of iterations, well below the number required for convergence, and samples of the cluster labels match poorly across iterations (particularly if the number of clusters suggested by those sampled labels is high).
 #'
 #' @export
-#' @importFrom Rfast "med" "rowMaxs" "standardise" "colMaxs" "rowVars" "rowmeans" "Order" "cova" "Var" "colTabulate"
+#' @importFrom Rfast "med" "rowMaxs" "standardise" "colMaxs" "rowVars" "rowmeans" "Order" "cova" "Var" "colTabulate" "Round" "sort_unique"
 #' @importFrom abind "adrop"
 #' @importFrom e1071 "matchClasses" "classAgreement"
 #' @importFrom mclust "classError"
 #' @importFrom matrixStats "rowMedians" "rowQuantiles"
+#' @importFrom slam "as.simple_triplet_matrix"
 #'
 #' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{plot.Results_IMIFA}}, \code{\link{Procrustes}}, \code{\link{Zsimilarity}}
 #' @references Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, <\href{https://arxiv.org/abs/1701.07010}{arXiv:1701.07010}>.
@@ -132,7 +133,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   G.ind          <- Q.ind      <- 1L
   if(inf.G)  {
     GQs          <- length(sims[[G.ind]])
-    GQ1          <- GQs > 1
+    GQ1x         <- GQs > 1    && !inf.Q
     G.store2     <- lapply(seq_len(GQs), function(gq) sims[[G.ind]][[gq]]$G.store[store])
     G.store      <- matrix(unlist(G.store2), nrow=GQs, ncol=n.store, byrow=TRUE)
     if(is.element(method, c("IMFA", "IMIFA"))) {
@@ -140,14 +141,14 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     }
     if(!is.character(G.meth))     stop("'G.meth' must be a character vector of length 1")
     G.meth       <- match.arg(G.meth)
-    G.tab        <- if(GQ1) lapply(apply(G.store, 1, function(x) list(table(x, dnn=NULL))), "[[", 1) else table(G.store, dnn=NULL)
-    G.prob       <- if(GQ1) lapply(G.tab, prop.table) else prop.table(G.tab)
-    G.mode       <- if(GQ1) unlist(lapply(G.tab, function(gt) as.numeric(names(gt[gt == max(gt)])[1]))) else as.numeric(names(G.tab[G.tab == max(G.tab)])[1])
-    G.med        <- if(GQ1) ceiling(matrixStats::rowMedians(G.store) * 2)/2 else ceiling(med(G.store) * 2)/2
+    G.tab        <- if(GQ1x) lapply(apply(G.store, 1, function(x) list(table(x, dnn=NULL))), "[[", 1) else table(G.store, dnn=NULL)
+    G.prob       <- if(GQ1x) lapply(G.tab, prop.table) else prop.table(G.tab)
+    G.mode       <- if(GQ1x) unlist(lapply(G.tab, function(gt) as.numeric(names(gt[gt == max(gt)])[1]))) else as.numeric(names(G.tab[G.tab == max(G.tab)])[1])
+    G.med        <- if(GQ1x) ceiling(matrixStats::rowMedians(G.store) * 2)/2 else ceiling(med(G.store) * 2)/2
     if(!G.T) {
       G          <- switch(G.meth, mode=G.mode, floor(G.med))
     }
-    G.CI         <- if(GQ1) Round(rowQuantiles(G.store, probs=conf.levels)) else Round(quantile(G.store, conf.levels))
+    G.CI         <- if(GQ1x) Round(rowQuantiles(G.store, probs=conf.levels)) else Round(quantile(G.store, conf.levels))
   }
 
   if(G.T)    {
@@ -159,8 +160,8 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
         if(!is.element(G, n.grp)) stop("This 'G' value was not used during simulation")
         G.ind    <- which(n.grp == G)
       } else if(G > 1)            message(paste0("Forced G=1 for the ", method, " method"))
-    } else   {
-      if(all(!inf.Q, GQ1)) {
+    } else     {
+      if(GQ1x) {
         if(!Q.T)                  stop(paste0("'G' cannot be supplied without 'Q' for the ", method, " method if a range of Q values were explored"))
         tmpQ     <- which(n.fac == unique(Q))
       } else {
@@ -191,12 +192,13 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
         (n.var - Q)   <= 0) > 1)) stop(paste0("'Q' must be less than the number of variables ", n.var))
       Qtmp       <- if(inf.G) sims[[1]][[1]]$Q.store[seq_len(G),, drop=FALSE] else switch(method, MIFA=sims[[ifelse(G.T, which(G == n.grp), G.ind)]][[1]]$.store, sims[[1]][[1]]$Q.store)
       storage.mode(Qtmp)   <- switch(method, IFA="integer", "numeric")
+      Qtmp       <- switch(method, IFA=max(Qtmp), apply(Qtmp, 1, max))
       if(any(Q * (Qtmp - Q) < 0)) stop(paste0("'Q' can't be greater than the maximum number of factors stored in ", ifelse(method == "IFA", "", "any cluster of "), match.call()$sims))
     }
   }
 
   if(inf.G)    {
-    tmp.store    <- if(GQ1) lapply(seq_len(GQs), function(gq) store[which(G.store[gq,] == G[ifelse(G.T, 1, gq)])]) else store[which(G.store == G)]
+    tmp.store    <- if(GQ1x) lapply(seq_len(GQs), function(gq) store[which(G.store[gq,] == G[ifelse(G.T, 1, gq)])]) else store[which(G.store == G)]
     GQ.temp1     <- list(G = G, G.Mode = G.mode, G.Median = G.med, G.CI = G.CI, G.Probs = G.prob, G.Counts = G.tab)
     GQ.temp1     <- c(GQ.temp1, list(Stored.G = switch(method, OMIFA=provideDimnames(G.store, base=list("Non-Empty", ""),    unique=FALSE),
                       IMIFA=provideDimnames(do.call(rbind, c(G.store2, act.store)), base=list(c("Non-Empty", "Active"), ""), unique=FALSE),
@@ -226,7 +228,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       gi                 <- ifelse(G.T, G.ind, g)
       for(q in seq_len(Q.range)) {
         qi               <- ifelse(Q.T, Q.ind, q)
-        log.likes        <- if(is.element(method, c("OMFA", "IMFA")) && GQ1) sims[[gi]][[qi]]$ll.store[tmp.store[[qi]]] else sims[[gi]][[qi]]$ll.store[tmp.store]
+        log.likes        <- if(GQ1x) sims[[gi]][[qi]]$ll.store[tmp.store[[qi]]] else sims[[gi]][[qi]]$ll.store[tmp.store]
         log.likes        <- log.likes[complete.cases(log.likes)]
         ll.max2          <- 2 * max(log.likes)
         S2               <- ifelse(length(log.likes) != 1, Var(log.likes), 0)
@@ -277,8 +279,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     gnames       <- paste0("Cluster", Gseq)
     G.ind        <- ifelse(all(length(n.grp) == 1, !inf.G), which(n.grp == G), G.ind)
     GQ.temp2     <- list(AICMs = aicm, BICMs = bicm, LogIntegratedLikelihoods = log.iLLH, DICs = dic)
-    if(is.element(method, c("OMFA", "IMFA")) &&
-       GQ1)      {
+    if(GQ1x)     {
       tmp.store  <- tmp.store[[Q.ind]]
     }
 
@@ -287,7 +288,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       Q.ind      <- if(all(!Q.T, length(n.fac) > 1)) Q.ind else which(n.fac == Q)
       Q          <- setNames(if(length(Q) != G) rep(Q, G)  else Q, gnames)
       if(all(inf.G, Q.T))  GQ.temp1$G <- rep(G, GQs)
-      if(is.element(method, c("OMFA", "IMFA")) && GQ1) {
+      if(GQ1x)   {
         GQ.temp1$G.CI     <- lapply(seq_len(GQs), function(gq) GQ.temp1$G.CI[gq,])
         GQ.temp1 <- lapply(GQ.temp1, "[[", Q.ind)
       } else if(inf.G) {

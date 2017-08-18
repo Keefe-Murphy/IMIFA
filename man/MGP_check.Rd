@@ -8,17 +8,13 @@ MGP_check(ad1, ad2, Q = 3L, nu = 2, bd1 = 1, bd2 = 1, plus1 = TRUE,
   inverse = TRUE)
 }
 \arguments{
-\item{ad1}{Shape hyperparameter for \eqn{\delta_1}{delta_1}.}
-
-\item{ad2}{Shape hyperparameter for \eqn{\delta_2}{delta_2}.}
+\item{ad1, ad2}{Shape hyperparameters for \eqn{\delta_1}{delta_1} and \eqn{\delta_2}{delta_2}, respectively.}
 
 \item{Q}{Number of latent factors. Defaults to 3, which is enough to check if the cumulative shrinkage property holds. Supply \code{Q} if the actual \emph{a priori} expected shrinkage factors are of interest.}
 
 \item{nu}{Hyperparameter for the local shrinkage parameters. Defaults to 2. Not necessary for checking if the cumulative shrinkage property holds, but worth supplying when \code{plus1} is \code{FALSE} if the actual \emph{a priori} expected shrinkage factors are of interest.}
 
-\item{bd1}{Rate hyperparameter for \eqn{\delta_1}{delta_1}. Defaults to 1.}
-
-\item{bd2}{Rate hyperparameter for \eqn{\delta_2}{delta_2}. Defaults to 1.}
+\item{bd1, bd2}{Rate hyperparameters for \eqn{\delta_1}{delta_1} and \eqn{\delta_2}{delta_2}, respectively. Both default to 1.}
 
 \item{plus1}{Logical indicator for whether the Gamma prior on the local shrinkage parameters is of the form Ga(\code{nu + 1, nu}), the default, or Ga(\code{nu, nu}).}
 

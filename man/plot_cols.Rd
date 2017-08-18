@@ -17,11 +17,7 @@ plot_cols(cmat, na.col = "#808080FF", ptype = c("image", "points"),
 
 \item{border.col}{Colour of border drawn around the plot.}
 
-\item{dlabels}{Vector of labels for the diagonals.}
-
-\item{rlabels}{Vector of labels for the rows.}
-
-\item{clabels}{Vector of labels for the columns.}
+\item{dlabels, rlabels, clabels}{Vector of labels for the diagonals, rows, and columns, respectively.}
 
 \item{pch}{Point type used when \code{ptype="points"}.}
 
