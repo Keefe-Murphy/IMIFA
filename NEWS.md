@@ -16,15 +16,16 @@ __Infinite Mixtures of Infinite Factor Analysers__
 * Added "`hc`" option to `z.init` to initialise allocations via hierarchical clustering (using `mclust::hc`).
 * `mu` argument added to `sim_IMIFA_data` to allow supplying true mean parameter values directly.
 * Standard deviation of AICM/BICM model selection criteria now computed and returned.
-* Speed-ups due to new `Rfast` package functions: `colTabulate`. `groupcolVars`, and`Round`.
-* `heat_legend` gains `cex.lab` argument to control magnification of legend text.
+* Speed-ups due to new `Rfast` package functions: `colTabulate`, `groupcolVars`, and`Round`.
 * Slight improvements when `adapt=FALSE` for infinite factor models with fixed high truncation level.
-* Optimised compression of `olive`, `coffee` and vignette data and used LazyData: true.
+* `heat_legend` gains `cex.lab` argument to control magnification of legend text.
+* Optimised compression of `olive`, `coffee` and vignette data and used `LazyData: true`.
 * Extensively improved package help documentation.
 
 ### Bug Fixes
-* Fixed bug preventing `uni.prior="isotropic"` when `uni.type` is `(un)constrained`.
 * Fixed model selection in `get_IMIFA_results` for IMFA/OMFA models when `range.Q` is a range.
+* Fixed calculation of `aicm`, `bicm` and `dic` criteria: all results remain the same.
+* Fixed bug preventing `uni.prior="isotropic"` when `uni.type` is `(un)constrained`.
 * Fixed treatment of exact zeros when plotting average clustering similarity matrix.
 * Fixed tiny bug when neither centering nor scaling (of any kind) are applied to data within `mcmc_IMIFA`.
 * Fixed plotting of posterior mean scores when one or more clusters are empty.

@@ -490,7 +490,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   }
   if(is.element(method, c("FA", "MFA", "OMFA", "IMFA")) && any(range.Q == 0)) {
     if(all(storage[c("s.sw", "l.sw")]))   {
-                                    message("Scores & Loadings not stored where 'range.Q=0' as model has zero factors", call)
+                                    message("Scores & Loadings not stored where 'range.Q=0' as model has zero factors")
     } else if(storage["s.sw"])    { message("Scores not stored where 'range.Q==0' as model has zero factors")
     } else if(storage["l.sw"])    { message("Loadings not stored where 'range.Q==0' as model has zero factors")
     }

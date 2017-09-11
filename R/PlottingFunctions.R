@@ -826,7 +826,6 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
       crit       <- GQ.res$Criteria
       aicm       <- Round(crit$AICMs, 2)
       bicm       <- Round(crit$BICMs, 2)
-      log.iLLH   <- Round(crit$LogIntegratedLikelihoods, 2)
       dic        <- Round(crit$DICs, 2)
       if(is.element(method, c("FA", "MFA", "OMFA", "IMFA"))) {
         aic.mcmc <- Round(crit$AIC.mcmcs, 2)
@@ -965,7 +964,6 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         }
           cat(paste0("AICM = ", aicm[G.ind,Q.ind], "\n"))
           cat(paste0("BICM = ", bicm[G.ind,Q.ind], "\n"))
-          cat(paste0("Log Integrated Likelihood = ", log.iLLH[G.ind,Q.ind], "\n"))
           cat(paste0("DIC = ", dic[G.ind,Q.ind], "\n"))
       }
       if(plotQ.ind) {
@@ -1048,7 +1046,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           } else   {
            pzs  <- factor(clust$MAP, levels=seq_len(G))
            if(nlevels(pzs) == length(unique(zlabels))) {
-            pzs <- factor(.lab_switch(z.new=as.numeric(levels(pzs))[pzs], z.old=zlabels)$z)
+            pzs <- factor(.lab_switch(z.new=as.numeric(levels(pzs))[pzs], z.old=as.integer(as.factor(zlabels)))$z)
            }
            tab  <- table(pzs, zlabels, dnn=list("Predicted", "Observed"))
            prf  <- c(classAgreement(tab), classError(pzs, zlabels))
