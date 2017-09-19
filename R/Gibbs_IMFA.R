@@ -12,7 +12,7 @@
     sq_mat           <- if(P  > 50) function(x) diag(sqrt(diag(x))) else sqrt
     matrix           <- base::matrix
     total            <- max(iters)
-    if(verbose)         pb   <- txtProgressBar(min=0, max=total, style=3)
+    if(verbose)         pb   <- utils::txtProgressBar(min=0, max=total, style=3)
     n.store          <- length(iters)
     Gs               <- seq_len(G)
     Ts               <- seq_len(trunc.G)
@@ -95,7 +95,7 @@
     psi.inv          <- if(uni) t(psi.inv) else psi.inv
     if(Q0 &&   Q      < min(N - 1, Ledermann(P))) {
       for(g in which(nn       > P)) {
-        fact         <- try(factanal(data[z == g,, drop=FALSE], factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
+        fact         <- try(stats::factanal(data[z == g,, drop=FALSE], factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
         if(!inherits(fact, "try-error")) {
           eta[z == g,]       <- fact$scores
           lmat[,,g]          <- unclass(fact$loadings)
@@ -113,7 +113,7 @@
       psi.inv[inf.ind]       <- psi.tmp[inf.ind]
     }
     l.sigma          <- diag(1/sigma.l, Q)
-    index            <- order(pi.prop, decreasing=TRUE)
+    index            <- Order(pi.prop, descending=TRUE)
     pi.prop          <- pi.prop[index]
     mu               <- mu[,index, drop=FALSE]
     lmat             <- lmat[,,index, drop=FALSE]
@@ -137,7 +137,7 @@
       if(sw["pi.sw"])   pi.store[,1]     <- pi.prop
       z.store[1,]            <- z
       sigma                  <- if(uni) lapply(Gs, function(g) as.matrix(1/psi.inv[,g] + if(Q0) tcrossprod(as.matrix(lmat[,,g])) else 0)) else lapply(Gs, function(g) tcrossprod(lmat[,,g]) + diag(1/psi.inv[,g]))
-      log.probs              <- if(uni) vapply(Gs, function(g) dnorm(data, mu[,g], sq_mat(sigma[[g]]), log=TRUE) + log(pi.prop[g]), numeric(N)) else vapply(Gs, function(g) { sigma <- if(Q0) sigma[[g]] else sq_mat(sigma[[g]]); dmvn(data, mu[,g], is.posi_def(sigma, make=TRUE)$X.new, log=TRUE, isChol=!Q0) + log(pi.prop[g]) }, numeric(N))
+      log.probs              <- if(uni) vapply(Gs, function(g) stats::dnorm(data, mu[,g], sq_mat(sigma[[g]]), log=TRUE) + log(pi.prop[g]), numeric(N)) else vapply(Gs, function(g) { sigma <- if(Q0) sigma[[g]] else sq_mat(sigma[[g]]); dmvn(data, mu[,g], is.posi_def(sigma, make=TRUE)$X.new, log=TRUE, isChol=!Q0) + log(pi.prop[g]) }, numeric(N))
       ll.store[1]            <- sum(rowLogSumExps(log.probs))
       G.store[1]             <- G.non
       act.store[1]           <- G
@@ -152,7 +152,7 @@
 
   # Iterate
     for(iter in seq_len(total)[-1]) {
-      if(verbose     && iter  < burnin)  setTxtProgressBar(pb, iter)
+      if(verbose     && iter  < burnin)  utils::setTxtProgressBar(pb, iter)
       storage        <- is.element(iter, iters)
 
     # Mixing Proportions
@@ -160,7 +160,7 @@
       pi.prop        <- .sim_pi_inf(Vs, len=G)
 
     # Re-ordering & Slice Sampler
-      index          <- order(pi.prop[Gs], decreasing=TRUE)
+      index          <- Order(pi.prop[Gs], descending=TRUE)
       prev.prod      <- pi.prop[G]  * (1/Vs[G] - 1)
       pi.prop[Gs]    <- pi.prop[index]
       Vs[Gs]         <- Vs[index]
@@ -173,7 +173,7 @@
         ksi          <- pi.prop
         log.ksi      <- log(ksi)
       }
-      u.slice        <- runif(N, 0, ksi[z])
+      u.slice        <- stats::runif(N, 0, ksi[z])
       min.u          <- min(u.slice)
       G.old          <- G
       if(ind.slice)   {
@@ -221,9 +221,9 @@
         psi          <- 1/psi.inv
         sigma        <- if(uni) lapply(Gs, function(g) as.matrix(psi[,g] + if(Q0) tcrossprod(as.matrix(lmat[,,g])) else 0)) else lapply(Gs, function(g) tcrossprod(lmat[,,g]) + diag(psi[,g]))
         if(uni) {
-          log.probs  <- vapply(Gs, function(g) dnorm(data, mu[,g], sq_mat(sigma[[g]]), log=TRUE), numeric(N))
+          log.probs  <- vapply(Gs, function(g) stats::dnorm(data, mu[,g], sq_mat(sigma[[g]]), log=TRUE), numeric(N))
         } else  {
-          log.check  <- capture.output(log.probs <- try(vapply(Gs, function(g) dmvn(data, mu[,g], if(Q0) sigma[[g]] else sq_mat(sigma[[g]]), log=TRUE, isChol=!Q0), numeric(N)), silent=TRUE))
+          log.check  <- utils::capture.output(log.probs <- try(vapply(Gs, function(g) dmvn(data, mu[,g], if(Q0) sigma[[g]] else sq_mat(sigma[[g]]), log=TRUE, isChol=!Q0), numeric(N)), silent=TRUE))
         }
         if(inherits(log.probs, "try-error")) {
           log.probs  <- vapply(Gs, function(g) { sigma <- if(Q0) sigma[[g]] else sq_mat(sigma[[g]]); dmvn(data, mu[,g], is.posi_def(sigma, make=TRUE)$X.new, log=TRUE, isChol=!Q0) }, numeric(N))
@@ -344,7 +344,7 @@
       if(learn.d)       d.rates[iter]                         <- d.rate
       if(IM.lab.sw)     lab.rate[,iter]                       <- c(acc1, acc2)
       if(storage)    {
-        if(verbose)     setTxtProgressBar(pb, iter)
+        if(verbose)     utils::setTxtProgressBar(pb, iter)
         new.it       <- which(iters == iter)
         if(sw["mu.sw"])               mu.store[,,new.it]      <- mu
         if(all(sw["s.sw"], Q0))       eta.store[,,new.it]     <- eta
@@ -374,7 +374,7 @@
                              discount  = if(learn.d) {           if(sum(d.store == 0)/n.store > 0.5) as.simple_triplet_matrix(d.store) else d.store },
                              a.rate    = ifelse(MH.step,         mean(a.rates), a.rates),
                              d.rate    = ifelse(learn.d,         mean(d.rates), d.rates),
-                             lab.rate  = if(IM.lab.sw)           setNames(rowmeans(lab.rate), c("Move1", "Move2")),
+                             lab.rate  = if(IM.lab.sw)           stats::setNames(rowmeans(lab.rate), c("Move1", "Move2")),
                              z.store   = z.store,
                              ll.store  = ll.store,
                              G.store   = G.store,

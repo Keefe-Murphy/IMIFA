@@ -21,7 +21,7 @@
 
 \item{g}{Optional argument that allows specification of exactly which cluster the plot of interest is to be produced for. If not supplied, the user will be prompted to cycle through plots for all clusters. Also functions as an index for which plot to return when \code{plot.meth} is \code{GQ} or \code{zlabels} in much the same way.}
 
-\item{mat}{Logical indicating whether a \code{\link{matplot}} is produced (defaults to \code{TRUE}). If given as \code{FALSE}, \code{ind} is invoked.}
+\item{mat}{Logical indicating whether a \code{\link[graphics]{matplot}} is produced (defaults to \code{TRUE}). If given as \code{FALSE}, \code{ind} is invoked.}
 
 \item{zlabels}{The true labels can be supplied if they are known. If this is not supplied, the function uses the labels that were supplied, if any, to \code{\link{get_IMIFA_results}}. Only relevant when \code{plot.meth = "zlabels"}.}
 
@@ -45,7 +45,7 @@
 
 \item{transparency}{A factor in [0, 1] modifying the opacity for overplotted lines. Defaults to 0.75, unless semi-transparency is not supported.}
 
-\item{...}{Other arguments typically passed to \code{\link{plot}}.}
+\item{...}{Other arguments typically passed to \code{\link[graphics]{plot}}.}
 }
 \value{
 The desired plot with appropriate output and summary statistics printed to the console screen.

@@ -15,25 +15,18 @@ URL: https://cran.r-project.org/package=IMIFA
 BugReports: https://github.com/Keefe-Murphy/IMIFA
 LazyData: true
 Imports:
-    abind,
-    e1071,
-    graphics,
-    grDevices,
     matrixStats,
     mcclust,
     mclust (>= 5.1),
     mvnfast,
-    plotrix,
-    Rfast (>= 1.8.2),
+    Rfast (>= 1.8.4),
     slam,
-    stats,
-    utils,
     viridis
 Suggests:
-    Rmpfr,
     gmp,
     knitr,
     methods,
-    rmarkdown
+    rmarkdown,
+    Rmpfr
 RoxygenNote: 6.0.1
 VignetteBuilder: knitr

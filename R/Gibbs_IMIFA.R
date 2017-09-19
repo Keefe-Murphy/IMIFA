@@ -13,7 +13,7 @@
     sq_mat           <- if(P   > 50) function(x) diag(sqrt(diag(x))) else sqrt
     matrix           <- base::matrix
     total            <- max(iters)
-    if(verbose)         pb    <- txtProgressBar(min=0, max=total, style=3)
+    if(verbose)         pb    <- utils::txtProgressBar(min=0, max=total, style=3)
     n.store          <- length(iters)
     Gs               <- seq_len(G)
     Ts               <- seq_len(trunc.G)
@@ -99,7 +99,7 @@
     psi.inv          <- if(uni) t(psi.inv) else psi.inv
     if(Q < min(N - 1, Ledermann(P)))     {
       for(g in which(nn > P)) {
-        fact         <- try(factanal(data[z == g,, drop=FALSE], factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
+        fact         <- try(stats::factanal(data[z == g,, drop=FALSE], factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
         if(!inherits(fact, "try-error")) {
           eta[z == g,]        <- fact$scores
           lmat[[g]]           <- unclass(fact$loadings)
@@ -116,7 +116,7 @@
       inf.ind        <- is.infinite(psi.inv) | is.nan(psi.inv)
       psi.inv[inf.ind]        <- psi.tmp[inf.ind]
     }
-    index            <- order(pi.prop, decreasing=TRUE)
+    index            <- Order(pi.prop, descending=TRUE)
     pi.prop          <- pi.prop[index]
     mu               <- mu[,index, drop=FALSE]
     phi              <- phi[index]
@@ -144,7 +144,7 @@
       z.store[1,]             <- z
       Q0                      <- Qs > 0
       sigma                   <- if(uni) lapply(Gs, function(g) as.matrix(1/psi.inv[,g] + if(Q0[g]) tcrossprod(lmat[[g]]) else 0)) else lapply(Gs, function(g) tcrossprod(lmat[[g]]) + diag(1/psi.inv[,g]))
-      log.probs               <- if(uni) vapply(Gs, function(g) dnorm(data, mu[,g], sq_mat(sigma[[g]]), log=TRUE) + log(pi.prop[g]), numeric(N)) else vapply(Gs, function(g, Q=Q0[g]) { sigma <- if(Q) sigma[[g]] else sq_mat(sigma[[g]]); dmvn(data, mu[,g], is.posi_def(sigma, make=TRUE)$X.new, log=TRUE, isChol=!Q) + log(pi.prop[g]) }, numeric(N))
+      log.probs               <- if(uni) vapply(Gs, function(g) stats::dnorm(data, mu[,g], sq_mat(sigma[[g]]), log=TRUE) + log(pi.prop[g]), numeric(N)) else vapply(Gs, function(g, Q=Q0[g]) { sigma <- if(Q) sigma[[g]] else sq_mat(sigma[[g]]); dmvn(data, mu[,g], is.posi_def(sigma, make=TRUE)$X.new, log=TRUE, isChol=!Q) + log(pi.prop[g]) }, numeric(N))
       ll.store[1]             <- sum(rowLogSumExps(log.probs))
       Q.store[,1]             <- Qs
       G.store[1]              <- G.non
@@ -160,7 +160,7 @@
 
   # Iterate
     for(iter in seq_len(total)[-1]) {
-      if(verbose     && iter   < burnin) setTxtProgressBar(pb, iter)
+      if(verbose     && iter   < burnin) utils::setTxtProgressBar(pb, iter)
       storage        <- is.element(iter, iters)
 
     # Mixing Proportions
@@ -168,7 +168,7 @@
       pi.prop        <- .sim_pi_inf(Vs, len=G)
 
     # Re-ordering & Slice Sampler
-      index          <- order(pi.prop[Gs], decreasing=TRUE)
+      index          <- Order(pi.prop[Gs], descending=TRUE)
       prev.prod      <- pi.prop[G]  * (1/Vs[G] - 1)
       pi.prop[Gs]    <- pi.prop[index]
       Vs[Gs]         <- Vs[index]
@@ -185,7 +185,7 @@
         ksi          <- pi.prop
         log.ksi      <- log(ksi)
       }
-      u.slice        <- runif(N, 0, ksi[z])
+      u.slice        <- stats::runif(N, 0, ksi[z])
       min.u          <- min(u.slice)
       G.old          <- G
       if(ind.slice)   {
@@ -236,9 +236,9 @@
         psi          <- 1/psi.inv
         sigma        <- if(uni) lapply(Gs, function(g) as.matrix(psi[,g] + if(Q0[g]) tcrossprod(lmat[[g]]) else 0)) else lapply(Gs, function(g) tcrossprod(lmat[[g]]) + diag(psi[,g]))
         if(uni) {
-          log.probs  <- vapply(Gs, function(g) dnorm(data, mu[,g], sq_mat(sigma[[g]]), log=TRUE), numeric(N))
+          log.probs  <- vapply(Gs, function(g) stats::dnorm(data, mu[,g], sq_mat(sigma[[g]]), log=TRUE), numeric(N))
         } else  {
-          log.check  <- capture.output(log.probs <- try(vapply(Gs, function(g, Q=Q0[g]) dmvn(data, mu[,g], if(Q) sigma[[g]] else sq_mat(sigma[[g]]), log=TRUE, isChol=!Q), numeric(N)), silent=TRUE))
+          log.check  <- utils::capture.output(log.probs <- try(vapply(Gs, function(g, Q=Q0[g]) dmvn(data, mu[,g], if(Q) sigma[[g]] else sq_mat(sigma[[g]]), log=TRUE, isChol=!Q), numeric(N)), silent=TRUE))
         }
         if(inherits(log.probs, "try-error")) {
           log.probs  <- vapply(Gs, function(g, Q=Q0[g]) { sigma <- if(Q) sigma[[g]] else sq_mat(sigma[[g]]); dmvn(data, mu[,g], is.posi_def(sigma, make=TRUE)$X.new, log=TRUE, isChol=!Q) }, numeric(N))
@@ -316,24 +316,24 @@
       }
 
     # Adaptation
-      if(all(adapt, iter > adaptat)) {
-        if(runif(1)   < ifelse(iter  < burnin, 0.5, exp(-b0 - b1 * (iter - adaptat)))) {
+      if(all(adapt, iter   > adaptat))   {
+        if(stats::runif(1) < ifelse(iter < burnin, 0.5, exp(-b0 - b1 * (iter - adaptat)))) {
           colvec     <- lapply(nn.ind, function(g) (if(Q0[g]) colSums(abs(lmat[[g]])   < epsilon)/P else 0) >= prop)
           nonred     <- lapply(colvec, .which0)
-          numred     <- lengths(colvec) - lengths(nonred)
+          numred     <- lengths(colvec)  - lengths(nonred)
           notred     <- numred == 0
           ng.ind     <- seq_along(nn.ind)
           Qs.old     <- Qs[nn0]
-          Qs[nn0]    <- pmax.int(0, vapply(ng.ind, function(h) if(notred[h]) Qs.old[h] + 1 else Qs.old[h] - numred[h], numeric(1L)))
+          Qs[nn0]    <- pmax.int(0, vapply(ng.ind, function(h) if(notred[h]) Qs.old[h] + 1 else Qs.old[h]    - numred[h], numeric(1L)))
           Q.big      <- Qs[nn0] > Q.star
           if((Q.bigs <- any(Q.big))) {
             notred   <- notred & !Q.big
             Qs[nn0][Q.big]    <- Q.star
           }
-          phi[nn0]   <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) cbind(phi[[g]][,seq_len(Qs.old[h])],  rgamma(n=P, shape=nu + nuplus1, rate=nu)) else phi[[g]][,nonred[[h]], drop=FALSE])
-          delta[nn0] <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) c(delta[[g]][seq_len(Qs.old[h])],     rgamma(n=1, shape=alpha.d2, rate=beta.d2)) else delta[[g]][nonred[[h]]])
+          phi[nn0]   <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) cbind(phi[[g]][,seq_len(Qs.old[h])],  stats::rgamma(n=P, shape=nu + nuplus1, rate=nu)) else phi[[g]][,nonred[[h]], drop=FALSE])
+          delta[nn0] <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) c(delta[[g]][seq_len(Qs.old[h])],     stats::rgamma(n=1, shape=alpha.d2, rate=beta.d2)) else delta[[g]][nonred[[h]]])
           tau[nn0]   <- lapply(delta[nn.ind], cumprod)
-          lmat[nn0]  <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) cbind(lmat[[g]][,seq_len(Qs.old[h])], rnorm(n=P, mean=0, sd=sqrt(1/(phi[[g]][,Qs[g]] * tau[[g]][Qs[g]])))) else lmat[[g]][,nonred[[h]], drop=FALSE])
+          lmat[nn0]  <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) cbind(lmat[[g]][,seq_len(Qs.old[h])], stats::rnorm(n=P, mean=0, sd=sqrt(1/(phi[[g]][,Qs[g]] * tau[[g]][Qs[g]])))) else lmat[[g]][,nonred[[h]], drop=FALSE])
           Qemp       <- Qs[!nn0]
           Qpop       <- Qs[nn0]
           Qmax       <- ifelse(all(Q.big), max(Qpop), max(Qpop[!Q.big]))
@@ -350,21 +350,21 @@
                 lmat[[t]]     <- lmat[[t]][,Qmaxseq, drop=FALSE]
               } else  {
                 while(Qt  != Qmax)  {
-                 phi[[t]]     <- cbind(phi[[t]],     rgamma(n=P, shape=nu + nuplus1, rate=nu))
-                 delta[[t]]   <- c(delta[[t]],       rgamma(n=1, shape=alpha.d2, rate=beta.d2))
+                 phi[[t]]     <- cbind(phi[[t]],     stats::rgamma(n=P, shape=nu + nuplus1,  rate=nu))
+                 delta[[t]]   <- c(delta[[t]],       stats::rgamma(n=1, shape=alpha.d2, rate=beta.d2))
                  tau[[t]]     <- cumprod(delta[[t]])
                  if(store.eta && t %in% Gs)   {
                  eta.tmp[[t]] <- cbind(eta.tmp[[t]], .empty_mat(nc=1))
                  }
                  Qt  <- Qt + 1
-                 lmat[[t]]    <- cbind(lmat[[t]],    rnorm(n=P, mean=0, sd=sqrt(1/(phi[[t]][,Qt] * tau[[t]][Qt]))))
+                 lmat[[t]]    <- cbind(lmat[[t]],    stats::rnorm(n=P, mean=0, sd=sqrt(1/(phi[[t]][,Qt] * tau[[t]][Qt]))))
                 }
               }
             }
             Qs[Qmax  != Qs & !nn0] <-  Qmax
           }
           if(store.eta)    {
-            eta.tmp  <- lapply(Gs,     function(g) if(nn0[g] && Qs[g] > Qs.old[which(nn.ind == g)]) cbind(eta.tmp[[g]], rnorm(nn[g])) else eta.tmp[[g]][,seq_len(Qs[g]), drop=FALSE])
+            eta.tmp  <- lapply(Gs,     function(g) if(nn0[g] && Qs[g] > Qs.old[which(nn.ind == g)]) cbind(eta.tmp[[g]], stats::rnorm(nn[g])) else eta.tmp[[g]][,seq_len(Qs[g]), drop=FALSE])
           }
         }
       }
@@ -463,7 +463,7 @@
       if(learn.d)        d.rates[iter]                 <- d.rate
       if(IM.lab.sw)      lab.rate[,iter]               <- c(acc1, acc2)
       if(storage)    {
-        if(verbose)      setTxtProgressBar(pb, iter)
+        if(verbose)      utils::setTxtProgressBar(pb, iter)
         new.it       <-  which(iters == iter)
         if(sw["mu.sw"])  mu.store[,,new.it]            <- mu
         if(all(sw["s.sw"],
@@ -510,7 +510,7 @@
                              discount  = if(learn.d) {     if(sum(d.store == 0)/n.store > 0.5) as.simple_triplet_matrix(d.store) else d.store },
                              a.rate    = ifelse(MH.step,   mean(a.rates), a.rates),
                              d.rate    = ifelse(learn.d,   mean(d.rates), d.rates),
-                             lab.rate  = if(IM.lab.sw)     setNames(rowmeans(lab.rate), c("Move1", "Move2")),
+                             lab.rate  = if(IM.lab.sw)     stats::setNames(rowmeans(lab.rate), c("Move1", "Move2")),
                              z.store   = z.store,
                              ll.store  = ll.store,
                              Q.store   = tryCatch(Q.store[Gmax,, drop=FALSE],          error=function(e) Q.store),

@@ -5,7 +5,7 @@
 \title{Set storage values for use with the IMIFA family of models}
 \usage{
 storeControl(mu.switch = TRUE, score.switch = TRUE, load.switch = TRUE,
-  psi.switch = TRUE, pi.switch = TRUE)
+  psi.switch = TRUE, pi.switch = TRUE, ...)
 }
 \arguments{
 \item{mu.switch}{Logical indicating whether the means are to be stored (defaults to \code{TRUE}).}
@@ -17,6 +17,8 @@ storeControl(mu.switch = TRUE, score.switch = TRUE, load.switch = TRUE,
 \item{psi.switch}{Logical indicating whether the uniquenesses are to be stored (defaults to \code{TRUE}).}
 
 \item{pi.switch}{Logical indicating whether the mixing proportions are to be stored (defaults to \code{TRUE}).}
+
+\item{...}{Catches unused arguments.}
 }
 \value{
 A named vector in which the names are the names of the storage switches and the values are logicals indicating whether that parameter is to be stored. The list also contains as an attribute a logical for each switch indicating whether it was actually supplied (\code{TRUE}) or the default was accepted (\code{FALSE}).
@@ -36,6 +38,9 @@ storeControl(score.switch=FALSE)
 # data(olive)
 # sim <- mcmc_IMIFA(olive, "IMIFA", n.iters=5000,
 #                   storage=storeControl(score.switch=FALSE))
+
+# Alternatively specify these arguments directly
+# sim <- mcmc_IMIFA(olive, "IMIFA", n.iters=5000, score.switch=FALSE)
 }
 \seealso{
 \code{\link{mcmc_IMIFA}}, \code{\link{get_IMIFA_results}}

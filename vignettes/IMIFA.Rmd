@@ -88,7 +88,7 @@ Be warned that the `mcmc_IMIFA` function calls in this section may take quite so
 
 ```{r, eval=FALSE}
 simMFA   <- mcmc_IMIFA(olive, method="MFA", n.iters=10000, range.G=3:6, range.Q=0:3, centering=FALSE, 
-                       scaling="unit", uni.type="isotropic", storage=storeControl(score.switch=FALSE))
+                       scaling="unit", uni.type="isotropic", score.switch=FALSE)
 ```
 
 Now let's instead have the numbers of cluster-specific latent factors be estimated automatically using a Mixture of Infinite Factor Analysers model (MIFA). This time, we'll also mean-center the data and initialise the cluster labels using `kmeans` instead. Note that `range.Q` no longer needs to be specified, but it can be given as a conservatively high starting value and upper limit. Let's accept the default, and also include the Infinite Factor Analysis model (IFA) as a special case where `range.G` is `1`.
@@ -98,14 +98,14 @@ simMIFA  <- mcmc_IMIFA(olive, method="MIFA", n.iters=10000, centering=TRUE,
                        range.G=1:3, z.init="kmeans")
 ```
 
-MIFA doesn't entirely solve the issue of model choice, as you can see; `range.G` still needs to be specified. We can allow the number of clusters to instead/also be estimated automatically by fitting one of the overfitted mixture models (OMFA/OMIFA) or one of the infinite mixture models (IMFA/IMIFA). Let's fit an Overfitted Mixture of Infinite Factor Analysers, and override the default value for the starting value / upper limit for the number of clusters (`range.G`) and supply a sufficiently small dirichlet hyperparameter (`alpha`) for the cluster mixing proportions. We can enforce additional shrinkage by varying other MGP hyperparameters using `mgpControl()`.
+MIFA doesn't entirely solve the issue of model choice, as you can see; `range.G` still needs to be specified. We can allow the number of clusters to instead/also be estimated automatically by fitting one of the overfitted mixture models (OMFA/OMIFA) or one of the infinite mixture models (IMFA/IMIFA). Let's fit an Overfitted Mixture of Infinite Factor Analysers, and override the default value for the starting value / upper limit for the number of clusters (`range.G`) and supply a sufficiently small dirichlet hyperparameter (`alpha`) for the cluster mixing proportions. We can enforce additional shrinkage by varying other MGP hyperparameters, using arguments from mgpControl()`.
 
 ```{r, eval=FALSE}
 simOMIFA <- mcmc_IMIFA(olive, method="OMIFA", n.iters=10000, range.G=10, alpha=0.8,
-                       MGP=mgpControl(alpha.d1=3.5, nu=3, alpha.d2=7, prop=0.6, epsilon=0.12))
+                       alpha.d1=3.5, nu=3, alpha.d2=7, prop=0.6, epsilon=0.12)
 ```
 
-Finally, let's run the flagship IMIFA model, on which all subsequent demonstrations and results will be based, for a greater number of iterations, accepting the defaults for most arguments. Note that the `verbose` argument, which defaults to `TRUE` will ordinarily print a progress bar to the console window. The default implementation uses the independent rather than dependent slice-efficient sampler; we could override the default for the parameter governing the rate of geometric decay by specifying `rho`. Furthermore, the default implementation assumes a Dirichlet process prior - let's override this and assume instead a Pitman-Yor process prior, and also learn its discount parameter $d$ via the `learn.d` argument.
+Finally, let's run the flagship IMIFA model, on which all subsequent demonstrations and results will be based, for a greater number of iterations, accepting the defaults for most arguments. Note that the `verbose` argument, which defaults to `TRUE` will ordinarily print a progress bar to the console window. The default implementation uses the independent rather than dependent slice-efficient sampler; we could override the default for the parameter governing the rate of geometric decay by specifying `rho`. Furthermore, the default implementation assumes a Dirichlet process prior - let's override this and assume instead a Pitman-Yor process prior, and also learn its discount parameter $d$ via the `learn.d` argument (from `bnpControl()`).
 
 ```{r, eval=FALSE}
 simIMIFA <- mcmc_IMIFA(olive, method="IMIFA", n.iters=50000, verbose=FALSE, learn.d=TRUE)

@@ -11,7 +11,7 @@
     start.time   <- proc.time()
     matrix       <- base::matrix
     total        <- max(iters)
-    if(verbose)     pb     <- txtProgressBar(min=0, max=total, style=3)
+    if(verbose)     pb     <- utils::txtProgressBar(min=0, max=total, style=3)
     n.store      <- length(iters)
     Pseq         <- seq_len(P)
     obsnames     <- rownames(data)
@@ -37,7 +37,7 @@
     post.mu      <- rep(0L, P)
     post.psi     <- post.mu
     ll.store     <- rep(0L, n.store)
-    cov.emp      <- if(P > 500) switch(scaling, unit=cora(as.matrix(data)), cova(as.matrix(data))) else switch(scaling, unit=cor(data), cov(data))
+    cov.emp      <- if(P > 500) switch(scaling, unit=cora(as.matrix(data)), cova(as.matrix(data))) else switch(scaling, unit=stats::cor(data), stats::cov(data))
     cov.est      <- matrix(0L, nrow=P, ncol=P)
 
     mu.sigma     <- 1/sigma.mu
@@ -51,7 +51,7 @@
     lmat         <- matrix(.sim_load_p(Q=Q, P=P, sigma.l=sigma.l), nrow=P, ncol=Q)
     psi.inv      <- .sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
     if(Q0 &&   Q  < min(N - 1, Ledermann(P))) {
-      fact       <- try(factanal(data, factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
+      fact       <- try(stats::factanal(data, factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
       if(!inherits(fact, "try-error")) {
         eta      <- fact$scores
         lmat     <- unclass(fact$loadings)
@@ -76,7 +76,7 @@
 
   # Iterate
     for(iter in seq_len(total)[-1]) {
-      if(verbose && iter    < burnin) setTxtProgressBar(pb, iter)
+      if(verbose && iter    < burnin) utils::setTxtProgressBar(pb, iter)
       storage    <- is.element(iter,  iters)
 
     # Scores & Loadings
@@ -95,7 +95,7 @@
       mu[]       <- .sim_mu(N=N, P=P, mu.sigma=mu.sigma, psi.inv=psi.inv, sum.data=sum.data, sum.eta=colSums(eta), lmat=lmat, mu.zero=mu.zero)
 
       if(storage) {
-        if(verbose) setTxtProgressBar(pb, iter)
+        if(verbose) utils::setTxtProgressBar(pb, iter)
         new.it   <- which(iters == iter)
         psi      <- 1/psi.inv
         post.mu  <- post.mu + mu/n.store
@@ -114,8 +114,8 @@
                       eta      = if(all(sw["s.sw"], Q0))   tryCatch(provideDimnames(eta.store,   base=list(obsnames, "", ""), unique=FALSE), error=function(e) eta.store),
                       load     = if(all(sw["l.sw"], Q0))   tryCatch(provideDimnames(load.store,  base=list(varnames, "", ""), unique=FALSE), error=function(e) load.store),
                       psi      = if(sw["psi.sw"])          tryCatch(provideDimnames(psi.store,   base=list(varnames, ""),     unique=FALSE), error=function(e) psi.store),
-                      post.mu  = tryCatch(setNames(post.mu,  varnames),                   error=function(e) post.mu),
-                      post.psi = tryCatch(setNames(post.psi, varnames),                   error=function(e) post.psi),
+                      post.mu  = tryCatch(stats::setNames(post.mu,  varnames),            error=function(e) post.mu),
+                      post.psi = tryCatch(stats::setNames(post.psi, varnames),            error=function(e) post.psi),
                       cov.emp  = tryCatch(provideDimnames(cov.emp,  base=list(varnames)), error=function(e) cov.emp),
                       cov.est  = tryCatch(provideDimnames(cov.est,  base=list(varnames)), error=function(e) cov.est),
                       ll.store = ll.store,

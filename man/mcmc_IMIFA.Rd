@@ -5,18 +5,16 @@
 \title{Adaptive Gibbs Sampler for Nonparameteric Model-based Clustering using models from the IMIFA family}
 \usage{
 mcmc_IMIFA(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA",
-  "MFA", "IFA", "FA", "classify"), n.iters = 25000L, range.G = NULL,
-  range.Q = NULL, burnin = n.iters/5, thinning = 2L, MGP = mgpControl(),
-  centering = TRUE, scaling = c("unit", "pareto", "none"),
-  uni.type = c("unconstrained", "isotropic", "constrained", "single"),
-  uni.prior = c("unconstrained", "isotropic"), alpha = NULL,
-  storage = storeControl(), psi.alpha = NULL, psi.beta = NULL,
-  mu.zero = NULL, sigma.mu = NULL, sigma.l = NULL, z.init = c("mclust",
-  "hc", "kmeans", "list", "priors"), z.list = NULL, trunc.G = NULL,
-  learn.alpha = TRUE, alpha.hyper = NULL, ind.slice = TRUE, rho = NULL,
-  IM.lab.sw = TRUE, discount = NULL, learn.d = FALSE, d.hyper = NULL,
-  kappa = NULL, zeta = NULL, tune.zeta = NULL, equal.pro = FALSE,
-  mu0g = FALSE, psi0g = FALSE, verbose = interactive())
+  "MFA", "IFA", "FA", "classify"), range.G = NULL, range.Q = NULL,
+  n.iters = 25000L, burnin = n.iters/5, thinning = 2L,
+  MGP = mgpControl(...), BNP = bnpControl(...), centering = TRUE,
+  scaling = c("unit", "pareto", "none"), uni.type = c("unconstrained",
+  "isotropic", "constrained", "single"), uni.prior = c("unconstrained",
+  "isotropic"), alpha = NULL, storage = storeControl(...),
+  psi.alpha = NULL, psi.beta = NULL, mu.zero = NULL, sigma.mu = NULL,
+  sigma.l = NULL, z.init = c("mclust", "hc", "kmeans", "list", "priors"),
+  z.list = NULL, equal.pro = FALSE, mu0g = FALSE, psi0g = FALSE,
+  verbose = interactive(), ...)
 }
 \arguments{
 \item{dat}{A matrix or data frame such that rows correspond to observations (\code{N}) and columns correspond to variables (\code{P}). Non-numeric variables and rows with missing entries will be removed.}
@@ -32,19 +30,21 @@ mcmc_IMIFA(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA",
  \item{"\code{IMFA}"}{Infinite Mixtures of Factor Analysers}
  \item{"\code{IMIFA}"}{Infinite Mixtures of Infinite Factor Analysers}
 }
- In principle, of course, one could overfit the "\code{MFA}" or "\code{MIFA}" models, but it is recommend to use the corresponding model options which begin with 'O' instead. Note that the "\code{classify}" method is not yet implemented.}
-
-\item{n.iters}{The number of iterations to run the Gibbs sampler for.}
+In principle, of course, one could overfit the "\code{MFA}" or "\code{MIFA}" models, but it is recommend to use the corresponding model options which begin with 'O' instead. Note that the "\code{classify}" method is not yet implemented.}
 
 \item{range.G}{Depending on the method employed, either the range of values for the number of clusters, or the conseratively high starting value for the number of clusters. Defaults to 1 for the "\code{FA}" and "\code{IFA}" methods. For the "\code{MFA}" and "\code{MIFA}" models this is to be given as a range of candidate models to explore. For the "\code{OMFA}", "\code{OMIFA}", "\code{IMFA}", and "\code{IMIFA}" models, this is the number of clusters with which the chain is to be initialised, in which case the default is \code{min(N - 1, max(25, ceiling(3 * log(N))))}. For the "\code{OMFA}", and "\code{OMIFA}" models this upper limit remains fixed for the entire length of the chain; \code{range.G} also doubles as the default \code{trunc.G} for the "\code{IMFA}" and "\code{IMIFA}" models. However, when \code{N < P}, or when this bound is close to or exceeds \code{N} for any of these overfitted/infinite mixture models, it is better to initialise at a value closer to the truth (i.e. \code{ceiling(log(N))} by default), though the upper bound remains the same - as a result the role of \code{range.G} when \code{N < P} is no longer to specify the upper bound (which can still be modified via \code{trunc.G}, at least for the "\code{IMFA}" and "\code{IMIFA}" methods) and the number of clusters used for initialisation, but rather just the number of clusters used for initialisation only. If \code{length(range.G) * length(range.Q)} is large, consider not storing unnecessary parameters (via \code{\link{storeControl}}), or breaking up the range of models to be explored into chunks and sending each chunk to \code{\link{get_IMIFA_results}}.}
 
 \item{range.Q}{Depending on the method employed, either the range of values for the number of latent factors, or, for methods ending in IFA the conservatively high starting value for the number of cluster-specific factors, in which case the default starting value is \code{floor(3 * log(P))}. For methods ending in IFA, different clusters can be modelled using different numbers of latent factors (incl. zero); for methods not ending in IFA it is possible to fit zero-factor models, corresponding to simple diagonal covariance structures. For instance, fitting the "\code{IMFA}" model with \code{range.Q=0} corresponds to a vanilla Dirichlet Process Mixture Model. If \code{length(range.G) * length(range.Q)} is large, consider not storing unnecessary parameters (via \code{\link{storeControl}}), or breaking up the range of models to be explored into chunks and sending each chunk to \code{\link{get_IMIFA_results}}.}
 
+\item{n.iters}{The number of iterations to run the Gibbs sampler for.}
+
 \item{burnin}{The number of burn-in iterations for the sampler. Defaults to \code{n.iters/5}. Note that chains can also be burned in later, using \code{\link{get_IMIFA_results}}.}
 
 \item{thinning}{The thinning interval used in the simulation. Defaults to 2. No thinning corresponds to 1. Note that chains can also be thinned later, using \code{\link{get_IMIFA_results}}.}
 
-\item{MGP}{A list of arguments pertaining to the multiplicative gamma process (MGP) shrinkage prior and adaptive Gibbs sampler (AGS). For use with the infinite factor models "\code{IFA}", "\code{MIFA}", "\code{OMIFA}", and "\code{IMIFA}" only. Defaults are set by a call to \code{\link{mgpControl}}, with further checking of validity by \code{\link{MGP_check}}}
+\item{MGP}{A list of arguments pertaining to the multiplicative gamma process (MGP) shrinkage prior and adaptive Gibbs sampler (AGS). For use with the infinite factor models "\code{IFA}", "\code{MIFA}", "\code{OMIFA}", and "\code{IMIFA}" only. Defaults are set by a call to \code{\link{mgpControl}}, with further checking of validity by \code{\link{MGP_check}}.}
+
+\item{BNP}{A list of arguments pertaining to the Bayesian Nonparametric Dirichlet/Pitman Yor process priors (BNP). For use with the infinite mixture models "\code{IMFA}" and "\code{IMIFA}" only. Defaults are set by a call to \code{\link{bnpControl}}.}
 
 \item{centering}{A logical value indicating whether mean centering should be applied to the data, defaulting to \code{TRUE}.}
 
@@ -57,11 +57,11 @@ mcmc_IMIFA(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA",
 \item{"\code{constrained}"}{\strong{UCU} - variable-specific, equal across clusters: \eqn{\Psi_g = \Psi}{Psi_g = Psi}.}
 \item{"\code{single}"}{\strong{UCC} - single value equal across clusters and variables: \eqn{\Psi_g = \sigma^2 \mathcal{I}_p}{Psi_g = sigma^2 I_p}.}
 }
- The first letter \strong{U} here corresponds to constraints on loadings (not yet implemented), the second letter corresponds to constrained/unconstrained across clusters, and the third letter corresponds to the isotropic constraint. Of course, only the third letter is of relevance for the single-cluster "\code{FA}" and "\code{IFA}" models, such that "\code{unconstrained}" and "\code{constrained}" are equivalent for these models, and so too are "\code{isotropic}" and "\code{single}".}
+The first letter \strong{U} here corresponds to constraints on loadings (not yet implemented), the second letter corresponds to constrained/unconstrained across clusters, and the third letter corresponds to the isotropic constraint. Of course, only the third letter is of relevance for the single-cluster "\code{FA}" and "\code{IFA}" models, such that "\code{unconstrained}" and "\code{constrained}" are equivalent for these models, and so too are "\code{isotropic}" and "\code{single}".}
 
 \item{uni.prior}{A switch indicating whether uniquenesses rate hyperparameters are to be "\code{unconstrained}" or "\code{isotropic}", i.e. variable-specific or not. "\code{uni.prior}" must be "\code{isotropic}" if the last letter of "\code{uni.type}" is \strong{C}, but can take either value otherwise. Defaults to correspond to the last letter of \code{uni.type} if that is supplied and \code{uni.prior} is not, otherwise defaults to "\code{unconstrained}", but "\code{isotropic}" is recommended when \code{N < P}. Only relevant when "\code{psi.beta}" is not supplied and \code{\link{psi_hyper}} is therefore invoked.}
 
-\item{alpha}{Depending on the method employed, either the hyperparameter of the Dirichlet prior for the cluster mixing proportions, or the Dirichlet process concentration parameter. Defaults to 0.5/range.G for the Overfitted methods - if supplied for "\code{OMFA}" and "\code{OMIFA}" methods, you are supplying the numerator of \code{alpha/range.G}, which should be less than half the dimension (per cluster!) of the free parameters of the smallest model considered in order to ensure superfluous clusters are emptied (for "\code{OMFA}", this corresponds to the smallest \code{range.Q}; for "\code{OMIFA}", this corresponds to a zero-factor model) [see: \code{\link{PGMM_dfree}} and Rousseau and Mengersen (2011)]. Defaults to 1 for the finite mixture models "\code{MFA}" and "\code{MIFA}". Defaults to \code{1 - discount} for the "\code{IMFA}" and "\code{IMIFA}" models if \code{learn.alpha=FALSE} or a simulation from the prior if \code{learn.alpha=TRUE}. Must be positive, unless \code{discount} is supplied for the "\code{IMFA}" or "\code{IMIFA}" methods.}
+\item{alpha}{Depending on the method employed, either the hyperparameter of the Dirichlet prior for the cluster mixing proportions, or the Dirichlet process concentration parameter. Defaults to 0.5/range.G for the Overfitted methods - if supplied for "\code{OMFA}" and "\code{OMIFA}" methods, you are supplying the numerator of \code{alpha/range.G}, which should be less than half the dimension (per cluster!) of the free parameters of the smallest model considered in order to ensure superfluous clusters are emptied (for "\code{OMFA}", this corresponds to the smallest \code{range.Q}; for "\code{OMIFA}", this corresponds to a zero-factor model) [see: \code{\link{PGMM_dfree}} and Rousseau and Mengersen (2011)]. Defaults to 1 for the finite mixture models "\code{MFA}" and "\code{MIFA}". Defaults to \code{1 - discount} for the "\code{IMFA}" and "\code{IMIFA}" models if \code{learn.alpha} is \code{FALSE} or a simulation from the prior if \code{learn.alpha} is \code{TRUE}. Must be positive, unless \code{discount} is supplied for the "\code{IMFA}" or "\code{IMIFA}" methods, in which case it must be greater than \code{-discount}.}
 
 \item{storage}{A vector of named logical indicators governing storage of parameters of interest for all models in the IMIFA family. Defaults are set by a call to \code{\link{storeControl}}. It may be useful not to store certain parameters if memory is an issue.}
 
@@ -79,36 +79,6 @@ mcmc_IMIFA(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA",
 
 \item{z.list}{A user supplied list of cluster labels. Only relevant if \code{z.init == "z.list"}.}
 
-\item{trunc.G}{The maximum number of allowable and storable clusters if the "\code{IMFA}" or "\code{IMIFA}" method is employed. Defaults to the same value as \code{range.G} (unless \code{N < P}, see \code{range.G} for details) and must be greater than or equal to this value. The number of active clusters to be sampled at each iteration is adaptively truncated, with \code{trunc.G} as an upper limit for storage reasons. Note that large values of \code{trunc.G} may lead to memory capacity issues.}
-
-\item{learn.alpha}{Logical indicating whether the Dirichlet process / Pitman concentration parameter is to be learned, or remain fixed for the duration of the chain. If being learned, a Ga(a, b) prior is assumed for \code{alpha}; updates take place via Gibbs sampling when \code{discount} is zero and via Metropolis-Hastings otherwise. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods, in which case the default is \code{TRUE}.}
-
-\item{alpha.hyper}{A vector of length 2 giving hyperparameters for the Dirichlet process / Pitman-Yor concentration parameter \code{alpha}. If \code{isTRUE(learn.alpha)}, these are shape and rate parameter of a Gamma distribution. Defaults to Ga(2, 1). Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods, in which case the default is \code{TRUE}. The prior is shifted to have support on (-\code{discount}, \code{Inf}) when non-zero \code{discount} is supplied or \code{learn.d=TRUE}.}
-
-\item{ind.slice}{Logical indicitating whether the independent slice-efficient sampler is to be employed. If \code{FALSE} the dependent slice-efficient sampler is employed, whereby the slice sequence xi_1,...,xi_g is equal to the decreasingly ordered mixing proportions. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods. Defaults to \code{TRUE}.}
-
-\item{rho}{Parameter controlling the rate of geometric decay for the independent slice-efficient sampler, s.t. xi = (1 - rho)rho^(g-1). Must lie in the interval (0, 1]. Higher values are associated with better mixing but longer run times. Defaults to 0.75, but 0.5 is an interesting special case which guarantees that the slice sequence xi_1,...,xi_g is equal to the \emph{expectation} of the decreasingly ordered mixing proportions. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods when \code{ind.slice} is \code{TRUE}.}
-
-\item{IM.lab.sw}{Logial indicating whether the two forced label switching moves are to be implemented (defaults to \code{TRUE}) when running one of the infinite mixture models, with Dirichlet process or Pitman-Yor process priors. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods.}
-
-\item{discount}{The discount parameter used when generalising the Dirichlet process to the Pitman-Yor process. Must lie in the interval [0, 1). If non-zero, \code{alpha} can be supplied greater than -discount. Defaults to 0. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods.}
-
-\item{learn.d}{Logical indicating whether the \code{discount} parameter is to be updated via Metropolis-Hastings. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods, in which case the default is \code{FALSE}.}
-
-\item{d.hyper}{Hyperparameters for the Beta(a,b) prior on the \code{discount} hyperparameter. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods.}
-
-\item{kappa}{The spike-and-slab prior distribution on the \code{discount} hyperparameter is assumed to be a mixture with point-mass at zero and a continuous Beta(a,b) distribution. \code{kappa} gives the weight of the point mass at zero (the 'spike'). Must lie in the interval [0,1]. Defaults to 0.5. Only relevant for the "\code{IMFA}" and "\code{IMIFA}" methods when \code{isTRUE(learn.d)}. A value of 0 ensures non-zero discount values (i.e. Pitman-Yor) at all times, and \emph{vice versa}.}
-
-\item{zeta}{Tuning parameter controlling the acceptance rate of the random-walk proposal for the Metropolis-Hastings steps when \code{learn.alpha=TRUE}, where \code{2 * zeta} gives the full width of the uniform proposal distribution. These steps are only invoked when either \code{discount} is non-zero and fixed or \code{learn.d=TRUE}, otherwise \code{alpha} is learned by Gibbs updates. Must be strictly positive. Defauts to 2.}
-
-\item{tune.zeta}{Used for tuning \code{zeta} & the width of the uniform proposal for \code{alpha} via diminishing Robbins-Monro type adaptation, when that parameter is learned via Metropolis-Hastings. Must be given in the form of a list with the following \emph{named} elements:
-\describe{
-\item{"\code{heat}"}{The initial adaptation intensity/step-size, such that larger values lead to larger updates. Must be strictly greater than zero. Defaults to 1 if not supplied but other elements of \code{tune.zeta} are.}
-\item{"\code{lambda}"}{Iteration rescaling parameter which controls the speed at which adaptation diminishes, such that lower values cause the contribution of later iterations to diminish more slowly. Must lie in the interval (0.5, 1]. Defaults to 1 if not supplied but other elements of \code{tune.zeta} are.}
-\item{"\code{target}"}{The target acceptance rate. Must lie in the interval [0, 1]. Defaults to 0.441, which is optimum for univariate targets, if not supplied but other elements of \code{tune.zeta} are.}
-}
- \code{tune.zeta} is only relevant when \code{isTRUE(learn.alpha)} under the "\code{IMFA}" or "\code{IMIFA}" models, and either the \code{discount} remains fixed at a non-zero value, or when \code{isTRUE(learn.d)} and \code{kappa < 1}. Since Gibbs steps are invoked for updated \code{alpha} when \code{discount == 0}, adaption occurs according to a running count of the number of iterations with non-zero sampled \code{discount} values. If diminishing adaptation is invoked, the posterior mean \code{zeta} will be stored. Since caution is advised when employing adaptation, note that acceptance rates of between 10-50\% are generally considered adequate.}
-
 \item{equal.pro}{Logical variable indicating whether or not the mixing mixing proportions are to be equal across clusters in the model (default = \code{FALSE}).}
 
 \item{mu0g}{Logical indicating whether the \code{mu.zero} hyperparameter can be cluster-specific. Defaults to \code{FALSE}. Only relevant for the "\code{MFA}" and "\code{MIFA}" methods when \code{z.list} is supplied.}
@@ -116,6 +86,8 @@ mcmc_IMIFA(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA",
 \item{psi0g}{Logical indicating whether the \code{psi.beta} hyperparameter(s) can be cluster-specific. Defaults to \code{FALSE}. Only relevant for the "\code{MFA}" and "\code{MIFA}" methods when \code{z.list} is supplied, and only allowable when \code{uni.type} is one of \code{unconstrained} or \code{isotropic}.}
 
 \item{verbose}{Logical indicating whether to print output (e.g. run times) and a progress bar to the screen while the sampler runs. By default is \code{TRUE} if the session is interactive, and \code{FALSE} otherwise. If \code{FALSE}, warnings and error messages will still be printed to the screen, but everything else will be suppressed.}
+
+\item{...}{An alternative means of passing control parameters directly via the named arguments of \code{\link{mgpControl}}, \code{\link{bnpControl}}, and \code{\link{storeControl}}. Do not pass the output from calls to those functions here!}
 }
 \value{
 A list of lists of lists of class "\code{IMIFA}" to be passed to \code{\link{get_IMIFA_results}}. If the returned object is x, candidate models are accesible via subsetting, where x is of the form x[[1:length(range.G)]][[1:length(range.Q)]]. However, these objects of class "IMIFA" should rarely if ever be manipulated by hand - use of the \code{\link{get_IMIFA_results}} function is \emph{strongly} advised.
@@ -130,8 +102,10 @@ Creates a raw object of class "\code{IMIFA}" from which the optimal/modal model 
 Further control over the specification of advanced function arguments can be obtained with recourse to the following functions:\cr
 \itemize{
 \item{\strong{\code{\link{mgpControl}}} - }{Supply arguments (with defaults) pertaining to the multiplicative gamma process (MGP) shrinkage prior and adaptive Gibbs sampler (AGS). For use with the infinite factor models "\code{IFA}", "\code{MIFA}", "\code{OMIFA}", and "\code{IMIFA}" only.}
+\item{\strong{\code{\link{bnpControl}}} - }{Supply arguments (with defaults) pertaining to the Bayesian Nonparametric Dirichlet/Pitman Yor process priors (BNP). For use with the infinite mixture models "\code{IMFA}" and "\code{IMIFA}" only.}
 \item{\strong{\code{\link{storeControl}}} - }{Supply logical indicators governing storage of parameters of interest for all models in the IMIFA family. It may be useful not to store certain parameters if memory is an issue (e.g. for large data sets or for a large number of MCMC iterations after burnin and thinning).}
 }
+Note however that the named arguments of these functions can also be supplied directly.
 }
 \examples{
 # data(olive)
@@ -144,15 +118,14 @@ Further control over the specification of advanced function arguments can be obt
 # Fit an IMIFA model assuming a Pitman-Yor prior.
 # Allow the alpha and discount parameter to be learned.
 # Control the balance between the DP and PY priors using the kappa parameter.
-# simPY    <- mcmc_IMIFA(olive, method="IMIFA", learn.d=TRUE, kappa=0.5)
+# simPY    <- mcmc_IMIFA(olive, method="IMIFA", learn.d=TRUE, kappa=0.75)
 # summary(simPY)
 
 # Fit a MFA model to the scaled olive data, with isotropic uniquenesses (i.e. MPPCA).
 # Allow diagonal covariance as a special case where range.Q = 0.
 # Don't store the scores. Accept all other defaults.
-# simMFA   <- mcmc_IMIFA(olive, method="MFA", n.iters=10000, range.G=3:6,
-#                        range.Q=0:3, storage=storeControl(store.switch=FALSE),
-#                        centering=FALSE, uni.type="isotropic")
+# simMFA   <- mcmc_IMIFA(olive, method="MFA", n.iters=10000, range.G=3:6, range.Q=0:3,
+#                        score.switch=FALSE, centering=FALSE, uni.type="isotropic")
 
 # Fit a MIFA model to the centered & scaled coffee data, w/ cluster labels initialised by K-Means.
 # Note that range.Q doesn't need to be specified. Allow IFA as a special case where range.G=1.
@@ -160,17 +133,17 @@ Further control over the specification of advanced function arguments can be obt
 
 # Fit an IFA model to the centered and pareto scaled olive data.
 # Note that range.G doesn't need to be specified. We can optionally supply a range.Q starting value.
-# Enforce additional shrinkage using alpha.d1, alpha.d2, prop, and epsilon via mgpControl().
+# Enforce additional shrinkage using alpha.d1, alpha.d2, prop, and eps [via mgpControl()].
 # simIFA   <- mcmc_IMIFA(olive, method="IFA", n.iters=10000, range.Q=4, scaling="pareto",
-#                        MGP=mgpControl(alpha.d1=3.5, alpha.d2=7, prop=0.6, epsilon=0.12))
+#                        alpha.d1=3.5, alpha.d2=7, prop=0.6, eps=0.12)
 
 # Fit an OMIFA model to the centered & scaled coffee data.
 # Supply a sufficiently small alpha value. Try varying other hyperparameters.
 # Accept the default value for the starting number of factors,
 # but supply a value for the starting number of clusters.
-# Try contraining uniquenesses to be common across both variables and clusters.
+# Try constraining uniquenesses to be common across both variables and clusters.
 # simOMIFA <- mcmc_IMIFA(coffee, method="OMIFA", range.G=10, psi.alpha=3,
-#                        MGP=mgpControl(nu=3), alpha=0.8, uni.type="single")
+#                        nu=3, alpha=0.8, uni.type="single")
 }
 \references{
 Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, <\href{https://arxiv.org/abs/1701.07010}{arXiv:1701.07010}>.
@@ -186,7 +159,7 @@ Rousseau, J. and Mengersen, K. (2011) Asymptotic Behaviour of the posterior dist
 Tipping, M. E. and Bishop, C. M. (1999). Probabilistic principal component analysis, \emph{Journal of the Royal Statistical Society: Series B (Statistical Methodology)}, 61(3): 611-622.
 }
 \seealso{
-\code{\link{get_IMIFA_results}}, \code{\link{psi_hyper}}, \code{\link{mgpControl}}, \code{\link{storeControl}}
+\code{\link{get_IMIFA_results}}, \code{\link{psi_hyper}}, \code{\link{mgpControl}}, \code{\link{bnpControl}}, \code{\link{storeControl}}
 }
 \author{
 Keefe Murphy - \href{keefe.murphy@ucd.ie}{<keefe.murphy@ucd.ie>}

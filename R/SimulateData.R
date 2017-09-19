@@ -91,7 +91,7 @@ sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(floor(log(P)), G),
   }
   simdata      <- base::matrix(0, nrow=0, ncol=P)
   true.mu      <- true.l   <-
-  true.psi     <- true.cov <- setNames(vector("list", G), paste0("Cluster", Gseq))
+  true.psi     <- true.cov <- stats::setNames(vector("list", G), paste0("Cluster", Gseq))
   sq_mat       <- if(P > 50)  function(x) diag(sqrt(diag(x))) else sqrt
 
 # Simulate true parameter values
@@ -103,9 +103,9 @@ sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(floor(log(P)), G),
   for(g in Gseq) {
     Q.g        <- Q[g]
     N.g        <- nn[g]
-    mu.true    <- setNames(if(mu.miss) .sim_mu_p(P=P, mu.zero=musup[g], sig.mu.sqrt=1) else musup[,g], vnames)
+    mu.true    <- stats::setNames(if(mu.miss) .sim_mu_p(P=P, mu.zero=musup[g], sig.mu.sqrt=1) else musup[,g], vnames)
     l.true     <- matrix(.sim_load_p(Q=Q.g, P=P, sigma.l=1), nrow=P, ncol=Q.g)
-    psi.true   <- setNames(if(psi.miss) rgamma(P, 1, 1) else psisup[,g], vnames)
+    psi.true   <- stats::setNames(if(psi.miss) stats::rgamma(P, 1, 1) else psisup[,g], vnames)
 
   # Simulate data
     covmat     <- provideDimnames({ if(P > 1) diag(psi.true) else as.matrix(psi.true) } + { if(Q.g > 0) switch(method, marginal=tcrossprod(l.true), 0) else 0}, base=list(vnames))
@@ -114,7 +114,7 @@ sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(floor(log(P)), G),
     covmat     <- is.posi_def(covmat, make=TRUE)$X.new
     sigma      <- if(all(Q.g > 0, P > 1, method == "marginal")) .chol(covmat) else sq_mat(covmat)
     means      <- matrix(mu.true, nrow=N.g, ncol=P, byrow=TRUE) + switch(method, conditional=tcrossprod(eta.true[true.zlab == g, seq_len(Q.g), drop=FALSE], l.true), 0)
-    simdata    <- rbind(simdata, means + matrix(rnorm(N.g * P), nrow=N.g, ncol=P) %*% sigma)
+    simdata    <- rbind(simdata, means + matrnorm(N.g, P) %*% sigma)
     dimnames(l.true)   <- list(vnames, if(Q.g > 0) paste0("Factor ", seq_len(Q.g)))
     true.mu[[g]]       <- mu.true
     true.l[[g]]        <- l.true

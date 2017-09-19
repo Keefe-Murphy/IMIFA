@@ -6,7 +6,7 @@
 \usage{
 mgpControl(alpha.d1 = 2, alpha.d2 = 6, nu = 2, prop = 0.7, eps = 0.1,
   adapt = TRUE, b0 = 0.1, b1 = 5e-05, nuplus1 = TRUE, beta.d1 = 1,
-  beta.d2 = 1, adapt.at = 0L, delta0g = FALSE)
+  beta.d2 = 1, adapt.at = 0L, delta0g = FALSE, ...)
 }
 \arguments{
 \item{alpha.d1}{Shape hyperparameter of the global shrinkage on the first column of the loadings according to the MGP shrinkage prior. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to 2.}
@@ -34,6 +34,8 @@ mgpControl(alpha.d1 = 2, alpha.d2 = 6, nu = 2, prop = 0.7, eps = 0.1,
 \item{adapt.at}{The iteration at which adaptation is to begin. Defaults to \code{burnin} for the "\code{IFA}" and "\code{MIFA}" methods, defaults to 0 for the "\code{OMIFA}" and "\code{IMIFA}" methods. Cannot exceed \code{burnin}.}
 
 \item{delta0g}{Logical indicating whether the \code{alpha.d1} and \code{alpha.d2} hyperparameters can be cluster-specific. Defaults to \code{FALSE}. Only relevant for the "\code{MIFA}" method and only allowed when \code{z.list} is supplied within \code{\link{mcmc_IMIFA}}.}
+
+\item{...}{Catches unused arguments.}
 }
 \value{
 A named list in which the names are the names of the arguments related to the MGP and AGS and the values are the values supplied to the arguments.
@@ -50,6 +52,9 @@ mgpControl(nu=2.5, eps=1e-02)
 # data(olive)
 # sim <- mcmc_IMIFA(olive, "IMIFA", n.iters=5000,
 #                   MGP=mgpControl(nu=2.5, eps=1e-02))
+
+# Alternatively specify these arguments directly
+# sim <- mcmc_IMIFA(olive, "IMIFA", n.iters=5000, nu=2.5, eps=1e-02)
 }
 \references{
 Bhattacharya, A. and Dunson, D. B. (2011) Sparse Bayesian infinite factor models, \emph{Biometrika}, 98(2): 291-306.

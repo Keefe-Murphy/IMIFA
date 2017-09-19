@@ -12,7 +12,7 @@
     start.time   <- proc.time()
     matrix       <- base::matrix
     total        <- max(iters)
-    if(verbose)     pb     <- txtProgressBar(min=0, max=total, style=3)
+    if(verbose)     pb     <- utils::txtProgressBar(min=0, max=total, style=3)
     n.store      <- length(iters)
     Pseq         <- seq_len(P)
     obsnames     <- rownames(data)
@@ -34,7 +34,7 @@
     post.mu      <- rep(0L, P)
     post.psi     <- post.mu
     ll.store     <- rep(0L, n.store)
-    cov.emp      <- if(P > 500) switch(scaling, unit=cora(as.matrix(data)), cova(as.matrix(data))) else switch(scaling, unit=cor(data), cov(data))
+    cov.emp      <- if(P > 500) switch(scaling, unit=cora(as.matrix(data)), cova(as.matrix(data))) else switch(scaling, unit=stats::cor(data), stats::cov(data))
     cov.est      <- matrix(0L, nrow=P, ncol=P)
     Q.star       <- Q
     Q.store      <- rep(0L, n.store)
@@ -54,7 +54,7 @@
     lmat         <- matrix(vapply(Pseq, function(j) .sim_load_ps(Q=Q, phi=phi[j,], tau=tau), numeric(Q)), nrow=P, byrow=TRUE)
     psi.inv      <- .sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
     if(Q   < min(N - 1, Ledermann(P))) {
-      fact       <- try(factanal(data, factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
+      fact       <- try(stats::factanal(data, factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
       if(!inherits(fact, "try-error")) {
         eta      <- fact$scores
         lmat     <- unclass(fact$loadings)
@@ -78,7 +78,7 @@
 
   # Iterate
     for(iter in seq_len(total)[-1]) {
-      if(verbose && iter    < burnin) setTxtProgressBar(pb, iter)
+      if(verbose && iter    < burnin) utils::setTxtProgressBar(pb, iter)
       storage    <- is.element(iter,  iters)
       Q0         <- Q  > 0
       Q1         <- Q == 1
@@ -116,9 +116,9 @@
       }
 
     # Adaptation
-      if(all(adapt, iter > adaptat)) {
-        if(runif(1) < ifelse(iter < burnin, 0.5, exp(-b0 - b1 * (iter - adaptat)))) {
-          colvec <- (if(Q0) colSums(abs(lmat) < epsilon) / P else 0) >= prop
+      if(all(adapt, iter   > adaptat))   {
+        if(stats::runif(1) < ifelse(iter < burnin, 0.5, exp(-b0 - b1  * (iter - adaptat)))) {
+          colvec <- (if(Q0) colSums(abs(lmat) < epsilon) / P     else 0) >= prop
           numred <- sum(colvec)
           if(numred == 0)  { # simulate extra columns from priors
             Q    <- Q + 1
@@ -126,11 +126,11 @@
             if(Q.big) {
               Q     <- Q.star
             } else {
-              eta   <- if(storage) cbind(eta,  rnorm(N))    else eta
-              phi   <- cbind(phi,  rgamma(n=P, shape=nu + nuplus1, rate=nu))
-              delta <- c(delta,    rgamma(n=1, shape=alpha.d2, rate=beta.d2))
+              eta   <- if(storage) cbind(eta, stats::rnorm(N))   else eta
+              phi   <- cbind(phi,  stats::rgamma(n=P, shape=nu + nuplus1,  rate=nu))
+              delta <- c(delta,    stats::rgamma(n=1, shape=alpha.d2, rate=beta.d2))
               tau   <- cumprod(delta)
-              lmat  <- cbind(lmat, rnorm(n=P, mean=0, sd=sqrt(1/(phi[,Q] * tau[Q]))))
+              lmat  <- cbind(lmat, stats::rnorm(n=P, mean=0, sd=sqrt(1/(phi[,Q] * tau[Q]))))
             }
           } else          { # remove redundant columns
             nonred  <- which(colvec == 0)
@@ -148,7 +148,7 @@
         Q.large  <- TRUE
       }
       if(storage) {
-        if(verbose) setTxtProgressBar(pb, iter)
+        if(verbose) utils::setTxtProgressBar(pb, iter)
         new.it   <- which(iters == iter)
         psi      <- 1/psi.inv
         post.mu  <- post.mu + mu/n.store
@@ -171,8 +171,8 @@
                          eta      = if(sw["s.sw"])   tryCatch(provideDimnames(tryCatch(as.simple_sparse_array(eta.store),        error=function(e) eta.store),  base=list(obsnames, "", ""), unique=FALSE), error=function(e) eta.store),
                          load     = if(sw["l.sw"])   tryCatch(provideDimnames(tryCatch(as.simple_sparse_array(load.store),       error=function(e) load.store), base=list(varnames, "", ""), unique=FALSE), error=function(e) load.store),
                          psi      = if(sw["psi.sw"]) tryCatch(provideDimnames(psi.store, base=list(varnames, ""), unique=FALSE), error=function(e) psi.store),
-                         post.mu  = tryCatch(setNames(post.mu,  varnames),                   error=function(e) post.mu),
-                         post.psi = tryCatch(setNames(post.psi, varnames),                   error=function(e) post.psi),
+                         post.mu  = tryCatch(stats::setNames(post.mu,  varnames),            error=function(e) post.mu),
+                         post.psi = tryCatch(stats::setNames(post.psi, varnames),            error=function(e) post.psi),
                          cov.emp  = tryCatch(provideDimnames(cov.emp,  base=list(varnames)), error=function(e) cov.emp),
                          cov.est  = tryCatch(provideDimnames(cov.est,  base=list(varnames)), error=function(e) cov.est),
                          ll.store = ll.store,

@@ -12,7 +12,7 @@
     sq_mat         <- if(P  > 50) function(x) diag(sqrt(diag(x))) else sqrt
     matrix         <- base::matrix
     total          <- max(iters)
-    if(verbose)       pb   <- txtProgressBar(min=0, max=total, style=3)
+    if(verbose)       pb   <- utils::txtProgressBar(min=0, max=total, style=3)
     n.store        <- length(iters)
     Gseq           <- seq_len(G)
     Pseq           <- seq_len(P)
@@ -82,7 +82,7 @@
     if(Q0     && Q  < min(N - 1, Ledermann(P))) {
       fact.ind     <- nn   <= P
       for(g in which(!fact.ind)) {
-        fact       <- try(factanal(data[z == g,, drop=FALSE], factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
+        fact       <- try(stats::factanal(data[z == g,, drop=FALSE], factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
         if(!inherits(fact, "try-error")) {
           eta[z == g,]     <- fact$scores
           lmat[,,g]        <- unclass(fact$loadings)
@@ -108,14 +108,14 @@
       if(sw["pi.sw"])  pi.store[,1]     <- pi.prop
       z.store[1,]          <- z
       sigma                <- if(uni) lapply(Gseq, function(g) as.matrix(1/psi.inv[,g] + if(Q0) tcrossprod(as.matrix(lmat[,,g])) else 0)) else lapply(Gseq, function(g) tcrossprod(lmat[,,g]) + diag(1/psi.inv[,g]))
-      log.probs            <- if(uni) vapply(Gseq, function(g) dnorm(data, mu[,g], sq_mat(sigma[[g]]), log=TRUE) + log(pi.prop[g]), numeric(N)) else vapply(Gseq, function(g) { sigma <- if(Q0) sigma[[g]] else sq_mat(sigma[[g]]); dmvn(data, mu[,g], is.posi_def(sigma, make=TRUE)$X.new, log=TRUE, isChol=!Q0) + log(pi.prop[g]) }, numeric(N))
+      log.probs            <- if(uni) vapply(Gseq, function(g) stats::dnorm(data, mu[,g], sq_mat(sigma[[g]]), log=TRUE) + log(pi.prop[g]), numeric(N)) else vapply(Gseq, function(g) { sigma <- if(Q0) sigma[[g]] else sq_mat(sigma[[g]]); dmvn(data, mu[,g], is.posi_def(sigma, make=TRUE)$X.new, log=TRUE, isChol=!Q0) + log(pi.prop[g]) }, numeric(N))
       ll.store[1]          <- sum(rowLogSumExps(log.probs))
     }
     init.time      <- proc.time() - start.time
 
   # Iterate
     for(iter in seq_len(total)[-1]) {
-      if(verbose   && iter  < burnin)  setTxtProgressBar(pb, iter)
+      if(verbose   && iter  < burnin)  utils::setTxtProgressBar(pb, iter)
       storage      <- is.element(iter, iters)
 
     # Mixing Proportions
@@ -126,9 +126,9 @@
       sigma        <- if(uni) lapply(Gseq, function(g) as.matrix(psi[,g] + if(Q0) tcrossprod(as.matrix(lmat[,,g])) else 0)) else lapply(Gseq, function(g) tcrossprod(lmat[,,g]) + diag(psi[,g]))
       log.pis      <- if(equal.pro) log.pis else log(pi.prop)
       if(uni) {
-        log.probs  <- vapply(Gseq, function(g) dnorm(data, mu[,g], sq_mat(sigma[[g]]), log=TRUE) + log.pis[g], numeric(N))
+        log.probs  <- vapply(Gseq, function(g) stats::dnorm(data, mu[,g], sq_mat(sigma[[g]]), log=TRUE) + log.pis[g], numeric(N))
       } else  {
-        log.check  <- capture.output(log.probs <- try(vapply(Gseq, function(g) dmvn(data, mu[,g], if(Q0) sigma[[g]] else sq_mat(sigma[[g]]), log=TRUE, isChol=!Q0) + log.pis[g], numeric(N)), silent=TRUE))
+        log.check  <- utils::capture.output(log.probs <- try(vapply(Gseq, function(g) dmvn(data, mu[,g], if(Q0) sigma[[g]] else sq_mat(sigma[[g]]), log=TRUE, isChol=!Q0) + log.pis[g], numeric(N)), silent=TRUE))
       }
       if(inherits(log.probs, "try-error")) {
         log.probs  <- vapply(Gseq, function(g) { sigma <- if(Q0) sigma[[g]] else sq_mat(sigma[[g]]); dmvn(data, mu[,g], is.posi_def(sigma, make=TRUE)$X.new, log=TRUE, isChol=!Q0) + log.pis[g] }, numeric(N))
@@ -192,7 +192,7 @@
         err.z      <- TRUE
       }
       if(storage)  {
-        if(verbose)   setTxtProgressBar(pb, iter)
+        if(verbose)   utils::setTxtProgressBar(pb, iter)
         new.it     <- which(iters == iter)
         if(sw["mu.sw"])            mu.store[,,new.it]      <- mu
         if(all(sw["s.sw"], Q0))    eta.store[,,new.it]     <- eta
