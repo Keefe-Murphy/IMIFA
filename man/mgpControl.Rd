@@ -4,9 +4,19 @@
 \alias{mgpControl}
 \title{Control settings for the MGP prior and AGS for infinite factor models}
 \usage{
-mgpControl(alpha.d1 = 2, alpha.d2 = 6, nu = 2, prop = 0.7, eps = 0.1,
-  adapt = TRUE, b0 = 0.1, b1 = 5e-05, nuplus1 = TRUE, beta.d1 = 1,
-  beta.d2 = 1, adapt.at = 0L, delta0g = FALSE, ...)
+mgpControl(alpha.d1 = 2,
+  alpha.d2 = 6,
+  nu = 2,
+  prop = 0.7,
+  eps = 0.1,
+  adapt = TRUE,
+  b0 = 0.1,
+  b1 = 5e-05,
+  nuplus1 = TRUE,
+  beta.d1 = 1,
+  beta.d2 = 1,
+  adapt.at = 0L,
+  delta0g = FALSE, ...)
 }
 \arguments{
 \item{alpha.d1}{Shape hyperparameter of the global shrinkage on the first column of the loadings according to the MGP shrinkage prior. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to 2.}
@@ -21,9 +31,11 @@ mgpControl(alpha.d1 = 2, alpha.d2 = 6, nu = 2, prop = 0.7, eps = 0.1,
 
 \item{adapt}{A logical value indicating whether adaptation of the number of cluster-specific factors is to take place when the MGP prior is employed. Defaults to \code{TRUE}. Specifying \code{FALSE} and supplying \code{range.Q} within \code{\link{mcmc_IMIFA}} provides a means to either approximate the infinite factor model with a fixed high truncation level, or to use the MGP prior in a finite factor context, however this is NOT recommended for the "\code{OMIFA}" and "\code{IMIFA}" methods.}
 
-\item{b0}{Intercept parameter for the exponentially decaying adaptation probability s.t. \code{p(iter) = 1/exp(b0 + b1 * (iter - adapt.at))}. Defaults to 0.1. Must be non-negative to ensure diminishing adaptation.}
+\item{b0, b1}{Intercept & slope parameters for the exponentially decaying adaptation probability:
 
-\item{b1}{Slope parameter for the exponentially decaying adaptation probability s.t. \code{p(iter) = 1/exp(b0 + b1 * (iter - adapt.at))}. Defaults to 0.00005. Must be positive to ensure diminishing adaptation.}
+\code{p(iter) = 1/exp(b0 + b1 * (iter - adapt.at))}.
+
+Defaults to 0.1 & 0.00005, respectively. Must be non-negative and strictly positive, respectively, to ensure diminishing adaptation.}
 
 \item{nuplus1}{Logical switch indicating whether the shape hyperparameter of the prior on the local shrinkage parameters is equal to \code{nu + 1} (i.e. Ga(\code{nu + 1}, \code{nu})). If \code{FALSE}, it is simply equal to \code{nu} (i.e. Ga(\code{nu}, \code{nu})).}
 
@@ -63,5 +75,6 @@ Bhattacharya, A. and Dunson, D. B. (2011) Sparse Bayesian infinite factor models
 \code{\link{mcmc_IMIFA}}, \code{\link{MGP_check}}
 }
 \author{
-Keefe Murphy - \href{keefe.murphy@ucd.ie}{<keefe.murphy@ucd.ie>}
+Keefe Murphy - <\email{keefe.murphy@ucd.ie}>
 }
+\keyword{control}

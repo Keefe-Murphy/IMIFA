@@ -40,7 +40,7 @@
 #' @param mu.zero The mean of the prior distribution for the mean parameter. Defaults to the sample mean of the data.
 #' @param sigma.mu The covariance of the prior distribution for the mean parameter. Always assumed to be a diagonal matrix. Can be a scalar times the identity or a vector of appropriate dimension. If supplied as a matrix, only the diagonal elements will be extracted. Defaults to the diagonal entries of the sample covariance matrix.
 #' @param sigma.l The covariance of the prior distribution for the loadings. Defaults to 1. Only relevant for the finite factor methods.
-#' @param z.init The method used to initialise the cluster labels. Defaults to \code{\link[mclust]{Mclust}}. Other options include \code{kmeans}, hierarchical clustering via \code{\link[mclust]{hc}}, random initialisation via \code{priors}, and a user-supplied \code{list}. Not relevant for the "\code{FA}" and "\code{"IFA"} methods.
+#' @param z.init The method used to initialise the cluster labels. Defaults to \code{\link[mclust]{Mclust}}. Other options include \code{kmeans}, hierarchical clustering via \code{\link[mclust]{hc}} (\code{VVV} is used, unless the data is high-dimensional, in which case \code{EII} is used), random initialisation via \code{priors}, and a user-supplied \code{list}. Not relevant for the "\code{FA}" and "\code{"IFA"} methods.
 #' @param z.list A user supplied list of cluster labels. Only relevant if \code{z.init == "z.list"}.
 #' @param equal.pro Logical variable indicating whether or not the mixing mixing proportions are to be equal across clusters in the model (default = \code{FALSE}).
 #' @param mu0g Logical indicating whether the \code{mu.zero} hyperparameter can be cluster-specific. Defaults to \code{FALSE}. Only relevant for the "\code{MFA}" and "\code{MIFA}" methods when \code{z.list} is supplied.
@@ -50,7 +50,7 @@
 #'
 #' @details Creates a raw object of class "\code{IMIFA}" from which the optimal/modal model can be extracted by \code{\link{get_IMIFA_results}}. Dedicated \code{print} and \code{summary} functions exist for objects of class "\code{IMIFA}".
 #'
-#' @note Further control over the specification of advanced function arguments can be obtained with recourse to the following functions:\cr
+#' @note Further control over the specification of advanced function arguments can be obtained with recourse to the following functions:
 #' \itemize{
 #' \item{\strong{\code{\link{mgpControl}}} - }{Supply arguments (with defaults) pertaining to the multiplicative gamma process (MGP) shrinkage prior and adaptive Gibbs sampler (AGS). For use with the infinite factor models "\code{IFA}", "\code{MIFA}", "\code{OMIFA}", and "\code{IMIFA}" only.}
 #' \item{\strong{\code{\link{bnpControl}}} - }{Supply arguments (with defaults) pertaining to the Bayesian Nonparametric Dirichlet/Pitman Yor process priors (BNP). For use with the infinite mixture models "\code{IMFA}" and "\code{IMIFA}" only.}
@@ -58,8 +58,9 @@
 #' }
 #' Note however that the named arguments of these functions can also be supplied directly.
 #' @return A list of lists of lists of class "\code{IMIFA}" to be passed to \code{\link{get_IMIFA_results}}. If the returned object is x, candidate models are accesible via subsetting, where x is of the form x[[1:length(range.G)]][[1:length(range.Q)]]. However, these objects of class "IMIFA" should rarely if ever be manipulated by hand - use of the \code{\link{get_IMIFA_results}} function is \emph{strongly} advised.
+#' @keywords IMIFA main
 #' @export
-#' @importFrom matrixStats "rowLogSumExps"
+#' @importFrom matrixStats "colMeans2" "colSums2" "rowLogSumExps" "rowSums2"
 #' @importFrom Rfast "Order" "colVars" "rowmeans" "standardise" "sort_unique" "cora" "cova" "Round" "groupcolVars" "matrnorm"
 #' @importFrom mvnfast "dmvn"
 #' @importFrom slam "as.simple_sparse_array" "as.simple_triplet_matrix"
@@ -79,7 +80,7 @@
 #'
 #' Tipping, M. E. and Bishop, C. M. (1999). Probabilistic principal component analysis, \emph{Journal of the Royal Statistical Society: Series B (Statistical Methodology)}, 61(3): 611-622.
 #'
-#' @author Keefe Murphy - \href{keefe.murphy@ucd.ie}{<keefe.murphy@ucd.ie>}
+#' @author Keefe Murphy - <\email{keefe.murphy@@ucd.ie}>
 #'
 #' @examples
 #' # data(olive)
@@ -176,7 +177,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   } else   {
     dat     <- as.matrix(raw.dat)
   }
-  centered  <- switch(method, classify=all(Round(colSums(dat)) == 0), any(centering, all(Round(colSums(dat)) == 0)))
+  centered  <- switch(method, classify=all(Round(colSums2(dat)) == 0), any(centering, all(Round(colSums2(dat)) == 0)))
   if(!any(centered, centering) && all(verbose,
     scaling != "none"))             message("Are you sure you want to apply scaling without centering?")
 
@@ -324,7 +325,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   datname          <- rownames(dat)
   if(any(length(unique(datname)) != N,
      is.null(datname)))      rownames(dat) <- seq_len(N)
-  mu               <- list(as.matrix(colMeans(dat)))
+  mu               <- list(as.matrix(colMeans2(dat)))
   mu0.x            <- missing(mu.zero)
   mu.zero          <- if(mu0.x) mu  else     .len_check(mu.zero, mu0g, method, P, G.init)
   sigmu.miss       <- missing(sigma.mu)
@@ -545,10 +546,10 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
       }
       nngs         <- tabulate(zi[[g]], nbins=switch(method, IMFA=, IMIFA=trunc.G, G))
       pi.prop[[g]] <- if(equal.pro) rep(1/G, G) else prop.table(nngs)
-      mu[[g]]      <- vapply(seq_len(G), function(gg) if(nngs[gg] > 0) colMeans(dat[zi[[g]] == gg,, drop=FALSE]) else rep(0, P), numeric(P))
+      mu[[g]]      <- vapply(seq_len(G), function(gg) if(nngs[gg] > 0) colMeans2(dat[zi[[g]] == gg,, drop=FALSE]) else rep(0, P), numeric(P))
       mu[[g]]      <- if(uni)       t(mu[[g]])  else mu[[g]]
       if(mu0.x)   {
-        mu.zero[[g]]    <- if(mu0g) mu[[g]]     else vapply(seq_len(G), function(gg) colMeans(dat), numeric(P))
+        mu.zero[[g]]    <- if(mu0g) mu[[g]]     else vapply(seq_len(G), function(gg) colMeans2(dat), numeric(P))
       }
       mu.zero[[g]] <- if(uni && !mu0g) t(mu.zero[[g]]) else mu.zero[[g]]
       if(beta.x)  {

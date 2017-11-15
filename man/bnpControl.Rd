@@ -4,9 +4,17 @@
 \alias{bnpControl}
 \title{Control settings for the Bayesian Nonparametric priors (BNP) for infinite mixture models}
 \usage{
-bnpControl(learn.alpha = TRUE, alpha.hyper = c(2L, 1L), discount = NULL,
-  learn.d = FALSE, d.hyper = c(1L, 1L), ind.slice = TRUE, rho = 0.75,
-  trunc.G = NULL, kappa = 0.5, IM.lab.sw = TRUE, zeta = 2,
+bnpControl(learn.alpha = TRUE,
+  alpha.hyper = c(2L, 1L),
+  discount = NULL,
+  learn.d = FALSE,
+  d.hyper = c(1L, 1L),
+  ind.slice = TRUE,
+  rho = 0.75,
+  trunc.G = NULL,
+  kappa = 0.5,
+  IM.lab.sw = TRUE,
+  zeta = 2,
   tune.zeta = NULL, ...)
 }
 \arguments{
@@ -67,5 +75,6 @@ bnpControl(ind.slice=FALSE, alpha.hyper=c(3, 1), learn.d=TRUE)
 \code{\link{mcmc_IMIFA}}, \code{\link{G_priorDensity}}
 }
 \author{
-Keefe Murphy - \href{keefe.murphy@ucd.ie}{<keefe.murphy@ucd.ie>}
+Keefe Murphy - <\email{keefe.murphy@ucd.ie}>
 }
+\keyword{control}

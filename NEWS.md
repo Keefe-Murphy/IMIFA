@@ -13,11 +13,13 @@ __Infinite Mixtures of Infinite Factor Analysers__
 ### Improvements
 * All methods now work for univariate data also (with apt. edits to plots & uniqueness defaults etc.).  
   `sim_IMIFA_data` also extended to work for univariate data, as well as sped-up.
-* `Zsimilarity` sped-up via `mcclust::comp.psm` s.t. `z.avgsim=TRUE` now by default in `get_IMIFA_results`.
+* `Zsimilarity` sped-up via the `comp.psm` & `cltoSim` functions s.t.  
+  `z.avgsim=TRUE` now by default in `get_IMIFA_results` when suggested `mcclust` package is loaded.
 * Added "`hc`" option to `z.init` to initialise allocations via hierarchical clustering (using `mclust::hc`).
 * `mu` argument added to `sim_IMIFA_data` to allow supplying true mean parameter values directly.
 * Standard deviation of AICM/BICM model selection criteria now computed and returned.
 * Speed-ups due to new `Rfast` functions: `colTabulate`, `groupcolVars`, `matrnorm`, `Order` & `Round`.
+* Speed-ups due to utility functions from `matrixStats`, on which `IMIFA` already depends.
 * Slight improvements when `adapt=FALSE` for infinite factor models with fixed high truncation level.
 * `heat_legend` gains `cex.lab` argument to control magnification of legend text.
 
@@ -40,6 +42,7 @@ __Infinite Mixtures of Infinite Factor Analysers__
 ### Miscellaneous
 * Optimised compression of `olive`, `coffee` and vignette data and used `LazyData: true`.
 * Removed dependency on`adrop`, `e1071`, `graphics`, `grDevices`, `plotrix`, `stats` & `utils` libraries.
+* Added `CITATION` file.
 * Extensively improved package help documentation.
 
 ## IMIFA v1.3.1 - (_5<sup>th</sup> release [patch update]: 2017-07-07_)

@@ -20,13 +20,14 @@
 #'
 #' @return The desired plot with appropriate output and summary statistics printed to the console screen.
 #' @export
+#' @keywords plotting main
 #' @importFrom Rfast "Order" "med" "colMedians" "Round"
 #' @importFrom mclust "classError"
 #' @importFrom viridis "viridis"
 #' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{get_IMIFA_results}}, \code{\link{mat2cols}}, \code{\link{plot_cols}}
 #' @references Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, <\href{https://arxiv.org/abs/1701.07010}{arXiv:1701.07010}>.
 #'
-#' @author Keefe Murphy - \href{keefe.murphy@ucd.ie}{<keefe.murphy@ucd.ie>}
+#' @author Keefe Murphy - <\email{keefe.murphy@@ucd.ie}>
 #'
 #' @examples
 #' # See the vignette associated with the package for more graphical examples:
@@ -599,8 +600,8 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
       if(param == "means") {
         plot.x <- x$Means$post.mu[,g]
         if(g   == min(Gs)) {
-          pxx  <- range(sapply(x$Means$post.mu,    range))
-          cixx <- if(all(intervals, ci.sw[param])) range(sapply(x$Means$ci.mu, range))
+          pxx  <- range(vapply(x$Means$post.mu,    range, numeric(2L)))
+          cixx <- if(all(intervals, ci.sw[param])) range(vapply(x$Means$ci.mu, range, numeric(2L)))
         }
         if(ci.sw[param])  ci.x   <- x$Means$ci.mu[[g]]
         graphics::plot(plot.x, type=type, ylab="", xlab="Variable", ylim=if(is.element(method, c("FA", "IFA"))) c(-1, 1) else if(all(intervals, ci.sw[param])) cixx else pxx)
@@ -689,8 +690,8 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
            lxx <- mat2cols(if(G > 1) plot.x else plot.x[[g]], cols=hcols, compare=G > 1, na.col=graphics::par()$bg)
           }
          }
-          pxx  <- range(sapply(Filter(Negate(is.null), plot.x), range))
-          cixx <- if(all(intervals, ci.sw[param], !heat.map)) { if(by.fac) range(sapply(Filter(Negate(is.null), x$Loadings$ci.load), function(x) range(x[,,ind[2]]))) else range(sapply(Filter(Negate(is.null), x$Loadings$ci.load), function(x) range(x[,ind[1],]))) }
+          pxx  <- range(vapply(Filter(Negate(is.null), plot.x), range, numeric(2L)))
+          cixx <- if(all(intervals, ci.sw[param], !heat.map)) { if(by.fac) range(vapply(Filter(Negate(is.null), x$Loadings$ci.load), function(x) range(x[,,ind[2]]), numeric(2L))) else range(vapply(Filter(Negate(is.null), x$Loadings$ci.load), function(x) range(x[,ind[1],]), numeric(2L))) }
         }
         if(isTRUE(heat.map))  {
           if(titles) graphics::par(mar=c(4.1, 4.1, 4.1, 4.1))
@@ -735,8 +736,8 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
       if(param == "uniquenesses") {
         plot.x <- x$Uniquenesses$post.psi[,g]
         if(g   == min(Gs)) {
-          pxx  <- c(0, max(sapply(x$Uniquenesses$post.psi, max)))
-          cixx <- if(all(intervals, ci.sw[param])) c(0, max(sapply(x$Uniquenesses$ci.psi, max)))
+          pxx  <- c(0, max(vapply(x$Uniquenesses$post.psi, max, numeric(1L))))
+          cixx <- if(all(intervals, ci.sw[param])) c(0, max(vapply(x$Uniquenesses$ci.psi, max, numeric(1L))))
         }
         if(ci.sw[param])  ci.x   <- x$Uniquenesses$ci.psi[[g]]
         graphics::plot(plot.x, type=type, ylab="", xlab="Variable", ylim=if(all(intervals, ci.sw[param])) cixx else pxx)
@@ -1263,6 +1264,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
 #'
 #' @return A matrix of hex colour code representations, or a list of such matrices when \code{compare} is \code{TRUE}.
 #' @export
+#' @keywords plotting
 #' @importFrom viridis "viridis"
 #'
 #' @seealso \code{\link{plot_cols}}, \code{\link{heat_legend}}, \code{\link{is.cols}}
@@ -1350,6 +1352,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
 #' @param cols A vector of colours, usually as a character string.
 #'
 #' @return A logical vector of length \code{length(cols)} which is \code{TRUE} for entries which are valid colours and \code{FALSE} otherwise.
+#' @keywords utility
 #' @export
 #'
 #' @examples
@@ -1372,6 +1375,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
 #'
 #' @return Modifies an existing plot by adding a legend.
 #' @export
+#' @keywords plotting
 #'
 #' @seealso \code{\link[graphics]{image}}, \code{\link{plot_cols}}, \code{\link{mat2cols}}, \code{\link{is.cols}}
 #' @examples
@@ -1421,12 +1425,13 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
 #'
 #' @return A plot of the prior distribution if \code{show.plot} is \code{TRUE}. Density values are returned invisibly. Note that the density values may not strictly sum to one in certain cases, as values small enough to be represented as zero may well be returned.
 #' @export
+#' @keywords plotting
 #' @importFrom viridis "viridis"
 #' @seealso \code{\link{G_expected}}, \code{\link{G_variance}}, \code{\link[Rmpfr]{Rmpfr}}
 #'
 #' @note Requires use of the \code{Rmpfr} and \code{gmp} libraries; may encounter difficulty and slowness for large \code{N}, especially with non-zero \code{discount} values.
 #'
-#' @author Keefe Murphy - \href{keefe.murphy@ucd.ie}{<keefe.murphy@ucd.ie>}
+#' @author Keefe Murphy - <\email{keefe.murphy@@ucd.ie}>
 #'
 #' @examples
 #'
@@ -1513,6 +1518,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
 #' @param ... Further graphical parameters.
 #'
 #' @return Either an \code{"image"} or \code{"points"} type plot of the supplied colours.
+#' @keywords plotting
 #' @export
 #'
 #' @seealso \code{\link{mat2cols}}, \code{\link[graphics]{image}}, \code{\link{heat_legend}}, \code{\link{is.cols}}

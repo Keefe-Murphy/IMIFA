@@ -4,16 +4,32 @@
 \alias{mcmc_IMIFA}
 \title{Adaptive Gibbs Sampler for Nonparameteric Model-based Clustering using models from the IMIFA family}
 \usage{
-mcmc_IMIFA(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA",
-  "MFA", "IFA", "FA", "classify"), range.G = NULL, range.Q = NULL,
-  n.iters = 25000L, burnin = n.iters/5, thinning = 2L,
-  MGP = mgpControl(...), BNP = bnpControl(...), centering = TRUE,
-  scaling = c("unit", "pareto", "none"), uni.type = c("unconstrained",
-  "isotropic", "constrained", "single"), uni.prior = c("unconstrained",
-  "isotropic"), alpha = NULL, storage = storeControl(...),
-  psi.alpha = NULL, psi.beta = NULL, mu.zero = NULL, sigma.mu = NULL,
-  sigma.l = NULL, z.init = c("mclust", "hc", "kmeans", "list", "priors"),
-  z.list = NULL, equal.pro = FALSE, mu0g = FALSE, psi0g = FALSE,
+mcmc_IMIFA(dat = NULL,
+  method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA",
+  "MFA", "IFA", "FA", "classify"),
+  range.G = NULL,
+  range.Q = NULL,
+  n.iters = 25000L,
+  burnin = n.iters/5,
+  thinning = 2L,
+  MGP = mgpControl(...),
+  BNP = bnpControl(...),
+  centering = TRUE,
+  scaling = c("unit", "pareto", "none"),
+  uni.type = c("unconstrained", "isotropic", "constrained", "single"),
+  uni.prior = c("unconstrained", "isotropic"),
+  alpha = NULL,
+  storage = storeControl(...),
+  psi.alpha = NULL,
+  psi.beta = NULL,
+  mu.zero = NULL,
+  sigma.mu = NULL,
+  sigma.l = NULL,
+  z.init = c("mclust", "hc", "kmeans", "list", "priors"),
+  z.list = NULL,
+  equal.pro = FALSE,
+  mu0g = FALSE,
+  psi0g = FALSE,
   verbose = interactive(), ...)
 }
 \arguments{
@@ -75,7 +91,7 @@ The first letter \strong{U} here corresponds to constraints on loadings (not yet
 
 \item{sigma.l}{The covariance of the prior distribution for the loadings. Defaults to 1. Only relevant for the finite factor methods.}
 
-\item{z.init}{The method used to initialise the cluster labels. Defaults to \code{\link[mclust]{Mclust}}. Other options include \code{kmeans}, hierarchical clustering via \code{\link[mclust]{hc}}, random initialisation via \code{priors}, and a user-supplied \code{list}. Not relevant for the "\code{FA}" and "\code{"IFA"} methods.}
+\item{z.init}{The method used to initialise the cluster labels. Defaults to \code{\link[mclust]{Mclust}}. Other options include \code{kmeans}, hierarchical clustering via \code{\link[mclust]{hc}} (\code{VVV} is used, unless the data is high-dimensional, in which case \code{EII} is used), random initialisation via \code{priors}, and a user-supplied \code{list}. Not relevant for the "\code{FA}" and "\code{"IFA"} methods.}
 
 \item{z.list}{A user supplied list of cluster labels. Only relevant if \code{z.init == "z.list"}.}
 
@@ -99,7 +115,7 @@ Carries out Gibbs sampling for all models from the IMIFA family, facilitating mo
 Creates a raw object of class "\code{IMIFA}" from which the optimal/modal model can be extracted by \code{\link{get_IMIFA_results}}. Dedicated \code{print} and \code{summary} functions exist for objects of class "\code{IMIFA}".
 }
 \note{
-Further control over the specification of advanced function arguments can be obtained with recourse to the following functions:\cr
+Further control over the specification of advanced function arguments can be obtained with recourse to the following functions:
 \itemize{
 \item{\strong{\code{\link{mgpControl}}} - }{Supply arguments (with defaults) pertaining to the multiplicative gamma process (MGP) shrinkage prior and adaptive Gibbs sampler (AGS). For use with the infinite factor models "\code{IFA}", "\code{MIFA}", "\code{OMIFA}", and "\code{IMIFA}" only.}
 \item{\strong{\code{\link{bnpControl}}} - }{Supply arguments (with defaults) pertaining to the Bayesian Nonparametric Dirichlet/Pitman Yor process priors (BNP). For use with the infinite mixture models "\code{IMFA}" and "\code{IMIFA}" only.}
@@ -162,5 +178,7 @@ Tipping, M. E. and Bishop, C. M. (1999). Probabilistic principal component analy
 \code{\link{get_IMIFA_results}}, \code{\link{psi_hyper}}, \code{\link{mgpControl}}, \code{\link{bnpControl}}, \code{\link{storeControl}}
 }
 \author{
-Keefe Murphy - \href{keefe.murphy@ucd.ie}{<keefe.murphy@ucd.ie>}
+Keefe Murphy - <\email{keefe.murphy@ucd.ie}>
 }
+\keyword{IMIFA}
+\keyword{main}

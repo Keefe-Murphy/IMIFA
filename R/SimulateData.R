@@ -12,9 +12,10 @@
 #'
 #' @return Invisibly returns a \code{data.frame} with \code{N} observations (rows) of \code{P} variables (columns). The true values of the parameters which generated these data are also stored as attributes.
 #' @export
+#' @keywords utility
 #' @importFrom Rfast "is.symmetric"
 #'
-#' @author Keefe Murphy - \href{keefe.murphy@ucd.ie}{<keefe.murphy@ucd.ie>}
+#' @author Keefe Murphy - <\email{keefe.murphy@@ucd.ie}>
 #'
 #' @examples
 #' # Simulate 100 observations from 3 balanced clusters with cluster-specific numbers of latent factors

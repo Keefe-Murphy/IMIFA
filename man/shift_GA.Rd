@@ -25,5 +25,6 @@ This function takes shape and rate parameters of a Gamma distribution and modifi
 shift_GA(4, 2, -1)
 }
 \author{
-Keefe Murphy - \href{keefe.murphy@ucd.ie}{<keefe.murphy@ucd.ie>}
+Keefe Murphy - <\email{keefe.murphy@ucd.ie}>
 }
+\keyword{utility}

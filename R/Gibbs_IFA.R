@@ -99,14 +99,14 @@
       psi.inv[]  <- .sim_psi_inv(uni.shape, psi.beta, S.mat, V)
 
     # Means
-      mu[]       <- .sim_mu(N=N, P=P, mu.sigma=mu.sigma, psi.inv=psi.inv, sum.data=sum.data, sum.eta=colSums(eta), lmat=lmat, mu.zero=mu.zero)
+      mu[]       <- .sim_mu(N=N, P=P, mu.sigma=mu.sigma, psi.inv=psi.inv, sum.data=sum.data, sum.eta=colSums2(eta), lmat=lmat, mu.zero=mu.zero)
 
     # Shrinkage
       if(Q0) {
         load.2   <- lmat * lmat
         phi      <- .sim_phi(Q=Q, P=P, nu=nu, tau=tau, load.2=load.2, plus1=nuplus1)
 
-        sum.term <- colSums(phi * load.2)
+        sum.term <- colSums2(phi * load.2)
         for(k in seq_len(Q)) {
           delta[k]  <- if(k > 1) .sim_deltak(alpha.d2=alpha.d2, beta.d2=beta.d2, delta.k=delta[k], Q=Q, P=P, k=k,
                        tau.kq=tau[k:Q], sum.term.kq=sum.term[k:Q]) else .sim_delta1(Q=Q, P=P, tau=tau, sum.term=sum.term,
@@ -118,7 +118,7 @@
     # Adaptation
       if(all(adapt, iter   > adaptat))   {
         if(stats::runif(1) < ifelse(iter < burnin, 0.5, exp(-b0 - b1  * (iter - adaptat)))) {
-          colvec <- (if(Q0) colSums(abs(lmat) < epsilon) / P     else 0) >= prop
+          colvec <- (if(Q0) colSums(abs(lmat) < epsilon) / P     else 0)     >= prop
           numred <- sum(colvec)
           if(numred == 0)  { # simulate extra columns from priors
             Q    <- Q + 1

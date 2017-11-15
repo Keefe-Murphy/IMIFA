@@ -29,3 +29,4 @@ Though the function is available for standalone use, note that no checks take pl
 \references{
 Devroye, L. (1986) \emph{Non-Uniform Random Variate Generation}, Springer-Verlag, New York, p. 594.
 }
+\keyword{utility}

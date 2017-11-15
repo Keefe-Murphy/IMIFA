@@ -33,9 +33,10 @@
     }
 
   # Uniquenesses
+  #' @importFrom matrixStats "colSums2"
     .sim_psi_uu  <- function(N, P, psi.alpha, psi.beta, c.data, eta, lmat, Q0) {
       S.mat      <- c.data  - if(Q0) tcrossprod(eta, lmat) else 0
-        stats::rgamma(P, shape=N/2 + psi.alpha, rate=colSums(S.mat * S.mat)/2 + psi.beta)
+        stats::rgamma(P, shape=N/2 + psi.alpha, rate=colSums2(S.mat * S.mat)/2 + psi.beta)
     }
 
     .sim_psi_uc  <- function(N, P, psi.alpha, psi.beta, c.data, eta, lmat, Q0) {
@@ -43,16 +44,18 @@
         rep(stats::rgamma(1, shape=(N * P)/2 + psi.alpha, rate=sum(S.mat * S.mat)/2 + psi.beta), P)
     }
 
+  #' @importFrom matrixStats "colSums2"
     .sim_psi_cu  <- function(u.shape, psi.beta, S.mat, V) {
-      stats::rgamma(V, shape=u.shape, rate=colSums(do.call(rbind, S.mat))/2 + psi.beta)
+      stats::rgamma(V, shape=u.shape, rate=colSums2(do.call(rbind, S.mat))/2 + psi.beta)
     }
 
     .sim_psi_cc  <- function(u.shape, psi.beta, S.mat, V = 1L) {
       stats::rgamma(V, shape=u.shape, rate=sum(unlist(S.mat))/2 + psi.beta)
     }
 
+  #' @importFrom matrixStats "colSums2"
     .sim_psi_u1  <- function(u.shape, psi.beta, S.mat, V) {
-      stats::rgamma(V, shape=u.shape, rate=colSums(S.mat * S.mat)/2 + psi.beta)
+      stats::rgamma(V, shape=u.shape, rate=colSums2(S.mat * S.mat)/2 + psi.beta)
     }
 
     .sim_psi_c1  <- function(u.shape, psi.beta, S.mat, V = 1L) {
@@ -86,6 +89,7 @@
 #' @note Though the function is available for standalone use, note that no checks take place, in order to speed up repeated calls to the function inside \code{\link{mcmc_IMIFA}}.
 #'
 #' @references Devroye, L. (1986) \emph{Non-Uniform Random Variate Generation}, Springer-Verlag, New York, p. 594.
+#' @keywords utility
 #' @export
 #'
 #' @examples
@@ -112,11 +116,12 @@
 #' @param slice A logical indicating whether or not the indicator correction for slice sampling has been applied to \code{probs}. Defaults to \code{FALSE} but is \code{TRUE} for the "\code{IMIFA}" and "\code{IMFA}" methods under \code{\link{mcmc_IMIFA}}. Details of this correction are given in Murphy et. al. (2017). When set to \code{TRUE}, this results in a speed-improvement when \code{probs} contains non-finite values (e.g. \code{-Inf}, corresponding to zero on the probability scale).
 #' @return A vector of N sampled cluster labels, with the largest label no greater than G.
 #' @importFrom Rfast "rowMaxs"
+#' @keywords utility
 #' @seealso \code{\link{mcmc_IMIFA}}, \code{\link[matrixStats]{rowLogSumExps}}
 #'
 #' @details Computation takes place on the log scale for stability/underflow reasons (to ensure negligible probabilities won't cause computational difficulties); in any case, many functions for calculating multivariate normal densities already output on the log scale.
 #'
-#' @note Though the function is available for standalone use, note that no checks take place, in order to speed up repeated calls to the function inside \code{\link{mcmc_IMIFA}}.\cr
+#' @note Though the function is available for standalone use, note that no checks take place, in order to speed up repeated calls to the function inside \code{\link{mcmc_IMIFA}}.
 #'
 #' If the normalising constant is required for another reason, e.g. to compute the log-likelihood, it can be calculated by summing the output obtained by calling \code{\link[matrixStats]{rowLogSumExps}} on \code{probs}.
 #'
@@ -125,7 +130,7 @@
 #' Yellot, J. I. Jr. (1977) The relationship between Luce's choice axiom, Thurstone's theory of comparative judgment, and the double exponential distribution, \emph{Journal of Mathematical Psychology}, 15: 109-144.
 #' @export
 #'
-#' @author Keefe Murphy - \href{keefe.murphy@ucd.ie}{<keefe.murphy@ucd.ie>}
+#' @author Keefe Murphy - <\email{keefe.murphy@@ucd.ie}>
 #'
 #' @examples
 #' # Create weights for 3 components
@@ -155,7 +160,7 @@
      } else   {
       probs      <- probs - log(stats::rexp(length(probs)))
      }
-      Rfast::rowMaxs(probs)    # i.e. max.col(probs)
+        Rfast::rowMaxs(probs)  # i.e. max.col(probs)
     }
 
   # Alpha
@@ -260,11 +265,12 @@
 #' @param covar A square, positive-semidefinite covariance matrix. If manually supplying the rate(s) to \code{\link{mcmc_IMIFA}} be careful to ensure that data are scaled in the same way when supplying \code{covar} here.
 #' @param type A switch indicating whether a single rate (\code{isotropic}) or variable-specific rates (\code{unconstrained}) are to be derived. Both options are allowed under models in \code{\link{mcmc_IMIFA}} with "constrained" or "unconstrained" uniquenesses, but only a single rate can be specified for models with "isotropic" or "single" uniquenesses.
 #'
-#' @details Constraining uniquenesses to be isotropic provides the link between factor analysis and the probabilistic PCA model. When used in conjunction with \code{\link{mcmc_IMIFA}} with "isotropic" or "single" uniquenesses, \code{type} must be \code{isotropic}, but for "unconstrained" or "constrained" uniquenesses, it's possible to specify either a single rate (\code{type="isotropic"}) or variable-specific rates (\code{type="unconstrained"}). \cr
+#' @details Constraining uniquenesses to be isotropic provides the link between factor analysis and the probabilistic PCA model. When used in conjunction with \code{\link{mcmc_IMIFA}} with "isotropic" or "single" uniquenesses, \code{type} must be \code{isotropic}, but for "unconstrained" or "constrained" uniquenesses, it's possible to specify either a single rate (\code{type="isotropic"}) or variable-specific rates (\code{type="unconstrained"}).
 #'
 #' Used internally by \code{\link{mcmc_IMIFA}} when its argument \code{psi_beta} is not supplied.
 #'
 #' @return Either a single rate hyperparameter or \code{ncol(covar)} variable-specific rate hyperparameters.
+#' @keywords utility
 #' @importFrom Rfast "is.symmetric"
 #' @export
 #'
@@ -273,7 +279,7 @@
 #'
 #' Tipping, M. E. and Bishop, C. M. (1999). Probabilistic principal component analysis, \emph{Journal of the Royal Statistical Society: Series B (Statistical Methodology)}, 61(3): 611-622.
 #'
-#' @author Keefe Murphy - \href{keefe.murphy@ucd.ie}{<keefe.murphy@ucd.ie>}
+#' @author Keefe Murphy - <\email{keefe.murphy@@ucd.ie}>
 #'
 #' @examples
 #' data(olive)
@@ -310,9 +316,10 @@
 #' @param param Switch controlling whether the supplied \code{rate} parameter is indeed a rate, or actually a scale parameter. Also governs whether the output is given in terms of rate or scale. Defaults to "\code{rate}".
 #'
 #' @return A list of length 2, containing the modified shape and rate parameters, respectively.
+#' @keywords utility
 #' @export
 #'
-#' @author Keefe Murphy - \href{keefe.murphy@ucd.ie}{<keefe.murphy@ucd.ie>}
+#' @author Keefe Murphy - <\email{keefe.murphy@@ucd.ie}>
 #'
 #' @examples
 #' # Shift a Ga(shape=4, rate=2) distribution to the left by 1;
@@ -357,13 +364,14 @@
 #'   \item{\strong{valid} - }{A logical indicating whether the cumulative shrinkage property holds.}
 #' }
 #' @export
+#' @keywords control
 #' @seealso \code{\link{mcmc_IMIFA}}
 #' @references
 #' Bhattacharya, A. and Dunson, D. B. (2011). Sparse Bayesian infinite factor models, \emph{Biometrika}, 98(2): 291-306.
 #'
 #' Durante, D. (2017). A note on the multiplicative gamma process, \emph{Statistics & Probability Letters}, 122: 198-204.
 #'
-#' @author Keefe Murphy - \href{keefe.murphy@ucd.ie}{<keefe.murphy@ucd.ie>}
+#' @author Keefe Murphy - <\email{keefe.murphy@@ucd.ie}>
 #'
 #' @examples
 #' # Check if expected shrinkage under the MGP increases with the column index (WRONG approach!).
@@ -415,6 +423,7 @@
 #' @details This function is used to calculate the penalty terms for the \code{aic.mcmc} and \code{bic.mcmc} model selection criteria implemented in \code{\link{get_IMIFA_results}} for \emph{finite} factor models (though \code{\link{mcmc_IMIFA}} currently only implements the \code{UUU}, \code{UUC}, \code{UCU}, and \code{UCC} covariance structures). The function is vectorized with respect to the argument \code{Q}.
 
 #' @return A vector of length \code{length(Q)}.
+#' @keywords utility
 #'
 #' @note Though the function is available for standalone use, note that no checks take place, in order to speed up repeated calls to the function inside \code{\link{mcmc_IMIFA}}.
 #'
@@ -422,7 +431,7 @@
 #' @references McNicholas, P. D. and Murphy, T. B. (2008) Parsimonious Gaussian Mixture Models, \emph{Statistics and Computing}, 18(3): 285-296.
 #' @seealso \code{\link{get_IMIFA_results}}, \code{\link{mcmc_IMIFA}}
 #'
-#' @author Keefe Murphy - \href{keefe.murphy@ucd.ie}{<keefe.murphy@ucd.ie>}
+#' @author Keefe Murphy - <\email{keefe.murphy@@ucd.ie}>
 #'
 #' @examples
 #' (UUU <- PGMM_dfree(Q=4:5, P=50, G=3, method="UUU"))
@@ -439,9 +448,10 @@
         as.integer(ifelse(equal.pro, 0, G  - 1) + G * P  + lambda + psi) },  vectorize.args = "Q")
 
   # Label Switching
+  #' @importFrom matrixStats "colSums2" "rowSums2"
     .lab_switch <- function(z.new, z.old) {
       tab       <- table(z.new, z.old, dnn=NULL)
-      tab.tmp   <- tab[rowSums(tab) != 0,colSums(tab) != 0, drop=FALSE]
+      tab.tmp   <- tab[rowSums2(tab) != 0,colSums2(tab) != 0, drop=FALSE]
       Gs        <- seq_len(max(unique(as.numeric(z.new))))
       nc        <- ncol(tab.tmp)
       nr        <- nrow(tab.tmp)
@@ -477,13 +487,12 @@
   # Similarity matrix and 'average' clustering
 #' Summarise MCMC samples of clustering labels with a similarity matrix and find the 'average' clustering
 #'
-#' This function takes a Monte Carlo sample of cluster labels, computes an average similarity matrix and returns the clustering with minimum mean squared error to this average.
+#' This function takes a Monte Carlo sample of cluster labels, computes an average similarity matrix and returns the clustering with minimum mean squared error to this average. The \code{mcclust} package \strong{must} be loaded.
 #' @param zs A matrix containing samples of clustering labels where the columns correspond to the number of observations (N) and the rows correspond to the number of iterations (M).
 #'
-#' @details This function takes a Monte Carlo sample of cluster labels, converts them to adjacency matrices, and computes a similarity matrix as an average of the adjacency matrices. The dimension of the similarity matrix is invariant to label switching and the number of clusters in each sample, desirable features when summarising partitions of Bayesian nonparametric models such as IMIFA. As a summary of the posterior clustering, the clustering with minimum mean squared error to this 'average' clustering is reported.\cr
+#' @details This function takes a Monte Carlo sample of cluster labels, converts them to adjacency matrices, and computes a similarity matrix as an average of the adjacency matrices. The dimension of the similarity matrix is invariant to label switching and the number of clusters in each sample, desirable features when summarising partitions of Bayesian nonparametric models such as IMIFA. As a summary of the posterior clustering, the clustering with minimum mean squared error to this 'average' clustering is reported.
 #'
 #' A heatmap of \code{z.sim} may provide a useful visualisation, if appropriately ordered. The user is also invited to perform hierarchical clustering using \code{\link[stats]{hclust}} after first converting this similarity matrix to a distance matrix - "complete" linkage is recommended.
-#'
 #' @return A list containing three elements:
 #' \describe{
 #' \item{z.avg}{The 'average' clustering, with minimum squared distance to \code{z.sim}.}
@@ -491,13 +500,15 @@
 #' \item{MSE.z}{A vector of length M recording the MSEs between each clustering and the 'average' clustering.}
 #' }
 #' @export
-#' @importFrom mcclust "cltoSim" "comp.psm"
+#' @keywords utility
 #' @importFrom slam "as.simple_triplet_matrix"
 #'
-#' @note This is liable to take quite some time to run, especially if the number of observations &/or number of iterations is large. Depending on how distinct the clusters are, \code{z.sim} may be stored better in a non-sparse format. This function can optionally be called inside \code{\link{get_IMIFA_results}}.
+#' @note The \code{mcclust} package \strong{must} be loaded.
+#'
+#' This is liable to take quite some time to run, especially if the number of observations &/or number of iterations is large. Depending on how distinct the clusters are, \code{z.sim} may be stored better in a non-sparse format. This function can optionally be called inside \code{\link{get_IMIFA_results}}.
 #' @seealso \code{\link{get_IMIFA_results}}, \code{\link[slam]{simple_triplet_matrix}}, \code{\link[stats]{hclust}}, \code{\link[mcclust]{comp.psm}}, \code{\link[mcclust]{cltoSim}}
 #'
-#' @author Keefe Murphy - \href{keefe.murphy@ucd.ie}{<keefe.murphy@ucd.ie>}
+#' @author Keefe Murphy - <\email{keefe.murphy@@ucd.ie}>
 #'
 #' @examples
 #' # Run a IMIFA model and extract the sampled cluster labels
@@ -520,11 +531,12 @@
 #' # Hcl    <- hclust(as.dist(1 - z.sim), method="complete")
 #' # plot(Hcl)
 #' # table(cutree(Hcl, k=3), olive$area)
-    Zsimilarity <- function(zs, ...) {
     Zsimilarity <- function(zs) {
+      has.pkg   <- suppressMessages(requireNamespace("mcclust", quietly=TRUE))
+      if(!has.pkg)                         stop("'mcclust' package not installed")
       if(!is.matrix(zs))                   stop("'zs' must be a matrix with rows corresponding to the number of observations and columns corresponding to the number of iterations")
-      zsim      <- comp.psm(zs)
-      mse.z     <- vapply(seq_len(nrow(zs)), function(i, x=cltoSim(zs[i,]) - zsim) tryCatch(suppressWarnings(mean(x * x)), error=function(e) Inf), numeric(1L))
+      zsim      <- mcclust::comp.psm(zs)
+      mse.z     <- vapply(seq_len(nrow(zs)), function(i, x=mcclust::cltoSim(zs[i,]) - zsim) tryCatch(suppressWarnings(mean(x * x)), error=function(e) Inf), numeric(1L))
       Z.avg     <- zs[which.min(mse.z),]
       attr(Z.avg, "MSE")  <- min(mse.z)
       Z.res     <- list(z.sim = as.simple_triplet_matrix(zsim), z.avg = Z.avg, MSE.z = mse.z)
@@ -561,12 +573,10 @@
     #' @param make Logical switch to return the nearest matrix which satisifies the test - if the test has been passed, this is of course just \code{x} itself, otherwise the nearest positive-(semi)definite matrix. Note that for reasons due to finite precision arithmetic, finding the nearest positive-definite and nearest positive-semidefinite matrices are effectively equivalent tasks.
     #'
     #' @return If \code{isTRUE(make)}, a list with two components:
-    #' \describe{
     #' \item{check}{A logical value indicating whether the matrix satisfies the test.}
     #' \item{X.new}{The nearest matrix which satisfies the test (which may just be the input matrix itself.)}
-    #' }
     #' Otherwise, only the logical value indicating whether the matrix satisfies the test is returned.
-    #'
+    #' @keywords utility
     #' @export
     #'
     #' @examples
@@ -610,6 +620,7 @@
 #'
 #' @return The Ledermann bound, a non-negative integer, or a vector of \code{length(P)} such bounds.
 #' @importFrom Rfast "Round"
+#' @keywords utility
 #' @export
 #'
 #' @examples
@@ -634,21 +645,21 @@
 #' @details{
 #'    \code{R}, \code{tt}, and \code{d} are chosen so that:
 #'
-#'    \deqn{d \times \mathbf{X} \mathbf{R} + 1\hspace*{-3pt}1 \underline{t}^\top \approx X^\star}{d X R + 1 t' approximately Xstar}
+#'    \deqn{d \times \mathbf{X} \mathbf{R} + 1\hspace*{-3.5pt}1 \underline{t}^\top \approx X^\star}{d X R + 1 t' approximately Xstar}
 #'
 #'    \code{X.new} is given by:
 #'
-#'    \deqn{X_{\textrm{new}} = d \times \mathbf{X} \mathbf{R} + 1\hspace*{-3pt}1 \underline{t}^\top}{X.new = d X R + 1 t'}
-#'}
+#'    \deqn{X_{\textrm{new}} = d \times \mathbf{X} \mathbf{R} + 1\hspace*{-3.5pt}1 \underline{t}^\top}{X.new = d X R + 1 t'}
+#' }
 #'
 #' @return A list containing:
-#' \describe{
 #' \item{X.new}{The matrix that is the Procrustes transformed version of \code{X}.}
 #' \item{R}{The rotation matrix.}
 #' \item{t}{The translation vector (if \code{isTRUE(translate)}).}
 #' \item{d}{The scaling factor (is \code{isTRUE(dilate)}).}
 #' \item{ss}{The sum of squared differences (if \code{isTRUE(sumsq)}).}
-#' }
+#' @keywords utility
+#' @importFrom matrixStats "colSums2"
 #' @export
 #'
 #' @references Borg, I. and Groenen, P. J. F. (1997) \emph{Modern Multidimensional Scaling}. Springer-Verlag, New York, pp. 340-342.
@@ -671,13 +682,13 @@
     Procrustes  <- function(X, Xstar, translate = FALSE, dilate = FALSE, sumsq = FALSE) {
       if((N <- nrow(X)) != nrow(Xstar))    stop("X and Xstar do not have the same number of rows")
       if((P <- ncol(X)) != ncol(Xstar))    stop("X and Xstar do not have the same number of columns")
-      J         <- if(translate) diag(N) - matrix(1/N, N, N)                           else diag(N)
+      J         <- if(translate) diag(N) - matrix(1/N, N, N)                             else diag(N)
       C         <- crossprod(Xstar, J) %*% X
       svdX      <- svd(C)
       R         <- tcrossprod(svdX$v, svdX$u)
-      d         <- if(dilate)    sum(colSums(C * R))/sum(colSums(crossprod(J, X) * X)) else 1
-      tt        <- if(translate) crossprod(Xstar - d * X %*% R, matrix(1, N, 1))/N     else 0
-      X.new     <- d * X %*% R + if(translate) matrix(tt, N, P, byrow = TRUE)          else tt
+      d         <- if(dilate)    sum(colSums2(C * R))/sum(colSums2(crossprod(J, X) * X)) else 1
+      tt        <- if(translate) crossprod(Xstar - d * X %*% R, matrix(1, N, 1))/N       else 0
+      X.new     <- d * X %*% R + if(translate) matrix(tt, N, P, byrow = TRUE)            else tt
         return(c(list(X.new = X.new), list(R = R), if(translate) list(t = tt),
                  if(dilate) list(d = d), if(sumsq) list(ss = sum((X - X.new)^2))))
     }
@@ -727,13 +738,14 @@
 #' @details All arguments are vectorised. Users can also consult \code{\link{G_variance}} and \code{\link{G_priorDensity}} in order to solicit sensible priors.
 #'
 #' @return The expected number of clusters under the specified prior conditions.
+#' @keywords utility
 #' @export
 #'
 #' @note Requires use of the \code{Rmpfr} and \code{gmp} libraries for non-zero \code{discount} values.
 #'
 #' @seealso \code{\link{G_variance}}, \code{\link{G_priorDensity}}, \code{\link[Rmpfr]{Rmpfr}}
 #'
-#' @author Keefe Murphy - \href{keefe.murphy@ucd.ie}{<keefe.murphy@ucd.ie>}
+#' @author Keefe Murphy - <\email{keefe.murphy@@ucd.ie}>
 #'
 #' @examples
 #' G_expected(N=50, alpha=19.23356)
@@ -772,12 +784,13 @@
 #' @details All arguments are vectorised. Users can also consult \code{\link{G_expected}} or \code{\link{G_priorDensity}} in order to solicit sensible priors.
 #'
 #' @return The variance of the number of clusters under the specified prior conditions.
+#' @keywords utility
 #' @export
 #'
 #' @note Requires use of the \code{Rmpfr} and \code{gmp} libraries for non-zero \code{discount} values.
 #' @seealso \code{\link{G_expected}}, \code{\link{G_priorDensity}}, \code{\link[Rmpfr]{Rmpfr}}
 #'
-#' @author Keefe Murphy - \href{keefe.murphy@ucd.ie}{<keefe.murphy@ucd.ie>}
+#' @author Keefe Murphy - <\email{keefe.murphy@@ucd.ie}>
 #'
 #' @examples
 #' G_variance(N=50, alpha=19.23356)
@@ -948,11 +961,12 @@
 #'
 #' @return A named list in which the names are the names of the arguments related to the BNP prior(s) and the values are the values supplied to the arguments.
 #' @note Certain supplied arguments will be subject to further checks within \code{\link{mcmc_IMIFA}}. \code{\link{G_priorDensity}} can help with soliciting sensible DP/PYP priors.
+#' @keywords control
 #'
 #' @export
 #'
 #' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{G_priorDensity}}
-#' @author Keefe Murphy - \href{keefe.murphy@ucd.ie}{<keefe.murphy@ucd.ie>}
+#' @author Keefe Murphy - <\email{keefe.murphy@@ucd.ie}>
 #' @examples
 #' bnpControl(ind.slice=FALSE, alpha.hyper=c(3, 1), learn.d=TRUE)
 #'
@@ -1055,8 +1069,11 @@
 #' @param prop Proportion of elements within the neighbourhood \code{eps} of zero necessary to consider a loadings column redundant. Defaults to \code{floor(0.7 * P)/P}, where \code{P} is the number of variables in the data set.
 #' @param eps Neighbourhood epsilon of zero within which a loadings entry is considered negligible according to \code{prop}. Defaults to 0.1.
 #' @param adapt A logical value indicating whether adaptation of the number of cluster-specific factors is to take place when the MGP prior is employed. Defaults to \code{TRUE}. Specifying \code{FALSE} and supplying \code{range.Q} within \code{\link{mcmc_IMIFA}} provides a means to either approximate the infinite factor model with a fixed high truncation level, or to use the MGP prior in a finite factor context, however this is NOT recommended for the "\code{OMIFA}" and "\code{IMIFA}" methods.
-#' @param b0 Intercept parameter for the exponentially decaying adaptation probability s.t. \code{p(iter) = 1/exp(b0 + b1 * (iter - adapt.at))}. Defaults to 0.1. Must be non-negative to ensure diminishing adaptation.
-#' @param b1 Slope parameter for the exponentially decaying adaptation probability s.t. \code{p(iter) = 1/exp(b0 + b1 * (iter - adapt.at))}. Defaults to 0.00005. Must be positive to ensure diminishing adaptation.
+#' @param b0,b1 Intercept & slope parameters for the exponentially decaying adaptation probability:
+#'
+#' \code{p(iter) = 1/exp(b0 + b1 * (iter - adapt.at))}.
+#'
+#' Defaults to 0.1 & 0.00005, respectively. Must be non-negative and strictly positive, respectively, to ensure diminishing adaptation.
 #' @param nuplus1 Logical switch indicating whether the shape hyperparameter of the prior on the local shrinkage parameters is equal to \code{nu + 1} (i.e. Ga(\code{nu + 1}, \code{nu})). If \code{FALSE}, it is simply equal to \code{nu} (i.e. Ga(\code{nu}, \code{nu})).
 #' @param beta.d1 Rate hyperparameter of the global shrinkage on the first column of the loadings according to the MGP shrinkage prior. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to 1.
 #' @param beta.d2 Rate hyperparameter of the global shrinkage on the subsequent columns of the loadings according to the MGP shrinkage prior. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to 1.
@@ -1066,12 +1083,13 @@
 #'
 #' @return A named list in which the names are the names of the arguments related to the MGP and AGS and the values are the values supplied to the arguments.
 #' @export
+#' @keywords control
 #'
 #' @note Certain supplied arguments will be subject to further checks by \code{\link{MGP_check}} to ensure the cumulative shrinkage property of the MGP prior holds according to the given parameterisation.
 #'
 #' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{MGP_check}}
 #' @references Bhattacharya, A. and Dunson, D. B. (2011) Sparse Bayesian infinite factor models, \emph{Biometrika}, 98(2): 291-306.
-#' @author Keefe Murphy - \href{keefe.murphy@ucd.ie}{<keefe.murphy@ucd.ie>}
+#' @author Keefe Murphy - <\email{keefe.murphy@@ucd.ie}>
 #'
 #' @examples
 #' mgpControl(nu=2.5, eps=1e-02)
@@ -1140,9 +1158,10 @@
 
 #' @return A named vector in which the names are the names of the storage switches and the values are logicals indicating whether that parameter is to be stored. The list also contains as an attribute a logical for each switch indicating whether it was actually supplied (\code{TRUE}) or the default was accepted (\code{FALSE}).
 #' @export
+#' @keywords control
 #'
 #' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{get_IMIFA_results}}
-#' @author Keefe Murphy - \href{keefe.murphy@ucd.ie}{<keefe.murphy@ucd.ie>}
+#' @author Keefe Murphy - <\email{keefe.murphy@@ucd.ie}>
 #' @examples
 #' storeControl(score.switch=FALSE)
 #'
@@ -1204,21 +1223,22 @@
       }
     )
 
+    #' @importFrom matrixStats "colSums2" "rowSums2"
     .class_agreement    <- function(tab, match.names = FALSE) {
       n         <- sum(tab)
-      ni        <- rowSums(tab)
-      nj        <- colSums(tab)
+      ni        <- rowSums2(tab)
+      nj        <- colSums2(tab)
       if(match.names && !is.null(dimnames(tab))) {
         lev     <- intersect(colnames(tab), rownames(tab))
         p0      <- sum(diag(tab[lev, lev]))/n
-        pc      <- sum(ni[lev] * nj[lev])/n^2
+        pc      <- sum(ni[lev]   * nj[lev])/n^2
       } else {
         m       <- seq_len(min(length(ni), length(nj)))
         p0      <- sum(diag(tab[m, m]))/n
         pc      <- sum((ni[m]/n) * (nj[m]/n))
       }
       n2        <- choose(n, 2)
-      rand      <- 1 + (sum(tab^2) - (sum(ni^2) + sum(nj^2))/2)/n2
+      rand      <- 1 + (sum(tab^2)  - (sum(ni^2) + sum(nj^2))/2)/n2
       nis2      <- sum(choose(ni[ni > 1], 2))
       njs2      <- sum(choose(nj[nj > 1], 2))
       crand     <- (sum(choose(tab[tab > 1], 2)) - (nis2 * njs2)/n2)/((nis2 + njs2)/2 - (nis2 * njs2)/n2)
@@ -1278,7 +1298,7 @@
       methods   <- c("rowmax", "greedy", "exact")
       method    <- pmatch(method, methods)
       rmax      <- apply(tab, 1, which.max)
-      myseq     <- 1:ncol(tab)
+      myseq     <- seq_len(ncol(tab))
       cn        <- colnames(tab)
       rn        <- rownames(tab)
       if(is.null(cn))  {
@@ -1423,8 +1443,7 @@
         scols  <- rep(scol, length.out = length(x))[nz]
         arrow.args$col    <- scols
         do.call(graphics::arrows, c(list(x[nz], ui[nz], x[nz], pmin(y + gap, ui)[nz]), arrow.args))
-      }
-      else if(err == "x")  {
+      } else if(err == "x") {
         gap    <- rep(gap, length(x)) * diff(graphics::par("usr")[1:2])
         smidge <- graphics::par("fin")[2] * sfrac
         nz     <- abs(li - pmax(x - gap, li)) * x.to.in > 0.001

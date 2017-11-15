@@ -22,3 +22,4 @@ all(is.cols(heat.colors(30)))
 
 any(!is.cols(c("red", "green", "aquamarine")))
 }
+\keyword{utility}

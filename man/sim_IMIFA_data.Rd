@@ -4,8 +4,15 @@
 \alias{sim_IMIFA_data}
 \title{Simulate Data from a Mixture of Factor Analysers Structure}
 \usage{
-sim_IMIFA_data(N = 300L, G = 3L, P = 50L, Q = rep(floor(log(P)), G),
-  pis = rep(1/G, G), mu = NULL, psi = NULL, nn = NULL, loc.diff = 1,
+sim_IMIFA_data(N = 300L,
+  G = 3L,
+  P = 50L,
+  Q = rep(floor(log(P)), G),
+  pis = rep(1/G, G),
+  mu = NULL,
+  psi = NULL,
+  nn = NULL,
+  loc.diff = 1,
   method = c("conditional", "marginal"))
 }
 \arguments{
@@ -48,5 +55,6 @@ plot(cmdscale(dist(sim_data), k=2), col=labels)
 \code{\link{mcmc_IMIFA}} for fitting an IMIFA related model to the simulated data set.
 }
 \author{
-Keefe Murphy - \href{keefe.murphy@ucd.ie}{<keefe.murphy@ucd.ie>}
+Keefe Murphy - <\email{keefe.murphy@ucd.ie}>
 }
+\keyword{utility}

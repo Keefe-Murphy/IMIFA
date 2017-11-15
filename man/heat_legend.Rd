@@ -31,3 +31,4 @@ heat_legend(data, cols); box(lwd=2)
 \seealso{
 \code{\link[graphics]{image}}, \code{\link{plot_cols}}, \code{\link{mat2cols}}, \code{\link{is.cols}}
 }
+\keyword{plotting}

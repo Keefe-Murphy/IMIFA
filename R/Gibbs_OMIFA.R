@@ -182,9 +182,9 @@
       }
 
     # Means
-      sum.data       <- vapply(dat.g, colSums, numeric(P))
+      sum.data       <- vapply(dat.g, colSums2, numeric(P))
       sum.data       <- if(uni) t(sum.data) else sum.data
-      sum.eta        <- lapply(eta.tmp, colSums)
+      sum.eta        <- lapply(eta.tmp, colSums2)
       mu[,]          <- vapply(Gseq, function(g) if(nn0[g]) .sim_mu(N=nn[g], mu.sigma=mu.sigma, psi.inv=psi.inv[,g], P=P, sum.eta=sum.eta[[g]][seq_len(Qs[g])],
                                sum.data=sum.data[,g], lmat=lmat[[g]], mu.zero=mu.zero) else .sim_mu_p(P=P, sig.mu.sqrt=sig.mu.sqrt, mu.zero=mu.zero), numeric(P))
 
@@ -194,7 +194,7 @@
         phi          <- lapply(Gseq, function(g) if(nn0[g]) .sim_phi(Q=Qs[g], P=P, nu=nu, plus1=nuplus1,
                         tau=tau[[g]], load.2=load.2[[g]]) else .sim_phi_p(Q=Qs[g], P=P, nu=nu, plus1=nuplus1))
 
-        sum.terms    <- lapply(Gseq, function(g) colSums(phi[[g]] * load.2[[g]]))
+        sum.terms    <- lapply(Gseq, function(g) colSums2(phi[[g]] * load.2[[g]]))
         for(g in Gseq) {
           Qg         <- Qs[g]
           Q1g        <- Q1[g]

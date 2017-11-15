@@ -17,10 +17,8 @@ is.posi_def(x, tol = NULL, semi = FALSE, make = FALSE)
 }
 \value{
 If \code{isTRUE(make)}, a list with two components:
-\describe{
 \item{check}{A logical value indicating whether the matrix satisfies the test.}
 \item{X.new}{The nearest matrix which satisfies the test (which may just be the input matrix itself.)}
-}
 Otherwise, only the logical value indicating whether the matrix satisfies the test is returned.
 }
 \description{
@@ -35,3 +33,4 @@ Xnew <- is.posi_def(x, semi=FALSE, make=TRUE)$X.new
 identical(x, Xnew)
 identical(x, is.posi_def(x, semi=TRUE, make=TRUE)$X.new)
 }
+\keyword{utility}

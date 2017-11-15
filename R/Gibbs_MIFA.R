@@ -176,9 +176,9 @@
       }
 
     # Means
-      sum.data     <- vapply(dat.g, colSums, numeric(P))
+      sum.data     <- vapply(dat.g, colSums2, numeric(P))
       sum.data     <- if(uni) t(sum.data) else sum.data
-      sum.eta      <- lapply(eta.tmp, colSums)
+      sum.eta      <- lapply(eta.tmp, colSums2)
       mu[,]        <- vapply(Gseq, function(g) if(nn0[g]) .sim_mu(mu.sigma=mu.sigma, psi.inv=psi.inv[,g], mu.zero=mu.zero[,g], sum.eta=sum.eta[[g]][seq_len(Qs[g])],
                              sum.data=sum.data[,g], lmat=lmat[[g]], N=nn[g], P=P) else .sim_mu_p(P=P, sig.mu.sqrt=sig.mu.sqrt, mu.zero=mu.zero[,g]), numeric(P))
 
@@ -188,7 +188,7 @@
         phi        <- lapply(Gseq, function(g) if(nn0[g]) .sim_phi(Q=Qs[g], P=P, nu=nu, plus1=nuplus1,
                       tau=tau[[g]], load.2=load.2[[g]]) else .sim_phi_p(Q=Qs[g], P=P, nu=nu, plus1=nuplus1))
 
-        sum.terms  <- lapply(Gseq, function(g) colSums(phi[[g]] * load.2[[g]]))
+        sum.terms  <- lapply(Gseq, function(g) colSums2(phi[[g]] * load.2[[g]]))
         for(g in Gseq)  {
           Qg       <- Qs[g]
           Q1g      <- Q1[g]
@@ -211,13 +211,13 @@
     # Adaptation
       if(all(adapt, iter   > adaptat)) {
         if(stats::runif(1) < ifelse(iter < burnin, 0.5, exp(-b0 - b1 * (iter - adaptat)))) {
-          colvec   <- lapply(nn.ind, function(g) (if(Q0[g]) colSums(abs(lmat[[g]]) < epsilon)/P else 0) >= prop)
+          colvec   <- lapply(nn.ind, function(g) (if(Q0[g]) colSums(abs(lmat[[g]])   < epsilon)/P else 0) >= prop)
           nonred   <- lapply(colvec, .which0)
           numred   <- lengths(colvec)  - lengths(nonred)
           notred   <- numred == 0
           ng.ind   <- seq_along(nn.ind)
           Qs.old   <- Qs[nn0]
-          Qs[nn0]  <- pmax.int(0, vapply(ng.ind, function(h) if(notred[h]) Qs.old[h] + 1 else Qs.old[h] - numred[h], numeric(1L)))
+          Qs[nn0]  <- pmax.int(0, vapply(ng.ind, function(h) if(notred[h]) Qs.old[h] + 1 else Qs.old[h]    - numred[h], numeric(1L)))
           Q.big    <- Qs[nn0] > Q.star
           if((Q.bigs        <-  any(Q.big))) {
             notred <- notred & !Q.big

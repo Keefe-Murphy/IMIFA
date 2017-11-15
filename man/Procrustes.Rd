@@ -19,13 +19,11 @@ Procrustes(X, Xstar, translate = FALSE, dilate = FALSE, sumsq = FALSE)
 }
 \value{
 A list containing:
-\describe{
 \item{X.new}{The matrix that is the Procrustes transformed version of \code{X}.}
 \item{R}{The rotation matrix.}
 \item{t}{The translation vector (if \code{isTRUE(translate)}).}
 \item{d}{The scaling factor (is \code{isTRUE(dilate)}).}
 \item{ss}{The sum of squared differences (if \code{isTRUE(sumsq)}).}
-}
 }
 \description{
 This function performs a Procrustes transformation on a matrix \code{X} to minimize the squared distance between \code{X} and another comparable matrix \code{Xstar}.
@@ -34,11 +32,11 @@ This function performs a Procrustes transformation on a matrix \code{X} to minim
 {
    \code{R}, \code{tt}, and \code{d} are chosen so that:
 
-   \deqn{d \times \mathbf{X} \mathbf{R} + 1\hspace*{-3pt}1 \underline{t}^\top \approx X^\star}{d X R + 1 t' approximately Xstar}
+   \deqn{d \times \mathbf{X} \mathbf{R} + 1\hspace*{-3.5pt}1 \underline{t}^\top \approx X^\star}{d X R + 1 t' approximately Xstar}
 
    \code{X.new} is given by:
 
-   \deqn{X_{\textrm{new}} = d \times \mathbf{X} \mathbf{R} + 1\hspace*{-3pt}1 \underline{t}^\top}{X.new = d X R + 1 t'}
+   \deqn{X_{\textrm{new}} = d \times \mathbf{X} \mathbf{R} + 1\hspace*{-3.5pt}1 \underline{t}^\top}{X.new = d X R + 1 t'}
 }
 }
 \examples{
@@ -60,3 +58,4 @@ mat_ss2  <- Procrustes(X=mat1, Xstar=mat2, sumsq=TRUE)$ss
 \references{
 Borg, I. and Groenen, P. J. F. (1997) \emph{Modern Multidimensional Scaling}. Springer-Verlag, New York, pp. 340-342.
 }
+\keyword{utility}

@@ -1,6 +1,6 @@
-[![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/IMIFA)](https://cran.r-project.org/package=IMIFA)
-[![rstudio mirror downloads](http://cranlogs.r-pkg.org/badges/IMIFA?)](https://github.com/metacran/cranlogs.app)
-[![rstudio mirror downloads](http://cranlogs.r-pkg.org/badges/grand-total/IMIFA?color=82b4e8)](https://github.com/metacran/cranlogs.app)
+[![CRAN_Status_Badge](https://www.r-pkg.org/badges/version/IMIFA)](https://cran.r-project.org/package=IMIFA)
+[![rstudio mirror downloads](https://cranlogs.r-pkg.org/badges/IMIFA?)](https://github.com/metacran/cranlogs.app)
+[![rstudio mirror downloads](https://cranlogs.r-pkg.org/badges/grand-total/IMIFA?color=82b4e8)](https://github.com/metacran/cranlogs.app)
 
 # IMIFA R Package
 ## Infinite Mixture of Infinite Factor Analysers

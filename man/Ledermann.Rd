@@ -18,3 +18,4 @@ Returns the maximum possible number of latent factors in a factor analysis model
 \examples{
 Ledermann(25)
 }
+\keyword{utility}

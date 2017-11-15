@@ -75,7 +75,7 @@
     psi0g          <- cluster$l.switch[2]
     label.switch   <- any(cluster$l.switch)
     eta            <- .sim_eta_p(N=N, Q=Q)
-    lmat           <- if(Q0) array(sapply(Gseq, function(g) .sim_load_p(Q=Q, P=P, sigma.l=sigma.l)), dim=c(P, Q, G)) else array(0, dim=c(P, 0, G))
+    lmat           <- if(Q0) array(vapply(Gseq, function(g) .sim_load_p(Q=Q, P=P, sigma.l=sigma.l), numeric(P * Q)), dim=c(P, Q, G)) else array(0, dim=c(P, 0, G))
     psi.inv        <- vapply(Gseq, function(g) .sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta[,g]), numeric(P))
     psi.inv        <- if(uni)     t(psi.inv)   else psi.inv
     psi.beta       <- if(one.uni) psi.beta[,1] else psi.beta
@@ -160,9 +160,9 @@
       }
 
     # Means
-      sum.data     <- vapply(dat.g, colSums, numeric(P))
+      sum.data     <- vapply(dat.g, colSums2, numeric(P))
       sum.data     <- if(uni) t(sum.data) else sum.data
-      sum.eta      <- lapply(eta.tmp, colSums)
+      sum.eta      <- lapply(eta.tmp, colSums2)
       mu[,]        <- vapply(Gseq, function(g) if(nn0[g]) .sim_mu(mu.zero=mu.zero[,g], mu.sigma=mu.sigma, psi.inv=psi.inv[,g], sum.data=sum.data[,g], sum.eta=sum.eta[[g]],
                              lmat=if(Q1) as.matrix(lmat[,,g]) else lmat[,,g], N=nn[g], P=P) else .sim_mu_p(P=P, sig.mu.sqrt=sig.mu.sqrt, mu.zero=mu.zero[,g]), numeric(P))
 

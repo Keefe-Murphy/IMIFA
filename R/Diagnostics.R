@@ -11,24 +11,26 @@
 #' @param Q.meth If the object in \code{sims} arises from the "\code{IFA}", "\code{MIFA}", "\code{OMIFA}" or "\code{IMIFA}" methods, this argument determines whether the optimal number of latent factors is given by the mode or median of the posterior distribution of \code{Q}. Defaults to "\code{mode}". Often the mode and median will agree in any case.
 #' @param dat The actual data set on which \code{\link{mcmc_IMIFA}} was originally run. If this is not supplied, the function will \emph{attempt} to find the data set if it is still available in the global environment. This is necessary if one wishes to compute error metrics between the estimated and empirical covariance matrix/matrices, although it's not required for the "\code{FA}" and "\code{IFA}" methods.
 #' @param conf.level The confidence level to be used throughout for credible intervals for all parameters of inferential interest. Defaults to 0.95.
-#' @param z.avgsim Logical indicating whether the clustering should also be summarised with a call to \code{\link{Zsimilarity}} by the clustering with minimum mean squared error to the similarity matrix obtained by averaging the stored adjacency matrices, in addition to the MAP estimate. Note that the MAP clustering is computed \emph{conditional} on the estimate of the number of clusters (whether that be the modal estimate or the estimate according to \code{criterion}) and other parameters are extracted conditional on this estimate of \code{G}: however, in constrast, the number of distinct clusters in the summarised labels obtained by specifying \code{z.avgsim=TRUE} may not necessarily coincide with the MAP estimate of \code{G}, but it may provide a useful alternative summary of the partitions explored during the chain, and the user is free to call \code{\link{get_IMIFA_results}} again with the new suggested \code{G} value. Please be warned that though this defaults to \code{TRUE}, this is liable to take considerable time to compute, and may not even be possible if the number of observations &/or number of stored iterations is large and the resulting matrix isn't sufficiently sparse. When \code{TRUE}, both the summarised clustering and the similarity matrix are stored: the latter can be visualised as part of a call to \code{\link{plot.Results_IMIFA}}.
+#' @param z.avgsim Logical indicating whether the clustering should also be summarised with a call to \code{\link{Zsimilarity}} by the clustering with minimum mean squared error to the similarity matrix obtained by averaging the stored adjacency matrices, in addition to the MAP estimate.
+#'
+#' Note that the MAP clustering is computed \emph{conditional} on the estimate of the number of clusters (whether that be the modal estimate or the estimate according to \code{criterion}) and other parameters are extracted conditional on this estimate of \code{G}: however, in constrast, the number of distinct clusters in the summarised labels obtained by specifying \code{z.avgsim=TRUE} may not necessarily coincide with the MAP estimate of \code{G}, but it may provide a useful alternative summary of the partitions explored during the chain, and the user is free to call \code{\link{get_IMIFA_results}} again with the new suggested \code{G} value.
+#'
+#' Please be warned that this only defaults to \code{TRUE} when the \code{mcclust} package - which \strong{must} be loaded for this feature - is loaded. This is liable to take considerable time to compute, and may not even be possible if the number of observations &/or number of stored iterations is large and the resulting matrix isn't sufficiently sparse. When \code{TRUE}, both the summarised clustering and the similarity matrix are stored: the latter can be visualised as part of a call to \code{\link{plot.Results_IMIFA}}.
 #' @param zlabels For any method that performs clustering, the true labels can be supplied if they are known in order to compute clustering performance metrics. This also has the effect of ordering the MAP labels (and thus the ordering of cluster-specific parameters) to most closely correspond to the true labels if supplied.
 #'
 #' @details The function also performs post-hoc corrections for label switching, as well as post-hoc Procrustes rotation of loadings matrices and scores, in order to ensure sensible posterior parameter estimates, constructs credible intervals, and generally transforms the raw \code{sims} object into an object of class "\code{Results_IMIFA}" in order to prepare the results for plotting via \code{\link{plot.Results_IMIFA}}.
 #'
 #' @return An object of class "\code{Results_IMIFA}" to be passed to \code{\link{plot.Results_IMIFA}} for visualising results. Dedicated \code{print} and \code{summary} functions also exist for objects of this class. The object, say \code{x}, is a list of lists, the most important components of which are:
-#' \itemize{
-#' \item{\strong{Clust} - }{Everything pertaining to clustering performance can be found here for all but the "\code{FA}" and "\code{IFA}" methods, in particular \code{x$Clust$MAP}, the MAP summary of the posterior clustering. More detail is given if known \code{zlabels} are supplied: performance is always evaluated against the MAP clustering, with additional evaluation against the alternative clustering computed if \code{z.avgsim=TRUE}.}
-#' \item{\strong{Error} - }{Error metrics (e.g. MSE, RMSE) between the empirical and estimated covariance matrix/matrices.}
-#' \item{\strong{GQ.results} - }{Everything pertaining to model choice can be found here, incl. posterior summaries for the estimated number of clusters and estimated number of factors, if applicable to the method employed. Information criterion values are also accessible here.}
-#' \item{\strong{Means} - }{Posterior summaries for the means.}
-#' \item{\strong{Loadings} - }{Posterior summaries for the factor loadings matrix/matrices. Posterior mean loadings given by x$Loadings$post.load are given the \code{\link[stats]{loadings}} class for printing purposes and thus the manner in which they are displayed can be modified.}
-#' \item{\strong{Scores} - }{Posterior summaries for the latent factor scores.}
-#' \item{\strong{Uniquenesses} - }{Posterior summaries for the uniquenesses.}
-#' }
+#' \item{\code{Clust}}{Everything pertaining to clustering performance can be found here for all but the "\code{FA}" and "\code{IFA}" methods, in particular \code{x$Clust$MAP}, the MAP summary of the posterior clustering. More detail is given if known \code{zlabels} are supplied: performance is always evaluated against the MAP clustering, with additional evaluation against the alternative clustering computed if \code{z.avgsim=TRUE}.}
+#' \item{\code{Error}}{Error metrics (e.g. MSE, RMSE) between the empirical and estimated covariance matrix/matrices.}
+#' \item{\code{GQ.results}}{Everything pertaining to model choice can be found here, incl. posterior summaries for the estimated number of clusters and estimated number of factors, if applicable to the method employed. Information criterion values are also accessible here.}
+#' \item{\code{Means}}{Posterior summaries for the means.}
+#' \item{\code{Loadings}}{Posterior summaries for the factor loadings matrix/matrices. Posterior mean loadings given by x$Loadings$post.load are given the \code{\link[stats]{loadings}} class for printing purposes and thus the manner in which they are displayed can be modified.}
+#' \item{\code{Scores}}{Posterior summaries for the latent factor scores.}
+#' \item{\code{Uniquenesses}}{Posterior summaries for the uniquenesses.}
 #'
 #' @note Due to the way the offline label-switching correction is performed, different runs of this function may give \emph{very slightly} different results, but only if the chain was run for an extremely small number of iterations, well below the number required for convergence, and samples of the cluster labels match poorly across iterations (particularly if the number of clusters suggested by those sampled labels is high).
-#'
+#' @keywords IMIFA main
 #' @export
 #' @importFrom Rfast "med" "rowMaxs" "standardise" "colMaxs" "rowVars" "rowmeans" "Order" "cova" "Var" "colTabulate" "Round" "sort_unique"
 #' @importFrom mclust "classError"
@@ -38,7 +40,7 @@
 #' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{plot.Results_IMIFA}}, \code{\link{Procrustes}}, \code{\link{Zsimilarity}}
 #' @references Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, <\href{https://arxiv.org/abs/1701.07010}{arXiv:1701.07010}>.
 #'
-#' @author Keefe Murphy - \href{keefe.murphy@ucd.ie}{<keefe.murphy@ucd.ie>}
+#' @author Keefe Murphy - <\email{keefe.murphy@@ucd.ie}>
 #'
 #' @examples
 #' # data(coffee)
@@ -63,7 +65,7 @@
 #' #                                    conf.level=0.9, z.avgsim=TRUE)
 #' # summary(resIMIFAolive)
 get_IMIFA_results              <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, Q = NULL, criterion = c("bicm", "aicm", "dic", "bic.mcmc", "aic.mcmc"),
-                                           G.meth = c("mode", "median"), Q.meth = c("mode", "median"), dat = NULL, conf.level = 0.95, z.avgsim = FALSE, zlabels = NULL) {
+                                           G.meth = c("mode", "median"), Q.meth = c("mode", "median"), dat = NULL, conf.level = 0.95, z.avgsim = TRUE, zlabels = NULL) {
   UseMethod("get_IMIFA_results")
 }
 
@@ -123,8 +125,18 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
      c("aic.mcmc", "bic.mcmc")))) stop(paste0(ifelse(isTRUE(choice), "Model choice is", "Though model choice isn't"), " actually required -\n'criterion' cannot be 'aic.mcmc' or 'bic.mcmc' for the ", method, " method"))
   recomp         <- any(burnin  > 0,
                     thinning    > 1)
+  miss.zavg      <- missing(z.avgsim)
   if(any(!is.logical(z.avgsim),
          length(z.avgsim) != 1))  stop("'z.avgsim' must be a single logical indicator")
+  if(isTRUE(z.avgsim))  {
+    has.pkg      <- suppressMessages(requireNamespace("mcclust", quietly=TRUE))
+    if(!has.pkg)  {
+      z.avgwarn  <- "Forcing 'z.avgsim' to FALSE: 'mcclust' package not installed"
+      z.avgsim   <- FALSE
+      if(miss.zavg)     {         message(z.avgwarn)
+      } else                      warning(z.avgwarn, call.=FALSE)
+    }
+  }
 
   G.T            <- !missing(G)
   Q.T            <- !missing(Q)
