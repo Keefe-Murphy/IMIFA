@@ -31,20 +31,20 @@
     if(sw["psi.sw"]) {
       psi.store  <- matrix(0L, nrow=P, ncol=n.store)
     }
-    post.mu      <- rep(0L, P)
+    post.mu      <- vector("integer", P)
     post.psi     <- post.mu
-    ll.store     <- rep(0L, n.store)
+    ll.store     <- vector("integer", n.store)
     cov.emp      <- if(P > 500) switch(scaling, unit=cora(as.matrix(data)), cova(as.matrix(data))) else switch(scaling, unit=stats::cor(data), stats::cov(data))
     cov.est      <- matrix(0L, nrow=P, ncol=P)
     Q.star       <- Q
-    Q.store      <- rep(0L, n.store)
+    Q.store      <- vector("integer", n.store)
     Q.large      <- Q.big  <- FALSE
 
     mu.sigma     <- 1/sigma.mu
     uni.type     <- switch(uni.type,   unconstrained=,               constrained="constrained", "single")
     .sim_psi_inv <- switch(uni.type,   constrained=.sim_psi_u1,      single=.sim_psi_c1)
     .sim_psi_ip  <- switch(uni.prior,  unconstrained=.sim_psi_ipu,   isotropic=.sim_psi_ipc)
-    psi.beta     <- switch(uni.prior,  isotropic=as.vector(unique(Round(psi.beta, min(nchar(psi.beta))))), psi.beta)
+    psi.beta     <- switch(uni.prior,  isotropic=psi.beta[which.max(.ndeci(psi.beta))], psi.beta)
     uni.shape    <- switch(uni.type,   constrained=N/2 + psi.alpha,  single=(N * P)/2 + psi.alpha)
     V            <- switch(uni.type,   constrained=P,                single=1)
     eta          <- .sim_eta_p(Q=Q, N=N)
@@ -133,7 +133,7 @@
               lmat  <- cbind(lmat, stats::rnorm(n=P, mean=0, sd=sqrt(1/(phi[,Q] * tau[Q]))))
             }
           } else          { # remove redundant columns
-            nonred  <- which(colvec == 0)
+            nonred  <- colvec == 0
             Q       <- max(0, Q - numred)
             eta     <- if(storage) eta[,nonred, drop=FALSE] else eta
             phi     <- phi[,nonred, drop=FALSE]

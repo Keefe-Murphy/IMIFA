@@ -23,26 +23,29 @@ MGP_check(ad1, ad2, Q = 3L, nu = 2, bd1 = 1, bd2 = 1, plus1 = TRUE,
 \value{
 A list of length 2 containing the following objects:
 \itemize{
-  \item{\strong{expectation} - }{The vector of actual expected shrinkage factors, \emph{a priori}.}
-  \item{\strong{valid} - }{A logical indicating whether the cumulative shrinkage property holds.}
+  \item{\strong{expectation} - }{The vector (or list of vectors) of actual expected \emph{a priori} shrinkage factors.}
+  \item{\strong{valid} - }{A logical (or vector of logicals) indicating whether the cumulative shrinkage property holds.}
 }
 }
 \description{
-Checks the hyperparameters for the multiplicative gamma process (MGP) shrinkage prior in order to ensure that the property of cumulative shrinkage holds.
+Checks the hyperparameters for the multiplicative gamma process (MGP) shrinkage prior in order to ensure that the property of cumulative shrinkage holds, i.e. checks whether growing mass is assigned to small neighbourhoods of zero as the column index increases.
 }
 \details{
-This is called inside \code{\link{mcmc_IMIFA}} for the "\code{IFA}", "\code{MIFA}", "\code{OMIFA}" and "\code{IMIFA}" methods. The arguments \code{ad1, ad2, nu, bd1} and \code{bd2} are vectorised.
+This is called inside \code{\link{mcmc_IMIFA}} for the "\code{IFA}", "\code{MIFA}", "\code{OMIFA}" and "\code{IMIFA}" methods. This function is vectorised with respect to the arguments \code{ad1, ad2, nu, bd1} and \code{bd2}.
+}
+\note{
+It is \emph{recommended} that \code{ad2} be moderately large relative to \code{ad1}, even if \code{valid} can sometimes be \code{TRUE} when this is not the case. Similarly, satisfying this condition is no guarantee that \code{valid} will be \code{TRUE}. Therefore, a warning is returned if \code{ad1 <= ad2}, regardless of the value taken by \code{valid}.
 }
 \examples{
 # Check if expected shrinkage under the MGP increases with the column index (WRONG approach!).
-MGP_check(ad1=1.5, ad2=1.8, Q=10, nu=2, inverse=FALSE)[[1]]$valid
+MGP_check(ad1=1.5, ad2=1.8, Q=10, nu=2, inverse=FALSE)$valid     #TRUE
 
 # Check if the induced IG prior on the MGP global shrinkage parameters
 # is stochastically increasing, thereby inducing cumulative shrinkage (CORRECT approach!).
-MGP_check(ad1=1.5, ad2=1.8, Q=10, nu=2, inverse=TRUE)[[1]]$valid
+MGP_check(ad1=1.5, ad2=1.8, Q=10, nu=2, inverse=TRUE)$valid     #FALSE
 
 # Check again with a parameterisation that IS valid and examine the expected shrinkage values.
-(shrink <- MGP_check(ad1=1.5, ad2=2.8, Q=10, nu=2, inverse=TRUE)[[1]])
+(shrink <- MGP_check(ad1=1.5, ad2=2.8, Q=10, nu=2, inverse=TRUE))
 }
 \references{
 Bhattacharya, A. and Dunson, D. B. (2011). Sparse Bayesian infinite factor models, \emph{Biometrika}, 98(2): 291-306.

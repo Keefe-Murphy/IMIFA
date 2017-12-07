@@ -42,7 +42,7 @@
     }
     z.store        <- matrix(0L, nrow=n.store, ncol=N)
     err.z          <- zerr <- FALSE
-    ll.store       <- rep(0L, n.store)
+    ll.store       <- vector("integer", n.store)
 
     mu.sigma       <- 1/sigma.mu
     sig.mu.sqrt    <- sqrt(sigma.mu)
@@ -67,8 +67,9 @@
       uni.shape    <- switch(uni.type,   constrained=N/2 + psi.alpha, single=(N * P)/2 + psi.alpha)
       V            <- switch(uni.type,   constrained=P, single=1)
     }
-    psi.beta       <- switch(uni.prior,  isotropic=unique(Round(psi.beta, min(nchar(psi.beta)))), psi.beta)
-    if(length(psi.beta) == 1) {
+    if(uni.prior   == "isotropic")   {
+      psi.beta     <- matrix(vapply(Gseq, function(g) psi.beta[which.max(.ndeci(psi.beta[,g])),g], numeric(1L)), nrow=1, ncol=G)
+    } else if(length(psi.beta) == 1) {
       psi.beta     <- matrix(psi.beta, nrow=1, ncol=G)
     }
     mu0g           <- cluster$l.switch[1]

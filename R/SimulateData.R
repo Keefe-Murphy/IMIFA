@@ -50,7 +50,7 @@ sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(floor(log(P)), G),
       } else if(length(Q != G))           stop(paste0("'Q' must supplied for each of the G=", G, " clusters"))
     }
   }
-  if(!is.character(method))               stop("'method' must be a character vector of length 1")
+  if(!all(is.character(method)))          stop("'method' must be a character vector of length 1")
   method       <- match.arg(method)
   Gseq         <- seq_len(G)
   Nseq         <- seq_len(N)
@@ -69,7 +69,7 @@ sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(floor(log(P)), G),
        any(length(pis)   != G,
            sum(pis)      != 1))           stop(paste0("'pis' must be a numeric vector of length G=", G, " which sums to ", 1))
     if(any(pis <= 0))                     stop("All 'pis' values must be strictly positive")
-    nn         <- rep(0,  G)
+    nn         <- vector("numeric", G)
     iter       <- 0
     while(any(nn   < floor(N/(G * G)),
               iter < 1000))            {

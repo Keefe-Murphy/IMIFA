@@ -1,12 +1,13 @@
 __Infinite Mixtures of Infinite Factor Analysers__
 ==================================================  
 
-## IMIFA v1.4.0 - (_6<sup>th</sup> release [minor update]: 2017-08-03_)
+## IMIFA v1.4.0 - (_6<sup>th</sup> release [minor update]: 2017-12-07_)
 ### New Features
 * Simplified `mcmc_IMIFA` by consolidating arguments using new helper functions (with defaults):  
-    * MGP & AGS args. supplied using `mgpControl` for infinite factor models.  
-    * Dirichlet/Pitman-Yor Process args. supplied using `bnpControl` for infinite mixture models.
-    * Storage switch args. supplied using `storeControl`.
+    * Args. common to all factor-analytic mixture methods & MCMC settings supplied via `mixfaControl`.
+    * MGP & AGS args. supplied via `mgpControl` for infinite factor models.  
+    * Dirichlet/Pitman-Yor Process args. supplied via `bnpControl` for infinite mixture models.
+    * Storage switch args. supplied via `storeControl`.
 * Added ability to constrain mixing proportions across clusters using `equal.pro` argument for M(I)FA models:  
   Modified PGMM_dfree accordingly and forced non-storage of mixing proportions when `equal.pro` is TRUE.  
 
@@ -18,7 +19,7 @@ __Infinite Mixtures of Infinite Factor Analysers__
 * Added "`hc`" option to `z.init` to initialise allocations via hierarchical clustering (using `mclust::hc`).
 * `mu` argument added to `sim_IMIFA_data` to allow supplying true mean parameter values directly.
 * Standard deviation of AICM/BICM model selection criteria now computed and returned.
-* Speed-ups due to new `Rfast` functions: `colTabulate`, `groupcolVars`, `matrnorm`, `Order` & `Round`.
+* Speed-ups due to new `Rfast` functions: `colTabulate`, `groupcolVars`, `matrnorm`, & `Order`.
 * Speed-ups due to utility functions from `matrixStats`, on which `IMIFA` already depends.
 * Slight improvements when `adapt=FALSE` for infinite factor models with fixed high truncation level.
 * `heat_legend` gains `cex.lab` argument to control magnification of legend text.
@@ -35,9 +36,10 @@ __Infinite Mixtures of Infinite Factor Analysers__
 * Fixed bug with default plotting palette for data sets with >1024 variables.
 * Fixed `print` and `summary` functions for objects of class `IMIFA` and `Results_IMIFA`.
 * Fixed calculating posterior mean `zeta` when adaptively targeting `alpha`'s optimal MH acceptance rate.
+* Clarified recommendation in `MGP_check` that `alpha.d2` be moderately large relative to `alpha.d1`.
 * Ensured `sigma.mu` hyperparameter arg. is always coerced to diagonal entries of a covariance matrix.
 * Transparency default in `plot.Results_IMIFA` now depends on device's support of semi-transparency.
-* `Ledermann(P)` is now properly vectorised.
+* `Ledermann()`, `MGP_check`, and `PGMM_dfree` are now properly vectorised.
 
 ### Miscellaneous
 * Optimised compression of `olive`, `coffee` and vignette data and used `LazyData: true`.

@@ -38,7 +38,7 @@
       pi.store     <- matrix(0L, nrow=G, ncol=n.store)
     }
     z.store        <- matrix(0L, nrow=n.store, ncol=N)
-    ll.store       <- rep(0, n.store)
+    ll.store       <- vector("integer", n.store)
     Q.star         <- Q
     Qs             <- rep(Q, G)
     Q.store        <- matrix(0L, nrow=G, ncol=n.store)
@@ -68,8 +68,9 @@
       uni.shape    <- switch(uni.type,   constrained=N/2 + psi.alpha, single=(N * P)/2 + psi.alpha)
       V            <- switch(uni.type,   constrained=P, single=1)
     }
-    psi.beta       <- switch(uni.prior,  isotropic=unique(Round(psi.beta, min(nchar(psi.beta)))), psi.beta)
-    if(length(psi.beta) == 1) {
+    if(uni.prior   == "isotropic")   {
+      psi.beta     <- matrix(vapply(Gseq, function(g) psi.beta[which.max(.ndeci(psi.beta[,g])),g], numeric(1L)), nrow=1, ncol=G)
+    } else if(length(psi.beta) == 1) {
       psi.beta     <- matrix(psi.beta, nrow=1, ncol=G)
     }
     alpha.d1       <- cluster$alpha.d1
@@ -257,7 +258,7 @@
            Qs[Qmax  != Qs    & !nn0]  <- Qmax
           }
           if(store.eta)  {
-            eta.tmp <- lapply(Gseq,  function(g) if(nn0[g] && Qs[g] > Qs.old[which(nn.ind == g)]) cbind(eta.tmp[[g]], stats::rnorm(nn[g])) else eta.tmp[[g]][,seq_len(Qs[g]), drop=FALSE])
+            eta.tmp <- lapply(Gseq,  function(g) if(nn0[g] && Qs[g] > Qs.old[nn.ind == g]) cbind(eta.tmp[[g]], stats::rnorm(nn[g])) else eta.tmp[[g]][,seq_len(Qs[g]), drop=FALSE])
           }
         }
       }

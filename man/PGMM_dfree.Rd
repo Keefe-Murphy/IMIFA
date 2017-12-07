@@ -10,11 +10,11 @@ PGMM_dfree(Q, P, G = 1L, method = c("UUU", "UUC", "UCU", "UCC", "CUU",
 \arguments{
 \item{Q}{The number of latent factors (which can be 0, corresponding to a model with diagonal covariance). This argument is vectorised.}
 
-\item{P}{The number of variables.}
+\item{P}{The number of variables. Must be a single strictly positive integer.}
 
-\item{G}{The number of clusters. This defaults to 1.}
+\item{G}{The number of clusters. This defaults to 1. Must be a single strictly positive integer.}
 
-\item{method}{By default, calculation assumes the \code{UUU} model with unconstrained loadings and unconstrained isotropic uniquesses. The other seven models detailed in McNicholas and Murphy (2008) are also given. The first letter denotes whether loadings are constrained/unconstrained across clusters; the second letter denotes the same for the uniquenesses; the final letter denotes whether uniquenesses are in turn constrained to be isotropic.}
+\item{method}{By default, calculation assumes the \code{UUU} model with unconstrained loadings and unconstrained isotropic uniquesses. The other seven models detailed in McNicholas and Murphy (2008) are also given (of which currently the first four are accomodated within \code{\link{mcmc_IMIFA}}). The first letter denotes whether loadings are constrained/unconstrained across clusters; the second letter denotes the same for the uniquenesses; the final letter denotes whether uniquenesses are in turn constrained to be isotropic.}
 
 \item{equal.pro}{Logical variable indicating whether or not the mixing mixing proportions are equal across clusters in the model (default = \code{FALSE}).}
 }
@@ -31,8 +31,8 @@ This function is used to calculate the penalty terms for the \code{aic.mcmc} and
 Though the function is available for standalone use, note that no checks take place, in order to speed up repeated calls to the function inside \code{\link{mcmc_IMIFA}}.
 }
 \examples{
-(UUU <- PGMM_dfree(Q=4:5, P=50, G=3, method="UUU"))
-(CCC <- PGMM_dfree(Q=4:5, P=50, G=3, method="CCC", equal.pro=TRUE))
+(UUU <- PGMM_dfree(Q=0:5, P=50, G=3, method="UUU"))
+(CCC <- PGMM_dfree(Q=0:5, P=50, G=3, method="CCC", equal.pro=TRUE))
 }
 \references{
 McNicholas, P. D. and Murphy, T. B. (2008) Parsimonious Gaussian Mixture Models, \emph{Statistics and Computing}, 18(3): 285-296.

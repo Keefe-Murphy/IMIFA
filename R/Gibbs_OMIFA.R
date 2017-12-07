@@ -38,13 +38,13 @@
       pi.store       <- matrix(0L, nrow=G, ncol=n.store)
     }
     z.store          <- matrix(0L, nrow=n.store, ncol=N)
-    ll.store         <- rep(0L, n.store)
+    ll.store         <- vector("integer", n.store)
     Q.star           <- Q
     Qs               <- rep(Q, G)
     Q.store          <- matrix(0L, nrow=G, ncol=n.store)
     Q.large          <- Q.big <- Q.bigs <- FALSE
     err.z            <- z.err <- FALSE
-    G.store          <- rep(0L, n.store)
+    G.store          <- vector("integer", n.store)
 
     mu.sigma         <- 1/sigma.mu
     sig.mu.sqrt      <- sqrt(sigma.mu)
@@ -58,11 +58,11 @@
                                            constrained=.sim_psi_cu,     single=.sim_psi_cc)
     .sim_psi_ip      <- switch(uni.prior,  unconstrained=.sim_psi_ipu,  isotropic=.sim_psi_ipc)
     if(isTRUE(one.uni)) {
-      uni.shape      <- switch(uni.type,   constrained=N/2 + psi.alpha, single=(N * P)/2 + psi.alpha)
+      uni.shape      <- switch(uni.type,   constrained=N/2 + psi.alpha, single=(N * P)/2  + psi.alpha)
       V              <- switch(uni.type,   constrained=P, single=1)
     }
-    psi.beta         <- switch(uni.prior,  isotropic=as.vector(unique(Round(psi.beta, min(nchar(psi.beta))))), psi.beta)
-    pi.prop          <- c(cluster$pi.prop, rep(0, G - length(cluster$pi.prop)))
+    psi.beta         <- switch(uni.prior,  isotropic=psi.beta[which.max(.ndeci(psi.beta))], psi.beta)
+    pi.prop          <- c(cluster$pi.prop, vector("numeric", G - length(cluster$pi.prop)))
     mu               <- cbind(mu,  vapply(seq_len(G - length(cluster$pi.prop)), function(g) .sim_mu_p(P=P, sig.mu.sqrt=sig.mu.sqrt, mu.zero=mu.zero), numeric(P)))
     eta              <- .sim_eta_p(N=N, Q=Q)
     phi              <- lapply(Gseq, function(g) .sim_phi_p(Q=Q, P=P, nu=nu, plus1=nuplus1))
@@ -263,7 +263,7 @@
             Qs[Qmax  != Qs & !nn0]   <- Qmax
           }
           if(store.eta)    {
-            eta.tmp  <- lapply(Gseq,   function(g) if(nn0[g] && Qs[g] > Qs.old[which(nn.ind == g)]) cbind(eta.tmp[[g]], stats::rnorm(nn[g])) else eta.tmp[[g]][,seq_len(Qs[g]), drop=FALSE])
+            eta.tmp  <- lapply(Gseq,   function(g) if(nn0[g] && Qs[g] > Qs.old[nn.ind == g]) cbind(eta.tmp[[g]], stats::rnorm(nn[g])) else eta.tmp[[g]][,seq_len(Qs[g]), drop=FALSE])
           }
         }
       }

@@ -42,10 +42,10 @@
       pi.store       <- matrix(0L, nrow=trunc.G, ncol=n.store)
     }
     z.store          <- matrix(0L, nrow=n.store, ncol=N)
-    ll.store         <- rep(0L, n.store)
+    ll.store         <- vector("integer", n.store)
     acc1             <- acc2 <- FALSE
     err.z            <- zerr <- FALSE
-    G.store          <- rep(0L, n.store)
+    G.store          <- vector("integer", n.store)
     act.store        <- G.store
     if(learn.alpha) {
       alpha.store    <- ll.store
@@ -56,12 +56,12 @@
       d.store        <- ll.store
       d.shape1       <- d.hyper[1]
       d.shape2       <- d.hyper[2]
-      d.rates        <- rep(0L, total)
+      d.rates        <- vector("integer", total)
       d.unif         <- d.shape1 == 1 & d.shape2 == 1
     } else d.rates   <- 1
     MH.step          <- any(discount  > 0, learn.d) && learn.alpha
     if(MH.step)     {
-      a.rates        <- rep(0L, total)
+      a.rates        <- vector("integer", total)
     } else a.rates   <- 1
     if(IM.lab.sw)   {
       lab.rate       <- matrix(0L, nrow=2, ncol=total)
@@ -81,10 +81,10 @@
                                            constrained=.sim_psi_cu,     single=.sim_psi_cc)
     .sim_psi_ip      <- switch(uni.prior,  unconstrained=.sim_psi_ipu,  isotropic=.sim_psi_ipc)
     if(isTRUE(one.uni)) {
-      uni.shape      <- switch(uni.type,   constrained=N/2 + psi.alpha, single=(N * P)/2 + psi.alpha)
+      uni.shape      <- switch(uni.type,   constrained=N/2 + psi.alpha, single=(N * P)/2  + psi.alpha)
       V              <- switch(uni.type,   constrained=P, single=1)
     }
-    psi.beta         <- switch(uni.prior,  isotropic=as.vector(unique(Round(psi.beta, min(nchar(psi.beta))))), psi.beta)
+    psi.beta         <- switch(uni.prior,  isotropic=psi.beta[which.max(.ndeci(psi.beta))], psi.beta)
     pi.prop          <- cluster$pi.prop
     nn               <- tabulate(z, nbins=trunc.G)
     mu.tmp           <- vapply(seq_len(trunc.G - G), function(g) .sim_mu_p(P=P, sig.mu.sqrt=sig.mu.sqrt, mu.zero=mu.zero), numeric(P))
