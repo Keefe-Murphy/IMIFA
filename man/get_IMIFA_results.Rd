@@ -12,9 +12,9 @@ get_IMIFA_results(sims = NULL,
   criterion = c("bicm", "aicm", "dic", "bic.mcmc", "aic.mcmc"),
   G.meth = c("mode", "median"),
   Q.meth = c("mode", "median"),
-  dat = NULL,
   conf.level = 0.95,
-  z.avgsim = FALSE,
+  error.metrics = TRUE,
+  z.avgsim = TRUE,
   zlabels = NULL)
 }
 \arguments{
@@ -40,9 +40,13 @@ Note that the first three options here might exhibit bias in favour of zero-fact
 
 \item{Q.meth}{If the object in \code{sims} arises from the "\code{IFA}", "\code{MIFA}", "\code{OMIFA}" or "\code{IMIFA}" methods, this argument determines whether the optimal number of latent factors is given by the mode or median of the posterior distribution of \code{Q}. Defaults to "\code{mode}". Often the mode and median will agree in any case.}
 
-\item{dat}{The actual data set on which \code{\link{mcmc_IMIFA}} was originally run. If this is not supplied, the function will \emph{attempt} to find the data set if it is still available in the global environment. This is necessary if one wishes to compute error metrics between the estimated and empirical covariance matrix/matrices, although it's not required for the "\code{FA}" and "\code{IFA}" methods.}
+\item{conf.level}{The confidence level to be used throughout for credible intervals for all parameters of inferential interest, and error metrics if \code{error.metrics} is \code{TRUE}. Defaults to 0.95.}
 
-\item{conf.level}{The confidence level to be used throughout for credible intervals for all parameters of inferential interest. Defaults to 0.95.}
+\item{error.metrics}{A logical activating or deactivating posterior predictive checking: i.e. controlling whether metrics quantifying the error between the empirical and estimated covariance matrices should be computed for every retained iteration. Defaults to \code{TRUE}, but can be time-consuming for models which achieve clustering.
+
+Regardless of the value of \code{error.metrics}, the metrics will still be computed at the posterior mean parameter estimates, \emph{if possible}, with or without computing a distribution of such metrics. These error metrics - and the uncertainty associated with them, if \code{error.metrics} is \code{TRUE} - can be visualised via \code{\link{plot.Results_IMIFA}}.
+
+For models which achieve clustering, the overall estimated covariance matrix is constructed from the cluster-specific estimated covariance matrices.}
 
 \item{z.avgsim}{Logical indicating whether the clustering should also be summarised with a call to \code{\link{Zsimilarity}} by the clustering with minimum mean squared error to the similarity matrix obtained by averaging the stored adjacency matrices, in addition to the MAP estimate.
 
@@ -54,8 +58,8 @@ Please be warned that this only defaults to \code{TRUE} when the \code{mcclust} 
 }
 \value{
 An object of class "\code{Results_IMIFA}" to be passed to \code{\link{plot.Results_IMIFA}} for visualising results. Dedicated \code{print} and \code{summary} functions also exist for objects of this class. The object, say \code{x}, is a list of lists, the most important components of which are:
-\item{\code{Clust}}{Everything pertaining to clustering performance can be found here for all but the "\code{FA}" and "\code{IFA}" methods, in particular \code{x$Clust$MAP}, the MAP summary of the posterior clustering. More detail is given if known \code{zlabels} are supplied: performance is always evaluated against the MAP clustering, with additional evaluation against the alternative clustering computed if \code{z.avgsim=TRUE}.}
-\item{\code{Error}}{Error metrics (e.g. MSE, RMSE) between the empirical and estimated covariance matrix/matrices.}
+\item{\code{Clust}}{Everything pertaining to clustering performance can be found here for all but the "\code{FA}" and "\code{IFA}" methods, in particular \code{x$Clust$MAP}, the MAP summary of the posterior clustering. More detail is given if known \code{zlabels} are supplied: performance is always evaluated against the MAP clustering, with additional evaluation against the alternative clustering computed if \code{z.avgsim=TRUE}. Mixing proportions and posterior summaries of the DP/PY parameters, if necessary, are also included here.}
+\item{\code{Error}}{Average error metrics (e.g. MSE, RMSE), and credible intervals quantifying the associated uncertainty, between the empirical and estimated covariance matrix/matrices, both of which are also included. The same metrics evaluated at the posterior mean parameter estimates are also given. Only relevant if \code{error.metrics} is \code{TRUE}.}
 \item{\code{GQ.results}}{Everything pertaining to model choice can be found here, incl. posterior summaries for the estimated number of clusters and estimated number of factors, if applicable to the method employed. Information criterion values are also accessible here.}
 \item{\code{Means}}{Posterior summaries for the means.}
 \item{\code{Loadings}}{Posterior summaries for the factor loadings matrix/matrices. Posterior mean loadings given by x$Loadings$post.load are given the \code{\link[stats]{loadings}} class for printing purposes and thus the manner in which they are displayed can be modified.}
@@ -63,12 +67,14 @@ An object of class "\code{Results_IMIFA}" to be passed to \code{\link{plot.Resul
 \item{\code{Uniquenesses}}{Posterior summaries for the uniquenesses.}
 }
 \description{
-This function post-processes simulations generated by \code{\link{mcmc_IMIFA}} for any of the IMIFA family of models. It can be re-ran at little computational cost in order to extract different models explored by the sampler used for \code{sims}, without having to re-run the model itself. New results objects using different numbers of clusters and different numbers of factors (if visited by the model in question), or using different model selection criteria (if necessary) can be generated with ease.
+This function post-processes simulations generated by \code{\link{mcmc_IMIFA}} for any of the IMIFA family of models. It can be re-ran at little computational cost in order to extract different models explored by the sampler used for \code{sims}, without having to re-run the model itself. New results objects using different numbers of clusters and different numbers of factors (if visited by the model in question), or using different model selection criteria (if necessary) can be generated with ease. Posterior predictive checking of the appropriateness of the fitted model is also facilitated.
 }
 \details{
-The function also performs post-hoc corrections for label switching, as well as post-hoc Procrustes rotation of loadings matrices and scores, in order to ensure sensible posterior parameter estimates, constructs credible intervals, and generally transforms the raw \code{sims} object into an object of class "\code{Results_IMIFA}" in order to prepare the results for plotting via \code{\link{plot.Results_IMIFA}}.
+The function also performs post-hoc corrections for label switching, as well as post-hoc Procrustes rotation of loadings matrices and scores, in order to ensure sensible posterior parameter estimates, computes error metrics, constructs credible intervals, and generally transforms the raw \code{sims} object into an object of class "\code{Results_IMIFA}" in order to prepare the results for plotting via \code{\link{plot.Results_IMIFA}}.
 }
 \note{
+For the "\code{IMIFA}", "\code{IMFA}", "\code{OMIFA}", and "\code{OMFA}" methods, the retained mixing proportions are renormalised after conditioning on the modal \code{G}. This is especially necessary for the compution of the \code{error.metrics}, just note that the values on which posterior inference are conducted will ever so slightly differ from the actually sampled values.
+
 Due to the way the offline label-switching correction is performed, different runs of this function may give \emph{very slightly} different results, but only if the chain was run for an extremely small number of iterations, well below the number required for convergence, and samples of the cluster labels match poorly across iterations (particularly if the number of clusters suggested by those sampled labels is high).
 }
 \examples{

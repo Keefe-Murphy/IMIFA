@@ -87,6 +87,7 @@
     psi.beta         <- switch(uni.prior,  isotropic=psi.beta[which.max(.ndeci(psi.beta))], psi.beta)
     pi.prop          <- cluster$pi.prop
     nn               <- tabulate(z, nbins=trunc.G)
+    nn0              <- nn > 0
     mu.tmp           <- vapply(seq_len(trunc.G - G), function(g) .sim_mu_p(P=P, sig.mu.sqrt=sig.mu.sqrt, mu.zero=mu.zero), numeric(P))
     mu               <- cbind(mu, if(uni) t(mu.tmp) else mu.tmp)
     eta              <- .sim_eta_p(N=N, Q=Q)
@@ -107,7 +108,8 @@
       if(isTRUE(one.uni)) {
         psi.inv[,Gs] <- 1/switch(uni.type, constrained=Rfast::colVars(data), exp(mean(log(Rfast::colVars(data)))))
       } else   {
-        psi.inv[,Gs] <- 1/groupcolVars(data, ina=z)
+        tmp.psi      <- ((nn[nn0] - 1)/(rowsum(data^2,  z) - rowsum(data, z)^2/nn[nn0]))
+        psi.inv[,nn   > 1]   <- tmp.psi[!is.nan(tmp.psi)]
       }
       inf.ind        <- is.infinite(psi.inv) | is.nan(psi.inv)
       psi.inv[inf.ind]       <- psi.tmp[inf.ind]

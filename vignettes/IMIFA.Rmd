@@ -203,7 +203,7 @@ To examine uniquenesses from all clusters in the form of a parellel coordinates 
 plot(resIMIFA, plot.meth="parallel.coords", param="uniquenesses")
 ```
 
-The error between the empirical and estimated covariance matrices (by cluster and averaged across clusters) can sometimes provide a useful indicator of the validity of a clustering solution, and can be visualised as follows:
+Posterior predictive checking to assess the appropriateness of the fitted model is also facilitated. Quantifying the error between the empirical and estimated covariance matrices - and the uncertainty associated with those metrics - can provide a useful indicator of the validity of the solution. For models which achieve clustering, the overall estimated covariance matrix is constructed from the cluster-specific estimated covariance matrices. A visualisation can be produced as follows:
 ```{r}
 plot(resIMIFA, plot.meth="errors")
 ```

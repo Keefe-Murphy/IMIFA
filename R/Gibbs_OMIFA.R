@@ -51,7 +51,8 @@
     z                <- cluster$z
     z.temp           <- factor(z, levels=Gseq)
     nn               <- tabulate(z, nbins=G)
-    nn.ind           <- which(nn > 0)
+    nn0              <- nn > 0
+    nn.ind           <- which(nn0)
     pi.alpha         <- cluster$pi.alpha
     one.uni          <- is.element(uni.type, c("constrained", "single"))
     .sim_psi_inv     <- switch(uni.type,   unconstrained=.sim_psi_uu,   isotropic=.sim_psi_uc,
@@ -80,12 +81,13 @@
           psi.inv[,g]         <- 1/fact$uniquenesses
         }
       }
-    } else {
+    } else   {
       psi.tmp        <- psi.inv
       if(isTRUE(one.uni)) {
         psi.inv[,]   <- 1/switch(uni.type, constrained=Rfast::colVars(data), exp(mean(log(Rfast::colVars(data)))))
-      } else   {
-        psi.inv[,]   <- 1/groupcolVars(data, ina=z)
+      } else {
+        tmp.psi      <- ((nn[nn0] - 1)/(rowsum(data^2,  z) - rowsum(data, z)^2/nn[nn0]))
+        psi.inv[,nn   > 1]    <- tmp.psi[!is.nan(tmp.psi)]
       }
       inf.ind        <- is.infinite(psi.inv) | is.nan(psi.inv)
       psi.inv[inf.ind]        <- psi.tmp[inf.ind]
@@ -217,13 +219,13 @@
     # Adaptation
       if(all(adapt, iter   > adaptat))   {
         if(stats::runif(1) < ifelse(iter < burnin, 0.5, exp(-b0 - b1 * (iter - adaptat)))) {
-          colvec     <- lapply(nn.ind, function(g) (if(Q0[g]) colSums(abs(lmat[[g]])   < epsilon)/P else 0) >= prop)
+          colvec     <- lapply(nn.ind, function(g) (if(Q0[g]) colSums(abs(lmat[[g]])   < epsilon)/P else stats::runif(1)) >= prop)
           nonred     <- lapply(colvec, .which0)
           numred     <- lengths(colvec)  - lengths(nonred)
           notred     <- numred == 0
           ng.ind     <- seq_along(nn.ind)
           Qs.old     <- Qs[nn0]
-          Qs[nn0]    <- pmax.int(0, vapply(ng.ind, function(h) if(notred[h]) Qs.old[h] + 1 else Qs.old[h]    - numred[h], numeric(1L)))
+          Qs[nn0]    <- pmax.int(0, vapply(ng.ind, function(h) if(notred[h]) Qs.old[h] + 1 else Qs.old[h] - numred[h], numeric(1L)))
           Q.big      <- Qs[nn0] > Q.star
           if((Q.bigs <- any(Q.big))) {
             notred   <- notred & !Q.big

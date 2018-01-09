@@ -106,7 +106,7 @@ sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(floor(log(P)), G),
     N.g        <- nn[g]
     mu.true    <- stats::setNames(if(mu.miss) .sim_mu_p(P=P, mu.zero=musup[g], sig.mu.sqrt=1) else musup[,g], vnames)
     l.true     <- matrix(.sim_load_p(Q=Q.g, P=P, sigma.l=1), nrow=P, ncol=Q.g)
-    psi.true   <- stats::setNames(if(psi.miss) stats::rgamma(P, 1, 1) else psisup[,g], vnames)
+    psi.true   <- stats::setNames(if(psi.miss) stats::rgamma(P, 2, 1) else psisup[,g], vnames)
 
   # Simulate data
     covmat     <- provideDimnames({ if(P > 1) diag(psi.true) else as.matrix(psi.true) } + { if(Q.g > 0) switch(method, marginal=tcrossprod(l.true), 0) else 0}, base=list(vnames))

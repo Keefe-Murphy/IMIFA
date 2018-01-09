@@ -2,7 +2,7 @@
 #'
 #' Carries out Gibbs sampling for all models from the IMIFA family, facilitating model-based clustering with dimensionally reduced factor-analytic covariance structures, with automatic estimation of the number of clusters and cluster-specific factors as appropriate to the method employed. Factor analysis with one group (FA/IFA), finite mixtures (MFA/MIFA), overfitted mixtures (OMFA/OMIFA), infinite factor models which employ the multiplicative gamma process (MGP) shrinkage prior (IFA/MIFA/OMIFA/IMIFA), and infinite mixtures which employ Dirichlet/Pitman-Yor Process Mixture Models (IMFA/IMIFA) are all provided.
 #'
-#' @param dat A matrix or data frame such that rows correspond to observations (\code{N}) and columns correspond to variables (\code{P}). Non-numeric variables and rows with missing entries will be removed.
+#' @param dat A matrix or data frame such that rows correspond to observations (\code{N}) and columns correspond to variables (\code{P}). Non-numeric variables will be discarded if they are explicitly coded as factors or ordinal factors; otherwise they will be treated as though they were continuous. Rows with missing entries will be also be automatically removed.
 #' @param method An acronym for the type of model to fit where:
 #' \describe{
 #'  \item{"\code{FA}"}{Factor Analysis}
@@ -50,7 +50,7 @@
 #' @keywords IMIFA main
 #' @export
 #' @importFrom matrixStats "colMeans2" "colSums2" "rowLogSumExps" "rowSums2"
-#' @importFrom Rfast "Order" "colVars" "rowmeans" "standardise" "sort_unique" "cora" "cova" "groupcolVars" "matrnorm"
+#' @importFrom Rfast "Order" "colVars" "rowmeans" "standardise" "sort_unique" "cora" "cova" "matrnorm"
 #' @importFrom mvnfast "dmvn"
 #' @importFrom slam "as.simple_sparse_array" "as.simple_triplet_matrix"
 #' @importFrom mclust "Mclust" "mclustBIC" "hc" "hclass" "hcEII" "hcVVV"
@@ -122,9 +122,6 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   method    <- match.arg(method)
   if(missing(dat))                  stop("Dataset must be supplied")
   dat.nam   <- gsub("[[:space:]]", "", deparse(substitute(dat)))
-  nam.dat   <- gsub("\\[.*", "", dat.nam)
-  if(!exists(nam.dat,
-     envir=.GlobalEnv))             stop(paste0("Object ", match.call()$dat, " not found\n"))
 
 # Remove non-numeric columns & apply centering & scaling if necessary
   mixfamiss <- attr(mixFA, "Missing")
@@ -193,9 +190,9 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   if(all(is.element(method, c("FA", "IFA")), verbose,
          !zin.miss || !zli.miss)) { message(paste0("z does not need to be initialised for the ", method, " method"))
   } else if(!zli.miss) {
-    if(!is.list(z.list))     z.list        <- lapply(list(z.list), as.factor)
+    if(!is.list(z.list))     z.list    <- lapply(list(z.list), as.factor)
     if(zin.miss &&
-       z.init   != "list") { z.init        <- "list"
+       z.init   != "list") { z.init    <- "list"
        if(verbose)                   message("'z.init' set to 'list' as 'z.list' was supplied")
     }
   }
@@ -203,7 +200,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   bnpmiss   <- attr(BNP, "Missing")
   if(!is.element(method, c("IMFA", "IMIFA"))) {
     if(!missing(BNP)         ||
-       any(!unlist(bnpmiss)))       message(paste0("'BNP' parameters not necessary for the ", method, " method"))
+       any(!unlist(bnpmiss)))       message(paste0("'bnpControl()' parameters not necessary for the ", method, " method"))
   } else        {
     learn.a       <- BNP$learn.a
     discount      <- BNP$discount
@@ -294,17 +291,20 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
 # Define full conditionals, hyperparamters & Gibbs Sampler function for desired method
   datname          <- rownames(dat)
   if(any(length(unique(datname)) != N,
-     is.null(datname)))      rownames(dat) <- seq_len(N)
+     is.null(datname)))  rownames(dat) <- seq_len(N)
   mu               <- list(as.matrix(colMeans2(dat)))
   mu0.x            <- mixfamiss$mu.zero
   mu0g             <- mixFA$mu0g
   mu.zero          <- if(mu0.x) mu  else     .len_check(mixFA$mu.zero, mu0g, method, P, G.init)
   sigma.mu         <- mixFA$sigma.mu
   sigmu.miss       <- mixfamiss$sigma.mu
-  cov.mat          <- if(P > 500)   switch(scaling, unit=cora(as.matrix(dat)), cova(as.matrix(dat))) else switch(scaling, unit=stats::cor(dat), stats::cov(dat))
-  sigma.mu         <- if(sigmu.miss) diag(cov.mat) else if(is.matrix(sigma.mu)) diag(sigma.mu) else sigma.mu
+  obsnames         <- rownames(dat)
+  varnames         <- colnames(dat)
+  covmat           <- if(P > 500)   switch(scaling, unit=cora(as.matrix(dat)), cova(as.matrix(dat))) else switch(scaling, unit=stats::cor(dat), stats::cov(dat))
+  dimnames(covmat) <- list(varnames, varnames)
+  sigma.mu         <- if(sigmu.miss) diag(covmat) else if(is.matrix(sigma.mu)) diag(sigma.mu)        else sigma.mu
   sigmu.len        <- length(unique(sigma.mu))
-  if(sigmu.len     == 1)     sigma.mu      <- sigma.mu[1]
+  if(sigmu.len     == 1) sigma.mu      <- sigma.mu[1]
   if(any(sigma.mu  <= 0, !is.numeric(sigma.mu),
      !is.element(length(sigma.mu),
      c(1, P))))                     stop(paste0("'sigma.mu' must be strictly positive, and of length 1 or P=", P))
@@ -312,7 +312,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   psi0g            <- mixFA$psi0g
   beta.x           <- mixfamiss$psi.beta
   if(beta.x) {
-    psi.beta       <- temp.psi   <- list(psi_hyper(shape=psi.alpha, covar=cov.mat, type=uni.prior))
+    psi.beta       <- temp.psi   <- list(psi_hyper(shape=psi.alpha, covar=covmat, type=uni.prior))
   } else {
     psi.beta       <- mixFA$psi.beta
     psi.beta       <- lapply(.len_check(psi.beta, psi0g, method, P, G.init), matrix, nrow=P, ncol=G.init, byrow=length(psi.beta) == G.init)
@@ -322,23 +322,23 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
 
   mgpmiss   <- attr(MGP, "Missing")
   if(is.element(method, c("FA", "MFA", "OMFA", "IMFA"))) {
-    if(!missing(MGP)       ||
-       any(!unlist(mgpmiss)))       message(paste0("'MGP' parameters not necessary for the ", method, " method"))
-    if(Q.miss)                      stop("'range.Q' must be specified")
-    if(any(range.Q  < 0))           stop(paste0("'range.Q' must be non-negative for the ", method, " method"))
-    range.Q <- sort_unique(range.Q)
-    delta0g <- FALSE
+   if(!missing(MGP)        ||
+      any(!unlist(mgpmiss)))        message(paste0("'mgpControl()' parameters not necessary for the ", method, " method"))
+   if(Q.miss)                       stop("'range.Q' must be specified")
+   if(any(range.Q  < 0))            stop(paste0("'range.Q' must be non-negative for the ", method, " method"))
+   range.Q  <- sort_unique(range.Q)
+   delta0g  <- FALSE
   } else {
-    fQ0     <- uni || P    == 2
-    MGP$prop   <- ifelse(fQ0 && mgpmiss$propx, 0, floor(MGP$prop * P)/P)
-    adapt   <- MGP$adapt
-    adaptat <- MGP$adaptat <- ifelse(mgpmiss$adaptatx, ifelse(fQ0, 0L, switch(method, IFA=, MIFA=burnin, 0L)), MGP$adaptat)
-    nuplus1 <- MGP$nuplus1
-    delta0g <- MGP$delta0g && method == "MIFA"
-    alpha.d1   <- .len_check(MGP$alpha.d1, delta0g, method, P, G.init, P.dim=FALSE)
-    alpha.d2   <- .len_check(MGP$alpha.d2, delta0g, method, P, G.init, P.dim=FALSE)
-    MGP     <- MGP[-c(1:3)]
-    if(Q.miss)               range.Q       <- as.integer(ifelse(fQ0, 1, min(ifelse(P > 500, 12 + floor(log(P)), floor(3 * log(P))), N - 1)))
+   fQ0      <- uni || P    == 2
+   MGP$prop <- ifelse(fQ0  && mgpmiss$propx, 0.5, floor(MGP$prop * P)/P)
+   adapt    <- MGP$adapt
+   adaptat  <- MGP$adaptat <- ifelse(mgpmiss$adaptatx, ifelse(fQ0, 0L, switch(method, IFA=, MIFA=burnin, 0L)), MGP$adaptat)
+   nuplus1  <- MGP$nuplus1
+   delta0g  <- MGP$delta0g && method   == "MIFA"
+   alpha.d1 <- .len_check(MGP$alpha.d1, delta0g, method, P, G.init, P.dim=FALSE)
+   alpha.d2 <- .len_check(MGP$alpha.d2, delta0g, method, P, G.init, P.dim=FALSE)
+   MGP      <- MGP[-c(1:3)]
+   if(Q.miss)                range.Q   <- as.integer(ifelse(fQ0, 1, min(ifelse(P > 500, 12 + floor(log(P)), floor(3 * log(P))), N - 1)))
     if(length(range.Q)      > 1)    stop(paste0("Only one starting value for 'range.Q' can be supplied for the ", method, " method"))
     if(range.Q <= 0)                stop(paste0("'range.Q' must be strictly positive for the ", method, " method"))
     if(isTRUE(adapt)) {
@@ -407,7 +407,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
            isTRUE(psi0g)))  {       warning(paste0("'psi0g' forced to FALSE as uniquenesses are constrained across clusters (i.e. 'uni.type' = ", uni.type, ")"), call.=FALSE)
       psi0g <- FALSE
     }
-    if(method == "classify") mu0g          <- TRUE
+    if(method == "classify") mu0g      <- TRUE
   } else if(any(sw0gs))             stop(paste0("'", names(which(sw0gs)), "' should be FALSE for the ", method, " method\n"))
 
   dimension <- PGMM_dfree(P=P, Q=switch(method, FA=, classify=, MFA=, OMFA=, IMFA=range.Q,
@@ -415,9 +415,9 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   min.d2    <- min(dimension)/2
   min.d2G   <- min.d2 * G.init
   if(!is.element(method, c("FA", "IFA", "classify"))) {
-    if(missing(alpha))     { alpha         <- switch(method, MFA=, MIFA=1, OMFA=, OMIFA=0.5/G.init, ifelse(learn.a, max(1, stats::rgamma(1, BNP$a.hyper[1], BNP$a.hyper[2])), 1))
+    if(missing(alpha))     { alpha     <- switch(method, MFA=, MIFA=1, OMFA=, OMIFA=0.5/G.init, ifelse(learn.a, max(1, stats::rgamma(1, BNP$a.hyper[1], BNP$a.hyper[2])), 1))
     } else if(is.element(method,
-      c("OMFA", "OMIFA")))   alpha         <- alpha/G.init
+      c("OMFA", "OMIFA")))   alpha     <- alpha/G.init
     if(length(alpha) != 1)          stop("'alpha' must be specified as a scalar to ensure an exchangeable prior")
     if(is.element(method, c("IMIFA", "IMFA"))) {
       if(alpha       <= -discount)  stop(paste0("'alpha' must be ",     ifelse(discount != 0, paste0("strictly greater than -discount (i.e. > ", - discount, ")"), "strictly positive")))
@@ -436,7 +436,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(!zli.miss) {
       if(length(z.list)   != len.G)  {
                                     stop(paste0("'z.list' must be a list of length ", len.G))  }
-                             list.levels   <- lapply(z.list, nlevels)
+      list.levels    <- lapply(z.list, nlevels)
       if(!all(list.levels == G.init))             {
         if(!is.element(method, c("IMIFA",
                        "IMFA", "OMIFA", "OMFA"))) {
@@ -523,7 +523,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
       mu.zero[[g]] <- if(uni && !mu0g) t(mu.zero[[g]]) else mu.zero[[g]]
       if(beta.x)  {
         if(psi0g) {
-          cov.gg   <- lapply(seq_len(G), function(gg, dat.gg = dat[zi[[g]] == gg,, drop=FALSE]) if(all(nngs[gg] > 1, P <= nngs[g])) { if(P > 500) cova(as.matrix(dat.gg)) else stats::cov(dat.gg) } else cov.mat)
+          cov.gg   <- lapply(seq_len(G), function(gg, dat.gg = dat[zi[[g]] == gg,, drop=FALSE]) if(all(nngs[gg] > 1, P <= nngs[g])) { if(P > 500) cova(as.matrix(dat.gg)) else stats::cov(dat.gg) } else covmat)
           psi.beta[[g]] <- vapply(seq_len(G), function(gg) psi_hyper(shape=psi.alpha, covar=cov.gg[[gg]], type=uni.prior), numeric(P))
         } else {
           psi.beta[[g]] <- replicate(G, temp.psi[[1]])
@@ -671,7 +671,9 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
       scal         <- switch(scaling, none=FALSE, Rfast::colVars(as.matrix(tmp.dat), std=TRUE))
       scal         <- switch(scaling, pareto=sqrt(scal), scal)
       tmp.dat <- if(is.logical(scal)) standardise(as.matrix(tmp.dat), center=centering, scale=scal) else scale(tmp.dat, center=centering, scale=scal)
-      if(sigmu.miss)   gibbs.arg$sigma.mu  <- diag(if(nrow(tmp.dat) > 1) { if(P > 500) cova(as.matrix(tmp.dat)) else stats::cov(tmp.dat) } else cov.mat)
+      if(sigmu.miss) {
+       gibbs.arg$sigma.mu <- diag(if(nrow(tmp.dat) > 1) { if(P > 500) cova(as.matrix(tmp.dat)) else stats::cov(tmp.dat) } else covmat)
+      }
       imifa[[g]]          <- list()
       gibbs.arg    <- append(temp.args, lapply(deltas[[Gi]], "[[", g))
       imifa[[g]][[Qi]]    <- do.call(paste0(".gibbs_", "IFA"),
@@ -704,7 +706,9 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
        "Class.Props")     <- if(method == "classify") tabulate(z.list[[1]], range.G)/N
   attr(imifa, "Call")     <- call
   attr(imifa, "Center")   <- any(centered, centering)
+  attr(imifa, "Cov.Emp")  <- covmat
   attr(imifa, "Clusters") <- range.G
+  attr(imifa, "Dataset")  <- dat
   attr(imifa, "Date")     <- format(Sys.Date(), "%d-%b-%Y")
   attr(imifa,
        "Disc.step")       <- is.element(method, c("IMFA", "IMIFA"))    && learn.d
@@ -712,25 +716,25 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   attr(imifa, "Equal.Pi") <- equal.pro
   attr(imifa, "Factors")  <- range.Q
   attr(imifa, "G.init")   <- G.init
-  attr(imifa, "IM.labsw") <- is.element(method, c("IMFA", "IMIFA")) && IM.lab.sw
+  attr(imifa, "IM.labsw") <- is.element(method, c("IMFA", "IMIFA"))    && IM.lab.sw
   attr(imifa,
-       "Ind.Slice")       <- is.element(method, c("IMFA", "IMIFA")) && BNP$ind.slice
-  attr(imifa, "Init.Z")   <- if(!is.element(method, c("FA", "IFA")))     z.init
+       "Ind.Slice")       <- is.element(method, c("IMFA", "IMIFA"))    && BNP$ind.slice
+  attr(imifa, "Init.Z")   <- if(!is.element(method, c("FA", "IFA")))      z.init
   attr(imifa,
-       "Label.Switch")    <- if(!is.element(method, c("FA", "IFA")))     any(sw0gs)
+       "Label.Switch")    <- if(!is.element(method, c("FA", "IFA")))      any(sw0gs)
   method                  <- names(table(meth)[which.max(table(meth))])
   attr(imifa, "Method")   <- paste0(toupper(substr(method, 1, 1)), substr(method, 2, nchar(method)))
   attr(imifa, "Name")     <- dat.nam
   attr(imifa, "Nuplus1")  <- is.element(method, c("IFA", "MIFA", "OMIFA", "IMIFA")) && nuplus1
   attr(imifa, "Obs")      <- N
-  attr(imifa, "Pitman")   <- is.element(method, c("IMFA", "IMIFA")) && any(learn.d, discount > 0)
-  attr(imifa, "Rho")      <- if(is.element(method, c("IMFA", "IMIFA"))) BNP$rho
+  attr(imifa, "Obsnames") <- obsnames
+  attr(imifa, "Pitman")   <- is.element(method, c("IMFA", "IMIFA"))    && any(learn.d, discount > 0)
+  attr(imifa, "Rho")      <- if(is.element(method, c("IMFA", "IMIFA")))   BNP$rho
   attr(imifa, "Scaling")  <- scal
   attr(attr(imifa,
   "Scaling"), "Method")   <- scaling
   attr(imifa, "Store")    <- length(iters)
-  storage                 <- c(storage, a.sw = attr(imifa, "Alph.step"), d.sw = attr(imifa, "Disc.step"))
-  attr(imifa, "Switch")   <- storage
+  attr(imifa, "Switch")   <- c(storage, a.sw = attr(imifa, "Alph.step"), d.sw = attr(imifa, "Disc.step"))
   times                   <- lapply(list(Total = tot.time, Average = avg.time, Initialisation = init.time), round, 2)
   if(all(len.G  == 1,
          len.Q  == 1)) {
@@ -740,6 +744,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   attr(imifa, "Time")     <- if(is.element(method, c("FA", "IFA", "classify"))) times[-length(times)] else times
   attr(imifa, "TuneZeta") <- is.element(method, c("IMFA", "IMIFA")) && (tune.zeta$heat > 0 && tune.zeta$do)
   attr(imifa, "Uni.Meth") <- c(Uni.Prior = uni.prior, Uni.Type = uni.type)
+  attr(imifa, "Varnames") <- varnames
   attr(imifa, "Vars")     <- P
   if(!is.element(method, c("FA", "IFA"))) {
     for(g in seq_along(G.init)) {

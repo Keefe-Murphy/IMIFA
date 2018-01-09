@@ -25,7 +25,7 @@ mgpControl(alpha.d1 = 2,
 
 \item{nu}{Hyperparameter for the gamma prior on the local shrinkage parameters. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to 2.}
 
-\item{prop}{Proportion of elements within the neighbourhood \code{eps} of zero necessary to consider a loadings column redundant. Defaults to \code{floor(0.7 * P)/P}, where \code{P} is the number of variables in the data set.}
+\item{prop}{Proportion of loadings elements within the neighbourhood \code{eps} of zero necessary to consider a loadings column redundant. Defaults to \code{floor(0.7 * P)/P}, where \code{P} is the number of variables in the data set. However, if the data set is univariate or bivariate, the default is \code{0.5} (see Note).}
 
 \item{eps}{Neighbourhood epsilon of zero within which a loadings entry is considered negligible according to \code{prop}. Defaults to 0.1.}
 
@@ -43,7 +43,7 @@ Defaults to 0.1 & 0.00005, respectively. Must be non-negative and strictly posit
 
 \item{beta.d2}{Rate hyperparameter of the global shrinkage on the subsequent columns of the loadings according to the MGP shrinkage prior. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to 1.}
 
-\item{adapt.at}{The iteration at which adaptation is to begin. Defaults to \code{burnin} for the "\code{IFA}" and "\code{MIFA}" methods, defaults to 0 for the "\code{OMIFA}" and "\code{IMIFA}" methods. Cannot exceed \code{burnin}.}
+\item{adapt.at}{The iteration at which adaptation is to begin. Defaults to \code{burnin} for the "\code{IFA}" and "\code{MIFA}" methods, defaults to 0 for the "\code{OMIFA}" and "\code{IMIFA}" methods, and defaults to 0 for all methods if the data set is univariate or bivariate. Cannot exceed \code{burnin}.}
 
 \item{delta0g}{Logical indicating whether the \code{alpha.d1} and \code{alpha.d2} hyperparameters can be cluster-specific. Defaults to \code{FALSE}. Only relevant for the "\code{MIFA}" method and only allowed when \code{z.list} is supplied within \code{\link{mcmc_IMIFA}}.}
 
@@ -57,6 +57,8 @@ Supplies a list of arguments for use in \code{\link{mcmc_IMIFA}} pertaining to t
 }
 \note{
 Certain supplied arguments will be subject to further checks by \code{\link{MGP_check}} to ensure the cumulative shrinkage property of the MGP prior holds according to the given parameterisation.
+
+The adaptive Gibbs sampler (AGS) monitors the \code{prop} of loadings elements within the neighbourhood \code{eps} of 0 and discards columns or simulates new columns on this basis. However, if at any stage the number of group-specific latent factors reaches zero, the decision to add columns is instead based on a simple binary trial with probability \code{1-prop}, as there are no loadings entries to monitor.
 }
 \examples{
 mgpControl(nu=2.5, eps=1e-02)

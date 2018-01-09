@@ -37,8 +37,6 @@
     post.mu      <- vector("integer", P)
     post.psi     <- post.mu
     ll.store     <- vector("integer", n.store)
-    cov.emp      <- if(P > 500) switch(scaling, unit=cora(as.matrix(data)), cova(as.matrix(data))) else switch(scaling, unit=stats::cor(data), stats::cov(data))
-    cov.est      <- matrix(0L, nrow=P, ncol=P)
 
     mu.sigma     <- 1/sigma.mu
     uni.type     <- switch(uni.type,   unconstrained=,               constrained="constrained", "single")
@@ -100,13 +98,11 @@
         psi      <- 1/psi.inv
         post.mu  <- post.mu + mu/n.store
         post.psi <- post.psi + psi/n.store
-        sigma    <- tcrossprod(lmat) + if(uni) psi else diag(psi)
-        cov.est  <- cov.est + sigma/n.store
         if(sw["mu.sw"])          mu.store[,new.it]      <- mu
         if(all(sw["s.sw"], Q0))  eta.store[,,new.it]    <- eta
         if(all(sw["l.sw"], Q0))  load.store[,,new.it]   <- lmat
         if(sw["psi.sw"])         psi.store[,new.it]     <- psi
-                                 ll.store[new.it]       <- sum(dmvn(X=data, mu=mu, sigma=sigma, log=TRUE))
+                                 ll.store[new.it]       <- sum(dmvn(X=data, mu=mu, sigma=tcrossprod(lmat) + if(uni) psi else diag(psi), log=TRUE))
       }
     }
     if(verbose)  close(pb)
@@ -116,8 +112,6 @@
                       psi      = if(sw["psi.sw"])          tryCatch(provideDimnames(psi.store,   base=list(varnames, ""),     unique=FALSE), error=function(e) psi.store),
                       post.mu  = tryCatch(stats::setNames(post.mu,  varnames),            error=function(e) post.mu),
                       post.psi = tryCatch(stats::setNames(post.psi, varnames),            error=function(e) post.psi),
-                      cov.emp  = tryCatch(provideDimnames(cov.emp,  base=list(varnames)), error=function(e) cov.emp),
-                      cov.est  = tryCatch(provideDimnames(cov.est,  base=list(varnames)), error=function(e) cov.est),
                       ll.store = ll.store,
                       time     = init.time)
     attr(returns, "K")        <- PGMM_dfree(Q=Q, P=P, method=switch(uni.type, constrained="UCU", single="UCC"))

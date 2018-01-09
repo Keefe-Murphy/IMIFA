@@ -88,6 +88,7 @@
     psi.beta         <- switch(uni.prior,  isotropic=psi.beta[which.max(.ndeci(psi.beta))], psi.beta)
     pi.prop          <- cluster$pi.prop
     nn               <- tabulate(z, nbins=trunc.G)
+    nn0              <- nn > 0
     mu.tmp           <- vapply(seq_len(trunc.G - G), function(g) .sim_mu_p(P=P, sig.mu.sqrt=sig.mu.sqrt, mu.zero=mu.zero), numeric(P))
     mu               <- cbind(mu, if(uni) t(mu.tmp) else mu.tmp)
     eta              <- .sim_eta_p(N=N, Q=Q)
@@ -111,7 +112,8 @@
       if(isTRUE(one.uni)) {
         psi.inv[,Gs] <- 1/switch(uni.type, constrained=Rfast::colVars(data), exp(mean(log(Rfast::colVars(data)))))
       } else   {
-        psi.inv[,Gs] <- 1/groupcolVars(data, ina=z)
+        tmp.psi      <- ((nn[nn0] - 1)/(rowsum(data^2,  z) - rowsum(data, z)^2/nn[nn0]))
+        psi.inv[,nn   > 1]    <- tmp.psi[!is.nan(tmp.psi)]
       }
       inf.ind        <- is.infinite(psi.inv) | is.nan(psi.inv)
       psi.inv[inf.ind]        <- psi.tmp[inf.ind]
@@ -318,13 +320,13 @@
     # Adaptation
       if(all(adapt, iter   > adaptat))   {
         if(stats::runif(1) < ifelse(iter < burnin, 0.5, exp(-b0 - b1 * (iter - adaptat)))) {
-          colvec     <- lapply(nn.ind, function(g) (if(Q0[g]) colSums(abs(lmat[[g]])   < epsilon)/P else 0) >= prop)
+          colvec     <- lapply(nn.ind, function(g) (if(Q0[g]) colSums(abs(lmat[[g]])   < epsilon)/P else stats::runif(1)) >= prop)
           nonred     <- lapply(colvec, .which0)
           numred     <- lengths(colvec)  - lengths(nonred)
           notred     <- numred == 0
           ng.ind     <- seq_along(nn.ind)
           Qs.old     <- Qs[nn0]
-          Qs[nn0]    <- pmax.int(0, vapply(ng.ind, function(h) if(notred[h]) Qs.old[h] + 1 else Qs.old[h]    - numred[h], numeric(1L)))
+          Qs[nn0]    <- pmax.int(0, vapply(ng.ind, function(h) if(notred[h]) Qs.old[h] + 1 else Qs.old[h] - numred[h], numeric(1L)))
           Q.big      <- Qs[nn0] > Q.star
           if((Q.bigs <- any(Q.big))) {
             notred   <- notred & !Q.big

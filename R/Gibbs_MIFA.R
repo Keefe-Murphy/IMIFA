@@ -57,6 +57,7 @@
     z              <- cluster$z
     z.temp         <- factor(z, levels=Gseq)
     nn             <- tabulate(z, nbins=G)
+    nn0            <- nn > 0
     pi.prop        <- cluster$pi.prop
     log.pis        <- log(pi.prop)
     pi.alpha       <- cluster$pi.alpha
@@ -105,7 +106,8 @@
       if(isTRUE(one.uni)) {
         psi.inv[,] <- 1/switch(uni.type, constrained=Rfast::colVars(data), exp(mean(log(Rfast::colVars(data)))))
       } else   {
-        psi.inv[,] <- 1/groupcolVars(data, ina=z)
+        tmp.psi    <- ((nn[nn0] - 1)/(rowsum(data^2,  z) - rowsum(data, z)^2/nn[nn0]))
+        psi.inv[,nn > 1]    <- tmp.psi[!is.nan(tmp.psi)]
       }
       inf.ind      <- is.infinite(psi.inv) | is.nan(psi.inv)
       psi.inv[inf.ind]      <- psi.tmp[inf.ind]
@@ -167,7 +169,7 @@
                              vapply(Pseq, function(j) .sim_load_ps(Q=Qs[g], phi=phi[[g]][j,], tau=tau[[g]]), numeric(Qs[g])), nrow=P, byrow=TRUE))
       }
 
-      # Uniquenesses
+    # Uniquenesses
       if(isTRUE(one.uni)) {
         S.mat      <- lapply(Gseq, function(g) { S <- c.data[[g]] - if(Q0[g]) tcrossprod(eta.tmp[[g]], lmat[[g]]) else 0; S * S } )
         psi.inv[,] <- .sim_psi_inv(uni.shape, psi.beta, S.mat, V)
@@ -212,13 +214,13 @@
     # Adaptation
       if(all(adapt, iter   > adaptat)) {
         if(stats::runif(1) < ifelse(iter < burnin, 0.5, exp(-b0 - b1 * (iter - adaptat)))) {
-          colvec   <- lapply(nn.ind, function(g) (if(Q0[g]) colSums(abs(lmat[[g]])   < epsilon)/P else 0) >= prop)
+          colvec   <- lapply(nn.ind, function(g) (if(Q0[g]) colSums(abs(lmat[[g]])   < epsilon)/P else stats::runif(1)) >= prop)
           nonred   <- lapply(colvec, .which0)
           numred   <- lengths(colvec)  - lengths(nonred)
           notred   <- numred == 0
           ng.ind   <- seq_along(nn.ind)
           Qs.old   <- Qs[nn0]
-          Qs[nn0]  <- pmax.int(0, vapply(ng.ind, function(h) if(notred[h]) Qs.old[h] + 1 else Qs.old[h]    - numred[h], numeric(1L)))
+          Qs[nn0]  <- pmax.int(0, vapply(ng.ind, function(h) if(notred[h]) Qs.old[h] + 1 else Qs.old[h] - numred[h], numeric(1L)))
           Q.big    <- Qs[nn0] > Q.star
           if((Q.bigs        <-  any(Q.big))) {
             notred <- notred & !Q.big

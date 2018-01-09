@@ -16,7 +16,7 @@ mcmc_IMIFA(dat = NULL,
   storage = storeControl(...), ...)
 }
 \arguments{
-\item{dat}{A matrix or data frame such that rows correspond to observations (\code{N}) and columns correspond to variables (\code{P}). Non-numeric variables and rows with missing entries will be removed.}
+\item{dat}{A matrix or data frame such that rows correspond to observations (\code{N}) and columns correspond to variables (\code{P}). Non-numeric variables will be discarded if they are explicitly coded as factors or ordinal factors; otherwise they will be treated as though they were continuous. Rows with missing entries will be also be automatically removed.}
 
 \item{method}{An acronym for the type of model to fit where:
 \describe{

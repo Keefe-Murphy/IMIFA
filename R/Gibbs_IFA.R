@@ -34,8 +34,6 @@
     post.mu      <- vector("integer", P)
     post.psi     <- post.mu
     ll.store     <- vector("integer", n.store)
-    cov.emp      <- if(P > 500) switch(scaling, unit=cora(as.matrix(data)), cova(as.matrix(data))) else switch(scaling, unit=stats::cor(data), stats::cov(data))
-    cov.est      <- matrix(0L, nrow=P, ncol=P)
     Q.star       <- Q
     Q.store      <- vector("integer", n.store)
     Q.large      <- Q.big  <- FALSE
@@ -118,11 +116,11 @@
     # Adaptation
       if(all(adapt, iter   > adaptat))   {
         if(stats::runif(1) < ifelse(iter < burnin, 0.5, exp(-b0 - b1  * (iter - adaptat)))) {
-          colvec <- (if(Q0) colSums(abs(lmat) < epsilon) / P     else 0)     >= prop
+          colvec <- (if(Q0)  colSums(abs(lmat) < epsilon) / P    else stats::runif(1))     >= prop
           numred <- sum(colvec)
-          if(numred == 0)  { # simulate extra columns from priors
+          if(numred == 0)  {
             Q    <- Q + 1
-            Q.big   <- Q > Q.star
+            Q.big   <- Q   > Q.star
             if(Q.big) {
               Q     <- Q.star
             } else {
@@ -132,8 +130,8 @@
               tau   <- cumprod(delta)
               lmat  <- cbind(lmat, stats::rnorm(n=P, mean=0, sd=sqrt(1/(phi[,Q] * tau[Q]))))
             }
-          } else          { # remove redundant columns
-            nonred  <- colvec == 0
+          } else if(Q > 0)      {
+            nonred  <- colvec  == 0
             Q       <- max(0, Q - numred)
             eta     <- if(storage) eta[,nonred, drop=FALSE] else eta
             phi     <- phi[,nonred, drop=FALSE]
@@ -153,14 +151,12 @@
         psi      <- 1/psi.inv
         post.mu  <- post.mu + mu/n.store
         post.psi <- post.psi + psi/n.store
-        sigma    <- tcrossprod(lmat) + if(uni) psi else diag(psi)
-        cov.est  <- cov.est + sigma/n.store
         if(sw["mu.sw"])             mu.store[,new.it]              <- mu
         if(all(sw["s.sw"], Q0))     eta.store[,seq_len(Q),new.it]  <- eta
         if(all(sw["l.sw"], Q0))     load.store[,seq_len(Q),new.it] <- lmat
         if(sw["psi.sw"])            psi.store[,new.it]             <- psi
                                     Q.store[new.it]                <- as.integer(Q)
-                                    ll.store[new.it]               <- sum(dmvn(X=data, mu=mu, sigma=sigma, log=TRUE))
+                                    ll.store[new.it]               <- sum(dmvn(X=data, mu=mu, sigma=tcrossprod(lmat) + if(uni) psi else diag(psi), log=TRUE))
       }
     }
     if(verbose)     close(pb)
@@ -173,8 +169,6 @@
                          psi      = if(sw["psi.sw"]) tryCatch(provideDimnames(psi.store, base=list(varnames, ""), unique=FALSE), error=function(e) psi.store),
                          post.mu  = tryCatch(stats::setNames(post.mu,  varnames),            error=function(e) post.mu),
                          post.psi = tryCatch(stats::setNames(post.psi, varnames),            error=function(e) post.psi),
-                         cov.emp  = tryCatch(provideDimnames(cov.emp,  base=list(varnames)), error=function(e) cov.emp),
-                         cov.est  = tryCatch(provideDimnames(cov.est,  base=list(varnames)), error=function(e) cov.est),
                          ll.store = ll.store,
                          Q.store  = matrix(Q.store, nrow=1),
                          time     = init.time)

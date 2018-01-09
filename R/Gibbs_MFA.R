@@ -56,6 +56,7 @@
     z              <- cluster$z
     z.temp         <- factor(z, levels=Gseq)
     nn             <- tabulate(z, nbins=G)
+    nn0            <- nn > 0
     pi.prop        <- cluster$pi.prop
     log.pis        <- log(pi.prop)
     pi.alpha       <- cluster$pi.alpha
@@ -95,7 +96,8 @@
       if(isTRUE(one.uni)) {
         psi.inv[,] <- 1/switch(uni.type, constrained=Rfast::colVars(data), exp(mean(log(Rfast::colVars(data)))))
       } else   {
-        psi.inv[,] <- 1/groupcolVars(data, ina=z)
+        tmp.psi    <- ((nn[nn0] - 1)/(rowsum(data^2,  z) - rowsum(data, z)^2/nn[nn0]))
+        psi.inv[,nn > 1]   <- tmp.psi[!is.nan(tmp.psi)]
       }
       inf.ind      <- is.infinite(psi.inv) | is.nan(psi.inv)
       psi.inv[inf.ind]     <- psi.tmp[inf.ind]

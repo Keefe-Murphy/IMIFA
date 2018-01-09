@@ -27,7 +27,12 @@
 
 \item{plot.meth}{The type of plot to be produced for the \code{param} of interest, where \code{correlation} refers to ACF/PACF plots, \code{means} refers to posterior means, \code{density}, \code{trace} and \code{parallel.coords} are self-explanatory. "\code{all}" in this case, the default, refers to {\code{trace, density, means, correlation}}. \code{parallel.coords} is only available when \code{param} is one of \code{means}, \code{loadings} or \code{uniquenesses} - note that this method applies a small amount of horizontal jitter to avoid overplotting.
 
-Special types of plots which don't require a \code{param} are \code{GQ}, for plotting the posterior summaries of the numbers of clusters/factors, if available, \code{zlabels} for plotting clustering uncertainties if clustering has taken place (and, if available, the average similarity matrix, reordered according to the MAP labels) with or without the clustering labels being supplied via the \code{zlabels} argument), and \code{errors} for visualing the difference between the estimated and empirical covariance matrix/matrices.}
+Special types of plots which don't require a \code{param} are:
+\describe{
+\item{"\code{GQ}"}{for plotting the posterior summaries of the numbers of clusters/factors, if available.}
+\item{"\code{zlabels}"}{for plotting clustering uncertainties if clustering has taken place (and, if available, the average similarity matrix, reordered according to the MAP labels) with or without the clustering labels being supplied via the \code{zlabels} argument.}
+\item{"\code{errors}"}{for conducting posterior predictive checking of the appropriateness of the fitted model by visualising the error metrics quantifying the difference between the estimated and empirical covariance matrices. The type of plot produced depends on how the \code{error.metrics} argument was supplied to \code{\link{get_IMIFA_results}}.}
+}}
 
 \item{param}{The parameter of interest for any of the following \code{plot.meth} options: \code{trace}, \code{density}, \code{means}, \code{correlation}. The \code{param} must have been stored when \code{\link{mcmc_IMIFA}} was initially ran. Includes \code{pis} for methods where clustering takes place, and allows posterior inference on \code{alpha} and \code{discount} for the "\code{IMFA}" and "\code{IMIFA}" methods.}
 

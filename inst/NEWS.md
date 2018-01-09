@@ -3,6 +3,13 @@ __Infinite Mixtures of Infinite Factor Analysers__
 
 ## IMIFA v1.4.0 - (_6<sup>th</sup> release [minor update]: 2017-12-07_)
 ### New Features
+* Posterior predictive checking overhauled: now MSE, RMSE etc. between empirical & estimated covariance  
+  matrices are computed for every retained iteration so uncertainty in these estimates can be quantified:  
+    * Can be switched on/off via the `error.metrics` argument to `get_IMIFA_results`.  
+    * Can be visualised by supplying `plot.meth=errors` to `plot.Results_IMIFA`.  
+    * For methods which achieve clustering, the 'overall' covariance matrix  
+      is now properly computed from the cluster-specific covariance matrices.  
+    * Same metrics also evaluated at posterior mean parameter estimates where possible.
 * Simplified `mcmc_IMIFA` by consolidating arguments using new helper functions (with defaults):  
     * Args. common to all factor-analytic mixture methods & MCMC settings supplied via `mixfaControl`.
     * MGP & AGS args. supplied via `mgpControl` for infinite factor models.  
@@ -10,16 +17,17 @@ __Infinite Mixtures of Infinite Factor Analysers__
     * Storage switch args. supplied via `storeControl`.
 * Added ability to constrain mixing proportions across clusters using `equal.pro` argument for M(I)FA models:  
   Modified PGMM_dfree accordingly and forced non-storage of mixing proportions when `equal.pro` is TRUE.  
-
-### Improvements
 * All methods now work for univariate data also (with apt. edits to plots & uniqueness defaults etc.).  
   `sim_IMIFA_data` also extended to work for univariate data, as well as sped-up.
+
+### Improvements
 * `Zsimilarity` sped-up via the `comp.psm` & `cltoSim` functions s.t.  
   `z.avgsim=TRUE` now by default in `get_IMIFA_results` when suggested `mcclust` package is loaded.
+* Modified AGS to better account for when the number of group-specific latent factors shrinks to zero.
 * Added "`hc`" option to `z.init` to initialise allocations via hierarchical clustering (using `mclust::hc`).
-* `mu` argument added to `sim_IMIFA_data` to allow supplying true mean parameter values directly.
-* Standard deviation of AICM/BICM model selection criteria now computed and returned.
-* Speed-ups due to new `Rfast` functions: `colTabulate`, `groupcolVars`, `matrnorm`, & `Order`.
+* Added `mu` argument to `sim_IMIFA_data` to allow supplying true mean parameter values directly.
+* Standard deviation of `aicm`/`bicm` model selection criteria now computed and returned.
+* Speed-ups due to new `Rfast` functions: `colTabulate`, `matrnorm`, & `Order`.
 * Speed-ups due to utility functions from `matrixStats`, on which `IMIFA` already depends.
 * Slight improvements when `adapt=FALSE` for infinite factor models with fixed high truncation level.
 * `heat_legend` gains `cex.lab` argument to control magnification of legend text.
@@ -34,8 +42,10 @@ __Infinite Mixtures of Infinite Factor Analysers__
 * Fixed plotting of posterior mean scores when one or more clusters are empty.
 * Fixed storage switches to account for `burnin=0`.
 * Fixed bug with default plotting palette for data sets with >1024 variables.
+* Fixed bug with label switching permutations in `get_IMIFA_results` when there are empty groups.
 * Fixed `print` and `summary` functions for objects of class `IMIFA` and `Results_IMIFA`.
 * Fixed calculating posterior mean `zeta` when adaptively targeting `alpha`'s optimal MH acceptance rate.
+* Normalised mixing proportions in `get_IMIFA_results` when conditioning on `G` for IM(I)FA/OM(I)FA models.
 * Clarified recommendation in `MGP_check` that `alpha.d2` be moderately large relative to `alpha.d1`.
 * Ensured `sigma.mu` hyperparameter arg. is always coerced to diagonal entries of a covariance matrix.
 * Transparency default in `plot.Results_IMIFA` now depends on device's support of semi-transparency.

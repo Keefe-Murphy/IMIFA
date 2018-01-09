@@ -215,12 +215,12 @@
 # Priors
   # Means
     .sim_mu_p    <- function(P, mu.zero, sig.mu.sqrt) {
-      sig.mu.sqrt * stats::rnorm(P) + mu.zero
+        sig.mu.sqrt * stats::rnorm(P) + mu.zero
     }
 
   # Scores
     .sim_eta_p   <- function(Q, N) {
-        matrnorm(N, Q)
+        matrix(matrnorm(N, Q), nrow=N, ncol=Q)
     }
 
   # Loadings
@@ -479,36 +479,37 @@
 
   # Label Switching
   #' @importFrom matrixStats "colSums2" "rowSums2"
+  #' @importFrom Rfast "Order"
     .lab_switch <- function(z.new, z.old) {
       tab       <- table(z.new, z.old, dnn=NULL)
       tab.tmp   <- tab[rowSums2(tab) != 0,colSums2(tab) != 0, drop=FALSE]
-      Gs        <- seq_len(max(unique(as.numeric(z.new))))
       nc        <- ncol(tab.tmp)
       nr        <- nrow(tab.tmp)
-      ng        <- tabulate(z.new, length(Gs))
+      ng        <- table(z.new)
+      Gs        <- .as_numchar(names(ng))
       if(nc > nr) {
         tmp.mat <- matrix(0L, nrow=nc - nr, ncol=nc)
-        rownames(tmp.mat) <- setdiff(as.numeric(colnames(tab.tmp)), as.numeric(rownames(tab.tmp)))[seq_len(nc - nr)]
+        rownames(tmp.mat) <- setdiff(.as_numchar(colnames(tab.tmp)), .as_numchar(rownames(tab.tmp)))[seq_len(nc - nr)]
         tab.tmp <- rbind(tab.tmp, tmp.mat)
       } else if(nr > nc) {
         tmp.mat <- matrix(0L, nrow=nr, ncol=nr - nc)
-        colnames(tmp.mat) <- setdiff(as.numeric(rownames(tab.tmp)), as.numeric(colnames(tab.tmp)))[seq_len(nr - nc)]
+        colnames(tmp.mat) <- setdiff(.as_numchar(rownames(tab.tmp)), .as_numchar(colnames(tab.tmp)))[seq_len(nr - nc)]
         tab.tmp <- cbind(tab.tmp, tmp.mat)
       }
 
       if(nr == 1) {
-        z.perm  <- stats::setNames(as.numeric(colnames(tab.tmp)), as.numeric(colnames(tab.tmp)))
+        z.perm  <- stats::setNames(.as_numchar(colnames(tab.tmp)), .as_numchar(colnames(tab.tmp)))
       } else if(nc == 1) {
-        z.perm  <- stats::setNames(as.numeric(colnames(tab.tmp)), as.numeric(colnames(tab.tmp)))
+        z.perm  <- stats::setNames(.as_numchar(rownames(tab.tmp)), .as_numchar(rownames(tab.tmp)))
       } else {
         z.perm  <- tryCatch(suppressWarnings(.match_classes(tab.tmp, method="exact",  verbose=FALSE)),
           error=function(e) suppressWarnings(.match_classes(tab.tmp, method="greedy", verbose=FALSE)))
-        z.perm  <- stats::setNames(as.numeric(z.perm), names(z.perm))
+        z.perm  <- stats::setNames(.as_numchar(z.perm), names(z.perm))
       }
       if(length(Gs) > length(z.perm)) {
         z.perm  <- c(z.perm, stats::setNames(setdiff(Gs, z.perm), setdiff(Gs, names(z.perm))))
       }
-      z.names   <- as.numeric(names(z.perm))
+      z.names   <- .as_numchar(names(z.perm))
       z.perm    <- z.perm[Order(z.names)]
       z.sw      <- factor(z.new, labels=z.perm[which(ng > 0)])
         return(list(z = as.integer(levels(z.sw))[z.sw], z.perm = z.perm))
@@ -1184,7 +1185,7 @@
 #' @param alpha.d1 Shape hyperparameter of the global shrinkage on the first column of the loadings according to the MGP shrinkage prior. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to 2.
 #' @param alpha.d2 Shape hyperparameter of the global shrinkage on the subsequent columns of the loadings according to the MGP shrinkage prior. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to 6.
 #' @param nu Hyperparameter for the gamma prior on the local shrinkage parameters. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to 2.
-#' @param prop Proportion of elements within the neighbourhood \code{eps} of zero necessary to consider a loadings column redundant. Defaults to \code{floor(0.7 * P)/P}, where \code{P} is the number of variables in the data set.
+#' @param prop Proportion of loadings elements within the neighbourhood \code{eps} of zero necessary to consider a loadings column redundant. Defaults to \code{floor(0.7 * P)/P}, where \code{P} is the number of variables in the data set. However, if the data set is univariate or bivariate, the default is \code{0.5} (see Note).
 #' @param eps Neighbourhood epsilon of zero within which a loadings entry is considered negligible according to \code{prop}. Defaults to 0.1.
 #' @param adapt A logical value indicating whether adaptation of the number of cluster-specific factors is to take place when the MGP prior is employed. Defaults to \code{TRUE}. Specifying \code{FALSE} and supplying \code{range.Q} within \code{\link{mcmc_IMIFA}} provides a means to either approximate the infinite factor model with a fixed high truncation level, or to use the MGP prior in a finite factor context, however this is NOT recommended for the "\code{OMIFA}" and "\code{IMIFA}" methods.
 #' @param b0,b1 Intercept & slope parameters for the exponentially decaying adaptation probability:
@@ -1195,7 +1196,7 @@
 #' @param nuplus1 Logical switch indicating whether the shape hyperparameter of the prior on the local shrinkage parameters is equal to \code{nu + 1} (i.e. Ga(\code{nu + 1}, \code{nu})). If \code{FALSE}, it is simply equal to \code{nu} (i.e. Ga(\code{nu}, \code{nu})).
 #' @param beta.d1 Rate hyperparameter of the global shrinkage on the first column of the loadings according to the MGP shrinkage prior. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to 1.
 #' @param beta.d2 Rate hyperparameter of the global shrinkage on the subsequent columns of the loadings according to the MGP shrinkage prior. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to 1.
-#' @param adapt.at The iteration at which adaptation is to begin. Defaults to \code{burnin} for the "\code{IFA}" and "\code{MIFA}" methods, defaults to 0 for the "\code{OMIFA}" and "\code{IMIFA}" methods. Cannot exceed \code{burnin}.
+#' @param adapt.at The iteration at which adaptation is to begin. Defaults to \code{burnin} for the "\code{IFA}" and "\code{MIFA}" methods, defaults to 0 for the "\code{OMIFA}" and "\code{IMIFA}" methods, and defaults to 0 for all methods if the data set is univariate or bivariate. Cannot exceed \code{burnin}.
 #' @param delta0g Logical indicating whether the \code{alpha.d1} and \code{alpha.d2} hyperparameters can be cluster-specific. Defaults to \code{FALSE}. Only relevant for the "\code{MIFA}" method and only allowed when \code{z.list} is supplied within \code{\link{mcmc_IMIFA}}.
 #' @param ... Catches unused arguments.
 #'
@@ -1205,6 +1206,7 @@
 #'
 #' @note Certain supplied arguments will be subject to further checks by \code{\link{MGP_check}} to ensure the cumulative shrinkage property of the MGP prior holds according to the given parameterisation.
 #'
+#' The adaptive Gibbs sampler (AGS) monitors the \code{prop} of loadings elements within the neighbourhood \code{eps} of 0 and discards columns or simulates new columns on this basis. However, if at any stage the number of group-specific latent factors reaches zero, the decision to add columns is instead based on a simple binary trial with probability \code{1-prop}, as there are no loadings entries to monitor.
 #' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{MGP_check}}
 #' @references Bhattacharya, A. and Dunson, D. B. (2011) Sparse Bayesian infinite factor models, \emph{Biometrika}, 98(2): 291-306.
 #' @author Keefe Murphy - <\email{keefe.murphy@@ucd.ie}>
@@ -1330,12 +1332,16 @@
         x
     }
 
-    .chol       <- function(x) tryCatch(chol(x), error=function(e) {
+    .as_numchar <- function(x) {
+       tryCatch(as.numeric(x), warning=function(w) as.numeric(factor(x, labels=seq_along(unique(x)))))
+    }
+
+    .chol       <- function(x, ...) tryCatch(chol(x, ...), error=function(e)   {
       d         <- nrow(x)
       eigs      <- eigen(x, symmetric = TRUE)
       eval      <- eigs$values
       evec      <- eigs$vectors
-        return(chol(x + evec %*% tcrossprod(diag(pmax.int(0, 2 * max(abs(eval)) * d * .Machine$double.eps - eval), d), evec)))
+        return(chol(x + evec %*% tcrossprod(diag(pmax.int(0, 2 * max(abs(eval)) * d * .Machine$double.eps - eval), d), evec), ...))
       }
     )
 
@@ -1517,15 +1523,16 @@
 
     .permutations     <- function(n) {
       if(n == 1)    {                      return(matrix(1))
-      } else if (n  < 2)                   stop("n must be a positive integer")
-      z         <- matrix(1)
+      } else if(n   < 2)                   stop("n must be a positive integer")
+      z          <- matrix(1)
       for(i in 2:n) {
-        x       <- cbind(z, i)
-        a       <- c(1:i, 1:(i - 1))
-        z       <- matrix(0, ncol = ncol(x), nrow = i * nrow(x))
-        z[1:nrow(x),] <- x
-        for(j in 2:i - 1) {
-          z[j * nrow(x) + 1:nrow(x),] <- x[,a[1:i + j]]
+        x        <- cbind(z, i)
+        a        <- c(1:i, 1:(i - 1))
+        nr       <- nrow(x)
+        z        <- matrix(0, ncol=ncol(x), nrow=i * nr)
+        z[1:nr,] <- x
+        for(j in 2:i - 1)    {
+          z[j * nr + 1:nr,] <- x[,a[1:i + j]]
         }
       }
       dimnames(z)     <- NULL

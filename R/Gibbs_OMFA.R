@@ -50,7 +50,8 @@
     z              <- cluster$z
     z.temp         <- factor(z, levels=Gseq)
     nn             <- tabulate(z, nbins=G)
-    nn.ind         <- which(nn > 0)
+    nn0            <- nn > 0
+    nn.ind         <- which(nn0)
     pi.alpha       <- cluster$pi.alpha
     one.uni        <- is.element(uni.type, c("constrained", "single"))
     .sim_psi_inv   <- switch(uni.type,   unconstrained=.sim_psi_uu,   isotropic=.sim_psi_uc,
@@ -81,7 +82,8 @@
       if(isTRUE(one.uni)) {
         psi.inv[,] <- 1/switch(uni.type, constrained=Rfast::colVars(data), exp(mean(log(Rfast::colVars(data)))))
       } else   {
-        psi.inv[,] <- 1/groupcolVars(data, ina=z)
+        tmp.psi    <- ((nn[nn0] - 1)/(rowsum(data^2,  z) - rowsum(data, z)^2/nn[nn0]))
+        psi.inv[,nn > 1]   <- tmp.psi[!is.nan(tmp.psi)]
       }
       inf.ind      <- is.infinite(psi.inv) | is.nan(psi.inv)
       psi.inv[inf.ind]     <- psi.tmp[inf.ind]
