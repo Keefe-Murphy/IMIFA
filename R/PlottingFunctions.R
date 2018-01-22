@@ -9,12 +9,12 @@
 #' \item{"\code{zlabels}"}{for plotting clustering uncertainties if clustering has taken place (and, if available, the average similarity matrix, reordered according to the MAP labels) with or without the clustering labels being supplied via the \code{zlabels} argument.}
 #' \item{"\code{errors}"}{for conducting posterior predictive checking of the appropriateness of the fitted model by visualising the error metrics quantifying the difference between the estimated and empirical covariance matrices. The type of plot produced depends on how the \code{error.metrics} argument was supplied to \code{\link{get_IMIFA_results}}.}
 #' }
-#' @param param The parameter of interest for any of the following \code{plot.meth} options: \code{trace}, \code{density}, \code{means}, \code{correlation}. The \code{param} must have been stored when \code{\link{mcmc_IMIFA}} was initially ran. Includes \code{pis} for methods where clustering takes place, and allows posterior inference on \code{alpha} and \code{discount} for the "\code{IMFA}" and "\code{IMIFA}" methods.
+#' @param param The parameter of interest for any of the following \code{plot.meth} options: \code{all}, \code{trace}, \code{density}, \code{means}, \code{correlation}. The \code{param} must have been stored when \code{\link{mcmc_IMIFA}} was initially ran. Includes \code{pis} for methods where clustering takes place, and allows posterior inference on \code{alpha} and \code{discount} for the "\code{IMFA}" and "\code{IMIFA}" methods.
 #' @param g Optional argument that allows specification of exactly which cluster the plot of interest is to be produced for. If not supplied, the user will be prompted to cycle through plots for all clusters. Also functions as an index for which plot to return when \code{plot.meth} is \code{GQ} or \code{zlabels} in much the same way.
 #' @param mat Logical indicating whether a \code{\link[graphics]{matplot}} is produced (defaults to \code{TRUE}). If given as \code{FALSE}, \code{ind} is invoked.
 #' @param zlabels The true labels can be supplied if they are known. If this is not supplied, the function uses the labels that were supplied, if any, to \code{\link{get_IMIFA_results}}. Only relevant when \code{plot.meth = "zlabels"}.
 #' @param heat.map Switch which allows plotting posterior mean loadings or posterior mean scores as a heatmap, or else as something akin to \code{link{plot(..., type="h")}}. Only relevant if \code{param = "loadings"} (in which case the default is \code{TRUE}) or \code{param = "scores"} (in which case the default is \code{FALSE}). Heatmaps are produced with the aid of \code{\link{mat2cols}} and \code{\link{plot_cols}}.
-#' @param palette An optional colour palette to be supplied if overwriting the default palette set inside the function by \code{\link[viridisLite]{viridis}} is desired.
+#' @param palette An optional colour palette to be supplied if overwriting the default palette set inside the function by \code{\link[viridisLite]{viridis}} is desired. it makes little sense to a supply a \code{palette} when \code{plot.meth="all"} and \code{param} is one of "\code{scores}" or "\code{loadings}".
 #' @param ind Either a single number indicating which variable to plot when \code{param} is one of \code{means} or \code{uniquenesses}, or which cluster to plot if \code{param} is \code{pis}. If \code{scores} are plotted, a vector of length two giving which observation and factor to plot; If \code{loadings} are plotted, a vector of length two giving which variable and factor to plot. Will be recycled to length 2 if necessary. Only relevant when \code{mat} is \code{FALSE}.
 #' @param fac Optional argument that provides an alternative way to specify \code{ind[2]} when \code{mat} is \code{FALSE} and \code{param} is one of \code{scores} or \code{loadings}.
 #' @param by.fac Optionally allows (mat)plotting of scores and loadings by factor - i.e. observation(s) (scores) or variable(s) (loadings) for a given factor, respectively, controlled by \code{ind} or \code{fac}) when set to \code{TRUE}. Otherwise factor(s) are plotted for a given observation or variable when set to \code{FALSE} (the default), again controlled by \code{ind} or \code{fac}. Only relevant when \code{param} is one of \code{scores} or \code{loadings}.
@@ -22,7 +22,7 @@
 #' @param intervals Logical indicating whether credible intervals around the posterior mean(s) are to be plotted when \code{is.element(plot.meth, c("all", "means"))}. Defaults to \code{TRUE}.
 #' @param partial Logical indicating whether plots of type "\code{correlation}" use the PACF. The default, \code{FALSE}, ensures the ACF is used. Only relevant when \code{plot.meth = "all"}, otherwise both plots are produced when \code{plot.meth = "correlation"}.
 #' @param titles Logical indicating whether default plot titles are to be used (\code{TRUE}), or suppressed (\code{FALSE}).
-#' @param transparency A factor in [0, 1] modifying the opacity for overplotted lines. Defaults to 0.75, unless semi-transparency is not supported.
+#' @param transparency A factor in [0, 1] modifying the opacity for overplotted lines. Defaults to 0.75, unless semi-transparency is not supported. Only relevant when \code{palette} is not supplied, otherwise the supplied \code{palette} must already be adjusted for transparency.
 #' @param ... Other arguments typically passed to \code{\link[graphics]{plot}}.
 #'
 #' @return The desired plot with appropriate output and summary statistics printed to the console screen.
@@ -69,10 +69,10 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
                                 param = c("means", "scores", "loadings", "uniquenesses", "pis", "alpha", "discount"), g = NULL, mat = TRUE, zlabels = NULL, heat.map = TRUE, palette = NULL,
                                 ind = NULL, fac = NULL, by.fac = FALSE, type = c("h", "n", "p", "l"), intervals = TRUE, partial = FALSE, titles = TRUE, transparency = 0.75, ...) {
 
-  if(missing(x))                      stop("'x' must be supplied")
+  if(missing(x))                      stop("'x' must be supplied", call.=FALSE)
   if(!exists(deparse(substitute(x)),
-             envir=.GlobalEnv))       stop(paste0("Object ", match.call()$x, " not found\n"))
-  if(class(x) != "Results_IMIFA")     stop(paste0("Results object of class 'Results_IMIFA' must be supplied"))
+             envir=.GlobalEnv))       stop(paste0("Object ", match.call()$x, " not found\n"), call.=FALSE)
+  if(class(x) != "Results_IMIFA")     stop(paste0("Results object of class 'Results_IMIFA' must be supplied"), call.=FALSE)
   GQ.res  <- x$GQ.results
   G       <- GQ.res$G
   Gseq    <- seq_len(G)
@@ -82,20 +82,20 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
   defpar$new        <- FALSE
   mispal            <- missing(palette)
   if(mispal)             palette <- viridis(min(10, max(G, Q.max, 5)))
-  if(!all(is.cols(cols=palette)))     stop("Supplied colour palette contains invalid colours")
+  if(!all(is.cols(cols=palette)))     stop("Supplied colour palette contains invalid colours", call.=FALSE)
   if(length(palette) < 5)             warning("Palette should contain 5 or more colours", call.=FALSE)
   trx     <- grDevices::dev.capabilities()$semiTransparency
   xtr     <- missing(transparency)
   if(length(transparency) != 1   &&
      any(!is.numeric(transparency),
          (transparency     < 0 ||
-          transparency     > 1)))     stop("'transparency' must be a single number in [0, 1]")
+          transparency     > 1)))     stop("'transparency' must be a single number in [0, 1]", call.=FALSE)
   if(transparency   != 1   && !trx) {
     if(!xtr)                          message("'transparency' not supported on this device")
      transparency   <- 1
   }
   tmp.pal <- palette
-  palette <- grDevices::adjustcolor(palette, alpha.f=transparency)
+  palette <- if(mispal) grDevices::adjustcolor(palette, alpha.f=transparency) else palette
   grDevices::palette(palette)
   grey    <- ifelse(trx, grDevices::adjustcolor("grey50", alpha.f=transparency), "grey50")
   defopt  <- options()
@@ -120,12 +120,12 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
   plot.mx <- missing(plot.meth)
   param.x <- missing(param)
   type.x  <- missing(type)
-  if(!all(is.character(plot.meth)))   stop("'plot.meth' must be a character vector of length 1")
-  if(!all(is.character(param)))       stop("'param' must be a character vector of length 1")
-  if(!all(is.character(type)))        stop("'type' must be a character vector of length 1")
+  if(!all(is.character(plot.meth)))   stop("'plot.meth' must be a character vector of length 1", call.=FALSE)
+  if(!all(is.character(param)))       stop("'param' must be a character vector of length 1", call.=FALSE)
+  if(!all(is.character(type)))        stop("'type' must be a character vector of length 1", call.=FALSE)
   if(plot.mx)    {
     if(!param.x) {     plot.meth <- "all"
-    } else                            stop("'plot.meth' not supplied:\nWhat type of plot would you like to produce?")
+    } else                            stop("'plot.meth' not supplied:\nWhat type of plot would you like to produce?", call.=FALSE)
   }
   if(is.element(plot.meth,
      c("G", "Q",
@@ -135,7 +135,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
   param        <- match.arg(param)
   type         <- match.arg(type)
   if(!is.element(plot.meth, c("errors", "GQ", "zlabels")) &&
-     param.x)                         stop("'param' not supplied:\nWhat variable would you like to plot?")
+     param.x)                         stop("'param' not supplied:\nWhat variable would you like to plot?", call.=FALSE)
 
   m.sw         <- c(G.sw = FALSE, Z.sw = FALSE, E.sw = FALSE, P.sw = FALSE, C.sw = FALSE, D.sw = FALSE, M.sw = FALSE, T.sw = FALSE)
   v.sw         <- attr(x, "Switch")
@@ -177,20 +177,20 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
   z.miss  <- missing(zlabels)
   if(!z.miss) {
     if(all(!is.factor(zlabels), !is.numeric(zlabels)) ||
-     length(zlabels) != n.obs)        stop(paste0("'zlabels' must be a factor of length N=",  n.obs))
+     length(zlabels) != n.obs)        stop(paste0("'zlabels' must be a factor of length N=",  n.obs), call.=FALSE)
   }
 
   if(m.sw["P.sw"]) {
     if(!is.element(param, c("means",
-       "loadings", "uniquenesses")))  stop("Can only plot parallel coordinates for means, loadings or uniquenesses")
+       "loadings", "uniquenesses")))  stop("Can only plot parallel coordinates for means, loadings or uniquenesses", call.=FALSE)
   }
   if(!grp.ind)     {
-    if(m.sw["Z.sw"])                  stop("Can't use 'zlabels' for 'plot.meth' as no clustering has taken place")
-    if(param == "pis")                stop("Can't plot mixing proportions as no clustering has taken place")
+    if(m.sw["Z.sw"])                  stop("Can't use 'zlabels' for 'plot.meth' as no clustering has taken place", call.=FALSE)
+    if(param == "pis")                stop("Can't plot mixing proportions as no clustering has taken place", call.=FALSE)
   }
   if(m.sw["E.sw"]) {
     errX  <- attr(x, "Errors")
-    if(errX == "None")  {             stop("Can't plot error metrics as they were not calculated within get_IMIFA_results()")
+    if(errX == "None")  {             stop("Can't plot error metrics as they were not calculated within get_IMIFA_results()", call.=FALSE)
     } else if(errX  == "Post")        warning("Can only plot error metrics evaluated at the posterior mean, as they were not calculated for every iteration within get_IMIFA_results", call.=FALSE)
   }
   if(all(any(m.sw["M.sw"], all.ind),
@@ -205,20 +205,20 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
   if(all(!v.sw[param], !m.sw["G.sw"],
      !m.sw["Z.sw"],   !m.sw["E.sw"])) stop(paste0("Nothing to plot: ", param, ifelse(is.element(param, c("alpha", "discount")), ifelse(any(all(param == "alpha", is.element(method, c("FA", "IFA"))),
                                            all(param == "discount", !is.element(method, c("IMFA", "IMIFA")))), paste0(" not used for the ", method, " method"), paste0(" was fixed at ", ifelse(param == "alpha",
-                                           attr(x, "Alpha"), attr(x, "Discount")))), " weren't stored"), ifelse(param == "pis" && equalpi, " as mixing proportions were constrained to be equal across clusters", "")))
+                                           attr(x, "Alpha"), attr(x, "Discount")))), " weren't stored"), ifelse(param == "pis" && equalpi, " as mixing proportions were constrained to be equal across clusters", "")), call.=FALSE)
   heat.map     <- ifelse(missing(heat.map), param == "loadings", heat.map)
   if(any(!is.logical(heat.map),
-         length(heat.map)  != 1))     stop("'heat.map' must be a single logical indicator")
+         length(heat.map)  != 1))     stop("'heat.map' must be a single logical indicator", call.=FALSE)
   if(any(!is.logical(intervals),
-         length(intervals) != 1))     stop("'intervals' must be a single logical indicator")
+         length(intervals) != 1))     stop("'intervals' must be a single logical indicator", call.=FALSE)
   if(any(!is.logical(mat),
-         length(mat)       != 1))     stop("'mat' must be a single logical indicator")
+         length(mat)       != 1))     stop("'mat' must be a single logical indicator", call.=FALSE)
   if(any(!is.logical(partial),
-         length(partial)   != 1))     stop("'partial' must be a single logical indicator")
+         length(partial)   != 1))     stop("'partial' must be a single logical indicator", call.=FALSE)
   if(any(!is.logical(titles),
-         length(titles)    != 1))     stop("'titles' must be a single logical indicator")
+         length(titles)    != 1))     stop("'titles' must be a single logical indicator", call.=FALSE)
   if(any(!is.logical(by.fac),
-         length(by.fac)    != 1))     stop("'by.fac' must be a single logical indicator")
+         length(by.fac)    != 1))     stop("'by.fac' must be a single logical indicator", call.=FALSE)
 
   indx    <- missing(ind)
   facx    <- missing(fac)
@@ -233,39 +233,39 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
     if(fl == 1)              fac <- rep(fac, G)
     fl    <- length(fac)
     if(fl != G && is.element(param,
-       c("loadings", "scores")))      stop(paste0("'fac' must be supplied for each of the ", G, " clusters"))
+       c("loadings", "scores")))      stop(paste0("'fac' must be supplied for each of the ", G, " clusters"), call.=FALSE)
   }
   g.score <- all(grp.ind, !all.ind, param == "scores")
   if(!gx)                      g <- as.integer(g)
   if(!gx  && any(length(g) != 1,
-                 !is.numeric(g)))     stop("If 'g' is supplied it must be of length 1")
+                 !is.numeric(g)))     stop("If 'g' is supplied it must be of length 1", call.=FALSE)
   if(any(all(is.element(method, c("IMFA", "OMFA")), m.sw["G.sw"]), m.sw["Z.sw"])) {
     if(m.sw["G.sw"]) {
       Gs  <- if(gx) seq_len(2L) else ifelse(g <= 2, g,
-                                      stop("Invalid 'g' value"))
+                                      stop("Invalid 'g' value", call.=FALSE))
     } else if(m.sw["Z.sw"]) {
       Gs  <- if(gx) (if(z.sim) seq_len(3L) else seq_len(2L)) else ifelse(g <=
-             ifelse(z.sim, 3, 2), g,  stop(paste0("Invalid 'g' value", ifelse(z.sim, ": similarity matrix not available", ""))))
+             ifelse(z.sim, 3, 2), g,  stop(paste0("Invalid 'g' value", ifelse(z.sim, ": similarity matrix not available", "")), call.=FALSE))
     }
   } else if(all(is.element(method, c("IMIFA", "OMIFA")), m.sw["G.sw"]))           {
     if(m.sw["G.sw"]) {
       Gs  <- if(gx) seq_len(3L) else ifelse(g <= 3, g,
-                                      stop("Invalid 'g' value"))
+                                      stop("Invalid 'g' value", call.=FALSE))
     } else if(m.sw["Z.sw"]) {
       Gs  <- if(gx) (if(z.sim) seq_len(3L) else seq_len(2L)) else ifelse(g <=
-             ifelse(z.sim, 3, 2), g,  stop(paste0("Invalid 'g' value", ifelse(z.sim, ": similarity matrix not available", ""))))
+             ifelse(z.sim, 3, 2), g,  stop(paste0("Invalid 'g' value", ifelse(z.sim, ": similarity matrix not available", "")), call.=FALSE))
     }
   } else if(any(all(is.element(param, c("scores", "pis", "alpha", "discount")), any(all.ind, param != "scores", !m.sw["M.sw"])), m.sw["G.sw"],
             all(m.sw["P.sw"], param != "loadings"), m.sw["E.sw"], all(param == "uniquenesses", is.element(uni.type, c("constrained", "single")))))  {
     Gs    <- 1L
   } else if(!gx) {
     if(!is.element(method, c("FA", "IFA"))) {
-      if(!is.element(g, Gseq))        stop("This g value was not used during simulation")
+      if(!is.element(g, Gseq))        stop("This g value was not used during simulation", call.=FALSE)
       Gs  <- g
     } else if(g > 1)        {         message(paste0("Forced g=1 for the ", method, " method"))
       Gs  <- 1L
     }
-  } else if(!interactive()) {         stop("g must be supplied for non-interactive sessions")
+  } else if(!interactive()) {         stop("g must be supplied for non-interactive sessions", call.=FALSE)
   } else {
     Gs    <- Gseq
   }
@@ -298,22 +298,22 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
     }
 
     if(is.element(param, c("scores", "loadings"))) {
-      if(m.sw["M.sw"])     hcols <- if(mispal) viridis(30, option="C") else palette
+      if(m.sw["M.sw"])     hcols <- if(mispal) viridis(30, option="C", alpha=transparency) else palette
       if(indx)               ind <- c(1L, 1L)
       if(!facx)           ind[2] <- fac[g]
       if(all(length(ind) == 1,
              mat))    {      ind <- rep(ind,  2)
         if(g   == 1)        xind <- rep(xind, 2)
       }
-      if(length(ind) != 2)            stop(paste0("Length of plotting indices must be 2 for the ", param, "parameter when 'mat' is FALSE"))
+      if(length(ind) != 2)            stop(paste0("Length of plotting indices must be 2 for the ", param, "parameter when 'mat' is FALSE"), call.=FALSE)
       if(param == "scores") {
-        if(ind[1] >  n.obs)           stop(paste0("First index can't be greater than the number of observations: ",  n.obs))
+        if(ind[1] >  n.obs)           stop(paste0("First index can't be greater than the number of observations: ",  n.obs), call.=FALSE)
         if(ind[2] >  Q.max) {         warning(paste0("Second index can't be greater than ", Q.max, ", the total number of factors", if(grp.ind) paste0(" in the widest loadings matrix")), call.=FALSE)
         if(isTRUE(msgx)) .ent_exit(opts = defopt)
         next
         }
       } else {
-        if(ind[1] > n.var)            stop(paste0("First index can't be greater than the number of variables: ",  n.var))
+        if(ind[1] > n.var)            stop(paste0("First index can't be greater than the number of variables: ",  n.var), call.=FALSE)
         if(ind[2] > Q) {              warning(paste0("Second index can't be greater than ", Q, ", the number of factors", if(grp.ind) paste0(" in cluster ", g), ".\nTry specifying a vector of fac values with maximum entries ", paste0(Qs, collapse=", "), "."), call.=FALSE)
         if(isTRUE(msgx)) .ent_exit(opts = defopt)
         next
@@ -322,11 +322,11 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
     } else   {
       if(any(is.element(param, c("alpha", "discount")),
              indx))       ind    <- 1L
-      if(length(ind) >  1)            stop("Length of plotting indices can't be greater than 1")
+      if(length(ind) >  1)            stop("Length of plotting indices can't be greater than 1", call.=FALSE)
       if(param == "pis")    {
-        if(ind       >  G)            stop(paste0("Index can't be greater than the number of clusters: ", G))
+        if(ind       >  G)            stop(paste0("Index can't be greater than the number of clusters: ", G), call.=FALSE)
       } else {
-        if(ind       > n.var)         stop(paste0("Index can't be greater than the number of variables: ", n.var))
+        if(ind       > n.var)         stop(paste0("Index can't be greater than the number of variables: ", n.var), call.=FALSE)
       }
     }
 
@@ -605,8 +605,8 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         }
         if(param  == "scores") {
           if(any(ind[1]  > Q.max,
-                 ind[2]  > Q.max))    stop(paste0("Only the first ", Q.max, " columns can be plotted"))
-        } else if(ind[2] > Q)         stop(paste0("Only the first ", Q, " columns can be plotted"))
+                 ind[2]  > Q.max))    stop(paste0("Only the first ", Q.max, " columns can be plotted"), call.=FALSE)
+        } else if(ind[2] > Q)         stop(paste0("Only the first ", Q, " columns can be plotted"), call.=FALSE)
       }
 
       if(param == "means") {
@@ -985,7 +985,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
     }
 
     if(m.sw["Z.sw"]) {
-      if(type == "l")                 stop("'type' cannot be 'l' for clustering uncertainty plots")
+      if(type == "l")                 stop("'type' cannot be 'l' for clustering uncertainty plots", call.=FALSE)
       plot.x <- as.vector(clust$uncertainty)
       if(g == 1) {
         col.x  <- c(1, ceiling(length(palette)/2))[(plot.x >= 1/G) + 1]
@@ -1036,7 +1036,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         plot.x  <- t(plot.x[,seq(from=ncol(plot.x), to=1, by=-1)])
         graphics::par(defpar)
         if(titles) graphics::par(mar=c(4.1, 4.1, 4.1, 4.1))
-        z.col   <- if(!any(mispal, gx)) palette else grDevices::heat.colors(12)[12:1]
+        z.col   <- if(any(!mispal, !gx)) palette else grDevices::heat.colors(12, alpha=transparency)[12:1]
         col.mat <- mat2cols(plot.x, cols=z.col, na.col=graphics::par()$bg)
         col.mat[plot.x == 0] <- NA
         plot_cols(col.mat, na.col=graphics::par()$bg)
@@ -1101,7 +1101,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
       jit.x  <- G == 1 || (param == "uniquenesses" && uni.type == "constrained")
       type.u <- ifelse(type.x, switch(param, uniquenesses=switch(uni.type, constrained=, unconstrained="p", single=, isotropic="l"), "p"), type)
       if(!is.element(type.u,
-                     c("l", "p")))    stop("Invalid 'type' for parallel coordinates plot")
+                     c("l", "p")))    stop("Invalid 'type' for parallel coordinates plot", call.=FALSE)
 
       graphics::matplot(seq_len(n.var) + if(!jit.x) switch(type.u, p=matrix(stats::rnorm(jitcol * n.var, 0, min(0.1, max(1e-02, 1/n.var^2))), nrow=n.var, ncol=jitcol), 0) else 0,
                         plot.x, type=type.u, pch=15, col=switch(param, loadings=seq_len(Q), seq_len(G)), xlab=switch(uni.type, constrained=, unconstrained="Variable", ""),
@@ -1269,6 +1269,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
 #' @param byrank Logical indicating whether to convert the matrix itself or the sample ranks of the values therein. Defaults to \code{FALSE}.
 #' @param breaks Number of gradations in colour to use. Defaults to \code{length(cols)}.
 #' @param na.col Colour to be used to represent missing data. Will be checked for validity by \code{\link{is.cols}}.
+#' @param transparency A factor in [0, 1] modifying the opacity for overplotted lines. Defaults to 1 (i.e. no transparency). Only relevant when \code{cols} is not supplied, otherwise the supplied \code{cols} must already be adjusted for transparency.
 #'
 #' @return A matrix of hex colour code representations, or a list of such matrices when \code{compare} is \code{TRUE}.
 #' @export
@@ -1308,40 +1309,48 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
 #' plot_cols(mat2cols(mat1, cols=cols)); heat_legend(range(mats), cols=cols); box(lwd=2)
 #' plot_cols(mat2cols(mat2, cols=cols)); heat_legend(range(mats), cols=cols); box(lwd=2)
 #' plot_cols(mat2cols(mat3, cols=cols)); heat_legend(range(mats), cols=cols); box(lwd=2)
-  mat2cols     <- function(mat, cols = NULL, compare = FALSE, byrank = FALSE, breaks = length(cols), na.col = "#808080FF") {
+  mat2cols     <- function(mat, cols = NULL, compare = FALSE, byrank = FALSE, breaks = NULL, na.col = "#808080FF", transparency = 1) {
     if(isTRUE(compare)) {
       if(!is.list(mat) && !all(vapply(mat,
-          is.matrix, logical(1L))))   stop("'mat' must be a list of matrices when 'compare' is TRUE")
+          is.matrix, logical(1L))))   stop("'mat' must be a list of matrices when 'compare' is TRUE", call.=FALSE)
       nc       <- vapply(mat, ncol, numeric(1L))
       nr       <- vapply(mat, nrow, numeric(1L))
       uc       <- unique(nc)
       ur       <- unique(nr)
-      if(length(ur)    == 1) {
+      if(length(ur)   == 1)  {
         mat    <- do.call(cbind, mat)
         spl    <- matrix(rep(seq_along(nc), nc), nrow=ur, ncol=ncol(mat), byrow=TRUE)
       } else if(length(uc)  == 1)  {
         mat    <- do.call(rbind, mat)
         spl    <- matrix(rep(seq_along(nr), nr), nrow=nrow(mat), ncol=uc, byrow=FALSE)
-      } else                          stop("Matrices must have either the same number of rows or the same number of columns")
-    } else if(!is.matrix(mat))        stop("'mat' must be a matrix when 'compare' is FALSE")
-    if(missing(cols))   {
-      cols     <- viridis(30L, option="C")
-      if(missing(breaks))   {
-        breaks <- length(cols)
+      } else                          stop("Matrices must have either the same number of rows or the same number of columns", call.=FALSE)
+    } else if(!is.matrix(mat))        stop("'mat' must be a matrix when 'compare' is FALSE", call.=FALSE)
+    if(missing(cols))  {
+      trx      <- grDevices::dev.capabilities()$semiTransparency
+      xtr      <- missing(transparency)
+      if(length(transparency)   != 1 &&
+         any(!is.numeric(transparency),
+             (transparency  < 0 ||
+              transparency  > 1)))    stop("'transparency' must be a single number in [0, 1]", call.=FALSE)
+      if(transparency != 1 && !trx)   {
+        if(!xtr)                      message("'transparency' not supported on this device")
+        transparency       <- 1
       }
+      cols     <- viridis(30L, option="C", alpha=transparency)
     }
-    if(!all(is.cols(cols)))           stop("Invalid colours supplied")
+    if(!all(is.cols(cols)))           stop("Invalid colours supplied", call.=FALSE)
     if(any(!is.logical(byrank),
-           length(byrank)  != 1))     stop("'byrank' must be a single logical indicator")
+           length(byrank)  != 1))     stop("'byrank' must be a single logical indicator", call.=FALSE)
+    breaks     <- if(missing(breaks)) length(cols) else breaks
     if(any(!is.numeric(breaks),
-           length(breaks)  != 1))     stop("'breaks' must be a single digit")
+           length(breaks)  != 1))     stop("'breaks' must be a single digit", call.=FALSE)
 
     m1         <- if(isTRUE(byrank))  rank(mat) else mat
     facs       <- cut(m1, breaks, include.lowest=TRUE)
     answer     <- matrix(cols[as.numeric(facs)], nrow=nrow(mat), ncol=ncol(mat))
     if(any((NM <- is.na(mat)))) {
       if(length(na.col     != 1)  &&
-         !is.cols(na.col))            stop("'na.col' must be a valid colour in the presence of missing data")
+         !is.cols(na.col))            stop("'na.col' must be a valid colour in the presence of missing data", call.=FALSE)
       answer   <- replace(answer, NM, na.col)
     }
     rownames(answer)       <- rownames(mat)
@@ -1396,7 +1405,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
 #' heat_legend(data, cols); box(lwd=2)
   heat_legend  <- function(data, cols, cex.lab = 1) {
     if(length(cex.lab) > 1 || (!is.numeric(cex.lab) ||
-       cex.lab <= 0))                 stop("Invalid 'cex.lab' supplied")
+       cex.lab <= 0))                 stop("Invalid 'cex.lab' supplied", call.=FALSE)
     bx         <- graphics::par("usr")
     xpd        <- graphics::par()$xpd
     box.cx     <- c(bx[2] + (bx[2]  - bx[1])/1000, bx[2] + (bx[2] - bx[1])/1000 + (bx[2] - bx[1])/50)
@@ -1434,7 +1443,6 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
 #' @return A plot of the prior distribution if \code{show.plot} is \code{TRUE}. Density values are returned invisibly. Note that the density values may not strictly sum to one in certain cases, as values small enough to be represented as zero may well be returned.
 #' @export
 #' @keywords plotting
-#' @importFrom viridis "viridis"
 #' @seealso \code{\link{G_expected}}, \code{\link{G_variance}}, \code{\link[Rmpfr]{Rmpfr}}
 #'
 #' @note Requires use of the \code{Rmpfr} and \code{gmp} libraries; may encounter difficulty and slowness for large \code{N}, especially with non-zero \code{discount} values.
@@ -1459,26 +1467,26 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
     if(isTRUE(firstex)) {
       on.exit(.detach_pkg("Rmpfr"))
       on.exit(.detach_pkg("gmp"),          add=TRUE)
-    } else                            stop("'Rmpfr' package not installed")
+    } else                            stop("'Rmpfr' package not installed", call.=FALSE)
     on.exit(grDevices::palette("default"), add=!isTRUE(firstex))
     defopt     <- options()
     options(expressions = 500000)
     on.exit(options(defopt),               add=TRUE)
 
     if(any(c(length(N),
-             length(show.plot)) > 1)) stop("Arguments 'N' and 'show.plot' must be strictly of length 1")
-    if(!is.logical(show.plot))        stop("'show.plot' must be a single logical indicator")
+             length(show.plot)) > 1)) stop("Arguments 'N' and 'show.plot' must be strictly of length 1", call.=FALSE)
+    if(!is.logical(show.plot))        stop("'show.plot' must be a single logical indicator", call.=FALSE)
     max.len    <- max(length(alpha),  length(discount))
-    if(max.len  > 10)                 stop("Can't plot more than ten distributions simultaneously")
+    if(max.len  > 10)                 stop("Can't plot more than ten distributions simultaneously", call.=FALSE)
     if(!is.element(length(alpha),
-       c(1, max.len)))                stop("'alpha' must be of length 1 or length(discount)")
+       c(1, max.len)))                stop("'alpha' must be of length 1 or length(discount)", call.=FALSE)
     if(!is.element(length(discount),
-       c(1, max.len)))                stop("'discount' must be of length 1 or length(alpha)")
+       c(1, max.len)))                stop("'discount' must be of length 1 or length(alpha)", call.=FALSE)
     if(!all(is.numeric(discount), is.numeric(alpha),
-            is.numeric(N)))           stop("'N', 'alpha', and 'discount' inputs must be numeric")
+            is.numeric(N)))           stop("'N', 'alpha', and 'discount' inputs must be numeric", call.=FALSE)
     if(any(discount < 0,
-       discount >= 1))                stop("'discount' must lie in the interval [0,1)")
-    if(any(alpha <= - discount))      stop("'alpha' must be strictly greater than -discount")
+       discount >= 1))                stop("'discount' must lie in the interval [0,1)", call.=FALSE)
+    if(any(alpha <= - discount))      stop("'alpha' must be strictly greater than -discount", call.=FALSE)
     if(length(alpha)    != max.len) {
       alpha    <- rep(alpha,    max.len)
     }
@@ -1547,12 +1555,12 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
   plot_cols    <- function(cmat, na.col = "#808080FF", ptype = c("image", "points"), border.col = "#808080FF",
                            dlabels = NULL, rlabels = FALSE, clabels = FALSE, pch = 15, cex = 3, label.cex = 0.6, ...) {
     if(!all(is.cols(cmat),
-            is.matrix(cmat)))         stop("'cmat' needs to be a valid colour matrix:\ntry supplying a vector as a matrix with 1 row or column, as appropriate")
+            is.matrix(cmat)))         stop("'cmat' needs to be a valid colour matrix:\ntry supplying a vector as a matrix with 1 row or column, as appropriate", call.=FALSE)
     if(!all(is.cols(na.col),
-            length(na.col)     == 1)) stop("'na.col' needs to a valid single colour")
+            length(na.col)     == 1)) stop("'na.col' needs to a valid single colour", call.=FALSE)
     if(!all(is.cols(border.col),
-            length(border.col) == 1)) stop("'border.col' needs to a valid single colour")
-    if(!all(is.character(ptype)))     stop("'ptype' must be a character vector of length 1")
+            length(border.col) == 1)) stop("'border.col' needs to a valid single colour", call.=FALSE)
+    if(!all(is.character(ptype)))     stop("'ptype' must be a character vector of length 1", call.=FALSE)
     ptype      <- match.arg(ptype)
     N          <- nrow(cmat)
     P          <- ncol(cmat)

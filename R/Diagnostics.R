@@ -44,7 +44,7 @@
 #' Due to the way the offline label-switching correction is performed, different runs of this function may give \emph{very slightly} different results, but only if the chain was run for an extremely small number of iterations, well below the number required for convergence, and samples of the cluster labels match poorly across iterations (particularly if the number of clusters suggested by those sampled labels is high).
 #' @keywords IMIFA main
 #' @export
-#' @importFrom Rfast "med" "rowMaxs" "standardise" "colMaxs" "rowVars" "rowmeans" "Order" "cova" "Var" "colTabulate" "sort_unique"
+#' @importFrom Rfast "med" "rowMaxs" "colMaxs" "rowmeans" "Order" "Var" "colTabulate" "sort_unique"
 #' @importFrom mclust "classError"
 #' @importFrom matrixStats "rowMedians" "rowQuantiles"
 #' @importFrom slam "as.simple_triplet_matrix"
@@ -89,19 +89,19 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   defopt         <- options()
   options(warn=1)
   on.exit(suppressWarnings(options(defopt)), add=TRUE)
-  if(missing(sims))               stop("Simulations must be supplied")
-  if(class(sims) != "IMIFA")      stop("Object of class 'IMIFA' must be supplied")
+  if(missing(sims))               stop("Simulations must be supplied", call.=FALSE)
+  if(class(sims) != "IMIFA")      stop("Object of class 'IMIFA' must be supplied", call.=FALSE)
   if(!exists(deparse(substitute(sims)),
-             envir=.GlobalEnv))   stop(paste0("Object ", match.call()$sims, " not found\n"))
+             envir=.GlobalEnv))   stop(paste0("Object ", match.call()$sims, " not found\n"), call.=FALSE)
   burnin         <- as.integer(burnin)
   thinning       <- as.integer(thinning)
   store          <- attr(sims, "Store")
   if(any(c(length(thinning),
-           length(burnin)) > 1))  stop("'burnin' and 'thinning' must be of length 1")
+           length(burnin)) > 1))  stop("'burnin' and 'thinning' must be of length 1", call.=FALSE)
   if(any(burnin   < 0, burnin >= store,
-         thinning < 1))           stop("Invalid 'burnin' and/or 'thinning' supplied")
+         thinning < 1))           stop("Invalid 'burnin' and/or 'thinning' supplied", call.=FALSE)
   store          <- seq(from=burnin + 1, to=store, by=thinning)
-  if(length(store) < 10)          stop("Too much 'burnin' or 'thinning' applied: not enough stored samples to proceed")
+  if(length(store) < 10)          stop("Too much 'burnin' or 'thinning' applied: not enough stored samples to proceed", call.=FALSE)
   n.store        <- length(store)
   tmp.store      <- store
 
@@ -133,26 +133,26 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   if(any(length(conf.level) != 1,
      !is.numeric(conf.level),
      (conf.level <= 0   ||
-      conf.level >= 1)))          stop("'conf.level' must be a single number in the interval (0, 1)")
+      conf.level >= 1)))          stop("'conf.level' must be a single number in the interval (0, 1)", call.=FALSE)
   conf.levels    <- c((1 - conf.level)/2, (1 + conf.level)/2)
   choice         <- length(n.grp) * length(n.fac) > 1
   crit.check     <- !all(is.character(criterion))
-  if(isTRUE(crit.check))          stop("'criterion' must be a character vector of length 1")
+  if(isTRUE(crit.check))          stop("'criterion' must be a character vector of length 1", call.=FALSE)
   criterion      <- match.arg(criterion)
   if(all(inf.Q, is.element(criterion,
-     c("aic.mcmc", "bic.mcmc")))) stop(paste0(ifelse(isTRUE(choice), "Model choice is", "Though model choice isn't"), " actually required -\n'criterion' cannot be 'aic.mcmc' or 'bic.mcmc' for the ", method, " method"))
+     c("aic.mcmc", "bic.mcmc")))) stop(paste0(ifelse(isTRUE(choice), "Model choice is", "Though model choice isn't"), " actually required -\n'criterion' cannot be 'aic.mcmc' or 'bic.mcmc' for the ", method, " method"), call.=FALSE)
   miss.zavg      <- missing(z.avgsim)
   if(length(error.metrics) != 1  ||
-     !is.logical(error.metrics))  stop("'error.metrics' must be a single logical indicator")
+     !is.logical(error.metrics))  stop("'error.metrics' must be a single logical indicator", call.=FALSE)
   if(length(z.avgsim)      != 1  ||
-     !is.logical(z.avgsim))       stop("'z.avgsim' must be a single logical indicator")
+     !is.logical(z.avgsim))       stop("'z.avgsim' must be a single logical indicator", call.=FALSE)
   if(isTRUE(z.avgsim))  {
     has.pkg      <- suppressMessages(requireNamespace("mcclust", quietly=TRUE))
     if(!has.pkg)  {
       z.avgwarn  <- "Forcing 'z.avgsim' to FALSE: 'mcclust' package not installed"
       z.avgsim   <- FALSE
       if(miss.zavg)     {         message(z.avgwarn)
-      } else                      warning(z.avgwarn, call.=FALSE)
+      } else                      warning(z.avgwarn, call.=FALSE, immediate.=TRUE)
     }
   }
 
@@ -168,7 +168,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       act.store  <- lapply(seq_len(GQs), function(gq) sims[[G.ind]][[gq]]$act.store[store])
     }
     G.mX         <- !all(is.character(G.meth))
-    if(isTRUE(G.mX))              stop("'G.meth' must be a character vector of length 1")
+    if(isTRUE(G.mX))              stop("'G.meth' must be a character vector of length 1", call.=FALSE)
     G.meth       <- match.arg(G.meth)
     G.tab        <- if(GQ1x) lapply(apply(G.store, 1, function(x) list(table(x, dnn=NULL))), "[[", 1) else table(G.store, dnn=NULL)
     G.prob       <- if(GQ1x) lapply(G.tab, prop.table) else prop.table(G.tab)
@@ -183,46 +183,46 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   if(G.T)    {
     G            <- as.integer(G)
     if(any(length(G) != 1,
-           !is.integer(G)))       stop("'G' must be an integer of length 1")
+           !is.integer(G)))       stop("'G' must be an integer of length 1", call.=FALSE)
     if(!inf.G) {
       if(!is.element(method, c("FA", "IFA")))  {
-        if(!is.element(G, n.grp)) stop("This 'G' value was not used during simulation")
+        if(!is.element(G, n.grp)) stop("This 'G' value was not used during simulation", call.=FALSE)
         G.ind    <- which(n.grp == G)
       } else if(G > 1)            message(paste0("Forced G=1 for the ", method, " method"))
     } else     {
       if(GQ1x) {
-        if(!Q.T)                  stop(paste0("'G' cannot be supplied without 'Q' for the ", method, " method if a range of Q values were explored"))
+        if(!Q.T)                  stop(paste0("'G' cannot be supplied without 'Q' for the ", method, " method if a range of Q values were explored"), call.=FALSE)
         tmpQ     <- which(n.fac == unique(Q))
       } else {
         tmpQ     <- Q.ind
       }
       if(length(tmpQ > 0)  && !is.element(G,
-         unique(G.store[tmpQ,]))) stop("This 'G' value was not visited during simulation")
+         unique(G.store[tmpQ,]))) stop("This 'G' value was not visited during simulation", call.=FALSE)
     }
   }
   G              <- if(any(inf.G, all(G.T, !is.element(method, c("FA", "IFA"))))) G else 1L
 
   if(Q.T)    {
     Q            <- as.integer(Q)
-    if(!is.integer(Q))            stop("'Q' must of integer type")
+    if(!is.integer(Q))            stop("'Q' must of integer type", call.=FALSE)
     if(G.T)  {
       if(length(Q) == 1)     Q <- rep(Q, G)
-      if(length(Q) != G)          stop(paste0("'Q' must be supplied for each cluster, as a scalar or vector of length G=", G))
+      if(length(Q) != G)          stop(paste0("'Q' must be supplied for each cluster, as a scalar or vector of length G=", G), call.=FALSE)
     } else if(length(n.grp)    != 1 && all(!is.element(length(Q),
-              c(1,  n.grp))))     stop("'Q' must be a scalar if G=1, 'G' is not suppplied, or a range of G values were explored")
+              c(1,  n.grp))))     stop("'Q' must be a scalar if G=1, 'G' is not suppplied, or a range of G values were explored", call.=FALSE)
     if(all(is.element(method, c("FA", "MFA", "OMFA", "IMFA")))) {
-      if(length(unique(Q)) != 1)  stop(paste0("'Q' cannot vary across clusters for the ", method, " method"))
+      if(length(unique(Q)) != 1)  stop(paste0("'Q' cannot vary across clusters for the ", method, " method"), call.=FALSE)
       Q          <- unique(Q)
-      if(!is.element(Q,   n.fac)) stop("This 'Q' value was not used during simulation")
+      if(!is.element(Q,   n.fac)) stop("This 'Q' value was not used during simulation", call.=FALSE)
       Q.ind      <- which(n.fac == Q)
     }
     if(inf.Q)  {
       if(any((Q  != 0) + (Q *
-        (n.var - Q)   <= 0) > 1)) stop(paste0("'Q' must be less than the number of variables ", n.var))
+        (n.var - Q)   <= 0) > 1)) stop(paste0("'Q' must be less than the number of variables ", n.var), call.=FALSE)
       Qtmp       <- if(inf.G) sims[[1]][[1]]$Q.store[seq_len(G),store, drop=FALSE] else switch(method, MIFA=sims[[if(G.T) G == n.grp else G.ind]][[1]]$Q.store[,store, drop=FALSE], sims[[1]][[1]]$Q.store[,store, drop=FALSE])
       storage.mode(Qtmp)   <- switch(method, IFA="integer", "numeric")
       Qtmp       <- switch(method, IFA=max(Qtmp), Rfast::rowMaxs(Qtmp, value=TRUE))
-      if(any(Q * (Qtmp - Q) < 0)) stop(paste0("'Q' can't be greater than the maximum number of factors stored in ", ifelse(method == "IFA", "", "any cluster of "), match.call()$sims))
+      if(any(Q * (Qtmp - Q) < 0)) stop(paste0("'Q' can't be greater than the maximum number of factors stored in ", ifelse(method == "IFA", "", "any cluster of "), match.call()$sims), call.=FALSE)
     }
   }
 
@@ -335,16 +335,16 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     if(inf.Q) {
       Q.store    <- sims[[G.ind]][[Q.ind]]$Q.store[,tmp.store, drop=FALSE]
       Q.mX       <- !all(is.character(Q.meth))
-      if(isTRUE(Q.mX))            stop("'Q.meth' must be a character vector of length 1")
+      if(isTRUE(Q.mX))            stop("'Q.meth' must be a character vector of length 1", call.=FALSE)
       Q.meth     <- match.arg(Q.meth)
     }
-    if(length(tmp.store)   < 2)   stop(paste0("Not enough samples stored to proceed", ifelse(any(G.T, Q.T), paste0(": try supplying different Q or G values"), "")))
+    if(length(tmp.store)   < 2)   stop(paste0("Not enough samples stored to proceed", ifelse(any(G.T, Q.T), paste0(": try supplying different Q or G values"), "")), call.=FALSE)
 
 # Manage Label Switching & retrieve cluster labels/mixing proportions
   if(clust.ind) {
     label.miss   <- missing(zlabels)
     if(!label.miss && (all(!is.factor(zlabels), !is.numeric(zlabels)) ||
-       length(zlabels) != n.obs)) stop(paste0("'zlabels' must be a factor of length N=",  n.obs))
+       length(zlabels) != n.obs)) stop(paste0("'zlabels' must be a factor of length N=",  n.obs), call.=FALSE)
     if(sw["mu.sw"])   {
       mus        <- sims[[G.ind]][[Q.ind]]$mu[,,tmp.store, drop=FALSE]
     }
@@ -440,8 +440,8 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     uncertain    <- 1 - Rfast::colMaxs(matrix(colTabulate(z, max_number=G)/length(tmp.store), nrow=G, ncol=n.obs), value=TRUE)
     if(sw["pi.sw"]) {
       pi.prop    <- provideDimnames(pies[Gseq,storeG, drop=FALSE], base=list(gnames, ""), unique=FALSE)
-      pi.prop    <- if(inf.G) sweep(pi.prop, 2, colSums2(pi.prop), FUN="/") else pi.prop
-      var.pi     <- stats::setNames(Rfast::rowVars(pi.prop), gnames)
+      pi.prop    <- if(inf.G) sweep(pi.prop, 2, colSums2(pi.prop), FUN="/", check.margin=FALSE) else pi.prop
+      var.pi     <- stats::setNames(.row_vars(pi.prop), gnames)
       ci.pi      <- rowQuantiles(pi.prop, probs=conf.levels)
       post.pi    <- stats::setNames(rowmeans(pi.prop),       gnames)
     } else {
@@ -582,7 +582,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     Lstore       <- lapply(Gseq, function(g) storeG[Q.store[g,] >= Q[g]])
     if(any(lengths(Lstore) < 2)) {
      sw["s.sw"]  <- tmpsw["l.sw"] <-
-     sw["l.sw"]  <- FALSE;       warning("Forcing non-storage of scores and loadings due to shortage of retained samples", call.=FALSE)
+     sw["l.sw"]  <- FALSE;        warning("Forcing non-storage of scores and loadings due to shortage of retained samples", call.=FALSE)
     }
     eta.store    <- sort_unique(unlist(Lstore))
   } else {
@@ -673,13 +673,13 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   # Compute posterior means and % variation explained
     if(sw["mu.sw"])  {
       post.mu    <- if(clust.ind) rowmeans(mu)  else post.mu
-      var.mu     <- if(uni)       Var(mu)       else Rfast::rowVars(mu)
+      var.mu     <- if(uni)       Var(mu)       else .row_vars(mu)
       ci.tmp     <- rowQuantiles(mu,  probs=conf.levels)
       ci.mu      <- if(uni)       t(ci.tmp)     else ci.tmp
     }
     if(sw["psi.sw"]) {
       post.psi   <- if(clust.ind) rowmeans(psi) else post.psi
-      var.psi    <- if(uni)       Var(psi)      else Rfast::rowVars(psi)
+      var.psi    <- if(uni)       Var(psi)      else .row_vars(psi)
       ci.tmp     <- rowQuantiles(psi, probs=conf.levels)
       ci.psi     <- if(uni)       t(ci.tmp)     else ci.tmp
     }
@@ -693,7 +693,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     } else if(sw["psi.sw"]) {
       if(sizes[g] > 1) {
         dat.gg   <- dat[z.ind[[g]],, drop=FALSE]
-        cov.gg   <- if(n.var  > 500) provideDimnames(cova(dat.gg), base=list(varnames)) else stats::cov(dat.gg)
+        cov.gg   <- if(n.var  > 500) provideDimnames(.cov2(dat.gg), base=list(varnames)) else stats::cov(dat.gg)
       }
       var.exp    <- ifelse(sizes[g] == 0, 0, max(0, (sum(diag(cov.gg)) - sum(post.psi))/n.var))
     } else {

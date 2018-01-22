@@ -57,7 +57,7 @@
       }
     } else {
       psi.tmp    <- psi.inv
-      psi.inv[]  <- 1/switch(uni.type, constrained=Rfast::colVars(data, suma=mu), exp(mean(log(Rfast::colVars(data, suma=mu)))))
+      psi.inv[]  <- 1/switch(uni.type, constrained=.col_vars(data, suma=mu), exp(mean(log(.col_vars(data, suma=mu)))))
       inf.ind    <- is.infinite(psi.inv)
       psi.inv[inf.ind]     <- psi.tmp[inf.ind]
     }
@@ -78,7 +78,7 @@
       storage    <- is.element(iter,  iters)
 
     # Scores & Loadings
-      c.data     <- sweep(data, 2, mu, FUN="-")
+      c.data     <- sweep(data, 2, mu, FUN="-", check.margin=FALSE)
       if(Q0) {
         eta      <- .sim_score(N=N, Q=Q, lmat=lmat, psi.inv=psi.inv, c.data=c.data, Q1=Q1)
         lmat     <- matrix(vapply(Pseq, function(j) .sim_load(l.sigma=l.sigma, Q=Q, c.data=c.data[,j], Q1=Q1,

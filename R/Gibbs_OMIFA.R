@@ -84,7 +84,7 @@
     } else   {
       psi.tmp        <- psi.inv
       if(isTRUE(one.uni)) {
-        psi.inv[,]   <- 1/switch(uni.type, constrained=Rfast::colVars(data), exp(mean(log(Rfast::colVars(data)))))
+        psi.inv[,]   <- 1/switch(uni.type, constrained=.col_vars(data), exp(mean(log(.col_vars(data)))))
       } else {
         tmp.psi      <- ((nn[nn0] - 1)/(rowsum(data^2,  z) - rowsum(data, z)^2/nn[nn0]))
         psi.inv[,nn   > 1]    <- tmp.psi[!is.nan(tmp.psi)]
@@ -161,7 +161,7 @@
       dat.g          <- lapply(Gseq, function(g) data[z == g,, drop=FALSE])
 
     # Scores & Loadings
-      c.data         <- lapply(Gseq, function(g) sweep(dat.g[[g]], 2, mu[,g], FUN="-"))
+      c.data         <- lapply(Gseq, function(g) sweep(dat.g[[g]], 2, mu[,g], FUN="-", check.margin=FALSE))
       if(!any(Q0))    {
         eta          <- .empty_mat(nr=N)
         eta.tmp      <- lapply(Gseq, function(g) eta[z == g,, drop=FALSE])

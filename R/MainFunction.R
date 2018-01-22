@@ -50,7 +50,7 @@
 #' @keywords IMIFA main
 #' @export
 #' @importFrom matrixStats "colMeans2" "colSums2" "rowLogSumExps" "rowSums2"
-#' @importFrom Rfast "Order" "colVars" "rowmeans" "standardise" "sort_unique" "cora" "cova" "matrnorm"
+#' @importFrom Rfast "Order" "rowmeans" "sort_unique" "matrnorm"
 #' @importFrom mvnfast "dmvn"
 #' @importFrom slam "as.simple_sparse_array" "as.simple_triplet_matrix"
 #' @importFrom mclust "Mclust" "mclustBIC" "hc" "hclass" "hcEII" "hcVVV"
@@ -118,9 +118,9 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   if(!missing(method) && method == "classification") {
     method  <- "classify"
   }
-  if(!all(is.character(method)))    stop("'method' must be a character vector of length 1")
+  if(!all(is.character(method)))    stop("'method' must be a character vector of length 1", call.=FALSE)
   method    <- match.arg(method)
-  if(missing(dat))                  stop("Dataset must be supplied")
+  if(missing(dat))                  stop("Dataset must be supplied", call.=FALSE)
   dat.nam   <- gsub("[[:space:]]", "", deparse(substitute(dat)))
 
 # Remove non-numeric columns & apply centering & scaling if necessary
@@ -133,7 +133,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   scaling   <- mixFA$scaling
   iters     <- seq(from=burnin + 1, to=n.iters, by=thinning)
   iters     <- iters[iters > 0]
-  if(length(iters)   < 10)          stop("Run a longer chain!")
+  if(length(iters)   < 10)          stop("Run a longer chain!", call.=FALSE)
   raw.dat   <- as.data.frame(dat)
   num.check <- vapply(raw.dat, is.numeric, logical(1L))
   if(anyNA(raw.dat)) {
@@ -144,11 +144,11 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(verbose)                     message("Non-numeric columns removed from data")
     raw.dat <- raw.dat[,num.check, drop=FALSE]
   }
-  if(any(dim(raw.dat) == 0))        stop("Empty data set after removal of ineligble rows/columns")
+  if(any(dim(raw.dat) == 0))        stop("Empty data set after removal of ineligble rows/columns", call.=FALSE)
   if(method != "classify") {
-    scal    <- switch(scaling, none=FALSE, Rfast::colVars(as.matrix(raw.dat), std=TRUE))
+    scal    <- switch(scaling, none=FALSE, .col_vars(as.matrix(raw.dat), std=TRUE))
     scal    <- switch(scaling, pareto=sqrt(scal), scal)
-    dat     <- if(is.logical(scal)) { if(any(centering, scal)) standardise(as.matrix(raw.dat), center=centering, scale=scal) else as.matrix(raw.dat) } else scale(raw.dat, center=centering, scale=scal)
+    dat     <- .scale2(as.matrix(raw.dat), center=centering, scale=scal)
   } else   {
     dat     <- as.matrix(raw.dat)
   }
@@ -174,15 +174,15 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(verbose)                     message("'uni.prior' coerced to isotropic as the dataset is univariate")
   }
   if(all(is.element(uni.type, c("isotropic", "single")),
-     uni.prior == "unconstrained")) stop("'uni.prior' can only be 'unconstrained' when 'uni.type' is 'unconstrained' or 'constrained'")
+     uni.prior == "unconstrained")) stop("'uni.prior' can only be 'unconstrained' when 'uni.type' is 'unconstrained' or 'constrained'", call.=FALSE)
   if(all(is.element(uni.type, c("unconstrained", "constrained")), any(miss.uni, miss.pri),
          NlP, verbose))             message(paste0("Consider setting 'uni.type' to 'isotropic' or 'single'", ifelse(miss.pri && uni.prior == "unconstrained", ", or at least 'uni.prior' to 'isotropic', ", " "), "in N << P cases"))
 
 # Manage storage switches & warnings for other function inputs
   store.x   <- attr(storage, "Missing")
   if(!store.x["mu.sw"] && all(!storage["mu.sw"], ifelse(method == "classify",
-     !centering, !centered)))       warning("Centering hasn't been applied - are you sure you want mu.switch=FALSE?", call.=FALSE)
-  if(N < 2)                         stop("Must have more than one observation")
+     !centering, !centered)))       warning("Centering hasn't been applied - are you sure you want mu.switch=FALSE?", call.=FALSE, immediate.=TRUE)
+  if(N < 2)                         stop("Must have more than one observation", call.=FALSE)
   z.init    <- mixFA$z.init
   z.list    <- mixFA$z.list
   zin.miss  <- mixfamiss$z.init
@@ -215,7 +215,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   }
 
   if(!is.element(method, c("MFA", "MIFA")))      {
-    if(length(range.G) > 1)         stop(paste0("Only one 'range.G' value can be specified for the ", method, " method"))
+    if(length(range.G) > 1)         stop(paste0("Only one 'range.G' value can be specified for the ", method, " method"), call.=FALSE)
     if(all(!G.x, verbose, is.element(method, c("FA", "IFA"))) &&
        range.G  > 1)                message(paste0("'range.G' forced to 1 for the ", method, " method"))
     if(is.element(method, c("OMIFA", "OMFA", "IMFA", "IMIFA"))) {
@@ -233,26 +233,26 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
           range.G  <- tmp.G
         }
       }
-      if(range.G    < lnN2)         warning(paste0("'range.G' should be at least log(N) (=log(", N, "))", " for the ", method, " method"), call.=FALSE)
+      if(range.G    < lnN2)         warning(paste0("'range.G' should be at least log(N) (=log(", N, "))", " for the ", method, " method"), call.=FALSE, immediate.=TRUE)
       if(is.element(method, c("IMFA", "IMIFA")))  {
         if((t.miss <- bnpmiss$trunc.G))    {
           trunc.G  <- BNP$trunc.G      <- range.G
         } else trunc.G    <- BNP$trunc.G
         if(all(ifelse(N > 50, trunc.G   < 50,
            trunc.G  < N), !t.miss)) message(paste0("Consider setting 'trunc.G' to min(N=", N, ", 50) unless practical reasons in heavy computational/memory burden cases prohibit it"))
-        if(trunc.G  < range.G)      stop(paste0("'trunc.G' must be at least range.G=", range.G))
-        if(trunc.G  > N)            stop(paste0("'trunc.G' cannot be greater than N=", N))
-        if(trunc.G  > 50)           warning(paste0("'trunc.G' is large: this may lead to memory capacity issues"), call.=FALSE)
+        if(trunc.G  < range.G)      stop(paste0("'trunc.G' must be at least range.G=", range.G), call.=FALSE)
+        if(trunc.G  > N)            stop(paste0("'trunc.G' cannot be greater than N=", N), call.=FALSE)
+        if(trunc.G  > 50)           warning(paste0("'trunc.G' is large: this may lead to memory capacity issues"), call.=FALSE, immediate.=TRUE)
       }
     } else if(method      == "classify")   {
       if(!zin.miss &&
-         z.init    != "list") {     stop("'z.init' must be set to 'list' for classification")
+         z.init    != "list") {     stop("'z.init' must be set to 'list' for classification", call.=FALSE)
       } else z.init       <- "list"
-      if(zli.miss)                  stop("Data labels must be supplied via 'z.list' for classification")
+      if(zli.miss)                  stop("Data labels must be supplied via 'z.list' for classification", call.=FALSE)
       levs         <- nlevels(unlist(z.list))
-      if(length(z.list)    > 1)     stop("Only one set of labels can be supplied via 'z.list'")
+      if(length(z.list)    > 1)     stop("Only one set of labels can be supplied via 'z.list'", call.=FALSE)
       zlabels      <- unlist(z.list)
-      if(length(zlabels)  != N)     stop(paste0("'z.list' must be a factor of length N=",  N))
+      if(length(zlabels)  != N)     stop(paste0("'z.list' must be a factor of length N=",  N), call.=FALSE)
       if(all(verbose, !G.x)    && any(length(range.G > 1),
           range.G  != levs))  {     message("Forced 'range.G' equal to the number of levels in 'zlabels' for the 'classify' method")
       }
@@ -271,16 +271,16 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
       storage["pi.sw"]    <- FALSE
     }
     alp3    <- 3L   * alpha
-    if(G.x)                         stop("'range.G' must be specified")
-    if(any(range.G  < 1))           stop("'range.G' must be strictly positive")
-    if(any(range.G  > alp3 * lnN))  warning(paste0("'range.G' MUCH greater than log(N) (=log(", N, ")):\nEmpty clusters are likely, consider running an overfitted or infinite mixture"), call.=FALSE)
+    if(G.x)                         stop("'range.G' must be specified", call.=FALSE)
+    if(any(range.G  < 1))           stop("'range.G' must be strictly positive", call.=FALSE)
+    if(any(range.G  > alp3 * lnN))  warning(paste0("'range.G' MUCH greater than log(N) (=log(", N, ")):\nEmpty clusters are likely, consider running an overfitted or infinite mixture"), call.=FALSE, immediate.=TRUE)
     range.G <- G.init     <- sort_unique(range.G)
     meth    <- rep(method, length(range.G))
   }
-  if(any(range.G >= N))             stop(paste0("'range.G' must be less than the number of observations N=", N))
+  if(any(range.G >= N))             stop(paste0("'range.G' must be less than the number of observations N=", N), call.=FALSE)
   if(G.init[1]   == 1)     {
     if(is.element(method, c("IMIFA", "IMFA",
-       "OMIFA", "OMFA")))  {        stop(paste0("'method' should be ", switch(method, IMFA=, OMFA="FA", OMIFA=, IMIFA="IFA"), " for a one group model under the ", method, " method"))
+       "OMIFA", "OMFA")))  {        stop(paste0("'method' should be ", switch(method, IMFA=, OMFA="FA", OMIFA=, IMIFA="IFA"), " for a one group model under the ", method, " method"), call.=FALSE)
     } else {
       meth[1]    <- switch(method,  MFA=, FA="FA", MIFA=, IFA="IFA")
     }
@@ -300,9 +300,9 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   sigmu.miss       <- mixfamiss$sigma.mu
   obsnames         <- rownames(dat)
   varnames         <- colnames(dat)
-  covmat           <- if(P > 500)   switch(scaling, unit=cora(as.matrix(dat)), cova(as.matrix(dat))) else switch(scaling, unit=stats::cor(dat), stats::cov(dat))
+  covmat           <- if(P > 500)   switch(scaling, unit=.cor2(as.matrix(dat)), .cov2(as.matrix(dat))) else switch(scaling, unit=stats::cor(dat), stats::cov(dat))
   dimnames(covmat) <- list(varnames, varnames)
-  sigma.mu         <- if(sigmu.miss) diag(covmat) else if(is.matrix(sigma.mu)) diag(sigma.mu)        else sigma.mu
+  sigma.mu         <- if(sigmu.miss) diag(covmat) else if(is.matrix(sigma.mu))  diag(sigma.mu)         else sigma.mu
   sigmu.len        <- length(unique(sigma.mu))
   if(sigmu.len     == 1) sigma.mu      <- sigma.mu[1]
   if(any(sigma.mu  <= 0, !is.numeric(sigma.mu),
@@ -324,8 +324,8 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   if(is.element(method, c("FA", "MFA", "OMFA", "IMFA"))) {
    if(!missing(MGP)        ||
       any(!unlist(mgpmiss)))        message(paste0("'mgpControl()' parameters not necessary for the ", method, " method"))
-   if(Q.miss)                       stop("'range.Q' must be specified")
-   if(any(range.Q  < 0))            stop(paste0("'range.Q' must be non-negative for the ", method, " method"))
+   if(Q.miss)                       stop("'range.Q' must be specified", call.=FALSE)
+   if(any(range.Q  < 0))            stop(paste0("'range.Q' must be non-negative for the ", method, " method"), call.=FALSE)
    range.Q  <- sort_unique(range.Q)
    delta0g  <- FALSE
   } else {
@@ -339,14 +339,14 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
    alpha.d2 <- .len_check(MGP$alpha.d2, delta0g, method, P, G.init, P.dim=FALSE)
    MGP      <- MGP[-c(1:3)]
    if(Q.miss)                range.Q   <- as.integer(ifelse(fQ0, 1, min(ifelse(P > 500, 12 + floor(log(P)), floor(3 * log(P))), N - 1)))
-    if(length(range.Q)      > 1)    stop(paste0("Only one starting value for 'range.Q' can be supplied for the ", method, " method"))
-    if(range.Q <= 0)                stop(paste0("'range.Q' must be strictly positive for the ", method, " method"))
+    if(length(range.Q)      > 1)    stop(paste0("Only one starting value for 'range.Q' can be supplied for the ", method, " method"), call.=FALSE)
+    if(range.Q <= 0)                stop(paste0("'range.Q' must be strictly positive for the ", method, " method"), call.=FALSE)
     if(isTRUE(adapt)) {
      if(adaptat < 0        ||
-        adaptat > burnin)           stop("'adapt.at' must be lie in the interval [0, burnin] if 'adapt' is TRUE")
-     if(Q.min   > range.Q)          stop(paste0("'range.Q' must be at least min(log(P), log(N)) for the ", method, " method when 'adapt' is TRUE"))
+        adaptat > burnin)           stop("'adapt.at' must be lie in the interval [0, burnin] if 'adapt' is TRUE", call.=FALSE)
+     if(Q.min   > range.Q)          stop(paste0("'range.Q' must be at least min(log(P), log(N)) for the ", method, " method when 'adapt' is TRUE"), call.=FALSE)
     } else if(!fQ0 && is.element(method,
-              c("OMIFA", "IMIFA"))) warning("'adapt=FALSE' is NOT recommended for the 'OMIFA' or 'IMIFA' methods", call.=FALSE)
+              c("OMIFA", "IMIFA"))) warning("'adapt=FALSE' is NOT recommended for the 'OMIFA' or 'IMIFA' methods", call.=FALSE, immediate.=TRUE)
   }
 
   len.G     <- switch(method, classify=range.G, length(range.G))
@@ -355,18 +355,18 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   if(all(len.X > 10,
          suppressWarnings(utils::memory.limit()) <= 16256,
          storage["s.sw"]))  {
-    if(!store.x["s.sw"])    {       warning(paste0("The large number of candidate models being explored (", len.X, ") could lead to memory issues\nConsider setting 'score.switch' to FALSE or breaking up the task into chunks and calling get_IMIFA_results() on each chunk"), call.=FALSE)
-    } else                  {       warning(paste0("'score.switch' set to FALSE as too many candidate models are being explored (", len.X, ")\nPosterior inference on the scores will not be possible, though you can risk forcing storage by supplying score.switch=TRUE\nConsider breaking up the task into chunks and calling get_IMIFA_results() on each chunk"), call.=FALSE)
+    if(!store.x["s.sw"])    {       warning(paste0("The large number of candidate models being explored (", len.X, ") could lead to memory issues\nConsider setting 'score.switch' to FALSE or breaking up the task into chunks and calling get_IMIFA_results() on each chunk"), call.=FALSE, immediate.=TRUE)
+    } else                  {       warning(paste0("'score.switch' set to FALSE as too many candidate models are being explored (", len.X, ")\nPosterior inference on the scores will not be possible, though you can risk forcing storage by supplying score.switch=TRUE\nConsider breaking up the task into chunks and calling get_IMIFA_results() on each chunk"), call.=FALSE, immediate.=TRUE)
       storage["s.sw"]    <- FALSE
     }
   }
   Q.warn       <- min(N - 1, Ledermann(P))
   if(any(range.Q > Q.warn))   {
     if(is.element(method, c("IFA", "MIFA", "OMIFA", "IMIFA")) &&
-       isTRUE(adapt))         {     warning(paste0("Starting value for number of factors is greater than ", ifelse(any(range.Q > P), paste0("the number of variables (", P, ")"), paste0("the suggested Ledermann upper bound (", Q.warn, ")"))), call.=FALSE)
+       isTRUE(adapt))         {     warning(paste0("Starting value for number of factors is greater than ", ifelse(any(range.Q > P), paste0("the number of variables (", P, ")"), paste0("the suggested Ledermann upper bound (", Q.warn, ")"))), call.=FALSE, immediate.=TRUE)
     } else if(any(is.element(method, c("FA", "MFA", "OMFA", "IMFA")),
                   is.element(method, c("IFA", "MIFA", "OMIFA", "IMIFA")) &&
-                  isTRUE(!adapt)))  warning(paste0("Number of factors is greater than ", ifelse(any(range.Q > P), paste0("the number of variables (", P, ")"), paste0("the suggested Ledermann upper bound (", Q.warn, ")"))), call.=FALSE)
+                  isTRUE(!adapt)))  warning(paste0("Number of factors is greater than ", ifelse(any(range.Q > P), paste0("the number of variables (", P, ")"), paste0("the suggested Ledermann upper bound (", Q.warn, ")"))), call.=FALSE, immediate.=TRUE)
   }
   if(verbose   && any(all(method == "MFA",  any(range.G > 1)) && any(range.Q > 0),
                       all(method == "MIFA", any(range.G > 1)), is.element(method, c("IMIFA",
@@ -399,16 +399,16 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   sw0gs     <- c(mu0g = mu0g, psi0g = psi0g, delta0g = delta0g)
   if(is.element(method, c("MFA", "MIFA", "classify"))) {
     if(all(z.init != "list", any(sw0gs))) {
-      if(isTRUE(delta0g))           stop("'delta0g' can only be TRUE if z.init='list' for the 'MIFA' method\n")
-      if(all(!mu0.x,  mu0g))        stop("'mu.zero' can only be supplied for each cluster if z.init='list' for the 'MFA' & 'MIFA' methods")
-      if(all(!beta.x, psi0g))       stop("'psi.beta' can only be supplied for each cluster if z.init='list' for the 'MFA' & 'MIFA' methods")
+      if(isTRUE(delta0g))           stop("'delta0g' can only be TRUE if z.init='list' for the 'MIFA' method\n", call.=FALSE)
+      if(all(!mu0.x,  mu0g))        stop("'mu.zero' can only be supplied for each cluster if z.init='list' for the 'MFA' & 'MIFA' methods", call.=FALSE)
+      if(all(!beta.x, psi0g))       stop("'psi.beta' can only be supplied for each cluster if z.init='list' for the 'MFA' & 'MIFA' methods", call.=FALSE)
     }
     if(all(is.element(uni.type, c("constrained", "single")),
            isTRUE(psi0g)))  {       warning(paste0("'psi0g' forced to FALSE as uniquenesses are constrained across clusters (i.e. 'uni.type' = ", uni.type, ")"), call.=FALSE)
       psi0g <- FALSE
     }
     if(method == "classify") mu0g      <- TRUE
-  } else if(any(sw0gs))             stop(paste0("'", names(which(sw0gs)), "' should be FALSE for the ", method, " method\n"))
+  } else if(any(sw0gs))             stop(paste0("'", names(which(sw0gs)), "' should be FALSE for the ", method, " method\n"), call.=FALSE)
 
   dimension <- PGMM_dfree(P=P, Q=switch(method, FA=, classify=, MFA=, OMFA=, IMFA=range.Q,
                IFA=, MIFA=, OMIFA=, IMIFA=0L), equal.pro=equal.pro, method=switch(uni.type, unconstrained="UUU", isotropic="UUC", constrained="UCU", single="UCC"))
@@ -418,36 +418,36 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(missing(alpha))     { alpha     <- switch(method, MFA=, MIFA=1, OMFA=, OMIFA=0.5/G.init, ifelse(learn.a, max(1, stats::rgamma(1, BNP$a.hyper[1], BNP$a.hyper[2])), 1))
     } else if(is.element(method,
       c("OMFA", "OMIFA")))   alpha     <- alpha/G.init
-    if(length(alpha) != 1)          stop("'alpha' must be specified as a scalar to ensure an exchangeable prior")
+    if(length(alpha) != 1)          stop("'alpha' must be specified as a scalar to ensure an exchangeable prior", call.=FALSE)
     if(is.element(method, c("IMIFA", "IMFA"))) {
-      if(alpha       <= -discount)  stop(paste0("'alpha' must be ",     ifelse(discount != 0, paste0("strictly greater than -discount (i.e. > ", - discount, ")"), "strictly positive")))
+      if(alpha       <= -discount)  stop(paste0("'alpha' must be ",     ifelse(discount != 0, paste0("strictly greater than -discount (i.e. > ", - discount, ")"), "strictly positive")), call.=FALSE)
       if(!learn.a)                  warning(paste0("'alpha' fixed at ", round(alpha, options()$digits), " as it's not being learned via Gibbs/Metropolis-Hastings updates"), call.=FALSE)
     }
     if(all(is.element(method,  c("OMIFA",   "OMFA")),
-       alpha >= min.d2))            warning(paste0("'alpha' over 'range.G' for the OMFA & OMIFA methods must be less than half the dimension (per cluster!)\nof the free parameters of the smallest model considered (= ", min.d2, "): consider suppling 'alpha' < ", min.d2G), call.=FALSE)
+       alpha >= min.d2))            warning(paste0("'alpha' over 'range.G' for the OMFA & OMIFA methods should be less than half the dimension (per cluster!)\nof the free parameters of the smallest model considered (= ", min.d2, "): consider suppling 'alpha' < ", min.d2G), call.=FALSE, immediate.=TRUE)
     if(any(all(is.element(method, c("MFA",  "MIFA")), alpha > 1),
            all(is.element(method, c("OMFA", "OMIFA")),
-           alpha > 1/G.init)))      warning("Are you sure alpha should be greater than 1?", call.=FALSE)
+           alpha > 1/G.init)))      warning("Are you sure alpha should be greater than 1?", call.=FALSE, immediate.=TRUE)
     if(all(any(is.nan(rDirichlet(G=min(range.G), alpha = alpha))),
            is.element(method,  c("MFA",     "MIFA",
-            "OMFA", "OMIFA"))))     stop("'alpha' is too small for simulated mixing proportions to be valid")
+            "OMFA", "OMIFA"))))     stop("'alpha' is too small for simulated mixing proportions to be valid", call.=FALSE)
     if(all(is.element(method,  c("OMIFA",   "OMFA")), is.element(z.init,
-       "priors")))                  stop(paste0("'z.init' cannot be set to 'priors' for the ", method, " method to ensure all clusters are populated at the initialisation stage"))
+       "priors")))                  stop(paste0("'z.init' cannot be set to 'priors' for the ", method, " method to ensure all clusters are populated at the initialisation stage"), call.=FALSE)
     if(!zli.miss) {
       if(length(z.list)   != len.G)  {
-                                    stop(paste0("'z.list' must be a list of length ", len.G))  }
+                                    stop(paste0("'z.list' must be a list of length ", len.G), call.=FALSE)  }
       list.levels    <- lapply(z.list, nlevels)
       if(!all(list.levels == G.init))             {
         if(!is.element(method, c("IMIFA",
                        "IMFA", "OMIFA", "OMFA"))) {
-                                    stop(paste0("Each element of 'z.list' must have the same number of levels as 'range.G'"))
-        } else                      stop(paste0("Only ", list.levels, " clusters are populated according to z.list, but 'range.G' has been set to ", G.init, ":\nReset 'range.G' to this value to avoid redunandtly carrying around empty clusters or supply a list with ", G.init, " levels"))
+                                    stop(paste0("Each element of 'z.list' must have the same number of levels as 'range.G'"), call.=FALSE)
+        } else                      stop(paste0("Only ", list.levels, " clusters are populated according to z.list, but 'range.G' has been set to ", G.init, ":\nReset 'range.G' to this value to avoid redunandtly carrying around empty clusters or supply a list with ", G.init, " levels"), call.=FALSE)
       }
       if(!all(lengths(z.list) == N)) {
-                                    stop(paste0("Each element of 'z.list' must be a vector of length N=", N)) }
+                                    stop(paste0("Each element of 'z.list' must be a vector of length N=", N), call.=FALSE) }
     }
     if(all(zli.miss, z.init   == "list"))         {
-                                    stop(paste0("'z.list' must be supplied if 'z.init' is set to 'list'")) }
+                                    stop(paste0("'z.list' must be supplied if 'z.init' is set to 'list'"), call.=FALSE) }
   }
 
   imifa     <- list(list())
@@ -482,19 +482,19 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
         k.res      <- try(suppressWarnings(stats::kmeans(dat, centers=G, iter.max=20, nstart=100)), silent=TRUE)
         if(!inherits(k.res, "try-error"))  {
           zi[[g]]  <- as.integer(factor(k.res$cluster,        levels=seq_len(G)))
-        } else                      stop("Cannot initialise cluster labels using kmeans. Try another z.init method")
+        } else                      stop("Cannot initialise cluster labels using kmeans. Try another z.init method", call.=FALSE)
       } else if(z.init  == "list")   {
         zi[[g]]    <- as.integer(z.list[[g]])
       } else if(z.init  == "hc")     {
         h.res      <- try(hc(dat, ifelse(NlP, "VVV", "EII"),  minclus=G), silent=TRUE)
         if(!inherits(h.res, "try-error"))  {
           zi[[g]]  <- as.integer(factor(hclass(h.res, G),     levels=seq_len(G)))
-        } else                      stop("Cannot initialise cluster labels using hierarchical clustering. Try another z.init method")
+        } else                      stop("Cannot initialise cluster labels using hierarchical clustering. Try another z.init method", call.=FALSE)
       } else if(z.init  == "mclust") {
         m.res      <- try(Mclust(dat, G, verbose=FALSE), silent=TRUE)
         if(!inherits(m.res, "try-error"))  {
           zi[[g]]  <- as.integer(factor(m.res$classification, levels=seq_len(G)))
-        } else                      stop("Cannot initialise cluster labels using mclust. Try another z.init method")
+        } else                      stop("Cannot initialise cluster labels using mclust. Try another z.init method", call.=FALSE)
       } else {
         zips       <- rep(1, N)
         if(!is.element(method, c("IMFA", "IMIFA"))) {
@@ -523,7 +523,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
       mu.zero[[g]] <- if(uni && !mu0g) t(mu.zero[[g]]) else mu.zero[[g]]
       if(beta.x)  {
         if(psi0g) {
-          cov.gg   <- lapply(seq_len(G), function(gg, dat.gg = dat[zi[[g]] == gg,, drop=FALSE]) if(all(nngs[gg] > 1, P <= nngs[g])) { if(P > 500) cova(as.matrix(dat.gg)) else stats::cov(dat.gg) } else covmat)
+          cov.gg   <- lapply(seq_len(G), function(gg, dat.gg = dat[zi[[g]] == gg,, drop=FALSE]) if(all(nngs[gg] > 1, P <= nngs[g])) { if(P > 500) .cov2(as.matrix(dat.gg)) else stats::cov(dat.gg) } else covmat)
           psi.beta[[g]] <- vapply(seq_len(G), function(gg) psi_hyper(shape=psi.alpha, covar=cov.gg[[gg]], type=uni.prior), numeric(P))
         } else {
           psi.beta[[g]] <- replicate(G, temp.psi[[1]])
@@ -560,7 +560,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(is.matrix(x)) any(apply(x, 1, function(y)   {
      length(unique(round(y, min(.ndeci(y))))) })  == 1) else  {
      length(unique(round(x,
-     min(.ndeci(x))))) == 1 }})))   stop("'mu0g' must be FALSE if 'mu.zero' is not group-specific")
+     min(.ndeci(x))))) == 1 }})))   stop("'mu0g' must be FALSE if 'mu.zero' is not group-specific", call.=FALSE)
   if(anyNA(unlist(psi.beta))) {
     psi.beta       <- lapply(psi.beta, function(x) replace(x, is.na(x), 0))
   }
@@ -569,24 +569,24 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
     if(is.matrix(x)) any(apply(x, 2, function(y)   {
      length(unique(round(y, min(.ndeci(y))))) })  != 1) else  {
      length(unique(round(x,
-     min(.ndeci(x))))) != 1 }}))))  stop("'psi.beta' cannot be variable-specific if 'uni.type' is 'isotropic' or 'single'")
+     min(.ndeci(x))))) != 1 }}))))  stop("'psi.beta' cannot be variable-specific if 'uni.type' is 'isotropic' or 'single'", call.=FALSE)
   if(is.element(uni.type, c("constrained", "single")))        {
       if(unlist(lapply(psi.beta,     function(x)   {
     if(is.matrix(x)) any(apply(x, 1, function(y)   {
      length(unique(round(y, min(.ndeci(y))))) })  != 1) else  {
      length(unique(round(x,
-     min(.ndeci(x))))) != 1 }}))) { stop("'psi.beta' cannot be group-specific if 'uni.type' is 'constrained' or 'single'")
+     min(.ndeci(x))))) != 1 }}))) { stop("'psi.beta' cannot be group-specific if 'uni.type' is 'constrained' or 'single'", call.=FALSE)
     } else if(isTRUE(psi0g) && is.element(method,
-              c("MFA", "MIFA")))    stop("'psi0g' must be FALSE if 'psi.beta' is not group-specific")
+              c("MFA", "MIFA")))    stop("'psi0g' must be FALSE if 'psi.beta' is not group-specific", call.=FALSE)
   }
-  if(any(unlist(psi.beta)   <= 0))  stop("'psi.beta' must be strictly positive")
+  if(any(unlist(psi.beta)   <= 0))  stop("'psi.beta' must be strictly positive", call.=FALSE)
   if(is.element(method, c("classify", "IFA", "MIFA", "IMIFA", "OMIFA"))) {
     ad1uu          <- unique(unlist(alpha.d1))
     ad2uu          <- unique(unlist(alpha.d2))
     check.mgp      <- MGP_check(ad1=ad1uu, ad2=ad2uu, Q=unique(range.Q), nu=MGP$nu, bd1=MGP$beta.d1, bd2=MGP$beta.d2, plus1=nuplus1)
-    if(!all(check.mgp$valid))       stop("Invalid shrinkage hyperparameter values WILL NOT encourage loadings column removal.\nTry using the MGP_check() function in advance to ensure the cumulative shrinkage property holds.")
+    if(!all(check.mgp$valid))       stop("Invalid shrinkage hyperparameter values WILL NOT encourage loadings column removal.\nTry using the MGP_check() function in advance to ensure the cumulative shrinkage property holds.", call.=FALSE)
     if(any(attr(check.mgp, "Warning")) ||
-       any(ad2uu   <= ad1uu))       warning("Shrinkage hyperparameter values MAY NOT encourage loadings column removal.\n'alpha.d2' should be moderately large relative to 'alpha.d1'", call.=FALSE)
+       any(ad2uu   <= ad1uu))       warning("Shrinkage hyperparameter values MAY NOT encourage loadings column removal.\n'alpha.d2' should be moderately large relative to 'alpha.d1'", call.=FALSE, immediate.=TRUE)
     deltas         <- lapply(seq_along(G.init), function(g) list(alpha.d1 = alpha.d1[[g]], alpha.d2 = alpha.d2[[g]]))
   }
   init.time        <- proc.time() - init.start
@@ -663,16 +663,16 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
         }
       }
     }
-  } else if(method == "classify") { stop("'classify' method not yet implemented")
+  } else if(method == "classify") { stop("'classify' method not yet implemented", call.=FALSE)
     start.time     <- proc.time()
     if(centered)                    warning("Data supplied is globally centered, are you sure?", call.=FALSE)
     for(g in seq_len(range.G))  {
       tmp.dat      <- raw.dat[zlabels == levels(zlabels)[g],]
-      scal         <- switch(scaling, none=FALSE, Rfast::colVars(as.matrix(tmp.dat), std=TRUE))
+      scal         <- switch(scaling, none=FALSE, .col_vars(as.matrix(tmp.dat), std=TRUE))
       scal         <- switch(scaling, pareto=sqrt(scal), scal)
-      tmp.dat <- if(is.logical(scal)) standardise(as.matrix(tmp.dat), center=centering, scale=scal) else scale(tmp.dat, center=centering, scale=scal)
+      tmp.dat      <- .scale2(as.matrix(tmp.dat), center=centering, scale=scal)
       if(sigmu.miss) {
-       gibbs.arg$sigma.mu <- diag(if(nrow(tmp.dat) > 1) { if(P > 500) cova(as.matrix(tmp.dat)) else stats::cov(tmp.dat) } else covmat)
+       gibbs.arg$sigma.mu <- diag(if(nrow(tmp.dat) > 1) { if(P > 500) .cov2(as.matrix(tmp.dat)) else stats::cov(tmp.dat) } else covmat)
       }
       imifa[[g]]          <- list()
       gibbs.arg    <- append(temp.args, lapply(deltas[[Gi]], "[[", g))

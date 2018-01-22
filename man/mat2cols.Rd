@@ -5,7 +5,7 @@
 \title{Convert a numeric matrix to colours}
 \usage{
 mat2cols(mat, cols = NULL, compare = FALSE, byrank = FALSE,
-  breaks = length(cols), na.col = "#808080FF")
+  breaks = NULL, na.col = "#808080FF", transparency = 1)
 }
 \arguments{
 \item{mat}{Either a matrix or, when \code{compare} is \code{TRUE}, a list of matrices.}
@@ -19,6 +19,8 @@ mat2cols(mat, cols = NULL, compare = FALSE, byrank = FALSE,
 \item{breaks}{Number of gradations in colour to use. Defaults to \code{length(cols)}.}
 
 \item{na.col}{Colour to be used to represent missing data. Will be checked for validity by \code{\link{is.cols}}.}
+
+\item{transparency}{A factor in [0, 1] modifying the opacity for overplotted lines. Defaults to 1 (i.e. no transparency). Only relevant when \code{cols} is not supplied, otherwise the supplied \code{cols} must already be adjusted for transparency.}
 }
 \value{
 A matrix of hex colour code representations, or a list of such matrices when \code{compare} is \code{TRUE}.

@@ -64,7 +64,7 @@
 
   # Local Shrinkage
     .sim_phi     <- function(Q, P, nu, tau, load.2, plus1) {
-        base::matrix(stats::rgamma(P * Q, shape=0.5 + nu + plus1, rate=(nu + sweep(load.2, 2, tau, FUN="*"))/2), nrow=P, ncol=Q)
+        base::matrix(stats::rgamma(P * Q, shape=0.5 + nu + plus1, rate=(nu + sweep(load.2, 2, tau, FUN="*", check.margin=FALSE))/2), nrow=P, ncol=Q)
     }
 
   # Global Shrinkage
@@ -289,12 +289,12 @@
 #' olive_scaled <- scale(olive2, center=TRUE, scale=TRUE)
 #' (rate  <- psi_hyper(shape=3, covar=cov(olive_scaled), type="unconstrained"))
     psi_hyper   <- function(shape, covar, type=c("unconstrained", "isotropic")) {
-      if(!all(is.character(type)))         stop("'type' must be a character vector of length 1")
+      if(!all(is.character(type)))         stop("'type' must be a character vector of length 1", call.=FALSE)
       if(!all(is.posi_def(covar, semi=TRUE),
               is.symmetric(covar),
-              is.double(covar)))           stop("Invalid covariance matrix supplied")
+              is.double(covar)))           stop("Invalid covariance matrix supplied", call.=FALSE)
       if(any(!is.numeric(shape),
-             length(shape) != 1))          stop("'shape' must be a single digit")
+             length(shape) != 1))          stop("'shape' must be a single digit", call.=FALSE)
       inv.cov   <- try(base::solve(covar), silent=TRUE)
 
       if(inherits(inv.cov, "try-error"))   {
@@ -327,17 +327,17 @@
 #' shift_GA(4, 2, -1)
     shift_GA    <- function(shape, rate, shift = 0L, param = c("rate", "scale")) {
       if(length(shape) > 1 ||
-        !is.numeric(shape) || shape <= 0)  stop("Argument 'shape' must be a single strictly positive number")
+        !is.numeric(shape) || shape <= 0)  stop("Argument 'shape' must be a single strictly positive number", call.=FALSE)
       if(length(rate)  > 1 ||
-        !is.numeric(rate)  || rate  <= 0)  stop("Argument 'rate' must be a single strictly positive number")
+        !is.numeric(rate)  || rate  <= 0)  stop("Argument 'rate' must be a single strictly positive number", call.=FALSE)
       if(length(shift) > 1 ||
-        !is.numeric(shift))                stop("Argument 'shift' must be a single number")
-      if(!all(is.character(param)))        stop("'param' must be a character vector of length 1")
+        !is.numeric(shift))                stop("Argument 'shift' must be a single number", call.=FALSE)
+      if(!all(is.character(param)))        stop("'param' must be a character vector of length 1", call.=FALSE)
       param     <- match.arg(param)
 
       rate      <- switch(param, rate=rate, 1/rate)
       exp       <- shape/rate
-      if(shift  >= exp)                    warning("This expected value is not achievable with the supplied 'shift'", call.=FALSE)
+      if(shift  >= exp)                    warning("This expected value is not achievable with the supplied 'shift'", call.=FALSE, immediate.=TRUE)
       var       <- exp/rate
       exp       <- max(var * rate    - shift, 0)
       rate      <- exp/var
@@ -386,30 +386,30 @@
 #' (shrink <- MGP_check(ad1=1.5, ad2=2.8, Q=10, nu=2, inverse=TRUE))
     MGP_check   <- function(ad1, ad2, Q = 3L, nu = 2, bd1 = 1, bd2 = 1, plus1 = TRUE, inverse = TRUE) {
       if(length(plus1)   != 1 ||
-         !is.logical(plus1))               stop("'plus1' must be a single logical indicator")
+         !is.logical(plus1))               stop("'plus1' must be a single logical indicator", call.=FALSE)
       if(length(inverse) != 1 ||
-         !is.logical(inverse))             stop("'inverse' must be a single logical indicator")
+         !is.logical(inverse))             stop("'inverse' must be a single logical indicator", call.=FALSE)
       if(length(Q)       != 1 ||
-         !is.numeric(Q)  || floor(Q) != Q) stop("'Q' must be a single integer value")
-      if(missing(ad1) || missing(ad2))     stop("Shrinkage shape hyperparameters 'ad1' and 'ad2' must be supplied")
+         !is.numeric(Q)  || floor(Q) != Q) stop("'Q' must be a single integer value", call.=FALSE)
+      if(missing(ad1) || missing(ad2))     stop("Shrinkage shape hyperparameters 'ad1' and 'ad2' must be supplied", call.=FALSE)
       max.len   <- max(length(ad1), length(ad2), length(Q), length(nu), length(bd1), length(bd2))
       if(!is.element(length(ad1),
-                     c(1, max.len)))       stop(paste0("'ad1' must be of length 1 or ", max.len, " for proper recycling"))
+                     c(1, max.len)))       stop(paste0("'ad1' must be of length 1 or ", max.len, " for proper recycling"), call.=FALSE)
       if(!is.element(length(ad2),
-                     c(1, max.len)))       stop(paste0("'ad2' must be of length 1 or ", max.len, " for proper recycling"))
+                     c(1, max.len)))       stop(paste0("'ad2' must be of length 1 or ", max.len, " for proper recycling"), call.=FALSE)
       if(!is.element(length(nu),
-                     c(1, max.len)))       stop(paste0("'nu' must be of length 1 or ",  max.len, " for proper recycling"))
+                     c(1, max.len)))       stop(paste0("'nu' must be of length 1 or ",  max.len, " for proper recycling"), call.=FALSE)
       if(!is.element(length(bd1),
-                     c(1, max.len)))       stop(paste0("'bd1' must be of length 1 or ", max.len, " for proper recycling"))
+                     c(1, max.len)))       stop(paste0("'bd1' must be of length 1 or ", max.len, " for proper recycling"), call.=FALSE)
       if(!is.element(length(bd2),
-                     c(1, max.len)))       stop(paste0("'bd2' must be of length 1 or ", max.len, " for proper recycling"))
+                     c(1, max.len)))       stop(paste0("'bd2' must be of length 1 or ", max.len, " for proper recycling"), call.=FALSE)
       if(any(nu <= !plus1,
              !is.numeric(nu)))             stop(paste0("'nu' must be ", ifelse(plus1,
                                                 "strictly positive for the Ga(nu + 1, nu) parameterisation",
-                                                "strictly greater than 1 for the Ga(nu, nu) parameterisation")))
-      if(any(c(ad1, ad2)  < 1))            stop("All shrinkage shape hyperparameter values must be at least 1")
-      if(any(c(bd1, bd2) <= 0))            stop("All shrinkage rate hyperparameter values must be strictly positive")
-      if(any(WX <- ad1   >= ad2))          warning("'ad2' should be moderately large relative to 'ad1' to encourage loadings column removal", call.=FALSE)
+                                                "strictly greater than 1 for the Ga(nu, nu) parameterisation")), call.=FALSE)
+      if(any(c(ad1, ad2)  < 1))            stop("All shrinkage shape hyperparameter values must be at least 1", call.=FALSE)
+      if(any(c(bd1, bd2) <= 0))            stop("All shrinkage rate hyperparameter values must be strictly positive", call.=FALSE)
+      if(any(WX <- ad1   >= ad2))          warning("'ad2' should be moderately large relative to 'ad1' to encourage loadings column removal", call.=FALSE, immediate.=TRUE)
 
       plus1     <- rep(plus1, max.len)
       Qseq      <- seq_len(Q)  - 1
@@ -461,14 +461,14 @@
 #' (UUU <- PGMM_dfree(Q=0:5, P=50, G=3, method="UUU"))
 #' (CCC <- PGMM_dfree(Q=0:5, P=50, G=3, method="CCC", equal.pro=TRUE))
     PGMM_dfree   <- function(Q, P, G = 1L, method = c("UUU", "UUC", "UCU", "UCC", "CUU", "CUC", "CCU", "CCC"), equal.pro = FALSE) {
-      if(any(Q    < 0, floor(Q)  != Q))    stop("'Q' must consist of strictly non-negative integers")
+      if(any(Q    < 0, floor(Q)  != Q))    stop("'Q' must consist of strictly non-negative integers", call.=FALSE)
       if(any(P   <= 0, floor(P)  != P,
-        length(P) > 1))                    stop("'P' must be a single strictly positive integer")
+        length(P) > 1))                    stop("'P' must be a single strictly positive integer", call.=FALSE)
       if(any(G   <= 0, floor(G)  != G,
-        length(G) > 1))                    stop("'G' must be a single strictly positive integer")
-      if(!all(is.character(method)))       stop("'method' must be a single character string")
+        length(G) > 1))                    stop("'G' must be a single strictly positive integer", call.=FALSE)
+      if(!all(is.character(method)))       stop("'method' must be a single character string", call.=FALSE)
       if(length(equal.pro)  > 1  ||
-         !is.logical(equal.pro))           stop("'equal.pro' must be a single logical indicator")
+         !is.logical(equal.pro))           stop("'equal.pro' must be a single logical indicator", call.=FALSE)
       meth       <- unlist(strsplit(match.arg(method), ""))
       lambda     <- P * Q   - 0.5 * Q * (Q - 1)
       lambda     <- switch(meth[1], C = lambda,   U = G  * lambda)
@@ -564,8 +564,8 @@
 #' # table(cutree(Hcl, k=3), olive$area)
     Zsimilarity <- function(zs) {
       has.pkg   <- suppressMessages(requireNamespace("mcclust", quietly=TRUE))
-      if(!has.pkg)                         stop("'mcclust' package not installed")
-      if(!is.matrix(zs))                   stop("'zs' must be a matrix with rows corresponding to the number of observations and columns corresponding to the number of iterations")
+      if(!has.pkg)                         stop("'mcclust' package not installed", call.=FALSE)
+      if(!is.matrix(zs))                   stop("'zs' must be a matrix with rows corresponding to the number of observations and columns corresponding to the number of iterations", call.=FALSE)
       zsim      <- mcclust::comp.psm(zs)
       mse.z     <- vapply(seq_len(nrow(zs)), function(i, x=mcclust::cltoSim(zs[i,]) - zsim) tryCatch(suppressWarnings(mean(x * x)), error=function(e) Inf), numeric(1L))
       Z.avg     <- zs[which.min(mse.z),]
@@ -620,13 +620,13 @@
     #' identical(x, is.posi_def(x, semi=TRUE, make=TRUE)$X.new)
     is.posi_def <- function(x, tol = NULL, semi = FALSE, make = FALSE)  {
       if(!is.matrix(x)     &&
-        nrow(x) != ncol(x))                stop("argument x is not a square matrix")
-      if(!is.symmetric(x))                 stop("argument x is not a symmetric matrix")
-      if(!is.double(x))                    stop("argument x is not a numeric matrix")
+        nrow(x) != ncol(x))                stop("argument x is not a square matrix", call.=FALSE)
+      if(!is.symmetric(x))                 stop("argument x is not a symmetric matrix", call.=FALSE)
+      if(!is.double(x))                    stop("argument x is not a numeric matrix", call.=FALSE)
       if(!is.logical(semi) ||
-         length(semi) > 1)                 stop("argument semi is not a single logical indicator")
+         length(semi) > 1)                 stop("argument semi is not a single logical indicator", call.=FALSE)
       if(!is.logical(make) ||
-         length(make) > 1)                 stop("argument make is not a single logical indicator")
+         length(make) > 1)                 stop("argument make is not a single logical indicator", call.=FALSE)
 
       d         <- nrow(x)
       eigs      <- eigen(x, symmetric = TRUE)
@@ -634,7 +634,7 @@
       abseigs   <- abs(eval)
       tol       <- if(missing(tol)) max(abseigs) * d * .Machine$double.eps else tol
       if(length(tol)  > 1  ||
-         !is.numeric(tol))                 stop("argument tol is not a single number")
+         !is.numeric(tol))                 stop("argument tol is not a single number", call.=FALSE)
       test      <- replace(eval, abseigs < tol, 0)
       check     <- all(if(isTRUE(semi)) test >= 0 else test > 0)
       if(isTRUE(make))  {
@@ -656,7 +656,7 @@
 #' @examples
 #' Ledermann(c(25, 50, 100))
     Ledermann   <- function(P)  {
-      if(any(P  <= 0, floor(P) != P))      stop("'P' must be a strictly positive integer")
+      if(any(P  <= 0, floor(P) != P))      stop("'P' must be a strictly positive integer", call.=FALSE)
       R         <- P + 0.5 * (1 - sqrt(8 * P  + 1))
         as.integer(floor(ifelse(1e-10 > abs(R - round(R)), round(R), R)))
     }
@@ -709,8 +709,8 @@
 #' mat_ss   <- proc$ss
 #' mat_ss2  <- Procrustes(X=mat1, Xstar=mat2, sumsq=TRUE)$ss
     Procrustes  <- function(X, Xstar, translate = FALSE, dilate = FALSE, sumsq = FALSE) {
-      if((N <- nrow(X)) != nrow(Xstar))    stop("X and Xstar do not have the same number of rows")
-      if((P <- ncol(X)) != ncol(Xstar))    stop("X and Xstar do not have the same number of columns")
+      if((N <- nrow(X)) != nrow(Xstar))    stop("X and Xstar do not have the same number of rows", call.=FALSE)
+      if((P <- ncol(X)) != ncol(Xstar))    stop("X and Xstar do not have the same number of columns", call.=FALSE)
       J         <- if(translate) diag(N) - matrix(1/N, N, N)                             else diag(N)
       C         <- crossprod(Xstar, J) %*% X
       svdX      <- svd(C)
@@ -733,26 +733,26 @@
       if(length(obj0g) != length(range.G))    {
         if(!P.dim)             {
           obj0g <- replicate(length(range.G), obj0g)
-        } else                             stop(paste0(obj.name, " must be a list of length ", length(range.G)))
+        } else                             stop(paste0(obj.name, " must be a list of length ", length(range.G)), call.=FALSE)
       }
       len       <- lengths(obj0g)
 
       if(is.element(method, c("FA", "IFA")))  {
-        if(any(!is.element(len, c(1, V)))) stop(paste0(obj.name, " must be list of length 1 containing a scalar", ifelse(P.dim, paste0(" or a vector of length P=", V), ""), " for a 1-group model"))
+        if(any(!is.element(len, c(1, V)))) stop(paste0(obj.name, " must be list of length 1 containing a scalar", ifelse(P.dim, paste0(" or a vector of length P=", V), ""), " for a 1-group model"), call.=FALSE)
       } else {
         if(any(is.element(len,
            c(1, range.G, V)))) {
-          if(all(len == range.G)) obj0g <- if(switch0g) lapply(rGseq, function(g) matrix(obj0g[[g]], nrow=1))  else stop(paste0(sw.name, " must be TRUE if the dimension of ", obj.name, " depends on G"))
+          if(all(len == range.G)) obj0g <- if(switch0g) lapply(rGseq, function(g) matrix(obj0g[[g]], nrow=1))  else stop(paste0(sw.name, " must be TRUE if the dimension of ", obj.name, " depends on G"), call.=FALSE)
           if(all(len == V))       obj0g <- if(V == 1)   lapply(rGseq, function(g) rep(obj0g[[g]], range.G[g])) else lapply(rGseq, function(g) matrix(obj0g[[g]], nrow=V, ncol=range.G[g]))
         } else if(!all(vapply(rGseq, function(g, dimG=as.integer(dim(obj0g[[g]]))) is.matrix(obj0g[[g]]) && any(identical(dimG, as.integer(c(1, range.G[g]))), identical(dimG, as.integer(c(V, range.G[g])))), logical(1L)))) {
                                            stop(paste0(ifelse(length(rGseq) > 1, "Each element of ", ""), obj.name, " must be of length 1", ifelse(P.dim, paste0(", P=", V, ifelse(length(rGseq) == 1, paste0(", or G=", range.G),  ", or its corresponding range.G,"),
-                                                ", or a matrix with P rows and ", ifelse(length(rGseq) == 1, "G columns", "its corresponding range.G")),  ifelse(switch0g,  ifelse(length(rGseq) == 1, paste0( " or G=",  range.G),  " or its corresponding range.G,"), ""))))
+                                                ", or a matrix with P rows and ", ifelse(length(rGseq) == 1, "G columns", "its corresponding range.G")),  ifelse(switch0g,  ifelse(length(rGseq) == 1, paste0( " or G=",  range.G),  " or its corresponding range.G,"), ""))), call.=FALSE)
         } else if(all(vapply(obj0g, is.matrix, logical(1L)), !switch0g) && any(vapply(rGseq, function(g) any(dim(obj0g[[g]]) == range.G[g]), logical(1L)))) {
-                                           stop(paste0(sw.name, " must be TRUE if the dimension of ", obj.name, " depends on G"))
+                                           stop(paste0(sw.name, " must be TRUE if the dimension of ", obj.name, " depends on G"), call.=FALSE)
         }
       }
       if(all(length(unique(unlist(obj0g))) > 1,
-             !switch0g, !P.dim))           stop(paste0(obj.name, " must be a scalar if ", sw.name, " is FALSE"))
+             !switch0g, !P.dim))           stop(paste0(obj.name, " must be a scalar if ", sw.name, " is FALSE"), call.=FALSE)
         obj0g
     }
 
@@ -783,16 +783,16 @@
 #' # G_expected(N=50, alpha=c(19.23356, 12.21619, 1), discount=c(0, 0.25, 0.7300045))
     G_expected  <- Vectorize(function(N, alpha, discount = 0) {
       if(!all(is.numeric(N), is.numeric(discount),
-         is.numeric(alpha)))               stop("All inputs must be numeric")
-      if(discount  < 0  || discount >= 1)  stop("'discount' must lie in the interval [0,1)")
-      if(alpha  <= - discount)             stop("'alpha' must be strictly greater than -discount")
-      if(alpha  == 0)                      stop("'alpha' equal to zero not yet implemented")
+         is.numeric(alpha)))               stop("All inputs must be numeric", call.=FALSE)
+      if(discount  < 0  || discount >= 1)  stop("'discount' must lie in the interval [0,1)", call.=FALSE)
+      if(alpha  <= - discount)             stop("'alpha' must be strictly greater than -discount", call.=FALSE)
+      if(alpha  == 0)                      stop("'alpha' equal to zero not yet implemented", call.=FALSE)
       if(suppressMessages(requireNamespace("Rmpfr", quietly=TRUE))) {
         mpfrind <- TRUE
         on.exit(.detach_pkg("Rmpfr"))
         on.exit(.detach_pkg("gmp"), add=TRUE)
         alpha   <- Rmpfr::mpfr(alpha, precBits=256)
-      } else if(discount != 0)             stop("'Rmpfr' package not installed")
+      } else if(discount != 0)             stop("'Rmpfr' package not installed", call.=FALSE)
       if(discount == 0) {
         exp     <- alpha * (digamma(alpha + N) - digamma(alpha))
         if(mpfrind)     {
@@ -828,16 +828,16 @@
 #' # G_variance(N=50, alpha=c(19.23356, 12.21619, 1), discount=c(0, 0.25, 0.7300045))
     G_variance  <- Vectorize(function(N, alpha, discount = 0) {
       if(!all(is.numeric(N), is.numeric(discount),
-         is.numeric(alpha)))               stop("All inputs must be numeric")
-      if(discount  < 0  || discount >= 1)  stop("'discount' must lie in the interval [0,1)")
-      if(alpha  <= - discount)             stop("'alpha' must be strictly greater than -discount")
-      if(alpha  == 0)                      stop("'alpha' equal to zero not yet implemented")
+         is.numeric(alpha)))               stop("All inputs must be numeric", call.=FALSE)
+      if(discount  < 0  || discount >= 1)  stop("'discount' must lie in the interval [0,1)", call.=FALSE)
+      if(alpha  <= - discount)             stop("'alpha' must be strictly greater than -discount", call.=FALSE)
+      if(alpha  == 0)                      stop("'alpha' equal to zero not yet implemented", call.=FALSE)
       if(suppressMessages(requireNamespace("Rmpfr", quietly=TRUE))) {
         mpfrind <- TRUE
         on.exit(.detach_pkg(Rmpfr))
         on.exit(.detach_pkg(gmp), add=TRUE)
         alpha   <- Rmpfr::mpfr(alpha, precBits=256)
-      } else if(discount != 0)             stop("'Rmpfr' package not installed")
+      } else if(discount != 0)             stop("'Rmpfr' package not installed", call.=FALSE)
 
       alpha2    <- alpha  * alpha
       if(discount == 0)   {
@@ -1022,33 +1022,33 @@
     n.iters     <- max(burnin + 1L, as.integer(n.iters))
     thinning    <- as.integer(thinning)
     if(any(!is.integer(n.iters),
-       length(n.iters)     != 1))          stop("'n.iters' must be a single integer")
+       length(n.iters)     != 1))          stop("'n.iters' must be a single integer", call.=FALSE)
     if(any(!is.integer(burnin),    burnin     < 0,
-       length(burnin)      != 1))          stop("'burnin' must be a single non-negative integer")
+       length(burnin)      != 1))          stop("'burnin' must be a single non-negative integer", call.=FALSE)
     if(any(!is.integer(thinning),  thinning   < 1,
-       length(thinning)    != 1))          stop("'thinning' must be a single strictly positive integer")
+       length(thinning)    != 1))          stop("'thinning' must be a single strictly positive integer", call.=FALSE)
     if(any(!is.logical(centering),
-       length(centering)   != 1))          stop("'centering' must be a single logical indicator")
-    if(!all(is.character(scaling)))        stop("'scaling' must be a character vector of length 1")
+       length(centering)   != 1))          stop("'centering' must be a single logical indicator", call.=FALSE)
+    if(!all(is.character(scaling)))        stop("'scaling' must be a character vector of length 1", call.=FALSE)
     scaling     <- match.arg(scaling)
-    if(!all(is.character(uni.type)))       stop("'uni.type' must be a character vector of length 1")
+    if(!all(is.character(uni.type)))       stop("'uni.type' must be a character vector of length 1", call.=FALSE)
     uni.type    <- match.arg(uni.type)
     if(any(!is.numeric(psi.alpha), psi.alpha <= 1,
-       length(psi.alpha)   != 1))          stop("'psi.alpha' must be a single number strictly greater than 1 in order to bound uniquenesses away from zero")
+       length(psi.alpha)   != 1))          stop("'psi.alpha' must be a single number strictly greater than 1 in order to bound uniquenesses away from zero", call.=FALSE)
     if(any(!is.numeric(sigma.l),   sigma.l   <= 0,
-       length(sigma.l)     != 1))          stop("'sigma.l' must be a single strictly positive number")
-    if(!all(is.character(z.init)))         stop("'z.init' must be a character vector of length 1")
+       length(sigma.l)     != 1))          stop("'sigma.l' must be a single strictly positive number", call.=FALSE)
+    if(!all(is.character(z.init)))         stop("'z.init' must be a character vector of length 1", call.=FALSE)
     z.init      <- match.arg(z.init)
     if(length(equal.pro)    > 1 ||
-       !is.logical(equal.pro))             stop("'equal.pro' must be a single logical indicator")
-    if(!all(is.character(uni.prior)))      stop("'uni.prior' must be a character vector of length 1")
+       !is.logical(equal.pro))             stop("'equal.pro' must be a single logical indicator", call.=FALSE)
+    if(!all(is.character(uni.prior)))      stop("'uni.prior' must be a character vector of length 1", call.=FALSE)
     uni.prior   <- match.arg(uni.prior)
     if(any(!is.logical(mu0g),
-       length(mu0g)        != 1))          stop("'mu0g' must be a single logical indicator")
+       length(mu0g)        != 1))          stop("'mu0g' must be a single logical indicator", call.=FALSE)
     if(any(!is.logical(psi0g),
-       length(psi0g)       != 1))          stop("'psi0g' must be a single logical indicator")
+       length(psi0g)       != 1))          stop("'psi0g' must be a single logical indicator", call.=FALSE)
     if(any(!is.logical(verbose),
-       length(verbose)     != 1))          stop("'verbose' must be a single logical indicator")
+       length(verbose)     != 1))          stop("'verbose' must be a single logical indicator", call.=FALSE)
     mixfa       <- list(n.iters = n.iters, burnin = burnin, thinning = thinning, centering = centering, scaling = scaling, uni.type = uni.type,
                         psi.alpha = psi.alpha, psi.beta = psi.beta, mu.zero = mu.zero, sigma.mu = sigma.mu, sigma.l = sigma.l, z.init = z.init,
                         z.list = z.list, equal.pro = equal.pro, uni.prior = uni.prior, mu0g = mu0g, psi0g = psi0g, verbose = verbose)
@@ -1102,48 +1102,48 @@
                             ind.slice = TRUE, rho = 0.75, trunc.G = NULL, kappa = 0.5, IM.lab.sw = TRUE, zeta = 2, tune.zeta = NULL, ...) {
     miss.args   <- list(trunc.G = missing(trunc.G), IM.lab.sw = missing(IM.lab.sw))
     if(any(!is.logical(learn.alpha),
-           length(learn.alpha)    != 1))   stop("'learn.alpha' must be a single logical indicator")
+           length(learn.alpha)    != 1))   stop("'learn.alpha' must be a single logical indicator", call.=FALSE)
     if(all(length(alpha.hyper)    != 2,
-           learn.alpha))                   stop(paste0("'alpha.hyper' must be a vector of length 2, giving the shape and rate hyperparameters of the gamma prior for alpha when 'learn.alpha' is TRUE"))
+           learn.alpha))                   stop(paste0("'alpha.hyper' must be a vector of length 2, giving the shape and rate hyperparameters of the gamma prior for alpha when 'learn.alpha' is TRUE"), call.=FALSE)
     if(learn.alpha       &&
-       any(alpha.hyper)  <= 0)             stop("The shape and rate of the gamma prior for alpha must both be strictly positive")
+       any(alpha.hyper)  <= 0)             stop("The shape and rate of the gamma prior for alpha must both be strictly positive", call.=FALSE)
     if(any(!is.logical(learn.d),
-           length(learn.d)        != 1))   stop("'learn.d' must be a single logical indicator")
+           length(learn.d)        != 1))   stop("'learn.d' must be a single logical indicator", call.=FALSE)
     if(all(length(d.hyper)        != 2,
-           learn.d))                       stop("d.hyper' must be a vector of length 2")
+           learn.d))                       stop("d.hyper' must be a vector of length 2", call.=FALSE)
     if(learn.d           &&
-       any(d.hyper       <= 0))            stop("'Discount Beta prior hyperparameters must both be strictly positive")
+       any(d.hyper       <= 0))            stop("'Discount Beta prior hyperparameters must both be strictly positive", call.=FALSE)
     if(any(!is.logical(ind.slice),
-           length(ind.slice)      != 1))   stop("'ind.slice' must be a single logical indicator")
+           length(ind.slice)      != 1))   stop("'ind.slice' must be a single logical indicator", call.=FALSE)
     if(all(length(rho)    > 1,
-       rho  > 1 || rho   <= 0))            stop("'rho' must be a single number in the interval (0, 1]")
-    if(rho  < 0.5)                         warning("Are you sure 'rho' should be less than 0.5? This could adversely affect mixing", call.=FALSE)
+       rho  > 1 || rho   <= 0))            stop("'rho' must be a single number in the interval (0, 1]", call.=FALSE)
+    if(rho  < 0.5)                         warning("Are you sure 'rho' should be less than 0.5? This could adversely affect mixing", call.=FALSE, immediate.=FALSE)
     if(!missing(trunc.G) &&
        (length(trunc.G)   > 1     ||
         !is.numeric(trunc.G)      ||
-        trunc.G <= 0))                     stop("'trunc.G' must be a single strictly positive number")
+        trunc.G <= 0))                     stop("'trunc.G' must be a single strictly positive number", call.=FALSE)
     if(any(!is.numeric(kappa),
-           length(kappa)          != 1))   stop("'kappa' must be a single number")
-    if(kappa     <  0    || kappa  > 1)    stop("'kappa' must lie in the interval [0, 1]")
+           length(kappa)          != 1))   stop("'kappa' must be a single number", call.=FALSE)
+    if(kappa     <  0    || kappa  > 1)    stop("'kappa' must lie in the interval [0, 1]", call.=FALSE)
     discount    <- ifelse(missing(discount), ifelse(learn.d, ifelse(kappa != 0 && stats::runif(1) <= kappa, 0, stats::rbeta(1, d.hyper[1], d.hyper[2])), 0), discount)
     if(any(!is.numeric(discount),
-           length(discount)       != 1))   stop("'discount' must be a single number")
+           length(discount)       != 1))   stop("'discount' must be a single number", call.=FALSE)
     if(discount  < 0     ||
-       discount >= 1)                      stop("'discount' must lie in the interval [0, 1)")
+       discount >= 1)                      stop("'discount' must lie in the interval [0, 1)", call.=FALSE)
     kappa       <- ifelse(all(!learn.d, discount == 0), 1, kappa)
     if(all(discount       > 0,
       !learn.d, learn.alpha)) {
       alpha.hyper        <- unname(unlist(shift_GA(shape=alpha.hyper[1], rate=alpha.hyper[2], shift=ifelse(learn.d, -1, -discount))))
     }
     if(all(kappa         == 0, !learn.d,
-           discount      == 0))            stop("'kappa' is zero and yet 'discount' is fixed at zero:\neither learn the discount parameter or specify a non-zero value")
+           discount      == 0))            stop("'kappa' is zero and yet 'discount' is fixed at zero:\neither learn the discount parameter or specify a non-zero value", call.=FALSE)
     if(all(kappa         == 1,  learn.d,
-           discount      != 0))            stop(paste0("'kappa' is exactly 1 and yet", ifelse(learn.d, " 'discount' is being learned ", if(discount != 0) " the discount is fixed at a non-zero value"), ":\nthe discount should remain fixed at zero"))
+           discount      != 0))            stop(paste0("'kappa' is exactly 1 and yet", ifelse(learn.d, " 'discount' is being learned ", if(discount != 0) " the discount is fixed at a non-zero value"), ":\nthe discount should remain fixed at zero"), call.=FALSE)
     if(any(!is.logical(IM.lab.sw),
-       length(IM.lab.sw) != 1))            stop("'IM.lab.sw' must be a single logical indicator")
+       length(IM.lab.sw) != 1))            stop("'IM.lab.sw' must be a single logical indicator", call.=FALSE)
     if(any(!is.numeric(zeta),
        length(zeta)      != 1,
-       zeta < 0))                          stop("'zeta' must be single strictly positive number")
+       zeta < 0))                          stop("'zeta' must be single strictly positive number", call.=FALSE)
     gibbs.def   <- all(kappa       < 1, learn.d,  learn.alpha)
     def.py      <- all(discount   != 0, !learn.d, learn.alpha)
     gibbs.may   <- gibbs.def      &&    kappa > 0
@@ -1154,22 +1154,22 @@
       if(!is.list(tz)    ||
          (!all(is.element(names(tz), c("heat",
           "lambda", "target")))   ||
-          !all(lengths(tz)        == 1)))  stop("'tune.zeta' must be a list with named elements 'heat', 'lambda' and 'target', all of length 1")
+          !all(lengths(tz)        == 1)))  stop("'tune.zeta' must be a list with named elements 'heat', 'lambda' and 'target', all of length 1", call.=FALSE)
       if(is.null(tz$heat))   tz$heat    <- 1
       if(is.null(tz$lambda)) tz$lambda  <- 1
       if(is.null(tz$target)) tz$target  <- 0.441
       if(!all(vapply(tz,
-              is.numeric, logical(1L))))   stop("Not all elements of 'tune.zeta' are numeric")
+              is.numeric, logical(1L))))   stop("Not all elements of 'tune.zeta' are numeric", call.=FALSE)
       tz$do     <- any(gibbs.def, def.py)
-      if(tz$heat          < 0)             stop("Invalid 'heat': must be >= 0")
+      if(tz$heat          < 0)             stop("Invalid 'heat': must be >= 0", call.=FALSE)
       if(tz$target        < 0     ||
-         tz$target        > 1)             stop("Invalid 'target': must lie in the interval [0, 1]")
+         tz$target        > 1)             stop("Invalid 'target': must lie in the interval [0, 1]", call.=FALSE)
       if(tz$lambda       <= 0.5   ||
-         tz$lambda        > 1)             stop("Invalid 'lambda': must lie in the interval (0.5, 1]")
+         tz$lambda        > 1)             stop("Invalid 'lambda': must lie in the interval (0.5, 1]", call.=FALSE)
       if(learn.alpha)     {
         if(tz$heat  > 0)  {
-          if(isTRUE(gibbs.may))            warning("Are you sure you want to tune zeta?: Gibbs updates are possible as 'kappa' is between zero and 1", call.=FALSE)
-        } else if(tz$do)                   warning("'heat' of 0 corresponds to no tuning: are you sure?", call.=FALSE)
+          if(isTRUE(gibbs.may))            warning("Are you sure you want to tune zeta?: Gibbs updates are possible as 'kappa' is between zero and 1", call.=FALSE, immediate.=TRUE)
+        } else if(tz$do)                   warning("'heat' of 0 corresponds to no tuning: are you sure?", call.=FALSE, immediate.=TRUE)
       }
       tune.zeta <- tz
     }
@@ -1225,35 +1225,35 @@
       miss.args <- list(propx = missing(prop), adaptatx = missing(adapt.at))
       if(any(!is.numeric(alpha.d1),
              !is.numeric(alpha.d2),
-             c(alpha.d1, alpha.d2) < 1))   stop("All shrinkage shape hyperparameter values must be numeric and at least 1")
+             c(alpha.d1, alpha.d2) < 1))   stop("All shrinkage shape hyperparameter values must be numeric and at least 1", call.=FALSE)
       if(prop    > 1          ||
-         prop   <= 0)                      stop("'prop' must be lie in the interval (0, 1]")
+         prop   <= 0)                      stop("'prop' must be lie in the interval (0, 1]", call.=FALSE)
       if(eps    <= 0 ||
-         eps    >= 1)                      stop("'eps' must be lie in the interval (0, 1)")
+         eps    >= 1)                      stop("'eps' must be lie in the interval (0, 1)", call.=FALSE)
       if(any(length(adapt)    != 1,
-             !is.logical(adapt)))          stop("'adapt' must be a single logical indicator")
+             !is.logical(adapt)))          stop("'adapt' must be a single logical indicator", call.=FALSE)
       if(any(length(b0)       != 1,
-             !is.numeric(b0), b0   < 0))   stop("'b0' must be a non-negative scalar to ensure valid adaptation probability")
+             !is.numeric(b0), b0   < 0))   stop("'b0' must be a non-negative scalar to ensure valid adaptation probability", call.=FALSE)
       if(any(length(b1)       != 1,
-             !is.numeric(b1), b1  <= 0))   stop("'b1' must be a single strictly positive scalar to ensure adaptation probability decreases")
+             !is.numeric(b1), b1  <= 0))   stop("'b1' must be a single strictly positive scalar to ensure adaptation probability decreases", call.=FALSE)
       if(any(length(nuplus1)  != 1,
-             !is.logical(nuplus1)))        stop("'nuplus1' must be a singe logical indicator")
+             !is.logical(nuplus1)))        stop("'nuplus1' must be a singe logical indicator", call.=FALSE)
       if(any(nu <= !nuplus1,
              !is.numeric(nu),
-             length(nu)       != 1))       stop(paste0("'nu' must be a single ", ifelse(nuplus1, "strictly positive number for the Ga(nu + 1, nu) parameterisation", "number strictly greater than 1 for the Ga(nu, nu) parameterisation")))
+             length(nu)       != 1))       stop(paste0("'nu' must be a single ", ifelse(nuplus1, "strictly positive number for the Ga(nu + 1, nu) parameterisation", "number strictly greater than 1 for the Ga(nu, nu) parameterisation")), call.=FALSE)
       if(any(!is.numeric(beta.d1),
              !is.numeric(beta.d2),
              length(beta.d1)  != 1,
              length(beta.d2)  != 1,
-             c(beta.d1,  beta.d2) <= 0))   stop("'beta.d1' and 'beta.d2' must both be numeric, of length 1, and strictly positive")
+             c(beta.d1,  beta.d2) <= 0))   stop("'beta.d1' and 'beta.d2' must both be numeric, of length 1, and strictly positive", call.=FALSE)
       if(any(!is.numeric(prop),
              !is.numeric(adapt.at),
              !is.numeric(eps),
              length(prop)     != 1,
              length(adapt.at) != 1,
-             length(eps)      != 1))       stop("'prop', 'adapt.at', and 'eps' must all be numeric and of length 1")
+             length(eps)      != 1))       stop("'prop', 'adapt.at', and 'eps' must all be numeric and of length 1", call.=FALSE)
       if(any(length(delta0g)  != 1,
-             !is.logical(delta0g)))        stop("'delta0g' must be a single logical indicator")
+             !is.logical(delta0g)))        stop("'delta0g' must be a single logical indicator", call.=FALSE)
       MGPAGS    <- list(alpha.d1 = alpha.d1, alpha.d2 = alpha.d2, delta0g = delta0g, nu = nu, prop = prop, epsilon = eps,
                         adapt = adapt, b0 = b0, b1 = b1, nuplus1 = nuplus1, beta.d1 = beta.d1, beta.d2 = beta.d2, adaptat = adapt.at)
       attr(MGPAGS, "Missing") <- miss.args
@@ -1292,24 +1292,24 @@
    storeControl <- function(mu.switch = TRUE, score.switch = TRUE, load.switch = TRUE, psi.switch = TRUE, pi.switch = TRUE, ...) {
       switches  <- c(mu.sw=mu.switch, s.sw=score.switch, l.sw=load.switch, psi.sw=psi.switch,pi.sw=pi.switch)
       attr(switches, "Missing") <- c(mu.sw=missing(mu.switch), s.sw=missing(score.switch), l.sw=missing(load.switch), psi.sw=missing(psi.switch), pi.sw=missing(pi.switch))
-      if(any(!is.logical(switches)))       stop("All logical parameter storage switches must be single logical indicators")
+      if(any(!is.logical(switches)))       stop("All logical parameter storage switches must be single logical indicators", call.=FALSE)
         switches
    }
 
   # Other Hidden Functions
     .a_drop     <- function(x, drop = TRUE, named.vector = TRUE, one.d.array = FALSE, ...) {
-      if(is.null(dim(x)))                  stop("require an object with a dim attribute")
+      if(is.null(dim(x)))                  stop("require an object with a dim attribute", call.=FALSE)
       if(length(list(...))) {
-        if(length(names(list(...)))) {     stop("have unrecognized ... arguments for adrop.default: ", paste(names(list(...)), collapse=", "))
-        } else                             stop("have unrecognized unnamed ... arguments for adrop.default")
+        if(length(names(list(...)))) {     stop("have unrecognized ... arguments for adrop.default: ", paste(names(list(...)), collapse=", "), call.=FALSE)
+        } else                             stop("have unrecognized unnamed ... arguments for adrop.default", call.=FALSE)
       }
       x.dim     <- dim(x)
       if(is.logical(drop))  {
-        if(length(drop) != length(x.dim))  stop("length of drop is not equal length of dim(x)")
+        if(length(drop) != length(x.dim))  stop("length of drop is not equal length of dim(x)", call.=FALSE)
         drop    <- which(drop)
       } else if(is.character(drop))  {
         if(any(is.na(i  <- match(drop,
-                     names(x.dim)))))      stop("dimension names ", paste("'", drop[is.na(i)], "'", sep="", collapse=" "), " not found in x")
+                     names(x.dim)))))      stop("dimension names ", paste("'", drop[is.na(i)], "'", sep="", collapse=" "), " not found in x", call.=FALSE)
         drop    <- i
       } else if(is.null(drop))       {
         drop    <- numeric(0)
@@ -1317,8 +1317,8 @@
       if(!is.numeric(drop) ||
         any(is.na(drop))   ||
         any(drop < 1 |
-            drop > length(x.dim)))         stop("drop must contain dimension numbers")
-      if(!all(x.dim[drop] == 1))           stop("dimensions to drop (", paste(drop, collapse = ", "), ") do not have length 1")
+            drop > length(x.dim)))         stop("drop must contain dimension numbers", call.=FALSE)
+      if(!all(x.dim[drop] == 1))           stop("dimensions to drop (", paste(drop, collapse = ", "), ") do not have length 1", call.=FALSE)
       x.dimnames        <- dimnames(x)
       dimnames(x)       <- NULL
       dim(x)    <- NULL
@@ -1382,6 +1382,28 @@
         argstr
     }
 
+    #' @importFrom matrixStats "colSums2"
+    .col_vars   <- function(x, std = FALSE, suma = NULL) { # replaces Rfast::colVars
+      if(length(std) > 1 ||
+         !is.logical(std))                 stop("'std' must be a single logical indicator")
+      if(!is.matrix(x))                    stop("'x' must be a matrix")
+      m         <- if(missing(suma)) colSums2(x) else suma
+      n         <- nrow(x)
+      s         <- (colSums2(x * x) - (m * m)/n)/(n - 1)
+        if(std) sqrt(s) else s
+    }
+
+    #' @importFrom matrixStats "colMeans2" "rowSums2"
+    .cor2       <- function(x) { # replaces Rfast::cora
+      mat       <- t(x) - colMeans2(x)
+      tcrossprod(mat/sqrt(rowSums2(mat * mat)))
+    }
+
+    .cov2       <- function(x) { # replaces Rfast::cova
+      n         <- nrow(x)
+      (crossprod(x) - sqrt(n) * colMeans2(x))/(n - 1)
+    }
+
     .detach_pkg <- function(pkg, character.only = FALSE) {
       searches  <- paste("package", if(!character.only) deparse(substitute(pkg)) else pkg, sep=":")
       while(searches %in% search()) {
@@ -1394,10 +1416,10 @@
     }
 
     .ent_exit  <- function(opts = options()) {
-      ent      <- readline("Hit <Return> to see next plot or type 'EXIT'/hit <Esc> to exit: ")
+      ent      <- readline("Hit <Return> to see next plot or /hit <Esc> or type 'EXIT' to exit: ")
       options(show.error.messages=FALSE)
       on.exit(suppressWarnings(options(opts)), add=TRUE)
-        if(ent  %in% c("exit", "EXIT"))    stop()
+        if(ent  %in% c("exit", "EXIT"))    stop(call.=FALSE)
     }
 
     .logdensity     <- function(x,  left = 0) { # export?
@@ -1433,7 +1455,7 @@
         retval  <- rmax
       }
       if(method == 2  || method   == 3)  {
-        if(ncol(tab)  != nrow(tab))        stop("Unique matching only for square tables.")
+        if(ncol(tab)  != nrow(tab))        stop("Unique matching only for square tables.", call.=FALSE)
         dimnames(tab) <- list(myseq, myseq)
         cmax    <- apply(tab, 2, which.max)
         retval  <- rep(NA, ncol(tab))
@@ -1451,7 +1473,7 @@
         if(verbose)                        cat("Direct agreement:", sum(baseok), "of", ncol(tab), "pairs\\n")
         if(!all(baseok))     {
           if(method   == 3)  {
-            if(sum(!baseok)  > maxexact) { warning(paste("Would need permutation of", sum(!baseok), "numbers, resetting to greedy search\\n"))
+            if(sum(!baseok)  > maxexact) { warning(paste("Would need permutation of", sum(!baseok), "numbers, resetting to greedy search\\n"), call.=FALSE, immediate.=TRUE)
               method  <- 2
             } else     {
               iter    <- gamma(ncol(tab) - sum(baseok) + 1)
@@ -1504,8 +1526,8 @@
       on.exit(options(scipen = scipen,
                       digits = digits))
       if(length(after.dot)  != 1  ||
-         !is.logical(after.dot))           stop("'after.dot' must be a single logical indicator")
-      if(!all(is.numeric(x)))              stop("'x' must be numeric")
+         !is.logical(after.dot))           stop("'after.dot' must be a single logical indicator", call.=FALSE)
+      if(!all(is.numeric(x)))              stop("'x' must be numeric", call.=FALSE)
       res             <- x
       na.ind          <- !is.na(x)
       x               <- abs(x[na.ind])
@@ -1523,7 +1545,7 @@
 
     .permutations     <- function(n) {
       if(n == 1)    {                      return(matrix(1))
-      } else if(n   < 2)                   stop("n must be a positive integer")
+      } else if(n   < 2)                   stop("n must be a positive integer", call.=FALSE)
       z          <- matrix(1)
       for(i in 2:n) {
         x        <- cbind(z, i)
@@ -1547,12 +1569,12 @@
         x       <- x$x
       }
       if(is.null(y)) {
-        if(is.null(x))                     stop("Both x and y are NULL")
+        if(is.null(x))                     stop("Both x and y are NULL", call.=FALSE)
         y       <- as.numeric(x)
         x       <- seq_along(x)
       }
       if(missing(uiw) &&
-        (is.null(ui)  || is.null(li)))     stop("Must specify either relative limits or both lower and upper limits")
+        (is.null(ui)  || is.null(li)))     stop("Must specify either relative limits or both lower and upper limits", call.=FALSE)
       if(!missing(uiw)) {
         z       <- if(err == "y") y else x
         ui      <- z + uiw
@@ -1609,6 +1631,31 @@
     }
 
     .power2     <- function(x) x * x
+
+    .row_vars   <- function(x, std = FALSE, suma = NULL) { # replaces Rfast::rowVars
+      if(length(std) > 1 ||
+         !is.logical(std))                 stop("'std' must be a single logical indicator")
+      if(!is.matrix(x))                    stop("'x' must be a matrix")
+      m         <- if(missing(suma)) rowSums2(x) else suma
+      n         <- ncol(x)
+      s         <- (rowSums2(x * x) - (m * m)/n)/(n - 1)
+        if(std) sqrt(s) else s
+    }
+
+    #' @importFrom matrixStats "colMeans2" "rowSums2"
+    .scale2     <- function(x, center = TRUE, scale = TRUE) { # replaces Rfast::standardise
+      cmeans    <- if(isTRUE(center)) colMeans2(x) else center
+      center    <- if(is.logical(center))   center else is.numeric(center)
+      scaling   <- if(is.logical(scale))     scale else is.numeric(scale)
+      if(center && scaling) {
+        y       <- t(x) - cmeans
+          if(isTRUE(scale)) t(y/sqrt(rowSums2(y * y)) * sqrt(nrow(x) - 1)) else t(y/scale)
+      } else if(center)     {
+          t(t(x) - cmeans)
+      } else if(scaling)    {
+          t(t(x)/if(isTRUE(scale)) .col_vars(x, std=TRUE) else scale)
+      } else  x
+    }
 
     .which0     <- function(x) which(x == 0)
     #

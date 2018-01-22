@@ -34,7 +34,7 @@ Special types of plots which don't require a \code{param} are:
 \item{"\code{errors}"}{for conducting posterior predictive checking of the appropriateness of the fitted model by visualising the error metrics quantifying the difference between the estimated and empirical covariance matrices. The type of plot produced depends on how the \code{error.metrics} argument was supplied to \code{\link{get_IMIFA_results}}.}
 }}
 
-\item{param}{The parameter of interest for any of the following \code{plot.meth} options: \code{trace}, \code{density}, \code{means}, \code{correlation}. The \code{param} must have been stored when \code{\link{mcmc_IMIFA}} was initially ran. Includes \code{pis} for methods where clustering takes place, and allows posterior inference on \code{alpha} and \code{discount} for the "\code{IMFA}" and "\code{IMIFA}" methods.}
+\item{param}{The parameter of interest for any of the following \code{plot.meth} options: \code{all}, \code{trace}, \code{density}, \code{means}, \code{correlation}. The \code{param} must have been stored when \code{\link{mcmc_IMIFA}} was initially ran. Includes \code{pis} for methods where clustering takes place, and allows posterior inference on \code{alpha} and \code{discount} for the "\code{IMFA}" and "\code{IMIFA}" methods.}
 
 \item{g}{Optional argument that allows specification of exactly which cluster the plot of interest is to be produced for. If not supplied, the user will be prompted to cycle through plots for all clusters. Also functions as an index for which plot to return when \code{plot.meth} is \code{GQ} or \code{zlabels} in much the same way.}
 
@@ -44,7 +44,7 @@ Special types of plots which don't require a \code{param} are:
 
 \item{heat.map}{Switch which allows plotting posterior mean loadings or posterior mean scores as a heatmap, or else as something akin to \code{link{plot(..., type="h")}}. Only relevant if \code{param = "loadings"} (in which case the default is \code{TRUE}) or \code{param = "scores"} (in which case the default is \code{FALSE}). Heatmaps are produced with the aid of \code{\link{mat2cols}} and \code{\link{plot_cols}}.}
 
-\item{palette}{An optional colour palette to be supplied if overwriting the default palette set inside the function by \code{\link[viridisLite]{viridis}} is desired.}
+\item{palette}{An optional colour palette to be supplied if overwriting the default palette set inside the function by \code{\link[viridisLite]{viridis}} is desired. it makes little sense to a supply a \code{palette} when \code{plot.meth="all"} and \code{param} is one of "\code{scores}" or "\code{loadings}".}
 
 \item{ind}{Either a single number indicating which variable to plot when \code{param} is one of \code{means} or \code{uniquenesses}, or which cluster to plot if \code{param} is \code{pis}. If \code{scores} are plotted, a vector of length two giving which observation and factor to plot; If \code{loadings} are plotted, a vector of length two giving which variable and factor to plot. Will be recycled to length 2 if necessary. Only relevant when \code{mat} is \code{FALSE}.}
 
@@ -60,7 +60,7 @@ Special types of plots which don't require a \code{param} are:
 
 \item{titles}{Logical indicating whether default plot titles are to be used (\code{TRUE}), or suppressed (\code{FALSE}).}
 
-\item{transparency}{A factor in [0, 1] modifying the opacity for overplotted lines. Defaults to 0.75, unless semi-transparency is not supported.}
+\item{transparency}{A factor in [0, 1] modifying the opacity for overplotted lines. Defaults to 0.75, unless semi-transparency is not supported. Only relevant when \code{palette} is not supplied, otherwise the supplied \code{palette} must already be adjusted for transparency.}
 
 \item{...}{Other arguments typically passed to \code{\link[graphics]{plot}}.}
 }

@@ -38,19 +38,19 @@ sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(floor(log(P)), G),
   P            <- as.integer(P)
   Q            <- as.integer(Q)
   Q.warn       <- min(N - 1, Ledermann(P))
-  if(any(N  < 0, P  < 0, Q < 0, G  <= 0)) stop("'N', 'P', and 'Q' must be strictly non-negative and 'G' must be strictly positive")
+  if(any(N  < 0, P  < 0, Q < 0, G  <= 0)) stop("'N', 'P', and 'Q' must be strictly non-negative and 'G' must be strictly positive", call.=FALSE)
   if(any(length(N) != 1, length(loc.diff) != 1,
-         length(G) != 1, length(P) != 1)) stop("'N', 'P', 'G', and 'loc.diff' must be of length 1")
-  if(any(N  < 2, N <= G))                 stop("Must simulate more than one data-point and the number of clusters cannot exceed N")
+         length(G) != 1, length(P) != 1)) stop("'N', 'P', 'G', and 'loc.diff' must be of length 1", call.=FALSE)
+  if(any(N  < 2, N <= G))                 stop("Must simulate more than one data-point and the number of clusters cannot exceed N", call.=FALSE)
   if(any(Q  > Q.warn))                    warning(paste0("Are you sure you want to generate this many factors relative to N=", N, " and P=", P, "?\nSuggested upper-bound = ", Q.warn), call.=FALSE)
   if(length(Q) != G) {
     if(!missing(Q))  {
       if(length(Q) == 1) {
         Q      <- rep(Q, G)
-      } else if(length(Q != G))           stop(paste0("'Q' must supplied for each of the G=", G, " clusters"))
+      } else if(length(Q != G))           stop(paste0("'Q' must supplied for each of the G=", G, " clusters"), call.=FALSE)
     }
   }
-  if(!all(is.character(method)))          stop("'method' must be a character vector of length 1")
+  if(!all(is.character(method)))          stop("'method' must be a character vector of length 1", call.=FALSE)
   method       <- match.arg(method)
   Gseq         <- seq_len(G)
   Nseq         <- seq_len(N)
@@ -62,13 +62,13 @@ sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(floor(log(P)), G),
     nn         <- as.integer(nn)
     if(!is.integer(nn)   ||
        any(length(nn)    != G,
-           sum(nn)       != N))           stop(paste0("'nn' must be an integer vector of length G=", G, " which sums to N=", N))
-    if(any(nn  <= 0))                     stop("All 'nn' values must be strictly positive; simulating empty clusters not allowed")
+           sum(nn)       != N))           stop(paste0("'nn' must be an integer vector of length G=", G, " which sums to N=", N), call.=FALSE)
+    if(any(nn  <= 0))                     stop("All 'nn' values must be strictly positive; simulating empty clusters not allowed", call.=FALSE)
   } else {
     if(!is.numeric(pis)  ||
        any(length(pis)   != G,
-           sum(pis)      != 1))           stop(paste0("'pis' must be a numeric vector of length G=", G, " which sums to ", 1))
-    if(any(pis <= 0))                     stop("All 'pis' values must be strictly positive")
+           sum(pis)      != 1))           stop(paste0("'pis' must be a numeric vector of length G=", G, " which sums to ", 1), call.=FALSE)
+    if(any(pis <= 0))                     stop("All 'pis' values must be strictly positive", call.=FALSE)
     nn         <- vector("numeric", G)
     iter       <- 0
     while(any(nn   < floor(N/(G * G)),
@@ -83,7 +83,7 @@ sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(floor(log(P)), G),
   if(!mu.miss)  {
     musup      <- matrix(.len_check(as.matrix(mu),  switch0g = TRUE, method = ifelse(G > 1, "MFA", "FA"), P, G)[[1]], nrow=P, ncol=G, byrow=length(mu)  == G)
   } else {
-    if(!is.numeric(loc.diff))             stop("'loc.diff' must be numeric")
+    if(!is.numeric(loc.diff))             stop("'loc.diff' must be numeric", call.=FALSE)
     musup      <- as.integer(scale(Gseq, center=TRUE, scale=FALSE)) * loc.diff
   }
   psi.miss     <- missing(psi)
@@ -111,7 +111,7 @@ sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(floor(log(P)), G),
   # Simulate data
     covmat     <- provideDimnames({ if(P > 1) diag(psi.true) else as.matrix(psi.true) } + { if(Q.g > 0) switch(method, marginal=tcrossprod(l.true), 0) else 0}, base=list(vnames))
     if(!all(is.symmetric(covmat),
-            is.double(covmat)))           stop("Invalid covariance matrix!")
+            is.double(covmat)))           stop("Invalid covariance matrix!", call.=FALSE)
     covmat     <- is.posi_def(covmat, make=TRUE)$X.new
     sigma      <- if(all(Q.g > 0, P > 1, method == "marginal")) .chol(covmat) else sq_mat(covmat)
     means      <- matrix(mu.true, nrow=N.g, ncol=P, byrow=TRUE) + switch(method, conditional=tcrossprod(eta.true[true.zlab == g, seq_len(Q.g), drop=FALSE], l.true), 0)
