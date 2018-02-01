@@ -92,7 +92,7 @@
     mu               <- cbind(mu, if(uni) t(mu.tmp) else mu.tmp)
     eta              <- .sim_eta_p(N=N, Q=Q)
     lmat             <- if(Q0) array(vapply(Ts, function(t) .sim_load_p(Q=Q, P=P, sigma.l=sigma.l), numeric(P * Q)), dim=c(P, Q, trunc.G)) else array(0, dim=c(P, 0, trunc.G))
-    psi.inv          <- vapply(Ts, function(t) .sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), numeric(P))
+    psi.inv          <- replicate(trunc.G, .sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), simplify="array")
     psi.inv          <- if(uni) t(psi.inv) else psi.inv
     if(Q0 &&   Q      < min(N - 1, Ledermann(P))) {
       for(g in which(nn       > P)) {

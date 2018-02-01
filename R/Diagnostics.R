@@ -50,7 +50,7 @@
 #' @importFrom slam "as.simple_triplet_matrix"
 #'
 #' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{plot.Results_IMIFA}}, \code{\link{Procrustes}}, \code{\link{Zsimilarity}}
-#' @references Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, <\href{https://arxiv.org/abs/1701.07010}{arXiv:1701.07010}>.
+#' @references Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010}{arXiv:1701.07010}>.
 #'
 #' @author Keefe Murphy - <\email{keefe.murphy@@ucd.ie}>
 #'
@@ -144,6 +144,10 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   miss.zavg      <- missing(z.avgsim)
   if(length(error.metrics) != 1  ||
      !is.logical(error.metrics))  stop("'error.metrics' must be a single logical indicator", call.=FALSE)
+  if(isTRUE(error.metrics) &&
+     anyNA(cov.emp))        {     warning("'error.metrics' forced to FALSE as there are missing values in the empirical covariance matrix", call.=FALSE)
+   error.metrics <- FALSE
+  }
   if(length(z.avgsim)      != 1  ||
      !is.logical(z.avgsim))       stop("'z.avgsim' must be a single logical indicator", call.=FALSE)
   if(isTRUE(z.avgsim))  {
@@ -693,7 +697,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     } else if(sw["psi.sw"]) {
       if(sizes[g] > 1) {
         dat.gg   <- dat[z.ind[[g]],, drop=FALSE]
-        cov.gg   <- if(n.var  > 500) provideDimnames(.cov2(dat.gg), base=list(varnames)) else stats::cov(dat.gg)
+        cov.gg   <- stats::cov(dat.gg)
       }
       var.exp    <- ifelse(sizes[g] == 0, 0, max(0, (sum(diag(cov.gg)) - sum(post.psi))/n.var))
     } else {
@@ -851,6 +855,9 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     class(Err)   <- "listof"
   } else errs    <- "None"
   error.metrics  <- errs       != "None"
+  if(error.metrics && anyNA(cov.emp)) {
+    Err          <- Err[names(Err) %in% c("Var.Exps", "Exp.Var", "Estimated.Cov")]
+  }
 
   result         <- c(if(exists("cluster", envir=environment()))          list(Clust      = cluster),
                       if(error.metrics)         list(Error        = Err), list(GQ.results = GQ.res),
@@ -866,7 +873,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   attr(result, "Conf.Level")   <- conf.level
   attr(result, "Disc.step")    <- if(is.element(method, c("IMFA", "IMIFA"))) learn.alpha
   attr(result, "Discount")     <- if(is.element(method, c("IMFA", "IMIFA")) && !learn.d) attr(sims, "Discount")
-  attr(result, "Errors")       <- errs
+  attr(result, "Errors")       <- ifelse(anyNA(cov.emp), "None", errs)
   attr(result, "Equal.Pi")     <- equal.pro
   attr(result, "G.init")       <- if(inf.G) attr(sims, "G.init")
   attr(result, "Ind.Slice")    <- if(is.element(method, c("IMFA", "IMIFA"))) attr(sims, "Ind.Slice")
@@ -878,6 +885,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   attr(result, "Pitman")       <- attr(sims, "Pitman")
   attr(result, "range.G")      <- attr(sims, "Clusters")
   attr(result, "range.Q")      <- attr(sims, "Factors")
+  attr(result, "Sd0.drop")     <- attr(sims, "Sd0.drop")
   attr(result, "Store")        <- tmp.store
   attr(result, "Switch")       <- sw
   attr(result, "TuneZeta")     <- attr(sims, "TuneZeta")

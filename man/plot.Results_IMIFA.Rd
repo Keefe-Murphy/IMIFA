@@ -30,7 +30,7 @@
 Special types of plots which don't require a \code{param} are:
 \describe{
 \item{"\code{GQ}"}{for plotting the posterior summaries of the numbers of clusters/factors, if available.}
-\item{"\code{zlabels}"}{for plotting clustering uncertainties if clustering has taken place (and, if available, the average similarity matrix, reordered according to the MAP labels) with or without the clustering labels being supplied via the \code{zlabels} argument.}
+\item{"\code{zlabels}"}{for plotting clustering uncertainties - in three different ways - if clustering has taken place (and, if available, the average similarity matrix, reordered according to the MAP labels) with or without the clustering labels being supplied via the \code{zlabels} argument.}
 \item{"\code{errors}"}{for conducting posterior predictive checking of the appropriateness of the fitted model by visualising the error metrics quantifying the difference between the estimated and empirical covariance matrices. The type of plot produced depends on how the \code{error.metrics} argument was supplied to \code{\link{get_IMIFA_results}}.}
 }}
 
@@ -40,7 +40,7 @@ Special types of plots which don't require a \code{param} are:
 
 \item{mat}{Logical indicating whether a \code{\link[graphics]{matplot}} is produced (defaults to \code{TRUE}). If given as \code{FALSE}, \code{ind} is invoked.}
 
-\item{zlabels}{The true labels can be supplied if they are known. If this is not supplied, the function uses the labels that were supplied, if any, to \code{\link{get_IMIFA_results}}. Only relevant when \code{plot.meth = "zlabels"}.}
+\item{zlabels}{The true labels can be supplied if they are known. If this is not supplied, the function uses the labels that were supplied, if any, to \code{\link{get_IMIFA_results}}. Only relevant when \code{plot.meth = "zlabels"}. When explicitly supplied, misclassified observations are highlighted in the first type of uncertainty plot (otherwise observations whose uncertainty exceed the inverse of the number of clusters are highlighted). For the second type of uncertainty plot, when \code{zlabels} are explicitly supplied, the uncertainty of misclassified observations is marked by vertical lines on the profile plot.}
 
 \item{heat.map}{Switch which allows plotting posterior mean loadings or posterior mean scores as a heatmap, or else as something akin to \code{link{plot(..., type="h")}}. Only relevant if \code{param = "loadings"} (in which case the default is \code{TRUE}) or \code{param = "scores"} (in which case the default is \code{FALSE}). Heatmaps are produced with the aid of \code{\link{mat2cols}} and \code{\link{plot_cols}}.}
 
@@ -101,7 +101,7 @@ Plotting output and parameters of inferential interest for IMIFA and related mod
 # plot(resIMIFA, plot.meth="all", param="alpha")
 }
 \references{
-Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, <\href{https://arxiv.org/abs/1701.07010}{arXiv:1701.07010}>.
+Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010}{arXiv:1701.07010}>.
 }
 \seealso{
 \code{\link{mcmc_IMIFA}}, \code{\link{get_IMIFA_results}}, \code{\link{mat2cols}}, \code{\link{plot_cols}}

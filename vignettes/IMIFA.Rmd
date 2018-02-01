@@ -167,15 +167,23 @@ plot(resIMIFA, plot.meth="GQ", g=2)
 plot(resIMIFA, plot.meth="GQ", g=3)
 ```
 
-Let's examine clustering performance against the known cluster labels. Note that the cluster labels could have been already supplied to `get_IMIFA_results` too, but plotting allows clustering performance to be evaluated against new labels without having to extract the full results object all over again. More specifically, the code below allows us to visualise the clustering uncertainty (with or without the labels being supplied, in fact). In this case, `g=2` would mean to instead visualise the uncertainties in the form of a histogram. We can visualise the N * N similarity matrix by supplying `g=3` when `plot.meth="zlabels"`. Had we not specified `g`, the function would cycle through the available plots.
+Let's examine clustering performance against the known cluster labels. Note that the cluster labels could have been already supplied to `get_IMIFA_results` too, but plotting allows clustering performance to be evaluated against new labels without having to extract the full results object all over again. More specifically, the code below allows us to visualise the clustering uncertainty (with or without the labels being supplied, in fact; when they are supplied, misclassified observations are highlighted, otherwise observations with uncertainty exceeding the inverse of the number of clusters are highlighted). 
 
 ```{r}
 plot(resIMIFA, plot.meth="zlabels", zlabels=olive$area, g=1)
 ```
 
-```{r}
-plot(resIMIFA, plot.meth="zlabels", g=3)
+We can also plot a clustering uncertainty profile, also highlighting misclassified observations, with `g=2`. When `plot.meth="zlabels"`, `g=3` would mean to instead visualise the uncertainties in the form of a histogram. 
+
+```{r, results="hide"}
+plot(resIMIFA, plot.meth="zlabels", zlabels=olive$area, g=2)
 ```
+
+Finally, we can visualise the N * N similarity matrix by supplying `g=4` when `plot.meth="zlabels"`. Had we not specified `g`, the function would cycle through the available plots.
+```{r}
+plot(resIMIFA, plot.meth="zlabels", g=4)
+```
+
 To examine the posterior mean estimates of the cluster means in a given cluster (say the 1st), we can set both `plot.meth` and `param` to `"means"`. If the cluster isn't specified using the argument `g`, the user will be prompted to hit &lt;Return&gt; at the onset of each plot in order to cycle through similar plots for all clusters. In the code below `mat=TRUE` means, in this case, to plot all variables simultaneously. By default, credible intervals are also plotted. Note that the data were originally mean-centered and unit-scaled when `mcmc_IMIFA` was called.
 
 ```{r}

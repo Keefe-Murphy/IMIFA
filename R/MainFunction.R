@@ -57,7 +57,7 @@
 #'
 #' @seealso \code{\link{get_IMIFA_results}}, \code{\link{mixfaControl}}, \code{\link{mgpControl}}, \code{\link{bnpControl}}, \code{\link{storeControl}}
 #' @references
-#' Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, <\href{https://arxiv.org/abs/1701.07010}{arXiv:1701.07010}>.
+#' Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010}{arXiv:1701.07010}>.
 #'
 #' Bhattacharya, A. and Dunson, D. B. (2011) Sparse Bayesian infinite factor models, \emph{Biometrika}, 98(2): 291-306.
 #'
@@ -132,27 +132,35 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   centering <- mixFA$centering
   scaling   <- mixFA$scaling
   iters     <- seq(from=burnin + 1, to=n.iters, by=thinning)
-  iters     <- iters[iters > 0]
+  iters     <- iters[iters  > 0]
   if(length(iters)   < 10)          stop("Run a longer chain!", call.=FALSE)
   raw.dat   <- as.data.frame(dat)
   num.check <- vapply(raw.dat, is.numeric, logical(1L))
   if(anyNA(raw.dat)) {
-    if(verbose)                     message("Rows with missing values removed from data")
+    if(verbose)                     message("Rows with missing values removed from data set")
     raw.dat <- raw.dat[stats::complete.cases(raw.dat),, drop=FALSE]
   }
   if(sum(num.check) != ncol(raw.dat)) {
-    if(verbose)                     message("Non-numeric columns removed from data")
-    raw.dat <- raw.dat[,num.check, drop=FALSE]
+    if(verbose)                     message("Non-numeric columns removed from data set")
+    raw.dat <- raw.dat[,num.check,    drop=FALSE]
+  }
+  if(isTRUE(mixFA$drop0sd)) {
+    sdx     <- .col_vars(as.matrix(raw.dat), std=TRUE)
+    sd0ind  <- sdx  == 0
+    if(any(sd0ind))  {              message("Columns with standard deviation of zero removed from data set")
+      raw.dat    <- raw.dat[,!sd0ind, drop=FALSE]
+      sdx   <- sdx[!sd0ind]
+    }
   }
   if(any(dim(raw.dat) == 0))        stop("Empty data set after removal of ineligble rows/columns", call.=FALSE)
-  if(method != "classify") {
-    scal    <- switch(scaling, none=FALSE, .col_vars(as.matrix(raw.dat), std=TRUE))
+  if(method != "classify")  {
+    scal    <- switch(scaling, none=FALSE, if(isTRUE(mixFA$drop0sd)) sdx else .col_vars(as.matrix(raw.dat), std=TRUE))
     scal    <- switch(scaling, pareto=sqrt(scal), scal)
     dat     <- .scale2(as.matrix(raw.dat), center=centering, scale=scal)
   } else   {
     dat     <- as.matrix(raw.dat)
   }
-  centered  <- switch(method, classify=all(round(colSums2(dat)) == 0), any(centering, all(round(colSums2(dat)) == 0)))
+  centered  <- switch(method, classify=all(round(colSums2(dat)) == 0), (centering || all(round(colSums2(dat)) == 0)))
   if(!any(centered, centering) && all(verbose,
     scaling != "none"))             message("Are you sure you want to apply scaling without centering?")
 
@@ -190,7 +198,8 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   if(all(is.element(method, c("FA", "IFA")), verbose,
          !zin.miss || !zli.miss)) { message(paste0("z does not need to be initialised for the ", method, " method"))
   } else if(!zli.miss) {
-    if(!is.list(z.list))     z.list    <- lapply(list(z.list), as.factor)
+    if(!inherits(z.list,
+                 "list"))    z.list    <- lapply(list(z.list), as.factor)
     if(zin.miss &&
        z.init   != "list") { z.init    <- "list"
        if(verbose)                   message("'z.init' set to 'list' as 'z.list' was supplied")
@@ -201,13 +210,13 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   if(!is.element(method, c("IMFA", "IMIFA"))) {
     if(!missing(BNP)         ||
        any(!unlist(bnpmiss)))       message(paste0("'bnpControl()' parameters not necessary for the ", method, " method"))
-  } else        {
-    learn.a       <- BNP$learn.a
-    discount      <- BNP$discount
-    learn.d       <- BNP$learn.d
-    IM.lab.sw     <- BNP$IM.lab.sw
-    tune.zeta     <- BNP$tune.zeta
-    if(learn.a    && verbose   &&
+  } else          {
+    learn.a      <- BNP$learn.a
+    discount     <- BNP$discount
+    learn.d      <- BNP$learn.d
+    IM.lab.sw    <- BNP$IM.lab.sw
+    tune.zeta    <- BNP$tune.zeta
+    if(learn.a   && verbose  &&
        all(discount   == 0, !learn.d, learn.a)  &&
        tune.zeta$heat  > 0)         message("Tuning zeta will have no effect as 'discount' is fixed at 0")
     if(all(!bnpmiss$IM.lab.sw, isTRUE(IM.lab.sw), !isTRUE(learn.a),
@@ -295,24 +304,29 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   mu               <- list(as.matrix(colMeans2(dat)))
   mu0.x            <- mixfamiss$mu.zero
   mu0g             <- mixFA$mu0g
-  mu.zero          <- if(mu0.x) mu  else     .len_check(mixFA$mu.zero, mu0g, method, P, G.init)
+  mu.zero          <- if(mu0.x) mu  else  .len_check(mixFA$mu.zero, mu0g, method, P, G.init)
   sigma.mu         <- mixFA$sigma.mu
   sigmu.miss       <- mixfamiss$sigma.mu
+  psi.alpha        <- mixFA$psi.alpha
+  psi0g            <- mixFA$psi0g
+  beta.x           <- mixfamiss$psi.beta
   obsnames         <- rownames(dat)
   varnames         <- colnames(dat)
-  covmat           <- if(P > 500)   switch(scaling, unit=.cor2(as.matrix(dat)), .cov2(as.matrix(dat))) else switch(scaling, unit=stats::cor(dat), stats::cov(dat))
+  covmat           <- switch(scaling, unit=stats::cor(dat), stats::cov(dat))
   dimnames(covmat) <- list(varnames, varnames)
-  sigma.mu         <- if(sigmu.miss) diag(covmat) else if(is.matrix(sigma.mu))  diag(sigma.mu)         else sigma.mu
+  if(anyNA(covmat))                 warning(paste0("Covariance matrix cannot be estimated: ", ifelse(beta.x || (sigmu.miss && scaling != "unit"), "deriving default hyperparameters may not be possible, neither will posterior predictive checking", "posterior predictive checking will not be possible")), call.=FALSE)
+  sigma.mu         <- if(sigmu.miss && scaling == "unit") rep(1, P) else if(sigmu.miss)   diag(covmat) else if(is.matrix(sigma.mu)) diag(sigma.mu) else sigma.mu
+  if(sigmu.miss    &&
+     anyNA(sigma.mu))               stop("Not possible to derive default 'sigma.mu': this argument now must be supplied", call.=FALSE)
   sigmu.len        <- length(unique(sigma.mu))
   if(sigmu.len     == 1) sigma.mu      <- sigma.mu[1]
   if(any(sigma.mu  <= 0, !is.numeric(sigma.mu),
      !is.element(length(sigma.mu),
      c(1, P))))                     stop(paste0("'sigma.mu' must be strictly positive, and of length 1 or P=", P))
-  psi.alpha        <- mixFA$psi.alpha
-  psi0g            <- mixFA$psi0g
-  beta.x           <- mixfamiss$psi.beta
   if(beta.x) {
-    psi.beta       <- temp.psi   <- list(psi_hyper(shape=psi.alpha, covar=covmat, type=uni.prior))
+    psi.beta       <- temp.psi   <- try(list(psi_hyper(shape=psi.alpha, covar=covmat, type=uni.prior)), silent=TRUE)
+    if(inherits(psi.beta,
+       "try-error"))                stop("Not possible to derive default 'psi.beta': this argument now must be supplied", call.=FALSE)
   } else {
     psi.beta       <- mixFA$psi.beta
     psi.beta       <- lapply(.len_check(psi.beta, psi0g, method, P, G.init), matrix, nrow=P, ncol=G.init, byrow=length(psi.beta) == G.init)
@@ -518,12 +532,14 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
       mu[[g]]      <- vapply(seq_len(G), function(gg) if(nngs[gg] > 0) colMeans2(dat[zi[[g]] == gg,, drop=FALSE]) else vector("numeric", P), numeric(P))
       mu[[g]]      <- if(uni)       t(mu[[g]])  else mu[[g]]
       if(mu0.x)   {
-        mu.zero[[g]]    <- if(mu0g) mu[[g]]     else vapply(seq_len(G), function(gg) colMeans2(dat), numeric(P))
+        mu.zero[[g]]    <- if(mu0g) mu[[g]]     else replicate(G, colMeans2(dat), simplify="array")
       }
       mu.zero[[g]] <- if(uni && !mu0g) t(mu.zero[[g]]) else mu.zero[[g]]
       if(beta.x)  {
         if(psi0g) {
-          cov.gg   <- lapply(seq_len(G), function(gg, dat.gg = dat[zi[[g]] == gg,, drop=FALSE]) if(all(nngs[gg] > 1, P <= nngs[g])) { if(P > 500) .cov2(as.matrix(dat.gg)) else stats::cov(dat.gg) } else covmat)
+          cov.gg   <- lapply(seq_len(G), function(gg, dat.gg = dat[zi[[g]] == gg,, drop=FALSE]) if(all(nngs[gg] > 1, P <= nngs[g])) stats::cov(dat.gg) else covmat)
+          if(any(vapply(cov.gg,
+             anyNA, logical(1L))))  stop("Not possible to derive default 'psi.beta' when 'psi0g' is TRUE: 'psi.beta' must now must be supplied", call.=FALSE)
           psi.beta[[g]] <- vapply(seq_len(G), function(gg) psi_hyper(shape=psi.alpha, covar=cov.gg[[gg]], type=uni.prior), numeric(P))
         } else {
           psi.beta[[g]] <- replicate(G, temp.psi[[1]])
@@ -672,7 +688,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
       scal         <- switch(scaling, pareto=sqrt(scal), scal)
       tmp.dat      <- .scale2(as.matrix(tmp.dat), center=centering, scale=scal)
       if(sigmu.miss) {
-       gibbs.arg$sigma.mu <- diag(if(nrow(tmp.dat) > 1) { if(P > 500) .cov2(as.matrix(tmp.dat)) else stats::cov(tmp.dat) } else covmat)
+       gibbs.arg$sigma.mu <- diag(if(nrow(tmp.dat) > 1) stats::cov(tmp.dat) else covmat)
       }
       imifa[[g]]          <- list()
       gibbs.arg    <- append(temp.args, lapply(deltas[[Gi]], "[[", g))
@@ -733,6 +749,7 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   attr(imifa, "Scaling")  <- scal
   attr(attr(imifa,
   "Scaling"), "Method")   <- scaling
+  attr(imifa, "Sd0.drop") <- if(isTRUE(mixFA$drop0sd) && any(sd0ind)) sd0ind
   attr(imifa, "Store")    <- length(iters)
   attr(imifa, "Switch")   <- c(storage, a.sw = attr(imifa, "Alph.step"), d.sw = attr(imifa, "Disc.step"))
   times                   <- lapply(list(Total = tot.time, Average = avg.time, Initialisation = init.time), round, 2)

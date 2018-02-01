@@ -125,7 +125,7 @@
 #'
 #' If the normalising constant is required for another reason, e.g. to compute the log-likelihood, it can be calculated by summing the output obtained by calling \code{\link[matrixStats]{rowLogSumExps}} on \code{probs}.
 #'
-#' @references Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, <\href{https://arxiv.org/abs/1701.07010}{arXiv:1701.07010}>.
+#' @references Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010}{arXiv:1701.07010}>.
 #'
 #' Yellot, J. I. Jr. (1977) The relationship between Luce's choice axiom, Thurstone's theory of comparative judgment, and the double exponential distribution, \emph{Journal of Mathematical Psychology}, 15: 109-144.
 #' @export
@@ -729,7 +729,8 @@
       obj.name  <- deparse(substitute(obj0g))
       obj.name  <- ifelse(grepl("$", obj.name, fixed=TRUE), sapply(strsplit(obj.name, "$", fixed=TRUE), "[[", 2), obj.name)
       sw.name   <- deparse(substitute(switch0g))
-      if(!is.list(obj0g))        obj0g  <- list(obj0g)
+      if(!inherits(obj0g,
+                   "list"))       obj0g <- list(obj0g)
       if(length(obj0g) != length(range.G))    {
         if(!P.dim)             {
           obj0g <- replicate(length(range.G), obj0g)
@@ -875,8 +876,8 @@
 
       Qmsg      <- if(length(fac) > 1) paste(c(Qmsg, paste0("and ", fac[length(fac)])), sep="", collapse="") else fac
       Gmsg      <- if(length(grp) > 1) paste(c(Gmsg, paste0("and ", grp[length(grp)])), sep="", collapse="") else grp
-      Qmsg      <- paste0(" with ", Qmsg, " factor", ifelse(length(fac) == 1, "", "s"))
-      Gmsg      <- paste0(" with ", Gmsg, " group",  ifelse(length(grp) == 1, "", "s"))
+      Qmsg      <- paste0(" with ", Qmsg, " factor", ifelse(length(fac) > 1 || fac > 1, "s", ""))
+      Gmsg      <- paste0(" with ", Gmsg, " group",  ifelse(length(grp) > 1 || grp > 1, "s", ""))
       if(is.element(meth, c("FA", "OMFA", "IMFA"))) {
         msg     <- Qmsg
       } else {
@@ -904,8 +905,8 @@
 
       Qmsg      <- if(length(fac) > 1) paste(c(Qmsg, paste0("and ", fac[length(fac)])), sep="", collapse="") else fac
       Gmsg      <- if(length(grp) > 1) paste(c(Gmsg, paste0("and ", grp[length(grp)])), sep="", collapse="") else grp
-      Qmsg      <- paste0(" with ", Qmsg, " factor", ifelse(length(fac) == 1, "", "s"))
-      Gmsg      <- paste0(" with ", Gmsg, " group",  ifelse(length(grp) == 1, "", "s"))
+      Qmsg      <- paste0(" with ", Qmsg, " factor", ifelse(length(fac) > 1 || fac > 1, "s", ""))
+      Gmsg      <- paste0(" with ", Gmsg, " group",  ifelse(length(grp) > 1 || grp > 1, "s", ""))
       if(is.element(meth, c("FA", "OMFA", "IMFA"))) {
         msg     <- Qmsg
       } else {
@@ -993,6 +994,7 @@
 #' @param uni.prior A switch indicating whether uniquenesses rate hyperparameters are to be "\code{unconstrained}" or "\code{isotropic}", i.e. variable-specific or not. "\code{uni.prior}" must be "\code{isotropic}" if the last letter of "\code{uni.type}" is \strong{C}, but can take either value otherwise. Defaults to correspond to the last letter of \code{uni.type} if that is supplied and \code{uni.prior} is not, otherwise defaults to "\code{unconstrained}" (though"\code{isotropic}" is recommended when \code{N < P}). Only relevant when "\code{psi.beta}" is not supplied and \code{\link{psi_hyper}} is therefore invoked.
 #' @param mu0g Logical indicating whether the \code{mu.zero} hyperparameter can be cluster-specific. Defaults to \code{FALSE}. Only relevant for the "\code{MFA}" and "\code{MIFA}" methods when \code{z.list} is supplied.
 #' @param psi0g Logical indicating whether the \code{psi.beta} hyperparameter(s) can be cluster-specific. Defaults to \code{FALSE}. Only relevant for the "\code{MFA}" and "\code{MIFA}" methods when \code{z.list} is supplied, and only allowable when \code{uni.type} is one of \code{unconstrained} or \code{isotropic}.
+#' @param drop0sd Logical indicating whether to drop variables with no standard deviation (defaults to \code{TRUE}). This is \emph{strongly} recommended, especially a) when \code{psi.beta} &/or \code{sigma.mu} are not supplied, and the defaults are therefore estimated using the empirical covariance matrix, &/or b) if some form of posterior predictive checking is subsequently desired when calling \code{\link{get_IMIFA_results}}.
 #' @param verbose Logical indicating whether to print output (e.g. run times) and a progress bar to the screen while the sampler runs. By default is \code{TRUE} if the session is interactive, and \code{FALSE} otherwise. If \code{FALSE}, warnings and error messages will still be printed to the screen, but everything else will be suppressed.
 #' @param ... Catches unused arguments.
 #'
@@ -1015,7 +1017,7 @@
   mixfaControl  <- function(n.iters = 25000L, burnin = n.iters/5, thinning = 2L, centering = TRUE, scaling = c("unit", "pareto", "none"),
                             uni.type = c("unconstrained", "isotropic", "constrained", "single"), psi.alpha = 2.5, psi.beta = NULL, mu.zero = NULL,
                             sigma.mu = NULL, sigma.l = 1L, z.init = c("mclust", "hc", "kmeans", "list", "priors"), z.list = NULL, equal.pro = FALSE,
-                            uni.prior = c("unconstrained", "isotropic"), mu0g = FALSE, psi0g = FALSE, verbose = interactive(), ...) {
+                            uni.prior = c("unconstrained", "isotropic"), mu0g = FALSE, psi0g = FALSE, drop0sd = TRUE, verbose = interactive(), ...) {
     miss.args   <- list(uni.type = missing(uni.type), psi.beta = missing(psi.beta), mu.zero = missing(mu.zero),
                         sigma.mu = missing(sigma.mu), z.init = missing(z.init), z.list = missing(z.list), uni.prior = missing(uni.prior))
     burnin      <- as.integer(burnin)
@@ -1047,11 +1049,13 @@
        length(mu0g)        != 1))          stop("'mu0g' must be a single logical indicator", call.=FALSE)
     if(any(!is.logical(psi0g),
        length(psi0g)       != 1))          stop("'psi0g' must be a single logical indicator", call.=FALSE)
+    if(any(!is.logical(drop0sd),
+       length(drop0sd)     != 1))          stop("'drop0sd' must be a single logical indicator", call.=FALSE)
     if(any(!is.logical(verbose),
        length(verbose)     != 1))          stop("'verbose' must be a single logical indicator", call.=FALSE)
     mixfa       <- list(n.iters = n.iters, burnin = burnin, thinning = thinning, centering = centering, scaling = scaling, uni.type = uni.type,
                         psi.alpha = psi.alpha, psi.beta = psi.beta, mu.zero = mu.zero, sigma.mu = sigma.mu, sigma.l = sigma.l, z.init = z.init,
-                        z.list = z.list, equal.pro = equal.pro, uni.prior = uni.prior, mu0g = mu0g, psi0g = psi0g, verbose = verbose)
+                        z.list = z.list, equal.pro = equal.pro, uni.prior = uni.prior, mu0g = mu0g, psi0g = psi0g, drop0sd = drop0sd, verbose = verbose)
     attr(mixfa, "Missing") <- miss.args
       return(mixfa)
   }
@@ -1151,7 +1155,7 @@
       tune.zeta <- list(heat=0, lambda=NULL, target=NULL, do=FALSE)
     } else  {
       tz        <- tune.zeta
-      if(!is.list(tz)    ||
+      if(!inherits(tz, "list")    ||
          (!all(is.element(names(tz), c("heat",
           "lambda", "target")))   ||
           !all(lengths(tz)        == 1)))  stop("'tune.zeta' must be a list with named elements 'heat', 'lambda' and 'target', all of length 1", call.=FALSE)
@@ -1391,17 +1395,6 @@
       n         <- nrow(x)
       s         <- (colSums2(x * x) - (m * m)/n)/(n - 1)
         if(std) sqrt(s) else s
-    }
-
-    #' @importFrom matrixStats "colMeans2" "rowSums2"
-    .cor2       <- function(x) { # replaces Rfast::cora
-      mat       <- t(x) - colMeans2(x)
-      tcrossprod(mat/sqrt(rowSums2(mat * mat)))
-    }
-
-    .cov2       <- function(x) { # replaces Rfast::cova
-      n         <- nrow(x)
-      (crossprod(x) - sqrt(n) * colMeans2(x))/(n - 1)
     }
 
     .detach_pkg <- function(pkg, character.only = FALSE) {

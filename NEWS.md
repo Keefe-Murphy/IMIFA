@@ -1,7 +1,7 @@
 __Infinite Mixtures of Infinite Factor Analysers__
 ==================================================  
 
-## IMIFA v1.4.0 - (_6<sup>th</sup> release [minor update]: 2017-12-07_)
+## IMIFA v2.0.0 - (_6<sup>th</sup> release [major update]: 2018-22-01_)
 ### Major Changes
 * Simplified `mcmc_IMIFA` by consolidating arguments using new helper functions (with defaults):  
     * Args. common to all factor-analytic mixture methods & MCMC settings supplied via `mixfaControl`.
@@ -19,9 +19,10 @@ __Infinite Mixtures of Infinite Factor Analysers__
       is now properly computed from the cluster-specific covariance matrices.  
     * Same metrics also evaluated at posterior mean parameter estimates where possible.
 * Added ability to constrain mixing proportions across clusters using `equal.pro` argument for M(I)FA models:  
-  Modified PGMM_dfree accordingly and forced non-storage of mixing proportions when `equal.pro` is TRUE.  
+  Modified PGMM_dfree accordingly and forced non-storage of mixing proportions when `equal.pro` is `TRUE`. 
 * All methods now work for univariate data also (with apt. edits to plots & uniqueness defaults etc.).  
   `sim_IMIFA_data` also extended to work for univariate data, as well as sped-up.
+* Added new type of clustering uncertainty profile plot in `plot.Results_IMIFA` when `plot.meth="zlabels"`.
 
 ### Improvements
 * `Zsimilarity` sped-up via the `comp.psm` & `cltoSim` functions s.t.  
@@ -33,10 +34,15 @@ __Infinite Mixtures of Infinite Factor Analysers__
 * Speed-ups due to new `Rfast` utility functions: `colTabulate`, `matrnorm`, & `Order`.
 * Speed-ups due to utility functions from `matrixStats`, on which `IMIFA` already depends.
 * Slight improvements when `adapt=FALSE` for infinite factor models with fixed high truncation level.
+* Misclassified observations now highlighted in 1st type of uncertainty plot in `Plot.Results_IMIFA`,  
+  when `plot.meth=zlabels` and the true `zlabels` are supplied.
+* `mixfaControl` gains arg. `drop0sd` to control removal of zero-variance features (defaults to `TRUE`).
 * `heat_legend` gains `cex.lab` argument to control magnification of legend text.
 * `mat2cols` gains the `transparency` argument.
 
 ### Bug Fixes
+* Accounted for errors in covariance matrix when deriving default `sigma.mu` & `psi.beta` values.
+* Accounted for missing empirical covariance entries within `get_IMIFA_results`.
 * Fixed model selection in `get_IMIFA_results` for IMFA/OMFA models when `range.Q` is a range.
 * Fixed calculation of `aicm`, `bicm` and `dic` criteria: all results remain the same.
 * Fixed support of Ga(a, b) prior on `alpha` when `discount` is being learned.
@@ -53,6 +59,7 @@ __Infinite Mixtures of Infinite Factor Analysers__
 * Clarified recommendation in `MGP_check` that `alpha.d2` be moderately large relative to `alpha.d1`.
 * Ensured `sigma.mu` hyperparameter arg. is always coerced to diagonal entries of a covariance matrix.
 * Transparency default in `plot.Results_IMIFA` now depends on device's support of semi-transparency.
+* Replaced certain instances of `is.list(x)` with `inherits(x, "list")` for stricter checking.
 * Added `check.margin=FALSE` to calls to `sweep()`.
 * `Ledermann()`, `MGP_check`, and `PGMM_dfree` are now properly vectorised.
 
@@ -60,7 +67,7 @@ __Infinite Mixtures of Infinite Factor Analysers__
 * Optimised compression of `olive`, `coffee` and vignette data and used `LazyData: true`.
 * Added `call.=FALSE` to `stop()` messages and `immediate.=TRUE` to certain `warning()` calls.
 * Removed dependency on`adrop`, `e1071`, `graphics`, `grDevices`, `plotrix`, `stats` & `utils` libraries.
-* Reduced dependency on `Rfast` w/ own versions of `colVars`, `rowVars`, `cova`, `cora` & `standardise`.
+* Reduced dependency on `Rfast` w/ own versions of `colVars`, `rowVars`, & `standardise`.
 * Added `CITATION` file.
 * Extensively improved package help documentation.
 
