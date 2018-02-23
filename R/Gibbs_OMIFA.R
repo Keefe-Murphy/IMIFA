@@ -64,7 +64,7 @@
     }
     psi.beta         <- switch(uni.prior,  isotropic=psi.beta[which.max(.ndeci(psi.beta))], psi.beta)
     pi.prop          <- c(cluster$pi.prop, vector("numeric", G - length(cluster$pi.prop)))
-    mu               <- cbind(mu, replicate(G - length(cluster$pi.prop), .sim_mu_p(P=P, sig.mu.sqrt=sig.mu.sqrt, mu.zero=mu.zero), simplify="array"))
+    mu               <- cbind(mu, vapply(seq_len(G - length(cluster$pi.prop)), function(g) .sim_mu_p(P=P, sig.mu.sqrt=sig.mu.sqrt, mu.zero=mu.zero), numeric(P)))
     eta              <- .sim_eta_p(N=N, Q=Q)
     phi              <- replicate(G, .sim_phi_p(Q=Q, P=P, nu=nu, plus1=nuplus1), simplify=FALSE)
     delta            <- lapply(Gseq, function(g) c(.sim_delta_p(alpha=alpha.d1, beta=beta.d1), .sim_delta_p(Q=Q, alpha=alpha.d2, beta=beta.d2)))

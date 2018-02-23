@@ -56,7 +56,7 @@ The first letter \strong{U} here corresponds to constraints on loadings (not yet
 
 \item{sigma.l}{A scalar controlling the diagonal covariance of the prior distribution for the loadings. Defaults to 1, i.e. the identity. Only relevant for the finite factor methods.}
 
-\item{z.init}{The method used to initialise the cluster labels. Defaults to \code{\link[mclust]{Mclust}}. Other options include \code{kmeans}, hierarchical clustering via \code{\link[mclust]{hc}} (\code{VVV} is used, unless the data is high-dimensional, in which case \code{EII} is used), random initialisation via \code{priors}, and a user-supplied \code{list} (\code{z.list}). Not relevant for the "\code{FA}" and "\code{"IFA"} methods.}
+\item{z.init}{The method used to initialise the cluster labels. Defaults to \code{\link[mclust]{Mclust}}. Other options include \code{kmeans} (with 100 random starts), hierarchical clustering via \code{\link[mclust]{hc}} (\code{VVV} is used, unless the data is high-dimensional, in which case \code{EII} is used), random initialisation via \code{priors}, and a user-supplied \code{list} (\code{z.list}). Not relevant for the "\code{FA}" and "\code{"IFA"} methods.}
 
 \item{z.list}{A user supplied list of cluster labels. Only relevant if \code{z.init == "z.list"}.}
 

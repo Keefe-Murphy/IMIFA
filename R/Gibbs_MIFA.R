@@ -267,12 +267,12 @@
 
     # Label Switching
       if(label.switch)   {
-        switch.lab <- .lab_switch(z.new=z, z.old=z.temp)
-        z.perm     <- switch.lab$z.perm
+        sw.lab     <- .lab_switch(z.new=z, z.old=z.temp)
+        z.perm     <- sw.lab$z.perm
         left       <- as.integer(unname(z.perm))
         right      <- as.integer(names(z.perm))
         if(!identical(left, right))   {
-          z        <- switch.lab$z
+          z        <- sw.lab$z
           if(length(unique(Qs)) != 1) {
             Qs[left]        <- Qs[right]
           }

@@ -205,11 +205,13 @@ The code below will produce only a heatmap of the loadings matrix in the first c
 ```{r}
 plot(resIMIFA, plot.meth="means", param="loadings", heat.map=TRUE, g=1)
 ```
-To examine uniquenesses from all clusters in the form of a parellel coordinates plot, type
+To examine posterior mean uniquenesses from all clusters in the form of a parellel coordinates plot, type
 
 ```{r}
 plot(resIMIFA, plot.meth="parallel.coords", param="uniquenesses")
 ```
+
+We could have also used the argument `show.last` to visualise the last valid sample of uniquenesses from all clusters instead. This argument can be used to replace the posterior mean by the corresponding last valid sample for any combination of arguments to `plot.Results_IMIFA` that shows a posterior mean.
 
 Posterior predictive checking to assess the appropriateness of the fitted model is also facilitated. Quantifying the error between the empirical and estimated covariance matrices - and the uncertainty associated with those metrics - can provide a useful indicator of the validity of the solution. For models which achieve clustering, the overall estimated covariance matrix is constructed from the cluster-specific estimated covariance matrices. A visualisation can be produced as follows:
 ```{r}

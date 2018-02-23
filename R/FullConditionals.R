@@ -284,10 +284,14 @@
 #' @examples
 #' data(olive)
 #' olive2 <- olive[,-(1:2)]
-#' (rates <- psi_hyper(shape=2.5, covar=cov(olive2), type="isotropic"))
+#' (rate  <- psi_hyper(shape=2.5, covar=cov(olive2), type="isotropic"))
 #'
 #' olive_scaled <- scale(olive2, center=TRUE, scale=TRUE)
-#' (rate  <- psi_hyper(shape=3, covar=cov(olive_scaled), type="unconstrained"))
+#' (rates <- psi_hyper(shape=3, covar=cov(olive_scaled), type="unconstrained"))
+#'
+#' # In the scaled example, the mean uniquenesses (given by rates/(shape - 1)),
+#' # can be interpreted as the proportion of the variance that is idiosyncratic
+#' (prop  <- rates/(3 - 1) * 100)
     psi_hyper   <- function(shape, covar, type=c("unconstrained", "isotropic")) {
       if(!all(is.character(type)))         stop("'type' must be a character vector of length 1", call.=FALSE)
       if(!all(is.posi_def(covar, semi=TRUE),
@@ -441,18 +445,19 @@
 #' @param Q The number of latent factors (which can be 0, corresponding to a model with diagonal covariance). This argument is vectorised.
 #' @param P The number of variables. Must be a single strictly positive integer.
 #' @param G The number of clusters. This defaults to 1. Must be a single strictly positive integer.
-#' @param method By default, calculation assumes the \code{UUU} model with unconstrained loadings and unconstrained isotropic uniquesses. The other seven models detailed in McNicholas and Murphy (2008) are also given (of which currently the first four are accomodated within \code{\link{mcmc_IMIFA}}). The first letter denotes whether loadings are constrained/unconstrained across clusters; the second letter denotes the same for the uniquenesses; the final letter denotes whether uniquenesses are in turn constrained to be isotropic.
+#' @param method By default, calculation assumes the \code{UUU} model with unconstrained loadings and unconstrained diagonal uniquesseses (i.e. the factor analysis model). The seven other models detailed in McNicholas and Murphy (2008) are given too (of which currently the first four are accomodated within \code{\link{mcmc_IMIFA}}). The first letter denotes whether loadings are constrained/unconstrained across clusters; the second letter denotes the same for the uniquenesses; the final letter denotes whether uniquenesses are in turn constrained to be isotropic. Finally, the 4 extra 4-letter models from the EPGMM family (McNicholas and Murphy, 2010), are also included.
 #' @param equal.pro Logical variable indicating whether or not the mixing mixing proportions are equal across clusters in the model (default = \code{FALSE}).
 #'
-#' @details This function is used to calculate the penalty terms for the \code{aic.mcmc} and \code{bic.mcmc} model selection criteria implemented in \code{\link{get_IMIFA_results}} for \emph{finite} factor models (though \code{\link{mcmc_IMIFA}} currently only implements the \code{UUU}, \code{UUC}, \code{UCU}, and \code{UCC} covariance structures). The function is vectorized with respect to the argument \code{Q}.
-
-#' @return A vector of length \code{length(Q)}.
+#' @return A vector of length \code{length(Q)} giving the total number of parameters, including means and mixing proportions, and not only covariance parameters. Set \code{equal.pro} to \code{FALSE} and subtract \code{G * P} from the result to determine the number of covariance parameters only.
 #' @keywords utility
 #'
-#' @note Though the function is available for standalone use, note that no checks take place, in order to speed up repeated calls to the function inside \code{\link{mcmc_IMIFA}}.
+#' @note This function is used to calculate the penalty terms for the \code{aic.mcmc} and \code{bic.mcmc} model selection criteria implemented in \code{\link{get_IMIFA_results}} for \emph{finite} factor models (though \code{\link{mcmc_IMIFA}} currently only implements the \code{UUU}, \code{UUC}, \code{UCU}, and \code{UCC} covariance structures). The function is vectorized with respect to the argument \code{Q}.
 #'
+#' Though the function is available for standalone use, note that no checks take place, in order to speed up repeated calls to the function inside \code{\link{mcmc_IMIFA}}.
 #' @export
 #' @references McNicholas, P. D. and Murphy, T. B. (2008) Parsimonious Gaussian Mixture Models, \emph{Statistics and Computing}, 18(3): 285-296.
+#'
+#' McNicholas, P. D. and Murphy, T. B. (2010) Model-Based clustering of microarray expression data via latent Gaussian mixture models, \emph{Bioinformatics}, 26(21): 2705-2712.
 #' @seealso \code{\link{get_IMIFA_results}}, \code{\link{mcmc_IMIFA}}
 #'
 #' @author Keefe Murphy - <\email{keefe.murphy@@ucd.ie}>
@@ -460,7 +465,7 @@
 #' @examples
 #' (UUU <- PGMM_dfree(Q=0:5, P=50, G=3, method="UUU"))
 #' (CCC <- PGMM_dfree(Q=0:5, P=50, G=3, method="CCC", equal.pro=TRUE))
-    PGMM_dfree   <- function(Q, P, G = 1L, method = c("UUU", "UUC", "UCU", "UCC", "CUU", "CUC", "CCU", "CCC"), equal.pro = FALSE) {
+    PGMM_dfree   <- function(Q, P, G = 1L, method = c("UUU", "UUC", "UCU", "UCC", "CUU", "CUC", "CCU", "CCC", "CCUU", "UCUU", "CUCU", "UUCU"), equal.pro = FALSE) {
       if(any(Q    < 0, floor(Q)  != Q))    stop("'Q' must consist of strictly non-negative integers", call.=FALSE)
       if(any(P   <= 0, floor(P)  != P,
         length(P) > 1))                    stop("'P' must be a single strictly positive integer", call.=FALSE)
@@ -472,8 +477,13 @@
       meth       <- unlist(strsplit(match.arg(method), ""))
       lambda     <- P * Q   - 0.5 * Q * (Q - 1)
       lambda     <- switch(meth[1], C = lambda,   U = G  * lambda)
-      psi        <- switch(meth[2], C = 1,        U = G)
-      psi        <- switch(meth[3], C = 1,        U = P) * psi
+      if(length(meth) < 4)  {
+        psi      <- switch(meth[2], C = 1,        U = G)
+        psi      <- switch(meth[3], C = 1,        U = P) * psi
+      } else      {
+        epgmm    <- paste(meth[-1], sep="", collapse="")
+        psi      <- switch(epgmm, CUU = G  + P  - 1, UCU = 1 + G * (P - 1))
+      }
         as.integer(ifelse(equal.pro, 0, G  - 1) + G * P  + lambda + psi)
     }
 
@@ -988,7 +998,7 @@
 #' @param mu.zero The mean of the prior distribution for the mean parameter. Either a scalar of a vector of appropriate dimension. Defaults to the sample mean of the data.
 #' @param sigma.mu The covariance of the prior distribution for the mean parameter. Always assumed to be a diagonal matrix. Can be a scalar times the identity or a vector of appropriate dimension. If supplied as a matrix, only the diagonal elements will be extracted. Defaults to the diagonal entries of the sample covariance matrix.
 #' @param sigma.l A scalar controlling the diagonal covariance of the prior distribution for the loadings. Defaults to 1, i.e. the identity. Only relevant for the finite factor methods.
-#' @param z.init The method used to initialise the cluster labels. Defaults to \code{\link[mclust]{Mclust}}. Other options include \code{kmeans}, hierarchical clustering via \code{\link[mclust]{hc}} (\code{VVV} is used, unless the data is high-dimensional, in which case \code{EII} is used), random initialisation via \code{priors}, and a user-supplied \code{list} (\code{z.list}). Not relevant for the "\code{FA}" and "\code{"IFA"} methods.
+#' @param z.init The method used to initialise the cluster labels. Defaults to \code{\link[mclust]{Mclust}}. Other options include \code{kmeans} (with 100 random starts), hierarchical clustering via \code{\link[mclust]{hc}} (\code{VVV} is used, unless the data is high-dimensional, in which case \code{EII} is used), random initialisation via \code{priors}, and a user-supplied \code{list} (\code{z.list}). Not relevant for the "\code{FA}" and "\code{"IFA"} methods.
 #' @param z.list A user supplied list of cluster labels. Only relevant if \code{z.init == "z.list"}.
 #' @param equal.pro Logical variable indicating whether or not the mixing mixing proportions are to be equal across clusters in the model (default = \code{FALSE}). Only relevant for the "\code{MFA}" and "\code{MIFA}" methods.
 #' @param uni.prior A switch indicating whether uniquenesses rate hyperparameters are to be "\code{unconstrained}" or "\code{isotropic}", i.e. variable-specific or not. "\code{uni.prior}" must be "\code{isotropic}" if the last letter of "\code{uni.type}" is \strong{C}, but can take either value otherwise. Defaults to correspond to the last letter of \code{uni.type} if that is supplied and \code{uni.prior} is not, otherwise defaults to "\code{unconstrained}" (though"\code{isotropic}" is recommended when \code{N < P}). Only relevant when "\code{psi.beta}" is not supplied and \code{\link{psi_hyper}} is therefore invoked.

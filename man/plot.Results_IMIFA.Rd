@@ -12,6 +12,7 @@
   mat = TRUE,
   zlabels = NULL,
   heat.map = TRUE,
+  show.last = FALSE,
   palette = NULL,
   ind = NULL,
   fac = NULL,
@@ -42,7 +43,9 @@ Special types of plots which don't require a \code{param} are:
 
 \item{zlabels}{The true labels can be supplied if they are known. If this is not supplied, the function uses the labels that were supplied, if any, to \code{\link{get_IMIFA_results}}. Only relevant when \code{plot.meth = "zlabels"}. When explicitly supplied, misclassified observations are highlighted in the first type of uncertainty plot (otherwise observations whose uncertainty exceed the inverse of the number of clusters are highlighted). For the second type of uncertainty plot, when \code{zlabels} are explicitly supplied, the uncertainty of misclassified observations is marked by vertical lines on the profile plot.}
 
-\item{heat.map}{Switch which allows plotting posterior mean loadings or posterior mean scores as a heatmap, or else as something akin to \code{link{plot(..., type="h")}}. Only relevant if \code{param = "loadings"} (in which case the default is \code{TRUE}) or \code{param = "scores"} (in which case the default is \code{FALSE}). Heatmaps are produced with the aid of \code{\link{mat2cols}} and \code{\link{plot_cols}}.}
+\item{heat.map}{A logical which controls plotting posterior mean loadings or posterior mean scores as a heatmap, or else as something akin to \code{link{plot(..., type="h")}}. Only relevant if \code{param = "loadings"} (in which case the default is \code{TRUE}) or \code{param = "scores"} (in which case the default is \code{FALSE}). Heatmaps are produced with the aid of \code{\link{mat2cols}} and \code{\link{plot_cols}}.}
+
+\item{show.last}{A logical indicator which defaults to \code{FALSE}, but when \code{TRUE} replaces any instance of the posterior mean with the last valid sample. Only relevant when \code{param} is one of \code{"means"} \code{"scores"}, \code{"loadings"}, \code{"uniquenesses"}, or \code{"pis"} and \code{plot.meth} is one of \code{"all"} or \code{"means"}. Also relevant for \code{"means"}, \code{"loadings"} and \code{"uniquenesses"} when \code{plot.meth} is \code{"parallel.coords"}. When \code{TRUE}, this has the effect of forcing \code{intervals} to be \code{FALSE}.}
 
 \item{palette}{An optional colour palette to be supplied if overwriting the default palette set inside the function by \code{\link[viridisLite]{viridis}} is desired. it makes little sense to a supply a \code{palette} when \code{plot.meth="all"} and \code{param} is one of "\code{scores}" or "\code{loadings}".}
 
@@ -54,7 +57,7 @@ Special types of plots which don't require a \code{param} are:
 
 \item{type}{The manner in which the plot is to be drawn, as per the \code{type} argument to \code{\link{plot}}.}
 
-\item{intervals}{Logical indicating whether credible intervals around the posterior mean(s) are to be plotted when \code{is.element(plot.meth, c("all", "means"))}. Defaults to \code{TRUE}.}
+\item{intervals}{Logical indicating whether credible intervals around the posterior mean(s) are to be plotted when \code{is.element(plot.meth, c("all", "means"))}. Defaults to \code{TRUE}, but can only be \code{TRUE} when \code{show.last} is \code{FALSE}.}
 
 \item{partial}{Logical indicating whether plots of type "\code{correlation}" use the PACF. The default, \code{FALSE}, ensures the ACF is used. Only relevant when \code{plot.meth = "all"}, otherwise both plots are produced when \code{plot.meth = "correlation"}.}
 
@@ -69,6 +72,9 @@ The desired plot with appropriate output and summary statistics printed to the c
 }
 \description{
 Plotting output and parameters of inferential interest for IMIFA and related models
+}
+\note{
+Supplying the argument \code{zlabels} does \strong{not} have the same effect of reordering the sampled parameters as it does if supplied directly to \code{\link{get_IMIFA_results}}.
 }
 \examples{
 # See the vignette associated with the package for more graphical examples:

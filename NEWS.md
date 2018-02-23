@@ -17,7 +17,11 @@ __Infinite Mixtures of Infinite Factor Analysers__
     * Can be visualised by supplying `plot.meth=errors` to `plot.Results_IMIFA`.  
     * For methods which achieve clustering, the 'overall' covariance matrix  
       is now properly computed from the cluster-specific covariance matrices.  
-    * Same metrics also evaluated at posterior mean parameter estimates where possible.
+    * Same metrics also evaluated at posterior mean parameter estimates & for final sample where possible.
+* For convenience, `get_IMIFA_results` now also returns the last valid samples for parameters of interest,  
+  after conditioning on the modal G & Q values and accounting for label switching and Procrustes rotation.
+* `plot.Results_IMIFA` gains new arg. `show.last` that replaces any instance of showing the posterior mean  
+  with the last valid sample instead (i.e. when `plot.meth="means"` or `plot.meth="parallel.coords")`.
 * Added ability to constrain mixing proportions across clusters using `equal.pro` argument for M(I)FA models:  
   Modified PGMM_dfree accordingly and forced non-storage of mixing proportions when `equal.pro` is `TRUE`. 
 * All methods now work for univariate data also (with apt. edits to plots & uniqueness defaults etc.).  
@@ -25,7 +29,7 @@ __Infinite Mixtures of Infinite Factor Analysers__
 * Added new type of clustering uncertainty profile plot in `plot.Results_IMIFA` when `plot.meth="zlabels"`.
 
 ### Improvements
-* `Zsimilarity` sped-up via the `comp.psm` & `cltoSim` functions s.t.  
+* `Zsimilarity` sped-up via the `comp.psm` & `cltoSim` functions s.t. when # observations < 1000,
   `z.avgsim=TRUE` now by default in `get_IMIFA_results` when suggested `mcclust` package is loaded.
 * Modified AGS to better account for when the number of group-specific latent factors shrinks to zero.
 * Added "`hc`" option to `z.init` to initialise allocations via hierarchical clustering (using `mclust::hc`).
@@ -39,8 +43,16 @@ __Infinite Mixtures of Infinite Factor Analysers__
 * `mixfaControl` gains arg. `drop0sd` to control removal of zero-variance features (defaults to `TRUE`).
 * `heat_legend` gains `cex.lab` argument to control magnification of legend text.
 * `mat2cols` gains the `transparency` argument.
+*  Edited `PGMM_dfree` to include the 4 extra models from the EPGMM family.
 
 ### Bug Fixes
+* Supplying `zlabels` to `get_IMIFA_results` will now match the cluster labels and parameters to  
+  the true labels even if there is a mismatch between the number of clusters in both.
+* Similarly, supplying `zlabels` to `plot.Results_IMIFA` when `plot.meth="zlabels"` no longer does  
+  any matching when printing performance metrics to the screen - previously this caused confusion  
+  as associated parameters were not also permuted as they are within `get_IMIFA_results`: now  
+  `plot(get_IMIFA_results(sim), plot.meth="zlabels", zlabels=z)` gives different results from  
+  `plot(get_IMIFA_results(sim, zlabels=z), plot.meth="zlabels")` as only the latter will permute.
 * Accounted for errors in covariance matrix when deriving default `sigma.mu` & `psi.beta` values.
 * Accounted for missing empirical covariance entries within `get_IMIFA_results`.
 * Fixed model selection in `get_IMIFA_results` for IMFA/OMFA models when `range.Q` is a range.
@@ -53,8 +65,10 @@ __Infinite Mixtures of Infinite Factor Analysers__
 * Fixed storage switches to account for `burnin=0`.
 * Fixed bug with default plotting palette for data sets with >1024 variables.
 * Fixed bug with label switching permutations in `get_IMIFA_results` when there are empty groups.
+* Fixed bug when plotting posterior mean loadings heatmap when one or more clusters have zero factors.
 * Fixed `print` and `summary` functions for objects of class `IMIFA` and `Results_IMIFA`.
 * Fixed calculating posterior mean `zeta` when adaptively targeting `alpha`'s optimal MH acceptance rate.
+* Minor label-switching fix when `zlabels` are supplied to `get_IMIFA_results()` & MAP has empty clusters.
 * Normalised mixing proportions in `get_IMIFA_results` when conditioning on `G` for IM(I)FA/OM(I)FA models.
 * Clarified recommendation in `MGP_check` that `alpha.d2` be moderately large relative to `alpha.d1`.
 * Ensured `sigma.mu` hyperparameter arg. is always coerced to diagonal entries of a covariance matrix.

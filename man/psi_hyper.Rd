@@ -27,10 +27,14 @@ Used internally by \code{\link{mcmc_IMIFA}} when its argument \code{psi_beta} is
 \examples{
 data(olive)
 olive2 <- olive[,-(1:2)]
-(rates <- psi_hyper(shape=2.5, covar=cov(olive2), type="isotropic"))
+(rate  <- psi_hyper(shape=2.5, covar=cov(olive2), type="isotropic"))
 
 olive_scaled <- scale(olive2, center=TRUE, scale=TRUE)
-(rate  <- psi_hyper(shape=3, covar=cov(olive_scaled), type="unconstrained"))
+(rates <- psi_hyper(shape=3, covar=cov(olive_scaled), type="unconstrained"))
+
+# In the scaled example, the mean uniquenesses (given by rates/(shape - 1)),
+# can be interpreted as the proportion of the variance that is idiosyncratic
+(prop  <- rates/(3 - 1) * 100)
 }
 \references{
 Fruwirth-Schnatter, S. and Lopes, H. F. (2010). Parsimonious Bayesian factor analysis when the number of factors is unknown, \emph{Technical Report}. The University of Chicago Booth School of Business.

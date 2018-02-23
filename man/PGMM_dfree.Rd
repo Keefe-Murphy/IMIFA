@@ -5,7 +5,7 @@
 \title{Estimate the Number of Free Parameters in Finite Factor Analytic Mixture Models (PGMM)}
 \usage{
 PGMM_dfree(Q, P, G = 1L, method = c("UUU", "UUC", "UCU", "UCC", "CUU",
-  "CUC", "CCU", "CCC"), equal.pro = FALSE)
+  "CUC", "CCU", "CCC", "CCUU", "UCUU", "CUCU", "UUCU"), equal.pro = FALSE)
 }
 \arguments{
 \item{Q}{The number of latent factors (which can be 0, corresponding to a model with diagonal covariance). This argument is vectorised.}
@@ -14,20 +14,19 @@ PGMM_dfree(Q, P, G = 1L, method = c("UUU", "UUC", "UCU", "UCC", "CUU",
 
 \item{G}{The number of clusters. This defaults to 1. Must be a single strictly positive integer.}
 
-\item{method}{By default, calculation assumes the \code{UUU} model with unconstrained loadings and unconstrained isotropic uniquesses. The other seven models detailed in McNicholas and Murphy (2008) are also given (of which currently the first four are accomodated within \code{\link{mcmc_IMIFA}}). The first letter denotes whether loadings are constrained/unconstrained across clusters; the second letter denotes the same for the uniquenesses; the final letter denotes whether uniquenesses are in turn constrained to be isotropic.}
+\item{method}{By default, calculation assumes the \code{UUU} model with unconstrained loadings and unconstrained diagonal uniquesseses (i.e. the factor analysis model). The seven other models detailed in McNicholas and Murphy (2008) are given too (of which currently the first four are accomodated within \code{\link{mcmc_IMIFA}}). The first letter denotes whether loadings are constrained/unconstrained across clusters; the second letter denotes the same for the uniquenesses; the final letter denotes whether uniquenesses are in turn constrained to be isotropic. Finally, the 4 extra 4-letter models from the EPGMM family (McNicholas and Murphy, 2010), are also included.}
 
 \item{equal.pro}{Logical variable indicating whether or not the mixing mixing proportions are equal across clusters in the model (default = \code{FALSE}).}
 }
 \value{
-A vector of length \code{length(Q)}.
+A vector of length \code{length(Q)} giving the total number of parameters, including means and mixing proportions, and not only covariance parameters. Set \code{equal.pro} to \code{FALSE} and subtract \code{G * P} from the result to determine the number of covariance parameters only.
 }
 \description{
 Estimates the dimension of the 'free' parameters in fully finite factor analytic mixture models, otherwise known as Parsimonious Gaussian Mixture Models (PGMM), typically necessary for the penalty term of various model selection criteria.
 }
-\details{
-This function is used to calculate the penalty terms for the \code{aic.mcmc} and \code{bic.mcmc} model selection criteria implemented in \code{\link{get_IMIFA_results}} for \emph{finite} factor models (though \code{\link{mcmc_IMIFA}} currently only implements the \code{UUU}, \code{UUC}, \code{UCU}, and \code{UCC} covariance structures). The function is vectorized with respect to the argument \code{Q}.
-}
 \note{
+This function is used to calculate the penalty terms for the \code{aic.mcmc} and \code{bic.mcmc} model selection criteria implemented in \code{\link{get_IMIFA_results}} for \emph{finite} factor models (though \code{\link{mcmc_IMIFA}} currently only implements the \code{UUU}, \code{UUC}, \code{UCU}, and \code{UCC} covariance structures). The function is vectorized with respect to the argument \code{Q}.
+
 Though the function is available for standalone use, note that no checks take place, in order to speed up repeated calls to the function inside \code{\link{mcmc_IMIFA}}.
 }
 \examples{
@@ -36,6 +35,8 @@ Though the function is available for standalone use, note that no checks take pl
 }
 \references{
 McNicholas, P. D. and Murphy, T. B. (2008) Parsimonious Gaussian Mixture Models, \emph{Statistics and Computing}, 18(3): 285-296.
+
+McNicholas, P. D. and Murphy, T. B. (2010) Model-Based clustering of microarray expression data via latent Gaussian mixture models, \emph{Bioinformatics}, 26(21): 2705-2712.
 }
 \seealso{
 \code{\link{get_IMIFA_results}}, \code{\link{mcmc_IMIFA}}

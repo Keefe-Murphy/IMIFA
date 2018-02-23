@@ -171,12 +171,12 @@
 
     # Label Switching
       if(label.switch) {
-        switch.lab <- .lab_switch(z.new=z, z.old=z.temp)
-        z.perm     <- switch.lab$z.perm
+        sw.lab     <- .lab_switch(z.new=z, z.old=z.temp)
+        z.perm     <- sw.lab$z.perm
         left       <- as.integer(unname(z.perm))
         right      <- as.integer(names(z.perm))
         if(!identical(left, right)) {
-          z        <- switch.lab$z
+          z        <- sw.lab$z
           mu[,left]        <- mu[,right, drop=FALSE]
           lmat[,,left]     <- lmat[,,right, drop=FALSE]
           psi.inv[,left]   <- psi.inv[,right, drop=FALSE]
