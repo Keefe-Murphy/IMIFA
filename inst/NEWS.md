@@ -1,7 +1,7 @@
 __Infinite Mixtures of Infinite Factor Analysers__
 ==================================================  
 
-## IMIFA v2.0.0 - (_6<sup>th</sup> release [major update]: 2018-22-01_)
+## IMIFA v2.0.0 - (_6<sup>th</sup> release [major update]: 2018-02-18_)
 ### Major Changes
 * Simplified `mcmc_IMIFA` by consolidating arguments using new helper functions (with defaults):  
     * Args. common to all factor-analytic mixture methods & MCMC settings supplied via `mixfaControl`.
@@ -32,6 +32,9 @@ __Infinite Mixtures of Infinite Factor Analysers__
 * `Zsimilarity` sped-up via the `comp.psm` & `cltoSim` functions s.t. when # observations < 1000,
   `z.avgsim=TRUE` now by default in `get_IMIFA_results` when suggested `mcclust` package is loaded.
 * Modified AGS to better account for when the number of group-specific latent factors shrinks to zero.
+* `mixfaControl` gains the arg. `prec.mu` to control the degree of flatness of the prior for the means.
+* `psi.alpha` no longer needs to be strictly greater than 1, unless the default `psi.beta` is invoked;  
+  thus flatter inverse gamma priors can now be specified for the uniquenesses via `mixfaControl`.
 * Added "`hc`" option to `z.init` to initialise allocations via hierarchical clustering (using `mclust::hc`).
 * Added `mu` argument to `sim_IMIFA_data` to allow supplying true mean parameter values directly.
 * Standard deviation of `aicm`/`bicm` model selection criteria now computed and returned.
@@ -82,6 +85,7 @@ __Infinite Mixtures of Infinite Factor Analysers__
 * Added `call.=FALSE` to `stop()` messages and `immediate.=TRUE` to certain `warning()` calls.
 * Removed dependency on`adrop`, `e1071`, `graphics`, `grDevices`, `plotrix`, `stats` & `utils` libraries.
 * Reduced dependency on `Rfast` w/ own versions of `colVars`, `rowVars`, & `standardise`.
+* Added utility function `IMIFA_news` for accessing this `NEWS` file.
 * Added `CITATION` file.
 * Extensively improved package help documentation.
 

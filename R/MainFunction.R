@@ -305,19 +305,22 @@ mcmc_IMIFA  <- function(dat = NULL, method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
   mu0.x            <- mixfamiss$mu.zero
   mu0g             <- mixFA$mu0g
   mu.zero          <- if(mu0.x) mu  else  .len_check(mixFA$mu.zero, mu0g, method, P, G.init)
+  prec.mu          <- mixFA$prec.mu
   sigma.mu         <- mixFA$sigma.mu
   sigmu.miss       <- mixfamiss$sigma.mu
   psi.alpha        <- mixFA$psi.alpha
   psi0g            <- mixFA$psi0g
   beta.x           <- mixfamiss$psi.beta
+  if(beta.x && psi.alpha <= 1)      stop("'psi.alpha' must be strictly greater than 1 when invoking the default for 'psi.beta' in order to bound uniquenesses away from zero",  call.=FALSE)
+  if(psi.alpha     <= 1)            warning("'psi.alpha' is not strictly greater than 1; uniquenesses may not be sufficiently bounded away from zero, algorithm may terminate", call.=FALSE)
   obsnames         <- rownames(dat)
   varnames         <- colnames(dat)
   covmat           <- switch(scaling, unit=stats::cor(dat), stats::cov(dat))
   dimnames(covmat) <- list(varnames, varnames)
   if(anyNA(covmat))                 warning(paste0("Covariance matrix cannot be estimated: ", ifelse(beta.x || (sigmu.miss && scaling != "unit"), "deriving default hyperparameters may not be possible, neither will posterior predictive checking", "posterior predictive checking will not be possible")), call.=FALSE)
   sigma.mu         <- if(sigmu.miss && scaling == "unit") rep(1, P) else if(sigmu.miss)   diag(covmat) else if(is.matrix(sigma.mu)) diag(sigma.mu) else sigma.mu
-  if(sigmu.miss    &&
-     anyNA(sigma.mu))               stop("Not possible to derive default 'sigma.mu': this argument now must be supplied", call.=FALSE)
+  sigma.mu         <- sigma.mu * 1/prec.mu
+  if(anyNA(sigma.mu))               stop(ifelse(sigmu.miss, "Not possible to derive default 'sigma.mu': this argument now must be supplied", "NA in 'sigma.mu'"), call.=FALSE)
   sigmu.len        <- length(unique(sigma.mu))
   if(sigmu.len     == 1) sigma.mu      <- sigma.mu[1]
   if(any(sigma.mu  <= 0, !is.numeric(sigma.mu),

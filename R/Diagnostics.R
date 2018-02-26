@@ -404,10 +404,10 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     MAP          <- apply(z, 2,   function(x) factor(which.max(tabulate(x, nbins=G)), levels=Gseq))
 
     if(isTRUE(z.avgsim)) {
-      zlog       <- utils::capture.output(znew <- try(Zsimilarity(zs=zadj), silent=TRUE))
+      znew       <- try(Zsimilarity(zs=zadj), silent=TRUE)
       condit     <- all(!is.element(method, c("MIFA", "MFA")), inherits(znew, "try-error"))
       if(isTRUE(condit)) {
-        zlog     <- utils::capture.output(znew <- try(Zsimilarity(zs=z),    silent=TRUE))
+        znew     <- try(Zsimilarity(zs=z),    silent=TRUE)
                                   warning("Constructing the similarity matrix failed:\ntrying again using iterations corresponding to the modal number of clusters", call.=FALSE)
       }
       if(!inherits(znew, "try-error")) {
@@ -446,6 +446,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       pi.prop    <- if(inf.G) sweep(pi.prop, 2, colSums2(pi.prop), FUN="/", check.margin=FALSE) else pi.prop
       var.pi     <- stats::setNames(.row_vars(pi.prop), gnames)
       ci.pi      <- rowQuantiles(pi.prop, probs=conf.levels)
+      ci.pi      <- if(G == 1) t(ci.pi) else ci.pi
       post.pi    <- stats::setNames(rowmeans(pi.prop),  gnames)
     } else {
       post.pi    <- stats::setNames(prop.table(tabulate(MAP, nbins=G)),    gnames)
@@ -454,19 +455,20 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       Q.store    <- provideDimnames(Q.store[Gseq,, drop=FALSE],  base=list(gnames, ""), unique=FALSE)
     }
 
+    sizes        <- stats::setNames(tabulate(MAP, nbins=G), gnames)
+    if(any(sizes == 0))           warning(paste0("Empty cluster exists in modal clustering:\nexamine trace plots", ifelse(any(is.element(method, c("OMFA", "IMFA", "OMIFA", "IMIFA")), is.element(method, c("MFA", "MIFA")) && any(n.grp < G)), ", try to supply a lower G value to get_IMIFA_results(),", ""), " or re-run the model"), call.=FALSE)
     if(!label.miss) {
       zlabels    <- factor(zlabels, labels=seq_along(unique(zlabels)))
       sw.lab     <- .lab_switch(z.new=MAP, z.old=zlabels)
-      MAP        <- factor(sw.lab$z, levels=Gseq)
+      MAP        <- factor(factor(sw.lab$z, labels=which(sizes > 0)), levels=Gseq)
       l.perm     <- sw.lab$z.perm
-      left       <- as.integer(unname(l.perm))[Gseq]
-      right      <- as.integer(names(l.perm))[Gseq]
-      z.tmp      <- lapply(storeG, function(i)   factor(factor(z[i,], labels=left[tabulate(z[i,], nbins=G) > 0]), levels=right))
+      left       <- as.integer(l.perm[Gseq])
+      z.tmp      <- lapply(storeG, function(i)   factor(z[i,], labels=Order(left[tabulate(z[i,], nbins=G) > 0])))
       z          <- do.call(rbind, lapply(z.tmp, function(x) as.integer(levels(as.factor(x)))[as.integer(x)]))
-      if(sw["mu.sw"])      mus <- mus[,right,,    drop=FALSE]
-      if(sw["l.sw"])     lmats <- lmats[,,right,, drop=FALSE]
-      if(sw["psi.sw"])    psis <- psis[,right,,   drop=FALSE]
       index      <- Order(left)
+      if(sw["mu.sw"])      mus <- mus[,index,,    drop=FALSE]
+      if(sw["l.sw"])     lmats <- lmats[,,index,, drop=FALSE]
+      if(sw["psi.sw"])    psis <- psis[,index,,   drop=FALSE]
       post.pi    <- stats::setNames(post.pi[index], gnames)
       if(sw["pi.sw"]) {
        pi.prop   <- provideDimnames(unname(pi.prop[index,, drop=FALSE]), base=list(gnames, ""), unique=FALSE)
@@ -491,9 +493,6 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       class(tab.stat)          <- "listof"
     }
 
-    uncert.obs   <- which(uncertain >= 1/G)
-    sizes        <- stats::setNames(tabulate(MAP, nbins=G), gnames)
-    if(any(sizes == 0))           warning(paste0("Empty cluster exists in modal clustering:\nexamine trace plots", ifelse(any(is.element(method, c("OMFA", "IMFA", "OMIFA", "IMIFA")), is.element(method, c("MFA", "MIFA")) && any(n.grp < G)), ", try to supply a lower G value to get_IMIFA_results(),", ""), " or re-run the model"), call.=FALSE)
     if(learn.alpha) {
       alpha      <- sims[[G.ind]][[Q.ind]]$alpha[store]
       post.alpha <- mean(alpha)
@@ -520,6 +519,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     }
 
     MAP          <- as.integer(levels(MAP))[MAP]
+    uncert.obs   <- which(uncertain  >= 1/G)
     uncertain    <- if(sum(uncertain == 0)/n.obs   > 0.5)  as.simple_triplet_matrix(uncertain) else uncertain
     attr(uncertain, "Obs")     <- if(sum(uncert.obs) != 0) uncert.obs
     if(!label.miss) tab.stat$uncertain            <-       attr(uncertain, "Obs")
@@ -784,7 +784,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     medae        <- rmse       <- nrmse     <- rep(NA, e.store)
   }
   if(clust.ind)     {
-    if(all(sw["psi.sw"], any(sw["l.sw"], Q0X)))   {
+    if(all(sw["psi.sw"], sw["mu.sw"], any(sw["l.sw"], Q0X))) {
       a          <- Reduce("+",   lapply(Gseq, function(g) post.pi[g] * (tcrossprod(post.mu[,g]) + (if(Q0[g])   0 else tcrossprod(post.load[[g]])) + (if(uni) post.psi[,g] else diag(post.psi[,g])))))
       b          <- Reduce("+",   lapply(Gseq, function(g) post.pi[g] * post.mu[,g]))
       cov.est    <- a - tcrossprod(b)
@@ -809,6 +809,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
         nrmse[r] <- rmse[r]/cov.range
        }
       }
+    } else if(!sw["mu.sw"])     { warning("Means not stored: can't compute error metrics or estimate posterior mean covariance matrix",                   call.=FALSE)
     } else if(all(QX0, !sw["l.sw"],
               !sw["psi.sw"]))   { warning("Loadings & Uniquenesses not stored: can't compute error metrics or estimate posterior mean covariance matrix", call.=FALSE)
     } else if(all(QX0,
@@ -838,30 +839,33 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
               !sw["l.sw"]))       warning("Loadings not stored: can't compute error metrics or estimate posterior mean covariance matrix",                call.=FALSE)
   }
   if(errs        <- all(sw["psi.sw"] || !clust.ind, any(sw["l.sw"], Q0X))) {
-    cov.est      <- as.matrix(cov.est)
-    dimnames(cov.est)          <- list(varnames, varnames)
-    var.exps     <- vapply(lapply(result, "[[", "var.exp"), function(x) ifelse(is.null(x), NA, x), numeric(1L))
-    var.exps     <- if(sum(is.na(var.exps)) == G) NULL else var.exps
-    err          <- cov.emp - cov.est
-    sq.err       <- err     * err
-    abs.err      <- abs(err)
-    mse2         <- mean(sq.err)
-    rmse2        <- sqrt(mse2)
-    post.met     <- c(MSE = mse2, MEDSE = med(sq.err), MAE = mean(abs.err), MEDAE = med(abs.err), RMSE = rmse2, NRMSE = rmse2/cov.range)
-    Err          <- list(Empirical.Cov = cov.emp, Estimated.Cov = cov.est, Post = post.met, Var.Exps = var.exps, Exp.Var = ifelse(clust.ind, sum(var.exps * post.pi), unname(var.exps)))
-    if(error.metrics && sw["psi.sw"]) {
-      metrics    <- rbind(MSE = mse, MEDSE = medse, MAE = mae, MEDAE = medae, RMSE = rmse, NRMSE = nrmse)
-      metric.CIs <- rowQuantiles(metrics, probs=conf.levels)
-      mean.met   <- stats::setNames(rowmeans(metrics), rownames(metrics))
-      last.met   <- c(MSE = mse[e.store], MEDSE = medse[e.store], MAE = mae[e.store], MEDAE = medae[e.store], RMSE = rmse[e.store], NRMSE = nrmse[e.store])
-      Err        <- c(list(Avg = mean.met, CIs = metric.CIs), Err[1:3], c(list(Last.Cov = sigma, Final = last.met)), Err[4:5])
-      errs       <- "All"
-    } else errs  <- "Post"
-    class(Err)   <- "listof"
-  } else errs    <- "None"
+   var.exps      <- vapply(lapply(result, "[[", "var.exp"), function(x) ifelse(is.null(x), NA, x), numeric(1L))
+   var.exps      <- if(sum(is.na(var.exps)) == G) NULL else var.exps
+   Err           <- list(Var.Exps = var.exps, Exp.Var = ifelse(clust.ind, sum(var.exps * post.pi), unname(var.exps)))
+   if(sw["mu.sw"] || !clust.ind)       {
+     cov.est     <- as.matrix(cov.est)
+     dimnames(cov.est)        <- list(varnames, varnames)
+     err         <- cov.emp - cov.est
+     sq.err      <- err     * err
+     abs.err     <- abs(err)
+     mse2        <- mean(sq.err)
+     rmse2       <- sqrt(mse2)
+     post.met    <- c(MSE = mse2, MEDSE = med(sq.err), MAE = mean(abs.err), MEDAE = med(abs.err), RMSE = rmse2, NRMSE = rmse2/cov.range)
+     Err         <- c(list(Empirical.Cov = cov.emp, Estimated.Cov = cov.est, Post = post.met), Err)
+     if(error.metrics && sw["psi.sw"]) {
+       metrics   <- rbind(MSE = mse, MEDSE = medse, MAE = mae, MEDAE = medae, RMSE = rmse, NRMSE = nrmse)
+       metricCIs <- rowQuantiles(metrics, probs=conf.levels)
+       mean.met  <- stats::setNames(rowmeans(metrics), rownames(metrics))
+       last.met  <- c(MSE = mse[e.store], MEDSE = medse[e.store], MAE = mae[e.store], MEDAE = medae[e.store], RMSE = rmse[e.store], NRMSE = nrmse[e.store])
+       Err       <- c(list(Avg = mean.met, CIs = metricCIs), Err[1:3], c(list(Last.Cov = sigma, Final = last.met)), Err[4:5])
+       errs      <- "All"
+     } else errs <- "Post"
+   } else   errs <- "Vars"
+   class(Err)    <- "listof"
+  } else    errs <- "None"
   error.metrics  <- errs       != "None"
   if(error.metrics && anyNA(cov.emp)) {
-    Err          <- Err[names(Err) %in% c("Var.Exps", "Exp.Var", "Estimated.Cov")]
+    Err          <- Err[names(Err) %in% if(errs == "Vars") c("Var.Exps", "Exp.Var") else c("Var.Exps", "Exp.Var", "Estimated.Cov")]
   }
 
   result         <- c(if(exists("cluster", envir=environment()))          list(Clust      = cluster),
@@ -878,7 +882,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   attr(result, "Conf.Level")   <- conf.level
   attr(result, "Disc.step")    <- if(is.element(method, c("IMFA", "IMIFA"))) learn.alpha
   attr(result, "Discount")     <- if(is.element(method, c("IMFA", "IMIFA")) && !learn.d) attr(sims, "Discount")
-  attr(result, "Errors")       <- ifelse(anyNA(cov.emp), "None", errs)
+  attr(result, "Errors")       <- ifelse(anyNA(cov.emp), "None", switch(errs, Vars="None", errs))
   attr(result, "Equal.Pi")     <- equal.pro
   attr(result, "G.init")       <- if(inf.G) attr(sims, "G.init")
   attr(result, "Ind.Slice")    <- if(is.element(method, c("IMFA", "IMIFA"))) attr(sims, "Ind.Slice")

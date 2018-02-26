@@ -47,5 +47,5 @@ NULL
   } else   {
     packageStartupMessage("\nPackage 'IMIFA' version ", version, ".")
   }
-  packageStartupMessage(paste("Type '?IMIFA' to see a brief guide to how to use this R package.\nType", sQuote(paste0("citation(", dQuote("IMIFA"),")")) ,"for citing the package in publications."))
+  packageStartupMessage(paste("Type '?IMIFA' to see a brief guide to how to use this R package.\nType", sQuote(paste0("citation(", dQuote("IMIFA"),")")) ,"for citing the package in publications.\nType 'IMIFA_news()' to see new features, changes, and bug fixes."))
 }

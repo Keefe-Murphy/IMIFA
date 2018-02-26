@@ -295,10 +295,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         if(prf$error.rate    == 0)  {
           prf$misclassified      <- NULL
         }
-        prf    <- c(list(confusion.matrix = tab), prf)
-        if(length(unique(pzs))   == length(unique(zlabels))) {
-          names(prf)[1]          <- "matched.confusion.matrix"
-        }
+        prf    <- c(list(confusion.matrix = tab), prf, list(uncertain = attr(clust$uncertainty, "Obs")))
       }
       prf$error.rate             <- paste0(round(100 * prf$error.rate, 2), "%")
     } else      {
@@ -834,34 +831,34 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         a.cex  <- graphics::par()$fin[2]/ifelse(MH, 4, 3)
         pen    <- ifelse(MH, 0,  0.15)
         tz     <- isTRUE(attr(x, "TuneZeta"))
-        y1     <- switch(param, alpha=ifelse(tz, 0.9,   0.85),  discount=0.9)   - pen/3
-        y2     <- switch(param, alpha=ifelse(tz, 0.725, 0.675), discount=0.725) - pen/3
-        y3     <- ifelse(MH, switch(param,   alpha=ifelse(tz, 0.6125, 0.55),    discount=0.6125), 0.55)   - pen
-        y4     <- ifelse(MH, switch(param,   alpha=ifelse(tz, 0.5375, 0.475),   discount=0.5375), 0.4875) - pen * 5/4
+        y1     <- ifelse(MH, switch(param,   alpha=ifelse(tz, 0.9,    0.85),    discount=0.9),    0.925)  - pen/3
+        y2     <- ifelse(MH, switch(param,   alpha=ifelse(tz, 0.725,  0.675),   discount=0.725),  0.825)  - pen/3
+        y3     <- ifelse(MH, switch(param,   alpha=ifelse(tz, 0.6125, 0.55),    discount=0.6125), 0.7625) - pen
+        y4     <- ifelse(MH, switch(param,   alpha=ifelse(tz, 0.5375, 0.4875),  discount=0.55),   0.7125) - pen * 5/4
+        y5     <- ifelse(MH, switch(param,   alpha=ifelse(tz, 0.2,    0.1375),  discount=0.2125), 0.1375)
+        y6     <- y5   + 0.0125
         graphics::text(x=0.5, y=y1,          cex=a.cex, col="black", adj=a.adj, expression(bold("Posterior Mean:\n")))
         graphics::text(x=0.5, y=y1,          cex=a.cex, col="black", adj=a.adj, bquote(.(round(switch(param, alpha=plot.x$post.alpha, discount=plot.x$post.disc), digits))))
         graphics::text(x=0.5, y=y2 - pen,    cex=a.cex, col="black", adj=a.adj, expression(bold("\nVariance:\n")))
         graphics::text(x=0.5, y=y2 - pen,    cex=a.cex, col="black", adj=a.adj, bquote(.(round(switch(param, alpha=plot.x$var.alpha,  discount=plot.x$var.disc),  digits))))
         graphics::text(x=0.5, y=y3 - pen,    cex=a.cex, col="black", adj=a.adj, bquote(bold(.(100 * conf)) * bold("% Confidence Interval:")))
         graphics::text(x=0.5, y=y4 - pen,    cex=a.cex, col="black", adj=a.adj, bquote(paste("[", .(round(switch(param, alpha=plot.x$ci.alpha[1], discount=plot.x$ci.disc[1]), digits)), ", ", .(round(switch(param, alpha=plot.x$ci.alpha[2], discount=plot.x$ci.disc[2]), digits)), "]")))
+        graphics::text(x=0.5, y=y5,          cex=a.cex, col="black", adj=a.adj, expression(bold("Last Valid Sample:\n")))
+        graphics::text(x=0.5, y=y6,          cex=a.cex, col="black", adj=a.adj, bquote(.(round(switch(param, alpha=plot.x$last.alpha, discount=plot.x$last.disc), digits))))
         if(isTRUE(MH)) {
           rate <- switch(param,              alpha="Acceptance Rate:",          discount="Mutation Rate:")
-          y5   <- switch(param,              alpha=ifelse(tz, 0.4375, 0.35),    discount=0.4375)
-          y6   <- switch(param,              alpha=ifelse(tz, 0.375,  0.2875),  discount=0.375)
-          y7   <- switch(param,              alpha=ifelse(tz, 0.2,    0.1),     discount=0.2)
-          y8   <- y7 + 0.0125
-          graphics::text(x=0.5, y=y5,        cex=a.cex, col="black", adj=a.adj, substitute(bold(rate)))
-          graphics::text(x=0.5, y=y6,        cex=a.cex, col="black", adj=a.adj, bquote(paste(.(round(100 * switch(param, alpha=plot.x$alpha.rate, discount=plot.x$disc.rate), 2)), "%")))
-          graphics::text(x=0.5, y=y7,        cex=a.cex, col="black", adj=a.adj, expression(bold("Last Valid Sample:\n")))
-          graphics::text(x=0.5, y=y8,        cex=a.cex, col="black", adj=a.adj, bquote(.(round(switch(param, alpha=plot.x$last.alpha, discount=plot.x$last.disc), digits))))
+          y7   <- switch(param,              alpha=ifelse(tz, 0.4375, 0.3625),  discount=0.4375)
+          y8   <- switch(param,              alpha=ifelse(tz, 0.375,  0.3125),  discount=0.375)
+          graphics::text(x=0.5, y=y7,        cex=a.cex, col="black", adj=a.adj, substitute(bold(rate)))
+          graphics::text(x=0.5, y=y8,        cex=a.cex, col="black", adj=a.adj, bquote(paste(.(round(100 * switch(param, alpha=plot.x$alpha.rate, discount=plot.x$disc.rate), 2)), "%")))
         }
         if(param == "discount") {
           graphics::text(x=0.5, y=0.125,     cex=a.cex, col="black", adj=a.adj, bquote(bold(hat(kappa)) * bold(" - Posterior Proportion of Zeros:")))
-          graphics::text(x=0.5, y=0.05625,   cex=a.cex, col="black", adj=a.adj, bquote(.(round(plot.x$post.kappa, digits))))
+          graphics::text(x=0.5, y=0.0575,    cex=a.cex, col="black", adj=a.adj, bquote(.(round(plot.x$post.kappa, digits))))
         }
         if(param == "alpha" && tz) {
           graphics::text(x=0.5, y=0.125,     cex=a.cex, col="black", adj=a.adj, bquote(bold(hat(zeta)) * bold(" - Posterior Mean Zeta:")))
-          graphics::text(x=0.5, y=0.05625,   cex=a.cex, col="black", adj=a.adj, bquote(.(round(plot.x$avg.zeta, digits))))
+          graphics::text(x=0.5, y=0.0575,    cex=a.cex, col="black", adj=a.adj, bquote(.(round(plot.x$avg.zeta, digits))))
         }
       }
 
@@ -1044,7 +1041,6 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         graphics::par(mar=c(5.1, 4.1, 4.1, 3.1))
         graphics::plot(plot.x, type=type, ylim=range(yax), col=col.x, yaxt="n", main="Clustering Uncertainty", ylab="Uncertainty", xlab="Observation", pch=ifelse(type == "n", NA, 16), lend=1)
         graphics::lines(x=c(0, n.obs), y=c(oneG, oneG), lty=2, col=3)
-        graphics::axis(1, las=1, pos=0, cex.axis=0.9, lty=0)
         graphics::axis(2, at=yax, labels=replace(yax, length(yax), "1 - 1/G"), las=2, cex.axis=0.9, xpd=TRUE)
         graphics::axis(2, at=oneG, labels="1/G", las=2, xpd=TRUE, side=4, xpd=TRUE)
         if(type == "n")  {

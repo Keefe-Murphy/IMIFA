@@ -14,6 +14,7 @@ mixfaControl(n.iters = 25000L,
   psi.beta = NULL,
   mu.zero = NULL,
   sigma.mu = NULL,
+  prec.mu = 1L,
   sigma.l = 1L,
   z.init = c("mclust", "hc", "kmeans", "list", "priors"),
   z.list = NULL,
@@ -46,13 +47,15 @@ Constraints \emph{may} be particularly useful when \code{N < P}, though caution 
 }
 The first letter \strong{U} here corresponds to constraints on loadings (not yet implemented), the second letter corresponds to uniquenesses constrained/unconstrained across clusters, and the third letter corresponds to the isotropic constraint on the uniquenesses. Of course, only the third letter is of relevance for the single-cluster "\code{FA}" and "\code{IFA}" models, such that "\code{unconstrained}" and "\code{constrained}" are equivalent for these models, and so too are "\code{isotropic}" and "\code{single}".}
 
-\item{psi.alpha}{The shape of the inverse gamma prior on the uniquenesses. Defaults to 2.5.}
+\item{psi.alpha}{The shape of the inverse gamma prior on the uniquenesses. Defaults to 2.5. Must be greater than 1 if \code{psi.beta} is \emph{not} supplied. Otherwise be warned that values less than or equal to 1 may not bound uniquenesses sufficiently far away from 0, and the algorithm may therefore terminate.}
 
 \item{psi.beta}{The rate of the inverse gamma prior on the uniquenesses. Can be either a single parameter, a vector of variable specific rates, or (if \code{psi0g} is \code{TRUE}) a matrix of variable and cluster-specific rates. If this is not supplied, \code{\link{psi_hyper}} is invoked to choose sensible values, depending on the value of \code{uni.prior} and, for the "\code{MFA}" and "\code{MIFA}" models, the value of \code{psi0g}.}
 
 \item{mu.zero}{The mean of the prior distribution for the mean parameter. Either a scalar of a vector of appropriate dimension. Defaults to the sample mean of the data.}
 
 \item{sigma.mu}{The covariance of the prior distribution for the mean parameter. Always assumed to be a diagonal matrix. Can be a scalar times the identity or a vector of appropriate dimension. If supplied as a matrix, only the diagonal elements will be extracted. Defaults to the diagonal entries of the sample covariance matrix.}
+
+\item{prec.mu}{A scalar controlling the degree of flatness of the prior by scaling \code{sigma.mu} (i.e. multiplying every element of \code{sigma.mu} by \code{1/prec.mu}). Lower values lead to a more diffuse prior. Defaults to \code{1}. The user can supply a scaled \code{sigma.mu} directly, but this argument is especially useful when the diagonal default is used for \code{sigma.mu}.}
 
 \item{sigma.l}{A scalar controlling the diagonal covariance of the prior distribution for the loadings. Defaults to 1, i.e. the identity. Only relevant for the finite factor methods.}
 
@@ -81,15 +84,15 @@ A named list in which the names are the names of the arguments and the values ar
 Supplies a list of arguments for use in \code{\link{mcmc_IMIFA}} pertaining to \emph{ALL} methods in the \code{IMIFA} family: eg. MCMC settings, cluster initialisation, generic hyperparameters for factor-analytic mixtures, etc.
 }
 \examples{
-mixfaControl(n.iters=20000, scaling="pareto", uni.type="constrained")
+mfctrl <- mixfaControl(n.iters=200, scaling="pareto",
+                      uni.type="constrained", prec.mu=1E-06)
 
 # data(olive)
-# sim <- mcmc_IMIFA(olive, "IMIFA", mixFA=mixfaControl(n.iters=200,
-#                   scaling="pareto", uni.type="constrained"))
+# sim  <- mcmc_IMIFA(olive, "IMIFA", mixFA=mfctrl)
 
 # Alternatively specify these arguments directly
-# sim <- mcmc_IMIFA(olive, "IMIFA", n.iters=20000,
-#                   scaling="pareto", uni.type="constrained")
+# sim  <- mcmc_IMIFA(olive, "IMIFA", n.iters=20000, prec.mu=1E-06,
+#                    scaling="pareto", uni.type="constrained")
 }
 \seealso{
 \code{\link{mcmc_IMIFA}}, \code{\link{psi_hyper}}

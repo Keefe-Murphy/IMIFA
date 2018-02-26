@@ -580,8 +580,7 @@
       mse.z     <- vapply(seq_len(nrow(zs)), function(i, x=mcclust::cltoSim(zs[i,]) - zsim) tryCatch(suppressWarnings(mean(x * x)), error=function(e) Inf), numeric(1L))
       Z.avg     <- zs[which.min(mse.z),]
       attr(Z.avg, "MSE")  <- min(mse.z)
-      Z.res     <- list(z.sim = as.simple_triplet_matrix(zsim), z.avg = Z.avg, MSE.z = mse.z)
-        Z.res
+        return(list(z.sim  = as.simple_triplet_matrix(zsim), z.avg = Z.avg, MSE.z = mse.z))
     }
 
   # Move 1
@@ -993,10 +992,11 @@
 #' \item{"\code{single}"}{\strong{UCC} - single value equal across clusters and variables: \eqn{\Psi_g = \sigma^2 \mathcal{I}_p}{Psi_g = sigma^2 I_p}.}
 #' }
 #' The first letter \strong{U} here corresponds to constraints on loadings (not yet implemented), the second letter corresponds to uniquenesses constrained/unconstrained across clusters, and the third letter corresponds to the isotropic constraint on the uniquenesses. Of course, only the third letter is of relevance for the single-cluster "\code{FA}" and "\code{IFA}" models, such that "\code{unconstrained}" and "\code{constrained}" are equivalent for these models, and so too are "\code{isotropic}" and "\code{single}".
-#' @param psi.alpha The shape of the inverse gamma prior on the uniquenesses. Defaults to 2.5.
+#' @param psi.alpha The shape of the inverse gamma prior on the uniquenesses. Defaults to 2.5. Must be greater than 1 if \code{psi.beta} is \emph{not} supplied. Otherwise be warned that values less than or equal to 1 may not bound uniquenesses sufficiently far away from 0, and the algorithm may therefore terminate.
 #' @param psi.beta The rate of the inverse gamma prior on the uniquenesses. Can be either a single parameter, a vector of variable specific rates, or (if \code{psi0g} is \code{TRUE}) a matrix of variable and cluster-specific rates. If this is not supplied, \code{\link{psi_hyper}} is invoked to choose sensible values, depending on the value of \code{uni.prior} and, for the "\code{MFA}" and "\code{MIFA}" models, the value of \code{psi0g}.
 #' @param mu.zero The mean of the prior distribution for the mean parameter. Either a scalar of a vector of appropriate dimension. Defaults to the sample mean of the data.
 #' @param sigma.mu The covariance of the prior distribution for the mean parameter. Always assumed to be a diagonal matrix. Can be a scalar times the identity or a vector of appropriate dimension. If supplied as a matrix, only the diagonal elements will be extracted. Defaults to the diagonal entries of the sample covariance matrix.
+#' @param prec.mu A scalar controlling the degree of flatness of the prior by scaling \code{sigma.mu} (i.e. multiplying every element of \code{sigma.mu} by \code{1/prec.mu}). Lower values lead to a more diffuse prior. Defaults to \code{1}. The user can supply a scaled \code{sigma.mu} directly, but this argument is especially useful when the diagonal default is used for \code{sigma.mu}.
 #' @param sigma.l A scalar controlling the diagonal covariance of the prior distribution for the loadings. Defaults to 1, i.e. the identity. Only relevant for the finite factor methods.
 #' @param z.init The method used to initialise the cluster labels. Defaults to \code{\link[mclust]{Mclust}}. Other options include \code{kmeans} (with 100 random starts), hierarchical clustering via \code{\link[mclust]{hc}} (\code{VVV} is used, unless the data is high-dimensional, in which case \code{EII} is used), random initialisation via \code{priors}, and a user-supplied \code{list} (\code{z.list}). Not relevant for the "\code{FA}" and "\code{"IFA"} methods.
 #' @param z.list A user supplied list of cluster labels. Only relevant if \code{z.init == "z.list"}.
@@ -1015,18 +1015,18 @@
 #' @author Keefe Murphy - <\email{keefe.murphy@@ucd.ie}>
 #'
 #' @examples
-#' mixfaControl(n.iters=20000, scaling="pareto", uni.type="constrained")
+#' mfctrl <- mixfaControl(n.iters=200, scaling="pareto",
+#'                       uni.type="constrained", prec.mu=1E-06)
 #'
 #' # data(olive)
-#' # sim <- mcmc_IMIFA(olive, "IMIFA", mixFA=mixfaControl(n.iters=200,
-#' #                   scaling="pareto", uni.type="constrained"))
+#' # sim  <- mcmc_IMIFA(olive, "IMIFA", mixFA=mfctrl)
 #'
 #' # Alternatively specify these arguments directly
-#' # sim <- mcmc_IMIFA(olive, "IMIFA", n.iters=20000,
-#' #                   scaling="pareto", uni.type="constrained")
+#' # sim  <- mcmc_IMIFA(olive, "IMIFA", n.iters=20000, prec.mu=1E-06,
+#' #                    scaling="pareto", uni.type="constrained")
   mixfaControl  <- function(n.iters = 25000L, burnin = n.iters/5, thinning = 2L, centering = TRUE, scaling = c("unit", "pareto", "none"),
                             uni.type = c("unconstrained", "isotropic", "constrained", "single"), psi.alpha = 2.5, psi.beta = NULL, mu.zero = NULL,
-                            sigma.mu = NULL, sigma.l = 1L, z.init = c("mclust", "hc", "kmeans", "list", "priors"), z.list = NULL, equal.pro = FALSE,
+                            sigma.mu = NULL, prec.mu = 1L, sigma.l = 1L, z.init = c("mclust", "hc", "kmeans", "list", "priors"), z.list = NULL, equal.pro = FALSE,
                             uni.prior = c("unconstrained", "isotropic"), mu0g = FALSE, psi0g = FALSE, drop0sd = TRUE, verbose = interactive(), ...) {
     miss.args   <- list(uni.type = missing(uni.type), psi.beta = missing(psi.beta), mu.zero = missing(mu.zero),
                         sigma.mu = missing(sigma.mu), z.init = missing(z.init), z.list = missing(z.list), uni.prior = missing(uni.prior))
@@ -1043,10 +1043,12 @@
        length(centering)   != 1))          stop("'centering' must be a single logical indicator", call.=FALSE)
     if(!all(is.character(scaling)))        stop("'scaling' must be a character vector of length 1", call.=FALSE)
     scaling     <- match.arg(scaling)
+    if(any(!is.numeric(prec.mu),   prec.mu   <= 0,
+       length(prec.mu)     != 1))          stop("'prec.mu' must be a single strictly positive number", call.=FALSE)
     if(!all(is.character(uni.type)))       stop("'uni.type' must be a character vector of length 1", call.=FALSE)
     uni.type    <- match.arg(uni.type)
-    if(any(!is.numeric(psi.alpha), psi.alpha <= 1,
-       length(psi.alpha)   != 1))          stop("'psi.alpha' must be a single number strictly greater than 1 in order to bound uniquenesses away from zero", call.=FALSE)
+    if(any(!is.numeric(psi.alpha), psi.alpha <= 0,
+       length(psi.alpha)   != 1))          stop("'psi.alpha' must be a single strictly positive number", call.=FALSE)
     if(any(!is.numeric(sigma.l),   sigma.l   <= 0,
        length(sigma.l)     != 1))          stop("'sigma.l' must be a single strictly positive number", call.=FALSE)
     if(!all(is.character(z.init)))         stop("'z.init' must be a character vector of length 1", call.=FALSE)
@@ -1063,9 +1065,9 @@
        length(drop0sd)     != 1))          stop("'drop0sd' must be a single logical indicator", call.=FALSE)
     if(any(!is.logical(verbose),
        length(verbose)     != 1))          stop("'verbose' must be a single logical indicator", call.=FALSE)
-    mixfa       <- list(n.iters = n.iters, burnin = burnin, thinning = thinning, centering = centering, scaling = scaling, uni.type = uni.type,
-                        psi.alpha = psi.alpha, psi.beta = psi.beta, mu.zero = mu.zero, sigma.mu = sigma.mu, sigma.l = sigma.l, z.init = z.init,
-                        z.list = z.list, equal.pro = equal.pro, uni.prior = uni.prior, mu0g = mu0g, psi0g = psi0g, drop0sd = drop0sd, verbose = verbose)
+    mixfa       <- list(n.iters = n.iters, burnin = burnin, thinning = thinning, centering = centering, scaling = scaling, uni.type = uni.type, psi.alpha = psi.alpha,
+                        psi.beta = psi.beta, mu.zero = mu.zero, sigma.mu = sigma.mu, prec.mu = prec.mu, sigma.l = sigma.l, z.init = z.init, z.list = z.list,
+                        equal.pro = equal.pro, uni.prior = uni.prior, mu0g = mu0g, psi0g = psi0g, drop0sd = drop0sd, verbose = verbose)
     attr(mixfa, "Missing") <- miss.args
       return(mixfa)
   }
@@ -1120,7 +1122,7 @@
     if(all(length(alpha.hyper)    != 2,
            learn.alpha))                   stop(paste0("'alpha.hyper' must be a vector of length 2, giving the shape and rate hyperparameters of the gamma prior for alpha when 'learn.alpha' is TRUE"), call.=FALSE)
     if(learn.alpha       &&
-       any(alpha.hyper)  <= 0)             stop("The shape and rate of the gamma prior for alpha must both be strictly positive", call.=FALSE)
+       any(alpha.hyper   <= 0))            stop("The shape and rate of the gamma prior for alpha must both be strictly positive", call.=FALSE)
     if(any(!is.logical(learn.d),
            length(learn.d)        != 1))   stop("'learn.d' must be a single logical indicator", call.=FALSE)
     if(all(length(d.hyper)        != 2,
@@ -1284,7 +1286,7 @@
 #' @param pi.switch Logical indicating whether the mixing proportions are to be stored (defaults to \code{TRUE}).
 #' @param ... Catches unused arguments.
 #'
-#' @details \code{\link{storeControl}} is provided for assigning values for IMIFA models within \code{\link{mcmc_IMIFA}}. It may be useful not to store certain parameters if memory is an issue (e.g. for large data sets or for a large number of MCMC iterations after burnin and thinning). Warning: posterior inference and plotting won't be posssible for parameters not stored. In particular, when loadings and uniquenesses are not stored, it will not be possible to estimate covariance matrices and compute error metrics. If loadings are not stored but scores are, caution is advised when examining posterior scores as Procrustes rotation will not occur within \code{\link{get_IMIFA_results}}.
+#' @details \code{\link{storeControl}} is provided for assigning values for IMIFA models within \code{\link{mcmc_IMIFA}}. It may be useful not to store certain parameters if memory is an issue (e.g. for large data sets or for a large number of MCMC iterations after burnin and thinning). Warning: posterior inference and plotting won't be posssible for parameters not stored. In particular, when loadings and uniquenesses are not stored (or when means are not stored, for any of the mixture models), it will not be possible to estimate covariance matrices and compute error metrics. If loadings are not stored but scores are, caution is advised when examining posterior scores as Procrustes rotation will not occur within \code{\link{get_IMIFA_results}}.
 #'
 #' @note Further warning messages may appear when \code{\link{mcmc_IMIFA}} is called depending on the particularities of the data set and the IMIFA method employed etc. as additional checks occur.
 
@@ -1309,6 +1311,23 @@
       if(any(!is.logical(switches)))       stop("All logical parameter storage switches must be single logical indicators", call.=FALSE)
         switches
    }
+
+#' Show the NEWS file
+#'
+#' Show the \code{NEWS} file of the \code{IMIFA} package.
+#' @param what A character string specifying whether the \code{"html"} (default) or Markdown \code{"md"} format is to be shown.
+#' @return The \code{IMIFA} \code{NEWS} file in the desired format.
+#' @export
+#' @keywords utility
+#'
+#' @examples
+#' IMIFA_news()
+  IMIFA_news    <- function(what = c("html", "md")) {
+    if(!missing(what) && (length(what) > 1 ||
+       !is.character(what)))               stop("'what' must be a single character string", call.=FALSE)
+    newsfile    <- file.path(system.file(package  = "IMIFA"), switch(EXPR=match.arg(what), html="NEWS.html", "NEWS.md"))
+      file.show(newsfile)
+  }
 
   # Other Hidden Functions
     .a_drop     <- function(x, drop = TRUE, named.vector = TRUE, one.d.array = FALSE, ...) {
