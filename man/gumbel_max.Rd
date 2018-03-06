@@ -4,7 +4,8 @@
 \alias{gumbel_max}
 \title{Simulate Cluster Labels from Unnormalised Log-Probabilities using the Gumbel-Max Trick}
 \usage{
-gumbel_max(probs, slice = FALSE)
+gumbel_max(probs,
+           slice = FALSE)
 }
 \arguments{
 \item{probs}{An N x G matrix of unnormalised probabilities on the log scale, where N is he number of observations that require labels to be sampled and G is the number of active clusters s.t. sampled labels can take values in \code{1:G}. Typically \code{N > G}.}
@@ -47,7 +48,7 @@ If the normalising constant is required for another reason, e.g. to compute the 
   (zs     <- gumbel_max(probs=log(weights)))
 }
 \references{
-Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010}{arXiv:1701.07010}>.
+Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
 
 Yellot, J. I. Jr. (1977) The relationship between Luce's choice axiom, Thurstone's theory of comparative judgment, and the double exponential distribution, \emph{Journal of Mathematical Psychology}, 15: 109-144.
 }

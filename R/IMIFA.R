@@ -30,10 +30,10 @@
 #'
 #' \strong{Maintainer}: Keefe Murphy - <\email{keefe.murphy@@ucd.ie}>
 #' @section References:
-#' Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010}{arXiv:1701.07010}>.
+#' Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
 #'
 #' @section See Also:
-#' Further details and examples are given in the associated vignette document:
+#' Further details and examples are given in the associated vignette document:\cr
 #' \code{vignette("IMIFA", package = "IMIFA")}
 #' @docType package
 #' @keywords package

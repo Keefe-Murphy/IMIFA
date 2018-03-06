@@ -30,14 +30,34 @@
 #' @export
 #' @note Supplying the argument \code{zlabels} does \strong{not} have the same effect of reordering the sampled parameters as it does if supplied directly to \code{\link{get_IMIFA_results}}.
 #' @keywords plotting main
-#' @importFrom Rfast "Order" "med" "colMedians"
+#' @importFrom Rfast "med" "colMedians"
 #' @importFrom mclust "classError"
 #' @importFrom viridis "viridis"
 #' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{get_IMIFA_results}}, \code{\link{mat2cols}}, \code{\link{plot_cols}}
-#' @references Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010}{arXiv:1701.07010}>.
+#' @references Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
 #'
 #' @author Keefe Murphy - <\email{keefe.murphy@@ucd.ie}>
-#'
+#' @usage
+#' \method{plot}{Results_IMIFA}(x,
+#'      plot.meth = c("all", "correlation", "density", "errors", "GQ",
+#'                    "means", "parallel.coords", "trace", "zlabels"),
+#'      param = c("means", "scores", "loadings", "uniquenesses",
+#'                "pis", "alpha", "discount"),
+#'      g = NULL,
+#'      mat = TRUE,
+#'      zlabels = NULL,
+#'      heat.map = TRUE,
+#'      show.last = FALSE,
+#'      palette = NULL,
+#'      ind = NULL,
+#'      fac = NULL,
+#'      by.fac = FALSE,
+#'      type = c("h", "n", "p", "l"),
+#'      intervals = TRUE,
+#'      partial = FALSE,
+#'      titles = TRUE,
+#'      transparency = 0.75,
+#'      ...)
 #' @examples
 #' # See the vignette associated with the package for more graphical examples:
 #' # vignette("IMIFA", package = "IMIFA")
@@ -67,13 +87,13 @@
 #' # plot(resIMIFA, plot.meth="parallel.coords", param="uniquenesses")
 #' # plot(resIMIFA, plot.meth="all", param="pis", intervals=FALSE, partial=TRUE)
 #' # plot(resIMIFA, plot.meth="all", param="alpha")
-plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "density", "errors", "GQ", "means", "parallel.coords", "trace", "zlabels"), param = c("means", "scores", "loadings", "uniquenesses", "pis", "alpha", "discount"), g = NULL,
+plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density", "errors", "GQ", "means", "parallel.coords", "trace", "zlabels"), param = c("means", "scores", "loadings", "uniquenesses", "pis", "alpha", "discount"), g = NULL,
                                 mat = TRUE, zlabels = NULL, heat.map = TRUE, show.last = FALSE, palette = NULL, ind = NULL, fac = NULL, by.fac = FALSE, type = c("h", "n", "p", "l"), intervals = TRUE, partial = FALSE, titles = TRUE, transparency = 0.75, ...) {
 
   if(missing(x))                      stop("'x' must be supplied", call.=FALSE)
   if(!exists(deparse(substitute(x)),
              envir=.GlobalEnv))       stop(paste0("Object ", match.call()$x, " not found\n"), call.=FALSE)
-  if(class(x) != "Results_IMIFA")     stop(paste0("Results object of class 'Results_IMIFA' must be supplied"), call.=FALSE)
+  if(class(x) != "Results_IMIFA")     stop("Results object of class 'Results_IMIFA' must be supplied", call.=FALSE)
   GQ.res  <- x$GQ.results
   G       <- GQ.res$G
   Gseq    <- seq_len(G)
@@ -170,7 +190,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
   mat     <- ifelse(n.var == 1, FALSE, mat)
   z.miss  <- missing(zlabels)
   if(!z.miss) {
-    if(all(!is.factor(zlabels), !is.numeric(zlabels)) ||
+    if(all(!is.factor(zlabels), !is.logical(zlabels), !is.numeric(zlabels)) ||
      length(zlabels) != n.obs)        stop(paste0("'zlabels' must be a factor of length N=",  n.obs), call.=FALSE)
   }
 
@@ -619,9 +639,12 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
           graphics::polygon(c(min(fitx), fitx), c(0, fity), col=grey, border=NA)
           if(intervals) {
             D  <- plot.x$post.disc
-            graphics::clip(D, D, 0, fity[which.min(abs(fitx - D))])
-            graphics::abline(v=D, col=2, lty=2)
-            graphics::clip(usr[1], usr[2], usr[3], usr[4])
+            d2 <- fity[which.min(abs(fitx - D))]
+            if(is.finite(d2)) {
+              graphics::clip(D, D, 0, d2)
+              graphics::abline(v=D, col=2, lty=2)
+              graphics::clip(usr[1], usr[2], usr[3], usr[4])
+            }
           }
         } else {                      warning("Mutation rate too low: can't plot density", call.=FALSE)
           if(all.ind) graphics::plot.new()
@@ -892,7 +915,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         missG  <- setdiff(rangeG, G.name)
         missG  <- stats::setNames(rep(NA, length(missG)), as.character(missG))
         plot.G <- c(plot.G, missG)
-        plot.G <- plot.G[Order(as.numeric(names(plot.G)))]
+        plot.G <- plot.G[order(as.numeric(names(plot.G)))]
         col.G  <- c(1, ceiling(length(palette)/2))[(rangeG == G) + 1]
         G.plot <- graphics::barplot(plot.G, ylab="Frequency", xaxt="n", col=col.G)
         if(titles) graphics::title(main=list("Posterior Distribution of G"))
@@ -911,13 +934,14 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         missQ  <- setdiff(rangeQ, Q.name)
         missQ  <- stats::setNames(rep(NA, length(missQ)), as.character(missQ))
         plot.Q <- c(plot.Q, missQ)
-        plot.Q <- plot.Q[Order(as.numeric(names(plot.Q)))]
+        plot.Q <- plot.Q[order(as.numeric(names(plot.Q)))]
         col.Q  <- c(1, ceiling(length(palette)/2))[(rangeQ == Q) + 1]
         Q.plot <- graphics::barplot(plot.Q, ylab="Frequency", xaxt="n", col=col.Q)
         if(titles) graphics::title(main=list("Posterior Distribution of Q"))
         graphics::axis(1, at=Q.plot, labels=names(plot.Q), tick=FALSE)
         graphics::axis(1, at=med(Q.plot), labels="Q", tick=FALSE, line=1.5)
       } else {
+        if(mispal) grDevices::palette(viridis(max(G, Q.max), alpha=transparency))
         graphics::layout(1)
         graphics::par(mar=c(5.1, 4.1, 4.1, 2.1))
         plot.Q <- GQ.res$Q.Counts
@@ -928,7 +952,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         missQ  <- lapply(Gseq, function(g) setdiff(rangeQ, as.numeric(Q.name[[g]])))
         missQ  <- lapply(Gseq, function(g) stats::setNames(rep(NA, length(missQ[[g]])), as.character(missQ[[g]])))
         plot.Q <- lapply(Gseq, function(g) c(plot.Q[[g]], missQ[[g]]))
-        plot.Q <- do.call(rbind, lapply(Gseq, function(g) plot.Q[[g]][Order(as.numeric(names(plot.Q[[g]])))]))
+        plot.Q <- do.call(rbind, lapply(Gseq, function(g) plot.Q[[g]][order(as.numeric(names(plot.Q[[g]])))]))
         if(titles)  {
           graphics::layout(rbind(1, 2), heights=c(9, 1))
           graphics::par(mar=c(3.1, 4.1, 4.1, 2.1))
@@ -1050,7 +1074,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         }
       } else if(g == 2)  {
         graphics::par(mar=c(5.1, 4.1, 4.1, 3.1))
-        x.ord   <- order(plot.x, decreasing=FALSE)
+        x.ord   <- order(plot.x)
         x.plot  <- plot.x[x.ord]
         graphics::plot(x.plot, type="n", ylim=c(-max(x.plot)/32, max(yax)), main="Clustering Uncertainty Profile", ylab="Uncertainty", xaxt="n", yaxt="n", xlab="Observations in order of increasing uncertainty")
         graphics::lines(x=c(0, n.obs), y=c(oneG, oneG), lty=2, col=3)
@@ -1061,8 +1085,9 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
         graphics::lines(x.plot)
         graphics::lines(x=c(0, n.obs), y=c(0, 0), lty=3, col=grey)
         if(mind) {
+          Nseq   <- (seq_len(n.obs))
           for(i in prf$misclassified)  {
-            x    <- (seq_len(n.obs))[x.ord == i]
+            x    <- Nseq[x.ord == i]
             graphics::lines(c(x, x), c(-max(plot.x)/32, plot.x[i]), lty=1, col=3, lend=1)
           }
         }
@@ -1086,7 +1111,7 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
 
       if(all(g  == 4, z.sim)) {
         plot.x  <- as.matrix(clust$Z.avgsim$z.sim)
-        perm    <- Order(clust$MAP)
+        perm    <- order(clust$MAP)
         plot.x  <- if((p.ind <- !identical(perm, clust$MAP))) plot.x[perm,perm] else plot.x
         plot.x  <- t(plot.x[,seq(from=ncol(plot.x), to=1, by=-1)])
         graphics::par(defpar)
@@ -1311,6 +1336,14 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
 #'
 #' @seealso \code{\link{plot_cols}}, \code{\link{heat_legend}}, \code{\link{is.cols}}
 #'
+#' @usage
+#' mat2cols(mat,
+#'          cols = NULL,
+#'          compare = FALSE,
+#'          byrank = FALSE,
+#'          breaks = NULL,
+#'          na.col = "#808080FF",
+#'          transparency = 1)
 #' @examples
 #' # Generate a colour matrix using mat2cols()
 #' mat      <- matrix(rnorm(100), nrow=10, ncol=10)
@@ -1426,11 +1459,15 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
 #' @param cols The palette used when the heatmap was created.
 #' @param cex.lab Magnification of axis annotation, indicating the amount by which plotting text and symbols should be scaled relative to the default of 1.
 #'
-#' @return Modifies an existing plot by adding a legend.
+#' @return Modifies an existing plot by adding a colour-key legend.
 #' @export
 #' @keywords plotting
 #'
 #' @seealso \code{\link[graphics]{image}}, \code{\link{plot_cols}}, \code{\link{mat2cols}}, \code{\link{is.cols}}
+#' @usage
+#' heat_legend(data,
+#'             cols,
+#'             cex.lab = 1)
 #' @examples
 #' # Generate a matrix, flip it, and plot it with a legend
 #' data <- matrix(rnorm(50), nrow=10, ncol=5)
@@ -1484,9 +1521,12 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
 #' @note Requires use of the \code{Rmpfr} and \code{gmp} libraries; may encounter difficulty and slowness for large \code{N}, especially with non-zero \code{discount} values.
 #'
 #' @author Keefe Murphy - <\email{keefe.murphy@@ucd.ie}>
-#'
+#' @usage
+#' G_priorDensity(N,
+#'                alpha,
+#'                discount = 0,
+#'                show.plot = TRUE)
 #' @examples
-#'
 #' # Plot Dirichlet process priors for different values of alpha
 #' (DP   <- G_priorDensity(N=50, alpha=c(3, 10, 25)))
 #'
@@ -1578,7 +1618,18 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
 #' @export
 #'
 #' @seealso \code{\link{mat2cols}}, \code{\link[graphics]{image}}, \code{\link{heat_legend}}, \code{\link{is.cols}}
-#'
+#' @usage
+#' plot_cols(cmat,
+#'           na.col = "#808080FF",
+#'           ptype = c("image", "points"),
+#'           border.col = "#808080FF",
+#'           dlabels = NULL,
+#'           rlabels = FALSE,
+#'           clabels = FALSE,
+#'           pch = 15,
+#'           cex = 3,
+#'           label.cex = 0.6,
+#'           ...)
 #' @examples
 #' # Generate a colour matrix using mat2cols()
 #' mat      <- matrix(rnorm(100), nrow=10, ncol=10)
@@ -1623,5 +1674,104 @@ plot.Results_IMIFA  <- function(x = NULL, plot.meth = c("all", "correlation", "d
       graphics::text(seq_len(Nd), Nd:1, dlabels, cex = label.cex)
     }
     graphics::box(col = border.col)
+  }
+
+#' Show image of grayscale grid
+#'
+#' Plots an image of a grayscale grid representation of a digit.
+#' @param dat A \code{matrix} or \code{data.frame} with the same number of rows and columns (or a vector which can be coerced to such a format), representing a grayscale map of a single digit.
+#' @param col The colour scale to be used. Defaults to \code{grey(seq(1, 0, length = nrow(dat)))}.
+#' @param ... Additional arguments to be passed to \code{\link[graphics]{image}}.
+#'
+#' @return The desired image representation of the digit.
+#' @export
+#' @seealso \code{\link{USPSdigits}}, \code{\link{show_IMIFA_digit}}
+#' @keywords plotting
+#' @author Keefe Murphy - <\email{keefe.murphy@@ucd.ie}>
+#' @usage
+#' show_digit(dat,
+#'            col = NULL,
+#'            ...)
+#' @examples
+#' data(USPSdigits)
+#'
+#' # Plot the first digit
+#' show_digit(USPSdigits$train[1,-1])
+#'
+#' # Visualise the overall mean
+#' show_digit(colMeans(USPSdigits$train[,-1]))
+  show_digit   <- function(dat, col = NULL, ...) {
+    x          <- if(df <- !is.data.frame(dat)) dat else as.matrix(dat)
+    dims       <- ifelse(is.matrix(dat), ncol(dat), length(dat))
+    col        <- if(!missing(col))             col else grDevices::grey(seq(1, 0, length = dims))
+    if(!all(is.cols(col)))            stop("Invalid 'col'", call. = FALSE)
+    dims       <- sqrt(dims)
+    x          <- if(is.matrix(dat) && df)      dat else matrix(unlist(dat), nrow = dims, ncol = dims)
+    if(nrow(x) != ncol(x))            stop("'dat' must be coercible to a square matrix", call. = FALSE)
+    graphics::image(matrix(x, nrow = dims)[,dims:1], col = col, ...)
+    graphics::box(lwd = 1)
+      invisible()
+  }
+
+#' Plot the posterior mean image
+#'
+#' Plots the posterior mean of a given cluster from an \code{"IMIFA"}-related model fit to a digit data set in the form of a square grayscale grid.
+#' @param res An object of class "\code{Results_IMIFA}" generated by \code{\link{get_IMIFA_results}}.
+#' @param G The index of the cluster for which the posterior mean digit is to be represented.
+#' @param what A switch controlling whether the \code{"mean"} or \code{"last"} valid sample is to be plotted.
+#' @param dat The full grayscale grid data set. Necessary when \code{ind} is supplied or if pixels with standard deviation of 0 exist in the data set (which will have been automatically removed by \code{\link{mcmc_IMIFA}}).
+#' @param ind The index of columns of \code{dat} which were discarded prior to fitting the \code{"IMIFA"}-related model via \code{\link{mcmc_IMIFA}}. Can be a vector of column indices of \code{dat} or an equivalent vector of logicals. The discarded pixels are replaced by the column-means corresponding to \code{ind} among images assigned to the given cluster \code{G}.
+#' @param ... Additional arguments to be passed, via \code{\link{show_digit}}, to \code{\link[graphics]{image}}.
+#'
+#' @return The desired image representation of the posterior mean digit (or the last valid sample) from the desired cluster.
+#' @details This function is a wrapper to \code{\link{show_digit}} which supplies the posterior mean digit of a given cluster from a \code{"IMIFA"} model.
+#' @importFrom matrixStats "colMeans2"
+#' @export
+#' @seealso \code{\link{USPSdigits}}, \code{\link{show_digit}}, \code{\link{get_IMIFA_results}}, \code{\link{mcmc_IMIFA}}
+#' @keywords plotting
+#' @author Keefe Murphy - <\email{keefe.murphy@@ucd.ie}>
+#' @usage
+#' show_IMIFA_digit(res,
+#'                  G = 1,
+#'                  what = c("mean", "last"),
+#'                  dat = NULL,
+#'                  ind = NULL,
+#'                  ...)
+#' @examples
+#' \dontrun{
+#' # Load the USPS data and discard peripheral digits
+#' data(USPSdigits)
+#' ylab  <- USPSdigits$train[,1]
+#' train <- USPSdigits$train[,-1]
+#' ind   <- apply(train, 2, sd) > 0.7
+#' dat   <- train[,ind]
+#'
+#' # Fit an IMIFA model (warning: quite slow!)
+#' # sim <- mcmc_IMIFA(dat, n.iters=100, prec.mu=1e-03, z.init="kmeans",
+#'                     centering=FALSE, scaling="none")
+#' # res <- get_IMIFA_results(sim, zlabels=ylab, z.avgsim=FALSE)
+#'
+#' # Examine the posterior mean image of the first two clusters
+#' show_IMIFA_digit(res, dat=train, ind=ind)
+#' show_IMIFA_digit(res, dat=train, ind=ind, G=2)}
+  show_IMIFA_digit <- function(res, G = 1, what = c("mean", "last"), dat = NULL, ind = NULL, ...) {
+    UseMethod("show_IMIFA_digit")
+  }
+
+#' @importFrom matrixStats "colMeans2"
+#' @export
+  show_IMIFA_digit.Results_IMIFA <- function(res, G = 1, what = c("mean", "last"), dat = NULL, ind = NULL, ...) {
+    if(class(res) != "Results_IMIFA") stop("Results object of class 'Results_IMIFA' must be supplied", call. = FALSE)
+    if(G > res$GQ.results$G)          stop("Invalid 'G'", call. = FALSE)
+    if(!all(is.character(what)))      stop("'what' must be a character vector of length 1", call. = FALSE)
+    sd0        <- if(missing(ind)) drop else if(is.logical(ind)) !ind else !(seq_len(ncol(dat)) %in% ind)
+    mu         <- switch(match.arg(what), mean = res$Means$post.mu[,G], last = res$Means$last.mu[,G])
+    if(!is.null(sd0)) {
+      if(missing(dat))                stop("'dat' must be supplied when pixels were discarded &/or 'ind' is supplied", call. = FALSE)
+      x        <- rep(NA, ncol(dat))
+      x[sd0]   <- colMeans2(data.matrix(dat)[res$Clust$MAP == G,sd0, drop=FALSE])
+      x[!sd0]  <- mu
+    } else x   <- mu
+      show_digit(x, ...)
   }
 #

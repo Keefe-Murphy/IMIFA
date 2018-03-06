@@ -4,7 +4,10 @@
 \alias{shift_GA}
 \title{Moment Matching Parameters of Shifted Gamma Distributions}
 \usage{
-shift_GA(shape, rate, shift = 0L, param = c("rate", "scale"))
+shift_GA(shape,
+         rate,
+         shift = 0L,
+         param = c("rate", "scale"))
 }
 \arguments{
 \item{shape, rate}{Shape and rate parameters a and b, respectibely, of a Gamma(a, b) distribution. Both must be strictly positive.}

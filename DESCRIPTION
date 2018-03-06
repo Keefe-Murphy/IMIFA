@@ -6,8 +6,8 @@ Version: 1.4.0
 Authors@R: c(person("Keefe", "Murphy", email = "keefe.murphy@ucd.ie", role = c("aut", "cre")),
              person("Isobel Claire", "Gormley", email = "claire.gormley@ucd.ie", role = "ctb"),
              person("Cinzia", "Viroli", email = "cinzia.viroli@unibo.it", role = "ctb"))
-Description: Provides flexible Bayesian estimation of Infinite Mixtures of Infinite Factor Analysers and related models, for nonparametrically clustering high-dimensional data, introduced by Murphy et al. (2017) <arXiv:1701.07010>. The IMIFA model conducts Bayesian nonparametric model-based clustering with factor analytic covariance structures without recourse to model selection criteria to choose the number of clusters or cluster-specific latent factors, mostly via efficient Gibbs updates. Model-specific diagnostic tools are also provided, as well as many options for plotting results and conducting posterior inference on parameters of interest.
-Depends: R (>= 3.3.2)
+Depends: R (>= 3.3.0)
+Description: Provides flexible Bayesian estimation of Infinite Mixtures of Infinite Factor Analysers and related models, for nonparametrically clustering high-dimensional data, introduced by Murphy et al. (2017) <arXiv:1701.07010v4>. The IMIFA model conducts Bayesian nonparametric model-based clustering with factor analytic covariance structures without recourse to model selection criteria to choose the number of clusters or cluster-specific latent factors, mostly via efficient Gibbs updates. Model-specific diagnostic tools are also provided, as well as many options for plotting results and conducting posterior inference on parameters of interest.
 License: GPL (>= 2)
 Encoding: UTF-8
 URL: https://cran.r-project.org/package=IMIFA
@@ -23,9 +23,25 @@ Imports:
 Suggests:
     gmp,
     knitr,
-    methods,
     mcclust,
+    methods,
     rmarkdown,
     Rmpfr
 RoxygenNote: 6.0.1
 VignetteBuilder: knitr
+Collate: 
+    'MainFunction.R'
+    'Diagnostics.R'
+    'FullConditionals.R'
+    'Gibbs_FA.R'
+    'Gibbs_IFA.R'
+    'Gibbs_IMFA.R'
+    'Gibbs_IMIFA.R'
+    'Gibbs_MFA.R'
+    'Gibbs_MIFA.R'
+    'Gibbs_OMFA.R'
+    'Gibbs_OMIFA.R'
+    'IMIFA.R'
+    'PlottingFunctions.R'
+    'SimulateData.R'
+    'data.R'

@@ -4,13 +4,19 @@
 \alias{storeControl}
 \title{Set storage values for use with the IMIFA family of models}
 \usage{
-storeControl(mu.switch = TRUE, score.switch = TRUE, load.switch = TRUE,
-  psi.switch = TRUE, pi.switch = TRUE, ...)
+storeControl(mu.switch = TRUE,
+             score.switch = TRUE,
+             load.switch = TRUE,
+             psi.switch = TRUE,
+             pi.switch = TRUE,
+             ...)
 }
 \arguments{
 \item{mu.switch}{Logical indicating whether the means are to be stored (defaults to \code{TRUE}).}
 
-\item{score.switch}{Logical indicating whether the factor scores are to be stored. As the array containing each sampled scores matrix tends to be amongst the largest objects to be stored, this defaults to \code{FALSE} inside \code{\link{mcmc_IMIFA}} when \code{length(range.G) * length(range.Q) > 10}, otherwise the default is \code{TRUE}. For the "\code{MIFA}", "\code{OMIFA}", and "\code{IMIFA}" methods, setting this switch to \code{FALSE} also offers a slight speed-up.}
+\item{score.switch}{Logical indicating whether the factor scores are to be stored.
+
+As the array containing each sampled scores matrix tends to be amongst the largest objects to be stored, this defaults to \code{FALSE} inside \code{\link{mcmc_IMIFA}} when \code{length(range.G) * length(range.Q) > 10}, otherwise the default is \code{TRUE}. For the "\code{MIFA}", "\code{OMIFA}", and "\code{IMIFA}" methods, setting this switch to \code{FALSE} also offers a slight speed-up.}
 
 \item{load.switch}{Logical indicating whether the factor loadings are to be stored (defaults to \code{TRUE}).}
 

@@ -12,11 +12,22 @@
 #'
 #' @return Invisibly returns a \code{data.frame} with \code{N} observations (rows) of \code{P} variables (columns). The true values of the parameters which generated these data are also stored as attributes.
 #' @export
+#' @references Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
 #' @keywords utility
 #' @importFrom Rfast "is.symmetric"
 #'
 #' @author Keefe Murphy - <\email{keefe.murphy@@ucd.ie}>
-#'
+#' @usage
+#' sim_IMIFA_data(N = 300L,
+#'                G = 3L,
+#'                P = 50L,
+#'                Q = rep(floor(log(P)), G),
+#'                pis = rep(1/G, G),
+#'                mu = NULL,
+#'                psi = NULL,
+#'                nn = NULL,
+#'                loc.diff = 1L,
+#'                method = c("conditional", "marginal"))
 #' @examples
 #' # Simulate 100 observations from 3 balanced clusters with cluster-specific numbers of latent factors
 #' # Specify isotropic uniquenesses within each cluster
@@ -31,7 +42,7 @@
 #' # tmp      <- mcmc_IMIFA(sim_data, method="MIFA", range.G=3, n.iters=5000)
 #' @seealso \code{\link{mcmc_IMIFA}} for fitting an IMIFA related model to the simulated data set.
 sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(floor(log(P)), G), pis = rep(1/G, G), mu = NULL,
-                           psi = NULL, nn = NULL, loc.diff = 1, method = c("conditional", "marginal")) {
+                           psi = NULL, nn = NULL, loc.diff = 1L, method = c("conditional", "marginal")) {
 
   N            <- as.integer(N)
   G            <- as.integer(G)

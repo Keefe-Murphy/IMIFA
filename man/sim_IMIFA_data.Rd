@@ -5,15 +5,15 @@
 \title{Simulate Data from a Mixture of Factor Analysers Structure}
 \usage{
 sim_IMIFA_data(N = 300L,
-  G = 3L,
-  P = 50L,
-  Q = rep(floor(log(P)), G),
-  pis = rep(1/G, G),
-  mu = NULL,
-  psi = NULL,
-  nn = NULL,
-  loc.diff = 1,
-  method = c("conditional", "marginal"))
+               G = 3L,
+               P = 50L,
+               Q = rep(floor(log(P)), G),
+               pis = rep(1/G, G),
+               mu = NULL,
+               psi = NULL,
+               nn = NULL,
+               loc.diff = 1L,
+               method = c("conditional", "marginal"))
 }
 \arguments{
 \item{N, G, P}{Desired overall number of observations, number of clusters, and number of variables in the simulated data set. All must be a single integer.}
@@ -50,6 +50,9 @@ plot(cmdscale(dist(sim_data), k=2), col=labels)
 
 # Fit a MIFA model to this data
 # tmp      <- mcmc_IMIFA(sim_data, method="MIFA", range.G=3, n.iters=5000)
+}
+\references{
+Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
 }
 \seealso{
 \code{\link{mcmc_IMIFA}} for fitting an IMIFA related model to the simulated data set.

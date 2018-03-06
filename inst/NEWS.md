@@ -29,16 +29,19 @@ __Infinite Mixtures of Infinite Factor Analysers__
 * Added new type of clustering uncertainty profile plot in `plot.Results_IMIFA` when `plot.meth="zlabels"`.
 
 ### Improvements
-* `Zsimilarity` sped-up via the `comp.psm` & `cltoSim` functions s.t. when # observations < 1000,
+* Retired args. `nu` & `nuplus1` to `mgpControl`, replaced by ability to specify more general gamma prior,  
+  via new `phi.hyper` arg. specifying shape _and_ rate - `mgp_check` has also been modified accordingly.
+* `Zsimilarity` sped-up via the `comp.psm` & `cltoSim` functions s.t. when # observations < 1000,  
   `z.avgsim=TRUE` now by default in `get_IMIFA_results` when suggested `mcclust` package is loaded.
 * Modified AGS to better account for when the number of group-specific latent factors shrinks to zero.
 * `mixfaControl` gains the arg. `prec.mu` to control the degree of flatness of the prior for the means.
 * `psi.alpha` no longer needs to be strictly greater than 1, unless the default `psi.beta` is invoked;  
   thus flatter inverse gamma priors can now be specified for the uniquenesses via `mixfaControl`.
 * Added "`hc`" option to `z.init` to initialise allocations via hierarchical clustering (using `mclust::hc`).
+* Allowed optional args. for functions used to initialise allocations via `...` in `mixfaControl`.
 * Added `mu` argument to `sim_IMIFA_data` to allow supplying true mean parameter values directly.
 * Standard deviation of `aicm`/`bicm` model selection criteria now computed and returned.
-* Speed-ups due to new `Rfast` utility functions: `colTabulate`, `matrnorm`, & `Order`.
+* Speed-ups due to new `Rfast` utility functions: `colTabulate` & `matrnorm`.
 * Speed-ups due to utility functions from `matrixStats`, on which `IMIFA` already depends.
 * Slight improvements when `adapt=FALSE` for infinite factor models with fixed high truncation level.
 * Misclassified observations now highlighted in 1st type of uncertainty plot in `Plot.Results_IMIFA`,  
@@ -73,6 +76,8 @@ __Infinite Mixtures of Infinite Factor Analysers__
 * Fixed calculating posterior mean `zeta` when adaptively targeting `alpha`'s optimal MH acceptance rate.
 * Minor label-switching fix when `zlabels` are supplied to `get_IMIFA_results()` & MAP has empty clusters.
 * Normalised mixing proportions in `get_IMIFA_results` when conditioning on `G` for IM(I)FA/OM(I)FA models.
+* Allowed `alpha` to be tiny for the (O)M(I)FA models (provided `z.init != "priors"` for the M(I)FA models).
+* New controls/warnings for excessively small Gamma hyperparemeters for uniqueness/local shrinkage priors.
 * Clarified recommendation in `MGP_check` that `alpha.d2` be moderately large relative to `alpha.d1`.
 * Ensured `sigma.mu` hyperparameter arg. is always coerced to diagonal entries of a covariance matrix.
 * Transparency default in `plot.Results_IMIFA` now depends on device's support of semi-transparency.
@@ -81,13 +86,18 @@ __Infinite Mixtures of Infinite Factor Analysers__
 * `Ledermann()`, `MGP_check`, and `PGMM_dfree` are now properly vectorised.
 
 ### Miscellaneous Edits
+* Added `USPSdigits` data set (training and test),  
+  with associated utility functions `show_digit` and `show_IMIFA_digit`.
 * Optimised compression of `olive`, `coffee` and vignette data and used `LazyData: true`.
 * Added `call.=FALSE` to `stop()` messages and `immediate.=TRUE` to certain `warning()` calls.
 * Removed dependency on`adrop`, `e1071`, `graphics`, `grDevices`, `plotrix`, `stats` & `utils` libraries.
 * Reduced dependency on `Rfast` w/ own versions of `colVars`, `rowVars`, & `standardise`.
 * Added utility function `IMIFA_news` for accessing this `NEWS` file.
 * Added `CITATION` file.
-* Extensively improved package help documentation.
+* Extensively improved package documentation: 
+    * Added `Collate:` field to `DESCRIPTION` file.
+    * Added line-breaks to `usage` sections of multi-argument functions.
+    * Consolidated help files for `G_expected` & `G_variance`.
 
 ## IMIFA v1.3.1 - (_5<sup>th</sup> release [patch update]: 2017-07-07_)
 ### Bug Fixes

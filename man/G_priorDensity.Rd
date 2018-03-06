@@ -4,7 +4,10 @@
 \alias{G_priorDensity}
 \title{Plot Dirichlet / Pitman-Yor process Priors}
 \usage{
-G_priorDensity(N, alpha, discount = 0, show.plot = TRUE)
+G_priorDensity(N,
+               alpha,
+               discount = 0,
+               show.plot = TRUE)
 }
 \arguments{
 \item{N}{The sample size.}
@@ -30,7 +33,6 @@ The actual density values are returned invisibly. Therefore, they can be visuali
 Requires use of the \code{Rmpfr} and \code{gmp} libraries; may encounter difficulty and slowness for large \code{N}, especially with non-zero \code{discount} values.
 }
 \examples{
-
 # Plot Dirichlet process priors for different values of alpha
 (DP   <- G_priorDensity(N=50, alpha=c(3, 10, 25)))
 

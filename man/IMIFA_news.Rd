@@ -4,13 +4,10 @@
 \alias{IMIFA_news}
 \title{Show the NEWS file}
 \usage{
-IMIFA_news(what = c("html", "md"))
-}
-\arguments{
-\item{what}{A character string specifying whether the \code{"html"} (default) or Markdown \code{"md"} format is to be shown.}
+IMIFA_news()
 }
 \value{
-The \code{IMIFA} \code{NEWS} file in the desired format.
+The \code{IMIFA} \code{NEWS} file, provided the session is interactive.
 }
 \description{
 Show the \code{NEWS} file of the \code{IMIFA} package.

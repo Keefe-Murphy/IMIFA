@@ -4,8 +4,13 @@
 \alias{mat2cols}
 \title{Convert a numeric matrix to colours}
 \usage{
-mat2cols(mat, cols = NULL, compare = FALSE, byrank = FALSE,
-  breaks = NULL, na.col = "#808080FF", transparency = 1)
+mat2cols(mat,
+         cols = NULL,
+         compare = FALSE,
+         byrank = FALSE,
+         breaks = NULL,
+         na.col = "#808080FF",
+         transparency = 1)
 }
 \arguments{
 \item{mat}{Either a matrix or, when \code{compare} is \code{TRUE}, a list of matrices.}

@@ -4,7 +4,9 @@
 \alias{heat_legend}
 \title{Add a colour key legend to heatmap plots}
 \usage{
-heat_legend(data, cols, cex.lab = 1)
+heat_legend(data,
+            cols,
+            cex.lab = 1)
 }
 \arguments{
 \item{data}{Either the data with which the heatmap was created or a vector containing its minimum and maximum values. Missing values are ignored.}
@@ -14,7 +16,7 @@ heat_legend(data, cols, cex.lab = 1)
 \item{cex.lab}{Magnification of axis annotation, indicating the amount by which plotting text and symbols should be scaled relative to the default of 1.}
 }
 \value{
-Modifies an existing plot by adding a legend.
+Modifies an existing plot by adding a colour-key legend.
 }
 \description{
 Using only base graphics, this function appends a colour key legend for heatmaps produced by, for instance, \code{\link{plot_cols}} or \code{\link[graphics]{image}}.

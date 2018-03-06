@@ -116,7 +116,7 @@
     }
     psi.inv[psi.inv == 0]    <- colMaxs(psi.inv[,which(psi.inv == 0, arr.ind=TRUE)[,2], drop=FALSE], value=TRUE)
     l.sigma          <- diag(1/sigma.l, Q)
-    index            <- Order(pi.prop, descending=TRUE)
+    index            <- order(pi.prop, decreasing=TRUE)
     pi.prop          <- pi.prop[index]
     mu               <- mu[,index, drop=FALSE]
     lmat             <- lmat[,,index, drop=FALSE]
@@ -163,7 +163,7 @@
       pi.prop        <- .sim_pi_inf(Vs, len=G)
 
     # Re-ordering & Slice Sampler
-      index          <- Order(pi.prop[Gs], descending=TRUE)
+      index          <- order(pi.prop[Gs], decreasing=TRUE)
       prev.prod      <- pi.prop[G]  * (1/Vs[G] - 1)
       pi.prop[Gs]    <- pi.prop[index]
       Vs[Gs]         <- Vs[index]

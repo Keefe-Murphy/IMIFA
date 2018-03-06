@@ -4,26 +4,26 @@
 \alias{mgpControl}
 \title{Control settings for the MGP prior and AGS for infinite factor models}
 \usage{
-mgpControl(alpha.d1 = 2,
-  alpha.d2 = 6,
-  nu = 2,
-  prop = 0.7,
-  eps = 0.1,
-  adapt = TRUE,
-  b0 = 0.1,
-  b1 = 5e-05,
-  nuplus1 = TRUE,
-  beta.d1 = 1,
-  beta.d2 = 1,
-  adapt.at = 0L,
-  delta0g = FALSE, ...)
+mgpControl(alpha.d1 = 2L,
+           alpha.d2 = 6L,
+           phi.hyper = c(3L, 2L),
+           prop = 0.7,
+           eps = 0.1,
+           adapt = TRUE,
+           b0 = 0.1,
+           b1 = 5e-05,
+           beta.d1 = 1L,
+           beta.d2 = 1L,
+           adapt.at = 0L,
+           delta0g = FALSE,
+           ...)
 }
 \arguments{
 \item{alpha.d1}{Shape hyperparameter of the global shrinkage on the first column of the loadings according to the MGP shrinkage prior. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to 2.}
 
 \item{alpha.d2}{Shape hyperparameter of the global shrinkage on the subsequent columns of the loadings according to the MGP shrinkage prior. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to 6.}
 
-\item{nu}{Hyperparameter for the gamma prior on the local shrinkage parameters. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to 2.}
+\item{phi.hyper}{A vector of length 2 giving the shape and rate hyperparameters for the gamma prior on the local shrinkage parameters. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to \code{c(3, 2)}. It is suggested that the rate be <= shape minus 1 to induce local shrinkage, though the cumulative shrinkage property is unaffected by these hyperparameters. Excessively small values may lead to critical numerical issues and should thus be avoided; indeed it is \emph{suggested} that the shape be >=1.}
 
 \item{prop}{Proportion of loadings elements within the neighbourhood \code{eps} of zero necessary to consider a loadings column redundant. Defaults to \code{floor(0.7 * P)/P}, where \code{P} is the number of variables in the data set. However, if the data set is univariate or bivariate, the default is \code{0.5} (see Note).}
 
@@ -36,8 +36,6 @@ mgpControl(alpha.d1 = 2,
 \code{p(iter) = 1/exp(b0 + b1 * (iter - adapt.at))}.
 
 Defaults to 0.1 & 0.00005, respectively. Must be non-negative and strictly positive, respectively, to ensure diminishing adaptation.}
-
-\item{nuplus1}{Logical switch indicating whether the shape hyperparameter of the prior on the local shrinkage parameters is equal to \code{nu + 1} (i.e. Ga(\code{nu + 1}, \code{nu})). If \code{FALSE}, it is simply equal to \code{nu} (i.e. Ga(\code{nu}, \code{nu})).}
 
 \item{beta.d1}{Rate hyperparameter of the global shrinkage on the first column of the loadings according to the MGP shrinkage prior. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to 1.}
 
@@ -61,16 +59,20 @@ Certain supplied arguments will be subject to further checks by \code{\link{MGP_
 The adaptive Gibbs sampler (AGS) monitors the \code{prop} of loadings elements within the neighbourhood \code{eps} of 0 and discards columns or simulates new columns on this basis. However, if at any stage the number of group-specific latent factors reaches zero, the decision to add columns is instead based on a simple binary trial with probability \code{1-prop}, as there are no loadings entries to monitor.
 }
 \examples{
-mgpControl(nu=2.5, eps=1e-02)
+mgpControl(phi.hyper=c(2.5, 1), eps=1e-02)
 
 # data(olive)
 # sim <- mcmc_IMIFA(olive, "IMIFA", n.iters=5000,
-#                   MGP=mgpControl(nu=2.5, eps=1e-02))
+#                   MGP=mgpControl(phi.hyper=c(2.5, 1), eps=1e-02))
 
 # Alternatively specify these arguments directly
-# sim <- mcmc_IMIFA(olive, "IMIFA", n.iters=5000, nu=2.5, eps=1e-02)
+# sim <- mcmc_IMIFA(olive, "IMIFA", n.iters=5000, phi.hyper=c(2.5, 1), eps=1e-02)
 }
 \references{
+Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
+
+Durante, D. (2017). A note on the multiplicative gamma process, \emph{Statistics & Probability Letters}, 122: 198-204.
+
 Bhattacharya, A. and Dunson, D. B. (2011) Sparse Bayesian infinite factor models, \emph{Biometrika}, 98(2): 291-306.
 }
 \seealso{

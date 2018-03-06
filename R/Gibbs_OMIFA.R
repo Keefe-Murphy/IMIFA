@@ -5,8 +5,8 @@
 # Gibbs Sampler Function
   .gibbs_OMIFA       <- function(Q, data, iters, N, P, G, mu.zero, sigma.mu, uni.type,
                                  uni.prior, burnin, thinning, adapt, psi.alpha, psi.beta,
-                                 verbose, alpha.d1, alpha.d2, sw, cluster, nu, b0, b1, mu,
-                                 prop, beta.d1, beta.d2, adaptat, epsilon, nuplus1, ...) {
+                                 verbose, alpha.d1, alpha.d2, sw, cluster, nu, vrho, b0,
+                                 b1, mu, prop, beta.d1, beta.d2, adaptat, epsilon, ...) {
 
   # Define & initialise variables
     start.time       <- proc.time()
@@ -66,7 +66,7 @@
     pi.prop          <- c(cluster$pi.prop, vector("numeric", G - length(cluster$pi.prop)))
     mu               <- cbind(mu, vapply(seq_len(G - length(cluster$pi.prop)), function(g) .sim_mu_p(P=P, sig.mu.sqrt=sig.mu.sqrt, mu.zero=mu.zero), numeric(P)))
     eta              <- .sim_eta_p(N=N, Q=Q)
-    phi              <- replicate(G, .sim_phi_p(Q=Q, P=P, nu=nu, plus1=nuplus1), simplify=FALSE)
+    phi              <- replicate(G, .sim_phi_p(Q=Q, P=P, nu=nu, rho=vrho), simplify=FALSE)
     delta            <- lapply(Gseq, function(g) c(.sim_delta_p(alpha=alpha.d1, beta=beta.d1), .sim_delta_p(Q=Q, alpha=alpha.d2, beta=beta.d2)))
     tau              <- lapply(delta, cumprod)
     lmat             <- lapply(Gseq, function(g) matrix(vapply(Pseq, function(j) .sim_load_ps(Q=Q, phi=phi[[g]][j,], tau=tau[[g]]), numeric(Q)), nrow=P, byrow=TRUE))
@@ -93,7 +93,7 @@
       psi.inv[inf.ind]        <- psi.tmp[inf.ind]
     }
     psi.inv[psi.inv == 0]     <- colMaxs(psi.inv[,which(psi.inv == 0, arr.ind=TRUE)[,2], drop=FALSE], value=TRUE)
-    index          <- Order(nn, descending=TRUE)
+    index          <- order(nn, decreasing=TRUE)
     pi.prop        <- pi.prop[index]
     mu             <- mu[,index, drop=FALSE]
     phi            <- phi[index]
@@ -128,7 +128,7 @@
 
     # Mixing Proportions & Re-ordering
       pi.prop        <- rDirichlet(G=G, alpha=pi.alpha, nn=nn)
-      index          <- Order(nn, descending=TRUE)
+      index          <- order(nn, decreasing=TRUE)
       pi.prop        <- pi.prop[index]
       mu             <- mu[,index, drop=FALSE]
       phi            <- phi[index]
@@ -194,8 +194,8 @@
     # Shrinkage
       if(all(Q0))    {
         load.2       <- lapply(lmat, .power2)
-        phi          <- lapply(Gseq, function(g) if(nn0[g]) .sim_phi(Q=Qs[g], P=P, nu=nu, plus1=nuplus1,
-                        tau=tau[[g]], load.2=load.2[[g]]) else .sim_phi_p(Q=Qs[g], P=P, nu=nu, plus1=nuplus1))
+        phi          <- lapply(Gseq, function(g) if(nn0[g]) .sim_phi(Q=Qs[g], P=P, nu=nu, rho=vrho,
+                        tau=tau[[g]], load.2=load.2[[g]]) else .sim_phi_p(Q=Qs[g], P=P, nu=nu, rho=vrho))
 
         sum.terms    <- lapply(Gseq, function(g) colSums2(phi[[g]] * load.2[[g]]))
         for(g in Gseq) {
@@ -232,7 +232,7 @@
             notred   <- notred & !Q.big
             Qs[nn0][Q.big]    <- Q.star
           }
-          phi[nn0]   <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) cbind(phi[[g]][,seq_len(Qs.old[h])],  stats::rgamma(n=P, shape=nu + nuplus1, rate=nu)) else phi[[g]][,nonred[[h]], drop=FALSE])
+          phi[nn0]   <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) cbind(phi[[g]][,seq_len(Qs.old[h])],  .rgamma0(n=P, shape=nu, rate=vrho)) else phi[[g]][,nonred[[h]], drop=FALSE])
           delta[nn0] <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) c(delta[[g]][seq_len(Qs.old[h])],     stats::rgamma(n=1, shape=alpha.d2, rate=beta.d2)) else delta[[g]][nonred[[h]]])
           tau[nn0]   <- lapply(delta[nn.ind], cumprod)
           lmat[nn0]  <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) cbind(lmat[[g]][,seq_len(Qs.old[h])], stats::rnorm(n=P, mean=0, sd=sqrt(1/(phi[[g]][,Qs[g]] * tau[[g]][Qs[g]])))) else lmat[[g]][,nonred[[h]], drop=FALSE])
@@ -252,7 +252,7 @@
                 lmat[[g]]     <- lmat[[g]][,Qmaxseq, drop=FALSE]
               } else  {
                 while(Qg  != Qmax) {
-                 phi[[g]]     <- cbind(phi[[g]],     stats::rgamma(n=P, shape=nu + nuplus1,  rate=nu))
+                 phi[[g]]     <- cbind(phi[[g]],     .rgamma0(n=P, shape=nu, rate=vrho))
                  delta[[g]]   <- c(delta[[g]],       stats::rgamma(n=1, shape=alpha.d2, rate=beta.d2))
                  tau[[g]]     <- cumprod(delta[[g]])
                  if(store.eta)     {

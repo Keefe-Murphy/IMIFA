@@ -4,9 +4,17 @@
 \alias{plot_cols}
 \title{Plots a matrix of colours}
 \usage{
-plot_cols(cmat, na.col = "#808080FF", ptype = c("image", "points"),
-  border.col = "#808080FF", dlabels = NULL, rlabels = FALSE,
-  clabels = FALSE, pch = 15, cex = 3, label.cex = 0.6, ...)
+plot_cols(cmat,
+          na.col = "#808080FF",
+          ptype = c("image", "points"),
+          border.col = "#808080FF",
+          dlabels = NULL,
+          rlabels = FALSE,
+          clabels = FALSE,
+          pch = 15,
+          cex = 3,
+          label.cex = 0.6,
+          ...)
 }
 \arguments{
 \item{cmat}{A matrix of valid colours, with missing values coded as \code{NA} allowed. Vectors should be supplied as matrices with 1 row or column, as appropriate.}

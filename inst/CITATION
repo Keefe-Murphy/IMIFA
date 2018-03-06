@@ -10,9 +10,9 @@ citEntry(entry  = "Article",
   volume  = "",
   number  = "",
   pages   = "",
-  url     = "https://arxiv.org/abs/1701.07010v3",
+  url     = "https://arxiv.org/abs/1701.07010v4",
   archivePrefix = "arXiv",
-  eprint  = "arXiv:1701.07010v3",
+  eprint  = "arXiv:1701.07010v4",
   primaryClass  = "stat.ME",
 
   textVersion   =
@@ -20,7 +20,7 @@ citEntry(entry  = "Article",
           "Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models.",
           "To appear.",
           "Pre-print available at arXiv.",
-          "URL: https://arxiv.org/abs/1701.07010v3.")
+          "URL: https://arxiv.org/abs/1701.07010v4.")
 )
 
 year     <- sub(".*(2[[:digit:]]{3})-.*", "\\1", meta$Date)

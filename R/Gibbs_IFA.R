@@ -5,7 +5,7 @@
 # Gibbs Sampler Function
   .gibbs_IFA     <- function(Q, data, iters, N, P, sigma.mu, mu, prop, uni.type,
                              uni.prior, psi.alpha, psi.beta, burnin, thinning, verbose,
-                             sw, epsilon, mu.zero, nu, adapt, adaptat, b0, b1, nuplus1,
+                             sw, epsilon, mu.zero, nu, vrho, adapt, adaptat, b0, b1,
                              alpha.d1, alpha.d2, beta.d1, beta.d2, scaling, ...) {
 
   # Define & initialise variables
@@ -46,7 +46,7 @@
     uni.shape    <- switch(uni.type,   constrained=N/2 + psi.alpha,  single=(N * P)/2 + psi.alpha)
     V            <- switch(uni.type,   constrained=P,                single=1)
     eta          <- .sim_eta_p(Q=Q, N=N)
-    phi          <- .sim_phi_p(Q=Q, P=P, nu=nu, plus1=nuplus1)
+    phi          <- .sim_phi_p(Q=Q, P=P, nu=nu, rho=vrho)
     delta        <- c(.sim_delta_p(alpha=alpha.d1, beta=beta.d1), .sim_delta_p(Q=Q, alpha=alpha.d2, beta=beta.d2))
     tau          <- cumprod(delta)
     lmat         <- matrix(vapply(Pseq, function(j) .sim_load_ps(Q=Q, phi=phi[j,], tau=tau), numeric(Q)), nrow=P, byrow=TRUE)
@@ -102,7 +102,7 @@
     # Shrinkage
       if(Q0) {
         load.2   <- lmat * lmat
-        phi      <- .sim_phi(Q=Q, P=P, nu=nu, tau=tau, load.2=load.2, plus1=nuplus1)
+        phi      <- .sim_phi(Q=Q, P=P, nu=nu, rho=vrho, tau=tau, load.2=load.2)
 
         sum.term <- colSums2(phi * load.2)
         for(k in seq_len(Q)) {
@@ -125,7 +125,7 @@
               Q     <- Q.star
             } else {
               eta   <- if(storage) cbind(eta, stats::rnorm(N))   else eta
-              phi   <- cbind(phi,  stats::rgamma(n=P, shape=nu + nuplus1,  rate=nu))
+              phi   <- cbind(phi,  .rgamma0(n=P, shape=nu, rate=vrho))
               delta <- c(delta,    stats::rgamma(n=1, shape=alpha.d2, rate=beta.d2))
               tau   <- cumprod(delta)
               lmat  <- cbind(lmat, stats::rnorm(n=P, mean=0, sd=sqrt(1/(phi[,Q] * tau[Q]))))

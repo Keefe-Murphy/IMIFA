@@ -27,6 +27,7 @@
 #'
 #' Please be warned that this only defaults to \code{TRUE} when the \code{mcclust} package - which \strong{must} be loaded for this feature - is loaded and the number of observations is less than 1000. However, it can still be manually set to \code{TRUE} for larger data sets. This is liable to take considerable time to compute, and may not even be possible if the number of observations &/or number of stored iterations is large and the resulting matrix isn't sufficiently sparse. When \code{TRUE}, both the summarised clustering and the similarity matrix are stored: the latter can be visualised as part of a call to \code{\link{plot.Results_IMIFA}}.
 #' @param zlabels For any method that performs clustering, the true labels can be supplied if they are known in order to compute clustering performance metrics. This also has the effect of ordering the MAP labels (and thus the ordering of cluster-specific parameters) to most closely correspond to the true labels if supplied.
+#' @param x,object,... Arguments required for the \code{print.Results_IMIFA} and \code{summary.Results_IMIFA} functions: \code{x} and \code{object} are objects of class \code{"Results_IMIFA"} resulting from a call to \code{\link{get_IMIFA_results}}, while \code{...} gathers additional arguments to those functions.
 #'
 #' @details The function also performs post-hoc corrections for label switching, as well as post-hoc Procrustes rotation of loadings matrices and scores, in order to ensure sensible posterior parameter estimates, computes error metrics, constructs credible intervals, and generally transforms the raw \code{sims} object into an object of class "\code{Results_IMIFA}" in order to prepare the results for plotting via \code{\link{plot.Results_IMIFA}}.
 #'
@@ -44,17 +45,30 @@
 #'
 #' Due to the way the offline label-switching correction is performed, different runs of this function may give \emph{very slightly} different results in terms of the cluster labellings (and by extension the parameters, which are permuted in the same way), but only if the chain was run for an extremely small number of iterations, well below the number required for convergence, and samples of the cluster labels match poorly across iterations (particularly if the number of clusters suggested by those sampled labels is high).
 #' @keywords IMIFA main
+#' @include MainFunction.R
 #' @export
-#' @importFrom Rfast "med" "rowMaxs" "colMaxs" "rowmeans" "Order" "Var" "colTabulate" "sort_unique"
+#' @importFrom Rfast "med" "rowMaxs" "colMaxs" "rowmeans" "Var" "colTabulate" "sort_unique"
 #' @importFrom mclust "classError"
 #' @importFrom matrixStats "rowMedians" "rowQuantiles"
 #' @importFrom slam "as.simple_triplet_matrix"
 #'
 #' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{plot.Results_IMIFA}}, \code{\link{Procrustes}}, \code{\link{Zsimilarity}}
-#' @references Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010}{arXiv:1701.07010}>.
+#' @references Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
 #'
 #' @author Keefe Murphy - <\email{keefe.murphy@@ucd.ie}>
-#'
+#' @usage
+#' get_IMIFA_results(sims = NULL,
+#'                   burnin = 0L,
+#'                   thinning = 1L,
+#'                   G = NULL,
+#'                   Q = NULL,
+#'                   criterion = c("bicm", "aicm", "dic", "bic.mcmc", "aic.mcmc"),
+#'                   G.meth = c("mode", "median"),
+#'                   Q.meth = c("mode", "median"),
+#'                   conf.level = 0.95,
+#'                   error.metrics = TRUE,
+#'                   z.avgsim = TRUE,
+#'                   zlabels = NULL)
 #' @examples
 #' # data(coffee)
 #' # data(olive)
@@ -463,9 +477,9 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       MAP        <- factor(factor(sw.lab$z, labels=which(sizes > 0)), levels=Gseq)
       l.perm     <- sw.lab$z.perm
       left       <- as.integer(l.perm[Gseq])
-      z.tmp      <- lapply(storeG, function(i)   factor(z[i,], labels=Order(left[tabulate(z[i,], nbins=G) > 0])))
+      z.tmp      <- lapply(storeG, function(i)   factor(z[i,], labels=order(left[tabulate(z[i,], nbins=G) > 0])))
       z          <- do.call(rbind, lapply(z.tmp, function(x) as.integer(levels(as.factor(x)))[as.integer(x)]))
-      index      <- Order(left)
+      index      <- order(left)
       if(sw["mu.sw"])      mus <- mus[,index,,    drop=FALSE]
       if(sw["l.sw"])     lmats <- lmats[,,index,, drop=FALSE]
       if(sw["psi.sw"])    psis <- psis[,index,,   drop=FALSE]

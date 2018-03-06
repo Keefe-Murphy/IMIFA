@@ -20,7 +20,7 @@ Typically one would run FA or MFA models over ranges of values for the numbers o
 
 The main features of the IMIFA model are the multiplicative gamma process shrinkage prior on the factor loadings, which allows theoretically infinitely many factors (this can also be employed in a MIFA context, for instance, where the number of clusters is fixed but cluster-specific factors are estimated) and the Dirichlet process prior, which utilises the stick-breaking construction and slice-efficient sampling, and allows theoretically infinitely many clusters. Tools are provided for soliciting sensible hyperparameters for these priors. As of IMIFA v1.2.0, it's now also possible to assume a Pitman-Yor process prior on the number of mixture components, and to learn its concentration and discount parameters via Metropolis-Hastings updates.
 
-Model-specific diagnostic tools are also provided, as well as many extensive options for plotting results and conducting posterior inference on parameters of interest. The functions are typically verbose, offering plenty of messages and warnings to the user where appropriate. Please see [Murphy et al. (2017)](https://arxiv.org/abs/1701.07010) for more info.
+Model-specific diagnostic tools are also provided, as well as many extensive options for plotting results and conducting posterior inference on parameters of interest. The functions are typically verbose, offering plenty of messages and warnings to the user where appropriate. Please see [Murphy et al. (2017)](https://arxiv.org/abs/1701.07010v4) for more info.
 
 If you find bugs or want to suggest new features please visit the __IMIFA__ [GitHub issues page](https://github.com/Keefe-Murphy/IMIFA/issues). This vignette aims to reproduce some results in the Murphy et al. (2017) paper using the `mcmc_IMIFA()` and `get_IMIFA_results()` functions and demonstrates how the plots therein were created using the dedicated S3 `plot` method, while also demonstrating how to fit other models in the IMIFA family.
 
@@ -60,7 +60,9 @@ While it is possible to simulate data from a factor analytic mixture using the `
 
 ```{r, eval=FALSE}
 # Simulate 100 observations from 3 balanced clusters with cluster-specific numbers of latent factors
-sim.data <- sim_IMIFA_data(N=100, G=3, P=20, Q=c(2, 2, 5))
+sim_data <- sim_IMIFA_data(N=100, G=3, P=20, Q=c(2, 2, 5), 
+                           psi=matrix(rgamma(60, 2, 1), nrow=20, ncol=3), 
+                           mu=matrix(rnorm(60, -2 + 1:3, 1), nrow=20, ncol=3, byrow=TRUE))
 ```
 the well-known Italian olive oil data set will be used throughout this vignette instead. You can load this data set after loading the __IMIFA__ package by typing
 
@@ -229,6 +231,6 @@ plot(resIMIFA, plot.meth="all", param="discount")
 # References
 For a more detailed description of the kind of things __IMIFA__ can do and the purposes for which the model was developed, please consult the followng papers:
 
-Murphy, K., Gormley, I. C. and Viroli, C. (2017). Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models. _To appear_. Pre-print available at [arXiv:1701.07010](https://arxiv.org/abs/1701.07010).
+Murphy, K., Gormley, I. C. and Viroli, C. (2017). Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models. _To appear_. Pre-print available at [arXiv:1701.07010v4](https://arxiv.org/abs/1701.07010v4).
 
 Bhattacharya, A. and Dunson, D. B. (2011). Sparse Bayesian infinite factor models. _Biometrika_, 98(2): 291-306.

@@ -4,8 +4,12 @@
 \alias{PGMM_dfree}
 \title{Estimate the Number of Free Parameters in Finite Factor Analytic Mixture Models (PGMM)}
 \usage{
-PGMM_dfree(Q, P, G = 1L, method = c("UUU", "UUC", "UCU", "UCC", "CUU",
-  "CUC", "CCU", "CCC", "CCUU", "UCUU", "CUCU", "UUCU"), equal.pro = FALSE)
+PGMM_dfree(Q,
+           P,
+           G = 1L,
+           method = c("UUU", "UUC", "UCU", "UCC", "CUU", "CUC",
+                      "CCU", "CCC", "CCUU", "UCUU", "CUCU", "UUCU"),
+           equal.pro = FALSE)
 }
 \arguments{
 \item{Q}{The number of latent factors (which can be 0, corresponding to a model with diagonal covariance). This argument is vectorised.}

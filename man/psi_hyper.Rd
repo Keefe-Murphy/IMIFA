@@ -4,7 +4,9 @@
 \alias{psi_hyper}
 \title{Find sensible inverse gamma hyperparameters for variance/uniqueness parameters}
 \usage{
-psi_hyper(shape, covar, type = c("unconstrained", "isotropic"))
+psi_hyper(shape,
+          covar,
+          type = c("unconstrained", "isotropic"))
 }
 \arguments{
 \item{shape}{A positive shape hyperparameter.}
@@ -37,6 +39,8 @@ olive_scaled <- scale(olive2, center=TRUE, scale=TRUE)
 (prop  <- rates/(3 - 1) * 100)
 }
 \references{
+Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
+
 Fruwirth-Schnatter, S. and Lopes, H. F. (2010). Parsimonious Bayesian factor analysis when the number of factors is unknown, \emph{Technical Report}. The University of Chicago Booth School of Business.
 
 Tipping, M. E. and Bishop, C. M. (1999). Probabilistic principal component analysis, \emph{Journal of the Royal Statistical Society: Series B (Statistical Methodology)}, 61(3): 611-622.

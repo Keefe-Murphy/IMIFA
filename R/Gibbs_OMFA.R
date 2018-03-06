@@ -90,7 +90,7 @@
     }
     psi.inv[psi.inv == 0]  <- colMaxs(psi.inv[,which(psi.inv == 0, arr.ind=TRUE)[,2], drop=FALSE], value=TRUE)
     l.sigma        <- diag(1/sigma.l, Q)
-    index          <- Order(nn, descending=TRUE)
+    index          <- order(nn, decreasing=TRUE)
     pi.prop        <- pi.prop[index]
     mu             <- mu[,index, drop=FALSE]
     lmat           <- lmat[,,index, drop=FALSE]
@@ -119,7 +119,7 @@
 
     # Mixing Proportions & Re-ordering
       pi.prop      <- rDirichlet(G=G, alpha=pi.alpha, nn=nn)
-      index        <- Order(nn, descending=TRUE)
+      index        <- order(nn, decreasing=TRUE)
       pi.prop      <- pi.prop[index]
       mu           <- mu[,index, drop=FALSE]
       lmat         <- lmat[,,index, drop=FALSE]

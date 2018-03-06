@@ -5,17 +5,18 @@
 \title{Control settings for the Bayesian Nonparametric priors (BNP) for infinite mixture models}
 \usage{
 bnpControl(learn.alpha = TRUE,
-  alpha.hyper = c(2L, 1L),
-  discount = NULL,
-  learn.d = FALSE,
-  d.hyper = c(1L, 1L),
-  ind.slice = TRUE,
-  rho = 0.75,
-  trunc.G = NULL,
-  kappa = 0.5,
-  IM.lab.sw = TRUE,
-  zeta = 2,
-  tune.zeta = NULL, ...)
+           alpha.hyper = c(2L, 1L),
+           discount = NULL,
+           learn.d = FALSE,
+           d.hyper = c(1L, 1L),
+           ind.slice = TRUE,
+           rho = 0.75,
+           trunc.G = NULL,
+           kappa = 0.5,
+           IM.lab.sw = TRUE,
+           zeta = 2L,
+           tune.zeta = NULL,
+           ...)
 }
 \arguments{
 \item{learn.alpha}{Logical indicating whether the Dirichlet process / Pitman-Yor concentration parameter is to be learned (defaults to \code{TRUE}), or remain fixed for the duration of the chain. If being learned, a Ga(a, b) prior is assumed for \code{alpha}; updates take place via Gibbs sampling when \code{discount} is zero and via Metropolis-Hastings otherwise.}
@@ -70,6 +71,9 @@ bnpControl(ind.slice=FALSE, alpha.hyper=c(3, 1), learn.d=TRUE)
 # Alternatively specify these arguments directly
 # sim <- mcmc_IMIFA(olive, "IMIFA", n.iters=5000,
 #                   ind.slice=FALSE, alpha.hyper=c(3, 1), learn.d=TRUE)
+}
+\references{
+Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
 }
 \seealso{
 \code{\link{mcmc_IMIFA}}, \code{\link{G_priorDensity}}

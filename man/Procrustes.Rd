@@ -4,7 +4,11 @@
 \alias{Procrustes}
 \title{Procrustes Transformation}
 \usage{
-Procrustes(X, Xstar, translate = FALSE, dilate = FALSE, sumsq = FALSE)
+Procrustes(X,
+           Xstar,
+           translate = FALSE,
+           dilate = FALSE,
+           sumsq = FALSE)
 }
 \arguments{
 \item{X}{The matrix to be transformed.}
