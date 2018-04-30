@@ -160,6 +160,9 @@
 #'   weights <- matrix(rDirichlet(N * G, alpha=1, nn=sizes), byrow=TRUE, nrow=N, ncol=G)
 #'   (zs     <- gumbel_max(probs=log(weights)))
     gumbel_max   <- function(probs, slice = FALSE) {
+     if(anyNA(probs))                      stop("Missing values not allowed in 'probs'", call.=FALSE)
+     if(length(slice) > 1 ||
+        !is.logical(slice))                stop("'slice' must be a single logical indicator", call.=FALSE)
      if(is.vector(probs)) probs <- t(probs)
      if(isTRUE(slice)) {
       fps        <- is.finite(probs)
@@ -360,9 +363,9 @@
       exp       <- shape/rate
       if(shift  >= exp)                    warning("This expected value is not achievable with the supplied 'shift'", call.=FALSE, immediate.=TRUE)
       var       <- exp/rate
-      exp       <- max(var * rate    - shift, 0)
+      exp       <- max(exp  - shift,   0)
       rate      <- exp/var
-      shape     <- rate * exp
+      shape     <- rate     * exp
         return(list(shape   = shape, rate = switch(param, rate=rate, 1/rate)))
     }
 
@@ -574,13 +577,12 @@
 #'
 #' A heatmap of \code{z.sim} may provide a useful visualisation, if appropriately ordered. The user is also invited to perform hierarchical clustering using \code{\link[stats]{hclust}} after first converting this similarity matrix to a distance matrix - "complete" linkage is recommended.
 #' @return A list containing three elements:
-#' \describe{
 #' \item{z.avg}{The 'average' clustering, with minimum squared distance to \code{z.sim}.}
 #' \item{z.sim}{The N x N similary matrix, in a sparse format (see \code{\link[slam]{simple_triplet_matrix}}).}
 #' \item{MSE.z}{A vector of length M recording the MSEs between each clustering and the 'average' clustering.}
-#' }
 #' @export
 #' @keywords utility
+#' @references Carmona, C., Nieto-barajas, L. and Canale, A. (2018) Model based approach for household clustering with mixed scale variables. \emph{Advances in Data Analysis and Classification}, 12: 1-25.
 #' @importFrom slam "as.simple_triplet_matrix"
 #'
 #' @note The \code{mcclust} package \strong{must} be loaded.
@@ -615,11 +617,82 @@
       has.pkg   <- suppressMessages(requireNamespace("mcclust", quietly=TRUE))
       if(!has.pkg)                         stop("'mcclust' package not installed", call.=FALSE)
       if(!is.matrix(zs))                   stop("'zs' must be a matrix with rows corresponding to the number of observations and columns corresponding to the number of iterations", call.=FALSE)
+      if(anyNA(zs))                        stop("Missing values are not allowed in 'zs'", call.=FALSE)
       zsim      <- mcclust::comp.psm(zs)
       mse.z     <- vapply(seq_len(nrow(zs)), function(i, x=mcclust::cltoSim(zs[i,]) - zsim) tryCatch(suppressWarnings(mean(x * x)), error=function(e) Inf), numeric(1L))
       Z.avg     <- zs[which.min(mse.z),]
       attr(Z.avg, "MSE")  <- min(mse.z)
         return(list(z.sim  = as.simple_triplet_matrix(zsim), z.avg = Z.avg, MSE.z = mse.z))
+    }
+
+#' Posterior Confusion Matrix
+#'
+#' For a (\code{N * G}) matrix of posterior cluster membership probabilities, this function creates a (\code{G * G}) posterior confusion matrix, whose hk-th entry gives the average probability that observations with maximum posterior allocation h will be assigned to cluster k.
+#' @param z A (\code{N * G}) matrix of posterior cluster membership probabilities whose ig-th entry gives the posterior probability that observation i belongs to cluster g. Entries must be valid probabilities in the interval [0,1]; missing values are not allowed.
+#'
+#' Otherwise, a list of such matrices can be supplied, where each matrix in the list has the same dimensions.
+#' @param scale A logical indicator whether the PCM should be rescaled by its row sums. When \code{TRUE} (the default), the benchmark matrix for comparison is the identity matrix of order \code{G}, corresponding to a situation with no uncertainty in the clustering. When \code{FALSE}, the row sums give the number of observations in each cluster.
+#' @return A (\code{G * G}) posterior confusion matrix, whose hk-th entry gives the average probability that observations with maximum posterior allocation h will be assigned to cluster k. When \code{scale=TRUE}, the benchmark matrix for comparison is the identity matrix of order \code{G}, corresponding to a situation with no uncertainty in the clustering.
+#' @export
+#' @keywords utility
+#' @importFrom matrixStats "rowSums2"
+#' @importFrom Rfast "rowOrder" "sort_mat"
+#' @author Keefe Murphy - <\email{keefe.murphy@@ucd.ie}>
+#' @seealso \code{get_IMIFA_results}
+#' @references Ranciati, S., Vinciotti, V. and Wit, E., (2017) Identifying overlapping terrorist cells from the Noordin Top actor-event network, \emph{to appear}. <\href{https://arxiv.org/abs/1710.10319v1}{arXiv:1710.10319v1}>.
+#'
+#' @examples
+#' # data(olive)
+#' # sim  <- mcmc_IMIFA(olive, n.iters=1000)
+#' # res  <- get_IMIFA_results(sim)
+#' # (PCM <- post_conf_mat(res$Clust$post.prob))
+#'
+#' # par(mar=c(5.1, 4.1, 4.1, 3.1))
+#' # PCM  <- replace(PCM, PCM == 0, NA)
+#' # plot_cols(mat2cols(PCM, col=heat.colors(30)[30:1], na.col=par()$bg)); box(lwd=2)
+#' # heat_legend(PCM, cols=heat.colors(30)[30:1])
+#' # par(mar=c(5.1, 4.1, 4.1, 2.1))
+    post_conf_mat <- function(z, scale = TRUE) {
+      if(lz     <- inherits(z, "list"))        {
+        if(!all(vapply(z, is.matrix,
+                       logical(1L))))      stop("Elements of the list 'z' must be matrices", call.=FALSE)
+        if(any(vapply(z, anyNA,
+                       logical(1L))))      stop("Missing values are not allowed in 'z'", call.=FALSE)
+        if(any(vapply(z, function(x)
+           any(x < 0) ||
+           any(x > 1), logical(1L))))      stop("Values in 'z' must be valid probabilities in the interval [0,1]", call.=FALSE)
+        nit     <- length(z)
+        Ns      <- vapply(z, nrow, numeric(1L))
+        Gs      <- vapply(z, ncol, numeric(1L))
+        N       <- Ns[1]
+        G       <- Gs[1]
+        if(any(Ns     != N)     ||
+           any(Gs     != G)     ||
+           N     < G)                      stop("All matrices in the list 'z' must have the same dimensions, with more columns than rows", call.=FALSE)
+      } else     {
+        if(!is.matrix(z))                  stop("'z' must be a matrix", call.=FALSE)
+        if(anyNA(z))                       stop("Missing values are not allowed in 'z'", call.=FALSE)
+        if(any(z < 0) ||
+           any(z > 1))                     stop("Values in 'z' must be valid probabilities in the interval [0,1]", call.=FALSE)
+        nit     <- 1
+        N       <- nrow(z)
+        G       <- ncol(z)
+        if(N     < G)                      stop("'z' must have more rows than columns", call.=FALSE)
+      }
+      if(length(scale) > 1      ||
+         !is.logical(scale))               stop("'scale' must be a single logical indicator", call.=FALSE)
+      tX        <- if(isTRUE(lz)) lapply(z, function(x) sort_mat(x, by.row=TRUE, descending=TRUE)) else list(sort_mat(z, by.row=TRUE, descending=TRUE))
+      rX        <- if(isTRUE(lz)) lapply(z, function(x) rowOrder(x, descending=TRUE))              else list(rowOrder(z, descending=TRUE))
+      PCM       <- matrix(0, nrow=G, ncol=G)
+      for(n     in seq_len(nit)) {
+        for(k   in seq_len(G))   {
+          for(i in seq_len(N))   {
+            PCM[rX[[n]][i,1], rX[[n]][i,k]] <- PCM[rX[[n]][i,1], rX[[n]][i,k]] + tX[[n]][i,k]
+           }
+        }
+      }
+      PCM       <- PCM/nit
+        if(scale)  sweep(PCM, 1, rowSums2(PCM), FUN="/") else PCM
     }
 
   # Move 1
@@ -674,13 +747,14 @@
 #' identical(x, is.posi_def(x, semi=TRUE, make=TRUE)$X.new)
     is.posi_def <- function(x, tol = NULL, semi = FALSE, make = FALSE)  {
       if(!is.matrix(x)     &&
-        nrow(x) != ncol(x))                stop("argument x is not a square matrix", call.=FALSE)
-      if(!is.symmetric(x))                 stop("argument x is not a symmetric matrix", call.=FALSE)
-      if(!is.double(x))                    stop("argument x is not a numeric matrix", call.=FALSE)
+        nrow(x) != ncol(x))                stop("argument 'x' is not a square matrix",    call.=FALSE)
+      if(anyNA(x))                         stop("argument 'x' contains missing values",   call.=FALSE)
+      if(!is.symmetric(x))                 stop("argument 'x' is not a symmetric matrix", call.=FALSE)
+      if(!is.double(x))                    stop("argument 'x' is not a numeric matrix",   call.=FALSE)
       if(!is.logical(semi) ||
-         length(semi) > 1)                 stop("argument semi is not a single logical indicator", call.=FALSE)
+         length(semi) > 1)                 stop("argument 'semi' is not a single logical indicator", call.=FALSE)
       if(!is.logical(make) ||
-         length(make) > 1)                 stop("argument make is not a single logical indicator", call.=FALSE)
+         length(make) > 1)                 stop("argument 'make' is not a single logical indicator", call.=FALSE)
 
       d         <- nrow(x)
       eigs      <- eigen(x, symmetric = TRUE)
@@ -688,7 +762,7 @@
       abseigs   <- abs(eval)
       tol       <- if(missing(tol)) max(abseigs) * d * .Machine$double.eps else tol
       if(length(tol)  > 1  ||
-         !is.numeric(tol))                 stop("argument tol is not a single number", call.=FALSE)
+         !is.numeric(tol))                 stop("argument 'tol' is not a single number", call.=FALSE)
       test      <- replace(eval, abseigs < tol, 0)
       check     <- all(if(isTRUE(semi)) test >= 0 else test > 0)
       if(isTRUE(make))  {
@@ -710,7 +784,8 @@
 #' @examples
 #' Ledermann(c(25, 50, 100))
     Ledermann   <- function(P)  {
-      if(any(P  <= 0, floor(P) != P))      stop("'P' must be a strictly positive integer", call.=FALSE)
+      if(!is.numeric(P)   ||
+         any(P  <= 0, floor(P) != P))      stop("'P' must be a strictly positive integer", call.=FALSE)
       R         <- P + 0.5 * (1 - sqrt(8 * P  + 1))
         as.integer(floor(ifelse(1e-10 > abs(R - round(R)), round(R), R)))
     }
@@ -768,8 +843,9 @@
 #' mat_ss   <- proc$ss
 #' mat_ss2  <- Procrustes(X=mat1, Xstar=mat2, sumsq=TRUE)$ss
     Procrustes  <- function(X, Xstar, translate = FALSE, dilate = FALSE, sumsq = FALSE) {
-      if((N <- nrow(X)) != nrow(Xstar))    stop("X and Xstar do not have the same number of rows", call.=FALSE)
-      if((P <- ncol(X)) != ncol(Xstar))    stop("X and Xstar do not have the same number of columns", call.=FALSE)
+      if((N <- nrow(X)) != nrow(Xstar))    stop("X and Xstar do not have the same number of rows",      call.=FALSE)
+      if((P <- ncol(X)) != ncol(Xstar))    stop("X and Xstar do not have the same number of columns",    call.=FALSE)
+      if(anyNA(Xstar)   || anyNA(X))       stop("X and Xstar are not allowed to contain missing values", call.=FALSE)
       J         <- if(translate) diag(N) - matrix(1/N, N, N)                             else diag(N)
       C         <- crossprod(Xstar, J) %*% X
       svdX      <- svd(C)
@@ -1048,10 +1124,10 @@
 #'
 #' Constraints \emph{may} be particularly useful when \code{N < P}, though caution is advised when employing constraints for any of the infinite factor models, especially "\code{isotropic}" and "\code{single}", which may lead to overestimation of the number of clusters &/or factors if this specification is inappropriate. The four options correspond to the following 4 parsimonious Gaussian mixture models:
 #' \describe{
-#' \item{"\code{unconstrained}"}{\strong{UUU} - variable-specific and cluster-specific: \eqn{\Psi_g = \Psi_g}{Psi_g = Psi_g}.}
-#' \item{"\code{isotropic}"}{\strong{UUC} - cluster-specific, equal across variables: \eqn{\Psi_g = \psi\mathcal{I}_p}{Psi_g = (sigma^2)_g I_p}.}
-#' \item{"\code{constrained}"}{\strong{UCU} - variable-specific, equal across clusters: \eqn{\Psi_g = \Psi}{Psi_g = Psi}.}
-#' \item{"\code{single}"}{\strong{UCC} - single value equal across clusters and variables: \eqn{\Psi_g = \psi\mathcal{I}_p}{Psi_g = sigma^2 I_p}.}
+#' \item{"\code{unconstrained}"}{(\strong{UUU}) - variable-specific and cluster-specific: \eqn{\Psi_g = \Psi_g}{Psi_g = Psi_g}.}
+#' \item{"\code{isotropic}"}{(\strong{UUC}) - cluster-specific, equal across variables: \eqn{\Psi_g = \psi\mathcal{I}_p}{Psi_g = (sigma^2)_g I_p}.}
+#' \item{"\code{constrained}"}{(\strong{UCU}) - variable-specific, equal across clusters: \eqn{\Psi_g = \Psi}{Psi_g = Psi}.}
+#' \item{"\code{single}"}{(\strong{UCC}) - single value equal across clusters and variables: \eqn{\Psi_g = \psi\mathcal{I}_p}{Psi_g = sigma^2 I_p}.}
 #' }
 #' The first letter \strong{U} here corresponds to constraints on loadings (not yet implemented), the second letter corresponds to uniquenesses constrained/unconstrained across clusters, and the third letter corresponds to the isotropic constraint on the uniquenesses. Of course, only the third letter is of relevance for the single-cluster "\code{FA}" and "\code{IFA}" models, such that "\code{unconstrained}" and "\code{constrained}" are equivalent for these models, and so too are "\code{isotropic}" and "\code{single}".
 #' @param psi.alpha The shape of the inverse gamma prior on the uniquenesses. Defaults to 2.5. Must be greater than 1 if \code{psi.beta} is \emph{not} supplied. Otherwise be warned that values less than or equal to 1 may not bound uniquenesses sufficiently far away from 0, and the algorithm may therefore terminate. Also, excessively small values may lead to critical numerical issues and should thus be avoided.
@@ -1174,9 +1250,9 @@
 #' @param zeta Tuning parameter controlling the acceptance rate of the random-walk proposal for the Metropolis-Hastings steps when \code{learn.alpha=TRUE}, where \code{2 * zeta} gives the full width of the uniform proposal distribution. These steps are only invoked when either \code{discount} is non-zero and fixed or \code{learn.d=TRUE}, otherwise \code{alpha} is learned by Gibbs updates. Must be strictly positive. Defauts to 2.
 #' @param tune.zeta Used for tuning \code{zeta} & the width of the uniform proposal for \code{alpha} via diminishing Robbins-Monro type adaptation, when that parameter is learned via Metropolis-Hastings. Must be given in the form of a list with the following \emph{named} elements:
 #' \describe{
-#' \item{"\code{heat}"}{The initial adaptation intensity/step-size, such that larger values lead to larger updates. Must be strictly greater than zero. Defaults to 1 if not supplied but other elements of \code{tune.zeta} are.}
-#' \item{"\code{lambda}"}{Iteration rescaling parameter which controls the speed at which adaptation diminishes, such that lower values cause the contribution of later iterations to diminish more slowly. Must lie in the interval (0.5, 1]. Defaults to 1 if not supplied but other elements of \code{tune.zeta} are.}
-#' \item{"\code{target}"}{The target acceptance rate. Must lie in the interval [0, 1]. Defaults to 0.441, which is optimum for univariate targets, if not supplied but other elements of \code{tune.zeta} are.}
+#' \item{"\code{heat}" - }{The initial adaptation intensity/step-size, such that larger values lead to larger updates. Must be strictly greater than zero. Defaults to 1 if not supplied but other elements of \code{tune.zeta} are.}
+#' \item{"\code{lambda}" - }{Iteration rescaling parameter which controls the speed at which adaptation diminishes, such that lower values cause the contribution of later iterations to diminish more slowly. Must lie in the interval (0.5, 1]. Defaults to 1 if not supplied but other elements of \code{tune.zeta} are.}
+#' \item{"\code{target}" - }{The target acceptance rate. Must lie in the interval [0, 1]. Defaults to 0.441, which is optimum for univariate targets, if not supplied but other elements of \code{tune.zeta} are.}
 #' }
 #'  \code{tune.zeta} is only relevant when \code{learn.alpha} is \code{TRUE}, and either the \code{discount} remains fixed at a non-zero value, or when \code{learn.d} is \code{TRUE} and \code{kappa < 1}. Since Gibbs steps are invoked for updated \code{alpha} when \code{discount == 0}, adaption occurs according to a running count of the number of iterations with non-zero sampled \code{discount} values. If diminishing adaptation is invoked, the posterior mean \code{zeta} will be stored. Since caution is advised when employing adaptation, note that acceptance rates of between 10-50\% are generally considered adequate.
 #' @param ... Catches unused arguments.
@@ -1250,7 +1326,7 @@
     kappa       <- ifelse(all(!learn.d, discount == 0), 1, kappa)
     if(all(discount       > 0,
       !learn.d, learn.alpha)) {
-      alpha.hyper        <- unname(unlist(shift_GA(shape=alpha.hyper[1], rate=alpha.hyper[2], shift=ifelse(learn.d, -1, -discount))))
+      alpha.hyper        <- unname(unlist(shift_GA(shape=alpha.hyper[1], rate=alpha.hyper[2], shift=-discount)))
     }
     if(all(kappa         == 0, !learn.d,
            discount      == 0))            stop("'kappa' is zero and yet 'discount' is fixed at zero:\neither learn the discount parameter or specify a non-zero value", call.=FALSE)
@@ -1455,10 +1531,6 @@
   # Other Hidden Functions
     .a_drop     <- function(x, drop = TRUE, named.vector = TRUE, one.d.array = FALSE, ...) {
       if(is.null(dim(x)))                  stop("require an object with a dim attribute", call.=FALSE)
-      if(length(list(...))) {
-        if(length(names(list(...)))) {     stop("have unrecognized ... arguments for adrop.default: ", paste(names(list(...)), collapse=", "), call.=FALSE)
-        } else                             stop("have unrecognized unnamed ... arguments for adrop.default", call.=FALSE)
-      }
       x.dim     <- dim(x)
       if(is.logical(drop))  {
         if(length(drop) != length(x.dim))  stop("length of drop is not equal length of dim(x)", call.=FALSE)
@@ -1709,7 +1781,7 @@
     .plot_CI    <- function(x, y = NULL, uiw, liw = uiw, ui = NULL, li = NULL, err = "y", sfrac = 0.01,
                             gap = 0, slty = graphics::par("lty"), add = FALSE, scol = NULL, pt.bg = graphics::par("bg"), ...) {
       arglist   <- list(...)
-      if(is.list(x)) {
+      if(inherits(x, "list"))   {
         y       <- x$y
         x       <- x$x
       }

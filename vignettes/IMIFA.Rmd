@@ -14,13 +14,13 @@ knitr::opts_chunk$set(fig.width=7, fig.height = 5, fig.align = 'center', fig.sho
                       warning=FALSE, message=FALSE, progress=FALSE, collapse=TRUE, comments="#>")
 ```
 ## Introduction
-__IMIFA__ is an R package that provides flexible efficient Gibbs sampling functions for fitting Infinite Mixtures of Infinite Factor Analysers (__IMIFA__) and related models. The main model, IMIFA itself, conducts Bayesian nonparametric clustering via latent Gaussian models. While the package offers a Bayesian implementation of the Factor Analysis (FA) and Mixtures of Factor Analysers (MFA) models, among others, these require pre-specification of the number of latent factors &/or the number of components, which must remain fixed, the main advantages of the IMIFA model are that a) these quantities are estimated automatically, and b) the number of latent factors is allowed to be cluster-specific.
+__IMIFA__ is an R package that provides flexible and efficient functions for fitting Infinite Mixtures of Infinite Factor Analysers (__IMIFA__) and related models. The main model, IMIFA itself, conducts Bayesian nonparametric clustering via latent Gaussian models. While the package offers a Bayesian implementation of the Factor Analysis (FA) and Mixtures of Factor Analysers (MFA) models, among others, these require pre-specification of the number of latent factors &/or the number of components, which must remain fixed, the main advantages of the IMIFA model are that a) the modl search is dramatically reduced, b) these quantities are estimated automatically, c) the number of latent factors is allowed to be cluster-specific, and d) uncertainty in the number of clusters and numbers of cluster-specific factors can be quantified.
 
 Typically one would run FA or MFA models over ranges of values for the numbers of clusters and factors, with the pair which optimises some model selection criteria typically chosen. __IMIFA__ instead enables Bayesian nonparametric model-based clustering with factor analytic covariance structures, _without_ recourse to model selection criteria, to automatically choose the number of clusters &/or cluster-specific latent factors. 
 
-The main features of the IMIFA model are the multiplicative gamma process shrinkage prior on the factor loadings, which allows theoretically infinitely many factors (this can also be employed in a MIFA context, for instance, where the number of clusters is fixed but cluster-specific factors are estimated) and the Dirichlet process prior, which utilises the stick-breaking construction and slice-efficient sampling, and allows theoretically infinitely many clusters. Tools are provided for soliciting sensible hyperparameters for these priors. As of IMIFA v1.2.0, it's now also possible to assume a Pitman-Yor process prior on the number of mixture components, and to learn its concentration and discount parameters via Metropolis-Hastings updates.
+The main features of the IMIFA model are the multiplicative gamma process shrinkage prior on the factor loadings, which allows theoretically infinitely many factors (this can also be employed in a MIFA context, for instance, where the number of clusters is fixed but cluster-specific factors are estimated), an adaptive Gibbs sampler which dynamically truncates the infinite loadings matrices, and the Dirichlet process prior, which utilises the stick-breaking construction and slice-efficient sampling, and allows theoretically infinitely many clusters. Tools are provided for soliciting sensible hyperparameters for these priors. As of IMIFA v1.2.0, it's now also possible to assume a Pitman-Yor process prior on the number of mixture components, and to learn its concentration and discount parameters via Metropolis-Hastings updates.
 
-Model-specific diagnostic tools are also provided, as well as many extensive options for plotting results and conducting posterior inference on parameters of interest. The functions are typically verbose, offering plenty of messages and warnings to the user where appropriate. Please see [Murphy et al. (2017)](https://arxiv.org/abs/1701.07010v4) for more info.
+Model-specific diagnostic tools are also provided, as well as many extensive options for plotting results, conducting posterior inference on parameters of interest, and quantifying uncertainty. The functions are typically verbose, offering plenty of messages and warnings to the user where appropriate. Please see [Murphy et al. (2017)](https://arxiv.org/abs/1701.07010v4) for more info.
 
 If you find bugs or want to suggest new features please visit the __IMIFA__ [GitHub issues page](https://github.com/Keefe-Murphy/IMIFA/issues). This vignette aims to reproduce some results in the Murphy et al. (2017) paper using the `mcmc_IMIFA()` and `get_IMIFA_results()` functions and demonstrates how the plots therein were created using the dedicated S3 `plot` method, while also demonstrating how to fit other models in the IMIFA family.
 
@@ -78,7 +78,7 @@ and learn more about this data set by typing
 
 ## Fitting the model & running the MCMC chain
 
-The `mcmc_IMIFA` function provides an adaptive Gibbs sampler for nonparameteric model-based clustering using models from the __IMIFA__ family. The function facilitates model-based clustering with dimensionally reduced factor-analytic covariance structures, with automatic estimation of the number of clusters and cluster-specific factors as appropriate to the method employed. Factor analysis with one group (FA/IFA), finite mixtures (MFA/MIFA), overfitted mixtures (OMFA/OMIFA), infinite factor models which employ the multiplicative gamma process (MGP) shrinkage prior (IFA/MIFA/OMIFA/IMIFA), and infinite mixtures which employ Dirichlet Process Mixture Models (IMFA/IMIFA) are all provided. The function creates a raw object of class `'IMIFA'` from which the optimal/modal model can be extracted by `get_IMIFA_results`.
+The `mcmc_IMIFA` function provides an adaptive Gibbs/Metropolis-within-Gibbs sampler for nonparameteric model-based clustering using models from the __IMIFA__ family. The function facilitates model-based clustering with dimensionally reduced factor-analytic covariance structures, with automatic estimation of the number of clusters and cluster-specific factors as appropriate to the method employed. Factor analysis with one group (FA/IFA), finite mixtures (MFA/MIFA), overfitted mixtures (OMFA/OMIFA), infinite factor models which employ the multiplicative gamma process (MGP) shrinkage prior (IFA/MIFA/OMIFA/IMIFA), and infinite mixtures which employ Dirichlet Process Mixture Models (IMFA/IMIFA) are all provided. The function creates a raw object of class `'IMIFA'` from which the optimal/modal model can be extracted by `get_IMIFA_results`.
 
 There are many, many options for specifying hyperparameters, specifying running conditions and pre-processing the data. These are documented bothin within `mcmc_IMIFA` and within various control functions (`mixfaControl`, `mgpControl`, `bnpControl`, etc.), are deferred, for brevity, to these functions' help files. Great care was taken to ensure the default function arguments governed by the control functions would be appropriate in most applications, but you can nevertheless access further helpful instructions by typing
 
@@ -88,7 +88,7 @@ There are many, many options for specifying hyperparameters, specifying running 
 
 and `?mixfaControl`, `?mgpControl`, `?bnpControl` etc. as needed. Arguments to these control functions can actually be supplied, provided they are named, directly to `mcmc_IMIFA`, and this convention is adopted throughout this document.
 
-Be warned that the `mcmc_IMIFA` function calls in this section may take quite some time to run. Let's begin by fitting a Mixture of Factor Analysers model (MFA) to the unit-scaled `olive` data. For this, we must specify sequences of values for `range.G`, the number of clusters, and `range.Q`, the number of latent factors. Let's assume that uniquenesses are `isotropic` rather than `unconstrained`. This isotropic constraint provides the link between factor analysis and the probabilistic principal component analysis model: note that we could also constrain uniqueness across clusters (but still be diagonal within each cluster) by specifiying `uni.type="constrained"` or constrain uniquenesses to a single value (i.e. equal across all clusters and all variables) by specifying `uni.type="single"`. Let's elect not to store the latent factor scores, as this can be a huge drain on memory, with the caveat that posterior inference on the scores won't be possible. Let's also allow diagonal covariance as a special case where `range.Q` is `0`, and accept all other defaults (for instance, cluster labels will be initialised by `mclust`).
+Be warned that the `mcmc_IMIFA` function calls in this section may take quite some time to run. Let's begin by fitting a Mixture of Factor Analysers model (MFA) to the unit-scaled `olive` data. For this, we must specify sequences of values for `range.G`, the number of clusters, and `range.Q`, the number of latent factors. Let's assume that uniquenesses are `isotropic` rather than `unconstrained`. This isotropic constraint provides the link between factor analysis and the probabilistic principal component analysis model (PPCA): note that we could also constrain uniqueness across clusters (but still be diagonal within each cluster) by specifiying `uni.type="constrained"` or constrain uniquenesses to a single value (i.e. equal across all clusters and all variables) by specifying `uni.type="single"`. Let's elect not to store the latent factor scores, as this can be a huge drain on memory, with the caveat that posterior inference on the scores won't be possible. Let's also allow diagonal covariance as a special case where `range.Q` is `0`, and accept all other defaults (for instance, cluster labels will be initialised by `mclust`).
 
 ```{r, eval=FALSE}
 simMFA   <- mcmc_IMIFA(olive, method="MFA", n.iters=10000, range.G=3:6, range.Q=0:3, centering=FALSE, 
@@ -118,7 +118,7 @@ simIMIFA <- mcmc_IMIFA(olive, method="IMIFA", n.iters=50000, verbose=FALSE, lear
 ## Postprocessing and extracing optimum results
 In order to extract results, conduct posterior inference and compute performance metrics for MCMC samples of models from the __IMIFA__ family, we can pass the output of `mcmc_IMIFA` to the function `get_IMIFA_results()`. If, for instance, `simMFA` above was supplied, this function would find the pair of $G$ and $Q$ values which optimises a model selection criteria of our choosing and prepare results from that model only. If `simIMIFA` is supplied, this function finds the _modal_ estimates of $G$ and each $Q_g$ (the cluster-specific number of latent factors), and likewise prepares results accordingly. 
 
-This function can be re-ran at little computational cost in order to extract different models explored by the sampler used by `mcmc_IMIFA`, without having to re-run the model itself. New results objects using different numbers of clusters and different numbers of factors (if visited by the model in question), or using different model selection criteria (if necessary) can be generated with ease. The function also performs post-hoc corrections for label switching, as well as post-hoc Procrustes rotation, to ensure sensible posterior parameter estimates, and constructs credible intervals. Please see the function's help manual by typing `?get_IMIFA_results` for further assistance with the various function arguments.
+This function can be re-ran at little computational cost in order to extract different models explored by the sampler used by `mcmc_IMIFA`, without having to re-run the model itself. New results objects using different numbers of clusters and different numbers of factors (if visited by the model in question), or using different model selection criteria (if necessary) can be generated with ease. The function also performs post-hoc corrections for label switching, as well as post-hoc Procrustes rotation to ensure sensible posterior parameter estimates, computes error metrics, and constructs credible intervals, the average similarity matrix, and the posterior confusion matrix. Please see the function's help manual by typing `?get_IMIFA_results` for further assistance with the various function arguments.
 
 If we wanted to choose the optimum MFA model, we would simply type
 
@@ -132,7 +132,7 @@ If we instead wanted to explore the 3-cluster solution, construct 90% credible i
 resMFA2 <- get_IMIFA_results(simMFA, G=3, criterion="aic.mcmc")
 ```
 
-For now, let's just extract results from our IMIFA run above so we can proceed to visually examine them. Though the IMIFA model obviates the need for model selection criteria, the syntax for extracting results is exactly the same. However, this time, let's also summarise the clustering via the N x N similarity matrix obtained by averaging the adjacency matrices (admittedly at the expense of slowing the function down considerably!), so that we can visualise it later.
+For now, let's just extract results from our IMIFA run above so we can proceed to visually examine them. Though the IMIFA model obviates the need for model selection criteria, the syntax for extracting results is exactly the same. However, this time, let's also summarise the clustering via the N x N similarity matrix obtained by averaging the adjacency matrices (admittedly at the expense of slightly slowing the function down!), so that we can visualise it later.
 
 ```{r, eval=FALSE}
 resIMIFA <- get_IMIFA_results(simIMIFA, z.avgsim=TRUE)
@@ -149,9 +149,9 @@ summary(resIMIFA)
 ```
 
 ## Visualing IMIFA results
-The object `resIMIFA` above is of the class `Results_IMIFA`. We can call `plot` an objects of this class to access a dedicated function for visualising output and parameters of inferential interest for IMIFA and related models. The two most important arguments, beyond the `Results_IMIFA` object itself, are `plot.meth` and `param`, where the former dictates the type of plot to be produced (one of `c("all", "correlation", "density", "errors", "GQ", "means", "parallel.coords", "trace", "zlabels")`, depending on the `method` employed originally by `mcmc_IMIFA`) for the `param`eter of interest (one of `c("means", "scores", "loadings", "uniquenesses", "pis", "alpha")`, depending on the `method` employed originally by `mcmc_IMIFA`). Note that many of the function calls below will also print relevant output to the console window that is not always shown here. Please see the function's help manual by typing `plot.Results_IMIFA` for further assistance with the various function arguments.
+The object `resIMIFA` above is of the class `Results_IMIFA`. We can call `plot` on objects of this class to access a dedicated function for visualising output and parameters of inferential interest for IMIFA and related models. The two most important arguments, beyond the `Results_IMIFA` object itself, are `plot.meth` and `param`, where the former dictates the type of plot to be produced (one of `c("all", "correlation", "density", "errors", "GQ", "means", "parallel.coords", "trace", "zlabels")`, depending on the `method` employed originally by `mcmc_IMIFA`) for the `param`eter of interest (one of `c("means", "scores", "loadings", "uniquenesses", "pis", "alpha")`, depending on the `method` employed originally by `mcmc_IMIFA`). Note that `"all"` refers here to the options `"trace"`, `"density"`, `"means"`, and `"correlation"`. Note also that many of the function calls below will also print relevant output to the console window that is not always shown here. Please see the function's help manual by typing `plot.Results_IMIFA` for further assistance with the various function arguments.
 
-Let's examine the posterior distribution of $G$ and the posterior distribution of $Q_g$ for each of the `r resIMIFA$GQ.results$G` clusters. The third plot below, depicting the trace of the numbers of active and non-empty clusters, allows us to examine mixing of the chain with respect to $G$.
+Let's examine the posterior distribution of $G$ and the posterior distribution of $Q_g$ for each of the `r resIMIFA$GQ.results$G` clusters. The third plot below, depicting the trace of the numbers of active and non-empty clusters, allows us to examine mixing of the chain with respect to $G$. The true number of clusters is estimated by $G=4$, the modal value.
 
 ```{r, results='hide', eval=FALSE}
 plot(resIMIFA, plot.meth="GQ")
@@ -181,9 +181,16 @@ We can also plot a clustering uncertainty profile, also highlighting misclassifi
 plot(resIMIFA, plot.meth="zlabels", zlabels=olive$area, g=2)
 ```
 
-Finally, we can visualise the N * N similarity matrix by supplying `g=4` when `plot.meth="zlabels"`. Had we not specified `g`, the function would cycle through the available plots.
-```{r}
+With `g=4`, we can visualise the posterior confusion matrix. The benchmark matrix for comparison is the identity matrix of order $G=4$, corresponding to a situation with no uncertainty in the clustering.
+
+```{r, results="hide"}
 plot(resIMIFA, plot.meth="zlabels", g=4)
+```
+
+Finally, we can visualise the $N * N$ similarity matrix by supplying `g=5` when `plot.meth="zlabels"`. Had we not specified `g`, the function would cycle through the available plots.
+
+```{r}
+plot(resIMIFA, plot.meth="zlabels", g=5)
 ```
 
 To examine the posterior mean estimates of the cluster means in a given cluster (say the 1st), we can set both `plot.meth` and `param` to `"means"`. If the cluster isn't specified using the argument `g`, the user will be prompted to hit &lt;Return&gt; at the onset of each plot in order to cycle through similar plots for all clusters. In the code below `mat=TRUE` means, in this case, to plot all variables simultaneously. By default, credible intervals are also plotted. Note that the data were originally mean-centered and unit-scaled when `mcmc_IMIFA` was called.
@@ -191,7 +198,7 @@ To examine the posterior mean estimates of the cluster means in a given cluster 
 ```{r}
 plot(resIMIFA, plot.meth="means", param="means", mat=TRUE, g=1)
 ```
-Had the factor scores been stored, we could examine the trace plots for them using the code below, where `mat=TRUE` and `by.fac=FALSE` (the default) means, in this case, to plot all factors simultaneously for a given observation, say the 1st (however this is not shown, as the scores were not stored).
+Had the factor scores been stored, we could examine the trace plots for them using the code below, where `mat=TRUE` and `by.fac=FALSE` (the default) means, in this case, to plot all factors simultaneously for a given observation: `ind=1` specifies that the observation of interest is the first (however this is not shown, as the scores were not stored).
 
 ```{r, eval=FALSE}
 plot(resIMIFA, plot.meth="trace", param="scores", mat=TRUE, ind=1)
@@ -220,7 +227,7 @@ Posterior predictive checking to assess the appropriateness of the fitted model 
 plot(resIMIFA, plot.meth="errors")
 ```
 
-Finally, inference can be conducted on the Pitman-Yor concentration parameter $\alpha$ and discount parameter $d$ (assuming `learn.alpha` and `learn.d`, respectively, were _not_ set to `FALSE` when `mcmc_IMIFA` was initially run using the IMFA/IMIFA methods),  where `all` below refers to `trace`, `density`, posterior `means`, and ACF (`correlation`) plots. Note that the `density` for `discount` accounts for the point-mass at zero built into its prior.
+Finally, inference can be conducted on the Pitman-Yor concentration parameter $\alpha$ and discount parameter $d$ (assuming `learn.alpha` and `learn.d`, respectively, were _not_ set to `FALSE` when `mcmc_IMIFA` was initially run using the IMFA/IMIFA methods),  where `all` below refers to `trace`, `density`, posterior `means`, and ACF/PACF (`correlation`) plots. Note that the `density` for `discount` accounts for the point-mass at zero built into its prior.
 ```{r, fig.height=7}
 plot(resIMIFA, plot.meth="all", param="alpha")
 ```

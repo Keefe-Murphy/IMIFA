@@ -31,7 +31,9 @@
 #' @examples
 #' # Simulate 100 observations from 3 balanced clusters with cluster-specific numbers of latent factors
 #' # Specify isotropic uniquenesses within each cluster
-#' sim_data <- sim_IMIFA_data(N=100, G=3, P=20, Q=c(2, 2, 5), psi=1:3)
+#' # Supply cluster means directly
+#' sim_data <- sim_IMIFA_data(N=100, G=3, P=20, Q=c(2, 2, 5), psi=1:3,
+#'                            mu=matrix(rnorm(60, -2 + 1:3, 1), nrow=20, ncol=3, byrow=TRUE))
 #' names(attributes(sim_data))
 #' labels   <- attr(sim_data, "Labels")
 #'
@@ -39,7 +41,7 @@
 #' plot(cmdscale(dist(sim_data), k=2), col=labels)
 #'
 #' # Fit a MIFA model to this data
-#' # tmp      <- mcmc_IMIFA(sim_data, method="MIFA", range.G=3, n.iters=5000)
+#' # tmp    <- mcmc_IMIFA(sim_data, method="MIFA", range.G=3, n.iters=5000)
 #' @seealso \code{\link{mcmc_IMIFA}} for fitting an IMIFA related model to the simulated data set.
 sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(floor(log(P)), G), pis = rep(1/G, G), mu = NULL,
                            psi = NULL, nn = NULL, loc.diff = 1L, method = c("conditional", "marginal")) {

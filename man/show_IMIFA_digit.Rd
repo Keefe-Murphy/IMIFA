@@ -22,7 +22,7 @@ show_IMIFA_digit(res,
 
 \item{ind}{The index of columns of \code{dat} which were discarded prior to fitting the \code{"IMIFA"}-related model via \code{\link{mcmc_IMIFA}}. Can be a vector of column indices of \code{dat} or an equivalent vector of logicals. The discarded pixels are replaced by the column-means corresponding to \code{ind} among images assigned to the given cluster \code{G}.}
 
-\item{...}{Additional arguments to be passed, via \code{\link{show_digit}}, to \code{\link[graphics]{image}}.}
+\item{...}{Additional arguments to be passed, via \code{\link{show_digit}}, to \code{\link{mat2cols}} and/or \code{\link{plot_cols}}.}
 }
 \value{
 The desired image representation of the posterior mean digit (or the last valid sample) from the desired cluster.
@@ -52,7 +52,7 @@ show_IMIFA_digit(res, dat=train, ind=ind)
 show_IMIFA_digit(res, dat=train, ind=ind, G=2)}
 }
 \seealso{
-\code{\link{USPSdigits}}, \code{\link{show_digit}}, \code{\link{get_IMIFA_results}}, \code{\link{mcmc_IMIFA}}
+\code{\link{USPSdigits}}, \code{\link{show_digit}}, \code{\link{get_IMIFA_results}}, \code{\link{mcmc_IMIFA}}, \code{\link{mat2cols}}, \code{\link{plot_cols}}
 }
 \author{
 Keefe Murphy - <\email{keefe.murphy@ucd.ie}>

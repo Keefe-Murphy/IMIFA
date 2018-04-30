@@ -33,7 +33,7 @@
 Special types of plots which don't require a \code{param} are:
 \describe{
 \item{"\code{GQ}"}{for plotting the posterior summaries of the numbers of clusters/factors, if available.}
-\item{"\code{zlabels}"}{for plotting clustering uncertainties - in three different ways - if clustering has taken place (and, if available, the average similarity matrix, reordered according to the MAP labels) with or without the clustering labels being supplied via the \code{zlabels} argument.}
+\item{"\code{zlabels}"}{for plotting clustering uncertainties - in four different ways (incl. the posterior confusion matrix) - if clustering has taken place, with or without the clustering labels being supplied via the \code{zlabels} argument. If available, the average similarity matrix, reordered according to the MAP labels, is shown as the 5-th plot.}
 \item{"\code{errors}"}{for conducting posterior predictive checking of the appropriateness of the fitted model by visualising the error metrics quantifying the difference between the estimated and empirical covariance matrices. The type of plot produced depends on how the \code{error.metrics} argument was supplied to \code{\link{get_IMIFA_results}}.}
 }}
 

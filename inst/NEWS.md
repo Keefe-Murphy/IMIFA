@@ -1,7 +1,7 @@
 __Infinite Mixtures of Infinite Factor Analysers__
 ==================================================  
 
-## IMIFA v2.0.0 - (_6<sup>th</sup> release [major update]: 2018-02-18_)
+## IMIFA v2.0.0 - (_6<sup>th</sup> release [major update]: 2018-05-01_)
 ### Major Changes
 * Simplified `mcmc_IMIFA` by consolidating arguments using new helper functions (with defaults):  
     * Args. common to all factor-analytic mixture methods & MCMC settings supplied via `mixfaControl`.
@@ -14,27 +14,30 @@ __Infinite Mixtures of Infinite Factor Analysers__
 * Posterior predictive checking overhauled: now MSE, RMSE etc. between empirical & estimated covariance  
   matrices are computed for every retained iteration so uncertainty in these estimates can be quantified:  
     * Can be switched on/off via the `error.metrics` argument to `get_IMIFA_results`.  
-    * Can be visualised by supplying `plot.meth=errors` to `plot.Results_IMIFA`.  
+    * Can be visualised by supplying `plot.meth="errors"` to `plot.Results_IMIFA`.  
     * For methods which achieve clustering, the 'overall' covariance matrix  
       is now properly computed from the cluster-specific covariance matrices.  
     * Same metrics also evaluated at posterior mean parameter estimates & for final sample where possible.
+* `mixfaControl` gains the arg. `prec.mu` to control the degree of flatness of the prior for the means.
+* Posterior confusion matrix now returned (`get_IMIFA_results`) & visualisable (`plot.Results_IMIFA`,  
+  when `plot.meth="zlabels"`), via new function `post_conf_mat`, to further assess clustering uncertainty.
+* Added new type of clustering uncertainty profile plot in `plot.Results_IMIFA` when `plot.meth="zlabels"`.
 * For convenience, `get_IMIFA_results` now also returns the last valid samples for parameters of interest,  
   after conditioning on the modal G & Q values and accounting for label switching and Procrustes rotation.
 * `plot.Results_IMIFA` gains new arg. `show.last` that replaces any instance of showing the posterior mean  
   with the last valid sample instead (i.e. when `plot.meth="means"` or `plot.meth="parallel.coords")`.
 * Added ability to constrain mixing proportions across clusters using `equal.pro` argument for M(I)FA models:  
-  Modified PGMM_dfree accordingly and forced non-storage of mixing proportions when `equal.pro` is `TRUE`. 
+  Modified `PGMM_dfree` accordingly and forced non-storage of mixing proportions when `equal.pro` is `TRUE`. 
 * All methods now work for univariate data also (with apt. edits to plots & uniqueness defaults etc.).  
   `sim_IMIFA_data` also extended to work for univariate data, as well as sped-up.
-* Added new type of clustering uncertainty profile plot in `plot.Results_IMIFA` when `plot.meth="zlabels"`.
 
 ### Improvements
 * Retired args. `nu` & `nuplus1` to `mgpControl`, replaced by ability to specify more general gamma prior,  
   via new `phi.hyper` arg. specifying shape _and_ rate - `mgp_check` has also been modified accordingly.
 * `Zsimilarity` sped-up via the `comp.psm` & `cltoSim` functions s.t. when # observations < 1000,  
-  `z.avgsim=TRUE` now by default in `get_IMIFA_results` when suggested `mcclust` package is loaded.
+  `z.avgsim=TRUE` now by default in `get_IMIFA_results` (when suggested `mcclust` package is loaded).
+* Matrix of posterior cluster membership probabilities now returned by `get_IMIFA_results`.
 * Modified AGS to better account for when the number of group-specific latent factors shrinks to zero.
-* `mixfaControl` gains the arg. `prec.mu` to control the degree of flatness of the prior for the means.
 * `psi.alpha` no longer needs to be strictly greater than 1, unless the default `psi.beta` is invoked;  
   thus flatter inverse gamma priors can now be specified for the uniquenesses via `mixfaControl`.
 * Added "`hc`" option to `z.init` to initialise allocations via hierarchical clustering (using `mclust::hc`).
@@ -45,7 +48,7 @@ __Infinite Mixtures of Infinite Factor Analysers__
 * Speed-ups due to utility functions from `matrixStats`, on which `IMIFA` already depends.
 * Slight improvements when `adapt=FALSE` for infinite factor models with fixed high truncation level.
 * Misclassified observations now highlighted in 1st type of uncertainty plot in `Plot.Results_IMIFA`,  
-  when `plot.meth=zlabels` and the true `zlabels` are supplied.
+  when `plot.meth="zlabels"` and the true `zlabels` are supplied.
 * `mixfaControl` gains arg. `drop0sd` to control removal of zero-variance features (defaults to `TRUE`).
 * `heat_legend` gains `cex.lab` argument to control magnification of legend text.
 * `mat2cols` gains the `transparency` argument.
@@ -70,13 +73,12 @@ __Infinite Mixtures of Infinite Factor Analysers__
 * Fixed plotting of posterior mean scores when one or more clusters are empty.
 * Fixed storage switches to account for `burnin=0`.
 * Fixed bug with default plotting palette for data sets with >1024 variables.
-* Fixed bug with label switching permutations in `get_IMIFA_results` when there are empty groups.
+* Fixed bug with label switching permutations in `get_IMIFA_results` when there are empty clusters.
 * Fixed bug when plotting posterior mean loadings heatmap when one or more clusters have zero factors.
 * Fixed `print` and `summary` functions for objects of class `IMIFA` and `Results_IMIFA`.
 * Fixed calculating posterior mean `zeta` when adaptively targeting `alpha`'s optimal MH acceptance rate.
-* Minor label-switching fix when `zlabels` are supplied to `get_IMIFA_results()` & MAP has empty clusters.
+* Allowed `alpha` be tiny for (O)M(I)FA models (provided `z.init != "priors"` for overfitted models).
 * Normalised mixing proportions in `get_IMIFA_results` when conditioning on `G` for IM(I)FA/OM(I)FA models.
-* Allowed `alpha` to be tiny for the (O)M(I)FA models (provided `z.init != "priors"` for the M(I)FA models).
 * New controls/warnings for excessively small Gamma hyperparemeters for uniqueness/local shrinkage priors.
 * Clarified recommendation in `MGP_check` that `alpha.d2` be moderately large relative to `alpha.d1`.
 * Ensured `sigma.mu` hyperparameter arg. is always coerced to diagonal entries of a covariance matrix.

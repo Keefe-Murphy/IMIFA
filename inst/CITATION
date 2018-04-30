@@ -4,7 +4,7 @@ citEntry(entry  = "Article",
   author  = personList(person(given="Keefe", family="Murphy"),
                        person(given=c("Isobel", "Claire"), family="Gormley"),
                        person(given="Cinzia", family="Viroli")),
-  title   = "Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models",
+  title   = "Infinite Mixtures of Infinite Factor Analysers",
   year    = "2017",
   journal = "To appear",
   volume  = "",
@@ -17,7 +17,7 @@ citEntry(entry  = "Article",
 
   textVersion   =
     paste("Keefe Murphy, I. Claire Gormley, and Cinzia Viroli (2017).",
-          "Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models.",
+          "Infinite Mixtures of Infinite Factor Analysers.",
           "To appear.",
           "Pre-print available at arXiv.",
           "URL: https://arxiv.org/abs/1701.07010v4.")

@@ -41,7 +41,9 @@ Function to simulate data of any size and dimension from a mixture of (infinite)
 \examples{
 # Simulate 100 observations from 3 balanced clusters with cluster-specific numbers of latent factors
 # Specify isotropic uniquenesses within each cluster
-sim_data <- sim_IMIFA_data(N=100, G=3, P=20, Q=c(2, 2, 5), psi=1:3)
+# Supply cluster means directly
+sim_data <- sim_IMIFA_data(N=100, G=3, P=20, Q=c(2, 2, 5), psi=1:3,
+                           mu=matrix(rnorm(60, -2 + 1:3, 1), nrow=20, ncol=3, byrow=TRUE))
 names(attributes(sim_data))
 labels   <- attr(sim_data, "Labels")
 
@@ -49,7 +51,7 @@ labels   <- attr(sim_data, "Labels")
 plot(cmdscale(dist(sim_data), k=2), col=labels)
 
 # Fit a MIFA model to this data
-# tmp      <- mcmc_IMIFA(sim_data, method="MIFA", range.G=3, n.iters=5000)
+# tmp    <- mcmc_IMIFA(sim_data, method="MIFA", range.G=3, n.iters=5000)
 }
 \references{
 Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.

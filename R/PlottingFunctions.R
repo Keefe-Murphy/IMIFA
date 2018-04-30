@@ -6,7 +6,7 @@
 #' Special types of plots which don't require a \code{param} are:
 #' \describe{
 #' \item{"\code{GQ}"}{for plotting the posterior summaries of the numbers of clusters/factors, if available.}
-#' \item{"\code{zlabels}"}{for plotting clustering uncertainties - in three different ways - if clustering has taken place (and, if available, the average similarity matrix, reordered according to the MAP labels) with or without the clustering labels being supplied via the \code{zlabels} argument.}
+#' \item{"\code{zlabels}"}{for plotting clustering uncertainties - in four different ways (incl. the posterior confusion matrix) - if clustering has taken place, with or without the clustering labels being supplied via the \code{zlabels} argument. If available, the average similarity matrix, reordered according to the MAP labels, is shown as the 5-th plot.}
 #' \item{"\code{errors}"}{for conducting posterior predictive checking of the appropriateness of the fitted model by visualising the error metrics quantifying the difference between the estimated and empirical covariance matrices. The type of plot produced depends on how the \code{error.metrics} argument was supplied to \code{\link{get_IMIFA_results}}.}
 #' }
 #' @param param The parameter of interest for any of the following \code{plot.meth} options: \code{all}, \code{trace}, \code{density}, \code{means}, \code{correlation}. The \code{param} must have been stored when \code{\link{mcmc_IMIFA}} was initially ran. Includes \code{pis} for methods where clustering takes place, and allows posterior inference on \code{alpha} and \code{discount} for the "\code{IMFA}" and "\code{IMIFA}" methods.
@@ -271,16 +271,16 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
       Gs  <- if(gx) seq_len(2L) else ifelse(g <= 2, g,
                                       stop("Invalid 'g' value", call.=FALSE))
     } else if(m.sw["Z.sw"]) {
-      Gs  <- if(gx) (if(z.sim) seq_len(4L) else seq_len(3L)) else ifelse(g <=
-             ifelse(z.sim, 4, 3), g,  stop(paste0("Invalid 'g' value", ifelse(z.sim, ": similarity matrix not available", "")), call.=FALSE))
+      Gs  <- if(gx) (if(z.sim) seq_len(5L) else seq_len(4L)) else ifelse(g <=
+             ifelse(z.sim, 5, 4), g,  stop(paste0("Invalid 'g' value", ifelse(z.sim, ": similarity matrix not available", "")), call.=FALSE))
     }
   } else if(all(is.element(method, c("IMIFA", "OMIFA")), m.sw["G.sw"]))           {
     if(m.sw["G.sw"]) {
       Gs  <- if(gx) seq_len(3L) else ifelse(g <= 3, g,
                                       stop("Invalid 'g' value", call.=FALSE))
     } else if(m.sw["Z.sw"]) {
-      Gs  <- if(gx) (if(z.sim) seq_len(4L) else seq_len(3L)) else ifelse(g <=
-             ifelse(z.sim, 4, 3), g,  stop(paste0("Invalid 'g' value", ifelse(z.sim, ": similarity matrix not available", "")), call.=FALSE))
+      Gs  <- if(gx) (if(z.sim) seq_len(5L) else seq_len(4L)) else ifelse(g <=
+             ifelse(z.sim, 5, 4), g,  stop(paste0("Invalid 'g' value", ifelse(z.sim, ": similarity matrix not available", "")), call.=FALSE))
     }
   } else if(any(all(is.element(param, c("scores", "pis", "alpha", "discount")), any(all.ind, param != "scores", !m.sw["M.sw"])), m.sw["G.sw"],
             all(m.sw["P.sw"], param != "loadings"), m.sw["E.sw"], all(param == "uniquenesses", is.element(uni.type, c("constrained", "single")))))  {
@@ -297,8 +297,9 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
     Gs    <- Gseq
   }
 
-  if(m.sw["Z.sw"] && !all(Gs == 4)) {
+  if(m.sw["Z.sw"] && !all(Gs == 5)) {
     prf   <- NULL
+    uncer <- attr(clust$uncertainty, "Obs")
     if(any(!labelmiss,  !z.miss))   {
       if(all(!labelmiss, z.miss))   {
         prf    <- clust$perf
@@ -315,11 +316,12 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
         if(prf$error.rate    == 0)  {
           prf$misclassified      <- NULL
         }
-        prf    <- c(list(confusion.matrix = tab), prf, list(uncertain = attr(clust$uncertainty, "Obs")))
+        prf    <- c(list(confusion.matrix = tab), prf, if(!is.null(uncer)) list(uncertain = uncer))
       }
-      prf$error.rate             <- paste0(round(100 * prf$error.rate, 2), "%")
+      prf$confusion.matrix       <- if(!is.null(prf$confusion.matrix))     stats::addmargins(prf$confusion.matrix, quiet=TRUE)
+      prf$error.rate             <- if(!is.null(prf$error.rate))           paste0(round(100 * prf$error.rate, 2), "%")
     } else      {
-      prf      <- list(uncertain  = attr(clust$uncertainty, "Obs"))
+      prf      <- if(!is.null(uncer))    list(uncertain = uncer)
       prf      <- if(!is.null(prf[[1]])) prf
     }
   }
@@ -1107,16 +1109,31 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
         graphics::plot(x.plot, main="", xlab="Uncertainties", xlim=c(0, 1 - 1/G), col=cols, xaxt="n", ylim=c(0, max(x.plot$counts)), yaxt="n")
         graphics::axis(1, at=c(breaks[round(breaks, 1) < min(0.8, 1 - 1/G)], 1 - 1/G), labels=(c(round(breaks[round(breaks, 1) < min(0.8, 1 - 1/G)], 3), "1 - 1/G")), las=2, pos=0, cex.axis=0.8)
         graphics::axis(2, at=if(sum(plot.x)  == 0) c(graphics::axTicks(2), max(x.plot$counts)) else graphics::axTicks(2), las=1, cex.axis=0.8)
+      } else if(g == 4)  {
+        graphics::par(defpar)
+        if(titles) graphics::par(mar=c(4.1, 4.1, 4.1, 4.1))
+        PCM     <- replace(clust$PCM, clust$PCM == 0, NA)
+        i.cols  <- if(any(!mispal, (!gx && !all(Gs == 4)))) palette else grDevices::heat.colors(18, alpha=transparency)[18:1]
+        plot_cols(mat2cols(PCM, cols=i.cols, na.col=graphics::par()$bg), na.col=graphics::par()$bg)
+        if(titles) {
+          graphics::title(main="Posterior Confusion Matrix")
+          graphics::mtext(side=1, at=Gseq, Gseq,      line=1)
+          graphics::mtext(side=2, at=Gseq, rev(Gseq), line=1, las=1)
+          graphics::mtext(side=1, "Cluster",          line=2)
+          graphics::mtext(side=2, "Allocation",       line=2)
+          heat_legend(PCM, cols=i.cols)
+        }
+        graphics::box(lwd=2)
       }
 
-      if(all(g  == 4, z.sim)) {
+      if(all(g  == 5, z.sim)) {
         plot.x  <- as.matrix(clust$Z.avgsim$z.sim)
         perm    <- order(clust$MAP)
         plot.x  <- if((p.ind <- !identical(perm, clust$MAP))) plot.x[perm,perm] else plot.x
         plot.x  <- t(plot.x[,seq(from=ncol(plot.x), to=1, by=-1)])
         graphics::par(defpar)
         if(titles) graphics::par(mar=c(4.1, 4.1, 4.1, 4.1))
-        z.col   <- if(any(!mispal, (!gx && !all(Gs == 4)))) palette else grDevices::heat.colors(12, alpha=transparency)[12:1]
+        z.col   <- if(any(!mispal, (!gx && !all(Gs == 5)))) palette else grDevices::heat.colors(12, alpha=transparency)[12:1]
         col.mat <- mat2cols(plot.x, cols=z.col, na.col=graphics::par()$bg)
         col.mat[plot.x == 0] <- NA
         plot_cols(col.mat, na.col=graphics::par()$bg)
@@ -1130,8 +1147,8 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
         if(p.ind)                     message("Rows and columns of similarity matrix reordered to correspond to MAP clustering")
       }
 
-      if(all(g  != 4, g == min(Gs)))  {
-        if(!is.null(prf))     {
+      if(all(g  != 5, g == min(Gs)))  {
+        if(!is.null(prf))   {
           class(prf)       <- "listof"
           print(prf)
         }
@@ -1379,9 +1396,11 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
     if(isTRUE(compare)) {
       if(!inherits(mat, "list")   &&
          !all(vapply(mat, function(x)
-          is.matrix(x) ||
-          is.data.frame(x),
-          logical(1L))))              stop("'mat' must be a list of matrices or data.frames when 'compare' is TRUE", call.=FALSE)
+         (is.matrix(x) ||
+          is.data.frame(x)) &&
+         (is.numeric(x)     ||
+          is.logical(x)),
+          logical(1L))))              stop("'mat' must be a list of numeric/logical matrices or data.frames when 'compare' is TRUE", call.=FALSE)
       nc       <- vapply(mat, ncol, numeric(1L))
       nr       <- vapply(mat, nrow, numeric(1L))
       uc       <- unique(nc)
@@ -1393,7 +1412,9 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
         mat    <- do.call(rbind, mat)
         spl    <- matrix(rep(seq_along(nr), nr), nrow=nrow(mat), ncol=uc, byrow=FALSE)
       } else                          stop("Matrices must have either the same number of rows or the same number of columns", call.=FALSE)
-    } else if(!is.matrix(mat))        stop("'mat' must be a matrix when 'compare' is FALSE", call.=FALSE)
+    } else if(!is.matrix(mat)     ||
+             (!is.numeric(mat)    &&
+              !is.logical(mat)))      stop("'mat' must be a numeric/logical matrix when 'compare' is FALSE", call.=FALSE)
     if(missing(cols))   {
       trx      <- grDevices::dev.capabilities()$semiTransparency
       xtr      <- missing(transparency)
@@ -1415,7 +1436,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
            length(breaks)   != 1))    stop("'breaks' must be a single digit", call.=FALSE)
 
     m1         <- if(isTRUE(byrank))  rank(mat) else mat
-    facs       <- cut(m1, breaks, include.lowest=TRUE)
+    facs       <- cut(as.numeric(m1), breaks, include.lowest=TRUE)
     answer     <- matrix(cols[as.numeric(facs)], nrow=nrow(mat), ncol=ncol(mat))
     if(any((NM <- is.na(mat))))    {
       if(length(na.col      != 1) &&
@@ -1479,6 +1500,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
   heat_legend  <- function(data, cols, cex.lab = 1) {
     if(length(cex.lab) > 1 || (!is.numeric(cex.lab) ||
        cex.lab <= 0))                 stop("Invalid 'cex.lab' supplied", call.=FALSE)
+    if(!is.numeric(data))             stop("'data' must be numeric", call.=FALSE)
     bx         <- graphics::par("usr")
     xpd        <- graphics::par()$xpd
     box.cx     <- c(bx[2] + (bx[2]  - bx[1])/1000, bx[2] + (bx[2] - bx[1])/1000 + (bx[2] - bx[1])/50)
@@ -1681,11 +1703,11 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
 #' Plots an image of a grayscale grid representation of a digit.
 #' @param dat A \code{matrix} or \code{data.frame} with the same number of rows and columns (or a vector which can be coerced to such a format), representing a grayscale map of a single digit.
 #' @param col The colour scale to be used. Defaults to \code{grey(seq(1, 0, length = nrow(dat)))}.
-#' @param ... Additional arguments to be passed to \code{\link[graphics]{image}}.
+#' @param ... Additional arguments to be passed to \code{\link{mat2cols}} and/or \code{\link{plot_cols}} (e.g. \code{na.col}) when \code{dat} is a matrix or \code{\link[graphics]{image}} when \code{dat} is a vector.
 #'
 #' @return The desired image representation of the digit.
 #' @export
-#' @seealso \code{\link{USPSdigits}}, \code{\link{show_IMIFA_digit}}
+#' @seealso \code{\link{USPSdigits}}, \code{\link{show_IMIFA_digit}}, \code{\link{mat2cols}}, \code{\link{plot_cols}}
 #' @keywords plotting
 #' @author Keefe Murphy - <\email{keefe.murphy@@ucd.ie}>
 #' @usage
@@ -1703,12 +1725,19 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
   show_digit   <- function(dat, col = NULL, ...) {
     x          <- if(df <- !is.data.frame(dat)) dat else as.matrix(dat)
     dims       <- ifelse(is.matrix(dat), ncol(dat), length(dat))
-    col        <- if(!missing(col))             col else grDevices::grey(seq(1, 0, length = dims))
-    if(!all(is.cols(col)))            stop("Invalid 'col'", call. = FALSE)
-    dims       <- sqrt(dims)
     x          <- if(is.matrix(dat) && df)      dat else matrix(unlist(dat), nrow = dims, ncol = dims)
-    if(nrow(x) != ncol(x))            stop("'dat' must be coercible to a square matrix", call. = FALSE)
-    graphics::image(matrix(x, nrow = dims)[,dims:1], col = col, ...)
+    col        <- if(!missing(col))             col else grDevices::grey(seq(1, 0, length = dims))
+    dims       <- sqrt(dims)
+    if(nrow(x) != ncol(x)) {
+      x        <- matrix(dat, nrow=dims, ncol=dims, byrow=FALSE)
+      if(diff(dim(x))   != 0)         stop("'dat' must be coercible to a square matrix", call. = FALSE)
+    }
+    if(!all(is.cols(col)))            stop("Invalid 'col'", call. = FALSE)
+    if(is.vector(dat))     {
+      graphics::image(matrix(x, nrow = dims)[,dims:1], col = col, ...)
+    } else      {
+      plot_cols(mat2cols(x, cols = col, ...), ...)
+    }
     graphics::box(lwd = 1)
       invisible()
   }
@@ -1721,13 +1750,13 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
 #' @param what A switch controlling whether the \code{"mean"} or \code{"last"} valid sample is to be plotted.
 #' @param dat The full grayscale grid data set. Necessary when \code{ind} is supplied or if pixels with standard deviation of 0 exist in the data set (which will have been automatically removed by \code{\link{mcmc_IMIFA}}).
 #' @param ind The index of columns of \code{dat} which were discarded prior to fitting the \code{"IMIFA"}-related model via \code{\link{mcmc_IMIFA}}. Can be a vector of column indices of \code{dat} or an equivalent vector of logicals. The discarded pixels are replaced by the column-means corresponding to \code{ind} among images assigned to the given cluster \code{G}.
-#' @param ... Additional arguments to be passed, via \code{\link{show_digit}}, to \code{\link[graphics]{image}}.
+#' @param ... Additional arguments to be passed, via \code{\link{show_digit}}, to \code{\link{mat2cols}} and/or \code{\link{plot_cols}}.
 #'
 #' @return The desired image representation of the posterior mean digit (or the last valid sample) from the desired cluster.
 #' @details This function is a wrapper to \code{\link{show_digit}} which supplies the posterior mean digit of a given cluster from a \code{"IMIFA"} model.
 #' @importFrom matrixStats "colMeans2"
 #' @export
-#' @seealso \code{\link{USPSdigits}}, \code{\link{show_digit}}, \code{\link{get_IMIFA_results}}, \code{\link{mcmc_IMIFA}}
+#' @seealso \code{\link{USPSdigits}}, \code{\link{show_digit}}, \code{\link{get_IMIFA_results}}, \code{\link{mcmc_IMIFA}}, \code{\link{mat2cols}}, \code{\link{plot_cols}}
 #' @keywords plotting
 #' @author Keefe Murphy - <\email{keefe.murphy@@ucd.ie}>
 #' @usage

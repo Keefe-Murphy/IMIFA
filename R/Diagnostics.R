@@ -32,7 +32,7 @@
 #' @details The function also performs post-hoc corrections for label switching, as well as post-hoc Procrustes rotation of loadings matrices and scores, in order to ensure sensible posterior parameter estimates, computes error metrics, constructs credible intervals, and generally transforms the raw \code{sims} object into an object of class "\code{Results_IMIFA}" in order to prepare the results for plotting via \code{\link{plot.Results_IMIFA}}.
 #'
 #' @return An object of class "\code{Results_IMIFA}" to be passed to \code{\link{plot.Results_IMIFA}} for visualising results. Dedicated \code{print} and \code{summary} functions also exist for objects of this class. The object, say \code{x}, is a list of lists, the most important components of which are:
-#' \item{\code{Clust}}{Everything pertaining to clustering performance can be found here for all but the "\code{FA}" and "\code{IFA}" methods, in particular \code{x$Clust$MAP}, the MAP summary of the posterior clustering & the last valid sample of cluster labels. More detail is given if known \code{zlabels} are supplied: performance is always evaluated against the MAP clustering, with additional evaluation against the alternative clustering computed if \code{z.avgsim=TRUE}. Posterior summaries of the mixing proportions, and the DP/PY parameters, if necessary, are also included here, as well as the last valid samples of each.}
+#' \item{\code{Clust}}{Everything pertaining to clustering performance can be found here for all but the "\code{FA}" and "\code{IFA}" methods, in particular \code{x$Clust$MAP}, the MAP summary of the posterior clustering, the last valid sample of cluster labels \code{x$Clust$last.z}, the matrix of posterior cluster membership probabilities \code{x$Clust$post.prob}, and the posterior confusion matrix \code{x$Clust$PCM}. More detail is given if known \code{zlabels} are supplied: performance is always evaluated against the MAP clustering, with additional evaluation against the alternative clustering computed if \code{z.avgsim=TRUE}. Posterior summaries of the mixing proportions, and the DP/PY parameters, if necessary, are also included here, as well as the last valid samples of each.}
 #' \item{\code{Error}}{Average error metrics (e.g. MSE, RMSE), and credible intervals quantifying the associated uncertainty, between the empirical and estimated covariance matrix/matrices, both of which are also included. The same metrics evaluated at the posterior mean parameter estimates and evaluated the last valid samples are also given. Only relevant if \code{error.metrics} is \code{TRUE}. May not all be returned if loadings and uniquenesses are not stored.}
 #' \item{\code{GQ.results}}{Everything pertaining to model choice can be found here, incl. posterior summaries for the estimated number of clusters and estimated number of factors, if applicable to the method employed. Model selection criterion values are also accessible here.}
 #' \item{\code{Means}}{Posterior summaries for the means.}
@@ -47,9 +47,9 @@
 #' @keywords IMIFA main
 #' @include MainFunction.R
 #' @export
-#' @importFrom Rfast "med" "rowMaxs" "colMaxs" "rowmeans" "Var" "colTabulate" "sort_unique"
+#' @importFrom Rfast "colMaxs" "colTabulate" "med" "rowMaxs" "rowmeans" "rowOrder" "sort_mat" "sort_unique" "Var"
 #' @importFrom mclust "classError"
-#' @importFrom matrixStats "rowMedians" "rowQuantiles"
+#' @importFrom matrixStats "colSums2" "rowMedians" "rowQuantiles" "rowSums2"
 #' @importFrom slam "as.simple_triplet_matrix"
 #'
 #' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{plot.Results_IMIFA}}, \code{\link{Procrustes}}, \code{\link{Zsimilarity}}
@@ -416,6 +416,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     if(sw["l.sw"])       lmats <- tryCatch(lmats[,,Gseq,,  drop=FALSE], error=function(e) lmats)
     if(sw["psi.sw"])      psis <- tryCatch(psis[,Gseq,,    drop=FALSE], error=function(e) psis)
     MAP          <- apply(z, 2,   function(x) factor(which.max(tabulate(x, nbins=G)), levels=Gseq))
+    post.prob    <- matrix(colTabulate(z, max_number=G)/TN.store, nrow=n.obs, ncol=G, byrow=TRUE)
 
     if(isTRUE(z.avgsim)) {
       znew       <- try(Zsimilarity(zs=zadj), silent=TRUE)
@@ -454,7 +455,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       }
     }
 
-    uncertain    <- 1 - Rfast::colMaxs(matrix(colTabulate(z, max_number=G)/TN.store, nrow=G, ncol=n.obs), value=TRUE)
+    uncertain    <- 1 - Rfast::rowMaxs(post.prob, value=TRUE)
     if(sw["pi.sw"]) {
       pi.prop    <- provideDimnames(pies[Gseq,storeG, drop=FALSE], base=list(gnames, ""), unique=FALSE)
       pi.prop    <- if(inf.G) sweep(pi.prop, 2, colSums2(pi.prop), FUN="/", check.margin=FALSE) else pi.prop
@@ -538,7 +539,8 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     attr(uncertain, "Obs")     <- if(sum(uncert.obs) != 0) uncert.obs
     if(!label.miss) tab.stat$uncertain            <-       attr(uncertain, "Obs")
     cluster      <- list(MAP = MAP, z = z, uncertainty = uncertain, last.z = z[TN.store,])
-    cluster      <- c(cluster, list(post.sizes  = sizes, post.ratio = sizes/n.obs, post.pi = post.pi/sum(post.pi)),
+    cluster      <- c(cluster, list(post.sizes  = sizes, post.ratio  = sizes/n.obs, post.pi = post.pi/sum(post.pi),
+                                    post.prob   = post.prob,  PCM    = post_conf_mat(post.prob)),
                       if(sw["pi.sw"]) list(pi.prop = pi.prop, var.pi = var.pi, ci.pi = ci.pi, last.pi = pi.prop[,TN.store]),
                       if(!label.miss) list(perf = tab.stat),
                       if(learn.alpha) list(DP.alpha = DP.alpha),

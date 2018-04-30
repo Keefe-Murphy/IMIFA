@@ -13,7 +13,7 @@ show_digit(dat,
 
 \item{col}{The colour scale to be used. Defaults to \code{grey(seq(1, 0, length = nrow(dat)))}.}
 
-\item{...}{Additional arguments to be passed to \code{\link[graphics]{image}}.}
+\item{...}{Additional arguments to be passed to \code{\link{mat2cols}} and/or \code{\link{plot_cols}} (e.g. \code{na.col}) when \code{dat} is a matrix or \code{\link[graphics]{image}} when \code{dat} is a vector.}
 }
 \value{
 The desired image representation of the digit.
@@ -31,7 +31,7 @@ show_digit(USPSdigits$train[1,-1])
 show_digit(colMeans(USPSdigits$train[,-1]))
 }
 \seealso{
-\code{\link{USPSdigits}}, \code{\link{show_IMIFA_digit}}
+\code{\link{USPSdigits}}, \code{\link{show_IMIFA_digit}}, \code{\link{mat2cols}}, \code{\link{plot_cols}}
 }
 \author{
 Keefe Murphy - <\email{keefe.murphy@ucd.ie}>

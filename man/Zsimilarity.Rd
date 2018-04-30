@@ -11,11 +11,9 @@ Zsimilarity(zs)
 }
 \value{
 A list containing three elements:
-\describe{
 \item{z.avg}{The 'average' clustering, with minimum squared distance to \code{z.sim}.}
 \item{z.sim}{The N x N similary matrix, in a sparse format (see \code{\link[slam]{simple_triplet_matrix}}).}
 \item{MSE.z}{A vector of length M recording the MSEs between each clustering and the 'average' clustering.}
-}
 }
 \description{
 This function takes a Monte Carlo sample of cluster labels, computes an average similarity matrix and returns the clustering with minimum mean squared error to this average. The \code{mcclust} package \strong{must} be loaded.
@@ -51,6 +49,9 @@ This is liable to take quite some time to run, especially if the number of obser
 # Hcl    <- hclust(as.dist(1 - z.sim), method="complete")
 # plot(Hcl)
 # table(cutree(Hcl, k=3), olive$area)
+}
+\references{
+Carmona, C., Nieto-barajas, L. and Canale, A. (2018) Model based approach for household clustering with mixed scale variables. \emph{Advances in Data Analysis and Classification}, 12: 1-25.
 }
 \seealso{
 \code{\link{get_IMIFA_results}}, \code{\link[slam]{simple_triplet_matrix}}, \code{\link[stats]{hclust}}, \code{\link[mcclust]{comp.psm}}, \code{\link[mcclust]{cltoSim}}
