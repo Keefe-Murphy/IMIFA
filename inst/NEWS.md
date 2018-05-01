@@ -1,6 +1,16 @@
 __Infinite Mixtures of Infinite Factor Analysers__
 ==================================================  
 
+## IMIFA v2.0.1 - (_7<sup>th</sup> release [patch update]: 2018-05-02_)
+### Improvements
+* Args. `scores` & `loadings` can now be supplied to `sim_IMIFA_data` directly.
+* Added new wrapper function `sim_IMIFA_model` to call `sim_IMIFA_data` using  
+  the estimated parameters from fitted `Results_IMIFA` objects.
+
+### Bug Fixes
+* Fixed permutation/rotation of scores within `get_IMIFA_results`.
+* Clarified dimnames of `get_IMIFA_results` output in `x$Loadings` & `x$Scores`.
+
 ## IMIFA v2.0.0 - (_6<sup>th</sup> release [major update]: 2018-05-01_)
 ### Major Changes
 * Simplified `mcmc_IMIFA` by consolidating arguments using new helper functions (with defaults):  
@@ -47,7 +57,7 @@ __Infinite Mixtures of Infinite Factor Analysers__
 * Speed-ups due to new `Rfast` utility functions: `colTabulate` & `matrnorm`.
 * Speed-ups due to utility functions from `matrixStats`, on which `IMIFA` already depends.
 * Slight improvements when `adapt=FALSE` for infinite factor models with fixed high truncation level.
-* Misclassified observations now highlighted in 1st type of uncertainty plot in `Plot.Results_IMIFA`,  
+* Misclassified observations now highlighted in 1<sup>st</sup> type of uncertainty plot in `Plot.Results_IMIFA`,  
   when `plot.meth="zlabels"` and the true `zlabels` are supplied.
 * `mixfaControl` gains arg. `drop0sd` to control removal of zero-variance features (defaults to `TRUE`).
 * `heat_legend` gains `cex.lab` argument to control magnification of legend text.

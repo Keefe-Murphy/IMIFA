@@ -111,12 +111,15 @@ Due to the way the offline label-switching correction is performed, different ru
 # resIMIFAolive <- get_IMIFA_results(simIMIFAolive, G.meth="median", Q.meth="median",
 #                                    conf.level=0.9, z.avgsim=TRUE)
 # summary(resIMIFAolive)
+
+# Simulate new data from the above model
+# newdata       <- sim_IMIFA_model(resIMIFAolive)
 }
 \references{
 Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
 }
 \seealso{
-\code{\link{mcmc_IMIFA}}, \code{\link{plot.Results_IMIFA}}, \code{\link{Procrustes}}, \code{\link{Zsimilarity}}
+\code{\link{mcmc_IMIFA}}, \code{\link{plot.Results_IMIFA}}, \code{\link{Procrustes}}, \code{\link{Zsimilarity}}, \code{\link{sim_IMIFA_model}}
 }
 \author{
 Keefe Murphy - <\email{keefe.murphy@ucd.ie}>

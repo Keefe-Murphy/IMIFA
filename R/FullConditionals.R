@@ -308,20 +308,20 @@
 #' # In the scaled example, the mean uniquenesses (given by rates/(shape - 1)),
 #' # can be interpreted as the proportion of the variance that is idiosyncratic
 #' (prop  <- rates/(3 - 1) * 100)
-    psi_hyper   <- function(shape, covar, type=c("unconstrained", "isotropic")) {
+    psi_hyper    <- function(shape, covar, type=c("unconstrained", "isotropic")) {
       if(!all(is.character(type)))         stop("'type' must be a character vector of length 1", call.=FALSE)
       if(!all(is.posi_def(covar, semi=TRUE),
               is.symmetric(covar),
               is.double(covar)))           stop("Invalid covariance matrix supplied", call.=FALSE)
       if(any(!is.numeric(shape),
              length(shape) != 1))          stop("'shape' must be a single digit", call.=FALSE)
-      inv.cov   <- try(base::solve(covar), silent=TRUE)
+      inv.cov    <- try(base::solve(covar), silent=TRUE)
 
       if(inherits(inv.cov, "try-error"))   {
-        covsvd  <- svd(covar)
-        posi    <- covsvd$d > max(sqrt(.Machine$double.eps) * covsvd$d[1L], 0)
-        inv.cov <- if(all(posi)) covsvd$v %*% (t(covsvd$u)/covsvd$d) else if(any(posi))
-                   covsvd$v[,posi, drop=FALSE] %*% (t(covsvd$u[,posi, drop=FALSE])/covsvd$d[posi]) else array(0, dim(covar)[2L:1L])
+        covsvd   <- svd(covar)
+        posi     <- covsvd$d > max(sqrt(.Machine$double.eps) * covsvd$d[1L], 0)
+        inv.cov  <- if(all(posi)) covsvd$v %*% (t(covsvd$u)/covsvd$d) else if(any(posi))
+                    covsvd$v[,posi, drop=FALSE] %*% (t(covsvd$u[,posi, drop=FALSE])/covsvd$d[posi]) else array(0, dim(covar)[2L:1L])
       }
         unname((shape - 1)/switch(match.arg(type), unconstrained=diag(inv.cov),
                                   isotropic=rep(exp(mean(log(diag(inv.cov)))), ncol(covar))))
@@ -349,7 +349,7 @@
 #' # Shift a Ga(shape=4, rate=2) distribution to the left by 1;
 #' # achieving the same expected value of 2 and variance of 1.
 #' shift_GA(4, 2, -1)
-    shift_GA    <- function(shape, rate, shift = 0L, param = c("rate", "scale")) {
+    shift_GA     <- function(shape, rate, shift = 0L, param = c("rate", "scale")) {
       if(length(shape) > 1 ||
         !is.numeric(shape) || shape <= 0)  stop("Argument 'shape' must be a single strictly positive number", call.=FALSE)
       if(length(rate)  > 1 ||
@@ -357,15 +357,15 @@
       if(length(shift) > 1 ||
         !is.numeric(shift))                stop("Argument 'shift' must be a single number", call.=FALSE)
       if(!all(is.character(param)))        stop("'param' must be a character vector of length 1", call.=FALSE)
-      param     <- match.arg(param)
+      param      <- match.arg(param)
 
-      rate      <- switch(param, rate=rate, 1/rate)
-      exp       <- shape/rate
-      if(shift  >= exp)                    warning("This expected value is not achievable with the supplied 'shift'", call.=FALSE, immediate.=TRUE)
-      var       <- exp/rate
-      exp       <- max(exp  - shift,   0)
-      rate      <- exp/var
-      shape     <- rate     * exp
+      rate       <- switch(param, rate=rate, 1/rate)
+      exp        <- shape/rate
+      if(shift   >= exp)                   warning("This expected value is not achievable with the supplied 'shift'", call.=FALSE, immediate.=TRUE)
+      var        <- exp/rate
+      exp        <- max(exp - shift,   0)
+      rate       <- exp/var
+      shape      <- rate    * exp
         return(list(shape   = shape, rate = switch(param, rate=rate, 1/rate)))
     }
 
@@ -416,16 +416,16 @@
 #'
 #' # Check again with a parameterisation that IS valid and examine the expected shrinkage values.
 #' (shrink <- MGP_check(ad1=1.5, ad2=2.8, Q=10, phi.shape=2, phi.rate=0.5, inverse=TRUE))
-    MGP_check   <- function(ad1, ad2, Q = 3L, phi.shape = NULL, phi.rate = NULL, bd1 = 1, bd2 = 1, inverse = TRUE) {
+    MGP_check    <- function(ad1, ad2, Q = 3L, phi.shape = NULL, phi.rate = NULL, bd1 = 1, bd2 = 1, inverse = TRUE) {
       if(length(inverse) != 1  ||
          !is.logical(inverse))             stop("'inverse' must be a single logical indicator", call.=FALSE)
-      phi.shape <- if(missing(phi.shape))  1 + inverse         else phi.shape
-      phi.rate  <- if(missing(phi.rate))   phi.shape - inverse else phi.rate
+      phi.shape  <- if(missing(phi.shape)) 1 + inverse         else phi.shape
+      phi.rate   <- if(missing(phi.rate))  phi.shape - inverse else phi.rate
 
       if(length(Q)       != 1  ||
          !is.numeric(Q)  || floor(Q) != Q) stop("'Q' must be a single integer value", call.=FALSE)
       if(missing(ad1) || missing(ad2))     stop("Global shrinkage shape hyperparameters 'ad1' and 'ad2' must be supplied",       call.=FALSE)
-      max.len   <- max(length(ad1), length(ad2), length(Q), length(phi.shape), length(phi.rate), length(bd1), length(bd2))
+      max.len    <- max(length(ad1), length(ad2), length(Q), length(phi.shape), length(phi.rate), length(bd1), length(bd2))
       if(!is.element(length(ad1),
                      c(1, max.len)))       stop(paste0("'ad1' must be of length 1 or ", max.len, " for proper recycling"),       call.=FALSE)
       if(!is.element(length(ad2),
@@ -443,34 +443,34 @@
       if(any(phi.rate    <= 0))            stop("All local shrinkage rate hyperparameter values must be strictly positive",      call.=FALSE)
       if(any(c(ad1, ad2)  < 1))            stop("All global shrinkage shape hyperparameter values must be at least 1",           call.=FALSE)
       if(any(c(bd1, bd2) <= 0))            stop("All global shrinkage rate hyperparameter values must be strictly positive",     call.=FALSE)
-      if(any(WX <- ad1   >= ad2))          warning("'ad2' should be moderately large relative to 'ad1' to encourage loadings column removal", call.=FALSE, immediate.=TRUE)
+      if(any(WX  <- ad1  >= ad2))          warning("'ad2' should be moderately large relative to 'ad1' to encourage loadings column removal", call.=FALSE, immediate.=TRUE)
 
-      Qseq      <- seq_len(Q)  - 1
-      ML        <- seq_len(max.len)
-      shape     <- if(PX) 1    + inverse   else phi.shape
-      rate      <- if(PX) 1                else phi.rate
+      Qseq       <- seq_len(Q)  - 1
+      ML         <- seq_len(max.len)
+      shape      <- if(PX) 1    + inverse  else phi.shape
+      rate       <- if(PX) 1               else phi.rate
       if(isTRUE(inverse)) {
-        if(any(WX        <- WX |
+        if(any(WX        <- WX  |
            phi.rate       >
            phi.shape      - 1))            warning("A priori expectation of the induced inverse-gamma local shrinkage hyperprior is not <=1", call.=FALSE, immediate.=TRUE)
-        ad1     <- ifelse(ad1 == 1, ad1 + .Machine$double.eps, ad1)
-        ad2     <- ifelse(ad2 == 1, ad2 + .Machine$double.eps, ad2)
-        exp.Q1  <- rate/(shape - 1)     * bd1/(ad1  - 1)
-        exp.Qk  <- bd2/(ad2    - 1)
-        exp.Q1  <- if(length(exp.Q1)    < length(exp.Qk)) rep(exp.Q1, max.len) else exp.Q1
-        exp.Qk  <- if(length(exp.Qk)    < length(exp.Q1)) rep(exp.Qk, max.len) else exp.Qk
-        exp.seq <- lapply(ML, function(i) exp.Q1[i] * exp.Qk[i]^Qseq)
-        check   <- vapply(exp.seq,  is.unsorted, logical(1L))
+        ad1      <- ifelse(ad1 == 1, ad1 + .Machine$double.eps, ad1)
+        ad2      <- ifelse(ad2 == 1, ad2 + .Machine$double.eps, ad2)
+        exp.Q1   <- rate/(shape - 1)     * bd1/(ad1  - 1)
+        exp.Qk   <- bd2/(ad2    - 1)
+        exp.Q1   <- if(length(exp.Q1)    < length(exp.Qk)) rep(exp.Q1, max.len) else exp.Q1
+        exp.Qk   <- if(length(exp.Qk)    < length(exp.Q1)) rep(exp.Qk, max.len) else exp.Qk
+        exp.seq  <- lapply(ML, function(i) exp.Q1[i] * exp.Qk[i]^Qseq)
+        check    <- vapply(exp.seq,  is.unsorted, logical(1L))
       } else {
-        exp.Q1  <- shape/rate  * ad1/bd1
-        exp.Qk  <- ad2/bd2
-        exp.Q1  <- if(length(exp.Q1)    < length(exp.Qk)) rep(exp.Q1, max.len) else exp.Q1
-        exp.Qk  <- if(length(exp.Qk)    < length(exp.Q1)) rep(exp.Qk, max.len) else exp.Qk
-        exp.seq <- lapply(ML, function(i) exp.Q1[i] * exp.Qk[i]^Qseq)
-        check   <- !vapply(exp.seq, is.unsorted, logical(1L))
+        exp.Q1   <- shape/rate  * ad1/bd1
+        exp.Qk   <- ad2/bd2
+        exp.Q1   <- if(length(exp.Q1)    < length(exp.Qk)) rep(exp.Q1, max.len) else exp.Q1
+        exp.Qk   <- if(length(exp.Qk)    < length(exp.Q1)) rep(exp.Qk, max.len) else exp.Qk
+        exp.seq  <- lapply(ML, function(i) exp.Q1[i] * exp.Qk[i]^Qseq)
+        check    <- !vapply(exp.seq, is.unsorted, logical(1L))
       }
-      exp.seq   <- if(length(exp.seq) == 1) exp.seq[[1]] else exp.seq
-      res       <- list(expectation = exp.seq, valid = if(Q < 2) TRUE else check)
+      exp.seq    <- if(length(exp.seq) == 1) exp.seq[[1]] else exp.seq
+      res        <- list(expectation = exp.seq, valid = if(Q < 2) TRUE else check)
       attr(res, "Warning")    <- WX
         return(res)
     }
@@ -532,38 +532,38 @@
 
   # Label Switching
   #' @importFrom matrixStats "colSums2" "rowSums2"
-    .lab_switch <- function(z.new, z.old) {
-      tab       <- table(z.new, z.old, dnn=NULL)
-      tab.tmp   <- tab[rowSums2(tab) != 0,colSums2(tab) != 0, drop=FALSE]
-      nc        <- ncol(tab.tmp)
-      nr        <- nrow(tab.tmp)
-      ng        <- table(z.new)
-      Gs        <- .as_numchar(names(ng))
+    .lab_switch  <- function(z.new, z.old) {
+      tab        <- table(z.new, z.old, dnn=NULL)
+      tab.tmp    <- tab[rowSums2(tab) != 0,colSums2(tab) != 0, drop=FALSE]
+      nc         <- ncol(tab.tmp)
+      nr         <- nrow(tab.tmp)
+      ng         <- table(z.new)
+      Gs         <- .as_numchar(names(ng))
       if(nc > nr) {
-        tmp.mat <- matrix(0L, nrow=nc - nr, ncol=nc)
+        tmp.mat  <- matrix(0L, nrow=nc - nr, ncol=nc)
         rownames(tmp.mat) <- setdiff(.as_numchar(colnames(tab.tmp)), .as_numchar(rownames(tab.tmp)))[seq_len(nc - nr)]
-        tab.tmp <- rbind(tab.tmp, tmp.mat)
+        tab.tmp  <- rbind(tab.tmp, tmp.mat)
       } else if(nr > nc) {
-        tmp.mat <- matrix(0L, nrow=nr, ncol=nr - nc)
+        tmp.mat  <- matrix(0L, nrow=nr, ncol=nr - nc)
         colnames(tmp.mat) <- setdiff(.as_numchar(rownames(tab.tmp)), .as_numchar(colnames(tab.tmp)))[seq_len(nr - nc)]
-        tab.tmp <- cbind(tab.tmp, tmp.mat)
+        tab.tmp  <- cbind(tab.tmp, tmp.mat)
       }
 
       if(nr == 1) {
-        z.perm  <- stats::setNames(.as_numchar(colnames(tab.tmp)), .as_numchar(colnames(tab.tmp)))
+        z.perm   <- stats::setNames(.as_numchar(colnames(tab.tmp)), .as_numchar(colnames(tab.tmp)))
       } else if(nc == 1) {
-        z.perm  <- stats::setNames(.as_numchar(rownames(tab.tmp)), .as_numchar(rownames(tab.tmp)))
+        z.perm   <- stats::setNames(.as_numchar(rownames(tab.tmp)), .as_numchar(rownames(tab.tmp)))
       } else {
-        z.perm  <- tryCatch(suppressWarnings(.match_classes(tab.tmp, method="exact",  verbose=FALSE)),
+        z.perm   <- tryCatch(suppressWarnings(.match_classes(tab.tmp, method="exact",  verbose=FALSE)),
           error=function(e) suppressWarnings(.match_classes(tab.tmp, method="greedy", verbose=FALSE)))
-        z.perm  <- stats::setNames(.as_numchar(z.perm), names(z.perm))
+        z.perm   <- stats::setNames(.as_numchar(z.perm), names(z.perm))
       }
       if(length(Gs) > length(z.perm)) {
-        z.perm  <- c(z.perm, stats::setNames(setdiff(Gs, z.perm), setdiff(Gs, names(z.perm))))
+        z.perm   <- c(z.perm, stats::setNames(setdiff(Gs, z.perm), setdiff(Gs, names(z.perm))))
       }
-      z.names   <- .as_numchar(names(z.perm))
-      z.perm    <- z.perm[order(z.names)]
-      z.sw      <- factor(z.new, labels=z.perm[which(ng > 0)])
+      z.names    <- .as_numchar(names(z.perm))
+      z.perm     <- z.perm[order(z.names)]
+      z.sw       <- factor(z.new, labels=z.perm[which(ng > 0)])
         return(list(z = as.integer(levels(z.sw))[z.sw], z.perm = z.perm))
     }
 
@@ -613,14 +613,14 @@
 #' # Hcl    <- hclust(as.dist(1 - z.sim), method="complete")
 #' # plot(Hcl)
 #' # table(cutree(Hcl, k=3), olive$area)
-    Zsimilarity <- function(zs) {
-      has.pkg   <- suppressMessages(requireNamespace("mcclust", quietly=TRUE))
+    Zsimilarity  <- function(zs) {
+      has.pkg    <- suppressMessages(requireNamespace("mcclust", quietly=TRUE))
       if(!has.pkg)                         stop("'mcclust' package not installed", call.=FALSE)
       if(!is.matrix(zs))                   stop("'zs' must be a matrix with rows corresponding to the number of observations and columns corresponding to the number of iterations", call.=FALSE)
       if(anyNA(zs))                        stop("Missing values are not allowed in 'zs'", call.=FALSE)
-      zsim      <- mcclust::comp.psm(zs)
-      mse.z     <- vapply(seq_len(nrow(zs)), function(i, x=mcclust::cltoSim(zs[i,]) - zsim) tryCatch(suppressWarnings(mean(x * x)), error=function(e) Inf), numeric(1L))
-      Z.avg     <- zs[which.min(mse.z),]
+      zsim       <- mcclust::comp.psm(zs)
+      mse.z      <- vapply(seq_len(nrow(zs)), function(i, x=mcclust::cltoSim(zs[i,]) - zsim) tryCatch(suppressWarnings(mean(x * x)), error=function(e) Inf), numeric(1L))
+      Z.avg      <- zs[which.min(mse.z),]
       attr(Z.avg, "MSE")  <- min(mse.z)
         return(list(z.sim  = as.simple_triplet_matrix(zsim), z.avg = Z.avg, MSE.z = mse.z))
     }
@@ -652,67 +652,67 @@
 #' # plot_cols(mat2cols(PCM, col=heat.colors(30)[30:1], na.col=par()$bg)); box(lwd=2)
 #' # heat_legend(PCM, cols=heat.colors(30)[30:1])
 #' # par(mar=c(5.1, 4.1, 4.1, 2.1))
-    post_conf_mat <- function(z, scale = TRUE) {
-      if(lz     <- inherits(z, "list"))        {
+   post_conf_mat <- function(z, scale = TRUE) {
+      if(lz      <- inherits(z, "list"))      {
         if(!all(vapply(z, is.matrix,
-                       logical(1L))))      stop("Elements of the list 'z' must be matrices", call.=FALSE)
+                        logical(1L))))     stop("Elements of the list 'z' must be matrices", call.=FALSE)
         if(any(vapply(z, anyNA,
-                       logical(1L))))      stop("Missing values are not allowed in 'z'", call.=FALSE)
+                        logical(1L))))     stop("Missing values are not allowed in 'z'", call.=FALSE)
         if(any(vapply(z, function(x)
-           any(x < 0) ||
-           any(x > 1), logical(1L))))      stop("Values in 'z' must be valid probabilities in the interval [0,1]", call.=FALSE)
-        nit     <- length(z)
-        Ns      <- vapply(z, nrow, numeric(1L))
-        Gs      <- vapply(z, ncol, numeric(1L))
-        N       <- Ns[1]
-        G       <- Gs[1]
-        if(any(Ns     != N)     ||
-           any(Gs     != G)     ||
-           N     < G)                      stop("All matrices in the list 'z' must have the same dimensions, with more columns than rows", call.=FALSE)
-      } else     {
+           any(x  < 0) ||
+           any(x  > 1), logical(1L))))     stop("Values in 'z' must be valid probabilities in the interval [0,1]", call.=FALSE)
+        nit      <- length(z)
+        Ns       <- vapply(z, nrow, numeric(1L))
+        Gs       <- vapply(z, ncol, numeric(1L))
+        N        <- Ns[1]
+        G        <- Gs[1]
+        if(any(Ns      != N)     ||
+           any(Gs      != G)     ||
+           N      < G)                     stop("All matrices in the list 'z' must have the same dimensions, with more columns than rows", call.=FALSE)
+      } else      {
         if(!is.matrix(z))                  stop("'z' must be a matrix", call.=FALSE)
         if(anyNA(z))                       stop("Missing values are not allowed in 'z'", call.=FALSE)
-        if(any(z < 0) ||
-           any(z > 1))                     stop("Values in 'z' must be valid probabilities in the interval [0,1]", call.=FALSE)
-        nit     <- 1
-        N       <- nrow(z)
-        G       <- ncol(z)
-        if(N     < G)                      stop("'z' must have more rows than columns", call.=FALSE)
+        if(any(z  < 0) ||
+           any(z  > 1))                    stop("Values in 'z' must be valid probabilities in the interval [0,1]", call.=FALSE)
+        nit      <- 1
+        N        <- nrow(z)
+        G        <- ncol(z)
+        if(N      < G)                     stop("'z' must have more rows than columns", call.=FALSE)
       }
-      if(length(scale) > 1      ||
+      if(length(scale) > 1       ||
          !is.logical(scale))               stop("'scale' must be a single logical indicator", call.=FALSE)
-      tX        <- if(isTRUE(lz)) lapply(z, function(x) sort_mat(x, by.row=TRUE, descending=TRUE)) else list(sort_mat(z, by.row=TRUE, descending=TRUE))
-      rX        <- if(isTRUE(lz)) lapply(z, function(x) rowOrder(x, descending=TRUE))              else list(rowOrder(z, descending=TRUE))
-      PCM       <- matrix(0, nrow=G, ncol=G)
-      for(n     in seq_len(nit)) {
-        for(k   in seq_len(G))   {
-          for(i in seq_len(N))   {
+      tX         <- if(isTRUE(lz)) lapply(z, function(x) sort_mat(x, by.row=TRUE, descending=TRUE)) else list(sort_mat(z, by.row=TRUE, descending=TRUE))
+      rX         <- if(isTRUE(lz)) lapply(z, function(x) rowOrder(x, descending=TRUE))              else list(rowOrder(z, descending=TRUE))
+      PCM        <- matrix(0, nrow=G, ncol=G)
+      for(n      in seq_len(nit)) {
+        for(k    in seq_len(G))   {
+          for(i  in seq_len(N))   {
             PCM[rX[[n]][i,1], rX[[n]][i,k]] <- PCM[rX[[n]][i,1], rX[[n]][i,k]] + tX[[n]][i,k]
            }
         }
       }
-      PCM       <- PCM/nit
-        if(scale)  sweep(PCM, 1, rowSums2(PCM), FUN="/") else PCM
+      PCM        <- PCM/nit
+        if(scale)   sweep(PCM, 1, rowSums2(PCM), FUN="/") else PCM
     }
 
   # Move 1
-    .lab_move1  <- function(nn.ind, pi.prop, nn) {
-      sw        <- sample(nn.ind, 2L)
-      log.pis   <- log(pi.prop[sw])
-      nns       <- nn[sw]
-      a.prob    <- (nns[1] - nns[2]) * (log.pis[1] - log.pis[2])
-        return(list(rate1  = a.prob >= 0 || - stats::rexp(1) < a.prob, sw = sw))
+    .lab_move1   <- function(nn.ind, pi.prop, nn)   {
+      sw         <- sample(nn.ind, 2L)
+      log.pis    <- log(pi.prop[sw])
+      nns        <- nn[sw]
+      a.prob     <- (nns[1] - nns[2]) * (log.pis[1] - log.pis[2])
+        return(list(rate1   = a.prob >= 0 || - stats::rexp(1) < a.prob, sw = sw))
     }
 
   # Move 2
-    .lab_move2  <- function(G, Vs, nn) {
-      sw        <- sample(G, 1L, prob=c(rep(1, G - 2), 0.5, 0.5))
-      sw        <- if(is.element(sw, c(G, G - 1))) c(G - 1, G) else c(sw, sw + 1)
-      nns       <- nn[sw]
-      log.vs    <- log1p( - Vs[sw])
-      a.prob    <- nns[1] * log.vs[2]       - nns[2]   * log.vs[1]
-      a.prob[is.nan(a.prob)]       <-       - Inf
-        return(list(rate2 = a.prob >= 0  || - stats::rexp(1) < a.prob, sw = sw))
+    .lab_move2   <- function(G, Vs, nn)   {
+      sw         <- sample(G, 1L, prob=c(rep(1, G - 2), 0.5, 0.5))
+      sw         <- if(is.element(sw, c(G, G - 1))) c(G - 1, G) else c(sw, sw + 1)
+      nns        <- nn[sw]
+      log.vs     <- log1p( - Vs[sw])
+      a.prob     <- nns[1] * log.vs[2]       - nns[2]   * log.vs[1]
+      a.prob[is.nan(a.prob)]       <-        - Inf
+        return(list(rate2 = a.prob >= 0  ||  - stats::rexp(1) < a.prob, sw = sw))
     }
 
 # Positive-(Semi)Definite Checker
@@ -745,9 +745,9 @@
 #' Xnew <- is.posi_def(x, semi=FALSE, make=TRUE)$X.new
 #' identical(x, Xnew)
 #' identical(x, is.posi_def(x, semi=TRUE, make=TRUE)$X.new)
-    is.posi_def <- function(x, tol = NULL, semi = FALSE, make = FALSE)  {
+    is.posi_def  <- function(x, tol = NULL, semi = FALSE, make = FALSE)  {
       if(!is.matrix(x)     &&
-        nrow(x) != ncol(x))                stop("argument 'x' is not a square matrix",    call.=FALSE)
+        nrow(x)  != ncol(x))               stop("argument 'x' is not a square matrix",    call.=FALSE)
       if(anyNA(x))                         stop("argument 'x' contains missing values",   call.=FALSE)
       if(!is.symmetric(x))                 stop("argument 'x' is not a symmetric matrix", call.=FALSE)
       if(!is.double(x))                    stop("argument 'x' is not a numeric matrix",   call.=FALSE)
@@ -756,17 +756,17 @@
       if(!is.logical(make) ||
          length(make) > 1)                 stop("argument 'make' is not a single logical indicator", call.=FALSE)
 
-      d         <- nrow(x)
-      eigs      <- eigen(x, symmetric = TRUE)
-      eval      <- eigs$values
-      abseigs   <- abs(eval)
-      tol       <- if(missing(tol)) max(abseigs) * d * .Machine$double.eps else tol
+      d          <- nrow(x)
+      eigs       <- eigen(x, symmetric = TRUE)
+      eval       <- eigs$values
+      abseigs    <- abs(eval)
+      tol        <- if(missing(tol)) max(abseigs) * d * .Machine$double.eps else tol
       if(length(tol)  > 1  ||
          !is.numeric(tol))                 stop("argument 'tol' is not a single number", call.=FALSE)
-      test      <- replace(eval, abseigs < tol, 0)
-      check     <- all(if(isTRUE(semi)) test >= 0 else test > 0)
+      test       <- replace(eval, abseigs < tol, 0)
+      check      <- all(if(isTRUE(semi)) test >= 0 else test > 0)
       if(isTRUE(make))  {
-        evec    <- eigs$vectors
+        evec     <- eigs$vectors
         return(list(check = check, X.new = if(check) x else x + evec %*% tcrossprod(diag(pmax.int(2 * tol - eval, ifelse(isTRUE(semi), 0, .Machine$double.eps)), d), evec)))
       } else check
     }
@@ -783,10 +783,10 @@
 #'
 #' @examples
 #' Ledermann(c(25, 50, 100))
-    Ledermann   <- function(P)  {
+    Ledermann    <- function(P)  {
       if(!is.numeric(P)   ||
-         any(P  <= 0, floor(P) != P))      stop("'P' must be a strictly positive integer", call.=FALSE)
-      R         <- P + 0.5 * (1 - sqrt(8 * P  + 1))
+         any(P   <= 0, floor(P) != P))      stop("'P' must be a strictly positive integer", call.=FALSE)
+      R          <- P + 0.5 * (1 - sqrt(8 * P  + 1))
         as.integer(floor(ifelse(1e-10 > abs(R - round(R)), round(R), R)))
     }
 
@@ -842,36 +842,36 @@
 #' # Compare the sum of squared differences to a Procestean transformation with rotation only
 #' mat_ss   <- proc$ss
 #' mat_ss2  <- Procrustes(X=mat1, Xstar=mat2, sumsq=TRUE)$ss
-    Procrustes  <- function(X, Xstar, translate = FALSE, dilate = FALSE, sumsq = FALSE) {
+    Procrustes   <- function(X, Xstar, translate = FALSE, dilate = FALSE, sumsq = FALSE) {
       if((N <- nrow(X)) != nrow(Xstar))    stop("X and Xstar do not have the same number of rows",      call.=FALSE)
       if((P <- ncol(X)) != ncol(Xstar))    stop("X and Xstar do not have the same number of columns",    call.=FALSE)
       if(anyNA(Xstar)   || anyNA(X))       stop("X and Xstar are not allowed to contain missing values", call.=FALSE)
-      J         <- if(translate) diag(N) - matrix(1/N, N, N)                             else diag(N)
-      C         <- crossprod(Xstar, J) %*% X
-      svdX      <- svd(C)
-      R         <- tcrossprod(svdX$v, svdX$u)
-      d         <- if(dilate)    sum(colSums2(C * R))/sum(colSums2(crossprod(J, X) * X)) else 1
-      tt        <- if(translate) crossprod(Xstar - d * X %*% R, matrix(1, N, 1))/N       else 0
-      X.new     <- d * X %*% R + if(translate) matrix(tt, N, P, byrow = TRUE)            else tt
+      J          <- if(translate) diag(N) - matrix(1/N, N, N)                             else diag(N)
+      C          <- crossprod(Xstar, J) %*% X
+      svdX       <- svd(C)
+      R          <- tcrossprod(svdX$v, svdX$u)
+      d          <- if(dilate)    sum(colSums2(C * R))/sum(colSums2(crossprod(J, X) * X)) else 1
+      tt         <- if(translate) crossprod(Xstar - d * X %*% R, matrix(1, N, 1))/N       else 0
+      X.new      <- d * X %*% R + if(translate) matrix(tt, N, P, byrow = TRUE)            else tt
         return(c(list(X.new = X.new), list(R = R), if(translate) list(t = tt),
                  if(dilate) list(d = d), if(sumsq) list(ss = sum((X - X.new)^2))))
     }
 
   # Length Checker
-    .len_check  <- function(obj0g, switch0g, method, P, range.G, P.dim = TRUE) {
-      V         <- ifelse(P.dim, P, 1L)
-      rGseq     <- seq_along(range.G)
-      obj.name  <- deparse(substitute(obj0g))
-      obj.name  <- ifelse(grepl("$", obj.name, fixed=TRUE), sapply(strsplit(obj.name, "$", fixed=TRUE), "[[", 2), obj.name)
-      sw.name   <- deparse(substitute(switch0g))
+    .len_check   <- function(obj0g, switch0g, method, P, range.G, P.dim = TRUE) {
+      V          <- ifelse(P.dim, P, 1L)
+      rGseq      <- seq_along(range.G)
+      obj.name   <- deparse(substitute(obj0g))
+      obj.name   <- ifelse(grepl("$", obj.name, fixed=TRUE), sapply(strsplit(obj.name, "$", fixed=TRUE), "[[", 2), obj.name)
+      sw.name    <- deparse(substitute(switch0g))
       if(!inherits(obj0g,
                    "list"))       obj0g <- list(obj0g)
       if(length(obj0g) != length(range.G))    {
         if(!P.dim)             {
-          obj0g <- replicate(length(range.G), obj0g)
+          obj0g  <- replicate(length(range.G), obj0g)
         } else                             stop(paste0(obj.name, " must be a list of length ", length(range.G)), call.=FALSE)
       }
-      len       <- lengths(obj0g)
+      len        <- lengths(obj0g)
 
       if(is.element(method, c("FA", "IFA")))  {
         if(any(!is.element(len, c(1, V)))) stop(paste0(obj.name, " must be list of length 1 containing a scalar", ifelse(P.dim, paste0(" or a vector of length P=", V), ""), " for a 1-group model"), call.=FALSE)
@@ -924,27 +924,27 @@
 #' # require("Rmpfr")
 #' # G_expected(N=50, alpha=c(19.23356, 12.21619, 1), discount=c(0, 0.25, 0.7300045))
 #' # G_variance(N=50, alpha=c(19.23356, 12.21619, 1), discount=c(0, 0.25, 0.7300045))
-    G_expected  <- Vectorize(function(N, alpha, discount = 0) {
+    G_expected   <- Vectorize(function(N, alpha, discount = 0) {
       if(!all(is.numeric(N), is.numeric(discount),
          is.numeric(alpha)))               stop("All inputs must be numeric", call.=FALSE)
-      if(discount  < 0  || discount >= 1)  stop("'discount' must lie in the interval [0,1)", call.=FALSE)
-      if(alpha  <= - discount)             stop("'alpha' must be strictly greater than -discount", call.=FALSE)
-      if(alpha  == 0)                      stop("'alpha' equal to zero not yet implemented", call.=FALSE)
+      if(discount   < 0  || discount >= 1) stop("'discount' must lie in the interval [0,1)", call.=FALSE)
+      if(alpha   <= - discount)            stop("'alpha' must be strictly greater than -discount", call.=FALSE)
+      if(alpha   == 0)                     stop("'alpha' equal to zero not yet implemented", call.=FALSE)
       if(suppressMessages(requireNamespace("Rmpfr", quietly=TRUE))) {
-        mpfrind <- TRUE
+        mpfrind  <- TRUE
         on.exit(.detach_pkg("Rmpfr"))
         on.exit(.detach_pkg("gmp"), add=TRUE)
-        alpha   <- Rmpfr::mpfr(alpha, precBits=256)
+        alpha    <- Rmpfr::mpfr(alpha, precBits=256)
       } else if(discount != 0)             stop("'Rmpfr' package not installed", call.=FALSE)
-      if(discount == 0) {
-        exp     <- alpha * (digamma(alpha + N) - digamma(alpha))
-        if(mpfrind)     {
+      if(discount == 0)   {
+        exp      <- alpha * (digamma(alpha + N) - digamma(alpha))
+        if(mpfrind)       {
           gmp::asNumeric(exp)
-        } else {
+        } else    {
           exp
         }
       } else {
-        adx     <- alpha/discount
+        adx      <- alpha/discount
           gmp::asNumeric(adx * Rmpfr::pochMpfr(alpha + discount, N)/Rmpfr::pochMpfr(alpha, N) - adx)
       }
     })
@@ -956,33 +956,33 @@
 #'            alpha,
 #'            discount = 0)
 #' @export
-    G_variance  <- Vectorize(function(N, alpha, discount = 0) {
+    G_variance   <- Vectorize(function(N, alpha, discount = 0) {
       if(!all(is.numeric(N), is.numeric(discount),
          is.numeric(alpha)))               stop("All inputs must be numeric", call.=FALSE)
-      if(discount  < 0  || discount >= 1)  stop("'discount' must lie in the interval [0,1)", call.=FALSE)
-      if(alpha  <= - discount)             stop("'alpha' must be strictly greater than -discount", call.=FALSE)
-      if(alpha  == 0)                      stop("'alpha' equal to zero not yet implemented", call.=FALSE)
+      if(discount   < 0  || discount >= 1) stop("'discount' must lie in the interval [0,1)", call.=FALSE)
+      if(alpha   <= - discount)            stop("'alpha' must be strictly greater than -discount", call.=FALSE)
+      if(alpha   == 0)                     stop("'alpha' equal to zero not yet implemented", call.=FALSE)
       if(suppressMessages(requireNamespace("Rmpfr", quietly=TRUE))) {
-        mpfrind <- TRUE
+        mpfrind  <- TRUE
         on.exit(.detach_pkg(Rmpfr))
         on.exit(.detach_pkg(gmp), add=TRUE)
-        alpha   <- Rmpfr::mpfr(alpha, precBits=256)
+        alpha    <- Rmpfr::mpfr(alpha, precBits=256)
       } else if(discount != 0)             stop("'Rmpfr' package not installed", call.=FALSE)
 
-      alpha2    <- alpha  * alpha
+      alpha2     <- alpha * alpha
       if(discount == 0)   {
-        var     <- alpha  * (digamma(alpha + N) - digamma(alpha))
+        var      <- alpha * (digamma(alpha + N) - digamma(alpha))
         if(mpfrind)       {
-          alpha <- gmp::asNumeric(alpha)
+          alpha  <- gmp::asNumeric(alpha)
           gmp::asNumeric(var + alpha2 * (trigamma(alpha + N) - trigamma(alpha)))
         } else {
           var  + alpha2   * (trigamma(alpha + N) - trigamma(alpha))
         }
-      } else {
-        sum.ad  <- alpha  + discount
-        poch.a  <- Rmpfr::pochMpfr(alpha, N)
-        poch.ad <- Rmpfr::pochMpfr(sum.ad, N)
-        subterm <- alpha/discount * poch.ad/poch.a
+      } else   {
+        sum.ad   <- alpha + discount
+        poch.a   <- Rmpfr::pochMpfr(alpha, N)
+        poch.ad  <- Rmpfr::pochMpfr(sum.ad, N)
+        subterm  <- alpha/discount * poch.ad/poch.a
           gmp::asNumeric((alpha * sum.ad)/(discount * discount) * Rmpfr::pochMpfr(sum.ad + discount, N)/poch.a - subterm - subterm * subterm)
       }
     })
@@ -995,27 +995,27 @@
 #'       ...)
 #' @include MainFunction.R
 #' @export
-    print.IMIFA <- function(x, ...) {
-      meth      <- attr(x, "Method")
-      name      <- attr(x, "Name")
-      fac       <- attr(x, "Factors")
-      grp       <- attr(x, "Clusters")
-      Qmsg      <- Gmsg <- msg   <- NULL
+    print.IMIFA  <- function(x, ...) {
+      meth       <- attr(x, "Method")
+      name       <- attr(x, "Name")
+      fac        <- attr(x, "Factors")
+      grp        <- attr(x, "Clusters")
+      Qmsg       <- Gmsg <- msg   <- NULL
       for(i in seq_along(fac[-length(fac)])) {
-        Qmsg    <- c(Qmsg, (paste0(fac[i], ifelse(i + 1 < length(fac), ", ", " "))))
+        Qmsg     <- c(Qmsg, (paste0(fac[i], ifelse(i + 1 < length(fac), ", ", " "))))
       }
       for(i in seq_along(grp[-length(grp)])) {
-        Gmsg    <- c(Gmsg, (paste0(grp[i], ifelse(i + 1 < length(grp), ", ", " "))))
+        Gmsg     <- c(Gmsg, (paste0(grp[i], ifelse(i + 1 < length(grp), ", ", " "))))
       }
 
-      Qmsg      <- if(length(fac) > 1) paste(c(Qmsg, paste0("and ", fac[length(fac)])), sep="", collapse="") else fac
-      Gmsg      <- if(length(grp) > 1) paste(c(Gmsg, paste0("and ", grp[length(grp)])), sep="", collapse="") else grp
-      Qmsg      <- paste0(" with ", Qmsg, " factor", ifelse(length(fac) > 1 || fac > 1, "s", ""))
-      Gmsg      <- paste0(" with ", Gmsg, " group",  ifelse(length(grp) > 1 || grp > 1, "s", ""))
+      Qmsg       <- if(length(fac) > 1) paste(c(Qmsg, paste0("and ", fac[length(fac)])), sep="", collapse="") else fac
+      Gmsg       <- if(length(grp) > 1) paste(c(Gmsg, paste0("and ", grp[length(grp)])), sep="", collapse="") else grp
+      Qmsg       <- paste0(" with ", Qmsg, " factor", ifelse(length(fac) > 1 || fac > 1, "s", ""))
+      Gmsg       <- paste0(" with ", Gmsg, " group",  ifelse(length(grp) > 1 || grp > 1, "s", ""))
       if(is.element(meth, c("FA", "OMFA", "IMFA"))) {
-        msg     <- Qmsg
+        msg      <- Qmsg
       } else {
-        msg     <- switch(meth, MFA=paste0(Gmsg, " and", Qmsg), MIFA=Gmsg)
+        msg      <- switch(meth, MFA=paste0(Gmsg, " and", Qmsg), MIFA=Gmsg)
       }
       cat(paste0(meth, " simulations for '", name, "' dataset", msg, " to be passed to get_IMIFA_results(...)\n"))
         invisible()
@@ -1029,29 +1029,29 @@
 #' @include MainFunction.R
 #' @export
     summary.IMIFA        <- function(object, ...) {
-      meth      <- attr(object, "Method")
-      name      <- attr(object, "Name")
-      call      <- attr(object, "Call")
-      fac       <- attr(object, "Factors")
-      grp       <- attr(object, "Clusters")
-      Qmsg      <- Gmsg <- msg   <- NULL
+      meth       <- attr(object, "Method")
+      name       <- attr(object, "Name")
+      call       <- attr(object, "Call")
+      fac        <- attr(object, "Factors")
+      grp        <- attr(object, "Clusters")
+      Qmsg       <- Gmsg <- msg   <- NULL
       for(i in seq_along(fac[-length(fac)])) {
-        Qmsg    <- c(Qmsg, (paste0(fac[i], ifelse(i + 1 < length(fac), ", ", " "))))
+        Qmsg     <- c(Qmsg, (paste0(fac[i], ifelse(i + 1 < length(fac), ", ", " "))))
       }
       for(i in seq_along(grp[-length(grp)])) {
-        Gmsg    <- c(Gmsg, (paste0(grp[i], ifelse(i + 1 < length(grp), ", ", " "))))
+        Gmsg     <- c(Gmsg, (paste0(grp[i], ifelse(i + 1 < length(grp), ", ", " "))))
       }
 
-      Qmsg      <- if(length(fac) > 1) paste(c(Qmsg, paste0("and ", fac[length(fac)])), sep="", collapse="") else fac
-      Gmsg      <- if(length(grp) > 1) paste(c(Gmsg, paste0("and ", grp[length(grp)])), sep="", collapse="") else grp
-      Qmsg      <- paste0(" with ", Qmsg, " factor", ifelse(length(fac) > 1 || fac > 1, "s", ""))
-      Gmsg      <- paste0(" with ", Gmsg, " group",  ifelse(length(grp) > 1 || grp > 1, "s", ""))
+      Qmsg       <- if(length(fac) > 1) paste(c(Qmsg, paste0("and ", fac[length(fac)])), sep="", collapse="") else fac
+      Gmsg       <- if(length(grp) > 1) paste(c(Gmsg, paste0("and ", grp[length(grp)])), sep="", collapse="") else grp
+      Qmsg       <- paste0(" with ", Qmsg, " factor", ifelse(length(fac) > 1 || fac > 1, "s", ""))
+      Gmsg       <- paste0(" with ", Gmsg, " group",  ifelse(length(grp) > 1 || grp > 1, "s", ""))
       if(is.element(meth, c("FA", "OMFA", "IMFA"))) {
-        msg     <- Qmsg
+        msg      <- Qmsg
       } else {
-        msg     <- switch(meth, MFA=paste0(Gmsg, " and", Qmsg), MIFA=Gmsg)
+        msg      <- switch(meth, MFA=paste0(Gmsg, " and", Qmsg), MIFA=Gmsg)
       }
-      summ      <- list(call = call, details = paste0(meth, " simulations for '", name, "' dataset", msg, " to be passed to get_IMIFA_results(...)\n"))
+      summ       <- list(call = call, details = paste0(meth, " simulations for '", name, "' dataset", msg, " to be passed to get_IMIFA_results(...)\n"))
       class(summ)        <- "summary_IMIFA"
         summ
     }
@@ -1071,21 +1071,21 @@
 #'       ...)
 #' @export
     print.Results_IMIFA  <- function(x, ...) {
-      method    <- attr(x, "Method")
-      adapt     <- attr(x, "Adapt") || !is.element(method, c("IFA", "MIFA", "OMIFA", "IMIFA"))
-      G         <- x$GQ.results$G
-      Q         <- x$GQ.results$Q
+      method     <- attr(x, "Method")
+      adapt      <- attr(x, "Adapt") || !is.element(method, c("IFA", "MIFA", "OMIFA", "IMIFA"))
+      G          <- x$GQ.results$G
+      Q          <- x$GQ.results$Q
       if(is.element(method, c("FA", "IFA")))  {
-        msg     <- paste0("The chosen ", method, " model has ", Q, " factor", ifelse(Q == 1, "", "s"), ifelse(adapt, "", " (no adaptation took place)"))
+        msg      <- paste0("The chosen ", method, " model has ", Q, " factor", ifelse(Q == 1, "", "s"), ifelse(adapt, "", " (no adaptation took place)"))
       } else if(is.element(method, c("MFA", "OMFA", "IMFA"))) {
-        msg     <- paste0("The chosen ", method, " model has ", G, " group",  ifelse(G == 1, " with ", "s, each with "), unique(Q), " factor", ifelse(unique(Q) == 1, "", "s"))
+        msg      <- paste0("The chosen ", method, " model has ", G, " group",  ifelse(G == 1, " with ", "s, each with "), unique(Q), " factor", ifelse(unique(Q) == 1, "", "s"))
       } else {
-        Q.msg   <- NULL
+        Q.msg    <- NULL
         for(i in seq_along(Q[-length(Q)])) {
-          Q.msg <- c(Q.msg, (paste0(Q[i], ifelse(i + 1 < length(Q), ", ", " "))))
+          Q.msg  <- c(Q.msg, (paste0(Q[i], ifelse(i + 1 < length(Q), ", ", " "))))
         }
-        Q.msg   <- if(!adapt) paste0(unique(Q)) else { if(length(Q) > 1) paste(c(Q.msg, paste0("and ", Q[length(Q)])), sep="", collapse="") else Q }
-        msg     <- paste0("The chosen ", method, " model has ", G, " group", ifelse(G == 1, " with ", paste0("s,", ifelse(adapt, "", " each"), " with ")), Q.msg, " factor", ifelse(G == 1 && Q == 1, "", paste0("s", ifelse(G == 1, "", " respectively"))), ifelse(adapt, "", " (no adaptation took place)"), sep="")
+        Q.msg    <- if(!adapt) paste0(unique(Q)) else { if(length(Q) > 1) paste(c(Q.msg, paste0("and ", Q[length(Q)])), sep="", collapse="") else Q }
+        msg      <- paste0("The chosen ", method, " model has ", G, " group", ifelse(G == 1, " with ", paste0("s,", ifelse(adapt, "", " each"), " with ")), Q.msg, " factor", ifelse(G == 1 && Q == 1, "", paste0("s", ifelse(G == 1, "", " respectively"))), ifelse(adapt, "", " (no adaptation took place)"), sep="")
       }
       cat(paste0(msg, ": this Results_IMIFA object can be passed to plot(...)\n"))
         invisible()
@@ -1098,15 +1098,15 @@
 #'         ...)
 #' @export
     summary.Results_IMIFA <- function(object, ...) {
-      criterion <- unlist(strsplit(toupper(attr(object$GQ.results, "Criterion")), "[.]"))
-      criterion <- ifelse(length(criterion) > 1, ifelse(criterion[1] != "LOG", paste0(criterion[1], ".", tolower(criterion[2])), "LogIntegratedLikelihood"), criterion)
-      crit.mat  <- object$GQ.results[[paste0(criterion, "s")]]
-      call      <- attr(object, "Call")
-      msg       <- NULL
+      criterion  <- unlist(strsplit(toupper(attr(object$GQ.results, "Criterion")), "[.]"))
+      criterion  <- ifelse(length(criterion) > 1, ifelse(criterion[1] != "LOG", paste0(criterion[1], ".", tolower(criterion[2])), "LogIntegratedLikelihood"), criterion)
+      crit.mat   <- object$GQ.results[[paste0(criterion, "s")]]
+      call       <- attr(object, "Call")
+      msg        <- NULL
       if(any(dim(crit.mat) > 1)) {
-        msg     <- paste0(", and ", ifelse(substr(criterion, 1, 1) == "A", "an ", "a "),  criterion, " of ", round(max(crit.mat), 2), "\n")
+        msg      <- paste0(", and ", ifelse(substr(criterion, 1, 1) == "A", "an ", "a "),  criterion, " of ", round(max(crit.mat), 2), "\n")
       }
-      summ      <- list(call = call, details = paste0(paste0(utils::capture.output(print(object)), msg)))
+      summ       <- list(call = call, details = paste0(paste0(utils::capture.output(print(object)), msg)))
       class(summ)        <- "summary_IMIFA"
         summ
     }
@@ -1184,15 +1184,15 @@
 #' # Alternatively specify these arguments directly
 #' # sim  <- mcmc_IMIFA(olive, "IMIFA", n.iters=20000, prec.mu=1E-06,
 #' #                    scaling="pareto", uni.type="constrained")
-  mixfaControl  <- function(n.iters = 25000L, burnin = n.iters/5, thinning = 2L, centering = TRUE, scaling = c("unit", "pareto", "none"),
-                            uni.type = c("unconstrained", "isotropic", "constrained", "single"), psi.alpha = 2.5, psi.beta = NULL, mu.zero = NULL,
-                            sigma.mu = NULL, prec.mu = 1L, sigma.l = 1L, z.init = c("mclust", "hc", "kmeans", "list", "priors"), z.list = NULL, equal.pro = FALSE,
-                            uni.prior = c("unconstrained", "isotropic"), mu0g = FALSE, psi0g = FALSE, drop0sd = TRUE, verbose = interactive(), ...) {
-    miss.args   <- list(uni.type = missing(uni.type), psi.beta = missing(psi.beta), mu.zero = missing(mu.zero),
-                        sigma.mu = missing(sigma.mu), z.init = missing(z.init), z.list = missing(z.list), uni.prior = missing(uni.prior))
-    burnin      <- as.integer(burnin)
-    n.iters     <- max(burnin + 1L, as.integer(n.iters))
-    thinning    <- as.integer(thinning)
+  mixfaControl   <- function(n.iters = 25000L, burnin = n.iters/5, thinning = 2L, centering = TRUE, scaling = c("unit", "pareto", "none"),
+                             uni.type = c("unconstrained", "isotropic", "constrained", "single"), psi.alpha = 2.5, psi.beta = NULL, mu.zero = NULL,
+                             sigma.mu = NULL, prec.mu = 1L, sigma.l = 1L, z.init = c("mclust", "hc", "kmeans", "list", "priors"), z.list = NULL, equal.pro = FALSE,
+                             uni.prior = c("unconstrained", "isotropic"), mu0g = FALSE, psi0g = FALSE, drop0sd = TRUE, verbose = interactive(), ...) {
+    miss.args    <- list(uni.type = missing(uni.type), psi.beta = missing(psi.beta), mu.zero = missing(mu.zero),
+                         sigma.mu = missing(sigma.mu), z.init = missing(z.init), z.list = missing(z.list), uni.prior = missing(uni.prior))
+    burnin       <- as.integer(burnin)
+    n.iters      <- max(burnin + 1L, as.integer(n.iters))
+    thinning     <- as.integer(thinning)
     if(any(!is.integer(n.iters),
        length(n.iters)     != 1))          stop("'n.iters' must be a single integer", call.=FALSE)
     if(any(!is.integer(burnin),    burnin     < 0,
@@ -1202,21 +1202,21 @@
     if(any(!is.logical(centering),
        length(centering)   != 1))          stop("'centering' must be a single logical indicator", call.=FALSE)
     if(!all(is.character(scaling)))        stop("'scaling' must be a character vector of length 1", call.=FALSE)
-    scaling     <- match.arg(scaling)
+    scaling      <- match.arg(scaling)
     if(any(!is.numeric(prec.mu),   prec.mu   <= 0,
        length(prec.mu)     != 1))          stop("'prec.mu' must be a single strictly positive number", call.=FALSE)
     if(!all(is.character(uni.type)))       stop("'uni.type' must be a character vector of length 1", call.=FALSE)
-    uni.type    <- match.arg(uni.type)
+    uni.type     <- match.arg(uni.type)
     if(any(!is.numeric(psi.alpha), psi.alpha <= 0,
        length(psi.alpha)   != 1))          stop("'psi.alpha' must be a single strictly positive number", call.=FALSE)
     if(any(!is.numeric(sigma.l),   sigma.l   <= 0,
        length(sigma.l)     != 1))          stop("'sigma.l' must be a single strictly positive number", call.=FALSE)
     if(!all(is.character(z.init)))         stop("'z.init' must be a character vector of length 1", call.=FALSE)
-    z.init      <- match.arg(z.init)
+    z.init       <- match.arg(z.init)
     if(length(equal.pro)    > 1 ||
        !is.logical(equal.pro))             stop("'equal.pro' must be a single logical indicator", call.=FALSE)
     if(!all(is.character(uni.prior)))      stop("'uni.prior' must be a character vector of length 1", call.=FALSE)
-    uni.prior   <- match.arg(uni.prior)
+    uni.prior    <- match.arg(uni.prior)
     if(any(!is.logical(mu0g),
        length(mu0g)        != 1))          stop("'mu0g' must be a single logical indicator", call.=FALSE)
     if(any(!is.logical(psi0g),
@@ -1225,11 +1225,11 @@
        length(drop0sd)     != 1))          stop("'drop0sd' must be a single logical indicator", call.=FALSE)
     if(any(!is.logical(verbose),
        length(verbose)     != 1))          stop("'verbose' must be a single logical indicator", call.=FALSE)
-    mixfa       <- list(n.iters = n.iters, burnin = burnin, thinning = thinning, centering = centering, scaling = scaling, uni.type = uni.type, psi.alpha = psi.alpha,
-                        psi.beta = psi.beta, mu.zero = mu.zero, sigma.mu = sigma.mu, prec.mu = prec.mu, sigma.l = sigma.l, z.init = z.init, z.list = z.list,
-                        equal.pro = equal.pro, uni.prior = uni.prior, mu0g = mu0g, psi0g = psi0g, drop0sd = drop0sd, verbose = verbose)
-    dots        <- list(...)
-    mixfa       <- c(mixfa, list(dots = dots[!(names(dots) %in% names(mixfa))]))
+    mixfa        <- list(n.iters = n.iters, burnin = burnin, thinning = thinning, centering = centering, scaling = scaling, uni.type = uni.type, psi.alpha = psi.alpha,
+                         psi.beta = psi.beta, mu.zero = mu.zero, sigma.mu = sigma.mu, prec.mu = prec.mu, sigma.l = sigma.l, z.init = z.init, z.list = z.list,
+                         equal.pro = equal.pro, uni.prior = uni.prior, mu0g = mu0g, psi0g = psi0g, drop0sd = drop0sd, verbose = verbose)
+    dots         <- list(...)
+    mixfa        <- c(mixfa, list(dots = dots[!(names(dots) %in% names(mixfa))]))
     attr(mixfa, "Missing") <- miss.args
       return(mixfa)
   }
@@ -1291,9 +1291,9 @@
 #' # Alternatively specify these arguments directly
 #' # sim <- mcmc_IMIFA(olive, "IMIFA", n.iters=5000,
 #' #                   ind.slice=FALSE, alpha.hyper=c(3, 1), learn.d=TRUE)
-  bnpControl    <- function(learn.alpha = TRUE, alpha.hyper = c(2L, 1L), discount = NULL, learn.d = FALSE, d.hyper = c(1L, 1L),
-                            ind.slice = TRUE, rho = 0.75, trunc.G = NULL, kappa = 0.5, IM.lab.sw = TRUE, zeta = 2L, tune.zeta = NULL, ...) {
-    miss.args   <- list(trunc.G = missing(trunc.G), IM.lab.sw = missing(IM.lab.sw))
+  bnpControl     <- function(learn.alpha = TRUE, alpha.hyper = c(2L, 1L), discount = NULL, learn.d = FALSE, d.hyper = c(1L, 1L),
+                             ind.slice = TRUE, rho = 0.75, trunc.G = NULL, kappa = 0.5, IM.lab.sw = TRUE, zeta = 2L, tune.zeta = NULL, ...) {
+    miss.args    <- list(trunc.G = missing(trunc.G), IM.lab.sw = missing(IM.lab.sw))
     if(any(!is.logical(learn.alpha),
            length(learn.alpha)    != 1))   stop("'learn.alpha' must be a single logical indicator", call.=FALSE)
     if(all(length(alpha.hyper)    != 2,
@@ -1309,21 +1309,21 @@
     if(any(!is.logical(ind.slice),
            length(ind.slice)      != 1))   stop("'ind.slice' must be a single logical indicator", call.=FALSE)
     if(all(length(rho)    > 1,
-       rho  > 1 || rho   <= 0))            stop("'rho' must be a single number in the interval (0, 1]", call.=FALSE)
+       rho  > 1  || rho  <= 0))            stop("'rho' must be a single number in the interval (0, 1]", call.=FALSE)
     if(rho  < 0.5)                         warning("Are you sure 'rho' should be less than 0.5? This could adversely affect mixing", call.=FALSE, immediate.=FALSE)
     if(!missing(trunc.G) &&
        (length(trunc.G)   > 1     ||
         !is.numeric(trunc.G)      ||
-        trunc.G <= 0))                     stop("'trunc.G' must be a single strictly positive number", call.=FALSE)
+        trunc.G  <= 0))                    stop("'trunc.G' must be a single strictly positive number", call.=FALSE)
     if(any(!is.numeric(kappa),
            length(kappa)          != 1))   stop("'kappa' must be a single number", call.=FALSE)
-    if(kappa     <  0    || kappa  > 1)    stop("'kappa' must lie in the interval [0, 1]", call.=FALSE)
-    discount    <- ifelse(missing(discount), ifelse(learn.d, ifelse(kappa != 0 && stats::runif(1) <= kappa, 0, pmin(stats::rbeta(1, d.hyper[1], d.hyper[2]), 1 - .Machine$double.eps)), 0), discount)
+    if(kappa      <  0   || kappa  > 1)    stop("'kappa' must lie in the interval [0, 1]", call.=FALSE)
+    discount     <- ifelse(missing(discount), ifelse(learn.d, ifelse(kappa != 0 && stats::runif(1) <= kappa, 0, pmin(stats::rbeta(1, d.hyper[1], d.hyper[2]), 1 - .Machine$double.eps)), 0), discount)
     if(any(!is.numeric(discount),
            length(discount)       != 1))   stop("'discount' must be a single number", call.=FALSE)
-    if(discount  < 0     ||
-       discount >= 1)                      stop("'discount' must lie in the interval [0, 1)", call.=FALSE)
-    kappa       <- ifelse(all(!learn.d, discount == 0), 1, kappa)
+    if(discount   < 0    ||
+       discount  >= 1)                     stop("'discount' must lie in the interval [0, 1)", call.=FALSE)
+    kappa        <- ifelse(all(!learn.d, discount == 0), 1, kappa)
     if(all(discount       > 0,
       !learn.d, learn.alpha)) {
       alpha.hyper        <- unname(unlist(shift_GA(shape=alpha.hyper[1], rate=alpha.hyper[2], shift=-discount)))
@@ -1337,13 +1337,13 @@
     if(any(!is.numeric(zeta),
        length(zeta)      != 1,
        zeta < 0))                          stop("'zeta' must be single strictly positive number", call.=FALSE)
-    gibbs.def   <- all(kappa       < 1, learn.d,  learn.alpha)
-    def.py      <- all(discount   != 0, !learn.d, learn.alpha)
-    gibbs.may   <- gibbs.def      &&    kappa > 0
+    gibbs.def    <- all(kappa      < 1, learn.d,  learn.alpha)
+    def.py       <- all(discount  != 0, !learn.d, learn.alpha)
+    gibbs.may    <- gibbs.def     &&    kappa > 0
     if(missing(tune.zeta)) {
-      tune.zeta <- list(heat=0, lambda=NULL, target=NULL, do=FALSE)
+      tune.zeta  <- list(heat=0, lambda=NULL, target=NULL, do=FALSE)
     } else  {
-      tz        <- tune.zeta
+      tz         <- tune.zeta
       if(!inherits(tz, "list")    ||
          (!all(is.element(names(tz), c("heat",
           "lambda", "target")))   ||
@@ -1353,7 +1353,7 @@
       if(is.null(tz$target)) tz$target  <- 0.441
       if(!all(vapply(tz,
               is.numeric, logical(1L))))   stop("Not all elements of 'tune.zeta' are numeric", call.=FALSE)
-      tz$do     <- any(gibbs.def, def.py)
+      tz$do      <- any(gibbs.def, def.py)
       if(tz$heat          < 0)             stop("Invalid 'heat': must be >= 0", call.=FALSE)
       if(tz$target        < 0     ||
          tz$target        > 1)             stop("Invalid 'target': must lie in the interval [0, 1]", call.=FALSE)
@@ -1364,10 +1364,10 @@
           if(isTRUE(gibbs.may))            warning("Are you sure you want to tune zeta?: Gibbs updates are possible as 'kappa' is between zero and 1", call.=FALSE, immediate.=TRUE)
         } else if(tz$do)                   warning("'heat' of 0 corresponds to no tuning: are you sure?", call.=FALSE, immediate.=TRUE)
       }
-      tune.zeta <- tz
+      tune.zeta  <- tz
     }
-    BNP         <- list(learn.a = learn.alpha, a.hyper = alpha.hyper, discount = discount, learn.d = learn.d, d.hyper = d.hyper, rho = rho,
-                        ind.slice = ind.slice, trunc.G = trunc.G, kappa = kappa, IM.lab.sw = IM.lab.sw, zeta = zeta, tune.zeta = tune.zeta)
+    BNP          <- list(learn.a = learn.alpha, a.hyper = alpha.hyper, discount = discount, learn.d = learn.d, d.hyper = d.hyper, rho = rho,
+                         ind.slice = ind.slice, trunc.G = trunc.G, kappa = kappa, IM.lab.sw = IM.lab.sw, zeta = zeta, tune.zeta = tune.zeta)
     attr(BNP, "Missing") <- miss.args
       BNP
   }
@@ -1429,16 +1429,16 @@
 #'
 #' # Alternatively specify these arguments directly
 #' # sim <- mcmc_IMIFA(olive, "IMIFA", n.iters=5000, phi.hyper=c(2.5, 1), eps=1e-02)
-    mgpControl  <- function(alpha.d1 = 2L, alpha.d2 = 6L, phi.hyper = c(3L, 2L), prop = 0.7, eps = 1e-01, adapt = TRUE,
-                            b0 = 0.1, b1 = 5e-05, beta.d1 = 1L, beta.d2 = 1L, adapt.at = 0L, delta0g = FALSE, ...) {
-      miss.args <- list(propx = missing(prop), adaptatx = missing(adapt.at))
+    mgpControl   <- function(alpha.d1 = 2L, alpha.d2 = 6L, phi.hyper = c(3L, 2L), prop = 0.7, eps = 1e-01, adapt = TRUE,
+                             b0 = 0.1, b1 = 5e-05, beta.d1 = 1L, beta.d2 = 1L, adapt.at = 0L, delta0g = FALSE, ...) {
+      miss.args  <- list(propx = missing(prop), adaptatx = missing(adapt.at))
       if(any(!is.numeric(alpha.d1),
              !is.numeric(alpha.d2),
              c(alpha.d1, alpha.d2)  < 1))  stop("All global shrinkage shape hyperparameter values must be numeric and at least 1", call.=FALSE)
-      if(prop    > 1          ||
-         prop   <= 0)                      stop("'prop' must be lie in the interval (0, 1]", call.=FALSE)
-      if(eps    <= 0 ||
-         eps    >= 1)                      stop("'eps' must be lie in the interval (0, 1)", call.=FALSE)
+      if(prop     > 1         ||
+         prop    <= 0)                     stop("'prop' must be lie in the interval (0, 1]", call.=FALSE)
+      if(eps     <= 0 ||
+         eps     >= 1)                     stop("'eps' must be lie in the interval (0, 1)", call.=FALSE)
       if(any(length(adapt)    != 1,
              !is.logical(adapt)))          stop("'adapt' must be a single logical indicator", call.=FALSE)
       if(any(length(b0)       != 1,
@@ -1462,8 +1462,8 @@
              length(eps)      != 1))       stop("'prop', 'adapt.at', and 'eps' must all be numeric and of length 1", call.=FALSE)
       if(any(length(delta0g)  != 1,
              !is.logical(delta0g)))        stop("'delta0g' must be a single logical indicator", call.=FALSE)
-      MGPAGS    <- list(alpha.d1 = alpha.d1, alpha.d2 = alpha.d2, delta0g = delta0g, phi.hyper = phi.hyper, prop = prop,
-                        epsilon = eps, adapt = adapt, b0 = b0, b1 = b1, beta.d1 = beta.d1, beta.d2 = beta.d2, adaptat = adapt.at)
+      MGPAGS     <- list(alpha.d1 = alpha.d1, alpha.d2 = alpha.d2, delta0g = delta0g, phi.hyper = phi.hyper, prop = prop,
+                         epsilon = eps, adapt = adapt, b0 = b0, b1 = b1, beta.d1 = beta.d1, beta.d2 = beta.d2, adaptat = adapt.at)
       attr(MGPAGS, "Missing") <- miss.args
         MGPAGS
     }
@@ -1506,8 +1506,8 @@
 #'
 #' # Alternatively specify these arguments directly
 #' # sim <- mcmc_IMIFA(olive, "IMIFA", n.iters=5000, score.switch=FALSE)
-   storeControl <- function(mu.switch = TRUE, score.switch = TRUE, load.switch = TRUE, psi.switch = TRUE, pi.switch = TRUE, ...) {
-      switches  <- c(mu.sw=mu.switch, s.sw=score.switch, l.sw=load.switch, psi.sw=psi.switch,pi.sw=pi.switch)
+   storeControl  <- function(mu.switch = TRUE, score.switch = TRUE, load.switch = TRUE, psi.switch = TRUE, pi.switch = TRUE, ...) {
+      switches   <- c(mu.sw=mu.switch, s.sw=score.switch, l.sw=load.switch, psi.sw=psi.switch,pi.sw=pi.switch)
       attr(switches, "Missing") <- c(mu.sw=missing(mu.switch), s.sw=missing(score.switch), l.sw=missing(load.switch), psi.sw=missing(psi.switch), pi.sw=missing(pi.switch))
       if(any(!is.logical(switches)))       stop("All logical parameter storage switches must be single logical indicators", call.=FALSE)
         switches
@@ -1523,87 +1523,87 @@
 #' @usage IMIFA_news()
 #' @examples
 #' IMIFA_news()
-  IMIFA_news    <- function() {
-    news        <- file.path(system.file(package  = "IMIFA"), "NEWS.md")
+  IMIFA_news     <- function() {
+    news         <- file.path(system.file(package  = "IMIFA"), "NEWS.md")
     if(interactive()) file.show(news) else message("The session is not interactive")
   }
 
   # Other Hidden Functions
-    .a_drop     <- function(x, drop = TRUE, named.vector = TRUE, one.d.array = FALSE, ...) {
+    .a_drop      <- function(x, drop = TRUE, named.vector = TRUE, one.d.array = FALSE, ...) {
       if(is.null(dim(x)))                  stop("require an object with a dim attribute", call.=FALSE)
-      x.dim     <- dim(x)
+      x.dim      <- dim(x)
       if(is.logical(drop))  {
         if(length(drop) != length(x.dim))  stop("length of drop is not equal length of dim(x)", call.=FALSE)
-        drop    <- which(drop)
+        drop     <- which(drop)
       } else if(is.character(drop))  {
         if(any(is.na(i  <- match(drop,
                      names(x.dim)))))      stop("dimension names ", paste("'", drop[is.na(i)], "'", sep="", collapse=" "), " not found in x", call.=FALSE)
-        drop    <- i
+        drop     <- i
       } else if(is.null(drop))       {
-        drop    <- numeric(0)
+        drop     <- numeric(0)
       }
       if(!is.numeric(drop) ||
         any(is.na(drop))   ||
-        any(drop < 1 |
-            drop > length(x.dim)))         stop("drop must contain dimension numbers", call.=FALSE)
+        any(drop  < 1 |
+            drop  > length(x.dim)))        stop("drop must contain dimension numbers", call.=FALSE)
       if(!all(x.dim[drop] == 1))           stop("dimensions to drop (", paste(drop, collapse = ", "), ") do not have length 1", call.=FALSE)
       x.dimnames        <- dimnames(x)
       dimnames(x)       <- NULL
-      dim(x)    <- NULL
-      keep      <- setdiff(seq_along(x.dim), drop)
+      dim(x)     <- NULL
+      keep       <- setdiff(seq_along(x.dim), drop)
       if(length(x.dim[keep]) > 1 || (length(x.dim[keep]) == 1 && one.d.array)) {
-       dim(x)   <- x.dim[keep]
+       dim(x)    <- x.dim[keep]
        if(!is.null(x.dimnames)) dimnames(x) <- x.dimnames[keep]
       } else if(length(x.dim[keep]) == 1 && named.vector) {
-       names(x) <- x.dimnames[keep][[1]]
+       names(x)  <- x.dimnames[keep][[1]]
       }
         x
     }
 
-    .as_numchar <- function(x) {
+    .as_numchar  <- function(x) {
        tryCatch(as.numeric(x), warning=function(w) as.numeric(factor(x, labels=seq_along(unique(x)))))
     }
 
-    .chol       <- function(x, ...) tryCatch(chol(x, ...), error=function(e)   {
-      d         <- nrow(x)
-      eigs      <- eigen(x, symmetric = TRUE)
-      eval      <- eigs$values
-      evec      <- eigs$vectors
+    .chol        <- function(x, ...) tryCatch(chol(x, ...), error=function(e)   {
+      d          <- nrow(x)
+      eigs       <- eigen(x, symmetric = TRUE)
+      eval       <- eigs$values
+      evec       <- eigs$vectors
         return(chol(x + evec %*% tcrossprod(diag(pmax.int(0, 2 * max(abs(eval)) * d * .Machine$double.eps - eval), d), evec), ...))
       }
     )
 
     #' @importFrom matrixStats "colSums2" "rowSums2"
     .class_agreement    <- function(tab, match.names = FALSE) {
-      n         <- sum(tab)
-      ni        <- rowSums2(tab)
-      nj        <- colSums2(tab)
+      n          <- sum(tab)
+      ni         <- rowSums2(tab)
+      nj         <- colSums2(tab)
       if(match.names && !is.null(dimnames(tab))) {
-        lev     <- intersect(colnames(tab), rownames(tab))
-        p0      <- sum(diag(tab[lev, lev]))/n
-        pc      <- sum(ni[lev]   * nj[lev])/n^2
+        lev      <- intersect(colnames(tab), rownames(tab))
+        p0       <- sum(diag(tab[lev, lev]))/n
+        pc       <- sum(ni[lev]   * nj[lev])/n^2
       } else {
-        m       <- seq_len(min(length(ni), length(nj)))
-        p0      <- sum(diag(tab[m, m]))/n
-        pc      <- sum((ni[m]/n) * (nj[m]/n))
+        m        <- seq_len(min(length(ni), length(nj)))
+        p0       <- sum(diag(tab[m, m]))/n
+        pc       <- sum((ni[m]/n) * (nj[m]/n))
       }
-      n2        <- choose(n, 2)
-      rand      <- 1 + (sum(tab^2)  - (sum(ni^2) + sum(nj^2))/2)/n2
-      nis2      <- sum(choose(ni[ni > 1], 2))
-      njs2      <- sum(choose(nj[nj > 1], 2))
-      crand     <- (sum(choose(tab[tab > 1], 2)) - (nis2 * njs2)/n2)/((nis2 + njs2)/2 - (nis2 * njs2)/n2)
+      n2         <- choose(n, 2)
+      rand       <- 1 + (sum(tab^2)  - (sum(ni^2) + sum(nj^2))/2)/n2
+      nis2       <- sum(choose(ni[ni > 1], 2))
+      njs2       <- sum(choose(nj[nj > 1], 2))
+      crand      <- (sum(choose(tab[tab > 1], 2)) - (nis2 * njs2)/n2)/((nis2 + njs2)/2 - (nis2 * njs2)/n2)
         list(diag = p0, kappa = (p0 - pc)/(1 - pc), rand = rand, crand = crand)
     }
 
-    .clean_args <- function(argstr, fn, exclude.repeats = FALSE, exclude.other = NULL, dots.ok = TRUE) {
-      fnargs    <- names(formals(fn))
+    .clean_args  <- function(argstr, fn, exclude.repeats = FALSE, exclude.other = NULL, dots.ok = TRUE) {
+      fnargs     <- names(formals(fn))
       if(length(argstr) > 0 && !("..." %in% fnargs && dots.ok)) {
-        badargs <- names(argstr)[!sapply(names(argstr), "%in%", c(fnargs, ""))]
+        badargs  <- names(argstr)[!sapply(names(argstr), "%in%", c(fnargs, ""))]
         for(i in badargs) argstr[[i]]     <- NULL
       }
       if(exclude.repeats) {
-        ntab    <- table(names(argstr))
-        badargs <- names(ntab)[ntab > 1 & names(ntab) != ""]
+        ntab     <- table(names(argstr))
+        badargs  <- names(ntab)[ntab > 1 & names(ntab) != ""]
         for(i in badargs) argstr[[i]]     <- NULL
       }
       for(i in exclude.other) argstr[[i]] <- NULL
@@ -1611,73 +1611,73 @@
     }
 
     #' @importFrom matrixStats "colSums2"
-    .col_vars   <- function(x, std = FALSE, suma = NULL) { # replaces Rfast::colVars
+    .col_vars    <- function(x, std = FALSE, suma = NULL) { # replaces Rfast::colVars
       if(length(std) > 1 ||
          !is.logical(std))                 stop("'std' must be a single logical indicator")
       if(!is.matrix(x))                    stop("'x' must be a matrix")
-      m         <- if(missing(suma)) colSums2(x) else suma
-      n         <- nrow(x)
-      s         <- (colSums2(x * x) - (m * m)/n)/(n - 1)
+      m          <- if(missing(suma)) colSums2(x) else suma
+      n          <- nrow(x)
+      s          <- (colSums2(x * x) - (m * m)/n)/(n - 1)
         if(std) sqrt(s) else s
     }
 
-    .detach_pkg <- function(pkg, character.only = FALSE) {
-      searches  <- paste("package", if(!character.only) deparse(substitute(pkg)) else pkg, sep=":")
+    .detach_pkg  <- function(pkg, character.only = FALSE) {
+      searches   <- paste("package", if(!character.only) deparse(substitute(pkg)) else pkg, sep=":")
       while(searches %in% search()) {
         detach(searches, unload=TRUE, character.only=TRUE)
       }
     }
 
-    .empty_mat <- function(nr = 0, nc = 0) {
+    .empty_mat   <- function(nr = 0, nc = 0) {
       base::matrix(0L, nrow=nr, ncol=nc)
     }
 
-    .ent_exit  <- function(opts = options()) {
-      ent      <- readline("Hit <Return> to see next plot or /hit <Esc> or type 'EXIT' to exit: ")
+    .ent_exit    <- function(opts = options()) {
+      ent        <- readline("Hit <Return> to see next plot or /hit <Esc> or type 'EXIT' to exit: ")
       options(show.error.messages=FALSE)
       on.exit(suppressWarnings(options(opts)), add=TRUE)
         if(ent  %in% c("exit", "EXIT"))    stop(call.=FALSE)
     }
 
     .logdensity     <- function(x,  left = 0) { # export?
-      d        <- tryCatch(stats::density(x, bw = "SJ"), error = function(e) stats::density(x))
-      h        <- d$bw
-      w        <- 1/stats::pnorm(left, mean = x, sd = h, lower.tail = FALSE)
+      d          <- tryCatch(stats::density(x, bw = "SJ"), error = function(e) stats::density(x))
+      h          <- d$bw
+      w          <- 1/stats::pnorm(left, mean = x, sd = h, lower.tail = FALSE)
         return(suppressWarnings(stats::density(x, bw = h, kernel = "gaussian", weights = w/length(x))))
     }
 
     .logitdensity   <- function(x)  { # export?
-      y        <- stats::qlogis(x[x > 0  &   x < 1])
-      g        <- tryCatch(stats::density(y, bw = "SJ"), error = function(e) stats::density(y))
-      xgrid    <- stats::plogis(g$x)
-      g$y      <- g$y/(xgrid  * (1  - xgrid))
-      g$x      <- xgrid
+      y          <- stats::qlogis(x[x > 0  &   x < 1])
+      g          <- tryCatch(stats::density(y, bw = "SJ"), error = function(e) stats::density(y))
+      xgrid      <- stats::plogis(g$x)
+      g$y        <- g$y/(xgrid  * (1  - xgrid))
+      g$x        <- xgrid
         return(g)
     }
 
     .match_classes  <- function(tab, method = "rowmax", iter = 1, maxexact = 9, verbose = TRUE) {
-      methods   <- c("rowmax", "greedy", "exact")
-      method    <- pmatch(method, methods)
-      rmax      <- apply(tab, 1, which.max)
-      myseq     <- seq_len(ncol(tab))
-      cn        <- colnames(tab)
-      rn        <- rownames(tab)
+      methods    <- c("rowmax", "greedy", "exact")
+      method     <- pmatch(method, methods)
+      rmax       <- apply(tab, 1, which.max)
+      myseq      <- seq_len(ncol(tab))
+      cn         <- colnames(tab)
+      rn         <- rownames(tab)
       if(is.null(cn))  {
-        cn      <- myseq
+        cn       <- myseq
       }
       if(is.null(rn))  {
-        rn      <- myseq
+        rn       <- myseq
       }
-      if(method == 1)  {
-        retval  <- rmax
+      if(method  == 1) {
+        retval   <- rmax
       }
-      if(method == 2  || method   == 3)  {
+      if(method  == 2 || method   == 3)  {
         if(ncol(tab)  != nrow(tab))        stop("Unique matching only for square tables.", call.=FALSE)
         dimnames(tab) <- list(myseq, myseq)
-        cmax    <- apply(tab, 2, which.max)
-        retval  <- rep(NA, ncol(tab))
+        cmax     <- apply(tab, 2, which.max)
+        retval   <- rep(NA, ncol(tab))
         names(retval) <- colnames(tab)
-        baseok  <- cmax[rmax]     == myseq
+        baseok   <- cmax[rmax]     == myseq
         for(k in myseq[baseok])    {
           therow      <- (tab[k, ])[-rmax[k]]
           thecol      <- (tab[, rmax[k]])[-k]
@@ -1698,7 +1698,7 @@
               perm    <- .permutations(ncol(tab) - sum(baseok))
             }
           }
-          rest  <- if(any(baseok)) myseq[-retval[baseok]] else myseq
+          rest   <- if(any(baseok)) myseq[-retval[baseok]] else myseq
           for(l in 1:iter)   {
             newretval <- retval
             if(method == 2)  {
@@ -1714,7 +1714,7 @@
             } else     {
               newretval[!baseok]  <- rest[perm[l, ]]
             }
-            if(l > 1)  {
+            if(l  > 1) {
               agree   <- sum(diag(tab[,newretval]))/sum(tab)
               if(agree > oldagree) {
                 retval            <- newretval
@@ -1729,15 +1729,19 @@
       }
       if(verbose)                          cat("Cases in matched pairs:", round(100 * sum(diag(tab[,retval]))/sum(tab), 2), "%\\n")
       if(any(as.character(myseq) != cn)) {
-        retval  <- cn[retval]
+        retval   <- cn[retval]
       }
       names(retval)   <- rn
         retval
     }
 
-    .ndeci            <- function(x, after.dot = TRUE) {
-      scipen          <- options()$scipen
-      digits          <- options()$digits
+    .matnames    <- function(list, names, dim = 2L) {
+      mapply(function(X, Y) { dimnames(X)[[dim]] <- Y; X }, list, names)
+    }
+
+    .ndeci       <- function(x, after.dot = TRUE) {
+      scipen     <- options()$scipen
+      digits     <- options()$digits
       options(scipen   = 999,
               digits   = 7)
       on.exit(options(scipen = scipen,
@@ -1745,15 +1749,15 @@
       if(length(after.dot)  != 1  ||
          !is.logical(after.dot))           stop("'after.dot' must be a single logical indicator", call.=FALSE)
       if(!all(is.numeric(x)))              stop("'x' must be numeric", call.=FALSE)
-      res             <- x
-      na.ind          <- !is.na(x)
-      x               <- abs(x[na.ind])
+      res        <- x
+      na.ind     <- !is.na(x)
+      x          <- abs(x[na.ind])
       if(all(icheck   <- floor(x) == x, na.rm=TRUE))   {
         res[na.ind]   <- if(isTRUE(after.dot)) vector("integer", length(x)) else sapply(as.integer(x), format.info, digits=22)
-      } else     {
-        ipart         <- pmax(1, floor(x))
-        ichar         <- nchar(ipart)
-        remain        <- x  %% ipart
+      } else      {
+        ipart    <- pmax(1, floor(x))
+        ichar    <- nchar(ipart)
+        remain   <- x %% ipart
         res[na.ind]   <- (sapply(gsub("0+$", "", as.character(remain)), format.info, digits=22L)        - !icheck)   -
                       (if(isTRUE(after.dot)) pmin(1, replace(ichar, remain == 0, 0L)) else ifelse(ichar > 1, - ichar + !icheck, 0L))
       }
@@ -1778,68 +1782,68 @@
         z
     }
 
-    .plot_CI    <- function(x, y = NULL, uiw, liw = uiw, ui = NULL, li = NULL, err = "y", sfrac = 0.01,
-                            gap = 0, slty = graphics::par("lty"), add = FALSE, scol = NULL, pt.bg = graphics::par("bg"), ...) {
-      arglist   <- list(...)
+    .plot_CI     <- function(x, y = NULL, uiw, liw = uiw, ui = NULL, li = NULL, err = "y", sfrac = 0.01,
+                             gap = 0, slty = graphics::par("lty"), add = FALSE, scol = NULL, pt.bg = graphics::par("bg"), ...) {
+      arglist    <- list(...)
       if(inherits(x, "list"))   {
-        y       <- x$y
-        x       <- x$x
+        y        <- x$y
+        x        <- x$x
       }
       if(is.null(y)) {
         if(is.null(x))                     stop("Both x and y are NULL", call.=FALSE)
-        y       <- as.numeric(x)
-        x       <- seq_along(x)
+        y        <- as.numeric(x)
+        x        <- seq_along(x)
       }
       if(missing(uiw) &&
         (is.null(ui)  || is.null(li)))     stop("Must specify either relative limits or both lower and upper limits", call.=FALSE)
       if(!missing(uiw)) {
-        z       <- if(err == "y") y else x
-        ui      <- z + uiw
-        li      <- z - liw
+        z        <- if(err == "y") y else x
+        ui       <- z + uiw
+        li       <- z - liw
       }
       if(is.null(arglist$xlab)) arglist$xlab <- deparse(substitute(x))
       if(is.null(arglist$ylab)) arglist$ylab <- deparse(substitute(y))
-      if(err == "y" &&
+      if(err == "y"   &&
          is.null(arglist$ylim)) arglist$ylim <- range(c(y, ui, li), na.rm = TRUE)
-      if(err == "x" &&
+      if(err == "x"   &&
          is.null(arglist$xlim)) arglist$xlim <- range(c(x, ui, li), na.rm = TRUE)
       if(missing(scol)) {
-        scol   <- if(!is.null(arglist$col)) arglist$col else graphics::par("col")
+        scol     <- if(!is.null(arglist$col)) arglist$col else graphics::par("col")
       }
-      ppoints  <- TRUE
+      ppoints    <- TRUE
       if(!is.null(arglist$pch) && is.na(arglist$pch)) {
         arglist$pch       <- 1
         ppoints           <- FALSE
       }
       if(!add) do.call(graphics::plot, c(list(x, y, type = "n"), .clean_args(arglist, graphics::plot)))
       if(gap == TRUE) gap <- 0.01
-      ul       <- c(li, ui)
-      pin      <- graphics::par("pin")
-      usr      <- graphics::par("usr")
-      x.to.in  <- pin[1]/diff(usr[1:2])
-      y.to.in  <- pin[2]/diff(usr[3:4])
+      ul         <- c(li, ui)
+      pin        <- graphics::par("pin")
+      usr        <- graphics::par("usr")
+      x.to.in    <- pin[1]/diff(usr[1:2])
+      y.to.in    <- pin[2]/diff(usr[3:4])
       if(err == "y") {
-        gap    <- rep(gap, length(x)) * diff(graphics::par("usr")[3:4])
-        smidge <- graphics::par("fin")[1] * sfrac
-        nz     <- abs(li - pmax(y - gap, li)) * y.to.in > 0.001
-        scols  <- rep(scol, length.out = length(x))[nz]
+        gap      <- rep(gap, length(x)) * diff(graphics::par("usr")[3:4])
+        smidge   <- graphics::par("fin")[1] * sfrac
+        nz       <- abs(li - pmax(y - gap, li)) * y.to.in > 0.001
+        scols    <- rep(scol, length.out = length(x))[nz]
         arrow.args        <- c(list(lty = slty, angle = 90, length = smidge, code = 1, col = scols),
                                .clean_args(arglist, graphics::arrows, exclude.other = c("col", "lty", "axes")))
         do.call(graphics::arrows, c(list(x[nz], li[nz], x[nz], pmax(y - gap, li)[nz]), arrow.args))
-        nz     <- abs(ui - pmin(y + gap, ui)) * y.to.in > 0.001
-        scols  <- rep(scol, length.out = length(x))[nz]
+        nz       <- abs(ui - pmin(y + gap, ui)) * y.to.in > 0.001
+        scols    <- rep(scol, length.out = length(x))[nz]
         arrow.args$col    <- scols
         do.call(graphics::arrows, c(list(x[nz], ui[nz], x[nz], pmin(y + gap, ui)[nz]), arrow.args))
       } else if(err == "x") {
-        gap    <- rep(gap, length(x)) * diff(graphics::par("usr")[1:2])
-        smidge <- graphics::par("fin")[2] * sfrac
-        nz     <- abs(li - pmax(x - gap, li)) * x.to.in > 0.001
-        scols  <- rep(scol, length.out = length(x))[nz]
+        gap      <- rep(gap, length(x)) * diff(graphics::par("usr")[1:2])
+        smidge   <- graphics::par("fin")[2] * sfrac
+        nz       <- abs(li - pmax(x - gap, li)) * x.to.in > 0.001
+        scols    <- rep(scol, length.out = length(x))[nz]
         arrow.args        <- c(list(lty = slty, angle = 90, length = smidge, code = 1, col = scols),
                                .clean_args(arglist, graphics::arrows, exclude.other = c("col", "lty", "axes")))
         do.call(graphics::arrows, c(list(li[nz], y[nz], pmax(x - gap, li)[nz], y[nz]), arrow.args))
-        nz     <- abs(ui - pmin(x + gap, ui)) * x.to.in > 0.001
-        scols  <- rep(scol, length.out = length(x))[nz]
+        nz       <- abs(ui - pmin(x + gap, ui)) * x.to.in > 0.001
+        scols    <- rep(scol, length.out = length(x))[nz]
         arrow.args$col    <- scols
         do.call(graphics::arrows, c(list(ui[nz], y[nz], pmin(x + gap, ui)[nz], y[nz]), arrow.args))
       }
@@ -1847,38 +1851,38 @@
         invisible(list(x = x, y = y))
     }
 
-    .power2     <- function(x) x * x
+    .power2      <- function(x) x * x
 
-    .rgamma0    <- function(...) {
-      tmp       <- stats::rgamma(...)
-      tmp[tmp   == 0]     <- .Machine$double.eps
+    .rgamma0     <- function(...) {
+      tmp        <- stats::rgamma(...)
+      tmp[tmp    == 0]     <- .Machine$double.eps
         tmp
     }
 
-    .row_vars   <- function(x, std = FALSE, suma = NULL) { # replaces Rfast::rowVars
+    .row_vars    <- function(x, std = FALSE, suma = NULL) { # replaces Rfast::rowVars
       if(length(std) > 1 ||
          !is.logical(std))                 stop("'std' must be a single logical indicator")
       if(!is.matrix(x))                    stop("'x' must be a matrix")
-      m         <- if(missing(suma)) rowSums2(x) else suma
-      n         <- ncol(x)
-      s         <- (rowSums2(x * x) - (m * m)/n)/(n - 1)
+      m          <- if(missing(suma)) rowSums2(x) else suma
+      n          <- ncol(x)
+      s          <- (rowSums2(x * x) - (m * m)/n)/(n - 1)
         if(std) sqrt(s) else s
     }
 
     #' @importFrom matrixStats "colMeans2" "rowSums2"
-    .scale2     <- function(x, center = TRUE, scale = TRUE) { # replaces Rfast::standardise
-      cmeans    <- if(isTRUE(center)) colMeans2(x) else center
-      center    <- if(is.logical(center))   center else is.numeric(center)
-      scaling   <- if(is.logical(scale))     scale else is.numeric(scale)
-      if(center && scaling) {
-        y       <- t(x) - cmeans
+    .scale2      <- function(x, center = TRUE, scale = TRUE) { # replaces Rfast::standardise
+      cmeans     <- if(isTRUE(center)) colMeans2(x) else center
+      center     <- if(is.logical(center))   center else is.numeric(center)
+      scaling    <- if(is.logical(scale))     scale else is.numeric(scale)
+      if(center  && scaling) {
+        y        <- t(x) - cmeans
           if(isTRUE(scale)) t(y/sqrt(rowSums2(y * y)) * sqrt(nrow(x) - 1)) else t(y/scale)
       } else if(center)     {
-          t(t(x) - cmeans)
+          t(t(x)  - cmeans)
       } else if(scaling)    {
           t(t(x)/if(isTRUE(scale)) .col_vars(x, std=TRUE) else scale)
       } else  x
     }
 
-    .which0     <- function(x) which(x == 0)
+    .which0      <- function(x) which(x == 0)
     #

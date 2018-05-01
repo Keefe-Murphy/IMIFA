@@ -52,7 +52,7 @@
 #' @importFrom matrixStats "colSums2" "rowMedians" "rowQuantiles" "rowSums2"
 #' @importFrom slam "as.simple_triplet_matrix"
 #'
-#' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{plot.Results_IMIFA}}, \code{\link{Procrustes}}, \code{\link{Zsimilarity}}
+#' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{plot.Results_IMIFA}}, \code{\link{Procrustes}}, \code{\link{Zsimilarity}}, \code{\link{sim_IMIFA_model}}
 #' @references Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
 #'
 #' @author Keefe Murphy - <\email{keefe.murphy@@ucd.ie}>
@@ -91,6 +91,9 @@
 #' # resIMIFAolive <- get_IMIFA_results(simIMIFAolive, G.meth="median", Q.meth="median",
 #' #                                    conf.level=0.9, z.avgsim=TRUE)
 #' # summary(resIMIFAolive)
+#'
+#' # Simulate new data from the above model
+#' # newdata       <- sim_IMIFA_model(resIMIFAolive)
 get_IMIFA_results              <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, Q = NULL, criterion = c("bicm", "aicm", "dic", "bic.mcmc", "aic.mcmc"),
                                            G.meth = c("mode", "median"), Q.meth = c("mode", "median"), conf.level = 0.95, error.metrics = TRUE, z.avgsim = TRUE, zlabels = NULL) {
   UseMethod("get_IMIFA_results")
@@ -383,6 +386,9 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     }
     zadj         <- sims[[G.ind]][[Q.ind]]$z.store
     z            <- as.matrix(zadj[tmp.store,])
+    if(sw["s.sw"])    {
+      z2         <- z
+    }
     zadj         <- zadj[store,]
 
     if(!label.switch) {
@@ -540,7 +546,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     if(!label.miss) tab.stat$uncertain            <-       attr(uncertain, "Obs")
     cluster      <- list(MAP = MAP, z = z, uncertainty = uncertain, last.z = z[TN.store,])
     cluster      <- c(cluster, list(post.sizes  = sizes, post.ratio  = sizes/n.obs, post.pi = post.pi/sum(post.pi),
-                                    post.prob   = post.prob,  PCM    = post_conf_mat(post.prob)),
+                                    post.prob   = post.prob,  PCM    = provideDimnames(post_conf_mat(post.prob), base=list(gnames, gnames))),
                       if(sw["pi.sw"]) list(pi.prop = pi.prop, var.pi = var.pi, ci.pi = ci.pi, last.pi = pi.prop[,TN.store]),
                       if(!label.miss) list(perf = tab.stat),
                       if(learn.alpha) list(DP.alpha = DP.alpha),
@@ -640,13 +646,12 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
           proc   <- Procrustes(X=if(uni) t(lmat[,,p]) else as.matrix(lmat[,,p]), Xstar=l.temp)
           lmat[,,p]        <- proc$X.new
           if(sw["s.sw"])    {
-            rot  <- proc$R
             p2   <- if(inf.Q) eta.store    == p       else p
             if(clust.ind)   {
-              zp <- z[p,]  == g
-              eta[zp,,p2]  <- eta[zp,,p2] %*% rot
+              zp <- z2[p,] == g
+              eta[zp,,p2]  <- eta[zp,,p2] %*% proc$R
             } else {
-              eta[,,p2]    <- eta[,,p2]   %*% rot
+              eta[,,p2]    <- eta[,,p2]   %*% proc$R
             }
           }
         }
@@ -698,7 +703,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       ci.psi     <- if(uni)       t(ci.tmp)     else ci.tmp
     }
     if(sw["l.sw"])   {
-      lmat       <- provideDimnames(lmat[,Qgs,if(inf.Q) Lstore[[g]] else storeG, drop=FALSE], base=list("", paste0("Factor", Qgs), ""), unique=FALSE)
+      lmat       <- lmat[,Qgs,Lstore[[g]], drop=FALSE]
       post.load  <- rowMeans(lmat, dims=2)
       var.load   <- apply(lmat, c(1, 2), Var)
       ci.load    <- apply(lmat, c(1, 2), stats::quantile, conf.levels)
@@ -732,11 +737,12 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   }
 
   if(sw["s.sw"])   {
-    Qseq         <- seq_len(max(Q))
-    eta          <- provideDimnames(eta[,Qseq,, drop=FALSE], base=list("", paste0("Factor", Qseq), ""), unique=FALSE)
-    scores       <- list(eta = eta, post.eta = rowMeans(eta, dims=2), var.eta = apply(eta, c(1, 2), Var),
+   Qseq          <- seq_len(max(Q))
+   eta           <- eta[,Qseq,, drop=FALSE]
+   colnames(eta) <- paste0("Factor", Qseq)
+   scores        <- list(eta = eta, post.eta = rowMeans(eta, dims=2), var.eta = apply(eta, c(1, 2), Var),
                          ci.eta = apply(eta, c(1, 2), stats::quantile, conf.levels), last.eta = .a_drop(eta[,,e.store, drop=FALSE], drop=3))
-    attr(scores, "Eta.store")  <- e.store
+   attr(scores, "Eta.store")   <- e.store
   }
   names(result)  <- gnames
   GQ.res$Criteria              <- c(GQ.res$Criteria, list(sd.AICMs = aicm.sd, sd.BICMs = bicm.sd,
@@ -764,10 +770,11 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     means        <- c(means, list(last.mu = last.mu))
   }
   if(sw["l.sw"]  <- tmpsw["l.sw"] && !all(Q == 0)) {
-    lmats2       <- lapply(result, "[[", "loadings")
-    post.load    <- lapply(result, "[[", "post.load")
-    var.load     <- lapply(result, "[[", "var.load")
-    ci.load      <- lapply(result, "[[", "ci.load")
+    lnames       <- lapply(Q, function(q) paste0("Factor", seq_len(q)))
+    lmats2       <- .matnames(lapply(result, "[[", "loadings"),  lnames)
+    post.load    <- .matnames(lapply(result, "[[", "post.load"), lnames)
+    var.load     <- .matnames(lapply(result, "[[", "var.load"),  lnames)
+    ci.load      <- .matnames(lapply(result, "[[", "ci.load"),   lnames, dim=3)
     last.lmat    <- lapply(lmats2, function(x) { if(!is.null(x)) { x <- .a_drop(x[,,dim(x)[3], drop=FALSE], drop=3); class(x) <- "loadings" }; x })
     loads        <- list(lmats = lmats2, post.load = post.load, var.load = var.load, ci.load = ci.load, last.load = last.lmat)
   }
