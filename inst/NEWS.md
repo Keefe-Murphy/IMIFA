@@ -10,6 +10,7 @@ __Infinite Mixtures of Infinite Factor Analysers__
 ### Bug Fixes
 * Fixed permutation/rotation of scores within `get_IMIFA_results`.
 * Clarified dimnames of `get_IMIFA_results` output in `x$Loadings` & `x$Scores`.
+* Fixed plotting of exact zeros in posterior confusion matrix.
 
 ## IMIFA v2.0.0 - (_6<sup>th</sup> release [major update]: 2018-05-01_)
 ### Major Changes

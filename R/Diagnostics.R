@@ -770,7 +770,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     means        <- c(means, list(last.mu = last.mu))
   }
   if(sw["l.sw"]  <- tmpsw["l.sw"] && !all(Q == 0)) {
-    lnames       <- lapply(Q, function(q) paste0("Factor", seq_len(q)))
+    lnames       <- lapply(Q, function(q) if(q > 0) paste0("Factor", seq_len(q)))
     lmats2       <- .matnames(lapply(result, "[[", "loadings"),  lnames)
     post.load    <- .matnames(lapply(result, "[[", "post.load"), lnames)
     var.load     <- .matnames(lapply(result, "[[", "var.load"),  lnames)

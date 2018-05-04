@@ -315,6 +315,7 @@
               is.double(covar)))           stop("Invalid covariance matrix supplied", call.=FALSE)
       if(any(!is.numeric(shape),
              length(shape) != 1))          stop("'shape' must be a single digit", call.=FALSE)
+      if(shape   <= 1)                     stop("Rate parameters not defined when 'shape' <= 1", call.=FALSE)
       inv.cov    <- try(base::solve(covar), silent=TRUE)
 
       if(inherits(inv.cov, "try-error"))   {

@@ -54,6 +54,14 @@ plot_cols(matcol)
 
 # Add a legend using heat_legend()
 heat_legend(mat, cols=cols); box(lwd=2)
+
+# Replace colour of exact zero entries:
+# Important to call mat2cols() first, (to include 0 in the cuts),
+# then replace relevant entries with NA for plot_cols(), i.e.
+mat[2,3] <- 0
+matcol2  <- mat2cols(mat, cols=cols)
+plot_cols(replace(matcol2, mat == 0, NA), na.col="blue")
+heat_legend(mat, cols=cols); box(lwd=2)
 }
 \seealso{
 \code{\link{mat2cols}}, \code{\link[graphics]{image}}, \code{\link{heat_legend}}, \code{\link{is.cols}}

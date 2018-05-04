@@ -31,7 +31,7 @@ sim_IMIFA_model(res,
 
 \item{mu}{True values of the mean parameters, either as a single value, a vector of length \code{G}, a vector of length \code{P}, or a \code{G * P} matrix. If \code{mu} is missing, \code{loc.diff} is invoked to simulate distinct means for each cluster by default.}
 
-\item{psi}{True values of uniqueness parameters, either as a single value, a vector of length \code{G}, a vector of length \code{P}, or a \code{G * P} matrix. As such the user can specify uniquenesses as a diagonal or isotropic matrix, and further constrain uniquenesses across clusters if desired. If \code{psi} is missing, uniquenesses are simulated via \code{rgamma(P, 1, 1)} within each cluster by default.}
+\item{psi}{True values of uniqueness parameters, either as a single value, a vector of length \code{G}, a vector of length \code{P}, or a \code{G * P} matrix. As such the user can specify uniquenesses as a diagonal or isotropic matrix, and further constrain uniquenesses across clusters if desired. If \code{psi} is missing, uniquenesses are simulated via \code{rgamma(P, 2, 1)} within each cluster by default.}
 
 \item{loadings}{True values of the loadings matrix/matrices. Must be supplied in the form of a list of numeric matrices when \code{G > 1}, otherwise a single matrix. Matrices must contain \code{P} rows and the number of columns must correspond to the values in \code{Q}. If \code{loadings} are not supplied, such matrices are populated with standard normal random variates by default.}
 

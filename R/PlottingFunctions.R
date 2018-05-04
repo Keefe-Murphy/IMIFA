@@ -1112,16 +1112,17 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
       } else if(g == 4)  {
         graphics::par(defpar)
         if(titles) graphics::par(mar=c(4.1, 4.1, 4.1, 4.1))
-        PCM     <- replace(clust$PCM, clust$PCM == 0, NA)
+        plot.x  <- clust$PCM
         i.cols  <- if(any(!mispal, (!gx && !all(Gs == 4)))) palette else grDevices::heat.colors(18, alpha=transparency)[18:1]
-        plot_cols(mat2cols(PCM, cols=i.cols, na.col=graphics::par()$bg), na.col=graphics::par()$bg)
+        PCM     <- mat2cols(plot.x, cols=i.cols, na.col=graphics::par()$bg)
+        plot_cols(replace(PCM, plot.x == 0, NA), na.col=graphics::par()$bg)
         if(titles) {
           graphics::title(main="Posterior Confusion Matrix")
           graphics::mtext(side=1, at=Gseq, Gseq,      line=1)
           graphics::mtext(side=2, at=Gseq, rev(Gseq), line=1, las=1)
           graphics::mtext(side=1, "Cluster",          line=2)
           graphics::mtext(side=2, "Allocation",       line=2)
-          heat_legend(PCM, cols=i.cols)
+          heat_legend(plot.x, cols=i.cols)
         }
         graphics::box(lwd=2)
       }
@@ -1664,6 +1665,14 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
 #' plot_cols(matcol)
 #'
 #' # Add a legend using heat_legend()
+#' heat_legend(mat, cols=cols); box(lwd=2)
+#'
+#' # Replace colour of exact zero entries:
+#' # Important to call mat2cols() first, (to include 0 in the cuts),
+#' # then replace relevant entries with NA for plot_cols(), i.e.
+#' mat[2,3] <- 0
+#' matcol2  <- mat2cols(mat, cols=cols)
+#' plot_cols(replace(matcol2, mat == 0, NA), na.col="blue")
 #' heat_legend(mat, cols=cols); box(lwd=2)
   plot_cols    <- function(cmat, na.col = "#808080FF", ptype = c("image", "points"), border.col = "#808080FF",
                            dlabels = NULL, rlabels = FALSE, clabels = FALSE, pch = 15, cex = 3, label.cex = 0.6, ...) {
