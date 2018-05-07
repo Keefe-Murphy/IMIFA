@@ -459,7 +459,7 @@
       if(Q.bigs && !Q.large   && iter > burnin) {         warning(paste0("Q has exceeded initial number of loadings columns since burnin: consider increasing range.Q from ", Q.star), call.=FALSE)
         Q.large      <- TRUE
       }
-      if(z.err  && !err.z) {                              warning("Algorithm may slow due to corrections for Choleski decompositions of non-positive-definite covariance matrices", call.=FALSE)
+      if(z.err  && !err.z) {                              warning("Algorithm may slow due to corrections for Choleski decompositions of non-positive-definite covariance matrices",    call.=FALSE)
         err.z        <- TRUE
       }
       if(MH.step)        a.rates[iter]                 <- a.rate

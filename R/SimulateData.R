@@ -5,7 +5,7 @@
 #' @param Q Desired number of cluster-specific latent factors in the simulated data set. Can be specified either as a single integer if all clusters are to have the same number of factors, or a vector of length \code{G}. Defaults to \code{floor(log(P))} in each cluster.
 #' @param pis Mixing proportions of the clusters in the dataset if \code{G} > 1. Must sum to 1. Defaults to \code{rep(1/G, G)}.
 #' @param mu True values of the mean parameters, either as a single value, a vector of length \code{G}, a vector of length \code{P}, or a \code{G * P} matrix. If \code{mu} is missing, \code{loc.diff} is invoked to simulate distinct means for each cluster by default.
-#' @param psi True values of uniqueness parameters, either as a single value, a vector of length \code{G}, a vector of length \code{P}, or a \code{G * P} matrix. As such the user can specify uniquenesses as a diagonal or isotropic matrix, and further constrain uniquenesses across clusters if desired. If \code{psi} is missing, uniquenesses are simulated via \code{rgamma(P, 2, 1)} within each cluster by default.
+#' @param psi True values of uniqueness parameters, either as a single value, a vector of length \code{G}, a vector of length \code{P}, or a \code{G * P} matrix. As such the user can specify uniquenesses as a diagonal or isotropic matrix, and further constrain uniquenesses across clusters if desired. If \code{psi} is missing, uniquenesses are simulated via \code{1/rgamma(P, 2, 1)} within each cluster by default.
 #' @param loadings True values of the loadings matrix/matrices. Must be supplied in the form of a list of numeric matrices when \code{G > 1}, otherwise a single matrix. Matrices must contain \code{P} rows and the number of columns must correspond to the values in \code{Q}. If \code{loadings} are not supplied, such matrices are populated with standard normal random variates by default.
 #' @param scores True values of the latent factor scores, as a \code{N * max(Q)} numeric matrix. If \code{scores} are not supplied, such a matrix is populated with standard normal random variates by default.
 #' @param nn An alternative way to specify the size of each cluster, by giving the exact number of observations in each cluster explicitly. Must sum to \code{N}.
@@ -68,7 +68,7 @@ sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(floor(log(P)), G),
   if(any(length(N) != 1, length(loc.diff) != 1,
          length(G) != 1, length(P) != 1)) stop("'N', 'P', 'G', and 'loc.diff' must be of length 1", call.=FALSE)
   if(any(N  < 2, N <= G))                 stop("Must simulate more than one data-point and the number of clusters cannot exceed N", call.=FALSE)
-  if(any(Q  > Q.warn))                    warning(paste0("Are you sure you want to generate this many factors relative to N=", N, " and P=", P, "?\nSuggested upper-bound = ", Q.warn), call.=FALSE)
+  if(any(Q  > Q.warn))                    warning(paste0("Are you sure you want to generate this many factors relative to N=", N, " and P=", P, "?\nSuggested upper-bound = ", Q.warn, "\n"), call.=FALSE)
   if(length(Q) != G) {
     if(!missing(Q))  {
       if(length(Q) == 1) {
@@ -130,7 +130,7 @@ sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(floor(log(P)), G),
       if(!is.matrix(lmat)  ||
          !is.numeric(lmat))               stop("Invalid 'loadings' supplied: must be a numeric matrix when G=1", call.=FALSE)
       if(nrow(lmat)   != P ||
-         ncol(lmat)   != Q)               stop(paste0("The 'loadings' matrix must have P=", P, " row and Q=", Q, " columns, when G=1"), call.=FALSE)
+         ncol(lmat)   != Q)               stop(paste0("The 'loadings' matrix must have P=", P, " rows and Q=", Q, " columns, when G=1"), call.=FALSE)
     } else      {
       if(!is.list(lmat)    ||
          length(lmat) != G)               stop(paste0("'loadings' must be a list of length G=", G, " when G > 1"), call.=FALSE)
@@ -156,13 +156,13 @@ sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(floor(log(P)), G),
     eta.true   <- if(scomiss) .sim_eta_p(Q=Q.max, N=N) else scores
     if(nrow(eta.true) != N ||
        ncol(eta.true) != Q.max)           stop(paste0("The 'scores' matrix must have N=", N, " rows and max(Q)=", Q.max, " columns"), call.=FALSE)
-  } else if(!scomiss)                     message("True 'scores' need not be supplied when 'method=\"marginal\"'")
+  } else if(!scomiss)                     message("True 'scores' need not be supplied when 'method=\"marginal\"'\n")
   for(g in Gseq) {
     Q.g        <- Q[g]
     N.g        <- nn[g]
     mu.true    <- stats::setNames(if(mumiss) .sim_mu_p(P=P, mu.zero=musup[g], sig.mu.sqrt=1) else musup[,g], vnames)
     l.true     <- if(lammiss) matrix(.sim_load_p(Q=Q.g, P=P, sigma.l=1), nrow=P, ncol=Q.g)   else lmat[[g]]
-    psi.true   <- stats::setNames(if(psimiss) stats::rgamma(P, 2, 1)                         else psisup[,g], vnames)
+    psi.true   <- stats::setNames(if(psimiss) 1/stats::rgamma(P, shape=2, rate=1)            else psisup[,g], vnames)
 
   # Simulate data
     covmat     <- provideDimnames({ if(P > 1) diag(psi.true) else as.matrix(psi.true) } + { if(Q.g > 0) switch(method, marginal=tcrossprod(l.true), 0) else 0}, base=list(vnames))

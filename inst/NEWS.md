@@ -3,14 +3,22 @@ __Infinite Mixtures of Infinite Factor Analysers__
 
 ## IMIFA v2.0.1 - (_7<sup>th</sup> release [patch update]: 2018-05-02_)
 ### Improvements
-* Args. `scores` & `loadings` can now be supplied to `sim_IMIFA_data` directly.
+* Added new function `scores_MAP` to decompose factor scores summaries  
+  from `get_IMIFA_resuls` into submatrices corresponding to the MAP partition.
 * Added new wrapper function `sim_IMIFA_model` to call `sim_IMIFA_data` using  
   the estimated parameters from fitted `Results_IMIFA` objects.
+* Args. `scores` & `loadings` can now be supplied to `sim_IMIFA_data` directly.
 
 ### Bug Fixes
 * Fixed permutation/rotation of scores within `get_IMIFA_results`.
-* Clarified dimnames of `get_IMIFA_results` output in `x$Loadings` & `x$Scores`.
+* `trunc.G` now shares the same default as `range.G`, rather than defaulting to `range.G`.
+* `prec.mu` now defaults to `0.1` s.t. the prior on the cluster means is flat by default.
+* Clarified `dimnames` of `get_IMIFA_results` output in `x$Loadings` & `x$Scores`.
 * Fixed plotting of exact zeros in posterior confusion matrix.
+* Fixed simulation of `psi` when not supplied to `sim_IMIFA_data` to IG rather than GA.
+* Minor cosmetic change for overplotting `scores` & `loadings` in `trace` & `density` plots.
+* Tidied indentation/line-breaks for message/warning calls for printing clarity.
+* Corrected `IMIFA-package` help file (formerly just `IMIFA`).
 
 ## IMIFA v2.0.0 - (_6<sup>th</sup> release [major update]: 2018-05-01_)
 ### Major Changes
@@ -191,7 +199,7 @@ __Infinite Mixtures of Infinite Factor Analysers__
   `rDirichlet` replaces earlier function to sample mixing proportions and is now unhidden/exported/documented.
 * Deferred setting `dimnames` attributes in `mcmc_IMIFA` to `get_IMIFA_results`: lower memory burden/faster simulations.
 * Jettisoned superfluous duplicate material in object outputted from `get_IMIFA_results` to reduce size/simplify access.
-* IMFA/IMIFA `trunc.G` arg, the max allowable # active clusters, defaults to `range.G` and # active clusters now stored.
+* Restored the IMFA/IMIFA arg. `trunc.G`, the max allowable # active clusters, and # active clusters now stored.
 * Code sped up when `active` G=1 by not simulating labels for IM(I)FA models.
 * Reduced chance of crash by exceeding memory capacity; `score.switch` defaults to `FALSE` if # models ran is large.
 

@@ -31,7 +31,7 @@ Calculates the \emph{a priori} expected number of clusters or the variance of th
 All arguments are vectorised. Users can also consult \code{\link{G_priorDensity}} in order to solicit sensible priors.
 }
 \note{
-Requires use of the \code{Rmpfr} and \code{gmp} libraries for non-zero \code{discount} values.
+Requires use of the \code{\link[Rmpfr]{Rmpfr}} and \code{gmp} libraries for non-zero \code{discount} values.
 }
 \examples{
 G_expected(N=50, alpha=19.23356)

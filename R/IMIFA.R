@@ -37,13 +37,12 @@
 #' \code{vignette("IMIFA", package = "IMIFA")}
 #' @docType package
 #' @keywords package
-#' @name IMIFA
-NULL
+"_PACKAGE"
 
 .onAttach <- function(lib, pkg) {
   version <- read.dcf(file.path(lib, pkg, "DESCRIPTION"), "Version")
   if(interactive()) {
-    packageStartupMessage(paste("\n   ________  __________________\n  /_  __/  |/   /_  __/ ___/ _ \\           Infinite Mixtures of\n   / / / /|_// / / / / /__/ /_\\ \\     Infinite Factor Analysers\n _/ /_/ /   / /_/ /_/ ___/ /___\\ \\ \n/____/_/   /_/_____/_/  /_/     \\_\\               version", version, "\n"))
+    packageStartupMessage(paste("\n   ________  __________________\n  /_  __/  |/   /_  __/ ___/ _ \\           Infinite Mixtures of\n   / / / /|_// / / / / /__/ /_\\ \\     Infinite Factor Analysers\n _/ /_/ /   / /_/ /_/ ___/ /___\\ \\           and Related Models\n/____/_/   /_/_____/_/  /_/     \\_\\               version", version, "\n"))
   } else   {
     packageStartupMessage("\nPackage 'IMIFA' version ", version, ".")
   }

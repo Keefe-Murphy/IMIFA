@@ -16,7 +16,7 @@ A list containing three elements:
 \item{MSE.z}{A vector of length M recording the MSEs between each clustering and the 'average' clustering.}
 }
 \description{
-This function takes a Monte Carlo sample of cluster labels, computes an average similarity matrix and returns the clustering with minimum mean squared error to this average. The \code{mcclust} package \strong{must} be loaded.
+This function takes a Monte Carlo sample of cluster labels, computes an average similarity matrix and returns the clustering with minimum mean squared error to this average. The \code{\link[mcclust]{mcclust}} package \strong{must} be loaded.
 }
 \details{
 This function takes a Monte Carlo sample of cluster labels, converts them to adjacency matrices, and computes a similarity matrix as an average of the adjacency matrices. The dimension of the similarity matrix is invariant to label switching and the number of clusters in each sample, desirable features when summarising partitions of Bayesian nonparametric models such as IMIFA. As a summary of the posterior clustering, the clustering with minimum mean squared error to this 'average' clustering is reported.
@@ -24,7 +24,7 @@ This function takes a Monte Carlo sample of cluster labels, converts them to adj
 A heatmap of \code{z.sim} may provide a useful visualisation, if appropriately ordered. The user is also invited to perform hierarchical clustering using \code{\link[stats]{hclust}} after first converting this similarity matrix to a distance matrix - "complete" linkage is recommended.
 }
 \note{
-The \code{mcclust} package \strong{must} be loaded.
+The \code{\link[mcclust]{mcclust}} package \strong{must} be loaded.
 
 This is liable to take quite some time to run, especially if the number of observations &/or number of iterations is large. Depending on how distinct the clusters are, \code{z.sim} may be stored better in a non-sparse format. This function can optionally be called inside \code{\link{get_IMIFA_results}}.
 }
