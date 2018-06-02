@@ -7,17 +7,21 @@ __Infinite Mixtures of Infinite Factor Analysers__
   from `get_IMIFA_resuls` into submatrices corresponding to the MAP partition.
 * Added new wrapper function `sim_IMIFA_model` to call `sim_IMIFA_data` using  
   the estimated parameters from fitted `Results_IMIFA` objects.
+* Args. for `hc` can now be passed when `init.z="mclust"` also  
+  (previously only `"hc"`), thus controlling how `Mclust` is itself initialised.
+* Sped-up initialisation when `init.z="mclust"`.
 * Args. `scores` & `loadings` can now be supplied to `sim_IMIFA_data` directly.
 
 ### Bug Fixes
 * Fixed permutation/rotation of scores within `get_IMIFA_results`.
 * `trunc.G` now shares the same default as `range.G`, rather than defaulting to `range.G`.
 * `prec.mu` now defaults to `0.1` s.t. the prior on the cluster means is flat by default.
+* Allowed full range of `hc` model types for initialisation purposes via `...` in `mixfaControl`.
 * Clarified `dimnames` of `get_IMIFA_results` output in `x$Loadings` & `x$Scores`.
 * Fixed plotting of exact zeros in posterior confusion matrix.
 * Fixed simulation of `psi` when not supplied to `sim_IMIFA_data` to IG rather than GA.
 * Minor cosmetic change for overplotting `scores` & `loadings` in `trace` & `density` plots.
-* Tidied indentation/line-breaks for message/warning calls for printing clarity.
+* Tidied indentation/line-breaks for `cat`/`message`/`warning` calls for printing clarity.
 * Corrected `IMIFA-package` help file (formerly just `IMIFA`).
 
 ## IMIFA v2.0.0 - (_6<sup>th</sup> release [major update]: 2018-05-01_)

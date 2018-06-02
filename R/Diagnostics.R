@@ -913,6 +913,12 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   attr(result, "N.Loadstore")  <- if(inf.Q) vapply(Lstore, length, numeric(1L)) else rep(TN.store, G)
   attr(result, "Name")         <- data.name
   attr(result, "N.Store")      <- TN.store
+  attr(result, "Nowarn.G")     <- ifelse(inf.G || length(n.grp) == 1, TRUE,
+                                  ifelse(G == min(n.grp), paste0("Best model occurs at the min of the number of components considered\n"),
+                                  ifelse(G == max(n.grp), paste0("Best model occurs at the max of the number of components considered\n"), TRUE)))
+  attr(result, "Nowarn.Q")     <- ifelse(inf.Q || length(n.fac) == 1, TRUE,
+                                  ifelse(Q == min(n.fac), paste0("Best model occurs at the min of the number of factors considered\n"),
+                                  ifelse(Q == max(n.fac), paste0("Best model occurs at the max of the number of factors considered\n"),    TRUE)))
   attr(result, "Obs")          <- n.obs
   attr(result, "Obsnames")     <- obsnames
   attr(result, "Pitman")       <- attr(sims, "Pitman")

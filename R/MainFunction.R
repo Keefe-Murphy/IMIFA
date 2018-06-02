@@ -60,7 +60,7 @@
 #' @importFrom Rfast "rowmeans" "sort_unique" "matrnorm"
 #' @importFrom mvnfast "dmvn"
 #' @importFrom slam "as.simple_sparse_array" "as.simple_triplet_matrix"
-#' @importFrom mclust "Mclust" "mclustBIC" "hc" "hclass" "hcEII" "hcVVV"
+#' @importFrom mclust "emControl" "Mclust" "mclustBIC" "hc" "hclass" "hcE" "hcEEE" "hcEII" "hcV" "hcVII" "hcVVV"
 #'
 #' @seealso \code{\link{get_IMIFA_results}}, \code{\link{mixfaControl}}, \code{\link{mgpControl}}, \code{\link{bnpControl}}, \code{\link{storeControl}}
 #' @references
@@ -225,11 +225,18 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
     }
   }
   dots      <- switch(EXPR = z.init,
-                      mclust = mixFA$dots["modelNames"],
+                      mclust = mixFA$dots[c("modelName", "modelNames", "use")],
                       hc = mixFA$dots[c("modelName", "use")],
                       kmeans = mixFA$dots[c("iter.max", "nstart")])
-  if(z.init == "hc"       && is.null(dots$modelName)) {
-    dots$modelName        <- ifelse(NlP, "EII", "VVV")
+  if(is.element(z.init, c("hc", "mclust"))) {
+    if(ifelse(z.init      ==    "mclust",
+              is.null(dots[names(dots) != "modelNames"]$modelName),
+              is.null(dots$modelName))) {
+      dots$modelName      <- ifelse(NlP, "EII", "VVV")
+      if(is.element(dots$modelname,
+         c("E", "V"))     && uni)  stop("'Hierarchical clustering models 'E' and 'V' can only be employed for univariate data", call.=FALSE)
+    }
+    dots$use              <- ifelse(is.null(dots$use), "VARS", dots$use)
   }
   if(z.init == "kmeans"   && is.null(dots$nstart))    {
     dots$nstart           <- 10L
@@ -517,33 +524,44 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
   }
 
   init.start       <- proc.time()
-  if(!is.element(method, c("FA", "IFA"))) {
+  if(!is.element(method,  c("FA",    "IFA"))) {
     if(verbose)                     cat(paste0("Initialising...\n"))
     clust          <- list()
     pi.alpha       <- list()
     pi.prop        <- list()
     zi             <- list()
-    if(z.init      == "hc")     {
-      hcZ          <- hclass(try(hc(dat, minclus=min(G.init), dots), silent=TRUE), G=G.init)
+    if(is.element(z.init, c("hc", "mclust"))) {
+      hcG          <- G.init[G.init > 1]
+      Zhc          <- tryCatch(hc(dat, minclus=min(hcG), modelName=dots$modelName, use=dots$use), error=function(e) stop(paste0("Hierarchical clustering initialisation failed", ifelse(z.init == "hc", ". ", " (when initialising using 'mclust'). "), "Try another z.init method"), call.=FALSE))
+      if(z.init    == "mclust") {
+        mcarg      <- list(data=dat, G=hcG, verbose=FALSE, control=emControl(equalPro=equal.pro), initialization=list(hcPairs=Zhc), unlist(mixFA$dots["modelNames"]))
+        mcl        <- suppressWarnings(do.call(mclustBIC, mcarg))
+        mcl        <- suppressWarnings(switch(init.crit, icl=do.call(mclustICL, mcarg), bic=do.call(mclustBIC, mcarg)))
+        class(mcl) <- "mclustBIC"
+      } else        {
+        hc1        <- any(G.init   == 1)
+        hcZ        <- hclass(Zhc, G=hcG)
+      }
     }
     for(g in seq_along(G.init)) {
       G            <- G.init[g]
-      if(z.init    == "kmeans")      {
+      if(G == 1)    {
+        zi[[g]]    <- rep(1, N)
+      } else if(z.init   == "mclust") {
+        m.res      <- try(suppressWarnings(Mclust(dat, G, x=mcl)), silent=TRUE)
+        if(!inherits(m.res, "try-error")  &&
+           !is.null(m.res))     {
+          zi[[g]]  <- as.integer(factor(m.res$classification, levels=seq_len(G)))
+        } else                      stop(paste0("Cannot initialise cluster labels using mclust. Try another z.init method", ifelse(length(dots) > 1, " or supply different 'mclust' arguments via '...' to mixfaControl", "")), call.=FALSE)
+      } else if(z.init   == "hc")     {
+        zi[[g]]    <- as.integer(factor(hcZ[,g - hc1],  levels=seq_len(G)))
+      } else if(z.init   == "kmeans") {
         k.res      <- try(suppressWarnings(stats::kmeans(dat, centers=G, dots)), silent=TRUE)
         if(!inherits(k.res, "try-error"))  {
           zi[[g]]  <- as.integer(factor(k.res$cluster, levels=seq_len(G)))
-        } else                      stop("Cannot initialise cluster labels using kmeans. Try another z.init method", call.=FALSE)
-      } else if(z.init  == "list")   {
+        } else                      stop(paste0("Cannot initialise cluster labels using kmeans. Try another z.init method", ifelse(length(dots) > 1, " or supply different 'kmeans' arguments via '...' to mixfaControl", "")), call.=FALSE)
+      } else if(z.init   == "list")   {
         zi[[g]]    <- as.integer(z.list[[g]])
-      } else if(z.init  == "hc")     {
-        if(!inherits(hcZ, "try-error"))  {
-          zi[[g]]  <- as.integer(factor(hcZ[,g], levels=seq_len(G)))
-        } else                      stop("Cannot initialise cluster labels using hierarchical clustering. Try another z.init method", call.=FALSE)
-      } else if(z.init  == "mclust") {
-        m.res      <- try(Mclust(dat, G, verbose=FALSE, unlist(dots)), silent=TRUE)
-        if(!inherits(m.res, "try-error"))  {
-          zi[[g]]  <- as.integer(factor(m.res$classification, levels=seq_len(G)))
-        } else                      stop("Cannot initialise cluster labels using mclust. Try another z.init method", call.=FALSE)
       } else {
         zips       <- rep(1, N)
         if(!is.element(method, c("IMFA", "IMIFA"))) {
@@ -671,7 +689,7 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
                                      args=append(list(data = dat, N = N, G = g, Q = range.Q, mu = mu[[Gi]], mu.zero = mu.zero[[Gi]],
                                                       psi.beta = psi.beta[[Gi]], cluster = if(meth[Gi] == "MIFA") clust[[Gi]]), gibbs.arg))
         fac.time   <- fac.time + imifa[[Gi]][[Qi]]$time
-        if(verbose && Gi  != len.G) cat(paste0("Model ", Gi, " of ", len.G, " complete"), "Initialising...", sep="\n")
+        if(verbose && Gi  != len.G) cat(paste0("Model ", Gi, " of ", len.G, " complete"), "\nInitialising...", sep="\n")
       }
     }
   } else if(is.element(method, c("FA", "MFA", "OMFA", "IMFA")))   {
@@ -689,7 +707,7 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
                                      args=append(list(data = dat, N = N, G = G.range, Q = q, mu = mu[[Gi]], mu.zero = mu.zero[[Gi]],
                                                       psi.beta = psi.beta[[Gi]], cluster = if(meth[Gi] !=  "FA") clust[[Gi]]), gibbs.arg))
         fac.time   <- fac.time + imifa[[Gi]][[Qi]]$time
-        if(verbose && Qi  != len.Q) cat(paste0("Model ", Qi, " of ", len.Q, " complete"), "Initialising...", sep="\n")
+        if(verbose && Qi  != len.Q) cat(paste0("Model ", Qi, " of ", len.Q, " complete"), "\nInitialising...", sep="\n")
       }
     } else if(len.Q == 1) {
       start.time   <- proc.time()
@@ -700,7 +718,7 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
                                      args=append(list(data = dat, N = N, G = g, Q = range.Q, mu = mu[[Gi]], mu.zero = mu.zero[[Gi]],
                                                       psi.beta = psi.beta[[Gi]], cluster = if(meth[Gi] != "FA") clust[[Gi]]), gibbs.arg))
         fac.time   <- fac.time + imifa[[Gi]][[Qi]]$time
-        if(verbose && Gi  != len.G) cat(paste0("Model ", Gi, " of ", len.G, " complete"), "Initialising...", sep="\n")
+        if(verbose && Gi  != len.G) cat(paste0("Model ", Gi, " of ", len.G, " complete"), "\nInitialising...", sep="\n")
       }
     } else {
       mi           <- 0
@@ -715,7 +733,7 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
                                                       psi.beta = psi.beta[[Gi]], cluster = if(meth[Gi] != "FA") clust[[Gi]]), gibbs.arg))
         mi         <- mi + 1
         fac.time   <- fac.time + imifa[[Gi]][[Qi]]$time
-        if(verbose && mi  != len.X) cat(paste0("Model ", mi, " of ", len.X, " complete"), "Initialising...", sep="\n")
+        if(verbose && mi  != len.X) cat(paste0("Model ", mi, " of ", len.X, " complete"), "\nInitialising...", sep="\n")
         }
       }
     }
@@ -736,7 +754,7 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
                                      args=append(list(data = tmp.dat, N = nrow(tmp.dat), mu = mu[[Gi]][,g], mu.zero = mu.zero[[Gi]][,g],
                                                       Q = range.Q, psi.beta = psi.beta[[Gi]][,g]), gibbs.arg))
       fac.time     <- fac.time + imifa[[g]][[Qi]]$time
-      if(verbose   && g   != len.G) cat(paste0("Model ", g, " of ", len.G, " complete"), "Initialising...", sep="\n")
+      if(verbose   && g   != len.G) cat(paste0("Model ", g, " of ", len.G, " complete"), "\nInitialising...", sep="\n")
     }
   }
   tot.time  <- proc.time() - start.time
@@ -808,7 +826,7 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
            "Z.init")      <- factor(zi[[g]], levels=seq_len(G.init[g]))
     }
   }
-  if(verbose)                print(attr(imifa, "Time"))
+  if(verbose)                cat("\n"); print(attr(imifa, "Time"))
   class(imifa)            <- "IMIFA"
     return(imifa)
 }

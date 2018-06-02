@@ -1050,7 +1050,14 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
         }
           cat(paste0("AICM = ", aicm[G.ind,Q.ind], "\n"))
           cat(paste0("BICM = ", bicm[G.ind,Q.ind], "\n"))
-          cat(paste0("DIC = ", dic[G.ind,Q.ind], "\n"))
+          cat(paste0("DIC = ", dic[G.ind,Q.ind], "\n\n"))
+      }
+      if(!isTRUE(attr(x,  "Nowarn.G"))) {  cat("\n");  message(attr(x, "Nowarn.G"))
+      }
+      if(!isTRUE(attr(x,  "Nowarn.Q"))) {
+        if(isTRUE(attr(x, "Nowarn.G"))) {  cat("\n")}
+        if(!is.element(method,
+        c("OMFA", "IMFA")) || plotT.ind)   message(attr(x, "Nowarn.Q"))
       }
       if(plotQ.ind) {
         if(!adapt)                    message("No adaptation took place\n")
