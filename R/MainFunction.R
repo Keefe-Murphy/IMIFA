@@ -60,7 +60,7 @@
 #' @importFrom Rfast "rowmeans" "sort_unique" "matrnorm"
 #' @importFrom mvnfast "dmvn"
 #' @importFrom slam "as.simple_sparse_array" "as.simple_triplet_matrix"
-#' @importFrom mclust "emControl" "Mclust" "mclustBIC" "hc" "hclass" "hcE" "hcEEE" "hcEII" "hcV" "hcVII" "hcVVV"
+#' @importFrom mclust "emControl" "Mclust" "mclustBIC" "mclustICL" "hc" "hclass" "hcE" "hcEEE" "hcEII" "hcV" "hcVII" "hcVVV"
 #'
 #' @seealso \code{\link{get_IMIFA_results}}, \code{\link{mixfaControl}}, \code{\link{mgpControl}}, \code{\link{bnpControl}}, \code{\link{storeControl}}
 #' @references
@@ -225,7 +225,7 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
     }
   }
   dots      <- switch(EXPR = z.init,
-                      mclust = mixFA$dots[c("modelName", "modelNames", "use")],
+                      mclust = mixFA$dots[c("modelName", "use", "modelNames", "criterion")],
                       hc = mixFA$dots[c("modelName", "use")],
                       kmeans = mixFA$dots[c("iter.max", "nstart")])
   if(is.element(z.init, c("hc", "mclust"))) {
@@ -524,7 +524,8 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
   }
 
   init.start       <- proc.time()
-  if(!is.element(method,  c("FA",    "IFA"))) {
+  if(!is.element(method,  c("FA",    "IFA")) &&
+     !all(G.init == 1))         {
     if(verbose)                     cat(paste0("Initialising...\n"))
     clust          <- list()
     pi.alpha       <- list()
@@ -532,12 +533,14 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
     zi             <- list()
     if(is.element(z.init, c("hc", "mclust"))) {
       hcG          <- G.init[G.init > 1]
-      Zhc          <- tryCatch(hc(dat, minclus=min(hcG), modelName=dots$modelName, use=dots$use), error=function(e) stop(paste0("Hierarchical clustering initialisation failed", ifelse(z.init == "hc", ". ", " (when initialising using 'mclust'). "), "Try another z.init method"), call.=FALSE))
+      Zhc          <- tryCatch(hc(dat, minclus=min(hcG), modelName=dots$modelName, use=dots$use), error=function(e) stop(paste0("Hierarchical clustering initialisation failed", ifelse(z.init == "hc", ". ", " (when initialising using 'mclust'). "), "Try another z.init method", ifelse(length(dots) > 1, " or supply different 'hc' arguments via '...' to mixfaControl", "")), call.=FALSE))
       if(z.init    == "mclust") {
         mcarg      <- list(data=dat, G=hcG, verbose=FALSE, control=emControl(equalPro=equal.pro), initialization=list(hcPairs=Zhc), unlist(mixFA$dots["modelNames"]))
-        mcl        <- suppressWarnings(do.call(mclustBIC, mcarg))
-        mcl        <- suppressWarnings(switch(init.crit, icl=do.call(mclustICL, mcarg), bic=do.call(mclustBIC, mcarg)))
+        mcl        <- suppressWarnings(if(identical(dots$criterion, "icl")) do.call(mclustICL, mcarg) else do.call(mclustBIC, mcarg))
         class(mcl) <- "mclustBIC"
+        if(!is.null(dots$criterion) &&
+           !is.element(dots$criterion,
+           c("bic", "icl")))        message("Using 'bic' to determine optimal mclust model to initialise with\n")
       } else        {
         hc1        <- any(G.init   == 1)
         hcZ        <- hclass(Zhc, G=hcG)

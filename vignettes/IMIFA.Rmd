@@ -214,7 +214,8 @@ The code below will produce only a heatmap of the loadings matrix in the first c
 ```{r}
 plot(resIMIFA, plot.meth="means", param="loadings", heat.map=TRUE, g=1)
 ```
-To examine posterior mean uniquenesses from all clusters in the form of a parellel coordinates plot, type
+
+To examine posterior mean uniquenesses from all clusters in the form of a parallel coordinates plot, type
 
 ```{r}
 plot(resIMIFA, plot.meth="parallel.coords", param="uniquenesses")

@@ -16,7 +16,7 @@
 #' @param heat.map A logical which controls plotting posterior mean loadings or posterior mean scores as a heatmap, or else as something akin to \code{link{plot(..., type="h")}}. Only relevant if \code{param = "loadings"} (in which case the default is \code{TRUE}) or \code{param = "scores"} (in which case the default is \code{FALSE}). Heatmaps are produced with the aid of \code{\link{mat2cols}} and \code{\link{plot_cols}}.
 #' @param show.last A logical indicator which defaults to \code{FALSE}, but when \code{TRUE} replaces any instance of the posterior mean with the last valid sample. Only relevant when \code{param} is one of \code{"means"} \code{"scores"}, \code{"loadings"}, \code{"uniquenesses"}, or \code{"pis"} and \code{plot.meth} is one of \code{"all"} or \code{"means"}. Also relevant for \code{"means"}, \code{"loadings"} and \code{"uniquenesses"} when \code{plot.meth} is \code{"parallel.coords"}. When \code{TRUE}, this has the effect of forcing \code{intervals} to be \code{FALSE}.
 #' @param palette An optional colour palette to be supplied if overwriting the default palette set inside the function by \code{\link[viridisLite]{viridis}} is desired. it makes little sense to a supply a \code{palette} when \code{plot.meth="all"} and \code{param} is one of "\code{scores}" or "\code{loadings}".
-#' @param ind Either a single number indicating which variable to plot when \code{param} is one of \code{means} or \code{uniquenesses}, or which cluster to plot if \code{param} is \code{pis}. If \code{scores} are plotted, a vector of length two giving which observation and factor to plot; If \code{loadings} are plotted, a vector of length two giving which variable and factor to plot. Will be recycled to length 2 if necessary. Only relevant when \code{mat} is \code{FALSE}.
+#' @param ind Either a single number indicating which variable to plot when \code{param} is one of \code{means} or \code{uniquenesses}, or which cluster to plot if \code{param} is \code{pis}. If \code{scores} are plotted, a vector of length two giving which observation and factor to plot; If \code{loadings} are plotted, a vector of length two giving which variable and factor to plot. Will be recycled to length 2 if necessary. Also governs which two factors are displayed on posterior mean plots of the \code{"scores"} when \code{heat.map} is \code{FALSE}; otherwise only relevant when \code{mat} is \code{FALSE}.
 #' @param fac Optional argument that provides an alternative way to specify \code{ind[2]} when \code{mat} is \code{FALSE} and \code{param} is one of \code{scores} or \code{loadings}.
 #' @param by.fac Optionally allows (mat)plotting of scores and loadings by factor - i.e. observation(s) (scores) or variable(s) (loadings) for a given factor, respectively, controlled by \code{ind} or \code{fac}) when set to \code{TRUE}. Otherwise all factor(s) are plotted for a given observation or variable when set to \code{FALSE} (the default), again controlled by \code{ind} or \code{fac}. Only relevant when \code{param} is one of \code{scores} or \code{loadings}.
 #' @param type The manner in which the plot is to be drawn, as per the \code{type} argument to \code{\link{plot}}.
@@ -102,6 +102,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
   Qs      <- unname(GQ.res$Q)
   Q.max   <- max(Qs)
   Qmseq   <- seq_len(Q.max)
+  nLx     <- Qs != 0
   defpar  <- suppressWarnings(graphics::par(no.readonly=TRUE))
   defpar$new        <- FALSE
   suppressWarnings(graphics::par(pty="m"))
@@ -241,10 +242,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
          length(titles)    != 1))     stop("'titles' must be a single logical indicator",    call.=FALSE)
   if(any(!is.logical(by.fac),
          length(by.fac)    != 1))     stop("'by.fac' must be a single logical indicator",    call.=FALSE)
-  if(param == "loadings"   && isTRUE(heat.map)) {
-    nullL <- which(!vapply(x$Loadings$lmats, is.null, logical(1L)))
-  }
-  if(all(show.last, intervals)) {
+  if(all(show.last, intervals))   {
     if(int.miss)                      message("Forcing 'intervals' to FALSE as 'show.last' is TRUE\n")
     intervals  <- FALSE
   }
@@ -690,8 +688,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
       }
 
       if(param == "scores") {
-        labs   <- if(show.last) clust$last.z        else clust$MAP
-        labs   <- if(grp.ind)   labs                else 1
+        labs   <- if(!grp.ind)  1     else if(show.last) clust$last.z   else   clust$MAP
         p.eta  <- if(show.last) x$Scores$last.eta   else x$Scores$post.eta
         eta1st <- if(plot.meth   == "all" || !gx) 1 else which.min(grp.size > 0)
         if(g.score)  {
@@ -734,6 +731,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
           graphics::box(lwd=2)
           graphics::mtext(ifelse(Q.max > 1, "Factors", "Factor"), side=1, line=2)
         } else {
+          if(mispal) grDevices::palette(viridis(G, alpha=transparency))
           col.s  <- if(is.factor(labs)) as.integer(levels(labs))[labs] else labs
           type.s <- ifelse(any(type.x, type == "l"), "p", type)
           if(ind2 != 1)  {
@@ -761,9 +759,8 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
 
       if(param == "loadings") {
         plot.x <- if(show.last) x$Loadings$last.load else x$Loadings$post.load
-        if(g   == min(Gs)) {
+        if(g   == min(Gs[nLx[Gs]])) {
          if(isTRUE(heat.map)) {
-          nLx  <- Gseq %in% nullL
           if(any(Qs   == 0))  {
            lxx <- vector("list", G)
            lxx[nLx]   <- mat2cols(Filter(Negate(is.null), plot.x), cols=hcols, compare=G > 1, na.col=graphics::par()$bg)
@@ -775,7 +772,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
           cixx <- if(all(intervals, ci.sw[param], !heat.map)) { if(by.fac) range(vapply(Filter(Negate(is.null), x$Loadings$ci.load), function(x) range(x[,,ind[2]]), numeric(2L))) else range(vapply(Filter(Negate(is.null), x$Loadings$ci.load), function(x) range(x[,ind[1],]), numeric(2L))) }
         }
         if(isTRUE(heat.map))  {
-          if(!(g %in% nullL)) break
+          if(!nLx[g])                 break
           if(titles) graphics::par(mar=c(4.1, 4.1, 4.1, 4.1))
           plot_cols(if(G > 1) lxx[[g]] else lxx)
           if(titles) {

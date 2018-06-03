@@ -605,7 +605,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
      sw["l.sw"]  <- FALSE;        warning("Forcing non-storage of scores and loadings due to shortage of retained samples\n", call.=FALSE)
     }
     eta.store    <- sort_unique(unlist(Lstore))
-  } else {
+  } else    {
     eta.store    <- tmp.store
   }
   e.store        <- length(eta.store)
@@ -816,7 +816,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
        mu2       <- mus[,,store.e,    drop=FALSE]
        pi2       <- pi.prop[,store.e, drop=FALSE]
        psi2      <- psis[,,store.e,   drop=FALSE]
-       for(r  in  Eseq)         {
+       for(r  in    Eseq)       {
         Q0Er     <- Q0E[,r]
         a        <- Reduce("+",   lapply(Gseq, function(g) pi2[g,r]   * (tcrossprod(mu2[,g,r])   + (if(Q0Er[g]) 0 else tcrossprod(lmat2[,,g,r]))   + (if(uni) psi2[,g,r]   else diag(psi2[,g,r])))))
         b        <- Reduce("+",   lapply(Gseq, function(g) pi2[g,r]   * mu2[,g,r]))
@@ -843,7 +843,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       cov.est    <- diag(post.psi[,1, drop=!uni]) + (if(Q0X)    0 else         tcrossprod(post.load[[1]]))
       if(error.metrics && sw["psi.sw"])           {
        psi2      <- psi[,store.e,     drop=FALSE]
-       for(r  in  Eseq)         {
+       for(r  in    Eseq)       {
         sigma    <- diag(psi2[,r, drop=!uni])     + (if(Q0E[r]) 0 else  if(uni)       crossprod(lmat[,,r])        else tcrossprod(lmat[,,r]))
         error    <- cov.emp - sigma
         sq.err   <- error   * error

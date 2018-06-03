@@ -39,6 +39,7 @@
     ll.store     <- vector("integer", n.store)
 
     mu.sigma     <- 1/sigma.mu
+    mu.zero      <- as.numeric(mu.zero)
     uni.type     <- switch(uni.type,   unconstrained=,               constrained="constrained", "single")
     .sim_psi_inv <- switch(uni.type,   constrained=.sim_psi_u1,      single=.sim_psi_c1)
     .sim_psi_ip  <- switch(uni.prior,  unconstrained=.sim_psi_ipu,   isotropic=.sim_psi_ipc)
@@ -64,10 +65,10 @@
     l.sigma      <- diag(1/sigma.l, Q)
     sum.data     <- mu * N
     if(burnin     < 1)    {
-      mu.store[,1]         <- mu
-      eta.store[,,1]       <- eta
-      load.store[,,1]      <- lmat
-      psi.store[,1]        <- 1/psi.inv
+      if(sw["mu.sw"])         mu.store[,1]              <- mu
+      if(sw["s.sw"])          eta.store[,,1]            <- eta
+      if(sw["l.sw"])          load.store[,,1]           <- lmat
+      if(sw["psi.sw"])        psi.store[,1]             <- 1/psi.inv
       ll.store[1]          <- sum(dmvn(X=data, mu=mu, sigma=tcrossprod(lmat) + diag(1/psi.inv), log=TRUE))
     }
     init.time    <- proc.time() - start.time
