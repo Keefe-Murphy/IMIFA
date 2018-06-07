@@ -16,6 +16,8 @@ __Infinite Mixtures of Infinite Factor Analysers__
 
 ### Bug Fixes
 * Fixed permutation/rotation of scores within `get_IMIFA_results`.
+* Explicitly allowed Pitman-Yor special case where `alpha=0` for IM(I)FA models;  
+  added related controls on spike-and-slab prior for `discount` when fixing `alpha<=0`.
 * `trunc.G` now shares the same default as `range.G`, rather than defaulting to `range.G`.
 * `prec.mu` now defaults to `0.1` s.t. the prior on the cluster means is flat by default.
 * Allowed full range of `hc` model types for initialisation purposes via `...` in `mixfaControl`.
@@ -25,6 +27,7 @@ __Infinite Mixtures of Infinite Factor Analysers__
 * Fixed plotting posterior mean loadings heatmap when one or more clusters have zero factors.
 * Fixed plotting scores for (I)FA models due to bug in previous update.
 * Fixed simulation of `psi` when not supplied to `sim_IMIFA_data` to IG rather than GA.
+* Sped-up 2<sup>nd</sup> label-switching move for IM(I)FA models (accounting for empty clusters).
 * Minor cosmetic change for overplotting `scores` & `loadings` in `trace` & `density` plots.
 * Tidied indentation/line-breaks for `cat`/`message`/`warning` calls for printing clarity.
 * Corrected `IMIFA-package` help file (formerly just `IMIFA`).
@@ -184,7 +187,8 @@ __Infinite Mixtures of Infinite Factor Analysers__
 ## IMIFA v1.2.0 - (_2<sup>nd</sup> release [minor update]: 2017-05-09_)
 ### New Features
 * Learning the Pitman-Yor `discount` & `alpha` parameters via Metropolis-Hastings now implemented.  
-  Plotting function's `param` argument gains the option `discount` for posterior inference.
+    * Spike-and-slab prior specified for `discount`: size of spike controlled by arg. `kappa`.
+    * Plotting function's `param` argument gains the option `discount` for posterior inference.
 * Sped up simulating cluster labels from unnormalised log probabilities using the Gumbel-Max trick (Yellott, 1977):  
   `gumbel_max` replaces earlier function to sample cluster labels and is now unhidden/exported/documented.
 * Added new plot when `plot.meth=GQ` for OM(I)FA/IM(I)FA models depicting trace of #s of active/non-empty clusters.

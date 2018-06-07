@@ -653,7 +653,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
               graphics::clip(usr[1], usr[2], usr[3], usr[4])
             }
           }
-        } else {                      warning("Mutation rate too low: can't plot density\n", call.=FALSE)
+        } else {                      warning(paste0(ifelse(attr(x, "Kappa0"), "Acceptance", "Mutation"), " rate too low: can't plot density\n"), call.=FALSE)
           if(all.ind) graphics::plot.new()
         }
       }
@@ -849,6 +849,8 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
       }
 
       if(is.element(param, c("alpha", "discount"))) {
+        if(param == "discount" &&
+           attr(x, "Kappa0"))         message(paste0("Spike-and-slab prior not invoked as alpha was fixed <= 0 (alpha=", attr(x, "Alpha"), ")\n"))
         graphics::plot(c(0, 1), c(0, 1), ann=FALSE, bty='n', type='n', xaxt='n', yaxt='n')
         if(titles) graphics::title(main=list(paste0("Summary Statistics", ifelse(all.ind, "", paste0(":\n", switch(param, alpha="Alpha", discount="Discount"))))))
         plot.x <- switch(param, alpha=clust$DP.alpha[-1],     discount=clust$PY.disc[-1])
@@ -875,7 +877,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
         graphics::text(x=0.5, y=y5,          cex=a.cex, col="black", adj=a.adj, expression(bold("Last Valid Sample:\n")))
         graphics::text(x=0.5, y=y6,          cex=a.cex, col="black", adj=a.adj, bquote(.(round(switch(param, alpha=plot.x$last.alpha, discount=plot.x$last.disc), digits))))
         if(isTRUE(MH)) {
-          rate <- switch(param,              alpha="Acceptance Rate:",          discount="Mutation Rate:")
+          rate <- switch(param,              alpha="Acceptance Rate:",          discount=paste0(ifelse(attr(x, "Kappa0"), "Acceptance", "Mutation"), " Rate:"))
           y7   <- switch(param,              alpha=ifelse(tz, 0.4375, 0.3625),  discount=0.4375)
           y8   <- switch(param,              alpha=ifelse(tz, 0.375,  0.3125),  discount=0.375)
           graphics::text(x=0.5, y=y7,        cex=a.cex, col="black", adj=a.adj, substitute(bold(rate)))
@@ -1325,7 +1327,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
         plot.x <- switch(param, alpha=clust$DP.alpha$alpha, discount=as.vector(clust$PY.disc$discount))
         if(switch(param, alpha=clust$DP.alpha$alpha.rate,   discount=clust$PY.disc$disc.rate) == 0 ||
            length(unique(round(plot.x, min(.ndeci(plot.x))))) == 1) {
-                                      warning(paste0(switch(param, alpha="Acceptance", discount="Mutation"), " rate too low: can't plot ", ifelse(all.ind, ifelse(partial, "partial-", "auto-"), ""), "correlation function", ifelse(all.ind, "\n", "s\n")), call.=FALSE)
+                                      warning(paste0(switch(param, alpha="Acceptance", discount=ifelse(attr(x, "Kappa0"), "Acceptance", "Mutation")), " rate too low: can't plot ", ifelse(all.ind, ifelse(partial, "partial-", "auto-"), ""), "correlation function", ifelse(all.ind, "\n", "s\n")), call.=FALSE)
           next
         }
         if(!partial) {

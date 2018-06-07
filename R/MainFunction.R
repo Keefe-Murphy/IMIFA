@@ -34,7 +34,7 @@
 #'
 #' Defaults to \code{0.5/range.G} for the overfitted methods - if supplied for "\code{OMFA}" and "\code{OMIFA}" methods, you are supplying the numerator of \code{alpha/range.G}, which should be less than half the dimension (per cluster!) of the free parameters of the smallest model considered in order to ensure superfluous clusters are emptied (for "\code{OMFA}", this corresponds to the smallest \code{range.Q}; for "\code{OMIFA}", this corresponds to a zero-factor model) [see: \code{\link{PGMM_dfree}} and Rousseau and Mengersen (2011)].
 #'
-#' Defaults to \code{1 - discount} for the "\code{IMFA}" and "\code{IMIFA}" models if \code{learn.alpha} is \code{FALSE} or a simulation from the prior if \code{learn.alpha} is \code{TRUE}. Must be positive, unless \code{discount} is supplied for the "\code{IMFA}" or "\code{IMIFA}" methods, in which case it must be greater than \code{-discount}. See \code{\link{bnpControl}} for details of specifying \code{alpha} or specifying a prior for \code{alpha} under the \code{"IMFA"} & \code{"IMIFA"} methods.
+#' Under the "\code{IMFA}" and "\code{IMIFA}" models, \code{alpha} defaults to a simulation from the prior if \code{learn.alpha} is \code{TRUE}, otherwise \code{alpha} \emph{must} be specified. Must be positive, unless \code{discount} is supplied or \code{learn.d} is \code{TRUE} for the "\code{IMFA}" or "\code{IMIFA}" methods, in which case it must be greater than \code{-discount}. See \code{\link{bnpControl}} for details of specifying \code{alpha} or specifying a prior for \code{alpha} under the \code{"IMFA"} & \code{"IMIFA"} methods. Under certain conditions, \code{alpha} can remain fixed at 0 (again, see \code{\link{bnpControl}}).
 #' @param storage A vector of named logical indicators governing storage of parameters of interest for all models in the IMIFA family. Defaults are set by a call to \code{\link{storeControl}}. It may be useful not to store certain parameters if memory is an issue.
 #' @param ... An alternative means of passing control parameters directly via the named arguments of \code{\link{mixfaControl}}, \code{\link{mgpControl}}, \code{\link{bnpControl}}, and \code{\link{storeControl}}. Do not pass the output from calls to those functions here!
 #' @param x,object Object of class \code{"IMIFA"}, for the \code{print.IMIFA} and \code{summary.IMIFA} functions, respectively.
@@ -473,12 +473,22 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
   min.d2G   <- min.d2 * G.init
   if(!is.element(method, c("FA", "IFA", "classify"))) {
     if(missing(alpha))     { alpha     <- switch(method, MFA=, MIFA=1, OMFA=, OMIFA=0.5/G.init, ifelse(learn.a, max(1, stats::rgamma(1, BNP$a.hyper[1], BNP$a.hyper[2])), 1))
+      if(is.element(method, c("IMFA", "IMIFA"))      &&
+         !learn.a)                  stop("'alpha' must be specified if it is to remain fixed when 'learn.alpha' is FALSE, as it's not being learned via Gibbs/Metropolis-Hastings updates", call.=FALSE)
     } else if(is.element(method,
       c("OMFA", "OMIFA")))   alpha     <- alpha/G.init
     if(length(alpha) != 1)          stop("'alpha' must be specified as a scalar to ensure an exchangeable prior", call.=FALSE)
     if(is.element(method, c("IMIFA", "IMFA"))) {
+      if(kappa0      <- alpha    <= 0  && !learn.a)   {
+        discount     <- BNP$discount   <- ifelse(ifelse(learn.d, discount == 0, bnpmiss$discount), pmin(stats::rbeta(1, BNP$a.hyper[1], BNP$a.hyper[2]), 1 - .Machine$double.eps), discount)
+        if(!learn.d  &&
+           discount  == 0)          stop("Set 'learn.d'=TRUE or fix a non-zero 'discount' value if fixing 'alpha' at <= 0", call.=FALSE)
+        if(learn.d   && bnpmiss$kappa)  {
+          BNP$kappa  <- 0L
+        } else if(BNP$kappa      != 0  &&
+                  learn.d)          stop("Set 'kappa'=0 if fixing 'alpha' at <= 0 and 'learn.d'=TRUE", call.=FALSE)
+      }
       if(alpha       <= -discount)  stop(paste0("'alpha' must be ",     ifelse(discount != 0, paste0("strictly greater than -discount (i.e. > ", - discount, ")"), "strictly positive")), call.=FALSE)
-      if(!learn.a)                  warning(paste0("'alpha' fixed at ", round(alpha, options()$digits), " as it's not being learned via Gibbs/Metropolis-Hastings updates\n"), call.=FALSE)
     }
     if(all(is.element(method,  c("OMIFA",   "OMFA")),
        alpha >= min.d2))            warning(paste0("'alpha' over 'range.G' for the OMFA & OMIFA methods should be less than half the dimension (per cluster!)\nof the free parameters of the smallest model considered (= ", min.d2, "): consider suppling 'alpha' < ", min.d2G, "\n"), call.=FALSE, immediate.=TRUE)
@@ -797,6 +807,7 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
   attr(imifa,
        "Ind.Slice")       <- is.element(method, c("IMFA", "IMIFA"))    && BNP$ind.slice
   attr(imifa, "Init.Z")   <- if(!is.element(method, c("FA", "IFA")))      z.init
+  attr(imifa, "Kappa0")   <- is.element(method, c("IMFA", "IMIFA"))    && kappa0
   attr(imifa,
        "Label.Switch")    <- if(!is.element(method, c("FA", "IFA")))      any(sw0gs)
   method                  <- names(table(meth)[which.max(table(meth))])

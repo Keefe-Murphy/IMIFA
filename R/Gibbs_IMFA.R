@@ -47,6 +47,7 @@
     err.z            <- zerr <- FALSE
     G.store          <- vector("integer", n.store)
     act.store        <- G.store
+    pi.alpha         <- cluster$pi.alpha
     if(learn.alpha) {
       alpha.store    <- ll.store
       alpha.shape    <- a.hyper[1]
@@ -57,7 +58,8 @@
       d.shape1       <- d.hyper[1]
       d.shape2       <- d.hyper[2]
       d.rates        <- vector("integer", total)
-      d.unif         <- d.shape1 == 1 & d.shape2 == 1
+      d.unif         <- d.shape1 == 1 & d.shape2    == 1
+      .sim_disc_mh   <- if(!learn.alpha && pi.alpha == 0) .sim_d_slab else .sim_d_spike
     } else d.rates   <- 1
     MH.step          <- any(discount  > 0, learn.d) && learn.alpha
     if(MH.step)     {
@@ -66,7 +68,7 @@
     if(IM.lab.sw)   {
       lab.rate       <- matrix(0L, nrow=2, ncol=total)
     }
-    d.count          <- 0
+    d.count          <- 0L
     avgzeta          <- zeta
     heat             <- tune.zeta$heat
     lambda           <- tune.zeta$lambda
@@ -75,7 +77,6 @@
     mu.sigma         <- 1/sigma.mu
     sig.mu.sqrt      <- sqrt(sigma.mu)
     z                <- cluster$z
-    pi.alpha         <- cluster$pi.alpha
     one.uni          <- is.element(uni.type, c("constrained", "single"))
     .sim_psi_inv     <- switch(uni.type,   unconstrained=.sim_psi_uu,   isotropic=.sim_psi_uc,
                                            constrained=.sim_psi_cu,     single=.sim_psi_cc)
@@ -297,7 +298,7 @@
 
     # Discount
       if(learn.d) {
-        MH.disc      <- .sim_disc_mh(discount=discount, alpha=pi.alpha, disc.shape1=d.shape1, disc.shape2=d.shape2, N=N, G=G.non, kappa=kappa, unif=d.unif, nn=nn[nn0])
+        MH.disc      <- .sim_disc_mh(discount=discount, disc.shape1=d.shape1, disc.shape2=d.shape2, G=G.non, unif=d.unif, nn=nn[nn0], alpha=pi.alpha, kappa=kappa)
         discount     <- MH.disc$disc
         d.rate       <- MH.disc$rate
       }

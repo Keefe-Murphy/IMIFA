@@ -198,27 +198,42 @@
     }
 
   # Adaptively Tune Zeta
-    .tune_zeta   <- function(zeta, time, l.rate, heat = 1, target = 0.441, lambda = 1) {
+    .tune_zeta   <- function(zeta, time, l.rate, heat = 1L, target = 0.441, lambda = 1L) {
       exp(heat/time^lambda * (exp(min(0, l.rate)) - target)) * zeta
     }
 
   # Discount
-    .log_pdisc   <- function(discount, alpha, disc.shape1, disc.shape2, N, G, kappa, unif, nn) {
-      l.prior    <- ifelse(discount == 0, log(kappa),  log1p(- kappa) + ifelse(unif, 0, stats::dbeta(discount, shape1=disc.shape1, shape2=disc.shape2, log=TRUE)))
-        sum(log(alpha + discount  * seq_len(G - 1)))  + sum(lgamma(nn - discount) -  lgamma(1  - discount)) + l.prior
+    .log_pdslab  <- function(discount, disc.shape1, disc.shape2, G, unif, nn)       {
+      l.prior    <- ifelse(unif, 0, stats::dbeta(discount, shape1=disc.shape1, shape2=disc.shape2, log=TRUE))
+        sum(log(discount   * seq_len(G - 1))) +  sum(lgamma(nn - discount) - lgamma(1 - discount)) + l.prior
     }
 
-    .sim_disc_mh <- function(discount, alpha, disc.shape1, disc.shape2, N, G, kappa, unif, nn) {
+    .log_pdspike <- function(discount, disc.shape1, disc.shape2, G, unif, nn, alpha, kappa)    {
+      l.prior    <- ifelse(discount == 0, log(kappa),    log1p(- kappa) + ifelse(unif, 0, stats::dbeta(discount, shape1=disc.shape1, shape2=disc.shape2, log=TRUE)))
+        sum(log(alpha + discount  * seq_len(G - 1)))  +  sum(lgamma(nn  - discount) - lgamma(1 - discount)) + l.prior
+    }
+
+    .sim_d_slab  <- function(discount, disc.shape1, disc.shape2, G, unif, nn, ...)  {
+      propd      <- ifelse(unif, stats::runif(1), stats::rbeta(1, disc.shape1, disc.shape2))
+      propd      <- ifelse(propd == 1, propd - .Machine$double.eps, propd)
+      cprob      <- .log_pdslab(discount,  disc.shape1, disc.shape2, G, unif, nn)
+      pprob      <- .log_pdslab(propd,     disc.shape1, disc.shape2, G, unif, nn)
+      logpr      <- pprob  - cprob
+      acpt       <- logpr >= 0   ||  - stats::rexp(1) < logpr
+        return(list(disc = ifelse(acpt, propd, discount), rate = acpt))
+    }
+
+    .sim_d_spike <- function(discount, disc.shape1, disc.shape2, G, unif, nn, alpha, kappa)    {
       propd      <- ifelse(alpha  > 0,  ifelse(kappa != 0 && stats::runif(1) <= kappa, 0, ifelse(unif,
                            stats::runif(1), stats::rbeta(1, disc.shape1, disc.shape2))), stats::runif(1, max(0, - alpha), 1))
       propd      <- ifelse(propd == 1, propd - .Machine$double.eps, propd)
       if(identical(discount, propd)) {
           return(list(disc = discount, rate = 0L))
       } else {
-        cprob    <- .log_pdisc(discount,  alpha, disc.shape1, disc.shape2, N, G,  kappa, unif, nn)
-        pprob    <- .log_pdisc(propd,     alpha, disc.shape1, disc.shape2, N, G,  kappa, unif, nn)
+        cprob    <- .log_pdspike(discount, disc.shape1, disc.shape2, G, unif, nn, alpha, kappa)
+        pprob    <- .log_pdspike(propd,    disc.shape1, disc.shape2, G, unif, nn, alpha, kappa)
         logpr    <- pprob  - cprob
-        acpt     <- logpr >= 0  ||   - stats::rexp(1) < logpr
+        acpt     <- logpr >= 0  ||   - stats::rexp(1)  < logpr
           return(list(disc = ifelse(acpt, propd, discount),   rate   = acpt))
       }
     }
@@ -706,14 +721,19 @@
     }
 
   # Move 2
-    .lab_move2   <- function(G, Vs, nn)   {
+    .lab_move2   <- function(G, Vs, nn)    {
       sw         <- sample(G, 1L, prob=c(rep(1, G - 2), 0.5, 0.5))
       sw         <- if(is.element(sw, c(G, G - 1))) c(G - 1, G) else c(sw, sw + 1)
       nns        <- nn[sw]
-      log.vs     <- log1p( - Vs[sw])
-      a.prob     <- nns[1] * log.vs[2]       - nns[2]   * log.vs[1]
-      a.prob[is.nan(a.prob)]       <-        - Inf
-        return(list(rate2 = a.prob >= 0  ||  - stats::rexp(1) < a.prob, sw = sw))
+      if(nns[1]  == 0)     {
+        return(list(rate2  = TRUE,
+               sw = sw))
+      } else      {
+        log.vs   <- log1p( - Vs[sw])
+        a.prob   <- nns[2] * log.vs[1]
+        a.prob   <- nns[1] * log.vs[2]       - ifelse(is.nan(a.prob), 0,  a.prob)
+        return(list(rate2 = a.prob >= 0   || - stats::rexp(1) < a.prob, sw = sw))
+      }
     }
 
 # Positive-(Semi)Definite Checker
@@ -928,6 +948,14 @@
 #' # require("Rmpfr")
 #' # G_expected(N=50, alpha=c(19.23356, 12.21619, 1), discount=c(0, 0.25, 0.7300045))
 #' # G_variance(N=50, alpha=c(19.23356, 12.21619, 1), discount=c(0, 0.25, 0.7300045))
+#'
+#' # Examine the growth rate of the DP
+#' DP   <- sapply(c(1, 5, 10), function(i) G_expected(1:200, alpha=i))
+#' matplot(DP, type="l", xlab="N", ylab="G")
+#'
+#' # Examine the growth rate of the PYP
+#' # PY <- sapply(c(0.1, 0.25, 0.5), function(i) G_expected(1:200, alpha=1, discount=i))
+#' # matplot(PY, type="l", xlab="N", ylab="G")
     G_expected   <- Vectorize(function(N, alpha, discount = 0) {
       if(!all(is.numeric(N), is.numeric(discount),
          is.numeric(alpha)))               stop("All inputs must be numeric", call.=FALSE)
@@ -1248,34 +1276,38 @@
 #' Control settings for the Bayesian Nonparametric priors (BNP) for infinite mixture models
 #'
 #' Supplies a list of arguments for use in \code{\link{mcmc_IMIFA}} pertaining to the use of the Bayesian Nonparametric Dirichlet/Pitman Yor process priors (BNP) with the infinite mixture models "\code{IMFA}" and "\code{IMIFA}".
-#' @param learn.alpha Logical indicating whether the Dirichlet process / Pitman-Yor concentration parameter is to be learned (defaults to \code{TRUE}), or remain fixed for the duration of the chain. If being learned, a Ga(a, b) prior is assumed for \code{alpha}; updates take place via Gibbs sampling when \code{discount} is zero and via Metropolis-Hastings otherwise.
+#'
+#' The crucial concentration parameter \code{alpha} is documented within the main \code{\link{mcmc_IMIFA}} function.
+#' @param learn.alpha Logical indicating whether the Dirichlet process / Pitman-Yor concentration parameter is to be learned (defaults to \code{TRUE}), or remain fixed for the duration of the chain. If being learned, a Ga(a, b) prior is assumed for \code{alpha}; updates take place via Gibbs sampling when \code{discount} is zero and via Metropolis-Hastings otherwise. If not being learned, \code{alpha} \emph{must} be supplied.
 #' @param alpha.hyper A vector of length 2 giving hyperparameters for the Dirichlet process / Pitman-Yor concentration parameter \code{alpha}. If \code{isTRUE(learn.alpha)}, these are shape and rate parameters of a Gamma distribution. Defaults to Ga(2, 1). The prior is shifted to have support on (\code{-discount}, \code{Inf}) when non-zero \code{discount} is supplied and remains fixed, or shifted to (\code{-1}, \code{Inf}) when \code{learn.d} is \code{TRUE}.
 #' @param discount The discount parameter used when generalising the Dirichlet process to the Pitman-Yor process. Defaults to 0, but must lie in the interval [0, 1). If non-zero, \code{alpha} can be supplied greater than \code{-discount}.
 #' @param learn.d Logical indicating whether the \code{discount} parameter is to be updated via Metropolis-Hastings (defaults to\code{FALSE}).
-#' @param d.hyper Hyperparameters for the Beta(a,b) prior on the \code{discount} hyperparameter. Defaults to Beta(1,1), i.e. Uniform(0,1).
+#' @param d.hyper Hyperparameters for the Beta(a,b) prior on the \code{discount} parameter. Defaults to Beta(1,1), i.e. Uniform(0,1).
 #' @param ind.slice Logical indicitating whether the independent slice-efficient sampler is to be employed (defaults to \code{TRUE}). If \code{FALSE} the dependent slice-efficient sampler is employed, whereby the slice sequence \eqn{\xi_1,\ldots,\xi_g}{xi_1,...,xi_g} is equal to the decreasingly ordered mixing proportions.
 #' @param rho Parameter controlling the rate of geometric decay for the independent slice-efficient sampler, s.t. \eqn{\xi=(1-\rho)\rho^{g-1}}{xi = (1 - rho)rho^(g-1)}. Must lie in the interval (0, 1]. Higher values are associated with better mixing but longer run times. Defaults to 0.75, but 0.5 is an interesting special case which guarantees that the slice sequence \eqn{\xi_1,\ldots,\xi_g}{xi_1,...,xi_g} is equal to the \emph{expectation} of the decreasingly ordered mixing proportions. Only relevant when \code{ind.slice} is \code{TRUE}.
 #' @param trunc.G The maximum number of allowable and storable clusters. Defaults to the same value (\code{min(N - 1, max(25, ceiling(3 * log(N))))}) that \code{range.G} defaults to (see \code{\link{mcmc_IMIFA}}). Must be greater than or equal to \code{range.G}. The number of active clusters to be sampled at each iteration is adaptively truncated, with \code{trunc.G} as an upper limit for storage reasons. Note that large values of \code{trunc.G} may lead to memory capacity issues.
-#' @param kappa The spike-and-slab prior distribution on the \code{discount} hyperparameter is assumed to be a mixture with point-mass at zero and a continuous Beta(a,b) distribution. \code{kappa} gives the weight of the point mass at zero (the 'spike'). Must lie in the interval [0,1]. Defaults to 0.5. Only relevant when \code{isTRUE(learn.d)}. A value of 0 ensures non-zero discount values (i.e. Pitman-Yor) at all times, and \emph{vice versa}.
+#' @param kappa The spike-and-slab prior distribution on the \code{discount} hyperparameter is assumed to be a mixture with point-mass at zero and a continuous Beta(a,b) distribution. \code{kappa} gives the weight of the point mass at zero (the 'spike'). Must lie in the interval [0,1]. Defaults to 0.5. Only relevant when \code{isTRUE(learn.d)}. A value of 0 ensures non-zero discount values (i.e. Pitman-Yor) at all times, and \emph{vice versa}. Note that \code{kappa} will default to exactly 0 if \code{alpha<=0} and \code{learn.alpha=FALSE}.
 #' @param IM.lab.sw Logial indicating whether the two forced label switching moves are to be implemented (defaults to \code{TRUE}) when running one of the infinite mixture models.
-#' @param zeta Tuning parameter controlling the acceptance rate of the random-walk proposal for the Metropolis-Hastings steps when \code{learn.alpha=TRUE}, where \code{2 * zeta} gives the full width of the uniform proposal distribution. These steps are only invoked when either \code{discount} is non-zero and fixed or \code{learn.d=TRUE}, otherwise \code{alpha} is learned by Gibbs updates. Must be strictly positive. Defauts to 2.
-#' @param tune.zeta Used for tuning \code{zeta} & the width of the uniform proposal for \code{alpha} via diminishing Robbins-Monro type adaptation, when that parameter is learned via Metropolis-Hastings. Must be given in the form of a list with the following \emph{named} elements:
+#' @param zeta Tuning parameter controlling the acceptance rate of the random-walk proposal for the Metropolis-Hastings steps when \code{learn.alpha=TRUE}, where \code{2 * zeta} gives the full width of the uniform proposal distribution. These steps are only invoked when either \code{discount} is non-zero and fixed or \code{learn.d=TRUE}, otherwise \code{alpha} is learned by Gibbs updates. Must be strictly positive (if invoked). Defauts to 2.
+#' @param tune.zeta A list with the following named arguments, used for tuning \code{zeta}, the width of the uniform proposal for \code{alpha}, via diminishing Robbins-Monro type adaptation, when the \code{alpha} parameter is learned via Metropolis-Hastings steps:
 #' \describe{
-#' \item{"\code{heat}" - }{The initial adaptation intensity/step-size, such that larger values lead to larger updates. Must be strictly greater than zero. Defaults to 1 if not supplied but other elements of \code{tune.zeta} are.}
-#' \item{"\code{lambda}" - }{Iteration rescaling parameter which controls the speed at which adaptation diminishes, such that lower values cause the contribution of later iterations to diminish more slowly. Must lie in the interval (0.5, 1]. Defaults to 1 if not supplied but other elements of \code{tune.zeta} are.}
-#' \item{"\code{target}" - }{The target acceptance rate. Must lie in the interval [0, 1]. Defaults to 0.441, which is optimum for univariate targets, if not supplied but other elements of \code{tune.zeta} are.}
+#' \item{\code{heat}}{The initial adaptation intensity/step-size, such that larger values lead to larger updates. Must be strictly greater than zero. Defaults to 1 if not supplied but other elements of \code{tune.zeta} are.}
+#' \item{\code{lambda}}{Iteration rescaling parameter which controls the speed at which adaptation diminishes, such that lower values cause the contribution of later iterations to diminish more slowly. Must lie in the interval (0.5, 1]. Defaults to 1 if not supplied but other elements of \code{tune.zeta} are.}
+#' \item{\code{target}}{The target acceptance rate. Must lie in the interval [0, 1]. Defaults to 0.441, which is optimum for univariate targets, if not supplied but other elements of \code{tune.zeta} are.}
 #' }
-#'  \code{tune.zeta} is only relevant when \code{learn.alpha} is \code{TRUE}, and either the \code{discount} remains fixed at a non-zero value, or when \code{learn.d} is \code{TRUE} and \code{kappa < 1}. Since Gibbs steps are invoked for updated \code{alpha} when \code{discount == 0}, adaption occurs according to a running count of the number of iterations with non-zero sampled \code{discount} values. If diminishing adaptation is invoked, the posterior mean \code{zeta} will be stored. Since caution is advised when employing adaptation, note that acceptance rates of between 10-50\% are generally considered adequate.
+#'  \code{tune.zeta} arguments are only relevant when \code{learn.alpha} is \code{TRUE}, and either the \code{discount} remains fixed at a non-zero value, or when \code{learn.d} is \code{TRUE} and \code{kappa < 1}. Since Gibbs steps are invoked for updating \code{alpha} when \code{discount == 0}, adaption occurs according to a running count of the number of iterations with non-zero sampled \code{discount} values. If diminishing adaptation is invoked, the posterior mean \code{zeta} will be stored. Since caution is advised when employing adaptation, note that acceptance rates of between 10-50\% are generally considered adequate.
 #' @param ... Catches unused arguments.
 #'
 #' @return A named list in which the names are the names of the arguments related to the BNP prior(s) and the values are the values supplied to the arguments.
-#' @note Certain supplied arguments will be subject to further checks within \code{\link{mcmc_IMIFA}}. \code{\link{G_priorDensity}} can help with soliciting sensible DP/PYP priors.
+#' @note Certain supplied arguments will be subject to further checks within \code{\link{mcmc_IMIFA}}. \code{\link{G_priorDensity}} and \code{\link{G_moments}} can help with soliciting sensible DP/PYP priors.
+#'
+#' By default, a Dirichlet Process prior is specified. A Pitman-Yor prior can be easily invoked when the \code{discount} is fixed at a non-zero value or \code{learn.d=TRUE}. The normalized stable process can also be specified as a prior distribution, as a special case of the Pitman-Yor process, when \code{alpha} remains fixed at \code{0} and \code{learn.alpha=FALSE} (provided the \code{discount} is fixed at a non-zero value or \code{learn.d=TRUE}).
 #' @keywords control
 #' @references Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
 #'
 #' @export
 #'
-#' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{G_priorDensity}}
+#' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{G_priorDensity}}, \code{\link{G_moments}}
 #' @author Keefe Murphy - <\email{keefe.murphy@@ucd.ie}>
 #' @usage
 #' bnpControl(learn.alpha = TRUE,
@@ -1289,7 +1321,7 @@
 #'            kappa = 0.5,
 #'            IM.lab.sw = TRUE,
 #'            zeta = 2L,
-#'            tune.zeta = NULL,
+#'            tune.zeta = list(...),
 #'            ...)
 #' @examples
 #' bnpControl(ind.slice=FALSE, alpha.hyper=c(3, 1), learn.d=TRUE)
@@ -1303,8 +1335,8 @@
 #' # sim <- mcmc_IMIFA(olive, "IMIFA", n.iters=5000,
 #' #                   ind.slice=FALSE, alpha.hyper=c(3, 1), learn.d=TRUE)
   bnpControl     <- function(learn.alpha = TRUE, alpha.hyper = c(2L, 1L), discount = NULL, learn.d = FALSE, d.hyper = c(1L, 1L),
-                             ind.slice = TRUE, rho = 0.75, trunc.G = NULL, kappa = 0.5, IM.lab.sw = TRUE, zeta = 2L, tune.zeta = NULL, ...) {
-    miss.args    <- list(trunc.G = missing(trunc.G), IM.lab.sw = missing(IM.lab.sw))
+                             ind.slice = TRUE, rho = 0.75, trunc.G = NULL, kappa = 0.5, IM.lab.sw = TRUE, zeta = 2L, tune.zeta = list(...), ...) {
+    miss.args    <- list(discount = missing(discount), IM.lab.sw = missing(IM.lab.sw), kappa = missing(kappa), trunc.G = missing(trunc.G))
     if(any(!is.logical(learn.alpha),
            length(learn.alpha)    != 1))   stop("'learn.alpha' must be a single logical indicator", call.=FALSE)
     if(all(length(alpha.hyper)    != 2,
@@ -1347,24 +1379,28 @@
        length(IM.lab.sw) != 1))            stop("'IM.lab.sw' must be a single logical indicator", call.=FALSE)
     if(any(!is.numeric(zeta),
        length(zeta)      != 1,
-       zeta < 0))                          stop("'zeta' must be single strictly positive number", call.=FALSE)
+       zeta      <= 0))                    stop("'zeta' must be single strictly positive number", call.=FALSE)
     gibbs.def    <- all(kappa      < 1, learn.d,  learn.alpha)
     def.py       <- all(discount  != 0, !learn.d, learn.alpha)
     gibbs.may    <- gibbs.def     &&    kappa > 0
-    if(missing(tune.zeta)) {
+    zeta.names   <- c("heat", "lambda", "target")
+    zeta.null    <- stats::setNames(vapply(tune.zeta[zeta.names], is.null, logical(1L)), zeta.names)
+    if(all(zeta.null)    ||
+       !(tzdo    <- any(gibbs.def, def.py))) {
       tune.zeta  <- list(heat=0, lambda=NULL, target=NULL, do=FALSE)
     } else  {
-      tz         <- tune.zeta
+      tz         <- stats::setNames(tune.zeta[zeta.names], zeta.names)
       if(!inherits(tz, "list")    ||
-         (!all(is.element(names(tz), c("heat",
-          "lambda", "target")))   ||
-          !all(lengths(tz)        == 1)))  stop("'tune.zeta' must be a list with named elements 'heat', 'lambda' and 'target', all of length 1", call.=FALSE)
+         (!all(is.element(names(tz),
+               zeta.names))       ||
+          !all(lengths(tz)        == 1   |
+               zeta.null)))                stop("'tune.zeta' must be a list with named elements 'heat', 'lambda' and 'target', all of length 1", call.=FALSE)
       if(is.null(tz$heat))   tz$heat    <- 1
       if(is.null(tz$lambda)) tz$lambda  <- 1
       if(is.null(tz$target)) tz$target  <- 0.441
       if(!all(vapply(tz,
               is.numeric, logical(1L))))   stop("Not all elements of 'tune.zeta' are numeric", call.=FALSE)
-      tz$do      <- any(gibbs.def, def.py)
+      tz$do      <- tzdo
       if(tz$heat          < 0)             stop("Invalid 'heat': must be >= 0", call.=FALSE)
       if(tz$target        < 0     ||
          tz$target        > 1)             stop("Invalid 'target': must lie in the interval [0, 1]", call.=FALSE)

@@ -909,6 +909,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   attr(result, "Equal.Pi")     <- equal.pro
   attr(result, "G.init")       <- if(inf.G) attr(sims, "G.init")
   attr(result, "Ind.Slice")    <- if(is.element(method, c("IMFA", "IMIFA"))) attr(sims, "Ind.Slice")
+  attr(result, "Kappa0")       <- attr(sims, "Kappa0")
   attr(result, "Method")       <- method
   attr(result, "N.Loadstore")  <- if(inf.Q) vapply(Lstore, length, numeric(1L)) else rep(TN.store, G)
   attr(result, "Name")         <- data.name
