@@ -2,24 +2,33 @@ __Infinite Mixtures of Infinite Factor Analysers__
 ==================================================  
 
 ## IMIFA v2.0.1 - (_7<sup>th</sup> release [patch update]: 2018-05-02_)
+### New Features
+* Added new function `scores_MAP` to decompose factor scores summaries  
+  from `get_IMIFA_resuls` into submatrices corresponding to the MAP partition.
+* Added new wrapper function `sim_IMIFA_model` to call `sim_IMIFA_data` using  
+  the estimated parameters from fitted `Results_IMIFA` objects.
+  
 ### Improvements
 * Args. for `hc` can now be passed when `init.z="mclust"` also  
   (previously only `"hc"`), thus controlling how `Mclust` is itself initialised.
 * Allowed `criterion` to be passed via `...` in `mixfaControl` to choose between  
   `mclustBIC`/`mclustICL` to determine optimum model to initialise with when  
   `z.init="mclust"` & also sped-up `mclust` initialisation in the process.
-* Added new function `scores_MAP` to decompose factor scores summaries  
-  from `get_IMIFA_resuls` into submatrices corresponding to the MAP partition.
-* Added new wrapper function `sim_IMIFA_model` to call `sim_IMIFA_data` using  
-  the estimated parameters from fitted `Results_IMIFA` objects.
 * Args. `scores` & `loadings` can now be supplied to `sim_IMIFA_data` directly.
+* `prec.mu` now defaults to `0.1` s.t. the prior on the cluster means is flat by default.
+* Sped-up 2<sup>nd</sup> label-switching move for IM(I)FA models (accounting for empty clusters).
 
 ### Bug Fixes
-* Fixed permutation/rotation of scores within `get_IMIFA_results`.
+* Fixed factor _scores_ & error metrics issues in `get_IMIFA_results` for clustering methods:  
+    * Fixed storage of scores - now corresponds to iterations where __all__ clusters had  
+      greater than or equal to the modal estimate of the number of factors (previously __any__):  
+      selection of valid iterations for computation of error metrics thus also fixed,  
+      and Procrustes rotation thus also sped-up for both scores & loadings.  
+    * Other Procrustes rotation fixes to account for label-switching.  
+    * Other Procrustes rotation fixes specific to the IMFA/OMFA methods.
 * Explicitly allowed Pitman-Yor special case where `alpha=0` for IM(I)FA models;  
   added related controls on spike-and-slab prior for `discount` when fixing `alpha<=0`.
 * `trunc.G` now shares the same default as `range.G`, rather than defaulting to `range.G`.
-* `prec.mu` now defaults to `0.1` s.t. the prior on the cluster means is flat by default.
 * Allowed full range of `hc` model types for initialisation purposes via `...` in `mixfaControl`.
 * Clarified `dimnames` of `get_IMIFA_results` output in `x$Loadings` & `x$Scores`.
 * Fixed storage switches to account for `burnin=0`.
@@ -27,7 +36,6 @@ __Infinite Mixtures of Infinite Factor Analysers__
 * Fixed plotting posterior mean loadings heatmap when one or more clusters have zero factors.
 * Fixed plotting scores for (I)FA models due to bug in previous update.
 * Fixed simulation of `psi` when not supplied to `sim_IMIFA_data` to IG rather than GA.
-* Sped-up 2<sup>nd</sup> label-switching move for IM(I)FA models (accounting for empty clusters).
 * Minor cosmetic change for overplotting `scores` & `loadings` in `trace` & `density` plots.
 * Tidied indentation/line-breaks for `cat`/`message`/`warning` calls for printing clarity.
 * Corrected `IMIFA-package` help file (formerly just `IMIFA`).

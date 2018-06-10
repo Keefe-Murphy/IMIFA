@@ -604,12 +604,13 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
      sw["s.sw"]  <- tmpsw["l.sw"] <-
      sw["l.sw"]  <- FALSE;        warning("Forcing non-storage of scores and loadings due to shortage of retained samples\n", call.=FALSE)
     }
-    eta.store    <- sort_unique(unlist(Lstore))
+    eta.store    <- sort_unique(Reduce(intersect, Lstore))
   } else    {
     eta.store    <- tmp.store
+    Lstore       <- if(inf.G) storeG else eta.store
   }
-  e.store        <- length(eta.store)
   if(sw["s.sw"]) {
+    e.store      <- length(eta.store)
     eta          <- if(inf.Q) as.array(sims[[G.ind]][[Q.ind]]$eta)[,,eta.store, drop=FALSE] else sims[[G.ind]][[Q.ind]]$eta[,,eta.store, drop=FALSE]
     if(!sw["l.sw"])               warning("Caution advised when examining posterior factor scores: Procrustes rotation has not taken place because loadings weren't stored\n", call.=FALSE)
   }
@@ -641,18 +642,19 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
 
   # Loadings matrix / identifiability / error metrics / etc.
     if(sw["l.sw"])          {
-      for(p      in storeG) {
-        if(p   %in% eta.store)   {
-          proc   <- Procrustes(X=if(uni) t(lmat[,,p]) else as.matrix(lmat[,,p]), Xstar=l.temp)
-          lmat[,,p]        <- proc$X.new
-          if(sw["s.sw"])    {
-            p2   <- if(inf.Q) eta.store    == p       else p
-            if(clust.ind)   {
-              zp <- z2[p,] == g
-              eta[zp,,p2]  <- eta[zp,,p2] %*% proc$R
-            } else {
-              eta[,,p2]    <- eta[,,p2]   %*% proc$R
-            }
+      for(p      in
+         (if(inf.Q) Lstore[[g]] else Lstore)) {
+        proc     <- Procrustes(X=if(uni) t(lmat[,,p]) else as.matrix(lmat[,,p]), Xstar=l.temp)
+        lmat[,,p]          <- proc$X.new
+        if(sw["s.sw"]      &&
+           (p  %in%
+            eta.store))     {
+          p2     <- if(inf.Q) eta.store      == p     else p
+          if(clust.ind)     {
+            zp   <- z2[p,] == g
+            eta[zp,,p2]    <- eta[zp,,p2]   %*% proc$R
+          } else  {
+            eta[,,p2]      <- eta[,,p2]     %*% proc$R
           }
         }
       }
@@ -796,7 +798,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   }
 
 # Calculate estimated covariance matrices & compute error metrics
-  store.e        <- storeG   %in% eta.store
+  store.e        <- (if(inf.Q) storeG else tmp.store) %in% eta.store
   e.store        <- sum(store.e)
   Q0E            <- if(inf.Q) Q.store[,store.e, drop=!clust.ind] == 0 else if(clust.ind) matrix(Q == 0, nrow=G, ncol=e.store) else rep(Q == 0, e.store)
   Q0X            <- all(Q0E)
@@ -881,6 +883,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
        mean.met  <- stats::setNames(rowmeans(metrics), rownames(metrics))
        last.met  <- c(MSE = mse[e.store], MEDSE = medse[e.store], MAE = mae[e.store], MEDAE = medae[e.store], RMSE = rmse[e.store], NRMSE = nrmse[e.store])
        Err       <- c(list(Avg = mean.met, CIs = metricCIs), Err[1:3], c(list(Last.Cov = sigma, Final = last.met)), Err[4:5])
+       attr(Err, "ESS")       <- e.store
        errs      <- "All"
      } else errs <- "Post"
    } else   errs <- "Vars"
