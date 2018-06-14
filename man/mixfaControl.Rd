@@ -56,7 +56,7 @@ The first letter \strong{U} here corresponds to constraints on loadings (not yet
 
 \item{sigma.mu}{The covariance of the prior distribution for the cluster mean parameters. Always assumed to be a diagonal matrix. Can be a scalar times the identity or a vector of appropriate dimension. If supplied as a matrix, only the diagonal elements will be extracted. Defaults to the diagonal entries of the sample covariance matrix.}
 
-\item{prec.mu}{A scalar controlling the degree of flatness of the prior for the cluster means by scaling \code{sigma.mu} (i.e. multiplying every element of \code{sigma.mu} by \code{1/prec.mu}). Lower values lead to a more diffuse prior. Defaults to \code{0.1}, such that the prior is relatively non-informative by default. Of course, \code{prec.mu=1} nullifies any effect of this argument. The user can supply a scaled \code{sigma.mu} directly, but this argument is especially useful when the diagonal default is used for \code{sigma.mu}.}
+\item{prec.mu}{A scalar controlling the degree of flatness of the prior for the cluster means by scaling \code{sigma.mu} (i.e. multiplying every element of \code{sigma.mu} by \code{1/prec.mu}). Lower values lead to a more diffuse prior. Defaults to \code{0.1}, such that the prior is relatively non-informative by default. Of course, \code{prec.mu=1} nullifies any effect of this argument. The user can supply a scaled \code{sigma.mu} directly, but this argument is especially useful when the diagonal default is used for \code{sigma.mu}. When the number of observations is small, particular when it's less than the number of variables, consider specifying a more informative prior on the cluster means by increasing \code{prec.mu} from its default value.}
 
 \item{sigma.l}{A scalar controlling the diagonal covariance of the prior distribution for the loadings. Defaults to 1, i.e. the identity. Only relevant for the finite factor methods.}
 
@@ -98,7 +98,7 @@ mfctrl <- mixfaControl(n.iters=200, scaling="pareto",
 #                    scaling="pareto", uni.type="constrained")
 }
 \references{
-Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
+Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
 }
 \seealso{
 \code{\link{mcmc_IMIFA}}, \code{\link{psi_hyper}}, \code{\link[mclust]{Mclust}}, \code{\link[mclust]{hc}}, \code{\link[stats]{kmeans}}

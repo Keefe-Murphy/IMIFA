@@ -239,6 +239,6 @@ plot(resIMIFA, plot.meth="all", param="discount")
 # References
 For a more detailed description of the kind of things __IMIFA__ can do and the purposes for which the model was developed, please consult the followng papers:
 
-Murphy, K., Gormley, I. C. and Viroli, C. (2017). Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models. _To appear_. Pre-print available at [arXiv:1701.07010v4](https://arxiv.org/abs/1701.07010v4).
+Murphy, K., Gormley, I. C. and Viroli, C. (2017). Infinite Mixtures of Infinite Factor Analysers. _To appear_. Pre-print available at [arXiv:1701.07010v4](https://arxiv.org/abs/1701.07010v4).
 
 Bhattacharya, A. and Dunson, D. B. (2011). Sparse Bayesian infinite factor models. _Biometrika_, 98(2): 291-306.

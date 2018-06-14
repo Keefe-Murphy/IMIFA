@@ -15,7 +15,9 @@ scores_MAP(res,
 Note that this argument is irrelevant (i.e. always \code{FALSE}) for the finite factor methods ("\code{FA}", "\code{MFA}", "\code{OMFA}", and "\code{IMFA}").}
 }
 \value{
-A list of lists (say \code{x}) decomposing the posterior mean scores (\code{x$post.eta}), the associated variance estimates (\code{x$var.eta}) and credible intervals (\code{x$ci.eta}), and the last valid sample of the scores (\code{x$last.eta}) into lists of length \code{G}, corresponding to the MAP clustering, with varying or common numbers of cluster-specific factors (depending on the value of \code{dropQ} and the method employed).
+For models which achieve clustering, a list of lists (say \code{x}) decomposing the posterior mean scores (\code{x$post.eta}), the associated variance estimates (\code{x$var.eta}) and credible intervals (\code{x$ci.eta}), and the last valid sample of the scores (\code{x$last.eta}) into lists of length \code{G}, corresponding to the MAP clustering, with varying or common numbers of cluster-specific factors (depending on the value of \code{dropQ} and the method employed).
+
+For models with only one component, or the "\code{FA}" and "\code{IFA}" methods, scores cannot be decomposed, and posterior summaries of the scores will be returned unchanged.
 }
 \description{
 Takes posterior summaries of the overall factor scores matrix and returns lists of sub-matrices corresponding to the \code{G}-cluster MAP partition.

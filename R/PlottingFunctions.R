@@ -36,7 +36,7 @@
 #' @importFrom mclust "classError"
 #' @importFrom viridis "viridis"
 #' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{get_IMIFA_results}}, \code{\link{mat2cols}}, \code{\link{plot_cols}}
-#' @references Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
+#' @references Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
 #'
 #' @author Keefe Murphy - <\email{keefe.murphy@@ucd.ie}>
 #' @usage
@@ -1623,7 +1623,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
       } else  {
         vnk    <- c(Rmpfr::mpfr(0,         precBits=256),  cumsum(log(alphi + Nseq[-N] * disci)))   -
                   log(Rmpfr::pochMpfr(alphi + 1, N - 1)) - Nsq2 * log(disci)
-        lnkd   <- lapply(Nseq, function(g) Rmpfr::sumBinomMpfr(g, f=function(k)  Rmpfr::pochMpfr(-k * disci, N)))
+        lnkd   <- lapply(Nseq, function(g) Rmpfr::sumBinomMpfr(g, f=function(k) Rmpfr::pochMpfr(-k * disci, N)))
         rx[,i] <- gmp::asNumeric(exp(vnk    - lfactorial(Nsq2)) * abs(methods::new("mpfr", unlist(lnkd))))
       }
     }

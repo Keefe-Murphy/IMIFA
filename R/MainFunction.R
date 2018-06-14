@@ -57,14 +57,14 @@
 #' @keywords IMIFA main
 #' @export
 #' @importFrom matrixStats "colMeans2" "colSums2" "rowLogSumExps" "rowSums2"
-#' @importFrom Rfast "rowmeans" "sort_unique" "matrnorm"
+#' @importFrom Rfast "rowmeans" "matrnorm"
 #' @importFrom mvnfast "dmvn"
 #' @importFrom slam "as.simple_sparse_array" "as.simple_triplet_matrix"
 #' @importFrom mclust "emControl" "Mclust" "mclustBIC" "mclustICL" "hc" "hclass" "hcE" "hcEEE" "hcEII" "hcV" "hcVII" "hcVVV"
 #'
 #' @seealso \code{\link{get_IMIFA_results}}, \code{\link{mixfaControl}}, \code{\link{mgpControl}}, \code{\link{bnpControl}}, \code{\link{storeControl}}
 #' @references
-#' Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
+#' Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
 #'
 #' Bhattacharya, A. and Dunson, D. B. (2011) Sparse Bayesian infinite factor models, \emph{Biometrika}, 98(2): 291-306.
 #'
@@ -271,7 +271,7 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
       if(G.x)   {
         range.G    <- G.init           <- tmp.G
         if(NlP) {     if(verbose)   message(paste0("Since N <= P, the sampler will be initialised with a different default of ceiling(log(N)) = ", lnN2, " clusters (unless 'range.G' is supplied)\n"))
-          G.init   <- max(2, lnN2)
+          G.init   <- max(2L, lnN2)
         }
       }
       if(!G.x)  {
@@ -281,14 +281,15 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
         }
       }
       if(range.G    < lnN2)         warning(paste0("'range.G' should be at least log(N) (=log(", N, "))", " for the ", method, " method\n"), call.=FALSE, immediate.=TRUE)
+      if(G.init    >= N)            stop(paste0("'range.G' must less than N (", N, ")"), call.=FALSE)
       if(is.element(method, c("IMFA", "IMIFA")))  {
         if((t.miss <- bnpmiss$trunc.G))    {
           trunc.G  <- BNP$trunc.G      <- tmp.G
         } else trunc.G    <- BNP$trunc.G
         if(all(ifelse(N > 50, trunc.G   < 50,
-           trunc.G  < N), !t.miss)) message(paste0("Consider setting 'trunc.G' to min(N=", N, ", 50) unless practical reasons in heavy computational/memory burden cases prohibit it\n"))
+           trunc.G <= N), !t.miss)) message(paste0("Consider setting 'trunc.G' to min(N-1=", N - 1, ", 50) unless practical reasons in heavy computational/memory burden cases prohibit it\n"))
         if(trunc.G  < range.G)      stop(paste0("'trunc.G' must be at least range.G=", range.G), call.=FALSE)
-        if(trunc.G >= N)            stop(paste0("'trunc.G' cannot be greater than N - 1=", N - 1), call.=FALSE)
+        if(trunc.G >= N)            stop(paste0("'trunc.G' cannot be greater than N-1 (", N - 1, ")"), call.=FALSE)
         if(trunc.G  > 50)           warning(paste0("'trunc.G' is large: this may lead to memory capacity issues\n"), call.=FALSE, immediate.=TRUE)
       }
     } else if(method      == "classify")   {
@@ -321,7 +322,7 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
     if(G.x)                         stop("'range.G' must be specified", call.=FALSE)
     if(any(range.G  < 1))           stop("'range.G' must be strictly positive", call.=FALSE)
     if(any(range.G  > alp3 * lnN))  warning(paste0("'range.G' MUCH greater than log(N) (=log(", N, ")):\nEmpty clusters are likely, consider running an overfitted or infinite mixture\n"), call.=FALSE, immediate.=TRUE)
-    range.G <- G.init     <- sort_unique(range.G)
+    range.G <- G.init     <- sort(unique(range.G))
     meth    <- rep(method, length(range.G))
   }
   if(any(range.G >= N))             stop(paste0("'range.G' must be less than the number of observations N=", N), call.=FALSE)
@@ -356,6 +357,8 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
   dimnames(covmat) <- list(varnames, varnames)
   if(anyNA(covmat))                 warning(paste0("Covariance matrix cannot be estimated: ", ifelse(beta.x || (sigmu.miss && scaling != "unit"), "deriving default hyperparameters may not be possible, neither will posterior predictive checking\n", "posterior predictive checking will not be possible\n")), call.=FALSE)
   sigma.mu         <- if(sigmu.miss && scaling == "unit") rep(1, P) else if(sigmu.miss)   diag(covmat) else if(is.matrix(sigma.mu)) diag(sigma.mu) else sigma.mu
+  if(!all(G.init   == 1)  &&
+    (NlP    && mixfamiss$prec.mu)) warning("Consider a more informative prior for the means when employing a clustering method when N<=P, by increasing 'prec.mu' from its default value\n", call.=FALSE)
   sigma.mu         <- sigma.mu * 1/mixFA$prec.mu
   if(anyNA(sigma.mu))               stop(ifelse(sigmu.miss, "Not possible to derive default 'sigma.mu': this argument now must be supplied", "NA in 'sigma.mu'"), call.=FALSE)
   sigmu.len        <- length(unique(sigma.mu))
@@ -382,7 +385,7 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
       any(!unlist(mgpmiss)))        message(paste0("'mgpControl()' parameters not necessary for the ", method, " method\n"))
    if(Q.miss)                       stop("'range.Q' must be specified", call.=FALSE)
    if(any(range.Q  < 0))            stop(paste0("'range.Q' must be non-negative for the ", method, " method"), call.=FALSE)
-   range.Q  <- sort_unique(range.Q)
+   range.Q  <- sort(unique(range.Q))
    delta0g  <- FALSE
   } else {
    fQ0      <- uni || P    == 2

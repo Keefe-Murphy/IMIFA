@@ -20,10 +20,10 @@ __Infinite Mixtures of Infinite Factor Analysers__
 
 ### Bug Fixes
 * Fixed factor _scores_ & error metrics issues in `get_IMIFA_results` for clustering methods:  
-    * Fixed storage of scores - now corresponds to iterations where __all__ clusters had  
-      greater than or equal to the modal estimate of the number of factors (previously __any__):  
-      selection of valid iterations for computation of error metrics thus also fixed,  
-      and Procrustes rotation thus also sped-up for both scores & loadings.  
+    * Fixed storage of scores for infinite factor methods - now corresponds to samples where the  
+      largest cluster-specific number of factors is `>=` the max of the modal estimates of the same  
+      (previously samples where __any__ cluster has `>=` the corresponding modal estimate were used):  
+      thus, valid samples for computing error metrics also fixed and Procrustes rotation also sped-up.  
     * Other Procrustes rotation fixes to account for label-switching.  
     * Other Procrustes rotation fixes specific to the IMFA/OMFA methods.
 * Explicitly allowed Pitman-Yor special case where `alpha=0` for IM(I)FA models;  
@@ -36,6 +36,7 @@ __Infinite Mixtures of Infinite Factor Analysers__
 * Fixed plotting posterior mean loadings heatmap when one or more clusters have zero factors.
 * Fixed plotting scores for (I)FA models due to bug in previous update.
 * Fixed simulation of `psi` when not supplied to `sim_IMIFA_data` to IG rather than GA.
+* Fixed bug preventing `Q` to be supplied to `get_IMIFA_results` for infinite factor methods.
 * Minor cosmetic change for overplotting `scores` & `loadings` in `trace` & `density` plots.
 * Tidied indentation/line-breaks for `cat`/`message`/`warning` calls for printing clarity.
 * Corrected `IMIFA-package` help file (formerly just `IMIFA`).

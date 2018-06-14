@@ -51,4 +51,4 @@ devtools::install_github('Keefe-Murphy/IMIFA', build_vignettes = TRUE)
 Alternatively, the vignette is available on the package's CRAN page.
 
 ### References
-Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models. _To appear_. <[arXiv:1701.07010v4](https://arxiv.org/abs/1701.07010v4)>
+Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers. _To appear_. <[arXiv:1701.07010v4](https://arxiv.org/abs/1701.07010v4)>

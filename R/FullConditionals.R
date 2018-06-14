@@ -130,7 +130,7 @@
 #'
 #' If the normalising constant is required for another reason, e.g. to compute the log-likelihood, it can be calculated by summing the output obtained by calling \code{\link[matrixStats]{rowLogSumExps}} on \code{probs}.
 #'
-#' @references Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
+#' @references Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
 #'
 #' Yellot, J. I. Jr. (1977) The relationship between Luce's choice axiom, Thurstone's theory of comparative judgment, and the double exponential distribution, \emph{Journal of Mathematical Psychology}, 15: 109-144.
 #' @export
@@ -301,7 +301,7 @@
 #' @export
 #'
 #' @seealso \code{\link{mcmc_IMIFA}}
-#' @references Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
+#' @references Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
 #'
 #' Fruwirth-Schnatter, S. and Lopes, H. F. (2010). Parsimonious Bayesian factor analysis when the number of factors is unknown, \emph{Technical Report}. The University of Chicago Booth School of Business.
 #'
@@ -407,7 +407,7 @@
 #' @keywords control
 #' @seealso \code{\link{mcmc_IMIFA}}
 #' @references
-#' Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
+#' Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
 #'
 #' Durante, D. (2017). A note on the multiplicative gamma process, \emph{Statistics & Probability Letters}, 122: 198-204.
 #'
@@ -669,7 +669,7 @@
 #' # heat_legend(PCM, cols=heat.colors(30)[30:1])
 #' # par(mar=c(5.1, 4.1, 4.1, 2.1))
    post_conf_mat <- function(z, scale = TRUE) {
-      if(lz      <- inherits(z, "list"))      {
+      if(inherits(z, "list"))     {
         if(!all(vapply(z, is.matrix,
                         logical(1L))))     stop("Elements of the list 'z' must be matrices", call.=FALSE)
         if(any(vapply(z, anyNA,
@@ -685,6 +685,8 @@
         if(any(Ns      != N)     ||
            any(Gs      != G)     ||
            N      < G)                     stop("All matrices in the list 'z' must have the same dimensions, with more columns than rows", call.=FALSE)
+        tX       <- lapply(z, sort_mat, by.row=TRUE, descending=TRUE)
+        rX       <- lapply(z, rowOrder, descending=TRUE)
       } else      {
         if(!is.matrix(z))                  stop("'z' must be a matrix", call.=FALSE)
         if(anyNA(z))                       stop("Missing values are not allowed in 'z'", call.=FALSE)
@@ -694,11 +696,11 @@
         N        <- nrow(z)
         G        <- ncol(z)
         if(N      < G)                     stop("'z' must have more rows than columns", call.=FALSE)
+        tX       <- list(sort_mat(z, by.row=TRUE, descending=TRUE))
+        rX       <- list(rowOrder(z, descending=TRUE))
       }
       if(length(scale) > 1       ||
          !is.logical(scale))               stop("'scale' must be a single logical indicator", call.=FALSE)
-      tX         <- if(isTRUE(lz)) lapply(z, function(x) sort_mat(x, by.row=TRUE, descending=TRUE)) else list(sort_mat(z, by.row=TRUE, descending=TRUE))
-      rX         <- if(isTRUE(lz)) lapply(z, function(x) rowOrder(x, descending=TRUE))              else list(rowOrder(z, descending=TRUE))
       PCM        <- matrix(0, nrow=G, ncol=G)
       for(n      in seq_len(nit)) {
         for(k    in seq_len(G))   {
@@ -1171,7 +1173,7 @@
 #' @param psi.beta The rate of the inverse gamma prior on the uniquenesses. Can be either a single parameter, a vector of variable specific rates, or (if \code{psi0g} is \code{TRUE}) a matrix of variable and cluster-specific rates. If this is not supplied, \code{\link{psi_hyper}} is invoked to choose sensible values, depending on the value of \code{uni.prior} and, for the "\code{MFA}" and "\code{MIFA}" models, the value of \code{psi0g}. Excessively small values may lead to critical numerical issues and should thus be avoided.
 #' @param mu.zero The mean of the prior distribution for the mean parameter. Either a scalar of a vector of appropriate dimension. Defaults to the sample mean of the data.
 #' @param sigma.mu The covariance of the prior distribution for the cluster mean parameters. Always assumed to be a diagonal matrix. Can be a scalar times the identity or a vector of appropriate dimension. If supplied as a matrix, only the diagonal elements will be extracted. Defaults to the diagonal entries of the sample covariance matrix.
-#' @param prec.mu A scalar controlling the degree of flatness of the prior for the cluster means by scaling \code{sigma.mu} (i.e. multiplying every element of \code{sigma.mu} by \code{1/prec.mu}). Lower values lead to a more diffuse prior. Defaults to \code{0.1}, such that the prior is relatively non-informative by default. Of course, \code{prec.mu=1} nullifies any effect of this argument. The user can supply a scaled \code{sigma.mu} directly, but this argument is especially useful when the diagonal default is used for \code{sigma.mu}.
+#' @param prec.mu A scalar controlling the degree of flatness of the prior for the cluster means by scaling \code{sigma.mu} (i.e. multiplying every element of \code{sigma.mu} by \code{1/prec.mu}). Lower values lead to a more diffuse prior. Defaults to \code{0.1}, such that the prior is relatively non-informative by default. Of course, \code{prec.mu=1} nullifies any effect of this argument. The user can supply a scaled \code{sigma.mu} directly, but this argument is especially useful when the diagonal default is used for \code{sigma.mu}. When the number of observations is small, particular when it's less than the number of variables, consider specifying a more informative prior on the cluster means by increasing \code{prec.mu} from its default value.
 #' @param sigma.l A scalar controlling the diagonal covariance of the prior distribution for the loadings. Defaults to 1, i.e. the identity. Only relevant for the finite factor methods.
 #' @param z.init The method used to initialise the cluster labels. Defaults to \code{\link[mclust]{Mclust}}. Other options include \code{\link[stats]{kmeans}} (with 10 random starts, by default), hierarchical clustering via \code{\link[mclust]{hc}} (\code{VVV} is used by default, unless the data is high-dimensional, in which case the default is \code{EII}), random initialisation via \code{priors}, and a user-supplied \code{list} (\code{z.list}). Not relevant for the "\code{FA}" and "\code{"IFA"} methods. Arguments for the relevant functions can be passed via the \code{...} construct.
 #' @param z.list A user supplied list of cluster labels. Only relevant if \code{z.init == "z.list"}.
@@ -1189,7 +1191,7 @@
 #' @export
 #' @keywords control
 #' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{psi_hyper}}, \code{\link[mclust]{Mclust}}, \code{\link[mclust]{hc}}, \code{\link[stats]{kmeans}}
-#' @references Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
+#' @references Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
 #' @author Keefe Murphy - <\email{keefe.murphy@@ucd.ie}>
 #' @usage
 #' mixfaControl(n.iters = 25000L,
@@ -1227,7 +1229,7 @@
                              uni.type = c("unconstrained", "isotropic", "constrained", "single"), psi.alpha = 2.5, psi.beta = NULL, mu.zero = NULL,
                              sigma.mu = NULL, prec.mu = 0.1, sigma.l = 1L, z.init = c("mclust", "hc", "kmeans", "list", "priors"), z.list = NULL, equal.pro = FALSE,
                              uni.prior = c("unconstrained", "isotropic"), mu0g = FALSE, psi0g = FALSE, drop0sd = TRUE, verbose = interactive(), ...) {
-    miss.args    <- list(uni.type = missing(uni.type), psi.beta = missing(psi.beta), mu.zero = missing(mu.zero),
+    miss.args    <- list(uni.type = missing(uni.type), psi.beta = missing(psi.beta), mu.zero = missing(mu.zero), prec.mu = missing(prec.mu),
                          sigma.mu = missing(sigma.mu), z.init = missing(z.init), z.list = missing(z.list), uni.prior = missing(uni.prior))
     burnin       <- as.integer(burnin)
     n.iters      <- max(burnin + 1L, as.integer(n.iters))
@@ -1303,7 +1305,7 @@
 #'
 #' By default, a Dirichlet Process prior is specified. A Pitman-Yor prior can be easily invoked when the \code{discount} is fixed at a non-zero value or \code{learn.d=TRUE}. The normalized stable process can also be specified as a prior distribution, as a special case of the Pitman-Yor process, when \code{alpha} remains fixed at \code{0} and \code{learn.alpha=FALSE} (provided the \code{discount} is fixed at a non-zero value or \code{learn.d=TRUE}).
 #' @keywords control
-#' @references Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
+#' @references Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
 #'
 #' @export
 #'
@@ -1447,7 +1449,7 @@
 #'
 #' The adaptive Gibbs sampler (AGS) monitors the \code{prop} of loadings elements within the neighbourhood \code{eps} of 0 and discards columns or simulates new columns on this basis. However, if at any stage the number of group-specific latent factors reaches zero, the decision to add columns is instead based on a simple binary trial with probability \code{1-prop}, as there are no loadings entries to monitor.
 #' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{MGP_check}}
-#' @references Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
+#' @references Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
 #'
 #' Durante, D. (2017). A note on the multiplicative gamma process, \emph{Statistics & Probability Letters}, 122: 198-204.
 #'
@@ -1575,7 +1577,9 @@
 #' For the infinite factor methods ("\code{IFA}", "\code{MIFA}", "\code{OMIFA}", and "\code{IMIFA}"), the factor scores matrix has dimensions \code{N * Qmax}, where \code{Qmax} is the largest of the cluster-specific numbers of latent factors \eqn{q_1,\ldots,q_g}{Q1,...,Qg}. Entries of this matrix thus may have been padded out with zero entries, as appropriate, prior to the Procrustes rotation-based correction applied within \code{\link{get_IMIFA_results}} (thus now these entries will be near-zero).
 #'
 #' In partitioning rows of the factor scores matrix into the same clusters the corresponding observations themselves belong to according to the MAP clustering, the number of columns \emph{may} vary according to the cluster-specific numbers of latent factors (depending on the value of \code{dropQ} and the method employed).
-#' @return A list of lists (say \code{x}) decomposing the posterior mean scores (\code{x$post.eta}), the associated variance estimates (\code{x$var.eta}) and credible intervals (\code{x$ci.eta}), and the last valid sample of the scores (\code{x$last.eta}) into lists of length \code{G}, corresponding to the MAP clustering, with varying or common numbers of cluster-specific factors (depending on the value of \code{dropQ} and the method employed).
+#' @return For models which achieve clustering, a list of lists (say \code{x}) decomposing the posterior mean scores (\code{x$post.eta}), the associated variance estimates (\code{x$var.eta}) and credible intervals (\code{x$ci.eta}), and the last valid sample of the scores (\code{x$last.eta}) into lists of length \code{G}, corresponding to the MAP clustering, with varying or common numbers of cluster-specific factors (depending on the value of \code{dropQ} and the method employed).
+#'
+#' For models with only one component, or the "\code{FA}" and "\code{IFA}" methods, scores cannot be decomposed, and posterior summaries of the scores will be returned unchanged.
 #' @keywords utility
 #' @export
 #' @usage
@@ -1605,17 +1609,19 @@
 #' @export
    scores_MAP.Results_IMIFA     <- function(res, dropQ = FALSE) {
      if(!attr(res, "Switch")["s.sw"])       stop("Scores not stored!", call.=FALSE)
-     if((G       <- res$GQ.results$G) == 1) stop("Clustering has not taken place; cannot decompose scores", call.=FALSE)
+     resGQ       <- res$GQ.results
+     scores      <- res$Scores
+     if((G       <- resGQ$G)    == 1) {     message("Clustering has not taken place; cannot decompose scores\n")
+       return(list(post.eta = scores$post.eta, var = scores$var.eta, ci.eta = scores$ci.eta, last.eta = scores$last.eta))
+     }
      if(length(dropQ) != 1 ||
         !is.logical(dropQ))                 stop("'dropQ' must be a single logical indicator", call.=FALSE)
      varyQ       <- is.element(attr(res, "Method"), c("IFA", "MIFA", "OMIFA", "IMIFA"))
      if(all(!varyQ, dropQ))                 message("'dropQ' ignored as a finite factor method was employed\n")
      dropQ       <- dropQ  && varyQ
      Gseq        <- seq_len(G)
-     Q           <- res$GQ.results$Q
-     Q           <- if(isTRUE(dropQ)) Q else rep(max(Q), G)
+     Q           <- if(isTRUE(dropQ)) resGQ$Q else rep(max(resGQ$Q), G)
      MAP         <- res$Clust$MAP
-     scores      <- res$Scores
        return(lapply(list(post.eta = lapply(Gseq, function(g) scores$post.eta[MAP == g, seq_len(Q[g]), drop=FALSE]),
                           var.eta  = lapply(Gseq, function(g) scores$var.eta[MAP  == g, seq_len(Q[g]), drop=FALSE]),
                           ci.eta   = lapply(Gseq, function(g) scores$ci.eta[,MAP  == g, seq_len(Q[g]), drop=FALSE]),
@@ -1749,18 +1755,18 @@
         if(ent  %in% c("exit", "EXIT"))    stop(call.=FALSE)
     }
 
-    .logdensity     <- function(x,  left = 0) { # export?
+    .logdensity     <- function(x, left = 0) { # export and add ...
       d          <- tryCatch(stats::density(x, bw = "SJ"), error = function(e) stats::density(x))
       h          <- d$bw
       w          <- 1/stats::pnorm(left, mean = x, sd = h, lower.tail = FALSE)
         return(suppressWarnings(stats::density(x, bw = h, kernel = "gaussian", weights = w/length(x))))
     }
 
-    .logitdensity   <- function(x)  { # export?
-      y          <- stats::qlogis(x[x > 0  &   x < 1])
+    .logitdensity   <- function(x) { # export and add ...
+      y          <- stats::qlogis(x[x > 0  & x < 1])
       g          <- tryCatch(stats::density(y, bw = "SJ"), error = function(e) stats::density(y))
       xgrid      <- stats::plogis(g$x)
-      g$y        <- g$y/(xgrid  * (1  - xgrid))
+      g$y        <- g$y/(xgrid * (1 - xgrid))
       g$x        <- xgrid
         return(g)
     }

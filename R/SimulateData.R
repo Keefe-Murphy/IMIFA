@@ -19,7 +19,7 @@
 #'
 #' Missing values are not allowed in any of \code{pis}, \code{mu}, \code{psi}, \code{loadings}, \code{scores} & \code{nn}.
 #' @export
-#' @references Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers: Nonparametric Model-Based Clustering via Latent Gaussian Models, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
+#' @references Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
 #' @keywords utility
 #' @importFrom Rfast "is.symmetric"
 #' @name sim_IMIFA
