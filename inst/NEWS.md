@@ -7,6 +7,8 @@ __Infinite Mixtures of Infinite Factor Analysers__
   from `get_IMIFA_resuls` into submatrices corresponding to the MAP partition.
 * Added new wrapper function `sim_IMIFA_model` to call `sim_IMIFA_data` using  
   the estimated parameters from fitted `Results_IMIFA` objects.
+* New `get_IMIFA_results` arg. `vari.rot` allows loadings templates to be varimax rotated,  
+  prior to Procrustes rotation, for more interpretable solutions (defaults to `FALSE`).
   
 ### Improvements
 * Args. for `hc` can now be passed when `init.z="mclust"` also  
@@ -17,6 +19,8 @@ __Infinite Mixtures of Infinite Factor Analysers__
 * Args. `scores` & `loadings` can now be supplied to `sim_IMIFA_data` directly.
 * `prec.mu` now defaults to `0.1` s.t. the prior on the cluster means is flat by default.
 * Sped-up 2<sup>nd</sup> label-switching move for IM(I)FA models (accounting for empty clusters).
+* Added `stop.AGS` arg. to `mgpControl`: renamed `adapt.at` to `start.AGS` for consistency.
+* Added `start.zeta` & `stop.zeta` options to `tune.zeta` argument in `bnpControl`.
 
 ### Bug Fixes
 * Fixed factor _scores_ & error metrics issues in `get_IMIFA_results` for clustering methods:  
@@ -37,6 +41,8 @@ __Infinite Mixtures of Infinite Factor Analysers__
 * Fixed plotting scores for (I)FA models due to bug in previous update.
 * Fixed simulation of `psi` when not supplied to `sim_IMIFA_data` to IG rather than GA.
 * Fixed bug preventing `Q` to be supplied to `get_IMIFA_results` for infinite factor methods.
+* Fixed y-axis labelling in uncertainty type plots when `plot.meth="z"`.
+* Better handling of tied model-selection criteria in `get_IMIFA_results`.
 * Minor cosmetic change for overplotting `scores` & `loadings` in `trace` & `density` plots.
 * Tidied indentation/line-breaks for `cat`/`message`/`warning` calls for printing clarity.
 * Corrected `IMIFA-package` help file (formerly just `IMIFA`).

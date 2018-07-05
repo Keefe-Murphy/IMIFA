@@ -5,8 +5,8 @@
 # Gibbs Sampler Function
   .gibbs_IFA     <- function(Q, data, iters, N, P, sigma.mu, mu, prop, uni.type,
                              uni.prior, psi.alpha, psi.beta, burnin, thinning, verbose,
-                             sw, epsilon, mu.zero, nu, vrho, adapt, adaptat, b0, b1,
-                             alpha.d1, alpha.d2, beta.d1, beta.d2, scaling, ...) {
+                             sw, epsilon, mu.zero, nu, vrho, adapt, start.AGS, stop.AGS,
+                             b0, b1, alpha.d1, alpha.d2, beta.d1, beta.d2, scaling, ...) {
 
   # Define & initialise variables
     start.time   <- proc.time()
@@ -40,12 +40,12 @@
 
     mu.sigma     <- 1/sigma.mu
     mu.zero      <- as.numeric(mu.zero)
-    uni.type     <- switch(uni.type,   unconstrained=,               constrained="constrained", "single")
-    .sim_psi_inv <- switch(uni.type,   constrained=.sim_psi_u1,      single=.sim_psi_c1)
-    .sim_psi_ip  <- switch(uni.prior,  unconstrained=.sim_psi_ipu,   isotropic=.sim_psi_ipc)
-    psi.beta     <- switch(uni.prior,  isotropic=psi.beta[which.max(.ndeci(psi.beta))], psi.beta)
-    uni.shape    <- switch(uni.type,   constrained=N/2 + psi.alpha,  single=(N * P)/2 + psi.alpha)
-    V            <- switch(uni.type,   constrained=P,                single=1)
+    uni.type     <- switch(EXPR=uni.type,  unconstrained=,               constrained="constrained", "single")
+    .sim_psi_inv <- switch(EXPR=uni.type,  constrained=.sim_psi_u1,      single=.sim_psi_c1)
+    .sim_psi_ip  <- switch(EXPR=uni.prior, unconstrained=.sim_psi_ipu,   isotropic=.sim_psi_ipc)
+    psi.beta     <- switch(EXPR=uni.prior, isotropic=psi.beta[which.max(.ndeci(psi.beta))], psi.beta)
+    uni.shape    <- switch(EXPR=uni.type,  constrained=N/2 + psi.alpha,  single=(N * P)/2 + psi.alpha)
+    V            <- switch(EXPR=uni.type,  constrained=P,                single=1)
     eta          <- .sim_eta_p(Q=Q, N=N)
     phi          <- .sim_phi_p(Q=Q, P=P, nu=nu, rho=vrho)
     delta        <- c(.sim_delta_p(alpha=alpha.d1, beta=beta.d1), .sim_delta_p(Q=Q, alpha=alpha.d2, beta=beta.d2))
@@ -61,29 +61,30 @@
       }
     } else {
       psi.tmp    <- psi.inv
-      psi.inv[]  <- 1/switch(uni.type, constrained=.col_vars(data, suma=mu), exp(mean(log(.col_vars(data, suma=mu)))))
+      psi.inv[]  <- 1/switch(EXPR=uni.type, constrained=.col_vars(data, suma=mu), .geom_mean(.col_vars(data, suma=mu)))
       inf.ind    <- is.infinite(psi.inv)
       psi.inv[inf.ind]     <- psi.tmp[inf.ind]
     }
     sum.data     <- mu * N
     if(burnin     < 1) {
-      if(sw["mu.sw"])         mu.store[,1]    <- mu
-      if(sw["s.sw"])          eta.store[,,1]  <- eta
-      if(sw["l.sw"])          load.store[,,1] <- lmat
-      if(sw["psi.sw"])        psi.store[,1]   <- 1/psi.inv
+      if(sw["mu.sw"])         mu.store[,1L]    <- mu
+      if(sw["s.sw"])          eta.store[,,1L]  <- eta
+      if(sw["l.sw"])          load.store[,,1L] <- lmat
+      if(sw["psi.sw"])        psi.store[,1L]   <- 1/psi.inv
+      Q.store[1]           <- Q
       ll.store[1]          <- sum(dmvn(X=data, mu=mu, sigma=tcrossprod(lmat) + diag(1/psi.inv), log=TRUE))
     }
     init.time    <- proc.time() - start.time
 
   # Iterate
-    for(iter in seq_len(total)[-1]) {
+    for(iter in seq_len(total)[-1L]) {
       if(verbose && iter    < burnin) utils::setTxtProgressBar(pb, iter)
       storage    <- is.element(iter,  iters)
       Q0         <- Q  > 0
       Q1         <- Q == 1
 
     # Scores & Loadings
-      c.data     <- sweep(data, 2, mu, FUN="-", check.margin=FALSE)
+      c.data     <- sweep(data, 2L, mu, FUN="-", check.margin=FALSE)
       if(Q0) {
         eta      <- .sim_score(N=N, Q=Q, lmat=lmat, psi.inv=psi.inv, c.data=c.data, Q1=Q1)
         lmat     <- matrix(vapply(Pseq, function(j) .sim_load_s(Q=Q, tau=tau, eta=eta, c.data=c.data[,j], Q1=Q1,
@@ -115,9 +116,9 @@
       }
 
     # Adaptation
-      if(all(adapt, iter   > adaptat))   {
-        if(stats::runif(1) < ifelse(iter < burnin, 0.5, exp(-b0 - b1  * (iter - adaptat)))) {
-          colvec <- (if(Q0)  colSums(abs(lmat) < epsilon) / P    else stats::runif(1))     >= prop
+      if(adapt   && all(iter >= start.AGS, iter < stop.AGS))    {
+        if(stats::runif(1) < ifelse(iter < burnin, 0.5, exp(-b0 - b1  * (iter - start.AGS)))) {
+          colvec <- (if(Q0)  colSums(abs(lmat)  < epsilon) / P   else stats::runif(1)) >= prop
           numred <- sum(colvec)
           if(numred == 0)  {
             Q    <- Q + 1
@@ -133,7 +134,7 @@
             }
           } else if(Q > 0)      {
             nonred  <- colvec  == 0
-            Q       <- max(0, Q - numred)
+            Q       <- max(0L, Q - numred)
             eta     <- if(storage) eta[,nonred, drop=FALSE] else eta
             phi     <- phi[,nonred, drop=FALSE]
             delta   <- delta[nonred]
@@ -171,7 +172,7 @@
                          post.mu  = tryCatch(stats::setNames(post.mu,  varnames),            error=function(e) post.mu),
                          post.psi = tryCatch(stats::setNames(post.psi, varnames),            error=function(e) post.psi),
                          ll.store = ll.store,
-                         Q.store  = matrix(Q.store, nrow=1),
+                         Q.store  = matrix(Q.store, nrow=1L),
                          time     = init.time)
     attr(returns, "Q.big") <- Q.large
     return(returns)

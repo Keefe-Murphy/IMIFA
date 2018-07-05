@@ -46,6 +46,8 @@ bnpControl(learn.alpha = TRUE,
 \item{\code{heat}}{The initial adaptation intensity/step-size, such that larger values lead to larger updates. Must be strictly greater than zero. Defaults to 1 if not supplied but other elements of \code{tune.zeta} are.}
 \item{\code{lambda}}{Iteration rescaling parameter which controls the speed at which adaptation diminishes, such that lower values cause the contribution of later iterations to diminish more slowly. Must lie in the interval (0.5, 1]. Defaults to 1 if not supplied but other elements of \code{tune.zeta} are.}
 \item{\code{target}}{The target acceptance rate. Must lie in the interval [0, 1]. Defaults to 0.441, which is optimum for univariate targets, if not supplied but other elements of \code{tune.zeta} are.}
+\item{\code{start.zeta}}{The iteration at which diminishing adaptation begins. Defaults to \code{100}.}
+\item{\code{stop.zeta}}{The iteration at which diminishing adaptation is to stop completely. Defaults to \code{Inf}, such that diminishing adaptation is never explicitly made to stop. Must be greater than \code{start.zeta}.}
 }
  \code{tune.zeta} arguments are only relevant when \code{learn.alpha} is \code{TRUE}, and either the \code{discount} remains fixed at a non-zero value, or when \code{learn.d} is \code{TRUE} and \code{kappa < 1}. Since Gibbs steps are invoked for updating \code{alpha} when \code{discount == 0}, adaption occurs according to a running count of the number of iterations with non-zero sampled \code{discount} values. If diminishing adaptation is invoked, the posterior mean \code{zeta} will be stored. Since caution is advised when employing adaptation, note that acceptance rates of between 10-50\% are generally considered adequate.}
 
@@ -66,16 +68,14 @@ Certain supplied arguments will be subject to further checks within \code{\link{
 By default, a Dirichlet Process prior is specified. A Pitman-Yor prior can be easily invoked when the \code{discount} is fixed at a non-zero value or \code{learn.d=TRUE}. The normalized stable process can also be specified as a prior distribution, as a special case of the Pitman-Yor process, when \code{alpha} remains fixed at \code{0} and \code{learn.alpha=FALSE} (provided the \code{discount} is fixed at a non-zero value or \code{learn.d=TRUE}).
 }
 \examples{
-bnpControl(ind.slice=FALSE, alpha.hyper=c(3, 1), learn.d=TRUE)
+bnpctrl <- bnpControl(learn.d=TRUE, ind.slice=FALSE, alpha.hyper=c(3, 1))
 
 # data(olive)
-# sim <- mcmc_IMIFA(olive, "IMIFA", n.iters=5000,
-#                   BNP=bnpControl(ind.slice=FALSE,
-#                   alpha.hyper=c(3, 1), learn.d=TRUE))
+# sim   <- mcmc_IMIFA(olive, "IMIFA", n.iters=5000, BNP=bnpctrl)
 
 # Alternatively specify these arguments directly
-# sim <- mcmc_IMIFA(olive, "IMIFA", n.iters=5000,
-#                   ind.slice=FALSE, alpha.hyper=c(3, 1), learn.d=TRUE)
+# sim   <- mcmc_IMIFA(olive, "IMIFA", n.iters=5000, learn.d=TRUE,
+#                     ind.slice=FALSE, alpha.hyper=c(3, 1))
 }
 \references{
 Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.

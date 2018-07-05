@@ -36,7 +36,7 @@ olive_scaled <- scale(olive2, center=TRUE, scale=TRUE)
 
 # In the scaled example, the mean uniquenesses (given by rates/(shape - 1)),
 # can be interpreted as the proportion of the variance that is idiosyncratic
-(prop  <- rates/(3 - 1) * 100)
+(prop  <- rates/(3 - 1))
 }
 \references{
 Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.

@@ -16,8 +16,10 @@ get_IMIFA_results(sims = NULL,
                   Q.meth = c("mode", "median"),
                   conf.level = 0.95,
                   error.metrics = TRUE,
+                  vari.rot = FALSE,
                   z.avgsim = TRUE,
-                  zlabels = NULL)
+                  zlabels = NULL,
+                  ...)
 
 \method{print}{Results_IMIFA}(x,
       ...)
@@ -56,6 +58,8 @@ Regardless of the value of \code{error.metrics}, the metrics will still be compu
 
 For models which achieve clustering, the overall estimated covariance matrix is constructed from the cluster-specific estimated covariance matrices.}
 
+\item{vari.rot}{Logical indicating whether the loadings matrix/matrices template(s) should be \code{\link[stats]{varimax}} rotated first, prior to the Procrustes rotation steps. Defaults to \code{FALSE}. Not necessary at all for clustering purposes, or inference on the covariance matrix, but useful if interpretable inferences on the loadings matrix/matrices are desired. Arguments to \code{\link[stats]{varimax}} can be passed via the \code{...} construct, but note that the argument \code{normalize} here defaults to \code{FALSE}.}
+
 \item{z.avgsim}{Logical indicating whether the clustering should also be summarised with a call to \code{\link{Zsimilarity}} by the clustering with minimum mean squared error to the similarity matrix obtained by averaging the stored adjacency matrices, in addition to the MAP estimate.
 
 Note that the MAP clustering is computed \emph{conditional} on the estimate of the number of clusters (whether that be the modal estimate or the estimate according to \code{criterion}) and other parameters are extracted conditional on this estimate of \code{G}: however, in constrast, the number of distinct clusters in the summarised labels obtained by specifying \code{z.avgsim=TRUE} may not necessarily coincide with the MAP estimate of \code{G}, but it may provide a useful alternative summary of the partitions explored during the chain, and the user is free to call \code{\link{get_IMIFA_results}} again with the new suggested \code{G} value.
@@ -64,7 +68,7 @@ Please be warned that this only defaults to \code{TRUE} when the \code{\link[mcc
 
 \item{zlabels}{For any method that performs clustering, the true labels can be supplied if they are known in order to compute clustering performance metrics. This also has the effect of ordering the MAP labels (and thus the ordering of cluster-specific parameters) to most closely correspond to the true labels if supplied.}
 
-\item{x, object, ...}{Arguments required for the \code{print.Results_IMIFA} and \code{summary.Results_IMIFA} functions: \code{x} and \code{object} are objects of class \code{"Results_IMIFA"} resulting from a call to \code{\link{get_IMIFA_results}}, while \code{...} gathers additional arguments to those functions.}
+\item{x, object, ...}{Arguments required for the \code{print.Results_IMIFA} and \code{summary.Results_IMIFA} functions: \code{x} and \code{object} are objects of class \code{"Results_IMIFA"} resulting from a call to \code{\link{get_IMIFA_results}}, while \code{...} gathers additional arguments to those functions. The \code{...} construct also allows arguments to \code{\link[stats]{varimax}} to be passed to \code{\link{get_IMIFA_results}} itself, when \code{isTRUE(vari.rot)}.}
 }
 \value{
 An object of class "\code{Results_IMIFA}" to be passed to \code{\link{plot.Results_IMIFA}} for visualising results. Dedicated \code{print} and \code{summary} functions also exist for objects of this class. The object, say \code{x}, is a list of lists, the most important components of which are:
@@ -84,7 +88,7 @@ The number of iterations retained for posterior summaries of the loadings may va
 For the infinite factor methods, iterations where the maximum number of factors was greater than or equal to the maximum of the estimated cluster-specific factors are retained for posterior summaries of the scores, in order to preserve the estimated dimension of the scores matrices.}
 \item{\code{Uniquenesses}}{Posterior summaries for the uniquenesses, after conditioning on \code{G}.}
 
-The objects \code{Means}, \code{Loadings}, \code{Scores} and \code{Uniquenesses} (if stored when calling \code{\link{mcmc_IMIFA}}!) also contain, as well as the posterior summaries, the entire chain of valid samples of each, as well as, for convenience, the last valid samples of each (after conditioning on the modal \code{G} and \code{Q} values, and accounting for label switching and Procrustes rotation).
+The objects \code{Means}, \code{Loadings}, \code{Scores} and \code{Uniquenesses} (if stored when calling \code{\link{mcmc_IMIFA}}!) also contain, as well as the posterior summaries, the entire chain of valid samples of each, as well as, for convenience, the last valid samples of each (after conditioning on the modal \code{G} and \code{Q} values, and accounting for label switching, and rotational invariance via Procrustes rotation).
 }
 \description{
 This function post-processes simulations generated by \code{\link{mcmc_IMIFA}} for any of the IMIFA family of models. This includes accounting for label switching, and accounting for rotational invariance via Procrustean methods. It can be re-ran at little computational cost in order to extract different models explored by the sampler used for \code{sims}, without having to re-run the model itself. New results objects using different numbers of clusters and different numbers of factors (if visited by the model in question), or using different model selection criteria (if necessary) can be generated with ease. Posterior predictive checking of the appropriateness of the fitted model is also facilitated.

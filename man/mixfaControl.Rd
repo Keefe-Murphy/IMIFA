@@ -54,9 +54,9 @@ The first letter \strong{U} here corresponds to constraints on loadings (not yet
 
 \item{mu.zero}{The mean of the prior distribution for the mean parameter. Either a scalar of a vector of appropriate dimension. Defaults to the sample mean of the data.}
 
-\item{sigma.mu}{The covariance of the prior distribution for the cluster mean parameters. Always assumed to be a diagonal matrix. Can be a scalar times the identity or a vector of appropriate dimension. If supplied as a matrix, only the diagonal elements will be extracted. Defaults to the diagonal entries of the sample covariance matrix.}
+\item{sigma.mu}{The covariance of the prior distribution for the cluster mean parameters. Always assumed to be a diagonal matrix. Can be a scalar times the identity or a vector of appropriate dimension. If supplied as a matrix, only the diagonal elements will be extracted. Defaults to the diagonal entries of the sample covariance matrix: for unit-scaled data this is simply the identity.}
 
-\item{prec.mu}{A scalar controlling the degree of flatness of the prior for the cluster means by scaling \code{sigma.mu} (i.e. multiplying every element of \code{sigma.mu} by \code{1/prec.mu}). Lower values lead to a more diffuse prior. Defaults to \code{0.1}, such that the prior is relatively non-informative by default. Of course, \code{prec.mu=1} nullifies any effect of this argument. The user can supply a scaled \code{sigma.mu} directly, but this argument is especially useful when the diagonal default is used for \code{sigma.mu}. When the number of observations is small, particular when it's less than the number of variables, consider specifying a more informative prior on the cluster means by increasing \code{prec.mu} from its default value.}
+\item{prec.mu}{A scalar controlling the degree of flatness of the prior for the cluster means by scaling \code{sigma.mu} (i.e. multiplying every element of \code{sigma.mu} by \code{1/prec.mu}). Lower values lead to a more diffuse prior. Defaults to \code{0.1}, such that the prior is relatively non-informative by default. Of course, \code{prec.mu=1} nullifies any effect of this argument. The user can supply a scaled \code{sigma.mu} directly, but this argument is especially useful when the diagonal default is used for \code{sigma.mu}. When the number of observations is small, particularly when it's less than the number of variables, consider specifying a more informative prior on the cluster means by increasing \code{prec.mu} from its default value.}
 
 \item{sigma.l}{A scalar controlling the diagonal covariance of the prior distribution for the loadings. Defaults to 1, i.e. the identity. Only relevant for the finite factor methods.}
 
@@ -87,14 +87,14 @@ A named list in which the names are the names of the arguments and the values ar
 Supplies a list of arguments for use in \code{\link{mcmc_IMIFA}} pertaining to \emph{ALL} methods in the \code{IMIFA} family: eg. MCMC settings, cluster initialisation, generic hyperparameters for factor-analytic mixtures, etc.
 }
 \examples{
-mfctrl <- mixfaControl(n.iters=200, scaling="pareto",
-                      uni.type="constrained", prec.mu=1E-03)
+mfctrl <- mixfaControl(n.iters=200, prec.mu=1E-03,
+                       scaling="pareto", uni.type="constrained")
 
 # data(olive)
 # sim  <- mcmc_IMIFA(olive, "IMIFA", mixFA=mfctrl)
 
 # Alternatively specify these arguments directly
-# sim  <- mcmc_IMIFA(olive, "IMIFA", n.iters=20000, prec.mu=1E-03,
+# sim  <- mcmc_IMIFA(olive, "IMIFA", n.iters=200, prec.mu=1E-03,
 #                    scaling="pareto", uni.type="constrained")
 }
 \references{

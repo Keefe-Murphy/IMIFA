@@ -40,12 +40,12 @@
 
     mu.sigma     <- 1/sigma.mu
     mu.zero      <- as.numeric(mu.zero)
-    uni.type     <- switch(uni.type,   unconstrained=,               constrained="constrained", "single")
-    .sim_psi_inv <- switch(uni.type,   constrained=.sim_psi_u1,      single=.sim_psi_c1)
-    .sim_psi_ip  <- switch(uni.prior,  unconstrained=.sim_psi_ipu,   isotropic=.sim_psi_ipc)
-    psi.beta     <- switch(uni.prior,  isotropic=psi.beta[which.max(.ndeci(psi.beta))], psi.beta)
-    uni.shape    <- switch(uni.type,   constrained=N/2 + psi.alpha,  single=(N * P)/2 + psi.alpha)
-    V            <- switch(uni.type,   constrained=P,                single=1)
+    uni.type     <- switch(EXPR=uni.type,  unconstrained=,               constrained="constrained", "single")
+    .sim_psi_inv <- switch(EXPR=uni.type,  constrained=.sim_psi_u1,      single=.sim_psi_c1)
+    .sim_psi_ip  <- switch(EXPR=uni.prior, unconstrained=.sim_psi_ipu,   isotropic=.sim_psi_ipc)
+    psi.beta     <- switch(EXPR=uni.prior, isotropic=psi.beta[which.max(.ndeci(psi.beta))], psi.beta)
+    uni.shape    <- switch(EXPR=uni.type,  constrained=N/2 + psi.alpha,  single=(N * P)/2 + psi.alpha)
+    V            <- switch(EXPR=uni.type,  constrained=P,                single=1)
     eta          <- .sim_eta_p(Q=Q, N=N)
     lmat         <- matrix(.sim_load_p(Q=Q, P=P, sigma.l=sigma.l), nrow=P, ncol=Q)
     psi.inv      <- .sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
@@ -58,28 +58,28 @@
       }
     } else {
       psi.tmp    <- psi.inv
-      psi.inv[]  <- 1/switch(uni.type, constrained=.col_vars(data, suma=mu), exp(mean(log(.col_vars(data, suma=mu)))))
+      psi.inv[]  <- 1/switch(EXPR=uni.type, constrained=.col_vars(data, suma=mu), .geom_mean(.col_vars(data, suma=mu)))
       inf.ind    <- is.infinite(psi.inv)
       psi.inv[inf.ind]     <- psi.tmp[inf.ind]
     }
     l.sigma      <- diag(1/sigma.l, Q)
     sum.data     <- mu * N
     if(burnin     < 1)    {
-      if(sw["mu.sw"])         mu.store[,1]              <- mu
-      if(sw["s.sw"])          eta.store[,,1]            <- eta
-      if(sw["l.sw"])          load.store[,,1]           <- lmat
-      if(sw["psi.sw"])        psi.store[,1]             <- 1/psi.inv
+      if(sw["mu.sw"])         mu.store[,1L]             <- mu
+      if(sw["s.sw"])          eta.store[,,1L]           <- eta
+      if(sw["l.sw"])          load.store[,,1L]          <- lmat
+      if(sw["psi.sw"])        psi.store[,1L]            <- 1/psi.inv
       ll.store[1]          <- sum(dmvn(X=data, mu=mu, sigma=tcrossprod(lmat) + diag(1/psi.inv), log=TRUE))
     }
     init.time    <- proc.time() - start.time
 
   # Iterate
-    for(iter in seq_len(total)[-1]) {
+    for(iter in seq_len(total)[-1L]) {
       if(verbose && iter    < burnin) utils::setTxtProgressBar(pb, iter)
       storage    <- is.element(iter,  iters)
 
     # Scores & Loadings
-      c.data     <- sweep(data, 2, mu, FUN="-", check.margin=FALSE)
+      c.data     <- sweep(data, 2L, mu, FUN="-", check.margin=FALSE)
       if(Q0) {
         eta      <- .sim_score(N=N, Q=Q, lmat=lmat, psi.inv=psi.inv, c.data=c.data, Q1=Q1)
         lmat     <- matrix(vapply(Pseq, function(j) .sim_load(l.sigma=l.sigma, Q=Q, c.data=c.data[,j], Q1=Q1,
@@ -115,6 +115,6 @@
                       post.psi = tryCatch(stats::setNames(post.psi, varnames),            error=function(e) post.psi),
                       ll.store = ll.store,
                       time     = init.time)
-    attr(returns, "K")        <- PGMM_dfree(Q=Q, P=P, method=switch(uni.type, constrained="UCU", single="UCC"))
+    attr(returns, "K")        <- PGMM_dfree(Q=Q, P=P, method=switch(EXPR=uni.type, constrained="UCU", single="UCC"))
     return(returns)
   }

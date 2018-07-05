@@ -47,11 +47,11 @@
     mu.sigma       <- 1/sigma.mu
     sig.mu.sqrt    <- sqrt(sigma.mu)
     if(all(mu.zero  == 0)) {
-      mu.zero      <- matrix(0L, nrow=1, ncol=G)
+      mu.zero      <- matrix(0L, nrow=1L, ncol=G)
       cluster$l.switch[1]  <- FALSE
     }
     if(length(mu.zero)  == 1) {
-      mu.zero      <- matrix(mu.zero, nrow=1, ncol=G)
+      mu.zero      <- matrix(mu.zero, nrow=1L, ncol=G)
     }
     z              <- cluster$z
     z.temp         <- factor(z, levels=Gseq)
@@ -61,26 +61,26 @@
     log.pis        <- log(pi.prop)
     pi.alpha       <- cluster$pi.alpha
     one.uni        <- is.element(uni.type, c("constrained", "single"))
-    .sim_psi_inv   <- switch(uni.type,   unconstrained=.sim_psi_uu,   isotropic=.sim_psi_uc,
-                                         constrained=.sim_psi_cu,     single=.sim_psi_cc)
-    .sim_psi_ip    <- switch(uni.prior,  unconstrained=.sim_psi_ipu,  isotropic=.sim_psi_ipc)
+    .sim_psi_inv   <- switch(EXPR=uni.type,  unconstrained=.sim_psi_uu,   isotropic=.sim_psi_uc,
+                                             constrained=.sim_psi_cu,     single=.sim_psi_cc)
+    .sim_psi_ip    <- switch(EXPR=uni.prior, unconstrained=.sim_psi_ipu,  isotropic=.sim_psi_ipc)
     if(isTRUE(one.uni))       {
-      uni.shape    <- switch(uni.type,   constrained=N/2 + psi.alpha, single=(N * P)/2 + psi.alpha)
-      V            <- switch(uni.type,   constrained=P, single=1)
+      uni.shape    <- switch(EXPR=uni.type,  constrained=N/2 + psi.alpha, single=(N * P)/2 + psi.alpha)
+      V            <- switch(EXPR=uni.type,  constrained=P, single=1)
     }
     if(uni.prior   == "isotropic")   {
       psi.beta     <- matrix(vapply(Gseq, function(g) psi.beta[which.max(.ndeci(psi.beta[,g])),g], numeric(1L)), nrow=1, ncol=G)
     } else if(length(psi.beta) == 1) {
-      psi.beta     <- matrix(psi.beta, nrow=1, ncol=G)
+      psi.beta     <- matrix(psi.beta, nrow=1L, ncol=G)
     }
-    mu0g           <- cluster$l.switch[1]
-    psi0g          <- cluster$l.switch[2]
+    mu0g           <- cluster$l.switch[1L]
+    psi0g          <- cluster$l.switch[2L]
     label.switch   <- any(cluster$l.switch)
     eta            <- .sim_eta_p(N=N, Q=Q)
     lmat           <- if(Q0) array(vapply(Gseq, function(g) .sim_load_p(Q=Q, P=P, sigma.l=sigma.l), numeric(P * Q)), dim=c(P, Q, G)) else array(0, dim=c(P, 0, G))
     psi.inv        <- vapply(Gseq, function(g) .sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta[,g]), numeric(P))
-    psi.inv        <- if(uni)     t(psi.inv)   else psi.inv
-    psi.beta       <- if(one.uni) psi.beta[,1] else psi.beta
+    psi.inv        <- if(uni)     t(psi.inv)    else psi.inv
+    psi.beta       <- if(one.uni) psi.beta[,1L] else psi.beta
     if(Q0     && Q  < min(N - 1, Ledermann(P))) {
       fact.ind     <- nn   <= P
       for(g in which(!fact.ind)) {
@@ -94,7 +94,7 @@
     } else     {
       psi.tmp      <- psi.inv
       if(isTRUE(one.uni)) {
-        psi.inv[,] <- 1/switch(uni.type, constrained=.col_vars(data), exp(mean(log(.col_vars(data)))))
+        psi.inv[,] <- 1/switch(EXPR=uni.type, constrained=.col_vars(data), .geom_mean(.col_vars(data)))
       } else   {
         tmp.psi    <- ((nn[nn0] - 1)/(rowsum(data^2,  z) - rowsum(data, z)^2/nn[nn0]))
         psi.inv[,nn > 1]   <- tmp.psi[!is.nan(tmp.psi)]
@@ -102,14 +102,14 @@
       inf.ind      <- is.infinite(psi.inv) | is.nan(psi.inv)
       psi.inv[inf.ind]     <- psi.tmp[inf.ind]
     }
-    psi.inv[psi.inv == 0]  <- colMaxs(psi.inv[,which(psi.inv == 0, arr.ind=TRUE)[,2], drop=FALSE], value=TRUE)
+    psi.inv[psi.inv == 0]  <- colMaxs(psi.inv[,which(psi.inv == 0, arr.ind=TRUE)[,2L], drop=FALSE], value=TRUE)
     l.sigma        <- diag(1/sigma.l, Q)
     if(burnin       < 1)  {
-      if(sw["mu.sw"])  mu.store[,,1]    <- mu
-      if(sw["s.sw"])   eta.store[,,1]   <- eta
-      if(sw["l.sw"])   load.store[,,,1] <- lmat
-      if(sw["psi.sw"]) psi.store[,,1]   <- 1/psi.inv
-      if(sw["pi.sw"])  pi.store[,1]     <- pi.prop
+      if(sw["mu.sw"])  mu.store[,,1L]    <- mu
+      if(sw["s.sw"])   eta.store[,,1L]   <- eta
+      if(sw["l.sw"])   load.store[,,,1L] <- lmat
+      if(sw["psi.sw"]) psi.store[,,1L]   <- 1/psi.inv
+      if(sw["pi.sw"])  pi.store[,1L]     <- pi.prop
       z.store[1,]          <- z
       sigma                <- if(uni) lapply(Gseq, function(g) as.matrix(1/psi.inv[,g] + if(Q0) tcrossprod(as.matrix(lmat[,,g])) else 0)) else lapply(Gseq, function(g) tcrossprod(lmat[,,g]) + diag(1/psi.inv[,g]))
       log.probs            <- if(uni) vapply(Gseq, function(g) stats::dnorm(data, mu[,g], sq_mat(sigma[[g]]), log=TRUE) + log(pi.prop[g]), numeric(N)) else vapply(Gseq, function(g) { sigma <- if(Q0) sigma[[g]] else sq_mat(sigma[[g]]); dmvn(data, mu[,g], is.posi_def(sigma, make=TRUE)$X.new, log=TRUE, isChol=!Q0) + log(pi.prop[g]) }, numeric(N))
@@ -118,7 +118,7 @@
     init.time      <- proc.time() - start.time
 
   # Iterate
-    for(iter in seq_len(total)[-1]) {
+    for(iter in seq_len(total)[-1L]) {
       if(verbose   && iter  < burnin)  utils::setTxtProgressBar(pb, iter)
       storage      <- is.element(iter, iters)
 
@@ -143,7 +143,7 @@
       dat.g        <- lapply(Gseq, function(g) data[z == g,, drop=FALSE])
 
     # Scores & Loadings
-      c.data       <- lapply(Gseq, function(g) sweep(dat.g[[g]], 2, mu[,g], FUN="-", check.margin=FALSE))
+      c.data       <- lapply(Gseq, function(g) sweep(dat.g[[g]], 2L, mu[,g], FUN="-", check.margin=FALSE))
       if(Q0) {
         eta.tmp    <- lapply(Gseq, function(g) if(nn0[g]) .sim_score(N=nn[g], lmat=lmat[,,g], Q=Q, c.data=c.data[[g]], psi.inv=psi.inv[,g], Q1=Q1) else .empty_mat(nc=Q))
         EtE        <- lapply(Gseq, function(g) if(nn0[g]) crossprod(eta.tmp[[g]]))
@@ -216,6 +216,6 @@
                            z.store  = z.store,
                            ll.store = ll.store,
                            time     = init.time)
-    attr(returns, "K")  <- PGMM_dfree(Q=Q, P=P, G=G, method=switch(uni.type, unconstrained="UUU", isotropic="UUC", constrained="UCU", single="UCC"), equal.pro=equal.pro)
+    attr(returns, "K")  <- PGMM_dfree(Q=Q, P=P, G=G, method=switch(EXPR=uni.type, unconstrained="UUU", isotropic="UUC", constrained="UCU", single="UCC"), equal.pro=equal.pro)
     return(returns)
   }

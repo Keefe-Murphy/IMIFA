@@ -188,7 +188,7 @@
 
     .sim_alpha_m <- function(alpha, discount, alpha.shape, alpha.rate, N, G, zeta) {
       inter      <- c(max( - discount, alpha    - zeta), alpha + zeta)
-      propa      <- stats::runif(1,    inter[1],  inter[2])
+      propa      <- stats::runif(1,    inter[1L], inter[2L])
       cprob      <- .log_palpha(alpha, discount,  alpha.shape,   alpha.rate, N, G)
       pprob      <- .log_palpha(propa, discount,  alpha.shape,   alpha.rate, N, G)
       propinter  <- c(max( - discount, propa    - zeta), propa + zeta)
@@ -279,7 +279,7 @@
 
   # Cluster Labels
     .sim_z_p     <- function(N, prob.z) {
-        which(stats::rmultinom(N, size=1, prob=prob.z) != 0, arr.ind=TRUE)[,1]
+        sample(seq_along(prob.z), size=N, replace=TRUE, prob=prob.z)
     }
 
 # Other Functions
@@ -322,7 +322,7 @@
 #'
 #' # In the scaled example, the mean uniquenesses (given by rates/(shape - 1)),
 #' # can be interpreted as the proportion of the variance that is idiosyncratic
-#' (prop  <- rates/(3 - 1) * 100)
+#' (prop  <- rates/(3 - 1))
     psi_hyper    <- function(shape, covar, type=c("unconstrained", "isotropic")) {
       if(!all(is.character(type)))         stop("'type' must be a character vector of length 1", call.=FALSE)
       if(!all(is.posi_def(covar, semi=TRUE),
@@ -337,10 +337,10 @@
         covsvd   <- svd(covar)
         posi     <- covsvd$d > max(sqrt(.Machine$double.eps) * covsvd$d[1L], 0)
         inv.cov  <- if(all(posi)) covsvd$v %*% (t(covsvd$u)/covsvd$d) else if(any(posi))
-                    covsvd$v[,posi, drop=FALSE] %*% (t(covsvd$u[,posi, drop=FALSE])/covsvd$d[posi]) else array(0, dim(covar)[2L:1L])
+                    covsvd$v[,posi, drop=FALSE] %*% (t(covsvd$u[,posi, drop=FALSE])/covsvd$d[posi]) else array(0L, dim(covar)[2L:1L])
       }
-        unname((shape - 1)/switch(match.arg(type), unconstrained=diag(inv.cov),
-                                  isotropic=rep(exp(mean(log(diag(inv.cov)))), ncol(covar))))
+        unname((shape - 1)/switch(EXPR=match.arg(type), unconstrained=diag(inv.cov),
+                                  isotropic=rep(.geom_mean(diag(inv.cov)), ncol(covar))))
     }
 
   # Alpha/Discount Shifted Gamma Hyperparameters
@@ -375,14 +375,14 @@
       if(!all(is.character(param)))        stop("'param' must be a character vector of length 1", call.=FALSE)
       param      <- match.arg(param)
 
-      rate       <- switch(param, rate=rate, 1/rate)
+      rate       <- switch(EXPR=param, rate=rate, 1/rate)
       exp        <- shape/rate
       if(shift   >= exp)                   warning("This expected value is not achievable with the supplied 'shift'\n", call.=FALSE, immediate.=TRUE)
       var        <- exp/rate
       exp        <- max(exp - shift,   0)
       rate       <- exp/var
       shape      <- rate    * exp
-        return(list(shape   = shape, rate = switch(param, rate=rate, 1/rate)))
+        return(list(shape   = shape, rate = switch(EXPR=param, rate=rate, 1/rate)))
     }
 
   # Check Shrinkage Hyperparemeters
@@ -485,7 +485,7 @@
         exp.seq  <- lapply(ML, function(i) exp.Q1[i] * exp.Qk[i]^Qseq)
         check    <- !vapply(exp.seq, is.unsorted, logical(1L))
       }
-      exp.seq    <- if(length(exp.seq) == 1) exp.seq[[1]] else exp.seq
+      exp.seq    <- if(length(exp.seq) == 1) exp.seq[[1L]] else exp.seq
       res        <- list(expectation = exp.seq, valid = if(Q < 2) TRUE else check)
       attr(res, "Warning")    <- WX
         return(res)
@@ -535,15 +535,15 @@
          !is.logical(equal.pro))           stop("'equal.pro' must be a single logical indicator", call.=FALSE)
       meth       <- unlist(strsplit(match.arg(method), ""))
       lambda     <- P * Q   - 0.5 * Q * (Q - 1)
-      lambda     <- switch(meth[1], C = lambda,   U = G  * lambda)
+      lambda     <- switch(EXPR=meth[1L], C = lambda,  U = G  * lambda)
       if(length(meth) < 4)  {
-        psi      <- switch(meth[2], C = 1,        U = G)
-        psi      <- switch(meth[3], C = 1,        U = P) * psi
+        psi      <- switch(EXPR=meth[2L], C = 1,       U = G)
+        psi      <- switch(EXPR=meth[3L], C = 1,       U = P) * psi
       } else      {
-        epgmm    <- paste(meth[-1], sep="", collapse="")
-        psi      <- switch(epgmm, CUU = G  + P  - 1, UCU = 1 + G * (P - 1))
+        epgmm    <- paste(meth[-1L], sep="", collapse="")
+        psi      <- switch(EXPR=epgmm, CUU  = G  + P - 1, UCU = 1  + G * (P - 1))
       }
-        as.integer(ifelse(equal.pro, 0, G  - 1) + G * P  + lambda + psi)
+        as.integer(ifelse(equal.pro, 0L, G  - 1) + G * P  + lambda + psi)
     }
 
   # Label Switching
@@ -571,7 +571,7 @@
         z.perm   <- stats::setNames(.as_numchar(rownames(tab.tmp)), .as_numchar(rownames(tab.tmp)))
       } else {
         z.perm   <- tryCatch(suppressWarnings(.match_classes(tab.tmp, method="exact",  verbose=FALSE)),
-          error=function(e) suppressWarnings(.match_classes(tab.tmp, method="greedy", verbose=FALSE)))
+          error=function(e) suppressWarnings(.match_classes(tab.tmp,  method="greedy", verbose=FALSE)))
         z.perm   <- stats::setNames(.as_numchar(z.perm), names(z.perm))
       }
       if(length(Gs) > length(z.perm)) {
@@ -680,8 +680,8 @@
         nit      <- length(z)
         Ns       <- vapply(z, nrow, numeric(1L))
         Gs       <- vapply(z, ncol, numeric(1L))
-        N        <- Ns[1]
-        G        <- Gs[1]
+        N        <- Ns[1L]
+        G        <- Gs[1L]
         if(any(Ns      != N)     ||
            any(Gs      != G)     ||
            N      < G)                     stop("All matrices in the list 'z' must have the same dimensions, with more columns than rows", call.=FALSE)
@@ -705,21 +705,21 @@
       for(n      in seq_len(nit)) {
         for(k    in seq_len(G))   {
           for(i  in seq_len(N))   {
-            PCM[rX[[n]][i,1], rX[[n]][i,k]] <- PCM[rX[[n]][i,1], rX[[n]][i,k]] + tX[[n]][i,k]
+            PCM[rX[[n]][i,1], rX[[n]][i,k]] <- PCM[rX[[n]][i,1L], rX[[n]][i,k]] + tX[[n]][i,k]
            }
         }
       }
       PCM        <- PCM/nit
-        if(scale)   sweep(PCM, 1, rowSums2(PCM), FUN="/") else PCM
+        if(scale)   sweep(PCM, 1L, rowSums2(PCM), FUN="/", check.margin=FALSE) else PCM
     }
 
   # Move 1
-    .lab_move1   <- function(nn.ind, pi.prop, nn)   {
+    .lab_move1   <- function(nn.ind, pi.prop, nn) {
       sw         <- sample(nn.ind, 2L)
       log.pis    <- log(pi.prop[sw])
       nns        <- nn[sw]
-      a.prob     <- (nns[1] - nns[2]) * (log.pis[1] - log.pis[2])
-        return(list(rate1   = a.prob >= 0 || - stats::rexp(1) < a.prob, sw = sw))
+      a.prob     <- (nns[1L] - nns[2L]) * (log.pis[1L] - log.pis[2L])
+        return(list(rate1    = a.prob  >= 0 || - stats::rexp(1) < a.prob, sw = sw))
     }
 
   # Move 2
@@ -727,14 +727,14 @@
       sw         <- sample(G, 1L, prob=c(rep(1, G - 2), 0.5, 0.5))
       sw         <- if(is.element(sw, c(G, G - 1))) c(G - 1, G) else c(sw, sw + 1)
       nns        <- nn[sw]
-      if(nns[1]  == 0)     {
-        return(list(rate2  = TRUE,
+      if(nns[1]  == 0)      {
+        return(list(rate2   = TRUE,
                sw = sw))
       } else      {
-        log.vs   <- log1p( - Vs[sw])
-        a.prob   <- nns[2] * log.vs[1]
-        a.prob   <- nns[1] * log.vs[2]       - ifelse(is.nan(a.prob), 0,  a.prob)
-        return(list(rate2 = a.prob >= 0   || - stats::rexp(1) < a.prob, sw = sw))
+        log.vs   <- log1p(  - Vs[sw])
+        a.prob   <- nns[2L] * log.vs[1L]
+        a.prob   <- nns[1L] * log.vs[2L]       - ifelse(is.nan(a.prob), 0,  a.prob)
+        return(list(rate2   = a.prob >= 0   || - stats::rexp(1) < a.prob, sw = sw))
       }
     }
 
@@ -790,7 +790,7 @@
       check      <- all(if(isTRUE(semi)) test >= 0 else test > 0)
       if(isTRUE(make))  {
         evec     <- eigs$vectors
-        return(list(check = check, X.new = if(check) x else x + evec %*% tcrossprod(diag(pmax.int(2 * tol - eval, ifelse(isTRUE(semi), 0, .Machine$double.eps)), d), evec)))
+        return(list(check = check, X.new = if(check) x else x + evec %*% tcrossprod(diag(pmax.int(2L * tol - eval, ifelse(isTRUE(semi), 0L, .Machine$double.eps)), d), evec)))
       } else check
     }
 
@@ -904,8 +904,8 @@
            c(1, range.G, V)))) {
           if(length(unique(len)) > 1    &&
              !switch0g)                    stop(paste0(sw.name, " must be TRUE if the dimension/length of ", obj.name, " varies"), call.=FALSE)
-          if(all(len == range.G)) obj0g <- if(switch0g) lapply(rGseq, function(g) matrix(obj0g[[g]], nrow=1))  else stop(paste0(sw.name, " must be TRUE if the dimension of ", obj.name, " depends on G"), call.=FALSE)
-          if(all(len == V))       obj0g <- if(V == 1)   lapply(rGseq, function(g) rep(obj0g[[g]], range.G[g])) else lapply(rGseq, function(g) matrix(obj0g[[g]], nrow=V, ncol=range.G[g]))
+          if(all(len == range.G)) obj0g <- if(switch0g) lapply(rGseq, function(g) matrix(obj0g[[g]], nrow=1L))  else stop(paste0(sw.name, " must be TRUE if the dimension of ", obj.name, " depends on G"), call.=FALSE)
+          if(all(len == V))       obj0g <- if(V == 1)   lapply(rGseq, function(g) rep(obj0g[[g]], range.G[g]))  else lapply(rGseq, function(g) matrix(obj0g[[g]], nrow=V, ncol=range.G[g]))
         } else if(!all(vapply(rGseq, function(g, dimG=as.integer(dim(obj0g[[g]]))) is.matrix(obj0g[[g]]) && any(identical(dimG, as.integer(c(1, range.G[g]))), identical(dimG, as.integer(c(V, range.G[g])))), logical(1L)))) {
                                            stop(paste0(ifelse(length(rGseq) > 1, "Each element of ", ""), obj.name, " must be of length 1", ifelse(P.dim, paste0(", P=", V, ifelse(length(rGseq) == 1, paste0(", or G=",  range.G),  ", or its corresponding range.G"),
                                                 ", or a matrix with P rows and ", ifelse(length(rGseq) == 1, "G columns", "its corresponding range.G number of columns")),  ifelse(switch0g,  ifelse(length(rGseq) == 1, paste0( " or G=",  range.G),  " or its corresponding range.G"), ""))), call.=FALSE)
@@ -1049,7 +1049,7 @@
       if(is.element(meth, c("FA", "OMFA", "IMFA"))) {
         msg      <- Qmsg
       } else {
-        msg      <- switch(meth, MFA=paste0(Gmsg, " and", Qmsg), MIFA=Gmsg)
+        msg      <- switch(EXPR=meth, MFA=paste0(Gmsg, " and", Qmsg), MIFA=Gmsg)
       }
       cat(paste0(meth, " simulations for '", name, "' dataset", msg, " to be passed to get_IMIFA_results(...)\n"))
         invisible()
@@ -1083,7 +1083,7 @@
       if(is.element(meth, c("FA", "OMFA", "IMFA"))) {
         msg      <- Qmsg
       } else {
-        msg      <- switch(meth, MFA=paste0(Gmsg, " and", Qmsg), MIFA=Gmsg)
+        msg      <- switch(EXPR=meth, MFA=paste0(Gmsg, " and", Qmsg), MIFA=Gmsg)
       }
       summ       <- list(call = call, details = paste0(meth, " simulations for '", name, "' dataset", msg, " to be passed to get_IMIFA_results(...)\n"))
       class(summ)        <- "summary_IMIFA"
@@ -1172,8 +1172,8 @@
 #' @param psi.alpha The shape of the inverse gamma prior on the uniquenesses. Defaults to 2.5. Must be greater than 1 if \code{psi.beta} is \emph{not} supplied. Otherwise be warned that values less than or equal to 1 may not bound uniquenesses sufficiently far away from 0, and the algorithm may therefore terminate. Also, excessively small values may lead to critical numerical issues and should thus be avoided.
 #' @param psi.beta The rate of the inverse gamma prior on the uniquenesses. Can be either a single parameter, a vector of variable specific rates, or (if \code{psi0g} is \code{TRUE}) a matrix of variable and cluster-specific rates. If this is not supplied, \code{\link{psi_hyper}} is invoked to choose sensible values, depending on the value of \code{uni.prior} and, for the "\code{MFA}" and "\code{MIFA}" models, the value of \code{psi0g}. Excessively small values may lead to critical numerical issues and should thus be avoided.
 #' @param mu.zero The mean of the prior distribution for the mean parameter. Either a scalar of a vector of appropriate dimension. Defaults to the sample mean of the data.
-#' @param sigma.mu The covariance of the prior distribution for the cluster mean parameters. Always assumed to be a diagonal matrix. Can be a scalar times the identity or a vector of appropriate dimension. If supplied as a matrix, only the diagonal elements will be extracted. Defaults to the diagonal entries of the sample covariance matrix.
-#' @param prec.mu A scalar controlling the degree of flatness of the prior for the cluster means by scaling \code{sigma.mu} (i.e. multiplying every element of \code{sigma.mu} by \code{1/prec.mu}). Lower values lead to a more diffuse prior. Defaults to \code{0.1}, such that the prior is relatively non-informative by default. Of course, \code{prec.mu=1} nullifies any effect of this argument. The user can supply a scaled \code{sigma.mu} directly, but this argument is especially useful when the diagonal default is used for \code{sigma.mu}. When the number of observations is small, particular when it's less than the number of variables, consider specifying a more informative prior on the cluster means by increasing \code{prec.mu} from its default value.
+#' @param sigma.mu The covariance of the prior distribution for the cluster mean parameters. Always assumed to be a diagonal matrix. Can be a scalar times the identity or a vector of appropriate dimension. If supplied as a matrix, only the diagonal elements will be extracted. Defaults to the diagonal entries of the sample covariance matrix: for unit-scaled data this is simply the identity.
+#' @param prec.mu A scalar controlling the degree of flatness of the prior for the cluster means by scaling \code{sigma.mu} (i.e. multiplying every element of \code{sigma.mu} by \code{1/prec.mu}). Lower values lead to a more diffuse prior. Defaults to \code{0.1}, such that the prior is relatively non-informative by default. Of course, \code{prec.mu=1} nullifies any effect of this argument. The user can supply a scaled \code{sigma.mu} directly, but this argument is especially useful when the diagonal default is used for \code{sigma.mu}. When the number of observations is small, particularly when it's less than the number of variables, consider specifying a more informative prior on the cluster means by increasing \code{prec.mu} from its default value.
 #' @param sigma.l A scalar controlling the diagonal covariance of the prior distribution for the loadings. Defaults to 1, i.e. the identity. Only relevant for the finite factor methods.
 #' @param z.init The method used to initialise the cluster labels. Defaults to \code{\link[mclust]{Mclust}}. Other options include \code{\link[stats]{kmeans}} (with 10 random starts, by default), hierarchical clustering via \code{\link[mclust]{hc}} (\code{VVV} is used by default, unless the data is high-dimensional, in which case the default is \code{EII}), random initialisation via \code{priors}, and a user-supplied \code{list} (\code{z.list}). Not relevant for the "\code{FA}" and "\code{"IFA"} methods. Arguments for the relevant functions can be passed via the \code{...} construct.
 #' @param z.list A user supplied list of cluster labels. Only relevant if \code{z.init == "z.list"}.
@@ -1216,14 +1216,14 @@
 #'              verbose = interactive(),
 #'              ...)
 #' @examples
-#' mfctrl <- mixfaControl(n.iters=200, scaling="pareto",
-#'                       uni.type="constrained", prec.mu=1E-03)
+#' mfctrl <- mixfaControl(n.iters=200, prec.mu=1E-03,
+#'                        scaling="pareto", uni.type="constrained")
 #'
 #' # data(olive)
 #' # sim  <- mcmc_IMIFA(olive, "IMIFA", mixFA=mfctrl)
 #'
 #' # Alternatively specify these arguments directly
-#' # sim  <- mcmc_IMIFA(olive, "IMIFA", n.iters=20000, prec.mu=1E-03,
+#' # sim  <- mcmc_IMIFA(olive, "IMIFA", n.iters=200, prec.mu=1E-03,
 #' #                    scaling="pareto", uni.type="constrained")
   mixfaControl   <- function(n.iters = 25000L, burnin = n.iters/5, thinning = 2L, centering = TRUE, scaling = c("unit", "pareto", "none"),
                              uni.type = c("unconstrained", "isotropic", "constrained", "single"), psi.alpha = 2.5, psi.beta = NULL, mu.zero = NULL,
@@ -1296,6 +1296,8 @@
 #' \item{\code{heat}}{The initial adaptation intensity/step-size, such that larger values lead to larger updates. Must be strictly greater than zero. Defaults to 1 if not supplied but other elements of \code{tune.zeta} are.}
 #' \item{\code{lambda}}{Iteration rescaling parameter which controls the speed at which adaptation diminishes, such that lower values cause the contribution of later iterations to diminish more slowly. Must lie in the interval (0.5, 1]. Defaults to 1 if not supplied but other elements of \code{tune.zeta} are.}
 #' \item{\code{target}}{The target acceptance rate. Must lie in the interval [0, 1]. Defaults to 0.441, which is optimum for univariate targets, if not supplied but other elements of \code{tune.zeta} are.}
+#' \item{\code{start.zeta}}{The iteration at which diminishing adaptation begins. Defaults to \code{100}.}
+#' \item{\code{stop.zeta}}{The iteration at which diminishing adaptation is to stop completely. Defaults to \code{Inf}, such that diminishing adaptation is never explicitly made to stop. Must be greater than \code{start.zeta}.}
 #' }
 #'  \code{tune.zeta} arguments are only relevant when \code{learn.alpha} is \code{TRUE}, and either the \code{discount} remains fixed at a non-zero value, or when \code{learn.d} is \code{TRUE} and \code{kappa < 1}. Since Gibbs steps are invoked for updating \code{alpha} when \code{discount == 0}, adaption occurs according to a running count of the number of iterations with non-zero sampled \code{discount} values. If diminishing adaptation is invoked, the posterior mean \code{zeta} will be stored. Since caution is advised when employing adaptation, note that acceptance rates of between 10-50\% are generally considered adequate.
 #' @param ... Catches unused arguments.
@@ -1326,16 +1328,14 @@
 #'            tune.zeta = list(...),
 #'            ...)
 #' @examples
-#' bnpControl(ind.slice=FALSE, alpha.hyper=c(3, 1), learn.d=TRUE)
+#' bnpctrl <- bnpControl(learn.d=TRUE, ind.slice=FALSE, alpha.hyper=c(3, 1))
 #'
 #' # data(olive)
-#' # sim <- mcmc_IMIFA(olive, "IMIFA", n.iters=5000,
-#' #                   BNP=bnpControl(ind.slice=FALSE,
-#' #                   alpha.hyper=c(3, 1), learn.d=TRUE))
+#' # sim   <- mcmc_IMIFA(olive, "IMIFA", n.iters=5000, BNP=bnpctrl)
 #'
 #' # Alternatively specify these arguments directly
-#' # sim <- mcmc_IMIFA(olive, "IMIFA", n.iters=5000,
-#' #                   ind.slice=FALSE, alpha.hyper=c(3, 1), learn.d=TRUE)
+#' # sim   <- mcmc_IMIFA(olive, "IMIFA", n.iters=5000, learn.d=TRUE,
+#' #                     ind.slice=FALSE, alpha.hyper=c(3, 1))
   bnpControl     <- function(learn.alpha = TRUE, alpha.hyper = c(2L, 1L), discount = NULL, learn.d = FALSE, d.hyper = c(1L, 1L),
                              ind.slice = TRUE, rho = 0.75, trunc.G = NULL, kappa = 0.5, IM.lab.sw = TRUE, zeta = 2L, tune.zeta = list(...), ...) {
     miss.args    <- list(discount = missing(discount), IM.lab.sw = missing(IM.lab.sw), kappa = missing(kappa), trunc.G = missing(trunc.G))
@@ -1385,21 +1385,25 @@
     gibbs.def    <- all(kappa      < 1, learn.d,  learn.alpha)
     def.py       <- all(discount  != 0, !learn.d, learn.alpha)
     gibbs.may    <- gibbs.def     &&    kappa > 0
-    zeta.names   <- c("heat", "lambda", "target")
+    zeta.names   <- c("heat", "lambda", "target", "start.zeta", "stop.zeta")
     zeta.null    <- stats::setNames(vapply(tune.zeta[zeta.names], is.null, logical(1L)), zeta.names)
     if(all(zeta.null)    ||
-       !(tzdo    <- any(gibbs.def, def.py))) {
-      tune.zeta  <- list(heat=0, lambda=NULL, target=NULL, do=FALSE)
+       !(tzdo    <- any(gibbs.def, def.py)))  {
+      tune.zeta  <- list(heat=0, lambda=NULL, target=NULL, do=FALSE, start.zeta=100L, stop.zeta=Inf)
     } else  {
       tz         <- stats::setNames(tune.zeta[zeta.names], zeta.names)
       if(!inherits(tz, "list")    ||
          (!all(is.element(names(tz),
                zeta.names))       ||
-          !all(lengths(tz)        == 1   |
+          !all(lengths(tz)        == 1        |
                zeta.null)))                stop("'tune.zeta' must be a list with named elements 'heat', 'lambda' and 'target', all of length 1", call.=FALSE)
-      if(is.null(tz$heat))   tz$heat    <- 1
-      if(is.null(tz$lambda)) tz$lambda  <- 1
-      if(is.null(tz$target)) tz$target  <- 0.441
+      if(is.null(tz$heat))   tz$heat         <- 1
+      if(is.null(tz$lambda)) tz$lambda       <- 1
+      if(is.null(tz$target)) tz$target       <- 0.441
+      attr(tz, "startx")          <- is.null(tz$start.zeta)
+      attr(tz, "stopx")           <- is.null(tz$stop.zeta)
+      if(attr(tz, "startx")) tz$start.zeta   <- 100L
+      if(attr(tz, "stopx"))  tz$stop.zeta    <- Inf
       if(!all(vapply(tz,
               is.numeric, logical(1L))))   stop("Not all elements of 'tune.zeta' are numeric", call.=FALSE)
       tz$do      <- tzdo
@@ -1412,6 +1416,12 @@
         if(tz$heat  > 0)  {
           if(isTRUE(gibbs.may))            warning("Are you sure you want to tune zeta?: Gibbs updates are possible as 'kappa' is between zero and 1\n", call.=FALSE, immediate.=TRUE)
         } else if(tz$do)                   warning("'heat' of 0 corresponds to no tuning: are you sure?\n", call.=FALSE, immediate.=TRUE)
+      }
+      if(tz$do   <- tzdo && 0     != tz$heat) {
+       if(length(c(tz$start.zeta,
+                   tz$stop.zeta)) != 2       ||
+          !is.numeric(c(tz$start.zeta,
+                        tz$stop.zeta)))    stop("'start.zeta' and 'stop.zeta' must both be numeric and of length 1", call.=FALSE)
       }
       tune.zeta  <- tz
     }
@@ -1432,12 +1442,13 @@
 #' @param adapt A logical value indicating whether adaptation of the number of cluster-specific factors is to take place when the MGP prior is employed. Defaults to \code{TRUE}. Specifying \code{FALSE} and supplying \code{range.Q} within \code{\link{mcmc_IMIFA}} provides a means to either approximate the infinite factor model with a fixed high truncation level, or to use the MGP prior in a finite factor context, however this is NOT recommended for the "\code{OMIFA}" and "\code{IMIFA}" methods.
 #' @param b0,b1 Intercept & slope parameters for the exponentially decaying adaptation probability:
 #'
-#' \code{p(iter) = 1/exp(b0 + b1 * (iter - adapt.at))}.
+#' \code{p(iter) = 1/exp(b0 + b1 * (iter - start.AGS))}.
 #'
 #' Defaults to 0.1 & 0.00005, respectively. Must be non-negative and strictly positive, respectively, to ensure diminishing adaptation.
 #' @param beta.d1 Rate hyperparameter of the global shrinkage on the first column of the loadings according to the MGP shrinkage prior. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to 1.
 #' @param beta.d2 Rate hyperparameter of the global shrinkage on the subsequent columns of the loadings according to the MGP shrinkage prior. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to 1.
-#' @param adapt.at The iteration at which adaptation is to begin. Defaults to \code{burnin} for the "\code{IFA}" and "\code{MIFA}" methods, defaults to 0 for the "\code{OMIFA}" and "\code{IMIFA}" methods, and defaults to 0 for all methods if the data set is univariate or bivariate. Cannot exceed \code{burnin}.
+#' @param start.AGS The iteration at which adaptation under the AGS is to begin. Defaults to \code{burnin} for the "\code{IFA}" and "\code{MIFA}" methods, defaults to 0 for the "\code{OMIFA}" and "\code{IMIFA}" methods, and defaults to 0 for all methods if the data set is univariate or bivariate. Cannot exceed \code{burnin}.
+#' @param stop.AGS The iteration at which adaptation under the AGS is to stop completely. Defaults to \code{Inf}, such that the AGS is never explicitly forced to stop (thereby overriding the diminishing adaptation probability after \code{stop.AGS}). Must be greater than \code{start.AGS}. The diminishing adaptation probability prior to \code{stop.AGS} is still governed by the arguments \code{b0} and \code{b1}.
 #' @param delta0g Logical indicating whether the \code{alpha.d1} and \code{alpha.d2} hyperparameters can be cluster-specific. Defaults to \code{FALSE}. Only relevant for the "\code{MIFA}" method and only allowed when \code{z.list} is supplied within \code{\link{mcmc_IMIFA}}.
 #' @param ... Catches unused arguments.
 #'
@@ -1466,54 +1477,57 @@
 #'            b1 = 5e-05,
 #'            beta.d1 = 1L,
 #'            beta.d2 = 1L,
-#'            adapt.at = 0L,
+#'            start.AGS = 0L,
+#'            stop.AGS = Inf,
 #'            delta0g = FALSE,
 #'            ...)
 #' @examples
-#' mgpControl(phi.hyper=c(2.5, 1), eps=1e-02)
+#' mgpctrl <- mgpControl(phi.hyper=c(2.5, 1), eps=1e-02)
 #'
 #' # data(olive)
-#' # sim <- mcmc_IMIFA(olive, "IMIFA", n.iters=5000,
-#' #                   MGP=mgpControl(phi.hyper=c(2.5, 1), eps=1e-02))
+#' # sim   <- mcmc_IMIFA(olive, "IMIFA", n.iters=5000, MGP=mgpctrl)
 #'
 #' # Alternatively specify these arguments directly
-#' # sim <- mcmc_IMIFA(olive, "IMIFA", n.iters=5000, phi.hyper=c(2.5, 1), eps=1e-02)
+#' # sim   <- mcmc_IMIFA(olive, "IMIFA", n.iters=5000, phi.hyper=c(2.5, 1), eps=1e-02)
     mgpControl   <- function(alpha.d1 = 2L, alpha.d2 = 6L, phi.hyper = c(3L, 2L), prop = 0.7, eps = 1e-01, adapt = TRUE,
-                             b0 = 0.1, b1 = 5e-05, beta.d1 = 1L, beta.d2 = 1L, adapt.at = 0L, delta0g = FALSE, ...) {
-      miss.args  <- list(propx = missing(prop), adaptatx = missing(adapt.at))
+                             b0 = 0.1, b1 = 5e-05, beta.d1 = 1L, beta.d2 = 1L, start.AGS = 0L, stop.AGS = Inf, delta0g = FALSE, ...) {
+      miss.args  <- list(propx = missing(prop), startAGSx = missing(start.AGS), stopAGSx = missing(stop.AGS))
       if(any(!is.numeric(alpha.d1),
              !is.numeric(alpha.d2),
-             c(alpha.d1, alpha.d2)  < 1))  stop("All global shrinkage shape hyperparameter values must be numeric and at least 1", call.=FALSE)
-      if(prop     > 1         ||
+             c(alpha.d1, alpha.d2)   < 1)) stop("All global shrinkage shape hyperparameter values must be numeric and at least 1", call.=FALSE)
+      if(prop     > 1          ||
          prop    <= 0)                     stop("'prop' must be lie in the interval (0, 1]", call.=FALSE)
       if(eps     <= 0 ||
          eps     >= 1)                     stop("'eps' must be lie in the interval (0, 1)", call.=FALSE)
-      if(any(length(adapt)    != 1,
+      if(any(length(adapt)     != 1,
              !is.logical(adapt)))          stop("'adapt' must be a single logical indicator", call.=FALSE)
-      if(any(length(b0)       != 1,
-             !is.numeric(b0), b0    < 0))  stop("'b0' must be a non-negative scalar to ensure valid adaptation probability", call.=FALSE)
-      if(any(length(b1)       != 1,
-             !is.numeric(b1), b1   <= 0))  stop("'b1' must be a single strictly positive scalar to ensure adaptation probability decreases", call.=FALSE)
-      if(length(phi.hyper)    != 2 ||
+      if(any(length(b0)        != 1,
+             !is.numeric(b0), b0     < 0)) stop("'b0' must be a non-negative scalar to ensure valid adaptation probability", call.=FALSE)
+      if(any(length(b1)        != 1,
+             !is.numeric(b1), b1    <= 0)) stop("'b1' must be a single strictly positive scalar to ensure adaptation probability decreases", call.=FALSE)
+      if(length(phi.hyper)     != 2 ||
          !is.numeric(phi.hyper))           stop("'phi.hyper' must be a numeric vector of length 2", call.=FALSE)
       if(any(phi.hyper < 1E-01))           stop("Excessively small values for the local shrinkage hyperparameters will lead to critical numerical issues & should thus be avoided", call.=FALSE)
-      if(any(phi.hyper        <= 0))       stop("The shape and rate in 'phi.hyper' must both be strictly positive", call.=FALSE)
+      if(any(phi.hyper         <= 0))      stop("The shape and rate in 'phi.hyper' must both be strictly positive", call.=FALSE)
       if(any(!is.numeric(beta.d1),
              !is.numeric(beta.d2),
-             length(beta.d1)  != 1,
-             length(beta.d2)  != 1,
+             length(beta.d1)   != 1,
+             length(beta.d2)   != 1,
              c(beta.d1,  beta.d2) <= 0))   stop("'beta.d1' and 'beta.d2' must both be numeric, of length 1, and strictly positive", call.=FALSE)
       if(any(!is.numeric(prop),
-             !is.numeric(adapt.at),
+             !is.numeric(start.AGS),
+             !is.numeric(stop.AGS),
              !is.numeric(eps),
-             length(prop)     != 1,
-             length(adapt.at) != 1,
-             length(eps)      != 1))       stop("'prop', 'adapt.at', and 'eps' must all be numeric and of length 1", call.=FALSE)
-      if(any(length(delta0g)  != 1,
+             length(prop)      != 1,
+             length(start.AGS) != 1,
+             length(stop.AGS)  != 1,
+             length(eps)       != 1))      stop("'prop', 'start.AGS', 'stop.AGS', and 'eps' must all be numeric and of length 1", call.=FALSE)
+      if(any(length(delta0g)   != 1,
              !is.logical(delta0g)))        stop("'delta0g' must be a single logical indicator", call.=FALSE)
-      MGPAGS     <- list(alpha.d1 = alpha.d1, alpha.d2 = alpha.d2, delta0g = delta0g, phi.hyper = phi.hyper, prop = prop,
-                         epsilon = eps, adapt = adapt, b0 = b0, b1 = b1, beta.d1 = beta.d1, beta.d2 = beta.d2, adaptat = adapt.at)
-      attr(MGPAGS, "Missing") <- miss.args
+      MGPAGS     <- list(alpha.d1 = alpha.d1, alpha.d2 = alpha.d2, delta0g = delta0g, phi.hyper = phi.hyper,
+                         prop = prop, epsilon = eps, adapt = adapt, b0 = b0, b1 = b1, beta.d1 = beta.d1,
+                         beta.d2 = beta.d2, start.AGS = start.AGS, stop.AGS = stop.AGS)
+      attr(MGPAGS, "Missing")  <- miss.args
         MGPAGS
     }
 
@@ -1549,14 +1563,13 @@
 #'              pi.switch = TRUE,
 #'              ...)
 #' @examples
-#' storeControl(score.switch=FALSE)
+#' stctrl <- storeControl(score.switch=FALSE)
 #'
 #' # data(olive)
-#' # sim <- mcmc_IMIFA(olive, "IMIFA", n.iters=5000,
-#' #                   storage=storeControl(score.switch=FALSE))
+#' # sim  <- mcmc_IMIFA(olive, "IMIFA", n.iters=5000, storage=stctrl)
 #'
 #' # Alternatively specify these arguments directly
-#' # sim <- mcmc_IMIFA(olive, "IMIFA", n.iters=5000, score.switch=FALSE)
+#' # sim  <- mcmc_IMIFA(olive, "IMIFA", n.iters=5000, score.switch=FALSE)
    storeControl  <- function(mu.switch = TRUE, score.switch = TRUE, load.switch = TRUE, psi.switch = TRUE, pi.switch = TRUE, ...) {
       switches   <- c(mu.sw=mu.switch, s.sw=score.switch, l.sw=load.switch, psi.sw=psi.switch,pi.sw=pi.switch)
       attr(switches, "Missing") <- c(mu.sw=missing(mu.switch), s.sw=missing(score.switch), l.sw=missing(load.switch), psi.sw=missing(psi.switch), pi.sw=missing(pi.switch))
@@ -1671,7 +1684,7 @@
        dim(x)    <- x.dim[keep]
        if(!is.null(x.dimnames)) dimnames(x) <- x.dimnames[keep]
       } else if(length(x.dim[keep]) == 1 && named.vector) {
-       names(x)  <- x.dimnames[keep][[1]]
+       names(x)  <- x.dimnames[keep][[1L]]
       }
         x
     }
@@ -1685,7 +1698,7 @@
       eigs       <- eigen(x, symmetric = TRUE)
       eval       <- eigs$values
       evec       <- eigs$vectors
-        return(chol(x + evec %*% tcrossprod(diag(pmax.int(0, 2 * max(abs(eval)) * d * .Machine$double.eps - eval), d), evec), ...))
+        return(chol(x + evec %*% tcrossprod(diag(pmax.int(0L, 2 * max(abs(eval)) * d * .Machine$double.eps - eval), d), evec), ...))
       }
     )
 
@@ -1744,7 +1757,7 @@
       }
     }
 
-    .empty_mat   <- function(nr = 0, nc = 0) {
+    .empty_mat   <- function(nr = 0L, nc = 0L) {
       base::matrix(0L, nrow=nr, ncol=nc)
     }
 
@@ -1753,6 +1766,10 @@
       options(show.error.messages=FALSE)
       on.exit(suppressWarnings(options(opts)), add=TRUE)
         if(ent  %in% c("exit", "EXIT"))    stop(call.=FALSE)
+    }
+
+    .geom_mean   <- function(x) {
+        return(if(any(x == 0, na.rm=TRUE)) 0L else exp(mean(log(x), na.rm=TRUE)))
     }
 
     .logdensity     <- function(x, left = 0) { # export and add ...
@@ -1774,7 +1791,7 @@
     .match_classes  <- function(tab, method = "rowmax", iter = 1, maxexact = 9, verbose = TRUE) {
       methods    <- c("rowmax", "greedy", "exact")
       method     <- pmatch(method, methods)
-      rmax       <- apply(tab, 1, which.max)
+      rmax       <- apply(tab, 1L, which.max)
       myseq      <- seq_len(ncol(tab))
       cn         <- colnames(tab)
       rn         <- rownames(tab)
@@ -1790,7 +1807,7 @@
       if(method  == 2 || method   == 3)  {
         if(ncol(tab)  != nrow(tab))        stop("Unique matching only for square tables.", call.=FALSE)
         dimnames(tab) <- list(myseq, myseq)
-        cmax     <- apply(tab, 2, which.max)
+        cmax     <- apply(tab, 2L, which.max)
         retval   <- rep(NA, ncol(tab))
         names(retval) <- colnames(tab)
         baseok   <- cmax[rmax]     == myseq
@@ -1843,7 +1860,7 @@
           }
         }
       }
-      if(verbose)                          cat("Cases in matched pairs:", round(100 * sum(diag(tab[,retval]))/sum(tab), 2), "%\\n")
+      if(verbose)                          cat("Cases in matched pairs:", round(100 * sum(diag(tab[,retval]))/sum(tab), 2L), "%\\n")
       if(any(as.character(myseq) != cn)) {
         retval   <- cn[retval]
       }
@@ -1886,9 +1903,9 @@
       z          <- matrix(1)
       for(i in 2:n) {
         x        <- cbind(z, i)
-        a        <- c(1:i, 1:(i - 1))
+        a        <- c(1L:i, 1L:(i - 1))
         nr       <- nrow(x)
-        z        <- matrix(0, ncol=ncol(x), nrow=i * nr)
+        z        <- matrix(0L, ncol=ncol(x), nrow=i * nr)
         z[1:nr,] <- x
         for(j in 2:i - 1)    {
           z[j * nr + 1:nr,] <- x[,a[1:i + j]]
@@ -1936,8 +1953,8 @@
       ul         <- c(li, ui)
       pin        <- graphics::par("pin")
       usr        <- graphics::par("usr")
-      x.to.in    <- pin[1]/diff(usr[1:2])
-      y.to.in    <- pin[2]/diff(usr[3:4])
+      x.to.in    <- pin[1L]/diff(usr[1L:2L])
+      y.to.in    <- pin[2L]/diff(usr[3L:4L])
       if(err == "y") {
         gap      <- rep(gap, length(x)) * diff(graphics::par("usr")[3:4])
         smidge   <- graphics::par("fin")[1] * sfrac
@@ -1952,7 +1969,7 @@
         do.call(graphics::arrows, c(list(x[nz], ui[nz], x[nz], pmin(y + gap, ui)[nz]), arrow.args))
       } else if(err == "x") {
         gap      <- rep(gap, length(x)) * diff(graphics::par("usr")[1:2])
-        smidge   <- graphics::par("fin")[2] * sfrac
+        smidge   <- graphics::par("fin")[2L] * sfrac
         nz       <- abs(li - pmax(x - gap, li)) * x.to.in > 0.001
         scols    <- rep(scol, length.out = length(x))[nz]
         arrow.args        <- c(list(lty = slty, angle = 90, length = smidge, code = 1, col = scols),
@@ -1998,6 +2015,32 @@
       } else if(scaling)    {
           t(t(x)/if(isTRUE(scale)) .col_vars(x, std=TRUE) else scale)
       } else  x
+    }
+
+    #' @importFrom matrixStats "colSums2" "rowSums2"
+    .vari_max    <- function(x, normalize = FALSE, eps = 1e-05) {
+      p          <- ncol(x)
+      if(p        < 2)                     return(x)
+      if(normalize)         {
+        sc       <- sqrt(rowSums2(x * x))
+        x        <- x/sc
+      }
+      n          <- nrow(x)
+      TT         <- diag(p)
+      d          <- 0
+      ns         <- rep(1L, n)
+      for(i in seq_len(1000L)) {
+        z        <- x    %*% TT
+        sB       <- La.svd(crossprod(x, z^3  - z %*% diag(colSums2(z * z)/n)))
+        TT       <- sB$u %*% sB$vt
+        dp       <- d
+        d        <- sum(sB$d)
+        if(d      < dp * (1 + eps))        break
+      }
+      z          <- if(normalize) (x %*% TT) * sc else x %*% TT
+      dimnames(z)         <- dimnames(x)
+      class(z)   <- "loadings"
+        return(list(loadings = z, rotmat = TT))
     }
 
     .which0      <- function(x) which(x == 0)

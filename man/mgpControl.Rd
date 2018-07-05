@@ -14,7 +14,8 @@ mgpControl(alpha.d1 = 2L,
            b1 = 5e-05,
            beta.d1 = 1L,
            beta.d2 = 1L,
-           adapt.at = 0L,
+           start.AGS = 0L,
+           stop.AGS = Inf,
            delta0g = FALSE,
            ...)
 }
@@ -33,7 +34,7 @@ mgpControl(alpha.d1 = 2L,
 
 \item{b0, b1}{Intercept & slope parameters for the exponentially decaying adaptation probability:
 
-\code{p(iter) = 1/exp(b0 + b1 * (iter - adapt.at))}.
+\code{p(iter) = 1/exp(b0 + b1 * (iter - start.AGS))}.
 
 Defaults to 0.1 & 0.00005, respectively. Must be non-negative and strictly positive, respectively, to ensure diminishing adaptation.}
 
@@ -41,7 +42,9 @@ Defaults to 0.1 & 0.00005, respectively. Must be non-negative and strictly posit
 
 \item{beta.d2}{Rate hyperparameter of the global shrinkage on the subsequent columns of the loadings according to the MGP shrinkage prior. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to 1.}
 
-\item{adapt.at}{The iteration at which adaptation is to begin. Defaults to \code{burnin} for the "\code{IFA}" and "\code{MIFA}" methods, defaults to 0 for the "\code{OMIFA}" and "\code{IMIFA}" methods, and defaults to 0 for all methods if the data set is univariate or bivariate. Cannot exceed \code{burnin}.}
+\item{start.AGS}{The iteration at which adaptation under the AGS is to begin. Defaults to \code{burnin} for the "\code{IFA}" and "\code{MIFA}" methods, defaults to 0 for the "\code{OMIFA}" and "\code{IMIFA}" methods, and defaults to 0 for all methods if the data set is univariate or bivariate. Cannot exceed \code{burnin}.}
+
+\item{stop.AGS}{The iteration at which adaptation under the AGS is to stop completely. Defaults to \code{Inf}, such that the AGS is never explicitly forced to stop (thereby overriding the diminishing adaptation probability after \code{stop.AGS}). Must be greater than \code{start.AGS}. The diminishing adaptation probability prior to \code{stop.AGS} is still governed by the arguments \code{b0} and \code{b1}.}
 
 \item{delta0g}{Logical indicating whether the \code{alpha.d1} and \code{alpha.d2} hyperparameters can be cluster-specific. Defaults to \code{FALSE}. Only relevant for the "\code{MIFA}" method and only allowed when \code{z.list} is supplied within \code{\link{mcmc_IMIFA}}.}
 
@@ -59,14 +62,13 @@ Certain supplied arguments will be subject to further checks by \code{\link{MGP_
 The adaptive Gibbs sampler (AGS) monitors the \code{prop} of loadings elements within the neighbourhood \code{eps} of 0 and discards columns or simulates new columns on this basis. However, if at any stage the number of group-specific latent factors reaches zero, the decision to add columns is instead based on a simple binary trial with probability \code{1-prop}, as there are no loadings entries to monitor.
 }
 \examples{
-mgpControl(phi.hyper=c(2.5, 1), eps=1e-02)
+mgpctrl <- mgpControl(phi.hyper=c(2.5, 1), eps=1e-02)
 
 # data(olive)
-# sim <- mcmc_IMIFA(olive, "IMIFA", n.iters=5000,
-#                   MGP=mgpControl(phi.hyper=c(2.5, 1), eps=1e-02))
+# sim   <- mcmc_IMIFA(olive, "IMIFA", n.iters=5000, MGP=mgpctrl)
 
 # Alternatively specify these arguments directly
-# sim <- mcmc_IMIFA(olive, "IMIFA", n.iters=5000, phi.hyper=c(2.5, 1), eps=1e-02)
+# sim   <- mcmc_IMIFA(olive, "IMIFA", n.iters=5000, phi.hyper=c(2.5, 1), eps=1e-02)
 }
 \references{
 Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.

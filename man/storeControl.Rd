@@ -41,14 +41,13 @@ In particular, when loadings and uniquenesses are not stored (or when means are 
 Further warning messages may appear when \code{\link{mcmc_IMIFA}} is called depending on the particularities of the data set and the IMIFA method employed etc. as additional checks occur.
 }
 \examples{
-storeControl(score.switch=FALSE)
+stctrl <- storeControl(score.switch=FALSE)
 
 # data(olive)
-# sim <- mcmc_IMIFA(olive, "IMIFA", n.iters=5000,
-#                   storage=storeControl(score.switch=FALSE))
+# sim  <- mcmc_IMIFA(olive, "IMIFA", n.iters=5000, storage=stctrl)
 
 # Alternatively specify these arguments directly
-# sim <- mcmc_IMIFA(olive, "IMIFA", n.iters=5000, score.switch=FALSE)
+# sim  <- mcmc_IMIFA(olive, "IMIFA", n.iters=5000, score.switch=FALSE)
 }
 \seealso{
 \code{\link{mcmc_IMIFA}}, \code{\link{get_IMIFA_results}}

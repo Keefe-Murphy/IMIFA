@@ -3,10 +3,10 @@
 #########################################################################
 
 # Gibbs Sampler Function
-  .gibbs_MIFA      <- function(Q, data, iters, N, P, G, sw, mu, mu.zero, uni.type,
-                               uni.prior, sigma.mu, burnin, thinning, verbose, nu,
-                               vrho, cluster, psi.alpha, psi.beta, adapt, adaptat,
-                               prop, b0, b1, beta.d1, beta.d2, epsilon, equal.pro, ...) {
+  .gibbs_MIFA      <- function(Q, data, iters, N, P, G, sw, mu, mu.zero, uni.type, uni.prior,
+                               sigma.mu, burnin, thinning, verbose, nu, vrho, cluster,
+                               psi.alpha, psi.beta, adapt, start.AGS, stop.AGS, prop,
+                               b0, b1, beta.d1, beta.d2, epsilon, equal.pro, ...) {
 
   # Define & initialise variables
     start.time     <- proc.time()
@@ -48,11 +48,11 @@
     mu.sigma       <- 1/sigma.mu
     sig.mu.sqrt    <- sqrt(sigma.mu)
     if(all(mu.zero == 0)) {
-      mu.zero      <- matrix(0L, nrow=1, ncol=G)
+      mu.zero      <- matrix(0L, nrow=1L, ncol=G)
       cluster$l.switch[1]   <- FALSE
     }
     if(length(mu.zero)  == 1) {
-      mu.zero      <- matrix(mu.zero, nrow=1, ncol=G)
+      mu.zero      <- matrix(mu.zero, nrow=1L, ncol=G)
     }
     z              <- cluster$z
     z.temp         <- factor(z, levels=Gseq)
@@ -62,26 +62,26 @@
     log.pis        <- log(pi.prop)
     pi.alpha       <- cluster$pi.alpha
     one.uni        <- is.element(uni.type, c("constrained", "single"))
-    .sim_psi_inv   <- switch(uni.type,   unconstrained=.sim_psi_uu,   isotropic=.sim_psi_uc,
-                                         constrained=.sim_psi_cu,     single=.sim_psi_cc)
-    .sim_psi_ip    <- switch(uni.prior,  unconstrained=.sim_psi_ipu,  isotropic=.sim_psi_ipc)
+    .sim_psi_inv   <- switch(EXPR=uni.type,  unconstrained=.sim_psi_uu,   isotropic=.sim_psi_uc,
+                                             constrained=.sim_psi_cu,     single=.sim_psi_cc)
+    .sim_psi_ip    <- switch(EXPR=uni.prior, unconstrained=.sim_psi_ipu,  isotropic=.sim_psi_ipc)
     if(isTRUE(one.uni))       {
-      uni.shape    <- switch(uni.type,   constrained=N/2 + psi.alpha, single=(N * P)/2 + psi.alpha)
-      V            <- switch(uni.type,   constrained=P, single=1)
+      uni.shape    <- switch(EXPR=uni.type,  constrained=N/2 + psi.alpha, single=(N * P)/2 + psi.alpha)
+      V            <- switch(EXPR=uni.type,  constrained=P, single=1)
     }
     if(uni.prior   == "isotropic")   {
       psi.beta     <- matrix(vapply(Gseq, function(g) psi.beta[which.max(.ndeci(psi.beta[,g])),g], numeric(1L)), nrow=1, ncol=G)
     } else if(length(psi.beta) == 1) {
-      psi.beta     <- matrix(psi.beta, nrow=1, ncol=G)
+      psi.beta     <- matrix(psi.beta, nrow=1L, ncol=G)
     }
     alpha.d1       <- cluster$alpha.d1
     alpha.d2       <- cluster$alpha.d2
-    ad1.x          <- length(unique(alpha.d1)) == 1
-    ad2.x          <- length(unique(alpha.d2)) == 1
-    mu0g           <- cluster$l.switch[1]
-    psi0g          <- cluster$l.switch[2]
-    delta0g        <- cluster$l.switch[3]
-    qstar0g        <- cluster$l.switch[4]
+    ad1.x          <- length(unique(alpha.d1)) == 1L
+    ad2.x          <- length(unique(alpha.d2)) == 1L
+    mu0g           <- cluster$l.switch[1L]
+    psi0g          <- cluster$l.switch[2L]
+    delta0g        <- cluster$l.switch[3L]
+    qstar0g        <- cluster$l.switch[4L]
     label.switch   <- any(cluster$l.switch)
     eta            <- .sim_eta_p(N=N, Q=Q)
     phi            <- replicate(G, .sim_phi_p(Q=Q, P=P, nu=nu, rho=vrho), simplify=FALSE)
@@ -89,8 +89,8 @@
     tau            <- lapply(delta, cumprod)
     lmat           <- lapply(Gseq, function(g) matrix(vapply(Pseq, function(j) .sim_load_ps(Q=Q, phi=phi[[g]][j,], tau=tau[[g]]), numeric(Q)), nrow=P, byrow=TRUE))
     psi.inv        <- vapply(Gseq, function(g) .sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta[,g]), numeric(P))
-    psi.inv        <- if(uni)     t(psi.inv)   else psi.inv
-    psi.beta       <- if(one.uni) psi.beta[,1] else psi.beta
+    psi.inv        <- if(uni)     t(psi.inv)    else psi.inv
+    psi.beta       <- if(one.uni) psi.beta[,1L] else psi.beta
     if(Q < min(N - 1, Ledermann(P)))     {
       fact.ind     <- nn    <= P
       for(g in which(!fact.ind)) {
@@ -104,7 +104,7 @@
     } else     {
       psi.tmp      <- psi.inv
       if(isTRUE(one.uni)) {
-        psi.inv[,] <- 1/switch(uni.type, constrained=.col_vars(data), exp(mean(log(.col_vars(data)))))
+        psi.inv[,] <- 1/switch(EXPR=uni.type, constrained=.col_vars(data), .geom_mean(.col_vars(data)))
       } else   {
         tmp.psi    <- ((nn[nn0] - 1)/(rowsum(data^2,  z) - rowsum(data, z)^2/nn[nn0]))
         psi.inv[,nn > 1]    <- tmp.psi[!is.nan(tmp.psi)]
@@ -112,13 +112,13 @@
       inf.ind      <- is.infinite(psi.inv) | is.nan(psi.inv)
       psi.inv[inf.ind]      <- psi.tmp[inf.ind]
     }
-    psi.inv[psi.inv == 0]   <- colMaxs(psi.inv[,which(psi.inv == 0, arr.ind=TRUE)[,2], drop=FALSE], value=TRUE)
+    psi.inv[psi.inv == 0]   <- colMaxs(psi.inv[,which(psi.inv == 0, arr.ind=TRUE)[,2L], drop=FALSE], value=TRUE)
     if(burnin       < 1)  {
-      if(sw["mu.sw"])  mu.store[,,1]    <- mu
-      if(sw["s.sw"])   eta.store[,,1]   <- eta
-      if(sw["l.sw"])   load.store[,,,1] <- array(unlist(lmat, use.names=FALSE), dim=c(P, Q, G))
-      if(sw["psi.sw"]) psi.store[,,1]   <- 1/psi.inv
-      if(sw["pi.sw"])  pi.store[,1]     <- pi.prop
+      if(sw["mu.sw"])  mu.store[,,1L]    <- mu
+      if(sw["s.sw"])   eta.store[,,1L]   <- eta
+      if(sw["l.sw"])   load.store[,,,1L] <- array(unlist(lmat, use.names=FALSE), dim=c(P, Q, G))
+      if(sw["psi.sw"]) psi.store[,,1L]   <- 1/psi.inv
+      if(sw["pi.sw"])  pi.store[,1L]     <- pi.prop
       z.store[1,]           <- z
       Q0                    <- Qs > 0
       sigma                 <- if(uni) lapply(Gseq, function(g) as.matrix(1/psi.inv[,g] + if(Q0[g]) tcrossprod(lmat[[g]]) else 0)) else lapply(Gseq, function(g) tcrossprod(lmat[[g]]) + diag(1/psi.inv[,g]))
@@ -129,7 +129,7 @@
     init.time      <- proc.time() - start.time
 
   # Iterate
-    for(iter in seq_len(total)[-1]) {
+    for(iter in seq_len(total)[-1L]) {
       if(verbose   && iter   < burnin) utils::setTxtProgressBar(pb, iter)
       storage      <- is.element(iter, iters)
 
@@ -157,7 +157,7 @@
       dat.g        <- lapply(Gseq, function(g) data[z == g,, drop=FALSE])
 
     # Scores & Loadings
-      c.data       <- lapply(Gseq, function(g) sweep(dat.g[[g]], 2, mu[,g], FUN="-", check.margin=FALSE))
+      c.data       <- lapply(Gseq, function(g) sweep(dat.g[[g]], 2L, mu[,g], FUN="-", check.margin=FALSE))
       if(!any(Q0))    {
         eta        <- .empty_mat(nr=N)
         eta.tmp    <- lapply(Gseq, function(g) eta[z == g,, drop=FALSE])
@@ -213,8 +213,8 @@
       }
 
     # Adaptation
-      if(all(adapt, iter   > adaptat)) {
-        if(stats::runif(1) < ifelse(iter < burnin, 0.5, exp(-b0 - b1 * (iter - adaptat)))) {
+      if(adapt     && all(iter >= start.AGS, iter < stop.AGS))  {
+        if(stats::runif(1) < ifelse(iter < burnin, 0.5, exp(-b0 - b1 * (iter - start.AGS))))   {
           colvec   <- lapply(nn.ind, function(g) (if(Q0[g]) colSums(abs(lmat[[g]])   < epsilon)/P else stats::runif(1)) >= prop)
           nonred   <- lapply(colvec, .which0)
           numred   <- lengths(colvec)  - lengths(nonred)
@@ -253,7 +253,7 @@
                  if(store.eta)         {
                   eta.tmp[[g]]   <- cbind(eta.tmp[[g]], .empty_mat(nc=1))
                  }
-                 Qg         <- Qg + 1
+                 Qg         <- Qg + 1L
                  lmat[[g]]  <- cbind(lmat[[g]], stats::rnorm(n=P, mean=0, sd=sqrt(1/(phi[[g]][,Qg] * tau[[g]][Qg]))))
                 }
               }

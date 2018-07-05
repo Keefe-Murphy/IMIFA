@@ -98,24 +98,24 @@ sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(floor(log(P)), G),
            sum(pis)      != 1))           stop(paste0("'pis' must be a numeric vector of length G=", G, " which sums to ", 1, "without missing values"),    call.=FALSE)
     if(any(pis <= 0))                     stop("All 'pis' values must be strictly positive", call.=FALSE)
     nn         <- vector("numeric", G)
-    iter       <- 0
+    iter       <- 0L
     while(any(nn   < floor(N/(G * G)),
               iter < 1000))            {
       labs     <- .sim_z_p(N=N, prob.z=pis)
       nn       <- tabulate(labs, nbins=G)
-      iter     <- iter    + 1
+      iter     <- iter    + 1L
     }
   }
 
   if(!(mumiss  <- missing(mu)))       {
-    musup      <- matrix(.len_check(as.matrix(mu),  switch0g = TRUE, method = ifelse(G > 1, "MFA", "FA"), P, G)[[1]], nrow=P, ncol=G, byrow=length(mu)  == G)
+    musup      <- matrix(.len_check(as.matrix(mu),  switch0g = TRUE, method = ifelse(G > 1, "MFA", "FA"), P, G)[[1L]], nrow=P, ncol=G, byrow=length(mu)  == G)
     if(anyNA(musup))                      stop("Missing values are not allowed in 'mu'",  call.=FALSE)
   } else {
     if(!is.numeric(loc.diff))             stop("'loc.diff' must be numeric", call.=FALSE)
     musup      <- as.integer(scale(Gseq, center=TRUE, scale=FALSE)) * loc.diff
   }
   if(!(psimiss <- missing(psi)))      {
-    psisup     <- matrix(.len_check(as.matrix(psi), switch0g = TRUE, method = ifelse(G > 1, "MFA", "FA"), P, G)[[1]], nrow=P, ncol=G, byrow=length(psi) == G)
+    psisup     <- matrix(.len_check(as.matrix(psi), switch0g = TRUE, method = ifelse(G > 1, "MFA", "FA"), P, G)[[1L]], nrow=P, ncol=G, byrow=length(psi) == G)
     if(anyNA(psisup))                     stop("Missing values are not allowed in 'psi'", call.=FALSE)
   }
   if(!(scomiss <- missing(scores)))   {
@@ -131,6 +131,7 @@ sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(floor(log(P)), G),
          !is.numeric(lmat))               stop("Invalid 'loadings' supplied: must be a numeric matrix when G=1", call.=FALSE)
       if(nrow(lmat)   != P ||
          ncol(lmat)   != Q)               stop(paste0("The 'loadings' matrix must have P=", P, " rows and Q=", Q, " columns, when G=1"), call.=FALSE)
+      lmat     <- list(lmat)
     } else      {
       if(!is.list(lmat)    ||
          length(lmat) != G)               stop(paste0("'loadings' must be a list of length G=", G, " when G > 1"), call.=FALSE)
@@ -140,11 +141,11 @@ sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(floor(log(P)), G),
       Px       <- as.integer(unname(vapply(lmat, nrow, numeric(1L))))
       Qx       <- as.integer(unname(vapply(lmat, ncol, numeric(1L))))
       if((length(unique(Px)) != 1 ||
-         P     != Px[1])   ||
+         P     != Px[1L])    ||
          sum(Q  - Qx) != 0)               stop(paste0("All 'loadings' matrices must have P=", P, " rows and the number of columns in each must correspond to Q"), call.=FALSE)
     }
   }
-  simdata      <- base::matrix(0, nrow=0, ncol=P)
+  simdata      <- base::matrix(0L, nrow=0L, ncol=P)
   true.mu      <- true.l   <-
   true.psi     <- true.cov <- stats::setNames(vector("list", G), paste0("Cluster", Gseq))
   sq_mat       <- if(P > 50)  function(x) diag(sqrt(diag(x))) else sqrt
@@ -165,12 +166,12 @@ sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(floor(log(P)), G),
     psi.true   <- stats::setNames(if(psimiss) 1/stats::rgamma(P, shape=2, rate=1)            else psisup[,g], vnames)
 
   # Simulate data
-    covmat     <- provideDimnames({ if(P > 1) diag(psi.true) else as.matrix(psi.true) } + { if(Q.g > 0) switch(method, marginal=tcrossprod(l.true), 0) else 0}, base=list(vnames))
+    covmat     <- provideDimnames({ if(P > 1) diag(psi.true) else as.matrix(psi.true) } + { if(Q.g > 0) switch(EXPR=method, marginal=tcrossprod(l.true), 0) else 0}, base=list(vnames))
     if(!all(is.symmetric(covmat),
             is.double(covmat)))           stop("Invalid covariance matrix!", call.=FALSE)
     covmat     <- is.posi_def(covmat, make=TRUE)$X.new
     sigma      <- if(all(Q.g > 0, P > 1, method == "marginal")) .chol(covmat) else sq_mat(covmat)
-    means      <- matrix(mu.true, nrow=N.g, ncol=P, byrow=TRUE) + switch(method, conditional=tcrossprod(eta.true[true.zlab == g, seq_len(Q.g), drop=FALSE], l.true), 0)
+    means      <- matrix(mu.true, nrow=N.g, ncol=P, byrow=TRUE) + switch(EXPR=method, conditional=tcrossprod(eta.true[true.zlab == g, seq_len(Q.g), drop=FALSE], l.true), 0)
     simdata    <- rbind(simdata, means + matrnorm(N.g, P) %*% sigma)
     dimnames(l.true)   <- list(vnames, if(Q.g > 0) paste0("Factor ", seq_len(Q.g)))
     true.mu[[g]]       <- mu.true
