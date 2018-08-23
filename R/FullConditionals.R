@@ -1281,7 +1281,7 @@
 #'
 #' The crucial concentration parameter \code{alpha} is documented within the main \code{\link{mcmc_IMIFA}} function.
 #' @param learn.alpha Logical indicating whether the Dirichlet process / Pitman-Yor concentration parameter is to be learned (defaults to \code{TRUE}), or remain fixed for the duration of the chain. If being learned, a Ga(a, b) prior is assumed for \code{alpha}; updates take place via Gibbs sampling when \code{discount} is zero and via Metropolis-Hastings otherwise. If not being learned, \code{alpha} \emph{must} be supplied.
-#' @param alpha.hyper A vector of length 2 giving hyperparameters for the Dirichlet process / Pitman-Yor concentration parameter \code{alpha}. If \code{isTRUE(learn.alpha)}, these are shape and rate parameters of a Gamma distribution. Defaults to Ga(2, 1). The prior is shifted to have support on (\code{-discount}, \code{Inf}) when non-zero \code{discount} is supplied and remains fixed, or shifted to (\code{-1}, \code{Inf}) when \code{learn.d} is \code{TRUE}.
+#' @param alpha.hyper A vector of length 2 giving hyperparameters for the Dirichlet process / Pitman-Yor concentration parameter \code{alpha}. If \code{isTRUE(learn.alpha)}, these are shape and rate parameters of a Gamma distribution. Defaults to Ga(2, 4). Choosing a larger rate is particularly important, as it encourages clustering. The prior is shifted to have support on (\code{-discount}, \code{Inf}) when non-zero \code{discount} is supplied and remains fixed, or shifted to (\code{-1}, \code{Inf}) when \code{learn.d} is \code{TRUE}.
 #' @param discount The discount parameter used when generalising the Dirichlet process to the Pitman-Yor process. Defaults to 0, but must lie in the interval [0, 1). If non-zero, \code{alpha} can be supplied greater than \code{-discount}.
 #' @param learn.d Logical indicating whether the \code{discount} parameter is to be updated via Metropolis-Hastings (defaults to\code{FALSE}).
 #' @param d.hyper Hyperparameters for the Beta(a,b) prior on the \code{discount} parameter. Defaults to Beta(1,1), i.e. Uniform(0,1).
@@ -1315,7 +1315,7 @@
 #' @author Keefe Murphy - <\email{keefe.murphy@@ucd.ie}>
 #' @usage
 #' bnpControl(learn.alpha = TRUE,
-#'            alpha.hyper = c(2L, 1L),
+#'            alpha.hyper = c(2L, 4L),
 #'            discount = NULL,
 #'            learn.d = FALSE,
 #'            d.hyper = c(1L, 1L),
@@ -1328,7 +1328,7 @@
 #'            tune.zeta = list(...),
 #'            ...)
 #' @examples
-#' bnpctrl <- bnpControl(learn.d=TRUE, ind.slice=FALSE, alpha.hyper=c(3, 1))
+#' bnpctrl <- bnpControl(learn.d=TRUE, ind.slice=FALSE, alpha.hyper=c(3, 3))
 #'
 #' # data(olive)
 #' # sim   <- mcmc_IMIFA(olive, "IMIFA", n.iters=5000, BNP=bnpctrl)
@@ -1336,7 +1336,7 @@
 #' # Alternatively specify these arguments directly
 #' # sim   <- mcmc_IMIFA(olive, "IMIFA", n.iters=5000, learn.d=TRUE,
 #' #                     ind.slice=FALSE, alpha.hyper=c(3, 1))
-  bnpControl     <- function(learn.alpha = TRUE, alpha.hyper = c(2L, 1L), discount = NULL, learn.d = FALSE, d.hyper = c(1L, 1L),
+  bnpControl     <- function(learn.alpha = TRUE, alpha.hyper = c(2L, 4L), discount = NULL, learn.d = FALSE, d.hyper = c(1L, 1L),
                              ind.slice = TRUE, rho = 0.75, trunc.G = NULL, kappa = 0.5, IM.lab.sw = TRUE, zeta = 2L, tune.zeta = list(...), ...) {
     miss.args    <- list(discount = missing(discount), IM.lab.sw = missing(IM.lab.sw), kappa = missing(kappa), trunc.G = missing(trunc.G))
     if(any(!is.logical(learn.alpha),
@@ -1345,6 +1345,7 @@
            learn.alpha))                   stop(paste0("'alpha.hyper' must be a vector of length 2, giving the shape and rate hyperparameters of the gamma prior for alpha when 'learn.alpha' is TRUE"), call.=FALSE)
     if(learn.alpha       &&
        any(alpha.hyper   <= 0))            stop("The shape and rate of the gamma prior for alpha must both be strictly positive", call.=FALSE)
+    if(diff(alpha.hyper)  < 0)             warning("The rate hyperparameter for the prior on alpha should be >= to the shape hyperparameter, in order to encourage clustering\n", call.=FALSE, immediate.=TRUE)
     if(any(!is.logical(learn.d),
            length(learn.d)        != 1))   stop("'learn.d' must be a single logical indicator", call.=FALSE)
     if(all(length(d.hyper)        != 2,
@@ -1355,7 +1356,7 @@
            length(ind.slice)      != 1))   stop("'ind.slice' must be a single logical indicator", call.=FALSE)
     if(all(length(rho)    > 1,
        rho  > 1  || rho  <= 0))            stop("'rho' must be a single number in the interval (0, 1]", call.=FALSE)
-    if(rho  < 0.5)                         warning("Are you sure 'rho' should be less than 0.5? This could adversely affect mixing\n", call.=FALSE, immediate.=FALSE)
+    if(rho  < 0.5)                         warning("Are you sure 'rho' should be less than 0.5? This could adversely affect mixing\n", call.=FALSE, immediate.=TRUE)
     if(!missing(trunc.G) &&
        (length(trunc.G)   > 1     ||
         !is.numeric(trunc.G)      ||

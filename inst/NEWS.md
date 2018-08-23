@@ -21,6 +21,7 @@ __Infinite Mixtures of Infinite Factor Analysers__
 * Sped-up 2<sup>nd</sup> label-switching move for IM(I)FA models (accounting for empty clusters).
 * Added `stop.AGS` arg. to `mgpControl`: renamed `adapt.at` to `start.AGS` for consistency.
 * Added `start.zeta` & `stop.zeta` options to `tune.zeta` argument in `bnpControl`.
+* Edited `alpha.hyper` defaults in `bnpControl` to better encourage clustering.
 
 ### Bug Fixes
 * Fixed factor _scores_ & error metrics issues in `get_IMIFA_results` for clustering methods:  
@@ -42,6 +43,7 @@ __Infinite Mixtures of Infinite Factor Analysers__
 * Fixed simulation of `psi` when not supplied to `sim_IMIFA_data` to IG rather than GA.
 * Fixed bug preventing `Q` to be supplied to `get_IMIFA_results` for infinite factor methods.
 * Fixed y-axis labelling in uncertainty type plots when `plot.meth="z"`.
+* Small fixes to function `show_digit`.
 * Better handling of tied model-selection criteria in `get_IMIFA_results`.
 * Minor cosmetic change for overplotting `scores` & `loadings` in `trace` & `density` plots.
 * Tidied indentation/line-breaks for `cat`/`message`/`warning` calls for printing clarity.
@@ -128,8 +130,8 @@ __Infinite Mixtures of Infinite Factor Analysers__
 * Ensured `sigma.mu` hyperparameter arg. is always coerced to diagonal entries of a covariance matrix.
 * Transparency default in `plot.Results_IMIFA` now depends on device's support of semi-transparency.
 * Replaced certain instances of `is.list(x)` with `inherits(x, "list")` for stricter checking.
-* Added `check.margin=FALSE` to calls to `sweep()`.
-* `Ledermann()`, `MGP_check`, and `PGMM_dfree` are now properly vectorised.
+* Added `check.margin=FALSE` to calls to `sweep`.
+* `Ledermann`, `MGP_check`, and `PGMM_dfree` are now properly vectorised.
 
 ### Miscellaneous Edits
 * Added `USPSdigits` data set (training and test),  

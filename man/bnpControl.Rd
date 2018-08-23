@@ -5,7 +5,7 @@
 \title{Control settings for the Bayesian Nonparametric priors (BNP) for infinite mixture models}
 \usage{
 bnpControl(learn.alpha = TRUE,
-           alpha.hyper = c(2L, 1L),
+           alpha.hyper = c(2L, 4L),
            discount = NULL,
            learn.d = FALSE,
            d.hyper = c(1L, 1L),
@@ -21,7 +21,7 @@ bnpControl(learn.alpha = TRUE,
 \arguments{
 \item{learn.alpha}{Logical indicating whether the Dirichlet process / Pitman-Yor concentration parameter is to be learned (defaults to \code{TRUE}), or remain fixed for the duration of the chain. If being learned, a Ga(a, b) prior is assumed for \code{alpha}; updates take place via Gibbs sampling when \code{discount} is zero and via Metropolis-Hastings otherwise. If not being learned, \code{alpha} \emph{must} be supplied.}
 
-\item{alpha.hyper}{A vector of length 2 giving hyperparameters for the Dirichlet process / Pitman-Yor concentration parameter \code{alpha}. If \code{isTRUE(learn.alpha)}, these are shape and rate parameters of a Gamma distribution. Defaults to Ga(2, 1). The prior is shifted to have support on (\code{-discount}, \code{Inf}) when non-zero \code{discount} is supplied and remains fixed, or shifted to (\code{-1}, \code{Inf}) when \code{learn.d} is \code{TRUE}.}
+\item{alpha.hyper}{A vector of length 2 giving hyperparameters for the Dirichlet process / Pitman-Yor concentration parameter \code{alpha}. If \code{isTRUE(learn.alpha)}, these are shape and rate parameters of a Gamma distribution. Defaults to Ga(2, 4). Choosing a larger rate is particularly important, as it encourages clustering. The prior is shifted to have support on (\code{-discount}, \code{Inf}) when non-zero \code{discount} is supplied and remains fixed, or shifted to (\code{-1}, \code{Inf}) when \code{learn.d} is \code{TRUE}.}
 
 \item{discount}{The discount parameter used when generalising the Dirichlet process to the Pitman-Yor process. Defaults to 0, but must lie in the interval [0, 1). If non-zero, \code{alpha} can be supplied greater than \code{-discount}.}
 
@@ -68,7 +68,7 @@ Certain supplied arguments will be subject to further checks within \code{\link{
 By default, a Dirichlet Process prior is specified. A Pitman-Yor prior can be easily invoked when the \code{discount} is fixed at a non-zero value or \code{learn.d=TRUE}. The normalized stable process can also be specified as a prior distribution, as a special case of the Pitman-Yor process, when \code{alpha} remains fixed at \code{0} and \code{learn.alpha=FALSE} (provided the \code{discount} is fixed at a non-zero value or \code{learn.d=TRUE}).
 }
 \examples{
-bnpctrl <- bnpControl(learn.d=TRUE, ind.slice=FALSE, alpha.hyper=c(3, 1))
+bnpctrl <- bnpControl(learn.d=TRUE, ind.slice=FALSE, alpha.hyper=c(3, 3))
 
 # data(olive)
 # sim   <- mcmc_IMIFA(olive, "IMIFA", n.iters=5000, BNP=bnpctrl)

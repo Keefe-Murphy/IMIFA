@@ -44,7 +44,7 @@
   if(interactive()) {
     packageStartupMessage(paste("\n   ________  __________________\n  /_  __/  |/   /_  __/ ___/ _ \\           Infinite Mixtures of\n   / / / /|_// / / / / /__/ /_\\ \\     Infinite Factor Analysers\n _/ /_/ /   / /_/ /_/ ___/ /___\\ \\           and Related Models\n/____/_/   /_/_____/_/  /_/     \\_\\               version", version, "\n"))
   } else   {
-    packageStartupMessage("\nPackage 'IMIFA' version ", version, ".")
+    packageStartupMessage("\nPackage 'IMIFA' version ", version, ".\n")
   }
-  packageStartupMessage(paste("Type '?IMIFA' to see a brief guide to how to use this R package.\nType", sQuote(paste0("citation(", dQuote("IMIFA"),")")) ,"for citing the package in publications.\nType 'IMIFA_news()' to see new features, changes, and bug fixes."))
+  packageStartupMessage(paste("Type '?IMIFA' to see a brief guide to how to use this R package.\nType", sQuote(paste0("citation(", dQuote("IMIFA"),")")) ,"for citing the package in publications.\nType 'IMIFA_news()' to see new features, changes, and bug fixes.\n"))
 }

@@ -156,17 +156,17 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
   raw.dat   <- as.data.frame(dat)
   num.check <- vapply(raw.dat, is.numeric, logical(1L))
   if(anyNA(raw.dat)) {
-    if(verbose)                     message("Rows with missing values removed from data set\n")
+    if(isTRUE(verbose))             message("Rows with missing values removed from data set\n")
     raw.dat <- raw.dat[stats::complete.cases(raw.dat),, drop=FALSE]
   }
   if(sum(num.check) != ncol(raw.dat)) {
-    if(verbose)                     message("Non-numeric columns removed from data set\n")
+    if(isTRUE(verbose))             message("Non-numeric columns removed from data set\n")
     raw.dat <- raw.dat[,num.check,    drop=FALSE]
   }
   if(isTRUE(mixFA$drop0sd)) {
     sdx     <- .col_vars(as.matrix(raw.dat), std=TRUE)
     sd0ind  <- sdx  == 0
-    if(any(sd0ind))  {              message("Columns with standard deviation of zero removed from data set\n")
+    if(any(sd0ind))  { if(verbose)  message("Columns with standard deviation of zero removed from data set\n")
       raw.dat    <- raw.dat[,!sd0ind, drop=FALSE]
       sdx   <- sdx[!sd0ind]
     }
@@ -193,12 +193,12 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
   uni.type  <- ifelse(miss.uni, ifelse(uni, "isotropic", "unconstrained"), mixFA$uni.type)
   if(uni    && is.element(uni.type, c("unconstrained", "constrained"))) {
     uni.type     <- switch(EXPR=uni.type, unconstrained=, isotropic="isotropic", constrained=, single="single")
-    if(verbose)                     message(paste0("'uni.type' coerced to ", uni.type, " as the dataset is univariate\n"))
+    if(isTRUE(verbose))             message(paste0("'uni.type' coerced to ", uni.type, " as the dataset is univariate\n"))
   }
   uni.prior <- ifelse(miss.pri, switch(EXPR=uni.type, constrained=, unconstrained="unconstrained", "isotropic"), mixFA$uni.prior)
   if(uni    && uni.prior  == "unconstrained") {
     uni.prior    <- "isotropic"
-    if(verbose)                     message("'uni.prior' coerced to isotropic as the dataset is univariate\n")
+    if(isTRUE(verbose))             message("'uni.prior' coerced to isotropic as the dataset is univariate\n")
   }
   if(all(is.element(uni.type, c("isotropic", "single")),
      uni.prior == "unconstrained")) stop("'uni.prior' can only be 'unconstrained' when 'uni.type' is 'unconstrained' or 'constrained'", call.=FALSE)
@@ -221,7 +221,7 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
                  "list"))    z.list    <- lapply(list(z.list), as.factor)
     if(zin.miss &&
        z.init   != "list") { z.init    <- "list"
-       if(verbose)                   message("'z.init' set to 'list' as 'z.list' was supplied\n")
+       if(isTRUE(verbose))          message("'z.init' set to 'list' as 'z.list' was supplied\n")
     }
   }
   dots      <- switch(EXPR = z.init,
@@ -246,8 +246,9 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
   G.x       <- missing(range.G)
   bnpmiss   <- attr(BNP, "Missing")
   if(!is.element(method, c("IMFA", "IMIFA"))) {
-    if(!missing(BNP)         ||
-       any(!unlist(bnpmiss)))       message(paste0("'bnpControl()' parameters not necessary for the ", method, " method\n"))
+    if(verbose   &&
+      (!missing(BNP)         ||
+       any(!unlist(bnpmiss))))      message(paste0("'bnpControl()' parameters not necessary for the ", method, " method\n"))
   } else          {
     learn.a      <- BNP$learn.a
     discount     <- BNP$discount
@@ -259,8 +260,9 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
          tune.zeta$start.zeta)      stop(paste0("'stop.zeta' must be greater than 'start.zeta' (=", tune.zeta$start.zeta, ")"), call.=FALSE)
       if(!(tune.zeta$do      <-
          tune.zeta$start.zeta <
-         n.iters))     {            message("Diminishing adaptation to tune zeta not invoked as 'start.zeta' is not less than 'n.iters'\n")
-      } else if(!attr(tune.zeta, "stopx") &&
+         n.iters)     &&
+         isTRUE(verbose))     {     message("Diminishing adaptation to tune zeta not invoked as 'start.zeta' is not less than 'n.iters'\n")
+      } else if(!attr(tune.zeta, "stopx") && isTRUE(verbose) &&
                 tune.zeta$stop.zeta       >=
                 n.iters)            message("'stop.zeta' not invoked as it is not less than 'n.iters'\n")
     }
@@ -293,7 +295,7 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
         if((t.miss <- bnpmiss$trunc.G))    {
           trunc.G  <- BNP$trunc.G      <- tmp.G
         } else trunc.G    <- BNP$trunc.G
-        if(all(ifelse(N > 50, trunc.G   < 50,
+        if(all(verbose, ifelse(N > 50, trunc.G    < 50,
            trunc.G <= N), !t.miss)) message(paste0("Consider setting 'trunc.G' to min(N-1=", N - 1, ", 50) unless practical reasons in heavy computational/memory burden cases prohibit it\n"))
         if(trunc.G  < range.G)      stop(paste0("'trunc.G' must be at least range.G=", range.G), call.=FALSE)
         if(trunc.G >= N)            stop(paste0("'trunc.G' cannot be greater than N-1 (", N - 1, ")"), call.=FALSE)
@@ -388,10 +390,11 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
 
   mgpmiss   <- attr(MGP, "Missing")
   if(is.element(method, c("FA", "MFA", "OMFA", "IMFA"))) {
-   if(!missing(MGP)        ||
+   if(verbose      &&
+      !missing(MGP)        ||
       any(!unlist(mgpmiss)))        message(paste0("'mgpControl()' parameters not necessary for the ", method, " method\n"))
    if(Q.miss)                       stop("'range.Q' must be specified", call.=FALSE)
-   if(any(range.Q  < 0))            stop(paste0("'range.Q' must be non-negative for the ", method, " method"), call.=FALSE)
+   if(any(range.Q   < 0))           stop(paste0("'range.Q' must be non-negative for the ", method, " method"), call.=FALSE)
    range.Q  <- sort(unique(range.Q))
    delta0g  <- FALSE
   } else {
@@ -411,7 +414,7 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
    if(isTRUE(adapt))  {
      if(start.AGS     > burnin)     stop("'start.AGS' must be <= 'burnin' if 'adapt' is TRUE", call.=FALSE)
      if(MGP$stop.AGS <= start.AGS)  stop(paste0("'stop.AGS' must be greater than 'start.AGS' (=", start.AGS, ")"),  call.=FALSE)
-     if(!mgpmiss$stopAGS   &&
+     if(!mgpmiss$stopAGS   && verbose  &&
         MGP$stop.AGS >= n.iters)    message("'stop.AGS' not invoked as it is not less than 'n.iters'\n")
      if(Q.min   > range.Q)          stop(paste0("'range.Q' must be at least min(log(P), log(N)) for the ", method, " method when 'adapt' is TRUE"), call.=FALSE)
     } else if(!fQ0 && is.element(method,
@@ -548,19 +551,19 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
   init.start       <- proc.time()
   if(!is.element(method,  c("FA",    "IFA")) &&
      !all(G.init == 1))         {
-    if(verbose)                     cat(paste0("Initialising...\n"))
+    if(isTRUE(verbose))             cat(paste0("Initialising...\n"))
     clust          <- list()
     pi.alpha       <- list()
     pi.prop        <- list()
     zi             <- list()
-    if(is.element(z.init, c("hc", "mclust"))) {
+    if(is.element(z.init, c("hc", "mclust")))   {
       hcG          <- G.init[G.init > 1]
       Zhc          <- tryCatch(hc(dat, minclus=min(hcG), modelName=dots$modelName, use=dots$use), error=function(e) stop(paste0("Hierarchical clustering initialisation failed", ifelse(z.init == "hc", ". ", " (when initialising using 'mclust'). "), "Try another z.init method", ifelse(length(dots) > 1, " or supply different 'hc' arguments via '...' to mixfaControl", "")), call.=FALSE))
       if(z.init    == "mclust") {
         mcarg      <- list(data=dat, G=hcG, verbose=FALSE, control=emControl(equalPro=equal.pro), initialization=list(hcPairs=Zhc), unlist(mixFA$dots["modelNames"]))
         mcl        <- suppressWarnings(if(identical(dots$criterion, "icl")) do.call(mclustICL, mcarg) else do.call(mclustBIC, mcarg))
         class(mcl) <- "mclustBIC"
-        if(!is.null(dots$criterion) &&
+        if(!is.null(dots$criterion) && verbose &&
            !is.element(dots$criterion,
            c("bic", "icl")))        message("Using 'bic' to determine optimal mclust model to initialise with\n")
       } else        {
@@ -852,7 +855,7 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
            "Z.init")      <- factor(zi[[g]], levels=seq_len(G.init[g]))
     }
   }
-  if(verbose)                cat("\n"); print(attr(imifa, "Time"))
+  if(isTRUE(verbose))        cat("\n"); print(attr(imifa, "Time"))
   class(imifa)            <- "IMIFA"
     return(imifa)
 }

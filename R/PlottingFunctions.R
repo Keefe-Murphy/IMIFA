@@ -1748,10 +1748,10 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
 #' show_digit(colMeans(USPSdigits$train[,-1]))
   show_digit   <- function(dat, col = NULL, ...) {
     x          <- if(df <- !is.data.frame(dat)) dat else as.matrix(dat)
-    dims       <- ifelse(is.matrix(dat), ncol(dat), length(dat))
-    x          <- if(is.matrix(dat) && df)      dat else matrix(unlist(dat), nrow = dims, ncol = dims)
-    col        <- if(!missing(col))             col else grDevices::grey(seq(1, 0, length = dims))
-    dims       <- sqrt(dims)
+    odims      <- ifelse(is.matrix(dat), ncol(dat), length(dat))
+    dims       <- sqrt(odims)
+    x          <- if(is.matrix(dat) && df)      dat else matrix(unlist(dat), nrow = dims, ncol = dims, byrow=!is.vector(dat))
+    col        <- if(!missing(col))             col else grDevices::grey(seq(1, 0, length = odims))
     if(nrow(x) != ncol(x)) {
       x        <- matrix(dat, nrow=dims, ncol=dims, byrow=FALSE)
       if(diff(dim(x))   != 0)         stop("'dat' must be coercible to a square matrix", call. = FALSE)
