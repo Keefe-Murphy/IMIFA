@@ -4,16 +4,19 @@
 \alias{Ledermann}
 \title{Ledermann Bound}
 \usage{
-Ledermann(P)
+Ledermann(P,
+          isotropic = FALSE)
 }
 \arguments{
 \item{P}{Integer number of variables in data set. This argument is vectorized.}
+
+\item{isotropic}{Logical indicating whether uniquenesses are constrained to be isotropic, in which case the bound is simply \eqn{P-1}{P-1}. Defaults to \code{FALSE}.}
 }
 \value{
 The Ledermann bound, a non-negative integer, or a vector of \code{length(P)} such bounds.
 }
 \description{
-Returns the maximum possible number of latent factors in a factor analysis model for data of dimension \code{P}. This Ledermann bound is given by the largest integer smaller than or equal to the solution \eqn{k}{k} of \eqn{(M - k)^2 \geq M + k}{(M - k)^2 >= M + k}.
+Returns the maximum number of latent factors in a factor analysis model for data of dimension \code{P} which actually achieves dimension reduction in terms of the number of covariance parameters. This Ledermann bound is given by the largest integer smaller than or equal to the solution \eqn{k}{k} of \eqn{(M - k)^2 \geq M + k}{(M - k)^2 >= M + k}.
 }
 \examples{
 Ledermann(c(25, 50, 100))

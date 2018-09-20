@@ -587,6 +587,8 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     sizes        <- n.obs
   }
 
+  leder.b        <- min(n.obs - 1, Ledermann(n.var, isotropic=is.element(uni.type, c("isotropic", "single"))))
+  if(any(unlist(Q) > leder.b))    warning(paste0("Estimate of Q", ifelse(G > 1, " in one or more clusters ", " "), "is greater than ", ifelse(any(unlist(Q) > n.var), paste0("the number of variables (", n.var, ")"), paste0("the suggested Ledermann upper bound (", leder.b, ")\n"))), call.=FALSE)
   if(inf.Q)   {
     G1           <- G > 1
     Q.tab        <- if(G1) lapply(apply(Q.store, 1L, function(x) list(table(x, dnn=NULL))), "[[", 1L)   else table(Q.store, dnn=NULL)
@@ -598,8 +600,6 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     } else    {
       Q          <- if(G.T) Q else stats::setNames(if(length(Q) == G) Q else rep(Q, G), gnames)
     }
-    leder.b      <- min(n.obs - 1, Ledermann(n.var))
-    if(any(unlist(Q) > leder.b))  warning(paste0("Estimate of Q", ifelse(G > 1, " in one or more clusters ", " "), "is greater than ", ifelse(any(unlist(Q) > n.var), paste0("the number of variables (", n.var, ")"), paste0("the suggested Ledermann upper bound (", leder.b, ")")), ":\nsolution may be invalid\n"), call.=FALSE)
     Q.CI         <- if(G1) round(rowQuantiles(Q.store, probs=conf.levels)) else round(stats::quantile(Q.store, conf.levels))
     GQ.temp4     <- list(Q = Q, Q.Mode = Q.mode, Q.Median = Q.med,
                          Q.CI = Q.CI, Q.Probs = Q.prob, Q.Counts = Q.tab,

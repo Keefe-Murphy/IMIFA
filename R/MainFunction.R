@@ -408,7 +408,7 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
    alpha.d2 <- .len_check(MGP$alpha.d2, delta0g, method, P, G.init, P.dim=FALSE)
    MGP      <- MGP[-c(1L:4L)]
    start.AGS       <-  MGP$start.AGS   <- ifelse(mgpmiss$startAGSx, ifelse(fQ0, 0L, switch(EXPR=method, IFA=, MIFA=burnin, 0L)), MGP$start.AGS)
-   if(Q.miss)                range.Q   <- as.integer(ifelse(fQ0, 1, min(ifelse(P > 500, 12 + floor(log(P)), floor(3 * log(P))), N - 1)))
+   if(Q.miss)                range.Q   <- as.integer(ifelse(fQ0, 1, min(ifelse(P > 500, 12 + floor(log(P)), floor(3 * log(P))), N - 1, P - 1)))
    if(length(range.Q)       > 1)    stop(paste0("Only one starting value for 'range.Q' can be supplied for the ", method, " method"), call.=FALSE)
    if(range.Q      <= 0)            stop(paste0("'range.Q' must be strictly positive for the ", method, " method"), call.=FALSE)
    if(isTRUE(adapt))  {
@@ -432,7 +432,7 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
       storage["s.sw"]    <- FALSE
     }
   }
-  Q.warn       <- min(N - 1, Ledermann(P))
+  Q.warn       <- min(N - 1, Ledermann(P, isotropic=is.element(uni.type, c("isotropic", "single"))))
   if(any(range.Q > Q.warn))   {
     if(is.element(method, c("IFA", "MIFA", "OMIFA", "IMIFA")) &&
        isTRUE(adapt))         {     warning(paste0("Starting value for number of factors is greater than ", ifelse(any(range.Q > P), paste0("the number of variables (", P, ")"), paste0("the suggested Ledermann upper bound (", Q.warn, ")\n"))), call.=FALSE, immediate.=TRUE)

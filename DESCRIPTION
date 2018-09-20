@@ -27,7 +27,7 @@ Suggests:
     methods,
     rmarkdown,
     Rmpfr
-RoxygenNote: 6.0.1
+RoxygenNote: 6.1.0
 VignetteBuilder: knitr
 Collate: 
     'MainFunction.R'

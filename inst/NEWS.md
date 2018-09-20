@@ -46,6 +46,7 @@ __Infinite Mixtures of Infinite Factor Analysers__
 * Small fixes to function `show_digit`.
 * Better handling of tied model-selection criteria in `get_IMIFA_results`.
 * Minor cosmetic change for overplotting `scores` & `loadings` in `trace` & `density` plots.
+* Edited `Ledermann` and related warnings to account for case of isotropic uniquenesses.
 * Tidied indentation/line-breaks for `cat`/`message`/`warning` calls for printing clarity.
 * Corrected `IMIFA-package` help file (formerly just `IMIFA`).
 
