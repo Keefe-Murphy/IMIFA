@@ -3,10 +3,10 @@
 ###########################################################################
 
 # Gibbs Sampler Function
-  .gibbs_OMIFA       <- function(Q, data, iters, N, P, G, mu.zero, sigma.mu, uni.type,
-                                 uni.prior, burnin, thinning, adapt, psi.alpha, psi.beta,
-                                 verbose, alpha.d1, alpha.d2, sw, cluster, nu, vrho, b0, b1,
-                                 mu, prop, beta.d1, beta.d2, start.AGS, stop.AGS, epsilon, ...) {
+  .gibbs_OMIFA       <- function(Q, data, iters, N, P, G, mu.zero, sigma.mu, uni.type, uni.prior,
+                                 burnin, thinning, adapt, psi.alpha, psi.beta, verbose, alpha.d1,
+                                 alpha.d2, sw, cluster, nu1, nu2, b0, b1, mu, prop, beta.d1, beta.d2,
+                                 start.AGS, stop.AGS, epsilon, learn.alpha, a.hyper, zeta, tune.zeta, ...) {
 
   # Define & initialise variables
     start.time       <- proc.time()
@@ -54,6 +54,19 @@
     nn0              <- nn > 0
     nn.ind           <- which(nn0)
     pi.alpha         <- cluster$pi.alpha
+    if(learn.alpha)   {
+      alpha.store    <- ll.store
+      alpha.shape    <- a.hyper[1L]
+      alpha.rate     <- a.hyper[2L]
+      a.rates        <- vector("integer", total)
+    }
+    avgzeta          <- zeta
+    heat             <- tune.zeta$heat
+    lambda           <- tune.zeta$lambda
+    target           <- tune.zeta$target
+    zeta.tune        <- tune.zeta$do
+    startz           <- tune.zeta$start.zeta
+    stopz            <- tune.zeta$stop.zeta
     one.uni          <- is.element(uni.type, c("constrained", "single"))
     .sim_psi_inv     <- switch(EXPR=uni.type,  unconstrained=.sim_psi_uu,   isotropic=.sim_psi_uc,
                                                constrained=.sim_psi_cu,     single=.sim_psi_cc)
@@ -66,7 +79,7 @@
     pi.prop          <- c(cluster$pi.prop, vector("numeric", G - length(cluster$pi.prop)))
     mu               <- cbind(mu, vapply(seq_len(G - length(cluster$pi.prop)), function(g) .sim_mu_p(P=P, sig.mu.sqrt=sig.mu.sqrt, mu.zero=mu.zero), numeric(P)))
     eta              <- .sim_eta_p(N=N, Q=Q)
-    phi              <- replicate(G, .sim_phi_p(Q=Q, P=P, nu=nu, rho=vrho), simplify=FALSE)
+    phi              <- replicate(G, .sim_phi_p(Q=Q, P=P, nu1=nu1, nu2=nu2), simplify=FALSE)
     delta            <- lapply(Gseq, function(g) c(.sim_delta_p(alpha=alpha.d1, beta=beta.d1), .sim_delta_p(Q=Q, alpha=alpha.d2, beta=beta.d2)))
     tau              <- lapply(delta, cumprod)
     lmat             <- lapply(Gseq, function(g) matrix(vapply(Pseq, function(j) .sim_load_ps(Q=Q, phi=phi[[g]][j,], tau=tau[[g]]), numeric(Q)), nrow=P, byrow=TRUE))
@@ -111,13 +124,14 @@
       if(sw["l.sw"])   load.store[,,,1L] <- array(unlist(lmat, use.names=FALSE), dim=c(P, Q, G))
       if(sw["psi.sw"]) psi.store[,,1L]   <- 1/psi.inv
       if(sw["pi.sw"])  pi.store[,1L]     <- pi.prop
-      z.store[1,]             <- z
+      if(learn.alpha)  alpha.store[1L]   <- pi.alpha
+      z.store[1L,]            <- z
       Q0                      <- Qs > 0
       sigma                   <- if(uni) lapply(Gseq, function(g) as.matrix(1/psi.inv[,g] + if(Q0[g]) tcrossprod(lmat[[g]]) else 0)) else lapply(Gseq, function(g) tcrossprod(lmat[[g]]) + diag(1/psi.inv[,g]))
       log.probs               <- if(uni) vapply(Gseq, function(g) stats::dnorm(data, mu[,g], sq_mat(sigma[[g]]), log=TRUE) + log(pi.prop[g]), numeric(N)) else vapply(Gseq, function(g, Q=Q0[g]) { sigma <- if(Q) sigma[[g]] else sq_mat(sigma[[g]]); dmvn(data, mu[,g], is.posi_def(sigma, make=TRUE)$X.new, log=TRUE, isChol=!Q) + log(pi.prop[g]) }, numeric(N))
-      ll.store[1]             <- sum(rowLogSumExps(log.probs))
-      Q.store[,1]             <- Qs
-      G.store[1]              <- G.non
+      ll.store[1L]            <- sum(rowLogSumExps(log.probs))
+      Q.store[,1L]            <- Qs
+      G.store[1L]             <- G.non
     }
     init.time        <- proc.time() - start.time
 
@@ -194,8 +208,8 @@
     # Shrinkage
       if(all(Q0))    {
         load.2       <- lapply(lmat, .power2)
-        phi          <- lapply(Gseq, function(g) if(nn0[g]) .sim_phi(Q=Qs[g], P=P, nu=nu, rho=vrho,
-                        tau=tau[[g]], load.2=load.2[[g]]) else .sim_phi_p(Q=Qs[g], P=P, nu=nu, rho=vrho))
+        phi          <- lapply(Gseq, function(g) if(nn0[g]) .sim_phi(Q=Qs[g], P=P, nu1=nu1, nu2=nu2,
+                        tau=tau[[g]], load.2=load.2[[g]]) else .sim_phi_p(Q=Qs[g], P=P, nu1=nu1, nu2=nu2))
 
         sum.terms    <- lapply(Gseq, function(g) colSums2(phi[[g]] * load.2[[g]]))
         for(g in Gseq) {
@@ -232,7 +246,7 @@
             notred   <- notred & !Q.big
             Qs[nn0][Q.big]    <- Q.star
           }
-          phi[nn0]   <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) cbind(phi[[g]][,seq_len(Qs.old[h])],  .rgamma0(n=P, shape=nu, rate=vrho)) else phi[[g]][,nonred[[h]], drop=FALSE])
+          phi[nn0]   <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) cbind(phi[[g]][,seq_len(Qs.old[h])],  .rgamma0(n=P, shape=nu1, rate=nu2)) else phi[[g]][,nonred[[h]], drop=FALSE])
           delta[nn0] <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) c(delta[[g]][seq_len(Qs.old[h])],     stats::rgamma(n=1, shape=alpha.d2, rate=beta.d2)) else delta[[g]][nonred[[h]]])
           tau[nn0]   <- lapply(delta[nn.ind], cumprod)
           lmat[nn0]  <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) cbind(lmat[[g]][,seq_len(Qs.old[h])], stats::rnorm(n=P, mean=0, sd=sqrt(1/(phi[[g]][,Qs[g]] * tau[[g]][Qs[g]])))) else lmat[[g]][,nonred[[h]], drop=FALSE])
@@ -252,7 +266,7 @@
                 lmat[[g]]     <- lmat[[g]][,Qmaxseq, drop=FALSE]
               } else  {
                 while(Qg  != Qmax) {
-                 phi[[g]]     <- cbind(phi[[g]],     .rgamma0(n=P, shape=nu, rate=vrho))
+                 phi[[g]]     <- cbind(phi[[g]],     .rgamma0(n=P, shape=nu1, rate=nu2))
                  delta[[g]]   <- c(delta[[g]],       stats::rgamma(n=1, shape=alpha.d2, rate=beta.d2))
                  tau[[g]]     <- cumprod(delta[[g]])
                  if(store.eta)     {
@@ -268,6 +282,20 @@
           if(store.eta)    {
             eta.tmp  <- lapply(Gseq,   function(g) if(nn0[g] && Qs[g] > Qs.old[nn.ind == g]) cbind(eta.tmp[[g]], stats::rnorm(nn[g])) else eta.tmp[[g]][,seq_len(Qs[g]), drop=FALSE])
           }
+        }
+      }
+
+    # Alpha
+      if(learn.alpha)      {
+        MH.alpha     <- .sim_alpha_o(alpha=pi.alpha, zeta=zeta, G=G, N=N, nn=nn[nn0], shape=alpha.shape, rate=alpha.rate)
+        pi.alpha     <- MH.alpha$alpha
+        a.rates[iter]         <- MH.alpha$rate
+        if(isTRUE(zeta.tune))   {
+          if(iter    >= startz &&
+             iter     < stopz)  {
+            zeta     <- .tune_zeta(zeta=zeta, time=iter, l.rate=MH.alpha$l.prob, heat=heat, target=target, lambda=lambda)
+          }
+          avgzeta    <- c(avgzeta, zeta)
         }
       }
 
@@ -299,6 +327,7 @@
         }
         if(sw["psi.sw"]) psi.store[,,new.it]           <- 1/psi.inv
         if(sw["pi.sw"])  pi.store[,new.it]             <- pi.prop
+        if(learn.alpha)  alpha.store[new.it]           <- pi.alpha
                          z.store[new.it,]              <- as.integer(z)
                          ll.store[new.it]              <- sum(rowLogSumExps(log.probs))
                          Q.store[,new.it]              <- as.integer(Qs)
@@ -318,11 +347,14 @@
                              load      = if(sw["l.sw"])   tryCatch(provideDimnames(tryCatch(as.simple_sparse_array(load.store),           error=function(e) load.store), base=list(varnames, "", "", ""), unique=FALSE), error=function(e) load.store),
                              psi       = if(sw["psi.sw"]) tryCatch(provideDimnames(psi.store, base=list(varnames, "", ""), unique=FALSE), error=function(e) psi.store),
                              pi.prop   = if(sw["pi.sw"])  pi.store,
+                             alpha     = if(learn.alpha)  alpha.store,
+                             a.rate    = ifelse(learn.alpha, mean(a.rates), a.rates),
                              z.store   = z.store,
                              ll.store  = ll.store,
                              G.store   = G.store,
                              Q.store   = tryCatch(Q.store[Gmax,, drop=FALSE],          error=function(e) Q.store),
+                             avg.zeta  = if(learn.alpha)  ifelse(zeta.tune, mean(avgzeta), zeta),
                              time      = init.time)
     attr(returns, "Q.big")    <- Q.large
-    return(returns)
+      return(returns)
   }

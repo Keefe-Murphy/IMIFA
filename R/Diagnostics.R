@@ -36,7 +36,7 @@
 #' @return An object of class "\code{Results_IMIFA}" to be passed to \code{\link{plot.Results_IMIFA}} for visualising results. Dedicated \code{print} and \code{summary} functions also exist for objects of this class. The object, say \code{x}, is a list of lists, the most important components of which are:
 #' \item{\code{Clust}}{Everything pertaining to clustering performance can be found here for all but the "\code{FA}" and "\code{IFA}" methods (or models where the estimate number of clusters is 1), in particular \code{x$Clust$MAP}, the MAP summary of the posterior clustering, the last valid sample of cluster labels \code{x$Clust$last.z}, the matrix of posterior cluster membership probabilities \code{x$Clust$post.prob}, and the posterior confusion matrix \code{x$Clust$PCM}.
 #'
-#' More detail is given if known \code{zlabels} are supplied: performance is always evaluated against the MAP clustering, with additional evaluation against the alternative clustering computed if \code{z.avgsim=TRUE}. Posterior summaries of the mixing proportions, and the DP/PY parameters, if necessary, are also included here, as well as the last valid samples of each.}
+#' More detail is given if known \code{zlabels} are supplied: performance is always evaluated against the MAP clustering, with additional evaluation against the alternative clustering computed if \code{z.avgsim=TRUE}. Posterior summaries of the mixing proportions, and the concentration/discount parameters, if necessary, are also included here, as well as the last valid samples of each.}
 #' \item{\code{Error}}{Average error metrics (e.g. MSE, RMSE), and credible intervals quantifying the associated uncertainty, between the empirical and estimated covariance matrix/matrices, both of which are also included. The same metrics evaluated at the posterior mean parameter estimates and evaluated the last valid samples are also given.
 #'
 #' Credible intervals are only returned if \code{error.metrics} is \code{TRUE}. May not all be returned if loadings and uniquenesses are not stored. The number of iterations used in the computation of the credible intervals is the same as the number retained for posterior summaries of the \code{Scores} (see below).}
@@ -574,8 +574,8 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
                                     post.prob   = post.prob,  PCM    = provideDimnames(post_conf_mat(post.prob), base=list(gnames, gnames))),
                       if(sw["pi.sw"]) list(pi.prop = pi.prop, var.pi = var.pi, ci.pi = ci.pi, last.pi = pi.prop[,TN.store]),
                       if(!label.miss) list(perf = tab.stat),
-                      if(learn.alpha) list(DP.alpha = DP.alpha),
-                      if(learn.d)     list(PY.disc = PY.disc),
+                      if(learn.alpha) list(Alpha = DP.alpha),
+                      if(learn.d)     list(Discount = PY.disc),
                       if(z.avgsim)    list(Z.avgsim = z_simavg),
                       if(is.element(method, c("IMFA", "IMIFA"))) list(lab.rate = sims[[G.ind]][[Q.ind]]$lab.rate))
     attr(cluster, "Z.init")    <- attr(sims[[G.ind]], "Z.init")
@@ -926,11 +926,11 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
                       if(sw["psi.sw"] || sw.px) list(Uniquenesses = uniquenesses))
 
   attr(result, "Adapt")        <- attr(sims, "Adapt")
-  attr(result, "Alph.step")    <- if(is.element(method, c("IMFA", "IMIFA"))) learn.alpha
+  attr(result, "Alph.step")    <- if(is.element(method, c("IMFA", "IMIFA", "OMFA", "OMIFA"))) learn.alpha
   attr(result, "Alpha")        <- if(!learn.alpha) attr(sims, "Alpha")
   attr(result, "Call")         <- call
   attr(result, "Conf.Level")   <- conf.level
-  attr(result, "Disc.step")    <- if(is.element(method, c("IMFA", "IMIFA"))) learn.alpha
+  attr(result, "Disc.step")    <- if(is.element(method, c("IMFA", "IMIFA"))) learn.d
   attr(result, "Discount")     <- if(is.element(method, c("IMFA", "IMIFA")) && !learn.d) attr(sims, "Discount")
   attr(result, "Errors")       <- ifelse(anyNA(cov.emp), "None", switch(EXPR=errs, Vars="None", errs))
   attr(result, "Equal.Pi")     <- equal.pro

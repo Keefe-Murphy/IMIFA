@@ -110,10 +110,10 @@
       if(sw["l.sw"])   load.store[,,,1L] <- lmat
       if(sw["psi.sw"]) psi.store[,,1L]   <- 1/psi.inv
       if(sw["pi.sw"])  pi.store[,1L]     <- pi.prop
-      z.store[1,]          <- z
+      z.store[1L,]         <- z
       sigma                <- if(uni) lapply(Gseq, function(g) as.matrix(1/psi.inv[,g] + if(Q0) tcrossprod(as.matrix(lmat[,,g])) else 0)) else lapply(Gseq, function(g) tcrossprod(lmat[,,g]) + diag(1/psi.inv[,g]))
       log.probs            <- if(uni) vapply(Gseq, function(g) stats::dnorm(data, mu[,g], sq_mat(sigma[[g]]), log=TRUE) + log(pi.prop[g]), numeric(N)) else vapply(Gseq, function(g) { sigma <- if(Q0) sigma[[g]] else sq_mat(sigma[[g]]); dmvn(data, mu[,g], is.posi_def(sigma, make=TRUE)$X.new, log=TRUE, isChol=!Q0) + log(pi.prop[g]) }, numeric(N))
-      ll.store[1]          <- sum(rowLogSumExps(log.probs))
+      ll.store[1L]         <- sum(rowLogSumExps(log.probs))
     }
     init.time      <- proc.time() - start.time
 
@@ -217,5 +217,5 @@
                            ll.store = ll.store,
                            time     = init.time)
     attr(returns, "K")  <- PGMM_dfree(Q=Q, P=P, G=G, method=switch(EXPR=uni.type, unconstrained="UUU", isotropic="UUC", constrained="UCU", single="UCC"), equal.pro=equal.pro)
-    return(returns)
+      return(returns)
   }

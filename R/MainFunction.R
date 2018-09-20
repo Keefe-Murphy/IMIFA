@@ -28,13 +28,16 @@
 #'
 #' If \code{length(range.G) * length(range.Q)} is large, consider not storing unnecessary parameters (via \code{\link{storeControl}}), or breaking up the range of models to be explored into chunks and sending each chunk to \code{\link{get_IMIFA_results}}.
 #' @param MGP A list of arguments pertaining to the multiplicative gamma process (MGP) shrinkage prior and adaptive Gibbs sampler (AGS). For use with the infinite factor models "\code{IFA}", "\code{MIFA}", "\code{OMIFA}", and "\code{IMIFA}" only. Defaults are set by a call to \code{\link{mgpControl}}, with further checking of validity by \code{\link{MGP_check}} (though arguments can also be supplied here directly).
-#' @param BNP A list of arguments pertaining to the Bayesian Nonparametric Dirichlet/Pitman Yor process priors (BNP). For use with the infinite mixture models "\code{IMFA}" and "\code{IMIFA}" only. Defaults are set by a call to \code{\link{bnpControl}} (though arguments can also be supplied here directly).
+#' @param BNP A list of arguments pertaining to the Bayesian Nonparametric Dirichlet/Pitman Yor process priors, for use with the infinite mixture models "\code{IMFA}" and "\code{IMIFA}", or select arguments related to the Dirichlet concentration parameter for the overfitted mixtures "\code{OMFA}" and \code{"OMIFA"}. Defaults are set by a call to \code{\link{bnpControl}} (though arguments can also be supplied here directly).
 #' @param mixFA A list of arguments pertaining to \emph{all other} aspects of model fitting, e.g. MCMC settings, cluster initialisation, and hyperparameters common to every \code{method} in the \code{IMIFA} family. Defaults are set by a call to \code{\link{mixfaControl}} (though arguments can also be supplied here directly).
-#' @param alpha Depending on the method employed, either the hyperparameter of the Dirichlet prior for the cluster mixing proportions, or the Dirichlet process concentration parameter. Defaults to 1 for the finite mixture models "\code{MFA}" and "\code{MIFA}". Not relevant for the "\code{FA}" and "\code{IFA}" methods.
+#' @param alpha Depending on the method employed, either the hyperparameter of the Dirichlet prior for the cluster mixing proportions, or the Dirichlet process concentration parameter. Defaults to 1 for the finite mixture models "\code{MFA}" and "\code{MIFA}", and must be a strictly positive scalar. Not relevant for the "\code{FA}" and "\code{IFA}" methods.
+#' \describe{
+#' \item{Under the "\code{IMFA}" and "\code{IMIFA}" models:}{\code{alpha} defaults to a simulation from the prior if \code{learn.alpha} is \code{TRUE}, otherwise \code{alpha} \emph{must} be specified. Must be positive, unless \code{discount} is supplied or \code{learn.d} is \code{TRUE}, in which case it must be greater than \code{-discount}. Under certain conditions, \code{alpha} can remain fixed at 0 (see \code{\link{bnpControl}}).}
+#' \item{Under the "\code{OMFA}" and "\code{OMIFA}" models:}{\code{alpha} defaults to a simulation from the prior if \code{learn.alpha} is \code{TRUE}, otherwise \code{alpha} defaults to \code{0.5/range.G}. If supplied, \code{alpha} must be positive, and you are supplying the numerator of \code{alpha/range.G}.
 #'
-#' Defaults to \code{0.5/range.G} for the overfitted methods - if supplied for "\code{OMFA}" and "\code{OMIFA}" methods, you are supplying the numerator of \code{alpha/range.G}, which should be less than half the dimension (per cluster!) of the free parameters of the smallest model considered in order to ensure superfluous clusters are emptied (for "\code{OMFA}", this corresponds to the smallest \code{range.Q}; for "\code{OMIFA}", this corresponds to a zero-factor model) [see: \code{\link{PGMM_dfree}} and Rousseau and Mengersen (2011)].
-#'
-#' Under the "\code{IMFA}" and "\code{IMIFA}" models, \code{alpha} defaults to a simulation from the prior if \code{learn.alpha} is \code{TRUE}, otherwise \code{alpha} \emph{must} be specified. Must be positive, unless \code{discount} is supplied or \code{learn.d} is \code{TRUE} for the "\code{IMFA}" or "\code{IMIFA}" methods, in which case it must be greater than \code{-discount}. See \code{\link{bnpControl}} for details of specifying \code{alpha} or specifying a prior for \code{alpha} under the \code{"IMFA"} & \code{"IMIFA"} methods. Under certain conditions, \code{alpha} can remain fixed at 0 (again, see \code{\link{bnpControl}}).
+#' If \code{alpha} remains fixed (i.e. \code{learn.alpha=FALSE}), \code{alpha} should be less than half the dimension (per cluster!) of the free parameters of the smallest model considered in order to ensure superfluous clusters are emptied (for "\code{OMFA}", this corresponds to the smallest \code{range.Q}; for "\code{OMIFA}", this corresponds to a zero-factor model) [see: \code{\link{PGMM_dfree}} and Rousseau and Mengersen (2011)].}
+#' }
+#' See \code{\link{bnpControl}} for further details of specifying \code{alpha} or specifying a prior for \code{alpha} under the "\code{IMFA}", "\code{IMIFA}", "\code{OMFA}", or "\code{OMIFA}" methods.
 #' @param storage A vector of named logical indicators governing storage of parameters of interest for all models in the IMIFA family. Defaults are set by a call to \code{\link{storeControl}}. It may be useful not to store certain parameters if memory is an issue.
 #' @param ... An alternative means of passing control parameters directly via the named arguments of \code{\link{mixfaControl}}, \code{\link{mgpControl}}, \code{\link{bnpControl}}, and \code{\link{storeControl}}. Do not pass the output from calls to those functions here!
 #' @param x,object Object of class \code{"IMIFA"}, for the \code{print.IMIFA} and \code{summary.IMIFA} functions, respectively.
@@ -44,7 +47,7 @@
 #' @note Further control over the specification of advanced function arguments can be obtained with recourse to the following functions:
 #' \itemize{
 #' \item{\strong{\code{\link{mgpControl}}} - }{Supply arguments (with defaults) pertaining to the multiplicative gamma process (MGP) shrinkage prior and adaptive Gibbs sampler (AGS). For use with the infinite factor models "\code{IFA}", "\code{MIFA}", "\code{OMIFA}", and "\code{IMIFA}" only.}
-#' \item{\strong{\code{\link{bnpControl}}} - }{Supply arguments (with defaults) pertaining to the Bayesian Nonparametric Dirichlet/Pitman Yor process priors (BNP). For use with the infinite mixture models "\code{IMFA}" and "\code{IMIFA}" only.}
+#' \item{\strong{\code{\link{bnpControl}}} - }{Supply arguments (with defaults) pertaining to the Bayesian Nonparametric Dirichlet/Pitman Yor process priors, for use with the infinite mixture models "\code{IMFA}" and "\code{IMIFA}". Certain arguments related to the Dirichlet concentration parameter for the overfitted mixtures "\code{OMFA}" and \code{"OMIFA"} can be supplied in this manner also.}
 #' \item{\strong{\code{\link{mixfaControl}}} - }{Supply arguments (with defaults) pertaining to \emph{all other} aspects of model fitting (e.g. MCMC settings, cluster initialisation, and hyperparameters common to every \code{method} in the \code{IMIFA} family.}
 #' \item{\strong{\code{\link{storeControl}}} - }{Supply logical indicators governing storage of parameters of interest for all models in the IMIFA family. It may be useful not to store certain parameters if memory is an issue (e.g. for large data sets or for a large number of MCMC iterations after burnin and thinning).}
 #' }
@@ -73,8 +76,6 @@
 #' Rousseau, J. and Mengersen, K. (2011) Asymptotic Behaviour of the posterior distribution in overfitted mixture models, \emph{Journal of the Royal Statistical Society: Series B (Statistical Methodology)}, 73(5): 689-710.
 #'
 #' McNicholas, P. D. and Murphy, T. B. (2008) Parsimonious Gaussian Mixture Models, \emph{Statistics and Computing}, 18(3): 285-296.
-#'
-#' Tipping, M. E. and Bishop, C. M. (1999). Probabilistic principal component analysis, \emph{Journal of the Royal Statistical Society: Series B (Statistical Methodology)}, 61(3): 611-622.
 #'
 #' @author Keefe Murphy - <\email{keefe.murphy@@ucd.ie}>
 #'
@@ -245,31 +246,6 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
 
   G.x       <- missing(range.G)
   bnpmiss   <- attr(BNP, "Missing")
-  if(!is.element(method, c("IMFA", "IMIFA"))) {
-    if(verbose   &&
-      (!missing(BNP)         ||
-       any(!unlist(bnpmiss))))      message(paste0("'bnpControl()' parameters not necessary for the ", method, " method\n"))
-  } else          {
-    learn.a      <- BNP$learn.a
-    discount     <- BNP$discount
-    learn.d      <- BNP$learn.d
-    IM.lab.sw    <- BNP$IM.lab.sw
-    tune.zeta    <- BNP$tune.zeta
-    if(tune.zeta$do)   {
-      if(tune.zeta$stop.zeta <=
-         tune.zeta$start.zeta)      stop(paste0("'stop.zeta' must be greater than 'start.zeta' (=", tune.zeta$start.zeta, ")"), call.=FALSE)
-      if(!(tune.zeta$do      <-
-         tune.zeta$start.zeta <
-         n.iters)     &&
-         isTRUE(verbose))     {     message("Diminishing adaptation to tune zeta not invoked as 'start.zeta' is not less than 'n.iters'\n")
-      } else if(!attr(tune.zeta, "stopx") && isTRUE(verbose) &&
-                tune.zeta$stop.zeta       >=
-                n.iters)            message("'stop.zeta' not invoked as it is not less than 'n.iters'\n")
-    }
-    if(all(!bnpmiss$IM.lab.sw, IM.lab.sw,
-      !learn.a, verbose, !learn.d)) message("May not be necessary to set 'IM.lab.sw' to TRUE when neither 'alpha' nor 'discount' are being learned\n")
-  }
-
   if(!is.element(method, c("MFA", "MIFA")))      {
     if(length(range.G) > 1)         stop(paste0("Only one 'range.G' value can be specified for the ", method, " method"), call.=FALSE)
     if(all(!G.x, verbose, is.element(method, c("FA", "IFA"))) &&
@@ -345,6 +321,40 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
            c("FA", "IFA"))))        message(paste0("Forced use of ", meth[1L], " method where 'range.G' is equal to 1\n"))
   }
 
+  if(!is.element(method, c("IMFA", "IMIFA", "OMFA", "OMIFA"))) {
+    if(verbose   &&
+      (!missing(BNP)         ||
+        any(!unlist(bnpmiss))))      message(paste0("'bnpControl()' parameters not necessary for the ", method, " method\n"))
+  } else          {
+    learn.a      <- BNP$learn.alpha
+    tune.zeta    <- BNP$tune.zeta
+    BNP$zeta     <- ifelse(bnpmiss$zeta, switch(EXPR=method, IMFA=, IMIFA=2L, 0.75), BNP$zeta)
+    tune.zeta$do <- switch(EXPR=method, OMFA=, OMIFA=tune.zeta$do, tune.zeta$do && attr(tune.zeta, "IM.Need"))
+    if(tune.zeta$do)   {
+      if(tune.zeta$stop.zeta <=
+         tune.zeta$start.zeta)      stop(paste0("'stop.zeta' must be greater than 'start.zeta' (=", tune.zeta$start.zeta, ")"), call.=FALSE)
+      if(!(tune.zeta$do      <-
+         tune.zeta$start.zeta <
+         n.iters)     &&
+         isTRUE(verbose))     {     message("Diminishing adaptation to tune zeta not invoked as 'start.zeta' is not less than 'n.iters'\n")
+      } else if(!attr(tune.zeta, "stopx") && isTRUE(verbose) &&
+                tune.zeta$stop.zeta       >=
+                n.iters)            message("'stop.zeta' not invoked as it is not less than 'n.iters'\n")
+    }
+    if(is.element(method, c("IMFA", "IMIFA"))) {
+      discount   <- BNP$discount
+      learn.d    <- BNP$learn.d
+      IM.lab.sw  <- BNP$IM.lab.sw
+      if(diff(BNP$a.hyper)    < 0)  warning("The rate hyperparameter for the prior on alpha should be >= to the shape hyperparameter, in order to encourage clustering\n", call.=FALSE, immediate.=TRUE)
+      if(all(discount         > 0,
+             !learn.d, learn.a)) {
+        BNP$a.hyper          <- unname(unlist(shift_GA(shape=BNP$a.hyper[1L], rate=BNP$a.hyper[2L], shift=-discount)))
+      }
+      if(all(!bnpmiss$IM.lab.sw, IM.lab.sw, !learn.a,
+             verbose, !learn.d))    message("May not be necessary to set 'IM.lab.sw' to TRUE when neither 'alpha' nor 'discount' are being learned\n")
+    } else BNP$a.hyper[2L]   <- BNP$a.hyper[2L] * G.init
+  }
+
 # Define full conditionals, hyperparamters & Gibbs Sampler function for desired method
   datname          <- rownames(dat)
   if(any(length(unique(datname)) != N,
@@ -402,8 +412,8 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
    MGP$prop <- ifelse(fQ0  && mgpmiss$propx, 0.5, floor(MGP$prop * P)/P)
    adapt    <- MGP$adapt
    delta0g  <- MGP$delta0g && method   == "MIFA"
-   MGP$nu   <- nu          <- MGP$phi.hyper[1L]
-   MGP$vrho <- vrho        <- MGP$phi.hyper[2L]
+   MGP$nu1  <- nu1         <- MGP$phi.hyper[1L]
+   MGP$nu2  <- nu2         <- MGP$phi.hyper[2L]
    alpha.d1 <- .len_check(MGP$alpha.d1, delta0g, method, P, G.init, P.dim=FALSE)
    alpha.d2 <- .len_check(MGP$alpha.d2, delta0g, method, P, G.init, P.dim=FALSE)
    MGP      <- MGP[-c(1L:4L)]
@@ -482,12 +492,8 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
     if(method == "classify") mu0g      <- TRUE
   } else if(any(sw0gs))             stop(paste0("'", names(which(sw0gs)), "' should be FALSE for the ", method, " method\n"), call.=FALSE)
 
-  dimension <- PGMM_dfree(P=P, Q=switch(EXPR=method, FA=, classify=, MFA=, OMFA=, IMFA=range.Q,
-               IFA=, MIFA=, OMIFA=, IMIFA=0L), equal.pro=equal.pro, method=switch(EXPR=uni.type, unconstrained="UUU", isotropic="UUC", constrained="UCU", single="UCC"))
-  min.d2    <- min(dimension)/2
-  min.d2G   <- min.d2 * G.init
   if(!is.element(method, c("FA", "IFA", "classify"))) {
-    if(missing(alpha))     { alpha     <- switch(EXPR=method, MFA=, MIFA=1, OMFA=, OMIFA=0.5/G.init, ifelse(learn.a, max(1, stats::rgamma(1, BNP$a.hyper[1], BNP$a.hyper[2])), 1))
+    if(missing(alpha))     { alpha     <- switch(EXPR=method, MFA=, MIFA=1L, OMFA=, OMIFA=ifelse(learn.a, min(1/G.init, stats::rgamma(1, BNP$a.hyper[1L], BNP$a.hyper[2L])), 0.5/G.init), ifelse(learn.a, max(1L, stats::rgamma(1, BNP$a.hyper[1L], BNP$a.hyper[2L])), 1L))
       if(is.element(method, c("IMFA", "IMIFA"))      &&
          !learn.a)                  stop("'alpha' must be specified if it is to remain fixed when 'learn.alpha' is FALSE, as it's not being learned via Gibbs/Metropolis-Hastings updates", call.=FALSE)
     } else if(is.element(method,
@@ -495,7 +501,7 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
     if(length(alpha) != 1)          stop("'alpha' must be specified as a scalar to ensure an exchangeable prior", call.=FALSE)
     if(is.element(method, c("IMIFA", "IMFA"))) {
       if(kappa0      <- alpha    <= 0  && !learn.a)   {
-        discount     <- BNP$discount   <- ifelse(ifelse(learn.d, discount == 0, bnpmiss$discount), pmin(stats::rbeta(1, BNP$a.hyper[1], BNP$a.hyper[2]), 1 - .Machine$double.eps), discount)
+        discount     <- BNP$discount   <- ifelse(ifelse(learn.d, discount == 0, bnpmiss$discount), pmin(stats::rbeta(1, BNP$d.hyper[1L], BNP$d.hyper[2L]), 1 - .Machine$double.eps), discount)
         if(!learn.d  &&
            discount  == 0)          stop("Set 'learn.d'=TRUE or fix a non-zero 'discount' value if fixing 'alpha' at <= 0", call.=FALSE)
         if(learn.d   && bnpmiss$kappa)  {
@@ -505,8 +511,11 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
       }
       if(alpha       <= -discount)  stop(paste0("'alpha' must be ",     ifelse(discount != 0, paste0("strictly greater than -discount (i.e. > ", - discount, ")"), "strictly positive")), call.=FALSE)
     }
-    if(all(is.element(method,  c("OMIFA",   "OMFA")),
-       alpha >= min.d2))            warning(paste0("'alpha' over 'range.G' for the OMFA & OMIFA methods should be less than half the dimension (per cluster!)\nof the free parameters of the smallest model considered (= ", min.d2, "): consider suppling 'alpha' < ", min.d2G, "\n"), call.=FALSE, immediate.=TRUE)
+    if(all(is.element(method,  c("OMIFA",   "OMFA")), !learn.a)) {
+      min.d2         <- 0.5 * PGMM_dfree(P=P, Q=switch(EXPR=method, OMFA=min(range.Q), OMIFA=0L), equal.pro=equal.pro,
+                                         method=switch(EXPR=uni.type, unconstrained="UUU", isotropic="UUC", constrained="UCU", single="UCC"))
+      if(alpha       >= min.d2)     warning(paste0("'alpha' over 'range.G' for the OMFA & OMIFA methods when 'learn.alpha=FALSE', should be less than half the dimension (per cluster!)\nof the free parameters of the smallest model considered (= ", min.d2, "): consider suppling 'alpha' < ", min.d2 * G.init, "\n"), call.=FALSE, immediate.=TRUE)
+    }
     if(any(all(is.element(method, c("MFA",  "MIFA")), alpha > 1),
            all(is.element(method, c("OMFA", "OMIFA")),
            alpha > 1/G.init)))      warning("Are you sure alpha should be greater than 1?\n", call.=FALSE, immediate.=TRUE)
@@ -533,7 +542,7 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
   Gi        <- Qi  <- 1L
   gibbs.arg <- list(P = P, sigma.mu = sigma.mu, psi.alpha = psi.alpha, burnin = burnin, sw = storage,
                     thinning = thinning, iters = iters, verbose = verbose, uni.type = uni.type, uni.prior = uni.prior)
-  if(is.element(method, c("IMIFA", "IMFA"))) {
+  if(is.element(method, c("IMIFA", "IMFA", "OMIFA", "OMFA"))) {
     gibbs.arg      <- append(gibbs.arg, BNP)
   }
   if(any(is.element(meth, c("FA",  "IFA")))) {
@@ -549,7 +558,7 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
   }
 
   init.start       <- proc.time()
-  if(!is.element(method,  c("FA",    "IFA")) &&
+  if(!is.element(method,  c("FA",    "IFA"))   &&
      !all(G.init == 1))         {
     if(isTRUE(verbose))             cat(paste0("Initialising...\n"))
     clust          <- list()
@@ -683,11 +692,11 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
   if(is.element(method, c("classify", "IFA", "MIFA", "IMIFA", "OMIFA"))) {
     ad1uu          <- unique(unlist(alpha.d1))
     ad2uu          <- unique(unlist(alpha.d2))
-    check.mgp      <- suppressWarnings(MGP_check(ad1=ad1uu, ad2=ad2uu, Q=unique(range.Q), phi.shape=nu, phi.rate=vrho, bd1=MGP$beta.d1, bd2=MGP$beta.d2))
+    check.mgp      <- suppressWarnings(MGP_check(ad1=ad1uu, ad2=ad2uu, Q=unique(range.Q), phi.shape=nu1, phi.rate=nu2, bd1=MGP$beta.d1, bd2=MGP$beta.d2))
     if(!all(check.mgp$valid))       stop("Invalid shrinkage hyperparameter values WILL NOT encourage loadings column removal.\nTry using the MGP_check() function in advance to ensure the cumulative shrinkage property holds.", call.=FALSE)
     if(any(attr(check.mgp, "Warning"))) {
       if(any(ad2uu <= ad1uu))       warning("Global shrinkage hyperparameter values MAY NOT encourage loadings column removal.\n'alpha.d2' should be moderately large relative to 'alpha.d1'\n", call.=FALSE, immediate.=TRUE)
-      if(any(vrho   > nu - 1))      warning("Expectation of local shrinkage hyperprior is not less than 1\n", call.=FALSE, immediate.=TRUE)
+      if(any(nu2    > nu1 - 1))     warning("Expectation of local shrinkage hyperprior is not less than 1\n", call.=FALSE, immediate.=TRUE)
     }
     deltas         <- lapply(seq_along(G.init), function(g) list(alpha.d1 = alpha.d1[[g]], alpha.d2 = alpha.d2[[g]]))
   }
@@ -802,10 +811,10 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
   names(imifa)            <- gnames
   attr(imifa, "Adapt")    <- is.element(method, c("classify", "IFA", "MIFA", "OMIFA", "IMIFA")) && isTRUE(adapt)
   attr(imifa,
-       "Alph.step")       <- is.element(method, c("IMFA", "IMIFA")) && learn.a
+       "Alph.step")       <- is.element(method, c("IMFA", "IMIFA", "OMFA", "OMIFA")) && learn.a
   attr(imifa, "Alpha")    <- if(!attr(imifa, "Alph.step")) alpha
   attr(imifa,
-       "Class.Props")     <- if(method == "classify") tabulate(z.list[[1]], range.G)/N
+       "Class.Props")     <- if(method == "classify") tabulate(z.list[[1L]], range.G)/N
   attr(imifa, "Call")     <- call
   attr(imifa, "Center")   <- any(centered, centering)
   attr(imifa, "Cov.Emp")  <- covmat
@@ -826,7 +835,7 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
   attr(imifa,
        "Label.Switch")    <- if(!is.element(method, c("FA", "IFA")))      any(sw0gs)
   method                  <- names(table(meth)[which.max(table(meth))])
-  attr(imifa, "Method")   <- paste0(toupper(substr(method, 1, 1)), substr(method, 2L, nchar(method)))
+  attr(imifa, "Method")   <- paste0(toupper(substr(method, 1L, 1L)), substr(method, 2L, nchar(method)))
   attr(imifa, "Name")     <- dat.nam
   attr(imifa, "Obs")      <- N
   attr(imifa, "Obsnames") <- obsnames
@@ -845,7 +854,7 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
   }
   class(times)            <- "listof"
   attr(imifa, "Time")     <- if(is.element(method, c("FA", "IFA", "classify"))) times[-length(times)] else times
-  attr(imifa, "TuneZeta") <- is.element(method, c("IMFA", "IMIFA")) && tune.zeta$do
+  attr(imifa, "TuneZeta") <- is.element(method, c("IMFA", "IMIFA", "OMFA", "OMIFA")) && tune.zeta$do
   attr(imifa, "Uni.Meth") <- c(Uni.Prior = uni.prior, Uni.Type = uni.type)
   attr(imifa, "Varnames") <- varnames
   attr(imifa, "Vars")     <- P

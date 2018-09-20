@@ -3,9 +3,9 @@
 ###########################################################################
 
 # Gibbs Sampler Function
-  .gibbs_OMFA      <- function(Q, data, iters, N, P, G, mu.zero, sigma.mu, mu,
-                               sigma.l, burnin, thinning, uni.type, uni.prior,
-                               sw, psi.alpha, psi.beta, verbose, cluster, ...) {
+  .gibbs_OMFA      <- function(Q, data, iters, N, P, G, mu.zero, sigma.mu, mu, sigma.l, burnin,
+                               thinning, uni.type, uni.prior, sw, psi.alpha, psi.beta, verbose,
+                               cluster, learn.alpha, a.hyper, zeta, tune.zeta, ...) {
 
   # Define & initialise variables
     start.time     <- proc.time()
@@ -53,6 +53,19 @@
     nn0            <- nn > 0
     nn.ind         <- which(nn0)
     pi.alpha       <- cluster$pi.alpha
+    if(learn.alpha) {
+      alpha.store  <- ll.store
+      alpha.shape  <- a.hyper[1L]
+      alpha.rate   <- a.hyper[2L]
+      a.rates      <- vector("integer", total)
+    }
+    avgzeta        <- zeta
+    heat           <- tune.zeta$heat
+    lambda         <- tune.zeta$lambda
+    target         <- tune.zeta$target
+    zeta.tune      <- tune.zeta$do
+    startz         <- tune.zeta$start.zeta
+    stopz          <- tune.zeta$stop.zeta
     one.uni        <- is.element(uni.type, c("constrained", "single"))
     .sim_psi_inv   <- switch(EXPR=uni.type,  unconstrained=.sim_psi_uu,   isotropic=.sim_psi_uc,
                                              constrained=.sim_psi_cu,     single=.sim_psi_cc)
@@ -104,11 +117,12 @@
       if(sw["l.sw"])   load.store[,,,1L] <- lmat
       if(sw["psi.sw"]) psi.store[,,1L]   <- 1/psi.inv
       if(sw["pi.sw"])  pi.store[,1L]     <- pi.prop
-      z.store[1,]          <- z
+      if(learn.alpha)  alpha.store[1L]   <- pi.alpha
+      z.store[1L,]         <- z
       sigma                <- if(uni) lapply(Gseq, function(g) as.matrix(1/psi.inv[,g] + if(Q0) tcrossprod(as.matrix(lmat[,,g])) else 0)) else lapply(Gseq, function(g) tcrossprod(lmat[,,g]) + diag(1/psi.inv[,g]))
       log.probs            <- if(uni) vapply(Gseq, function(g) stats::dnorm(data, mu[,g], sq_mat(sigma[[g]]), log=TRUE) + log(pi.prop[g]), numeric(N)) else vapply(Gseq, function(g) { sigma <- if(Q0) sigma[[g]] else sq_mat(sigma[[g]]); dmvn(data, mu[,g], is.posi_def(sigma, make=TRUE)$X.new, log=TRUE, isChol=!Q0) + log(pi.prop[g]) }, numeric(N))
-      ll.store[1]          <- sum(rowLogSumExps(log.probs))
-      G.store[1]           <- G.non
+      ll.store[1L]         <- sum(rowLogSumExps(log.probs))
+      G.store[1L]          <- G.non
     }
     init.time      <- proc.time() - start.time
 
@@ -174,6 +188,20 @@
       mu[,]        <- vapply(Gseq, function(g) if(nn0[g]) .sim_mu(mu.sigma=mu.sigma, psi.inv=psi.inv[,g], mu.zero=mu.zero, sum.data=sum.data[,g], sum.eta=sum.eta[[g]],
                              lmat=if(Q1) as.matrix(lmat[,,g]) else lmat[,,g], N=nn[g], P=P) else .sim_mu_p(P=P, sig.mu.sqrt=sig.mu.sqrt, mu.zero=mu.zero), numeric(P))
 
+    # Alpha
+      if(learn.alpha)    {
+        MH.alpha   <- .sim_alpha_o(alpha=pi.alpha, zeta=zeta, G=G, N=N, nn=nn[nn0], shape=alpha.shape, rate=alpha.rate)
+        pi.alpha   <- MH.alpha$alpha
+        a.rates[iter]      <- MH.alpha$rate
+        if(isTRUE(zeta.tune))  {
+          if(iter  >= startz  &&
+             iter   < stopz)   {
+            zeta   <- .tune_zeta(zeta=zeta, time=iter, l.rate=MH.alpha$l.prob, heat=heat, target=target, lambda=lambda)
+          }
+          avgzeta  <- c(avgzeta, zeta)
+        }
+      }
+
       if(zerr && !err.z) {                                     warning("Algorithm may slow due to corrections for Choleski decompositions of non-positive-definite covariance matrices", call.=FALSE)
         err.z      <- TRUE
       }
@@ -185,6 +213,7 @@
         if(all(sw["l.sw"], Q0))     load.store[,,,new.it]   <- lmat
         if(sw["psi.sw"])            psi.store[,,new.it]     <- 1/psi.inv
         if(sw["pi.sw"])             pi.store[,new.it]       <- pi.prop
+        if(learn.alpha)             alpha.store[new.it]     <- pi.alpha
                                     z.store[new.it,]        <- as.integer(z)
                                     ll.store[new.it]        <- sum(rowLogSumExps(log.probs))
                                     G.store[new.it]         <- as.integer(G.non)
@@ -201,9 +230,12 @@
                            load      = if(all(sw["l.sw"], Q0)) tryCatch(provideDimnames(load.store, base=list(varnames, "", "", ""), unique=FALSE), error=function(e) load.store),
                            psi       = if(sw["psi.sw"])        tryCatch(provideDimnames(psi.store,  base=list(varnames, "", ""),     unique=FALSE), error=function(e) psi.store),
                            pi.prop   = if(sw["pi.sw"])         pi.store,
+                           alpha     = if(learn.alpha)         alpha.store,
+                           a.rate    = ifelse(learn.alpha,     mean(a.rates), a.rates),
                            z.store   = z.store,
                            ll.store  = ll.store,
                            G.store   = G.store,
+                           avg.zeta  = if(learn.alpha)         ifelse(zeta.tune, mean(avgzeta), zeta),
                            time      = init.time)
-    return(returns)
+      return(returns)
   }

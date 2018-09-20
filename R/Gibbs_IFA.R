@@ -5,7 +5,7 @@
 # Gibbs Sampler Function
   .gibbs_IFA     <- function(Q, data, iters, N, P, sigma.mu, mu, prop, uni.type,
                              uni.prior, psi.alpha, psi.beta, burnin, thinning, verbose,
-                             sw, epsilon, mu.zero, nu, vrho, adapt, start.AGS, stop.AGS,
+                             sw, epsilon, mu.zero, nu1, nu2, adapt, start.AGS, stop.AGS,
                              b0, b1, alpha.d1, alpha.d2, beta.d1, beta.d2, scaling, ...) {
 
   # Define & initialise variables
@@ -47,7 +47,7 @@
     uni.shape    <- switch(EXPR=uni.type,  constrained=N/2 + psi.alpha,  single=(N * P)/2 + psi.alpha)
     V            <- switch(EXPR=uni.type,  constrained=P,                single=1)
     eta          <- .sim_eta_p(Q=Q, N=N)
-    phi          <- .sim_phi_p(Q=Q, P=P, nu=nu, rho=vrho)
+    phi          <- .sim_phi_p(Q=Q, P=P, nu1=nu1, nu2=nu2)
     delta        <- c(.sim_delta_p(alpha=alpha.d1, beta=beta.d1), .sim_delta_p(Q=Q, alpha=alpha.d2, beta=beta.d2))
     tau          <- cumprod(delta)
     lmat         <- matrix(vapply(Pseq, function(j) .sim_load_ps(Q=Q, phi=phi[j,], tau=tau), numeric(Q)), nrow=P, byrow=TRUE)
@@ -71,8 +71,8 @@
       if(sw["s.sw"])          eta.store[,,1L]  <- eta
       if(sw["l.sw"])          load.store[,,1L] <- lmat
       if(sw["psi.sw"])        psi.store[,1L]   <- 1/psi.inv
-      Q.store[1]           <- Q
-      ll.store[1]          <- sum(dmvn(X=data, mu=mu, sigma=tcrossprod(lmat) + diag(1/psi.inv), log=TRUE))
+      Q.store[1L]          <- Q
+      ll.store[1L]         <- sum(dmvn(X=data, mu=mu, sigma=tcrossprod(lmat) + diag(1/psi.inv), log=TRUE))
     }
     init.time    <- proc.time() - start.time
 
@@ -104,7 +104,7 @@
     # Shrinkage
       if(Q0) {
         load.2   <- lmat * lmat
-        phi      <- .sim_phi(Q=Q, P=P, nu=nu, rho=vrho, tau=tau, load.2=load.2)
+        phi      <- .sim_phi(Q=Q, P=P, nu1=nu1, nu2=nu2, tau=tau, load.2=load.2)
 
         sum.term <- colSums2(phi * load.2)
         for(k in seq_len(Q)) {
@@ -127,7 +127,7 @@
               Q     <- Q.star
             } else {
               eta   <- if(storage) cbind(eta, stats::rnorm(N))   else eta
-              phi   <- cbind(phi,  .rgamma0(n=P, shape=nu, rate=vrho))
+              phi   <- cbind(phi,  .rgamma0(n=P, shape=nu1, rate=nu2))
               delta <- c(delta,    stats::rgamma(n=1, shape=alpha.d2, rate=beta.d2))
               tau   <- cumprod(delta)
               lmat  <- cbind(lmat, stats::rnorm(n=P, mean=0, sd=sqrt(1/(phi[,Q] * tau[Q]))))
@@ -175,5 +175,5 @@
                          Q.store  = matrix(Q.store, nrow=1L),
                          time     = init.time)
     attr(returns, "Q.big") <- Q.large
-    return(returns)
+      return(returns)
   }

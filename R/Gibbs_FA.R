@@ -69,7 +69,7 @@
       if(sw["s.sw"])          eta.store[,,1L]           <- eta
       if(sw["l.sw"])          load.store[,,1L]          <- lmat
       if(sw["psi.sw"])        psi.store[,1L]            <- 1/psi.inv
-      ll.store[1]          <- sum(dmvn(X=data, mu=mu, sigma=tcrossprod(lmat) + diag(1/psi.inv), log=TRUE))
+      ll.store[1L]         <- sum(dmvn(X=data, mu=mu, sigma=tcrossprod(lmat) + diag(1/psi.inv), log=TRUE))
     }
     init.time    <- proc.time() - start.time
 
@@ -116,5 +116,5 @@
                       ll.store = ll.store,
                       time     = init.time)
     attr(returns, "K")        <- PGMM_dfree(Q=Q, P=P, method=switch(EXPR=uni.type, constrained="UCU", single="UCC"))
-    return(returns)
+      return(returns)
   }

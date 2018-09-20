@@ -3,7 +3,7 @@
 ############################################################################
 
 # Gibbs Sampler Function
-  .gibbs_IMFA        <- function(Q, data, iters, N, P, G, mu.zero, rho, sigma.l, learn.alpha, discount,  mu, tune.zeta,
+  .gibbs_IMFA        <- function(Q, data, iters, N, P, G, mu.zero, rho, sigma.l, learn.alpha, discount, mu, tune.zeta,
                                  a.hyper, sigma.mu, burnin, thinning, d.hyper, learn.d, uni.type, uni.prior, trunc.G,
                                  ind.slice, psi.alpha, psi.beta, verbose, sw, cluster, IM.lab.sw, zeta, kappa, ...) {
 
@@ -60,11 +60,11 @@
       d.rates        <- vector("integer", total)
       d.unif         <- d.shape1 == 1 & d.shape2    == 1
       .sim_disc_mh   <- if(!learn.alpha && pi.alpha == 0) .sim_d_slab else .sim_d_spike
-    } else d.rates   <- 1
+    } else d.rates   <- 1L
     MH.step          <- any(discount  > 0, learn.d) && learn.alpha
     if(MH.step)     {
       a.rates        <- vector("integer", total)
-    } else a.rates   <- 1
+    } else a.rates   <- 1L
     if(IM.lab.sw)   {
       lab.rate       <- matrix(0L, nrow=2L, ncol=total)
     }
@@ -141,18 +141,14 @@
       if(sw["l.sw"])    load.store[,,,1L] <- lmat
       if(sw["psi.sw"])  psi.store[,,1L]   <- 1/psi.inv
       if(sw["pi.sw"])   pi.store[,1L]     <- pi.prop
-      z.store[1,]            <- z
+      if(learn.alpha)   alpha.store[1L]   <- pi.alpha
+      if(learn.d)       d.store[1L]       <- discount
+      z.store[1L,]           <- z
       sigma                  <- if(uni) lapply(Gs, function(g) as.matrix(1/psi.inv[,g] + if(Q0) tcrossprod(as.matrix(lmat[,,g])) else 0)) else lapply(Gs, function(g) tcrossprod(lmat[,,g]) + diag(1/psi.inv[,g]))
       log.probs              <- if(uni) vapply(Gs, function(g) stats::dnorm(data, mu[,g], sq_mat(sigma[[g]]), log=TRUE) + log(pi.prop[g]), numeric(N)) else vapply(Gs, function(g) { sigma <- if(Q0) sigma[[g]] else sq_mat(sigma[[g]]); dmvn(data, mu[,g], is.posi_def(sigma, make=TRUE)$X.new, log=TRUE, isChol=!Q0) + log(pi.prop[g]) }, numeric(N))
-      ll.store[1]            <- sum(rowLogSumExps(log.probs))
-      G.store[1]             <- G.non
-      act.store[1]           <- G
-      if(learn.alpha) {
-        alpha.store[1]       <- pi.alpha
-      }
-      if(learn.d)     {
-        d.store[1]           <- discount
-      }
+      ll.store[1L]           <- sum(rowLogSumExps(log.probs))
+      G.store[1L]            <- G.non
+      act.store[1L]          <- G
     }
     init.time        <- proc.time() - start.time
 
@@ -295,7 +291,7 @@
           }
         } else {
           pi.alpha   <- .sim_alpha_g(alpha=pi.alpha, shape=alpha.shape, rate=alpha.rate, G=G.non, N=N)
-          a.rate     <- 1
+          a.rate     <- 1L
         }
       }
 
@@ -388,5 +384,5 @@
                              act.store = act.store,
                              avg.zeta  = if(MH.step)             ifelse(zeta.tune, mean(avgzeta), zeta),
                              time      = init.time)
-    return(returns)
+      return(returns)
   }

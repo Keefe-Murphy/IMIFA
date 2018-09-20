@@ -63,8 +63,8 @@
     }
 
   # Local Shrinkage
-    .sim_phi     <- function(Q, P, nu, rho, tau, load.2) {
-        base::matrix(stats::rgamma(P * Q, shape=nu + 0.5, rate=rho + (sweep(load.2, 2, tau, FUN="*", check.margin=FALSE))/2), nrow=P, ncol=Q)
+    .sim_phi     <- function(Q, P, nu1, nu2, tau, load.2) {
+        base::matrix(stats::rgamma(P * Q, shape=nu1 + 0.5, rate=nu2 + (sweep(load.2, 2, tau, FUN="*", check.margin=FALSE))/2), nrow=P, ncol=Q)
     }
 
   # Global Shrinkage
@@ -79,16 +79,16 @@
   # Mixing Proportions
 #' Simulate Mixing Proportions from a Dirichlet Distribution
 #'
-#' Generates samples from the Dirichlet distrubution with parameter \code{alpha} efficiently by simulating Gamma(\code{alpha}, 1) random variables and normalising them.
+#' Generates samples from the Dirichlet distribution with parameter \code{alpha} efficiently by simulating Gamma(\code{alpha}, 1) random variables and normalising them.
 #' @param G The number of clusters for which weights need to be sampled.
-#' @param alpha The Dirichlet hyperparameter, either of length 1 or \code{G}. When the length of \code{alpha} is 1, this amounts to assuming an exchangeable prior, which doesn't favour one component over another. Be warned that this will be recycled if necessary.
+#' @param alpha The Dirichlet hyperparameter, either of length 1 or \code{G}. When the length of \code{alpha} is 1, this amounts to assuming an exchangeable prior, which doesn't favour one component over another. Be warned that this will be recycled if necessary. Larger values have the effect of making the returned samples more equal.
 #' @param nn A vector giving the number of observations in each of G clusters so that Dirichlet posteriors rather than priors can be sampled from. This defaults to 0, i.e. simulation from the prior. Must be non-negative. Be warned that this will be recycled if necessary.
 #'
 #' @return A Dirichlet vector of \code{G} weights which sum to 1.
 #'
 #' @note Though the function is available for standalone use, note that no checks take place, in order to speed up repeated calls to the function inside \code{\link{mcmc_IMIFA}}.
 #'
-#' While small values of \code{alpha} have the effect of increasingly concentrating the mass onto fewer components, note that this will not be true for excessively small values of \code{alpha}, when \code{nn=0}; see the details of \code{rgamma} for small \code{shape} values.
+#' While small values of \code{alpha} have the effect of increasingly concentrating the mass onto fewer components, note that this function may return \code{NaN} for excessively small values of \code{alpha}, when \code{nn=0}; see the details of \code{rgamma} for small \code{shape} values.
 #'
 #' @references Devroye, L. (1986) \emph{Non-Uniform Random Variate Generation}, Springer-Verlag, New York, p. 594.
 #' @keywords utility
@@ -183,23 +183,37 @@
 
     .log_palpha  <- function(alpha, discount, alpha.shape, alpha.rate, N, G) {
       l.prior    <- stats::dgamma(alpha    + discount, shape=alpha.shape, rate=alpha.rate, log=TRUE)
-        lgamma(alpha + 1)  - lgamma(alpha  + N) + sum(log(alpha + discount  * seq_len(G - 1))) + l.prior
+        lgamma(alpha  + 1) - lgamma(alpha  + N) + sum(log(alpha + discount   * seq_len(G - 1))) + l.prior
     }
 
     .sim_alpha_m <- function(alpha, discount, alpha.shape, alpha.rate, N, G, zeta) {
-      inter      <- c(max( - discount, alpha    - zeta), alpha + zeta)
+      inter      <- c(max( - discount, alpha    - zeta), alpha  + zeta)
       propa      <- stats::runif(1,    inter[1L], inter[2L])
       cprob      <- .log_palpha(alpha, discount,  alpha.shape,   alpha.rate, N, G)
       pprob      <- .log_palpha(propa, discount,  alpha.shape,   alpha.rate, N, G)
-      propinter  <- c(max( - discount, propa    - zeta), propa + zeta)
-      logpr      <- pprob  - cprob   - log(diff(propinter))    + log(diff(inter))
+      propinter  <- c(max( - discount, propa    - zeta), propa  + zeta)
+      logpr      <- pprob  - cprob   - log(diff(propinter))     + log(diff(inter))
       acpt       <- logpr >= 0  ||   - stats::rexp(1)  < logpr
-        return(list(alpha  = ifelse(acpt, propa, alpha), rate  = acpt, l.prob = logpr))
+        return(list(alpha  = ifelse(acpt, propa, alpha), rate   = acpt, l.prob = logpr))
+    }
+
+    .log_Oalpha  <- function(x, G, N, nn, shape, rate) {
+      G          <- G * x
+        lgamma(G) - lgamma(N + G)            +
+        sum(lgamma(nn + x)   - lgamma(x))    +
+        dgamma(x, shape=shape, rate=rate, log=TRUE)
+    }
+
+    .sim_alpha_o <- function(alpha, zeta, G, N, nn, shape, rate) {
+      propa      <- exp(log(alpha) + rnorm(1, 0, zeta))
+      logpr      <- .log_Oalpha(propa, G, N, nn, shape, rate) - .log_Oalpha(alpha, G, N, nn, shape, rate) + log(propa) - log(alpha)
+      acpt       <- logpr >= 0  || - stats::rexp(1) < logpr
+        return(list(alpha  = ifelse(acpt, propa, alpha), rate = acpt, l.prob = logpr))
     }
 
   # Adaptively Tune Zeta
     .tune_zeta   <- function(zeta, time, l.rate, heat = 1L, target = 0.441, lambda = 1L) {
-      exp(heat/time^lambda * (exp(min(0, l.rate)) - target)) * zeta
+        exp(heat/time^lambda * (exp(min(0, l.rate)) - target)) * zeta
     }
 
   # Discount
@@ -268,8 +282,8 @@
     }
 
   # Local Shrinkage
-    .sim_phi_p   <- function(Q, P, nu, rho) {
-        base::matrix(.rgamma0(n=P * Q, shape=nu, rate=rho), nrow=P, ncol=Q)
+    .sim_phi_p   <- function(Q, P, nu1, nu2) {
+        base::matrix(.rgamma0(n=P * Q, shape=nu1, rate=nu2), nrow=P, ncol=Q)
     }
 
   # Global Shrinkage
@@ -435,7 +449,7 @@
     MGP_check    <- function(ad1, ad2, Q = 3L, phi.shape = NULL, phi.rate = NULL, bd1 = 1, bd2 = 1, inverse = TRUE) {
       if(length(inverse) != 1  ||
          !is.logical(inverse))             stop("'inverse' must be a single logical indicator", call.=FALSE)
-      phi.shape  <- if(missing(phi.shape)) 1 + inverse         else phi.shape
+      phi.shape  <- if(missing(phi.shape)) 1L + inverse        else phi.shape
       phi.rate   <- if(missing(phi.rate))  phi.shape - inverse else phi.rate
 
       if(length(Q)       != 1  ||
@@ -461,14 +475,14 @@
       if(any(c(bd1, bd2) <= 0))            stop("All global shrinkage rate hyperparameter values must be strictly positive",     call.=FALSE)
       if(any(WX  <- ad1  >= ad2))          warning("'ad2' should be moderately large relative to 'ad1' to encourage loadings column removal\n", call.=FALSE, immediate.=TRUE)
 
-      Qseq       <- seq_len(Q)  - 1
+      Qseq       <- seq_len(Q)  - 1L
       ML         <- seq_len(max.len)
-      shape      <- if(PX) 1    + inverse  else phi.shape
-      rate       <- if(PX) 1               else phi.rate
+      shape      <- if(PX) 1L   + inverse  else phi.shape
+      rate       <- if(PX) 1L              else phi.rate
       if(isTRUE(inverse)) {
         if(any(WX        <- WX  |
            phi.rate       >
-           phi.shape      - 1))            warning("A priori expectation of the induced inverse-gamma local shrinkage hyperprior is not <=1\n", call.=FALSE, immediate.=TRUE)
+           phi.shape      - 1L))           warning("A priori expectation of the induced inverse-gamma local shrinkage hyperprior is not <=1\n", call.=FALSE, immediate.=TRUE)
         ad1      <- ifelse(ad1 == 1, ad1 + .Machine$double.eps, ad1)
         ad2      <- ifelse(ad2 == 1, ad2 + .Machine$double.eps, ad2)
         exp.Q1   <- rate/(shape - 1)     * bd1/(ad1  - 1)
@@ -1015,7 +1029,7 @@
 
       alpha2     <- alpha * alpha
       if(discount == 0)   {
-        var      <- alpha * (digamma(alpha + N) - digamma(alpha))
+        var      <- alpha * (digamma(alpha  + N) - digamma(alpha))
         if(mpfrind)       {
           alpha  <- gmp::asNumeric(alpha)
           gmp::asNumeric(var + alpha2 * (trigamma(alpha + N) - trigamma(alpha)))
@@ -1202,6 +1216,9 @@
 #' @keywords control
 #' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{psi_hyper}}, \code{\link[mclust]{Mclust}}, \code{\link[mclust]{hc}}, \code{\link[stats]{kmeans}}
 #' @references Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
+#'
+#' McNicholas, P. D. and Murphy, T. B. (2008) Parsimonious Gaussian Mixture Models, \emph{Statistics and Computing}, 18(3): 285-296.
+#'
 #' @author Keefe Murphy - <\email{keefe.murphy@@ucd.ie}>
 #' @usage
 #' mixfaControl(n.iters = 25000L,
@@ -1285,13 +1302,19 @@
       return(mixfa)
   }
 
-#' Control settings for the Bayesian Nonparametric priors (BNP) for infinite mixture models
+#' Control settings for the Bayesian Nonparametric priors for infinite mixture models (or shrinkage priors for overfitted mixtures)
 #'
-#' Supplies a list of arguments for use in \code{\link{mcmc_IMIFA}} pertaining to the use of the Bayesian Nonparametric Dirichlet/Pitman Yor process priors (BNP) with the infinite mixture models "\code{IMFA}" and "\code{IMIFA}".
-#'
-#' The crucial concentration parameter \code{alpha} is documented within the main \code{\link{mcmc_IMIFA}} function.
-#' @param learn.alpha Logical indicating whether the Dirichlet process / Pitman-Yor concentration parameter is to be learned (defaults to \code{TRUE}), or remain fixed for the duration of the chain. If being learned, a Ga(a, b) prior is assumed for \code{alpha}; updates take place via Gibbs sampling when \code{discount} is zero and via Metropolis-Hastings otherwise. If not being learned, \code{alpha} \emph{must} be supplied.
-#' @param alpha.hyper A vector of length 2 giving hyperparameters for the Dirichlet process / Pitman-Yor concentration parameter \code{alpha}. If \code{isTRUE(learn.alpha)}, these are shape and rate parameters of a Gamma distribution. Defaults to Ga(2, 4). Choosing a larger rate is particularly important, as it encourages clustering. The prior is shifted to have support on (\code{-discount}, \code{Inf}) when non-zero \code{discount} is supplied and remains fixed, or shifted to (\code{-1}, \code{Inf}) when \code{learn.d} is \code{TRUE}.
+#' Supplies a list of arguments for use in \code{\link{mcmc_IMIFA}} pertaining to the use of the Bayesian Nonparametric Dirichlet/Pitman Yor process priors with the infinite mixture models "\code{IMFA}" and "\code{IMIFA}". Certain arguments related to the Dirichlet concentration parameter for the overfitted mixtures "\code{OMFA}" and \code{"OMIFA"} can be supplied in this manner also.
+#' @param learn.alpha
+#' \describe{
+#' \item{For the "\code{IMFA}" and "\code{IMIFA}" methods:}{A logical indicating whether the Dirichlet process / Pitman-Yor concentration parameter is to be learned (defaults to \code{TRUE}), or remain fixed for the duration of the chain. If being learned, a Ga(a, b) prior is assumed for \code{alpha}; updates take place via Gibbs sampling when \code{discount} is zero and via Metropolis-Hastings otherwise. If not being learned, \code{alpha} \emph{must} be supplied.}
+#' \item{For the "\code{OMFA}" and "\code{OMIFA}" methods:}{A logical indicating whether the Dirichlet concentration parameter is to be learned (defaults to \code{TRUE}) or remain fixed for the duration of the chain. If being learned, a Ga(a, b * G) is assumed for \code{alpha}, where G is the number of mixture components \code{range.G}, and updates take place via Metropolis-Hastings. If not being learned \code{alpha} \emph{must} be supplied.}
+#' }
+#' @param alpha.hyper
+#' \describe{
+#' \item{For the "\code{IMFA}" and "\code{IMIFA}" methods:}{A vector of length 2 giving hyperparameters for the prior on the Dirichlet process / Pitman-Yor concentration parameter \code{alpha}. If \code{isTRUE(learn.alpha)}, these are shape and rate parameters of a Gamma distribution. Defaults to Ga(2, 4). Choosing a larger rate is particularly important, as it encourages clustering. The prior is shifted to have support on (\code{-discount}, \code{Inf}) when non-zero \code{discount} is supplied and remains fixed, or shifted to (\code{-1}, \code{Inf}) when \code{learn.d} is \code{TRUE}.}
+#' \item{For the "\code{OMFA}" and "\code{OMIFA}" methods:}{A vector of length 2 giving hyperparameters a and b for the prior on the Dirichlet concentration parameter \code{alpha}. If \code{isTRUE(learn.alpha)}, these are shape and rate parameters of a Gamma distribution. Defaults to Ga(2, 4). Note that the suplied rate will be multiplied by \code{range.G}, to encourage clustering, such that the form of the prior is Ga(a, b * G).}
+#' }
 #' @param discount The discount parameter used when generalising the Dirichlet process to the Pitman-Yor process. Defaults to 0, but must lie in the interval [0, 1). If non-zero, \code{alpha} can be supplied greater than \code{-discount}.
 #' @param learn.d Logical indicating whether the \code{discount} parameter is to be updated via Metropolis-Hastings (defaults to\code{FALSE}).
 #' @param d.hyper Hyperparameters for the Beta(a,b) prior on the \code{discount} parameter. Defaults to Beta(1,1), i.e. Uniform(0,1).
@@ -1300,8 +1323,12 @@
 #' @param trunc.G The maximum number of allowable and storable clusters. Defaults to the same value (\code{min(N - 1, max(25, ceiling(3 * log(N))))}) that \code{range.G} defaults to (see \code{\link{mcmc_IMIFA}}). Must be greater than or equal to \code{range.G}. The number of active clusters to be sampled at each iteration is adaptively truncated, with \code{trunc.G} as an upper limit for storage reasons. Note that large values of \code{trunc.G} may lead to memory capacity issues.
 #' @param kappa The spike-and-slab prior distribution on the \code{discount} hyperparameter is assumed to be a mixture with point-mass at zero and a continuous Beta(a,b) distribution. \code{kappa} gives the weight of the point mass at zero (the 'spike'). Must lie in the interval [0,1]. Defaults to 0.5. Only relevant when \code{isTRUE(learn.d)}. A value of 0 ensures non-zero discount values (i.e. Pitman-Yor) at all times, and \emph{vice versa}. Note that \code{kappa} will default to exactly 0 if \code{alpha<=0} and \code{learn.alpha=FALSE}.
 #' @param IM.lab.sw Logial indicating whether the two forced label switching moves are to be implemented (defaults to \code{TRUE}) when running one of the infinite mixture models.
-#' @param zeta Tuning parameter controlling the acceptance rate of the random-walk proposal for the Metropolis-Hastings steps when \code{learn.alpha=TRUE}, where \code{2 * zeta} gives the full width of the uniform proposal distribution. These steps are only invoked when either \code{discount} is non-zero and fixed or \code{learn.d=TRUE}, otherwise \code{alpha} is learned by Gibbs updates. Must be strictly positive (if invoked). Defauts to 2.
-#' @param tune.zeta A list with the following named arguments, used for tuning \code{zeta}, the width of the uniform proposal for \code{alpha}, via diminishing Robbins-Monro type adaptation, when the \code{alpha} parameter is learned via Metropolis-Hastings steps:
+#' @param zeta
+#' \describe{
+#' \item{For the "\code{IMFA}" and "\code{IMIFA}" methods:}{Tuning parameter controlling the acceptance rate of the random-walk proposal for the Metropolis-Hastings steps when \code{learn.alpha=TRUE}, where \code{2 * zeta} gives the full width of the uniform proposal distribution. These steps are only invoked when either \code{discount} is non-zero and fixed or \code{learn.d=TRUE}, otherwise \code{alpha} is learned by Gibbs updates. Must be strictly positive (if invoked). Defauts to \code{2}.}
+#' \item{For the "\code{OMFA}" and "\code{OMIFA}" methods:}{Tuning parameter controlling the standard deviation of the log-normal proposal for the Metropolis-Hastings steps when \code{learn.alpha=TRUE}. Must be strictly positive (if invoked). Defaults to \code{0.75}.}
+#' }
+#' @param tune.zeta A list with the following named arguments, used for tuning \code{zeta} (which is either the width of the uniform proposal for the "\code{IMFA}" or "\code{IMIFA}" methods or the standard deviation of the log-normal proposal for the "\code{OMFA}" or "\code{OMIFA}" methods) for \code{alpha}, via diminishing Robbins-Monro type adaptation, when the \code{alpha} parameter is learned via Metropolis-Hastings steps:
 #' \describe{
 #' \item{\code{heat}}{The initial adaptation intensity/step-size, such that larger values lead to larger updates. Must be strictly greater than zero. Defaults to 1 if not supplied but other elements of \code{tune.zeta} are.}
 #' \item{\code{lambda}}{Iteration rescaling parameter which controls the speed at which adaptation diminishes, such that lower values cause the contribution of later iterations to diminish more slowly. Must lie in the interval (0.5, 1]. Defaults to 1 if not supplied but other elements of \code{tune.zeta} are.}
@@ -1309,15 +1336,23 @@
 #' \item{\code{start.zeta}}{The iteration at which diminishing adaptation begins. Defaults to \code{100}.}
 #' \item{\code{stop.zeta}}{The iteration at which diminishing adaptation is to stop completely. Defaults to \code{Inf}, such that diminishing adaptation is never explicitly made to stop. Must be greater than \code{start.zeta}.}
 #' }
-#'  \code{tune.zeta} arguments are only relevant when \code{learn.alpha} is \code{TRUE}, and either the \code{discount} remains fixed at a non-zero value, or when \code{learn.d} is \code{TRUE} and \code{kappa < 1}. Since Gibbs steps are invoked for updating \code{alpha} when \code{discount == 0}, adaption occurs according to a running count of the number of iterations with non-zero sampled \code{discount} values. If diminishing adaptation is invoked, the posterior mean \code{zeta} will be stored. Since caution is advised when employing adaptation, note that acceptance rates of between 10-50\% are generally considered adequate.
+#' At least one \code{tune.zeta} argument must be supplied for diminishing adaptation to be invoked. \code{tune.zeta} arguments are only relevant when \code{learn.alpha} is \code{TRUE} (and, for the "\code{IMFA}" and "\code{IMIFA}" methods, when either of the following is also true: the \code{discount} remains fixed at a non-zero value, or when \code{learn.d} is \code{TRUE} and \code{kappa < 1}). Since Gibbs steps are invoked for updating \code{alpha} when \code{discount == 0} under the "\code{IMFA}" or "\code{IMIFA}" methods, adaption occurs according to a running count of the number of iterations with non-zero sampled \code{discount} values for those methods.
+#'
+#' If diminishing adaptation is invoked, the posterior mean \code{zeta} will be stored. Since caution is advised when employing adaptation, note that acceptance rates of between 10-50\% are generally considered adequate.
 #' @param ... Catches unused arguments.
+#'
+#' @details The crucial concentration parameter \code{alpha} is documented within the main \code{\link{mcmc_IMIFA}} function, and is relevant to all of the "\code{IMIFA}", "\code{IMFA}", "\code{OMIFA}", and "\code{OMFA}" methods.
+#'
+#' All arguments here are relevant to the "\code{IMFA}" and "\code{IMIFA}" methods, but the following are also related to the "\code{OMFA}" and "\code{OMIFA}" methods, and may behave differently in those instances: \code{learn.alpha}, \code{alpha.hyper}, \code{zeta}, and \code{tune.zeta}.
 #'
 #' @return A named list in which the names are the names of the arguments related to the BNP prior(s) and the values are the values supplied to the arguments.
 #' @note Certain supplied arguments will be subject to further checks within \code{\link{mcmc_IMIFA}}. \code{\link{G_priorDensity}} and \code{\link{G_moments}} can help with soliciting sensible DP/PYP priors.
 #'
-#' By default, a Dirichlet Process prior is specified. A Pitman-Yor prior can be easily invoked when the \code{discount} is fixed at a non-zero value or \code{learn.d=TRUE}. The normalized stable process can also be specified as a prior distribution, as a special case of the Pitman-Yor process, when \code{alpha} remains fixed at \code{0} and \code{learn.alpha=FALSE} (provided the \code{discount} is fixed at a non-zero value or \code{learn.d=TRUE}).
+#' Under the "\code{IMFA}" and "\code{IMIFA}" methods, a Dirichlet Process prior is specified by default. A Pitman-Yor prior can be easily invoked when the \code{discount} is fixed at a non-zero value or \code{learn.d=TRUE}. The normalized stable process can also be specified as a prior distribution, as a special case of the Pitman-Yor process, when \code{alpha} remains fixed at \code{0} and \code{learn.alpha=FALSE} (provided the \code{discount} is fixed at a non-zero value or \code{learn.d=TRUE}).
 #' @keywords control
 #' @references Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
+#'
+#' Kalli, M., Griffin, J. E. and Walker, S. G. (2011) Slice sampling mixture models, \emph{Statistics and Computing}, 21(1): 93-105.
 #'
 #' @export
 #'
@@ -1334,7 +1369,7 @@
 #'            trunc.G = NULL,
 #'            kappa = 0.5,
 #'            IM.lab.sw = TRUE,
-#'            zeta = 2L,
+#'            zeta = NULL,
 #'            tune.zeta = list(...),
 #'            ...)
 #' @examples
@@ -1345,17 +1380,16 @@
 #'
 #' # Alternatively specify these arguments directly
 #' # sim   <- mcmc_IMIFA(olive, "IMIFA", n.iters=5000, learn.d=TRUE,
-#' #                     ind.slice=FALSE, alpha.hyper=c(3, 1))
+#' #                     ind.slice=FALSE, alpha.hyper=c(3, 3))
   bnpControl     <- function(learn.alpha = TRUE, alpha.hyper = c(2L, 4L), discount = NULL, learn.d = FALSE, d.hyper = c(1L, 1L),
-                             ind.slice = TRUE, rho = 0.75, trunc.G = NULL, kappa = 0.5, IM.lab.sw = TRUE, zeta = 2L, tune.zeta = list(...), ...) {
-    miss.args    <- list(discount = missing(discount), IM.lab.sw = missing(IM.lab.sw), kappa = missing(kappa), trunc.G = missing(trunc.G))
+                             ind.slice = TRUE, rho = 0.75, trunc.G = NULL, kappa = 0.5, IM.lab.sw = TRUE, zeta = NULL, tune.zeta = list(...), ...) {
+    miss.args    <- list(discount = missing(discount), IM.lab.sw = missing(IM.lab.sw), kappa = missing(kappa), trunc.G = missing(trunc.G), zeta = missing(zeta))
     if(any(!is.logical(learn.alpha),
            length(learn.alpha)    != 1))   stop("'learn.alpha' must be a single logical indicator", call.=FALSE)
     if(all(length(alpha.hyper)    != 2,
            learn.alpha))                   stop(paste0("'alpha.hyper' must be a vector of length 2, giving the shape and rate hyperparameters of the gamma prior for alpha when 'learn.alpha' is TRUE"), call.=FALSE)
     if(learn.alpha       &&
        any(alpha.hyper   <= 0))            stop("The shape and rate of the gamma prior for alpha must both be strictly positive", call.=FALSE)
-    if(diff(alpha.hyper)  < 0)             warning("The rate hyperparameter for the prior on alpha should be >= to the shape hyperparameter, in order to encourage clustering\n", call.=FALSE, immediate.=TRUE)
     if(any(!is.logical(learn.d),
            length(learn.d)        != 1))   stop("'learn.d' must be a single logical indicator", call.=FALSE)
     if(all(length(d.hyper)        != 2,
@@ -1374,42 +1408,40 @@
     if(any(!is.numeric(kappa),
            length(kappa)          != 1))   stop("'kappa' must be a single number", call.=FALSE)
     if(kappa      <  0   || kappa  > 1)    stop("'kappa' must lie in the interval [0, 1]", call.=FALSE)
-    discount     <- ifelse(missing(discount), ifelse(learn.d, ifelse(kappa != 0 && stats::runif(1) <= kappa, 0, pmin(stats::rbeta(1, d.hyper[1], d.hyper[2]), 1 - .Machine$double.eps)), 0), discount)
+    discount     <- ifelse(missing(discount), ifelse(learn.d, ifelse(kappa != 0 && stats::runif(1) <= kappa, 0, pmin(stats::rbeta(1, d.hyper[1L], d.hyper[2L]), 1 - .Machine$double.eps)), 0), discount)
     if(any(!is.numeric(discount),
            length(discount)       != 1))   stop("'discount' must be a single number", call.=FALSE)
     if(discount   < 0    ||
        discount  >= 1)                     stop("'discount' must lie in the interval [0, 1)", call.=FALSE)
-    kappa        <- ifelse(all(!learn.d, discount == 0), 1, kappa)
-    if(all(discount       > 0,
-      !learn.d, learn.alpha)) {
-      alpha.hyper        <- unname(unlist(shift_GA(shape=alpha.hyper[1], rate=alpha.hyper[2], shift=-discount)))
-    }
+    kappa        <- ifelse(all(!learn.d, discount == 0), 1L, kappa)
     if(all(kappa         == 0, !learn.d,
            discount      == 0))            stop("'kappa' is zero and yet 'discount' is fixed at zero:\neither learn the discount parameter or specify a non-zero value", call.=FALSE)
     if(all(kappa         == 1,  learn.d,
            discount      != 0))            stop(paste0("'kappa' is exactly 1 and yet", ifelse(learn.d, " 'discount' is being learned ", if(discount != 0) " the discount is fixed at a non-zero value"), ":\nthe discount should remain fixed at zero"), call.=FALSE)
     if(any(!is.logical(IM.lab.sw),
        length(IM.lab.sw) != 1))            stop("'IM.lab.sw' must be a single logical indicator", call.=FALSE)
-    if(any(!is.numeric(zeta),
+    if(!missing(zeta)    &&
+       any(!is.numeric(zeta),
        length(zeta)      != 1,
        zeta      <= 0))                    stop("'zeta' must be single strictly positive number", call.=FALSE)
+
     gibbs.def    <- all(kappa      < 1, learn.d,  learn.alpha)
     def.py       <- all(discount  != 0, !learn.d, learn.alpha)
     gibbs.may    <- gibbs.def     &&    kappa > 0
     zeta.names   <- c("heat", "lambda", "target", "start.zeta", "stop.zeta")
     zeta.null    <- stats::setNames(vapply(tune.zeta[zeta.names], is.null, logical(1L)), zeta.names)
     if(all(zeta.null)    ||
-       !(tzdo    <- any(gibbs.def, def.py)))  {
-      tune.zeta  <- list(heat=0, lambda=NULL, target=NULL, do=FALSE, start.zeta=100L, stop.zeta=Inf)
+       !(tzdo    <- learn.alpha))  {
+      tz         <- list(heat=0L, lambda=NULL, target=NULL, do=FALSE, start.zeta=100L, stop.zeta=Inf)
     } else  {
       tz         <- stats::setNames(tune.zeta[zeta.names], zeta.names)
       if(!inherits(tz, "list")    ||
          (!all(is.element(names(tz),
                zeta.names))       ||
           !all(lengths(tz)        == 1        |
-               zeta.null)))                stop("'tune.zeta' must be a list with named elements 'heat', 'lambda' and 'target', all of length 1", call.=FALSE)
-      if(is.null(tz$heat))   tz$heat         <- 1
-      if(is.null(tz$lambda)) tz$lambda       <- 1
+               zeta.null)))                stop("'tune.zeta' must be a list containing named elements 'heat', 'lambda', 'target', 'start.zeta' and 'stop.zeta', all of length 1", call.=FALSE)
+      if(is.null(tz$heat))   tz$heat         <- 1L
+      if(is.null(tz$lambda)) tz$lambda       <- 1L
       if(is.null(tz$target)) tz$target       <- 0.441
       attr(tz, "startx")          <- is.null(tz$start.zeta)
       attr(tz, "stopx")           <- is.null(tz$stop.zeta)
@@ -1434,15 +1466,15 @@
           !is.numeric(c(tz$start.zeta,
                         tz$stop.zeta)))    stop("'start.zeta' and 'stop.zeta' must both be numeric and of length 1", call.=FALSE)
       }
-      tune.zeta  <- tz
     }
-    BNP          <- list(learn.a = learn.alpha, a.hyper = alpha.hyper, discount = discount, learn.d = learn.d, d.hyper = d.hyper, rho = rho,
-                         ind.slice = ind.slice, trunc.G = trunc.G, kappa = kappa, IM.lab.sw = IM.lab.sw, zeta = zeta, tune.zeta = tune.zeta)
+    attr(tz,  "IM.Need") <- any(gibbs.def, def.py)
+    BNP          <- list(learn.alpha = learn.alpha, a.hyper = alpha.hyper, discount = discount, learn.d = learn.d, d.hyper = d.hyper,
+                         rho = rho, ind.slice = ind.slice, trunc.G = trunc.G, kappa = kappa, IM.lab.sw = IM.lab.sw, zeta = zeta, tune.zeta = tz)
     attr(BNP, "Missing") <- miss.args
       BNP
   }
 
-  #' Control settings for the MGP prior and AGS for infinite factor models
+#' Control settings for the MGP prior and AGS for infinite factor models
 #'
 #' Supplies a list of arguments for use in \code{\link{mcmc_IMIFA}} pertaining to the use of the multiplicative gamma process (MGP) shrinkage prior and adaptive Gibbs sampler (AGS) for use with the infinite factor models "\code{IFA}", "\code{MIFA}", "\code{OMIFA}", and "\code{IMIFA}".
 #' @param alpha.d1 Shape hyperparameter of the global shrinkage on the first column of the loadings according to the MGP shrinkage prior. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to 2.

@@ -9,7 +9,7 @@
 #' \item{"\code{zlabels}"}{for plotting clustering uncertainties - in four different ways (incl. the posterior confusion matrix) - if clustering has taken place, with or without the clustering labels being supplied via the \code{zlabels} argument. If available, the average similarity matrix, reordered according to the MAP labels, is shown as the 5-th plot.}
 #' \item{"\code{errors}"}{for conducting posterior predictive checking of the appropriateness of the fitted model by visualising the error metrics quantifying the difference between the estimated and empirical covariance matrices. The type of plot produced depends on how the \code{error.metrics} argument was supplied to \code{\link{get_IMIFA_results}}.}
 #' }
-#' @param param The parameter of interest for any of the following \code{plot.meth} options: \code{all}, \code{trace}, \code{density}, \code{means}, \code{correlation}. The \code{param} must have been stored when \code{\link{mcmc_IMIFA}} was initially ran. Includes \code{pis} for methods where clustering takes place, and allows posterior inference on \code{alpha} and \code{discount} for the "\code{IMFA}" and "\code{IMIFA}" methods. Otherwise \code{means}, \code{scores}, \code{loadings}, and \code{uniquenesses} can be plotted.
+#' @param param The parameter of interest for any of the following \code{plot.meth} options: \code{all}, \code{trace}, \code{density}, \code{means}, \code{correlation}. The \code{param} must have been stored when \code{\link{mcmc_IMIFA}} was initially ran. Includes \code{pis} for methods where clustering takes place, and allows posterior inference on \code{alpha} (for the "\code{IMFA}", "\code{IMIFA}", "\code{OMFA}", and "\code{OMIFA}" methods) and \code{discount} (for the "\code{IMFA}" and "\code{IMIFA}" methods). Otherwise \code{means}, \code{scores}, \code{loadings}, and \code{uniquenesses} can be plotted.
 #' @param g Optional argument that allows specification of exactly which cluster the plot of interest is to be produced for. If not supplied, the user will be prompted to cycle through plots for all clusters. Also functions as an index for which plot to return when \code{plot.meth} is \code{GQ} or \code{zlabels} in much the same way.
 #' @param mat Logical indicating whether a \code{\link[graphics]{matplot}} is produced (defaults to \code{TRUE}). If given as \code{FALSE}, \code{ind} is invoked.
 #' @param zlabels The true labels can be supplied if they are known. If this is not supplied, the function uses the labels that were supplied, if any, to \code{\link{get_IMIFA_results}}. Only relevant when \code{plot.meth = "zlabels"}. When explicitly supplied, misclassified observations are highlighted in the first type of uncertainty plot (otherwise observations whose uncertainty exceed the inverse of the number of clusters are highlighted). For the second type of uncertainty plot, when \code{zlabels} are explicitly supplied, the uncertainty of misclassified observations is marked by vertical lines on the profile plot.
@@ -406,7 +406,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
           plot.x  <- x.plot[,ind[2L],]
           if(mispal) grDevices::palette(viridis(min(10, max(2, n.obs)), alpha=transparency))
         } else {
-          plot.x  <- if(Q.max > 1) x.plot[ind[1],rev(Qmseq),] else t(x.plot[ind[1],rev(Qmseq),])
+          plot.x  <- if(Q.max > 1) x.plot[ind[1],rev(Qmseq),] else t(x.plot[ind[1L],rev(Qmseq),])
           if(mispal) grDevices::palette(viridis(min(10, max(2, Q.max)), alpha=transparency))
         }
         if(matx) {
@@ -471,7 +471,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
       }
 
       if(param == "alpha") {
-        plot.x <- clust$DP.alpha
+        plot.x <- clust$Alpha
         graphics::plot(plot.x$alpha, ylab="", type="l", xlab="Iteration", main="")
         if(titles) graphics::title(main=list(paste0("Trace", ifelse(all.ind, "", paste0(":\nAlpha")))))
         if(all(intervals, ci.sw[param])) {
@@ -483,7 +483,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
       }
 
       if(param == "discount") {
-        plot.x <- clust$PY.disc
+        plot.x <- clust$Discount
         graphics::plot(as.vector(plot.x$discount), ylab="", type="l", xlab="Iteration", main="", ylim=c(0, 1))
         if(titles) graphics::title(main=list(paste0("Trace", ifelse(all.ind, "", paste0(":\nDiscount")))))
         if(all(intervals, ci.sw[param])) {
@@ -525,7 +525,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
           plot.x  <- x.plot[,ind[2L],]
           if(mispal) grDevices::palette(viridis(min(10, max(2, n.obs)), alpha=transparency))
         } else   {
-          plot.x  <- if(Q > 1) x.plot[ind[1],rev(Qmseq),] else t(x.plot[ind[1],rev(Qmseq),])
+          plot.x  <- if(Q > 1) x.plot[ind[1],rev(Qmseq),] else t(x.plot[ind[1L],rev(Qmseq),])
           if(mispal) grDevices::palette(viridis(min(10, max(2, Q.max)), alpha=transparency))
         }
         if(matx) {
@@ -614,10 +614,10 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
       }
 
       if(param == "alpha") {
-        plot.x <- clust$DP.alpha
-        tr     <- ifelse(attr(x, "Pitman"), - max(clust$PY.disc$discount, 0), 0)
+        plot.x <- clust$Alpha
+        tr     <- ifelse(attr(x, "Pitman"), - max(clust$Discount$discount, 0), 0)
         plot.d <- .logdensity(plot.x$alpha, left=tr)
-        plot.d$y[plot.d$x < tr]  <- 0
+        plot.d$y[plot.d$x < tr]  <- 0L
         graphics::plot(plot.d, main="", ylab="", xlab="")
         if(titles) graphics::title(main=list(paste0("Density", ifelse(all.ind, "", paste0(":\nAlpha")))))
         graphics::polygon(plot.d, col=grey, border=NA)
@@ -629,7 +629,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
       }
 
       if(param == "discount") {
-        plot.x <- clust$PY.disc
+        plot.x <- clust$Discount
         x.plot <- as.vector(plot.x$discount)
         fit    <- try(.logitdensity(x.plot), silent = TRUE)
         if(!inherits(fit, "try-error")) {
@@ -787,7 +787,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
           graphics::mtext(ifelse(Q > 1, "Factors", "Factor"), side=1, line=2, cex=0.8)
           if(Q != 1 && titles) {
             absq <- seq(from=graphics::par("usr")[1L], to=graphics::par("usr")[2L], length.out=Q + 1)
-            graphics::abline(v=absq[-c(1, length(absq))], lty=2, lwd=1, col=grey)
+            graphics::abline(v=absq[-c(1L, length(absq))], lty=2, lwd=1, col=grey)
           }
         } else {
           plot.x <- plot.x[[g]]
@@ -853,11 +853,11 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
            attr(x, "Kappa0"))         message(paste0("Spike-and-slab prior not invoked as alpha was fixed <= 0 (alpha=", attr(x, "Alpha"), ")\n"))
         graphics::plot(c(0, 1), c(0, 1), ann=FALSE, bty='n', type='n', xaxt='n', yaxt='n')
         if(titles) graphics::title(main=list(paste0("Summary Statistics", ifelse(all.ind, "", paste0(":\n", switch(EXPR=param, alpha="Alpha", discount="Discount"))))))
-        plot.x <- switch(EXPR=param, alpha=clust$DP.alpha[-1L],  discount=clust$PY.disc[-1L])
+        plot.x <- switch(EXPR=param, alpha=clust$Alpha[-1L], discount=clust$Discount[-1L])
         x.step <- switch(EXPR=param, alpha=attr(x, "Alph.step"), discount=attr(x, "Disc.step"))
         conf   <- attr(x, "Conf.Level")
         digits <- options()$digits
-        MH     <- switch(EXPR=param, alpha=plot.x$alpha.rate != 1, discount=plot.x$disc.rate != 1)
+        MH     <- switch(EXPR=param, alpha=is.element(method, c("OMFA", "OMIFA")) || plot.x$alpha.rate != 1, discount=plot.x$disc.rate != 1)
         a.adj  <- rep(0.5, 2)
         a.cex  <- graphics::par()$fin[2L]/ifelse(MH, 4, 3)
         pen    <- ifelse(MH, 0,  0.15)
@@ -943,13 +943,13 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
         missQ  <- stats::setNames(rep(NA, length(missQ)), as.character(missQ))
         plot.Q <- c(plot.Q, missQ)
         plot.Q <- plot.Q[order(as.numeric(names(plot.Q)))]
-        col.Q  <- c(1, ceiling(length(palette)/2))[(rangeQ == Q) + 1L]
+        col.Q  <- c(1L, ceiling(length(palette)/2))[(rangeQ == Q) + 1L]
         Q.plot <- graphics::barplot(plot.Q, ylab="Frequency", xaxt="n", col=col.Q)
         if(titles) graphics::title(main=list("Posterior Distribution of Q"))
         graphics::axis(1, at=Q.plot, labels=names(plot.Q), tick=FALSE)
         graphics::axis(1, at=med(Q.plot), labels="Q", tick=FALSE, line=1.5)
       } else {
-        if(mispal) grDevices::palette(viridis(max(G, Q.max), alpha=transparency))
+        if(mispal) grDevices::palette(viridis(G, alpha=transparency))
         graphics::layout(1)
         graphics::par(mar=c(5.1, 4.1, 4.1, 2.1))
         plot.Q <- GQ.res$Q.Counts
@@ -1325,8 +1325,8 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
       }
 
       if(is.element(param, c("alpha", "discount"))) {
-        plot.x <- switch(EXPR=param, alpha=clust$DP.alpha$alpha, discount=as.vector(clust$PY.disc$discount))
-        if(switch(EXPR=param, alpha=clust$DP.alpha$alpha.rate,   discount=clust$PY.disc$disc.rate) == 0 ||
+        plot.x <- switch(EXPR=param, alpha=clust$Alpha$alpha, discount=as.vector(clust$Discount$discount))
+        if(switch(EXPR=param, alpha=clust$Alpha$alpha.rate,   discount=clust$Discount$disc.rate) == 0 ||
            length(unique(round(plot.x, min(.ndeci(plot.x))))) == 1) {
                                       warning(paste0(switch(EXPR=param, alpha="Acceptance", discount=ifelse(attr(x, "Kappa0"), "Acceptance", "Mutation")), " rate too low: can't plot ", ifelse(all.ind, ifelse(partial, "partial-", "auto-"), ""), "correlation function", ifelse(all.ind, "\n", "s\n")), call.=FALSE)
           next

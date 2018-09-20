@@ -3,6 +3,9 @@ __Infinite Mixtures of Infinite Factor Analysers__
 
 ## IMIFA v2.0.1 - (_7<sup>th</sup> release [patch update]: 2018-05-02_)
 ### New Features
+* Allowed the Dirichlet concentration parameter `alpha` to be learned via MH steps for the OM(I)FA models.  
+    * Also allowed diminishing adaptation to tune the log-normal proposal to achieve a target acceptance rate.
+    * Thus `bnpControl` args. `learn.alpha`, `alpha.hyper`, `zeta`, & `tune.zeta` become relevant for OM(I)FA models.
 * Added new function `scores_MAP` to decompose factor scores summaries  
   from `get_IMIFA_resuls` into submatrices corresponding to the MAP partition.
 * Added new wrapper function `sim_IMIFA_model` to call `sim_IMIFA_data` using  

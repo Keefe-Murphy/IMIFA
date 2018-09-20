@@ -6,7 +6,7 @@
   .gibbs_IMIFA       <- function(Q, data, iters, N, P, G, mu.zero, rho, sigma.l, learn.alpha, mu, sw, uni.type,
                                  uni.prior, sigma.mu, burnin, thinning, a.hyper, psi.alpha, psi.beta, verbose, trunc.G,
                                  adapt, ind.slice, alpha.d1, discount, alpha.d2, cluster, b0, b1, IM.lab.sw, zeta, tune.zeta,
-                                 nu, vrho, prop, d.hyper, beta.d1, beta.d2, start.AGS, stop.AGS, epsilon, learn.d, kappa, ...) {
+                                 nu1, nu2, prop, d.hyper, beta.d1, beta.d2, start.AGS, stop.AGS, epsilon, learn.d, kappa, ...) {
 
   # Define & initialise variables
     start.time       <- proc.time()
@@ -61,11 +61,11 @@
       d.rates        <- vector("integer", total)
       d.unif         <- d.shape1 == 1 & d.shape2    == 1
       .sim_disc_mh   <- if(!learn.alpha && pi.alpha == 0) .sim_d_slab else .sim_d_spike
-    } else d.rates   <- 1
+    } else d.rates   <- 1L
     MH.step          <- any(discount  > 0, learn.d) && learn.alpha
     if(MH.step)     {
       a.rates        <- vector("integer", total)
-    } else a.rates   <- 1
+    } else a.rates   <- 1L
     if(IM.lab.sw)   {
       lab.rate       <- matrix(0L, nrow=2L, ncol=total)
     }
@@ -95,7 +95,7 @@
     mu.tmp           <- vapply(seq_len(trunc.G - G), function(g) .sim_mu_p(P=P, sig.mu.sqrt=sig.mu.sqrt, mu.zero=mu.zero), numeric(P))
     mu               <- cbind(mu, if(uni) t(mu.tmp) else mu.tmp)
     eta              <- .sim_eta_p(N=N, Q=Q)
-    phi              <- replicate(trunc.G, .sim_phi_p(Q=Q, P=P, nu=nu, rho=vrho), simplify=FALSE)
+    phi              <- replicate(trunc.G, .sim_phi_p(Q=Q, P=P, nu1=nu1, nu2=nu2), simplify=FALSE)
     delta            <- lapply(Ts, function(t) c(.sim_delta_p(alpha=alpha.d1, beta=beta.d1), .sim_delta_p(Q=Q, alpha=alpha.d2, beta=beta.d2)))
     tau              <- lapply(delta, cumprod)
     lmat             <- lapply(Ts, function(t) matrix(vapply(Ps, function(j) .sim_load_ps(Q=Q, phi=phi[[t]][j,], tau=tau[[t]]), numeric(Q)), nrow=P, byrow=TRUE))
@@ -147,20 +147,16 @@
       if(sw["l.sw"])    load.store[,,,1L] <- array(unlist(lmat, use.names=FALSE), dim=c(P, Q, trunc.G))
       if(sw["psi.sw"])  psi.store[,,1L]   <- 1/psi.inv
       if(sw["pi.sw"])   pi.store[,1L]     <- pi.prop
-      z.store[1,]             <- z
+      if(learn.alpha)   alpha.store[1L]   <- pi.alpha
+      if(learn.d)       d.store[1L]       <- discount
+      z.store[1L,]            <- z
       Q0                      <- Qs > 0
       sigma                   <- if(uni) lapply(Gs, function(g) as.matrix(1/psi.inv[,g] + if(Q0[g]) tcrossprod(lmat[[g]]) else 0)) else lapply(Gs, function(g) tcrossprod(lmat[[g]]) + diag(1/psi.inv[,g]))
       log.probs               <- if(uni) vapply(Gs, function(g) stats::dnorm(data, mu[,g], sq_mat(sigma[[g]]), log=TRUE) + log(pi.prop[g]), numeric(N)) else vapply(Gs, function(g, Q=Q0[g]) { sigma <- if(Q) sigma[[g]] else sq_mat(sigma[[g]]); dmvn(data, mu[,g], is.posi_def(sigma, make=TRUE)$X.new, log=TRUE, isChol=!Q) + log(pi.prop[g]) }, numeric(N))
-      ll.store[1]             <- sum(rowLogSumExps(log.probs))
-      Q.store[,1]             <- Qs
-      G.store[1]              <- G.non
-      act.store[1]            <- G
-      if(learn.alpha) {
-        alpha.store[1]        <- pi.alpha
-      }
-      if(learn.d)     {
-        d.store[1]            <- discount
-      }
+      ll.store[1L]            <- sum(rowLogSumExps(log.probs))
+      Q.store[,1L]            <- Qs
+      G.store[1L]             <- G.non
+      act.store[1L]           <- G
     }
     init.time        <- proc.time() - start.time
 
@@ -298,8 +294,8 @@
     # Shrinkage
       if(all(Q0))     {
         load.2       <- lapply(lmat[Gs], .power2)
-        phi[Gs]      <- lapply(Gs, function(g) if(nn0[g]) .sim_phi(Q=Qs[g], P=P, nu=nu, rho=vrho, tau=tau[[g]],
-                               load.2=load.2[[g]]) else .sim_phi_p(Q=Qs[g], P=P, nu=nu, rho=vrho))
+        phi[Gs]      <- lapply(Gs, function(g) if(nn0[g]) .sim_phi(Q=Qs[g], P=P, nu1=nu1, nu2=nu2, tau=tau[[g]],
+                               load.2=load.2[[g]]) else .sim_phi_p(Q=Qs[g], P=P, nu1=nu1, nu2=nu2))
 
         sum.terms    <- lapply(Gs, function(g) colSums2(phi[[g]] * load.2[[g]]))
         for(g in Gs)  {
@@ -336,7 +332,7 @@
             notred   <- notred & !Q.big
             Qs[nn0][Q.big]    <- Q.star
           }
-          phi[nn0]   <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) cbind(phi[[g]][,seq_len(Qs.old[h])],  .rgamma0(n=P, shape=nu, rate=vrho)) else phi[[g]][,nonred[[h]], drop=FALSE])
+          phi[nn0]   <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) cbind(phi[[g]][,seq_len(Qs.old[h])],  .rgamma0(n=P, shape=nu1, rate=nu2)) else phi[[g]][,nonred[[h]], drop=FALSE])
           delta[nn0] <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) c(delta[[g]][seq_len(Qs.old[h])],     stats::rgamma(n=1, shape=alpha.d2, rate=beta.d2)) else delta[[g]][nonred[[h]]])
           tau[nn0]   <- lapply(delta[nn.ind], cumprod)
           lmat[nn0]  <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) cbind(lmat[[g]][,seq_len(Qs.old[h])], stats::rnorm(n=P, mean=0, sd=sqrt(1/(phi[[g]][,Qs[g]] * tau[[g]][Qs[g]])))) else lmat[[g]][,nonred[[h]], drop=FALSE])
@@ -356,7 +352,7 @@
                 lmat[[t]]     <- lmat[[t]][,Qmaxseq, drop=FALSE]
               } else  {
                 while(Qt  != Qmax)  {
-                 phi[[t]]     <- cbind(phi[[t]],     .rgamma0(n=P, shape=nu, rate=vrho))
+                 phi[[t]]     <- cbind(phi[[t]],     .rgamma0(n=P, shape=nu1, rate=nu2))
                  delta[[t]]   <- c(delta[[t]],       stats::rgamma(n=1, shape=alpha.d2, rate=beta.d2))
                  tau[[t]]     <- cumprod(delta[[t]])
                  if(store.eta && t %in% Gs)   {
@@ -392,7 +388,7 @@
           }
         } else {
           pi.alpha   <- .sim_alpha_g(alpha=pi.alpha, shape=alpha.shape, rate=alpha.rate, G=G.non, N=N)
-          a.rate     <- 1
+          a.rate     <- 1L
         }
       }
 
@@ -526,5 +522,5 @@
                              avg.zeta  = if(MH.step)       ifelse(zeta.tune, mean(avgzeta), zeta),
                              time      = init.time)
     attr(returns, "Q.big")    <- Q.large
-    return(returns)
+      return(returns)
   }
