@@ -46,9 +46,9 @@
 
     mu.sigma       <- 1/sigma.mu
     sig.mu.sqrt    <- sqrt(sigma.mu)
-    if(all(mu.zero  == 0)) {
+    if(all(mu.zero  == 0))  {
       mu.zero      <- matrix(0L, nrow=1L, ncol=G)
-      cluster$l.switch[1]  <- FALSE
+      cluster$l.switch[1L] <- FALSE
     }
     if(length(mu.zero)  == 1) {
       mu.zero      <- matrix(mu.zero, nrow=1L, ncol=G)
@@ -66,7 +66,7 @@
     .sim_psi_ip    <- switch(EXPR=uni.prior, unconstrained=.sim_psi_ipu,  isotropic=.sim_psi_ipc)
     if(isTRUE(one.uni))       {
       uni.shape    <- switch(EXPR=uni.type,  constrained=N/2 + psi.alpha, single=(N * P)/2 + psi.alpha)
-      V            <- switch(EXPR=uni.type,  constrained=P, single=1)
+      V            <- switch(EXPR=uni.type,  constrained=P, single=1L)
     }
     if(uni.prior   == "isotropic")   {
       psi.beta     <- matrix(vapply(Gseq, function(g) psi.beta[which.max(.ndeci(psi.beta[,g])),g], numeric(1L)), nrow=1, ncol=G)
@@ -104,12 +104,12 @@
     }
     psi.inv[psi.inv == 0]  <- colMaxs(psi.inv[,which(psi.inv == 0, arr.ind=TRUE)[,2L], drop=FALSE], value=TRUE)
     l.sigma        <- diag(1/sigma.l, Q)
-    if(burnin       < 1)  {
-      if(sw["mu.sw"])  mu.store[,,1L]    <- mu
-      if(sw["s.sw"])   eta.store[,,1L]   <- eta
+    if(burnin       < 1)    {
+      if(sw["mu.sw"])     mu.store[,,1L] <- mu
+      if(sw["s.sw"])     eta.store[,,1L] <- eta
       if(sw["l.sw"])   load.store[,,,1L] <- lmat
-      if(sw["psi.sw"]) psi.store[,,1L]   <- 1/psi.inv
-      if(sw["pi.sw"])  pi.store[,1L]     <- pi.prop
+      if(sw["psi.sw"])   psi.store[,,1L] <- 1/psi.inv
+      if(sw["pi.sw"])      pi.store[,1L] <- pi.prop
       z.store[1L,]         <- z
       sigma                <- if(uni) lapply(Gseq, function(g) as.matrix(1/psi.inv[,g] + if(Q0) tcrossprod(as.matrix(lmat[,,g])) else 0)) else lapply(Gseq, function(g) tcrossprod(lmat[,,g]) + diag(1/psi.inv[,g]))
       log.probs            <- if(uni) vapply(Gseq, function(g) stats::dnorm(data, mu[,g], sq_mat(sigma[[g]]), log=TRUE) + log(pi.prop[g]), numeric(N)) else vapply(Gseq, function(g) { sigma <- if(Q0) sigma[[g]] else sq_mat(sigma[[g]]); dmvn(data, mu[,g], is.posi_def(sigma, make=TRUE)$X.new, log=TRUE, isChol=!Q0) + log(pi.prop[g]) }, numeric(N))
@@ -198,13 +198,13 @@
       if(storage)  {
         if(verbose)   utils::setTxtProgressBar(pb, iter)
         new.it     <- which(iters == iter)
-        if(sw["mu.sw"])            mu.store[,,new.it]      <- mu
-        if(all(sw["s.sw"], Q0))    eta.store[,,new.it]     <- eta
+        if(sw["mu.sw"])               mu.store[,,new.it]   <- mu
+        if(all(sw["s.sw"], Q0))      eta.store[,,new.it]   <- eta
         if(all(sw["l.sw"], Q0))    load.store[,,,new.it]   <- lmat
-        if(sw["psi.sw"])           psi.store[,,new.it]     <- 1/psi.inv
-        if(sw["pi.sw"])            pi.store[,new.it]       <- pi.prop
-                                   z.store[new.it,]        <- as.integer(z)
-                                   ll.store[new.it]        <- sum(rowLogSumExps(log.probs))
+        if(sw["psi.sw"])             psi.store[,,new.it]   <- 1/psi.inv
+        if(sw["pi.sw"])                pi.store[,new.it]   <- pi.prop
+                                        z.store[new.it,]   <- as.integer(z)
+                                        ll.store[new.it]   <- sum(rowLogSumExps(log.probs))
       }
     }
     if(verbose)       close(pb)

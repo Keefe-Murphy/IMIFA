@@ -26,8 +26,8 @@
         psi.inv   * (if(Q1) 1/(u.load  * u.load) else chol2inv(u.load)) %*% crossprod(eta, c.data) + backsolve(u.load, stats::rnorm(Q))
     }
 
-    .sim_load_s  <- function(Q, c.data, eta, phi, tau, psi.inv, EtE, Q1) {
-      u.load     <- diag(phi * tau, Q) + psi.inv * EtE
+    .sim_load_s  <- function(Q, c.data, eta, phi, tau, psi.inv, EtE, Q1, sigma = 1L) {
+      u.load     <- diag(phi * tau * sigma, Q) + psi.inv * EtE
       u.load     <- if(Q1) sqrt(u.load) else .chol(u.load)
         psi.inv   * (if(Q1) 1/(u.load  * u.load) else chol2inv(u.load)) %*% crossprod(eta, c.data) + backsolve(u.load, stats::rnorm(Q))
     }
@@ -63,17 +63,22 @@
     }
 
   # Local Shrinkage
-    .sim_phi     <- function(Q, P, nu1, nu2, tau, load.2) {
-        base::matrix(stats::rgamma(P * Q, shape=nu1 + 0.5, rate=nu2 + (sweep(load.2, 2, tau, FUN="*", check.margin=FALSE))/2), nrow=P, ncol=Q)
+    .sim_phi     <- function(Q, P, nu1, nu2, tau, load.2, sigma = 1L) {
+        base::matrix(stats::rgamma(P * Q, shape=nu1 + 0.5, rate=nu2 + (sigma * sweep(load.2, 2L, tau, FUN="*", check.margin=FALSE))/2), nrow=P, ncol=Q)
     }
 
-  # Global Shrinkage
-    .sim_delta1  <- function(Q, P, alpha.d1, delta.1, beta.d1, tau, sum.term) {
-        stats::rgamma(1, shape=alpha.d1 + P * Q/2, rate=beta.d1 + 0.5/delta.1 * tau %*% sum.term)
+  # Column Shrinkage
+    .sim_delta1  <- function(Q, P, alpha.d1, delta.1, beta.d1, tau, sum.term, sigma = 1L) {
+        stats::rgamma(1, shape=alpha.d1 + P * Q/2, rate=beta.d1 + (sigma * 0.5)/delta.1 * tau %*% sum.term)
     }
 
-    .sim_deltak  <- function(Q, P, k, alpha.d2, beta.d2, delta.k, tau.kq, sum.term.kq) {
-        stats::rgamma(1, shape=alpha.d2 + P/2 * (Q - k + 1), rate=beta.d2 + 0.5/delta.k * tau.kq %*% sum.term.kq)
+    .sim_deltak  <- function(Q, P, k, alpha.d2, beta.d2, delta.k, tau.kq, sum.term.kq, sigma = 1L) {
+        stats::rgamma(1, shape=alpha.d2 + P/2 * (Q - k + 1), rate=beta.d2 + (sigma * 0.5)/delta.k * tau.kq %*% sum.term.kq)
+    }
+
+  # Cluster Shrinkage
+    .sim_sigma   <- function(G, P, Qs, rho1, rho2, sum.terms, tau) {
+        stats::rgamma(G, shape=rho1 + (P * Qs)/2, rate=rho2 + mapply("%*%", sum.terms, tau)/2)
     }
 
   # Mixing Proportions
@@ -268,8 +273,8 @@
         sqrt(sigma.l) * stats::rnorm(P * Q)
     }
 
-    .sim_load_ps <- function(Q, sigma.l, phi, tau) {
-        sqrt(1/(phi * tau)) * stats::rnorm(Q)
+    .sim_load_ps <- function(Q, sigma.l, phi, tau, sigma = 1L) {
+        sqrt(1/(phi * tau * sigma)) * stats::rnorm(Q)
     }
 
   # Uniquenesses
@@ -286,9 +291,14 @@
         base::matrix(.rgamma0(n=P * Q, shape=nu1, rate=nu2), nrow=P, ncol=Q)
     }
 
-  # Global Shrinkage
+  # Column Shrinkage
     .sim_delta_p <- function(Q = 2L, alpha, beta) {
         stats::rgamma(n=Q - 1, shape=alpha, rate=beta)
+    }
+
+  # Cluster Shrinkage
+    .sim_sigma_p <- function(G = 1L, rho1, rho2)  {
+        .rgamma0(n=G, shape=rho1, rate=rho2)
     }
 
   # Cluster Labels
@@ -405,11 +415,12 @@
 #' Checks the hyperparameters for the multiplicative gamma process (MGP) shrinkage prior in order to ensure that the property of cumulative shrinkage holds, i.e. checks whether growing mass is assigned to small neighbourhoods of zero as the column index increases.
 #' @param ad1,ad2 Shape hyperparameters for \eqn{\delta_1}{delta_1} and \eqn{\delta_2}{delta_2}, respectively.
 #' @param Q Number of latent factors. Defaults to 3, which is enough to check if the cumulative shrinkage property holds. Supply \code{Q} if the actual \emph{a priori} expected shrinkage factors are of interest.
-#' @param phi.shape,phi.rate The shape and rate hyperparameters for the gamma prior on the local shrinkage parameters. Not necessary for checking if the cumulative shrinkage property holds, but worth supplying \emph{both} if the actual \emph{a priori} expected shrinkage factors are of interest. The default value(s) depends on the value of \code{inverse}, but are chosen in such a way that the local shrinkage has no effect on the expectation unless both are supplied. Cannot be incorporated into the expectation if \code{phi.shape < 1}.
+#' @param phi.shape,phi.rate The shape and rate hyperparameters for the gamma prior on the local shrinkage parameters. Not necessary for checking if the cumulative shrinkage property holds, but worth supplying \emph{both} if the actual \emph{a priori} expected shrinkage factors are of interest. The default value(s) depends on the value of \code{inverse}, but are chosen in such a way that the local shrinkage has no effect on the expectation unless both are supplied. Cannot be incorporated into the expectation if \code{phi.shape < 1} and \code{isTRUE(inverse)}.
+#' @param sigma.shape,sigma.rate The shape and rate hyperparameters for the gamma prior on the cluster shrinkage parameters. Not necessary for checking if the cumulative shrinkage property holds, but worth supplying \emph{both} if the actual \emph{a priori} expected shrinkage factors are of interest. The default value(s) depends on the value of \code{inverse}, but are chosen in such a way that the cluster shrinkage has no effect on the expectation unless both are supplied. Cannot be incorporated into the expectation if \code{sigma.shape < 1} and \code{isTRUE(inverse)}.
 #' @param bd1,bd2 Rate hyperparameters for \eqn{\delta_1}{delta_1} and \eqn{\delta_2}{delta_2}, respectively. Both default to 1.
 #' @param inverse Logical indicator for whether the cumulative shrinkage property is assessed against the induced Inverse Gamma prior, the default, or in terms of the Gamma prior (which is incorrect). This is always \code{TRUE} when used inside \code{\link{mcmc_IMIFA}}: the \code{FALSE} option exists only for demonstration purposes.
 #'
-#' @details This is called inside \code{\link{mcmc_IMIFA}} for the "\code{IFA}", "\code{MIFA}", "\code{OMIFA}" and "\code{IMIFA}" methods. This function is vectorised with respect to the arguments \code{ad1, ad2, phi.shape, phi.rate, bd1} and \code{bd2}.
+#' @details This is called inside \code{\link{mcmc_IMIFA}} for the "\code{IFA}", "\code{MIFA}", "\code{OMIFA}" and "\code{IMIFA}" methods. This function is vectorised with respect to the arguments \code{ad1, ad2, phi.shape, phi.rate, sigma.shape, sigma.rate, bd1} and \code{bd2}.
 #'
 #' @return A list of length 2 containing the following objects:
 #' \itemize{
@@ -433,6 +444,8 @@
 #'           Q = 3L,
 #'           phi.shape = NULL,
 #'           phi.rate = NULL,
+#'           sigma.shape = NULL,
+#'           sigma.rate = NULL,
 #'           bd1 = 1,
 #'           bd2 = 1,
 #'           inverse = TRUE)
@@ -440,59 +453,71 @@
 #' # Check if expected shrinkage under the MGP increases with the column index (WRONG approach!).
 #' MGP_check(ad1=1.5, ad2=1.8, Q=10, phi.shape=3, inverse=FALSE)$valid      #TRUE
 #'
-#' # Check if the induced IG prior on the MGP global shrinkage parameters
+#' # Check if the induced IG prior on the MGP column shrinkage parameters
 #' # is stochastically increasing, thereby inducing cumulative shrinkage     (CORRECT approach!).
 #' MGP_check(ad1=1.5, ad2=1.8, Q=10, phi.shape=3, inverse=TRUE)$valid       #FALSE
 #'
 #' # Check again with a parameterisation that IS valid and examine the expected shrinkage values.
 #' (shrink <- MGP_check(ad1=1.5, ad2=2.8, Q=10, phi.shape=2, phi.rate=0.5, inverse=TRUE))
-    MGP_check    <- function(ad1, ad2, Q = 3L, phi.shape = NULL, phi.rate = NULL, bd1 = 1, bd2 = 1, inverse = TRUE) {
+    MGP_check    <- function(ad1, ad2, Q = 3L, phi.shape = NULL, phi.rate = NULL, sigma.shape = NULL, sigma.rate = NULL, bd1 = 1, bd2 = 1, inverse = TRUE) {
       if(length(inverse) != 1  ||
          !is.logical(inverse))             stop("'inverse' must be a single logical indicator", call.=FALSE)
-      phi.shape  <- if(missing(phi.shape)) 1L + inverse        else phi.shape
-      phi.rate   <- if(missing(phi.rate))  phi.shape - inverse else phi.rate
+      phi.shape  <- if(is.null(phi.shape))   1L + inverse        else phi.shape
+      phi.rate   <- if(is.null(phi.rate))    phi.shape - inverse else phi.rate
+      sig.shape  <- if(is.null(sigma.shape)) 1L + inverse        else sigma.shape
+      sig.rate   <- if(is.null(sigma.rate))  sig.shape - inverse else sigma.rate
 
       if(length(Q)       != 1  ||
          !is.numeric(Q)  || floor(Q) != Q) stop("'Q' must be a single integer value", call.=FALSE)
-      if(missing(ad1) || missing(ad2))     stop("Global shrinkage shape hyperparameters 'ad1' and 'ad2' must be supplied",       call.=FALSE)
-      max.len    <- max(length(ad1), length(ad2), length(Q), length(phi.shape), length(phi.rate), length(bd1), length(bd2))
+      if(missing(ad1) || missing(ad2))     stop("Column shrinkage shape hyperparameters 'ad1' and 'ad2' must be supplied",         call.=FALSE)
+      max.len    <- max(length(ad1), length(ad2), length(Q), length(phi.shape), length(phi.rate), length(sig.shape), length(sig.rate), length(bd1), length(bd2))
       if(!is.element(length(ad1),
-                     c(1, max.len)))       stop(paste0("'ad1' must be of length 1 or ", max.len, " for proper recycling"),       call.=FALSE)
+                     c(1, max.len)))       stop(paste0("'ad1' must be of length 1 or ", max.len, " for proper recycling"),         call.=FALSE)
       if(!is.element(length(ad2),
-                     c(1, max.len)))       stop(paste0("'ad2' must be of length 1 or ", max.len, " for proper recycling"),       call.=FALSE)
+                     c(1, max.len)))       stop(paste0("'ad2' must be of length 1 or ", max.len, " for proper recycling"),         call.=FALSE)
       if(!is.element(length(bd1),
-                     c(1, max.len)))       stop(paste0("'bd1' must be of length 1 or ", max.len, " for proper recycling"),       call.=FALSE)
+                     c(1, max.len)))       stop(paste0("'bd1' must be of length 1 or ", max.len, " for proper recycling"),         call.=FALSE)
       if(!is.element(length(bd2),
-                     c(1, max.len)))       stop(paste0("'bd2' must be of length 1 or ", max.len, " for proper recycling"),       call.=FALSE)
+                     c(1, max.len)))       stop(paste0("'bd2' must be of length 1 or ", max.len, " for proper recycling"),         call.=FALSE)
       if(!is.element(length(phi.shape),
-                     c(1, max.len)))       stop(paste0("'phi.shape' must be of length 1 or ", max.len, " for proper recycling"), call.=FALSE)
+                     c(1, max.len)))       stop(paste0("'phi.shape' must be of length 1 or ", max.len, " for proper recycling"),   call.=FALSE)
       if(!is.element(length(phi.rate),
-                     c(1, max.len)))       stop(paste0("'phi.rate' must be of length 1 or ", max.len, " for proper recycling"),  call.=FALSE)
+                     c(1, max.len)))       stop(paste0("'phi.rate' must be of length 1 or ", max.len, " for proper recycling"),    call.=FALSE)
+      if(!is.element(length(sig.shape),
+                     c(1, max.len)))       stop(paste0("'sigma.shape' must be of length 1 or ", max.len, " for proper recycling"), call.=FALSE)
+      if(!is.element(length(sig.rate),
+                     c(1, max.len)))       stop(paste0("'sigma.rate' must be of length 1 or ", max.len, " for proper recycling"),  call.=FALSE)
 
-      if(any(phi.shape   <= 1) -> PX)      warning("Can't incorporate local shrinkage parameters into the expectation when 'phi.shape' is not strictly greater than 1\n", call.=FALSE)
-      if(any(phi.rate    <= 0))            stop("All local shrinkage rate hyperparameter values must be strictly positive",      call.=FALSE)
-      if(any(c(ad1, ad2)  < 1))            stop("All global shrinkage shape hyperparameter values must be at least 1",           call.=FALSE)
-      if(any(c(bd1, bd2) <= 0))            stop("All global shrinkage rate hyperparameter values must be strictly positive",     call.=FALSE)
+      if(inverse &
+         any(phi.shape   <= 1) -> PX)      warning("Can't incorporate local shrinkage parameters into the expectation when 'phi.shape' is not strictly greater than 1\n",     call.=FALSE, immediate.=TRUE)
+      if(inverse &
+         any(sig.shape   <= 1) -> SX)      warning("Can't incorporate cluster shrinkage parameters into the expectation when 'sigma.shape' is not strictly greater than 1\n", call.=FALSE, immediate.=TRUE)
+      if(any(phi.rate    <= 0))            stop("All local shrinkage rate hyperparameter values must be strictly positive",        call.=FALSE)
+      if(any(sig.rate    <= 0))            stop("All cluster shrinkage rate hyperparameter values must be strictly positive",      call.=FALSE)
+      if(any(c(ad1, ad2)  < 1))            stop("All column shrinkage shape hyperparameter values must be at least 1",             call.=FALSE)
+      if(any(c(bd1, bd2) <= 0))            stop("All column shrinkage rate hyperparameter values must be strictly positive",       call.=FALSE)
       if(any(WX  <- ad1  >= ad2))          warning("'ad2' should be moderately large relative to 'ad1' to encourage loadings column removal\n", call.=FALSE, immediate.=TRUE)
 
       Qseq       <- seq_len(Q)  - 1L
       ML         <- seq_len(max.len)
-      shape      <- if(PX) 1L   + inverse  else phi.shape
-      rate       <- if(PX) 1L              else phi.rate
+      nu1        <- if(PX) 1L   + inverse  else phi.shape
+      nu2        <- if(PX) 1L              else phi.rate
+      rho1       <- if(SX) 1L   + inverse  else sig.shape
+      rho2       <- if(SX) 1L              else sig.rate
       if(isTRUE(inverse)) {
         if(any(WX        <- WX  |
            phi.rate       >
            phi.shape      - 1L))           warning("A priori expectation of the induced inverse-gamma local shrinkage hyperprior is not <=1\n", call.=FALSE, immediate.=TRUE)
         ad1      <- ifelse(ad1 == 1, ad1 + .Machine$double.eps, ad1)
         ad2      <- ifelse(ad2 == 1, ad2 + .Machine$double.eps, ad2)
-        exp.Q1   <- rate/(shape - 1)     * bd1/(ad1  - 1)
+        exp.Q1   <- nu2/(nu1    - 1)     * bd1/(ad1  - 1) * rho2/(rho1 - 1)
         exp.Qk   <- bd2/(ad2    - 1)
         exp.Q1   <- if(length(exp.Q1)    < length(exp.Qk)) rep(exp.Q1, max.len) else exp.Q1
         exp.Qk   <- if(length(exp.Qk)    < length(exp.Q1)) rep(exp.Qk, max.len) else exp.Qk
         exp.seq  <- lapply(ML, function(i) exp.Q1[i] * exp.Qk[i]^Qseq)
         check    <- vapply(exp.seq,  is.unsorted, logical(1L))
       } else {
-        exp.Q1   <- shape/rate  * ad1/bd1
+        exp.Q1   <- nu1/nu2     * ad1/bd1            * rho1/rho2
         exp.Qk   <- ad2/bd2
         exp.Q1   <- if(length(exp.Q1)    < length(exp.Qk)) rep(exp.Q1, max.len) else exp.Q1
         exp.Qk   <- if(length(exp.Qk)    < length(exp.Q1)) rep(exp.Qk, max.len) else exp.Qk
@@ -706,7 +731,7 @@
         if(anyNA(z))                       stop("Missing values are not allowed in 'z'", call.=FALSE)
         if(any(z  < 0) ||
            any(z  > 1))                    stop("Values in 'z' must be valid probabilities in the interval [0,1]", call.=FALSE)
-        nit      <- 1
+        nit      <- 1L
         N        <- nrow(z)
         G        <- ncol(z)
         if(N      < G)                     stop("'z' must have more rows than columns", call.=FALSE)
@@ -719,7 +744,7 @@
       for(n      in seq_len(nit)) {
         for(k    in seq_len(G))   {
           for(i  in seq_len(N))   {
-            PCM[rX[[n]][i,1], rX[[n]][i,k]] <- PCM[rX[[n]][i,1L], rX[[n]][i,k]] + tX[[n]][i,k]
+            PCM[rX[[n]][i,1L], rX[[n]][i,k]] <- PCM[rX[[n]][i,1L], rX[[n]][i,k]] + tX[[n]][i,k]
            }
         }
       }
@@ -741,7 +766,7 @@
       sw         <- sample(G, 1L, prob=c(rep(1, G - 2), 0.5, 0.5))
       sw         <- if(is.element(sw, c(G, G - 1))) c(G - 1, G) else c(sw, sw + 1)
       nns        <- nn[sw]
-      if(nns[1]  == 0)      {
+      if(nns[1L] == 0)      {
         return(list(rate2   = TRUE,
                sw = sw))
       } else      {
@@ -1320,7 +1345,7 @@
 #' @param d.hyper Hyperparameters for the Beta(a,b) prior on the \code{discount} parameter. Defaults to Beta(1,1), i.e. Uniform(0,1).
 #' @param ind.slice Logical indicitating whether the independent slice-efficient sampler is to be employed (defaults to \code{TRUE}). If \code{FALSE} the dependent slice-efficient sampler is employed, whereby the slice sequence \eqn{\xi_1,\ldots,\xi_g}{xi_1,...,xi_g} is equal to the decreasingly ordered mixing proportions.
 #' @param rho Parameter controlling the rate of geometric decay for the independent slice-efficient sampler, s.t. \eqn{\xi=(1-\rho)\rho^{g-1}}{xi = (1 - rho)rho^(g-1)}. Must lie in the interval (0, 1]. Higher values are associated with better mixing but longer run times. Defaults to 0.75, but 0.5 is an interesting special case which guarantees that the slice sequence \eqn{\xi_1,\ldots,\xi_g}{xi_1,...,xi_g} is equal to the \emph{expectation} of the decreasingly ordered mixing proportions. Only relevant when \code{ind.slice} is \code{TRUE}.
-#' @param trunc.G The maximum number of allowable and storable clusters. Defaults to the same value (\code{min(N - 1, max(25, ceiling(3 * log(N))))}) that \code{range.G} defaults to (see \code{\link{mcmc_IMIFA}}). Must be greater than or equal to \code{range.G}. The number of active clusters to be sampled at each iteration is adaptively truncated, with \code{trunc.G} as an upper limit for storage reasons. Note that large values of \code{trunc.G} may lead to memory capacity issues.
+#' @param trunc.G The maximum number of allowable and storable clusters. Defaults to the max of \code{range.G} and the same value (\code{min(N - 1, max(25, ceiling(3 * log(N))))}) that \code{range.G} defaults to (see \code{\link{mcmc_IMIFA}}). Must be greater than or equal to \code{range.G}. The number of active clusters to be sampled at each iteration is adaptively truncated, with \code{trunc.G} as an upper limit for storage reasons. Note that large values of \code{trunc.G} may lead to memory capacity issues.
 #' @param kappa The spike-and-slab prior distribution on the \code{discount} hyperparameter is assumed to be a mixture with point-mass at zero and a continuous Beta(a,b) distribution. \code{kappa} gives the weight of the point mass at zero (the 'spike'). Must lie in the interval [0,1]. Defaults to 0.5. Only relevant when \code{isTRUE(learn.d)}. A value of 0 ensures non-zero discount values (i.e. Pitman-Yor) at all times, and \emph{vice versa}. Note that \code{kappa} will default to exactly 0 if \code{alpha<=0} and \code{learn.alpha=FALSE}.
 #' @param IM.lab.sw Logial indicating whether the two forced label switching moves are to be implemented (defaults to \code{TRUE}) when running one of the infinite mixture models.
 #' @param zeta
@@ -1477,19 +1502,21 @@
 #' Control settings for the MGP prior and AGS for infinite factor models
 #'
 #' Supplies a list of arguments for use in \code{\link{mcmc_IMIFA}} pertaining to the use of the multiplicative gamma process (MGP) shrinkage prior and adaptive Gibbs sampler (AGS) for use with the infinite factor models "\code{IFA}", "\code{MIFA}", "\code{OMIFA}", and "\code{IMIFA}".
-#' @param alpha.d1 Shape hyperparameter of the global shrinkage on the first column of the loadings according to the MGP shrinkage prior. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to 2.
-#' @param alpha.d2 Shape hyperparameter of the global shrinkage on the subsequent columns of the loadings according to the MGP shrinkage prior. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to 6.
+#' @param alpha.d1 Shape hyperparameter of the column shrinkage on the first column of the loadings according to the MGP shrinkage prior. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to 2.
+#' @param alpha.d2 Shape hyperparameter of the column shrinkage on the subsequent columns of the loadings according to the MGP shrinkage prior. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to 6.
 #' @param phi.hyper A vector of length 2 giving the shape and rate hyperparameters for the gamma prior on the local shrinkage parameters. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to \code{c(3, 2)}. It is suggested that the rate be <= shape minus 1 to induce local shrinkage, though the cumulative shrinkage property is unaffected by these hyperparameters. Excessively small values may lead to critical numerical issues and should thus be avoided; indeed it is \emph{suggested} that the shape be >=1.
+#' @param sigma.hyper A vector of length 2 giving the shape and rate hyperparameters for the gamma prior on the cluster shrinkage parameters. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to \code{c(3, 2)}. Again, it is \emph{suggested} that the shape be >= 1. Only relevant for the "\code{IMIFA}", "\code{OMIFA}", and "\code{MIFA}" methods when \code{isTRUE(cluster.shrink)}.
 #' @param prop Proportion of loadings elements within the neighbourhood \code{eps} of zero necessary to consider a loadings column redundant. Defaults to \code{floor(0.7 * P)/P}, where \code{P} is the number of variables in the data set. However, if the data set is univariate or bivariate, the default is \code{0.5} (see Note).
 #' @param eps Neighbourhood epsilon of zero within which a loadings entry is considered negligible according to \code{prop}. Defaults to 0.1.
 #' @param adapt A logical value indicating whether adaptation of the number of cluster-specific factors is to take place when the MGP prior is employed. Defaults to \code{TRUE}. Specifying \code{FALSE} and supplying \code{range.Q} within \code{\link{mcmc_IMIFA}} provides a means to either approximate the infinite factor model with a fixed high truncation level, or to use the MGP prior in a finite factor context, however this is NOT recommended for the "\code{OMIFA}" and "\code{IMIFA}" methods.
+#' @param cluster.shrink A logical value indicating whether to place the prior specified by \code{sigma.hyper} on the cluster shrinkage parameters. Defaults to \code{TRUE}. Specifying \code{FALSE} is equivalent to fixing all cluster shrinkage parameters to 1. Only relevant for the "\code{IMIFA}", "\code{OMIFA}", and "\code{MIFA}" methods. If invoked, the posterior mean cluster shrinkage factors will be reported.
 #' @param b0,b1 Intercept & slope parameters for the exponentially decaying adaptation probability:
 #'
 #' \code{p(iter) = 1/exp(b0 + b1 * (iter - start.AGS))}.
 #'
 #' Defaults to 0.1 & 0.00005, respectively. Must be non-negative and strictly positive, respectively, to ensure diminishing adaptation.
-#' @param beta.d1 Rate hyperparameter of the global shrinkage on the first column of the loadings according to the MGP shrinkage prior. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to 1.
-#' @param beta.d2 Rate hyperparameter of the global shrinkage on the subsequent columns of the loadings according to the MGP shrinkage prior. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to 1.
+#' @param beta.d1 Rate hyperparameter of the column shrinkage on the first column of the loadings according to the MGP shrinkage prior. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to 1.
+#' @param beta.d2 Rate hyperparameter of the column shrinkage on the subsequent columns of the loadings according to the MGP shrinkage prior. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to 1.
 #' @param start.AGS The iteration at which adaptation under the AGS is to begin. Defaults to \code{burnin} for the "\code{IFA}" and "\code{MIFA}" methods, defaults to 0 for the "\code{OMIFA}" and "\code{IMIFA}" methods, and defaults to 0 for all methods if the data set is univariate or bivariate. Cannot exceed \code{burnin}.
 #' @param stop.AGS The iteration at which adaptation under the AGS is to stop completely. Defaults to \code{Inf}, such that the AGS is never explicitly forced to stop (thereby overriding the diminishing adaptation probability after \code{stop.AGS}). Must be greater than \code{start.AGS}. The diminishing adaptation probability prior to \code{stop.AGS} is still governed by the arguments \code{b0} and \code{b1}.
 #' @param delta0g Logical indicating whether the \code{alpha.d1} and \code{alpha.d2} hyperparameters can be cluster-specific. Defaults to \code{FALSE}. Only relevant for the "\code{MIFA}" method and only allowed when \code{z.list} is supplied within \code{\link{mcmc_IMIFA}}.
@@ -1510,16 +1537,18 @@
 #' Bhattacharya, A. and Dunson, D. B. (2011) Sparse Bayesian infinite factor models, \emph{Biometrika}, 98(2): 291-306.
 #' @author Keefe Murphy - <\email{keefe.murphy@@ucd.ie}>
 #' @usage
-#' mgpControl(alpha.d1 = 2L,
-#'            alpha.d2 = 6L,
-#'            phi.hyper = c(3L, 2L),
+#' mgpControl(alpha.d1 = 2,
+#'            alpha.d2 = 6,
+#'            phi.hyper = c(3, 2),
+#'            sigma.hyper = c(3, 2),
 #'            prop = 0.7,
 #'            eps = 0.1,
 #'            adapt = TRUE,
+#'            cluster.shrink = TRUE,
 #'            b0 = 0.1,
 #'            b1 = 5e-05,
-#'            beta.d1 = 1L,
-#'            beta.d2 = 1L,
+#'            beta.d1 = 1,
+#'            beta.d2 = 1,
 #'            start.AGS = 0L,
 #'            stop.AGS = Inf,
 #'            delta0g = FALSE,
@@ -1532,31 +1561,37 @@
 #'
 #' # Alternatively specify these arguments directly
 #' # sim   <- mcmc_IMIFA(olive, "IMIFA", n.iters=5000, phi.hyper=c(2.5, 1), eps=1e-02)
-    mgpControl   <- function(alpha.d1 = 2L, alpha.d2 = 6L, phi.hyper = c(3L, 2L), prop = 0.7, eps = 1e-01, adapt = TRUE,
-                             b0 = 0.1, b1 = 5e-05, beta.d1 = 1L, beta.d2 = 1L, start.AGS = 0L, stop.AGS = Inf, delta0g = FALSE, ...) {
+    mgpControl   <- function(alpha.d1 = 2, alpha.d2 = 6, phi.hyper = c(3, 2), sigma.hyper = c(3, 2), prop = 0.7, eps = 1e-01, adapt = TRUE,
+                             cluster.shrink = TRUE, b0 = 0.1, b1 = 5e-05, beta.d1 = 1, beta.d2 = 1, start.AGS = 0L, stop.AGS = Inf, delta0g = FALSE, ...) {
       miss.args  <- list(propx = missing(prop), startAGSx = missing(start.AGS), stopAGSx = missing(stop.AGS))
       if(any(!is.numeric(alpha.d1),
              !is.numeric(alpha.d2),
-             c(alpha.d1, alpha.d2)   < 1)) stop("All global shrinkage shape hyperparameter values must be numeric and at least 1", call.=FALSE)
+             c(alpha.d1, alpha.d2)   < 1)) stop("All column shrinkage shape hyperparameter values must be numeric and at least 1", call.=FALSE)
       if(prop     > 1          ||
          prop    <= 0)                     stop("'prop' must be lie in the interval (0, 1]", call.=FALSE)
-      if(eps     <= 0 ||
+      if(eps     <= 0          ||
          eps     >= 1)                     stop("'eps' must be lie in the interval (0, 1)", call.=FALSE)
       if(any(length(adapt)     != 1,
              !is.logical(adapt)))          stop("'adapt' must be a single logical indicator", call.=FALSE)
+      if(any(length(cluster.shrink) != 1,
+             !is.logical(cluster.shrink))) stop("'cluster.shrink' must be a single logical indicator", call.=FALSE)
       if(any(length(b0)        != 1,
              !is.numeric(b0), b0     < 0)) stop("'b0' must be a non-negative scalar to ensure valid adaptation probability", call.=FALSE)
       if(any(length(b1)        != 1,
              !is.numeric(b1), b1    <= 0)) stop("'b1' must be a single strictly positive scalar to ensure adaptation probability decreases", call.=FALSE)
       if(length(phi.hyper)     != 2 ||
          !is.numeric(phi.hyper))           stop("'phi.hyper' must be a numeric vector of length 2", call.=FALSE)
-      if(any(phi.hyper < 1E-01))           stop("Excessively small values for the local shrinkage hyperparameters will lead to critical numerical issues & should thus be avoided", call.=FALSE)
+      if(any(phi.hyper   < 1E-01))         stop("Excessively small values for the local shrinkage hyperparameters will lead to critical numerical issues & should thus be avoided", call.=FALSE)
       if(any(phi.hyper         <= 0))      stop("The shape and rate in 'phi.hyper' must both be strictly positive", call.=FALSE)
+      if(length(sigma.hyper)   != 2 ||
+         !is.numeric(sigma.hyper))         stop("'sigma.hyper' must be a numeric vector of length 2", call.=FALSE)
+      if(any(sigma.hyper < 1E-01))         stop("Excessively small values for the cluster shrinkage hyperparameters will lead to critical numerical issues & should thus be avoided", call.=FALSE)
+      if(any(sigma.hyper       <= 0))      stop("The shape and rate in 'phi.hyper' must both be strictly positive", call.=FALSE)
       if(any(!is.numeric(beta.d1),
              !is.numeric(beta.d2),
              length(beta.d1)   != 1,
              length(beta.d2)   != 1,
-             c(beta.d1,  beta.d2) <= 0))   stop("'beta.d1' and 'beta.d2' must both be numeric, of length 1, and strictly positive", call.=FALSE)
+             c(beta.d1,  beta.d2)   <= 0)) stop("'beta.d1' and 'beta.d2' must both be numeric, of length 1, and strictly positive", call.=FALSE)
       if(any(!is.numeric(prop),
              !is.numeric(start.AGS),
              !is.numeric(stop.AGS),
@@ -1568,8 +1603,8 @@
       if(any(length(delta0g)   != 1,
              !is.logical(delta0g)))        stop("'delta0g' must be a single logical indicator", call.=FALSE)
       MGPAGS     <- list(alpha.d1 = alpha.d1, alpha.d2 = alpha.d2, delta0g = delta0g, phi.hyper = phi.hyper,
-                         prop = prop, epsilon = eps, adapt = adapt, b0 = b0, b1 = b1, beta.d1 = beta.d1,
-                         beta.d2 = beta.d2, start.AGS = start.AGS, stop.AGS = stop.AGS)
+                         sigma.hyper = sigma.hyper, prop = prop, epsilon = eps, adapt = adapt, cluster.shrink = cluster.shrink,
+                         b0 = b0, b1 = b1, beta.d1 = beta.d1, beta.d2 = beta.d2, start.AGS = start.AGS, stop.AGS = stop.AGS)
       attr(MGPAGS, "Missing")  <- miss.args
         MGPAGS
     }

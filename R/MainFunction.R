@@ -269,7 +269,7 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
       if(G.init    >= N)            stop(paste0("'range.G' must less than N (", N, ")"), call.=FALSE)
       if(is.element(method, c("IMFA", "IMIFA")))  {
         if((t.miss <- bnpmiss$trunc.G))    {
-          trunc.G  <- BNP$trunc.G      <- tmp.G
+          trunc.G  <- BNP$trunc.G      <- max(tmp.G, range.G)
         } else trunc.G    <- BNP$trunc.G
         if(all(verbose, ifelse(N > 50, trunc.G    < 50,
            trunc.G <= N), !t.miss)) message(paste0("Consider setting 'trunc.G' to min(N-1=", N - 1, ", 50) unless practical reasons in heavy computational/memory burden cases prohibit it\n"))
@@ -414,9 +414,11 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
    delta0g  <- MGP$delta0g && method   == "MIFA"
    MGP$nu1  <- nu1         <- MGP$phi.hyper[1L]
    MGP$nu2  <- nu2         <- MGP$phi.hyper[2L]
+   MGP$rho1 <- rho1        <- if(MGP$cluster.shrink && method != "IFA") MGP$sigma.hyper[1L]
+   MGP$rho2 <- rho2        <- if(MGP$cluster.shrink && method != "IFA") MGP$sigma.hyper[2L]
    alpha.d1 <- .len_check(MGP$alpha.d1, delta0g, method, P, G.init, P.dim=FALSE)
    alpha.d2 <- .len_check(MGP$alpha.d2, delta0g, method, P, G.init, P.dim=FALSE)
-   MGP      <- MGP[-c(1L:4L)]
+   MGP      <- MGP[-seq_len(5L)]
    start.AGS       <-  MGP$start.AGS   <- ifelse(mgpmiss$startAGSx, ifelse(fQ0, 0L, switch(EXPR=method, IFA=, MIFA=burnin, 0L)), MGP$start.AGS)
    if(Q.miss)                range.Q   <- as.integer(ifelse(fQ0, 1, min(ifelse(P > 500, 12 + floor(log(P)), floor(3 * log(P))), N - 1, P - 1)))
    if(length(range.Q)       > 1)    stop(paste0("Only one starting value for 'range.Q' can be supplied for the ", method, " method"), call.=FALSE)
@@ -511,7 +513,7 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
       }
       if(alpha       <= -discount)  stop(paste0("'alpha' must be ",     ifelse(discount != 0, paste0("strictly greater than -discount (i.e. > ", - discount, ")"), "strictly positive")), call.=FALSE)
     }
-    if(all(is.element(method,  c("OMIFA",   "OMFA")), !learn.a)) {
+    if(is.element(method, c("OMIFA",   "OMFA")) && !learn.a) {
       min.d2         <- 0.5 * PGMM_dfree(P=P, Q=switch(EXPR=method, OMFA=min(range.Q), OMIFA=0L), equal.pro=equal.pro,
                                          method=switch(EXPR=uni.type, unconstrained="UUU", isotropic="UUC", constrained="UCU", single="UCC"))
       if(alpha       >= min.d2)     warning(paste0("'alpha' over 'range.G' for the OMFA & OMIFA methods when 'learn.alpha=FALSE', should be less than half the dimension (per cluster!)\nof the free parameters of the smallest model considered (= ", min.d2, "): consider suppling 'alpha' < ", min.d2 * G.init, "\n"), call.=FALSE, immediate.=TRUE)
@@ -620,7 +622,7 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
       }
       nngs         <- tabulate(zi[[g]], nbins=switch(EXPR=method, IMFA=, IMIFA=trunc.G, G))
       pi.prop[[g]] <- if(equal.pro) rep(1/G, G) else prop.table(nngs)
-      mu[[g]]      <- vapply(seq_len(G), function(gg) if(nngs[gg] > 0) colMeans2(dat[zi[[g]] == gg,, drop=FALSE]) else vector("numeric", P), numeric(P))
+      mu[[g]]      <- vapply(seq_len(G), function(gg) if(nngs[gg] > 0) colMeans2(dat[zi[[g]] == gg,, drop=FALSE]) else vector("integer", P), numeric(P))
       mu[[g]]      <- if(uni)       t(mu[[g]])  else mu[[g]]
       if(mu0.x)   {
         mu.zero[[g]]    <- if(mu0g) mu[[g]]     else replicate(G, colMeans2(dat), simplify="array")
@@ -692,10 +694,10 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
   if(is.element(method, c("classify", "IFA", "MIFA", "IMIFA", "OMIFA"))) {
     ad1uu          <- unique(unlist(alpha.d1))
     ad2uu          <- unique(unlist(alpha.d2))
-    check.mgp      <- suppressWarnings(MGP_check(ad1=ad1uu, ad2=ad2uu, Q=unique(range.Q), phi.shape=nu1, phi.rate=nu2, bd1=MGP$beta.d1, bd2=MGP$beta.d2))
+    check.mgp      <- suppressWarnings(MGP_check(ad1=ad1uu, ad2=ad2uu, Q=unique(range.Q), phi.shape=nu1, phi.rate=nu2, sigma.shape=rho1, sigma.rate=rho2, bd1=MGP$beta.d1, bd2=MGP$beta.d2))
     if(!all(check.mgp$valid))       stop("Invalid shrinkage hyperparameter values WILL NOT encourage loadings column removal.\nTry using the MGP_check() function in advance to ensure the cumulative shrinkage property holds.", call.=FALSE)
     if(any(attr(check.mgp, "Warning"))) {
-      if(any(ad2uu <= ad1uu))       warning("Global shrinkage hyperparameter values MAY NOT encourage loadings column removal.\n'alpha.d2' should be moderately large relative to 'alpha.d1'\n", call.=FALSE, immediate.=TRUE)
+      if(any(ad2uu <= ad1uu))       warning("Column shrinkage hyperparameter values MAY NOT encourage loadings column removal.\n'alpha.d2' should be moderately large relative to 'alpha.d1'\n", call.=FALSE, immediate.=TRUE)
       if(any(nu2    > nu1 - 1))     warning("Expectation of local shrinkage hyperprior is not less than 1\n", call.=FALSE, immediate.=TRUE)
     }
     deltas         <- lapply(seq_along(G.init), function(g) list(alpha.d1 = alpha.d1[[g]], alpha.d2 = alpha.d2[[g]]))
@@ -813,6 +815,7 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
   attr(imifa,
        "Alph.step")       <- is.element(method, c("IMFA", "IMIFA", "OMFA", "OMIFA")) && learn.a
   attr(imifa, "Alpha")    <- if(!attr(imifa, "Alph.step")) alpha
+  attr(imifa, "C.Shrink") <- is.element(method, c("MIFA", "OMIFA", "IMIFA"))         && MGP$cluster.shrink
   attr(imifa,
        "Class.Props")     <- if(method == "classify") tabulate(z.list[[1L]], range.G)/N
   attr(imifa, "Call")     <- call

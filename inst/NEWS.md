@@ -3,6 +3,10 @@ __Infinite Mixtures of Infinite Factor Analysers__
 
 ## IMIFA v2.0.1 - (_7<sup>th</sup> release [patch update]: 2018-05-02_)
 ### New Features
+* `mgpControl` gains the arguments `cluster.shrink` and `sigma.hyper`:
+    * `cluster.shrink` governs whether cluster shrinkage MGP hyperparameter is invoked for MIFA/OMIFA/IMIFA methods.
+    * `sigma.hyper` controls the gamma hyperprior on this parameter. The posterior mean is reported, where applicable.
+    * Full conditionals for loadings and local/column shrinkage MGP hyperparameters edited accordingly.
 * Allowed the Dirichlet concentration parameter `alpha` to be learned via MH steps for the OM(I)FA models.  
     * Also allowed diminishing adaptation to tune the log-normal proposal to achieve a target acceptance rate.
     * Thus `bnpControl` args. `learn.alpha`, `alpha.hyper`, `zeta`, & `tune.zeta` become relevant for OM(I)FA models.
@@ -34,6 +38,9 @@ __Infinite Mixtures of Infinite Factor Analysers__
       thus, valid samples for computing error metrics also fixed and Procrustes rotation also sped-up.  
     * Other Procrustes rotation fixes to account for label-switching.  
     * Other Procrustes rotation fixes specific to the IMFA/OMFA methods.
+* Slight label-switching fixes when `zlabels` are supplied to `get_IMIFA_results`;
+  posterior confusion matrix, cluster sizes vector, and the sampled labels themselves effected.
+* Slight speed-up to updating MGP hyperparameters in the presence of empty MIFA/OMIFA/IMIFA components.
 * Explicitly allowed Pitman-Yor special case where `alpha=0` for IM(I)FA models;  
   added related controls on spike-and-slab prior for `discount` when fixing `alpha<=0`.
 * `trunc.G` now shares the same default as `range.G`, rather than defaulting to `range.G`.

@@ -6,7 +6,7 @@
 #' Special types of plots which don't require a \code{param} are:
 #' \describe{
 #' \item{"\code{GQ}"}{for plotting the posterior summaries of the numbers of clusters/factors, if available.}
-#' \item{"\code{zlabels}"}{for plotting clustering uncertainties - in four different ways (incl. the posterior confusion matrix) - if clustering has taken place, with or without the clustering labels being supplied via the \code{zlabels} argument. If available, the average similarity matrix, reordered according to the MAP labels, is shown as the 5-th plot.}
+#' \item{"\code{zlabels}"}{for plotting clustering uncertainties - in four different ways (incl. the posterior confusion matrix) - if clustering has taken place, with or without the clustering labels being supplied via the \code{zlabels} argument. If available, the average similarity matrix, reordered according to the MAP labels, is shown as a 5-th plot.}
 #' \item{"\code{errors}"}{for conducting posterior predictive checking of the appropriateness of the fitted model by visualising the error metrics quantifying the difference between the estimated and empirical covariance matrices. The type of plot produced depends on how the \code{error.metrics} argument was supplied to \code{\link{get_IMIFA_results}}.}
 #' }
 #' @param param The parameter of interest for any of the following \code{plot.meth} options: \code{all}, \code{trace}, \code{density}, \code{means}, \code{correlation}. The \code{param} must have been stored when \code{\link{mcmc_IMIFA}} was initially ran. Includes \code{pis} for methods where clustering takes place, and allows posterior inference on \code{alpha} (for the "\code{IMFA}", "\code{IMIFA}", "\code{OMFA}", and "\code{OMIFA}" methods) and \code{discount} (for the "\code{IMFA}" and "\code{IMIFA}" methods). Otherwise \code{means}, \code{scores}, \code{loadings}, and \code{uniquenesses} can be plotted.
@@ -309,7 +309,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
         tab    <- table(pzs, zlabels, dnn=list("Predicted", "Observed"))
         prf    <- c(.class_agreement(tab), classError(pzs, zlabels))
         if(nrow(tab) != ncol(tab))  {
-          prf  <- prf[-seq_len(2)]
+          prf  <- prf[-seq_len(2L)]
           names(prf)[4L]         <- "error.rate"
         } else  {
           names(prf)[6L]         <- "error.rate"
@@ -1014,8 +1014,8 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
           print(GQ.res[gq.nam   == "G"])
         } else if(g == 2) {
           if(adapt)  {
-            print(GQ.res[gq.nam == "Q"])
-          }
+            print(if(attr(x, "C.Shrink")) GQ.res[gq.nam == "Q" | gq.nam == "P"] else GQ.res[gq.nam == "Q"])
+          } else print(GQ.res[gq.nam == "P"])
         } else if(g == 3) {
           print(GQ.res[gq.nam   == "C"])
         }
@@ -1133,8 +1133,8 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
           graphics::title(main="Posterior Confusion Matrix")
           graphics::mtext(side=1, at=Gseq, Gseq,      line=1)
           graphics::mtext(side=2, at=Gseq, rev(Gseq), line=1, las=1)
-          graphics::mtext(side=1, "Cluster",          line=2)
-          graphics::mtext(side=2, "Allocation",       line=2)
+          graphics::mtext(side=1, "Allocation",       line=2)
+          graphics::mtext(side=2, "Cluster",          line=2)
           heat_legend(plot.x, cols=i.cols, cex.lab=0.8)
         }
         graphics::box(lwd=2)

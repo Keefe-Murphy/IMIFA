@@ -57,7 +57,7 @@
 #' @keywords IMIFA main
 #' @include MainFunction.R
 #' @export
-#' @importFrom Rfast "colMaxs" "colTabulate" "med" "rowMaxs" "rowmeans" "rowOrder" "sort_mat" "Var"
+#' @importFrom Rfast "colMaxs" "colTabulate" "med" "rowMaxs" "rowmeans" "rowOrder" "rowTabulate" "sort_mat" "Var"
 #' @importFrom mclust "classError"
 #' @importFrom matrixStats "colSums2" "rowMedians" "rowQuantiles" "rowSums2"
 #' @importFrom slam "as.simple_triplet_matrix"
@@ -159,7 +159,8 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   obsnames       <- attr(sims, "Obsnames")
   varnames       <- attr(sims, "Varnames")
   cov.emp        <- attr(sims, "Cov.Emp")
-  cov.range      <- ifelse(uni, 1, max(cov.emp) - min(cov.emp))
+  cov.range      <- ifelse(uni, 1L, max(cov.emp) - min(cov.emp))
+  cshrink        <- attr(sims, "C.Shrink")
   if(any(length(conf.level) != 1,
      !is.numeric(conf.level),
      (conf.level <= 0   ||
@@ -334,8 +335,8 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
 
   # Control for supplied values of G &/or Q
     if(!any(Q.T, G.T)) {
-      G.ind      <- crit.max[1]
-      Q.ind      <- crit.max[2]
+      G.ind      <- crit.max[1L]
+      Q.ind      <- crit.max[2L]
       if(!inf.G) {
         G        <- n.grp[G.ind]
       }
@@ -388,6 +389,9 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       Q.mX       <- !all(is.character(Q.meth))
       if(isTRUE(Q.mX))            stop("'Q.meth' must be a character vector of length 1", call.=FALSE)
       Q.meth     <- match.arg(Q.meth)
+      if(cshrink) {
+        sigmas   <- sims[[G.ind]][[Q.ind]]$sigma[,tmp.store,   drop=FALSE]
+      }
     }
     TN.store     <- length(tmp.store)
     if(TN.store   < 2)            stop(paste0("Not enough samples stored to proceed", ifelse(any(G.T, Q.T), paste0(": try supplying different Q or G values"), "")), call.=FALSE)
@@ -439,6 +443,9 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
           }
           if(inf.Q)        {
             Q.store[left,sl]   <- Q.store[right,sl]
+            if(cshrink)    {
+              sigmas[left,sl]  <- sigmas[right,sl]
+            }
           }
         }
       }
@@ -446,6 +453,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     if(sw["mu.sw"])        mus <- tryCatch(mus[,Gseq,,     drop=FALSE], error=function(e) mus)
     if(sw["l.sw"])       lmats <- tryCatch(lmats[,,Gseq,,  drop=FALSE], error=function(e) lmats)
     if(sw["psi.sw"])      psis <- tryCatch(psis[,Gseq,,    drop=FALSE], error=function(e) psis)
+    if(cshrink)         sigmas <- tryCatch(sigmas[Gseq,,   drop=FALSE], error=function(e) sigmas)
     MAP          <- apply(z, 2L,  function(x) factor(which.max(tabulate(x, nbins=G)), levels=Gseq))
     post.prob    <- matrix(colTabulate(z, max_number=G)/TN.store, nrow=n.obs, ncol=G, byrow=TRUE)
 
@@ -467,7 +475,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
          tab     <- table(zadj, zlabels, dnn=list("Predicted", "Observed"))
          tabstat <- c(.class_agreement(tab), classError(MAP, zlabels))
          if(nrow(tab) != ncol(tab))    {
-         tabstat <- tabstat[-seq_len(2)]
+         tabstat <- tabstat[-seq_len(2L)]
            names(tabstat)[4L]  <- "error.rate"
          } else {
            names(tabstat)[6L]  <- "error.rate"
@@ -490,28 +498,31 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     if(sw["pi.sw"]) {
       pi.prop    <- provideDimnames(pies[Gseq,storeG, drop=FALSE], base=list(gnames, ""), unique=FALSE)
       pi.prop    <- if(inf.G) sweep(pi.prop, 2L, colSums2(pi.prop), FUN="/", check.margin=FALSE) else pi.prop
-      var.pi     <- stats::setNames(.row_vars(pi.prop), gnames)
+      var.pi     <- stats::setNames(.row_vars(pi.prop),     gnames)
       ci.pi      <- rowQuantiles(pi.prop, probs=conf.levels)
       ci.pi      <- if(G == 1) t(ci.pi) else ci.pi
-      post.pi    <- stats::setNames(rowmeans(pi.prop),  gnames)
+      post.pi    <- stats::setNames(rowmeans(pi.prop),      gnames)
     } else {
       post.pi    <- stats::setNames(prop.table(tabulate(MAP, nbins=G)),    gnames)
     }
     if(inf.Q)       {
       Q.store    <- provideDimnames(Q.store[Gseq,, drop=FALSE],  base=list(gnames, ""), unique=FALSE)
     }
-
     sizes        <- stats::setNames(tabulate(MAP, nbins=G), gnames)
     if(any(sizes == 0))           warning(paste0("Empty cluster exists in modal clustering:\nexamine trace plots", ifelse(any(is.element(method, c("OMFA", "IMFA", "OMIFA", "IMIFA")), is.element(method, c("MFA", "MIFA")) && any(n.grp < G)), ", try to supply a lower G value to get_IMIFA_results(),", ""), " or re-run the model\n"), call.=FALSE)
+
     if(!label.miss) {
       zlabels    <- factor(zlabels, labels=seq_along(unique(zlabels)))
       sw.lab     <- .lab_switch(z.new=MAP, z.old=zlabels)
       MAP        <- factor(factor(sw.lab$z, labels=which(sizes > 0)), levels=Gseq)
       l.perm     <- sw.lab$z.perm
       left       <- as.integer(l.perm[Gseq])
-      z.tmp      <- lapply(storeG, function(i)   factor(z[i,], labels=order(left[tabulate(z[i,], nbins=G) > 0])))
-      z          <- do.call(rbind, lapply(z.tmp, function(x) as.integer(levels(as.factor(x)))[as.integer(x)]))
+      z.tab      <- rowTabulate(z, max_number=G) > 0
+      z.tmp      <- lapply(storeG, function(i)   factor(z[i,], labels=left[z.tab[i,]]))
+      z          <- do.call(rbind, lapply(z.tmp, function(x) as.integer(levels(x))[as.integer(x)]))
       index      <- order(left)
+      sizes      <- stats::setNames(sizes[index],   gnames)
+      post.prob  <- post.prob[,index]
       if(sw["mu.sw"])      mus <- mus[,index,,    drop=FALSE]
       if(sw["l.sw"])     lmats <- lmats[,,index,, drop=FALSE]
       if(sw["psi.sw"])    psis <- psis[,index,,   drop=FALSE]
@@ -523,11 +534,12 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       }
       if(inf.Q)   {
         Q.store  <- provideDimnames(unname(Q.store[index,, drop=FALSE]), base=list(gnames, ""), unique=FALSE)
+        if(cshrink) sigmas     <- sigmas[index,,  drop=FALSE]
       }
       tab        <- table(MAP, zlabels, dnn=list("Predicted", "Observed"))
       tab.stat   <- c(.class_agreement(tab), classError(MAP, zlabels))
       if(nrow(tab) != ncol(tab))     {
-        tab.stat <- tab.stat[-seq_len(2)]
+        tab.stat <- tab.stat[-seq_len(2L)]
         names(tab.stat)[4L]    <- "error.rate"
       } else {
         names(tab.stat)[6L]    <- "error.rate"
@@ -571,7 +583,8 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     if(!label.miss) tab.stat$uncertain            <-       attr(uncertain, "Obs")
     cluster      <- list(MAP = MAP, z = z, uncertainty = uncertain, last.z = z[TN.store,])
     cluster      <- c(cluster, list(post.sizes  = sizes, post.ratio  = sizes/n.obs, post.pi = post.pi/sum(post.pi),
-                                    post.prob   = post.prob,  PCM    = provideDimnames(post_conf_mat(post.prob), base=list(gnames, gnames))),
+                                    post.prob   = provideDimnames(post.prob, base=list("", gnames)),
+                                    PCM         = provideDimnames(post_conf_mat(post.prob), base=list(gnames, gnames))),
                       if(sw["pi.sw"]) list(pi.prop = pi.prop, var.pi = var.pi, ci.pi = ci.pi, last.pi = pi.prop[,TN.store]),
                       if(!label.miss) list(perf = tab.stat),
                       if(learn.alpha) list(Alpha = DP.alpha),
@@ -587,7 +600,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     sizes        <- n.obs
   }
 
-  leder.b        <- min(n.obs - 1, Ledermann(n.var, isotropic=is.element(uni.type, c("isotropic", "single"))))
+  leder.b        <- min(n.obs - 1L, Ledermann(n.var, isotropic=is.element(uni.type, c("isotropic", "single"))))
   if(any(unlist(Q) > leder.b))    warning(paste0("Estimate of Q", ifelse(G > 1, " in one or more clusters ", " "), "is greater than ", ifelse(any(unlist(Q) > n.var), paste0("the number of variables (", n.var, ")"), paste0("the suggested Ledermann upper bound (", leder.b, ")\n"))), call.=FALSE)
   if(inf.Q)   {
     G1           <- G > 1
@@ -605,7 +618,8 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
                          Q.CI = Q.CI, Q.Probs = Q.prob, Q.Counts = Q.tab,
                          Stored.Q = if(clust.ind) Q.store else as.vector(Q.store),
                          Q.Last = Q.store[,TN.store])
-    GQ.res       <- if(inf.G) c(GQ.temp1, GQ.temp4) else c(list(G = G), GQ.temp4)
+    GQ.res       <- if(inf.G)   c(GQ.temp1, GQ.temp4) else c(list(G = G), GQ.temp4)
+    GQ.res       <- if(cshrink) c(GQ.res, list(Post.Sigma = stats::setNames(rowmeans(sigmas), gnames))) else GQ.res
     GQ.res       <- c(GQ.res, list(Criteria = GQ.temp2))
     attr(GQ.res, "Q.big") <- attr(sims[[G.ind]][[Q.ind]], "Q.big")
   }
@@ -800,8 +814,9 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     post.load    <- .matnames(lapply(result, "[[", "post.load"), lnames)
     var.load     <- .matnames(lapply(result, "[[", "var.load"),  lnames)
     ci.load      <- .matnames(lapply(result, "[[", "ci.load"),   lnames, dim=3)
-    last.lmat    <- lapply(lmats2, function(x) { if(!is.null(x)) { x <- .a_drop(x[,,dim(x)[3], drop=FALSE], drop=3); class(x) <- "loadings" }; x })
+    last.lmat    <- lapply(lmats2, function(x) { if(!is.null(x)) { x <- .a_drop(x[,,dim(x)[3L], drop=FALSE], drop=3); class(x) <- "loadings" }; x })
     loads        <- list(lmats = lmats2, post.load = post.load, var.load = var.load, ci.load = ci.load, last.load = last.lmat)
+    if(cshrink)     attr(loads, "Sigma")    <- GQ.res$Post.Sigma
   }
   if(sw["psi.sw"]) {
     psis2        <- lapply(result, "[[", "psis")
@@ -928,6 +943,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   attr(result, "Adapt")        <- attr(sims, "Adapt")
   attr(result, "Alph.step")    <- if(is.element(method, c("IMFA", "IMIFA", "OMFA", "OMIFA"))) learn.alpha
   attr(result, "Alpha")        <- if(!learn.alpha) attr(sims, "Alpha")
+  attr(result, "C.Shrink")     <- cshrink
   attr(result, "Call")         <- call
   attr(result, "Conf.Level")   <- conf.level
   attr(result, "Disc.step")    <- if(is.element(method, c("IMFA", "IMIFA"))) learn.d
