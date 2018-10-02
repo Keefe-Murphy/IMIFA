@@ -918,12 +918,12 @@
       if((N <- nrow(X)) != nrow(Xstar))    stop("X and Xstar do not have the same number of rows",      call.=FALSE)
       if((P <- ncol(X)) != ncol(Xstar))    stop("X and Xstar do not have the same number of columns",    call.=FALSE)
       if(anyNA(Xstar)   || anyNA(X))       stop("X and Xstar are not allowed to contain missing values", call.=FALSE)
-      J          <- if(translate) diag(N) - matrix(1/N, N, N)                             else diag(N)
+      J          <- if(translate) diag(N) - 1/N                                           else diag(N)
       C          <- crossprod(Xstar, J) %*% X
       svdX       <- svd(C)
       R          <- tcrossprod(svdX$v, svdX$u)
-      d          <- if(dilate)    sum(colSums2(C * R))/sum(colSums2(crossprod(J, X) * X)) else 1
-      tt         <- if(translate) crossprod(Xstar - d * X %*% R, matrix(1, N, 1))/N       else 0
+      d          <- if(dilate)    sum(colSums2(C * R))/sum(colSums2(crossprod(J, X) * X)) else 1L
+      tt         <- if(translate) crossprod(Xstar - d * X %*% R, matrix(1, N, 1))/N       else 0L
       X.new      <- d * X %*% R + if(translate) matrix(tt, N, P, byrow = TRUE)            else tt
         return(c(list(X.new = X.new), list(R = R), if(translate) list(t = tt),
                  if(dilate) list(d = d), if(sumsq) list(ss = sum((X - X.new)^2))))

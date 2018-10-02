@@ -183,7 +183,8 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   miss.zavg      <- missing(z.avgsim)
   if(length(z.avgsim)      != 1  ||
      !is.logical(z.avgsim))       stop("'z.avgsim' must be a single logical indicator", call.=FALSE)
-  if(isTRUE(z.avgsim))  {
+  if(isTRUE(z.avgsim)       &&
+     !is.element(method, c("FA", "IFA"))) {
     if(!(has.pkg <- suppressMessages(requireNamespace("mcclust", quietly=TRUE)))) {
       z.avgwarn  <- "Forcing 'z.avgsim' to FALSE: 'mcclust' package not installed\n"
       z.avgsim   <- FALSE
@@ -775,8 +776,8 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     result[[g]]  <- unlist(results, recursive=FALSE)
   }
 
+  Qseq           <- seq_len(Qmax)
   if(sw["s.sw"])   {
-   Qseq          <- seq_len(Qmax)
    eta           <- eta[,Qseq,, drop=FALSE]
    colnames(eta) <- paste0("Factor", Qseq)
    scores        <- list(eta = eta, post.eta = rowMeans(eta, dims=2), var.eta = apply(eta, c(1L, 2L), Var),
@@ -883,9 +884,9 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     if(any(sw["l.sw"], Q0X))    {
       cov.est    <- diag(post.psi[,1L, drop=!uni]) + (if(Q0X)    0 else          tcrossprod(post.load[[1L]]))
       if(error.metrics && sw["psi.sw"])            {
-       psi2      <- psi[,store.e,     drop=FALSE]
+       psi2      <- psi[,store.e,      drop=FALSE]
        for(r  in    Eseq)       {
-        sigma    <- diag(psi2[,r, drop=!uni])      + (if(Q0E[r]) 0 else  if(uni)         crossprod(lmat[,,r])     else tcrossprod(lmat[,,r]))
+        sigma    <- diag(psi2[,r,      drop=!uni]) + (if(Q0E[r]) 0 else  if(uni)         crossprod(lmat[,,r])     else tcrossprod(lmat[,,r]))
         error    <- cov.emp - sigma
         sq.err   <- error   * error
         abs.err  <- abs(error)
@@ -945,6 +946,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   attr(result, "Alpha")        <- if(!learn.alpha) attr(sims, "Alpha")
   attr(result, "C.Shrink")     <- cshrink
   attr(result, "Call")         <- call
+  attr(result, "Center")       <- attr(sims, "Center")
   attr(result, "Conf.Level")   <- conf.level
   attr(result, "Disc.step")    <- if(is.element(method, c("IMFA", "IMIFA"))) learn.d
   attr(result, "Discount")     <- if(is.element(method, c("IMFA", "IMIFA")) && !learn.d) attr(sims, "Discount")
@@ -953,6 +955,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   attr(result, "G.init")       <- if(inf.G) attr(sims, "G.init")
   attr(result, "Ind.Slice")    <- if(is.element(method, c("IMFA", "IMIFA"))) attr(sims, "Ind.Slice")
   attr(result, "Kappa0")       <- attr(sims, "Kappa0")
+  attr(result, "Mean")         <- attr(sims, "Mean")
   attr(result, "Method")       <- method
   attr(result, "N.Loadstore")  <- if(inf.Q) vapply(Lstore, length, numeric(1L)) else rep(TN.store, G)
   attr(result, "Name")         <- data.name
@@ -968,6 +971,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   attr(result, "Pitman")       <- attr(sims, "Pitman")
   attr(result, "range.G")      <- attr(sims, "Clusters")
   attr(result, "range.Q")      <- attr(sims, "Factors")
+  attr(result, "Scaling")      <- attr(sims, "Scaling")
   attr(result, "Sd0.drop")     <- attr(sims, "Sd0.drop")
   attr(result, "Store")        <- tmp.store
   attr(result, "Switch")       <- sw

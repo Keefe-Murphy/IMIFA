@@ -144,7 +144,7 @@
         }
       }
 
-      if(Q.big && !Q.large && iter > burnin) {       warning(paste0("Q has exceeded initial number of loadings columns since burnin: consider increasing range.Q from ", Q.star), call.=FALSE)
+      if(Q.big && !Q.large && iter > burnin) {       warning(paste0("\nQ has exceeded initial number of loadings columns since burnin: consider increasing range.Q from ", Q.star, "\n"), call.=FALSE)
         Q.large  <- TRUE
       }
       if(storage) {

@@ -164,6 +164,7 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
     if(isTRUE(verbose))             message("Non-numeric columns removed from data set\n")
     raw.dat <- raw.dat[,num.check,    drop=FALSE]
   }
+  glo.mean  <- colSums2(as.matrix(raw.dat))
   if(isTRUE(mixFA$drop0sd)) {
     sdx     <- .col_vars(as.matrix(raw.dat), std=TRUE)
     sd0ind  <- sdx  == 0
@@ -838,6 +839,7 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
   attr(imifa,
        "Label.Switch")    <- if(!is.element(method, c("FA", "IFA")))      any(sw0gs)
   method                  <- names(table(meth)[which.max(table(meth))])
+  attr(imifa, "Mean")     <- if(attr(imifa, "Center")) glo.mean
   attr(imifa, "Method")   <- paste0(toupper(substr(method, 1L, 1L)), substr(method, 2L, nchar(method)))
   attr(imifa, "Name")     <- dat.nam
   attr(imifa, "Obs")      <- N

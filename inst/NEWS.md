@@ -50,6 +50,7 @@ __Infinite Mixtures of Infinite Factor Analysers__
 * Fixed plotting of exact zeros in posterior confusion matrix.
 * Fixed plotting posterior mean loadings heatmap when one or more clusters have zero factors.
 * Fixed plotting scores for (I)FA models due to bug in previous update.
+* Fixed `show_IMIFA_digit` to better account for missing pixels &/or the data having been centered.
 * Fixed simulation of `psi` when not supplied to `sim_IMIFA_data` to IG rather than GA.
 * Fixed bug preventing `Q` to be supplied to `get_IMIFA_results` for infinite factor methods.
 * Fixed y-axis labelling in uncertainty type plots when `plot.meth="z"`.
