@@ -7,7 +7,7 @@
 #' @param mu True values of the mean parameters, either as a single value, a vector of length \code{G}, a vector of length \code{P}, or a \code{G * P} matrix. If \code{mu} is missing, \code{loc.diff} is invoked to simulate distinct means for each cluster by default.
 #' @param psi True values of uniqueness parameters, either as a single value, a vector of length \code{G}, a vector of length \code{P}, or a \code{G * P} matrix. As such the user can specify uniquenesses as a diagonal or isotropic matrix, and further constrain uniquenesses across clusters if desired. If \code{psi} is missing, uniquenesses are simulated via \code{1/rgamma(P, 2, 1)} within each cluster by default.
 #' @param loadings True values of the loadings matrix/matrices. Must be supplied in the form of a list of numeric matrices when \code{G > 1}, otherwise a single matrix. Matrices must contain \code{P} rows and the number of columns must correspond to the values in \code{Q}. If \code{loadings} are not supplied, such matrices are populated with standard normal random variates by default.
-#' @param scores True values of the latent factor scores, as a \code{N * max(Q)} numeric matrix. If \code{scores} are not supplied, such a matrix is populated with standard normal random variates by default.
+#' @param scores True values of the latent factor scores, as a \code{N * max(Q)} numeric matrix. If \code{scores} are not supplied, such a matrix is populated with standard normal random variates by default. Only relevant when \code{method="conditional"}.
 #' @param nn An alternative way to specify the size of each cluster, by giving the exact number of observations in each cluster explicitly. Must sum to \code{N}.
 #' @param loc.diff A parameter to control the closeness of the clusters in terms of the difference in their location vectors. Only relevant if \code{mu} is NOT supplied. Defaults to 1.
 #' @param method A switch indicating whether the mixture to be simulated from is the conditional distribution of the data given the latent variables (default), or simply the marginal distribution of the data.
@@ -84,7 +84,7 @@ sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(floor(log(P)), G),
   nnames       <- paste0("Obs ", Nseq)
   vnames       <- paste0("Var ", Pseq)
 
-  if(!missing(nn) && missing(pis))     {
+  if(!missing(nn) && missing(pis))    {
     nn         <- as.integer(nn)
     if(!is.integer(nn)   ||
        anyNA(nn)  ||
@@ -95,16 +95,18 @@ sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(floor(log(P)), G),
     if(!is.numeric(pis)  ||
        anyNA(pis) ||
        any(length(pis)   != G,
-           sum(pis)      != 1))           stop(paste0("'pis' must be a numeric vector of length G=", G, " which sums to ", 1, "without missing values"),    call.=FALSE)
+           !all.equal(sum(pis), 1)))      stop(paste0("'pis' must be a numeric vector of length G=", G, " which sums to ", 1, " without missing values"),   call.=FALSE)
     if(any(pis <= 0))                     stop("All 'pis' values must be strictly positive", call.=FALSE)
     nn         <- vector("integer", G)
     iter       <- 0L
-    while(any(nn   < floor(N/(G * G)),
-              iter < 1000))            {
+    nn0        <- TRUE
+    while(nn0  && iter    < 100)      {
       labs     <- .sim_z_p(N=N, prob.z=pis)
       nn       <- tabulate(labs, nbins=G)
       iter     <- iter    + 1L
+      nn0      <- any(nn <= 0)
     }
+    if(nn0)                               stop("Simulating empty clusters not allowed; try supplying 'nn' directly instead of small 'pis'", call.=FALSE)
   }
 
   if(!(mumiss  <- missing(mu)))       {
@@ -118,10 +120,12 @@ sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(floor(log(P)), G),
     psisup     <- matrix(.len_check(as.matrix(psi), switch0g = TRUE, method = ifelse(G > 1, "MFA", "FA"), P, G)[[1L]], nrow=P, ncol=G, byrow=length(psi) == G)
     if(anyNA(psisup))                     stop("Missing values are not allowed in 'psi'", call.=FALSE)
   }
-  if(!(scomiss <- missing(scores)))   {
-    if(!is.matrix(scores)  ||
-       !is.numeric(scores))               stop("Invalid 'scores' supplied: must be a numeric matrix", call.=FALSE)
-    if(anyNA(scores))                     stop("Missing values are not allowed in 'scores'", call.=FALSE)
+  if(method    == "conditional")      {
+    if(!(smiss <- missing(scores)))   {
+      if(!is.matrix(scores)  ||
+         !is.numeric(scores))             stop("Invalid 'scores' supplied: must be a numeric matrix", call.=FALSE)
+      if(anyNA(scores))                   stop("Missing values are not allowed in 'scores'", call.=FALSE)
+    }
   }
   if(!(lammiss <- missing(loadings))) {
     lmat       <- loadings
@@ -154,10 +158,10 @@ sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(floor(log(P)), G),
   true.zlab    <- factor(rep(Gseq, nn), labels=Gseq)
   if(method    == "conditional")   {
     Q.max      <- max(Q)
-    eta.true   <- if(scomiss) .sim_eta_p(Q=Q.max, N=N) else scores
+    eta.true   <- if(smiss) .sim_eta_p(Q=Q.max, N=N) else scores
     if(nrow(eta.true) != N ||
        ncol(eta.true) != Q.max)           stop(paste0("The 'scores' matrix must have N=", N, " rows and max(Q)=", Q.max, " columns"), call.=FALSE)
-  } else if(!scomiss)                     message("True 'scores' need not be supplied when 'method=\"marginal\"'\n")
+  } else if(!smiss)                       message("True 'scores' need not be supplied when 'method=\"marginal\"'\n")
   for(g in Gseq) {
     Q.g        <- Q[g]
     N.g        <- nn[g]
@@ -166,12 +170,12 @@ sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(floor(log(P)), G),
     psi.true   <- stats::setNames(if(psimiss) 1/stats::rgamma(P, shape=2, rate=1)            else psisup[,g], vnames)
 
   # Simulate data
-    covmat     <- provideDimnames({ if(P > 1) diag(psi.true) else as.matrix(psi.true) } + { if(Q.g > 0) switch(EXPR=method, marginal=tcrossprod(l.true), 0) else 0}, base=list(vnames))
+    covmat     <- provideDimnames({ if(P > 1) diag(psi.true) else as.matrix(psi.true) } + { if(Q.g > 0) switch(EXPR=method, marginal=tcrossprod(l.true), 0L) else 0L}, base=list(vnames))
     if(!all(is.symmetric(covmat),
             is.double(covmat)))           stop("Invalid covariance matrix!", call.=FALSE)
     covmat     <- is.posi_def(covmat, make=TRUE)$X.new
     sigma      <- if(all(Q.g > 0, P > 1, method == "marginal")) .chol(covmat) else sq_mat(covmat)
-    means      <- matrix(mu.true, nrow=N.g, ncol=P, byrow=TRUE) + switch(EXPR=method, conditional=tcrossprod(eta.true[true.zlab == g, seq_len(Q.g), drop=FALSE], l.true), 0)
+    means      <- matrix(mu.true, nrow=N.g, ncol=P, byrow=TRUE) + switch(EXPR=method, conditional=tcrossprod(eta.true[true.zlab == g, seq_len(Q.g), drop=FALSE], l.true), 0L)
     simdata    <- rbind(simdata, means + matrnorm(N.g, P) %*% sigma)
     dimnames(l.true)   <- list(vnames, if(Q.g > 0) paste0("Factor ", seq_len(Q.g)))
     true.mu[[g]]       <- mu.true

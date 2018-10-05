@@ -150,9 +150,6 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   n.var          <- attr(sims, "Vars")
   uni            <- n.var == 1
   sw             <- tmpsw <- attr(sims, "Switch")
-  cent           <- attr(sims, "Center")
-  scaling        <- attr(sims, "Scaling")
-  scal.meth      <- attr(scaling, "Method")
   uni.meth       <- attr(sims, "Uni.Meth")
   uni.type       <- unname(uni.meth["Uni.Type"])
   conf.level     <- as.numeric(conf.level)
@@ -496,6 +493,8 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     }
 
     uncertain    <- 1 - Rfast::rowMaxs(post.prob, value=TRUE)
+    sizes        <- stats::setNames(tabulate(MAP, nbins=G), gnames)
+    if(any(sizes == 0))           warning(paste0("Empty cluster exists in modal clustering:\nexamine trace plots", ifelse(any(is.element(method, c("OMFA", "IMFA", "OMIFA", "IMIFA")), is.element(method, c("MFA", "MIFA")) && any(n.grp < G)), ", try to supply a lower G value to get_IMIFA_results(),", ""), " or re-run the model\n"), call.=FALSE)
     if(sw["pi.sw"]) {
       pi.prop    <- provideDimnames(pies[Gseq,storeG, drop=FALSE], base=list(gnames, ""), unique=FALSE)
       pi.prop    <- if(inf.G) sweep(pi.prop, 2L, colSums2(pi.prop), FUN="/", check.margin=FALSE) else pi.prop
@@ -504,13 +503,11 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       ci.pi      <- if(G == 1) t(ci.pi) else ci.pi
       post.pi    <- stats::setNames(rowmeans(pi.prop),      gnames)
     } else {
-      post.pi    <- stats::setNames(prop.table(tabulate(MAP, nbins=G)),    gnames)
+      post.pi    <- stats::setNames(prop.table(sizes),      gnames)
     }
     if(inf.Q)       {
       Q.store    <- provideDimnames(Q.store[Gseq,, drop=FALSE],  base=list(gnames, ""), unique=FALSE)
     }
-    sizes        <- stats::setNames(tabulate(MAP, nbins=G), gnames)
-    if(any(sizes == 0))           warning(paste0("Empty cluster exists in modal clustering:\nexamine trace plots", ifelse(any(is.element(method, c("OMFA", "IMFA", "OMIFA", "IMIFA")), is.element(method, c("MFA", "MIFA")) && any(n.grp < G)), ", try to supply a lower G value to get_IMIFA_results(),", ""), " or re-run the model\n"), call.=FALSE)
 
     if(!label.miss) {
       zlabels    <- factor(zlabels, labels=seq_along(unique(zlabels)))
@@ -874,12 +871,14 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
         nrmse[r] <- rmse[r]/cov.range
        }
       }
-    } else if(!sw["mu.sw"])     { warning("Means not stored: can't compute error metrics or estimate posterior mean covariance matrix\n",                   call.=FALSE)
-    } else if(all(QX0, !sw["l.sw"],
-              !sw["psi.sw"]))   { warning("Loadings & Uniquenesses not stored: can't compute error metrics or estimate posterior mean covariance matrix\n", call.=FALSE)
-    } else if(all(QX0,
-              !sw["l.sw"]))     { warning("Loadings not stored: can't compute error metrics or estimate posterior mean covariance matrix\n",                call.=FALSE)
-    } else                        warning("Uniquenesses not stored: can't compute error metrics or estimate posterior mean covariance matrix\n",            call.=FALSE)
+    } else if(error.metrics)    {
+        if(!sw["mu.sw"])        { warning("Means not stored: can't compute error metrics or estimate posterior mean covariance matrix\n",                   call.=FALSE)
+      } else if(all(QX0, !sw["l.sw"],
+                !sw["psi.sw"])) { warning("Loadings & Uniquenesses not stored: can't compute error metrics or estimate posterior mean covariance matrix\n", call.=FALSE)
+      } else if(all(QX0,
+                !sw["l.sw"]))   { warning("Loadings not stored: can't compute error metrics or estimate posterior mean covariance matrix\n",                call.=FALSE)
+      } else                      warning("Uniquenesses not stored: can't compute error metrics or estimate posterior mean covariance matrix\n",            call.=FALSE)
+    }
   } else    {
     if(any(sw["l.sw"], Q0X))    {
       cov.est    <- diag(post.psi[,1L, drop=!uni]) + (if(Q0X)    0 else          tcrossprod(post.load[[1L]]))
@@ -898,10 +897,12 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
         nrmse[r] <- rmse[r]/cov.range
        }
       } else if(error.metrics)    warning("Uniquenesses not stored: can't compute error metrics\n", call.=FALSE)
-    } else if(all(QX0, !sw["l.sw"],
-              !sw["psi.sw"]))   { warning("Loadings & Uniquenesses not stored: can't compute error metrics or estimate posterior mean covariance matrix\n", call.=FALSE)
-    } else if(all(QX0,
-              !sw["l.sw"]))       warning("Loadings not stored: can't compute error metrics or estimate posterior mean covariance matrix\n",                call.=FALSE)
+    } else if(error.metrics)    {
+        if(all(QX0, !sw["l.sw"],
+           !sw["psi.sw"]))      { warning("Loadings & Uniquenesses not stored: can't compute error metrics or estimate posterior mean covariance matrix\n", call.=FALSE)
+      } else if(all(QX0,
+                !sw["l.sw"]))     warning("Loadings not stored: can't compute error metrics or estimate posterior mean covariance matrix\n",                call.=FALSE)
+    }
   }
   if(errs        <- all(sw["psi.sw"] || !clust.ind, any(sw["l.sw"], Q0X))) {
    var.exps      <- vapply(lapply(result, "[[", "var.exp"), function(x) ifelse(is.null(x), NA, x), numeric(1L))
@@ -953,9 +954,10 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   attr(result, "Errors")       <- ifelse(anyNA(cov.emp), "None", switch(EXPR=errs, Vars="None", errs))
   attr(result, "Equal.Pi")     <- equal.pro
   attr(result, "G.init")       <- if(inf.G) attr(sims, "G.init")
+  attr(result, "G.Mean")       <- attr(sims, "G.Mean")
+  attr(result, "G.Scale")      <- attr(sims, "G.Scale")
   attr(result, "Ind.Slice")    <- if(is.element(method, c("IMFA", "IMIFA"))) attr(sims, "Ind.Slice")
   attr(result, "Kappa0")       <- attr(sims, "Kappa0")
-  attr(result, "Mean")         <- attr(sims, "Mean")
   attr(result, "Method")       <- method
   attr(result, "N.Loadstore")  <- if(inf.Q) vapply(Lstore, length, numeric(1L)) else rep(TN.store, G)
   attr(result, "Name")         <- data.name

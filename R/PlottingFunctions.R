@@ -1777,7 +1777,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
 #' @param ... Additional arguments to be passed, via \code{\link{show_digit}}, to \code{\link{mat2cols}} and/or \code{\link{plot_cols}}.
 #'
 #' @return The desired image representation of the posterior mean digit (or the last valid sample) from the desired cluster.
-#' @note Note that centering of the original data prior to modelling is accounted for, but scaling is not.
+#' @note Note that both centering and scaling of the original data prior to modelling is accounted for in reconstructing the means, but \code{dat}, if necessary, must be the raw data prior to pre-processing.
 #' @details This function is a wrapper to \code{\link{show_digit}} which supplies the posterior mean digit of a given cluster from a \code{"IMIFA"} model.
 #' @importFrom matrixStats "colMeans2"
 #' @export
@@ -1821,13 +1821,15 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
     sd0        <- if(missing(ind)) attr(res, "Sd0.drop") else if(is.logical(ind)) !ind else !(seq_len(attr(res, "Vars")) %in% ind)
     mu         <- switch(EXPR=match.arg(what), mean = res$Means$post.mu[,G], last = res$Means$last.mu[,G])
     center     <- attr(res, "Center")
+    scale      <- attr(res, "Scaling") != "none"
     if(!is.null(sd0)) {
       if(missing(dat))                stop("'dat' must be supplied when pixels were discarded &/or 'ind' is supplied",  call.=FALSE)
       x        <- rep(NA, attr(res, "Vars"))
-      x[sd0]   <- colMeans2(.scale2(data.matrix(dat), center=center, scale=attr(res, "Scaling"))[res$Clust$MAP == G,sd0, drop=FALSE])
+      x[sd0]   <- colMeans2(.scale2(data.matrix(dat), center=center, scale=attr(res, "Scale"))[res$Clust$MAP == G,sd0, drop=FALSE])
       x[!sd0]  <- mu
     } else x   <- mu
-    x          <- if(center) x + attr(res, "Mean") else x
+    x          <- if(scale)  x * attr(res, "G.Scale") else x
+    x          <- if(center) x + attr(res, "G.Mean")  else x
       show_digit(x, ...)
   }
 #

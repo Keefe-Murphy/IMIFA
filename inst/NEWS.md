@@ -38,6 +38,7 @@ __Infinite Mixtures of Infinite Factor Analysers__
       thus, valid samples for computing error metrics also fixed and Procrustes rotation also sped-up.  
     * Other Procrustes rotation fixes to account for label-switching.  
     * Other Procrustes rotation fixes specific to the IMFA/OMFA methods.
+* Improved handling of empty components when simulating cluster labels from priors in `mcmc_IMIFA` & `sim_IMIFA_data`.
 * Slight label-switching fixes when `zlabels` are supplied to `get_IMIFA_results`;
   posterior confusion matrix, cluster sizes vector, and the sampled labels themselves effected.
 * Slight speed-up to updating MGP hyperparameters in the presence of empty MIFA/OMIFA/IMIFA components.
@@ -50,7 +51,7 @@ __Infinite Mixtures of Infinite Factor Analysers__
 * Fixed plotting of exact zeros in posterior confusion matrix.
 * Fixed plotting posterior mean loadings heatmap when one or more clusters have zero factors.
 * Fixed plotting scores for (I)FA models due to bug in previous update.
-* Fixed `show_IMIFA_digit` to better account for missing pixels &/or the data having been centered.
+* Fixed `show_IMIFA_digit` to better account for missing pixels &/or the data having been centered/scaled.
 * Fixed simulation of `psi` when not supplied to `sim_IMIFA_data` to IG rather than GA.
 * Fixed bug preventing `Q` to be supplied to `get_IMIFA_results` for infinite factor methods.
 * Fixed y-axis labelling in uncertainty type plots when `plot.meth="z"`.

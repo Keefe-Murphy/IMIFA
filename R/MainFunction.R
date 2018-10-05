@@ -164,9 +164,10 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
     if(isTRUE(verbose))             message("Non-numeric columns removed from data set\n")
     raw.dat <- raw.dat[,num.check,    drop=FALSE]
   }
-  glo.mean  <- colSums2(as.matrix(raw.dat))
+  glo.mean  <- colMeans2(data.matrix(raw.dat))
+  glo.scal  <- .col_vars(data.matrix(raw.dat), std=TRUE)
   if(isTRUE(mixFA$drop0sd)) {
-    sdx     <- .col_vars(as.matrix(raw.dat), std=TRUE)
+    sdx     <- glo.scal
     sd0ind  <- sdx  == 0
     if(any(sd0ind))  { if(verbose)  message("Columns with standard deviation of zero removed from data set\n")
       raw.dat    <- raw.dat[,!sd0ind, drop=FALSE]
@@ -175,7 +176,7 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
   }
   if(any(dim(raw.dat) == 0))        stop("Empty data set after removal of ineligble rows/columns", call.=FALSE)
   if(method != "classify")  {
-    scal    <- switch(EXPR=scaling, none=FALSE, if(isTRUE(mixFA$drop0sd)) sdx else .col_vars(as.matrix(raw.dat), std=TRUE))
+    scal    <- switch(EXPR=scaling, none=FALSE, if(isTRUE(mixFA$drop0sd)) sdx else glo.scal)
     scal    <- switch(EXPR=scaling, pareto=sqrt(scal), scal)
     dat     <- .scale2(as.matrix(raw.dat), center=centering, scale=scal)
   } else   {
@@ -360,7 +361,8 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
   datname          <- rownames(dat)
   if(any(length(unique(datname)) != N,
      is.null(datname)))  rownames(dat) <- seq_len(N)
-  mu               <- list(as.matrix(colMeans2(dat)))
+  cmeans           <- colMeans2(dat)
+  mu               <- list(as.matrix(cmeans))
   mu0.x            <- mixfamiss$mu.zero
   mu0g             <- mixFA$mu0g
   mu.zero          <- if(mu0.x) mu  else  .len_check(mixFA$mu.zero, mu0g, method, P, G.init)
@@ -519,11 +521,9 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
                                          method=switch(EXPR=uni.type, unconstrained="UUU", isotropic="UUC", constrained="UCU", single="UCC"))
       if(alpha       >= min.d2)     warning(paste0("'alpha' over 'range.G' for the OMFA & OMIFA methods when 'learn.alpha=FALSE', should be less than half the dimension (per cluster!)\nof the free parameters of the smallest model considered (= ", min.d2, "): consider suppling 'alpha' < ", min.d2 * G.init, "\n"), call.=FALSE, immediate.=TRUE)
     }
-    if(any(all(is.element(method, c("MFA",  "MIFA")), alpha > 1),
-           all(is.element(method, c("OMFA", "OMIFA")),
+    if(any(all(is.element(method, c("MFA",  "MIFA")),  alpha > 1),
+           all(is.element(method, c("OMFA", "OMIFA")), !learn.a,
            alpha > 1/G.init)))      warning("Are you sure alpha should be greater than 1?\n", call.=FALSE, immediate.=TRUE)
-    if(all(is.element(method,  c("OMIFA",   "OMFA")), is.element(z.init,
-       "priors")))                  stop(paste0("'z.init' cannot be set to 'priors' for the ", method, " method to ensure all clusters are populated at the initialisation stage"), call.=FALSE)
     if(!zli.miss) {
       if(length(z.list)   != len.G)  {
                                     stop(paste0("'z.list' must be a list of length ", len.G), call.=FALSE)  }
@@ -603,21 +603,29 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
       } else if(z.init   == "list")   {
         zi[[g]]    <- as.integer(z.list[[g]])
       } else {
-        zips       <- rep(1, N)
-        if(!is.element(method, c("IMFA", "IMIFA"))) {
-          iter     <- 0
-          while(all(length(unique(zips)) != G, iter < 100,
-                any(prop.table(tabulate(zips, nbins=G)) < 1/G^2))) {
-            pies   <- rDirichlet(alpha=alpha, G)
+        zips       <- rep(1L, N)
+        iter       <- 0L
+        n0         <- TRUE
+        switch(EXPR=method,
+               IMFA=, IMIFA=          {
+          while(n0 && iter < 100)     {
+            vies   <- .sim_vs_inf(alpha=alpha, discount=discount, len=G.init, lseq=seq_len(G.init), N=N, nn=rep(N/G.init, G.init))
+            pies   <- .sim_pi_inf(vs=vies, len=G.init)
+            zips   <- .sim_z_p(N=N, prob.z=pies)
+            iter   <- iter + 1L
+            n0     <- any(tabulate(zips, nbins=G.init) <= 0)
+          }
+        },          {
+          a.tmp    <- switch(EXPR=method, OMFA=, OMIFA=alpha * G.init, alpha)
+          while(n0 && iter < 100)     {
+            pies   <- rDirichlet(alpha=a.tmp, G.init)
             if(any(is.nan(pies)))   stop("'alpha' is too small to initialise cluster labels from the prior", call.=FALSE)
             zips   <- .sim_z_p(N=N, prob.z=pies)
-            iter   <- iter + 1
+            iter   <- iter + 1L
+            n0     <- any(tabulate(zips, nbins=G.init) <= 0)
           }
-        } else {
-          vies     <- .sim_vs_inf(alpha=alpha, N=N, nn=rep(N/G.init, G.init), discount=discount, len=G.init, lseq=seq_len(G.init))
-          pies     <- .sim_pi_inf(vs=vies, len=G.init)
-          zips     <- .sim_z_p(N=N, prob.z=pies)
-        }
+        })
+        if(isTRUE(n0))              stop("Empty clusters after simulating labels from the priors; try another 'z.init' method", call.=FALSE)
         zi[[g]]    <- as.integer(zips)
         rm(zips)
       }
@@ -626,7 +634,7 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
       mu[[g]]      <- vapply(seq_len(G), function(gg) if(nngs[gg] > 0) colMeans2(dat[zi[[g]] == gg,, drop=FALSE]) else vector("integer", P), numeric(P))
       mu[[g]]      <- if(uni)       t(mu[[g]])  else mu[[g]]
       if(mu0.x)   {
-        mu.zero[[g]]    <- if(mu0g) mu[[g]]     else replicate(G, colMeans2(dat), simplify="array")
+        mu.zero[[g]]    <- if(mu0g) mu[[g]]     else replicate(G, cmeans, simplify="array")
       }
       mu.zero[[g]] <- if(uni && !mu0g) t(mu.zero[[g]]) else mu.zero[[g]]
       if(beta.x)  {
@@ -831,6 +839,8 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
   attr(imifa, "Equal.Pi") <- equal.pro
   attr(imifa, "Factors")  <- range.Q
   attr(imifa, "G.init")   <- G.init
+  attr(imifa, "G.Mean")   <- if(attr(imifa, "Center")) glo.mean
+  attr(imifa, "G.Scale")  <- if(scaling != "none")     switch(EXPR=scaling, pareto=sqrt(glo.scal), glo.scal)
   attr(imifa, "IM.labsw") <- is.element(method, c("IMFA", "IMIFA"))    && IM.lab.sw
   attr(imifa,
        "Ind.Slice")       <- is.element(method, c("IMFA", "IMIFA"))    && BNP$ind.slice
@@ -839,16 +849,14 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
   attr(imifa,
        "Label.Switch")    <- if(!is.element(method, c("FA", "IFA")))      any(sw0gs)
   method                  <- names(table(meth)[which.max(table(meth))])
-  attr(imifa, "Mean")     <- if(attr(imifa, "Center")) glo.mean
   attr(imifa, "Method")   <- paste0(toupper(substr(method, 1L, 1L)), substr(method, 2L, nchar(method)))
   attr(imifa, "Name")     <- dat.nam
   attr(imifa, "Obs")      <- N
   attr(imifa, "Obsnames") <- obsnames
   attr(imifa, "Pitman")   <- is.element(method, c("IMFA", "IMIFA"))    && any(learn.d, discount > 0)
   attr(imifa, "Rho")      <- if(is.element(method, c("IMFA", "IMIFA")))   BNP$rho
-  attr(imifa, "Scaling")  <- scal
-  attr(attr(imifa,
-  "Scaling"), "Method")   <- scaling
+  attr(imifa, "Scale")    <- scal
+  attr(imifa, "Scaling")  <- scaling
   attr(imifa, "Sd0.drop") <- if(isTRUE(mixFA$drop0sd) && any(sd0ind)) sd0ind
   attr(imifa, "Store")    <- length(iters)
   attr(imifa, "Switch")   <- c(storage, a.sw = attr(imifa, "Alph.step"), d.sw = attr(imifa, "Disc.step"))
