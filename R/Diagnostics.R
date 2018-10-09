@@ -502,20 +502,23 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       ci.pi      <- rowQuantiles(pi.prop, probs=conf.levels)
       ci.pi      <- if(G == 1) t(ci.pi) else ci.pi
       post.pi    <- stats::setNames(rowmeans(pi.prop),      gnames)
-    } else {
-      post.pi    <- stats::setNames(prop.table(sizes),      gnames)
+    } else if(equal.pro)  {
+      post.pi    <- stats::setNames(rep(1/G, G),            gnames)
+    } else          {
+      post.pi    <- stats::setNames(sizes/n.obs,            gnames)
     }
     if(inf.Q)       {
-      Q.store    <- provideDimnames(Q.store[Gseq,, drop=FALSE],  base=list(gnames, ""), unique=FALSE)
+      Q.store    <- provideDimnames(Q.store[Gseq,,    drop=FALSE], base=list(gnames, ""), unique=FALSE)
     }
 
+    tab.z        <- if(!label.miss || (clust.ind && all(error.metrics, sw["mu.sw"], sw["psi.sw"]))) rowTabulate(z, max_number=G)
     if(!label.miss) {
       zlabels    <- factor(zlabels, labels=seq_along(unique(zlabels)))
       sw.lab     <- .lab_switch(z.new=MAP, z.old=zlabels)
       MAP        <- factor(factor(sw.lab$z, labels=which(sizes > 0)), levels=Gseq)
       l.perm     <- sw.lab$z.perm
       left       <- as.integer(l.perm[Gseq])
-      z.tab      <- rowTabulate(z, max_number=G) > 0
+      z.tab      <- tab.z > 0
       z.tmp      <- lapply(storeG, function(i)   factor(z[i,], labels=left[z.tab[i,]]))
       z          <- do.call(rbind, lapply(z.tmp, function(x) as.integer(levels(x))[as.integer(x)]))
       index      <- order(left)
@@ -594,6 +597,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     attr(cluster, "Label.Sup") <- !label.miss
     z.ind        <- lapply(Gseq, function(g) MAP == g)
   } else      {
+    lmats        <- if(inf.Q) as.array(sims[[G.ind]][[Q.ind]]$load) else sims[[G.ind]][[Q.ind]]$load
     z.ind        <- list(seq_len(n.obs))
     sizes        <- n.obs
   }
@@ -638,7 +642,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   }
   if(inf.Q) {
     Lstore       <- lapply(Gseq, function(g) storeG[Q.store[g,] >= Q[g]])
-    if(any(lengths(Lstore) < 2)) {
+    if(any(lengths(Lstore) < 2))   {
      sw["s.sw"]  <- tmpsw["l.sw"] <-
      sw["l.sw"]  <- FALSE;        warning("Forcing non-storage of scores and loadings due to shortage of retained samples\n", call.=FALSE)
     }
@@ -647,9 +651,17 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     eta.store    <- tmp.store
     Lstore       <- if(inf.G) storeG else eta.store
   }
+  Qseq           <- seq_len(Qmax)
+  store.e        <- (if(inf.Q) storeG  else tmp.store) %in% eta.store
+  e.store        <- sum(store.e)
+  QsE            <- if(inf.Q) Q.store[,store.e, drop=!clust.ind]
+  Q0E            <- if(inf.Q) QsE == 0 else if(clust.ind) matrix(Q == 0, nrow=G, ncol=e.store) else rep(Q == 0, e.store)
+  Q0X            <- all(Q0E)
+  QX0            <- any(!Q0E)
+  frobenius      <- error.metrics && all(sw["psi.sw"], sw["mu.sw"], any(Q0X, sw["l.sw"]))
   if(sw["s.sw"]) {
-    e.store      <- length(eta.store)
     eta          <- if(inf.Q) as.array(sims[[G.ind]][[Q.ind]]$eta)[,,eta.store, drop=FALSE] else sims[[G.ind]][[Q.ind]]$eta[,,eta.store, drop=FALSE]
+    if(frobenius)   eta2          <- eta
     if(!sw["l.sw"])               warning("Caution advised when examining posterior factor scores: Procrustes rotation has not taken place because loadings weren't stored\n", call.=FALSE)
   }
 
@@ -669,14 +681,9 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   # Retrieve loadings and rotate
     if(sw["l.sw"]) {
       tmpind     <- ifelse(inf.Q, which.max(Q.store[g,] == Qg), 1L)
-      if(clust.ind)  {
-        lmat     <- .a_drop(lmats[,,g,storeG, drop=FALSE], drop=3)
-        l.temp   <- .a_drop(lmat[,,tmpind,    drop=FALSE], drop=3)
-      } else  {
-        lmat     <- if(inf.Q) as.array(sims[[G.ind]][[Q.ind]]$load)[,,storeG, drop=FALSE] else sims[[G.ind]][[Q.ind]]$load[,,storeG, drop=FALSE]
-        l.temp   <- .a_drop(lmat[,,tmpind,    drop=FALSE], drop=3)
-      }
-      l.temp     <- if(isTRUE(vari.rot)) .vari_max(l.temp, ...)$loadings else l.temp
+      lmat       <- if(clust.ind) .a_drop(lmats[,,g,storeG, drop=FALSE], drop=3) else lmats[,,storeG, drop=FALSE]
+      l.temp     <- .a_drop(lmat[,,tmpind, drop=FALSE], drop=3)
+      l.temp     <- if(isTRUE(vari.rot)) .vari_max(l.temp, ...)$loadings         else l.temp
       for(p      in
          (if(inf.Q) Lstore[[g]] else Lstore)) {
         proc     <- Procrustes(X=if(uni) t(lmat[,,p]) else as.matrix(lmat[,,p]), Xstar=l.temp)
@@ -773,14 +780,6 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     result[[g]]  <- unlist(results, recursive=FALSE)
   }
 
-  Qseq           <- seq_len(Qmax)
-  if(sw["s.sw"])   {
-   eta           <- eta[,Qseq,, drop=FALSE]
-   colnames(eta) <- paste0("Factor", Qseq)
-   scores        <- list(eta = eta, post.eta = rowMeans(eta, dims=2), var.eta = apply(eta, c(1L, 2L), Var),
-                         ci.eta = apply(eta, c(1L, 2L), stats::quantile, conf.levels), last.eta = .a_drop(eta[,,e.store, drop=FALSE], drop=3))
-   attr(scores, "Eta.store")   <- e.store
-  }
   names(result)  <- gnames
   GQ.res$Criteria              <- c(GQ.res$Criteria, list(sd.AICMs = aicm.sd, sd.BICMs = bicm.sd,
                                                           best.models = t(vapply(GQ.res$Criteria, function(x) { inds <- arrayInd(which.max(x), dim(x));
@@ -834,31 +833,59 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   }
 
 # Calculate estimated covariance matrices & compute error metrics
-  store.e        <- (if(inf.Q) storeG else tmp.store) %in% eta.store
-  e.store        <- sum(store.e)
-  QsE            <- if(inf.Q) Q.store[,store.e, drop=!clust.ind]
-  Q0E            <- if(inf.Q) QsE == 0 else if(clust.ind) matrix(Q == 0, nrow=G, ncol=e.store) else rep(Q == 0, e.store)
-  Q0X            <- all(Q0E)
-  QX0            <- any(!Q0E)
   if(error.metrics) {
     Eseq         <- seq_len(e.store)
-    mse          <- mae        <- medse     <-
+    Fro          <- mse        <- mae       <- medse         <-
     medae        <- rmse       <- nrmse     <- rep(NA, e.store)
+    if(frobenius)   {
+      orig.data  <- as.data.frame(dat)
+      nbins      <- 10L
+      dbreaks    <- lapply(orig.data, stats::quantile, (0L:nbins)/nbins)
+      dbreaks    <- lapply(dbreaks, function(x) replace(x + seq_along(x) * .Machine$double.eps, c(1L, nbins + 1L), c(-Inf, Inf)))
+      dat.bins   <- sapply(mapply(cut, orig.data, dbreaks, include.lowest=TRUE, right=FALSE, SIMPLIFY=FALSE), tabulate, nbins)
+      datnorm    <- norm(dat.bins, "F")
+      if(!any(sw["s.sw"], Q0X))   warning("Replicate data used to compute the PPRE will use the marginal rather than conditional representation, as scores have not been stored\n",         call.=FALSE)
+    } else if(Q0X)  {             warning("Need the means and uniquenesses to have been stored for zero-factor models in order to compute the posterior predictive reconstruction error\n", call.=FALSE)
+    } else                        warning("Need the means, uniquenesses, loadings, and scores to have been stored in order to compute the posterior predictive reconstruction error\n",     call.=FALSE)
   }
   if(clust.ind)     {
-    if(all(sw["psi.sw"], sw["mu.sw"], any(sw["l.sw"], Q0X))) {
-      a          <- Reduce("+",   lapply(Gseq, function(g) post.pi[g] * (tcrossprod(post.mu[,g]) + (if(Q0[g])   0 else tcrossprod(post.load[[g]])) + (if(uni) post.psi[,g] else diag(post.psi[,g])))))
+    if(frobenius)   {
+      a          <- Reduce("+",   lapply(Gseq, function(g) post.pi[g] * (tcrossprod(post.mu[,g]) + (if(Q0[g])   0L else tcrossprod(post.load[[g]])) + (if(uni) post.psi[,g] else diag(post.psi[,g])))))
       b          <- Reduce("+",   lapply(Gseq, function(g) post.pi[g] * post.mu[,g]))
       cov.est    <- a - tcrossprod(b)
-      if(error.metrics)         {
+      if(error.metrics && (sw["pi.sw"] || equal.pro)) {
        lmat2     <- lmats[,,,store.e, drop=FALSE]
        mu2       <- mus[,,store.e,    drop=FALSE]
-       pi2       <- pi.prop[,store.e, drop=FALSE]
        psi2      <- psis[,,store.e,   drop=FALSE]
+       if(equal.pro)    {
+         pi2     <- matrix(1/G, nrow=G, ncol=e.store)
+       } else           {
+         pi2     <- pi.prop[,store.e, drop=FALSE]
+       }
        for(r  in    Eseq)       {
         Q0Er     <- Q0E[,r]
-        a        <- Reduce("+",   lapply(Gseq, function(g) pi2[g,r]   * (tcrossprod(mu2[,g,r])   + (if(Q0Er[g]) 0 else tcrossprod(lmat2[,,g,r]))   + (if(uni) psi2[,g,r]   else diag(psi2[,g,r])))))
+        a        <- Reduce("+",   lapply(Gseq, function(g) pi2[g,r]   * (tcrossprod(mu2[,g,r])   + (if(Q0Er[g]) 0L else tcrossprod(lmat2[,,g,r]))   + (if(uni) psi2[,g,r]   else diag(psi2[,g,r])))))
         b        <- Reduce("+",   lapply(Gseq, function(g) pi2[g,r]   * mu2[,g,r]))
+        if(!inf.Q)      {
+          QsEr   <- Q
+          QsMs   <- Qseq
+        }
+        if(frobenius)   {
+          if(inf.Q)       QsEr <- QsE[,r]
+          if(all(Q0Er)) {
+            rdat <- suppressWarnings(sim_IMIFA_data(N=n.obs, G=G, P=n.var, Q=QsEr, nn=tab.z[r,], mu=mu2[,,r], psi=psi2[,,r]))
+          } else if(sw["s.sw"]) {
+            if(inf.Q)     QsMs <- seq_len(max(QsEr))
+            rdat <- suppressWarnings(sim_IMIFA_data(N=n.obs, G=G, P=n.var, Q=QsEr, nn=tab.z[r,], mu=mu2[,,r], psi=psi2[,,r], loadings=lapply(Gseq, function(g) as.matrix(lmat2[,if(inf.Q) seq_len(QsEr[g]) else Qseq,g,r])), scores=as.matrix(eta2[,QsMs,r])))
+          } else        {
+            rdat <- suppressWarnings(sim_IMIFA_data(N=n.obs, G=G, P=n.var, Q=QsEr, nn=tab.z[r,], mu=mu2[,,r], psi=psi2[,,r], loadings=lapply(Gseq, function(g) as.matrix(lmat2[,if(inf.Q) seq_len(QsEr[g]) else Qseq,g,r])), method="marginal"))
+          }
+          rbins  <- sapply(mapply(cut, rdat, dbreaks, include.lowest=TRUE, right=FALSE, SIMPLIFY=FALSE), tabulate, nbins)
+          Frob   <- norm(dat.bins - rbins, "F")
+          rFro   <- norm(rbins, "F")
+          minF   <- abs(datnorm - rFro)
+          Fro[r] <- (Frob - minF)/(datnorm + rFro - minF)
+        }
         sigma    <- a - tcrossprod(b)
         error    <- cov.emp - sigma
         sq.err   <- error   * error
@@ -870,7 +897,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
         rmse[r]  <- sqrt(mse[r])
         nrmse[r] <- rmse[r]/cov.range
        }
-      }
+      } else if(error.metrics)    warning("Mixing proportions not stored: can't compute error metrics\n",                                                   call.=FALSE)
     } else if(error.metrics)    {
         if(!sw["mu.sw"])        { warning("Means not stored: can't compute error metrics or estimate posterior mean covariance matrix\n",                   call.=FALSE)
       } else if(all(QX0, !sw["l.sw"],
@@ -881,11 +908,37 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     }
   } else    {
     if(any(sw["l.sw"], Q0X))    {
-      cov.est    <- diag(post.psi[,1L, drop=!uni]) + (if(Q0X)    0 else          tcrossprod(post.load[[1L]]))
+      cov.est    <- diag(post.psi[,1L, drop=!uni]) + (if(Q0X)    0L else           tcrossprod(post.load[[1L]]))
       if(error.metrics && sw["psi.sw"])            {
+       if(frobenius)    {
+         mu2     <- mu[,store.e,       drop=FALSE]
+       }
+       lmat2     <- lmats[,,store.e,   drop=FALSE]
        psi2      <- psi[,store.e,      drop=FALSE]
+       if(!inf.Q)       {
+         QsEr    <- Q
+         QsMs    <- Qseq
+       }
        for(r  in    Eseq)       {
-        sigma    <- diag(psi2[,r,      drop=!uni]) + (if(Q0E[r]) 0 else  if(uni)         crossprod(lmat[,,r])     else tcrossprod(lmat[,,r]))
+        sigma    <- diag(psi2[,r,      drop=!uni]) + (if(Q0E[r]) 0L else  if(uni)         crossprod(lmat2[,,r])    else tcrossprod(lmat2[,,r]))
+        if(frobenius)   {
+          if(inf.Q)       QsEr <- QsE[r]
+          if(Q0E[r])    {
+            rdat <- suppressWarnings(sim_IMIFA_data(N=n.obs, G=G, P=n.var, Q=QsEr, mu=mu2[,r], psi=psi2[,r]))
+          } else        {
+            if(inf.Q)     QsMs <- seq_len(QsEr)
+            if(sw["s.sw"])      {
+            rdat <- suppressWarnings(sim_IMIFA_data(N=n.obs, G=G, P=n.var, Q=QsEr, mu=mu2[,r], psi=psi2[,r], loadings=as.matrix(lmat2[,QsMs,r]), scores=as.matrix(eta2[,QsMs,r])))
+            } else      {
+            rdat <- suppressWarnings(sim_IMIFA_data(N=n.obs, G=G, P=n.var, Q=QsEr, mu=mu2[,r], psi=psi2[,r], loadings=as.matrix(lmat2[,QsMs,r]), method="marginal"))
+            }
+          }
+          rbins  <- sapply(mapply(cut, rdat, dbreaks, include.lowest=TRUE, right=FALSE, SIMPLIFY=FALSE), tabulate, nbins)
+          Frob   <- norm(dat.bins - rbins, "F")
+          rFro   <- norm(rbins, "F")
+          minF   <- abs(datnorm - rFro)
+          Fro[r] <- (Frob - minF)/(datnorm + rFro - minF)
+        }
         error    <- cov.emp - sigma
         sq.err   <- error   * error
         abs.err  <- abs(error)
@@ -910,7 +963,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
    Err           <- list(Var.Exps = var.exps, Exp.Var = ifelse(clust.ind, sum(var.exps * post.pi), unname(var.exps)))
    if(sw["mu.sw"] || !clust.ind)       {
      cov.est     <- as.matrix(cov.est)
-     dimnames(cov.est)        <- list(varnames, varnames)
+     dimnames(cov.est)         <- list(varnames, varnames)
      err         <- cov.emp - cov.est
      sq.err      <- err     * err
      abs.err     <- abs(err)
@@ -920,21 +973,41 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
      Err         <- c(list(Empirical.Cov = cov.emp, Estimated.Cov = cov.est, Post = post.met), Err)
      if(error.metrics && sw["psi.sw"]) {
        metrics   <- rbind(MSE = mse, MEDSE = medse, MAE = mae, MEDAE = medae, RMSE = rmse, NRMSE = nrmse)
+       metrics   <- if(frobenius) rbind(metrics, PPRE = Fro)        else metrics
        metricCIs <- rowQuantiles(metrics, probs=conf.levels)
        mean.met  <- stats::setNames(rowmeans(metrics), rownames(metrics))
        last.met  <- c(MSE = mse[e.store], MEDSE = medse[e.store], MAE = mae[e.store], MEDAE = medae[e.store], RMSE = rmse[e.store], NRMSE = nrmse[e.store])
-       Err       <- c(list(Avg = mean.met, CIs = metricCIs), Err[1:3], c(list(Last.Cov = sigma, Final = last.met)), Err[4:5])
-       attr(Err, "ESS")       <- e.store
-       errs      <- "All"
+       last.met  <- if(frobenius) c(last.met, PPRE = Fro[e.store])  else last.met
+       Err       <- c(list(Avg = mean.met, CIs = metricCIs), Err[1L:3L], c(list(Last.Cov = sigma, Final = last.met)), Err[4L:5L])
+       Err       <- if(frobenius) c(Err, list(PPRE = Fro))          else Err
+       attr(Err, "ESS")        <- e.store
+       errs      <- ifelse(frobenius, "PPRE", "Covs")
      } else errs <- "Post"
    } else   errs <- "Vars"
    class(Err)    <- "listof"
   } else    errs <- "None"
   error.metrics  <- errs       != "None"
   if(error.metrics && anyNA(cov.emp)) {
-    Err          <- Err[names(Err) %in% if(errs == "Vars") c("Var.Exps", "Exp.Var") else c("Var.Exps", "Exp.Var", "Estimated.Cov")]
+   switch(EXPR=errs,
+           PPRE=  {
+      Err$Avg    <- Err$Avg["PPRE"]
+      Err$Final  <- Err$Final["PPRE"]
+      Err$CIs    <- Err$CIs["PPRE",]
+      Err        <- Err[c("Avg", "CIs", "Estimated.Cov", "Last.Cov", "Final", "Var.Exps", "Exp.Var", "PPRE")]
+   },      Vars=  {
+      Err        <- Err[c("Var.Exps", "Exp.Var")]
+   },      Post=  {
+      Err        <- Err[c("Estimated.Cov", "Var.Exps", "Exp.Var")]
+   }, Err        <- Err[c("Estimated.Cov", "Last.Cov", "Var.Exps", "Exp.Var")])
   }
 
+  if(sw["s.sw"])  {
+   eta           <- eta[,Qseq,, drop=FALSE]
+   colnames(eta) <- paste0("Factor", Qseq)
+   scores        <- list(eta = eta, post.eta = rowMeans(eta, dims=2), var.eta = apply(eta, c(1L, 2L), Var),
+                         ci.eta = apply(eta, c(1L, 2L), stats::quantile, conf.levels), last.eta = .a_drop(eta[,,e.store, drop=FALSE], drop=3))
+   attr(scores, "Eta.store")   <- e.store
+  }
   result         <- c(if(exists("cluster", envir=environment()))          list(Clust      = cluster),
                       if(error.metrics)         list(Error        = Err), list(GQ.results = GQ.res),
                       if(sw["mu.sw"]  || sw.mx) list(Means        =       means),

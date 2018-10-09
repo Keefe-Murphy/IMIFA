@@ -142,7 +142,7 @@
     z                <- factor(z, labels=match(nn.ind, index))
     z                <- as.integer(levels(z))[z]
     if(ind.slice) {
-      ksi            <- (1 - rho) * rho^(Ts - 1)
+      ksi            <- (1 - rho) * rho^(Ts - 1L)
       log.ksi        <- log(ksi)
     }
     slice.logs       <- c(- Inf, 0L)
@@ -157,8 +157,8 @@
       if(cluster.shrink)   sig.store[,1L] <- MGPsig
       z.store[1L,]            <- z
       Q0                      <- Qs > 0
-      sigma                   <- if(uni) lapply(Gs, function(g) as.matrix(1/psi.inv[,g] + if(Q0[g]) tcrossprod(lmat[[g]]) else 0)) else lapply(Gs, function(g) tcrossprod(lmat[[g]]) + diag(1/psi.inv[,g]))
-      log.probs               <- if(uni) vapply(Gs, function(g) stats::dnorm(data, mu[,g], sq_mat(sigma[[g]]), log=TRUE) + log(pi.prop[g]), numeric(N)) else vapply(Gs, function(g, Q=Q0[g]) { sigma <- if(Q) sigma[[g]] else sq_mat(sigma[[g]]); dmvn(data, mu[,g], is.posi_def(sigma, make=TRUE)$X.new, log=TRUE, isChol=!Q) + log(pi.prop[g]) }, numeric(N))
+      sigma                   <- if(uni) lapply(Gs, function(g) as.matrix(1/psi.inv[,g] + if(Q0[g]) tcrossprod(lmat[[g]]) else 0L)) else lapply(Gs, function(g) tcrossprod(lmat[[g]]) + diag(1/psi.inv[,g]))
+      log.probs               <- if(uni) vapply(Gs, function(g) stats::dnorm(data, mu[,g], sq_mat(sigma[[g]]), log=TRUE) + log(pi.prop[g]), numeric(N)) else vapply(Gs, function(g, Q=Q0[g]) { sigma <- if(Q) is.posi_def(sigma[[g]], make=TRUE)$X.new else sq_mat(sigma[[g]]); dmvn(data, mu[,g], sigma, log=TRUE, isChol=!Q) + log(pi.prop[g]) }, numeric(N))
       ll.store[1L]            <- sum(rowLogSumExps(log.probs))
       Q.store[,1L]            <- Qs
       G.store[1L]             <- G.non
@@ -232,7 +232,6 @@
         Gs           <- seq_len(G)
         if(G.trunc) {
           pi.prop    <- ksi   <-   pi.prop[Gs]
-          log.ksi    <- log.ksi[Gs]
           Vs         <- Vs[Gs]
         }
       }
@@ -241,22 +240,23 @@
       Qgs            <- Qs[Gs]
       Q0             <- Qgs  > 0
       Q1             <- Qgs == 1
-      if(G > 1)     {
+      if(G > 1)       {
         psi          <- 1/psi.inv
-        sigma        <- if(uni) lapply(Gs, function(g) as.matrix(psi[,g] + if(Q0[g]) tcrossprod(lmat[[g]]) else 0)) else lapply(Gs, function(g) tcrossprod(lmat[[g]]) + diag(psi[,g]))
-        if(uni) {
-          log.probs  <- vapply(Gs, function(g) stats::dnorm(data, mu[,g], sq_mat(sigma[[g]]), log=TRUE), numeric(N))
-        } else  {
-          log.probs  <- try(vapply(Gs, function(g, Q=Q0[g]) dmvn(data, mu[,g], if(Q) sigma[[g]] else sq_mat(sigma[[g]]), log=TRUE, isChol=!Q), numeric(N)), silent=TRUE)
-        }
-        if(inherits(log.probs, "try-error")) {
-          log.probs  <- vapply(Gs, function(g, Q=Q0[g]) { sigma <- if(Q) sigma[[g]] else sq_mat(sigma[[g]]); dmvn(data, mu[,g], is.posi_def(sigma, make=TRUE)$X.new, log=TRUE, isChol=!Q) }, numeric(N))
-        }
+        sigma        <- if(uni) lapply(Gs, function(g) as.matrix(psi[,g] + if(Q0[g]) tcrossprod(lmat[[g]]) else 0L)) else lapply(Gs, function(g) tcrossprod(lmat[[g]]) + diag(psi[,g]))
         if(ind.slice) {
-          log.pixi   <- log(pi.prop) - log(ksi[Gs])
-          log.probs  <- vapply(Gs, function(g) slice.logs[1 + (u.slice < ksi[g])] + log.pixi[g], numeric(N)) + log.probs
-        } else   {
-          log.probs  <- vapply(Gs, function(g) slice.logs[1 + (u.slice < ksi[g])], numeric(N)) + log.probs
+          log.pixi   <- log(pi.prop) - log.ksi[Gs]
+          log.probs  <- vapply(Gs, function(g) slice.logs[1L + (u.slice < ksi[g])] + log.pixi[g], numeric(N))
+        } else  {
+          log.probs  <- vapply(Gs, function(g) slice.logs[1L + (u.slice < ksi[g])], numeric(N))
+        }
+        fin.probs    <- is.finite(log.probs)
+        if(uni) {
+          log.probs  <- vapply(Gs, function(g, LP=log.probs[,g], FP=fin.probs[,g]) { LP[FP] <- stats::dnorm(data[FP,], mu[,g], sq_mat(sigma[[g]]), log=TRUE) + LP[FP]; LP }, numeric(N))
+        } else  {
+          log.probs  <- try(vapply(Gs, function(g, LP=log.probs[,g], FP=fin.probs[,g]) { LP[FP] <- dmvn(data[FP,], mu[,g], sigma[[g]], log=TRUE,  isChol=!Q) + LP[FP]; LP }, numeric(N)), silent=TRUE)
+          if(inherits(log.probs, "try-error")) {
+           log.probs <- vapply(Gs, function(g, LP=log.probs[,g], FP=fin.probs[,g], Q=Q0[g]) { sigma <- if(Q) is.posi_def(sigma[[g]], make=TRUE)$X.new else sq_mat(sigma[[g]]); LP[FP] <- dmvn(data[FP,], mu[,g], sigma, log=TRUE, isChol=!Q) + LP[FP]; LP }, numeric(N))
+          }
         }
         z            <- gumbel_max(probs=log.probs, slice=TRUE)
       } else   {
@@ -284,7 +284,7 @@
 
     # Uniquenesses
       if(isTRUE(one.uni)) {
-        S.mat        <- lapply(Gs, function(g) { S <- c.data[[g]] - if(Q0[g]) tcrossprod(eta.tmp[[g]], lmat[[g]]) else 0; S * S } )
+        S.mat        <- lapply(Gs, function(g) { S <- c.data[[g]] - if(Q0[g]) tcrossprod(eta.tmp[[g]], lmat[[g]]) else 0L; S * S } )
         psi.inv[,]   <- .sim_psi_inv(uni.shape, psi.beta, S.mat, V)
       } else {
         psi.inv[,Gs] <- vapply(Gs, function(g) if(nn0[g]) .sim_psi_inv(N=nn[g], psi.alpha=psi.alpha, c.data=c.data[[g]], psi.beta=psi.beta, lmat=lmat[[g]],

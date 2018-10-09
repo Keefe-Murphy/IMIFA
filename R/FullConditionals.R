@@ -375,6 +375,7 @@
 #' @param shift Modifier, such that the Gamma distribution has support on (\code{shift}, \eqn{\infty}). Can be positive or negative, though typically negative and small.
 #' @param param Switch controlling whether the supplied \code{rate} parameter is indeed a rate, or actually a scale parameter. Also governs whether the output is given in terms of rate or scale. Defaults to "\code{rate}".
 #'
+#' @note This function is invoked within \code{\link{mcmc_IMIFA}} when \code{discount} is \emph{fixed} at a non-zero value.
 #' @return A list of length 2, containing the modified shape and rate parameters, respectively.
 #' @keywords utility
 #' @export
@@ -812,7 +813,7 @@
         nrow(x)  != ncol(x))               stop("argument 'x' is not a square matrix",    call.=FALSE)
       if(anyNA(x))                         stop("argument 'x' contains missing values",   call.=FALSE)
       if(!is.symmetric(x))                 stop("argument 'x' is not a symmetric matrix", call.=FALSE)
-      if(!is.double(x))                    stop("argument 'x' is not a numeric matrix",   call.=FALSE)
+      if(!is.numeric(x))                   stop("argument 'x' is not a numeric matrix",   call.=FALSE)
       if(!is.logical(semi) ||
          length(semi) > 1)                 stop("argument 'semi' is not a single logical indicator", call.=FALSE)
       if(!is.logical(make) ||
@@ -967,10 +968,10 @@
         obj0g
     }
 
-  # Moments of Dirichlet / Pitman-Yor Processes
-#' 1st & 2nd Moments of the Dirichlet / Pitman-Yor Processes
+  # Moments of Pitman-Yor / Dirichlet Processes
+#' 1st & 2nd Moments of the Pitman-Yor / Dirichlet Processes
 #'
-#' Calculates the \emph{a priori} expected number of clusters or the variance of the number of clusters under a Dirichlet process or Pitman-Yor process prior for a sample of size \code{N} at given values of the concentration parameter \code{alpha} and optionally also the Pitman-Yor \code{discount} parameter. Useful for soliciting sensible priors (or fixed values) for \code{alpha} or \code{discount} under the "\code{IMFA}" and "\code{IMIFA}" methods for \code{\link{mcmc_IMIFA}}.
+#' Calculates the \emph{a priori} expected number of clusters or the variance of the number of clusters under a PYP or DP prior for a sample of size \code{N} at given values of the concentration parameter \code{alpha} and optionally also the Pitman-Yor \code{discount} parameter. Useful for soliciting sensible priors (or fixed values) for \code{alpha} or \code{discount} under the "\code{IMFA}" and "\code{IMIFA}" methods for \code{\link{mcmc_IMIFA}}.
 #' @param N The sample size.
 #' @param alpha The concentration parameter. Must be specified and must be strictly greater than \code{-discount}.
 #' @param discount The discount parameter for the Pitman-Yor process. Must lie in the interval [0, 1). Defaults to 0 (i.e. the Dirichlet process).
@@ -1329,19 +1330,19 @@
 
 #' Control settings for the Bayesian Nonparametric priors for infinite mixture models (or shrinkage priors for overfitted mixtures)
 #'
-#' Supplies a list of arguments for use in \code{\link{mcmc_IMIFA}} pertaining to the use of the Bayesian Nonparametric Dirichlet/Pitman Yor process priors with the infinite mixture models "\code{IMFA}" and "\code{IMIFA}". Certain arguments related to the Dirichlet concentration parameter for the overfitted mixtures "\code{OMFA}" and \code{"OMIFA"} can be supplied in this manner also.
+#' Supplies a list of arguments for use in \code{\link{mcmc_IMIFA}} pertaining to the use of the Bayesian Nonparametric Pitman-Yor / Dirichlet process priors with the infinite mixture models "\code{IMFA}" and "\code{IMIFA}". Certain arguments related to the Dirichlet concentration parameter for the overfitted mixtures "\code{OMFA}" and \code{"OMIFA"} can be supplied in this manner also.
 #' @param learn.alpha
 #' \describe{
-#' \item{For the "\code{IMFA}" and "\code{IMIFA}" methods:}{A logical indicating whether the Dirichlet process / Pitman-Yor concentration parameter is to be learned (defaults to \code{TRUE}), or remain fixed for the duration of the chain. If being learned, a Ga(a, b) prior is assumed for \code{alpha}; updates take place via Gibbs sampling when \code{discount} is zero and via Metropolis-Hastings otherwise. If not being learned, \code{alpha} \emph{must} be supplied.}
+#' \item{For the "\code{IMFA}" and "\code{IMIFA}" methods:}{A logical indicating whether the Pitman-Yor / Dirichlet process concentration parameter is to be learned (defaults to \code{TRUE}), or remain fixed for the duration of the chain. If being learned, a Ga(a, b) prior is assumed for \code{alpha}; updates take place via Gibbs sampling when \code{discount} is zero and via Metropolis-Hastings otherwise. If not being learned, \code{alpha} \emph{must} be supplied.}
 #' \item{For the "\code{OMFA}" and "\code{OMIFA}" methods:}{A logical indicating whether the Dirichlet concentration parameter is to be learned (defaults to \code{TRUE}) or remain fixed for the duration of the chain. If being learned, a Ga(a, b * G) is assumed for \code{alpha}, where G is the number of mixture components \code{range.G}, and updates take place via Metropolis-Hastings. If not being learned \code{alpha} \emph{must} be supplied.}
 #' }
 #' @param alpha.hyper
 #' \describe{
-#' \item{For the "\code{IMFA}" and "\code{IMIFA}" methods:}{A vector of length 2 giving hyperparameters for the prior on the Dirichlet process / Pitman-Yor concentration parameter \code{alpha}. If \code{isTRUE(learn.alpha)}, these are shape and rate parameters of a Gamma distribution. Defaults to Ga(2, 4). Choosing a larger rate is particularly important, as it encourages clustering. The prior is shifted to have support on (\code{-discount}, \code{Inf}) when non-zero \code{discount} is supplied and remains fixed, or shifted to (\code{-1}, \code{Inf}) when \code{learn.d} is \code{TRUE}.}
+#' \item{For the "\code{IMFA}" and "\code{IMIFA}" methods:}{A vector of length 2 giving hyperparameters for the prior on the Pitman-Yor / Dirichlet process concentration parameter \code{alpha}. If \code{isTRUE(learn.alpha)}, these are shape and rate parameters of a Gamma distribution. Defaults to Ga(\code{2}, \code{4}). Choosing a larger rate is particularly important, as it encourages clustering. The prior is shifted to have support on (\code{-discount}, \code{Inf}) when non-zero \code{discount} is supplied and remains fixed (i.e. \code{learn.d=FALSE}).}
 #' \item{For the "\code{OMFA}" and "\code{OMIFA}" methods:}{A vector of length 2 giving hyperparameters a and b for the prior on the Dirichlet concentration parameter \code{alpha}. If \code{isTRUE(learn.alpha)}, these are shape and rate parameters of a Gamma distribution. Defaults to Ga(2, 4). Note that the suplied rate will be multiplied by \code{range.G}, to encourage clustering, such that the form of the prior is Ga(a, b * G).}
 #' }
-#' @param discount The discount parameter used when generalising the Dirichlet process to the Pitman-Yor process. Defaults to 0, but must lie in the interval [0, 1). If non-zero, \code{alpha} can be supplied greater than \code{-discount}.
-#' @param learn.d Logical indicating whether the \code{discount} parameter is to be updated via Metropolis-Hastings (defaults to\code{FALSE}).
+#' @param discount The discount parameter used when generalising the Dirichlet process to the Pitman-Yor process. Defaults to 0, but must lie in the interval [0, 1). If non-zero, \code{alpha} can be supplied greater than \code{-discount}. By default, Metropolis-Hastings steps are invoked for updating this parameter via \code{learn.d}.
+#' @param learn.d Logical indicating whether the \code{discount} parameter is to be updated via Metropolis-Hastings (defaults to\code{TRUE}).
 #' @param d.hyper Hyperparameters for the Beta(a,b) prior on the \code{discount} parameter. Defaults to Beta(1,1), i.e. Uniform(0,1).
 #' @param ind.slice Logical indicitating whether the independent slice-efficient sampler is to be employed (defaults to \code{TRUE}). If \code{FALSE} the dependent slice-efficient sampler is employed, whereby the slice sequence \eqn{\xi_1,\ldots,\xi_g}{xi_1,...,xi_g} is equal to the decreasingly ordered mixing proportions.
 #' @param rho Parameter controlling the rate of geometric decay for the independent slice-efficient sampler, s.t. \eqn{\xi=(1-\rho)\rho^{g-1}}{xi = (1 - rho)rho^(g-1)}. Must lie in the interval (0, 1]. Higher values are associated with better mixing but longer run times. Defaults to 0.75, but 0.5 is an interesting special case which guarantees that the slice sequence \eqn{\xi_1,\ldots,\xi_g}{xi_1,...,xi_g} is equal to the \emph{expectation} of the decreasingly ordered mixing proportions. Only relevant when \code{ind.slice} is \code{TRUE}.
@@ -1373,7 +1374,7 @@
 #' @return A named list in which the names are the names of the arguments related to the BNP prior(s) and the values are the values supplied to the arguments.
 #' @note Certain supplied arguments will be subject to further checks within \code{\link{mcmc_IMIFA}}. \code{\link{G_priorDensity}} and \code{\link{G_moments}} can help with soliciting sensible DP/PYP priors.
 #'
-#' Under the "\code{IMFA}" and "\code{IMIFA}" methods, a Dirichlet Process prior is specified by default. A Pitman-Yor prior can be easily invoked when the \code{discount} is fixed at a non-zero value or \code{learn.d=TRUE}. The normalized stable process can also be specified as a prior distribution, as a special case of the Pitman-Yor process, when \code{alpha} remains fixed at \code{0} and \code{learn.alpha=FALSE} (provided the \code{discount} is fixed at a non-zero value or \code{learn.d=TRUE}).
+#' Under the "\code{IMFA}" and "\code{IMIFA}" methods, a Pitman-Yor process prior is specified by default. A Dirichlet process prior can be easily invoked when the \code{discount} is fixed at \code{0} and \code{learn.d=FALSE}. The normalized stable process can also be specified as a prior distribution, as a special case of the Pitman-Yor process, when \code{alpha} remains fixed at \code{0} and \code{learn.alpha=FALSE} (provided the \code{discount} is fixed at a non-zero value or \code{learn.d=TRUE}).
 #' @keywords control
 #' @references Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
 #'
@@ -1387,7 +1388,7 @@
 #' bnpControl(learn.alpha = TRUE,
 #'            alpha.hyper = c(2L, 4L),
 #'            discount = NULL,
-#'            learn.d = FALSE,
+#'            learn.d = TRUE,
 #'            d.hyper = c(1L, 1L),
 #'            ind.slice = TRUE,
 #'            rho = 0.75,
@@ -1398,15 +1399,15 @@
 #'            tune.zeta = list(...),
 #'            ...)
 #' @examples
-#' bnpctrl <- bnpControl(learn.d=TRUE, ind.slice=FALSE, alpha.hyper=c(3, 3))
+#' bnpctrl <- bnpControl(learn.d=FALSE, ind.slice=FALSE, alpha.hyper=c(3, 3))
 #'
 #' # data(olive)
 #' # sim   <- mcmc_IMIFA(olive, "IMIFA", n.iters=5000, BNP=bnpctrl)
 #'
 #' # Alternatively specify these arguments directly
-#' # sim   <- mcmc_IMIFA(olive, "IMIFA", n.iters=5000, learn.d=TRUE,
+#' # sim   <- mcmc_IMIFA(olive, "IMIFA", n.iters=5000, learn.d=FALSE,
 #' #                     ind.slice=FALSE, alpha.hyper=c(3, 3))
-  bnpControl     <- function(learn.alpha = TRUE, alpha.hyper = c(2L, 4L), discount = NULL, learn.d = FALSE, d.hyper = c(1L, 1L),
+  bnpControl     <- function(learn.alpha = TRUE, alpha.hyper = c(2L, 4L), discount = NULL, learn.d = TRUE, d.hyper = c(1L, 1L),
                              ind.slice = TRUE, rho = 0.75, trunc.G = NULL, kappa = 0.5, IM.lab.sw = TRUE, zeta = NULL, tune.zeta = list(...), ...) {
     miss.args    <- list(discount = missing(discount), IM.lab.sw = missing(IM.lab.sw), kappa = missing(kappa), trunc.G = missing(trunc.G), zeta = missing(zeta))
     if(any(!is.logical(learn.alpha),
@@ -1621,12 +1622,14 @@
 #' @param pi.switch Logical indicating whether the mixing proportions are to be stored (defaults to \code{TRUE}).
 #' @param ... Catches unused arguments.
 #'
-#' @details \code{\link{storeControl}} is provided for assigning values for IMIFA models within \code{\link{mcmc_IMIFA}}. It may be useful not to store certain parameters if memory is an issue (e.g. for large data sets or for a large number of MCMC iterations after burnin and thinning). Warning: posterior inference and plotting won't be posssible for parameters not stored.
+#' @details \code{\link{storeControl}} is provided for assigning values for IMIFA models within \code{\link{mcmc_IMIFA}}. It may be useful not to store certain parameters if memory is an issue (e.g. for large data sets or for a large number of MCMC iterations after burnin and thinning).
 #'
-#' In particular, when loadings and uniquenesses are not stored (or when means are not stored, for any of the mixture models), it will not be possible to estimate covariance matrices and compute error metrics. If loadings are not stored but scores are, caution is advised when examining posterior scores as Procrustes rotation will not occur within \code{\link{get_IMIFA_results}}.
+#' @note Posterior inference and plotting won't be posssible for parameters not stored.
 #'
-#' @note Further warning messages may appear when \code{\link{mcmc_IMIFA}} is called depending on the particularities of the data set and the IMIFA method employed etc. as additional checks occur.
-
+#' Non-storage of parameters will almost surely prohibit the computation of posterior predictive checking error metrics within \code{\link{get_IMIFA_results}} also.
+#'
+#' Finally, if loadings are not stored but scores are, caution is advised when examining posterior scores as Procrustes rotation will not occur within \code{\link{get_IMIFA_results}}.
+#'
 #' @return A named vector in which the names are the names of the storage switches and the values are logicals indicating whether that parameter is to be stored. The list also contains as an attribute a logical for each switch indicating whether it was actually supplied (\code{TRUE}) or the default was accepted (\code{FALSE}).
 #' @export
 #' @keywords control
@@ -1747,7 +1750,7 @@
                      names(x.dim)))))      stop("dimension names ", paste("'", drop[is.na(i)], "'", sep="", collapse=" "), " not found in x", call.=FALSE)
         drop     <- i
       } else if(is.null(drop))       {
-        drop     <- numeric(0)
+        drop     <- numeric(0L)
       }
       if(!is.numeric(drop) ||
         any(is.na(drop))   ||

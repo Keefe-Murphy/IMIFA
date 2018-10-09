@@ -18,17 +18,19 @@ __Infinite Mixtures of Infinite Factor Analysers__
   prior to Procrustes rotation, for more interpretable solutions (defaults to `FALSE`).
   
 ### Improvements
+* New hyperparameter/argument defaults:
+    * `prec.mu` defaults to `0.1` s.t. the prior on the cluster means is flat by default.
+    * `learn.d` defaults to `TRUE` s.t. a PYP prior is assumed for IM(I)FA models by default.
+    * `alpha.hyper` now has a larger hyper-rate by default, to better encourage clustering.
 * Args. for `hc` can now be passed when `init.z="mclust"` also  
   (previously only `"hc"`), thus controlling how `Mclust` is itself initialised.
 * Allowed `criterion` to be passed via `...` in `mixfaControl` to choose between  
   `mclustBIC`/`mclustICL` to determine optimum model to initialise with when  
   `z.init="mclust"` & also sped-up `mclust` initialisation in the process.
 * Args. `scores` & `loadings` can now be supplied to `sim_IMIFA_data` directly.
-* `prec.mu` now defaults to `0.1` s.t. the prior on the cluster means is flat by default.
 * Sped-up 2<sup>nd</sup> label-switching move for IM(I)FA models (accounting for empty clusters).
 * Added `stop.AGS` arg. to `mgpControl`: renamed `adapt.at` to `start.AGS` for consistency.
 * Added `start.zeta` & `stop.zeta` options to `tune.zeta` argument in `bnpControl`.
-* Edited `alpha.hyper` defaults in `bnpControl` to better encourage clustering.
 
 ### Bug Fixes
 * Fixed factor _scores_ & error metrics issues in `get_IMIFA_results` for clustering methods:  
@@ -42,6 +44,7 @@ __Infinite Mixtures of Infinite Factor Analysers__
 * Slight label-switching fixes when `zlabels` are supplied to `get_IMIFA_results`;
   posterior confusion matrix, cluster sizes vector, and the sampled labels themselves effected.
 * Slight speed-up to updating MGP hyperparameters in the presence of empty MIFA/OMIFA/IMIFA components.
+* Slight speed-up to sampling cluster labels with slice indicators for IM(I)FA models.
 * Explicitly allowed Pitman-Yor special case where `alpha=0` for IM(I)FA models;  
   added related controls on spike-and-slab prior for `discount` when fixing `alpha<=0`.
 * `trunc.G` now shares the same default as `range.G`, rather than defaulting to `range.G`.
@@ -67,7 +70,7 @@ __Infinite Mixtures of Infinite Factor Analysers__
 * Simplified `mcmc_IMIFA` by consolidating arguments using new helper functions (with defaults):  
     * Args. common to all factor-analytic mixture methods & MCMC settings supplied via `mixfaControl`.
     * MGP & AGS args. supplied via `mgpControl` for infinite factor models.  
-    * Dirichlet/Pitman-Yor Process args. supplied via `bnpControl` for infinite mixture models.
+    * Pitman-Yor/Dirichlet Process args. supplied via `bnpControl` for infinite mixture models.
     * Storage switch args. supplied via `storeControl`.
     * New functions also inherit the old documentation for their arguments.
 

@@ -1,6 +1,6 @@
 #' Adaptive Gibbs Sampler for Nonparameteric Model-based Clustering using models from the IMIFA family
 #'
-#' Carries out Gibbs sampling for all models from the IMIFA family, facilitating model-based clustering with dimensionally reduced factor-analytic covariance structures, with automatic estimation of the number of clusters and cluster-specific factors as appropriate to the method employed. Factor analysis with one group (FA/IFA), finite mixtures (MFA/MIFA), overfitted mixtures (OMFA/OMIFA), infinite factor models which employ the multiplicative gamma process (MGP) shrinkage prior (IFA/MIFA/OMIFA/IMIFA), and infinite mixtures which employ Dirichlet/Pitman-Yor Process Mixture Models (IMFA/IMIFA) are all provided.
+#' Carries out Gibbs sampling for all models from the IMIFA family, facilitating model-based clustering with dimensionally reduced factor-analytic covariance structures, with automatic estimation of the number of clusters and cluster-specific factors as appropriate to the method employed. Factor analysis with one group (FA/IFA), finite mixtures (MFA/MIFA), overfitted mixtures (OMFA/OMIFA), infinite factor models which employ the multiplicative gamma process (MGP) shrinkage prior (IFA/MIFA/OMIFA/IMIFA), and infinite mixtures which employ Pitman-Yor / Dirichlet Process Mixture Models (IMFA/IMIFA) are all provided.
 #'
 #' @param dat A matrix or data frame such that rows correspond to observations (\code{N}) and columns correspond to variables (\code{P}). Non-numeric variables will be discarded if they are explicitly coded as factors or ordinal factors; otherwise they will be treated as though they were continuous. Rows with missing entries will be also be automatically removed.
 #' @param method An acronym for the type of model to fit where:
@@ -24,15 +24,15 @@
 #' If \code{length(range.G) * length(range.Q)} is large, consider not storing unnecessary parameters (via \code{\link{storeControl}}), or breaking up the range of models to be explored into chunks and sending each chunk to \code{\link{get_IMIFA_results}}.
 #' @param range.Q Depending on the method employed, either the range of values for the number of latent factors, or, for methods ending in IFA the conservatively high starting value for the number of cluster-specific factors, in which case the default starting value is \code{floor(3 * log(P))}.
 #'
-#' For methods ending in IFA, different clusters can be modelled using different numbers of latent factors (incl. zero); for methods not ending in IFA it is possible to fit zero-factor models, corresponding to simple diagonal covariance structures. For instance, fitting the "\code{IMFA}" model with \code{range.Q=0} corresponds to a vanilla Dirichlet/Pitman-Yor Process Mixture Model.
+#' For methods ending in IFA, different clusters can be modelled using different numbers of latent factors (incl. zero); for methods not ending in IFA it is possible to fit zero-factor models, corresponding to simple diagonal covariance structures. For instance, fitting the "\code{IMFA}" model with \code{range.Q=0} corresponds to a vanilla Pitman-Yor / Dirichlet Process Mixture Model.
 #'
 #' If \code{length(range.G) * length(range.Q)} is large, consider not storing unnecessary parameters (via \code{\link{storeControl}}), or breaking up the range of models to be explored into chunks and sending each chunk to \code{\link{get_IMIFA_results}}.
 #' @param MGP A list of arguments pertaining to the multiplicative gamma process (MGP) shrinkage prior and adaptive Gibbs sampler (AGS). For use with the infinite factor models "\code{IFA}", "\code{MIFA}", "\code{OMIFA}", and "\code{IMIFA}" only. Defaults are set by a call to \code{\link{mgpControl}}, with further checking of validity by \code{\link{MGP_check}} (though arguments can also be supplied here directly).
-#' @param BNP A list of arguments pertaining to the Bayesian Nonparametric Dirichlet/Pitman Yor process priors, for use with the infinite mixture models "\code{IMFA}" and "\code{IMIFA}", or select arguments related to the Dirichlet concentration parameter for the overfitted mixtures "\code{OMFA}" and \code{"OMIFA"}. Defaults are set by a call to \code{\link{bnpControl}} (though arguments can also be supplied here directly).
+#' @param BNP A list of arguments pertaining to the Bayesian Nonparametric Pitman-Yor / Dirichlet process priors, for use with the infinite mixture models "\code{IMFA}" and "\code{IMIFA}", or select arguments related to the Dirichlet concentration parameter for the overfitted mixtures "\code{OMFA}" and \code{"OMIFA"}. Defaults are set by a call to \code{\link{bnpControl}} (though arguments can also be supplied here directly).
 #' @param mixFA A list of arguments pertaining to \emph{all other} aspects of model fitting, e.g. MCMC settings, cluster initialisation, and hyperparameters common to every \code{method} in the \code{IMIFA} family. Defaults are set by a call to \code{\link{mixfaControl}} (though arguments can also be supplied here directly).
-#' @param alpha Depending on the method employed, either the hyperparameter of the Dirichlet prior for the cluster mixing proportions, or the Dirichlet process concentration parameter. Defaults to 1 for the finite mixture models "\code{MFA}" and "\code{MIFA}", and must be a strictly positive scalar. Not relevant for the "\code{FA}" and "\code{IFA}" methods.
+#' @param alpha Depending on the method employed, either the hyperparameter of the Dirichlet prior for the cluster mixing proportions, or the Pitman-Yor / Dirichlet process concentration parameter. Defaults to 1 for the finite mixture models "\code{MFA}" and "\code{MIFA}", and must be a strictly positive scalar. Not relevant for the "\code{FA}" and "\code{IFA}" methods.
 #' \describe{
-#' \item{Under the "\code{IMFA}" and "\code{IMIFA}" models:}{\code{alpha} defaults to a simulation from the prior if \code{learn.alpha} is \code{TRUE}, otherwise \code{alpha} \emph{must} be specified. Must be positive, unless \code{discount} is supplied or \code{learn.d} is \code{TRUE}, in which case it must be greater than \code{-discount}. Under certain conditions, \code{alpha} can remain fixed at 0 (see \code{\link{bnpControl}}).}
+#' \item{Under the "\code{IMFA}" and "\code{IMIFA}" models:}{\code{alpha} defaults to a simulation from the prior if \code{learn.alpha} is \code{TRUE}, otherwise \code{alpha} \emph{must} be specified. Must be positive, unless non-zero \code{discount} is supplied or \code{learn.d=TRUE} (the default), in which case it must be greater than \code{-discount}. Under certain conditions, \code{alpha} can remain fixed at \code{0} (see \code{\link{bnpControl}}).}
 #' \item{Under the "\code{OMFA}" and "\code{OMIFA}" models:}{\code{alpha} defaults to a simulation from the prior if \code{learn.alpha} is \code{TRUE}, otherwise \code{alpha} defaults to \code{0.5/range.G}. If supplied, \code{alpha} must be positive, and you are supplying the numerator of \code{alpha/range.G}.
 #'
 #' If \code{alpha} remains fixed (i.e. \code{learn.alpha=FALSE}), \code{alpha} should be less than half the dimension (per cluster!) of the free parameters of the smallest model considered in order to ensure superfluous clusters are emptied (for "\code{OMFA}", this corresponds to the smallest \code{range.Q}; for "\code{OMIFA}", this corresponds to a zero-factor model) [see: \code{\link{PGMM_dfree}} and Rousseau and Mengersen (2011)].}
@@ -47,7 +47,7 @@
 #' @note Further control over the specification of advanced function arguments can be obtained with recourse to the following functions:
 #' \itemize{
 #' \item{\strong{\code{\link{mgpControl}}} - }{Supply arguments (with defaults) pertaining to the multiplicative gamma process (MGP) shrinkage prior and adaptive Gibbs sampler (AGS). For use with the infinite factor models "\code{IFA}", "\code{MIFA}", "\code{OMIFA}", and "\code{IMIFA}" only.}
-#' \item{\strong{\code{\link{bnpControl}}} - }{Supply arguments (with defaults) pertaining to the Bayesian Nonparametric Dirichlet/Pitman Yor process priors, for use with the infinite mixture models "\code{IMFA}" and "\code{IMIFA}". Certain arguments related to the Dirichlet concentration parameter for the overfitted mixtures "\code{OMFA}" and \code{"OMIFA"} can be supplied in this manner also.}
+#' \item{\strong{\code{\link{bnpControl}}} - }{Supply arguments (with defaults) pertaining to the Bayesian Nonparametric Pitman-Yor / Dirichlet process priors, for use with the infinite mixture models "\code{IMFA}" and "\code{IMIFA}". Certain arguments related to the Dirichlet concentration parameter for the overfitted mixtures "\code{OMFA}" and \code{"OMIFA"} can be supplied in this manner also.}
 #' \item{\strong{\code{\link{mixfaControl}}} - }{Supply arguments (with defaults) pertaining to \emph{all other} aspects of model fitting (e.g. MCMC settings, cluster initialisation, and hyperparameters common to every \code{method} in the \code{IMIFA} family.}
 #' \item{\strong{\code{\link{storeControl}}} - }{Supply logical indicators governing storage of parameters of interest for all models in the IMIFA family. It may be useful not to store certain parameters if memory is an issue (e.g. for large data sets or for a large number of MCMC iterations after burnin and thinning).}
 #' }
@@ -100,9 +100,8 @@
 #' # summary(simIMIFA)
 #'
 #' # Fit an IMIFA model assuming a Pitman-Yor prior.
-#' # Allow the alpha and discount parameter to be learned.
 #' # Control the balance between the DP and PY priors using the kappa parameter.
-#' # simPY    <- mcmc_IMIFA(olive, method="IMIFA", learn.d=TRUE, kappa=0.75)
+#' # simPY    <- mcmc_IMIFA(olive, method="IMIFA", kappa=0.75)
 #' # summary(simPY)
 #'
 #' # Fit a MFA model to the scaled olive data, with isotropic uniquenesses (i.e. MPPCA).
@@ -270,7 +269,7 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
       if(range.G    < lnN2)         warning(paste0("'range.G' should be at least log(N) (=log(", N, "))", " for the ", method, " method\n"), call.=FALSE, immediate.=TRUE)
       if(G.init    >= N)            stop(paste0("'range.G' must less than N (", N, ")"), call.=FALSE)
       if(is.element(method, c("IMFA", "IMIFA")))  {
-        if((t.miss <- bnpmiss$trunc.G))    {
+        if((t.miss <- bnpmiss$trunc.G)) {
           trunc.G  <- BNP$trunc.G      <- max(tmp.G, range.G)
         } else trunc.G    <- BNP$trunc.G
         if(all(verbose, ifelse(N > 50, trunc.G    < 50,
@@ -302,7 +301,7 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
     equal.pro      <- mixFA$equal.pro
     if(storage["pi.sw"]   && equal.pro) {
       if(all(!store.x["pi.sw"],
-             verbose))              message("Forced non-storage of mixing proportions as 'equal.pro' is TRUE: only posterior mean estimates will be available\n")
+             verbose))              message("Forced non-storage of mixing proportions as 'equal.pro' is TRUE\n")
       storage["pi.sw"]    <- FALSE
     }
     alp3    <- 3L   * alpha
@@ -455,32 +454,23 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
                   is.element(method, c("IFA", "MIFA", "OMIFA", "IMIFA")) &&
                   isTRUE(!adapt)))  warning(paste0("Number of factors is greater than ", ifelse(any(range.Q > P), paste0("the number of variables (", P, ")"), paste0("the suggested Ledermann upper bound (", Q.warn, ")\n"))), call.=FALSE, immediate.=TRUE)
   }
-  if(verbose   && any(all(method == "MFA",  any(range.G > 1)) && any(range.Q > 0),
-                      all(method == "MIFA", any(range.G > 1)), is.element(method, c("IMIFA",
-     "IMFA", "OMIFA", "OMFA"))))  {
-    if(all(!storage["l.sw"],
-           !storage["psi.sw"]))   {
-                                    message("Loadings & Uniquenesses not stored: will be unable to estimate covariance matrices and compute error metrics\n")
-    } else if(!storage["l.sw"])   { message("Loadings not stored: will be unable to estimate covariance matrices and compute error metrics\n")
-    } else if(!storage["psi.sw"])   message("Uniquenesses not stored: will be unable to estimate covariance matrices and compute error metrics\n")
-  }
-  if(all(storage["s.sw"], !storage["l.sw"],
-     any(range.Q   != 0)))          message("Loadings not stored but scores are: Procrustes rotation of scores will not occur when passing results to get_IMIFA_results()\n")
-  if(verbose   && is.element(method,
-               c("FA", "IFA")))   {
-    if(all(!storage["mu.sw"],
-           !storage["psi.sw"]))   {
-                                    message("Means & Uniquenesses not stored, but posterior mean estimates will still be available\n")
-    } else if(!storage["mu.sw"])  { message("Means not stored, but posterior mean estimates will still be available\n")
-    } else if(!storage["psi.sw"])   message("Uniquenesses not stored, but posterior mean estimates will still be available\n")
-  }
-  if(is.element(method, c("FA", "MFA", "OMFA", "IMFA")) && any(range.Q == 0)) {
+  if(verbose   && !all(storage))  {
+    if(all(storage["s.sw"], !storage["l.sw"],
+           any(range.Q   != 0)))    message("Loadings not stored but scores are: Procrustes rotation of scores will not occur when passing results to get_IMIFA_results()\n")
+    if(any(!storage))             {
+      if(any(all(method  == "MFA",  any(range.G > 1)) && any(range.Q > 0),
+             all(method  == "MIFA", any(range.G > 1)), is.element(method, c("IMIFA", "IMFA", "OMIFA", "OMFA"))) &&
+         identical(unname(which(!storage)), 5L)       &&
+         !equal.pro)              { message("Non-storage of parameters means posterior predictive checking error metrics almost surely will not be available\n")
+      } else if(any(!storage[-5L])) message(paste0("Non-storage of parameters means posterior predictive checking error metrics almost surely will not be available", ifelse(is.element(max(which(!storage[-5L])), c(1, 4)), paste0(":\nposterior mean parameter estimates of the ", ifelse(!storage["mu.sw"], ifelse(storage["psi.sw"], "means", "means and uniquenesses"), "uniquenesses"), " will still be available\n"), "\n")))
+    }
+  } else if(verbose && is.element(method, c("FA", "MFA", "OMFA", "IMFA")) && any(range.Q == 0)) {
     if(all(storage[c("s.sw", "l.sw")]))   {
                                     message("Scores & Loadings not stored where 'range.Q=0' as model has zero factors\n")
     } else if(storage["s.sw"])    { message("Scores not stored where 'range.Q==0' as model has zero factor\n")
     } else if(storage["l.sw"])    { message("Loadings not stored where 'range.Q==0' as model has zero factors\n")
     }
-    if(all(range.Q == 0))    storage[c("s.sw", "l.sw")] <- FALSE
+    if(all(range.Q  == 0))   storage[c("s.sw", "l.sw")] <- FALSE
   }
 
   sw0gs     <- c(mu0g = mu0g, psi0g = psi0g, delta0g = delta0g)
@@ -522,7 +512,7 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
       if(alpha       >= min.d2)     warning(paste0("'alpha' over 'range.G' for the OMFA & OMIFA methods when 'learn.alpha=FALSE', should be less than half the dimension (per cluster!)\nof the free parameters of the smallest model considered (= ", min.d2, "): consider suppling 'alpha' < ", min.d2 * G.init, "\n"), call.=FALSE, immediate.=TRUE)
     }
     if(any(all(is.element(method, c("MFA",  "MIFA")),  alpha > 1),
-           all(is.element(method, c("OMFA", "OMIFA")), !learn.a,
+           all(is.element(method, c("OMFA", "OMIFA")) && !learn.a,
            alpha > 1/G.init)))      warning("Are you sure alpha should be greater than 1?\n", call.=FALSE, immediate.=TRUE)
     if(!zli.miss) {
       if(length(z.list)   != len.G)  {

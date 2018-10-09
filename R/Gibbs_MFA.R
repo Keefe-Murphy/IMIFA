@@ -111,8 +111,8 @@
       if(sw["psi.sw"])   psi.store[,,1L] <- 1/psi.inv
       if(sw["pi.sw"])      pi.store[,1L] <- pi.prop
       z.store[1L,]         <- z
-      sigma                <- if(uni) lapply(Gseq, function(g) as.matrix(1/psi.inv[,g] + if(Q0) tcrossprod(as.matrix(lmat[,,g])) else 0)) else lapply(Gseq, function(g) tcrossprod(lmat[,,g]) + diag(1/psi.inv[,g]))
-      log.probs            <- if(uni) vapply(Gseq, function(g) stats::dnorm(data, mu[,g], sq_mat(sigma[[g]]), log=TRUE) + log(pi.prop[g]), numeric(N)) else vapply(Gseq, function(g) { sigma <- if(Q0) sigma[[g]] else sq_mat(sigma[[g]]); dmvn(data, mu[,g], is.posi_def(sigma, make=TRUE)$X.new, log=TRUE, isChol=!Q0) + log(pi.prop[g]) }, numeric(N))
+      sigma                <- if(uni) lapply(Gseq, function(g) as.matrix(1/psi.inv[,g] + if(Q0) tcrossprod(as.matrix(lmat[,,g])) else 0L)) else lapply(Gseq, function(g) tcrossprod(lmat[,,g]) + diag(1/psi.inv[,g]))
+      log.probs            <- if(uni) vapply(Gseq, function(g) stats::dnorm(data, mu[,g], sq_mat(sigma[[g]]), log=TRUE) + log(pi.prop[g]), numeric(N)) else vapply(Gseq, function(g) { sigma <- if(Q0) is.posi_def(sigma[[g]], make=TRUE)$X.new else sq_mat(sigma[[g]]); dmvn(data, mu[,g], sigma, log=TRUE, isChol=!Q0) + log(pi.prop[g]) }, numeric(N))
       ll.store[1L]         <- sum(rowLogSumExps(log.probs))
     }
     init.time      <- proc.time() - start.time
@@ -127,7 +127,7 @@
 
     # Cluster Labels
       psi          <- 1/psi.inv
-      sigma        <- if(uni) lapply(Gseq, function(g) as.matrix(psi[,g] + if(Q0) tcrossprod(as.matrix(lmat[,,g])) else 0)) else lapply(Gseq, function(g) tcrossprod(lmat[,,g]) + diag(psi[,g]))
+      sigma        <- if(uni) lapply(Gseq, function(g) as.matrix(psi[,g] + if(Q0) tcrossprod(as.matrix(lmat[,,g])) else 0L)) else lapply(Gseq, function(g) tcrossprod(lmat[,,g]) + diag(psi[,g]))
       log.pis      <- if(equal.pro) log.pis else log(pi.prop)
       if(uni) {
         log.probs  <- vapply(Gseq, function(g) stats::dnorm(data, mu[,g], sq_mat(sigma[[g]]), log=TRUE) + log.pis[g], numeric(N))
@@ -135,7 +135,7 @@
         log.probs  <- try(vapply(Gseq, function(g) dmvn(data, mu[,g], if(Q0) sigma[[g]] else sq_mat(sigma[[g]]), log=TRUE, isChol=!Q0) + log.pis[g], numeric(N)), silent=TRUE)
       }
       if(inherits(log.probs, "try-error")) {
-        log.probs  <- vapply(Gseq, function(g) { sigma <- if(Q0) sigma[[g]] else sq_mat(sigma[[g]]); dmvn(data, mu[,g], is.posi_def(sigma, make=TRUE)$X.new, log=TRUE, isChol=!Q0) + log.pis[g] }, numeric(N))
+        log.probs  <- vapply(Gseq, function(g) { sigma <- if(Q0) is.posi_def(sigma[[g]], make=TRUE)$X.new else sq_mat(sigma[[g]]); dmvn(data, mu[,g], sigma, log=TRUE, isChol=!Q0) + log.pis[g] }, numeric(N))
       }
       z            <- gumbel_max(probs=log.probs)
       nn           <- tabulate(z, nbins=G)
@@ -156,7 +156,7 @@
 
     # Uniquenesses
       if(isTRUE(one.uni)) {
-        S.mat      <- lapply(Gseq, function(g) { S   <- c.data[[g]] - if(Q0) tcrossprod(eta.tmp[[g]], if(Q1) as.matrix(lmat[,,g]) else lmat[,,g]) else 0; S * S } )
+        S.mat      <- lapply(Gseq, function(g) { S   <- c.data[[g]] - if(Q0) tcrossprod(eta.tmp[[g]], if(Q1) as.matrix(lmat[,,g]) else lmat[,,g]) else 0L; S * S } )
         psi.inv[,] <- .sim_psi_inv(uni.shape, psi.beta, S.mat, V)
       } else {
         psi.inv[,] <- vapply(Gseq, function(g) if(nn0[g]) .sim_psi_inv(N=nn[g], psi.alpha=psi.alpha, c.data=c.data[[g]], eta=eta.tmp[[g]], psi.beta=psi.beta[,g],

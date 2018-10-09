@@ -7,7 +7,7 @@
 #' \describe{
 #' \item{"\code{GQ}"}{for plotting the posterior summaries of the numbers of clusters/factors, if available.}
 #' \item{"\code{zlabels}"}{for plotting clustering uncertainties - in four different ways (incl. the posterior confusion matrix) - if clustering has taken place, with or without the clustering labels being supplied via the \code{zlabels} argument. If available, the average similarity matrix, reordered according to the MAP labels, is shown as a 5-th plot.}
-#' \item{"\code{errors}"}{for conducting posterior predictive checking of the appropriateness of the fitted model by visualising the error metrics quantifying the difference between the estimated and empirical covariance matrices. The type of plot produced depends on how the \code{error.metrics} argument was supplied to \code{\link{get_IMIFA_results}}.}
+#' \item{"\code{errors}"}{for conducting posterior predictive checking of the appropriateness of the fitted model by visualising the posterior predictive reconstruction error &/or error metrics quantifying the difference between the estimated and empirical covariance matrices. The type of plot(s) produced depends on how the \code{error.metrics} argument was supplied to \code{\link{get_IMIFA_results}} and what parameters were stored.}
 #' }
 #' @param param The parameter of interest for any of the following \code{plot.meth} options: \code{all}, \code{trace}, \code{density}, \code{means}, \code{correlation}. The \code{param} must have been stored when \code{\link{mcmc_IMIFA}} was initially ran. Includes \code{pis} for methods where clustering takes place, and allows posterior inference on \code{alpha} (for the "\code{IMFA}", "\code{IMIFA}", "\code{OMFA}", and "\code{OMIFA}" methods) and \code{discount} (for the "\code{IMFA}" and "\code{IMIFA}" methods). Otherwise \code{means}, \code{scores}, \code{loadings}, and \code{uniquenesses} can be plotted.
 #' @param g Optional argument that allows specification of exactly which cluster the plot of interest is to be produced for. If not supplied, the user will be prompted to cycle through plots for all clusters. Also functions as an index for which plot to return when \code{plot.meth} is \code{GQ} or \code{zlabels} in much the same way.
@@ -208,8 +208,10 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
   }
   if(m.sw["E.sw"]) {
     errX  <- attr(x, "Errors")
-    if(errX == "None")  {             stop("Can't plot error metrics as they were not calculated within get_IMIFA_results()", call.=FALSE)
-    } else if(errX  == "Post")        warning("Can only plot error metrics evaluated at the posterior mean, as they were not calculated for every iteration within get_IMIFA_results\n", call.=FALSE)
+    if(is.element(errX,
+                c("None", "Vars"))) { stop("Can't plot error metrics as they were not calculated within get_IMIFA_results()", call.=FALSE)
+    } else if(errX == "Covs")       { warning("Can only plot error metrics between covariance matrices, and not the posterior predictive reconstruction error\n", call.=FALSE)
+    } else if(errX == "Post")         warning("Can only plot error metrics between covariance matrices evaluated at the posterior mean, as they were not calculated for every iteration within get_IMIFA_results\n", call.=FALSE)
   }
   if(all(any(m.sw["M.sw"], m.sw["P.sw"], all.ind),
      is.element(param,  c("means", "uniquenesses")),
@@ -283,8 +285,11 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
       Gs  <- if(gx) (if(z.sim) seq_len(5L) else seq_len(4L)) else ifelse(g <=
              ifelse(z.sim, 5, 4), g,  stop(paste0("Invalid 'g' value", ifelse(z.sim, ": similarity matrix not available", "")), call.=FALSE))
     }
+  } else if(m.sw["E.sw"])   {
+    Gs    <- if(gx) switch(EXPR=errX, PPRE=seq_len(2L), 1L) else ifelse(g <= (1L + (errX == "PPRE")), g,
+                                      stop("Invalid 'g' value", call.=FALSE))
   } else if(any(all(is.element(param, c("scores", "pis", "alpha", "discount")), any(all.ind, param != "scores", !m.sw["M.sw"])), m.sw["G.sw"],
-            all(m.sw["P.sw"], param != "loadings"), m.sw["E.sw"], all(param == "uniquenesses", is.element(uni.type, c("constrained", "single")))))  {
+            all(m.sw["P.sw"], param != "loadings"), all(param == "uniquenesses", is.element(uni.type, c("constrained", "single")))))  {
     Gs    <- 1L
   } else if(!gx) {
     if(!is.element(method, c("FA", "IFA"))) {
@@ -1214,18 +1219,25 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
       }
     }
 
-    if(m.sw["E.sw"] && errX == "All") {
-      error  <- x$Error
-      plot.x <- error$Avg
+    if(m.sw["E.sw"]) {
+     Pind    <-  errX == "PPRE" && g == 1
+     Cind    <- (errX == "PPRE" && g == 2) || !Pind
+     error   <- x$Error
+     if(Pind) {
+       graphics::boxplot(error$PPRE, main="Posterior Predictive\nReconstruction Error")
+       print(c(error$CIs[7L,], Mean=unname(error$Avg[7L]), Median=med(error$PPRE), "Last Valid Sample"=unname(error$Final[7L]))[c(1L, 3L, 4L, 5L, 2L)])
+     }
+     if(Cind && is.element(errX, c("PPRE", "Covs"))) {
       post.x <- error$Post
-      last.x <- error$Final
+      plot.x <- switch(EXPR=errX, PPRE=error$Avg[-7L],   error$Avg)
+      last.x <- switch(EXPR=errX, PPRE=error$Final[-7L], error$Avg)
       if(titles) {
         graphics::layout(rbind(1, 2), heights=c(9, 1))
         graphics::par(mar=c(3.1, 4.1, 4.1, 2.1))
       }
       col.e  <- seq_along(plot.x)
       if(mispal) grDevices::palette(viridis(length(col.e) + 2, option="D", alpha=transparency)[-c(1L:2L)])
-      ci.x   <- error$CIs
+      ci.x   <- switch(EXPR=errX, PPRE=error$CIs[-7L,],  error$CIs)
       erange <- pretty(c(min(c(ci.x[,1L], plot.x, post.x)), max(c(ci.x[,2L], plot.x, post.x))))
       x.plot <- graphics::barplot(plot.x, col=col.e, ylim=erange[c(1, length(erange))], main="", yaxt="n", ylab="Error")
       graphics::axis(2, at=erange, labels=erange)
@@ -1234,7 +1246,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
       graphics::points(x=x.plot, last.x, pch=18, col=e.col[2L], cex=2, xpd=TRUE)
       .plot_CI(x.plot, plot.x, li=ci.x[,1], ui=ci.x[,2], add=TRUE, gap=TRUE, slty=3, lwd=3, scol=grey, pch=19)
       if(titles) {
-        graphics::title(main=list("Error Metrics"))
+        graphics::title(main=list("Covariance Error Metrics"))
         graphics::par(mar=c(0, 0, 0, 0))
         graphics::plot.new()
         ltxt <- c("Average Error Metrics", "Error Metrics Evaluated at Posterior Mean", "Error Metrics Evaluated at Last Valid Sample")
@@ -1244,12 +1256,13 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
       metric <- rbind(plot.x, post.x, last.x)
       rownames(metric) <- c("Averages", "Evaluated at Posterior Mean", "Evaluated at Last Valid Sample")
         print(metric)
-    } else if(m.sw["E.sw"]) {
-      plot.x <- x$Error$Post
+     } else if(Cind)    {
+      plot.x <- error$Post
       col.e  <- seq_along(plot.x)
       if(mispal) grDevices::palette(viridis(length(col.e) + 2, option="D", alpha=transparency)[-c(1L:2L)])
       graphics::barplot(plot.x, col=col.e, main="", ylab="Error")
         print(provideDimnames(matrix(plot.x, nrow=1), base=list("Evaluated at Posterior Mean", names(plot.x))))
+     }
     }
 
     if(m.sw["C.sw"]) {
@@ -1540,9 +1553,9 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
   }
 
 # Prior No. Clusters (DP & PY)
-#' Plot Dirichlet / Pitman-Yor process Priors
+#' Plot Pitman-Yor / Dirichlet Process Priors
 #'
-#' Plots the prior distribution of the number of clusters under a Dirichlet / Pitman-Yor process prior, for a sample of size \code{N} at given values of the concentration parameter \code{alpha} and optionally also the \code{discount} parameter. Useful for soliciting sensible priors (or fixed values) for \code{alpha} or \code{discount} under the "\code{IMFA}" and "\code{IMIFA}" methods for \code{\link{mcmc_IMIFA}}.
+#' Plots the prior distribution of the number of clusters under a Pitman-Yor / Dirichlet process prior, for a sample of size \code{N} at given values of the concentration parameter \code{alpha} and optionally also the \code{discount} parameter. Useful for soliciting sensible priors (or fixed values) for \code{alpha} or \code{discount} under the "\code{IMFA}" and "\code{IMIFA}" methods for \code{\link{mcmc_IMIFA}}.
 #' @param N The sample size.
 #' @param alpha The concentration parameter. Must be specified and must be strictly greater than \code{-discount}.
 #' @param discount The discount parameter for the Pitman-Yor process. Must lie in the interval [0, 1). Defaults to 0 (i.e. the Dirichlet process).

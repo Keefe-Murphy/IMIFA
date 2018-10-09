@@ -120,12 +120,11 @@ sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(floor(log(P)), G),
     psisup     <- matrix(.len_check(as.matrix(psi), switch0g = TRUE, method = ifelse(G > 1, "MFA", "FA"), P, G)[[1L]], nrow=P, ncol=G, byrow=length(psi) == G)
     if(anyNA(psisup))                     stop("Missing values are not allowed in 'psi'", call.=FALSE)
   }
-  if(method    == "conditional")      {
-    if(!(smiss <- missing(scores)))   {
-      if(!is.matrix(scores)  ||
-         !is.numeric(scores))             stop("Invalid 'scores' supplied: must be a numeric matrix", call.=FALSE)
-      if(anyNA(scores))                   stop("Missing values are not allowed in 'scores'", call.=FALSE)
-    }
+  if(!(smiss   <- missing(scores))   &&
+     method    == "conditional")      {
+    if(!is.matrix(scores)  ||
+       !is.numeric(scores))               stop("Invalid 'scores' supplied: must be a numeric matrix", call.=FALSE)
+    if(anyNA(scores))                     stop("Missing values are not allowed in 'scores'", call.=FALSE)
   }
   if(!(lammiss <- missing(loadings))) {
     lmat       <- loadings
@@ -173,8 +172,7 @@ sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(floor(log(P)), G),
     covmat     <- provideDimnames({ if(P > 1) diag(psi.true) else as.matrix(psi.true) } + { if(Q.g > 0) switch(EXPR=method, marginal=tcrossprod(l.true), 0L) else 0L}, base=list(vnames))
     if(!all(is.symmetric(covmat),
             is.double(covmat)))           stop("Invalid covariance matrix!", call.=FALSE)
-    covmat     <- is.posi_def(covmat, make=TRUE)$X.new
-    sigma      <- if(all(Q.g > 0, P > 1, method == "marginal")) .chol(covmat) else sq_mat(covmat)
+    sigma      <- if(all(Q.g > 0, P > 1, method == "marginal")) .chol(is.posi_def(covmat, make=TRUE)$X.new) else sq_mat(covmat)
     means      <- matrix(mu.true, nrow=N.g, ncol=P, byrow=TRUE) + switch(EXPR=method, conditional=tcrossprod(eta.true[true.zlab == g, seq_len(Q.g), drop=FALSE], l.true), 0L)
     simdata    <- rbind(simdata, means + matrnorm(N.g, P) %*% sigma)
     dimnames(l.true)   <- list(vnames, if(Q.g > 0) paste0("Factor ", seq_len(Q.g)))
