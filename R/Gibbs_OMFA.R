@@ -71,7 +71,7 @@
                                              constrained=.sim_psi_cu,     single=.sim_psi_cc)
     .sim_psi_ip    <- switch(EXPR=uni.prior, unconstrained=.sim_psi_ipu,  isotropic=.sim_psi_ipc)
     if(isTRUE(one.uni)) {
-      uni.shape    <- switch(EXPR=uni.type,  constrained=N/2 + psi.alpha, single=(N * P)/2  + psi.alpha)
+      uni.shape    <- switch(EXPR=uni.type,  constrained=N/2 + psi.alpha, single=(N * P)/2 + psi.alpha)
       V            <- switch(EXPR=uni.type,  constrained=P, single=1L)
     }
     psi.beta       <- switch(EXPR=uni.prior, isotropic=psi.beta[which.max(.ndeci(psi.beta))], psi.beta)
@@ -81,7 +81,7 @@
     lmat           <- if(Q0) array(vapply(Gseq, function(g) .sim_load_p(Q=Q, P=P, sigma.l=sigma.l), numeric(P * Q)), dim=c(P, Q, G)) else array(0, dim=c(P, 0, G))
     psi.inv        <- replicate(G, .sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), simplify="array")
     psi.inv        <- if(uni) t(psi.inv) else psi.inv
-    if(Q0 &&   Q    < min(N - 1, Ledermann(P))) {
+    if(Q0 &&   Q    < min(N - 1L, Ledermann(P)))  {
       for(g in which(nn     > P))   {
         fact       <- try(stats::factanal(data[z == g,, drop=FALSE], factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
         if(!inherits(fact, "try-error")) {
@@ -95,7 +95,7 @@
       if(isTRUE(one.uni)) {
         psi.inv[,] <- 1/switch(EXPR=uni.type, constrained=.col_vars(data), .geom_mean(.col_vars(data)))
       } else   {
-        tmp.psi    <- ((nn[nn0] - 1)/(rowsum(data^2,  z) - rowsum(data, z)^2/nn[nn0]))
+        tmp.psi    <- ((nn[nn0] - 1L)/(rowsum(data^2, z) - rowsum(data, z)^2/nn[nn0]))
         psi.inv[,nn > 1]   <- tmp.psi[!is.nan(tmp.psi)]
       }
       inf.ind      <- is.infinite(psi.inv) | is.nan(psi.inv)

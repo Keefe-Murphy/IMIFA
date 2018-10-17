@@ -35,12 +35,12 @@
   # Uniquenesses
   #' @importFrom matrixStats "colSums2"
     .sim_psi_uu  <- function(N, P, psi.alpha, psi.beta, c.data, eta, lmat, Q0) {
-      S.mat      <- c.data  - if(Q0) tcrossprod(eta, lmat) else 0
+      S.mat      <- c.data  - if(Q0) tcrossprod(eta, lmat) else 0L
         stats::rgamma(P, shape=N/2 + psi.alpha, rate=colSums2(S.mat * S.mat)/2 + psi.beta)
     }
 
     .sim_psi_uc  <- function(N, P, psi.alpha, psi.beta, c.data, eta, lmat, Q0) {
-      S.mat      <- c.data  - if(Q0) tcrossprod(eta, lmat) else 0
+      S.mat      <- c.data  - if(Q0) tcrossprod(eta, lmat) else 0L
         rep(stats::rgamma(1, shape=(N * P)/2 + psi.alpha, rate=sum(S.mat * S.mat)/2 + psi.beta), P)
     }
 
@@ -73,7 +73,7 @@
     }
 
     .sim_deltak  <- function(Q, P, k, alpha.d2, beta.d2, delta.k, tau.kq, sum.term.kq, sigma = 1L) {
-        stats::rgamma(1, shape=alpha.d2 + P/2 * (Q - k + 1), rate=beta.d2 + (sigma * 0.5)/delta.k * tau.kq %*% sum.term.kq)
+        stats::rgamma(1, shape=alpha.d2 + P/2 * (Q - k + 1L), rate=beta.d2 + (sigma * 0.5)/delta.k * tau.kq %*% sum.term.kq)
     }
 
   # Cluster Shrinkage
@@ -123,7 +123,7 @@
 #'
 #' Samples cluster labels for N observations from G clusters efficiently using log-probabilities and the so-called Gumbel-Max trick, without requiring that the log-probabilities be normalised; thus redunant computation can be avoided.
 #' @param probs An N x G matrix of unnormalised probabilities on the log scale, where N is he number of observations that require labels to be sampled and G is the number of active clusters s.t. sampled labels can take values in \code{1:G}. Typically \code{N > G}.
-#' @param slice A logical indicating whether or not the indicator correction for slice sampling has been applied to \code{probs}. Defaults to \code{FALSE} but is \code{TRUE} for the "\code{IMIFA}" and "\code{IMFA}" methods under \code{\link{mcmc_IMIFA}}. Details of this correction are given in Murphy et. al. (2017). When set to \code{TRUE}, this results in a speed-improvement when \code{probs} contains non-finite values (e.g. \code{-Inf}, corresponding to zero on the probability scale).
+#' @param slice A logical indicating whether or not the indicator correction for slice sampling has been applied to \code{probs}. Defaults to \code{FALSE} but is \code{TRUE} for the "\code{IMIFA}" and "\code{IMFA}" methods under \code{\link{mcmc_IMIFA}}. Details of this correction are given in Murphy et. al. (2018). When set to \code{TRUE}, this results in a speed-improvement when \code{probs} contains non-finite values (e.g. \code{-Inf}, corresponding to zero on the probability scale).
 #' @return A vector of N sampled cluster labels, with the largest label no greater than G.
 #' @importFrom Rfast "rowMaxs"
 #' @keywords utility
@@ -135,7 +135,7 @@
 #'
 #' If the normalising constant is required for another reason, e.g. to compute the log-likelihood, it can be calculated by summing the output obtained by calling \code{\link[matrixStats]{rowLogSumExps}} on \code{probs}.
 #'
-#' @references Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
+#' @references Murphy, K., Gormley, I. C. and Viroli, C. (2018) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
 #'
 #' Yellot, J. I. Jr. (1977) The relationship between Luce's choice axiom, Thurstone's theory of comparative judgment, and the double exponential distribution, \emph{Journal of Mathematical Psychology}, 15: 109-144.
 #' @export
@@ -188,7 +188,7 @@
 
     .log_palpha  <- function(alpha, discount, alpha.shape, alpha.rate, N, G) {
       l.prior    <- stats::dgamma(alpha    + discount, shape=alpha.shape, rate=alpha.rate, log=TRUE)
-        lgamma(alpha  + 1) - lgamma(alpha  + N) + sum(log(alpha + discount   * seq_len(G - 1))) + l.prior
+        lgamma(alpha  + 1) - lgamma(alpha  + N) + sum(log(alpha + discount   * seq_len(G - 1L))) + l.prior
     }
 
     .sim_alpha_m <- function(alpha, discount, alpha.shape, alpha.rate, N, G, zeta) {
@@ -206,11 +206,11 @@
       G          <- G * x
         lgamma(G) - lgamma(N + G)            +
         sum(lgamma(nn + x)   - lgamma(x))    +
-        dgamma(x, shape=shape, rate=rate, log=TRUE)
+        stats::dgamma(x, shape=shape, rate=rate, log=TRUE)
     }
 
     .sim_alpha_o <- function(alpha, zeta, G, N, nn, shape, rate) {
-      propa      <- exp(log(alpha) + rnorm(1, 0, zeta))
+      propa      <- exp(log(alpha) + stats::rnorm(1, 0, zeta))
       logpr      <- .log_Oalpha(propa, G, N, nn, shape, rate) - .log_Oalpha(alpha, G, N, nn, shape, rate) + log(propa) - log(alpha)
       acpt       <- logpr >= 0  || - stats::rexp(1) < logpr
         return(list(alpha  = ifelse(acpt, propa, alpha), rate = acpt, l.prob = logpr))
@@ -222,28 +222,28 @@
     }
 
   # Discount
-    .log_pdslab  <- function(discount, disc.shape1, disc.shape2, G, unif, nn)       {
+    .log_pdslab  <- function(discount, disc.shape1, disc.shape2, G, unif, nn)          {
       l.prior    <- ifelse(unif, 0, stats::dbeta(discount, shape1=disc.shape1, shape2=disc.shape2, log=TRUE))
-        sum(log(discount   * seq_len(G - 1))) +  sum(lgamma(nn - discount) - lgamma(1 - discount)) + l.prior
+        sum(log(discount   * seq_len(G - 1L))) +  sum(lgamma(nn - discount) - lgamma(1 - discount)) + l.prior
     }
 
-    .log_pdspike <- function(discount, disc.shape1, disc.shape2, G, unif, nn, alpha, kappa)    {
-      l.prior    <- ifelse(discount == 0, log(kappa),    log1p(- kappa) + ifelse(unif, 0, stats::dbeta(discount, shape1=disc.shape1, shape2=disc.shape2, log=TRUE)))
-        sum(log(alpha + discount  * seq_len(G - 1)))  +  sum(lgamma(nn  - discount) - lgamma(1 - discount)) + l.prior
+    .log_pdspike <- function(discount, disc.shape1, disc.shape2, G, unif, nn, alpha, kappa)     {
+      l.prior    <- ifelse(discount == 0, log(kappa),     log1p(- kappa) + ifelse(unif, 0, stats::dbeta(discount, shape1=disc.shape1, shape2=disc.shape2, log=TRUE)))
+        sum(log(alpha + discount  * seq_len(G  - 1L))) +  sum(lgamma(nn  - discount) - lgamma(1 - discount)) + l.prior
     }
 
-    .sim_d_slab  <- function(discount, disc.shape1, disc.shape2, G, unif, nn, ...)  {
+    .sim_d_slab  <- function(discount, disc.shape1, disc.shape2, G, unif, nn, ...)   {
       propd      <- ifelse(unif, stats::runif(1), stats::rbeta(1, disc.shape1, disc.shape2))
-      propd      <- ifelse(propd == 1, propd - .Machine$double.eps, propd)
+      propd      <- ifelse(propd == 1, propd   - .Machine$double.eps,      propd)
       cprob      <- .log_pdslab(discount,  disc.shape1, disc.shape2, G, unif, nn)
       pprob      <- .log_pdslab(propd,     disc.shape1, disc.shape2, G, unif, nn)
       logpr      <- pprob  - cprob
-      acpt       <- logpr >= 0   ||  - stats::rexp(1) < logpr
+      acpt       <- logpr >= 0   ||  - stats::rexp(1)  < logpr
         return(list(disc = ifelse(acpt, propd, discount), rate = acpt))
     }
 
     .sim_d_spike <- function(discount, disc.shape1, disc.shape2, G, unif, nn, alpha, kappa)    {
-      propd      <- ifelse(alpha  > 0,  ifelse(kappa != 0 && stats::runif(1) <= kappa, 0, ifelse(unif,
+      propd      <- ifelse(alpha  > 0,  ifelse(kappa  != 0 && stats::runif(1) <= kappa, 0L, ifelse(unif,
                            stats::runif(1), stats::rbeta(1, disc.shape1, disc.shape2))), stats::runif(1, max(0, - alpha), 1))
       propd      <- ifelse(propd == 1, propd - .Machine$double.eps, propd)
       if(identical(discount, propd)) {
@@ -293,7 +293,7 @@
 
   # Column Shrinkage
     .sim_delta_p <- function(Q = 2L, alpha, beta) {
-        stats::rgamma(n=Q - 1, shape=alpha, rate=beta)
+        stats::rgamma(n=Q - 1L, shape=alpha, rate=beta)
     }
 
   # Cluster Shrinkage
@@ -325,7 +325,7 @@
 #' @export
 #'
 #' @seealso \code{\link{mcmc_IMIFA}}
-#' @references Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
+#' @references Murphy, K., Gormley, I. C. and Viroli, C. (2018) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
 #'
 #' Fruwirth-Schnatter, S. and Lopes, H. F. (2010). Parsimonious Bayesian factor analysis when the number of factors is unknown, \emph{Technical Report}. The University of Chicago Booth School of Business.
 #'
@@ -359,7 +359,7 @@
 
       if(inherits(inv.cov, "try-error"))   {
         covsvd   <- svd(covar)
-        posi     <- covsvd$d > max(sqrt(.Machine$double.eps) * covsvd$d[1L], 0)
+        posi     <- covsvd$d > max(sqrt(.Machine$double.eps) * covsvd$d[1L], 0L)
         inv.cov  <- if(all(posi)) covsvd$v %*% (t(covsvd$u)/covsvd$d) else if(any(posi))
                     covsvd$v[,posi, drop=FALSE] %*% (t(covsvd$u[,posi, drop=FALSE])/covsvd$d[posi]) else array(0L, dim(covar)[2L:1L])
       }
@@ -375,7 +375,7 @@
 #' @param shift Modifier, such that the Gamma distribution has support on (\code{shift}, \eqn{\infty}). Can be positive or negative, though typically negative and small.
 #' @param param Switch controlling whether the supplied \code{rate} parameter is indeed a rate, or actually a scale parameter. Also governs whether the output is given in terms of rate or scale. Defaults to "\code{rate}".
 #'
-#' @note This function is invoked within \code{\link{mcmc_IMIFA}} when \code{discount} is \emph{fixed} at a non-zero value.
+#' @note This function is invoked within \code{\link{mcmc_IMIFA}} when \code{discount} is \emph{fixed} at a non-zero value and \code{learn.alpha=TRUE}.
 #' @return A list of length 2, containing the modified shape and rate parameters, respectively.
 #' @keywords utility
 #' @export
@@ -404,7 +404,7 @@
       exp        <- shape/rate
       if(shift   >= exp)                   warning("This expected value is not achievable with the supplied 'shift'\n", call.=FALSE, immediate.=TRUE)
       var        <- exp/rate
-      exp        <- max(exp - shift,   0)
+      exp        <- max(exp - shift, 0L)
       rate       <- exp/var
       shape      <- rate    * exp
         return(list(shape   = shape, rate = switch(EXPR=param, rate=rate, 1/rate)))
@@ -433,7 +433,7 @@
 #' @keywords control
 #' @seealso \code{\link{mcmc_IMIFA}}
 #' @references
-#' Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
+#' Murphy, K., Gormley, I. C. and Viroli, C. (2018) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
 #'
 #' Durante, D. (2017). A note on the multiplicative gamma process, \emph{Statistics & Probability Letters}, 122: 198-204.
 #'
@@ -574,23 +574,23 @@
       if(length(equal.pro)  > 1  ||
          !is.logical(equal.pro))           stop("'equal.pro' must be a single logical indicator", call.=FALSE)
       meth       <- unlist(strsplit(match.arg(method), ""))
-      lambda     <- P * Q   - 0.5 * Q * (Q - 1)
-      lambda     <- switch(EXPR=meth[1L], C = lambda,  U = G  * lambda)
+      lambda     <- P * Q   - 0.5 * Q * (Q - 1L)
+      lambda     <- switch(EXPR=meth[1L], C = lambda,  U = G    * lambda)
       if(length(meth) < 4)  {
-        psi      <- switch(EXPR=meth[2L], C = 1,       U = G)
-        psi      <- switch(EXPR=meth[3L], C = 1,       U = P) * psi
+        psi      <- switch(EXPR=meth[2L], C = 1L,      U = G)
+        psi      <- switch(EXPR=meth[3L], C = 1L,      U = P)   * psi
       } else      {
         epgmm    <- paste(meth[-1L], sep="", collapse="")
-        psi      <- switch(EXPR=epgmm, CUU  = G  + P - 1, UCU = 1  + G * (P - 1))
+        psi      <- switch(EXPR=epgmm, CUU  = G   + P - 1L, UCU = 1L + G * (P - 1L))
       }
-        as.integer(ifelse(equal.pro, 0L, G  - 1) + G * P  + lambda + psi)
+        as.integer(ifelse(equal.pro, 0L, G  - 1L) + G * P  + lambda  + psi)
     }
 
   # Label Switching
   #' @importFrom matrixStats "colSums2" "rowSums2"
     .lab_switch  <- function(z.new, z.old) {
       tab        <- table(z.new, z.old, dnn=NULL)
-      tab.tmp    <- tab[rowSums2(tab) != 0,colSums2(tab) != 0, drop=FALSE]
+      tab.tmp    <- tab[rowSums2(tab) != 0, colSums2(tab) != 0, drop=FALSE]
       nc         <- ncol(tab.tmp)
       nr         <- nrow(tab.tmp)
       ng         <- table(z.new)
@@ -764,8 +764,8 @@
 
   # Move 2
     .lab_move2   <- function(G, Vs, nn)    {
-      sw         <- sample(G, 1L, prob=c(rep(1, G - 2), 0.5, 0.5))
-      sw         <- if(is.element(sw, c(G, G - 1))) c(G - 1, G) else c(sw, sw + 1)
+      sw         <- sample(G, 1L, prob=c(rep(1, G - 2L), 0.5, 0.5))
+      sw         <- if(is.element(sw, c(G, G - 1L))) c(G - 1L, G) else c(sw, sw + 1L)
       nns        <- nn[sw]
       if(nns[1L] == 0)      {
         return(list(rate2   = TRUE,
@@ -773,7 +773,7 @@
       } else      {
         log.vs   <- log1p(  - Vs[sw])
         a.prob   <- nns[2L] * log.vs[1L]
-        a.prob   <- nns[1L] * log.vs[2L]       - ifelse(is.nan(a.prob), 0,  a.prob)
+        a.prob   <- nns[1L] * log.vs[2L]       - ifelse(is.nan(a.prob), 0L, a.prob)
         return(list(rate2   = a.prob >= 0   || - stats::rexp(1) < a.prob, sw = sw))
       }
     }
@@ -826,7 +826,7 @@
       tol        <- if(missing(tol)) max(abseigs) * d * .Machine$double.eps else tol
       if(length(tol)  > 1  ||
          !is.numeric(tol))                 stop("argument 'tol' is not a single number", call.=FALSE)
-      test       <- replace(eval, abseigs < tol, 0)
+      test       <- replace(eval, abseigs < tol, 0L)
       check      <- all(if(isTRUE(semi)) test >= 0 else test > 0)
       if(isTRUE(make))  {
         evec     <- eigs$vectors
@@ -858,7 +858,7 @@
       if(isTRUE(isotropic))      {
           as.integer(P - 1L)
       } else      {
-        R        <- P + 0.5 * (1 - sqrt(8 * P  + 1))
+        R        <- P + 0.5 * (1 - sqrt(8L * P  + 1L))
           as.integer(floor(ifelse(1e-10 > abs(R - round(R)), round(R), R)))
       }
     }
@@ -924,7 +924,7 @@
       svdX       <- svd(C)
       R          <- tcrossprod(svdX$v, svdX$u)
       d          <- if(dilate)    sum(colSums2(C * R))/sum(colSums2(crossprod(J, X) * X)) else 1L
-      tt         <- if(translate) crossprod(Xstar - d * X %*% R, matrix(1, N, 1))/N       else 0L
+      tt         <- if(translate) crossprod(Xstar - d * X %*% R, matrix(1L, N, 1))/N      else 0L
       X.new      <- d * X %*% R + if(translate) matrix(tt, N, P, byrow = TRUE)            else tt
         return(c(list(X.new = X.new), list(R = R), if(translate) list(t = tt),
                  if(dilate) list(d = d), if(sumsq) list(ss = sum((X - X.new)^2))))
@@ -1157,20 +1157,21 @@
     print.Results_IMIFA  <- function(x, ...) {
       method     <- attr(x, "Method")
       adapt      <- attr(x, "Adapt") || !is.element(method, c("IFA", "MIFA", "OMIFA", "IMIFA"))
+      choice     <- ifelse(attr(x, "Choice"), paste0(" (", switch(EXPR=method, MFA="both ", ""), "chosen by ", toupper(attr(x, "Criterion")), ")"), "")
       G          <- x$GQ.results$G
       Q          <- x$GQ.results$Q
-      if(is.element(method, c("FA", "IFA")))  {
-        msg      <- paste0("The chosen ", method, " model has ", Q, " factor", ifelse(Q == 1, "", "s"), ifelse(adapt, "", " (no adaptation took place)"))
-      } else if(is.element(method, c("MFA", "OMFA", "IMFA"))) {
-        msg      <- paste0("The chosen ", method, " model has ", G, " group",  ifelse(G == 1, " with ", "s, each with "), unique(Q), " factor", ifelse(unique(Q) == 1, "", "s"))
-      } else {
+      switch(EXPR=method, FA=, IFA={
+        msg      <- paste0("The chosen ", method, " model has ", Q, " factor", ifelse(Q == 1, "", "s"), choice, ifelse(adapt, "", " (no adaptation took place)"))
+      }, MFA=, OMFA=, IMFA= {
+        msg      <- paste0("The chosen ", method, " model has ", G, " group",  ifelse(G == 1, " with ", "s, each with "), unique(Q), " factor", ifelse(unique(Q) == 1, "", "s"), choice)
+      }, {
         Q.msg    <- NULL
         for(i in seq_along(Q[-length(Q)])) {
           Q.msg  <- c(Q.msg, (paste0(Q[i], ifelse(i + 1 < length(Q), ", ", " "))))
         }
         Q.msg    <- if(!adapt) paste0(unique(Q)) else { if(length(Q) > 1) paste(c(Q.msg, paste0("and ", Q[length(Q)])), sep="", collapse="") else Q }
-        msg      <- paste0("The chosen ", method, " model has ", G, " group", ifelse(G == 1, " with ", paste0("s,", ifelse(adapt, "", " each"), " with ")), Q.msg, " factor", ifelse(G == 1 && Q == 1, "", paste0("s", ifelse(G == 1, "", " respectively"))), ifelse(adapt, "", " (no adaptation took place)"), sep="")
-      }
+        msg      <- paste0("The chosen ", method, " model has ", G, " group", ifelse(G  == 1, "", "s"), choice, ifelse(G == 1, " with ", paste0(ifelse(adapt, "", " each"), " with ")), Q.msg, " factor", ifelse(all(Q == 1), "", paste0("s", ifelse(G == 1, "", " respectively"))), ifelse(adapt, "", " (no adaptation took place)"), sep="")
+      })
       cat(paste0(msg, ": this Results_IMIFA object can be passed to plot(...)\n"))
       if(!isTRUE(attr(x,  "Nowarn.G"))) {  cat("\n");  message(attr(x, "Nowarn.G"))
       }
@@ -1241,7 +1242,7 @@
 #' @export
 #' @keywords control
 #' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{psi_hyper}}, \code{\link[mclust]{Mclust}}, \code{\link[mclust]{hc}}, \code{\link[stats]{kmeans}}
-#' @references Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
+#' @references Murphy, K., Gormley, I. C. and Viroli, C. (2018) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
 #'
 #' McNicholas, P. D. and Murphy, T. B. (2008) Parsimonious Gaussian Mixture Models, \emph{Statistics and Computing}, 18(3): 285-296.
 #'
@@ -1282,7 +1283,7 @@
                              uni.type = c("unconstrained", "isotropic", "constrained", "single"), psi.alpha = 2.5, psi.beta = NULL, mu.zero = NULL,
                              sigma.mu = NULL, prec.mu = 0.1, sigma.l = 1L, z.init = c("mclust", "hc", "kmeans", "list", "priors"), z.list = NULL, equal.pro = FALSE,
                              uni.prior = c("unconstrained", "isotropic"), mu0g = FALSE, psi0g = FALSE, drop0sd = TRUE, verbose = interactive(), ...) {
-    miss.args    <- list(uni.type = missing(uni.type), psi.beta = missing(psi.beta), mu.zero = missing(mu.zero), prec.mu = missing(prec.mu),
+    miss.args    <- list(uni.type = missing(uni.type), psi.beta = missing(psi.beta), mu.zero = missing(mu.zero),
                          sigma.mu = missing(sigma.mu), z.init = missing(z.init), z.list = missing(z.list), uni.prior = missing(uni.prior))
     burnin       <- as.integer(burnin)
     n.iters      <- max(burnin + 1L, as.integer(n.iters))
@@ -1376,7 +1377,7 @@
 #'
 #' Under the "\code{IMFA}" and "\code{IMIFA}" methods, a Pitman-Yor process prior is specified by default. A Dirichlet process prior can be easily invoked when the \code{discount} is fixed at \code{0} and \code{learn.d=FALSE}. The normalized stable process can also be specified as a prior distribution, as a special case of the Pitman-Yor process, when \code{alpha} remains fixed at \code{0} and \code{learn.alpha=FALSE} (provided the \code{discount} is fixed at a non-zero value or \code{learn.d=TRUE}).
 #' @keywords control
-#' @references Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
+#' @references Murphy, K., Gormley, I. C. and Viroli, C. (2018) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
 #'
 #' Kalli, M., Griffin, J. E. and Walker, S. G. (2011) Slice sampling mixture models, \emph{Statistics and Computing}, 21(1): 93-105.
 #'
@@ -1503,8 +1504,8 @@
 #' Control settings for the MGP prior and AGS for infinite factor models
 #'
 #' Supplies a list of arguments for use in \code{\link{mcmc_IMIFA}} pertaining to the use of the multiplicative gamma process (MGP) shrinkage prior and adaptive Gibbs sampler (AGS) for use with the infinite factor models "\code{IFA}", "\code{MIFA}", "\code{OMIFA}", and "\code{IMIFA}".
-#' @param alpha.d1 Shape hyperparameter of the column shrinkage on the first column of the loadings according to the MGP shrinkage prior. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to 2.
-#' @param alpha.d2 Shape hyperparameter of the column shrinkage on the subsequent columns of the loadings according to the MGP shrinkage prior. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to 6.
+#' @param alpha.d1 Shape hyperparameter of the column shrinkage on the first column of the loadings according to the MGP shrinkage prior. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to \code{2.1}.
+#' @param alpha.d2 Shape hyperparameter of the column shrinkage on the subsequent columns of the loadings according to the MGP shrinkage prior. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to \code{3.1}.
 #' @param phi.hyper A vector of length 2 giving the shape and rate hyperparameters for the gamma prior on the local shrinkage parameters. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to \code{c(3, 2)}. It is suggested that the rate be <= shape minus 1 to induce local shrinkage, though the cumulative shrinkage property is unaffected by these hyperparameters. Excessively small values may lead to critical numerical issues and should thus be avoided; indeed it is \emph{suggested} that the shape be >=1.
 #' @param sigma.hyper A vector of length 2 giving the shape and rate hyperparameters for the gamma prior on the cluster shrinkage parameters. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to \code{c(3, 2)}. Again, it is \emph{suggested} that the shape be >= 1. Only relevant for the "\code{IMIFA}", "\code{OMIFA}", and "\code{MIFA}" methods when \code{isTRUE(cluster.shrink)}.
 #' @param prop Proportion of loadings elements within the neighbourhood \code{eps} of zero necessary to consider a loadings column redundant. Defaults to \code{floor(0.7 * P)/P}, where \code{P} is the number of variables in the data set. However, if the data set is univariate or bivariate, the default is \code{0.5} (see Note).
@@ -1531,15 +1532,15 @@
 #'
 #' The adaptive Gibbs sampler (AGS) monitors the \code{prop} of loadings elements within the neighbourhood \code{eps} of 0 and discards columns or simulates new columns on this basis. However, if at any stage the number of group-specific latent factors reaches zero, the decision to add columns is instead based on a simple binary trial with probability \code{1-prop}, as there are no loadings entries to monitor.
 #' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{MGP_check}}
-#' @references Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
+#' @references Murphy, K., Gormley, I. C. and Viroli, C. (2018) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
 #'
 #' Durante, D. (2017). A note on the multiplicative gamma process, \emph{Statistics & Probability Letters}, 122: 198-204.
 #'
 #' Bhattacharya, A. and Dunson, D. B. (2011) Sparse Bayesian infinite factor models, \emph{Biometrika}, 98(2): 291-306.
 #' @author Keefe Murphy - <\email{keefe.murphy@@ucd.ie}>
 #' @usage
-#' mgpControl(alpha.d1 = 2,
-#'            alpha.d2 = 6,
+#' mgpControl(alpha.d1 = 2.1,
+#'            alpha.d2 = 3.1,
 #'            phi.hyper = c(3, 2),
 #'            sigma.hyper = c(3, 2),
 #'            prop = 0.7,
@@ -1562,7 +1563,7 @@
 #'
 #' # Alternatively specify these arguments directly
 #' # sim   <- mcmc_IMIFA(olive, "IMIFA", n.iters=5000, phi.hyper=c(2.5, 1), eps=1e-02)
-    mgpControl   <- function(alpha.d1 = 2, alpha.d2 = 6, phi.hyper = c(3, 2), sigma.hyper = c(3, 2), prop = 0.7, eps = 1e-01, adapt = TRUE,
+    mgpControl   <- function(alpha.d1 = 2.1, alpha.d2 = 3.1, phi.hyper = c(3, 2), sigma.hyper = c(3, 2), prop = 0.7, eps = 1e-01, adapt = TRUE,
                              cluster.shrink = TRUE, b0 = 0.1, b1 = 5e-05, beta.d1 = 1, beta.d2 = 1, start.AGS = 0L, stop.AGS = Inf, delta0g = FALSE, ...) {
       miss.args  <- list(propx = missing(prop), startAGSx = missing(start.AGS), stopAGSx = missing(stop.AGS))
       if(any(!is.numeric(alpha.d1),
@@ -1827,7 +1828,7 @@
       if(!is.matrix(x))                    stop("'x' must be a matrix")
       m          <- if(missing(suma)) colSums2(x) else suma
       n          <- nrow(x)
-      s          <- (colSums2(x * x) - (m * m)/n)/(n - 1)
+      s          <- (colSums2(x * x) - (m * m)/n)/(n - 1L)
         if(std) sqrt(s) else s
     }
 
@@ -1869,7 +1870,7 @@
         return(g)
     }
 
-    .match_classes  <- function(tab, method = "rowmax", iter = 1, maxexact = 9, verbose = TRUE) {
+    .match_classes  <- function(tab, method = "rowmax", iter = 1L, maxexact = 9L, verbose = TRUE) {
       methods    <- c("rowmax", "greedy", "exact")
       method     <- pmatch(method, methods)
       rmax       <- apply(tab, 1L, which.max)
@@ -1907,26 +1908,26 @@
             if(sum(!baseok)  > maxexact) { warning(paste("Would need permutation of", sum(!baseok), "numbers, resetting to greedy search\n"), call.=FALSE, immediate.=TRUE)
               method  <- 2
             } else     {
-              iter    <- gamma(ncol(tab) - sum(baseok) + 1)
+              iter    <- gamma(ncol(tab) - sum(baseok) + 1L)
               if(verbose)                  cat("Iterations for permutation matching:", iter, "\\n")
               perm    <- .permutations(ncol(tab) - sum(baseok))
             }
           }
           rest   <- if(any(baseok)) myseq[-retval[baseok]] else myseq
-          for(l in 1:iter)   {
+          for(l in 1L:iter)  {
             newretval <- retval
             if(method == 2)  {
               ok      <- baseok
               while(sum(!ok) > 1)  {
                 rest  <- myseq[!ok]
-                k     <- sample(rest, 1)
+                k     <- sample(rest, 1L)
                 rmax  <- if(any(ok)) tab[k,-newretval[ok]] else tab[k,]
                 ok[k] <- TRUE
                 newretval[k]      <- as.numeric(names(rmax)[which.max(rmax)])
               }
               newretval[!ok]      <- myseq[-newretval[ok]]
             } else     {
-              newretval[!baseok]  <- rest[perm[l, ]]
+              newretval[!baseok]  <- rest[perm[l,]]
             }
             if(l  > 1) {
               agree   <- sum(diag(tab[,newretval]))/sum(tab)
@@ -1969,27 +1970,32 @@
       if(all(icheck   <- floor(x) == x, na.rm=TRUE))   {
         res[na.ind]   <- if(isTRUE(after.dot)) vector("integer", length(x)) else sapply(as.integer(x), format.info, digits=22)
       } else      {
-        ipart    <- pmax(1, floor(x))
+        ipart    <- pmax(1L, floor(x))
         ichar    <- nchar(ipart)
         remain   <- x %% ipart
-        res[na.ind]   <- (sapply(gsub("0+$", "", as.character(remain)), format.info, digits=22L)        - !icheck)   -
-                      (if(isTRUE(after.dot)) pmin(1, replace(ichar, remain == 0, 0L)) else ifelse(ichar > 1, - ichar + !icheck, 0L))
+        res[na.ind]   <- (sapply(gsub("0+$", "", as.character(remain)), format.info, digits=22L)         - !icheck)   -
+                      (if(isTRUE(after.dot)) pmin(1L, replace(ichar, remain == 0, 0L)) else ifelse(ichar > 1, - ichar + !icheck, 0L))
       }
         return(res)
+    }
+
+    .padding     <- function(x, nr) {
+      length(x)  <- nr
+        replace(x, is.na(x), 0L)
     }
 
     .permutations     <- function(n) {
       if(n == 1)    {                      return(matrix(1))
       } else if(n   < 2)                   stop("n must be a positive integer", call.=FALSE)
-      z          <- matrix(1)
+      z          <- matrix(1L)
       for(i in 2:n) {
         x        <- cbind(z, i)
-        a        <- c(1L:i, 1L:(i - 1))
+        a        <- c(1L:i, 1L:(i - 1L))
         nr       <- nrow(x)
         z        <- matrix(0L, ncol=ncol(x), nrow=i * nr)
         z[1:nr,] <- x
         for(j in 2:i - 1)    {
-          z[j * nr + 1:nr,] <- x[,a[1:i + j]]
+         z[j * nr + 1L:nr,] <- x[,a[1L:i + j]]
         }
       }
       dimnames(z)     <- NULL
@@ -2012,8 +2018,8 @@
         (is.null(ui)  || is.null(li)))     stop("Must specify either relative limits or both lower and upper limits", call.=FALSE)
       if(!missing(uiw)) {
         z        <- if(err == "y") y else x
-        ui       <- z + uiw
-        li       <- z - liw
+        ui       <- z  + uiw
+        li       <- z  - liw
       }
       if(is.null(arglist$xlab)) arglist$xlab <- deparse(substitute(x))
       if(is.null(arglist$ylab)) arglist$ylab <- deparse(substitute(y))
@@ -2026,7 +2032,7 @@
       }
       ppoints    <- TRUE
       if(!is.null(arglist$pch) && is.na(arglist$pch)) {
-        arglist$pch       <- 1
+        arglist$pch       <- 1L
         ppoints           <- FALSE
       }
       if(!add) do.call(graphics::plot, c(list(x, y, type = "n"), .clean_args(arglist, graphics::plot)))
@@ -2037,7 +2043,7 @@
       x.to.in    <- pin[1L]/diff(usr[1L:2L])
       y.to.in    <- pin[2L]/diff(usr[3L:4L])
       if(err == "y") {
-        gap      <- rep(gap, length(x)) * diff(graphics::par("usr")[3:4])
+        gap      <- rep(gap, length(x)) * diff(graphics::par("usr")[3L:4L])
         smidge   <- graphics::par("fin")[1] * sfrac
         nz       <- abs(li - pmax(y - gap, li)) * y.to.in > 0.001
         scols    <- rep(scol, length.out = length(x))[nz]
@@ -2049,7 +2055,7 @@
         arrow.args$col    <- scols
         do.call(graphics::arrows, c(list(x[nz], ui[nz], x[nz], pmin(y + gap, ui)[nz]), arrow.args))
       } else if(err == "x") {
-        gap      <- rep(gap, length(x)) * diff(graphics::par("usr")[1:2])
+        gap      <- rep(gap, length(x)) * diff(graphics::par("usr")[1L:2L])
         smidge   <- graphics::par("fin")[2L] * sfrac
         nz       <- abs(li - pmax(x - gap, li)) * x.to.in > 0.001
         scols    <- rep(scol, length.out = length(x))[nz]
@@ -2079,7 +2085,7 @@
       if(!is.matrix(x))                    stop("'x' must be a matrix")
       m          <- if(missing(suma)) rowSums2(x) else suma
       n          <- ncol(x)
-      s          <- (rowSums2(x * x) - (m * m)/n)/(n - 1)
+      s          <- (rowSums2(x * x) - (m * m)/n)/(n - 1L)
         if(std) sqrt(s) else s
     }
 
@@ -2090,7 +2096,7 @@
       scaling    <- if(is.logical(scale))     scale else is.numeric(scale)
       if(center  && scaling) {
         y        <- t(x) - cmeans
-          if(isTRUE(scale)) t(y/sqrt(rowSums2(y * y)) * sqrt(nrow(x) - 1)) else t(y/scale)
+          if(isTRUE(scale)) t(y/sqrt(rowSums2(y * y)) * sqrt(nrow(x) - 1L)) else t(y/scale)
       } else if(center)     {
           t(t(x)  - cmeans)
       } else if(scaling)    {

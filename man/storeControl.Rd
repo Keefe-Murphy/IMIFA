@@ -33,12 +33,14 @@ A named vector in which the names are the names of the storage switches and the 
 Supplies a list of values for logical switches indicating whether parameters of interest (means, scores, loadings, uniquenesses, and mixing proportions) should be stored when running models from the IMIFA family via \code{\link{mcmc_IMIFA}}. It may be useful not to store certain parameters if memory is an issue.
 }
 \details{
-\code{\link{storeControl}} is provided for assigning values for IMIFA models within \code{\link{mcmc_IMIFA}}. It may be useful not to store certain parameters if memory is an issue (e.g. for large data sets or for a large number of MCMC iterations after burnin and thinning). Warning: posterior inference and plotting won't be posssible for parameters not stored.
-
-In particular, when loadings and uniquenesses are not stored (or when means are not stored, for any of the mixture models), it will not be possible to estimate covariance matrices and compute error metrics. If loadings are not stored but scores are, caution is advised when examining posterior scores as Procrustes rotation will not occur within \code{\link{get_IMIFA_results}}.
+\code{\link{storeControl}} is provided for assigning values for IMIFA models within \code{\link{mcmc_IMIFA}}. It may be useful not to store certain parameters if memory is an issue (e.g. for large data sets or for a large number of MCMC iterations after burnin and thinning).
 }
 \note{
-Further warning messages may appear when \code{\link{mcmc_IMIFA}} is called depending on the particularities of the data set and the IMIFA method employed etc. as additional checks occur.
+Posterior inference and plotting won't be posssible for parameters not stored.
+
+Non-storage of parameters will almost surely prohibit the computation of posterior predictive checking error metrics within \code{\link{get_IMIFA_results}} also.
+
+Finally, if loadings are not stored but scores are, caution is advised when examining posterior scores as Procrustes rotation will not occur within \code{\link{get_IMIFA_results}}.
 }
 \examples{
 stctrl <- storeControl(score.switch=FALSE)

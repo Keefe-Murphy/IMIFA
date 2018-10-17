@@ -85,7 +85,7 @@
                                                constrained=.sim_psi_cu,     single=.sim_psi_cc)
     .sim_psi_ip      <- switch(EXPR=uni.prior, unconstrained=.sim_psi_ipu,  isotropic=.sim_psi_ipc)
     if(isTRUE(one.uni)) {
-      uni.shape      <- switch(EXPR=uni.type,  constrained=N/2 + psi.alpha, single=(N * P)/2  + psi.alpha)
+      uni.shape      <- switch(EXPR=uni.type,  constrained=N/2 + psi.alpha, single=(N * P)/2 + psi.alpha)
       V              <- switch(EXPR=uni.type,  constrained=P, single=1L)
     }
     psi.beta         <- switch(EXPR=uni.prior, isotropic=psi.beta[which.max(.ndeci(psi.beta))], psi.beta)
@@ -96,17 +96,17 @@
     mu               <- cbind(mu, if(uni) t(mu.tmp) else mu.tmp)
     eta              <- .sim_eta_p(N=N, Q=Q)
     phi              <- replicate(trunc.G, .sim_phi_p(Q=Q, P=P, nu1=nu1, nu2=nu2), simplify=FALSE)
-    delta            <- lapply(Ts, function(t) c(.sim_delta_p(alpha=alpha.d1, beta=beta.d1), .sim_delta_p(Q=Q, alpha=alpha.d2, beta=beta.d2)))
+    delta            <- replicate(trunc.G, list(c(.sim_delta_p(alpha=alpha.d1, beta=beta.d1), .sim_delta_p(Q=Q, alpha=alpha.d2, beta=beta.d2))))
     tau              <- lapply(delta, cumprod)
-    if(cluster.shrink)   {
+    if(cluster.shrink)  {
       sig.store      <- matrix(0L, nrow=trunc.G, ncol=n.store)
       MGPsig         <- .sim_sigma_p(G=trunc.G, rho1=rho1, rho2=rho2)
     } else MGPsig    <- rep(1L, trunc.G)
     lmat             <- lapply(Ts, function(t) matrix(vapply(Ps, function(j) .sim_load_ps(Q=Q, phi=phi[[t]][j,], tau=tau[[t]], sigma=MGPsig[t]), numeric(Q)), nrow=P, byrow=TRUE))
     psi.inv          <- replicate(trunc.G, .sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), simplify="array")
     psi.inv          <- if(uni) t(psi.inv) else psi.inv
-    if(Q < min(N - 1, Ledermann(P)))     {
-      for(g in which(nn > P)) {
+    if(Q < min(N - 1L, Ledermann(P)))    {
+      for(g in which(nn > P))  {
         fact         <- try(stats::factanal(data[z == g,, drop=FALSE], factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
         if(!inherits(fact, "try-error")) {
           eta[z == g,]        <- fact$scores
@@ -119,13 +119,13 @@
       if(isTRUE(one.uni)) {
         psi.inv[,Gs] <- 1/switch(EXPR=uni.type, constrained=.col_vars(data), .geom_mean(.col_vars(data)))
       } else   {
-        tmp.psi      <- ((nn[nn0] - 1)/(rowsum(data^2,  z) - rowsum(data, z)^2/nn[nn0]))
+        tmp.psi      <- ((nn[nn0] - 1L)/(rowsum(data^2, z) - rowsum(data, z)^2/nn[nn0]))
         psi.inv[,nn   > 1]    <- tmp.psi[!is.nan(tmp.psi)]
       }
       inf.ind        <- is.infinite(psi.inv) | is.nan(psi.inv)
       psi.inv[inf.ind]        <- psi.tmp[inf.ind]
     }
-    psi.inv[psi.inv == 0]     <- colMaxs(psi.inv[,which(psi.inv == 0, arr.ind=TRUE)[,2L], drop=FALSE], value=TRUE)
+    psi.inv[psi.inv  == 0]    <- colMaxs(psi.inv[,which(psi.inv == 0, arr.ind=TRUE)[,2L], drop=FALSE], value=TRUE)
     index            <- order(pi.prop, decreasing=TRUE)
     pi.prop          <- pi.prop[index]
     mu               <- mu[,index, drop=FALSE]
@@ -144,8 +144,8 @@
     if(ind.slice) {
       ksi            <- (1 - rho) * rho^(Ts - 1L)
       log.ksi        <- log(ksi)
-    }
-    slice.logs       <- c(- Inf, 0L)
+      slinf          <- rep(-Inf, N)
+    } else slinf     <- c(-Inf,  0L)
     if(burnin         < 1)  {
       if(sw["mu.sw"])      mu.store[,,1L] <- mu
       if(sw["s.sw"])      eta.store[,,1L] <- eta
@@ -245,9 +245,9 @@
         sigma        <- if(uni) lapply(Gs, function(g) as.matrix(psi[,g] + if(Q0[g]) tcrossprod(lmat[[g]]) else 0L)) else lapply(Gs, function(g) tcrossprod(lmat[[g]]) + diag(psi[,g]))
         if(ind.slice) {
           log.pixi   <- log(pi.prop) - log.ksi[Gs]
-          log.probs  <- vapply(Gs, function(g) slice.logs[1L + (u.slice < ksi[g])] + log.pixi[g], numeric(N))
+          log.probs  <- vapply(Gs, function(g) { slinf[u.slice < ksi[g]] <- log.pixi[g]; slinf }, numeric(N))
         } else  {
-          log.probs  <- vapply(Gs, function(g) slice.logs[1L + (u.slice < ksi[g])], numeric(N))
+          log.probs  <- vapply(Gs, function(g) slinf[1L + (u.slice < ksi[g])], numeric(N))
         }
         fin.probs    <- is.finite(log.probs)
         if(uni) {
@@ -272,7 +272,7 @@
       c.data         <- lapply(Gs, function(g) sweep(dat.g[[g]], 2L, mu[,g], FUN="-", check.margin=FALSE))
       if(!any(Q0))    {
         eta          <- .empty_mat(nr=N)
-        eta.tmp      <- lapply(Gs, function(g) eta[z == g,, drop=FALSE])
+        eta.tmp      <- lapply(Gs, function(g) eta[z == g,,  drop=FALSE])
         lmat[Gs]     <- replicate(G, .empty_mat(nr=P))
       } else {
         eta.tmp      <- lapply(Gs, function(g) if(all(nn0[g], Q0[g])) .sim_score(N=nn[g], lmat=lmat[[g]], Q=Qs[g], Q1=Q1[g], c.data=c.data[[g]], psi.inv=psi.inv[,g]) else matrix(0, nrow=ifelse(Q0[g], 0, nn[g]), ncol=Qs[g]))
@@ -487,7 +487,7 @@
         if(all(sw["s.sw"],
            any(Q0)))    {
           max.Q      <-  max(Qs)
-          eta.tmp    <-  if(length(unique(Qs)) != 1)        lapply(Gs,       function(g) cbind(eta.tmp[[g]], matrix(0, nrow=nn[g], ncol=max.Q - Qs[g]))) else eta.tmp
+          eta.tmp    <-  if(length(unique(Qs)) != 1)        lapply(Gs,       function(g) cbind(eta.tmp[[g]], matrix(0L, nrow=nn[g], ncol=max.Q - Qs[g]))) else eta.tmp
           q0ng       <-  (!Q0  | Qs[Gs] == 0)   & nn0[Gs]
           if(any(q0ng)) {
             eta.tmp[q0ng]     <-                            lapply(Gs[q0ng], function(g, x=eta.tmp[[g]]) { row.names(x) <- row.names(dat.g[[g]]); x })

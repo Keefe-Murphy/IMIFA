@@ -95,7 +95,7 @@
     psi.inv        <- vapply(Gseq, function(g) .sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta[,g]), numeric(P))
     psi.inv        <- if(uni)     t(psi.inv)    else psi.inv
     psi.beta       <- if(one.uni) psi.beta[,1L] else psi.beta
-    if(Q < min(N - 1, Ledermann(P)))     {
+    if(Q < min(N - 1L, Ledermann(P)))    {
       fact.ind     <- nn    <= P
       for(g in which(!fact.ind)) {
         fact       <- try(stats::factanal(data[z == g,, drop=FALSE], factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
@@ -110,7 +110,7 @@
       if(isTRUE(one.uni)) {
         psi.inv[,] <- 1/switch(EXPR=uni.type, constrained=.col_vars(data), .geom_mean(.col_vars(data)))
       } else   {
-        tmp.psi    <- ((nn[nn0] - 1)/(rowsum(data^2,  z) - rowsum(data, z)^2/nn[nn0]))
+        tmp.psi    <- ((nn[nn0] - 1L)/(rowsum(data^2, z) - rowsum(data, z)^2/nn[nn0]))
         psi.inv[,nn > 1]    <- tmp.psi[!is.nan(tmp.psi)]
       }
       inf.ind      <- is.infinite(psi.inv) | is.nan(psi.inv)
@@ -165,7 +165,7 @@
       c.data       <- lapply(Gseq, function(g) sweep(dat.g[[g]], 2L, mu[,g], FUN="-", check.margin=FALSE))
       if(!any(Q0))    {
         eta        <- .empty_mat(nr=N)
-        eta.tmp    <- lapply(Gseq, function(g) eta[z == g,, drop=FALSE])
+        eta.tmp    <- lapply(Gseq, function(g) eta[z == g,,  drop=FALSE])
         lmat       <- replicate(G, .empty_mat(nr=P))
       } else {
         eta.tmp    <- lapply(Gseq, function(g) if(all(nn0[g], Q0[g])) .sim_score(N=nn[g], lmat=lmat[[g]], Q=Qs[g], Q1=Q1[g], c.data=c.data[[g]], psi.inv=psi.inv[,g]) else matrix(0, nrow=ifelse(Q0[g], 0, nn[g]), ncol=Qs[g]))
@@ -334,7 +334,7 @@
         if(all(sw["s.sw"],
            any(Q0)))     {
           max.Q    <- max(Qs)
-          eta.tmp  <- if(length(unique(Qs))  != 1)       lapply(Gseq,       function(g) cbind(eta.tmp[[g]], matrix(0, nrow=nn[g], ncol=max.Q - Qs[g]))) else eta.tmp
+          eta.tmp  <- if(length(unique(Qs))  != 1)       lapply(Gseq,       function(g) cbind(eta.tmp[[g]], matrix(0L, nrow=nn[g], ncol=max.Q - Qs[g]))) else eta.tmp
           q0ng     <- (!Q0   | Qs[Gseq] == 0) & nn0[Gseq]
           if(any(q0ng))  {
             eta.tmp[q0ng]   <-                           lapply(Gseq[q0ng], function(g, x=eta.tmp[[g]]) { row.names(x) <- row.names(dat.g[[g]]); x })

@@ -19,7 +19,7 @@
 #'
 #' Missing values are not allowed in any of \code{pis}, \code{mu}, \code{psi}, \code{loadings}, \code{scores} & \code{nn}.
 #' @export
-#' @references Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
+#' @references Murphy, K., Gormley, I. C. and Viroli, C. (2018) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
 #' @keywords utility
 #' @importFrom Rfast "is.symmetric"
 #' @name sim_IMIFA
@@ -130,6 +130,7 @@ sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(floor(log(P)), G),
     lmat       <- loadings
     if(anyNA(lmat))                       stop("Missing values are not allowed in 'loadings'", call.=FALSE)
     if(G == 1)  {
+      lmat     <- base::matrix(unlist(lmat), nrow=P, ncol=Q)
       if(!is.matrix(lmat)  ||
          !is.numeric(lmat))               stop("Invalid 'loadings' supplied: must be a numeric matrix when G=1", call.=FALSE)
       if(nrow(lmat)   != P ||
@@ -164,14 +165,14 @@ sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(floor(log(P)), G),
   for(g in Gseq) {
     Q.g        <- Q[g]
     N.g        <- nn[g]
-    mu.true    <- stats::setNames(if(mumiss) .sim_mu_p(P=P, mu.zero=musup[g], sig.mu.sqrt=1) else musup[,g], vnames)
+    mu.true    <- stats::setNames(if(mumiss) .sim_mu_p(P=P, mu.zero=musup[g], sig.mu.sqrt=1) else musup[,g],  vnames)
     l.true     <- if(lammiss) matrix(.sim_load_p(Q=Q.g, P=P, sigma.l=1), nrow=P, ncol=Q.g)   else lmat[[g]]
     psi.true   <- stats::setNames(if(psimiss) 1/stats::rgamma(P, shape=2, rate=1)            else psisup[,g], vnames)
 
   # Simulate data
     covmat     <- provideDimnames({ if(P > 1) diag(psi.true) else as.matrix(psi.true) } + { if(Q.g > 0) switch(EXPR=method, marginal=tcrossprod(l.true), 0L) else 0L}, base=list(vnames))
     if(!all(is.symmetric(covmat),
-            is.double(covmat)))           stop("Invalid covariance matrix!", call.=FALSE)
+            is.numeric(covmat)))          stop("Invalid covariance matrix!", call.=FALSE)
     sigma      <- if(all(Q.g > 0, P > 1, method == "marginal")) .chol(is.posi_def(covmat, make=TRUE)$X.new) else sq_mat(covmat)
     means      <- matrix(mu.true, nrow=N.g, ncol=P, byrow=TRUE) + switch(EXPR=method, conditional=tcrossprod(eta.true[true.zlab == g, seq_len(Q.g), drop=FALSE], l.true), 0L)
     simdata    <- rbind(simdata, means + matrnorm(N.g, P) %*% sigma)

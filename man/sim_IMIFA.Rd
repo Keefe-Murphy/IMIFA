@@ -35,7 +35,7 @@ sim_IMIFA_model(res,
 
 \item{loadings}{True values of the loadings matrix/matrices. Must be supplied in the form of a list of numeric matrices when \code{G > 1}, otherwise a single matrix. Matrices must contain \code{P} rows and the number of columns must correspond to the values in \code{Q}. If \code{loadings} are not supplied, such matrices are populated with standard normal random variates by default.}
 
-\item{scores}{True values of the latent factor scores, as a \code{N * max(Q)} numeric matrix. If \code{scores} are not supplied, such a matrix is populated with standard normal random variates by default.}
+\item{scores}{True values of the latent factor scores, as a \code{N * max(Q)} numeric matrix. If \code{scores} are not supplied, such a matrix is populated with standard normal random variates by default. Only relevant when \code{method="conditional"}.}
 
 \item{nn}{An alternative way to specify the size of each cluster, by giving the exact number of observations in each cluster explicitly. Must sum to \code{N}.}
 
@@ -75,7 +75,7 @@ plot(cmdscale(dist(sim_data), k=2), col=labels)
 # tmp    <- mcmc_IMIFA(sim_data, method="MIFA", range.G=3, n.iters=5000)
 }
 \references{
-Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
+Murphy, K., Gormley, I. C. and Viroli, C. (2018) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
 }
 \seealso{
 \code{\link{mcmc_IMIFA}} for fitting an IMIFA related model to the simulated data set.

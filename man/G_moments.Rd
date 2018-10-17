@@ -4,7 +4,7 @@
 \alias{G_moments}
 \alias{G_expected}
 \alias{G_variance}
-\title{1st & 2nd Moments of the Dirichlet / Pitman-Yor Processes}
+\title{1st & 2nd Moments of the Pitman-Yor / Dirichlet Processes}
 \usage{
 G_expected(N,
            alpha,
@@ -25,7 +25,7 @@ G_variance(N,
 The expected number of clusters under the specified prior conditions, or the variance of the number of clusters.
 }
 \description{
-Calculates the \emph{a priori} expected number of clusters or the variance of the number of clusters under a Dirichlet process or Pitman-Yor process prior for a sample of size \code{N} at given values of the concentration parameter \code{alpha} and optionally also the Pitman-Yor \code{discount} parameter. Useful for soliciting sensible priors (or fixed values) for \code{alpha} or \code{discount} under the "\code{IMFA}" and "\code{IMIFA}" methods for \code{\link{mcmc_IMIFA}}.
+Calculates the \emph{a priori} expected number of clusters or the variance of the number of clusters under a PYP or DP prior for a sample of size \code{N} at given values of the concentration parameter \code{alpha} and optionally also the Pitman-Yor \code{discount} parameter. Useful for soliciting sensible priors (or fixed values) for \code{alpha} or \code{discount} under the "\code{IMFA}" and "\code{IMIFA}" methods for \code{\link{mcmc_IMIFA}}.
 }
 \details{
 All arguments are vectorised. Users can also consult \code{\link{G_priorDensity}} in order to solicit sensible priors.

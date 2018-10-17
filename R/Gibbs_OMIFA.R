@@ -72,7 +72,7 @@
                                                constrained=.sim_psi_cu,     single=.sim_psi_cc)
     .sim_psi_ip      <- switch(EXPR=uni.prior, unconstrained=.sim_psi_ipu,  isotropic=.sim_psi_ipc)
     if(isTRUE(one.uni)) {
-      uni.shape      <- switch(EXPR=uni.type,  constrained=N/2 + psi.alpha, single=(N * P)/2  + psi.alpha)
+      uni.shape      <- switch(EXPR=uni.type,  constrained=N/2 + psi.alpha, single=(N * P)/2 + psi.alpha)
       V              <- switch(EXPR=uni.type,  constrained=P, single=1L)
     }
     psi.beta         <- switch(EXPR=uni.prior, isotropic=psi.beta[which.max(.ndeci(psi.beta))], psi.beta)
@@ -80,7 +80,7 @@
     mu               <- cbind(mu, vapply(seq_len(G - length(cluster$pi.prop)), function(g) .sim_mu_p(P=P, sig.mu.sqrt=sig.mu.sqrt, mu.zero=mu.zero), numeric(P)))
     eta              <- .sim_eta_p(N=N, Q=Q)
     phi              <- replicate(G, .sim_phi_p(Q=Q, P=P, nu1=nu1, nu2=nu2), simplify=FALSE)
-    delta            <- lapply(Gseq, function(g) c(.sim_delta_p(alpha=alpha.d1, beta=beta.d1), .sim_delta_p(Q=Q, alpha=alpha.d2, beta=beta.d2)))
+    delta            <- replicate(G, list(c(.sim_delta_p(alpha=alpha.d1, beta=beta.d1), .sim_delta_p(Q=Q, alpha=alpha.d2, beta=beta.d2))))
     if(cluster.shrink)   {
       sig.store      <- matrix(0L, nrow=G, ncol=n.store)
       MGPsig         <- .sim_sigma_p(G=G, rho1=rho1, rho2=rho2)
@@ -89,7 +89,7 @@
     lmat             <- lapply(Gseq, function(g) matrix(vapply(Pseq, function(j) .sim_load_ps(Q=Q, phi=phi[[g]][j,], tau=tau[[g]], sigma=MGPsig[g]), numeric(Q)), nrow=P, byrow=TRUE))
     psi.inv          <- replicate(G, .sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), simplify="array")
     psi.inv          <- if(uni) t(psi.inv) else psi.inv
-    if(Q < min(N - 1, Ledermann(P)))     {
+    if(Q < min(N - 1L, Ledermann(P)))    {
       for(g in which(nn > P)) {
         fact         <- try(stats::factanal(data[z == g,, drop=FALSE], factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
         if(!inherits(fact, "try-error")) {
@@ -103,7 +103,7 @@
       if(isTRUE(one.uni)) {
         psi.inv[,]   <- 1/switch(EXPR=uni.type, constrained=.col_vars(data), .geom_mean(.col_vars(data)))
       } else {
-        tmp.psi      <- ((nn[nn0] - 1)/(rowsum(data^2,  z) - rowsum(data, z)^2/nn[nn0]))
+        tmp.psi      <- ((nn[nn0] - 1L)/(rowsum(data^2, z) - rowsum(data, z)^2/nn[nn0]))
         psi.inv[,nn   > 1]    <- tmp.psi[!is.nan(tmp.psi)]
       }
       inf.ind        <- is.infinite(psi.inv) | is.nan(psi.inv)
@@ -186,7 +186,7 @@
       c.data         <- lapply(Gseq, function(g) sweep(dat.g[[g]], 2L, mu[,g], FUN="-", check.margin=FALSE))
       if(!any(Q0))    {
         eta          <- .empty_mat(nr=N)
-        eta.tmp      <- lapply(Gseq, function(g) eta[z == g,, drop=FALSE])
+        eta.tmp      <- lapply(Gseq, function(g) eta[z == g,,  drop=FALSE])
         lmat         <- replicate(G, .empty_mat(nr=P))
       } else {
         eta.tmp      <- lapply(Gseq, function(g) if(all(nn0[g], Q0[g])) .sim_score(N=nn[g], lmat=lmat[[g]], Q=Qs[g], Q1=Q1[g], c.data=c.data[[g]], psi.inv=psi.inv[,g]) else matrix(0, nrow=ifelse(Q0[g], 0, nn[g]), ncol=Qs[g]))
@@ -323,7 +323,7 @@
         if(all(sw["s.sw"],
            any(Q0)))     {
           max.Q      <-  max(Qs)
-          eta.tmp    <-  if(length(unique(Qs)) != 1)         lapply(Gseq,       function(g) cbind(eta.tmp[[g]], matrix(0, nrow=nn[g], ncol=max.Q - Qs[g]))) else eta.tmp
+          eta.tmp    <-  if(length(unique(Qs)) != 1)         lapply(Gseq,       function(g) cbind(eta.tmp[[g]], matrix(0L, nrow=nn[g], ncol=max.Q - Qs[g]))) else eta.tmp
           q0ng       <-  (!Q0  | Qs[Gseq] == 0) & nn0[Gseq]
           if(any(q0ng))  {
             eta.tmp[q0ng]     <-                             lapply(Gseq[q0ng], function(g, x=eta.tmp[[g]]) { row.names(x) <- row.names(dat.g[[g]]); x })

@@ -19,9 +19,7 @@
 #'
 #' For the "\code{OMFA}", and "\code{OMIFA}" models this upper limit remains fixed for the entire length of the chain; the upper limit for the for the "\code{IMFA}" and "\code{IMIFA}" models can be specified via \code{trunc.G} (see \code{\link{bnpControl}}), which shares the same default as \code{range.G}.
 #'
-#' However, when \code{N <= P}, or when this bound is close to or exceeds \code{N} for any of these overfitted/infinite mixture models, it is better to initialise using \code{range.G} at a value closer to the truth (i.e. \code{ceiling(log(N))} by default), though the upper bound is still governed by \code{trunc.G} (see \code{\link{bnpControl}}).
-#'
-#' If \code{length(range.G) * length(range.Q)} is large, consider not storing unnecessary parameters (via \code{\link{storeControl}}), or breaking up the range of models to be explored into chunks and sending each chunk to \code{\link{get_IMIFA_results}}.
+#' If \code{length(range.G) * length(range.Q)} is large, consider not storing unnecessary parameters (via \code{\link{storeControl}}), or breaking up the range of models to be explored into chunks and sending each chunk to \code{\link{get_IMIFA_results}} separately.
 #' @param range.Q Depending on the method employed, either the range of values for the number of latent factors, or, for methods ending in IFA the conservatively high starting value for the number of cluster-specific factors, in which case the default starting value is \code{floor(3 * log(P))}.
 #'
 #' For methods ending in IFA, different clusters can be modelled using different numbers of latent factors (incl. zero); for methods not ending in IFA it is possible to fit zero-factor models, corresponding to simple diagonal covariance structures. For instance, fitting the "\code{IMFA}" model with \code{range.Q=0} corresponds to a vanilla Pitman-Yor / Dirichlet Process Mixture Model.
@@ -51,7 +49,7 @@
 #' \item{\strong{\code{\link{mixfaControl}}} - }{Supply arguments (with defaults) pertaining to \emph{all other} aspects of model fitting (e.g. MCMC settings, cluster initialisation, and hyperparameters common to every \code{method} in the \code{IMIFA} family.}
 #' \item{\strong{\code{\link{storeControl}}} - }{Supply logical indicators governing storage of parameters of interest for all models in the IMIFA family. It may be useful not to store certain parameters if memory is an issue (e.g. for large data sets or for a large number of MCMC iterations after burnin and thinning).}
 #' }
-#' Note however that the named arguments of these functions can also be supplied directly.
+#' Note however that the named arguments of these functions can also be supplied directly. Parameter starting values are obtained by simulation from the relevant prior distribution specified in these control functions.
 #' @return A list of lists of lists of class "\code{IMIFA}" to be passed to \code{\link{get_IMIFA_results}}. If the returned object is \code{x}, candidate models are accesible via subsetting, where \code{x} is of the following form:
 #'
 #' \code{x[[1:length(range.G)]][[1:length(range.Q)]]}.
@@ -67,7 +65,7 @@
 #'
 #' @seealso \code{\link{get_IMIFA_results}}, \code{\link{mixfaControl}}, \code{\link{mgpControl}}, \code{\link{bnpControl}}, \code{\link{storeControl}}
 #' @references
-#' Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
+#' Murphy, K., Gormley, I. C. and Viroli, C. (2018) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
 #'
 #' Bhattacharya, A. and Dunson, D. B. (2011) Sparse Bayesian infinite factor models, \emph{Biometrika}, 98(2): 291-306.
 #'
@@ -249,22 +247,15 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
   bnpmiss   <- attr(BNP, "Missing")
   if(!is.element(method, c("MFA", "MIFA")))      {
     if(length(range.G) > 1)         stop(paste0("Only one 'range.G' value can be specified for the ", method, " method"), call.=FALSE)
-    if(all(!G.x, verbose, is.element(method, c("FA", "IFA"))) &&
+    if(all(!G.x, verbose, is.element(method, c("FA", "IFA")))  &&
        range.G  > 1)                message(paste0("'range.G' forced to 1 for the ", method, " method\n"))
     if(is.element(method, c("OMIFA", "OMFA", "IMFA", "IMIFA"))) {
       lnN2         <- ceiling(lnN)
       tmp.G        <- as.integer(min(N  - 1, max(25, ceiling(3  * lnN))))
       if(G.x)   {
-        range.G    <- G.init           <- tmp.G
-        if(NlP) {     if(verbose)   message(paste0("Since N <= P, the sampler will be initialised with a different default of ceiling(log(N)) = ", lnN2, " clusters (unless 'range.G' is supplied)\n"))
-          G.init   <- max(2L, lnN2)
-        }
-      }
-      if(!G.x)  {
+        G.init     <- range.G          <- tmp.G
+      } else    {
         G.init     <- range.G
-        if(NlP) {
-          range.G  <- tmp.G
-        }
       }
       if(range.G    < lnN2)         warning(paste0("'range.G' should be at least log(N) (=log(", N, "))", " for the ", method, " method\n"), call.=FALSE, immediate.=TRUE)
       if(G.init    >= N)            stop(paste0("'range.G' must less than N (", N, ")"), call.=FALSE)
@@ -304,10 +295,10 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
              verbose))              message("Forced non-storage of mixing proportions as 'equal.pro' is TRUE\n")
       storage["pi.sw"]    <- FALSE
     }
-    alp3    <- 3L   * alpha
     if(G.x)                         stop("'range.G' must be specified", call.=FALSE)
     if(any(range.G  < 1))           stop("'range.G' must be strictly positive", call.=FALSE)
-    if(any(range.G  > alp3 * lnN))  warning(paste0("'range.G' MUCH greater than log(N) (=log(", N, ")):\nEmpty clusters are likely, consider running an overfitted or infinite mixture\n"), call.=FALSE, immediate.=TRUE)
+    if(all(range.G  > lnN,
+           alpha    < 1))           warning("Empty clusters are likely with small 'alpha' and large 'range.G', consider running an overfitted or infinite mixture\n", call.=FALSE, immediate.=TRUE)
     range.G <- G.init     <- sort(unique(range.G))
     meth    <- rep(method, length(range.G))
   }
@@ -377,10 +368,8 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
   covmat           <- switch(EXPR=scaling, unit=stats::cor(dat), stats::cov(dat))
   dimnames(covmat) <- list(varnames, varnames)
   if(anyNA(covmat))                 warning(paste0("Covariance matrix cannot be estimated: ", ifelse(beta.x || (sigmu.miss && scaling != "unit"), "deriving default hyperparameters may not be possible, neither will posterior predictive checking\n", "posterior predictive checking will not be possible\n")), call.=FALSE)
-  sigma.mu         <- if(sigmu.miss && scaling == "unit") rep(1L, P) else if(sigmu.miss)   diag(covmat) else if(is.matrix(sigma.mu)) diag(sigma.mu) else sigma.mu
-  if(!all(G.init   == 1)  &&
-    (NlP    && mixfamiss$prec.mu)) warning("Consider a more informative prior for the means when employing a clustering method when N<=P, by increasing 'prec.mu' from its default value\n", call.=FALSE)
-  sigma.mu         <- sigma.mu * 1/mixFA$prec.mu
+  sigma.mu         <- if(sigmu.miss && scaling == "unit") 1L else if(sigmu.miss) diag(covmat) else if(is.matrix(sigma.mu)) diag(sigma.mu) else sigma.mu
+  sigma.mu         <- sigma.mu/mixFA$prec.mu
   if(anyNA(sigma.mu))               stop(ifelse(sigmu.miss, "Not possible to derive default 'sigma.mu': this argument now must be supplied", "NA in 'sigma.mu'"), call.=FALSE)
   sigmu.len        <- length(unique(sigma.mu))
   if(sigmu.len     == 1) sigma.mu      <- sigma.mu[1L]
@@ -422,7 +411,7 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
    alpha.d2 <- .len_check(MGP$alpha.d2, delta0g, method, P, G.init, P.dim=FALSE)
    MGP      <- MGP[-seq_len(5L)]
    start.AGS       <-  MGP$start.AGS   <- ifelse(mgpmiss$startAGSx, ifelse(fQ0, 0L, switch(EXPR=method, IFA=, MIFA=burnin, 0L)), MGP$start.AGS)
-   if(Q.miss)                range.Q   <- as.integer(ifelse(fQ0, 1, min(ifelse(P > 500, 12 + floor(log(P)), floor(3 * log(P))), N - 1, P - 1)))
+   if(Q.miss)                range.Q   <- as.integer(ifelse(fQ0, 1L, min(ifelse(P > 500, 12L + floor(log(P)), floor(3 * log(P))), N - 1L, P - 1L)))
    if(length(range.Q)       > 1)    stop(paste0("Only one starting value for 'range.Q' can be supplied for the ", method, " method"), call.=FALSE)
    if(range.Q      <= 0)            stop(paste0("'range.Q' must be strictly positive for the ", method, " method"), call.=FALSE)
    if(isTRUE(adapt))  {

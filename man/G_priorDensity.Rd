@@ -2,7 +2,7 @@
 % Please edit documentation in R/PlottingFunctions.R
 \name{G_priorDensity}
 \alias{G_priorDensity}
-\title{Plot Dirichlet / Pitman-Yor process Priors}
+\title{Plot Pitman-Yor / Dirichlet Process Priors}
 \usage{
 G_priorDensity(N,
                alpha,
@@ -22,7 +22,7 @@ G_priorDensity(N,
 A plot of the prior distribution if \code{show.plot} is \code{TRUE}. Density values are returned invisibly. Note that the density values may not strictly sum to one in certain cases, as values small enough to be represented as zero may well be returned.
 }
 \description{
-Plots the prior distribution of the number of clusters under a Dirichlet / Pitman-Yor process prior, for a sample of size \code{N} at given values of the concentration parameter \code{alpha} and optionally also the \code{discount} parameter. Useful for soliciting sensible priors (or fixed values) for \code{alpha} or \code{discount} under the "\code{IMFA}" and "\code{IMIFA}" methods for \code{\link{mcmc_IMIFA}}.
+Plots the prior distribution of the number of clusters under a Pitman-Yor / Dirichlet process prior, for a sample of size \code{N} at given values of the concentration parameter \code{alpha} and optionally also the \code{discount} parameter. Useful for soliciting sensible priors (or fixed values) for \code{alpha} or \code{discount} under the "\code{IMFA}" and "\code{IMIFA}" methods for \code{\link{mcmc_IMIFA}}.
 }
 \details{
 All arguments are vectorised. Users can also consult \code{\link{G_expected}} and \code{\link{G_variance}} in order to solicit sensible priors.

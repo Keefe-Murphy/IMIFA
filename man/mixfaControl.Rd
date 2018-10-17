@@ -58,9 +58,9 @@ The first letter \strong{U} here corresponds to constraints on loadings (not yet
 
 \item{prec.mu}{A scalar controlling the degree of flatness of the prior for the cluster means by scaling \code{sigma.mu} (i.e. multiplying every element of \code{sigma.mu} by \code{1/prec.mu}). Lower values lead to a more diffuse prior. Defaults to \code{0.1}, such that the prior is relatively non-informative by default. Of course, \code{prec.mu=1} nullifies any effect of this argument. The user can supply a scaled \code{sigma.mu} directly, but this argument is especially useful when the diagonal default is used for \code{sigma.mu}. When the number of observations is small, particularly when it's less than the number of variables, consider specifying a more informative prior on the cluster means by increasing \code{prec.mu} from its default value.}
 
-\item{sigma.l}{A scalar controlling the diagonal covariance of the prior distribution for the loadings. Defaults to 1, i.e. the identity. Only relevant for the finite factor methods.}
+\item{sigma.l}{A scalar controlling the diagonal covariance of the prior distribution for the loadings. Defaults to \code{1}, i.e. the identity. Only relevant for the finite factor methods.}
 
-\item{z.init}{The method used to initialise the cluster labels. Defaults to \code{\link[mclust]{Mclust}}. Other options include \code{\link[stats]{kmeans}} (with 10 random starts, by default), hierarchical clustering via \code{\link[mclust]{hc}} (\code{VVV} is used by default, unless the data is high-dimensional, in which case the default is \code{EII}), random initialisation via \code{priors}, and a user-supplied \code{list} (\code{z.list}). Not relevant for the "\code{FA}" and "\code{"IFA"} methods. Arguments for the relevant functions can be passed via the \code{...} construct.}
+\item{z.init}{The method used to initialise the cluster labels. Defaults to \code{\link[mclust]{Mclust}}. Other options include \code{\link[stats]{kmeans}} (with 10 random starts, by default), hierarchical clustering via \code{\link[mclust]{hc}} (\code{VVV} is used by default, unless the data is high-dimensional, in which case the default is \code{EII}), random initialisation via \code{priors}, and a user-supplied \code{list} (\code{z.list}). Not relevant for the "\code{FA}" and "\code{"IFA"} methods. Arguments for the relevant functions can be passed via the \code{...} construct. The option \code{"priors"} may lead to empty components at initialisation, which will return an error.}
 
 \item{z.list}{A user supplied list of cluster labels. Only relevant if \code{z.init == "z.list"}.}
 
@@ -98,7 +98,9 @@ mfctrl <- mixfaControl(n.iters=200, prec.mu=1E-03,
 #                    scaling="pareto", uni.type="constrained")
 }
 \references{
-Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
+Murphy, K., Gormley, I. C. and Viroli, C. (2018) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
+
+McNicholas, P. D. and Murphy, T. B. (2008) Parsimonious Gaussian Mixture Models, \emph{Statistics and Computing}, 18(3): 285-296.
 }
 \seealso{
 \code{\link{mcmc_IMIFA}}, \code{\link{psi_hyper}}, \code{\link[mclust]{Mclust}}, \code{\link[mclust]{hc}}, \code{\link[stats]{kmeans}}

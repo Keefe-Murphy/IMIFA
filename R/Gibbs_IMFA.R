@@ -84,7 +84,7 @@
                                                constrained=.sim_psi_cu,     single=.sim_psi_cc)
     .sim_psi_ip      <- switch(EXPR=uni.prior, unconstrained=.sim_psi_ipu,  isotropic=.sim_psi_ipc)
     if(isTRUE(one.uni)) {
-      uni.shape      <- switch(EXPR=uni.type,  constrained=N/2 + psi.alpha, single=(N * P)/2  + psi.alpha)
+      uni.shape      <- switch(EXPR=uni.type,  constrained=N/2 + psi.alpha, single=(N * P)/2 + psi.alpha)
       V              <- switch(EXPR=uni.type,  constrained=P, single=1L)
     }
     psi.beta         <- switch(EXPR=uni.prior, isotropic=psi.beta[which.max(.ndeci(psi.beta))], psi.beta)
@@ -97,7 +97,7 @@
     lmat             <- if(Q0) array(vapply(Ts, function(t) .sim_load_p(Q=Q, P=P, sigma.l=sigma.l), numeric(P * Q)), dim=c(P, Q, trunc.G)) else array(0, dim=c(P, 0, trunc.G))
     psi.inv          <- replicate(trunc.G, .sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), simplify="array")
     psi.inv          <- if(uni) t(psi.inv) else psi.inv
-    if(Q0 &&   Q      < min(N - 1, Ledermann(P))) {
+    if(Q0 &&   Q      < min(N - 1L, Ledermann(P)))  {
       for(g in which(nn       > P)) {
         fact         <- try(stats::factanal(data[z == g,, drop=FALSE], factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
         if(!inherits(fact, "try-error")) {
@@ -111,13 +111,13 @@
       if(isTRUE(one.uni)) {
         psi.inv[,Gs] <- 1/switch(EXPR=uni.type, constrained=.col_vars(data), .geom_mean(.col_vars(data)))
       } else   {
-        tmp.psi      <- ((nn[nn0] - 1)/(rowsum(data^2,  z) - rowsum(data, z)^2/nn[nn0]))
+        tmp.psi      <- ((nn[nn0] - 1L)/(rowsum(data^2, z) - rowsum(data, z)^2/nn[nn0]))
         psi.inv[,nn   > 1]   <- tmp.psi[!is.nan(tmp.psi)]
       }
       inf.ind        <- is.infinite(psi.inv) | is.nan(psi.inv)
       psi.inv[inf.ind]       <- psi.tmp[inf.ind]
     }
-    psi.inv[psi.inv == 0]    <- colMaxs(psi.inv[,which(psi.inv == 0, arr.ind=TRUE)[,2L], drop=FALSE], value=TRUE)
+    psi.inv[psi.inv  == 0]   <- colMaxs(psi.inv[,which(psi.inv == 0, arr.ind=TRUE)[,2L], drop=FALSE], value=TRUE)
     l.sigma          <- diag(1/sigma.l, Q)
     index            <- order(pi.prop, decreasing=TRUE)
     pi.prop          <- pi.prop[index]
@@ -133,8 +133,8 @@
     if(ind.slice) {
       ksi            <- (1 - rho) * rho^(Ts - 1L)
       log.ksi        <- log(ksi)
-    }
-    slice.logs       <- c(- Inf, 0L)
+      slinf          <- rep(-Inf, N)
+    } else slinf     <- c(-Inf,  0L)
     if(burnin         < 1)  {
       if(sw["mu.sw"])      mu.store[,,1L] <- mu
       if(sw["s.sw"])      eta.store[,,1L] <- eta
@@ -223,9 +223,9 @@
         sigma        <- if(uni) lapply(Gs, function(g) as.matrix(psi[,g] + if(Q0) tcrossprod(as.matrix(lmat[,,g])) else 0L)) else lapply(Gs, function(g) tcrossprod(lmat[,,g]) + diag(psi[,g]))
         if(ind.slice) {
           log.pixi   <- log(pi.prop) - log.ksi[Gs]
-          log.probs  <- vapply(Gs, function(g) slice.logs[1L + (u.slice < ksi[g])] + log.pixi[g], numeric(N))
+          log.probs  <- vapply(Gs, function(g) { slinf[u.slice < ksi[g]] <- log.pixi[g]; slinf }, numeric(N))
         } else   {
-          log.probs  <- vapply(Gs, function(g) slice.logs[1L + (u.slice < ksi[g])], numeric(N))
+          log.probs  <- vapply(Gs, function(g) slinf[1L + (u.slice < ksi[g])], numeric(N))
         }
         fin.probs    <- is.finite(log.probs)
         if(uni) {

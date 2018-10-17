@@ -7,16 +7,17 @@
 #' \describe{
 #' \item{"\code{GQ}"}{for plotting the posterior summaries of the numbers of clusters/factors, if available.}
 #' \item{"\code{zlabels}"}{for plotting clustering uncertainties - in four different ways (incl. the posterior confusion matrix) - if clustering has taken place, with or without the clustering labels being supplied via the \code{zlabels} argument. If available, the average similarity matrix, reordered according to the MAP labels, is shown as a 5-th plot.}
-#' \item{"\code{errors}"}{for conducting posterior predictive checking of the appropriateness of the fitted model by visualising the posterior predictive reconstruction error &/or error metrics quantifying the difference between the estimated and empirical covariance matrices. The type of plot(s) produced depends on how the \code{error.metrics} argument was supplied to \code{\link{get_IMIFA_results}} and what parameters were stored.}
+#' \item{"\code{errors}"}{for conducting posterior predictive checking of the appropriateness of the fitted model by visualising the posterior predictive reconstruction error &/or histograms comparing the data to replicate draws from the posterior distribution &/or error metrics quantifying the difference between the estimated and empirical covariance matrices. The type of plot(s) produced depends on how the \code{error.metrics} argument was supplied to \code{\link{get_IMIFA_results}} and what parameters were stored.}
 #' }
+#' The argument \code{g} can be used to cycle through the available plots in each case. \code{ind} can also be used to govern which variable is shown for the 2-nd plot.
 #' @param param The parameter of interest for any of the following \code{plot.meth} options: \code{all}, \code{trace}, \code{density}, \code{means}, \code{correlation}. The \code{param} must have been stored when \code{\link{mcmc_IMIFA}} was initially ran. Includes \code{pis} for methods where clustering takes place, and allows posterior inference on \code{alpha} (for the "\code{IMFA}", "\code{IMIFA}", "\code{OMFA}", and "\code{OMIFA}" methods) and \code{discount} (for the "\code{IMFA}" and "\code{IMIFA}" methods). Otherwise \code{means}, \code{scores}, \code{loadings}, and \code{uniquenesses} can be plotted.
-#' @param g Optional argument that allows specification of exactly which cluster the plot of interest is to be produced for. If not supplied, the user will be prompted to cycle through plots for all clusters. Also functions as an index for which plot to return when \code{plot.meth} is \code{GQ} or \code{zlabels} in much the same way.
+#' @param g Optional argument that allows specification of exactly which cluster the plot of interest is to be produced for. If not supplied, the user will be prompted to cycle through plots for all clusters. Also functions as an index for which plot to return when \code{plot.meth} is \code{GQ}, \code{zlabels}, or \code{errors} in much the same way.
 #' @param mat Logical indicating whether a \code{\link[graphics]{matplot}} is produced (defaults to \code{TRUE}). If given as \code{FALSE}, \code{ind} is invoked.
 #' @param zlabels The true labels can be supplied if they are known. If this is not supplied, the function uses the labels that were supplied, if any, to \code{\link{get_IMIFA_results}}. Only relevant when \code{plot.meth = "zlabels"}. When explicitly supplied, misclassified observations are highlighted in the first type of uncertainty plot (otherwise observations whose uncertainty exceed the inverse of the number of clusters are highlighted). For the second type of uncertainty plot, when \code{zlabels} are explicitly supplied, the uncertainty of misclassified observations is marked by vertical lines on the profile plot.
 #' @param heat.map A logical which controls plotting posterior mean loadings or posterior mean scores as a heatmap, or else as something akin to \code{link{plot(..., type="h")}}. Only relevant if \code{param = "loadings"} (in which case the default is \code{TRUE}) or \code{param = "scores"} (in which case the default is \code{FALSE}). Heatmaps are produced with the aid of \code{\link{mat2cols}} and \code{\link{plot_cols}}.
 #' @param show.last A logical indicator which defaults to \code{FALSE}, but when \code{TRUE} replaces any instance of the posterior mean with the last valid sample. Only relevant when \code{param} is one of \code{"means"} \code{"scores"}, \code{"loadings"}, \code{"uniquenesses"}, or \code{"pis"} and \code{plot.meth} is one of \code{"all"} or \code{"means"}. Also relevant for \code{"means"}, \code{"loadings"} and \code{"uniquenesses"} when \code{plot.meth} is \code{"parallel.coords"}. When \code{TRUE}, this has the effect of forcing \code{intervals} to be \code{FALSE}.
 #' @param palette An optional colour palette to be supplied if overwriting the default palette set inside the function by \code{\link[viridisLite]{viridis}} is desired. it makes little sense to a supply a \code{palette} when \code{plot.meth="all"} and \code{param} is one of "\code{scores}" or "\code{loadings}".
-#' @param ind Either a single number indicating which variable to plot when \code{param} is one of \code{means} or \code{uniquenesses}, or which cluster to plot if \code{param} is \code{pis}. If \code{scores} are plotted, a vector of length two giving which observation and factor to plot; If \code{loadings} are plotted, a vector of length two giving which variable and factor to plot. Will be recycled to length 2 if necessary. Also governs which two factors are displayed on posterior mean plots of the \code{"scores"} when \code{heat.map} is \code{FALSE}; otherwise only relevant when \code{mat} is \code{FALSE}.
+#' @param ind Either a single number indicating which variable to plot when \code{param} is one of \code{means} or \code{uniquenesses} (or \code{plot.meth="errors"}), or which cluster to plot if \code{param} is \code{pis}. If \code{scores} are plotted, a vector of length two giving which observation and factor to plot; if \code{loadings} are plotted, a vector of length two giving which variable and factor to plot. Will be recycled to length 2 if necessary. Also governs which two factors are displayed on posterior mean plots of the \code{"scores"} when \code{heat.map} is \code{FALSE}; otherwise only relevant when \code{mat} is \code{FALSE}.
 #' @param fac Optional argument that provides an alternative way to specify \code{ind[2]} when \code{mat} is \code{FALSE} and \code{param} is one of \code{scores} or \code{loadings}.
 #' @param by.fac Optionally allows (mat)plotting of scores and loadings by factor - i.e. observation(s) (scores) or variable(s) (loadings) for a given factor, respectively, controlled by \code{ind} or \code{fac}) when set to \code{TRUE}. Otherwise all factor(s) are plotted for a given observation or variable when set to \code{FALSE} (the default), again controlled by \code{ind} or \code{fac}. Only relevant when \code{param} is one of \code{scores} or \code{loadings}.
 #' @param type The manner in which the plot is to be drawn, as per the \code{type} argument to \code{\link{plot}}.
@@ -36,7 +37,7 @@
 #' @importFrom mclust "classError"
 #' @importFrom viridis "viridis"
 #' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{get_IMIFA_results}}, \code{\link{mat2cols}}, \code{\link{plot_cols}}
-#' @references Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
+#' @references Murphy, K., Gormley, I. C. and Viroli, C. (2018) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
 #'
 #' @author Keefe Murphy - <\email{keefe.murphy@@ucd.ie}>
 #' @usage
@@ -76,8 +77,14 @@
 #' # Plot clustering uncertainty (and, if available, the similarity matrix)
 #' # plot(resIMIFA, plot.meth="zlabels", zlabels=olive$area)
 #'
+#' # Visualise the posterior predictive reconstruction error
+#' # plot(resIMIFA, plot.meth="errors", g=1)
+#'
+#' # Compare histograms of the data vs. replicate draw from the posterior for the 1st variable
+#' # plot(resIMIFA, plot.meth="errors", g=2, ind=1)
+#'
 #' # Visualise empirical vs. estimated covariance error metrics
-#' # plot(resIMIFA, plot.meth="errors")
+#' # plot(resIMIFA, plot.meth="errors", g=3)
 #'
 #' # Look at the trace, density, posterior mean and correlation of various parameters of interest
 #' # plot(resIMIFA, plot.meth="all", param="means", g=1)
@@ -93,8 +100,6 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
                                 mat = TRUE, zlabels = NULL, heat.map = TRUE, show.last = FALSE, palette = NULL, ind = NULL, fac = NULL, by.fac = FALSE, type = c("h", "n", "p", "l"), intervals = TRUE, partial = FALSE, titles = TRUE, transparency = 0.75, ...) {
 
   if(missing(x))                      stop("'x' must be supplied", call.=FALSE)
-  if(!exists(deparse(substitute(x)),
-             envir=.GlobalEnv))       stop(paste0("Object ", match.call()$x, " not found\n"), call.=FALSE)
   if(class(x) != "Results_IMIFA")     stop("Results object of class 'Results_IMIFA' must be supplied", call.=FALSE)
   GQ.res  <- x$GQ.results
   G       <- GQ.res$G
@@ -107,7 +112,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
   defpar$new        <- FALSE
   suppressWarnings(graphics::par(pty="m"))
   mispal            <- missing(palette)
-  if(mispal)             palette <- viridis(min(10, max(G, Q.max, 5)))
+  if(mispal)             palette <- viridis(min(10L, max(G, Q.max, 5L)))
   if(!all(is.cols(cols=palette)))     stop("Supplied colour palette contains invalid colours", call.=FALSE)
   if(length(palette) < 5)             warning("Palette should contain 5 or more colours\n",    call.=FALSE)
   trx     <- grDevices::dev.capabilities()$semiTransparency
@@ -142,7 +147,6 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
   var.pal <- max(min(n.var, 1024), 2)
   n.obs   <- attr(x, "Obs")
   z.sim   <- attr(x, "Z.sim")
-  equalpi <- attr(x, "Equal.Pi")
   plot.mx <- missing(plot.meth)
   param.x <- missing(param)
   type.x  <- missing(type)
@@ -227,7 +231,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
   if(all(!v.sw[param], !m.sw["G.sw"],
      !m.sw["Z.sw"],   !m.sw["E.sw"])) stop(paste0("Nothing to plot: ", param, ifelse(is.element(param, c("alpha", "discount")), ifelse(any(all(param == "alpha", is.element(method, c("FA", "IFA"))),
                                            all(param == "discount", !is.element(method, c("IMFA", "IMIFA")))), paste0(" not used for the ", method, " method"), paste0(" was fixed at ", ifelse(param == "alpha",
-                                           attr(x, "Alpha"), attr(x, "Discount")))), " weren't stored"), ifelse(param == "pis" && equalpi, " as mixing proportions were constrained to be equal across clusters", "")), call.=FALSE)
+                                           attr(x, "Alpha"), attr(x, "Discount")))), " weren't stored"), ifelse(param == "pis" && attr(x, "Equal.Pi"), " as mixing proportions were constrained to be equal across clusters", "")), call.=FALSE)
   heat.map     <- ifelse(missing(heat.map), param == "loadings", heat.map)
   int.miss     <- !missing(intervals)
   if(any(!is.logical(heat.map),
@@ -286,7 +290,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
              ifelse(z.sim, 5, 4), g,  stop(paste0("Invalid 'g' value", ifelse(z.sim, ": similarity matrix not available", "")), call.=FALSE))
     }
   } else if(m.sw["E.sw"])   {
-    Gs    <- if(gx) switch(EXPR=errX, PPRE=seq_len(2L), 1L) else ifelse(g <= (1L + (errX == "PPRE")), g,
+    Gs    <- if(gx) switch(EXPR=errX, PPRE=seq_len(3L), 1L) else ifelse(g <= (1L + 2L * (errX == "PPRE")), g,
                                       stop("Invalid 'g' value", call.=FALSE))
   } else if(any(all(is.element(param, c("scores", "pis", "alpha", "discount")), any(all.ind, param != "scores", !m.sw["M.sw"])), m.sw["G.sw"],
             all(m.sw["P.sw"], param != "loadings"), all(param == "uniquenesses", is.element(uni.type, c("constrained", "single")))))  {
@@ -360,7 +364,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
     }
 
     if(is.element(param, c("scores", "loadings"))) {
-      if(m.sw["M.sw"])     hcols <- if(mispal) viridis(30, option="C", alpha=transparency) else palette
+      if(m.sw["M.sw"])     hcols <- if(mispal) viridis(30L, option="C", alpha=transparency) else palette
       if(indx)               ind <- c(1L, 1L)
       if(!facx)          ind[2L] <- fac[g]
       if(all(length(ind) == 1,
@@ -409,22 +413,22 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
         x.plot <- x$Scores$eta
         if(by.fac) {
           plot.x  <- x.plot[,ind[2L],]
-          if(mispal) grDevices::palette(viridis(min(10, max(2, n.obs)), alpha=transparency))
+          if(mispal) grDevices::palette(viridis(min(10L, max(2L, n.obs)), alpha=transparency))
         } else {
-          plot.x  <- if(Q.max > 1) x.plot[ind[1],rev(Qmseq),] else t(x.plot[ind[1L],rev(Qmseq),])
-          if(mispal) grDevices::palette(viridis(min(10, max(2, Q.max)), alpha=transparency))
+          plot.x  <- if(Q.max > 1) x.plot[ind[1L],rev(Qmseq),] else t(x.plot[ind[1L],rev(Qmseq),])
+          if(mispal) grDevices::palette(viridis(min(10L, max(2L, Q.max)), alpha=transparency))
         }
         if(matx) {
           scols   <- seq_along(grDevices::palette())
           graphics::matplot(t(plot.x), type="l", ylab="", xlab="Iteration", lty=1, col=if(by.fac) scols else rev(scols))
           if(by.fac) {
-            if(titles) graphics::title(main=list(paste0("Trace", ifelse(all.ind, ":\n", ":\nScores - "), "Factor ", ind[2])))
+            if(titles) graphics::title(main=list(paste0("Trace", ifelse(all.ind, ":\n", ":\nScores - "), "Factor ", ind[2L])))
           } else {
-            if(titles) graphics::title(main=list(paste0("Trace", ifelse(all.ind, ":\n", ":\nScores - "), "Observation ", obs.names[ind[1]])))
+            if(titles) graphics::title(main=list(paste0("Trace", ifelse(all.ind, ":\n", ":\nScores - "), "Observation ", obs.names[ind[1L]])))
           }
         } else {
           graphics::plot(x=iter, y=x.plot[ind[1L],ind[2L],], type="l", ylab="", xlab="Iteration")
-          if(titles) graphics::title(main=list(paste0("Trace", ifelse(all.ind, ":\n", ":\nScores - "), "Observation ", obs.names[ind[1]], ", Factor ", ind[2])))
+          if(titles) graphics::title(main=list(paste0("Trace", ifelse(all.ind, ":\n", ":\nScores - "), "Observation ", obs.names[ind[1L]], ", Factor ", ind[2L])))
         }
       }
 
@@ -432,22 +436,22 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
         x.plot <- x$Loadings$lmats[[g]]
         if(by.fac) {
           plot.x  <- x.plot[,ind[2L],]
-          if(mispal) grDevices::palette(viridis(min(10, max(2, n.var)), alpha=transparency))
+          if(mispal) grDevices::palette(viridis(min(10L, max(2L, n.var)), alpha=transparency))
         } else {
           plot.x  <- x.plot[ind[1L],rev(seq_len(Q)),]
-          if(mispal) grDevices::palette(viridis(min(10, max(2, Q)),     alpha=transparency))
+          if(mispal) grDevices::palette(viridis(min(10L, max(2L, Q)),     alpha=transparency))
         }
         if(matx) {
           lcols   <- seq_along(grDevices::palette())
           graphics::matplot(t(plot.x), type="l", ylab="", xlab="Iteration", lty=1, col=if(by.fac) lcols else rev(lcols))
           if(by.fac) {
-            if(titles) graphics::title(main=list(paste0("Trace", ifelse(all.ind, ":\n", paste0(":\nLoadings - ", ifelse(grp.ind, paste0("Cluster ", g, " - "), ""))), "Factor ", ind[2])))
+            if(titles) graphics::title(main=list(paste0("Trace", ifelse(all.ind, ":\n", paste0(":\nLoadings - ", ifelse(grp.ind, paste0("Cluster ", g, " - "), ""))), "Factor ", ind[2L])))
           } else {
-            if(titles) graphics::title(main=list(paste0("Trace", ifelse(all.ind, ":\n", paste0(":\nLoadings - ", ifelse(grp.ind, paste0("Cluster ", g, " - "), ""))), var.names[ind[1]], " Variable")))
+            if(titles) graphics::title(main=list(paste0("Trace", ifelse(all.ind, ":\n", paste0(":\nLoadings - ", ifelse(grp.ind, paste0("Cluster ", g, " - "), ""))), var.names[ind[1L]], " Variable")))
           }
         } else   {
           graphics::plot(x=iter, y=x.plot[ind[1L],ind[2L],], type="l", ylab="", xlab="Iteration")
-          if(titles) graphics::title(main=list(paste0("Trace", ifelse(all.ind, ":\n", paste0(":\nLoadings - ", ifelse(grp.ind, paste0("Cluster ", g, " - "), ""))), var.names[ind[1]], " Variable, Factor ", ind[2])))
+          if(titles) graphics::title(main=list(paste0("Trace", ifelse(all.ind, ":\n", paste0(":\nLoadings - ", ifelse(grp.ind, paste0("Cluster ", g, " - "), ""))), var.names[ind[1L]], " Variable, Factor ", ind[2L])))
         }
       }
 
@@ -466,8 +470,8 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
       if(param == "pis") {
         plot.x <- clust$pi.prop
         if(matx) {
-          if(mispal) grDevices::palette(viridis(G, alpha=transparency))
-          graphics::matplot(t(plot.x), type="l", ylab="", xlab="Iteration", lty=1, col=seq_along(grDevices::palette()))
+          if(mispal) grDevices::palette(viridis(max(G, 2L), alpha=transparency))
+          graphics::matplot(t(plot.x), type="l", ylab="", xlab="Iteration", lty=1, col=seq_along(grDevices::palette()), ylim=c(0, 1))
           if(titles) graphics::title(main=list(paste0("Trace", ifelse(all.ind, "", paste0(":\nMixing Proportions")))))
         } else   {
           graphics::plot(x=iter, y=plot.x[ind,], ylab="", type="l", xlab="Iteration")
@@ -528,10 +532,10 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
         x.plot <- x$Scores$eta
         if(by.fac) {
           plot.x  <- x.plot[,ind[2L],]
-          if(mispal) grDevices::palette(viridis(min(10, max(2, n.obs)), alpha=transparency))
+          if(mispal) grDevices::palette(viridis(min(10L, max(2L, n.obs)), alpha=transparency))
         } else   {
           plot.x  <- if(Q > 1) x.plot[ind[1],rev(Qmseq),] else t(x.plot[ind[1L],rev(Qmseq),])
-          if(mispal) grDevices::palette(viridis(min(10, max(2, Q.max)), alpha=transparency))
+          if(mispal) grDevices::palette(viridis(min(10L, max(2L, Q.max)), alpha=transparency))
         }
         if(matx) {
           scols   <- seq_along(grDevices::palette())
@@ -556,10 +560,10 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
         x.plot <- x$Loadings$lmats[[g]]
         if(by.fac) {
           plot.x  <- x.plot[,ind[2L],]
-          if(mispal) grDevices::palette(viridis(min(10, max(2, n.var)), alpha=transparency))
+          if(mispal) grDevices::palette(viridis(min(10L, max(2L, n.var)), alpha=transparency))
         } else {
           plot.x  <- x.plot[ind[1L],rev(seq_len(Q)),]
-          if(mispal) grDevices::palette(viridis(min(10, max(2, Q)),     alpha=transparency))
+          if(mispal) grDevices::palette(viridis(min(10L, max(2L, Q)),     alpha=transparency))
         }
         if(matx) {
           lcols   <- seq_along(grDevices::palette())
@@ -601,7 +605,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
       if(param == "pis") {
         x.plot <- t(clust$pi.prop)
         if(matx) {
-          if(mispal) grDevices::palette(viridis(G, alpha=transparency))
+          if(mispal) grDevices::palette(viridis(max(G, 2L), alpha=transparency))
           plot.x  <- lapply(as.data.frame(x.plot), .logitdensity)
           fitx    <- sapply(plot.x, "[[", "x")
           fity    <- sapply(plot.x, "[[", "y")
@@ -693,7 +697,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
       }
 
       if(param == "scores") {
-        labs   <- if(!grp.ind)  1     else if(show.last) clust$last.z   else   clust$MAP
+        labs   <- if(!grp.ind)  1L else if(show.last) clust$last.z else clust$MAP
         p.eta  <- if(show.last) x$Scores$last.eta   else x$Scores$post.eta
         eta1st <- if(plot.meth   == "all" || !gx) 1 else which.min(grp.size > 0)
         if(g.score)  {
@@ -736,13 +740,13 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
           graphics::box(lwd=2)
           graphics::mtext(ifelse(Q.max > 1, "Factors", "Factor"), side=1, line=2)
         } else {
-          if(mispal && G >= 2) grDevices::palette(viridis(G, alpha=transparency))
+          if(mispal && G >= 2) grDevices::palette(viridis(max(G, 2L), alpha=transparency))
           col.s  <- if(is.factor(labs)) as.integer(levels(labs))[labs] else labs
           type.s <- ifelse(any(type.x, type == "l"), "p", type)
           if(ind2 != 1)  {
             if(all(intervals, ci.sw[param])) {
               suppressWarnings(.plot_CI(plot.x[,ind[1L]], plot.x[,ind2], li=ci.x[1L,,ind2], ui=ci.x[2L,,ind2], gap=TRUE, pch=NA, scol=grey, slty=3, xlab=paste0("Factor ", ind[1L]), ylab=paste0("Factor ", ind2)))
-              suppressWarnings(.plot_CI(plot.x[,ind[1L]], plot.x[,ind2], li=ci.x[1L,,ind[1L]], ui=ci.x[2L,,ind[1]], add=TRUE, gap=TRUE, pch=NA, scol=grey, slty=3, err="x"))
+              suppressWarnings(.plot_CI(plot.x[,ind[1L]], plot.x[,ind2], li=ci.x[1L,,ind[1L]], ui=ci.x[2L,,ind[1L]], add=TRUE, gap=TRUE, pch=NA, scol=grey, slty=3, err="x"))
               if(type.s != "n") graphics::points(plot.x[,ind[1L]], plot.x[,ind2], type=type.s, col=col.s, pch=20)
             } else {
               graphics::plot(plot.x[,ind[1]], plot.x[,ind2], type=type.s, col=col.s, pch=20, cex=0.8,
@@ -798,8 +802,8 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
           plot.x <- plot.x[[g]]
           if(ci.sw[param]) ci.x  <- x$Loadings$ci.load[[g]]
           if(!by.fac) {
-           if(ci.sw[param]) ci.x <- as.matrix(ci.x[,ind[1],])
-            graphics::plot(plot.x[ind[1],], type=type, xaxt="n", xlab="", ylab="Loading", ylim=if(all(intervals, ci.sw[param])) cixx else pxx, lend=1)
+           if(ci.sw[param]) ci.x <- as.matrix(ci.x[,ind[1L],])
+            graphics::plot(plot.x[ind[1L],], type=type, xaxt="n", xlab="", ylab="Loading", ylim=if(all(intervals, ci.sw[param])) cixx else pxx, lend=1)
             if(all(intervals, ci.sw[param])) suppressWarnings(.plot_CI(plot.x[ind[1L],], li=ci.x[1L,], ui=ci.x[2L,], slty=3, scol=grey, add=TRUE, gap=TRUE, pch=ifelse(type == "n", NA, 20)))
             graphics::axis(1, line=-0.5, tick=FALSE, at=seq_len(Q), labels=seq_len(Q))
             graphics::mtext("Factors", side=1, line=2)
@@ -808,7 +812,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
           } else     {
            if(ci.sw[param]) ci.x <- as.matrix(ci.x[,ind[2L],])
             graphics::plot(plot.x[,ind[2L]], type=type, xaxt="n", xlab="", ylab="Loading", ylim=if(all(intervals, ci.sw[param])) cixx else pxx, lend=1)
-            if(all(intervals, ci.sw[param])) suppressWarnings(.plot_CI(plot.x[,ind[2]], li=ci.x[1L,], ui=ci.x[2L,], slty=3, scol=grey, add=TRUE, gap=TRUE, pch=ifelse(type == "n", NA, 20)))
+            if(all(intervals, ci.sw[param])) suppressWarnings(.plot_CI(plot.x[,ind[2L]], li=ci.x[1L,], ui=ci.x[2L,], slty=3, scol=grey, add=TRUE, gap=TRUE, pch=ifelse(type == "n", NA, 20)))
             graphics::axis(1, line=-0.5, tick=FALSE, at=seq_len(n.var), labels=seq_len(n.var))
             graphics::mtext("Variable #", side=1, line=2, cex=0.8)
             if(titles) graphics::title(main=list(paste0(post.last, ":\n", ifelse(!all.ind, paste0("Loadings - ", ifelse(grp.ind, paste0("Cluster ", g, " - "), "")), ""), "Factor ", ind[2L])))
@@ -837,7 +841,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
         if(matx) {
           if(all(intervals, ci.sw[param])) {
             suppressWarnings(.plot_CI(graphics::barplot(plot.x, ylab="", xlab="", col=grey, ylim=c(0, 1), cex.names=0.7),
-                   plot.x, li=ci.x[,1L], ui=ci.x[,2L], slty=3, scol=2, add=TRUE, gap=TRUE, pch=20))
+                   plot.x, li=ci.x[,1L], ui=ci.x[,2L], slty=3, scol="red", add=TRUE, gap=TRUE, pch=20))
           } else {
             graphics::barplot(plot.x, ylab="", xlab="", ylim=c(0, 1), cex.names=0.7)
           }
@@ -845,7 +849,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
         } else {
           if(all(intervals, ci.sw[param])) {
             suppressWarnings(.plot_CI(graphics::barplot(plot.x[ind], ylab="", xlab="", ylim=c(0, 1), cex.names=0.7),
-                   plot.x[ind], li=ci.x[ind,1L], ui=ci.x[ind,2L], slty=3, scol=2, add=TRUE, gap=TRUE, pch=20))
+                   plot.x[ind], li=ci.x[ind,1L], ui=ci.x[ind,2L], slty=3, scol="red", add=TRUE, gap=TRUE, pch=20))
           } else {
             graphics::barplot(plot.x[ind], ylab="", xlab="Variable", ylim=c(0, 1), cex.names=0.7)
           }
@@ -954,11 +958,11 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
         graphics::axis(1, at=Q.plot, labels=names(plot.Q), tick=FALSE)
         graphics::axis(1, at=med(Q.plot), labels="Q", tick=FALSE, line=1.5)
       } else {
-        if(mispal) grDevices::palette(viridis(G, alpha=transparency))
+        if(mispal) grDevices::palette(viridis(max(G, 2L), alpha=transparency))
         graphics::layout(1)
         graphics::par(mar=c(5.1, 4.1, 4.1, 2.1))
         plot.Q <- GQ.res$Q.Counts
-        plot.Q <- if(inherits(plot.Q, "list")) plot.Q else list(plot.Q)
+        plot.Q <- if(inherits(plot.Q, "listof")) plot.Q else list(plot.Q)
         Q.name <- lapply(plot.Q, names)
         rangeQ <- as.numeric(unique(unlist(Q.name, use.names=FALSE)))
         rangeQ <- seq(from=min(rangeQ), to=max(rangeQ), by=1)
@@ -1002,11 +1006,11 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
           graphics::title(expression(phantom("Active ") * "and" * phantom(" Non-empty Clusters")), col.main="black")
           graphics::title(expression(phantom("Active and ") * "Non-empty" * phantom(" Clusters")), col.main = palette[col.G[1]])
           graphics::title(expression(phantom("Active and Non-empty ") * "Clusters"), col.main="black")
-          if(length(unique(plot.x[,1])) > 1) {
+          if(length(unique(plot.x[,1L])) > 1) {
             G.ci    <- GQ.res$G.CI
             graphics::lines(x=c(0, nrow(plot.x)), y=rep(G, 2), col=length(palette),    lty=2, lwd=1)
-            if(G.ci[1] != G) graphics::lines(x=c(0, nrow(plot.x)), y=rep(G.ci[1L], 2), lty=2, lwd=0.5, col=grey)
-            if(G.ci[2] != G) graphics::lines(x=c(0, nrow(plot.x)), y=rep(G.ci[2L], 2), lty=2, lwd=0.5, col=grey)
+            if(G.ci[1L] != G) graphics::lines(x=c(0, nrow(plot.x)), y=rep(G.ci[1L], 2), lty=2, lwd=0.5, col=grey)
+            if(G.ci[2L] != G) graphics::lines(x=c(0, nrow(plot.x)), y=rep(G.ci[2L], 2), lty=2, lwd=0.5, col=grey)
           }
         }
       }
@@ -1184,7 +1188,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
       plot.x <- if(param == "uniquenesses" && is.element(uni.type, c("isotropic", "single"))) plot.x else apply(plot.x, 2L, function(x) (x - min(x, na.rm=TRUE))/(max(x, na.rm=TRUE) - min(x, na.rm=TRUE)))
       varnam <- paste0(toupper(substr(param, 1L, 1L)), substr(param, 2L, nchar(param)))
       if(any(grp.ind, param == "loadings")) {
-        if(mispal) grDevices::palette(viridis(max(switch(EXPR=param, loadings=Q, G), 2), alpha=transparency))
+        if(mispal) grDevices::palette(viridis(max(switch(EXPR=param, loadings=Q, G), 2L), alpha=transparency))
         graphics::layout(rbind(1, 2), heights=c(9, 1))
         graphics::par(mar=c(3.1, 4.1, 4.1, 2.1))
       }
@@ -1221,11 +1225,35 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
 
     if(m.sw["E.sw"]) {
      Pind    <-  errX == "PPRE" && g == 1
-     Cind    <- (errX == "PPRE" && g == 2) || !Pind
+     Hind    <-  errX == "PPRE" && g == 2
+     Cind    <- (errX == "PPRE" && g == 3) || !any(Pind, Hind)
      error   <- x$Error
      if(Pind) {
-       graphics::boxplot(error$PPRE, main="Posterior Predictive\nReconstruction Error")
+       graphics::boxplot(error$PPRE, col=palette[length(palette)])
+       if(titles)    {
+         graphics::title(main=list("Posterior Predictive\nReconstruction Error"))
+         graphics::mtext("PPRE", side=2, line=2)
+         graphics::mtext(method, side=1, line=1)
+       }
        print(c(error$CIs[7L,], Mean=unname(error$Avg[7L]), Median=med(error$PPRE), "Last Valid Sample"=unname(error$Final[7L]))[c(1L, 3L, 4L, 5L, 2L)])
+     }
+     if(Hind) {
+       if(titles) {
+         graphics::layout(rbind(1, 2), heights=c(9, 1))
+         graphics::par(mar=c(3.1, 4.1, 4.1, 2.1))
+       }
+       ci.x  <- error$RepCounts[[ind]]
+       dat.x <- error$DatCounts[[ind]]
+       suppressWarnings(.plot_CI(graphics::barplot(dat.x, ylim=c(0L, max(ci.x[3L,], dat.x)), col=grey),
+                        ci.x[2L,], li=ci.x[1L,], ui=ci.x[3L,], add=TRUE, gap=TRUE, slty=3, scol="red", pch=15))
+       if(titles) {
+        graphics::title(main=list(paste0(var.names[ind], " Variable")))
+        graphics::par(mar=c(0, 0, 0, 0))
+        graphics::plot.new()
+        ltxt <- c("Data Bin Counts", "Median Replicate Bin Counts")
+        temp <- graphics::legend("center", legend=rep("", 2), text.width=max(graphics::strwidth(ltxt)), ncol=1, bty="n", cex=0.75, pt.cex=1.25, fill=c(grey, "black"), xjust=0.5)
+        graphics::text(temp$rect$left + temp$rect$w * 0.55, temp$text$y, ltxt)
+       }
      }
      if(Cind && is.element(errX, c("PPRE", "Covs"))) {
       post.x <- error$Post
@@ -1236,15 +1264,15 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
         graphics::par(mar=c(3.1, 4.1, 4.1, 2.1))
       }
       col.e  <- seq_along(plot.x)
-      if(mispal) grDevices::palette(viridis(length(col.e) + 2, option="D", alpha=transparency)[-c(1L:2L)])
-      ci.x   <- switch(EXPR=errX, PPRE=error$CIs[-7L,],  error$CIs)
+      if(mispal) grDevices::palette(viridis(length(col.e) + 2L, option="D", alpha=transparency)[-c(1L:2L)])
+      ci.x   <- switch(EXPR=errX, PPRE=error$CIs[-7L,], error$CIs)
       erange <- pretty(c(min(c(ci.x[,1L], plot.x, post.x)), max(c(ci.x[,2L], plot.x, post.x))))
-      x.plot <- graphics::barplot(plot.x, col=col.e, ylim=erange[c(1, length(erange))], main="", yaxt="n", ylab="Error")
+      x.plot <- graphics::barplot(plot.x, col=col.e, ylim=erange[c(1L, length(erange))], main="", yaxt="n", ylab="Error")
       graphics::axis(2, at=erange, labels=erange)
       e.col  <- grDevices::adjustcolor(c("red", "darkorchid"), alpha.f=transparency)
       graphics::points(x=x.plot, post.x, pch=15, col=e.col[1L], cex=2, xpd=TRUE)
       graphics::points(x=x.plot, last.x, pch=18, col=e.col[2L], cex=2, xpd=TRUE)
-      .plot_CI(x.plot, plot.x, li=ci.x[,1], ui=ci.x[,2], add=TRUE, gap=TRUE, slty=3, lwd=3, scol=grey, pch=19)
+      suppressWarnings(.plot_CI(x.plot, plot.x, li=ci.x[,1L], ui=ci.x[,2L], add=TRUE, gap=TRUE, slty=3, lwd=3, scol=grey, pch=19))
       if(titles) {
         graphics::title(main=list("Covariance Error Metrics"))
         graphics::par(mar=c(0, 0, 0, 0))

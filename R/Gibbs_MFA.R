@@ -81,7 +81,7 @@
     psi.inv        <- vapply(Gseq, function(g) .sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta[,g]), numeric(P))
     psi.inv        <- if(uni)     t(psi.inv)    else psi.inv
     psi.beta       <- if(one.uni) psi.beta[,1L] else psi.beta
-    if(Q0     && Q  < min(N - 1, Ledermann(P))) {
+    if(Q0     && Q  < min(N - 1L, Ledermann(P)))  {
       fact.ind     <- nn   <= P
       for(g in which(!fact.ind)) {
         fact       <- try(stats::factanal(data[z == g,, drop=FALSE], factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
@@ -96,7 +96,7 @@
       if(isTRUE(one.uni)) {
         psi.inv[,] <- 1/switch(EXPR=uni.type, constrained=.col_vars(data), .geom_mean(.col_vars(data)))
       } else   {
-        tmp.psi    <- ((nn[nn0] - 1)/(rowsum(data^2,  z) - rowsum(data, z)^2/nn[nn0]))
+        tmp.psi    <- ((nn[nn0] - 1L)/(rowsum(data^2, z) - rowsum(data, z)^2/nn[nn0]))
         psi.inv[,nn > 1]   <- tmp.psi[!is.nan(tmp.psi)]
       }
       inf.ind      <- is.infinite(psi.inv) | is.nan(psi.inv)

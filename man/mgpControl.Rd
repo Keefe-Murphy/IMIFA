@@ -4,27 +4,31 @@
 \alias{mgpControl}
 \title{Control settings for the MGP prior and AGS for infinite factor models}
 \usage{
-mgpControl(alpha.d1 = 2L,
-           alpha.d2 = 6L,
-           phi.hyper = c(3L, 2L),
+mgpControl(alpha.d1 = 2.1,
+           alpha.d2 = 3.1,
+           phi.hyper = c(3, 2),
+           sigma.hyper = c(3, 2),
            prop = 0.7,
            eps = 0.1,
            adapt = TRUE,
+           cluster.shrink = TRUE,
            b0 = 0.1,
            b1 = 5e-05,
-           beta.d1 = 1L,
-           beta.d2 = 1L,
+           beta.d1 = 1,
+           beta.d2 = 1,
            start.AGS = 0L,
            stop.AGS = Inf,
            delta0g = FALSE,
            ...)
 }
 \arguments{
-\item{alpha.d1}{Shape hyperparameter of the global shrinkage on the first column of the loadings according to the MGP shrinkage prior. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to 2.}
+\item{alpha.d1}{Shape hyperparameter of the column shrinkage on the first column of the loadings according to the MGP shrinkage prior. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to \code{2.1}.}
 
-\item{alpha.d2}{Shape hyperparameter of the global shrinkage on the subsequent columns of the loadings according to the MGP shrinkage prior. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to 6.}
+\item{alpha.d2}{Shape hyperparameter of the column shrinkage on the subsequent columns of the loadings according to the MGP shrinkage prior. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to \code{3.1}.}
 
 \item{phi.hyper}{A vector of length 2 giving the shape and rate hyperparameters for the gamma prior on the local shrinkage parameters. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to \code{c(3, 2)}. It is suggested that the rate be <= shape minus 1 to induce local shrinkage, though the cumulative shrinkage property is unaffected by these hyperparameters. Excessively small values may lead to critical numerical issues and should thus be avoided; indeed it is \emph{suggested} that the shape be >=1.}
+
+\item{sigma.hyper}{A vector of length 2 giving the shape and rate hyperparameters for the gamma prior on the cluster shrinkage parameters. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to \code{c(3, 2)}. Again, it is \emph{suggested} that the shape be >= 1. Only relevant for the "\code{IMIFA}", "\code{OMIFA}", and "\code{MIFA}" methods when \code{isTRUE(cluster.shrink)}.}
 
 \item{prop}{Proportion of loadings elements within the neighbourhood \code{eps} of zero necessary to consider a loadings column redundant. Defaults to \code{floor(0.7 * P)/P}, where \code{P} is the number of variables in the data set. However, if the data set is univariate or bivariate, the default is \code{0.5} (see Note).}
 
@@ -32,15 +36,17 @@ mgpControl(alpha.d1 = 2L,
 
 \item{adapt}{A logical value indicating whether adaptation of the number of cluster-specific factors is to take place when the MGP prior is employed. Defaults to \code{TRUE}. Specifying \code{FALSE} and supplying \code{range.Q} within \code{\link{mcmc_IMIFA}} provides a means to either approximate the infinite factor model with a fixed high truncation level, or to use the MGP prior in a finite factor context, however this is NOT recommended for the "\code{OMIFA}" and "\code{IMIFA}" methods.}
 
+\item{cluster.shrink}{A logical value indicating whether to place the prior specified by \code{sigma.hyper} on the cluster shrinkage parameters. Defaults to \code{TRUE}. Specifying \code{FALSE} is equivalent to fixing all cluster shrinkage parameters to 1. Only relevant for the "\code{IMIFA}", "\code{OMIFA}", and "\code{MIFA}" methods. If invoked, the posterior mean cluster shrinkage factors will be reported.}
+
 \item{b0, b1}{Intercept & slope parameters for the exponentially decaying adaptation probability:
 
 \code{p(iter) = 1/exp(b0 + b1 * (iter - start.AGS))}.
 
 Defaults to 0.1 & 0.00005, respectively. Must be non-negative and strictly positive, respectively, to ensure diminishing adaptation.}
 
-\item{beta.d1}{Rate hyperparameter of the global shrinkage on the first column of the loadings according to the MGP shrinkage prior. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to 1.}
+\item{beta.d1}{Rate hyperparameter of the column shrinkage on the first column of the loadings according to the MGP shrinkage prior. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to 1.}
 
-\item{beta.d2}{Rate hyperparameter of the global shrinkage on the subsequent columns of the loadings according to the MGP shrinkage prior. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to 1.}
+\item{beta.d2}{Rate hyperparameter of the column shrinkage on the subsequent columns of the loadings according to the MGP shrinkage prior. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to 1.}
 
 \item{start.AGS}{The iteration at which adaptation under the AGS is to begin. Defaults to \code{burnin} for the "\code{IFA}" and "\code{MIFA}" methods, defaults to 0 for the "\code{OMIFA}" and "\code{IMIFA}" methods, and defaults to 0 for all methods if the data set is univariate or bivariate. Cannot exceed \code{burnin}.}
 
@@ -71,7 +77,7 @@ mgpctrl <- mgpControl(phi.hyper=c(2.5, 1), eps=1e-02)
 # sim   <- mcmc_IMIFA(olive, "IMIFA", n.iters=5000, phi.hyper=c(2.5, 1), eps=1e-02)
 }
 \references{
-Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
+Murphy, K., Gormley, I. C. and Viroli, C. (2018) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
 
 Durante, D. (2017). A note on the multiplicative gamma process, \emph{Statistics & Probability Letters}, 122: 198-204.
 

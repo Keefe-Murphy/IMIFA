@@ -50,13 +50,9 @@ Note that the first three options here might exhibit bias in favour of zero-fact
 
 \item{Q.meth}{If the object in \code{sims} arises from the "\code{IFA}", "\code{MIFA}", "\code{OMIFA}" or "\code{IMIFA}" methods, this argument determines whether the optimal number of latent factors is given by the mode or median of the posterior distribution of \code{Q}. Defaults to "\code{mode}". Often the mode and median will agree in any case.}
 
-\item{conf.level}{The confidence level to be used throughout for credible intervals for all parameters of inferential interest, and error metrics if \code{error.metrics} is \code{TRUE}. Defaults to 0.95.}
+\item{conf.level}{The confidence level to be used throughout for credible intervals for all parameters of inferential interest, and error metrics if \code{error.metrics=TRUE}. Defaults to \code{0.95}.}
 
-\item{error.metrics}{A logical activating or deactivating posterior predictive checking: i.e. controlling whether metrics quantifying the error between the empirical and estimated covariance matrices should be computed for every \emph{valid} retained iteration (see \code{Details}). Defaults to \code{TRUE}, but can be time-consuming for models which achieve clustering.
-
-Regardless of the value of \code{error.metrics}, the metrics will still be computed at the posterior mean parameter estimates, \emph{if possible}, with or without computing a distribution of such metrics. These error metrics, and the uncertainty associated with them, if \code{error.metrics} is \code{TRUE}, can be visualised via \code{\link{plot.Results_IMIFA}}.
-
-For models which achieve clustering, the overall estimated covariance matrix is constructed from the cluster-specific estimated covariance matrices.}
+\item{error.metrics}{A logical activating or deactivating posterior predictive checking: i.e. controlling whether metrics quantifying a) the posterior predictive reconstruction error between bin counts of the data and bin counts of replicate draws from the posterior distribution & and b) the error between the empirical and estimated covariance matrices should be computed. These are computed for every \emph{valid} retained iteration (see \code{Details}). Defaults to \code{TRUE}, but can be time-consuming for models which achieve clustering. These error metrics, and the uncertainty associated with them can be visualised via \code{\link{plot.Results_IMIFA}}.}
 
 \item{vari.rot}{Logical indicating whether the loadings matrix/matrices template(s) should be \code{\link[stats]{varimax}} rotated first, prior to the Procrustes rotation steps. Defaults to \code{FALSE}. Not necessary at all for clustering purposes, or inference on the covariance matrix, but useful if interpretable inferences on the loadings matrix/matrices are desired. Arguments to \code{\link[stats]{varimax}} can be passed via the \code{...} construct, but note that the argument \code{normalize} here defaults to \code{FALSE}.}
 
@@ -74,10 +70,8 @@ Please be warned that this only defaults to \code{TRUE} when the \code{\link[mcc
 An object of class "\code{Results_IMIFA}" to be passed to \code{\link{plot.Results_IMIFA}} for visualising results. Dedicated \code{print} and \code{summary} functions also exist for objects of this class. The object, say \code{x}, is a list of lists, the most important components of which are:
 \item{\code{Clust}}{Everything pertaining to clustering performance can be found here for all but the "\code{FA}" and "\code{IFA}" methods (or models where the estimate number of clusters is 1), in particular \code{x$Clust$MAP}, the MAP summary of the posterior clustering, the last valid sample of cluster labels \code{x$Clust$last.z}, the matrix of posterior cluster membership probabilities \code{x$Clust$post.prob}, and the posterior confusion matrix \code{x$Clust$PCM}.
 
-More detail is given if known \code{zlabels} are supplied: performance is always evaluated against the MAP clustering, with additional evaluation against the alternative clustering computed if \code{z.avgsim=TRUE}. Posterior summaries of the mixing proportions, and the DP/PY parameters, if necessary, are also included here, as well as the last valid samples of each.}
-\item{\code{Error}}{Average error metrics (e.g. MSE, RMSE), and credible intervals quantifying the associated uncertainty, between the empirical and estimated covariance matrix/matrices, both of which are also included. The same metrics evaluated at the posterior mean parameter estimates and evaluated the last valid samples are also given.
-
-Credible intervals are only returned if \code{error.metrics} is \code{TRUE}. May not all be returned if loadings and uniquenesses are not stored. The number of iterations used in the computation of the credible intervals is the same as the number retained for posterior summaries of the \code{Scores} (see below).}
+More detail is given if known \code{zlabels} are supplied: performance is always evaluated against the MAP clustering, with additional evaluation against the alternative clustering computed if \code{z.avgsim=TRUE}. Posterior summaries of the mixing proportions, and the concentration/discount parameters, if necessary, are also included here, as well as the last valid samples of each.}
+\item{\code{Error}}{Everything pertaining the model fit assessment can be found here, incl. the distribution of the PPRE values and associated bin counts for the replicate draws, as well as average error metrics (e.g. MSE, RMSE), and credible intervals quantifying the associated uncertainty, between the empirical and estimated covariance matrix/matrices, both of which are also included.}
 \item{\code{GQ.results}}{Everything pertaining to model choice can be found here, incl. posterior summaries for the estimated number of clusters and estimated number of factors, if applicable to the method employed. Model selection criterion values are also accessible here.}
 \item{\code{Means}}{Posterior summaries for the means, after conditioning on \code{G}.}
 \item{\code{Loadings}}{Posterior summaries for the factor loadings matrix/matrices, after conditioning on \code{G} and \code{Q}. Posterior mean loadings given by \code{x$Loadings$post.load} are given the \code{\link[stats]{loadings}} class for printing purposes and thus the manner in which they are displayed can be modified.
@@ -97,6 +91,8 @@ This function post-processes simulations generated by \code{\link{mcmc_IMIFA}} f
 The function also performs post-hoc corrections for label switching, as well as post-hoc Procrustes rotation of loadings matrices and scores, in order to ensure sensible posterior parameter estimates, computes error metrics, constructs credible intervals, and generally transforms the raw \code{sims} object into an object of class "\code{Results_IMIFA}" in order to prepare the results for plotting via \code{\link{plot.Results_IMIFA}}.
 
 For the infinite factor methods, iterations where the maximum number of factors was greater than or equal to the maximum of the estimated cluster-specific factors are retained for posterior summaries of the scores, in order to preserve the estimated dimension of the scores matrices. Similarly, these are also the \emph{valid} iterations used for the computation of the averages and credible intervals for the error metrics. For the finite factor models, \emph{all} retained iterations are used in both instances (i.e. both for the scores and the error metrics).
+
+In all cases, only iterations with \code{G} non-empty components are retained.
 }
 \note{
 For the "\code{IMIFA}", "\code{IMFA}", "\code{OMIFA}", and "\code{OMFA}" methods, the retained mixing proportions are renormalised after conditioning on the modal \code{G}. This is especially necessary for the compution of the \code{error.metrics}, just note that the values on which posterior inference are conducted will ever so slightly differ from the actually sampled values.
@@ -130,7 +126,7 @@ Due to the way the offline label-switching correction is performed, different ru
 # newdata       <- sim_IMIFA_model(resIMIFAolive)
 }
 \references{
-Murphy, K., Gormley, I. C. and Viroli, C. (2017) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
+Murphy, K., Gormley, I. C. and Viroli, C. (2018) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
 }
 \seealso{
 \code{\link{plot.Results_IMIFA}}, \code{\link{mcmc_IMIFA}}, \code{\link{Zsimilarity}}, \code{\link{scores_MAP}}, \code{\link{sim_IMIFA_model}}, \code{\link{Procrustes}}

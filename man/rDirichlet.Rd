@@ -11,7 +11,7 @@ rDirichlet(G,
 \arguments{
 \item{G}{The number of clusters for which weights need to be sampled.}
 
-\item{alpha}{The Dirichlet hyperparameter, either of length 1 or \code{G}. When the length of \code{alpha} is 1, this amounts to assuming an exchangeable prior, which doesn't favour one component over another. Be warned that this will be recycled if necessary.}
+\item{alpha}{The Dirichlet hyperparameter, either of length 1 or \code{G}. When the length of \code{alpha} is 1, this amounts to assuming an exchangeable prior, which doesn't favour one component over another. Be warned that this will be recycled if necessary. Larger values have the effect of making the returned samples more equal.}
 
 \item{nn}{A vector giving the number of observations in each of G clusters so that Dirichlet posteriors rather than priors can be sampled from. This defaults to 0, i.e. simulation from the prior. Must be non-negative. Be warned that this will be recycled if necessary.}
 }
@@ -19,12 +19,12 @@ rDirichlet(G,
 A Dirichlet vector of \code{G} weights which sum to 1.
 }
 \description{
-Generates samples from the Dirichlet distrubution with parameter \code{alpha} efficiently by simulating Gamma(\code{alpha}, 1) random variables and normalising them.
+Generates samples from the Dirichlet distribution with parameter \code{alpha} efficiently by simulating Gamma(\code{alpha}, 1) random variables and normalising them.
 }
 \note{
 Though the function is available for standalone use, note that no checks take place, in order to speed up repeated calls to the function inside \code{\link{mcmc_IMIFA}}.
 
-While small values of \code{alpha} have the effect of increasingly concentrating the mass onto fewer components, note that this will not be true for excessively small values of \code{alpha}, when \code{nn=0}; see the details of \code{rgamma} for small \code{shape} values.
+While small values of \code{alpha} have the effect of increasingly concentrating the mass onto fewer components, note that this function may return \code{NaN} for excessively small values of \code{alpha}, when \code{nn=0}; see the details of \code{rgamma} for small \code{shape} values.
 }
 \examples{
 (prior     <- rDirichlet(G=5, alpha=1))
