@@ -51,20 +51,11 @@
     delta        <- c(.sim_delta_p(alpha=alpha.d1, beta=beta.d1), .sim_delta_p(Q=Q, alpha=alpha.d2, beta=beta.d2))
     tau          <- cumprod(delta)
     lmat         <- matrix(vapply(Pseq, function(j) .sim_load_ps(Q=Q, phi=phi[j,], tau=tau), numeric(Q)), nrow=P, byrow=TRUE)
+    psi.tmp      <-
     psi.inv      <- .sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
-    if(Q   < min(N - 1L, Ledermann(P))) {
-      fact       <- try(stats::factanal(data, factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
-      if(!inherits(fact, "try-error"))  {
-        eta      <- fact$scores
-        lmat     <- unclass(fact$loadings)
-        psi.inv  <- 1/fact$uniquenesses
-      }
-    } else {
-      psi.tmp    <- psi.inv
-      psi.inv[]  <- 1/switch(EXPR=uni.type, constrained=.col_vars(data, suma=mu), .geom_mean(.col_vars(data, suma=mu)))
-      inf.ind    <- is.infinite(psi.inv)
-      psi.inv[inf.ind]     <- psi.tmp[inf.ind]
-    }
+    psi.inv[]    <- 1/switch(EXPR=uni.type, constrained=.col_vars(data, suma=mu), .geom_mean(.col_vars(data, suma=mu)))
+    inf.ind      <- is.infinite(psi.inv)
+    psi.inv[inf.ind]       <- psi.tmp[inf.ind]
     sum.data     <- mu * N
     if(burnin     < 1) {
       if(sw["mu.sw"])            mu.store[,1L] <- mu

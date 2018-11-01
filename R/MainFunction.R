@@ -49,7 +49,7 @@
 #' \item{\strong{\code{\link{mixfaControl}}} - }{Supply arguments (with defaults) pertaining to \emph{all other} aspects of model fitting (e.g. MCMC settings, cluster initialisation, and hyperparameters common to every \code{method} in the \code{IMIFA} family.}
 #' \item{\strong{\code{\link{storeControl}}} - }{Supply logical indicators governing storage of parameters of interest for all models in the IMIFA family. It may be useful not to store certain parameters if memory is an issue (e.g. for large data sets or for a large number of MCMC iterations after burnin and thinning).}
 #' }
-#' Note however that the named arguments of these functions can also be supplied directly. Parameter starting values are obtained by simulation from the relevant prior distribution specified in these control functions.
+#' Note however that the named arguments of these functions can also be supplied directly. Parameter starting values are obtained by simulation from the relevant prior distribution specified in these control functions, though initial means and mixing proportions are computed empirically.
 #' @return A list of lists of lists of class "\code{IMIFA}" to be passed to \code{\link{get_IMIFA_results}}. If the returned object is \code{x}, candidate models are accesible via subsetting, where \code{x} is of the following form:
 #'
 #' \code{x[[1:length(range.G)]][[1:length(range.Q)]]}.
@@ -367,7 +367,7 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
   varnames         <- colnames(dat)
   covmat           <- switch(EXPR=scaling, unit=stats::cor(dat), stats::cov(dat))
   dimnames(covmat) <- list(varnames, varnames)
-  if(anyNA(covmat))                 warning(paste0("Covariance matrix cannot be estimated: ", ifelse(beta.x || (sigmu.miss && scaling != "unit"), "deriving default hyperparameters may not be possible, neither will posterior predictive checking\n", "posterior predictive checking will not be possible\n")), call.=FALSE)
+  if(anyNA(covmat))                 warning(paste0("Covariance matrix cannot be estimated: ", ifelse(beta.x || (sigmu.miss && scaling != "unit"), "deriving mean/uniqueness hyperparameters may not be possible, neither will certain posterior predictive checks\n", "certain posterior predictive checks will not be possible\n")), call.=FALSE)
   sigma.mu         <- if(sigmu.miss && scaling == "unit") 1L else if(sigmu.miss) diag(covmat) else if(is.matrix(sigma.mu)) diag(sigma.mu) else sigma.mu
   sigma.mu         <- sigma.mu/mixFA$prec.mu
   if(anyNA(sigma.mu))               stop(ifelse(sigmu.miss, "Not possible to derive default 'sigma.mu': this argument now must be supplied", "NA in 'sigma.mu'"), call.=FALSE)

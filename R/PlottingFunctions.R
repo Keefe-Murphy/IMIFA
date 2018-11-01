@@ -214,6 +214,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
     errX  <- attr(x, "Errors")
     if(is.element(errX,
                 c("None", "Vars"))) { stop("Can't plot error metrics as they were not calculated within get_IMIFA_results()", call.=FALSE)
+    } else if(errX == "PPRE")       { warning("Can only plot the posterior predictive reconstruction error, and not error metrics between covariance matrices\n", call.=FALSE)
     } else if(errX == "Covs")       { warning("Can only plot error metrics between covariance matrices, and not the posterior predictive reconstruction error\n", call.=FALSE)
     } else if(errX == "Post")         warning("Can only plot error metrics between covariance matrices evaluated at the posterior mean, as they were not calculated for every iteration within get_IMIFA_results\n", call.=FALSE)
   }
@@ -290,7 +291,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
              ifelse(z.sim, 5, 4), g,  stop(paste0("Invalid 'g' value", ifelse(z.sim, ": similarity matrix not available", "")), call.=FALSE))
     }
   } else if(m.sw["E.sw"])   {
-    Gs    <- if(gx) switch(EXPR=errX, PPRE=seq_len(3L), 1L) else ifelse(g <= (1L + 2L * (errX == "PPRE")), g,
+    Gs    <- if(gx) switch(EXPR=errX, All=seq_len(3L), PPRE=seq_len(2L), 1L) else ifelse(g <= switch(EXPR=errX, All=3L, PPRE=2L, 1L), g,
                                       stop("Invalid 'g' value", call.=FALSE))
   } else if(any(all(is.element(param, c("scores", "pis", "alpha", "discount")), any(all.ind, param != "scores", !m.sw["M.sw"])), m.sw["G.sw"],
             all(m.sw["P.sw"], param != "loadings"), all(param == "uniquenesses", is.element(uni.type, c("constrained", "single")))))  {
@@ -1224,9 +1225,9 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
     }
 
     if(m.sw["E.sw"]) {
-     Pind    <-  errX == "PPRE" && g == 1
-     Hind    <-  errX == "PPRE" && g == 2
-     Cind    <- (errX == "PPRE" && g == 3) || !any(Pind, Hind)
+     Pind    <-  is.element(errX, c("All", "PPRE")) && g == 1
+     Hind    <-  is.element(errX, c("All", "PPRE")) && g == 2
+     Cind    <- (errX == "All" && g == 3) || !any(Pind, Hind)
      error   <- x$Error
      if(Pind) {
        graphics::boxplot(error$PPRE, col=palette[length(palette)])
@@ -1235,7 +1236,8 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
          graphics::mtext("PPRE", side=2, line=2)
          graphics::mtext(method, side=1, line=1)
        }
-       print(c(error$CIs[7L,], Mean=unname(error$Avg[7L]), Median=med(error$PPRE), "Last Valid Sample"=unname(error$Final[7L]))[c(1L, 3L, 4L, 5L, 2L)])
+       indp  <- switch(EXPR=errX, All=7L, PPRE=1L)
+       print(c(error$CIs[indp,], Mean=unname(error$Avg[indp]), Median=med(error$PPRE), "Last Valid Sample"=unname(error$Final[indp]))[c(1L, 3L, 4L, 5L, 2L)])
      }
      if(Hind) {
        if(titles) {
@@ -1255,17 +1257,17 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
         graphics::text(temp$rect$left + temp$rect$w * 0.55, temp$text$y, ltxt)
        }
      }
-     if(Cind && is.element(errX, c("PPRE", "Covs"))) {
+     if(Cind && is.element(errX, c("All", "Covs"))) {
       post.x <- error$Post
-      plot.x <- switch(EXPR=errX, PPRE=error$Avg[-7L],   error$Avg)
-      last.x <- switch(EXPR=errX, PPRE=error$Final[-7L], error$Avg)
+      plot.x <- switch(EXPR=errX, All=error$Avg[-7L],   error$Avg)
+      last.x <- switch(EXPR=errX, All=error$Final[-7L], error$Avg)
       if(titles) {
         graphics::layout(rbind(1, 2), heights=c(9, 1))
         graphics::par(mar=c(3.1, 4.1, 4.1, 2.1))
       }
       col.e  <- seq_along(plot.x)
       if(mispal) grDevices::palette(viridis(length(col.e) + 2L, option="D", alpha=transparency)[-c(1L:2L)])
-      ci.x   <- switch(EXPR=errX, PPRE=error$CIs[-7L,], error$CIs)
+      ci.x   <- switch(EXPR=errX, All=error$CIs[-7L,], error$CIs)
       erange <- pretty(c(min(c(ci.x[,1L], plot.x, post.x)), max(c(ci.x[,2L], plot.x, post.x))))
       x.plot <- graphics::barplot(plot.x, col=col.e, ylim=erange[c(1L, length(erange))], main="", yaxt="n", ylab="Error")
       graphics::axis(2, at=erange, labels=erange)
@@ -1285,6 +1287,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
       rownames(metric) <- c("Averages", "Evaluated at Posterior Mean", "Evaluated at Last Valid Sample")
         print(metric)
      } else if(Cind)    {
+      graphics::par(defpar)
       plot.x <- error$Post
       col.e  <- seq_along(plot.x)
       if(mispal) grDevices::palette(viridis(length(col.e) + 2, option="D", alpha=transparency)[-c(1L:2L)])

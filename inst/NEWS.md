@@ -22,17 +22,19 @@ __Infinite Mixtures of Infinite Factor Analysers__
   
 ### Improvements
 * New hyperparameter/argument defaults:
+    * `sigma.mu` defaults to 1 s.t. the hypercovariance is the identity for the prior on the means;  
+      old behaviour (using the diagonal of the sample covariance matrix) recoverable by specifying `sigma.mu=NULL`.
     * `prec.mu` defaults to `0.1` s.t. the prior on the cluster means is flat by default.
     * `learn.d` defaults to `TRUE` s.t. a PYP prior is assumed for IM(I)FA models by default.
     * `alpha.hyper` now has a larger hyper-rate by default, to better encourage clustering.
     * `alpha.d1` & `alpha.d2` now set to `2.1`/`3.1` rather than `2`/`6` to discourage exponentially fast shrinkage.
+* Args. `scores` & `loadings` can now be supplied to `sim_IMIFA_data` directly.
+* Sped-up 2<sup>nd</sup> label-switching move for IM(I)FA models (accounting for empty clusters).
 * Args. for `hc` can now be passed when `init.z="mclust"` also  
   (previously only `"hc"`), thus controlling how `Mclust` is itself initialised.
 * Allowed `criterion` to be passed via `...` in `mixfaControl` to choose between  
   `mclustBIC`/`mclustICL` to determine optimum model to initialise with when  
   `z.init="mclust"` & also sped-up `mclust` initialisation in the process.
-* Args. `scores` & `loadings` can now be supplied to `sim_IMIFA_data` directly.
-* Sped-up 2<sup>nd</sup> label-switching move for IM(I)FA models (accounting for empty clusters).
 * Added `stop.AGS` arg. to `mgpControl`: renamed `adapt.at` to `start.AGS` for consistency.
 * Added `start.zeta` & `stop.zeta` options to `tune.zeta` argument in `bnpControl`.
 
@@ -46,11 +48,12 @@ __Infinite Mixtures of Infinite Factor Analysers__
     * Other Procrustes rotation fixes specific to the IMFA/OMFA methods.
 * Slight label-switching fixes when `zlabels` are supplied to `get_IMIFA_results`;  
   posterior confusion matrix, cluster sizes vector, and the sampled labels themselves effected.
+* Fixed initialisation of uniquenesses to account for all four settings of `uni.type`.
 * `trunc.G` now shares the same default as `range.G`, rather than defaulting to `range.G`.
 * `range.G` default no longer differs in `N <= P` settings.
 * Conditioned on iterations with all components populated for M(I)FA models in `get_IMIFA_results`.
 * Accounted for 1-component IM(I)FA/OM(I)FA models in `get_IMIFA_results`.
-* Improved handling of empty components when simulating cluster labels from priors in `mcmc_IMIFA` & `sim_IMIFA_data`.
+* Fixed handling of empty components when simulating cluster labels from priors in `mcmc_IMIFA` & `sim_IMIFA_data`.
 * Slight speed-up to updating MGP hyperparameters in the presence of empty MIFA/OMIFA/IMIFA components.
 * Slight speed-up to sampling cluster labels with slice indicators for IM(I)FA models.
 * Explicitly allowed Pitman-Yor special case where `alpha=0` for IM(I)FA models;  

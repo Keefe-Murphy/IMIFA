@@ -79,28 +79,20 @@
     mu             <- cbind(mu, vapply(seq_len(G - length(cluster$pi.prop)), function(g) .sim_mu_p(P=P, sig.mu.sqrt=sig.mu.sqrt, mu.zero=mu.zero), numeric(P)))
     eta            <- .sim_eta_p(N=N, Q=Q)
     lmat           <- if(Q0) array(vapply(Gseq, function(g) .sim_load_p(Q=Q, P=P, sigma.l=sigma.l), numeric(P * Q)), dim=c(P, Q, G)) else array(0, dim=c(P, 0, G))
-    psi.inv        <- replicate(G, .sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), simplify="array")
+    if(isTRUE(one.uni)) {
+      psi.inv      <- matrix(.sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), nrow=P, ncol=G)
+    } else psi.inv <- replicate(G, .sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), simplify="array")
+    psi.tmp        <-
     psi.inv        <- if(uni) t(psi.inv) else psi.inv
-    if(Q0 &&   Q    < min(N - 1L, Ledermann(P)))  {
-      for(g in which(nn     > P))   {
-        fact       <- try(stats::factanal(data[z == g,, drop=FALSE], factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
-        if(!inherits(fact, "try-error")) {
-          eta[z == g,]     <- fact$scores
-          lmat[,,g]        <- unclass(fact$loadings)
-          psi.inv[,g]      <- 1/fact$uniquenesses
-        }
-      }
-    } else {
-      psi.tmp      <- psi.inv
-      if(isTRUE(one.uni)) {
-        psi.inv[,] <- 1/switch(EXPR=uni.type, constrained=.col_vars(data), .geom_mean(.col_vars(data)))
-      } else   {
-        tmp.psi    <- ((nn[nn0] - 1L)/(rowsum(data^2, z) - rowsum(data, z)^2/nn[nn0]))
-        psi.inv[,nn > 1]   <- tmp.psi[!is.nan(tmp.psi)]
-      }
-      inf.ind      <- is.infinite(psi.inv) | is.nan(psi.inv)
-      psi.inv[inf.ind]     <- psi.tmp[inf.ind]
+    if(isTRUE(one.uni))     {
+      psi.inv[,]   <- 1/switch(EXPR=uni.type, constrained=.col_vars(data), .geom_mean(.col_vars(data)))
+    } else  {
+      tmp.psi      <- ((nn[nn0] - 1L)/(rowsum(data^2, z) - rowsum(data, z)^2/nn[nn0]))
+      tmp.psi      <- switch(EXPR=uni.type, unconstrained=t(tmp.psi), matrix(apply(tmp.psi, 1L, .geom_mean), nrow=P, ncol=G, byrow=TRUE))
+      psi.inv[,nn   > 1]   <- tmp.psi[!is.nan(tmp.psi)]
     }
+    inf.ind        <- is.infinite(psi.inv) | is.nan(psi.inv)
+    psi.inv[inf.ind]       <- psi.tmp[inf.ind]
     psi.inv[psi.inv == 0]  <- colMaxs(psi.inv[,which(psi.inv == 0, arr.ind=TRUE)[,2L], drop=FALSE], value=TRUE)
     l.sigma        <- diag(1/sigma.l, Q)
     index          <- order(nn, decreasing=TRUE)

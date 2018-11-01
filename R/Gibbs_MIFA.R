@@ -92,32 +92,23 @@
       MGPsig       <- .sim_sigma_p(G=G, rho1=rho1, rho2=rho2)
     } else MGPsig  <- rep(1L, G)
     lmat           <- lapply(Gseq, function(g) matrix(vapply(Pseq, function(j) .sim_load_ps(Q=Q, phi=phi[[g]][j,], tau=tau[[g]], sigma=MGPsig[g]), numeric(Q)), nrow=P, byrow=TRUE))
-    psi.inv        <- vapply(Gseq, function(g) .sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta[,g]), numeric(P))
+    if(isTRUE(one.uni)) {
+      psi.beta     <- psi.beta[,1L]
+      psi.inv      <- matrix(.sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), nrow=P, ncol=G)
+    } else psi.inv <- vapply(Gseq, function(g) .sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta[,g]), numeric(P))
+    psi.tmp        <-
     psi.inv        <- if(uni)     t(psi.inv)    else psi.inv
-    psi.beta       <- if(one.uni) psi.beta[,1L] else psi.beta
-    if(Q < min(N - 1L, Ledermann(P)))    {
-      fact.ind     <- nn    <= P
-      for(g in which(!fact.ind)) {
-        fact       <- try(stats::factanal(data[z == g,, drop=FALSE], factors=Q, scores="regression", control=list(nstart=50)), silent=TRUE)
-        if(!inherits(fact, "try-error")) {
-          eta[z == g,]      <- fact$scores
-          lmat[[g]]         <- unclass(fact$loadings)
-          psi.inv[,g]       <- 1/fact$uniquenesses
-        }
-      }
-    } else     {
-      psi.tmp      <- psi.inv
-      if(isTRUE(one.uni)) {
-        psi.inv[,] <- 1/switch(EXPR=uni.type, constrained=.col_vars(data), .geom_mean(.col_vars(data)))
-      } else   {
-        tmp.psi    <- ((nn[nn0] - 1L)/(rowsum(data^2, z) - rowsum(data, z)^2/nn[nn0]))
-        psi.inv[,nn > 1]    <- tmp.psi[!is.nan(tmp.psi)]
-      }
-      inf.ind      <- is.infinite(psi.inv) | is.nan(psi.inv)
-      psi.inv[inf.ind]      <- psi.tmp[inf.ind]
+    if(isTRUE(one.uni)) {
+      psi.inv[,]   <- 1/switch(EXPR=uni.type, constrained=.col_vars(data), .geom_mean(.col_vars(data)))
+    } else   {
+      tmp.psi      <- ((nn[nn0] - 1L)/(rowsum(data^2, z) - rowsum(data, z)^2/nn[nn0]))
+      tmp.psi      <- switch(EXPR=uni.type, unconstrained=t(tmp.psi), matrix(apply(tmp.psi, 1L, .geom_mean), nrow=P, ncol=G, byrow=TRUE))
+      psi.inv[,nn   > 1]    <- tmp.psi[!is.nan(tmp.psi)]
     }
+    inf.ind        <- is.infinite(psi.inv) | is.nan(psi.inv)
+    psi.inv[inf.ind]        <- psi.tmp[inf.ind]
     psi.inv[psi.inv == 0]   <- colMaxs(psi.inv[,which(psi.inv == 0, arr.ind=TRUE)[,2L], drop=FALSE], value=TRUE)
-    if(burnin       < 1)  {
+    if(burnin       < 1)     {
       if(sw["mu.sw"])    mu.store[,,1L]  <- mu
       if(sw["s.sw"])     eta.store[,,1L] <- eta
       if(sw["l.sw"])   load.store[,,,1L] <- array(unlist(lmat, use.names=FALSE), dim=c(P, Q, G))
