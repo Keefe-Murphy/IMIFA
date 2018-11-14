@@ -19,6 +19,7 @@ get_IMIFA_results(sims = NULL,
                   vari.rot = FALSE,
                   z.avgsim = TRUE,
                   zlabels = NULL,
+                  nonempty = TRUE,
                   ...)
 
 \method{print}{Results_IMIFA}(x,
@@ -63,6 +64,8 @@ Note that the MAP clustering is computed \emph{conditional} on the estimate of t
 Please be warned that this only defaults to \code{TRUE} when the \code{\link[mcclust]{mcclust}} package - which \strong{must} be loaded for this feature - is loaded and the number of observations is less than 1000. However, it can still be manually set to \code{TRUE} for larger data sets. This is liable to take considerable time to compute, and may not even be possible if the number of observations &/or number of stored iterations is large and the resulting matrix isn't sufficiently sparse. When \code{TRUE}, both the summarised clustering and the similarity matrix are stored: the latter can be visualised as part of a call to \code{\link{plot.Results_IMIFA}}.}
 
 \item{zlabels}{For any method that performs clustering, the true labels can be supplied if they are known in order to compute clustering performance metrics. This also has the effect of ordering the MAP labels (and thus the ordering of cluster-specific parameters) to most closely correspond to the true labels if supplied.}
+
+\item{nonempty}{For "\code{MFA}" and "\code{MIFA}" models ONLY: a logical indicating whether only iterations with non-empty components should be retained. Defaults to \code{TRUE}, but may lead to empty chains - conversely, \code{FALSE} may lead to empty components.}
 
 \item{x, object, ...}{Arguments required for the \code{print.Results_IMIFA} and \code{summary.Results_IMIFA} functions: \code{x} and \code{object} are objects of class \code{"Results_IMIFA"} resulting from a call to \code{\link{get_IMIFA_results}}, while \code{...} gathers additional arguments to those functions. The \code{...} construct also allows arguments to \code{\link[stats]{varimax}} to be passed to \code{\link{get_IMIFA_results}} itself, when \code{isTRUE(vari.rot)}.}
 }

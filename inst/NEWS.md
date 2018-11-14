@@ -24,10 +24,11 @@ __Infinite Mixtures of Infinite Factor Analysers__
 * New hyperparameter/argument defaults:
     * `sigma.mu` defaults to 1 s.t. the hypercovariance is the identity for the prior on the means;  
       old behaviour (using the diagonal of the sample covariance matrix) recoverable by specifying `sigma.mu=NULL`.
-    * `prec.mu` defaults to `0.1` s.t. the prior on the cluster means is flat by default.
+    * `prec.mu` defaults to `0.01` s.t. the prior on the cluster means is flat by default.
     * `learn.d` defaults to `TRUE` s.t. a PYP prior is assumed for IM(I)FA models by default.
     * `alpha.hyper` now has a larger hyper-rate by default, to better encourage clustering.
     * `alpha.d1` & `alpha.d2` now set to `2.1`/`3.1` rather than `2`/`6` to discourage exponentially fast shrinkage.
+    * `z.init` now defaults to `"hc"`: model-based agglomerative hierarchical clustering.
 * Args. `scores` & `loadings` can now be supplied to `sim_IMIFA_data` directly.
 * Sped-up 2<sup>nd</sup> label-switching move for IM(I)FA models (accounting for empty clusters).
 * Args. for `hc` can now be passed when `init.z="mclust"` also  
@@ -46,12 +47,11 @@ __Infinite Mixtures of Infinite Factor Analysers__
       thus, valid samples for computing error metrics also fixed and Procrustes rotation also sped-up.  
     * Other Procrustes rotation fixes to account for label-switching.  
     * Other Procrustes rotation fixes specific to the IMFA/OMFA methods.
+* `range.G` and `trunc.G` defaults fixed, especially for small sample size settings. 
 * Slight label-switching fixes when `zlabels` are supplied to `get_IMIFA_results`;  
   posterior confusion matrix, cluster sizes vector, and the sampled labels themselves effected.
 * Fixed initialisation of uniquenesses to account for all four settings of `uni.type`.
-* `trunc.G` now shares the same default as `range.G`, rather than defaulting to `range.G`.
-* `range.G` default no longer differs in `N <= P` settings.
-* Conditioned on iterations with all components populated for M(I)FA models in `get_IMIFA_results`.
+* Allowed conditioning on iterations with all components populated for M(I)FA models in `get_IMIFA_results`.
 * Accounted for 1-component IM(I)FA/OM(I)FA models in `get_IMIFA_results`.
 * Fixed handling of empty components when simulating cluster labels from priors in `mcmc_IMIFA` & `sim_IMIFA_data`.
 * Slight speed-up to updating MGP hyperparameters in the presence of empty MIFA/OMIFA/IMIFA components.
@@ -60,7 +60,7 @@ __Infinite Mixtures of Infinite Factor Analysers__
   added related controls on spike-and-slab prior for `discount` when fixing `alpha<=0`.
 * Allowed full range of `hc` model types for initialisation purposes via `...` in `mixfaControl`.
 * Clarified `dimnames` of `get_IMIFA_results` output in `x$Loadings` & `x$Scores`.
-* Fixed storage switches to account for `burnin=0`.
+* Fixed storage switches & iteration indices to better account for `burnin=0`.
 * Fixed plotting of exact zeros in posterior confusion matrix.
 * Fixed plotting posterior mean loadings heatmap when one or more clusters have zero factors.
 * Fixed plotting scores for (I)FA models due to bug in previous update.
@@ -70,6 +70,7 @@ __Infinite Mixtures of Infinite Factor Analysers__
 * Fixed y-axis labelling in uncertainty type plots when `plot.meth="z"`.
 * Small fixes to function `show_digit`.
 * Better handling of tied model-selection criteria in `get_IMIFA_results`.
+* `Procrustes` now works when `X` has fewer columns than `Xstar`.
 * Minor cosmetic change for overplotting `scores` & `loadings` in `trace` & `density` plots.
 * Edited `Ledermann` and related warnings to account for case of isotropic uniquenesses.
 * Tidied indentation/line-breaks for `cat`/`message`/`warning` calls for printing clarity.

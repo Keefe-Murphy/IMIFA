@@ -40,13 +40,13 @@ mcmc_IMIFA(dat,
 }
 In principle, of course, one could overfit the "\code{MFA}" or "\code{MIFA}" models, but it is recommend to use the corresponding model options which begin with `O' instead. Note that the "\code{classify}" method is not yet implemented.}
 
-\item{range.G}{Depending on the method employed, either the range of values for the number of clusters, or the conseratively high starting value for the number of clusters. Defaults to (and must be!) 1 for the "\code{FA}" and "\code{IFA}" methods. For the "\code{MFA}" and "\code{MIFA}" models this is to be given as a range of candidate models to explore. For the "\code{OMFA}", "\code{OMIFA}", "\code{IMFA}", and "\code{IMIFA}" models, this is the number of clusters with which the chain is to be initialised (default = \code{min(N - 1, max(25, ceiling(3 * log(N))))}).
+\item{range.G}{Depending on the method employed, either the range of values for the number of clusters, or the conseratively high starting value for the number of clusters. Defaults to (and must be!) 1 for the "\code{FA}" and "\code{IFA}" methods. For the "\code{MFA}" and "\code{MIFA}" models this is to be given as a range of candidate models to explore. For the "\code{OMFA}", "\code{OMIFA}", "\code{IMFA}", and "\code{IMIFA}" models, this is the conservatively high number of clusters with which the chain is to be initialised (default = \code{max(25, ceiling(3 * log(N)))} for large N, or \code{min(N-1, ceiling(3 * log(N)))} for small N).
 
 For the "\code{OMFA}", and "\code{OMIFA}" models this upper limit remains fixed for the entire length of the chain; the upper limit for the for the "\code{IMFA}" and "\code{IMIFA}" models can be specified via \code{trunc.G} (see \code{\link{bnpControl}}), which shares the same default as \code{range.G}.
 
 If \code{length(range.G) * length(range.Q)} is large, consider not storing unnecessary parameters (via \code{\link{storeControl}}), or breaking up the range of models to be explored into chunks and sending each chunk to \code{\link{get_IMIFA_results}} separately.}
 
-\item{range.Q}{Depending on the method employed, either the range of values for the number of latent factors, or, for methods ending in IFA the conservatively high starting value for the number of cluster-specific factors, in which case the default starting value is \code{floor(3 * log(P))}.
+\item{range.Q}{Depending on the method employed, either the range of values for the number of latent factors, or, for methods ending in IFA the conservatively high starting value for the number of cluster-specific factors, in which case the default starting value is \code{round(3 * log(P))}.
 
 For methods ending in IFA, different clusters can be modelled using different numbers of latent factors (incl. zero); for methods not ending in IFA it is possible to fit zero-factor models, corresponding to simple diagonal covariance structures. For instance, fitting the "\code{IMFA}" model with \code{range.Q=0} corresponds to a vanilla Pitman-Yor / Dirichlet Process Mixture Model.
 
@@ -121,9 +121,9 @@ Note however that the named arguments of these functions can also be supplied di
 
 # Fit an IFA model to the centered and pareto scaled olive data.
 # Note that range.G doesn't need to be specified. We can optionally supply a range.Q starting value.
-# Enforce additional shrinkage using alpha.d1, alpha.d2, prop, and eps [via mgpControl()].
+# Enforce additional shrinkage using alpha.d1, alpha.d2, prop, and eps (via mgpControl()).
 # simIFA   <- mcmc_IMIFA(olive, method="IFA", n.iters=10000, range.Q=4, scaling="pareto",
-#                        alpha.d1=3.5, alpha.d2=7, prop=0.6, eps=0.12)
+#                        alpha.d1=2.5, alpha.d2=4, prop=0.6, eps=0.12)
 
 # Fit an OMIFA model to the centered & scaled coffee data.
 # Supply a sufficiently small alpha value. Try varying other hyperparameters.

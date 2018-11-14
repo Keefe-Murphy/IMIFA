@@ -51,24 +51,17 @@
     delta        <- c(.sim_delta_p(alpha=alpha.d1, beta=beta.d1), .sim_delta_p(Q=Q, alpha=alpha.d2, beta=beta.d2))
     tau          <- cumprod(delta)
     lmat         <- matrix(vapply(Pseq, function(j) .sim_load_ps(Q=Q, phi=phi[j,], tau=tau), numeric(Q)), nrow=P, byrow=TRUE)
-    psi.tmp      <-
     psi.inv      <- .sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
-    psi.inv[]    <- 1/switch(EXPR=uni.type, constrained=.col_vars(data, suma=mu), .geom_mean(.col_vars(data, suma=mu)))
-    inf.ind      <- is.infinite(psi.inv)
-    psi.inv[inf.ind]       <- psi.tmp[inf.ind]
+    psi.inv[]    <- 1/switch(EXPR=uni.type, constrained=.col_vars(data, avg=mu), .geom_mean(.col_vars(data, avg=mu)))
+    max.p        <- (psi.alpha - 1)/switch(EXPR=uni.type, unconstrained=, constrained=psi.beta, min(psi_hyper(psi.alpha, cov(data))))
+    inf.ind      <- psi.inv > max(max.p)
+    psi.inv[inf.ind]       <- switch(EXPR=uni.type, constrained=max.p, rep(max.p, P))[inf.ind]
+    rm(max.p, inf.ind)
     sum.data     <- mu * N
-    if(burnin     < 1) {
-      if(sw["mu.sw"])            mu.store[,1L] <- mu
-      if(sw["s.sw"])           eta.store[,,1L] <- eta
-      if(sw["l.sw"])          load.store[,,1L] <- lmat
-      if(sw["psi.sw"])          psi.store[,1L] <- 1/psi.inv
-      Q.store[1L]          <- Q
-      ll.store[1L]         <- sum(dmvn(X=data, mu=mu, sigma=tcrossprod(lmat) + diag(1/psi.inv), log=TRUE))
-    }
     init.time    <- proc.time() - start.time
 
   # Iterate
-    for(iter in seq_len(total)[-1L]) {
+    for(iter in seq_len(total)) {
       if(verbose && iter    < burnin) utils::setTxtProgressBar(pb, iter)
       storage    <- is.element(iter,  iters)
       Q0         <- Q  > 0
@@ -135,7 +128,7 @@
         }
       }
 
-      if(Q.big && !Q.large && iter > burnin) {       warning(paste0("\nQ has exceeded initial number of loadings columns since burnin: consider increasing range.Q from ", Q.star, "\n"), call.=FALSE)
+      if(Q.big && !Q.large && iter > burnin) {       cat("\n"); warning(paste0("\nQ has exceeded initial number of loadings columns since burnin: consider increasing range.Q from ", Q.star, "\n"), call.=FALSE)
         Q.large  <- TRUE
       }
       if(storage) {

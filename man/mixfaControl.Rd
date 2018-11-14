@@ -14,9 +14,9 @@ mixfaControl(n.iters = 25000L,
              psi.beta = NULL,
              mu.zero = NULL,
              sigma.mu = 1L,
-             prec.mu = 0.1,
+             prec.mu = 0.01,
              sigma.l = 1L,
-             z.init = c("mclust", "hc", "kmeans", "list", "priors"),
+             z.init = c("hc", "kmeans", "list", "mclust", "priors"),
              z.list = NULL,
              equal.pro = FALSE,
              uni.prior = c("unconstrained", "isotropic"),
@@ -56,11 +56,11 @@ The first letter \strong{U} here corresponds to constraints on loadings (not yet
 
 \item{sigma.mu}{The covariance of the prior distribution for the cluster mean parameters. Always assumed to be a diagonal matrix, and set to the identity matrix by default. Can also be a scalar by which the identity is multiplied, a vector of appropriate dimension; if supplied as a matrix, only the diagonal elements will be extracted. Specifying \code{sigma.mu=NULL} will use the diagonal entries of the sample covariance matrix: for unit-scaled data this is simply the identity again. See \code{prec.mu} for further control over the hypercovariance in the prior for the means.}
 
-\item{prec.mu}{A scalar controlling the degree of flatness of the prior for the cluster means by scaling \code{sigma.mu} (i.e. multiplying every element of \code{sigma.mu} by \code{1/prec.mu}). Lower values lead to a more diffuse prior. Defaults to \code{0.1}, such that the prior is relatively non-informative by default. Of course, prec.mu=1 nullifies any effect of this argument. The user can supply a scaled \code{sigma.mu} directly, but this argument is especially useful when specifying \code{sigma.mu=NULL}, such that the diagonal entries of the sample covariance matrix are used.}
+\item{prec.mu}{A scalar controlling the degree of flatness of the prior for the cluster means by scaling \code{sigma.mu} (i.e. multiplying every element of \code{sigma.mu} by \code{1/prec.mu}). Lower values lead to a more diffuse prior. Defaults to \code{0.01}, such that the prior is relatively non-informative by default. Of course, \code{prec.mu=1} nullifies any effect of this argument. The user can supply a scaled \code{sigma.mu} directly, but this argument is especially useful when specifying \code{sigma.mu=NULL}, such that the diagonal entries of the sample covariance matrix are used.}
 
 \item{sigma.l}{A scalar controlling the diagonal covariance of the prior distribution for the loadings. Defaults to \code{1}, i.e. the identity; otherwise a diagonal matrix with non-zero entries all equal to \code{sigma.l} Only relevant for the finite factor methods.}
 
-\item{z.init}{The method used to initialise the cluster labels. Defaults to \code{\link[mclust]{Mclust}}. Other options include \code{\link[stats]{kmeans}} (with 10 random starts, by default), hierarchical clustering via \code{\link[mclust]{hc}} (\code{VVV} is used by default, unless the data is high-dimensional, in which case the default is \code{EII}), random initialisation via \code{priors}, and a user-supplied \code{list} (\code{z.list}). Not relevant for the "\code{FA}" and "\code{"IFA"} methods. Arguments for the relevant functions can be passed via the \code{...} construct. The option \code{"priors"} may lead to empty components at initialisation, which will return an error.}
+\item{z.init}{The method used to initialise the cluster labels. Defaults to model-based agglomerative hierarchical clustering via \code{"\link[mclust]{hc}"}. Other options include \code{"\link[stats]{kmeans}"} (with 10 random starts, by default), \code{\link[mclust]{Mclust}} via \code{"mclust"}, random initialisation via \code{"priors"}, and a user-supplied \code{"list"} (\code{z.list}). Not relevant for the "\code{FA}" and "\code{"IFA"} methods. Arguments for the relevant functions can be passed via the \code{...} construct. For \code{"\link[mclust]{hc}"}, \code{VVV} is used by default, unless the data is high-dimensional, in which case the default is \code{EII}. The option \code{"priors"} may lead to empty components at initialisation, which will return an error.}
 
 \item{z.list}{A user supplied list of cluster labels. Only relevant if \code{z.init == "z.list"}.}
 
@@ -78,7 +78,7 @@ The first letter \strong{U} here corresponds to constraints on loadings (not yet
 
 \item{...}{Additional arguments to be passed to \code{\link[mclust]{hc}} (\code{modelName} & \code{use} only), to \code{\link[mclust]{Mclust}} (\code{modelNames}, and the arguments for \code{\link[mclust]{hc}} with which \code{\link[mclust]{Mclust}} is itself initialised - \code{modelName} & \code{use}), or to \code{\link[stats]{kmeans}} (\code{iter.max} and \code{nstart} only) can be passed here, depending on the value of \code{z.init}. Also catches unused arguments.
 
-Additionally, when \code{init.z="mclust"}, \code{criterion} can be passed here (can be "\code{icl}" or "\code{bic}", the default; anything else defaults to "\code{bic}") to control how the optimum \code{\link[mclust]{Mclust}} model to initialise with is determined.}
+Additionally, when \code{z.init="mclust"}, \code{criterion} can be passed here (can be "\code{icl}" or "\code{bic}", the default) to control how the optimum \code{\link[mclust]{Mclust}} model to initialise with is determined.}
 }
 \value{
 A named list in which the names are the names of the arguments and the values are the values of the arguments.

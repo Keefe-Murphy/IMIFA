@@ -48,24 +48,18 @@
     V            <- switch(EXPR=uni.type,  constrained=P,                single=1L)
     eta          <- .sim_eta_p(Q=Q, N=N)
     lmat         <- matrix(.sim_load_p(Q=Q, P=P, sigma.l=sigma.l), nrow=P, ncol=Q)
-    psi.tmp      <-
     psi.inv      <- .sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
-    psi.inv[]    <- 1/switch(EXPR=uni.type, constrained=.col_vars(data, suma=mu), .geom_mean(.col_vars(data, suma=mu)))
-    inf.ind      <- is.infinite(psi.inv)
-    psi.inv[inf.ind]       <- psi.tmp[inf.ind]
+    psi.inv[]    <- 1/switch(EXPR=uni.type, constrained=.col_vars(data, avg=mu), .geom_mean(.col_vars(data, avg=mu)))
+    max.p        <- (psi.alpha - 1)/switch(EXPR=uni.type, unconstrained=, constrained=psi.beta, min(psi_hyper(psi.alpha, cov(data))))
+    inf.ind      <- psi.inv > max(max.p)
+    psi.inv[inf.ind]       <- switch(EXPR=uni.type, constrained=max.p, rep(max.p, P))[inf.ind]
+    rm(max.p, inf.ind)
     l.sigma      <- diag(1/sigma.l, Q)
     sum.data     <- mu * N
-    if(burnin     < 1)      {
-      if(sw["mu.sw"])            mu.store[,1L]          <- mu
-      if(sw["s.sw"])           eta.store[,,1L]          <- eta
-      if(sw["l.sw"])          load.store[,,1L]          <- lmat
-      if(sw["psi.sw"])          psi.store[,1L]          <- 1/psi.inv
-      ll.store[1L]         <- sum(dmvn(X=data, mu=mu, sigma=tcrossprod(lmat) + diag(1/psi.inv), log=TRUE))
-    }
     init.time    <- proc.time() - start.time
 
   # Iterate
-    for(iter in seq_len(total)[-1L]) {
+    for(iter in seq_len(total)) {
       if(verbose && iter    < burnin) utils::setTxtProgressBar(pb, iter)
       storage    <- is.element(iter,  iters)
 

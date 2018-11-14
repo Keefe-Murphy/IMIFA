@@ -15,12 +15,12 @@
 #'  \item{"\code{IMIFA}"}{Infinite Mixtures of Infinite Factor Analysers}
 #' }
 #' In principle, of course, one could overfit the "\code{MFA}" or "\code{MIFA}" models, but it is recommend to use the corresponding model options which begin with `O' instead. Note that the "\code{classify}" method is not yet implemented.
-#' @param range.G Depending on the method employed, either the range of values for the number of clusters, or the conseratively high starting value for the number of clusters. Defaults to (and must be!) 1 for the "\code{FA}" and "\code{IFA}" methods. For the "\code{MFA}" and "\code{MIFA}" models this is to be given as a range of candidate models to explore. For the "\code{OMFA}", "\code{OMIFA}", "\code{IMFA}", and "\code{IMIFA}" models, this is the number of clusters with which the chain is to be initialised (default = \code{min(N - 1, max(25, ceiling(3 * log(N))))}).
+#' @param range.G Depending on the method employed, either the range of values for the number of clusters, or the conseratively high starting value for the number of clusters. Defaults to (and must be!) 1 for the "\code{FA}" and "\code{IFA}" methods. For the "\code{MFA}" and "\code{MIFA}" models this is to be given as a range of candidate models to explore. For the "\code{OMFA}", "\code{OMIFA}", "\code{IMFA}", and "\code{IMIFA}" models, this is the conservatively high number of clusters with which the chain is to be initialised (default = \code{max(25, ceiling(3 * log(N)))} for large N, or \code{min(N-1, ceiling(3 * log(N)))} for small N).
 #'
 #' For the "\code{OMFA}", and "\code{OMIFA}" models this upper limit remains fixed for the entire length of the chain; the upper limit for the for the "\code{IMFA}" and "\code{IMIFA}" models can be specified via \code{trunc.G} (see \code{\link{bnpControl}}), which shares the same default as \code{range.G}.
 #'
 #' If \code{length(range.G) * length(range.Q)} is large, consider not storing unnecessary parameters (via \code{\link{storeControl}}), or breaking up the range of models to be explored into chunks and sending each chunk to \code{\link{get_IMIFA_results}} separately.
-#' @param range.Q Depending on the method employed, either the range of values for the number of latent factors, or, for methods ending in IFA the conservatively high starting value for the number of cluster-specific factors, in which case the default starting value is \code{floor(3 * log(P))}.
+#' @param range.Q Depending on the method employed, either the range of values for the number of latent factors, or, for methods ending in IFA the conservatively high starting value for the number of cluster-specific factors, in which case the default starting value is \code{round(3 * log(P))}.
 #'
 #' For methods ending in IFA, different clusters can be modelled using different numbers of latent factors (incl. zero); for methods not ending in IFA it is possible to fit zero-factor models, corresponding to simple diagonal covariance structures. For instance, fitting the "\code{IMFA}" model with \code{range.Q=0} corresponds to a vanilla Pitman-Yor / Dirichlet Process Mixture Model.
 #'
@@ -114,9 +114,9 @@
 #'
 #' # Fit an IFA model to the centered and pareto scaled olive data.
 #' # Note that range.G doesn't need to be specified. We can optionally supply a range.Q starting value.
-#' # Enforce additional shrinkage using alpha.d1, alpha.d2, prop, and eps [via mgpControl()].
+#' # Enforce additional shrinkage using alpha.d1, alpha.d2, prop, and eps (via mgpControl()).
 #' # simIFA   <- mcmc_IMIFA(olive, method="IFA", n.iters=10000, range.Q=4, scaling="pareto",
-#' #                        alpha.d1=3.5, alpha.d2=7, prop=0.6, eps=0.12)
+#' #                        alpha.d1=2.5, alpha.d2=4, prop=0.6, eps=0.12)
 #'
 #' # Fit an OMIFA model to the centered & scaled coffee data.
 #' # Supply a sufficiently small alpha value. Try varying other hyperparameters.
@@ -148,7 +148,7 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
   thinning  <- mixFA$thinning
   centering <- mixFA$centering
   scaling   <- mixFA$scaling
-  iters     <- seq(from=burnin + 1, to=n.iters, by=thinning)
+  iters     <- seq(from=burnin + 2L, to=n.iters + 1L, by=thinning)
   iters     <- iters[iters  > 0]
   if(length(iters)   < 10)          stop("Run a longer chain!", call.=FALSE)
   raw.dat   <- as.data.frame(dat)
@@ -165,7 +165,7 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
   glo.scal  <- .col_vars(data.matrix(raw.dat), std=TRUE)
   if(isTRUE(mixFA$drop0sd)) {
     sdx     <- glo.scal
-    sd0ind  <- sdx  == 0
+    sd0ind  <- sdx  <= 0
     if(any(sd0ind))  { if(verbose)  message("Columns with standard deviation of zero removed from data set\n")
       raw.dat    <- raw.dat[,!sd0ind, drop=FALSE]
       sdx   <- sdx[!sd0ind]
@@ -176,7 +176,7 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
     scal    <- switch(EXPR=scaling, none=FALSE, if(isTRUE(mixFA$drop0sd)) sdx else glo.scal)
     scal    <- switch(EXPR=scaling, pareto=sqrt(scal), scal)
     dat     <- .scale2(as.matrix(raw.dat), center=centering, scale=scal)
-  } else   {
+  } else     {
     dat     <- as.matrix(raw.dat)
   }
   centered  <- switch(EXPR=method, classify=all(round(colSums2(dat)) == 0), (centering || all(round(colSums2(dat)) == 0)))
@@ -251,17 +251,20 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
        range.G  > 1)                message(paste0("'range.G' forced to 1 for the ", method, " method\n"))
     if(is.element(method, c("OMIFA", "OMFA", "IMFA", "IMIFA"))) {
       lnN2         <- ceiling(lnN)
-      tmp.G        <- as.integer(min(N  - 1, max(25, ceiling(3  * lnN))))
+      tmp.G        <- as.integer(ifelse(N <= 50, min(N - 1, ceiling(3 * lnN)), max(25, ceiling(3 * lnN))))
       if(G.x)   {
         G.init     <- range.G          <- tmp.G
       } else    {
         G.init     <- range.G
       }
-      if(range.G    < lnN2)         warning(paste0("'range.G' should be at least log(N) (=log(", N, "))", " for the ", method, " method\n"), call.=FALSE, immediate.=TRUE)
+      if(isTRUE(verbose))  {
+        if(N <= 50 && G.x)          message("Consider initialising closer to the expected truth (~log(N)) when the sample size is small\n")
+        if(range.G  < lnN2)         message(paste0("Suggestion:'range.G' should be at least log(N) (=log(", N, "))", " for the ", method, " method\n"))
+      }
       if(G.init    >= N)            stop(paste0("'range.G' must less than N (", N, ")"), call.=FALSE)
       if(is.element(method, c("IMFA", "IMIFA")))  {
         if((t.miss <- bnpmiss$trunc.G)) {
-          trunc.G  <- BNP$trunc.G      <- max(tmp.G, range.G)
+          trunc.G  <- BNP$trunc.G      <- max(ifelse(N <= 50, N - 1L, tmp.G), range.G)
         } else trunc.G    <- BNP$trunc.G
         if(all(verbose, ifelse(N > 50, trunc.G    < 50,
            trunc.G <= N), !t.miss)) message(paste0("Consider setting 'trunc.G' to min(N-1=", N - 1, ", 50) unless practical reasons in heavy computational/memory burden cases prohibit it\n"))
@@ -411,7 +414,7 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
    alpha.d2 <- .len_check(MGP$alpha.d2, delta0g, method, P, G.init, P.dim=FALSE)
    MGP      <- MGP[-seq_len(5L)]
    start.AGS       <-  MGP$start.AGS   <- ifelse(mgpmiss$startAGSx, ifelse(fQ0, 0L, switch(EXPR=method, IFA=, MIFA=burnin, 0L)), MGP$start.AGS)
-   if(Q.miss)                range.Q   <- as.integer(ifelse(fQ0, 1L, min(ifelse(P > 500, 12L + floor(log(P)), floor(3 * log(P))), N - 1L, P - 1L)))
+   if(Q.miss)                range.Q   <- as.integer(ifelse(fQ0, 1L, min(ifelse(P > 500, 12L + round(log(P)), round(3 * log(P))), N - 1L, P - 1L)))
    if(length(range.Q)       > 1)    stop(paste0("Only one starting value for 'range.Q' can be supplied for the ", method, " method"), call.=FALSE)
    if(range.Q      <= 0)            stop(paste0("'range.Q' must be strictly positive for the ", method, " method"), call.=FALSE)
    if(isTRUE(adapt))  {
@@ -485,7 +488,7 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
     if(length(alpha) != 1)          stop("'alpha' must be specified as a scalar to ensure an exchangeable prior", call.=FALSE)
     if(is.element(method, c("IMIFA", "IMFA"))) {
       if(kappa0      <- alpha    <= 0  && !learn.a)   {
-        discount     <- BNP$discount   <- ifelse(ifelse(learn.d, discount == 0, bnpmiss$discount), pmin(stats::rbeta(1, BNP$d.hyper[1L], BNP$d.hyper[2L]), 1 - .Machine$double.eps), discount)
+        discount     <- BNP$discount   <- ifelse(ifelse(learn.d, discount == 0, bnpmiss$discount), pmin(pmax(stats::rbeta(1, BNP$d.hyper[1L], BNP$d.hyper[2L]), .Machine$double.eps - alpha), 1 - .Machine$double.eps), discount)
         if(!learn.d  &&
            discount  == 0)          stop("Set 'learn.d'=TRUE or fix a non-zero 'discount' value if fixing 'alpha' at <= 0", call.=FALSE)
         if(learn.d   && bnpmiss$kappa)  {

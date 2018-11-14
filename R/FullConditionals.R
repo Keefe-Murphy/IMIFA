@@ -599,15 +599,17 @@
         tmp.mat  <- matrix(0L, nrow=nc - nr, ncol=nc)
         rownames(tmp.mat) <- setdiff(.as_numchar(colnames(tab.tmp)), .as_numchar(rownames(tab.tmp)))[seq_len(nc - nr)]
         tab.tmp  <- rbind(tab.tmp, tmp.mat)
-      } else if(nr > nc) {
+      } else if(nr > nc)   {
         tmp.mat  <- matrix(0L, nrow=nr, ncol=nr - nc)
         colnames(tmp.mat) <- setdiff(.as_numchar(rownames(tab.tmp)), .as_numchar(colnames(tab.tmp)))[seq_len(nr - nc)]
         tab.tmp  <- cbind(tab.tmp, tmp.mat)
       }
 
-      if(nr == 1) {
+      if(length(tab.tmp)  == 1)       {
+        z.perm   <- stats::setNames(.as_numchar(colnames(tab.tmp)), .as_numchar(rownames(tab.tmp)))
+      } else if(nr == 1)   {
         z.perm   <- stats::setNames(.as_numchar(colnames(tab.tmp)), .as_numchar(colnames(tab.tmp)))
-      } else if(nc == 1) {
+      } else if(nc == 1)   {
         z.perm   <- stats::setNames(.as_numchar(rownames(tab.tmp)), .as_numchar(rownames(tab.tmp)))
       } else {
         z.perm   <- tryCatch(suppressWarnings(.match_classes(tab.tmp, method="exact",  verbose=FALSE)),
@@ -883,6 +885,7 @@
 #'    \deqn{X_{\textrm{new}} = d \times \mathbf{X} \mathbf{R} + 1\hspace*{-3.5pt}1 \underline{t}^\top}{X.new = d X R + 1 t'}
 #' }
 #'
+#' @note \code{X} is padded out with columns containing \code{0} if it has fewer columns than \code{Xstar}.
 #' @return A list containing:
 #' \item{X.new}{The matrix that is the Procrustes transformed version of \code{X}.}
 #' \item{R}{The rotation matrix.}
@@ -916,8 +919,18 @@
 #' mat_ss   <- proc$ss
 #' mat_ss2  <- Procrustes(X=mat1, Xstar=mat2, sumsq=TRUE)$ss
     Procrustes   <- function(X, Xstar, translate = FALSE, dilate = FALSE, sumsq = FALSE) {
-      if((N <- nrow(X)) != nrow(Xstar))    stop("X and Xstar do not have the same number of rows",      call.=FALSE)
-      if((P <- ncol(X)) != ncol(Xstar))    stop("X and Xstar do not have the same number of columns",    call.=FALSE)
+      if(any(!is.logical(translate),
+             length(translate) != 1))      stop("'translate' must be a single logical indicator", call.=FALSE)
+      if(any(!is.logical(dilate),
+             length(dilate)    != 1))      stop("'dilate' must be a single logical indicator",    call.=FALSE)
+      if(any(!is.logical(sumsq),
+             length(sumsq)     != 1))      stop("'sumsq' must be a single logical indicator",     call.=FALSE)
+      if((N <- nrow(X)) != nrow(Xstar))    stop("X and Xstar do not have the same number of rows",       call.=FALSE)
+      if((P <- ncol(X)) != (P2 <- ncol(Xstar)))  {
+        if(P < P2)       {                 warning("X padded out to same number of columns as Xstar\n",  call.=FALSE, immediate.=TRUE)
+          X <- cbind(X, base::matrix(0L, nrow=N, ncol=P2 - P))
+        } else                             stop("X cannot have more columns than Xstar",          call.=FALSE)
+      }
       if(anyNA(Xstar)   || anyNA(X))       stop("X and Xstar are not allowed to contain missing values", call.=FALSE)
       J          <- if(translate) diag(N) - 1/N                                           else diag(N)
       C          <- crossprod(Xstar, J) %*% X
@@ -925,9 +938,9 @@
       R          <- tcrossprod(svdX$v, svdX$u)
       d          <- if(dilate)    sum(colSums2(C * R))/sum(colSums2(crossprod(J, X) * X)) else 1L
       tt         <- if(translate) crossprod(Xstar - d * X %*% R, matrix(1L, N, 1))/N      else 0L
-      X.new      <- d * X %*% R + if(translate) matrix(tt, N, P, byrow = TRUE)            else tt
+      X.new      <- d * X %*% R + if(translate) matrix(tt, N, P2, byrow = TRUE)           else tt
         return(c(list(X.new = X.new), list(R = R), if(translate) list(t = tt),
-                 if(dilate) list(d = d), if(sumsq) list(ss = sum((X - X.new)^2))))
+                 if(dilate) list(d = d), if(sumsq) list(ss = sum((X[,seq_len(P2), drop=FALSE] - X.new)^2))))
     }
 
   # Length Checker
@@ -1224,9 +1237,9 @@
 #' @param psi.beta The rate of the inverse gamma prior on the uniquenesses. Can be either a single parameter, a vector of variable specific rates, or (if \code{psi0g} is \code{TRUE}) a matrix of variable and cluster-specific rates. If this is not supplied, \code{\link{psi_hyper}} is invoked to choose sensible values, depending on the value of \code{uni.prior} and, for the "\code{MFA}" and "\code{MIFA}" models, the value of \code{psi0g}. Excessively small values may lead to critical numerical issues and should thus be avoided.
 #' @param mu.zero The mean of the prior distribution for the mean parameter. Either a scalar of a vector of appropriate dimension. Defaults to the sample mean of the data.
 #' @param sigma.mu The covariance of the prior distribution for the cluster mean parameters. Always assumed to be a diagonal matrix, and set to the identity matrix by default. Can also be a scalar by which the identity is multiplied, a vector of appropriate dimension; if supplied as a matrix, only the diagonal elements will be extracted. Specifying \code{sigma.mu=NULL} will use the diagonal entries of the sample covariance matrix: for unit-scaled data this is simply the identity again. See \code{prec.mu} for further control over the hypercovariance in the prior for the means.
-#' @param prec.mu A scalar controlling the degree of flatness of the prior for the cluster means by scaling \code{sigma.mu} (i.e. multiplying every element of \code{sigma.mu} by \code{1/prec.mu}). Lower values lead to a more diffuse prior. Defaults to \code{0.1}, such that the prior is relatively non-informative by default. Of course, prec.mu=1 nullifies any effect of this argument. The user can supply a scaled \code{sigma.mu} directly, but this argument is especially useful when specifying \code{sigma.mu=NULL}, such that the diagonal entries of the sample covariance matrix are used.
+#' @param prec.mu A scalar controlling the degree of flatness of the prior for the cluster means by scaling \code{sigma.mu} (i.e. multiplying every element of \code{sigma.mu} by \code{1/prec.mu}). Lower values lead to a more diffuse prior. Defaults to \code{0.01}, such that the prior is relatively non-informative by default. Of course, \code{prec.mu=1} nullifies any effect of this argument. The user can supply a scaled \code{sigma.mu} directly, but this argument is especially useful when specifying \code{sigma.mu=NULL}, such that the diagonal entries of the sample covariance matrix are used.
 #' @param sigma.l A scalar controlling the diagonal covariance of the prior distribution for the loadings. Defaults to \code{1}, i.e. the identity; otherwise a diagonal matrix with non-zero entries all equal to \code{sigma.l} Only relevant for the finite factor methods.
-#' @param z.init The method used to initialise the cluster labels. Defaults to \code{\link[mclust]{Mclust}}. Other options include \code{\link[stats]{kmeans}} (with 10 random starts, by default), hierarchical clustering via \code{\link[mclust]{hc}} (\code{VVV} is used by default, unless the data is high-dimensional, in which case the default is \code{EII}), random initialisation via \code{priors}, and a user-supplied \code{list} (\code{z.list}). Not relevant for the "\code{FA}" and "\code{"IFA"} methods. Arguments for the relevant functions can be passed via the \code{...} construct. The option \code{"priors"} may lead to empty components at initialisation, which will return an error.
+#' @param z.init The method used to initialise the cluster labels. Defaults to model-based agglomerative hierarchical clustering via \code{"\link[mclust]{hc}"}. Other options include \code{"\link[stats]{kmeans}"} (with 10 random starts, by default), \code{\link[mclust]{Mclust}} via \code{"mclust"}, random initialisation via \code{"priors"}, and a user-supplied \code{"list"} (\code{z.list}). Not relevant for the "\code{FA}" and "\code{"IFA"} methods. Arguments for the relevant functions can be passed via the \code{...} construct. For \code{"\link[mclust]{hc}"}, \code{VVV} is used by default, unless the data is high-dimensional, in which case the default is \code{EII}. The option \code{"priors"} may lead to empty components at initialisation, which will return an error.
 #' @param z.list A user supplied list of cluster labels. Only relevant if \code{z.init == "z.list"}.
 #' @param equal.pro Logical variable indicating whether or not the mixing mixing proportions are to be equal across clusters in the model (default = \code{FALSE}). Only relevant for the "\code{MFA}" and "\code{MIFA}" methods.
 #' @param uni.prior A switch indicating whether uniquenesses rate hyperparameters are to be "\code{unconstrained}" or "\code{isotropic}", i.e. variable-specific or not. "\code{uni.prior}" must be "\code{isotropic}" if the last letter of "\code{uni.type}" is \strong{C}, but can take either value otherwise. Defaults to correspond to the last letter of \code{uni.type} if that is supplied and \code{uni.prior} is not, otherwise defaults to "\code{unconstrained}" (though"\code{isotropic}" is recommended when \code{N <= P}). Only relevant when "\code{psi.beta}" is not supplied and \code{\link{psi_hyper}} is therefore invoked.
@@ -1236,7 +1249,7 @@
 #' @param verbose Logical indicating whether to print output (e.g. run times) and a progress bar to the screen while the sampler runs. By default is \code{TRUE} if the session is interactive, and \code{FALSE} otherwise. If \code{FALSE}, warnings and error messages will still be printed to the screen, but everything else will be suppressed.
 #' @param ... Additional arguments to be passed to \code{\link[mclust]{hc}} (\code{modelName} & \code{use} only), to \code{\link[mclust]{Mclust}} (\code{modelNames}, and the arguments for \code{\link[mclust]{hc}} with which \code{\link[mclust]{Mclust}} is itself initialised - \code{modelName} & \code{use}), or to \code{\link[stats]{kmeans}} (\code{iter.max} and \code{nstart} only) can be passed here, depending on the value of \code{z.init}. Also catches unused arguments.
 #'
-#' Additionally, when \code{init.z="mclust"}, \code{criterion} can be passed here (can be "\code{icl}" or "\code{bic}", the default; anything else defaults to "\code{bic}") to control how the optimum \code{\link[mclust]{Mclust}} model to initialise with is determined.
+#' Additionally, when \code{z.init="mclust"}, \code{criterion} can be passed here (can be "\code{icl}" or "\code{bic}", the default) to control how the optimum \code{\link[mclust]{Mclust}} model to initialise with is determined.
 #'
 #' @return A named list in which the names are the names of the arguments and the values are the values of the arguments.
 #' @export
@@ -1258,9 +1271,9 @@
 #'              psi.beta = NULL,
 #'              mu.zero = NULL,
 #'              sigma.mu = 1L,
-#'              prec.mu = 0.1,
+#'              prec.mu = 0.01,
 #'              sigma.l = 1L,
-#'              z.init = c("mclust", "hc", "kmeans", "list", "priors"),
+#'              z.init = c("hc", "kmeans", "list", "mclust", "priors"),
 #'              z.list = NULL,
 #'              equal.pro = FALSE,
 #'              uni.prior = c("unconstrained", "isotropic"),
@@ -1281,7 +1294,7 @@
 #' #                    sigma.mu=NULL, scaling="pareto", uni.type="constrained")
   mixfaControl   <- function(n.iters = 25000L, burnin = n.iters/5, thinning = 2L, centering = TRUE, scaling = c("unit", "pareto", "none"),
                              uni.type = c("unconstrained", "isotropic", "constrained", "single"), psi.alpha = 2.5, psi.beta = NULL, mu.zero = NULL,
-                             sigma.mu = 1L, prec.mu = 0.1, sigma.l = 1L, z.init = c("mclust", "hc", "kmeans", "list", "priors"), z.list = NULL, equal.pro = FALSE,
+                             sigma.mu = 1L, prec.mu = 0.01, sigma.l = 1L, z.init = c("hc", "kmeans", "list", "mclust", "priors"), z.list = NULL, equal.pro = FALSE,
                              uni.prior = c("unconstrained", "isotropic"), mu0g = FALSE, psi0g = FALSE, drop0sd = TRUE, verbose = interactive(), ...) {
     miss.args    <- list(uni.type = missing(uni.type), psi.beta = missing(psi.beta), mu.zero = missing(mu.zero),
                          sigma.mu = is.null(sigma.mu), z.init = missing(z.init), z.list = missing(z.list), uni.prior = missing(uni.prior))
@@ -1347,7 +1360,7 @@
 #' @param d.hyper Hyperparameters for the Beta(a,b) prior on the \code{discount} parameter. Defaults to Beta(1,1), i.e. Uniform(0,1).
 #' @param ind.slice Logical indicitating whether the independent slice-efficient sampler is to be employed (defaults to \code{TRUE}). If \code{FALSE} the dependent slice-efficient sampler is employed, whereby the slice sequence \eqn{\xi_1,\ldots,\xi_g}{xi_1,...,xi_g} is equal to the decreasingly ordered mixing proportions.
 #' @param rho Parameter controlling the rate of geometric decay for the independent slice-efficient sampler, s.t. \eqn{\xi=(1-\rho)\rho^{g-1}}{xi = (1 - rho)rho^(g-1)}. Must lie in the interval (0, 1]. Higher values are associated with better mixing but longer run times. Defaults to 0.75, but 0.5 is an interesting special case which guarantees that the slice sequence \eqn{\xi_1,\ldots,\xi_g}{xi_1,...,xi_g} is equal to the \emph{expectation} of the decreasingly ordered mixing proportions. Only relevant when \code{ind.slice} is \code{TRUE}.
-#' @param trunc.G The maximum number of allowable and storable clusters. Defaults to the max of \code{range.G} and the same value (\code{min(N - 1, max(25, ceiling(3 * log(N))))}) that \code{range.G} defaults to (see \code{\link{mcmc_IMIFA}}). Must be greater than or equal to \code{range.G}. The number of active clusters to be sampled at each iteration is adaptively truncated, with \code{trunc.G} as an upper limit for storage reasons. Note that large values of \code{trunc.G} may lead to memory capacity issues.
+#' @param trunc.G The maximum number of allowable and storable clusters. Defaults to the max of \code{range.G} and the same value that \code{range.G} defaults to for large N (see \code{\link{mcmc_IMIFA}}), or the max of \code{range.G} and \code{N-1} for small N. Must be greater than or equal to \code{range.G}. The number of active clusters to be sampled at each iteration is adaptively truncated, with \code{trunc.G} as an upper limit for storage reasons. Note that large values of \code{trunc.G} may lead to memory capacity issues.
 #' @param kappa The spike-and-slab prior distribution on the \code{discount} hyperparameter is assumed to be a mixture with point-mass at zero and a continuous Beta(a,b) distribution. \code{kappa} gives the weight of the point mass at zero (the 'spike'). Must lie in the interval [0,1]. Defaults to 0.5. Only relevant when \code{isTRUE(learn.d)}. A value of 0 ensures non-zero discount values (i.e. Pitman-Yor) at all times, and \emph{vice versa}. Note that \code{kappa} will default to exactly 0 if \code{alpha<=0} and \code{learn.alpha=FALSE}.
 #' @param IM.lab.sw Logial indicating whether the two forced label switching moves are to be implemented (defaults to \code{TRUE}) when running one of the infinite mixture models.
 #' @param zeta
@@ -1775,7 +1788,7 @@
        tryCatch(as.numeric(x), warning=function(w) as.numeric(factor(x, labels=seq_along(unique(x)))))
     }
 
-    .chol        <- function(x, ...) tryCatch(chol(x, ...), error=function(e)   {
+    .chol        <- function(x, ...) tryCatch(chol(x, ...), error=function(e)    {
       d          <- nrow(x)
       eigs       <- eigen(x, symmetric = TRUE)
       eval       <- eigs$values
@@ -1821,14 +1834,14 @@
         argstr
     }
 
-    #' @importFrom matrixStats "colSums2"
-    .col_vars    <- function(x, std = FALSE, suma = NULL) { # replaces Rfast::colVars
+    #' @importFrom matrixStats "colMeans2"
+    .col_vars    <- function(x, std = FALSE, avg = NULL) {
       if(length(std) > 1 ||
          !is.logical(std))                 stop("'std' must be a single logical indicator")
       if(!is.matrix(x))                    stop("'x' must be a matrix")
-      m          <- if(missing(suma)) colSums2(x) else suma
+      m          <- if(missing(avg)) colMeans2(x) else as.vector(avg)
       n          <- nrow(x)
-      s          <- (colSums2(x * x) - (m * m)/n)/(n - 1L)
+      s          <- pmax((colMeans2(x * x) - (m * m)) * (n/(n - 1)), 0L)
         if(std) sqrt(s) else s
     }
 

@@ -49,7 +49,6 @@
     mu.sigma         <- 1/sigma.mu
     sig.mu.sqrt      <- sqrt(sigma.mu)
     z                <- cluster$z
-    z.temp           <- factor(z, levels=Gseq)
     nn               <- tabulate(z, nbins=G)
     nn0              <- nn > 0
     nn.ind           <- which(nn0)
@@ -90,51 +89,23 @@
     if(isTRUE(one.uni)) {
       psi.inv        <- matrix(.sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), nrow=P, ncol=G)
     } else psi.inv   <- replicate(G, .sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), simplify="array")
-    psi.tmp          <-
     psi.inv          <- if(uni) t(psi.inv) else psi.inv
     if(isTRUE(one.uni)) {
-      psi.inv[,]     <- 1/switch(EXPR=uni.type, constrained=.col_vars(data), .geom_mean(.col_vars(data)))
+      psi.inv[]      <- 1/switch(EXPR=uni.type, constrained=.col_vars(data), .geom_mean(.col_vars(data)))
     } else {
-      tmp.psi        <- ((nn[nn0] - 1L)/(rowsum(data^2, z) - rowsum(data, z)^2/nn[nn0]))
+      tmp.psi        <- (nn[nn0] - 1L)/pmax(rowsum(data^2, z) - rowsum(data, z)^2/nn[nn0], 0L)
       tmp.psi        <- switch(EXPR=uni.type, unconstrained=t(tmp.psi), matrix(apply(tmp.psi, 1L, .geom_mean), nrow=P, ncol=G, byrow=TRUE))
       psi.inv[,nn     > 1]    <- tmp.psi[!is.nan(tmp.psi)]
+      rm(tmp.psi)
     }
-    inf.ind          <- is.infinite(psi.inv) | is.nan(psi.inv)
-    psi.inv[inf.ind]          <- psi.tmp[inf.ind]
-    psi.inv[psi.inv  == 0]    <- colMaxs(psi.inv[,which(psi.inv == 0, arr.ind=TRUE)[,2L], drop=FALSE], value=TRUE)
-    index            <- order(nn, decreasing=TRUE)
-    pi.prop          <- pi.prop[index]
-    mu               <- mu[,index, drop=FALSE]
-    phi              <- phi[index]
-    delta            <- delta[index]
-    tau              <- tau[index]
-    MGPsig           <- MGPsig[index]
-    lmat             <- lmat[index]
-    Qs               <- Qs[index]
-    psi.inv          <- psi.inv[,index, drop=FALSE]
-    z                <- factor(z, labels=match(nn.ind, index))
-    z                <- as.integer(levels(z))[z]
-    G.non            <- G
-    if(burnin         < 1)     {
-      if(sw["mu.sw"])     mu.store[,,1L] <- mu
-      if(sw["s.sw"])     eta.store[,,1L] <- eta
-      if(sw["l.sw"])   load.store[,,,1L] <- array(unlist(lmat, use.names=FALSE), dim=c(P, Q, G))
-      if(sw["psi.sw"])   psi.store[,,1L] <- 1/psi.inv
-      if(sw["pi.sw"])      pi.store[,1L] <- pi.prop
-      if(learn.alpha)    alpha.store[1L] <- pi.alpha
-      if(cluster.shrink)  sig.store[,1L] <- MGPsig
-      z.store[1L,]            <- z
-      Q0                      <- Qs > 0
-      sigma                   <- if(uni) lapply(Gseq, function(g) as.matrix(1/psi.inv[,g] + if(Q0[g]) tcrossprod(lmat[[g]]) else 0L)) else lapply(Gseq, function(g) tcrossprod(lmat[[g]]) + diag(1/psi.inv[,g]))
-      log.probs               <- if(uni) vapply(Gseq, function(g) stats::dnorm(data, mu[,g], sq_mat(sigma[[g]]), log=TRUE) + log(pi.prop[g]), numeric(N)) else vapply(Gseq, function(g, Q=Q0[g]) { sigma <- if(Q) is.posi_def(sigma[[g]], make=TRUE)$X.new else sq_mat(sigma[[g]]); dmvn(data, mu[,g], sigma, log=TRUE, isChol=!Q) + log(pi.prop[g]) }, numeric(N))
-      ll.store[1L]            <- sum(rowLogSumExps(log.probs))
-      Q.store[,1L]            <- Qs
-      G.store[1L]             <- G.non
-    }
+    max.p            <- (psi.alpha  - 1)/switch(EXPR=uni.type, unconstrained=, constrained=psi.beta, min(psi_hyper(psi.alpha, cov(data))))
+    inf.ind          <- psi.inv > max(max.p)
+    psi.inv[inf.ind] <- matrix(max.p, nrow=P, ncol=G)[inf.ind]
+    rm(max.p, inf.ind)
     init.time        <- proc.time() - start.time
 
   # Iterate
-    for(iter in seq_len(total)[-1L]) {
+    for(iter in seq_len(total))     {
       if(verbose     && iter   < burnin) utils::setTxtProgressBar(pb, iter)
       storage        <- is.element(iter, iters)
 
@@ -163,9 +134,9 @@
         log.probs    <- vapply(Gseq, function(g) stats::dnorm(data, mu[,g], sq_mat(sigma[[g]]), log=TRUE) + log.pis[g], numeric(N))
       } else  {
         log.probs    <- try(vapply(Gseq, function(g, Q=Q0[g]) dmvn(data, mu[,g], if(Q) sigma[[g]] else sq_mat(sigma[[g]]), log=TRUE, isChol=!Q) + log.pis[g], numeric(N)), silent=TRUE)
-      }
-      if(inherits(log.probs, "try-error")) {
-        log.probs    <- vapply(Gseq, function(g, Q=Q0[g]) { sigma <- if(Q) is.posi_def(sigma[[g]], make=TRUE)$X.new else sq_mat(sigma[[g]]); dmvn(data, mu[,g], sigma, log=TRUE, isChol=!Q) + log.pis[g] }, numeric(N))
+        if(z.err     <- inherits(log.probs, "try-error")) {
+          log.probs  <- vapply(Gseq, function(g, Q=Q0[g]) { sigma <- if(Q) is.posi_def(sigma[[g]], make=TRUE)$X.new else sq_mat(sigma[[g]]); dmvn(data, mu[,g], sigma, log=TRUE, isChol=!Q) + log.pis[g] }, numeric(N))
+        }
       }
       z              <- gumbel_max(probs=log.probs)
       nn             <- tabulate(z, nbins=G)
@@ -302,10 +273,10 @@
         }
       }
 
-      if(Q.bigs && !Q.large   && iter > burnin) {         warning(paste0("\nQ has exceeded initial number of loadings columns since burnin: consider increasing range.Q from ", Q.star, "\n"), call.=FALSE)
+      if(Q.bigs && !Q.large   && iter > burnin) {         cat("\n"); warning(paste0("\nQ has exceeded initial number of loadings columns since burnin: consider increasing range.Q from ", Q.star, "\n"), call.=FALSE)
         Q.large      <- TRUE
       }
-      if(z.err  && !err.z) {                              warning("\nAlgorithm may slow due to corrections for Choleski decompositions of non-positive-definite covariance matrices\n",        call.=FALSE)
+      if(z.err  && !err.z) {                              cat("\n"); warning("\nAlgorithm may slow due to corrections for Choleski decompositions of non-positive-definite covariance matrices\n",        call.=FALSE)
         err.z        <- TRUE
       }
       if(storage)    {

@@ -43,6 +43,9 @@ This function performs a Procrustes transformation on a matrix \code{X} to minim
    \deqn{X_{\textrm{new}} = d \times \mathbf{X} \mathbf{R} + 1\hspace*{-3.5pt}1 \underline{t}^\top}{X.new = d X R + 1 t'}
 }
 }
+\note{
+\code{X} is padded out with columns containing \code{0} if it has fewer columns than \code{Xstar}.
+}
 \examples{
 # Match two matrices, allowing translation and dilation
 mat1     <- diag(rnorm(10))

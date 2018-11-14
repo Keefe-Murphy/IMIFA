@@ -162,7 +162,7 @@ plot(resIMIFA, plot.meth="GQ", g=1)
 ```
 
 ```{r, results='hide', echo=FALSE}
-plot(resIMIFA, plot.meth="GQ", g=2)
+suppressWarnings(plot(resIMIFA, plot.meth="GQ", g=2))
 ```
 
 ```{r, results='hide', echo=FALSE}
@@ -189,10 +189,13 @@ plot(resIMIFA, plot.meth="zlabels", g=4)
 
 Finally, we can visualise the $N * N$ similarity matrix by supplying `g=5` when `plot.meth="zlabels"`. Had we not specified `g`, the function would cycle through the available plots.
 
-```{r}
+```{r, eval=FALSE}
 plot(resIMIFA, plot.meth="zlabels", g=5)
 ```
 
+```{r, results='hide', echo=FALSE}
+suppressMessages(plot(resIMIFA, plot.meth="zlabels", g=5))
+```
 To examine the posterior mean estimates of the cluster means in a given cluster (say the 1st), we can set both `plot.meth` and `param` to `"means"`. If the cluster isn't specified using the argument `g`, the user will be prompted to hit &lt;Return&gt; at the onset of each plot in order to cycle through similar plots for all clusters. In the code below `mat=TRUE` means, in this case, to plot all variables simultaneously. By default, credible intervals are also plotted. Note that the data were originally mean-centered and unit-scaled when `mcmc_IMIFA` was called.
 
 ```{r}

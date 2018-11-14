@@ -180,7 +180,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
     clust      <- x$Clust
     grp.size   <- clust$post.sizes
     labelmiss  <- !is.null(attr(clust, "Label.Sup"))  && !attr(clust, "Label.Sup")
-  }
+  } else grp.size   <- n.obs
   grp.ind      <- all(G != 1, grp.ind)
   if((all.ind  <- plot.meth == "all"))    {
     if(v.sw[param]) {
@@ -778,7 +778,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
            lxx <- mat2cols(if(G > 1) plot.x else plot.x[[g]], cols=hcols, compare=G > 1, na.col=graphics::par()$bg)
           }
          }
-          pxx  <- range(vapply(Filter(Negate(is.null), plot.x), range, numeric(2L)))
+          pxx  <- range(vapply(Filter(Negate(is.null), plot.x), range, na.rm=TRUE, numeric(2L)))
           cixx <- if(all(intervals, ci.sw[param], !heat.map)) { if(by.fac) range(vapply(Filter(Negate(is.null), x$Loadings$ci.load), function(x) range(x[,,ind[2L]]), numeric(2L))) else range(vapply(Filter(Negate(is.null), x$Loadings$ci.load), function(x) range(x[,ind[1L],]), numeric(2L))) }
         }
         if(isTRUE(heat.map))  {
@@ -1085,11 +1085,12 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
         mind <- !is.null(prf) && !z.miss
       }
       if(g == 1) {
-        col.x   <- if(mind) replace(rep(1, n.obs), prf$misclassified, ceiling(length(palette)/2)) else c(1, ceiling(length(palette)/2))[(plot.x >= oneG) + 1L]
+        if(mispal) grDevices::palette(replace(viridis(8, alpha=transparency), 2, "red"))
+        col.x   <- if(mind) replace(rep(5, n.obs), prf$misclassified, 2) else c(5L, 2L)[(plot.x >= oneG) + 1L]
         if(type != "n") col.x[plot.x == 0] <- NA
         graphics::par(mar=c(5.1, 4.1, 4.1, 3.1))
         graphics::plot(plot.x, type=type, ylim=range(yax), col=col.x, yaxt="n", main="Clustering Uncertainty", ylab="Uncertainty", xlab="Observation", pch=ifelse(type == "n", NA, 16), lend=1)
-        graphics::lines(x=c(0, n.obs), y=c(oneG, oneG), lty=2, col=3)
+        graphics::lines(x=c(0, n.obs), y=c(oneG, oneG), lty=2, col=1)
         graphics::axis(2, at=yax, labels=replace(yax, length(yax), "1 - 1/G"), las=2, cex.axis=0.9, xpd=TRUE)
         graphics::axis(2, at=oneG, labels="1/G", las=2, xpd=TRUE, side=4, xpd=TRUE)
         if(type == "n")  {
@@ -1110,7 +1111,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
         graphics::axis(2, at=yax, labels=replace(yax, length(yax), "1 - 1/G"), las=2, cex.axis=0.9, xpd=TRUE)
         graphics::axis(2, at=oneG, labels="1/G", las=2, xpd=TRUE, side=4, xpd=TRUE)
         if(mind) {
-          Nseq   <- (seq_len(n.obs))
+          Nseq   <- seq_len(n.obs)
           for(i in prf$misclassified)  {
             x    <- Nseq[x.ord == i]
             graphics::lines(c(x, x), c(-max(plot.x)/32, plot.x[i]), lty=1, col=3, lend=1)
@@ -1560,7 +1561,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
   heat_legend  <- function(data, cols, cex.lab = 1) {
     if(length(cex.lab) > 1 || (!is.numeric(cex.lab) ||
        cex.lab <= 0))                 stop("Invalid 'cex.lab' supplied", call.=FALSE)
-    if(!is.numeric(data))             stop("'data' must be numeric", call.=FALSE)
+    if(!is.numeric(data))             stop("'data' must be numeric",     call.=FALSE)
     bx         <- graphics::par("usr")
     xpd        <- graphics::par()$xpd
     box.cx     <- c(bx[2L] + (bx[2L]  - bx[1L])/1000, bx[2L] + (bx[2L] - bx[1L])/1000 + (bx[2L] - bx[1L])/50)
