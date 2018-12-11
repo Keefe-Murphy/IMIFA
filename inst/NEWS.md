@@ -1,7 +1,7 @@
 __Infinite Mixtures of Infinite Factor Analysers__
 ==================================================  
 
-## IMIFA v2.0.1 - (_7<sup>th</sup> release [patch update]: 2018-05-02_)
+## IMIFA v2.1.0 - (_7<sup>th</sup> release [minor update]: 2018-11-14_)
 ### New Features
 * `mgpControl` gains the arguments `cluster.shrink` and `sigma.hyper`:
     * `cluster.shrink` governs whether cluster shrinkage MGP hyperparameter is invoked for MIFA/OMIFA/IMIFA methods.
@@ -38,6 +38,7 @@ __Infinite Mixtures of Infinite Factor Analysers__
   `z.init="mclust"` & also sped-up `mclust` initialisation in the process.
 * Added `stop.AGS` arg. to `mgpControl`: renamed `adapt.at` to `start.AGS` for consistency.
 * Added `start.zeta` & `stop.zeta` options to `tune.zeta` argument in `bnpControl`.
+* Allowed user-supplied `breaks` in the plotting functions `mat2cols` & `heat_legend`.
 
 ### Bug Fixes
 * Fixed factor _scores_ & error metrics issues in `get_IMIFA_results` for clustering methods:  

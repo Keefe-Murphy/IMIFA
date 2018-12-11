@@ -10,7 +10,8 @@ mat2cols(mat,
          byrank = FALSE,
          breaks = NULL,
          na.col = "#808080FF",
-         transparency = 1)
+         transparency = 1,
+         ...)
 }
 \arguments{
 \item{mat}{Either a matrix or, when \code{compare} is \code{TRUE}, a list of matrices.}
@@ -21,11 +22,13 @@ mat2cols(mat,
 
 \item{byrank}{Logical indicating whether to convert the matrix itself or the sample ranks of the values therein. Defaults to \code{FALSE}.}
 
-\item{breaks}{Number of gradations in colour to use. Defaults to \code{length(cols)}.}
+\item{breaks}{Number of gradations in colour to use. Defaults to \code{length(cols)}. Alternatively, a vector of breakpoints for use with \code{\link[base]{cut}}.}
 
 \item{na.col}{Colour to be used to represent missing data. Will be checked for validity by \code{\link{is.cols}}.}
 
 \item{transparency}{A factor in [0, 1] modifying the opacity for overplotted lines. Defaults to 1 (i.e. no transparency). Only relevant when \code{cols} is not supplied, otherwise the supplied \code{cols} must already be adjusted for transparency.}
+
+\item{...}{Catches unused arguments.}
 }
 \value{
 A matrix of hex colour code representations, or a list of such matrices when \code{compare} is \code{TRUE}.
@@ -66,6 +69,6 @@ plot_cols(mat2cols(mat2, cols=cols)); heat_legend(range(mats), cols=cols); box(l
 plot_cols(mat2cols(mat3, cols=cols)); heat_legend(range(mats), cols=cols); box(lwd=2)
 }
 \seealso{
-\code{\link{plot_cols}}, \code{\link{heat_legend}}, \code{\link{is.cols}}
+\code{\link{plot_cols}}, \code{\link{heat_legend}}, \code{\link{is.cols}}, \code{\link[base]{cut}}
 }
 \keyword{plotting}

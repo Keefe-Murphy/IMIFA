@@ -98,7 +98,7 @@
       psi.inv[,nn     > 1]    <- tmp.psi[!is.nan(tmp.psi)]
       rm(tmp.psi)
     }
-    max.p            <- (psi.alpha  - 1)/switch(EXPR=uni.type, unconstrained=, constrained=psi.beta, min(psi_hyper(psi.alpha, cov(data))))
+    max.p            <- (psi.alpha  - 1)/switch(EXPR=uni.type, unconstrained=, constrained=psi.beta, min(psi_hyper(psi.alpha, stats::cov(data))))
     inf.ind          <- psi.inv > max(max.p)
     psi.inv[inf.ind] <- matrix(max.p, nrow=P, ncol=G)[inf.ind]
     rm(max.p, inf.ind)

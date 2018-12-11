@@ -25,7 +25,7 @@
 #' Please be warned that this only defaults to \code{TRUE} when the \code{\link[mcclust]{mcclust}} package - which \strong{must} be loaded for this feature - is loaded and the number of observations is less than 1000. However, it can still be manually set to \code{TRUE} for larger data sets. This is liable to take considerable time to compute, and may not even be possible if the number of observations &/or number of stored iterations is large and the resulting matrix isn't sufficiently sparse. When \code{TRUE}, both the summarised clustering and the similarity matrix are stored: the latter can be visualised as part of a call to \code{\link{plot.Results_IMIFA}}.
 #' @param zlabels For any method that performs clustering, the true labels can be supplied if they are known in order to compute clustering performance metrics. This also has the effect of ordering the MAP labels (and thus the ordering of cluster-specific parameters) to most closely correspond to the true labels if supplied.
 #' @param nonempty For "\code{MFA}" and "\code{MIFA}" models ONLY: a logical indicating whether only iterations with non-empty components should be retained. Defaults to \code{TRUE}, but may lead to empty chains - conversely, \code{FALSE} may lead to empty components.
-#' @param x,object,... Arguments required for the \code{print.Results_IMIFA} and \code{summary.Results_IMIFA} functions: \code{x} and \code{object} are objects of class \code{"Results_IMIFA"} resulting from a call to \code{\link{get_IMIFA_results}}, while \code{...} gathers additional arguments to those functions. The \code{...} construct also allows arguments to \code{\link[stats]{varimax}} to be passed to \code{\link{get_IMIFA_results}} itself, when \code{isTRUE(vari.rot)}.
+#' @param x,object,... Arguments required for the \code{print.Results_IMIFA} and \code{summary.Results_IMIFA} functions: \code{x} and \code{object} are objects of class \code{"Results_IMIFA"} resulting from a call to \code{\link{get_IMIFA_results}}, while \code{...} gathers additional arguments to those functions. The \code{...} construct also allows arguments to \code{\link[stats]{varimax}} to be passed to \code{\link{get_IMIFA_results}} itself, when \code{isTRUE(vari.rot)}, or arguments to \code{\link[graphics]{hist}} when \code{isTRUE(error.metrics)}, in order to guide construction of the bins.
 #'
 #' @details The function also performs post-hoc corrections for label switching, as well as post-hoc Procrustes rotation of loadings matrices and scores, in order to ensure sensible posterior parameter estimates, computes error metrics, constructs credible intervals, and generally transforms the raw \code{sims} object into an object of class "\code{Results_IMIFA}" in order to prepare the results for plotting via \code{\link{plot.Results_IMIFA}}.
 #'
@@ -863,7 +863,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     if(frobenius)   {
       orig.data  <- as.data.frame(dat)
       Pseq       <- seq_len(n.var)
-      xbins      <- vapply(orig.data, function(x) length(graphics::hist(x, plot=FALSE)$counts), numeric(1L))
+      xbins      <- vapply(orig.data, function(x) length(suppressWarnings(graphics::hist(x, plot=FALSE, ...))$counts), numeric(1L))
       dbreaks    <- lapply(Pseq, function(p) c(-Inf, as.numeric(sub("\\((.+),.*", "\\1", levels(cut(orig.data[[p]], xbins[[p]]))))))
       dcounts    <- mapply(tabulate, mapply(cut, orig.data, dbreaks, include.lowest=TRUE, right=FALSE, SIMPLIFY=FALSE), xbins, SIMPLIFY=FALSE)
       nbins      <- max(xbins)
@@ -1024,7 +1024,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
        last.met  <- c(MSE = mse[e.store], MEDSE = medse[e.store], MAE = mae[e.store], MEDAE = medae[e.store], RMSE = rmse[e.store], NRMSE = nrmse[e.store])
        last.met  <- if(frobenius) c(last.met, PPRE = Fro[e.store])  else last.met
        last.met  <- last.met[!is.na(last.met)]
-       Err       <- if(cov.met) c(list(Avg = mean.met, CIs = metricCI), Err[1L:3L], c(list(Last.Cov = sigma, Final = last.met)), Err[4L:5L]) else c(list(Avg = mean.met, CIs = metricCI), Err[1L:2L], list(Final = last.met))
+       Err       <- if(cov.met) c(list(Avg = mean.met, CIs = metricCI), Err[seq_len(3L)], c(list(Last.Cov = sigma, Final = last.met)), Err[4L:5L]) else c(list(Avg = mean.met, CIs = metricCI), Err[seq_len(2L)], list(Final = last.met))
        if(frobenius)     {
          rcounts <- stats::setNames(lapply(Pseq, function(p) t(rowQuantiles(sapply(rcounts, "[[", p), probs=c(conf.levels[1L], 0.5, conf.levels[2L])))), varnames)
          class(dcounts) <- "listof"

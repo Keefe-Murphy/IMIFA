@@ -6,14 +6,20 @@
 \usage{
 heat_legend(data,
             cols,
-            cex.lab = 1)
+            breaks = NULL,
+            cex.lab = 1,
+            ...)
 }
 \arguments{
 \item{data}{Either the data with which the heatmap was created or a vector containing its minimum and maximum values. Missing values are ignored.}
 
 \item{cols}{The palette used when the heatmap was created.}
 
+\item{breaks}{Optional argument giving the break-points for the axis labels}
+
 \item{cex.lab}{Magnification of axis annotation, indicating the amount by which plotting text and symbols should be scaled relative to the default of 1.}
+
+\item{...}{Catches unused arguments.}
 }
 \value{
 Modifies an existing plot by adding a colour-key legend.

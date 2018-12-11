@@ -648,8 +648,8 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
   }
 
   if(is.element(method, c("IMIFA", "IMFA", "OMIFA", "OMFA"))) {
-    mu.zero        <- if(all(lengths(mu.zero)  == 1L)) list(mu.zero[[1]])  else list(mu.zero[[1L]][,1L,  drop=FALSE])
-    psi.beta       <- if(all(lengths(psi.beta) == 1L)) list(psi.beta[[1]]) else list(psi.beta[[1L]][,1L, drop=FALSE])
+    mu.zero        <- if(all(lengths(mu.zero)  == 1L)) list(mu.zero[[1L]])  else list(mu.zero[[1L]][,1L,  drop=FALSE])
+    psi.beta       <- if(all(lengths(psi.beta) == 1L)) list(psi.beta[[1L]]) else list(psi.beta[[1L]][,1L, drop=FALSE])
     if(!is.element(method, c("OMFA", "IMFA")))  {
       alpha.d1     <- list(alpha.d1[[1L]][1L])
       alpha.d2     <- list(alpha.d2[[1L]][1L])

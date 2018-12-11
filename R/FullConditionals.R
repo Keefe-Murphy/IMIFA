@@ -2068,7 +2068,7 @@
         arrow.args$col    <- scols
         do.call(graphics::arrows, c(list(x[nz], ui[nz], x[nz], pmin(y + gap, ui)[nz]), arrow.args))
       } else if(err == "x") {
-        gap      <- rep(gap, length(x)) * diff(graphics::par("usr")[1L:2L])
+        gap      <- rep(gap, length(x)) * diff(graphics::par("usr")[seq_len(2L)])
         smidge   <- graphics::par("fin")[2L] * sfrac
         nz       <- abs(li - pmax(x - gap, li)) * x.to.in > 0.001
         scols    <- rep(scol, length.out = length(x))[nz]
@@ -2118,7 +2118,7 @@
     }
 
     #' @importFrom matrixStats "colSums2" "rowSums2"
-    .vari_max    <- function(x, normalize = FALSE, eps = 1e-05) {
+    .vari_max    <- function(x, normalize = FALSE, eps = 1e-05, ...) {
       p          <- ncol(x)
       if(p        < 2)                     return(x)
       if(normalize)         {

@@ -68,7 +68,7 @@ The argument \code{g} can be used to cycle through the available plots in each c
 
 \item{transparency}{A factor in [0, 1] modifying the opacity for overplotted lines. Defaults to 0.75, unless semi-transparency is not supported. Only relevant when \code{palette} is not supplied, otherwise the supplied \code{palette} must already be adjusted for transparency.}
 
-\item{...}{Other arguments typically passed to \code{\link[graphics]{plot}}.}
+\item{...}{Other arguments typically passed to \code{\link[graphics]{plot}} or the \code{breaks} argument to \code{\link{mat2cols}} and \code{\link{heat_legend}} when heatmaps are plotted.}
 }
 \value{
 The desired plot with appropriate output and summary statistics printed to the console screen.
