@@ -55,7 +55,7 @@ Useful links:
 
 }
 \author{
-Keefe Murphy [aut, cre], Isobel Claire Gormley [ctb], Cinzia Viroli [ctb]
+Keefe Murphy [aut, cre], Cinzia Viroli [ctb], Isobel Claire Gormley [ctb]
 
 \strong{Maintainer}: Keefe Murphy - <\email{keefe.murphy@ucd.ie}>
 }

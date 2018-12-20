@@ -5,7 +5,7 @@
 \title{Control settings for the IMIFA family of factor analytic mixtures}
 \usage{
 mixfaControl(n.iters = 25000L,
-             burnin = n.iters/5,
+             burnin = n.iters/5L,
              thinning = 2L,
              centering = TRUE,
              scaling = c("unit", "pareto", "none"),
@@ -60,7 +60,9 @@ The first letter \strong{U} here corresponds to constraints on loadings (not yet
 
 \item{sigma.l}{A scalar controlling the diagonal covariance of the prior distribution for the loadings. Defaults to \code{1}, i.e. the identity; otherwise a diagonal matrix with non-zero entries all equal to \code{sigma.l} Only relevant for the finite factor methods.}
 
-\item{z.init}{The method used to initialise the cluster labels. Defaults to model-based agglomerative hierarchical clustering via \code{"\link[mclust]{hc}"}. Other options include \code{"\link[stats]{kmeans}"} (with 10 random starts, by default), \code{\link[mclust]{Mclust}} via \code{"mclust"}, random initialisation via \code{"priors"}, and a user-supplied \code{"list"} (\code{z.list}). Not relevant for the "\code{FA}" and "\code{"IFA"} methods. Arguments for the relevant functions can be passed via the \code{...} construct. For \code{"\link[mclust]{hc}"}, \code{VVV} is used by default, unless the data is high-dimensional, in which case the default is \code{EII}. The option \code{"priors"} may lead to empty components at initialisation, which will return an error.}
+\item{z.init}{The method used to initialise the cluster labels. Defaults to model-based agglomerative hierarchical clustering via \code{"\link[mclust]{hc}"}. Other options include \code{"\link[stats]{kmeans}"} (with 10 random starts, by default), \code{\link[mclust]{Mclust}} via \code{"mclust"}, random initialisation via \code{"priors"}, and a user-supplied \code{"list"} (\code{z.list}). Not relevant for the "\code{FA}" and "\code{"IFA"} methods. Arguments for the relevant functions can be passed via the \code{...} construct. For \code{"\link[mclust]{hc}"}, \code{VVV} is used by default, unless the data is high-dimensional, in which case the default is \code{EII}. The option \code{"priors"} may lead to empty components at initialisation, which will return an error.
+
+In any case, unless \code{z.list} is explicitly supplied, or \code{verbose} is \code{FALSE}, the initial cluster sizes will be printed to the screen to alert users to potentially bad initialisiations.}
 
 \item{z.list}{A user supplied list of cluster labels. Only relevant if \code{z.init == "z.list"}.}
 
@@ -86,6 +88,9 @@ A named list in which the names are the names of the arguments and the values ar
 \description{
 Supplies a list of arguments for use in \code{\link{mcmc_IMIFA}} pertaining to \emph{ALL} methods in the \code{IMIFA} family: eg. MCMC settings, cluster initialisation, generic hyperparameters for factor-analytic mixtures, etc.
 }
+\note{
+Users should be careful to note that data are mean-centered (\code{centering=TRUE}) and unit-scaled (\code{scaling="unit"}) by default when supplying other parameters among the list above, or to the other control functions \code{\link{mgpControl}} and \code{\link{bnpControl}}.
+}
 \examples{
 mfctrl <- mixfaControl(n.iters=200, prec.mu=1E-03, sigma.mu=NULL,
                        scaling="pareto", uni.type="constrained")
@@ -103,7 +108,7 @@ Murphy, K., Gormley, I. C. and Viroli, C. (2018) Infinite Mixtures of Infinite F
 McNicholas, P. D. and Murphy, T. B. (2008) Parsimonious Gaussian Mixture Models, \emph{Statistics and Computing}, 18(3): 285-296.
 }
 \seealso{
-\code{\link{mcmc_IMIFA}}, \code{\link{psi_hyper}}, \code{\link[mclust]{Mclust}}, \code{\link[mclust]{hc}}, \code{\link[stats]{kmeans}}
+\code{\link{mcmc_IMIFA}}, \code{\link{psi_hyper}}, \code{\link[mclust]{hc}}, \code{\link[stats]{kmeans}}, \code{\link[mclust]{Mclust}}, \code{\link{mgpControl}}, \code{\link{bnpControl}}, \code{\link{storeControl}}
 }
 \author{
 Keefe Murphy - <\email{keefe.murphy@ucd.ie}>

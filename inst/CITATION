@@ -16,11 +16,11 @@ citEntry(entry  = "Article",
   primaryClass  = "stat.ME",
 
   textVersion   =
-    paste("Keefe Murphy, I. Claire Gormley, and Cinzia Viroli (2018).",
-          "Infinite Mixtures of Infinite Factor Analysers.",
-          "To appear.",
-          "Pre-print available at arXiv.",
-          "URL: https://arxiv.org/abs/1701.07010v4.")
+    paste0("Keefe Murphy, I. Claire Gormley, and Cinzia Viroli (2018). ",
+           "Infinite Mixtures of Infinite Factor Analysers. ",
+           "To appear. ",
+           "Pre-print available at arXiv. ",
+           "URL: https://arxiv.org/abs/1701.07010v4.")
 )
 
 year     <- sub(".*(2[[:digit:]]{3})-.*", "\\1", meta$Date)
@@ -28,15 +28,15 @@ vers     <- paste("package version", meta$Version)
 
 citEntry(entry  = "Manual",
   author  = personList(person(given="Keefe", family="Murphy"),
-                       person(given=c("Isobel", "Claire"), family="Gormley"),
-                       person(given="Cinzia", family="Viroli")),
-  title   = "{IMIFA}: Infinite Mixtures of Infinite Factor Analysers and Related Models",
+                       person(given="Cinzia", family="Viroli"),
+                       person(given=c("Isobel", "Claire"), family="Gormley")),
+  title   = "\\texttt{\\textup{IMIFA}}: Infinite Mixtures of Infinite Factor Analysers and Related Models",
   year    = year,
   note    = paste0("{R} ", vers),
   url     = "https://cran.r-project.org/package=IMIFA",
 
   textVersion   =
-    paste0("Keefe Murphy, I. Claire Gormley, and Cinzia Viroli (", year, "). ",
-          "IMIFA: Infinite Mixtures of Infinite Factor Analysers and Related Models. ",
-          "URL: https://cran.r-project.org/package=IMIFA ", "R ", vers)
+    paste0("Keefe Murphy, Cinzia Viroli, and I. Claire Gormley (", year, "). ",
+           "IMIFA: Infinite Mixtures of Infinite Factor Analysers and Related Models. ",
+           "URL: https://cran.r-project.org/package=IMIFA ", "R ", vers)
 )

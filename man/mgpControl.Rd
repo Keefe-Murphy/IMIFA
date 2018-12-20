@@ -84,7 +84,7 @@ Durante, D. (2017). A note on the multiplicative gamma process, \emph{Statistics
 Bhattacharya, A. and Dunson, D. B. (2011) Sparse Bayesian infinite factor models, \emph{Biometrika}, 98(2): 291-306.
 }
 \seealso{
-\code{\link{mcmc_IMIFA}}, \code{\link{MGP_check}}
+\code{\link{mcmc_IMIFA}}, \code{\link{MGP_check}}, \code{\link{mixfaControl}}, \code{\link{bnpControl}}, \code{\link{storeControl}}
 }
 \author{
 Keefe Murphy - <\email{keefe.murphy@ucd.ie}>

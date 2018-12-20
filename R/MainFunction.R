@@ -15,9 +15,9 @@
 #'  \item{"\code{IMIFA}"}{Infinite Mixtures of Infinite Factor Analysers}
 #' }
 #' In principle, of course, one could overfit the "\code{MFA}" or "\code{MIFA}" models, but it is recommend to use the corresponding model options which begin with `O' instead. Note that the "\code{classify}" method is not yet implemented.
-#' @param range.G Depending on the method employed, either the range of values for the number of clusters, or the conseratively high starting value for the number of clusters. Defaults to (and must be!) 1 for the "\code{FA}" and "\code{IFA}" methods. For the "\code{MFA}" and "\code{MIFA}" models this is to be given as a range of candidate models to explore. For the "\code{OMFA}", "\code{OMIFA}", "\code{IMFA}", and "\code{IMIFA}" models, this is the conservatively high number of clusters with which the chain is to be initialised (default = \code{max(25, ceiling(3 * log(N)))} for large N, or \code{min(N-1, ceiling(3 * log(N)))} for small N).
+#' @param range.G Depending on the method employed, either the range of values for the number of clusters, or the conseratively high starting value for the number of clusters. Defaults to (and must be!) \code{1} for the "\code{FA}" and "\code{IFA}" methods. For the "\code{MFA}" and "\code{MIFA}" models this is to be given as a range of candidate models to explore. For the "\code{OMFA}", "\code{OMIFA}", "\code{IMFA}", and "\code{IMIFA}" models, this is the conservatively high number of clusters with which the chain is to be initialised (default = \code{max(25, ceiling(3 * log(N)))} for large N, or \code{min(N-1, ceiling(3 * log(N)))} for small N<=50).
 #'
-#' For the "\code{OMFA}", and "\code{OMIFA}" models this upper limit remains fixed for the entire length of the chain; the upper limit for the for the "\code{IMFA}" and "\code{IMIFA}" models can be specified via \code{trunc.G} (see \code{\link{bnpControl}}), which shares the same default as \code{range.G}.
+#' For the "\code{OMFA}", and "\code{OMIFA}" models this upper limit remains fixed for the entire length of the chain; the upper limit for the for the "\code{IMFA}" and "\code{IMIFA}" models can be specified via \code{trunc.G} (see \code{\link{bnpControl}}), which must satisfy \code{range.G <= trunc.G < N}.
 #'
 #' If \code{length(range.G) * length(range.Q)} is large, consider not storing unnecessary parameters (via \code{\link{storeControl}}), or breaking up the range of models to be explored into chunks and sending each chunk to \code{\link{get_IMIFA_results}} separately.
 #' @param range.Q Depending on the method employed, either the range of values for the number of latent factors, or, for methods ending in IFA the conservatively high starting value for the number of cluster-specific factors, in which case the default starting value is \code{round(3 * log(P))}.
@@ -251,9 +251,8 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
        range.G  > 1)                message(paste0("'range.G' forced to 1 for the ", method, " method\n"))
     if(is.element(method, c("OMIFA", "OMFA", "IMFA", "IMIFA"))) {
       lnN2         <- ceiling(lnN)
-      tmp.G        <- as.integer(ifelse(N <= 50, min(N - 1, ceiling(3 * lnN)), max(25, ceiling(3 * lnN))))
       if(G.x)   {
-        G.init     <- range.G          <- tmp.G
+        G.init     <- range.G          <- as.integer(ifelse(N <= 50, min(N - 1L, ceiling(3 * lnN)), max(25L, ceiling(3 * lnN))))
       } else    {
         G.init     <- range.G
       }
@@ -263,13 +262,13 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
       }
       if(G.init    >= N)            stop(paste0("'range.G' must less than N (", N, ")"), call.=FALSE)
       if(is.element(method, c("IMFA", "IMIFA")))  {
-        if((t.miss <- bnpmiss$trunc.G)) {
-          trunc.G  <- BNP$trunc.G      <- max(ifelse(N <= 50, N - 1L, tmp.G), range.G)
+        if((tmiss  <- bnpmiss$trunc.G)) {
+          trunc.G  <- BNP$trunc.G      <- max(min(50L, N - 1L), range.G)
         } else trunc.G    <- BNP$trunc.G
-        if(all(verbose, ifelse(N > 50, trunc.G    < 50,
-           trunc.G <= N), !t.miss)) message(paste0("Consider setting 'trunc.G' to min(N-1=", N - 1, ", 50) unless practical reasons in heavy computational/memory burden cases prohibit it\n"))
+        if(all(verbose, ifelse(N <= 50, trunc.G   < N - 1L,
+           trunc.G  < 50), !tmiss)) message(paste0("Consider setting 'trunc.G' to min(N-1=", N - 1L, ", 50) unless practical reasons in heavy computational/memory burden cases prohibit it\n"))
         if(trunc.G  < range.G)      stop(paste0("'trunc.G' must be at least range.G=", range.G), call.=FALSE)
-        if(trunc.G >= N)            stop(paste0("'trunc.G' cannot be greater than N-1 (", N - 1, ")"), call.=FALSE)
+        if(trunc.G >= N)            stop(paste0("'trunc.G' cannot be greater than N-1 (", N - 1L, ")"), call.=FALSE)
         if(trunc.G  > 50)           warning(paste0("'trunc.G' is large: this may lead to memory capacity issues\n"), call.=FALSE, immediate.=TRUE)
       }
     } else if(method      == "classify")   {
@@ -298,10 +297,8 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
              verbose))              message("Forced non-storage of mixing proportions as 'equal.pro' is TRUE\n")
       storage["pi.sw"]    <- FALSE
     }
-    if(G.x)                         stop("'range.G' must be specified", call.=FALSE)
+    if(G.x)                         stop("'range.G' must be specified",         call.=FALSE)
     if(any(range.G  < 1))           stop("'range.G' must be strictly positive", call.=FALSE)
-    if(all(range.G  > lnN,
-           alpha    < 1))           warning("Empty clusters are likely with small 'alpha' and large 'range.G', consider running an overfitted or infinite mixture\n", call.=FALSE, immediate.=TRUE)
     range.G <- G.init     <- sort(unique(range.G))
     meth    <- rep(method, length(range.G))
   }
@@ -438,7 +435,7 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
       storage["s.sw"]    <- FALSE
     }
   }
-  Q.warn       <- min(N - 1, Ledermann(P, isotropic=is.element(uni.type, c("isotropic", "single"))))
+  Q.warn       <- min(N - 1L, Ledermann(P, isotropic=is.element(uni.type, c("isotropic", "single"))))
   if(any(range.Q > Q.warn))   {
     if(is.element(method, c("IFA", "MIFA", "OMIFA", "IMIFA")) &&
        isTRUE(adapt))         {     warning(paste0("Starting value for number of factors is greater than ", ifelse(any(range.Q > P), paste0("the number of variables (", P, ")"), paste0("the suggested Ledermann upper bound (", Q.warn, ")\n"))), call.=FALSE, immediate.=TRUE)
@@ -447,14 +444,15 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
                   isTRUE(!adapt)))  warning(paste0("Number of factors is greater than ", ifelse(any(range.Q > P), paste0("the number of variables (", P, ")"), paste0("the suggested Ledermann upper bound (", Q.warn, ")\n"))), call.=FALSE, immediate.=TRUE)
   }
   if(verbose   && !all(storage))  {
-    if(all(storage["s.sw"], !storage["l.sw"],
-           any(range.Q   != 0)))    message("Loadings not stored but scores are: Procrustes rotation of scores will not occur when passing results to get_IMIFA_results()\n")
     if(any(!storage))             {
-      if(any(all(method  == "MFA",  any(range.G > 1)) && any(range.Q > 0),
-             all(method  == "MIFA", any(range.G > 1)), is.element(method, c("IMIFA", "IMFA", "OMIFA", "OMFA"))) &&
-         identical(unname(which(!storage)), 5L)       &&
-         !equal.pro)              { message("Non-storage of parameters means posterior predictive checking error metrics almost surely will not be available\n")
-      } else if(any(!storage[-5L])) message(paste0("Non-storage of parameters means posterior predictive checking error metrics almost surely will not be available", ifelse(is.element(max(which(!storage[-5L])), c(1, 4)), paste0(":\nposterior mean parameter estimates of the ", ifelse(!storage["mu.sw"], ifelse(storage["psi.sw"], "means", "means and uniquenesses"), "uniquenesses"), " will still be available\n"), "\n")))
+      if(all(storage["s.sw"], !storage["l.sw"],
+         any(range.Q   != 0)))      message("Loadings not stored but scores are: Procrustes rotation of scores will not occur when passing results to get_IMIFA_results()\n")
+      sX       <- c(1L, 3L, 4L)
+      if(any(!storage[sX]))       { message(paste0("Non-storage of parameters means posterior predictive checking error metrics almost surely will not be available", ifelse(is.element(max(which(!storage[sX])), c(1L, 4L)), paste0(":\nposterior mean parameter estimates of the ", ifelse(!storage["mu.sw"], ifelse(storage["psi.sw"], "means", "means and uniquenesses"), "uniquenesses"), " will still be available\n"), "\n")))
+      } else if(any(all(method  == "MFA",  any(range.G > 1)) && any(range.Q > 0),
+                    all(method  == "MIFA", any(range.G > 1)), is.element(method, c("IMIFA", "IMFA", "OMIFA", "OMFA"))) &&
+          (!equal.pro  &&
+           !storage["pi.sw"]))      message("Non-storage of mixing proportions parameters means posterior predictive checking error metrics will almost surely not all be available\n")
     }
   } else if(verbose && is.element(method, c("FA", "MFA", "OMFA", "IMFA")) && any(range.Q == 0)) {
     if(all(storage[c("s.sw", "l.sw")]))   {
@@ -481,12 +479,12 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
 
   if(!is.element(method, c("FA", "IFA", "classify"))) {
     if(missing(alpha))     { alpha     <- switch(EXPR=method, MFA=, MIFA=1L, OMFA=, OMIFA=ifelse(learn.a, min(1/G.init, stats::rgamma(1, BNP$a.hyper[1L], BNP$a.hyper[2L])), 0.5/G.init), ifelse(learn.a, max(1L, stats::rgamma(1, BNP$a.hyper[1L], BNP$a.hyper[2L])), 1L))
-      if(is.element(method, c("IMFA", "IMIFA"))      &&
+      if(is.element(method, c("IMIFA", "IMFA"))      &&
          !learn.a)                  stop("'alpha' must be specified if it is to remain fixed when 'learn.alpha' is FALSE, as it's not being learned via Gibbs/Metropolis-Hastings updates", call.=FALSE)
     } else if(is.element(method,
       c("OMFA", "OMIFA")))   alpha     <- alpha/G.init
     if(length(alpha) != 1)          stop("'alpha' must be specified as a scalar to ensure an exchangeable prior", call.=FALSE)
-    if(is.element(method, c("IMIFA", "IMFA"))) {
+    if(is.element(method,   c("IMIFA", "IMFA")))      {
       if(kappa0      <- alpha    <= 0  && !learn.a)   {
         discount     <- BNP$discount   <- ifelse(ifelse(learn.d, discount == 0, bnpmiss$discount), pmin(pmax(stats::rbeta(1, BNP$d.hyper[1L], BNP$d.hyper[2L]), .Machine$double.eps - alpha), 1 - .Machine$double.eps), discount)
         if(!learn.d  &&
@@ -506,7 +504,10 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
     if(any(all(is.element(method, c("MFA",  "MIFA")),  alpha > 1),
            all(is.element(method, c("OMFA", "OMIFA")) && !learn.a,
            alpha > 1/G.init)))      warning("Are you sure alpha should be greater than 1?\n", call.=FALSE, immediate.=TRUE)
-    if(!zli.miss) {
+    if(all(is.element(method,     c("MFA", "MIFA")),
+           range.G    > lnN,
+           alpha      < 1))         warning("Empty clusters are likely with small 'alpha' and large 'range.G', consider running an overfitted or infinite mixture\n", call.=FALSE, immediate.=TRUE)
+    if(!zli.miss)     {
       if(length(z.list)   != len.G)  {
                                     stop(paste0("'z.list' must be a list of length ", len.G), call.=FALSE)  }
       list.levels    <- lapply(z.list, nlevels)
@@ -567,20 +568,21 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
     }
     for(g in seq_along(G.init)) {
       G            <- G.init[g]
+      Gseq         <- seq_len(G)
       if(G == 1)    {
         zi[[g]]    <- rep(1L, N)
       } else if(z.init   == "mclust") {
         m.res      <- try(suppressWarnings(Mclust(dat, G, x=mcl)), silent=TRUE)
         if(!inherits(m.res, "try-error")  &&
            !is.null(m.res))     {
-          zi[[g]]  <- as.integer(factor(m.res$classification, levels=seq_len(G)))
+          zi[[g]]  <- as.integer(factor(m.res$classification, levels=Gseq))
         } else                      stop(paste0("Cannot initialise cluster labels using mclust. Try another z.init method", ifelse(length(dots) > 1, " or supply different 'mclust' arguments via '...' to mixfaControl", "")), call.=FALSE)
       } else if(z.init   == "hc")     {
-        zi[[g]]    <- as.integer(factor(hcZ[,g - hc1],  levels=seq_len(G)))
+        zi[[g]]    <- as.integer(factor(hcZ[,g - hc1],  levels=Gseq))
       } else if(z.init   == "kmeans") {
         k.res      <- try(suppressWarnings(stats::kmeans(dat, centers=G, dots)), silent=TRUE)
         if(!inherits(k.res, "try-error"))  {
-          zi[[g]]  <- as.integer(factor(k.res$cluster, levels=seq_len(G)))
+          zi[[g]]  <- as.integer(factor(k.res$cluster, levels=Gseq))
         } else                      stop(paste0("Cannot initialise cluster labels using kmeans. Try another z.init method", ifelse(length(dots) > 1, " or supply different 'kmeans' arguments via '...' to mixfaControl", "")), call.=FALSE)
       } else if(z.init   == "list")   {
         zi[[g]]    <- as.integer(z.list[[g]])
@@ -591,8 +593,9 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
         switch(EXPR=method,
                IMFA=, IMIFA=          {
           while(n0 && iter < 100)     {
-            vies   <- .sim_vs_inf(alpha=alpha, discount=discount, len=G.init, lseq=seq_len(G.init), N=N, nn=rep(N/G.init, G.init))
-            pies   <- .sim_pi_inf(vs=vies, len=G.init)
+            G.sim  <- G.init - 1L
+            vies   <- .sim_vs_inf(alpha=alpha, discount=discount, len=G.sim, lseq=seq_len(G.sim), N=N, nn=rep(N/G.init, G.sim))
+            pies   <- .sim_pi_inf(vs=c(vies, 1L), len=G.init)
             zips   <- .sim_z_p(N=N, prob.z=pies)
             iter   <- iter + 1L
             n0     <- any(tabulate(zips, nbins=G.init) <= 0)
@@ -612,8 +615,9 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
         rm(zips)
       }
       nngs         <- tabulate(zi[[g]], nbins=switch(EXPR=method, IMFA=, IMIFA=trunc.G, G))
+      if(verbose   && zli.miss)     message(paste0("G=", G, " - initial cluster sizes: ", paste(nngs[Gseq], collapse=", "), "\n"))
       pi.prop[[g]] <- if(equal.pro) rep(1/G, G) else prop.table(nngs)
-      mu[[g]]      <- vapply(seq_len(G), function(gg) if(nngs[gg] > 0) colMeans2(dat[zi[[g]] == gg,, drop=FALSE]) else vector("integer", P), numeric(P))
+      mu[[g]]      <- vapply(Gseq, function(gg) if(nngs[gg] > 0) colMeans2(dat[zi[[g]] == gg,, drop=FALSE]) else vector("integer", P), numeric(P))
       mu[[g]]      <- if(uni)       t(mu[[g]])  else mu[[g]]
       if(mu0.x)   {
         mu.zero[[g]]    <- if(mu0g) mu[[g]]     else replicate(G, cmeans, simplify="array")
@@ -621,10 +625,10 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
       mu.zero[[g]] <- if(uni && !mu0g) t(mu.zero[[g]]) else mu.zero[[g]]
       if(beta.x)  {
         if(psi0g) {
-          cov.gg   <- lapply(seq_len(G), function(gg, dat.gg = dat[zi[[g]] == gg,, drop=FALSE]) if(all(nngs[gg] > 1, P <= nngs[g])) stats::cov(dat.gg) else covmat)
+          cov.gg   <- lapply(Gseq, function(gg, dat.gg = dat[zi[[g]] == gg,, drop=FALSE]) if(all(nngs[gg] > 1, P <= nngs[g])) stats::cov(dat.gg) else covmat)
           if(any(vapply(cov.gg,
              anyNA, logical(1L))))  stop("Not possible to derive default 'psi.beta' when 'psi0g' is TRUE: 'psi.beta' must now must be supplied", call.=FALSE)
-          psi.beta[[g]] <- vapply(seq_len(G), function(gg) psi_hyper(shape=psi.alpha, covar=cov.gg[[gg]], type=uni.prior), numeric(P))
+          psi.beta[[g]] <- vapply(Gseq, function(gg) psi_hyper(shape=psi.alpha, covar=cov.gg[[gg]], type=uni.prior), numeric(P))
           if(any(psi.beta[[g]] <
                  1E-03))            stop("Excessively small values for the uniquenesses hyperparameters will lead to critical numerical issues & should thus be avoided", call.=FALSE)
         } else {

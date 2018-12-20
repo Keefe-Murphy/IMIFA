@@ -11,7 +11,7 @@ show_digit(dat,
 \arguments{
 \item{dat}{A \code{matrix} or \code{data.frame} with the same number of rows and columns (or a vector which can be coerced to such a format), representing a grayscale map of a single digit.}
 
-\item{col}{The colour scale to be used. Defaults to \code{grey(seq(1, 0, length = nrow(dat)))}.}
+\item{col}{The colour scale to be used. Defaults to \code{grey(seq(1, 0, length = ncol(dat)))}.}
 
 \item{...}{Additional arguments to be passed to \code{\link{mat2cols}} and/or \code{\link{plot_cols}} (e.g. \code{na.col}) when \code{dat} is a matrix or \code{\link[graphics]{image}} when \code{dat} is a vector.}
 }

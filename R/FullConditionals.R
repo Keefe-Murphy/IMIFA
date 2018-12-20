@@ -34,14 +34,14 @@
 
   # Uniquenesses
   #' @importFrom matrixStats "colSums2"
-    .sim_psi_uu  <- function(N, P, psi.alpha, psi.beta, c.data, eta, lmat, Q0) {
+    .sim_psi_uu  <- function(N, P, psi.alpha, psi.beta, c.data, eta, lmat, Q0)  {
       S.mat      <- c.data  - if(Q0) tcrossprod(eta, lmat) else 0L
-        stats::rgamma(P, shape=N/2 + psi.alpha, rate=colSums2(S.mat * S.mat)/2 + psi.beta)
+        stats::rgamma(P, shape=N/2L + psi.alpha, rate=colSums2(S.mat * S.mat)/2 + psi.beta)
     }
 
-    .sim_psi_uc  <- function(N, P, psi.alpha, psi.beta, c.data, eta, lmat, Q0) {
+    .sim_psi_uc  <- function(N, P, psi.alpha, psi.beta, c.data, eta, lmat, Q0)  {
       S.mat      <- c.data  - if(Q0) tcrossprod(eta, lmat) else 0L
-        rep(stats::rgamma(1, shape=(N * P)/2 + psi.alpha, rate=sum(S.mat * S.mat)/2 + psi.beta), P)
+        rep(stats::rgamma(1, shape=(N * P)/2L + psi.alpha, rate=sum(S.mat * S.mat)/2 + psi.beta), P)
     }
 
   #' @importFrom matrixStats "colSums2"
@@ -180,7 +180,7 @@
 
   # Alpha
     .sim_alpha_g <- function(alpha, shape, rate, G, N) {
-      shape2     <- shape  + G - 1
+      shape2     <- shape  + G - 1L
       rate2      <- rate   - log(stats::rbeta(1, alpha + 1, N))
       weight     <- shape2/(shape2 + N * rate2)
         weight    * stats::rgamma(1, shape=shape2 + 1, rate=rate2) + (1 - weight) * stats::rgamma(1, shape=shape2, rate=rate2)
@@ -357,7 +357,7 @@
       if(shape   <= 1)                     stop("Rate parameters not defined when 'shape' <= 1", call.=FALSE)
       inv.cov    <- try(base::solve(covar), silent=TRUE)
 
-      if(inherits(inv.cov, "try-error"))   {
+      if(inherits(inv.cov, "try-error"))    {
         covsvd   <- svd(covar)
         posi     <- covsvd$d > max(sqrt(.Machine$double.eps) * covsvd$d[1L], 0L)
         inv.cov  <- if(all(posi)) covsvd$v %*% (t(covsvd$u)/covsvd$d) else if(any(posi))
@@ -574,7 +574,7 @@
       if(length(equal.pro)  > 1  ||
          !is.logical(equal.pro))           stop("'equal.pro' must be a single logical indicator", call.=FALSE)
       meth       <- unlist(strsplit(match.arg(method), ""))
-      lambda     <- P * Q   - 0.5 * Q * (Q - 1L)
+      lambda     <- P * Q   - 0.5 * Q * (Q  - 1L)
       lambda     <- switch(EXPR=meth[1L], C = lambda,  U = G    * lambda)
       if(length(meth) < 4)  {
         psi      <- switch(EXPR=meth[2L], C = 1L,      U = G)
@@ -1240,6 +1240,8 @@
 #' @param prec.mu A scalar controlling the degree of flatness of the prior for the cluster means by scaling \code{sigma.mu} (i.e. multiplying every element of \code{sigma.mu} by \code{1/prec.mu}). Lower values lead to a more diffuse prior. Defaults to \code{0.01}, such that the prior is relatively non-informative by default. Of course, \code{prec.mu=1} nullifies any effect of this argument. The user can supply a scaled \code{sigma.mu} directly, but this argument is especially useful when specifying \code{sigma.mu=NULL}, such that the diagonal entries of the sample covariance matrix are used.
 #' @param sigma.l A scalar controlling the diagonal covariance of the prior distribution for the loadings. Defaults to \code{1}, i.e. the identity; otherwise a diagonal matrix with non-zero entries all equal to \code{sigma.l} Only relevant for the finite factor methods.
 #' @param z.init The method used to initialise the cluster labels. Defaults to model-based agglomerative hierarchical clustering via \code{"\link[mclust]{hc}"}. Other options include \code{"\link[stats]{kmeans}"} (with 10 random starts, by default), \code{\link[mclust]{Mclust}} via \code{"mclust"}, random initialisation via \code{"priors"}, and a user-supplied \code{"list"} (\code{z.list}). Not relevant for the "\code{FA}" and "\code{"IFA"} methods. Arguments for the relevant functions can be passed via the \code{...} construct. For \code{"\link[mclust]{hc}"}, \code{VVV} is used by default, unless the data is high-dimensional, in which case the default is \code{EII}. The option \code{"priors"} may lead to empty components at initialisation, which will return an error.
+#'
+#' In any case, unless \code{z.list} is explicitly supplied, or \code{verbose} is \code{FALSE}, the initial cluster sizes will be printed to the screen to alert users to potentially bad initialisiations.
 #' @param z.list A user supplied list of cluster labels. Only relevant if \code{z.init == "z.list"}.
 #' @param equal.pro Logical variable indicating whether or not the mixing mixing proportions are to be equal across clusters in the model (default = \code{FALSE}). Only relevant for the "\code{MFA}" and "\code{MIFA}" methods.
 #' @param uni.prior A switch indicating whether uniquenesses rate hyperparameters are to be "\code{unconstrained}" or "\code{isotropic}", i.e. variable-specific or not. "\code{uni.prior}" must be "\code{isotropic}" if the last letter of "\code{uni.type}" is \strong{C}, but can take either value otherwise. Defaults to correspond to the last letter of \code{uni.type} if that is supplied and \code{uni.prior} is not, otherwise defaults to "\code{unconstrained}" (though"\code{isotropic}" is recommended when \code{N <= P}). Only relevant when "\code{psi.beta}" is not supplied and \code{\link{psi_hyper}} is therefore invoked.
@@ -1253,8 +1255,9 @@
 #'
 #' @return A named list in which the names are the names of the arguments and the values are the values of the arguments.
 #' @export
+#' @note Users should be careful to note that data are mean-centered (\code{centering=TRUE}) and unit-scaled (\code{scaling="unit"}) by default when supplying other parameters among the list above, or to the other control functions \code{\link{mgpControl}} and \code{\link{bnpControl}}.
 #' @keywords control
-#' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{psi_hyper}}, \code{\link[mclust]{Mclust}}, \code{\link[mclust]{hc}}, \code{\link[stats]{kmeans}}
+#' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{psi_hyper}}, \code{\link[mclust]{hc}}, \code{\link[stats]{kmeans}}, \code{\link[mclust]{Mclust}}, \code{\link{mgpControl}}, \code{\link{bnpControl}}, \code{\link{storeControl}}
 #' @references Murphy, K., Gormley, I. C. and Viroli, C. (2018) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
 #'
 #' McNicholas, P. D. and Murphy, T. B. (2008) Parsimonious Gaussian Mixture Models, \emph{Statistics and Computing}, 18(3): 285-296.
@@ -1262,7 +1265,7 @@
 #' @author Keefe Murphy - <\email{keefe.murphy@@ucd.ie}>
 #' @usage
 #' mixfaControl(n.iters = 25000L,
-#'              burnin = n.iters/5,
+#'              burnin = n.iters/5L,
 #'              thinning = 2L,
 #'              centering = TRUE,
 #'              scaling = c("unit", "pareto", "none"),
@@ -1292,7 +1295,7 @@
 #' # Alternatively specify these arguments directly
 #' # sim  <- mcmc_IMIFA(olive, "IMIFA", n.iters=200, prec.mu=1E-03,
 #' #                    sigma.mu=NULL, scaling="pareto", uni.type="constrained")
-  mixfaControl   <- function(n.iters = 25000L, burnin = n.iters/5, thinning = 2L, centering = TRUE, scaling = c("unit", "pareto", "none"),
+  mixfaControl   <- function(n.iters = 25000L, burnin = n.iters/5L, thinning = 2L, centering = TRUE, scaling = c("unit", "pareto", "none"),
                              uni.type = c("unconstrained", "isotropic", "constrained", "single"), psi.alpha = 2.5, psi.beta = NULL, mu.zero = NULL,
                              sigma.mu = 1L, prec.mu = 0.01, sigma.l = 1L, z.init = c("hc", "kmeans", "list", "mclust", "priors"), z.list = NULL, equal.pro = FALSE,
                              uni.prior = c("unconstrained", "isotropic"), mu0g = FALSE, psi0g = FALSE, drop0sd = TRUE, verbose = interactive(), ...) {
@@ -1360,7 +1363,7 @@
 #' @param d.hyper Hyperparameters for the Beta(a,b) prior on the \code{discount} parameter. Defaults to Beta(1,1), i.e. Uniform(0,1).
 #' @param ind.slice Logical indicitating whether the independent slice-efficient sampler is to be employed (defaults to \code{TRUE}). If \code{FALSE} the dependent slice-efficient sampler is employed, whereby the slice sequence \eqn{\xi_1,\ldots,\xi_g}{xi_1,...,xi_g} is equal to the decreasingly ordered mixing proportions.
 #' @param rho Parameter controlling the rate of geometric decay for the independent slice-efficient sampler, s.t. \eqn{\xi=(1-\rho)\rho^{g-1}}{xi = (1 - rho)rho^(g-1)}. Must lie in the interval (0, 1]. Higher values are associated with better mixing but longer run times. Defaults to 0.75, but 0.5 is an interesting special case which guarantees that the slice sequence \eqn{\xi_1,\ldots,\xi_g}{xi_1,...,xi_g} is equal to the \emph{expectation} of the decreasingly ordered mixing proportions. Only relevant when \code{ind.slice} is \code{TRUE}.
-#' @param trunc.G The maximum number of allowable and storable clusters. Defaults to the max of \code{range.G} and the same value that \code{range.G} defaults to for large N (see \code{\link{mcmc_IMIFA}}), or the max of \code{range.G} and \code{N-1} for small N. Must be greater than or equal to \code{range.G}. The number of active clusters to be sampled at each iteration is adaptively truncated, with \code{trunc.G} as an upper limit for storage reasons. Note that large values of \code{trunc.G} may lead to memory capacity issues.
+#' @param trunc.G The maximum number of allowable and storable clusters under the "\code{IMIFA}" and "\code{IMFA}" models. The number of active clusters to be sampled at each iteration is adaptively truncated, with \code{trunc.G} as an upper limit for storage reasons. Defaults to \code{max(min(N-1, 50), range.G))} and must satisfy \code{range.G <= trunc.G < N}. Note that large values of \code{trunc.G} may lead to memory capacity issues.
 #' @param kappa The spike-and-slab prior distribution on the \code{discount} hyperparameter is assumed to be a mixture with point-mass at zero and a continuous Beta(a,b) distribution. \code{kappa} gives the weight of the point mass at zero (the 'spike'). Must lie in the interval [0,1]. Defaults to 0.5. Only relevant when \code{isTRUE(learn.d)}. A value of 0 ensures non-zero discount values (i.e. Pitman-Yor) at all times, and \emph{vice versa}. Note that \code{kappa} will default to exactly 0 if \code{alpha<=0} and \code{learn.alpha=FALSE}.
 #' @param IM.lab.sw Logial indicating whether the two forced label switching moves are to be implemented (defaults to \code{TRUE}) when running one of the infinite mixture models.
 #' @param zeta
@@ -1396,7 +1399,7 @@
 #'
 #' @export
 #'
-#' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{G_priorDensity}}, \code{\link{G_moments}}
+#' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{G_priorDensity}}, \code{\link{G_moments}}, \code{\link{mixfaControl}}, \code{\link{mgpControl}}, \code{\link{storeControl}}
 #' @author Keefe Murphy - <\email{keefe.murphy@@ucd.ie}>
 #' @usage
 #' bnpControl(learn.alpha = TRUE,
@@ -1544,7 +1547,7 @@
 #' @note Certain supplied arguments will be subject to further checks by \code{\link{MGP_check}} to ensure the cumulative shrinkage property of the MGP prior holds according to the given parameterisation.
 #'
 #' The adaptive Gibbs sampler (AGS) monitors the \code{prop} of loadings elements within the neighbourhood \code{eps} of 0 and discards columns or simulates new columns on this basis. However, if at any stage the number of group-specific latent factors reaches zero, the decision to add columns is instead based on a simple binary trial with probability \code{1-prop}, as there are no loadings entries to monitor.
-#' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{MGP_check}}
+#' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{MGP_check}}, \code{\link{mixfaControl}}, \code{\link{bnpControl}}, \code{\link{storeControl}}
 #' @references Murphy, K., Gormley, I. C. and Viroli, C. (2018) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
 #'
 #' Durante, D. (2017). A note on the multiplicative gamma process, \emph{Statistics & Probability Letters}, 122: 198-204.
@@ -1631,6 +1634,8 @@
 #' @param score.switch Logical indicating whether the factor scores are to be stored.
 #'
 #' As the array containing each sampled scores matrix tends to be amongst the largest objects to be stored, this defaults to \code{FALSE} inside \code{\link{mcmc_IMIFA}} when \code{length(range.G) * length(range.Q) > 10}, otherwise the default is \code{TRUE}. For the "\code{MIFA}", "\code{OMIFA}", and "\code{IMIFA}" methods, setting this switch to \code{FALSE} also offers a slight speed-up.
+#'
+#' Unlike other parameters, the scores need not be stored for posterior predictive checking (see Note below).
 #' @param load.switch Logical indicating whether the factor loadings are to be stored (defaults to \code{TRUE}).
 #' @param psi.switch Logical indicating whether the uniquenesses are to be stored (defaults to \code{TRUE}).
 #' @param pi.switch Logical indicating whether the mixing proportions are to be stored (defaults to \code{TRUE}).
@@ -1640,7 +1645,7 @@
 #'
 #' @note Posterior inference and plotting won't be posssible for parameters not stored.
 #'
-#' Non-storage of parameters will almost surely prohibit the computation of posterior predictive checking error metrics within \code{\link{get_IMIFA_results}} also.
+#' Non-storage of parameters will almost surely prohibit the computation of posterior predictive checking error metrics within \code{\link{get_IMIFA_results}} also. In particular, if such error metrics are desired, \code{mu.switch} and \code{psi.switch} must be \code{TRUE} for all but the "\code{FA}" and "\code{IFA}" models, \code{load.switch} must be \code{TRUE} for all but the entirely zero-factor models, and \code{pi.switch} must be \code{TRUE} for models with clustering structure and unequal mixing proportions for all but the PPRE metric. \code{score.switch=TRUE} is not required for any posterior predictive checking.
 #'
 #' Finally, if loadings are not stored but scores are, caution is advised when examining posterior scores as Procrustes rotation will not occur within \code{\link{get_IMIFA_results}}.
 #'
@@ -1648,7 +1653,7 @@
 #' @export
 #' @keywords control
 #'
-#' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{get_IMIFA_results}}
+#' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{get_IMIFA_results}}, \code{\link{mixfaControl}}, \code{\link{mgpControl}}, \code{\link{bnpControl}}
 #' @author Keefe Murphy - <\email{keefe.murphy@@ucd.ie}>
 #' @usage
 #' storeControl(mu.switch = TRUE,
@@ -1770,7 +1775,7 @@
         any(is.na(drop))   ||
         any(drop  < 1 |
             drop  > length(x.dim)))        stop("drop must contain dimension numbers", call.=FALSE)
-      if(!all(x.dim[drop] == 1))           stop("dimensions to drop (", paste(drop, collapse = ", "), ") do not have length 1", call.=FALSE)
+      if(!all(x.dim[drop]  == 1))          stop("dimensions to drop (", paste(drop, collapse = ", "), ") do not have length 1", call.=FALSE)
       x.dimnames        <- dimnames(x)
       dimnames(x)       <- NULL
       dim(x)     <- NULL

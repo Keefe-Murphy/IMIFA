@@ -20,6 +20,7 @@
      by.fac = FALSE,
      type = c("h", "n", "p", "l"),
      intervals = TRUE,
+     common = TRUE,
      partial = FALSE,
      titles = TRUE,
      transparency = 0.75,
@@ -34,7 +35,7 @@ Special types of plots which don't require a \code{param} are:
 \describe{
 \item{"\code{GQ}"}{for plotting the posterior summaries of the numbers of clusters/factors, if available.}
 \item{"\code{zlabels}"}{for plotting clustering uncertainties - in four different ways (incl. the posterior confusion matrix) - if clustering has taken place, with or without the clustering labels being supplied via the \code{zlabels} argument. If available, the average similarity matrix, reordered according to the MAP labels, is shown as a 5-th plot.}
-\item{"\code{errors}"}{for conducting posterior predictive checking of the appropriateness of the fitted model by visualising the posterior predictive reconstruction error &/or histograms comparing the data to replicate draws from the posterior distribution &/or error metrics quantifying the difference between the estimated and empirical covariance matrices. The type of plot(s) produced depends on how the \code{error.metrics} argument was supplied to \code{\link{get_IMIFA_results}} and what parameters were stored.}
+\item{"\code{errors}"}{for conducting posterior predictive checking of the appropriateness of the fitted model by visualising the posterior predictive reconstruction error (PPRE) &/or histograms comparing the data to replicate draws from the posterior distribution &/or error metrics quantifying the difference between the estimated and empirical covariance matrices. The type of plot(s) produced depends on how the \code{error.metrics} argument was supplied to \code{\link{get_IMIFA_results}} and what parameters were stored.}
 }
 The argument \code{g} can be used to cycle through the available plots in each case. \code{ind} can also be used to govern which variable is shown for the 2-nd plot.}
 
@@ -61,6 +62,10 @@ The argument \code{g} can be used to cycle through the available plots in each c
 \item{type}{The manner in which the plot is to be drawn, as per the \code{type} argument to \code{\link{plot}}.}
 
 \item{intervals}{Logical indicating whether credible intervals around the posterior mean(s) are to be plotted when \code{is.element(plot.meth, c("all", "means"))}. Defaults to \code{TRUE}, but can only be \code{TRUE} when \code{show.last} is \code{FALSE}.}
+
+\item{common}{Logical indicating whether plots with \code{plot.meth="means"} (or the corresponding plots for \code{plot.meth="all"}) when \code{param} is one of \code{"means"}, \code{"scores"}, \code{"loadings"}, or \code{"uniquenesses"} are calibrated to a common scale based on the range of the \code{param} parameters across all clusters (defaults to \code{TRUE}, and only relevant when there are clusters). Otherwise, the only the range corresponding to the image being plotted is used to determine the scale.
+
+Note that this affects the \code{"loadings"} and \code{"scores"} plots regardless of the value of \code{heat.map}. An exception is the \code{"scores"} plots when \code{plot.meth="means"} and \code{heat.map} is \code{FALSE}, in which case \code{common} defaults to \code{FALSE}.}
 
 \item{partial}{Logical indicating whether plots of type "\code{correlation}" use the PACF. The default, \code{FALSE}, ensures the ACF is used. Only relevant when \code{plot.meth = "all"}, otherwise both plots are produced when \code{plot.meth = "correlation"}.}
 

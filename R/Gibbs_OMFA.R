@@ -57,7 +57,7 @@
       alpha.shape  <- a.hyper[1L]
       alpha.rate   <- a.hyper[2L]
       a.rates      <- vector("integer", total)
-    }
+    } else a.rates <- 1L
     avgzeta        <- zeta
     heat           <- tune.zeta$heat
     lambda         <- tune.zeta$lambda

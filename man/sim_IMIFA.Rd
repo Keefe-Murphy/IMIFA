@@ -17,6 +17,7 @@ sim_IMIFA_data(N = 300L,
                scores = NULL,
                nn = NULL,
                loc.diff = 1L,
+               forceQ = TRUE,
                method = c("conditional", "marginal"))
 
 sim_IMIFA_model(res,
@@ -25,7 +26,7 @@ sim_IMIFA_model(res,
 \arguments{
 \item{N, G, P}{Desired overall number of observations, number of clusters, and number of variables in the simulated data set. All must be a single integer.}
 
-\item{Q}{Desired number of cluster-specific latent factors in the simulated data set. Can be specified either as a single integer if all clusters are to have the same number of factors, or a vector of length \code{G}. Defaults to \code{floor(log(P))} in each cluster.}
+\item{Q}{Desired number of cluster-specific latent factors in the simulated data set. Can be specified either as a single integer if all clusters are to have the same number of factors, or a vector of length \code{G}. Defaults to \code{floor(log(P))} in each cluster. Should be less than the associated \code{\link{Ledermann}} bound and the number of observations in the corresponding cluster. The argument \code{forceQ} can be used to enforce this upper limit.}
 
 \item{pis}{Mixing proportions of the clusters in the dataset if \code{G} > 1. Must sum to 1. Defaults to \code{rep(1/G, G)}.}
 
@@ -39,7 +40,11 @@ sim_IMIFA_model(res,
 
 \item{nn}{An alternative way to specify the size of each cluster, by giving the exact number of observations in each cluster explicitly. Must sum to \code{N}.}
 
-\item{loc.diff}{A parameter to control the closeness of the clusters in terms of the difference in their location vectors. Only relevant if \code{mu} is NOT supplied. Defaults to 1.}
+\item{loc.diff}{A parameter to control the closeness of the clusters in terms of the difference in their location vectors. Only relevant if \code{mu} is NOT supplied. Defaults to \code{1}.
+
+More specifically, \code{loc.diff} (if invoked) is invoked as follows: means are simulated with the vector of cluster-specific hypermeans given by \code{scale(1:G, center=TRUE, scale=FALSE) * loc.diff}.}
+
+\item{forceQ}{A logical indicating whether the upper limit on the number of cluster-specific factors \code{Q} is enforced. Defaults to \code{TRUE} for \code{sim_IMIFA_data}, but is always \code{FALSE} for \code{sim_IMIFA_model}.}
 
 \item{method}{A switch indicating whether the mixture to be simulated from is the conditional distribution of the data given the latent variables (default), or simply the marginal distribution of the data.}
 
@@ -71,6 +76,9 @@ labels   <- attr(sim_data, "Labels")
 # Visualise the data in two-dimensions
 plot(cmdscale(dist(sim_data), k=2), col=labels)
 
+# Examine the overlap with a pairs plot of 5 randomly chosen variables
+pairs(sim_data[,sample(1:20, 5)], col=labels)
+
 # Fit a MIFA model to this data
 # tmp    <- mcmc_IMIFA(sim_data, method="MIFA", range.G=3, n.iters=5000)
 }
@@ -81,6 +89,8 @@ Murphy, K., Gormley, I. C. and Viroli, C. (2018) Infinite Mixtures of Infinite F
 \code{\link{mcmc_IMIFA}} for fitting an IMIFA related model to the simulated data set.
 
 \code{\link{get_IMIFA_results}} for generating input for \code{sim_IMIFA_model}.
+
+\code{\link{Ledermann}} for details on the upper-bound for \code{Q}. Note that this function accounts for isotropic uniquenesses, if \code{psi} is supplied in that manner, in computing this bound.
 }
 \author{
 Keefe Murphy - <\email{keefe.murphy@ucd.ie}>

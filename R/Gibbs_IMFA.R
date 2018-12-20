@@ -58,7 +58,7 @@
       d.shape1       <- d.hyper[1L]
       d.shape2       <- d.hyper[2L]
       d.rates        <- vector("integer", total)
-      d.unif         <- d.shape1 == 1 & d.shape2    == 1
+      d.unif         <- d.shape1 == 1   && d.shape2 == 1
       .sim_disc_mh   <- if(!learn.alpha && pi.alpha == 0) .sim_d_slab else .sim_d_spike
     } else d.rates   <- 1L
     MH.step          <- any(discount  > 0, learn.d) && learn.alpha

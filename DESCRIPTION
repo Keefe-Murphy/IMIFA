@@ -4,8 +4,8 @@ Date: 2018-05-01
 Title: Infinite Mixtures of Infinite Factor Analysers and Related Models
 Version: 2.0.0
 Authors@R: c(person("Keefe", "Murphy", email = "keefe.murphy@ucd.ie", role = c("aut", "cre")),
-             person("Isobel Claire", "Gormley", email = "claire.gormley@ucd.ie", role = "ctb"),
-             person("Cinzia", "Viroli", email = "cinzia.viroli@unibo.it", role = "ctb"))
+             person("Cinzia", "Viroli", email = "cinzia.viroli@unibo.it", role = "ctb"),
+             person("Isobel Claire", "Gormley", email = "claire.gormley@ucd.ie", role = "ctb"))
 Description: Provides flexible Bayesian estimation of Infinite Mixtures of Infinite Factor Analysers and related models, for nonparametrically clustering high-dimensional data, introduced by Murphy et al. (2018) <arXiv:1701.07010v4>. The IMIFA model conducts Bayesian nonparametric model-based clustering with factor analytic covariance structures without recourse to model selection criteria to choose the number of clusters or cluster-specific latent factors, mostly via efficient Gibbs updates. Model-specific diagnostic tools are also provided, as well as many options for plotting results, conducting posterior inference on parameters of interest, posterior predictive checking, and quantifying uncertainty.
 Depends: R (>= 3.3.0)
 License: GPL (>= 2)

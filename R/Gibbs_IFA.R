@@ -14,6 +14,7 @@
     total        <- max(iters)
     if(verbose)     pb     <- utils::txtProgressBar(min=0, max=total, style=3)
     n.store      <- length(iters)
+    AGS.burn     <- total/5L
     Pseq         <- seq_len(P)
     obsnames     <- rownames(data)
     varnames     <- colnames(data)
@@ -100,8 +101,8 @@
       }
 
     # Adaptation
-      if(adapt   && all(iter >= start.AGS, iter < stop.AGS))    {
-        if(stats::runif(1) < ifelse(iter < burnin, 0.5, exp(-b0 - b1  * (iter - start.AGS)))) {
+      if(adapt   && all(iter >= start.AGS, iter < stop.AGS))      {
+        if(stats::runif(1) < ifelse(iter < AGS.burn, 0.5, exp(-b0 - b1 * (iter - start.AGS)))) {
           colvec <- (if(Q0)  colSums(abs(lmat)  < epsilon) / P   else stats::runif(1)) >= prop
           numred <- sum(colvec)
           if(numred == 0)  {

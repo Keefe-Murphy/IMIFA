@@ -26,7 +26,7 @@
 #' Results obtained from get_IMIFA_Results are passed to this function with the type of plot desired specified by \code{plot.meth} (e.g. \code{"trace"}) and the parameter of interest specified by \code{param} (e.g. \code{"loadings"}).
 #'
 #' @author
-#' Keefe Murphy [aut, cre], Isobel Claire Gormley [ctb], Cinzia Viroli [ctb]
+#' Keefe Murphy [aut, cre], Cinzia Viroli [ctb], Isobel Claire Gormley [ctb]
 #'
 #' \strong{Maintainer}: Keefe Murphy - <\email{keefe.murphy@@ucd.ie}>
 #' @section References:

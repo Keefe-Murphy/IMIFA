@@ -15,6 +15,7 @@
     total            <- max(iters)
     if(verbose)         pb    <- utils::txtProgressBar(min=0, max=total, style=3)
     n.store          <- length(iters)
+    AGS.burn         <- total/5L
     Gs               <- seq_len(G)
     Ts               <- seq_len(trunc.G)
     Ps               <- seq_len(P)
@@ -59,7 +60,7 @@
       d.shape1       <- d.hyper[1L]
       d.shape2       <- d.hyper[2L]
       d.rates        <- vector("integer", total)
-      d.unif         <- d.shape1 == 1 & d.shape2    == 1
+      d.unif         <- d.shape1 == 1   && d.shape2 == 1
       .sim_disc_mh   <- if(!learn.alpha && pi.alpha == 0) .sim_d_slab else .sim_d_spike
     } else d.rates   <- 1L
     MH.step          <- any(discount  > 0, learn.d) && learn.alpha
@@ -294,8 +295,8 @@
       }
 
     # Adaptation
-      if(adapt       && all(iter >= start.AGS, iter < stop.AGS)) {
-        if(stats::runif(1) < ifelse(iter < burnin, 0.5, exp(-b0  - b1 * (iter - start.AGS))))    {
+      if(adapt       && all(iter >= start.AGS, iter < stop.AGS))  {
+        if(stats::runif(1) < ifelse(iter < AGS.burn, 0.5, exp(-b0 - b1 * (iter - start.AGS))))   {
           colvec     <- lapply(nn.ind, function(g) (if(Q0[g]) colSums(abs(lmat[[g]])   < epsilon)/P else stats::runif(1)) >= prop)
           nonred     <- lapply(colvec, .which0)
           numred     <- lengths(colvec)  - lengths(nonred)
