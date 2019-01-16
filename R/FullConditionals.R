@@ -310,61 +310,109 @@
   # Uniqueness Hyperparameters
 #' Find sensible inverse gamma hyperparameters for variance/uniqueness parameters
 #'
-#' Takes an inverse-Gamma shape hyperparameter, and a covariance matrix, and finds data-driven rate hyperparameters in such a way that Heywood problems are avoided for factor analysis or probabilistic principal components analysis (and mixtures thereof).
+#' Takes an inverse-Gamma shape hyperparameter, and an inverse covariance matrix (or estimate thereof), and finds data-driven rate hyperparameters in such a way that Heywood problems are avoided for factor analysis or probabilistic principal components analysis (and mixtures thereof).
 #' @param shape A positive shape hyperparameter.
-#' @param covar A square, positive-semidefinite covariance matrix. If manually supplying the rate(s) to \code{\link{mcmc_IMIFA}} be careful to ensure that data are scaled in the same way when supplying \code{covar} here.
+#' @param dat The data matrix from which the inverse covariance matrix is estimated. If data are to be centered &/or scaled within \code{\link{mcmc_IMIFA}}, then \code{dat} must also be standardised in the same way.
 #' @param type A switch indicating whether a single rate (\code{isotropic}) or variable-specific rates (\code{unconstrained}) are to be derived. Both options are allowed under models in \code{\link{mcmc_IMIFA}} with "constrained" or "unconstrained" uniquenesses, but only a single rate can be specified for models with "isotropic" or "single" uniquenesses.
+#' @param beta0 See Note below. Must be a strictly positive numeric scalar. Defaults to \code{3}, but is only invoked when both \code{beta0} and \code{S0} are explicitly supplied or when the number of observations is not greater than the number of variables (or when inverting the sample covariance matrix somehow otherwise fails).
+#' @param S0 See Note below. Must be a square positive semi-definite \code{P * P} numeric matrix. Defaults to the \code{P}-dimensional identity matrix, but is only invoked when both \code{beta0} and \code{S0} are explicitly supplied or when the number of observations is not greater than the number of variables (or when inverting the sample covariance matrix somehow otherwise fails).
+#' @param ... Catches unused arguments. For advanced users who are sure the sample covariance matrix is invertible, the argument \code{covar} can be supplied through \code{...}.
 #'
 #' @details Constraining uniquenesses to be isotropic provides the link between factor analysis and the probabilistic PCA model. When used in conjunction with \code{\link{mcmc_IMIFA}} with "isotropic" or "single" uniquenesses, \code{type} must be \code{isotropic}, but for "unconstrained" or "constrained" uniquenesses, it's possible to specify either a single rate (\code{type="isotropic"}) or variable-specific rates (\code{type="unconstrained"}).
 #'
 #' Used internally by \code{\link{mcmc_IMIFA}} when its argument \code{psi_beta} is not supplied.
 #'
-#' @return Either a single rate hyperparameter or \code{ncol(covar)} variable-specific rate hyperparameters.
+#' @note When \code{N > P}, where \code{N} is the number of observations and \code{P} is the number of variables, the inverse of the sample covariance matrix is used.
+#'
+#' When \code{N <= P}, the inverse either does not exist or the estimate thereof is highly unstable. Thus, an estimate of the form \eqn{\left(\beta_0 + \frac{N}{2}\right)\left(\beta_0 S_0 + 0.5\sum_{i=1}^N x_i x_i^\top\right)^{-1}}{(beta0 + N/2) * solve(beta0 * S0 + 0.5 * crossprod(dat))} is used instead.
+#'
+#' This estimate can also be used in \code{N > P} cases by explicitly supplying \code{beta0} and \code{S0}. It will also be used if inverting the covariance matrix fails in \code{N > P} cases.
+#'
+#' The optional arguments \code{beta0} and \code{S0} can be supplied to \code{\link{mcmc_IMIFA}} via the control function \code{\link{mixfaControl}}.
+#'
+#' @return Either a single rate hyperparameter or \code{ncol(dat)} variable-specific rate hyperparameters.
 #' @keywords utility
 #' @importFrom Rfast "is.symmetric"
 #' @export
 #'
-#' @seealso \code{\link{mcmc_IMIFA}}
+#' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{mixfaControl}}
 #' @references Murphy, K., Gormley, I. C. and Viroli, C. (2018) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
 #'
 #' Fruwirth-Schnatter, S. and Lopes, H. F. (2010). Parsimonious Bayesian factor analysis when the number of factors is unknown, \emph{Technical Report}. The University of Chicago Booth School of Business.
+#'
+#' Fruwirth-Schnatter, S. and Lopes, H. F. (2018). Sparse Bayesian factor analysis when the number of factors is unknown, \emph{to appear}. <\href{https://arxiv.org/abs/1804.04231}{arXiv:1804.04231}>.
 #'
 #' Tipping, M. E. and Bishop, C. M. (1999). Probabilistic principal component analysis, \emph{Journal of the Royal Statistical Society: Series B (Statistical Methodology)}, 61(3): 611-622.
 #'
 #' @author Keefe Murphy - <\email{keefe.murphy@@ucd.ie}>
 #' @usage
 #' psi_hyper(shape,
-#'           covar,
-#'           type = c("unconstrained", "isotropic"))
+#'           dat,
+#'           type = c("unconstrained", "isotropic"),
+#'           beta0 = 3,
+#'           S0 = NULL,
+#'           ...)
 #' @examples
 #' data(olive)
-#' olive2 <- olive[,-(1:2)]
-#' (rate  <- psi_hyper(shape=2.5, covar=cov(olive2), type="isotropic"))
+#' olive2  <- olive[,-(1:2)]
+#' (rate   <- psi_hyper(shape=2.5, dat=olive2, type="isotropic"))
 #'
-#' olive_scaled <- scale(olive2, center=TRUE, scale=TRUE)
-#' (rates <- psi_hyper(shape=3, covar=cov(olive_scaled), type="unconstrained"))
+#' # Try again with scaled data
+#' olive_S <- scale(olive2, center=TRUE, scale=TRUE)
+#'
+#' # Use the inverse of the sample covariance matrix
+#' (rates1 <- psi_hyper(shape=2.5, dat=olive_S, type="unconstrained"))
+#'
+#' # Use the estimated inverse covariance matrix
+#' (rates2 <- psi_hyper(shape=2.5, dat=olive_S, type="unconstrained", beta0=3, S0=diag(ncol(olive_S))))
 #'
 #' # In the scaled example, the mean uniquenesses (given by rates/(shape - 1)),
-#' # can be interpreted as the proportion of the variance that is idiosyncratic
-#' (prop  <- rates/(3 - 1))
-    psi_hyper    <- function(shape, covar, type=c("unconstrained", "isotropic")) {
+#' # can be interpreted as the prior proportion of the variance that is idiosyncratic
+#' (prop1   <- rates1/(2.5 - 1))
+#' (prop2   <- rates2/(2.5 - 1))
+    psi_hyper    <- function(shape, dat, type=c("unconstrained", "isotropic"), beta0 = 3, S0 = NULL, ...) {
       if(!all(is.character(type)))         stop("'type' must be a character vector of length 1", call.=FALSE)
-      if(!all(is.posi_def(covar, semi=TRUE),
-              is.symmetric(covar),
-              is.double(covar)))           stop("Invalid covariance matrix supplied", call.=FALSE)
       if(any(!is.numeric(shape),
-             length(shape) != 1))          stop("'shape' must be a single digit", call.=FALSE)
+             length(shape) != 1))          stop("'shape' must be a single digit",                call.=FALSE)
       if(shape   <= 1)                     stop("Rate parameters not defined when 'shape' <= 1", call.=FALSE)
-      inv.cov    <- try(base::solve(covar), silent=TRUE)
-
-      if(inherits(inv.cov, "try-error"))    {
-        covsvd   <- svd(covar)
-        posi     <- covsvd$d > max(sqrt(.Machine$double.eps) * covsvd$d[1L], 0L)
-        inv.cov  <- if(all(posi)) covsvd$v %*% (t(covsvd$u)/covsvd$d) else if(any(posi))
-                    covsvd$v[,posi, drop=FALSE] %*% (t(covsvd$u[,posi, drop=FALSE])/covsvd$d[posi]) else array(0L, dim(covar)[2L:1L])
+      dat        <- as.matrix(dat)
+      N          <- nrow(dat)
+      P          <- ncol(dat)
+      miss.b0    <- !missing(beta0)
+      miss.S0    <- !missing(S0)
+      if(xor(miss.b0, miss.S0))            stop("If one of 'beta0' and 'S0' are supplied, then both must be supplied", call.=FALSE)
+      do.estim   <- N <= P || all(miss.b0, miss.S0)
+      if(!do.estim)    {
+        covar    <- list(...)[["covar"]]
+        covar    <- if(is.null(covar)) stats::cov(dat) else covar
+        if(!all(is.symmetric(covar), is.double(covar)) ||
+           !is.posi_def(covar, semi=TRUE)) stop("Invalid covariance matrix supplied", call.=FALSE)
+        inv.cov  <- try(base::solve(covar), silent=TRUE)
+        if(!(do.estim <- inherits(inv.cov, "try-error"))) {
+          return(unname((shape - 1)/switch(EXPR=match.arg(type), unconstrained=diag(inv.cov),
+                                                isotropic=rep(.geom_mean(diag(inv.cov)), P))))
+        }
       }
-        unname((shape - 1)/switch(EXPR=match.arg(type), unconstrained=diag(inv.cov),
-                                  isotropic=rep(.geom_mean(diag(inv.cov)), ncol(covar))))
+
+      if(do.estim)     {
+        if(!is.numeric(beta0)   ||
+           length(beta0)   != 1 ||
+           beta0 <= 0)                     stop("'beta0' must be a strictly positive numeric scalar", call.=FALSE)
+        if(!miss.S0)   {
+          S0     <- diag(beta0, P)
+        } else    {
+          if(!is.matrix(S0)     ||
+             !is.double(S0)     ||
+             any(dim(S0)   != P))          stop("'S0' must be a square P * P numeric matrix",         call.=FALSE)
+          tryCatch(
+          {if(!is.posi_def(S0, semi=TRUE)) stop("'S0' must be a positive semi-definite matrix",       call.=FALSE)},
+                   error=function(e)       stop("'S0' must be a positive semi-definite matrix",       call.=FALSE))
+          S0     <- beta0   * S0
+        }
+        inv.cov  <- (beta0  + N/2L) * diag(base::solve(S0 + 0.5 * crossprod(dat)))
+          return(unname((shape - 1)/switch(EXPR=match.arg(type), unconstrained=inv.cov,
+                                                isotropic=rep(.geom_mean(inv.cov), P))))
+      }
     }
 
   # Alpha/Discount Shifted Gamma Hyperparameters
@@ -421,7 +469,7 @@
 #' @param bd1,bd2 Rate hyperparameters for \eqn{\delta_1}{delta_1} and \eqn{\delta_2}{delta_2}, respectively. Both default to 1.
 #' @param inverse Logical indicator for whether the cumulative shrinkage property is assessed against the induced Inverse Gamma prior, the default, or in terms of the Gamma prior (which is incorrect). This is always \code{TRUE} when used inside \code{\link{mcmc_IMIFA}}: the \code{FALSE} option exists only for demonstration purposes.
 #'
-#' @details This is called inside \code{\link{mcmc_IMIFA}} for the "\code{IFA}", "\code{MIFA}", "\code{OMIFA}" and "\code{IMIFA}" methods. This function is vectorised with respect to the arguments \code{ad1, ad2, phi.shape, phi.rate, sigma.shape, sigma.rate, bd1} and \code{bd2}.
+#' @details This is called inside \code{\link{mcmc_IMIFA}} for the "\code{IFA}", "\code{MIFA}", "\code{OMIFA}" and "\code{IMIFA}" methods. This function is vectorised with respect to the arguments \code{ad1}, \code{ad2}, \code{phi.shape}, \code{phi.rate}, \code{sigma.shape}, \code{sigma.rate}, \code{bd1} and \code{bd2}.
 #'
 #' @return A list of length 2 containing the following objects:
 #' \itemize{
@@ -961,7 +1009,7 @@
 
       if(is.element(method, c("FA", "IFA"))  ||
          all(range.G == 1))    {
-        if(any(!is.element(len, c(1, V)))) stop(paste0(obj.name, " must be list of length 1 containing a scalar", ifelse(P.dim, paste0(" or a vector of length P=", V), ""), " for a 1-group model"), call.=FALSE)
+        if(any(!is.element(len, c(1, V)))) stop(paste0(obj.name, " must be a scalar", ifelse(P.dim, paste0(" or a vector of length P=", V), ""), " for a 1-group model"), call.=FALSE)
       } else {
         if(any(is.element(len,
            c(1, range.G, V)))) {
@@ -1234,28 +1282,32 @@
 #' }
 #' The first letter \strong{U} here corresponds to constraints on loadings (not yet implemented), the second letter corresponds to uniquenesses constrained/unconstrained across clusters, and the third letter corresponds to the isotropic constraint on the uniquenesses. Of course, only the third letter is of relevance for the single-cluster "\code{FA}" and "\code{IFA}" models, such that "\code{unconstrained}" and "\code{constrained}" are equivalent for these models, and so too are "\code{isotropic}" and "\code{single}".
 #' @param psi.alpha The shape of the inverse gamma prior on the uniquenesses. Defaults to 2.5. Must be greater than 1 if \code{psi.beta} is \emph{not} supplied. Otherwise be warned that values less than or equal to 1 may not bound uniquenesses sufficiently far away from 0, and the algorithm may therefore terminate. Also, excessively small values may lead to critical numerical issues and should thus be avoided.
-#' @param psi.beta The rate of the inverse gamma prior on the uniquenesses. Can be either a single parameter, a vector of variable specific rates, or (if \code{psi0g} is \code{TRUE}) a matrix of variable and cluster-specific rates. If this is not supplied, \code{\link{psi_hyper}} is invoked to choose sensible values, depending on the value of \code{uni.prior} and, for the "\code{MFA}" and "\code{MIFA}" models, the value of \code{psi0g}. Excessively small values may lead to critical numerical issues and should thus be avoided.
+#' @param psi.beta The rate of the inverse gamma prior on the uniquenesses. Can be either a single parameter, a vector of variable specific rates, or (if \code{psi0g} is \code{TRUE}) a matrix of variable and cluster-specific rates. If this is not supplied, \code{\link{psi_hyper}} is invoked to choose sensible values, depending on the value of \code{uni.prior} and the data size and dimension, for the "\code{MFA}" and "\code{MIFA}" models only, the value of \code{psi0g}. Excessively small values may lead to critical numerical issues and should thus be avoided.
+#'
+#' Note that optional arguments to \code{psi_hyper} can be supplied via the \code{...} construct here.
 #' @param mu.zero The mean of the prior distribution for the mean parameter. Either a scalar of a vector of appropriate dimension. Defaults to the sample mean of the data.
 #' @param sigma.mu The covariance of the prior distribution for the cluster mean parameters. Always assumed to be a diagonal matrix, and set to the identity matrix by default. Can also be a scalar by which the identity is multiplied, a vector of appropriate dimension; if supplied as a matrix, only the diagonal elements will be extracted. Specifying \code{sigma.mu=NULL} will use the diagonal entries of the sample covariance matrix: for unit-scaled data this is simply the identity again. See \code{prec.mu} for further control over the hypercovariance in the prior for the means.
 #' @param prec.mu A scalar controlling the degree of flatness of the prior for the cluster means by scaling \code{sigma.mu} (i.e. multiplying every element of \code{sigma.mu} by \code{1/prec.mu}). Lower values lead to a more diffuse prior. Defaults to \code{0.01}, such that the prior is relatively non-informative by default. Of course, \code{prec.mu=1} nullifies any effect of this argument. The user can supply a scaled \code{sigma.mu} directly, but this argument is especially useful when specifying \code{sigma.mu=NULL}, such that the diagonal entries of the sample covariance matrix are used.
 #' @param sigma.l A scalar controlling the diagonal covariance of the prior distribution for the loadings. Defaults to \code{1}, i.e. the identity; otherwise a diagonal matrix with non-zero entries all equal to \code{sigma.l} Only relevant for the finite factor methods.
 #' @param z.init The method used to initialise the cluster labels. Defaults to model-based agglomerative hierarchical clustering via \code{"\link[mclust]{hc}"}. Other options include \code{"\link[stats]{kmeans}"} (with 10 random starts, by default), \code{\link[mclust]{Mclust}} via \code{"mclust"}, random initialisation via \code{"priors"}, and a user-supplied \code{"list"} (\code{z.list}). Not relevant for the "\code{FA}" and "\code{"IFA"} methods. Arguments for the relevant functions can be passed via the \code{...} construct. For \code{"\link[mclust]{hc}"}, \code{VVV} is used by default, unless the data is high-dimensional, in which case the default is \code{EII}. The option \code{"priors"} may lead to empty components at initialisation, which will return an error.
 #'
-#' In any case, unless \code{z.list} is explicitly supplied, or \code{verbose} is \code{FALSE}, the initial cluster sizes will be printed to the screen to alert users to potentially bad initialisiations.
+#' In any case, unless \code{z.list} is explicitly supplied, or \code{verbose} is \code{FALSE}, the initial cluster sizes will be printed to the screen to alert users to potentially bad initialisiations (e.g. heavily imbalanced initial cluster sizes).
 #' @param z.list A user supplied list of cluster labels. Only relevant if \code{z.init == "z.list"}.
 #' @param equal.pro Logical variable indicating whether or not the mixing mixing proportions are to be equal across clusters in the model (default = \code{FALSE}). Only relevant for the "\code{MFA}" and "\code{MIFA}" methods.
-#' @param uni.prior A switch indicating whether uniquenesses rate hyperparameters are to be "\code{unconstrained}" or "\code{isotropic}", i.e. variable-specific or not. "\code{uni.prior}" must be "\code{isotropic}" if the last letter of "\code{uni.type}" is \strong{C}, but can take either value otherwise. Defaults to correspond to the last letter of \code{uni.type} if that is supplied and \code{uni.prior} is not, otherwise defaults to "\code{unconstrained}" (though"\code{isotropic}" is recommended when \code{N <= P}). Only relevant when "\code{psi.beta}" is not supplied and \code{\link{psi_hyper}} is therefore invoked.
+#' @param uni.prior A switch indicating whether uniquenesses rate hyperparameters are to be "\code{unconstrained}" or "\code{isotropic}", i.e. variable-specific or not. "\code{uni.prior}" must be "\code{isotropic}" if the last letter of "\code{uni.type}" is \strong{C}, but can take either value otherwise. Defaults to correspond to the last letter of \code{uni.type} if that is supplied and \code{uni.prior} is not, otherwise defaults to "\code{unconstrained}" (though"\code{isotropic}" is recommended when \code{N <= P}). Only relevant when "\code{psi.beta}" is not supplied and \code{\link{psi_hyper}} is therefore invoked (with optional arguments passable via the \code{...} construct).
 #' @param mu0g Logical indicating whether the \code{mu.zero} hyperparameter can be cluster-specific. Defaults to \code{FALSE}. Only relevant for the "\code{MFA}" and "\code{MIFA}" methods when \code{z.list} is supplied.
 #' @param psi0g Logical indicating whether the \code{psi.beta} hyperparameter(s) can be cluster-specific. Defaults to \code{FALSE}. Only relevant for the "\code{MFA}" and "\code{MIFA}" methods when \code{z.list} is supplied, and only allowable when \code{uni.type} is one of \code{unconstrained} or \code{isotropic}.
 #' @param drop0sd Logical indicating whether to drop variables with no standard deviation (defaults to \code{TRUE}). This is \emph{strongly} recommended, especially a) when \code{psi.beta} is not supplied &/or \code{sigma.mu=NULL}, and either/both are therefore estimated using the empirical covariance matrix, &/or b) if some form of posterior predictive checking is subsequently desired when calling \code{\link{get_IMIFA_results}}.
 #' @param verbose Logical indicating whether to print output (e.g. run times) and a progress bar to the screen while the sampler runs. By default is \code{TRUE} if the session is interactive, and \code{FALSE} otherwise. If \code{FALSE}, warnings and error messages will still be printed to the screen, but everything else will be suppressed.
-#' @param ... Additional arguments to be passed to \code{\link[mclust]{hc}} (\code{modelName} & \code{use} only), to \code{\link[mclust]{Mclust}} (\code{modelNames}, and the arguments for \code{\link[mclust]{hc}} with which \code{\link[mclust]{Mclust}} is itself initialised - \code{modelName} & \code{use}), or to \code{\link[stats]{kmeans}} (\code{iter.max} and \code{nstart} only) can be passed here, depending on the value of \code{z.init}. Also catches unused arguments.
-#'
-#' Additionally, when \code{z.init="mclust"}, \code{criterion} can be passed here (can be "\code{icl}" or "\code{bic}", the default) to control how the optimum \code{\link[mclust]{Mclust}} model to initialise with is determined.
-#'
+#' @param ... Also catches unused arguments. A number of optional arguments can be also supplied here:
+#' \itemize{
+#' \item{The additional \code{\link{psi_hyper}} arguments \code{beta0} and \code{S0}, especially when \code{N <= P}.}
+#' \item{Additional arguments to be passed to \code{\link[mclust]{hc}} (\code{modelName} & \code{use} only), to \code{\link[mclust]{Mclust}} (\code{modelNames}, and the arguments for \code{\link[mclust]{hc}} with which \code{\link[mclust]{Mclust}} is itself initialised - \code{modelName} & \code{use}), or to \code{\link[stats]{kmeans}} (\code{iter.max} and \code{nstart} only), depending on the value of \code{z.init}.}
+#' \item{Additionally, when \code{z.init="mclust"}, \code{criterion} can be passed here (can be "\code{icl}" or "\code{bic}", the default) to control how the optimum \code{\link[mclust]{Mclust}} model to initialise with is determined.}
+#' }
 #' @return A named list in which the names are the names of the arguments and the values are the values of the arguments.
 #' @export
-#' @note Users should be careful to note that data are mean-centered (\code{centering=TRUE}) and unit-scaled (\code{scaling="unit"}) by default when supplying other parameters among the list above, or to the other control functions \code{\link{mgpControl}} and \code{\link{bnpControl}}.
+#' @note Users should be careful to note that data are mean-centered (\code{centering=TRUE}) and unit-scaled (\code{scaling="unit"}) by default when supplying other parameters among the list above, especially those related in any way to \code{psi.hyper}, or to the other control functions \code{\link{mgpControl}} and \code{\link{bnpControl}}.
 #' @keywords control
 #' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{psi_hyper}}, \code{\link[mclust]{hc}}, \code{\link[stats]{kmeans}}, \code{\link[mclust]{Mclust}}, \code{\link{mgpControl}}, \code{\link{bnpControl}}, \code{\link{storeControl}}
 #' @references Murphy, K., Gormley, I. C. and Viroli, C. (2018) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
@@ -1287,14 +1339,14 @@
 #'              ...)
 #' @examples
 #' mfctrl <- mixfaControl(n.iters=200, prec.mu=1E-03, sigma.mu=NULL,
-#'                        scaling="pareto", uni.type="constrained")
+#'                        beta0=4, S0=diag(8), uni.type="constrained")
 #'
 #' # data(olive)
 #' # sim  <- mcmc_IMIFA(olive, "IMIFA", mixFA=mfctrl)
 #'
 #' # Alternatively specify these arguments directly
-#' # sim  <- mcmc_IMIFA(olive, "IMIFA", n.iters=200, prec.mu=1E-03,
-#' #                    sigma.mu=NULL, scaling="pareto", uni.type="constrained")
+#' # sim  <- mcmc_IMIFA(olive, "IMIFA", n.iters=200, prec.mu=1E-03, sigma.mu=NULL,
+#' #                    beta0=4, S0=diag(8), uni.type="constrained")
   mixfaControl   <- function(n.iters = 25000L, burnin = n.iters/5L, thinning = 2L, centering = TRUE, scaling = c("unit", "pareto", "none"),
                              uni.type = c("unconstrained", "isotropic", "constrained", "single"), psi.alpha = 2.5, psi.beta = NULL, mu.zero = NULL,
                              sigma.mu = 1L, prec.mu = 0.01, sigma.l = 1L, z.init = c("hc", "kmeans", "list", "mclust", "priors"), z.list = NULL, equal.pro = FALSE,

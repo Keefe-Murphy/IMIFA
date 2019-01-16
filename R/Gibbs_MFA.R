@@ -78,11 +78,10 @@
     label.switch   <- any(cluster$l.switch)
     eta            <- .sim_eta_p(N=N, Q=Q)
     lmat           <- if(Q0) array(vapply(Gseq, function(g) .sim_load_p(Q=Q, P=P, sigma.l=sigma.l), numeric(P * Q)), dim=c(P, Q, G)) else array(0, dim=c(P, 0, G))
-    if(isTRUE(one.uni)) {
+    if(isTRUE(one.uni))     {
       psi.beta     <- psi.beta[,1L]
       psi.inv      <- matrix(.sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), nrow=P, ncol=G)
     } else psi.inv <- vapply(Gseq, function(g) .sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta[,g]), numeric(P))
-    psi.beta       <- if(one.uni) psi.beta[,1L] else psi.beta
     psi.inv        <- if(uni)     t(psi.inv)    else psi.inv
     if(isTRUE(one.uni))     {
       psi.inv[]    <- 1/switch(EXPR=uni.type, constrained=.col_vars(data), .geom_mean(.col_vars(data)))
@@ -92,7 +91,8 @@
       psi.inv[,nn   > 1]   <- tmp.psi[!is.nan(tmp.psi)]
       rm(tmp.psi)
     }
-    max.p          <- (psi.alpha  - 1)/switch(EXPR=uni.type, unconstrained=, constrained=psi.beta, min(psi_hyper(psi.alpha, stats::cov(data))))
+    max.p          <- (psi.alpha  - 1)/switch(EXPR=uni.type, unconstrained=, constrained=psi.beta,
+                                              min(do.call(psi_hyper, c(list(shape=psi.alpha, dat=data, covar=stats::cov(data)), list(...)$pots))))
     inf.ind        <- psi.inv > max(max.p)
     psi.inv[inf.ind]       <- matrix(max.p, nrow=P, ncol=G)[inf.ind]
     rm(max.p, inf.ind)

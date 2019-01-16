@@ -5,48 +5,75 @@
 \title{Find sensible inverse gamma hyperparameters for variance/uniqueness parameters}
 \usage{
 psi_hyper(shape,
-          covar,
-          type = c("unconstrained", "isotropic"))
+          dat,
+          type = c("unconstrained", "isotropic"),
+          beta0 = 3,
+          S0 = NULL,
+          ...)
 }
 \arguments{
 \item{shape}{A positive shape hyperparameter.}
 
-\item{covar}{A square, positive-semidefinite covariance matrix. If manually supplying the rate(s) to \code{\link{mcmc_IMIFA}} be careful to ensure that data are scaled in the same way when supplying \code{covar} here.}
+\item{dat}{The data matrix from which the inverse covariance matrix is estimated. If data are to be centered &/or scaled within \code{\link{mcmc_IMIFA}}, then \code{dat} must also be standardised in the same way.}
 
 \item{type}{A switch indicating whether a single rate (\code{isotropic}) or variable-specific rates (\code{unconstrained}) are to be derived. Both options are allowed under models in \code{\link{mcmc_IMIFA}} with "constrained" or "unconstrained" uniquenesses, but only a single rate can be specified for models with "isotropic" or "single" uniquenesses.}
+
+\item{beta0}{See Note below. Must be a strictly positive numeric scalar. Defaults to \code{3}, but is only invoked when both \code{beta0} and \code{S0} are explicitly supplied or when the number of observations is not greater than the number of variables (or when inverting the sample covariance matrix somehow otherwise fails).}
+
+\item{S0}{See Note below. Must be a square positive semi-definite \code{P * P} numeric matrix. Defaults to the \code{P}-dimensional identity matrix, but is only invoked when both \code{beta0} and \code{S0} are explicitly supplied or when the number of observations is not greater than the number of variables (or when inverting the sample covariance matrix somehow otherwise fails).}
+
+\item{...}{Catches unused arguments. For advanced users who are sure the sample covariance matrix is invertible, the argument \code{covar} can be supplied through \code{...}.}
 }
 \value{
-Either a single rate hyperparameter or \code{ncol(covar)} variable-specific rate hyperparameters.
+Either a single rate hyperparameter or \code{ncol(dat)} variable-specific rate hyperparameters.
 }
 \description{
-Takes an inverse-Gamma shape hyperparameter, and a covariance matrix, and finds data-driven rate hyperparameters in such a way that Heywood problems are avoided for factor analysis or probabilistic principal components analysis (and mixtures thereof).
+Takes an inverse-Gamma shape hyperparameter, and an inverse covariance matrix (or estimate thereof), and finds data-driven rate hyperparameters in such a way that Heywood problems are avoided for factor analysis or probabilistic principal components analysis (and mixtures thereof).
 }
 \details{
 Constraining uniquenesses to be isotropic provides the link between factor analysis and the probabilistic PCA model. When used in conjunction with \code{\link{mcmc_IMIFA}} with "isotropic" or "single" uniquenesses, \code{type} must be \code{isotropic}, but for "unconstrained" or "constrained" uniquenesses, it's possible to specify either a single rate (\code{type="isotropic"}) or variable-specific rates (\code{type="unconstrained"}).
 
 Used internally by \code{\link{mcmc_IMIFA}} when its argument \code{psi_beta} is not supplied.
 }
+\note{
+When \code{N > P}, where \code{N} is the number of observations and \code{P} is the number of variables, the inverse of the sample covariance matrix is used.
+
+When \code{N <= P}, the inverse either does not exist or the estimate thereof is highly unstable. Thus, an estimate of the form \eqn{\left(\beta_0 + \frac{N}{2}\right)\left(\beta_0 S_0 + 0.5\sum_{i=1}^N x_i x_i^\top\right)^{-1}}{(beta0 + N/2) * solve(beta0 * S0 + 0.5 * crossprod(dat))} is used instead.
+
+This estimate can also be used in \code{N > P} cases by explicitly supplying \code{beta0} and \code{S0}. It will also be used if inverting the covariance matrix fails in \code{N > P} cases.
+
+The optional arguments \code{beta0} and \code{S0} can be supplied to \code{\link{mcmc_IMIFA}} via the control function \code{\link{mixfaControl}}.
+}
 \examples{
 data(olive)
-olive2 <- olive[,-(1:2)]
-(rate  <- psi_hyper(shape=2.5, covar=cov(olive2), type="isotropic"))
+olive2  <- olive[,-(1:2)]
+(rate   <- psi_hyper(shape=2.5, dat=olive2, type="isotropic"))
 
-olive_scaled <- scale(olive2, center=TRUE, scale=TRUE)
-(rates <- psi_hyper(shape=3, covar=cov(olive_scaled), type="unconstrained"))
+# Try again with scaled data
+olive_S <- scale(olive2, center=TRUE, scale=TRUE)
+
+# Use the inverse of the sample covariance matrix
+(rates1 <- psi_hyper(shape=2.5, dat=olive_S, type="unconstrained"))
+
+# Use the estimated inverse covariance matrix
+(rates2 <- psi_hyper(shape=2.5, dat=olive_S, type="unconstrained", beta0=3, S0=diag(ncol(olive_S))))
 
 # In the scaled example, the mean uniquenesses (given by rates/(shape - 1)),
-# can be interpreted as the proportion of the variance that is idiosyncratic
-(prop  <- rates/(3 - 1))
+# can be interpreted as the prior proportion of the variance that is idiosyncratic
+(prop1   <- rates1/(2.5 - 1))
+(prop2   <- rates2/(2.5 - 1))
 }
 \references{
 Murphy, K., Gormley, I. C. and Viroli, C. (2018) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
 
 Fruwirth-Schnatter, S. and Lopes, H. F. (2010). Parsimonious Bayesian factor analysis when the number of factors is unknown, \emph{Technical Report}. The University of Chicago Booth School of Business.
 
+Fruwirth-Schnatter, S. and Lopes, H. F. (2018). Sparse Bayesian factor analysis when the number of factors is unknown, \emph{to appear}. <\href{https://arxiv.org/abs/1804.04231}{arXiv:1804.04231}>.
+
 Tipping, M. E. and Bishop, C. M. (1999). Probabilistic principal component analysis, \emph{Journal of the Royal Statistical Society: Series B (Statistical Methodology)}, 61(3): 611-622.
 }
 \seealso{
-\code{\link{mcmc_IMIFA}}
+\code{\link{mcmc_IMIFA}}, \code{\link{mixfaControl}}
 }
 \author{
 Keefe Murphy - <\email{keefe.murphy@ucd.ie}>

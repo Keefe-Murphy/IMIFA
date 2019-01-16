@@ -241,7 +241,9 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
   if(z.init == "kmeans"   && is.null(dots$nstart))    {
     dots$nstart           <- 10L
   }
+  pots      <- mixFA$dots[c("beta0", "S0")]
   dots      <- dots[!vapply(dots, is.null, logical(1L))]
+  pots      <- pots[!vapply(pots, is.null, logical(1L))]
 
   G.x       <- missing(range.G)
   bnpmiss   <- attr(BNP, "Missing")
@@ -361,7 +363,7 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
   psi.alpha        <- mixFA$psi.alpha
   psi0g            <- mixFA$psi0g
   beta.x           <- mixfamiss$psi.beta
-  if(beta.x && psi.alpha <= 1)      stop("'psi.alpha' must be strictly greater than 1 when invoking the default for 'psi.beta' in order to bound uniquenesses away from zero",  call.=FALSE)
+  if(beta.x && psi.alpha <= 1)      stop("'psi.alpha' must be strictly greater than 1 when invoking the default for 'psi.beta' in order to bound uniquenesses away from zero",    call.=FALSE)
   if(psi.alpha     <= 1)            warning("'psi.alpha' is not strictly greater than 1; uniquenesses may not be sufficiently bounded away from zero, algorithm may terminate\n", call.=FALSE)
   obsnames         <- rownames(dat)
   varnames         <- colnames(dat)
@@ -377,9 +379,8 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
      !is.element(length(sigma.mu),
      c(1, P))))                     stop(paste0("'sigma.mu' must be strictly positive, and of length 1 or P=", P))
   if(beta.x) {
-    psi.beta       <- temp.psi   <- try(list(psi_hyper(shape=psi.alpha, covar=covmat, type=uni.prior)), silent=TRUE)
-    if(inherits(psi.beta,
-       "try-error"))                stop("Not possible to derive default 'psi.beta': this argument now must be supplied", call.=FALSE)
+    psi.beta       <- temp.psi   <- tryCatch(list(psi_hyper(shape=psi.alpha, dat=dat, type=uni.prior, covar=covmat, ...)), error=function(e) message(paste0(e)))
+    if(is.null(psi.beta))           stop("Not possible to derive default 'psi.beta': try supplying this argument directly", call.=FALSE)
   } else {
     psi.beta       <- mixFA$psi.beta
     psi.beta       <- lapply(.len_check(psi.beta, psi0g, method, P, G.init), matrix, nrow=P, ncol=G.init, byrow=length(psi.beta) == G.init)
@@ -526,8 +527,8 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
 
   imifa     <- list(list())
   Gi        <- Qi  <- 1L
-  gibbs.arg <- list(P = P, sigma.mu = sigma.mu, psi.alpha = psi.alpha, burnin = burnin, sw = storage,
-                    thinning = thinning, iters = iters, verbose = verbose, uni.type = uni.type, uni.prior = uni.prior)
+  gibbs.arg <- list(P = P, sigma.mu = sigma.mu, psi.alpha = psi.alpha, burnin = burnin, sw = storage, thinning = thinning,
+                    iters = iters, verbose = verbose, uni.type = uni.type, uni.prior = uni.prior, pots = pots)
   if(is.element(method, c("IMIFA", "IMFA", "OMIFA", "OMFA"))) {
     gibbs.arg      <- append(gibbs.arg, BNP)
   }
@@ -625,15 +626,15 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
       mu.zero[[g]] <- if(uni && !mu0g) t(mu.zero[[g]]) else mu.zero[[g]]
       if(beta.x)  {
         if(psi0g) {
-          cov.gg   <- lapply(Gseq, function(gg, dat.gg = dat[zi[[g]] == gg,, drop=FALSE]) if(all(nngs[gg] > 1, P <= nngs[g])) stats::cov(dat.gg) else covmat)
-          if(any(vapply(cov.gg,
-             anyNA, logical(1L))))  stop("Not possible to derive default 'psi.beta' when 'psi0g' is TRUE: 'psi.beta' must now must be supplied", call.=FALSE)
-          psi.beta[[g]] <- vapply(Gseq, function(gg) psi_hyper(shape=psi.alpha, covar=cov.gg[[gg]], type=uni.prior), numeric(P))
-          if(any(psi.beta[[g]] <
-                 1E-03))            stop("Excessively small values for the uniquenesses hyperparameters will lead to critical numerical issues & should thus be avoided", call.=FALSE)
-        } else {
+          dat.gg   <- lapply(Gseq, function(gg) dat[zi[[g]] == gg,, drop=FALSE])
+          cov.gg   <- lapply(Gseq, function(gg) if(all(nngs[gg] > 1, P <= nngs[g])) stats::cov(dat.gg[[gg]]) else covmat)
+          psi.beta[[g]] <- try(vapply(Gseq, function(gg) psi_hyper(shape=psi.alpha, dat=dat.gg[[gg]], type=uni.prior, covar=cov.gg[[gg]], ...), numeric(P)), silent=TRUE)
+        }
+        if(!psi0g  || inherits(psi.beta[[g]], "try-error")) {
           psi.beta[[g]] <- replicate(G, temp.psi[[1L]])
         }
+        if(any(psi.beta[[g]]  <
+               1E-03))              stop("Excessively small values for the uniquenesses hyperparameters will lead to critical numerical issues & should thus be avoided", call.=FALSE)
         psi.beta[[g]]   <- if(uni)  t(psi.beta[[g]])   else psi.beta[[g]]
       }
       clust[[g]]   <- list(z = zi[[g]], pi.alpha = alpha, pi.prop = pi.prop[[g]])
@@ -680,8 +681,9 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
       if(unlist(lapply(psi.beta,      function(x)  {
     if(is.matrix(x)) any(apply(x, 1L, function(y)  {
      length(unique(round(y, min(.ndeci(y))))) })  != 1) else  {
+     !is.element(method, c("FA", "IFA"))          &&
      length(unique(round(x,
-     min(.ndeci(x))))) != 1 }}))) { stop("'psi.beta' cannot be group-specific if 'uni.type' is 'constrained' or 'single'", call.=FALSE)
+     min(.ndeci(x))))) != 1 }}))) { stop("'psi.beta' cannot be group-specific if 'uni.type' is 'constrained' or 'single'",  call.=FALSE)
     } else if(isTRUE(psi0g) && is.element(method,
               c("MFA", "MIFA")))    stop("'psi0g' must be FALSE if 'psi.beta' is not group-specific", call.=FALSE)
   }

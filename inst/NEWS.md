@@ -10,6 +10,7 @@ __Infinite Mixtures of Infinite Factor Analysers__
 * Allowed the Dirichlet concentration parameter `alpha` to be learned via MH steps for the OM(I)FA models.  
     * Also allowed diminishing adaptation to tune the log-normal proposal to achieve a target acceptance rate.
     * Thus `bnpControl` args. `learn.alpha`, `alpha.hyper`, `zeta`, & `tune.zeta` become relevant for OM(I)FA models.
+* Overhauled `psi_hyper` for `N <= P` data where the sample covariance matrix is not invertible (details in documentation).
 * New posterior predictive model checking approach added to `get_IMIFA_results` (with associated plots):  
   Posterior Predictive Reconstruction Error (PPRE) compares bin counts of the original data with corresponding  
   counts for replicate draws from the posterior predictive distribution using a standardised Frobenius norm.
