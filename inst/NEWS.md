@@ -31,7 +31,8 @@ __Infinite Mixtures of Infinite Factor Analysers__
     * `alpha.hyper` now has a larger hyper-rate by default, to better encourage clustering.
     * `alpha.d1` & `alpha.d2` now set to `2.1`/`3.1` rather than `2`/`6` to discourage exponentially fast shrinkage.
     * `z.init` now defaults to `"hc"`: model-based agglomerative hierarchical clustering.
-* Args. `scores` & `loadings` can now be supplied to `sim_IMIFA_data` directly.
+* Args. `scores` & `loadings` can now be supplied to `sim_IMIFA_data` directly;  
+  new arg. `non.zero` controls the # effective factors (per column & cluster) when `loadings` are instead simulated.
 * Sped-up 2<sup>nd</sup> label-switching move for IM(I)FA models (accounting for empty clusters).
 * Args. for `hc` can now be passed when `init.z="mclust"` also  
   (previously only `"hc"`), thus controlling how `Mclust` is itself initialised.

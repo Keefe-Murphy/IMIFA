@@ -314,8 +314,8 @@
 #' @param shape A positive shape hyperparameter.
 #' @param dat The data matrix from which the inverse covariance matrix is estimated. If data are to be centered &/or scaled within \code{\link{mcmc_IMIFA}}, then \code{dat} must also be standardised in the same way.
 #' @param type A switch indicating whether a single rate (\code{isotropic}) or variable-specific rates (\code{unconstrained}) are to be derived. Both options are allowed under models in \code{\link{mcmc_IMIFA}} with "constrained" or "unconstrained" uniquenesses, but only a single rate can be specified for models with "isotropic" or "single" uniquenesses.
-#' @param beta0 See Note below. Must be a strictly positive numeric scalar. Defaults to \code{3}, but is only invoked when both \code{beta0} and \code{S0} are explicitly supplied or when the number of observations is not greater than the number of variables (or when inverting the sample covariance matrix somehow otherwise fails).
-#' @param S0 See Note below. Must be a square positive semi-definite \code{P * P} numeric matrix. Defaults to the \code{P}-dimensional identity matrix, but is only invoked when both \code{beta0} and \code{S0} are explicitly supplied or when the number of observations is not greater than the number of variables (or when inverting the sample covariance matrix somehow otherwise fails).
+#' @param beta0 See Note below. Must be a strictly positive numeric scalar. Defaults to \code{3}, but is only invoked when both \code{beta0} and \code{S0} are explicitly supplied or when the number of observations is not greater than the number of variables (or when inverting the sample covariance matrix somehow otherwise fails). In some cases, \code{beta0} should not be so small as to render the estimate of the inverse unstable.
+#' @param S0 See Note below. Must be a square positive definite \code{P * P} numeric matrix. Defaults to the \code{P}-dimensional identity matrix, but is only invoked when both \code{beta0} and \code{S0} are explicitly supplied or when the number of observations is not greater than the number of variables (or when inverting the sample covariance matrix somehow otherwise fails).
 #' @param ... Catches unused arguments. For advanced users who are sure the sample covariance matrix is invertible, the argument \code{covar} can be supplied through \code{...}.
 #'
 #' @details Constraining uniquenesses to be isotropic provides the link between factor analysis and the probabilistic PCA model. When used in conjunction with \code{\link{mcmc_IMIFA}} with "isotropic" or "single" uniquenesses, \code{type} must be \code{isotropic}, but for "unconstrained" or "constrained" uniquenesses, it's possible to specify either a single rate (\code{type="isotropic"}) or variable-specific rates (\code{type="unconstrained"}).
@@ -398,18 +398,21 @@
         if(!is.numeric(beta0)   ||
            length(beta0)   != 1 ||
            beta0 <= 0)                     stop("'beta0' must be a strictly positive numeric scalar", call.=FALSE)
+        if(beta0  < P &&
+           beta0 != floor(beta0))          message("Suggestion:'beta0' should be an integer when less than P\n")
         if(!miss.S0)   {
           S0     <- diag(beta0, P)
         } else    {
           if(!is.matrix(S0)     ||
              !is.double(S0)     ||
-             any(dim(S0)   != P))          stop("'S0' must be a square P * P numeric matrix",         call.=FALSE)
+             any(dim(S0)   != P))          stop("'S0' must be a square P * P numeric matrix", call.=FALSE)
           tryCatch(
-          {if(!is.posi_def(S0, semi=TRUE)) stop("'S0' must be a positive semi-definite matrix",       call.=FALSE)},
-                   error=function(e)       stop("'S0' must be a positive semi-definite matrix",       call.=FALSE))
+          {if(!is.posi_def(S0))            stop("'S0' must be a positive definite matrix",    call.=FALSE)},
+                   error=function(e)       stop("'S0' must be a positive definite matrix",    call.=FALSE))
           S0     <- beta0   * S0
         }
-        inv.cov  <- (beta0  + N/2L) * diag(base::solve(S0 + 0.5 * crossprod(dat)))
+        inv.cov  <- (beta0  + N/2L) * diag(tryCatch(base::solve(S0 + 0.5 * crossprod(dat)), error=function(e) {
+                                           stop("Cannot estimate inverse covariance matrix: try increasing 'beta0'", call.=FALSE) }))
           return(unname((shape - 1)/switch(EXPR=match.arg(type), unconstrained=inv.cov,
                                                 isotropic=rep(.geom_mean(inv.cov), P))))
       }

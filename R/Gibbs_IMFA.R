@@ -109,7 +109,8 @@
       rm(tmp.psi)
     }
     max.p            <- (psi.alpha  - 1)/switch(EXPR=uni.type, unconstrained=, constrained=psi.beta,
-                                                min(do.call(psi_hyper, c(list(shape=psi.alpha, dat=data, covar=stats::cov(data)), list(...)$pots))))
+                                                min(tryCatch(suppressMessages(do.call(psi_hyper, c(list(shape=psi.alpha, dat=data, covar=stats::cov(data)), list(...)$pots))),
+                                                             error=function(e) psi_hyper(shape=psi.alpha, dat=data, covar=stats::cov(data)))))
     inf.ind          <- psi.inv  > max(max.p)
     psi.inv[inf.ind] <- matrix(max.p, nrow=P, ncol=trunc.G)[inf.ind]
     rm(max.p, inf.ind)

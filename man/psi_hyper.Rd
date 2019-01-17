@@ -18,9 +18,9 @@ psi_hyper(shape,
 
 \item{type}{A switch indicating whether a single rate (\code{isotropic}) or variable-specific rates (\code{unconstrained}) are to be derived. Both options are allowed under models in \code{\link{mcmc_IMIFA}} with "constrained" or "unconstrained" uniquenesses, but only a single rate can be specified for models with "isotropic" or "single" uniquenesses.}
 
-\item{beta0}{See Note below. Must be a strictly positive numeric scalar. Defaults to \code{3}, but is only invoked when both \code{beta0} and \code{S0} are explicitly supplied or when the number of observations is not greater than the number of variables (or when inverting the sample covariance matrix somehow otherwise fails).}
+\item{beta0}{See Note below. Must be a strictly positive numeric scalar. Defaults to \code{3}, but is only invoked when both \code{beta0} and \code{S0} are explicitly supplied or when the number of observations is not greater than the number of variables (or when inverting the sample covariance matrix somehow otherwise fails). In some cases, \code{beta0} should not be so small as to render the estimate of the inverse unstable.}
 
-\item{S0}{See Note below. Must be a square positive semi-definite \code{P * P} numeric matrix. Defaults to the \code{P}-dimensional identity matrix, but is only invoked when both \code{beta0} and \code{S0} are explicitly supplied or when the number of observations is not greater than the number of variables (or when inverting the sample covariance matrix somehow otherwise fails).}
+\item{S0}{See Note below. Must be a square positive definite \code{P * P} numeric matrix. Defaults to the \code{P}-dimensional identity matrix, but is only invoked when both \code{beta0} and \code{S0} are explicitly supplied or when the number of observations is not greater than the number of variables (or when inverting the sample covariance matrix somehow otherwise fails).}
 
 \item{...}{Catches unused arguments. For advanced users who are sure the sample covariance matrix is invertible, the argument \code{covar} can be supplied through \code{...}.}
 }
