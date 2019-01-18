@@ -16,7 +16,7 @@ sim_IMIFA_data(N = 300L,
                loadings = NULL,
                scores = NULL,
                nn = NULL,
-               loc.diff = 1L,
+               loc.diff = 2,
                non.zero = P,
                forceQ = TRUE,
                method = c("conditional", "marginal"))
@@ -41,7 +41,7 @@ sim_IMIFA_model(res,
 
 \item{nn}{An alternative way to specify the size of each cluster, by giving the exact number of observations in each cluster explicitly. Must sum to \code{N}.}
 
-\item{loc.diff}{A parameter to control the closeness of the clusters in terms of the difference in their location vectors. Only relevant if \code{mu} is NOT supplied. Defaults to \code{1}.
+\item{loc.diff}{A parameter to control the closeness of the clusters in terms of the difference in their location vectors. Only relevant if \code{mu} is NOT supplied. Defaults to \code{2}.
 
 More specifically, \code{loc.diff} (if invoked) is invoked as follows: means are simulated with the vector of cluster-specific hypermeans given by \code{scale(1:G, center=TRUE, scale=FALSE) * loc.diff}.}
 

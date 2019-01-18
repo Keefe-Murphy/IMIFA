@@ -310,27 +310,28 @@
   # Uniqueness Hyperparameters
 #' Find sensible inverse gamma hyperparameters for variance/uniqueness parameters
 #'
-#' Takes an inverse-Gamma shape hyperparameter, and an inverse covariance matrix (or estimate thereof), and finds data-driven rate hyperparameters in such a way that Heywood problems are avoided for factor analysis or probabilistic principal components analysis (and mixtures thereof).
+#' Takes an inverse-Gamma shape hyperparameter, and an inverse covariance matrix (or estimate thereof), and finds data-driven scale hyperparameters in such a way that Heywood problems are avoided for factor analysis or probabilistic principal components analysis (and mixtures thereof).
 #' @param shape A positive shape hyperparameter.
 #' @param dat The data matrix from which the inverse covariance matrix is estimated. If data are to be centered &/or scaled within \code{\link{mcmc_IMIFA}}, then \code{dat} must also be standardised in the same way.
-#' @param type A switch indicating whether a single rate (\code{isotropic}) or variable-specific rates (\code{unconstrained}) are to be derived. Both options are allowed under models in \code{\link{mcmc_IMIFA}} with "constrained" or "unconstrained" uniquenesses, but only a single rate can be specified for models with "isotropic" or "single" uniquenesses.
-#' @param beta0 See Note below. Must be a strictly positive numeric scalar. Defaults to \code{3}, but is only invoked when both \code{beta0} and \code{S0} are explicitly supplied or when the number of observations is not greater than the number of variables (or when inverting the sample covariance matrix somehow otherwise fails). In some cases, \code{beta0} should not be so small as to render the estimate of the inverse unstable.
-#' @param S0 See Note below. Must be a square positive definite \code{P * P} numeric matrix. Defaults to the \code{P}-dimensional identity matrix, but is only invoked when both \code{beta0} and \code{S0} are explicitly supplied or when the number of observations is not greater than the number of variables (or when inverting the sample covariance matrix somehow otherwise fails).
-#' @param ... Catches unused arguments. For advanced users who are sure the sample covariance matrix is invertible, the argument \code{covar} can be supplied through \code{...}.
+#' @param type A switch indicating whether a single scale (\code{isotropic}) or variable-specific scales (\code{unconstrained}) are to be derived. Both options are allowed under models in \code{\link{mcmc_IMIFA}} with "constrained" or "unconstrained" uniquenesses, but only a single scale can be specified for models with "isotropic" or "single" uniquenesses.
+#' @param beta0 See Note below. Must be a strictly positive numeric scalar. Defaults to \code{3}, but is only invoked when explicitly supplied or when the number of observations \code{N} is not greater than the number of variables \code{P} (or when inverting the sample covariance matrix somehow otherwise fails). In some cases, \code{beta0} should not be so small as to render the estimate of the inverse unstable.
+#' @param ... Catches unused arguments. Advanced users can also supply the sample covariance matrix of \code{dat}, if available, through \code{...} via the argument \code{covar}.
 #'
-#' @details Constraining uniquenesses to be isotropic provides the link between factor analysis and the probabilistic PCA model. When used in conjunction with \code{\link{mcmc_IMIFA}} with "isotropic" or "single" uniquenesses, \code{type} must be \code{isotropic}, but for "unconstrained" or "constrained" uniquenesses, it's possible to specify either a single rate (\code{type="isotropic"}) or variable-specific rates (\code{type="unconstrained"}).
+#' @details Constraining uniquenesses to be isotropic provides the link between factor analysis and the probabilistic PCA model. When used in conjunction with \code{\link{mcmc_IMIFA}} with "isotropic" or "single" uniquenesses, \code{type} must be \code{isotropic}, but for "unconstrained" or "constrained" uniquenesses, it's possible to specify either a single scale (\code{type="isotropic"}) or variable-specific scales (\code{type="unconstrained"}).
 #'
 #' Used internally by \code{\link{mcmc_IMIFA}} when its argument \code{psi_beta} is not supplied.
 #'
-#' @note When \code{N > P}, where \code{N} is the number of observations and \code{P} is the number of variables, the inverse of the sample covariance matrix is used.
+#' @note When \code{N > P}, where \code{N} is the number of observations and \code{P} is the number of variables, the inverse of the sample covariance matrix is used by default.
 #'
-#' When \code{N <= P}, the inverse either does not exist or the estimate thereof is highly unstable. Thus, an estimate of the form \eqn{\left(\beta_0 + \frac{N}{2}\right)\left(\beta_0 S_0 + 0.5\sum_{i=1}^N x_i x_i^\top\right)^{-1}}{(beta0 + N/2) * solve(beta0 * S0 + 0.5 * crossprod(dat))} is used instead.
+#' When \code{N <= P}, the inverse either does not exist or the estimate thereof is highly unstable. Thus, an estimate of the form \eqn{\left(\beta_0 + \frac{N}{2}\right)\left(\beta_0\mathcal{I}_p + 0.5\sum_{i=1}^N x_i x_i^\top\right)^{-1}}{(beta0 + N/2) * solve(diag(beta0, P) + 0.5 * crossprod(dat))} is used instead.
 #'
-#' This estimate can also be used in \code{N > P} cases by explicitly supplying \code{beta0} and \code{S0}. It will also be used if inverting the covariance matrix fails in \code{N > P} cases.
+#' For unstandardised data, the estimate is instead constructed using a standardised version of the data, and the resulting inverse \emph{correlation} matrix estimate is scaled appropriately by the diagonal entries of the sample covariance matrix of the original data.
 #'
-#' The optional arguments \code{beta0} and \code{S0} can be supplied to \code{\link{mcmc_IMIFA}} via the control function \code{\link{mixfaControl}}.
+#' This estimate can also be used in \code{N > P} cases by explicitly supplying \code{beta0}. It will also be used if inverting the sample covariance matrix fails in \code{N > P} cases.
 #'
-#' @return Either a single rate hyperparameter or \code{ncol(dat)} variable-specific rate hyperparameters.
+#' The optional argument \code{beta0} can be supplied to \code{\link{mcmc_IMIFA}} via the control function \code{\link{mixfaControl}}.
+#'
+#' @return Either a single scale hyperparameter or \code{ncol(dat)} variable-specific scale hyperparameters.
 #' @keywords utility
 #' @importFrom Rfast "is.symmetric"
 #' @export
@@ -350,71 +351,60 @@
 #'           dat,
 #'           type = c("unconstrained", "isotropic"),
 #'           beta0 = 3,
-#'           S0 = NULL,
 #'           ...)
 #' @examples
 #' data(olive)
 #' olive2  <- olive[,-(1:2)]
-#' (rate   <- psi_hyper(shape=2.5, dat=olive2, type="isotropic"))
+#' (scale1 <- psi_hyper(shape=2.5, dat=olive2))
 #'
 #' # Try again with scaled data
 #' olive_S <- scale(olive2, center=TRUE, scale=TRUE)
 #'
 #' # Use the inverse of the sample covariance matrix
-#' (rates1 <- psi_hyper(shape=2.5, dat=olive_S, type="unconstrained"))
+#' (scale2 <- psi_hyper(shape=2.5, dat=olive_S))
 #'
 #' # Use the estimated inverse covariance matrix
-#' (rates2 <- psi_hyper(shape=2.5, dat=olive_S, type="unconstrained", beta0=3, S0=diag(ncol(olive_S))))
+#' (scale3 <- psi_hyper(shape=2.5, dat=olive_S, beta0=3))
 #'
-#' # In the scaled example, the mean uniquenesses (given by rates/(shape - 1)),
+#' # In the normalised example, the mean uniquenesses (given by scale/(shape - 1)),
 #' # can be interpreted as the prior proportion of the variance that is idiosyncratic
-#' (prop1   <- rates1/(2.5 - 1))
-#' (prop2   <- rates2/(2.5 - 1))
-    psi_hyper    <- function(shape, dat, type=c("unconstrained", "isotropic"), beta0 = 3, S0 = NULL, ...) {
-      if(!all(is.character(type)))         stop("'type' must be a character vector of length 1", call.=FALSE)
+#' (prop1   <- scale1/(2.5 - 1))
+#' (prop2   <- scale2/(2.5 - 1))
+    psi_hyper    <- function(shape, dat, type=c("unconstrained", "isotropic"), beta0 = 3, ...) {
+      if(!all(is.character(type)))         stop("'type' must be a character vector of length 1",  call.=FALSE)
       if(any(!is.numeric(shape),
-             length(shape) != 1))          stop("'shape' must be a single digit",                call.=FALSE)
-      if(shape   <= 1)                     stop("Rate parameters not defined when 'shape' <= 1", call.=FALSE)
+             length(shape) != 1))          stop("'shape' must be a single digit",                 call.=FALSE)
+      if(shape   <= 1)                     stop("Scale parameters not defined when 'shape' <= 1", call.=FALSE)
       dat        <- as.matrix(dat)
       N          <- nrow(dat)
       P          <- ncol(dat)
-      miss.b0    <- !missing(beta0)
-      miss.S0    <- !missing(S0)
-      if(xor(miss.b0, miss.S0))            stop("If one of 'beta0' and 'S0' are supplied, then both must be supplied", call.=FALSE)
-      do.estim   <- N <= P || all(miss.b0, miss.S0)
-      if(!do.estim)    {
-        covar    <- list(...)[["covar"]]
-        covar    <- if(is.null(covar)) stats::cov(dat) else covar
-        if(!all(is.symmetric(covar), is.double(covar)) ||
-           !is.posi_def(covar, semi=TRUE)) stop("Invalid covariance matrix supplied", call.=FALSE)
+      if(is.null(covar     <- list(...)[["covar"]]))         {
+        covar    <- stats::cov(dat)
+      } else if(!all(is.symmetric(covar), is.double(covar)) ||
+        !is.posi_def(covar, semi=TRUE))    stop("Invalid covariance matrix supplied", call.=FALSE)
+
+      if((noest  <- N  > P && missing(beta0)))               {
         inv.cov  <- try(base::solve(covar), silent=TRUE)
-        if(!(do.estim <- inherits(inv.cov, "try-error"))) {
+        if((noest     <- !inherits(inv.cov, "try-error")))   {
           return(unname((shape - 1)/switch(EXPR=match.arg(type), unconstrained=diag(inv.cov),
-                                                isotropic=rep(.geom_mean(diag(inv.cov)), P))))
+                                                isotropic=rep(max(diag(inv.cov)), P))))
         }
       }
 
-      if(do.estim)     {
+      if(!noest)  {
         if(!is.numeric(beta0)   ||
            length(beta0)   != 1 ||
            beta0 <= 0)                     stop("'beta0' must be a strictly positive numeric scalar", call.=FALSE)
         if(beta0  < P &&
            beta0 != floor(beta0))          message("Suggestion:'beta0' should be an integer when less than P\n")
-        if(!miss.S0)   {
-          S0     <- diag(beta0, P)
-        } else    {
-          if(!is.matrix(S0)     ||
-             !is.double(S0)     ||
-             any(dim(S0)   != P))          stop("'S0' must be a square P * P numeric matrix", call.=FALSE)
-          tryCatch(
-          {if(!is.posi_def(S0))            stop("'S0' must be a positive definite matrix",    call.=FALSE)},
-                   error=function(e)       stop("'S0' must be a positive definite matrix",    call.=FALSE))
-          S0     <- beta0   * S0
-        }
-        inv.cov  <- (beta0  + N/2L) * diag(tryCatch(base::solve(S0 + 0.5 * crossprod(dat)), error=function(e) {
+        if(!all((cvar <- diag(covar)) == 1)) {
+          dat    <- .scale2(dat, TRUE, TRUE)
+        } else cvar   <- 1L
+        inv.cov  <- (beta0  + N/2L) * diag(tryCatch(base::solve(diag(beta0, P) + 0.5 * crossprod(dat)), error=function(e) {
                                            stop("Cannot estimate inverse covariance matrix: try increasing 'beta0'", call.=FALSE) }))
+        inv.cov  <- 1/cvar  * inv.cov
           return(unname((shape - 1)/switch(EXPR=match.arg(type), unconstrained=inv.cov,
-                                                isotropic=rep(.geom_mean(inv.cov), P))))
+                                                isotropic=rep(max(inv.cov), P))))
       }
     }
 
@@ -435,13 +425,13 @@
 #' @usage
 #' shift_GA(shape,
 #'          rate,
-#'          shift = 0L,
+#'          shift = 0,
 #'          param = c("rate", "scale"))
 #' @examples
 #' # Shift a Ga(shape=4, rate=2) distribution to the left by 1;
 #' # achieving the same expected value of 2 and variance of 1.
 #' shift_GA(4, 2, -1)
-    shift_GA     <- function(shape, rate, shift = 0L, param = c("rate", "scale")) {
+    shift_GA     <- function(shape, rate, shift = 0, param = c("rate", "scale")) {
       if(length(shape) > 1 ||
         !is.numeric(shape) || shape <= 0)  stop("Argument 'shape' must be a single strictly positive number", call.=FALSE)
       if(length(rate)  > 1 ||
@@ -985,13 +975,16 @@
       if(anyNA(Xstar)   || anyNA(X))       stop("X and Xstar are not allowed to contain missing values", call.=FALSE)
       J          <- if(translate) diag(N) - 1/N                                           else diag(N)
       C          <- crossprod(Xstar, J) %*% X
-      svdX       <- svd(C)
-      R          <- tcrossprod(svdX$v, svdX$u)
+      if(!all(P  == 1,
+              P2 == 1))  {
+        svdX     <- svd(C)
+        R        <- tcrossprod(svdX$v, svdX$u)
+      } else R   <- 1L
       d          <- if(dilate)    sum(colSums2(C * R))/sum(colSums2(crossprod(J, X) * X)) else 1L
       tt         <- if(translate) crossprod(Xstar - d * X %*% R, matrix(1L, N, 1))/N      else 0L
       X.new      <- d * X %*% R + if(translate) matrix(tt, N, P2, byrow = TRUE)           else tt
         return(c(list(X.new = X.new), list(R = R), if(translate) list(t = tt),
-                 if(dilate) list(d = d), if(sumsq) list(ss = sum((X[,seq_len(P2), drop=FALSE] - X.new)^2))))
+                 if(dilate) list(d = d), if(sumsq) list(ss = sum((X[,seq_len(P2), drop=FALSE] - X.new)^2L))))
     }
 
   # Length Checker
@@ -1304,7 +1297,7 @@
 #' @param verbose Logical indicating whether to print output (e.g. run times) and a progress bar to the screen while the sampler runs. By default is \code{TRUE} if the session is interactive, and \code{FALSE} otherwise. If \code{FALSE}, warnings and error messages will still be printed to the screen, but everything else will be suppressed.
 #' @param ... Also catches unused arguments. A number of optional arguments can be also supplied here:
 #' \itemize{
-#' \item{The additional \code{\link{psi_hyper}} arguments \code{beta0} and \code{S0}, especially when \code{N <= P}.}
+#' \item{The additional \code{\link{psi_hyper}} argument \code{beta0}, especially when \code{N <= P}.}
 #' \item{Additional arguments to be passed to \code{\link[mclust]{hc}} (\code{modelName} & \code{use} only), to \code{\link[mclust]{Mclust}} (\code{modelNames}, and the arguments for \code{\link[mclust]{hc}} with which \code{\link[mclust]{Mclust}} is itself initialised - \code{modelName} & \code{use}), or to \code{\link[stats]{kmeans}} (\code{iter.max} and \code{nstart} only), depending on the value of \code{z.init}.}
 #' \item{Additionally, when \code{z.init="mclust"}, \code{criterion} can be passed here (can be "\code{icl}" or "\code{bic}", the default) to control how the optimum \code{\link[mclust]{Mclust}} model to initialise with is determined.}
 #' }
@@ -1342,14 +1335,14 @@
 #'              ...)
 #' @examples
 #' mfctrl <- mixfaControl(n.iters=200, prec.mu=1E-03, sigma.mu=NULL,
-#'                        beta0=4, S0=diag(8), uni.type="constrained")
+#'                        beta0=1, uni.type="constrained")
 #'
 #' # data(olive)
 #' # sim  <- mcmc_IMIFA(olive, "IMIFA", mixFA=mfctrl)
 #'
 #' # Alternatively specify these arguments directly
-#' # sim  <- mcmc_IMIFA(olive, "IMIFA", n.iters=200, prec.mu=1E-03, sigma.mu=NULL,
-#' #                    beta0=4, S0=diag(8), uni.type="constrained")
+#' # sim  <- mcmc_IMIFA(olive, "IMIFA", n.iters=200, prec.mu=1E-03,
+#' #                    sigma.mu=NULL, beta0=1, uni.type="constrained")
   mixfaControl   <- function(n.iters = 25000L, burnin = n.iters/5L, thinning = 2L, centering = TRUE, scaling = c("unit", "pareto", "none"),
                              uni.type = c("unconstrained", "isotropic", "constrained", "single"), psi.alpha = 2.5, psi.beta = NULL, mu.zero = NULL,
                              sigma.mu = 1L, prec.mu = 0.01, sigma.l = 1L, z.init = c("hc", "kmeans", "list", "mclust", "priors"), z.list = NULL, equal.pro = FALSE,
@@ -1749,6 +1742,7 @@
 #'
 #' For models with only one component, or the "\code{FA}" and "\code{IFA}" methods, scores cannot be decomposed, and posterior summaries of the scores will be returned unchanged.
 #' @keywords utility
+#' @author Keefe Murphy - <\email{keefe.murphy@@ucd.ie}>
 #' @export
 #' @usage
 #' scores_MAP(res,
@@ -1810,6 +1804,31 @@
   IMIFA_news     <- function() {
     news         <- file.path(system.file(package  = "IMIFA"), "NEWS.md")
     if(interactive()) file.show(news) else message("The session is not interactive\n")
+  }
+
+#' Pareto Scaling
+#'
+#' Pareto scaling of a numeric matrix, with or without centering. Obserations are scaled by the square-root of their column-wise standard deviations.
+#' @param x A numeric matrix-like object.
+#' @param centering A logical vector indicating whether centering is to be applied (default=\code{TRUE}).
+#'
+#' @return The Pareto scaled version of the matrix \code{x}.
+#' @importFrom matrixStats "colMeans2"
+#' @export
+#' @author Keefe Murphy - <\email{keefe.murphy@@ucd.ie}>
+#' @references van den Berg, R.A., Hoefsloot, H.C.J, Westerhuis, J.A. and Smilde, A.K. and van der Werf, M.J. (2006) Centering, scaling, and transformations: improving the biological information content of metabolomics data. \emph{BMC Genomics}, 7, 1, 142.
+#' @keywords utility
+#' @usage
+#' pareto_scale(x,
+#'              centering = TRUE)
+#'
+#' @examples
+#' dat  <- pareto_scale(olive[,-c(1,2)])
+  pareto_scale <- function(x, centering=TRUE) {
+    if(length(centering) != 1 ||
+       !is.logical(centering))           stop("'centering' must be a single logical indicator", call.=FALSE)
+    x          <- as.matrix(x)
+      .scale2(x, centering, sqrt(.col_vars(x, std=TRUE)))
   }
 
   # Other Hidden Functions
@@ -1923,7 +1942,7 @@
         if(ent  %in% c("exit", "EXIT"))    stop(call.=FALSE)
     }
 
-    .geom_mean   <- function(x) {
+    .geom_mean   <- function(x) { # unused
         return(if(any(x == 0, na.rm=TRUE)) 0L else exp(mean(log(x), na.rm=TRUE)))
     }
 
@@ -2175,6 +2194,15 @@
       } else if(scaling)    {
           t(t(x)/if(isTRUE(scale)) .col_vars(x, std=TRUE) else scale)
       } else  x
+    }
+
+    .tune_beta0  <- function(beta0, dat, type=c("diag", "mse")) { # unused
+      dat        <- as.matrix(dat)
+      N          <- nrow(dat)
+      P          <- ncol(dat)
+      inv.cov    <- (beta0 + N/2L) * base::solve(diag(beta0, P) + 0.5 * crossprod(.scale2(dat, TRUE, TRUE))) * tcrossprod(1/.col_vars(dat, std=TRUE))
+      error      <- diag(P) - (stats::cov(dat) %*% inv.cov)
+        switch(EXPR=match.arg(type), diag=sum(diag(error)^2)/P, mean(error^2))
     }
 
     #' @importFrom matrixStats "colSums2" "rowSums2"

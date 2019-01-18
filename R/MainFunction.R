@@ -241,9 +241,7 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
   if(z.init == "kmeans"   && is.null(dots$nstart))    {
     dots$nstart           <- 10L
   }
-  pots      <- mixFA$dots[c("beta0", "S0")]
   dots      <- dots[!vapply(dots, is.null, logical(1L))]
-  pots      <- pots[!vapply(pots, is.null, logical(1L))]
 
   G.x       <- missing(range.G)
   bnpmiss   <- attr(BNP, "Missing")
@@ -527,8 +525,8 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
 
   imifa     <- list(list())
   Gi        <- Qi  <- 1L
-  gibbs.arg <- list(P = P, sigma.mu = sigma.mu, psi.alpha = psi.alpha, burnin = burnin, sw = storage, thinning = thinning,
-                    iters = iters, verbose = verbose, uni.type = uni.type, uni.prior = uni.prior, pots = pots)
+  gibbs.arg <- list(P = P, sigma.mu = sigma.mu, psi.alpha = psi.alpha, burnin = burnin, sw = storage,
+                    thinning = thinning, iters = iters, verbose = verbose, uni.type = uni.type, uni.prior = uni.prior)
   if(is.element(method, c("IMIFA", "IMFA", "OMIFA", "OMFA"))) {
     gibbs.arg      <- append(gibbs.arg, BNP)
   }

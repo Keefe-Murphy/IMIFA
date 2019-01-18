@@ -36,6 +36,8 @@ library(IMIFA)
 help(mcmc_IMIFA) # Help on the main modelling function
 ```
 
+Generally, `mcmc_IMIFA()` is used for running the model and creating a raw results object, on which `get_IMIFA_results()` is then called to prepare these results for posterior inference. The output of the second call be visualised in many ways using `plot.Results_IMIFA()`.
+
 For a more thorough intro, the vignette document is available as follows:
 
 ```

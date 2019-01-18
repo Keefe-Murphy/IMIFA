@@ -53,10 +53,8 @@
     tau          <- cumprod(delta)
     lmat         <- matrix(vapply(Pseq, function(j) .sim_load_ps(Q=Q, phi=phi[j,], tau=tau), numeric(Q)), nrow=P, byrow=TRUE)
     psi.inv      <- .sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
-    psi.inv[]    <- 1/switch(EXPR=uni.type, constrained=.col_vars(data, avg=mu), .geom_mean(.col_vars(data, avg=mu)))
-    max.p        <- (psi.alpha - 1)/switch(EXPR=uni.type, unconstrained=, constrained=psi.beta,
-                                           min(tryCatch(suppressMessages(do.call(psi_hyper, c(list(shape=psi.alpha, dat=data, covar=stats::cov(data)), list(...)$pots))),
-                                                        error=function(e) psi_hyper(shape=psi.alpha, dat=data, covar=stats::cov(data)))))
+    psi.inv[]    <- 1/switch(EXPR=uni.type, constrained=.col_vars(data, avg=mu), max(.col_vars(data, avg=mu)))
+    max.p        <- (psi.alpha  - 1)/psi.beta
     inf.ind      <- psi.inv > max(max.p)
     psi.inv[inf.ind]       <- switch(EXPR=uni.type, constrained=max.p, rep(max.p, P))[inf.ind]
     rm(max.p, inf.ind)

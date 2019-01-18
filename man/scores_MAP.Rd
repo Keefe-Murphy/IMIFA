@@ -48,4 +48,7 @@ scores_MAP(res, dropQ=TRUE)$post.eta}
 \seealso{
 \code{\link{get_IMIFA_results}}
 }
+\author{
+Keefe Murphy - <\email{keefe.murphy@ucd.ie}>
+}
 \keyword{utility}

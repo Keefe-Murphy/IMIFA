@@ -197,7 +197,8 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
       graphics::par(cex=0.8, mai=c(0.5, 0.5, 0.5, 0.2), mgp=c(2, 1, 0), oma=c(0, 0.5, 2, 0.5))
     }
   } else {
-    sw.n       <- paste0(toupper(substring(plot.meth, 1, 1)), ".sw")
+    graphics::layout(1)
+    sw.n       <- paste0(toupper(substring(plot.meth, 1L, 1L)), ".sw")
     m.sw[sw.n] <- TRUE
   }
   if(param == "uniquenesses") {
@@ -243,7 +244,6 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
                                            attr(x, "Alpha"), attr(x, "Discount")))), " weren't stored"), ifelse(param == "pis" && attr(x, "Equal.Pi"), " as mixing proportions were constrained to be equal across clusters", "")), call.=FALSE)
   heat.map     <- ifelse(missing(heat.map), param == "loadings", heat.map)
   int.miss     <- !missing(intervals)
-  common       <- ifelse(missing(common) && all(grp.ind, !all.ind, m.sw["M.sw"], param == "scores", !heat.map), FALSE, ifelse(grp.ind, common, TRUE))
   if(any(!is.logical(heat.map),
          length(heat.map)  != 1))     stop("'heat.map' must be a single logical indicator",  call.=FALSE)
   if(any(!is.logical(show.last),
@@ -252,6 +252,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
          length(intervals) != 1))     stop("'intervals' must be a single logical indicator", call.=FALSE)
   if(any(!is.logical(mat),
          length(mat)       != 1))     stop("'mat' must be a single logical indicator",       call.=FALSE)
+  common       <- ifelse(missing(common) && all(grp.ind, !all.ind, m.sw["M.sw"], param == "scores", heat.map), FALSE, ifelse(grp.ind, common, TRUE))
   if(any(!is.logical(common),
          length(common)    != 1))     stop("'common' must be a single logical indicator",    call.=FALSE)
   if(any(!is.logical(partial),
@@ -667,7 +668,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
           usr  <- graphics::par("usr")
           if(plot.x$post.kappa > 0)     {
             graphics::clip(usr[1L], usr[2L], 0,       usr[4L])
-            graphics::abline(v=0,  col=3,  lwd=2)
+            graphics::abline(v=0,   col=3,   lwd=2)
             graphics::clip(usr[1L], usr[2L], usr[3L], usr[4L])
           }
           if(titles) graphics::title(main=list(paste0("Density", ifelse(all.ind, "", paste0(":\nDiscount")))))
@@ -1120,6 +1121,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
       if(type == "l")                 stop("'type' cannot be 'l' for clustering uncertainty plots", call.=FALSE)
       plot.x <- as.vector(clust$uncertainty)
       if(g == 1 || g == 2) {
+        graphics::layout(1)
         oneG <- 1/G
         minG <- 1   - oneG
         yax  <- unique(c(0, pretty(c(0, minG))))
@@ -1133,8 +1135,8 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
         graphics::par(mar=c(5.1, 4.1, 4.1, 3.1))
         graphics::plot(plot.x, type=type, ylim=range(yax), col=col.x, yaxt="n", main="Clustering Uncertainty", ylab="Uncertainty", xlab="Observation", pch=ifelse(type == "n", NA, 16), lend=1)
         graphics::lines(x=c(0, n.obs), y=c(oneG, oneG), lty=2, col=1)
-        graphics::axis(2, at=yax, labels=replace(yax, length(yax), "1 - 1/G"), las=2, cex.axis=0.9, xpd=TRUE)
-        graphics::axis(2, at=oneG, labels="1/G", las=2, xpd=TRUE, side=4, xpd=TRUE)
+        graphics::axis(2, at=yax, labels=replace(yax, length(yax), expression(1 - frac(1, hat(G)))), las=2, cex.axis=0.9, xpd=TRUE)
+        graphics::axis(2, at=oneG, labels=expression(frac(1, hat(G))), las=2, xpd=TRUE, side=4, xpd=TRUE)
         if(type == "n")  {
           znam  <- obs.names
           znam[plot.x == 0] <- ""
@@ -1150,8 +1152,8 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
         graphics::lines(x.plot)
         graphics::points(x.plot, pch=15, cex=if(mind) replace(rep(0.5, n.obs), mcO, 0.75) else 0.5, col=if(mind) replace(rep(1, n.obs), mcO, 3) else 1)
         graphics::lines(x=c(0, n.obs), y=c(oneG, oneG), lty=2, col=3)
-        graphics::axis(2, at=yax, labels=replace(yax, length(yax), "1 - 1/G"), las=2, cex.axis=0.9, xpd=TRUE)
-        graphics::axis(2, at=oneG, labels="1/G", las=2, xpd=TRUE, side=4, xpd=TRUE)
+        graphics::axis(2, at=yax, labels=replace(yax, length(yax), expression(1 - frac(1, hat(G)))), las=2, cex.axis=0.9, xpd=TRUE)
+        graphics::axis(2, at=oneG, labels=expression(frac(1, hat(G))), las=2, xpd=TRUE, side=4, xpd=TRUE)
         if(mind) {
           Nseq   <- seq_len(n.obs)
           for(i in prf$misclassified)  {
@@ -1164,7 +1166,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
           graphics::layout(rbind(1, 2), heights=c(1, 6))
           graphics::par(mar=c(0, 4.1, 0.5, 2.1))
           graphics::plot.new()
-          graphics::legend("center", legend=bquote({NA >= 1/G} == 1/.(G)), title="", pch=15, col=3, bty="n", y.intersp=graphics::par()$fin[2L] * 7/5)
+          graphics::legend("center", legend=bquote({NA >= 1/hat(G)} == 1/.(G)), title="", pch=15, col=3, bty="n", y.intersp=graphics::par()$fin[2L] * 7/5)
           graphics::legend("center", legend=c(" "," "), title=expression(bold("Clustering Uncertainty")), bty='n', y.intersp=graphics::par()$fin[2L] * 2/5, cex=graphics::par()$cex.main)
           graphics::par(mar=c(5.1, 4.1, 0.5, 2.1))
         }
@@ -1173,7 +1175,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
         cols    <- 2L    + (breaks >= 1/G)
         cols[cols == 2] <- grey
         graphics::plot(x.plot, main="", xlab="Uncertainties", xlim=c(0, 1 - 1/G), col=cols, xaxt="n", ylim=c(0, max(x.plot$counts)), yaxt="n")
-        graphics::axis(1, at=c(breaks[round(breaks, 1) < min(0.8, 1 - 1/G)], 1 - 1/G), labels=(c(round(breaks[round(breaks, 1) < min(0.8, 1 - 1/G)], 3), "1 - 1/G")), las=2, pos=0, cex.axis=0.8)
+        graphics::axis(1, at=c(breaks[round(breaks, 1) < min(0.8, 1 - 1/G)], 1 - 1/G), labels=(c(round(breaks[round(breaks, 1) < min(0.8, 1 - 1/G)], 3), expression(1 - frac(1, hat(G))))), las=2, pos=0, cex.axis=0.8)
         graphics::axis(2, at=if(sum(plot.x)  == 0) c(graphics::axTicks(2), max(x.plot$counts)) else graphics::axTicks(2), las=1, cex.axis=0.8)
       } else if(g == 4)  {
         graphics::par(defpar)
@@ -1549,7 +1551,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
       }
       cols     <- viridis(30L, option="B", alpha=transparency)
     }
-    if(!all(is.cols(cols)))           stop("Invalid colours supplied", call.=FALSE)
+    if(!all(is.cols(cols)))           stop("Invalid 'cols' colour palette  supplied",     call.=FALSE)
     if(any(!is.logical(byrank),
            length(byrank)   != 1))    stop("'byrank' must be a single logical indicator", call.=FALSE)
     breaks     <- if(missing(breaks)) length(cols) else breaks
@@ -1595,7 +1597,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
 #'
 #' Using only base graphics, this function appends a colour key legend for heatmaps produced by, for instance, \code{\link{plot_cols}} or \code{\link[graphics]{image}}.
 #' @param data Either the data with which the heatmap was created or a vector containing its minimum and maximum values. Missing values are ignored.
-#' @param cols The palette used when the heatmap was created.
+#' @param cols The colour palette used when the heatmap was created. By default, the same \code{\link[viridisLite]{viridis}} default as in \code{\link{mat2cols}} is used. Will be checked for validity by \code{\link{is.cols}}.
 #' @param breaks Optional argument giving the break-points for the axis labels
 #' @param cex.lab Magnification of axis annotation, indicating the amount by which plotting text and symbols should be scaled relative to the default of 1.
 #' @param ... Catches unused arguments.
@@ -1607,7 +1609,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
 #' @seealso \code{\link[graphics]{image}}, \code{\link{plot_cols}}, \code{\link{mat2cols}}, \code{\link{is.cols}}
 #' @usage
 #' heat_legend(data,
-#'             cols,
+#'             cols = NULL,
 #'             breaks = NULL,
 #'             cex.lab = 1,
 #'             ...)
@@ -1619,10 +1621,13 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
 #'
 #' image(t(data)[,nrow(data):1], col=cols)
 #' heat_legend(data, cols); box(lwd=2)
-  heat_legend  <- function(data, cols, breaks = NULL, cex.lab = 1, ...) {
+  heat_legend  <- function(data, cols = NULL, breaks = NULL, cex.lab = 1, ...) {
     if(length(cex.lab) > 1 || (!is.numeric(cex.lab) ||
        cex.lab <= 0))                 stop("Invalid 'cex.lab' supplied", call.=FALSE)
     if(!is.numeric(data))             stop("'data' must be numeric",     call.=FALSE)
+    if(missing(cols))   {
+      cols     <- viridis(30L, option="B", alpha=1L)
+    } else if(!all(is.cols(cols)))    stop("Invalid 'cols' colour palette supplied", call.=FALSE)
     bx         <- graphics::par("usr")
     xpd        <- graphics::par()$xpd
     box.cx     <- c(bx[2L] + (bx[2L]  - bx[1L])/1000, bx[2L] + (bx[2L] - bx[1L])/1000 + (bx[2L] - bx[1L])/50)
@@ -1744,10 +1749,10 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
     }
 
     if(isTRUE(show.plot))   {
-      cols     <- seq(from=2, to=max.len + 1L)
-      grDevices::palette(grDevices::adjustcolor(rep(cols, 2L), alpha.f=ifelse(grDevices::dev.capabilities()$semiTransparency, 0.5, 1)))
+      cols     <- seq(from=2L, to=max.len   + 1L)
+      grDevices::palette(grDevices::adjustcolor(rep(cols, 2L), alpha.f=ifelse(grDevices::dev.capabilities()$semiTransparency && max.len > 1, 0.5, 1)))
       graphics::matplot(x=seq_len(N), y=rx, type="h", col=cols, xlab="Clusters", ylim=c(0, max(rx)), ylab="Density", lend=1,
-                        main=paste0("Prior Distribution of G\nN=", N), lwd=seq(3, 1, length.out=max.len), lty=seq_len(2))
+                        main=paste0("Prior Distribution of G\nN=", N), lwd=seq(3L, 1L, length.out=max.len), lty=seq_len(2L))
     }
       invisible(if(max.len == 1) as.vector(rx) else rx)
   }
@@ -1917,7 +1922,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
 #' # Fit an IMIFA model (warning: quite slow!)
 #' # sim <- mcmc_IMIFA(dat, n.iters=100, prec.mu=1e-03, z.init="kmeans",
 #'                     centering=FALSE, scaling="none")
-#' # res <- get_IMIFA_results(sim, zlabels=ylab, z.avgsim=FALSE)
+#' # res <- get_IMIFA_results(sim, zlabels=ylab)
 #'
 #' # Examine the posterior mean image of the first two clusters
 #' show_IMIFA_digit(res, dat=train, ind=ind)

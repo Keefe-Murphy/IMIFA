@@ -2,8 +2,8 @@ citHeader("To cite the 'IMIFA' package in publications, please use:")
 
 citEntry(entry  = "Article",
   author  = personList(person(given="Keefe", family="Murphy"),
-                       person(given=c("Isobel", "Claire"), family="Gormley"),
                        person(given="Cinzia", family="Viroli")),
+                       person(given=c("Isobel", "Claire"), family="Gormley"),
   title   = "Infinite Mixtures of Infinite Factor Analysers",
   year    = "2018",
   journal = "To appear",
@@ -16,7 +16,7 @@ citEntry(entry  = "Article",
   primaryClass  = "stat.ME",
 
   textVersion   =
-    paste0("Keefe Murphy, I. Claire Gormley, and Cinzia Viroli (2018). ",
+    paste0("Keefe Murphy, Cinzia Viroli, and I. Claire Gormley (2018). ",
            "Infinite Mixtures of Infinite Factor Analysers. ",
            "To appear. ",
            "Pre-print available at arXiv. ",

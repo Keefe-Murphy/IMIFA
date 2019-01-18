@@ -18,11 +18,11 @@
 #' @param conf.level The confidence level to be used throughout for credible intervals for all parameters of inferential interest, and error metrics if \code{error.metrics=TRUE}. Defaults to \code{0.95}.
 #' @param error.metrics A logical activating or deactivating posterior predictive checking: i.e. controlling whether metrics quantifying a) the posterior predictive reconstruction error (PPRE) between bin counts of the data and bin counts of replicate draws from the posterior distribution & and b) the error between the empirical and estimated covariance matrices should be computed. These are computed for every \emph{valid} retained iteration (see \code{Details}). Defaults to \code{TRUE}, but can be time-consuming for models which achieve clustering. These error metrics, and the uncertainty associated with them can be visualised via \code{\link{plot.Results_IMIFA}}.
 #' @param vari.rot Logical indicating whether the loadings matrix/matrices template(s) should be \code{\link[stats]{varimax}} rotated first, prior to the Procrustes rotation steps. Defaults to \code{FALSE}. Not necessary at all for clustering purposes, or inference on the covariance matrix, but useful if interpretable inferences on the loadings matrix/matrices are desired. Arguments to \code{\link[stats]{varimax}} can be passed via the \code{...} construct, but note that the argument \code{normalize} here defaults to \code{FALSE}.
-#' @param z.avgsim Logical indicating whether the clustering should also be summarised with a call to \code{\link{Zsimilarity}} by the clustering with minimum mean squared error to the similarity matrix obtained by averaging the stored adjacency matrices, in addition to the MAP estimate.
+#' @param z.avgsim Logical (defaults to \code{FALSE}) indicating whether the clustering should also be summarised with a call to \code{\link{Zsimilarity}} by the clustering with minimum mean squared error to the similarity matrix obtained by averaging the stored adjacency matrices, in addition to the MAP estimate.
 #'
 #' Note that the MAP clustering is computed \emph{conditional} on the estimate of the number of clusters (whether that be the modal estimate or the estimate according to \code{criterion}) and other parameters are extracted conditional on this estimate of \code{G}: however, in constrast, the number of distinct clusters in the summarised labels obtained by specifying \code{z.avgsim=TRUE} may not necessarily coincide with the MAP estimate of \code{G}, but it may provide a useful alternative summary of the partitions explored during the chain, and the user is free to call \code{\link{get_IMIFA_results}} again with the new suggested \code{G} value.
 #'
-#' Please be warned that this only defaults to \code{TRUE} when the \code{\link[mcclust]{mcclust}} package - which \strong{must} be loaded for this feature - is loaded and the number of observations is less than 1000. However, it can still be manually set to \code{TRUE} for larger data sets. This is liable to take considerable time to compute, and may not even be possible if the number of observations &/or number of stored iterations is large and the resulting matrix isn't sufficiently sparse. When \code{TRUE}, both the summarised clustering and the similarity matrix are stored: the latter can be visualised as part of a call to \code{\link{plot.Results_IMIFA}}.
+#' Please be warned that this feature requires loading the \code{\link[mcclust]{mcclust}} package. This is liable to take considerable time to compute, and may not even be possible if the number of observations &/or number of stored iterations is large and the resulting matrix isn't sufficiently sparse. When \code{z.avgsim=TRUE}, both the summarised clustering and the similarity matrix are stored: the latter can be visualised as part of a call to \code{\link{plot.Results_IMIFA}}.
 #' @param zlabels For any method that performs clustering, the true labels can be supplied if they are known in order to compute clustering performance metrics. This also has the effect of ordering the MAP labels (and thus the ordering of cluster-specific parameters) to most closely correspond to the true labels if supplied.
 #' @param nonempty For "\code{MFA}" and "\code{MIFA}" models ONLY: a logical indicating whether only iterations with non-empty components should be retained. Defaults to \code{TRUE}, but may lead to empty chains - conversely, \code{FALSE} may lead to empty components.
 #' @param x,object,... Arguments required for the \code{print.Results_IMIFA} and \code{summary.Results_IMIFA} functions: \code{x} and \code{object} are objects of class \code{"Results_IMIFA"} resulting from a call to \code{\link{get_IMIFA_results}}, while \code{...} gathers additional arguments to those functions. The \code{...} construct also allows arguments to \code{\link[stats]{varimax}} to be passed to \code{\link{get_IMIFA_results}} itself, when \code{isTRUE(vari.rot)}, or arguments to \code{\link[graphics]{hist}} when \code{isTRUE(error.metrics)}, in order to guide construction of the bins.
@@ -75,7 +75,7 @@
 #'                   conf.level = 0.95,
 #'                   error.metrics = TRUE,
 #'                   vari.rot = FALSE,
-#'                   z.avgsim = TRUE,
+#'                   z.avgsim = FALSE,
 #'                   zlabels = NULL,
 #'                   nonempty = TRUE,
 #'                   ...)
@@ -105,13 +105,13 @@
 #' # Simulate new data from the above model
 #' # newdata       <- sim_IMIFA_model(resIMIFAolive)
 get_IMIFA_results              <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, Q = NULL, criterion = c("bicm", "aicm", "dic", "bic.mcmc", "aic.mcmc"), G.meth = c("mode", "median"),
-                                           Q.meth = c("mode", "median"), conf.level = 0.95, error.metrics = TRUE, vari.rot = FALSE, z.avgsim = TRUE, zlabels = NULL, nonempty = TRUE, ...) {
+                                           Q.meth = c("mode", "median"), conf.level = 0.95, error.metrics = TRUE, vari.rot = FALSE, z.avgsim = FALSE, zlabels = NULL, nonempty = TRUE, ...) {
   UseMethod("get_IMIFA_results")
 }
 
 #' @export
 get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, Q = NULL, criterion = c("bicm", "aicm", "dic", "bic.mcmc", "aic.mcmc"), G.meth = c("mode", "median"),
-                                           Q.meth = c("mode", "median"), conf.level = 0.95, error.metrics = TRUE, vari.rot = FALSE, z.avgsim = TRUE, zlabels = NULL, nonempty = TRUE, ...) {
+                                           Q.meth = c("mode", "median"), conf.level = 0.95, error.metrics = TRUE, vari.rot = FALSE, z.avgsim = FALSE, zlabels = NULL, nonempty = TRUE, ...) {
 
   call           <- match.call()
   defopt         <- options()
@@ -173,18 +173,13 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
      anyNA(cov.emp))        {     warning("Certain error metrics cannot be computed as there are missing values in the empirical covariance matrix\n", call.=FALSE)
    cov.met       <- FALSE
   } else cov.met <- error.metrics
-  miss.zavg      <- missing(z.avgsim)
   if(length(z.avgsim)      != 1  ||
      !is.logical(z.avgsim))       stop("'z.avgsim' must be a single logical indicator", call.=FALSE)
-  if(isTRUE(z.avgsim)       &&
-     !is.element(method, c("FA", "IFA"))) {
+  if((z.avgsim   <- (isTRUE(z.avgsim)      &&
+     !is.element(method, c("FA", "IFA"))))) {
     if(!(has.pkg <- suppressMessages(requireNamespace("mcclust", quietly=TRUE)))) {
-      z.avgwarn  <- "Forcing 'z.avgsim' to FALSE: 'mcclust' package not installed\n"
-      z.avgsim   <- FALSE
-      if(miss.zavg)     {         message(z.avgwarn)
-      } else                      warning(z.avgwarn, call.=FALSE, immediate.=TRUE)
-    } else if(miss.zavg     &&
-           n.obs >= 10000)        message("Consider setting 'z.avgsim' to FALSE as the number of observations is quite large\n")
+      z.avgsim   <- FALSE;        warning("Forcing 'z.avgsim' to FALSE: 'mcclust' package not installed\n", call.=FALSE, immediate.=TRUE)
+    } else if(n.obs >= 10000)     message("Consider setting 'z.avgsim' to FALSE as the number of observations is quite large\n")
   }
 
   G.T            <- !missing(G)
@@ -508,7 +503,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       post.pi    <- stats::setNames(rowmeans(pi.prop),      gnames)
     } else if(equal.pro)  {
       post.pi    <- stats::setNames(rep(1/G, G),            gnames)
-    } else          {
+    } else          {             message("Mixing proportions not stored: estimating posterior mean by the proportions of the MAP clustering\n")
       post.pi    <- stats::setNames(sizes/n.obs,            gnames)
     }
     if(inf.Q)       {
@@ -697,19 +692,24 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       lmat       <- if(clust.ind) .a_drop(lmats[,,g,storeG, drop=FALSE], drop=3) else lmats[,,storeG, drop=FALSE]
       l.temp     <- .a_drop(lmat[,,tmpind, drop=FALSE], drop=3)
       l.temp     <- if(isTRUE(vari.rot)) .vari_max(l.temp, ...)$loadings         else l.temp
-      for(p      in
-         (if(inf.Q) Lstore[[g]] else Lstore)) {
+      if(inf.Q)   {
+        rotind   <- Lstore[[g]][-1L]
+        rotind   <- rotind[Q.store[g,rotind] > 1]
+      } else      {
+        rotind   <- if(Qg   > 1) Lstore[-1L]
+      }
+      for(p      in rotind) {
         proc     <- suppressWarnings(Procrustes(X=if(uni) t(lmat[,,p]) else as.matrix(lmat[,,p]), Xstar=l.temp))
         lmat[,,p]          <- proc$X.new
         if(sw["s.sw"]      &&
            (p  %in%
             eta.store))     {
-          p2     <- if(inf.Q) eta.store      == p     else p
+          p2     <- if(inf.Q) eta.store == p else p
           if(clust.ind)     {
             zp   <- z2[p,] == g
-            eta[zp,,p2]    <- eta[zp,,p2]   %*% proc$R
+            eta[zp,,p2]    <- .a_drop(eta[zp,,p2, drop=FALSE], 3) %*% proc$R
           } else  {
-            eta[,,p2]      <- eta[,,p2]     %*% proc$R
+            eta[,,p2]      <- eta[,,p2,           drop=FALSE]     %*% proc$R
           }
         }
       }

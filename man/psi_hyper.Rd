@@ -8,7 +8,6 @@ psi_hyper(shape,
           dat,
           type = c("unconstrained", "isotropic"),
           beta0 = 3,
-          S0 = NULL,
           ...)
 }
 \arguments{
@@ -16,52 +15,52 @@ psi_hyper(shape,
 
 \item{dat}{The data matrix from which the inverse covariance matrix is estimated. If data are to be centered &/or scaled within \code{\link{mcmc_IMIFA}}, then \code{dat} must also be standardised in the same way.}
 
-\item{type}{A switch indicating whether a single rate (\code{isotropic}) or variable-specific rates (\code{unconstrained}) are to be derived. Both options are allowed under models in \code{\link{mcmc_IMIFA}} with "constrained" or "unconstrained" uniquenesses, but only a single rate can be specified for models with "isotropic" or "single" uniquenesses.}
+\item{type}{A switch indicating whether a single scale (\code{isotropic}) or variable-specific scales (\code{unconstrained}) are to be derived. Both options are allowed under models in \code{\link{mcmc_IMIFA}} with "constrained" or "unconstrained" uniquenesses, but only a single scale can be specified for models with "isotropic" or "single" uniquenesses.}
 
-\item{beta0}{See Note below. Must be a strictly positive numeric scalar. Defaults to \code{3}, but is only invoked when both \code{beta0} and \code{S0} are explicitly supplied or when the number of observations is not greater than the number of variables (or when inverting the sample covariance matrix somehow otherwise fails). In some cases, \code{beta0} should not be so small as to render the estimate of the inverse unstable.}
+\item{beta0}{See Note below. Must be a strictly positive numeric scalar. Defaults to \code{3}, but is only invoked when explicitly supplied or when the number of observations \code{N} is not greater than the number of variables \code{P} (or when inverting the sample covariance matrix somehow otherwise fails). In some cases, \code{beta0} should not be so small as to render the estimate of the inverse unstable.}
 
-\item{S0}{See Note below. Must be a square positive definite \code{P * P} numeric matrix. Defaults to the \code{P}-dimensional identity matrix, but is only invoked when both \code{beta0} and \code{S0} are explicitly supplied or when the number of observations is not greater than the number of variables (or when inverting the sample covariance matrix somehow otherwise fails).}
-
-\item{...}{Catches unused arguments. For advanced users who are sure the sample covariance matrix is invertible, the argument \code{covar} can be supplied through \code{...}.}
+\item{...}{Catches unused arguments. Advanced users can also supply the sample covariance matrix of \code{dat}, if available, through \code{...} via the argument \code{covar}.}
 }
 \value{
-Either a single rate hyperparameter or \code{ncol(dat)} variable-specific rate hyperparameters.
+Either a single scale hyperparameter or \code{ncol(dat)} variable-specific scale hyperparameters.
 }
 \description{
-Takes an inverse-Gamma shape hyperparameter, and an inverse covariance matrix (or estimate thereof), and finds data-driven rate hyperparameters in such a way that Heywood problems are avoided for factor analysis or probabilistic principal components analysis (and mixtures thereof).
+Takes an inverse-Gamma shape hyperparameter, and an inverse covariance matrix (or estimate thereof), and finds data-driven scale hyperparameters in such a way that Heywood problems are avoided for factor analysis or probabilistic principal components analysis (and mixtures thereof).
 }
 \details{
-Constraining uniquenesses to be isotropic provides the link between factor analysis and the probabilistic PCA model. When used in conjunction with \code{\link{mcmc_IMIFA}} with "isotropic" or "single" uniquenesses, \code{type} must be \code{isotropic}, but for "unconstrained" or "constrained" uniquenesses, it's possible to specify either a single rate (\code{type="isotropic"}) or variable-specific rates (\code{type="unconstrained"}).
+Constraining uniquenesses to be isotropic provides the link between factor analysis and the probabilistic PCA model. When used in conjunction with \code{\link{mcmc_IMIFA}} with "isotropic" or "single" uniquenesses, \code{type} must be \code{isotropic}, but for "unconstrained" or "constrained" uniquenesses, it's possible to specify either a single scale (\code{type="isotropic"}) or variable-specific scales (\code{type="unconstrained"}).
 
 Used internally by \code{\link{mcmc_IMIFA}} when its argument \code{psi_beta} is not supplied.
 }
 \note{
-When \code{N > P}, where \code{N} is the number of observations and \code{P} is the number of variables, the inverse of the sample covariance matrix is used.
+When \code{N > P}, where \code{N} is the number of observations and \code{P} is the number of variables, the inverse of the sample covariance matrix is used by default.
 
-When \code{N <= P}, the inverse either does not exist or the estimate thereof is highly unstable. Thus, an estimate of the form \eqn{\left(\beta_0 + \frac{N}{2}\right)\left(\beta_0 S_0 + 0.5\sum_{i=1}^N x_i x_i^\top\right)^{-1}}{(beta0 + N/2) * solve(beta0 * S0 + 0.5 * crossprod(dat))} is used instead.
+When \code{N <= P}, the inverse either does not exist or the estimate thereof is highly unstable. Thus, an estimate of the form \eqn{\left(\beta_0 + \frac{N}{2}\right)\left(\beta_0\mathcal{I}_p + 0.5\sum_{i=1}^N x_i x_i^\top\right)^{-1}}{(beta0 + N/2) * solve(diag(beta0, P) + 0.5 * crossprod(dat))} is used instead.
 
-This estimate can also be used in \code{N > P} cases by explicitly supplying \code{beta0} and \code{S0}. It will also be used if inverting the covariance matrix fails in \code{N > P} cases.
+For unstandardised data, the estimate is instead constructed using a standardised version of the data, and the resulting inverse \emph{correlation} matrix estimate is scaled appropriately by the diagonal entries of the sample covariance matrix of the original data.
 
-The optional arguments \code{beta0} and \code{S0} can be supplied to \code{\link{mcmc_IMIFA}} via the control function \code{\link{mixfaControl}}.
+This estimate can also be used in \code{N > P} cases by explicitly supplying \code{beta0}. It will also be used if inverting the sample covariance matrix fails in \code{N > P} cases.
+
+The optional argument \code{beta0} can be supplied to \code{\link{mcmc_IMIFA}} via the control function \code{\link{mixfaControl}}.
 }
 \examples{
 data(olive)
 olive2  <- olive[,-(1:2)]
-(rate   <- psi_hyper(shape=2.5, dat=olive2, type="isotropic"))
+(scale1 <- psi_hyper(shape=2.5, dat=olive2))
 
 # Try again with scaled data
 olive_S <- scale(olive2, center=TRUE, scale=TRUE)
 
 # Use the inverse of the sample covariance matrix
-(rates1 <- psi_hyper(shape=2.5, dat=olive_S, type="unconstrained"))
+(scale2 <- psi_hyper(shape=2.5, dat=olive_S))
 
 # Use the estimated inverse covariance matrix
-(rates2 <- psi_hyper(shape=2.5, dat=olive_S, type="unconstrained", beta0=3, S0=diag(ncol(olive_S))))
+(scale3 <- psi_hyper(shape=2.5, dat=olive_S, beta0=3))
 
-# In the scaled example, the mean uniquenesses (given by rates/(shape - 1)),
+# In the normalised example, the mean uniquenesses (given by scale/(shape - 1)),
 # can be interpreted as the prior proportion of the variance that is idiosyncratic
-(prop1   <- rates1/(2.5 - 1))
-(prop2   <- rates2/(2.5 - 1))
+(prop1   <- scale1/(2.5 - 1))
+(prop2   <- scale2/(2.5 - 1))
 }
 \references{
 Murphy, K., Gormley, I. C. and Viroli, C. (2018) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.

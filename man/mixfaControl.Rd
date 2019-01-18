@@ -82,7 +82,7 @@ In any case, unless \code{z.list} is explicitly supplied, or \code{verbose} is \
 
 \item{...}{Also catches unused arguments. A number of optional arguments can be also supplied here:
 \itemize{
-\item{The additional \code{\link{psi_hyper}} arguments \code{beta0} and \code{S0}, especially when \code{N <= P}.}
+\item{The additional \code{\link{psi_hyper}} argument \code{beta0}, especially when \code{N <= P}.}
 \item{Additional arguments to be passed to \code{\link[mclust]{hc}} (\code{modelName} & \code{use} only), to \code{\link[mclust]{Mclust}} (\code{modelNames}, and the arguments for \code{\link[mclust]{hc}} with which \code{\link[mclust]{Mclust}} is itself initialised - \code{modelName} & \code{use}), or to \code{\link[stats]{kmeans}} (\code{iter.max} and \code{nstart} only), depending on the value of \code{z.init}.}
 \item{Additionally, when \code{z.init="mclust"}, \code{criterion} can be passed here (can be "\code{icl}" or "\code{bic}", the default) to control how the optimum \code{\link[mclust]{Mclust}} model to initialise with is determined.}
 }}
@@ -98,14 +98,14 @@ Users should be careful to note that data are mean-centered (\code{centering=TRU
 }
 \examples{
 mfctrl <- mixfaControl(n.iters=200, prec.mu=1E-03, sigma.mu=NULL,
-                       beta0=4, S0=diag(8), uni.type="constrained")
+                       beta0=1, uni.type="constrained")
 
 # data(olive)
 # sim  <- mcmc_IMIFA(olive, "IMIFA", mixFA=mfctrl)
 
 # Alternatively specify these arguments directly
-# sim  <- mcmc_IMIFA(olive, "IMIFA", n.iters=200, prec.mu=1E-03, sigma.mu=NULL,
-#                    beta0=4, S0=diag(8), uni.type="constrained")
+# sim  <- mcmc_IMIFA(olive, "IMIFA", n.iters=200, prec.mu=1E-03,
+#                    sigma.mu=NULL, beta0=1, uni.type="constrained")
 }
 \references{
 Murphy, K., Gormley, I. C. and Viroli, C. (2018) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.

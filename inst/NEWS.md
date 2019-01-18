@@ -1,7 +1,7 @@
 __Infinite Mixtures of Infinite Factor Analysers__
 ==================================================  
 
-## IMIFA v2.1.0 - (_7<sup>th</sup> release [minor update]: 2018-11-14_)
+## IMIFA v2.1.0 - (_7<sup>th</sup> release [minor update]: 2019-02-04_)
 ### New Features
 * `mgpControl` gains the arguments `cluster.shrink` and `sigma.hyper`:
     * `cluster.shrink` governs invocation of cluster shrinkage MGP hyperparameter for MIFA/OMIFA/IMIFA methods.
@@ -10,7 +10,6 @@ __Infinite Mixtures of Infinite Factor Analysers__
 * Allowed the Dirichlet concentration parameter `alpha` to be learned via MH steps for the OM(I)FA models.  
     * Also allowed diminishing adaptation to tune the log-normal proposal to achieve a target acceptance rate.
     * Thus `bnpControl` args. `learn.alpha`, `alpha.hyper`, `zeta`, & `tune.zeta` become relevant for OM(I)FA models.
-* Overhauled `psi_hyper` for `N <= P` data where the sample covariance matrix is not invertible (details in documentation).
 * New posterior predictive model checking approach added to `get_IMIFA_results` (with associated plots):  
   Posterior Predictive Reconstruction Error (PPRE) compares bin counts of the original data with corresponding  
   counts for replicate draws from the posterior predictive distribution using a standardised Frobenius norm.
@@ -31,6 +30,9 @@ __Infinite Mixtures of Infinite Factor Analysers__
     * `alpha.hyper` now has a larger hyper-rate by default, to better encourage clustering.
     * `alpha.d1` & `alpha.d2` now set to `2.1`/`3.1` rather than `2`/`6` to discourage exponentially fast shrinkage.
     * `z.init` now defaults to `"hc"`: model-based agglomerative hierarchical clustering.
+* Overhauled `psi_hyper` (details in documentation) for:  
+    * `N <= P` data where the sample covariance matrix is not invertible.
+    * `type="isotropic"` uniquenesses.
 * Args. `scores` & `loadings` can now be supplied to `sim_IMIFA_data` directly;  
   new arg. `non.zero` controls the # effective factors (per column & cluster) when `loadings` are instead simulated.
 * Sped-up 2<sup>nd</sup> label-switching move for IM(I)FA models (accounting for empty clusters).
@@ -43,6 +45,7 @@ __Infinite Mixtures of Infinite Factor Analysers__
 * Added `start.zeta` & `stop.zeta` options to `tune.zeta` argument in `bnpControl`.
 * Allowed user-supplied `breaks` in the plotting functions `mat2cols` & `heat_legend`.
 * Initial cluster sizes are now shown in order to alert users to potentially bad starting values.
+* Added utility function `pareto_scale()`.
 
 ### Bug Fixes
 * Fixed factor _scores_ & error metrics issues in `get_IMIFA_results` for clustering methods:  
@@ -55,6 +58,7 @@ __Infinite Mixtures of Infinite Factor Analysers__
 * `range.G` and `trunc.G` defaults fixed, especially for small sample size settings. 
 * Slight label-switching fixes when `zlabels` are supplied to `get_IMIFA_results`;  
   posterior confusion matrix, cluster sizes vector, and the sampled labels themselves effected.
+* Prevented unnecessary Procrustes rotation for single-factor components, thus fixing some bugs.
 * Fixed initialisation of uniquenesses to account for all four settings of `uni.type`.
 * Allowed conditioning on iterations with all components populated for M(I)FA models in `get_IMIFA_results`.
 * Accounted for 1-component IM(I)FA/OM(I)FA models in `get_IMIFA_results`.
@@ -116,8 +120,7 @@ __Infinite Mixtures of Infinite Factor Analysers__
 ### Improvements
 * Retired args. `nu` & `nuplus1` to `mgpControl`, replaced by ability to specify more general gamma prior,  
   via new `phi.hyper` arg. specifying shape _and_ rate - `mgp_check` has also been modified accordingly.
-* `Zsimilarity` sped-up via the `comp.psm` & `cltoSim` functions s.t. when # observations < 1000,  
-  `z.avgsim=TRUE` now by default in `get_IMIFA_results` (when suggested `mcclust` package is loaded).
+* `Zsimilarity` sped-up via the `comp.psm` & `cltoSim` functions s.t. when # observations < 1000.
 * Matrix of posterior cluster membership probabilities now returned by `get_IMIFA_results`.
 * Modified AGS to better account for when the number of group-specific latent factors shrinks to zero.
 * `psi.alpha` no longer needs to be strictly greater than 1, unless the default `psi.beta` is invoked;  

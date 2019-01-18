@@ -48,7 +48,7 @@ dat   <- train[,ind]
 # Fit an IMIFA model (warning: quite slow!)
 # sim <- mcmc_IMIFA(dat, n.iters=100, prec.mu=1e-03, z.init="kmeans",
                     centering=FALSE, scaling="none")
-# res <- get_IMIFA_results(sim, zlabels=ylab, z.avgsim=FALSE)
+# res <- get_IMIFA_results(sim, zlabels=ylab)
 
 # Examine the posterior mean image of the first two clusters
 show_IMIFA_digit(res, dat=train, ind=ind)

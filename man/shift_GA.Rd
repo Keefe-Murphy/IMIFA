@@ -6,7 +6,7 @@
 \usage{
 shift_GA(shape,
          rate,
-         shift = 0L,
+         shift = 0,
          param = c("rate", "scale"))
 }
 \arguments{

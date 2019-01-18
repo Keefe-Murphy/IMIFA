@@ -5,7 +5,7 @@
 \title{Add a colour key legend to heatmap plots}
 \usage{
 heat_legend(data,
-            cols,
+            cols = NULL,
             breaks = NULL,
             cex.lab = 1,
             ...)
@@ -13,7 +13,7 @@ heat_legend(data,
 \arguments{
 \item{data}{Either the data with which the heatmap was created or a vector containing its minimum and maximum values. Missing values are ignored.}
 
-\item{cols}{The palette used when the heatmap was created.}
+\item{cols}{The colour palette used when the heatmap was created. By default, the same \code{\link[viridisLite]{viridis}} default as in \code{\link{mat2cols}} is used. Will be checked for validity by \code{\link{is.cols}}.}
 
 \item{breaks}{Optional argument giving the break-points for the axis labels}
 

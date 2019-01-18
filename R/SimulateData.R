@@ -9,7 +9,7 @@
 #' @param loadings True values of the loadings matrix/matrices. Must be supplied in the form of a list of numeric matrices when \code{G > 1}, otherwise a single matrix. Matrices must contain \code{P} rows and the number of columns must correspond to the values in \code{Q}. If \code{loadings} are not supplied, such matrices are populated with standard normal random variates by default (see \code{non.zero}).
 #' @param scores True values of the latent factor scores, as a \code{N * max(Q)} numeric matrix. If \code{scores} are not supplied, such a matrix is populated with standard normal random variates by default. Only relevant when \code{method="conditional"}.
 #' @param nn An alternative way to specify the size of each cluster, by giving the exact number of observations in each cluster explicitly. Must sum to \code{N}.
-#' @param loc.diff A parameter to control the closeness of the clusters in terms of the difference in their location vectors. Only relevant if \code{mu} is NOT supplied. Defaults to \code{1}.
+#' @param loc.diff A parameter to control the closeness of the clusters in terms of the difference in their location vectors. Only relevant if \code{mu} is NOT supplied. Defaults to \code{2}.
 #'
 #' More specifically, \code{loc.diff} (if invoked) is invoked as follows: means are simulated with the vector of cluster-specific hypermeans given by \code{scale(1:G, center=TRUE, scale=FALSE) * loc.diff}.
 #' @param non.zero Controls the number of non-zero entries in each loadings column (per cluster) \strong{only} when \code{loadings} is not explicitly supplied. Values must be integers in the interval \code{[1,P]}. Defaults to \code{P}. The positions of the zeros are randomised, and non-zero entries are drawn from a standard normal.
@@ -43,7 +43,7 @@
 #'                loadings = NULL,
 #'                scores = NULL,
 #'                nn = NULL,
-#'                loc.diff = 1L,
+#'                loc.diff = 2,
 #'                non.zero = P,
 #'                forceQ = TRUE,
 #'                method = c("conditional", "marginal"))
@@ -70,7 +70,7 @@
 #'
 #' \code{\link{Ledermann}} for details on the upper-bound for \code{Q}. Note that this function accounts for isotropic uniquenesses, if \code{psi} is supplied in that manner, in computing this bound.
 sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(floor(log(P)), G), pis = rep(1/G, G), mu = NULL, psi = NULL, loadings = NULL,
-                           scores = NULL, nn = NULL, loc.diff = 1L, non.zero = P, forceQ = TRUE, method = c("conditional", "marginal")) {
+                           scores = NULL, nn = NULL, loc.diff = 2, non.zero = P, forceQ = TRUE, method = c("conditional", "marginal")) {
 
   N            <- unname(as.integer(N))
   G            <- unname(as.integer(G))
@@ -183,13 +183,14 @@ sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(floor(log(P)), G),
     if(forceQ && any(Q.ind))  {           message("Also forcing 'non-zero' to conform to 'Q'...\n")
       non.zero <- lapply(Gseq, function(g, ng=non.zero[[g]]) ng[seq_len(pmin(length(ng), Q.warn[g]))])
     }
+    non.zero   <- lapply(non.zero, function(x) if(!is.null(x) && (length(x) > 1 || x != 0)) x)
     if(!identical(Q, lengths(non.zero)))  stop(paste0("The length of each element of 'non.zero' must correspond to Q={", paste(Q, collapse=", "), "}"), call.=FALSE)
     nztest     <- unlist(non.zero)
     if(!is.numeric(nztest) ||
        anyNA(nztest)       ||
        any(nztest < 1       |
            nztest > P)     ||
-       nztest  != floor(nztest))          stop(paste0("Every entry of 'non.zero' must be an strictly positive integer, less than P=", P), call.=FALSE)
+       nztest  != floor(nztest))          stop(paste0("Every entry of 'non.zero' must be a strictly positive integer, less than or equal to P=", P), call.=FALSE)
   }
   simdata      <- base::matrix(0L, nrow=0L, ncol=P)
   true.mu      <- true.l   <-
@@ -216,7 +217,7 @@ sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(floor(log(P)), G),
         l.true[lind,k] <- .sim_load_p(Q=1L, P=neff[k], sigma.l=1)
       }
     } else      {
-      l.true   <- if(nzmiss) base::matrix(.sim_load_p(Q=Q.g, P=P, sigma.l=1), nrow=P, ncol=Q.g)  else lmat[[g]]
+      l.true   <- if(lammiss) base::matrix(.sim_load_p(Q=Q.g, P=P, sigma.l=1), nrow=P, ncol=Q.g) else lmat[[g]]
     }
     psi.true   <- stats::setNames(if(psimiss) 1/stats::rgamma(P, shape=2, rate=1)                else psisup[,g], vnames)
 

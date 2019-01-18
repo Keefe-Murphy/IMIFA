@@ -92,16 +92,14 @@
     } else psi.inv   <- replicate(G, .sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), simplify="array")
     psi.inv          <- if(uni) t(psi.inv) else psi.inv
     if(isTRUE(one.uni)) {
-      psi.inv[]      <- 1/switch(EXPR=uni.type, constrained=.col_vars(data), .geom_mean(.col_vars(data)))
+      psi.inv[]      <- 1/switch(EXPR=uni.type, constrained=.col_vars(data), max(.col_vars(data)))
     } else {
       tmp.psi        <- (nn[nn0] - 1L)/pmax(rowsum(data^2, z) - rowsum(data, z)^2/nn[nn0], 0L)
-      tmp.psi        <- switch(EXPR=uni.type, unconstrained=t(tmp.psi), matrix(apply(tmp.psi, 1L, .geom_mean), nrow=P, ncol=G, byrow=TRUE))
+      tmp.psi        <- switch(EXPR=uni.type, unconstrained=t(tmp.psi), matrix(Rfast::rowMaxs(tmp.psi, value=TRUE), nrow=P, ncol=G, byrow=TRUE))
       psi.inv[,nn     > 1]    <- tmp.psi[!is.nan(tmp.psi)]
       rm(tmp.psi)
     }
-    max.p            <- (psi.alpha  - 1)/switch(EXPR=uni.type, unconstrained=, constrained=psi.beta,
-                                                min(tryCatch(suppressMessages(do.call(psi_hyper, c(list(shape=psi.alpha, dat=data, covar=stats::cov(data)), list(...)$pots))),
-                                                             error=function(e) psi_hyper(shape=psi.alpha, dat=data, covar=stats::cov(data)))))
+    max.p            <- (psi.alpha  - 1)/psi.beta
     inf.ind          <- psi.inv > max(max.p)
     psi.inv[inf.ind] <- matrix(max.p, nrow=P, ncol=G)[inf.ind]
     rm(max.p, inf.ind)
