@@ -13,6 +13,7 @@ vignette: >
 knitr::opts_chunk$set(fig.width=7, fig.height = 5, fig.align = 'center', fig.show='hold',
                       warning=FALSE, message=FALSE, progress=FALSE, collapse=TRUE, comments="#>")
 ```
+
 ## Introduction
 __IMIFA__ is an R package that provides flexible and efficient functions for fitting Infinite Mixtures of Infinite Factor Analysers (__IMIFA__) and related models. The main model, IMIFA itself, conducts Bayesian nonparametric clustering via latent Gaussian models. While the package offers a Bayesian implementation of the Factor Analysis (FA) and Mixtures of Factor Analysers (MFA) models, among others, these require pre-specification of the number of latent factors &/or the number of components, which must remain fixed, the main advantages of the IMIFA model are that a) the modl search is dramatically reduced, b) these quantities are estimated automatically, c) the number of latent factors is allowed to be cluster-specific, and d) uncertainty in the number of clusters and numbers of cluster-specific factors can be quantified.
 
@@ -20,7 +21,7 @@ Typically one would run FA or MFA models over ranges of values for the numbers o
 
 The main features of the IMIFA model are the multiplicative gamma process shrinkage prior on the factor loadings, which allows theoretically infinitely many factors (this can also be employed in a MIFA context, for instance, where the number of clusters is fixed but cluster-specific factors are estimated), an adaptive Gibbs sampler which dynamically truncates the infinite loadings matrices, and the Dirichlet process prior, which utilises the stick-breaking construction and slice-efficient sampling, and allows theoretically infinitely many clusters. Tools are provided for soliciting sensible hyperparameters for these priors. As of IMIFA v1.2.0, a Pitman-Yor process prior on the number of mixture components is assumed by default, and its concentration and discount parameters are learned via Metropolis-Hastings updates.
 
-Model-specific diagnostic tools are also provided, as well as many extensive options for plotting results, conducting posterior inference on parameters of interest, and quantifying uncertainty. The functions are typically verbose, offering plenty of messages and warnings to the user where appropriate. Please see [Murphy et al. (2018)](https://arxiv.org/abs/1701.07010v4) for more info.
+Model-specific diagnostic tools are also provided, as well as many extensive options for plotting results, conducting posterior inference on parameters of interest, and quantifying uncertainty. The functions are typically verbose, offering plenty of messages and warnings to the user where appropriate. Please see [Murphy et al. (2019)](https://arxiv.org/abs/1701.07010v5) for more info.
 
 If you find bugs or want to suggest new features please visit the __IMIFA__ [GitHub issues page](https://github.com/Keefe-Murphy/IMIFA/issues). This vignette aims to reproduce some results in the Murphy et al. (2018) paper using the `mcmc_IMIFA()` and `get_IMIFA_results()` functions and demonstrates how the plots therein were created using the dedicated S3 `plot` method, while also demonstrating how to fit other models in the IMIFA family.
 
@@ -28,10 +29,12 @@ If you find bugs or want to suggest new features please visit the __IMIFA__ [Git
 __IMIFA__ will run in Windows, Mac OS X or Linux. To install __IMIFA__ you first need to install [R](https://cran.r-project.org/). Installing [Rstudio](https://www.rstudio.com/) as a nice desktop environment for using R is also recommended.
 
 Once in R you can type:
+
 ```{r, eval=FALSE}
 install.packages('devtools')
 devtools::install_github('Keefe-Murphy/IMIFA')
 ```
+
 at the R command prompt to install the latest development version of the package from the __IMIFA__ [GitHub page](https://github.com/Keefe-Murphy/IMIFA). 
 
 To instead install the latest stable official release of the package from CRAN go to R and type:
@@ -41,9 +44,11 @@ install.packages('IMIFA')
 ```
 
 In either case, if you then type:
+
 ```{r}
 library(IMIFA)
 ```
+
 it will load in all the __IMIFA__ functions.
 
 The GitHub version contains a few more features but some of these may not yet be fully tested, and occasionally this version might be liable to break when it is in the process of being updated.
@@ -57,13 +62,13 @@ There exist several utility functions in the package to solicit good prior hyper
 
 While it is possible to simulate data from a factor analytic mixture using the `sim_IMIFA_data()` function, specifying, among other things, the sample size `N`, the number of clusters `G`, and the number of variables `P`, e.g. 
 
-
 ```{r, eval=FALSE}
 # Simulate 100 observations from 3 balanced clusters with cluster-specific numbers of latent factors
 sim_data <- sim_IMIFA_data(N=100, G=3, P=20, Q=c(2, 2, 5), 
                            psi=matrix(rgamma(60, 2, 1), nrow=20, ncol=3), 
                            mu=matrix(rnorm(60, -2 + 1:3, 1), nrow=20, ncol=3, byrow=TRUE))
 ```
+
 the well-known Italian olive oil data set will be used throughout this vignette instead. You can load this data set after loading the __IMIFA__ package by typing
 
 ```{r}
@@ -201,6 +206,7 @@ To examine the posterior mean estimates of the cluster means in a given cluster 
 ```{r}
 plot(resIMIFA, plot.meth="means", param="means", mat=TRUE, g=1)
 ```
+
 Had the factor scores been stored, we could examine the trace plots for them using the code below, where `mat=TRUE` and `by.fac=FALSE` (the default) means, in this case, to plot all factors simultaneously for a given observation: `ind=1` specifies that the observation of interest is the first (however this is not shown, as the scores were not stored).
 
 ```{r, eval=FALSE}
@@ -208,6 +214,7 @@ plot(resIMIFA, plot.meth="trace", param="scores", mat=TRUE, ind=1)
 ```
 
 We could instead plot all observations simultaneously for a given factor, say the 2nd (also not shown).
+
 ```{r, eval=FALSE}
 plot(resIMIFA, plot.meth="trace", param="scores", mat=TRUE, by.fac=TRUE, fac=2)
 ```
@@ -227,19 +234,23 @@ plot(resIMIFA, plot.meth="parallel.coords", param="uniquenesses")
 We could have also used the argument `show.last` to visualise the last valid sample of uniquenesses from all clusters instead. This argument can be used to replace the posterior mean by the corresponding last valid sample for any combination of arguments to `plot.Results_IMIFA` that shows a posterior mean.
 
 Posterior predictive checking to assess the appropriateness of the fitted model is also facilitated. The posterior predictive reconstruction error, obtained by comparing bin counts of the data against bin counts of replicate draws from the posterior distribution, can be visualised as follows. Setting `g=2` allows individual histograms to be depicted, while the PPRE offers an overall perspective across variables.
+
 ```{r}
 plot(resIMIFA, plot.meth="errors", g=1)
 ```
 
 Quantifying the error between the empirical and estimated covariance matrices - and the uncertainty associated with those metrics - can also provide a useful indicator of the validity of the solution. For models which achieve clustering, the overall estimated covariance matrix is constructed from the cluster-specific estimated covariance matrices. A visualisation can be produced as follows:
+
 ```{r}
 plot(resIMIFA, plot.meth="errors", g=3)
 ```
 
 Finally, inference can be conducted on the Pitman-Yor concentration parameter $\alpha$ and discount parameter $d$ (assuming `learn.alpha` and `learn.d`, respectively, were _not_ set to `FALSE` when `mcmc_IMIFA` was initially run using the IMFA/IMIFA methods),  where `all` below refers to `trace`, `density`, posterior `means`, and ACF/PACF (`correlation`) plots. Note that the `density` for `discount` accounts for the point-mass at zero built into its prior.
+
 ```{r, fig.height=7}
 plot(resIMIFA, plot.meth="all", param="alpha")
 ```
+
 ```{r, fig.height=7}
 plot(resIMIFA, plot.meth="all", param="discount")
 ```
@@ -247,6 +258,6 @@ plot(resIMIFA, plot.meth="all", param="discount")
 # References
 For a more detailed description of the kind of things __IMIFA__ can do and the purposes for which the model was developed, please consult the followng papers:
 
-Murphy, K., Gormley, I. C. and Viroli, C. (2018). Infinite Mixtures of Infinite Factor Analysers. _To appear_. Pre-print available at [arXiv:1701.07010v4](https://arxiv.org/abs/1701.07010v4).
+Murphy, K., Viroli, C., and Gormley, I. C. (2019). Infinite Mixtures of Infinite Factor Analysers. _To appear_. Pre-print available at [arXiv:1701.07010v5](https://arxiv.org/abs/1701.07010v5).
 
 Bhattacharya, A. and Dunson, D. B. (2011). Sparse Bayesian infinite factor models. _Biometrika_, 98(2): 291-306.

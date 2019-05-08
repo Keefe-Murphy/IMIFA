@@ -5,22 +5,22 @@ citEntry(entry  = "Article",
                        person(given="Cinzia", family="Viroli")),
                        person(given=c("Isobel", "Claire"), family="Gormley"),
   title   = "Infinite Mixtures of Infinite Factor Analysers",
-  year    = "2018",
+  year    = "2019",
   journal = "To appear",
   volume  = "",
   number  = "",
   pages   = "",
-  url     = "https://arxiv.org/abs/1701.07010v4",
+  url     = "https://arxiv.org/abs/1701.07010v5",
   archivePrefix = "arXiv",
-  eprint  = "arXiv:1701.07010v4",
+  eprint  = "arXiv:1701.07010v5",
   primaryClass  = "stat.ME",
 
   textVersion   =
-    paste0("Keefe Murphy, Cinzia Viroli, and I. Claire Gormley (2018). ",
+    paste0("Keefe Murphy, Cinzia Viroli, and I. Claire Gormley (2019). ",
            "Infinite Mixtures of Infinite Factor Analysers. ",
            "To appear. ",
            "Pre-print available at arXiv. ",
-           "URL: https://arxiv.org/abs/1701.07010v4.")
+           "URL: https://arxiv.org/abs/1701.07010v5.")
 )
 
 year     <- sub(".*(2[[:digit:]]{3})-.*", "\\1", meta$Date)

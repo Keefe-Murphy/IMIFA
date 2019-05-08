@@ -1,6 +1,16 @@
 __Infinite Mixtures of Infinite Factor Analysers__
 ==================================================  
 
+## IMIFA v2.1.1 - (_8<sup>th</sup> release [patch update]: 2019-02-04_)
+### Improvements & Bug Fixes
+* Other types of `norm` (beyond Frobenius) can now be specified, by passing the arg. `type`,  
+  via the `...` construct, for calculating the PPRE within `get_IMIFA_results`.
+* The breaks used to construct the bins for the PPRE calculation can now also be specified,  
+  by passing the `dbreaks` arg. through the `...` construct. This is an experimental feature; caution is advised.
+* Minor fix for handling optional args. to `mixfaControl` and `plot.Results_IMIFA` functions.
+* Minor speed-ups to `post_conf_mat` function and `"parallel.coords"` plots.
+* Updated citation info.
+
 ## IMIFA v2.1.0 - (_7<sup>th</sup> release [minor update]: 2019-02-04_)
 ### New Features
 * `mgpControl` gains the arguments `cluster.shrink` and `sigma.hyper`:

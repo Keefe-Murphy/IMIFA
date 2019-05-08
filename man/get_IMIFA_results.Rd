@@ -53,7 +53,9 @@ Note that the first three options here might exhibit bias in favour of zero-fact
 
 \item{conf.level}{The confidence level to be used throughout for credible intervals for all parameters of inferential interest, and error metrics if \code{error.metrics=TRUE}. Defaults to \code{0.95}.}
 
-\item{error.metrics}{A logical activating or deactivating posterior predictive checking: i.e. controlling whether metrics quantifying a) the posterior predictive reconstruction error (PPRE) between bin counts of the data and bin counts of replicate draws from the posterior distribution & and b) the error between the empirical and estimated covariance matrices should be computed. These are computed for every \emph{valid} retained iteration (see \code{Details}). Defaults to \code{TRUE}, but can be time-consuming for models which achieve clustering. These error metrics, and the uncertainty associated with them can be visualised via \code{\link{plot.Results_IMIFA}}.}
+\item{error.metrics}{A logical activating or deactivating posterior predictive checking: i.e. controlling whether metrics quantifying a) the posterior predictive reconstruction error (PPRE) between bin counts of the data and bin counts of replicate draws from the posterior distribution & and b) the error between the empirical and estimated covariance matrices should be computed. These are computed for every \emph{valid} retained iteration (see \code{Details}). Defaults to \code{TRUE}, but can be time-consuming for models which achieve clustering. These error metrics, and the uncertainty associated with them can be visualised via \code{\link{plot.Results_IMIFA}}. Depending on what parameters were stored when calling \code{\link{mcmc_IMIFA}}, potentially not all error metrics will be available to compute.
+
+The Frobenius norm is used in the computation of the PPRE, by default, but the \code{type} of norm can be changed via the \code{...} construct below. So too can the breakpoints (\code{dbreaks}) used to bin the data and the posterior predictive replicate data sets. Some caution is advised in the latter case.}
 
 \item{vari.rot}{Logical indicating whether the loadings matrix/matrices template(s) should be \code{\link[stats]{varimax}} rotated first, prior to the Procrustes rotation steps. Defaults to \code{FALSE}. Not necessary at all for clustering purposes, or inference on the covariance matrix, but useful if interpretable inferences on the loadings matrix/matrices are desired. Arguments to \code{\link[stats]{varimax}} can be passed via the \code{...} construct, but note that the argument \code{normalize} here defaults to \code{FALSE}.}
 
@@ -67,7 +69,11 @@ Please be warned that this feature requires loading the \code{\link[mcclust]{mcc
 
 \item{nonempty}{For "\code{MFA}" and "\code{MIFA}" models ONLY: a logical indicating whether only iterations with non-empty components should be retained. Defaults to \code{TRUE}, but may lead to empty chains - conversely, \code{FALSE} may lead to empty components.}
 
-\item{x, object, ...}{Arguments required for the \code{print.Results_IMIFA} and \code{summary.Results_IMIFA} functions: \code{x} and \code{object} are objects of class \code{"Results_IMIFA"} resulting from a call to \code{\link{get_IMIFA_results}}, while \code{...} gathers additional arguments to those functions. The \code{...} construct also allows arguments to \code{\link[stats]{varimax}} to be passed to \code{\link{get_IMIFA_results}} itself, when \code{isTRUE(vari.rot)}, or arguments to \code{\link[graphics]{hist}} when \code{isTRUE(error.metrics)}, in order to guide construction of the bins.}
+\item{x, object, ...}{Arguments required for the \code{print.Results_IMIFA} and \code{summary.Results_IMIFA} functions: \code{x} and \code{object} are objects of class \code{"Results_IMIFA"} resulting from a call to \code{\link{get_IMIFA_results}}, while \code{...} gathers additional arguments to those functions.
+
+Users can also pass the \code{type} argument to the \code{\link{norm}} function when \code{isTRUE(error.metrics)} and the posterior predictive reconstruction error (PPRE) is calculated. By default the Frobenius norm (\code{type="F"}) is employed.
+
+Finally, the \code{...} construct also allows arguments to \code{\link[stats]{varimax}} to be passed to \code{\link{get_IMIFA_results}} itself, when \code{isTRUE(vari.rot)}, or arguments to \code{\link[graphics]{hist}} when \code{isTRUE(error.metrics)}, in order to guide construction of the bins. Additionally, by passing the argument \code{dbreaks} via the \code{...} construct, the bins can be specified directly. However, caution is advised in doing so; in particular, the bins must be constructed on data which has been standardised in the same way as the data modelled within \code{\link{mcmc_IMIFA}}.}
 }
 \value{
 An object of class "\code{Results_IMIFA}" to be passed to \code{\link{plot.Results_IMIFA}} for visualising results. Dedicated \code{print} and \code{summary} functions also exist for objects of this class. The object, say \code{x}, is a list of lists, the most important components of which are:
@@ -129,7 +135,7 @@ Due to the way the offline label-switching correction is performed, different ru
 # newdata       <- sim_IMIFA_model(resIMIFAolive)
 }
 \references{
-Murphy, K., Gormley, I. C. and Viroli, C. (2018) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
+Murphy, K., Viroli, C., and Gormley, I. C. (2019) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v5}{arXiv:1701.07010v5}>.
 }
 \seealso{
 \code{\link{plot.Results_IMIFA}}, \code{\link{mcmc_IMIFA}}, \code{\link{Zsimilarity}}, \code{\link{scores_MAP}}, \code{\link{sim_IMIFA_model}}, \code{\link{Procrustes}}

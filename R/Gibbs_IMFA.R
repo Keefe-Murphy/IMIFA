@@ -347,7 +347,7 @@
                              discount  = if(learn.d) {           if(sum(d.store == 0)/n.store > 0.5) as.simple_triplet_matrix(d.store) else d.store },
                              a.rate    = ifelse(MH.step,         mean(a.rates), a.rates),
                              d.rate    = ifelse(learn.d,         mean(d.rates), d.rates),
-                             lab.rate  = if(IM.lab.sw)           stats::setNames(rowmeans(lab.rate), c("Move1", "Move2")),
+                             lab.rate  = if(IM.lab.sw)           stats::setNames(rowMeans2(lab.rate), c("Move1", "Move2")),
                              z.store   = z.store,
                              ll.store  = ll.store,
                              G.store   = G.store,

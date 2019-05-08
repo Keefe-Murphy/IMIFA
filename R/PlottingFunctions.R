@@ -36,11 +36,13 @@
 #'
 #' When \code{mat} is \code{TRUE} and \code{by.fac} is \code{FALSE} (both defaults), the convention for dealing with overplotting for \code{trace} and \code{density} plots when \code{param} is either \code{scores} or \code{loadings} is to plot the last factor first, such that the first factor appears 'on top'.
 #' @keywords plotting main
+#' @method plot Results_IMIFA
 #' @importFrom Rfast "med" "colMedians"
+#' @importFrom matrixStats "rowRanges"
 #' @importFrom mclust "classError"
 #' @importFrom viridis "viridis"
 #' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{get_IMIFA_results}}, \code{\link{mat2cols}}, \code{\link{plot_cols}}
-#' @references Murphy, K., Gormley, I. C. and Viroli, C. (2018) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
+#' @references Murphy, K., Viroli, C., and Gormley, I. C. (2019) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v5}{arXiv:1701.07010v5}>.
 #'
 #' @author Keefe Murphy - <\email{keefe.murphy@@ucd.ie}>
 #' @usage
@@ -141,6 +143,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
   on.exit(grDevices::palette("default"), add=TRUE)
   on.exit(suppressWarnings(options(defopt)),  add=TRUE)
   dots    <- list(...)
+  dots    <- dots[unique(names(dots))]
   if(brX  <- "breaks" %in% names(dots)) {
     brXs  <- dots[["breaks"]]
   }
@@ -1244,7 +1247,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
                        uniquenesses= if(show.last) x$Uniquenesses$last.psi   else x$Uniquenesses$post.psi,
                        loadings    = if(show.last) x$Loadings$last.load[[g]] else x$Loadings$post.load[[g]])
       plot.x <- switch(EXPR=param, loadings=plot.x[,rev(seq_len(Q)), drop=FALSE], plot.x)
-      x.plot <- apply(plot.x, 1L, range, na.rm=TRUE)
+      x.plot <- rowRanges(plot.x, na.rm=TRUE)
       plot.x <- if(param == "uniquenesses" && is.element(uni.type, c("isotropic", "single"))) plot.x else apply(plot.x, 2L, function(x) (x - min(x, na.rm=TRUE))/(max(x, na.rm=TRUE) - min(x, na.rm=TRUE)))
       varnam <- paste0(toupper(substr(param, 1L, 1L)), substr(param, 2L, nchar(param)))
       if(any(grp.ind, param == "loadings")) {
@@ -1268,7 +1271,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
         if(titles && n.var < 100) {
           graphics::text(c(i, i), c(switch(EXPR=param, uniquenesses=switch(EXPR=uni.type, single=, isotropic=graphics::par("usr")[3L], 0), 0),
                          switch(EXPR=param, uniquenesses=switch(EXPR=uni.type, single=, isotropic=graphics::par("usr")[4L], 1), 1)),
-                         labels=format(x.plot[,i], digits=3), xpd=NA, offset=0.3, pos=c(1, 3), cex=0.5)
+                         labels=format(x.plot[i,], digits=3), xpd=NA, offset=0.3, pos=c(1, 3), cex=0.5)
         }
       }
       if(any(grp.ind, param  == "loadings")) {
@@ -1291,7 +1294,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
      if(Pind) {
        graphics::boxplot(error$PPRE, col=palette[length(palette)])
        if(titles)    {
-         graphics::title(main=list("Posterior Predictive\nReconstruction Error"))
+         graphics::title(main=list(paste0("Posterior Predictive Reconstruction Error\n(using the ", switch(EXPR=toupper(attr(error, "Norm")), O=, "1"="One", I="Infinity", "F"="Frobenius", M="Maximum", "2"="Spectral"), " norm)")))
          graphics::mtext("PPRE", side=2, line=2)
          graphics::mtext(method, side=1, line=1)
        }
@@ -1928,7 +1931,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
 #' show_IMIFA_digit(res, dat=train, ind=ind)
 #' show_IMIFA_digit(res, dat=train, ind=ind, G=2)}
   show_IMIFA_digit <- function(res, G = 1L, what = c("mean", "last"), dat = NULL, ind = NULL, ...) {
-    UseMethod("show_IMIFA_digit")
+      UseMethod("show_IMIFA_digit")
   }
 
 #' @importFrom matrixStats "colMeans2"

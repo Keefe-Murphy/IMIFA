@@ -123,7 +123,7 @@ When \code{mat} is \code{TRUE} and \code{by.fac} is \code{FALSE} (both defaults)
 # plot(resIMIFA, plot.meth="all", param="alpha")
 }
 \references{
-Murphy, K., Gormley, I. C. and Viroli, C. (2018) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
+Murphy, K., Viroli, C., and Gormley, I. C. (2019) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v5}{arXiv:1701.07010v5}>.
 }
 \seealso{
 \code{\link{mcmc_IMIFA}}, \code{\link{get_IMIFA_results}}, \code{\link{mat2cols}}, \code{\link{plot_cols}}

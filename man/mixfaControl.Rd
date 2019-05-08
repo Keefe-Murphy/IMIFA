@@ -108,7 +108,7 @@ mfctrl <- mixfaControl(n.iters=200, prec.mu=1E-03, sigma.mu=NULL,
 #                    sigma.mu=NULL, beta0=1, uni.type="constrained")
 }
 \references{
-Murphy, K., Gormley, I. C. and Viroli, C. (2018) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
+Murphy, K., Viroli, C., and Gormley, I. C. (2019) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v5}{arXiv:1701.07010v5}>.
 
 McNicholas, P. D. and Murphy, T. B. (2008) Parsimonious Gaussian Mixture Models, \emph{Statistics and Computing}, 18(3): 285-296.
 }

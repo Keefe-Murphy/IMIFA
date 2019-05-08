@@ -135,7 +135,7 @@
 #'
 #' If the normalising constant is required for another reason, e.g. to compute the log-likelihood, it can be calculated by summing the output obtained by calling \code{\link[matrixStats]{rowLogSumExps}} on \code{probs}.
 #'
-#' @references Murphy, K., Gormley, I. C. and Viroli, C. (2018) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
+#' @references Murphy, K., Viroli, C., and Gormley, I. C. (2019) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v5}{arXiv:1701.07010v5}>.
 #'
 #' Yellot, J. I. Jr. (1977) The relationship between Luce's choice axiom, Thurstone's theory of comparative judgment, and the double exponential distribution, \emph{Journal of Mathematical Psychology}, 15: 109-144.
 #' @export
@@ -337,7 +337,7 @@
 #' @export
 #'
 #' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{mixfaControl}}
-#' @references Murphy, K., Gormley, I. C. and Viroli, C. (2018) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
+#' @references Murphy, K., Viroli, C., and Gormley, I. C. (2019) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v5}{arXiv:1701.07010v5}>.
 #'
 #' Fruwirth-Schnatter, S. and Lopes, H. F. (2010). Parsimonious Bayesian factor analysis when the number of factors is unknown, \emph{Technical Report}. The University of Chicago Booth School of Business.
 #'
@@ -474,7 +474,7 @@
 #' @keywords control
 #' @seealso \code{\link{mcmc_IMIFA}}
 #' @references
-#' Murphy, K., Gormley, I. C. and Viroli, C. (2018) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
+#' Murphy, K., Viroli, C., and Gormley, I. C. (2019) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v5}{arXiv:1701.07010v5}>.
 #'
 #' Durante, D. (2017). A note on the multiplicative gamma process, \emph{Statistics & Probability Letters}, 122: 198-204.
 #'
@@ -735,7 +735,7 @@
 #' @export
 #' @keywords utility
 #' @importFrom matrixStats "rowSums2"
-#' @importFrom Rfast "rowOrder" "sort_mat"
+#' @importFrom Rfast "rowOrder" "rowSort"
 #' @author Keefe Murphy - <\email{keefe.murphy@@ucd.ie}>
 #' @seealso \code{get_IMIFA_results}
 #' @references Ranciati, S., Vinciotti, V. and Wit, E., (2017) Identifying overlapping terrorist cells from the Noordin Top actor-event network, \emph{to appear}. <\href{https://arxiv.org/abs/1710.10319v1}{arXiv:1710.10319v1}>.
@@ -768,7 +768,7 @@
         if(any(Ns      != N)     ||
            any(Gs      != G)     ||
            N      < G)                     stop("All matrices in the list 'z' must have the same dimensions, with more columns than rows", call.=FALSE)
-        tX       <- lapply(z, sort_mat, by.row=TRUE, descending=TRUE)
+        tX       <- lapply(z, rowSort,  descending=TRUE)
         rX       <- lapply(z, rowOrder, descending=TRUE)
       } else      {
         if(!is.matrix(z))                  stop("'z' must be a matrix", call.=FALSE)
@@ -778,8 +778,8 @@
         nit      <- 1L
         N        <- nrow(z)
         G        <- ncol(z)
-        if(N      < G)                     stop("'z' must have more rows than columns", call.=FALSE)
-        tX       <- list(sort_mat(z, by.row=TRUE, descending=TRUE))
+        if(N      < G)                     stop("'z' must have more rows than columns",  call.=FALSE)
+        tX       <- list(rowSort(z,  descending=TRUE))
         rX       <- list(rowOrder(z, descending=TRUE))
       }
       if(length(scale) > 1       ||
@@ -793,7 +793,7 @@
         }
       }
       PCM        <- PCM/nit
-        if(scale)   sweep(PCM, 1L, rowSums2(PCM), FUN="/", check.margin=FALSE) else PCM
+        if(scale)   PCM/rowSums2(PCM) else PCM
     }
 
   # Move 1
@@ -1306,7 +1306,7 @@
 #' @note Users should be careful to note that data are mean-centered (\code{centering=TRUE}) and unit-scaled (\code{scaling="unit"}) by default when supplying other parameters among the list above, especially those related in any way to \code{psi.hyper}, or to the other control functions \code{\link{mgpControl}} and \code{\link{bnpControl}}.
 #' @keywords control
 #' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{psi_hyper}}, \code{\link[mclust]{hc}}, \code{\link[stats]{kmeans}}, \code{\link[mclust]{Mclust}}, \code{\link{mgpControl}}, \code{\link{bnpControl}}, \code{\link{storeControl}}
-#' @references Murphy, K., Gormley, I. C. and Viroli, C. (2018) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
+#' @references Murphy, K., Viroli, C., and Gormley, I. C. (2019) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v5}{arXiv:1701.07010v5}>.
 #'
 #' McNicholas, P. D. and Murphy, T. B. (2008) Parsimonious Gaussian Mixture Models, \emph{Statistics and Computing}, 18(3): 285-296.
 #'
@@ -1388,6 +1388,7 @@
                          psi.beta = psi.beta, mu.zero = mu.zero, sigma.mu = sigma.mu, prec.mu = prec.mu, sigma.l = sigma.l, z.init = z.init, z.list = z.list,
                          equal.pro = equal.pro, uni.prior = uni.prior, mu0g = mu0g, psi0g = psi0g, drop0sd = drop0sd, verbose = verbose)
     dots         <- list(...)
+    dots         <- dots[unique(names(dots))]
     mixfa        <- c(mixfa, list(dots = dots[!(names(dots) %in% names(mixfa))]))
     attr(mixfa, "Missing") <- miss.args
       return(mixfa)
@@ -1441,7 +1442,7 @@
 #'
 #' Under the "\code{IMFA}" and "\code{IMIFA}" methods, a Pitman-Yor process prior is specified by default. A Dirichlet process prior can be easily invoked when the \code{discount} is fixed at \code{0} and \code{learn.d=FALSE}. The normalized stable process can also be specified as a prior distribution, as a special case of the Pitman-Yor process, when \code{alpha} remains fixed at \code{0} and \code{learn.alpha=FALSE} (provided the \code{discount} is fixed at a non-zero value or \code{learn.d=TRUE}).
 #' @keywords control
-#' @references Murphy, K., Gormley, I. C. and Viroli, C. (2018) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
+#' @references Murphy, K., Viroli, C., and Gormley, I. C. (2019) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v5}{arXiv:1701.07010v5}>.
 #'
 #' Kalli, M., Griffin, J. E. and Walker, S. G. (2011) Slice sampling mixture models, \emph{Statistics and Computing}, 21(1): 93-105.
 #'
@@ -1596,7 +1597,7 @@
 #'
 #' The adaptive Gibbs sampler (AGS) monitors the \code{prop} of loadings elements within the neighbourhood \code{eps} of 0 and discards columns or simulates new columns on this basis. However, if at any stage the number of group-specific latent factors reaches zero, the decision to add columns is instead based on a simple binary trial with probability \code{1-prop}, as there are no loadings entries to monitor.
 #' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{MGP_check}}, \code{\link{mixfaControl}}, \code{\link{bnpControl}}, \code{\link{storeControl}}
-#' @references Murphy, K., Gormley, I. C. and Viroli, C. (2018) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
+#' @references Murphy, K., Viroli, C., and Gormley, I. C. (2019) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v5}{arXiv:1701.07010v5}>.
 #'
 #' Durante, D. (2017). A note on the multiplicative gamma process, \emph{Statistics & Probability Letters}, 122: 198-204.
 #'
@@ -1765,7 +1766,7 @@
 #' # Allow the number of columns be cluster-specific
 #' scores_MAP(res, dropQ=TRUE)$post.eta}
    scores_MAP    <- function(res, dropQ = FALSE) {
-     UseMethod("scores_MAP")
+      UseMethod("scores_MAP")
    }
 
 #' @export
@@ -1932,7 +1933,7 @@
     }
 
     .empty_mat   <- function(nr = 0L, nc = 0L) {
-      base::matrix(0L, nrow=nr, ncol=nc)
+        base::matrix(0L, nrow=nr, ncol=nc)
     }
 
     .ent_exit    <- function(opts = options()) {
@@ -2043,7 +2044,7 @@
     }
 
     .matnames    <- function(list, names, dim = 2L) {
-      mapply(function(X, Y) { dimnames(X)[[dim]] <- Y; X }, list, names, SIMPLIFY=FALSE)
+        mapply(function(X, Y) { dimnames(X)[[dim]] <- Y; X }, list, names, SIMPLIFY=FALSE)
     }
 
     .ndeci       <- function(x, after.dot = TRUE) {

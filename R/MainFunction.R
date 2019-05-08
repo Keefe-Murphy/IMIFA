@@ -57,15 +57,15 @@
 #' However, these objects of class "IMIFA" should rarely if ever be manipulated by hand - use of the \code{\link{get_IMIFA_results}} function is \emph{strongly} advised.
 #' @keywords IMIFA main
 #' @export
-#' @importFrom matrixStats "colMeans2" "colSums2" "rowLogSumExps" "rowSums2"
-#' @importFrom Rfast "rowmeans" "matrnorm"
+#' @importFrom matrixStats "colMeans2" "colSums2" "rowLogSumExps" "rowMeans2" "rowSums2"
+#' @importFrom Rfast "matrnorm"
 #' @importFrom mvnfast "dmvn"
 #' @importFrom slam "as.simple_sparse_array" "as.simple_triplet_matrix"
 #' @importFrom mclust "emControl" "Mclust" "mclustBIC" "mclustICL" "hc" "hclass" "hcE" "hcEEE" "hcEII" "hcV" "hcVII" "hcVVV"
 #'
 #' @seealso \code{\link{get_IMIFA_results}}, \code{\link{mixfaControl}}, \code{\link{mgpControl}}, \code{\link{bnpControl}}, \code{\link{storeControl}}
 #' @references
-#' Murphy, K., Gormley, I. C. and Viroli, C. (2018) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
+#' Murphy, K., Viroli, C., and Gormley, I. C. (2019) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v5}{arXiv:1701.07010v5}>.
 #'
 #' Bhattacharya, A. and Dunson, D. B. (2011) Sparse Bayesian infinite factor models, \emph{Biometrika}, 98(2): 291-306.
 #'

@@ -25,7 +25,7 @@
 #'
 #' Missing values are not allowed in any of \code{pis}, \code{mu}, \code{psi}, \code{loadings}, \code{scores} & \code{nn}.
 #' @export
-#' @references Murphy, K., Gormley, I. C. and Viroli, C. (2018) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
+#' @references Murphy, K., Viroli, C., and Gormley, I. C. (2019) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v5}{arXiv:1701.07010v5}>.
 #' @keywords utility
 #' @importFrom Rfast "is.symmetric"
 #' @name sim_IMIFA
@@ -280,7 +280,7 @@ sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(floor(log(P)), G),
 #' sim_IMIFA_model(res,
 #'                 method = c("conditional", "marginal"))
   sim_IMIFA_model      <- function(res, method = c("conditional", "marginal")) {
-    UseMethod("sim_IMIFA_model")
+      UseMethod("sim_IMIFA_model")
   }
 
 #' @export

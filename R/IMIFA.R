@@ -30,7 +30,7 @@
 #'
 #' \strong{Maintainer}: Keefe Murphy - <\email{keefe.murphy@@ucd.ie}>
 #' @section References:
-#' Murphy, K., Gormley, I. C. and Viroli, C. (2018) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v4}{arXiv:1701.07010v4}>.
+#' Murphy, K., Viroli, C., and Gormley, I. C. (2019) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v5}{arXiv:1701.07010v5}>.
 #'
 #' @section See Also:
 #' Further details and examples are given in the associated vignette document:\cr
@@ -46,5 +46,5 @@
   } else   {
     packageStartupMessage("\nPackage 'IMIFA' version ", version, ".\n")
   }
-  packageStartupMessage(paste("Type '?IMIFA' to see a brief guide to how to use this R package.\nType", sQuote(paste0("citation(", dQuote("IMIFA"),")")) ,"for citing the package in publications.\nType 'IMIFA_news()' to see new features, changes, and bug fixes.\n"))
+    packageStartupMessage(paste("Type '?IMIFA' to see a brief guide to how to use this R package.\nType", sQuote(paste0("citation(", dQuote("IMIFA"),")")) ,"for citing the package in publications.\nType 'IMIFA_news()' to see new features, changes, and bug fixes.\n"))
 }

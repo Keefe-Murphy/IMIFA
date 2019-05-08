@@ -9,7 +9,7 @@
 
 ## Description
 
-The IMIFA package provides flexible Bayesian estimation of Infinite Mixtures of Infinite Factor Analysers and related models, for nonparametric model-based clustering of high-dimensional data, introduced by Murphy et al. (2017) <[arXiv:1701.07010v4](https://arxiv.org/abs/1701.07010v4)>. The IMIFA model assumes factor analytic covariance structures within mixture components and simultaneously achieves dimension reduction and clustering without recourse to model selection criteria to choose the number of clusters or cluster-specific latent factors, mostly via efficient Gibbs updates. Model-specific diagnostic tools are also provided, as well as many options for plotting results, conducting posterior inference on parameters of interest, posterior predictive checking, and quantifying uncertainty.
+The IMIFA package provides flexible Bayesian estimation of Infinite Mixtures of Infinite Factor Analysers and related models, for nonparametric model-based clustering of high-dimensional data, introduced by Murphy et al. (2019) <[arXiv:1701.07010v5](https://arxiv.org/abs/1701.07010v5)>. The IMIFA model assumes factor analytic covariance structures within mixture components and simultaneously achieves dimension reduction and clustering without recourse to model selection criteria to choose the number of clusters or cluster-specific latent factors, mostly via efficient Gibbs updates. Model-specific diagnostic tools are also provided, as well as many options for plotting results, conducting posterior inference on parameters of interest, posterior predictive checking, and quantifying uncertainty.
 
 The package also contains three data sets: `olive`, `USPSdigits`, and `coffee`.
 
@@ -53,4 +53,4 @@ devtools::install_github('Keefe-Murphy/IMIFA', build_vignettes = TRUE)
 Alternatively, the vignette is available on the package's CRAN page.
 
 ### References
-Murphy, K., Gormley, I. C. and Viroli, C. (2018) Infinite Mixtures of Infinite Factor Analysers. _To appear_. <[arXiv:1701.07010v4](https://arxiv.org/abs/1701.07010v4)>
+Murphy, K., Viroli, C., and Gormley, I. C. (2019) Infinite Mixtures of Infinite Factor Analysers. _To appear_. <[arXiv:1701.07010v5](https://arxiv.org/abs/1701.07010v5)>
