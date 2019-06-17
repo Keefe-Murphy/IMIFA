@@ -67,7 +67,7 @@ Please be warned that this feature requires loading the \code{\link[mcclust]{mcc
 
 \item{zlabels}{For any method that performs clustering, the true labels can be supplied if they are known in order to compute clustering performance metrics. This also has the effect of ordering the MAP labels (and thus the ordering of cluster-specific parameters) to most closely correspond to the true labels if supplied.}
 
-\item{nonempty}{For "\code{MFA}" and "\code{MIFA}" models ONLY: a logical indicating whether only iterations with non-empty components should be retained. Defaults to \code{TRUE}, but may lead to empty chains - conversely, \code{FALSE} may lead to empty components.}
+\item{nonempty}{For "\code{MFA}" and "\code{MIFA}" models ONLY: a logical indicating whether only iterations with non-empty components should be retained. Defaults to \code{TRUE}, but may lead to empty chains - conversely, \code{FALSE} may lead to empty components and related errors.}
 
 \item{x, object, ...}{Arguments required for the \code{print.Results_IMIFA} and \code{summary.Results_IMIFA} functions: \code{x} and \code{object} are objects of class \code{"Results_IMIFA"} resulting from a call to \code{\link{get_IMIFA_results}}, while \code{...} gathers additional arguments to those functions.
 

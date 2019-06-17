@@ -111,7 +111,12 @@
     }
 
     .sim_vs_inf  <- function(alpha, nn = 0L, N = sum(nn), discount, len, lseq = NULL) {
-        if(discount == 0) stats::rbeta(len, 1L + nn, alpha + N - cumsum(nn)) else stats::rbeta(len, 1 - discount + nn, alpha + lseq * discount + N - cumsum(nn))
+        if(discount == 0) stats::rbeta(len, 1L + nn, alpha + N - cumsum(nn))                                 else
+        if(discount  > 0) stats::rbeta(len, 1  - discount  + nn, alpha + lseq * discount + N   - cumsum(nn)) else {
+          bg     <- alpha   + lseq * discount  + N - cumsum(nn)
+          bgs    <- bg[bg   > 0]
+          base::c(stats::rbeta(sum(bg > 0), 1  - discount  + nn[bg > 0], bgs), rep(1L, sum(bg <= 0)))
+        }
     }
 
     .sim_pi_inf  <- function(vs, len, init = 0) {
@@ -1030,8 +1035,8 @@
 #'
 #' Calculates the \emph{a priori} expected number of clusters or the variance of the number of clusters under a PYP or DP prior for a sample of size \code{N} at given values of the concentration parameter \code{alpha} and optionally also the Pitman-Yor \code{discount} parameter. Useful for soliciting sensible priors (or fixed values) for \code{alpha} or \code{discount} under the "\code{IMFA}" and "\code{IMIFA}" methods for \code{\link{mcmc_IMIFA}}.
 #' @param N The sample size.
-#' @param alpha The concentration parameter. Must be specified and must be strictly greater than \code{-discount}.
-#' @param discount The discount parameter for the Pitman-Yor process. Must lie in the interval [0, 1). Defaults to 0 (i.e. the Dirichlet process).
+#' @param alpha The concentration parameter. Must be specified and must be strictly greater than \code{-discount}. When \code{discount} is negative \code{alpha} must be a positive integer multiple of \code{abs(discount)}.
+#' @param discount The discount parameter for the Pitman-Yor process. Must be less than 1, but typically lies in the interval [0, 1). Defaults to 0 (i.e. the Dirichlet process). When \code{discount} is negative \code{alpha} must be a positive integer multiple of \code{abs(discount)}.
 #'
 #' @details All arguments are vectorised. Users can also consult \code{\link{G_priorDensity}} in order to solicit sensible priors.
 #'
@@ -1068,9 +1073,12 @@
     G_expected   <- Vectorize(function(N, alpha, discount = 0) {
       if(!all(is.numeric(N), is.numeric(discount),
          is.numeric(alpha)))               stop("All inputs must be numeric", call.=FALSE)
-      if(discount   < 0  || discount >= 1) stop("'discount' must lie in the interval [0,1)", call.=FALSE)
-      if(alpha   <= - discount)            stop("'alpha' must be strictly greater than -discount", call.=FALSE)
-      if(alpha   == 0)                     stop("'alpha' equal to zero not yet implemented", call.=FALSE)
+      if(discount >= 1)                    stop("'discount' must be less than 1", call.=FALSE)
+      if(discount > 0    &&
+         alpha   <= - discount)            stop("'alpha' must be strictly greater than -discount", call.=FALSE)
+      if(discount < 0    &&
+        (alpha   %% discount) != 0)        stop("'alpha' must be a positive integer multiple of 'abs(discount)' when 'discount' is negative", call.=FALSE)
+      if(alpha   == 0)                     return(Inf)
       if(suppressMessages(requireNamespace("Rmpfr", quietly=TRUE))) {
         mpfrind  <- TRUE
         on.exit(.detach_pkg("Rmpfr"))
@@ -1079,12 +1087,13 @@
       } else if(discount != 0)             stop("'Rmpfr' package not installed", call.=FALSE)
       if(discount == 0)   {
         exp      <- alpha * (digamma(alpha + N) - digamma(alpha))
+       #exp      <- sum(alpha/(alpha + seq_len(N) - 1L))
         if(mpfrind)       {
           gmp::asNumeric(exp)
         } else    {
           exp
         }
-      } else {
+      } else      {
         adx      <- alpha/discount
           gmp::asNumeric(adx * Rmpfr::pochMpfr(alpha + discount, N)/Rmpfr::pochMpfr(alpha, N) - adx)
       }
@@ -1100,9 +1109,12 @@
     G_variance   <- Vectorize(function(N, alpha, discount = 0) {
       if(!all(is.numeric(N), is.numeric(discount),
          is.numeric(alpha)))               stop("All inputs must be numeric", call.=FALSE)
-      if(discount   < 0  || discount >= 1) stop("'discount' must lie in the interval [0,1)", call.=FALSE)
-      if(alpha   <= - discount)            stop("'alpha' must be strictly greater than -discount", call.=FALSE)
-      if(alpha   == 0)                     stop("'alpha' equal to zero not yet implemented", call.=FALSE)
+      if(discount >= 1)                    stop("'discount' must be less than 1", call.=FALSE)
+      if(discount > 0    &&
+         alpha   <= - discount)            stop("'alpha' must be strictly greater than -discount", call.=FALSE)
+      if(discount < 0    &&
+         alpha   %% discount != 0)         stop("'alpha' must be a positive integer multiple of 'abs(discount)' when 'discount' is negative", call.=FALSE)
+      if(alpha   == 0)                     return(Inf)
       if(suppressMessages(requireNamespace("Rmpfr", quietly=TRUE))) {
         mpfrind  <- TRUE
         on.exit(.detach_pkg(Rmpfr))
@@ -1475,7 +1487,8 @@
 #' #                     ind.slice=FALSE, alpha.hyper=c(3, 3))
   bnpControl     <- function(learn.alpha = TRUE, alpha.hyper = c(2L, 4L), discount = NULL, learn.d = TRUE, d.hyper = c(1L, 1L),
                              ind.slice = TRUE, rho = 0.75, trunc.G = NULL, kappa = 0.5, IM.lab.sw = TRUE, zeta = NULL, tune.zeta = list(...), ...) {
-    miss.args    <- list(discount = missing(discount), IM.lab.sw = missing(IM.lab.sw), kappa = missing(kappa), trunc.G = missing(trunc.G), zeta = missing(zeta))
+    miss.args    <- list(discount = missing(discount), IM.lab.sw = missing(IM.lab.sw), kappa = missing(kappa),
+                         trunc.G = missing(trunc.G), zeta = missing(zeta), learn.alpha = missing(learn.alpha), learn.d = missing(learn.d))
     if(any(!is.logical(learn.alpha),
            length(learn.alpha)    != 1))   stop("'learn.alpha' must be a single logical indicator", call.=FALSE)
     if(all(length(alpha.hyper)    != 2,
@@ -1503,8 +1516,14 @@
     discount     <- ifelse(missing(discount), ifelse(learn.d, ifelse(kappa != 0 && stats::runif(1) <= kappa, 0, pmin(stats::rbeta(1, d.hyper[1L], d.hyper[2L]), 1 - .Machine$double.eps)), 0), discount)
     if(any(!is.numeric(discount),
            length(discount)       != 1))   stop("'discount' must be a single number", call.=FALSE)
-    if(discount   < 0    ||
-       discount  >= 1)                     stop("'discount' must lie in the interval [0, 1)", call.=FALSE)
+    if(discount  >= 1)                     stop("'discount' must be less than 1", call.=FALSE)
+    if(discount   < 0)    {
+      if(!miss.args$learn.d       &&
+         isTRUE(learn.d))                  stop("'learn.d' must be FALSE when 'discount' is negative", call.=FALSE)
+      if(!miss.args$learn.alpha   &&
+         isTRUE(learn.alpha))              stop("'learn.alpha' must be FALSE when 'discount' is negative", call.=FALSE)
+      learn.d    <- learn.alpha   <- FALSE
+    }
     kappa        <- ifelse(all(!learn.d, discount == 0), 1L, kappa)
     if(all(kappa         == 0, !learn.d,
            discount      == 0))            stop("'kappa' is zero and yet 'discount' is fixed at zero:\neither learn the discount parameter or specify a non-zero value", call.=FALSE)

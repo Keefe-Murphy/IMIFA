@@ -481,6 +481,10 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
       if(is.element(method, c("IMIFA", "IMFA"))      &&
          !learn.a)                  stop("'alpha' must be specified if it is to remain fixed when 'learn.alpha' is FALSE, as it's not being learned via Gibbs/Metropolis-Hastings updates", call.=FALSE)
     } else if(is.element(method,
+      c("IMFA", "IMIFA"))) {
+      if(discount < 0     &&
+         alpha   %% discount != 0)  stop("'alpha' must be a positive integer multiple of 'abs(discount)' when 'discount' is negative", call.=FALSE)
+    } else if(is.element(method,
       c("OMFA", "OMIFA")))   alpha     <- alpha/G.init
     if(length(alpha) != 1)          stop("'alpha' must be specified as a scalar to ensure an exchangeable prior", call.=FALSE)
     if(is.element(method,   c("IMIFA", "IMFA")))      {

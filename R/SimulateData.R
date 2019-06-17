@@ -101,7 +101,7 @@ sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(floor(log(P)), G),
        anyNA(nn)  ||
        any(length(nn)    != G,
            sum(nn)       != N))           stop(paste0("'nn' must be an integer vector of length G=", G, " which sums to N=", N, " without missing values"), call.=FALSE)
-    if(any(nn  <= 0))                     stop("All 'nn' values must be strictly positive; simulating empty clusters not allowed", call.=FALSE)
+    if(any(nn  <= 0))                     warning("All 'nn' values should be strictly positive; are you sure you want to simulate empty clusters?\n",       call.=FALSE, immediate.=FALSE)
   } else {
     if(!is.numeric(pis)  ||
        anyNA(pis) ||
@@ -117,7 +117,7 @@ sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(floor(log(P)), G),
       iter     <- iter    + 1L
       nn0      <- any(nn <= 0)
     }
-    if(nn0)                               stop("Simulating empty clusters not allowed; try supplying 'nn' directly instead of small 'pis'", call.=FALSE)
+    if(nn0)                               warning("Empty clusters generated; are you sure?\n Try supplying 'nn' directly instead of small 'pis\n'",         call.=FALSE, immediate.=FALSE)
   }
 
   if(!(mumiss  <- missing(mu)))       {
@@ -137,7 +137,7 @@ sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(floor(log(P)), G),
        !is.numeric(scores))               stop("Invalid 'scores' supplied: must be a numeric matrix", call.=FALSE)
     if(anyNA(scores))                     stop("Missing values are not allowed in 'scores'", call.=FALSE)
   }
-  Q.warn       <- pmin(nn - 1L, Ledermann(P, isotropic=!psimiss && length(unique(psisup[,1L])) == 1))
+  Q.warn       <- pmin(pmax(0L, nn - 1L), Ledermann(P, isotropic=!psimiss && length(unique(psisup[,1L])) == 1))
   if(any(Q.ind <- Q > Q.warn))        {
     if(length(forceQ)   != 1 ||
        !is.logical(forceQ))               stop("'forceQ' must be a single logical indicator", call.=FALSE)
@@ -198,7 +198,7 @@ sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(floor(log(P)), G),
   sq_mat       <- if(P > 50)  function(x) diag(sqrt(diag(x))) else sqrt
 
 # Simulate true parameter values
-  true.zlab    <- factor(rep(Gseq, nn), labels=Gseq)
+  true.zlab    <- factor(rep(Gseq, nn), labels=Gseq[nn > 0])
   if(method    == "conditional")   {
     Q.max      <- max(Q)
     eta.true   <- if(smiss) .sim_eta_p(Q=Q.max, N=N) else scores

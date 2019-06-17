@@ -3,10 +3,14 @@ __Infinite Mixtures of Infinite Factor Analysers__
 
 ## IMIFA v2.1.1 - (_8<sup>th</sup> release [patch update]: 2019-02-04_)
 ### Improvements & Bug Fixes
+* `discount` can now be fixed at a negative value when `learn.d=learn.alpha=FALSE`,  
+  provided the fixed `alpha` is a positive integer multiple of `abs(discount)`;   
+  this setting is now also accommodated in the `G_expected`, `G_variance`, and `G_priorDensity` functions.
 * Other types of `norm` (beyond Frobenius) can now be specified, by passing the arg. `type`,  
   via the `...` construct, for calculating the PPRE within `get_IMIFA_results`.
 * The breaks used to construct the bins for the PPRE calculation can now also be specified,  
   by passing the `dbreaks` arg. through the `...` construct. This is an experimental feature; caution is advised.
+* Fixes to `sim_IMIFA_data` to allow empty clusters and related fix for `nonempty` arg. to `get_IMIFA_results`.
 * Minor fix for handling optional args. to `mixfaControl` and `plot.Results_IMIFA` functions.
 * Minor speed-ups to `post_conf_mat` function and `"parallel.coords"` plots.
 * Updated citation info.

@@ -1666,8 +1666,8 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
 #'
 #' Plots the prior distribution of the number of clusters under a Pitman-Yor / Dirichlet process prior, for a sample of size \code{N} at given values of the concentration parameter \code{alpha} and optionally also the \code{discount} parameter. Useful for soliciting sensible priors (or fixed values) for \code{alpha} or \code{discount} under the "\code{IMFA}" and "\code{IMIFA}" methods for \code{\link{mcmc_IMIFA}}.
 #' @param N The sample size.
-#' @param alpha The concentration parameter. Must be specified and must be strictly greater than \code{-discount}.
-#' @param discount The discount parameter for the Pitman-Yor process. Must lie in the interval [0, 1). Defaults to 0 (i.e. the Dirichlet process).
+#' @param alpha The concentration parameter. Must be specified and must be strictly greater than \code{-discount}. When \code{discount} is negative \code{alpha} must be a positive integer multiple of \code{abs(discount)}.
+#' @param discount The discount parameter for the Pitman-Yor process. Must be less than 1, but typically lies in the interval [0, 1). Defaults to 0 (i.e. the Dirichlet process). When \code{discount} is negative \code{alpha} must be a positive integer multiple of \code{abs(discount)}.
 #' @param show.plot Logical indicating whether the plot should be displayed (default = \code{TRUE}).
 #'
 #' @details All arguments are vectorised. Users can also consult \code{\link{G_expected}} and \code{\link{G_variance}} in order to solicit sensible priors.
@@ -1724,9 +1724,11 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
        c(1, max.len)))                stop("'discount' must be of length 1 or length(alpha)", call.=FALSE)
     if(!all(is.numeric(discount), is.numeric(alpha),
             is.numeric(N)))           stop("'N', 'alpha', and 'discount' inputs must be numeric", call.=FALSE)
-    if(any(discount < 0,
-       discount >= 1))                stop("'discount' must lie in the interval [0,1)", call.=FALSE)
-    if(any(alpha <= - discount))      stop("'alpha' must be strictly greater than -discount", call.=FALSE)
+    if(any(discount     >= 1))        stop("'discount' must be less than 1", call.=FALSE)
+    if(any(discount > 0  &
+       alpha   <= - discount))        stop("'alpha' must be strictly greater than -discount", call.=FALSE)
+    if(any(discount < 0  &
+       alpha   %% discount != 0))     stop("'alpha' must be a positive integer multiple of 'abs(discount)' when 'discount' is negative", call.=FALSE)
     if(length(alpha)    != max.len) {
       alpha    <- rep(alpha,    max.len)
     }
@@ -1740,12 +1742,20 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
     for(i in seq_len(max.len)) {
       alphi    <- Rmpfr::mpfr(alpha[i],    precBits=256)
       disci    <- Rmpfr::mpfr(discount[i], precBits=256)
-      if(disci == 0) {
+      if(disci == 0)  {
         vnk    <- exp(Nsq2 * log(alphi)     - log(Rmpfr::pochMpfr(alphi, N)))
         rx[,i] <- gmp::asNumeric(abs(vnk    * Rmpfr::.bigz2mpfr(gmp::Stirling1.all(N))))
-      } else  {
-        vnk    <- c(Rmpfr::mpfr(0,         precBits=256),  cumsum(log(alphi + Nseq[-N] * disci)))   -
+      } else    {
+        if(disci > 0) {
+          vnk  <- c(Rmpfr::mpfr(0,         precBits=256),  cumsum(log(alphi + Nseq[-N]   * disci)))         -
                   log(Rmpfr::pochMpfr(alphi + 1, N - 1L)) - Nsq2 * log(disci)
+        } else  {
+          m    <- as.integer(alphi/abs(disci))
+          mn   <- min(m, N)
+          seqN <- seq_len(mn - 1L)
+          vnk  <- c(c(Rmpfr::mpfr(0,       precBits=256),  cumsum(log(m - seqN))  + seqN * log(abs(disci))) -
+                  log(Rmpfr::pochMpfr(alphi + 1, N - 1L)) - c(seqN, mn) * log(abs(disci)), rep(-Inf, N - mn))
+        }
         lnkd   <- lapply(Nseq, function(g) Rmpfr::sumBinomMpfr(g, f=function(k) Rmpfr::pochMpfr(-k * disci, N)))
         rx[,i] <- gmp::asNumeric(exp(vnk    - lfactorial(Nsq2))  * abs(methods::new("mpfr", unlist(lnkd))))
       }

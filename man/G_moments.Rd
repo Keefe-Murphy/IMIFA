@@ -17,9 +17,9 @@ G_variance(N,
 \arguments{
 \item{N}{The sample size.}
 
-\item{alpha}{The concentration parameter. Must be specified and must be strictly greater than \code{-discount}.}
+\item{alpha}{The concentration parameter. Must be specified and must be strictly greater than \code{-discount}. When \code{discount} is negative \code{alpha} must be a positive integer multiple of \code{abs(discount)}.}
 
-\item{discount}{The discount parameter for the Pitman-Yor process. Must lie in the interval [0, 1). Defaults to 0 (i.e. the Dirichlet process).}
+\item{discount}{The discount parameter for the Pitman-Yor process. Must be less than 1, but typically lies in the interval [0, 1). Defaults to 0 (i.e. the Dirichlet process). When \code{discount} is negative \code{alpha} must be a positive integer multiple of \code{abs(discount)}.}
 }
 \value{
 The expected number of clusters under the specified prior conditions, or the variance of the number of clusters.
