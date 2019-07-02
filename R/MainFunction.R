@@ -25,12 +25,14 @@
 #' For methods ending in IFA, different clusters can be modelled using different numbers of latent factors (incl. zero); for methods not ending in IFA it is possible to fit zero-factor models, corresponding to simple diagonal covariance structures. For instance, fitting the "\code{IMFA}" model with \code{range.Q=0} corresponds to a vanilla Pitman-Yor / Dirichlet Process Mixture Model.
 #'
 #' If \code{length(range.G) * length(range.Q)} is large, consider not storing unnecessary parameters (via \code{\link{storeControl}}), or breaking up the range of models to be explored into chunks and sending each chunk to \code{\link{get_IMIFA_results}}.
+#'
+#' See \code{\link{Ledermann}} for bounds on \code{range.Q}; this is useful in both the finite factor and infinite factor settings, as one may wish to ensure te fixed number of factors, or upper limits on the number of factors, respectively, respects this bound to yield indentifiable solutions, particularly in low-dimensional settings.
 #' @param MGP A list of arguments pertaining to the multiplicative gamma process (MGP) shrinkage prior and adaptive Gibbs sampler (AGS). For use with the infinite factor models "\code{IFA}", "\code{MIFA}", "\code{OMIFA}", and "\code{IMIFA}" only. Defaults are set by a call to \code{\link{mgpControl}}, with further checking of validity by \code{\link{MGP_check}} (though arguments can also be supplied here directly).
 #' @param BNP A list of arguments pertaining to the Bayesian Nonparametric Pitman-Yor / Dirichlet process priors, for use with the infinite mixture models "\code{IMFA}" and "\code{IMIFA}", or select arguments related to the Dirichlet concentration parameter for the overfitted mixtures "\code{OMFA}" and \code{"OMIFA"}. Defaults are set by a call to \code{\link{bnpControl}} (though arguments can also be supplied here directly).
 #' @param mixFA A list of arguments pertaining to \emph{all other} aspects of model fitting, e.g. MCMC settings, cluster initialisation, and hyperparameters common to every \code{method} in the \code{IMIFA} family. Defaults are set by a call to \code{\link{mixfaControl}} (though arguments can also be supplied here directly).
-#' @param alpha Depending on the method employed, either the hyperparameter of the Dirichlet prior for the cluster mixing proportions, or the Pitman-Yor / Dirichlet process concentration parameter. Defaults to 1 for the finite mixture models "\code{MFA}" and "\code{MIFA}", and must be a strictly positive scalar. Not relevant for the "\code{FA}" and "\code{IFA}" methods.
+#' @param alpha Depending on the method employed, either the hyperparameter of the Dirichlet prior for the cluster mixing proportions, or the Pitman-Yor / Dirichlet process concentration parameter. Defaults to \code{1} for the finite mixture models "\code{MFA}" and "\code{MIFA}", and must be a strictly positive scalar. Not relevant for the "\code{FA}" and "\code{IFA}" methods.
 #' \describe{
-#' \item{Under the "\code{IMFA}" and "\code{IMIFA}" models:}{\code{alpha} defaults to a simulation from the prior if \code{learn.alpha} is \code{TRUE}, otherwise \code{alpha} \emph{must} be specified. Must be positive, unless non-zero \code{discount} is supplied or \code{learn.d=TRUE} (the default), in which case it must be greater than \code{-discount}. Under certain conditions, \code{alpha} can remain fixed at \code{0} (see \code{\link{bnpControl}}).}
+#' \item{Under the "\code{IMFA}" and "\code{IMIFA}" models:}{\code{alpha} defaults to a simulation from the prior if \code{learn.alpha} is \code{TRUE}, otherwise \code{alpha} \emph{must} be specified. Must be positive, unless non-zero \code{discount} is supplied or \code{learn.d=TRUE} (the default), in which case it must be greater than \code{-discount}. Under certain conditions, \code{alpha} can remain fixed at \code{0} (see \code{\link{bnpControl}}). Additionally, when \code{discount} is negative, \code{alpha} must be a positive integer multiple of \code{abs(discount)} (default=\code{range.G * abs(discount)}).}
 #' \item{Under the "\code{OMFA}" and "\code{OMIFA}" models:}{\code{alpha} defaults to a simulation from the prior if \code{learn.alpha} is \code{TRUE}, otherwise \code{alpha} defaults to \code{0.5/range.G}. If supplied, \code{alpha} must be positive, and you are supplying the numerator of \code{alpha/range.G}.
 #'
 #' If \code{alpha} remains fixed (i.e. \code{learn.alpha=FALSE}), \code{alpha} should be less than half the dimension (per cluster!) of the free parameters of the smallest model considered in order to ensure superfluous clusters are emptied (for "\code{OMFA}", this corresponds to the smallest \code{range.Q}; for "\code{OMIFA}", this corresponds to a zero-factor model) [see: \code{\link{PGMM_dfree}} and Rousseau and Mengersen (2011)].}
@@ -63,9 +65,9 @@
 #' @importFrom slam "as.simple_sparse_array" "as.simple_triplet_matrix"
 #' @importFrom mclust "emControl" "Mclust" "mclustBIC" "mclustICL" "hc" "hclass" "hcE" "hcEEE" "hcEII" "hcV" "hcVII" "hcVVV"
 #'
-#' @seealso \code{\link{get_IMIFA_results}}, \code{\link{mixfaControl}}, \code{\link{mgpControl}}, \code{\link{bnpControl}}, \code{\link{storeControl}}
+#' @seealso \code{\link{get_IMIFA_results}}, \code{\link{mixfaControl}}, \code{\link{mgpControl}}, \code{\link{bnpControl}}, \code{\link{storeControl}}, \code{\link{Ledermann}}
 #' @references
-#' Murphy, K., Viroli, C., and Gormley, I. C. (2019) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v5}{arXiv:1701.07010v5}>.
+#' Murphy, K., Viroli, C., and Gormley, I. C. (2019) Infinite mixtures of infinite factor analysers, \emph{Bayesian Analysis}, 1-27. <\href{https://projecteuclid.org/euclid.ba/1570586978}{doi:10.1214/19-BA1179}>.
 #'
 #' Bhattacharya, A. and Dunson, D. B. (2011) Sparse Bayesian infinite factor models, \emph{Biometrika}, 98(2): 291-306.
 #'
@@ -73,14 +75,17 @@
 #'
 #' Rousseau, J. and Mengersen, K. (2011) Asymptotic Behaviour of the posterior distribution in overfitted mixture models, \emph{Journal of the Royal Statistical Society: Series B (Statistical Methodology)}, 73(5): 689-710.
 #'
-#' McNicholas, P. D. and Murphy, T. B. (2008) Parsimonious Gaussian Mixture Models, \emph{Statistics and Computing}, 18(3): 285-296.
+#' McNicholas, P. D. and Murphy, T. B. (2008) Parsimonious Gaussian mixture models, \emph{Statistics and Computing}, 18(3): 285-296.
 #'
 #' @author Keefe Murphy - <\email{keefe.murphy@@ucd.ie}>
 #'
 #' @usage
 #' mcmc_IMIFA(dat,
-#'            method = c("IMIFA", "IMFA", "OMIFA", "OMFA",
-#'                       "MIFA", "MFA", "IFA", "FA", "classify"),
+#'            method = c("IMIFA", "IMFA",
+#'                       "OMIFA", "OMFA",
+#'                       "MIFA", "MFA",
+#'                       "IFA", "FA",
+#'                       "classify"),
 #'            range.G = NULL,
 #'            range.Q = NULL,
 #'            MGP = mgpControl(...),
@@ -90,7 +95,7 @@
 #'            storage = storeControl(...),
 #'            ...)
 #' @examples
-#' # data(olive)
+#' \donttest{# data(olive)
 #' # data(coffee)
 #'
 #' # Fit an IMIFA model to the olive data. Accept all defaults.
@@ -124,7 +129,7 @@
 #' # but supply a value for the starting number of clusters.
 #' # Try constraining uniquenesses to be common across both variables and clusters.
 #' # simOMIFA <- mcmc_IMIFA(coffee, method="OMIFA", range.G=10, psi.alpha=3,
-#' #                        phi.hyper=c(2, 1), alpha=0.8, uni.type="single")
+#' #                        phi.hyper=c(2, 1), alpha=0.8, uni.type="single")}
 mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA", "MFA", "IFA", "FA", "classify"), range.G = NULL, range.Q = NULL,
                         MGP = mgpControl(...), BNP = bnpControl(...), mixFA = mixfaControl(...), alpha = NULL, storage = storeControl(...), ...) {
 
@@ -477,7 +482,7 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
   } else if(any(sw0gs))             stop(paste0("'", names(which(sw0gs)), "' should be FALSE for the ", method, " method\n"), call.=FALSE)
 
   if(!is.element(method, c("FA", "IFA", "classify"))) {
-    if(missing(alpha))     { alpha     <- switch(EXPR=method, MFA=, MIFA=1L, OMFA=, OMIFA=ifelse(learn.a, min(1/G.init, stats::rgamma(1, BNP$a.hyper[1L], BNP$a.hyper[2L])), 0.5/G.init), ifelse(learn.a, max(1L, stats::rgamma(1, BNP$a.hyper[1L], BNP$a.hyper[2L])), 1L))
+    if(missing(alpha))     { alpha     <- switch(EXPR=method, MFA=, MIFA=1L, OMFA=, OMIFA=ifelse(learn.a, min(1/G.init, stats::rgamma(1, BNP$a.hyper[1L], BNP$a.hyper[2L])), 0.5/G.init), ifelse(learn.a && discount >= 0, max(1L, stats::rgamma(1, BNP$a.hyper[1L], BNP$a.hyper[2L])), ifelse(learn.a, range.G * abs(discount), 1L)))
       if(is.element(method, c("IMIFA", "IMFA"))      &&
          !learn.a)                  stop("'alpha' must be specified if it is to remain fixed when 'learn.alpha' is FALSE, as it's not being learned via Gibbs/Metropolis-Hastings updates", call.=FALSE)
     } else if(is.element(method,
@@ -488,14 +493,16 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
       c("OMFA", "OMIFA")))   alpha     <- alpha/G.init
     if(length(alpha) != 1)          stop("'alpha' must be specified as a scalar to ensure an exchangeable prior", call.=FALSE)
     if(is.element(method,   c("IMIFA", "IMFA")))      {
-      if(kappa0      <- alpha    <= 0  && !learn.a)   {
+      if(kappa0      <- alpha    <= 0)  {
         discount     <- BNP$discount   <- ifelse(ifelse(learn.d, discount == 0, bnpmiss$discount), pmin(pmax(stats::rbeta(1, BNP$d.hyper[1L], BNP$d.hyper[2L]), .Machine$double.eps - alpha), 1 - .Machine$double.eps), discount)
-        if(!learn.d  &&
-           discount  == 0)          stop("Set 'learn.d'=TRUE or fix a non-zero 'discount' value if fixing 'alpha' at <= 0", call.=FALSE)
-        if(learn.d   && bnpmiss$kappa)  {
-          BNP$kappa  <- 0L
-        } else if(BNP$kappa      != 0  &&
-                  learn.d)          stop("Set 'kappa'=0 if fixing 'alpha' at <= 0 and 'learn.d'=TRUE", call.=FALSE)
+        if(kappa0    <- kappa0   && !learn.a)         {
+         if(!learn.d &&
+            discount == 0)          stop("Set 'learn.d'=TRUE or fix a non-zero 'discount' value if fixing 'alpha' at <= 0", call.=FALSE)
+         if(learn.d  && bnpmiss$kappa)  {
+           BNP$kappa <- 0L
+         } else if(BNP$kappa     != 0  &&
+                   learn.d)          stop("Set 'kappa'=0 if fixing 'alpha' at <= 0 and 'learn.d'=TRUE", call.=FALSE)
+        }
       }
       if(alpha       <= -discount)  stop(paste0("'alpha' must be ",     ifelse(discount != 0, paste0("strictly greater than -discount (i.e. > ", - discount, ")"), "strictly positive")), call.=FALSE)
     }
@@ -524,7 +531,7 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
                                     stop(paste0("Each element of 'z.list' must be a vector of length N=", N), call.=FALSE) }
     }
     if(all(zli.miss, z.init   == "list"))         {
-                                    stop(paste0("'z.list' must be supplied if 'z.init' is set to 'list'"), call.=FALSE) }
+                                    stop(paste0("'z.list' must be supplied if 'z.init' is set to 'list'"),    call.=FALSE) }
   }
 
   imifa     <- list(list())
@@ -549,7 +556,7 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
   init.start       <- proc.time()
   if(!is.element(method,  c("FA",    "IFA"))   &&
      !all(G.init == 1))         {
-    if(isTRUE(verbose))             cat(paste0("Initialising...\n"))
+    if(isTRUE(verbose))             message(paste0("Initialising...\n"))
     clust          <- list()
     pi.alpha       <- list()
     pi.prop        <- list()
@@ -727,7 +734,7 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
                                      args=append(list(data = dat, N = N, G = g, Q = range.Q, mu = mu[[Gi]], mu.zero = mu.zero[[Gi]],
                                                       psi.beta = psi.beta[[Gi]], cluster = if(meth[Gi] == "MIFA") clust[[Gi]]), gibbs.arg))
         fac.time   <- fac.time + imifa[[Gi]][[Qi]]$time
-        if(verbose && Gi  != len.G) cat(paste0("Model ", Gi, " of ", len.G, " complete"), "\nInitialising...", sep="\n")
+        if(verbose && Gi  != len.G) message(paste0("Model ", Gi, " of ", len.G, " complete"), "\nInitialising...", sep="\n")
       }
     }
   } else if(is.element(method, c("FA", "MFA", "OMFA", "IMFA")))   {
@@ -745,7 +752,7 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
                                      args=append(list(data = dat, N = N, G = G.range, Q = q, mu = mu[[Gi]], mu.zero = mu.zero[[Gi]],
                                                       psi.beta = psi.beta[[Gi]], cluster = if(meth[Gi] !=  "FA") clust[[Gi]]), gibbs.arg))
         fac.time   <- fac.time + imifa[[Gi]][[Qi]]$time
-        if(verbose && Qi  != len.Q) cat(paste0("Model ", Qi, " of ", len.Q, " complete"), "\nInitialising...", sep="\n")
+        if(verbose && Qi  != len.Q) message(paste0("Model ", Qi, " of ", len.Q, " complete"), "\nInitialising...", sep="\n")
       }
     } else if(len.Q == 1) {
       start.time   <- proc.time()
@@ -756,7 +763,7 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
                                      args=append(list(data = dat, N = N, G = g, Q = range.Q, mu = mu[[Gi]], mu.zero = mu.zero[[Gi]],
                                                       psi.beta = psi.beta[[Gi]], cluster = if(meth[Gi] != "FA") clust[[Gi]]), gibbs.arg))
         fac.time   <- fac.time + imifa[[Gi]][[Qi]]$time
-        if(verbose && Gi  != len.G) cat(paste0("Model ", Gi, " of ", len.G, " complete"), "\nInitialising...", sep="\n")
+        if(verbose && Gi  != len.G) message(paste0("Model ", Gi, " of ", len.G, " complete"), "\nInitialising...", sep="\n")
       }
     } else {
       mi           <- 0L
@@ -771,7 +778,7 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
                                                       psi.beta = psi.beta[[Gi]], cluster = if(meth[Gi] != "FA") clust[[Gi]]), gibbs.arg))
         mi         <- mi + 1L
         fac.time   <- fac.time + imifa[[Gi]][[Qi]]$time
-        if(verbose && mi  != len.X) cat(paste0("Model ", mi, " of ", len.X, " complete"), "\nInitialising...", sep="\n")
+        if(verbose && mi  != len.X) message(paste0("Model ", mi, " of ", len.X, " complete"), "\nInitialising...", sep="\n")
         }
       }
     }
@@ -792,7 +799,7 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
                                      args=append(list(data = tmp.dat, N = nrow(tmp.dat), mu = mu[[Gi]][,g], mu.zero = mu.zero[[Gi]][,g],
                                                       Q = range.Q, psi.beta = psi.beta[[Gi]][,g]), gibbs.arg))
       fac.time     <- fac.time + imifa[[g]][[Qi]]$time
-      if(verbose   && g   != len.G) cat(paste0("Model ", g, " of ", len.G, " complete"), "\nInitialising...", sep="\n")
+      if(verbose   && g   != len.G) message(paste0("Model ", g, " of ", len.G, " complete"), "\nInitialising...", sep="\n")
     }
   }
   tot.time  <- proc.time() - start.time
@@ -828,6 +835,7 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
   attr(imifa, "Discount") <- if(is.element(method, c("IMFA", "IMIFA")) && !learn.d) discount
   attr(imifa, "Equal.Pi") <- equal.pro
   attr(imifa, "Factors")  <- range.Q
+  attr(imifa, "ForceQg")  <- MGP$forceQg && is.element(method, c("MIFA", "OMIFA", "IMIFA"))
   attr(imifa, "G.init")   <- G.init
   attr(imifa, "G.Mean")   <- if(attr(imifa, "Center")) glo.mean
   attr(imifa, "G.Scale")  <- if(scaling != "none")     switch(EXPR=scaling, pareto=sqrt(glo.scal), glo.scal)

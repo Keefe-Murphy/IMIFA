@@ -6,8 +6,8 @@
 #' \itemize{
 #' \item{Type: }{Package}
 #' \item{Package: }{IMIFA}
-#' \item{Version: }{2.1.0}
-#' \item{Date: }{2019-02-04 (this version), 2017-02-02 (original release)}
+#' \item{Version: }{2.1.1}
+#' \item{Date: }{2019-12-11 (this version), 2017-02-02 (original release)}
 #' \item{Licence: }{GPL (>=2)}
 #' }
 #'
@@ -30,7 +30,7 @@
 #'
 #' \strong{Maintainer}: Keefe Murphy - <\email{keefe.murphy@@ucd.ie}>
 #' @section References:
-#' Murphy, K., Viroli, C., and Gormley, I. C. (2019) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v5}{arXiv:1701.07010v5}>.
+#' Murphy, K., Viroli, C., and Gormley, I. C. (2019) Infinite mixtures of infinite factor analysers, \emph{Bayesian Analysis}, 1-27. <\href{https://projecteuclid.org/euclid.ba/1570586978}{doi:10.1214/19-BA1179}>.
 #'
 #' @section See Also:
 #' Further details and examples are given in the associated vignette document:\cr
@@ -44,7 +44,7 @@
   if(interactive()) {
     packageStartupMessage(paste("\n   ________  __________________\n  /_  __/  |/   /_  __/ ___/ _ \\           Infinite Mixtures of\n   / / / /|_// / / / / /__/ /_\\ \\     Infinite Factor Analysers\n _/ /_/ /   / /_/ /_/ ___/ /___\\ \\           and Related Models\n/____/_/   /_/_____/_/  /_/     \\_\\               version", version, "\n"))
   } else   {
-    packageStartupMessage("\nPackage 'IMIFA' version ", version, ".\n")
+    packageStartupMessage("\nPackage ", sQuote("IMIFA"), " version ", version, ".\n")
   }
-    packageStartupMessage(paste("Type '?IMIFA' to see a brief guide to how to use this R package.\nType", sQuote(paste0("citation(", dQuote("IMIFA"),")")) ,"for citing the package in publications.\nType 'IMIFA_news()' to see new features, changes, and bug fixes.\n"))
+    packageStartupMessage(paste("Type", sQuote("?IMIFA"), "to see a brief guide to how to use this R package.\nType", sQuote(paste0("citation(", dQuote("IMIFA"),")")) ,"for citing the package in publications.\nType", sQuote("IMIFA_news()"), "to see new features, changes, and bug fixes.\n"))
 }

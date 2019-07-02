@@ -11,7 +11,14 @@ data(olive)
 \description{
 Data on the percentage composition of eight fatty acids found by lipid fraction of 572 Italian olive oils. The data come from three areas; within each area there are a number of constituent regions, of which there are 9 in total.
 }
+\examples{
+data(olive, package="IMIFA")
+pairs(olive[,-(1:2)], col=olive$area)
+region <- as.numeric(olive$region)
+pairs(olive[,-(1:2)],
+      col=ifelse(region < 5, 1, ifelse(region < 7, 2, ifelse(region == 9, 4, 3))))
+}
 \references{
-Forina, M., Armanino, C., Lanteri, S. and Tiscornia, E. (1983). Classification of olive oils from their fatty acid composition, \emph{Food Research and Data Analysis}, Applied Science Publishers, London, pp. 189-214.
+Forina, M., Armanino, C., Lanteri, S. and Tiscornia, E. (1983). Classification of olive oils from their fatty acid composition, In Martens, H. and Russrum Jr., H. (Eds.), \emph{Food Research and Data Analysis}, Applied Science Publishers, London, pp. 189-214.
 }
 \keyword{datasets}

@@ -30,8 +30,7 @@ For the infinite factor methods ("\code{IFA}", "\code{MIFA}", "\code{OMIFA}", an
 In partitioning rows of the factor scores matrix into the same clusters the corresponding observations themselves belong to according to the MAP clustering, the number of columns \emph{may} vary according to the cluster-specific numbers of latent factors (depending on the value of \code{dropQ} and the method employed).
 }
 \examples{
-\dontrun{
-data(coffee)
+\donttest{data(coffee)
 sim <- mcmc_IMIFA(coffee, n.iters=1000)
 res <- get_IMIFA_results(sim)
 

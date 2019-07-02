@@ -106,24 +106,8 @@
     # Mixing Proportions
       pi.prop      <- if(equal.pro) pi.prop else rDirichlet(G=G, alpha=pi.alpha, nn=nn)
 
-    # Cluster Labels
-      psi          <- 1/psi.inv
-      sigma        <- if(uni) lapply(Gseq, function(g) as.matrix(psi[,g] + if(Q0) tcrossprod(as.matrix(lmat[,,g])) else 0L)) else lapply(Gseq, function(g) tcrossprod(lmat[,,g]) + diag(psi[,g]))
-      log.pis      <- if(equal.pro) log.pis else log(pi.prop)
-      if(uni) {
-        log.probs  <- vapply(Gseq, function(g) stats::dnorm(data, mu[,g], sq_mat(sigma[[g]]), log=TRUE) + log.pis[g], numeric(N))
-      } else  {
-        log.probs  <- try(vapply(Gseq, function(g) dmvn(data, mu[,g], if(Q0) sigma[[g]] else sq_mat(sigma[[g]]), log=TRUE, isChol=!Q0) + log.pis[g], numeric(N)), silent=TRUE)
-        if(zerr    <- inherits(log.probs, "try-error")) {
-         log.probs <- vapply(Gseq, function(g) { sigma <- if(Q0) is.posi_def(sigma[[g]], make=TRUE)$X.new else sq_mat(sigma[[g]]); dmvn(data, mu[,g], sigma, log=TRUE, isChol=!Q0) + log.pis[g] }, numeric(N))
-        }
-      }
-      z            <- gumbel_max(probs=log.probs)
-      nn           <- tabulate(z, nbins=G)
-      nn0          <- nn > 0
-      dat.g        <- lapply(Gseq, function(g) data[z == g,, drop=FALSE])
-
     # Scores & Loadings
+      dat.g        <- lapply(Gseq, function(g) data[z == g,, drop=FALSE])
       c.data       <- lapply(Gseq, function(g) sweep(dat.g[[g]], 2L, mu[,g], FUN="-", check.margin=FALSE))
       if(Q0) {
         eta.tmp    <- lapply(Gseq, function(g) if(nn0[g]) .sim_score(N=nn[g], lmat=lmat[,,g], Q=Q, c.data=c.data[[g]], psi.inv=psi.inv[,g], Q1=Q1) else .empty_mat(nc=Q))
@@ -150,6 +134,22 @@
       sum.eta      <- lapply(eta.tmp, colSums2)
       mu[,]        <- vapply(Gseq, function(g) if(nn0[g]) .sim_mu(mu.zero=mu.zero[,g], mu.sigma=mu.sigma, psi.inv=psi.inv[,g], sum.data=sum.data[,g], sum.eta=sum.eta[[g]],
                              lmat=if(Q1) as.matrix(lmat[,,g]) else lmat[,,g], N=nn[g], P=P) else .sim_mu_p(P=P, sig.mu.sqrt=sig.mu.sqrt, mu.zero=mu.zero[,g]), numeric(P))
+
+    # Cluster Labels
+      psi          <- 1/psi.inv
+      sigma        <- if(uni) lapply(Gseq, function(g) as.matrix(psi[,g] + if(Q0) tcrossprod(as.matrix(lmat[,,g])) else 0L)) else lapply(Gseq, function(g) tcrossprod(lmat[,,g]) + diag(psi[,g]))
+      log.pis      <- if(equal.pro) log.pis else log(pi.prop)
+      if(uni) {
+        log.probs  <- vapply(Gseq, function(g) stats::dnorm(data, mu[,g], sq_mat(sigma[[g]]), log=TRUE) + log.pis[g], numeric(N))
+      } else  {
+        log.probs  <- try(vapply(Gseq, function(g) dmvn(data, mu[,g], if(Q0) sigma[[g]] else sq_mat(sigma[[g]]), log=TRUE, isChol=!Q0) + log.pis[g], numeric(N)), silent=TRUE)
+        if(zerr    <- inherits(log.probs, "try-error")) {
+         log.probs <- vapply(Gseq, function(g) { sigma <- if(Q0) is.posi_def(sigma[[g]], make=TRUE)$X.new else sq_mat(sigma[[g]]); dmvn(data, mu[,g], sigma, log=TRUE, isChol=!Q0) + log.pis[g] }, numeric(N))
+        }
+      }
+      z            <- gumbel_max(probs=log.probs)
+      nn           <- tabulate(z, nbins=G)
+      nn0          <- nn > 0
 
     # Label Switching
       if(label.switch) {

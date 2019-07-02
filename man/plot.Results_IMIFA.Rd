@@ -51,7 +51,7 @@ The argument \code{g} can be used to cycle through the available plots in each c
 
 \item{show.last}{A logical indicator which defaults to \code{FALSE}, but when \code{TRUE} replaces any instance of the posterior mean with the last valid sample. Only relevant when \code{param} is one of \code{"means"} \code{"scores"}, \code{"loadings"}, \code{"uniquenesses"}, or \code{"pis"} and \code{plot.meth} is one of \code{"all"} or \code{"means"}. Also relevant for \code{"means"}, \code{"loadings"} and \code{"uniquenesses"} when \code{plot.meth} is \code{"parallel.coords"}. When \code{TRUE}, this has the effect of forcing \code{intervals} to be \code{FALSE}.}
 
-\item{palette}{An optional colour palette to be supplied if overwriting the default palette set inside the function by \code{\link[viridisLite]{viridis}} is desired. it makes little sense to a supply a \code{palette} when \code{plot.meth="all"} and \code{param} is one of "\code{scores}" or "\code{loadings}".}
+\item{palette}{An optional colour palette to be supplied if overwriting the default palette set inside the function by \code{\link[viridisLite]{viridis}} is desired. It makes little sense to a supply a \code{palette} when \code{plot.meth="all"} and \code{param} is one of "\code{scores}" or "\code{loadings}".}
 
 \item{ind}{Either a single number indicating which variable to plot when \code{param} is one of \code{means} or \code{uniquenesses} (or \code{plot.meth="errors"}), or which cluster to plot if \code{param} is \code{pis}. If \code{scores} are plotted, a vector of length two giving which observation and factor to plot; if \code{loadings} are plotted, a vector of length two giving which variable and factor to plot. Will be recycled to length 2 if necessary. Also governs which two factors are displayed on posterior mean plots of the \code{"scores"} when \code{heat.map} is \code{FALSE}; otherwise only relevant when \code{mat} is \code{FALSE}.}
 
@@ -87,7 +87,7 @@ Supplying the argument \code{zlabels} does \strong{not} have the same effect of 
 When \code{mat} is \code{TRUE} and \code{by.fac} is \code{FALSE} (both defaults), the convention for dealing with overplotting for \code{trace} and \code{density} plots when \code{param} is either \code{scores} or \code{loadings} is to plot the last factor first, such that the first factor appears 'on top'.
 }
 \examples{
-# See the vignette associated with the package for more graphical examples:
+\donttest{# See the vignette associated with the package for more graphical examples:
 # vignette("IMIFA", package = "IMIFA")
 
 # data(olive)
@@ -111,7 +111,7 @@ When \code{mat} is \code{TRUE} and \code{by.fac} is \code{FALSE} (both defaults)
 # Visualise empirical vs. estimated covariance error metrics
 # plot(resIMIFA, plot.meth="errors", g=3)
 
-# Look at the trace, density, posterior mean and correlation of various parameters of interest
+# Look at the trace, density, posterior mean, and correlation of various parameters of interest
 # plot(resIMIFA, plot.meth="all", param="means", g=1)
 # plot(resIMIFA, plot.meth="all", param="means", g=1, ind=2)
 # plot(resIMIFA, plot.meth="all", param="scores")
@@ -120,10 +120,10 @@ When \code{mat} is \code{TRUE} and \code{by.fac} is \code{FALSE} (both defaults)
 # plot(resIMIFA, plot.meth="all", param="loadings", g=1, heat.map=FALSE)
 # plot(resIMIFA, plot.meth="parallel.coords", param="uniquenesses")
 # plot(resIMIFA, plot.meth="all", param="pis", intervals=FALSE, partial=TRUE)
-# plot(resIMIFA, plot.meth="all", param="alpha")
+# plot(resIMIFA, plot.meth="all", param="alpha")}
 }
 \references{
-Murphy, K., Viroli, C., and Gormley, I. C. (2019) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v5}{arXiv:1701.07010v5}>.
+Murphy, K., Viroli, C., and Gormley, I. C. (2019) Infinite mixtures of infinite factor analysers, \emph{Bayesian Analysis}, 1-27. <\href{https://projecteuclid.org/euclid.ba/1570586978}{doi:10.1214/19-BA1179}>.
 }
 \seealso{
 \code{\link{mcmc_IMIFA}}, \code{\link{get_IMIFA_results}}, \code{\link{mat2cols}}, \code{\link{plot_cols}}

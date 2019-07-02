@@ -9,7 +9,8 @@ mixfaControl(n.iters = 25000L,
              thinning = 2L,
              centering = TRUE,
              scaling = c("unit", "pareto", "none"),
-             uni.type = c("unconstrained", "isotropic", "constrained", "single"),
+             uni.type = c("unconstrained", "isotropic",
+                          "constrained", "single"),
              psi.alpha = 2.5,
              psi.beta = NULL,
              mu.zero = NULL,
@@ -50,7 +51,7 @@ The first letter \strong{U} here corresponds to constraints on loadings (not yet
 
 \item{psi.alpha}{The shape of the inverse gamma prior on the uniquenesses. Defaults to 2.5. Must be greater than 1 if \code{psi.beta} is \emph{not} supplied. Otherwise be warned that values less than or equal to 1 may not bound uniquenesses sufficiently far away from 0, and the algorithm may therefore terminate. Also, excessively small values may lead to critical numerical issues and should thus be avoided.}
 
-\item{psi.beta}{The rate of the inverse gamma prior on the uniquenesses. Can be either a single parameter, a vector of variable specific rates, or (if \code{psi0g} is \code{TRUE}) a matrix of variable and cluster-specific rates. If this is not supplied, \code{\link{psi_hyper}} is invoked to choose sensible values, depending on the value of \code{uni.prior} and the data size and dimension, for the "\code{MFA}" and "\code{MIFA}" models only, the value of \code{psi0g}. Excessively small values may lead to critical numerical issues and should thus be avoided.
+\item{psi.beta}{The scale of the inverse gamma prior on the uniquenesses. Can be either a single parameter, a vector of variable specific scales, or (if \code{psi0g} is \code{TRUE}) a matrix of variable and cluster-specific scales. If this is not supplied, \code{\link{psi_hyper}} is invoked to choose sensible values, depending on the value of \code{uni.prior} and the data size and dimension, for the "\code{MFA}" and "\code{MIFA}" models only, the value of \code{psi0g}. Excessively small values may lead to critical numerical issues and should thus be avoided.
 
 Note that optional arguments to \code{psi_hyper} can be supplied via the \code{...} construct here.}
 
@@ -70,7 +71,7 @@ In any case, unless \code{z.list} is explicitly supplied, or \code{verbose} is \
 
 \item{equal.pro}{Logical variable indicating whether or not the mixing mixing proportions are to be equal across clusters in the model (default = \code{FALSE}). Only relevant for the "\code{MFA}" and "\code{MIFA}" methods.}
 
-\item{uni.prior}{A switch indicating whether uniquenesses rate hyperparameters are to be "\code{unconstrained}" or "\code{isotropic}", i.e. variable-specific or not. "\code{uni.prior}" must be "\code{isotropic}" if the last letter of "\code{uni.type}" is \strong{C}, but can take either value otherwise. Defaults to correspond to the last letter of \code{uni.type} if that is supplied and \code{uni.prior} is not, otherwise defaults to "\code{unconstrained}" (though"\code{isotropic}" is recommended when \code{N <= P}). Only relevant when "\code{psi.beta}" is not supplied and \code{\link{psi_hyper}} is therefore invoked (with optional arguments passable via the \code{...} construct).}
+\item{uni.prior}{A switch indicating whether uniquenesses scale hyperparameters are to be "\code{unconstrained}" or "\code{isotropic}", i.e. variable-specific or not. "\code{uni.prior}" must be "\code{isotropic}" if the last letter of "\code{uni.type}" is \strong{C}, but can take either value otherwise. Defaults to correspond to the last letter of \code{uni.type} if that is supplied and \code{uni.prior} is not, otherwise defaults to "\code{unconstrained}" (though"\code{isotropic}" is recommended when \code{N <= P}). Only relevant when "\code{psi.beta}" is not supplied and \code{\link{psi_hyper}} is therefore invoked (with optional arguments passable via the \code{...} construct).}
 
 \item{mu0g}{Logical indicating whether the \code{mu.zero} hyperparameter can be cluster-specific. Defaults to \code{FALSE}. Only relevant for the "\code{MFA}" and "\code{MIFA}" methods when \code{z.list} is supplied.}
 
@@ -108,9 +109,9 @@ mfctrl <- mixfaControl(n.iters=200, prec.mu=1E-03, sigma.mu=NULL,
 #                    sigma.mu=NULL, beta0=1, uni.type="constrained")
 }
 \references{
-Murphy, K., Viroli, C., and Gormley, I. C. (2019) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v5}{arXiv:1701.07010v5}>.
+Murphy, K., Viroli, C., and Gormley, I. C. (2019) Infinite mixtures of infinite factor analysers, \emph{Bayesian Analysis}, 1-27. <\href{https://projecteuclid.org/euclid.ba/1570586978}{doi:10.1214/19-BA1179}>.
 
-McNicholas, P. D. and Murphy, T. B. (2008) Parsimonious Gaussian Mixture Models, \emph{Statistics and Computing}, 18(3): 285-296.
+McNicholas, P. D. and Murphy, T. B. (2008) Parsimonious Gaussian mixture models, \emph{Statistics and Computing}, 18(3): 285-296.
 }
 \seealso{
 \code{\link{mcmc_IMIFA}}, \code{\link{psi_hyper}}, \code{\link[mclust]{hc}}, \code{\link[stats]{kmeans}}, \code{\link[mclust]{Mclust}}, \code{\link{mgpControl}}, \code{\link{bnpControl}}, \code{\link{storeControl}}

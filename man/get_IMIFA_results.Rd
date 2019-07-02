@@ -109,7 +109,7 @@ For the "\code{IMIFA}", "\code{IMFA}", "\code{OMIFA}", and "\code{OMFA}" methods
 Due to the way the offline label-switching correction is performed, different runs of this function may give \emph{very slightly} different results in terms of the cluster labellings (and by extension the parameters, which are permuted in the same way), but only if the chain was run for an extremely small number of iterations, well below the number required for convergence, and samples of the cluster labels match poorly across iterations (particularly if the number of clusters suggested by those sampled labels is high).
 }
 \examples{
-# data(coffee)
+\donttest{# data(coffee)
 # data(olive)
 
 # Run a MFA model on the coffee data over a range of clusters and factors.
@@ -132,10 +132,10 @@ Due to the way the offline label-switching correction is performed, different ru
 # summary(resIMIFAolive)
 
 # Simulate new data from the above model
-# newdata       <- sim_IMIFA_model(resIMIFAolive)
+# newdata       <- sim_IMIFA_model(resIMIFAolive)}
 }
 \references{
-Murphy, K., Viroli, C., and Gormley, I. C. (2019) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v5}{arXiv:1701.07010v5}>.
+Murphy, K., Viroli, C., and Gormley, I. C. (2019) Infinite mixtures of infinite factor analysers, \emph{Bayesian Analysis}, 1-27. <\href{https://projecteuclid.org/euclid.ba/1570586978}{doi:10.1214/19-BA1179}>.
 }
 \seealso{
 \code{\link{plot.Results_IMIFA}}, \code{\link{mcmc_IMIFA}}, \code{\link{Zsimilarity}}, \code{\link{scores_MAP}}, \code{\link{sim_IMIFA_model}}, \code{\link{Procrustes}}

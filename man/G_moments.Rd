@@ -17,7 +17,7 @@ G_variance(N,
 \arguments{
 \item{N}{The sample size.}
 
-\item{alpha}{The concentration parameter. Must be specified and must be strictly greater than \code{-discount}. When \code{discount} is negative \code{alpha} must be a positive integer multiple of \code{abs(discount)}.}
+\item{alpha}{The concentration parameter. Must be specified and must be strictly greater than \code{-discount}. The case \code{alpha=0} is accommodated. When \code{discount} is negative \code{alpha} must be a positive integer multiple of \code{abs(discount)}.}
 
 \item{discount}{The discount parameter for the Pitman-Yor process. Must be less than 1, but typically lies in the interval [0, 1). Defaults to 0 (i.e. the Dirichlet process). When \code{discount} is negative \code{alpha} must be a positive integer multiple of \code{abs(discount)}.}
 }
@@ -31,7 +31,7 @@ Calculates the \emph{a priori} expected number of clusters or the variance of th
 All arguments are vectorised. Users can also consult \code{\link{G_priorDensity}} in order to solicit sensible priors.
 }
 \note{
-Requires use of the \code{\link[Rmpfr]{Rmpfr}} and \code{gmp} libraries for non-zero \code{discount} values.
+\code{G_variance} requires use of the \code{\link[Rmpfr]{Rmpfr}} and \code{gmp} libraries for non-zero \code{discount} values. \code{G_expected} requires these libraries only for the \code{alpha=0} case. Despite the high precision arithmetic used, the functions can be unstable for small values of \code{discount}.
 }
 \examples{
 G_expected(N=50, alpha=19.23356)
@@ -48,6 +48,9 @@ matplot(DP, type="l", xlab="N", ylab="G")
 # Examine the growth rate of the PYP
 # PY <- sapply(c(0.1, 0.25, 0.5), function(i) G_expected(1:200, alpha=1, discount=i))
 # matplot(PY, type="l", xlab="N", ylab="G")
+}
+\references{
+De Blasi, P., Favaro, S., Lijoi, A., Mena, R. H., Prunster, I., and Ruggiero, M. (2015) Are Gibbs-type priors the most natural generalization of the Dirichlet process?, \emph{IEEE Transactions on Pattern Analysis and Machine Intelligence}, 37(2): 212-229.
 }
 \seealso{
 \code{\link{G_priorDensity}}, \code{\link[Rmpfr]{Rmpfr}}

@@ -68,6 +68,7 @@
     if(IM.lab.sw)   {
       lab.rate       <- matrix(0L, nrow=2L, ncol=total)
     }
+    abs.disc         <- abs(discount)
     d.count          <- 0L
     avgzeta          <- zeta
     heat             <- tune.zeta$heat
@@ -125,11 +126,9 @@
       if(verbose     && iter  < burnin)  utils::setTxtProgressBar(pb, iter)
       storage        <- is.element(iter, iters)
 
-    # Mixing Proportions
+    # Mixing Proportions & Re-ordering
       Vs             <- .sim_vs_inf(alpha=pi.alpha, nn=nn[Gs], N=N, discount=discount, len=G, lseq=Gs)
       pi.prop        <- .sim_pi_inf(Vs, len=G)
-
-    # Re-ordering & Slice Sampler
       index          <- order(pi.prop, decreasing=TRUE)
       prev.prod      <- pi.prop[G]  * (1/Vs[G] - 1)
       pi.prop        <- pi.prop[index]
@@ -139,7 +138,40 @@
       psi.inv[,Gs]   <- psi.inv[,index, drop=FALSE]
       z              <- factor(z, labels=match(nn.ind, index))
       z              <- as.integer(levels(z))[z]
-      if(!ind.slice) {
+      nn[Gs]         <- nn[index]
+      nn0[Gs]        <- nn0[index]
+
+    # Scores & Loadings
+      dat.g          <- lapply(Gs, function(g) data[z == g,, drop=FALSE])
+      c.data         <- lapply(Gs, function(g) sweep(dat.g[[g]], 2L, mu[,g], FUN="-", check.margin=FALSE))
+      if(Q0)     {
+        eta.tmp      <- lapply(Gs, function(g) if(nn0[g]) .sim_score(N=nn[g], lmat=lmat[,,g], Q=Q, c.data=c.data[[g]], psi.inv=psi.inv[,g], Q1=Q1) else .empty_mat(nc=Q))
+        EtE          <- lapply(Gs, function(g) if(nn0[g]) crossprod(eta.tmp[[g]]))
+        lmat[,,Gs]   <- array(unlist(lapply(Gs, function(g) matrix(if(nn0[g]) vapply(Ps, function(j) .sim_load(l.sigma=l.sigma, Q=Q, c.data=c.data[[g]][,j], eta=eta.tmp[[g]],
+                        EtE=EtE[[g]], Q1=Q1, psi.inv=psi.inv[,g][j]), numeric(Q)) else .sim_load_p(Q=Q, P=P, sigma.l=sigma.l), nrow=P, byrow=TRUE)), use.names=FALSE), dim=c(P, Q, G))
+        eta          <- do.call(rbind, eta.tmp)[obsnames,, drop=FALSE]
+      } else     {
+        eta.tmp      <- lapply(Gs, function(g) eta[z == g,, drop=FALSE])
+      }
+
+    # Uniquenesses
+      if(isTRUE(one.uni)) {
+        S.mat        <- lapply(Gs, function(g) { S   <- c.data[[g]] - if(Q0) tcrossprod(eta.tmp[[g]], if(Q1) as.matrix(lmat[,,g]) else lmat[,,g]) else 0L; S * S } )
+        psi.inv[,]   <- .sim_psi_inv(uni.shape, psi.beta, S.mat, V)
+      } else {
+        psi.inv[,Gs] <- vapply(Gs, function(g) if(nn0[g]) .sim_psi_inv(N=nn[g], psi.alpha=psi.alpha, c.data=c.data[[g]], P=P, eta=eta.tmp[[g]], psi.beta=psi.beta,
+                               Q0=Q0, lmat=if(Q1) as.matrix(lmat[,,g]) else lmat[,,g]) else .sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), numeric(P))
+      }
+
+    # Means
+      sum.data       <- vapply(dat.g, colSums2, numeric(P))
+      sum.data       <- if(uni) t(sum.data) else sum.data
+      sum.eta        <- lapply(eta.tmp, colSums2)
+      mu[,Gs]        <- vapply(Gs, function(g) if(nn0[g]) .sim_mu(mu.sigma=mu.sigma, psi.inv=psi.inv[,g], mu.zero=mu.zero, sum.data=sum.data[,g], sum.eta=sum.eta[[g]],
+                               lmat=if(Q1) as.matrix(lmat[,,g]) else lmat[,,g], N=nn[g], P=P) else .sim_mu_p(P=P, sig.mu.sqrt=sig.mu.sqrt, mu.zero=mu.zero), numeric(P))
+
+    # Slice Sampler
+      if(!ind.slice)  {
         ksi          <- pi.prop
         log.ksi      <- log(ksi)
       }
@@ -156,7 +188,7 @@
           G          <- G + 1L
           prev.prod  <- pi.prop[G]  * (1/Vs[G] - 1)
         }
-        G            <- ifelse(!G.trunc, G, G.new)
+        G            <- ifelse(G.trunc, G.new, G)
         Gs           <- seq_len(G)
         if(G.trunc)   {
           pi.prop    <- pi.prop[Gs]
@@ -166,7 +198,7 @@
         cum.pi       <- sum(pi.prop)
         u.max        <- 1 - min.u
         G.trunc      <- cum.pi > u.max
-        while(cum.pi  < u.max && trunc.G > G && (pi.prop[G] != 0 || Vs[G] != 1)) {
+        while(cum.pi <= u.max && trunc.G > G && (pi.prop[G] != 0 || Vs[G] != 1)) {
           newVs      <- .sim_vs_inf(alpha=pi.alpha, discount=discount, len=1L, lseq=G + 1L)
           Vs         <- c(Vs,      newVs)
           newPis     <- newVs  *   prev.prod
@@ -214,40 +246,13 @@
       nn0            <- nn > 0
       nn.ind         <- which(nn0)
       G.non          <- length(nn.ind)
-      dat.g          <- lapply(Gs, function(g) data[z == g,, drop=FALSE])
-
-    # Scores & Loadings
-      c.data         <- lapply(Gs, function(g) sweep(dat.g[[g]], 2L, mu[,g], FUN="-", check.margin=FALSE))
-      if(Q0)     {
-        eta.tmp      <- lapply(Gs, function(g) if(nn0[g]) .sim_score(N=nn[g], lmat=lmat[,,g], Q=Q, c.data=c.data[[g]], psi.inv=psi.inv[,g], Q1=Q1) else .empty_mat(nc=Q))
-        EtE          <- lapply(Gs, function(g) if(nn0[g]) crossprod(eta.tmp[[g]]))
-        lmat[,,Gs]   <- array(unlist(lapply(Gs, function(g) matrix(if(nn0[g]) vapply(Ps, function(j) .sim_load(l.sigma=l.sigma, Q=Q, c.data=c.data[[g]][,j], eta=eta.tmp[[g]],
-                        EtE=EtE[[g]], Q1=Q1, psi.inv=psi.inv[,g][j]), numeric(Q)) else .sim_load_p(Q=Q, P=P, sigma.l=sigma.l), nrow=P, byrow=TRUE)), use.names=FALSE), dim=c(P, Q, G))
-        eta          <- do.call(rbind, eta.tmp)[obsnames,, drop=FALSE]
-      } else     {
-        eta.tmp      <- lapply(Gs, function(g) eta[z == g,, drop=FALSE])
-      }
-
-    # Uniquenesses
-      if(isTRUE(one.uni)) {
-        S.mat        <- lapply(Gs, function(g) { S   <- c.data[[g]] - if(Q0) tcrossprod(eta.tmp[[g]], if(Q1) as.matrix(lmat[,,g]) else lmat[,,g]) else 0L; S * S } )
-        psi.inv[,]   <- .sim_psi_inv(uni.shape, psi.beta, S.mat, V)
-      } else {
-        psi.inv[,Gs] <- vapply(Gs, function(g) if(nn0[g]) .sim_psi_inv(N=nn[g], psi.alpha=psi.alpha, c.data=c.data[[g]], P=P, eta=eta.tmp[[g]], psi.beta=psi.beta,
-                               Q0=Q0, lmat=if(Q1) as.matrix(lmat[,,g]) else lmat[,,g]) else .sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), numeric(P))
-      }
-
-    # Means
-      sum.data       <- vapply(dat.g, colSums2, numeric(P))
-      sum.data       <- if(uni) t(sum.data) else sum.data
-      sum.eta        <- lapply(eta.tmp, colSums2)
-      mu[,Gs]        <- vapply(Gs, function(g) if(nn0[g]) .sim_mu(mu.sigma=mu.sigma, psi.inv=psi.inv[,g], mu.zero=mu.zero, sum.data=sum.data[,g], sum.eta=sum.eta[[g]],
-                               lmat=if(Q1) as.matrix(lmat[,,g]) else lmat[,,g], N=nn[g], P=P) else .sim_mu_p(P=P, sig.mu.sqrt=sig.mu.sqrt, mu.zero=mu.zero), numeric(P))
 
     # Alpha
       if(learn.alpha)      {
         non.zero.d   <- discount != 0
-        if(isTRUE(non.zero.d))  {
+        if(discount   < 0) {
+          pi.alpha   <- if(discount < 0) G * abs.disc else pi.alpha
+        } else if(isTRUE(non.zero.d))  {
           MH.alpha   <- .sim_alpha_m(alpha=pi.alpha, discount=discount, alpha.shape=alpha.shape, alpha.rate=alpha.rate, N=N, G=G.non, zeta=zeta)
           pi.alpha   <- MH.alpha$alpha
           a.rate     <- MH.alpha$rate

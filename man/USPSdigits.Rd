@@ -21,7 +21,7 @@ Training and test sets for the United States Postal Service (USPS) handwritten d
 }
 \examples{
 # Load the data and record the labels
-data(USPSdigits)
+data(USPSdigits, package="IMIFA")
 ylab  <- USPSdigits$train[,1]
 train <- USPSdigits$train[,-1]
 

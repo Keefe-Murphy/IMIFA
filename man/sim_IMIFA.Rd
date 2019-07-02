@@ -18,7 +18,7 @@ sim_IMIFA_data(N = 300L,
                nn = NULL,
                loc.diff = 2,
                non.zero = P,
-               forceQ = TRUE,
+               forceQg = TRUE,
                method = c("conditional", "marginal"))
 
 sim_IMIFA_model(res,
@@ -27,7 +27,7 @@ sim_IMIFA_model(res,
 \arguments{
 \item{N, G, P}{Desired overall number of observations, number of clusters, and number of variables in the simulated data set. All must be a single integer.}
 
-\item{Q}{Desired number of cluster-specific latent factors in the simulated data set. Can be specified either as a single integer if all clusters are to have the same number of factors, or a vector of length \code{G}. Defaults to \code{floor(log(P))} in each cluster. Should be less than the associated \code{\link{Ledermann}} bound and the number of observations in the corresponding cluster. The argument \code{forceQ} can be used to enforce this upper limit.}
+\item{Q}{Desired number of cluster-specific latent factors in the simulated data set. Can be specified either as a single integer if all clusters are to have the same number of factors, or a vector of length \code{G}. Defaults to \code{floor(log(P))} in each cluster. Should be less than the associated \code{\link{Ledermann}} bound and the number of observations in the corresponding cluster. The argument \code{forceQg} can be used to enforce this upper limit.}
 
 \item{pis}{Mixing proportions of the clusters in the dataset if \code{G} > 1. Must sum to 1. Defaults to \code{rep(1/G, G)}.}
 
@@ -43,13 +43,15 @@ sim_IMIFA_model(res,
 
 \item{loc.diff}{A parameter to control the closeness of the clusters in terms of the difference in their location vectors. Only relevant if \code{mu} is NOT supplied. Defaults to \code{2}.
 
-More specifically, \code{loc.diff} (if invoked) is invoked as follows: means are simulated with the vector of cluster-specific hypermeans given by \code{scale(1:G, center=TRUE, scale=FALSE) * loc.diff}.}
+More specifically, \code{loc.diff} (if invoked) is invoked as follows: means are simulated with the vector of cluster-specific hypermeans given by:
+
+\code{scale(1:G, center=TRUE, scale=FALSE) * loc.diff}.}
 
 \item{non.zero}{Controls the number of non-zero entries in each loadings column (per cluster) \strong{only} when \code{loadings} is not explicitly supplied. Values must be integers in the interval \code{[1,P]}. Defaults to \code{P}. The positions of the zeros are randomised, and non-zero entries are drawn from a standard normal.
 
-Must be given as a list of length \code{G} of vectors of length corresponding to \code{Q} when \code{G>1}. Can be given either as such a list or simply a vector of length \code{Q} when \code{G=1}. Alternatively, a single integer can be supplied, common across all loadings columns across all clusters. In any case, \code{non.zero} will be affected by \code{forceQ=TRUE} by default (see below).}
+Must be given as a list of length \code{G} of vectors of length corresponding to \code{Q} when \code{G>1}. Can be given either as such a list or simply a vector of length \code{Q} when \code{G=1}. Alternatively, a single integer can be supplied, common across all loadings columns across all clusters. In any case, \code{non.zero} will be affected by \code{forceQg=TRUE} by default (see below).}
 
-\item{forceQ}{A logical indicating whether the upper limit on the number of cluster-specific factors \code{Q} is enforced. Defaults to \code{TRUE} for \code{sim_IMIFA_data}, but is always \code{FALSE} for \code{sim_IMIFA_model}. Note that when \code{forceQ=TRUE} is invoked, \code{non.zero} (see above) is also affected.}
+\item{forceQg}{A logical indicating whether the upper limit on the number of cluster-specific factors \code{Q} is enforced. Defaults to \code{TRUE} for \code{sim_IMIFA_data}, but is always \code{FALSE} for \code{sim_IMIFA_model}. Note that when \code{forceQg=TRUE} is invoked, \code{non.zero} (see above) is also affected.}
 
 \item{method}{A switch indicating whether the mixture to be simulated from is the conditional distribution of the data given the latent variables (default), or simply the marginal distribution of the data.}
 
@@ -84,11 +86,11 @@ plot(cmdscale(dist(sim_data), k=2), col=labels)
 # Examine the overlap with a pairs plot of 5 randomly chosen variables
 pairs(sim_data[,sample(1:20, 5)], col=labels)
 
-# Fit a MIFA model to this data
-# tmp    <- mcmc_IMIFA(sim_data, method="MIFA", range.G=3, n.iters=5000)
+\donttest{# Fit a MIFA model to this data
+# tmp    <- mcmc_IMIFA(sim_data, method="MIFA", range.G=3, n.iters=5000)}
 }
 \references{
-Murphy, K., Viroli, C., and Gormley, I. C. (2019) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v5}{arXiv:1701.07010v5}>.
+Murphy, K., Viroli, C., and Gormley, I. C. (2019) Infinite mixtures of infinite factor analysers, \emph{Bayesian Analysis}, 1-27. <\href{https://projecteuclid.org/euclid.ba/1570586978}{doi:10.1214/19-BA1179}>.
 }
 \seealso{
 \code{\link{mcmc_IMIFA}} for fitting an IMIFA related model to the simulated data set.

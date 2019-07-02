@@ -7,16 +7,19 @@
 G_priorDensity(N,
                alpha,
                discount = 0,
-               show.plot = TRUE)
+               show.plot = TRUE,
+               type = "h")
 }
 \arguments{
 \item{N}{The sample size.}
 
-\item{alpha}{The concentration parameter. Must be specified and must be strictly greater than \code{-discount}. When \code{discount} is negative \code{alpha} must be a positive integer multiple of \code{abs(discount)}.}
+\item{alpha}{The concentration parameter. Must be specified and must be strictly greater than \code{-discount}. The case \code{alpha=0} is accommodated. When \code{discount} is negative \code{alpha} must be a positive integer multiple of \code{abs(discount)}.}
 
 \item{discount}{The discount parameter for the Pitman-Yor process. Must be less than 1, but typically lies in the interval [0, 1). Defaults to 0 (i.e. the Dirichlet process). When \code{discount} is negative \code{alpha} must be a positive integer multiple of \code{abs(discount)}.}
 
 \item{show.plot}{Logical indicating whether the plot should be displayed (default = \code{TRUE}).}
+
+\item{type}{The type of plot to be drawn, as per \code{\link[graphics]{plot}}. Default to "\code{h}": histogram-like vertical lines.}
 }
 \value{
 A plot of the prior distribution if \code{show.plot} is \code{TRUE}. Density values are returned invisibly. Note that the density values may not strictly sum to one in certain cases, as values small enough to be represented as zero may well be returned.
@@ -30,7 +33,7 @@ All arguments are vectorised. Users can also consult \code{\link{G_expected}} an
 \note{
 The actual density values are returned invisibly. Therefore, they can be visualised as desired by the user even if \code{show.plot} is \code{FALSE}.
 
-Requires use of the \code{\link[Rmpfr]{Rmpfr}} and \code{gmp} libraries; may encounter difficulty and slowness for large \code{N}, especially with non-zero \code{discount} values.
+Requires use of the \code{\link[Rmpfr]{Rmpfr}} and \code{gmp} libraries; may encounter difficulty and slowness for large \code{N}, especially with non-zero \code{discount} values. Despite the high precision arithmetic used, the functions can be unstable for small values of \code{discount}.
 }
 \examples{
 # Plot Dirichlet process priors for different values of alpha
@@ -44,6 +47,9 @@ Requires use of the \code{\link[Rmpfr]{Rmpfr}} and \code{gmp} libraries; may enc
 
 # Now plot them to examine tail behaviour as discount increases
 # (PY <- G_priorDensity(N=50, alpha=c(19.23356, 6.47006, 1), discount=c(0, 0.47002, 0.7300045)))
+}
+\references{
+De Blasi, P., Favaro, S., Lijoi, A., Mena, R. H., Prunster, I., and Ruggiero, M. (2015) Are Gibbs-type priors the most natural generalization of the Dirichlet process?, \emph{IEEE Transactions on Pattern Analysis and Machine Intelligence}, 37(2): 212-229.
 }
 \seealso{
 \code{\link{G_expected}}, \code{\link{G_variance}}, \code{\link[Rmpfr]{Rmpfr}}

@@ -37,7 +37,6 @@ This function is a wrapper to \code{\link{show_digit}} which supplies the poster
 Note that both centering and scaling of the original data prior to modelling is accounted for in reconstructing the means, but \code{dat}, if necessary, must be the raw data prior to pre-processing.
 }
 \examples{
-\dontrun{
 # Load the USPS data and discard peripheral digits
 data(USPSdigits)
 ylab  <- USPSdigits$train[,1]
@@ -45,9 +44,9 @@ train <- USPSdigits$train[,-1]
 ind   <- apply(train, 2, sd) > 0.7
 dat   <- train[,ind]
 
-# Fit an IMIFA model (warning: quite slow!)
+\donttest{# Fit an IMIFA model (warning: quite slow!)
 # sim <- mcmc_IMIFA(dat, n.iters=100, prec.mu=1e-03, z.init="kmeans",
-                    centering=FALSE, scaling="none")
+#                   centering=FALSE, scaling="none")
 # res <- get_IMIFA_results(sim, zlabels=ylab)
 
 # Examine the posterior mean image of the first two clusters

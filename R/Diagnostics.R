@@ -66,7 +66,7 @@
 #' @importFrom slam "as.simple_triplet_matrix"
 #'
 #' @seealso \code{\link{plot.Results_IMIFA}}, \code{\link{mcmc_IMIFA}}, \code{\link{Zsimilarity}}, \code{\link{scores_MAP}}, \code{\link{sim_IMIFA_model}}, \code{\link{Procrustes}}
-#' @references Murphy, K., Viroli, C., and Gormley, I. C. (2019) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v5}{arXiv:1701.07010v5}>.
+#' @references Murphy, K., Viroli, C., and Gormley, I. C. (2019) Infinite mixtures of infinite factor analysers, \emph{Bayesian Analysis}, 1-27. <\href{https://projecteuclid.org/euclid.ba/1570586978}{doi:10.1214/19-BA1179}>.
 #'
 #' @author Keefe Murphy - <\email{keefe.murphy@@ucd.ie}>
 #' @usage
@@ -86,7 +86,7 @@
 #'                   nonempty = TRUE,
 #'                   ...)
 #' @examples
-#' # data(coffee)
+#' \donttest{# data(coffee)
 #' # data(olive)
 #'
 #' # Run a MFA model on the coffee data over a range of clusters and factors.
@@ -109,12 +109,13 @@
 #' # summary(resIMIFAolive)
 #'
 #' # Simulate new data from the above model
-#' # newdata       <- sim_IMIFA_model(resIMIFAolive)
+#' # newdata       <- sim_IMIFA_model(resIMIFAolive)}
 get_IMIFA_results              <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, Q = NULL, criterion = c("bicm", "aicm", "dic", "bic.mcmc", "aic.mcmc"), G.meth = c("mode", "median"),
                                            Q.meth = c("mode", "median"), conf.level = 0.95, error.metrics = TRUE, vari.rot = FALSE, z.avgsim = FALSE, zlabels = NULL, nonempty = TRUE, ...) {
     UseMethod("get_IMIFA_results")
 }
 
+#' @method get_IMIFA_results IMIFA
 #' @export
 get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, Q = NULL, criterion = c("bicm", "aicm", "dic", "bic.mcmc", "aic.mcmc"), G.meth = c("mode", "median"),
                                            Q.meth = c("mode", "median"), conf.level = 0.95, error.metrics = TRUE, vari.rot = FALSE, z.avgsim = FALSE, zlabels = NULL, nonempty = TRUE, ...) {
@@ -613,7 +614,10 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   }
 
   leder.b        <- min(n.obs - 1L, Ledermann(n.var, isotropic=is.element(uni.type, c("isotropic", "single"))))
-  if(any(unlist(Q) > leder.b))    warning(paste0("Estimate of Q", ifelse(G > 1, " in one or more clusters ", " "), "is greater than ", ifelse(any(unlist(Q) > n.var), paste0("the number of variables (", n.var, ")"), paste0("the suggested Ledermann upper bound (", leder.b, ")\n"))), call.=FALSE)
+  if(any(unlist(Q)  >  leder.b))  warning(paste0("Estimate of Q", ifelse(G > 1, " in one or more clusters ", " "), "is greater than ", ifelse(any(unlist(Q) > n.var), paste0("the number of variables (", n.var, ")"), paste0("the suggested Ledermann upper bound (", leder.b, ")\n"))), call.=FALSE)
+  if(any(unlist(Q) >= sizes) &&
+     G > 1   &&
+     !attr(sims, "ForceQg"))      warning("Estimate of Q is greater than the number of observations in one or more clusters:\nConsider setting 'forceQg' to TRUE\n", call.=FALSE)
   if(inf.Q)   {
     if(G1        <- G > 1)    {
       Q.tab      <- lapply(apply(Q.store, 1L, function(x) list(table(x, dnn=NULL))), "[[", 1L)
@@ -695,9 +699,9 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   # Retrieve loadings and rotate
     if(sw["l.sw"]) {
       tmpind     <- ifelse(inf.Q, which.max(Q.store[g,] == Qg), 1L)
-      lmat       <- if(clust.ind) .a_drop(lmats[,,g,storeG, drop=FALSE], drop=3) else lmats[,,storeG, drop=FALSE]
-      l.temp     <- .a_drop(lmat[,,tmpind, drop=FALSE], drop=3)
-      l.temp     <- if(isTRUE(vari.rot)) .vari_max(l.temp, ...)$loadings         else l.temp
+      lmat       <- if(clust.ind) .a_drop(lmats[,,g,storeG, drop=FALSE], drop=3L) else lmats[,,storeG, drop=FALSE]
+      l.temp     <- .a_drop(lmat[,,tmpind, drop=FALSE], drop=3L)
+      l.temp     <- if(isTRUE(vari.rot)) .vari_max(l.temp, ...)$loadings          else l.temp
       if(inf.Q)   {
         rotind   <- Lstore[[g]][-1L]
         rotind   <- rotind[Q.store[g,rotind] > 1]
@@ -710,12 +714,12 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
         if(sw["s.sw"]      &&
            (p  %in%
             eta.store))     {
-          p2     <- if(inf.Q) eta.store == p else p
+          p2     <- if(inf.Q) eta.store == p   else p
           if(clust.ind)     {
             zp   <- z2[p,] == g
-            eta[zp,,p2]    <- .a_drop(eta[zp,,p2, drop=FALSE], 3) %*% proc$R
+            eta[zp,,p2]    <- .a_drop(eta[zp,,p2, drop=FALSE], 3L) %*% proc$R
           } else  {
-            eta[,,p2]      <- eta[,,p2,           drop=FALSE]     %*% proc$R
+            eta[,,p2]      <- .a_drop(eta[,,p2,   drop=FALSE], 3L) %*% proc$R
           }
         }
       }
@@ -823,7 +827,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     class(means) <- "listof"
   }
   if(sw["mu.sw"]) {
-    last.mu      <- if(clust.ind) .a_drop(mus[,,TN.store, drop=FALSE], drop=3)  else  mu[,TN.store, drop=FALSE]
+    last.mu      <- if(clust.ind) .a_drop(mus[,,TN.store, drop=FALSE], drop=3L) else  mu[,TN.store, drop=FALSE]
     colnames(last.mu)      <- gnames
     means        <- c(means, list(last.mu = last.mu))
     class(means) <- "listof"
@@ -834,7 +838,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     post.load    <- .matnames(lapply(result, "[[", "post.load"), lnames)
     var.load     <- .matnames(lapply(result, "[[", "var.load"),  lnames)
     ci.load      <- .matnames(lapply(result, "[[", "ci.load"),   lnames, dim=3)
-    last.lmat    <- lapply(lmats2, function(x) { if(!is.null(x)) { x <- .a_drop(x[,,dim(x)[3L], drop=FALSE], drop=3); class(x) <- "loadings" }; x })
+    last.lmat    <- lapply(lmats2, function(x) { if(!is.null(x)) { x <- .a_drop(x[,,dim(x)[3L], drop=FALSE], drop=3L); class(x) <- "loadings" }; x })
     loads        <- list(lmats = lmats2, post.load = post.load, var.load = var.load, ci.load = ci.load, last.load = last.lmat)
     loads        <- lapply(loads, function(x)  { class(x) <-  "listof"; x} )
     if(cshrink)     attr(loads, "Sigma")    <- GQ.res$post.sigma
@@ -854,7 +858,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     class(uniquenesses)    <- "listof"
   }
   if(sw["psi.sw"]) {
-    last.psi     <- if(clust.ind) .a_drop(psis[,,TN.store, drop=FALSE], drop=3) else  psi[,TN.store, drop=FALSE]
+    last.psi     <- if(clust.ind) .a_drop(psis[,,TN.store, drop=FALSE], drop=3L) else psi[,TN.store, drop=FALSE]
     colnames(last.psi)     <- gnames
     uniquenesses <- c(uniquenesses, list(last.psi = last.psi))
     class(uniquenesses)    <- "listof"
@@ -916,7 +920,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
         Q0Er     <- Q0E[,r]
         if(frobenius)   {
           if(inf.Q) QsEr       <- QsE[,r]
-          rdat   <- suppressWarnings(sim_IMIFA_data(N=n.obs, G=G, P=n.var, Q=QsEr, nn=tab.z[r,], mu=mu2[,,r], psi=psi2[,,r], method="marginal", forceQ=FALSE, loadings=if(!all(Q0Er)) lapply(Gseq, function(g) as.matrix(lmat2[,if(inf.Q) seq_len(QsEr[g]) else Qseq,g,r]))))
+          rdat   <- suppressWarnings(sim_IMIFA_data(N=n.obs, G=G, P=n.var, Q=QsEr, nn=tab.z[r,], mu=mu2[,,r], psi=psi2[,,r], method="marginal", forceQg=FALSE, loadings=if(!all(Q0Er)) lapply(Gseq, function(g) as.matrix(lmat2[,if(inf.Q) seq_len(QsEr[g]) else Qseq,g,r]))))
           rbinsx <- mapply(tabulate, mapply(cut, rdat, dbreaks, SIMPLIFY=FALSE), xbins, SIMPLIFY=FALSE)
           rbins  <- sapply(rbinsx, .padding, nbins)
           Frob   <- norm(dat.bins - rbins, dots$type)
@@ -971,7 +975,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
             QsEr <- QsE[r]
             QsMs <- seq_len(QsEr)
           }
-          rdat   <- suppressWarnings(sim_IMIFA_data(N=n.obs, G=G, P=n.var, Q=QsEr, mu=mu2[,r], psi=psi2[,r], method="marginal", forceQ=FALSE, loadings=if(!Q0E[r]) as.matrix(lmat2[,QsMs,r])))
+          rdat   <- suppressWarnings(sim_IMIFA_data(N=n.obs, G=G, P=n.var, Q=QsEr, mu=mu2[,r], psi=psi2[,r], method="marginal", forceQg=FALSE, loadings=if(!Q0E[r]) as.matrix(lmat2[,QsMs,r])))
           rbinsx <- mapply(tabulate, mapply(cut, rdat, dbreaks, SIMPLIFY=FALSE), xbins, SIMPLIFY=FALSE)
           rbins  <- sapply(rbinsx, .padding, nbins)
           Frob   <- norm(dat.bins - rbins, dots$type)
@@ -1048,7 +1052,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
    eta           <- eta[,Qseq,, drop=FALSE]
    colnames(eta) <- paste0("Factor", Qseq)
    scores        <- list(eta = eta, post.eta = rowMeans(eta, dims=2), var.eta = apply(eta, c(1L, 2L), Var),
-                         ci.eta = apply(eta, c(1L, 2L), stats::quantile, conf.levels), last.eta = .a_drop(eta[,,e.store, drop=FALSE], drop=3))
+                         ci.eta = apply(eta, c(1L, 2L), stats::quantile, conf.levels), last.eta = .a_drop(eta[,,e.store, drop=FALSE], drop=3L))
    attr(scores, "Eta.store")   <- e.store
    class(scores) <- "listof"
   }
@@ -1072,6 +1076,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   attr(result, "Discount")     <- if(is.element(method, c("IMFA", "IMIFA")) && !learn.d) attr(sims, "Discount")
   attr(result, "Errors")       <- errs
   attr(result, "Equal.Pi")     <- equal.pro
+  attr(result, "ForceQg")      <- attr(sims, "ForceQg")
   attr(result, "G.init")       <- if(inf.G) attr(sims, "G.init")
   attr(result, "G.Mean")       <- attr(sims, "G.Mean")
   attr(result, "G.Scale")      <- attr(sims, "G.Scale")

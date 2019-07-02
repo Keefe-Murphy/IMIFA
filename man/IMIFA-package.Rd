@@ -13,8 +13,8 @@ A package for Bayesian nonparameteric clustering of high-dimensional datasets, p
 \itemize{
 \item{Type: }{Package}
 \item{Package: }{IMIFA}
-\item{Version: }{2.1.0}
-\item{Date: }{2019-02-04 (this version), 2017-02-02 (original release)}
+\item{Version: }{2.1.1}
+\item{Date: }{2019-12-11 (this version), 2017-02-02 (original release)}
 \item{Licence: }{GPL (>=2)}
 }
 }
@@ -37,7 +37,7 @@ Results obtained from get_IMIFA_Results are passed to this function with the typ
 
 \section{References}{
 
-Murphy, K., Viroli, C., and Gormley, I. C. (2019) Infinite Mixtures of Infinite Factor Analysers, \emph{to appear}. <\href{https://arxiv.org/abs/1701.07010v5}{arXiv:1701.07010v5}>.
+Murphy, K., Viroli, C., and Gormley, I. C. (2019) Infinite mixtures of infinite factor analysers, \emph{Bayesian Analysis}, 1-27. <\href{https://projecteuclid.org/euclid.ba/1570586978}{doi:10.1214/19-BA1179}>.
 }
 
 \section{See Also}{

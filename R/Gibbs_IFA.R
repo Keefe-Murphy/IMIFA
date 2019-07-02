@@ -90,7 +90,6 @@
       if(Q0) {
         load.2   <- lmat * lmat
         phi      <- .sim_phi(Q=Q, P=P, nu1=nu1, nu2=nu2, tau=tau, load.2=load.2)
-
         sum.term <- colSums2(phi * load.2)
         for(k in seq_len(Q)) {
           delta[k]  <- if(k > 1) .sim_deltak(alpha.d2=alpha.d2, beta.d2=beta.d2, delta.k=delta[k], Q=Q, P=P, k=k,
