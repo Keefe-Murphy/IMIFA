@@ -571,7 +571,7 @@
         exp.seq  <- lapply(ML, function(i) exp.Q1[i] * exp.Qk[i]^Qseq)
         check    <- !vapply(exp.seq, is.unsorted, logical(1L))
       }
-      exp.seq    <- if(length(exp.seq) == 1) exp.seq[[1L]] else exp.seq
+      exp.seq    <- if(length(exp.seq) == 1) exp.seq[[1L]]             else exp.seq
       res        <- list(expectation = exp.seq, valid = if(Q < 2) TRUE else check)
       attr(res, "Warning")    <- WX
         return(res)

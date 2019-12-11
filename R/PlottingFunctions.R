@@ -37,7 +37,7 @@
 #' When \code{mat} is \code{TRUE} and \code{by.fac} is \code{FALSE} (both defaults), the convention for dealing with overplotting for \code{trace} and \code{density} plots when \code{param} is either \code{scores} or \code{loadings} is to plot the last factor first, such that the first factor appears 'on top'.
 #' @keywords plotting main
 #' @method plot Results_IMIFA
-#' @importFrom Rfast "med" "colMedians"
+#' @importFrom Rfast "colMedians" "Median"
 #' @importFrom matrixStats "rowRanges"
 #' @importFrom mclust "classError"
 #' @importFrom viridis "viridis"
@@ -983,7 +983,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
         G.plot <- graphics::barplot(plot.G, ylab="Frequency", xaxt="n", col=col.G)
         if(titles) graphics::title(main=list("Posterior Distribution of G"))
         graphics::axis(1, at=G.plot, labels=names(plot.G), tick=FALSE)
-        graphics::axis(1, at=med(G.plot), labels="G", tick=FALSE, line=1.5)
+        graphics::axis(1, at=Median(G.plot), labels="G", tick=FALSE, line=1.5)
       }
 
     if(plotQ.ind) {
@@ -1002,7 +1002,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
         Q.plot <- graphics::barplot(plot.Q, ylab="Frequency", xaxt="n", col=col.Q)
         if(titles) graphics::title(main=list("Posterior Distribution of Q"))
         graphics::axis(1, at=Q.plot, labels=names(plot.Q), tick=FALSE)
-        graphics::axis(1, at=med(Q.plot), labels="Q", tick=FALSE, line=1.5)
+        graphics::axis(1, at=Median(Q.plot), labels="Q", tick=FALSE, line=1.5)
       } else {
         if(mispal) grDevices::palette(viridis(max(G, 2L), alpha=transparency))
         graphics::layout(1)
@@ -1023,7 +1023,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
         Q.plot <- graphics::barplot(plot.Q, beside=TRUE, ylab="Frequency", xaxt="n", col=Gseq, space=c(0, 2))
         if(titles) graphics::title(main=list(expression('Posterior Distribution of Q'["g"])))
         graphics::axis(1, at=Rfast::colMedians(Q.plot), labels=colnames(plot.Q), tick=FALSE)
-        graphics::axis(1, at=med(Q.plot), labels="Q", tick=FALSE, line=1)
+        graphics::axis(1, at=Median(Q.plot), labels="Q", tick=FALSE, line=1)
         if(titles)  {
           graphics::par(mar=c(0, 0, 0, 0))
           graphics::plot.new()

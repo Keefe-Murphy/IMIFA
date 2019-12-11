@@ -1,6 +1,9 @@
 __Infinite Mixtures of Infinite Factor Analysers__
 ==================================================  
 
+### Bug Fixes
+* Ensured compatibility with latest version of `Rfast` package.
+
 ## IMIFA v2.1.1 - (_8<sup>th</sup> release [patch update]: 2019-12-11_)
 ### Improvements
 * `discount` can now be fixed at a negative value when `learn.d=FALSE`,  
