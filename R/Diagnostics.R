@@ -60,7 +60,7 @@
 #' @keywords IMIFA main
 #' @include MainFunction.R
 #' @export
-#' @importFrom Rfast "colMaxs" "colTabulate" "med" "rowAll" "rowMaxs" "rowOrder" "rowSort" "rowTabulate" "Var"
+#' @importFrom Rfast "colMaxs" "colTabulate" "Median" "rowAll" "rowMaxs" "rowOrder" "rowSort" "rowTabulate" "Var"
 #' @importFrom mclust "classError"
 #' @importFrom matrixStats "colSums2" "rowMeans2" "rowMedians" "rowQuantiles" "rowSums2"
 #' @importFrom slam "as.simple_triplet_matrix"
@@ -206,7 +206,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     G.tab        <- if(GQ1x) lapply(apply(G.store, 1L, function(x) list(table(x, dnn=NULL))), "[[", 1L)   else table(G.store, dnn=NULL)
     G.prob       <- if(GQ1x) lapply(G.tab, prop.table) else prop.table(G.tab)
     G.mode       <- if(GQ1x) unlist(lapply(G.tab, function(gt) as.numeric(names(gt[gt == max(gt)])[1L]))) else as.numeric(names(G.tab[G.tab == max(G.tab)])[1L])
-    G.med        <- if(GQ1x) ceiling(matrixStats::rowMedians(G.store) * 2)/2 else ceiling(med(G.store) * 2)/2
+    G.med        <- if(GQ1x) ceiling(matrixStats::rowMedians(G.store) * 2)/2 else ceiling(Median(G.store) * 2)/2
     if(!G.T) {
       G          <- switch(EXPR=G.meth, mode=G.mode, floor(G.med))
     }
@@ -628,7 +628,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       Q.prob     <- prop.table(Q.tab)
     }
     Q.mode       <- if(G1) unlist(lapply(Q.tab, function(qt) as.numeric(names(qt[qt == max(qt)])[1L]))) else as.numeric(names(Q.tab[Q.tab == max(Q.tab)])[1L])
-    Q.med        <- if(G1) stats::setNames(ceiling(matrixStats::rowMedians(Q.store) * 2)/2, gnames)     else ceiling(med(Q.store) * 2)/2
+    Q.med        <- if(G1) stats::setNames(ceiling(matrixStats::rowMedians(Q.store) * 2)/2, gnames)     else ceiling(Median(Q.store) * 2)/2
     if(!Q.T)  {
       Q          <- switch(EXPR=Q.meth, mode=Q.mode, floor(Q.med))
     } else    {
@@ -937,9 +937,9 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
           sqerr  <- error   * error
           abserr <- abs(error)
           mse[r]       <- mean(sqerr)
-          medse[r]     <- med(sqerr)
+          medse[r]     <- Median(sqerr)
           mae[r]       <- mean(abserr)
-          medae[r]     <- med(abserr)
+          medae[r]     <- Median(abserr)
           rmse[r]      <- sqrt(mse[r])
           nrmse[r]     <- rmse[r]/cov.range
         }
@@ -990,9 +990,9 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
           sqerr  <- error   * error
           abserr <- abs(error)
           mse[r]      <- mean(sqerr)
-          medse[r]    <- med(sqerr)
+          medse[r]    <- Median(sqerr)
           mae[r]      <- mean(abserr)
-          medae[r]    <- med(abserr)
+          medae[r]    <- Median(abserr)
           rmse[r]     <- sqrt(mse[r])
           nrmse[r]    <- rmse[r]/cov.range
         }
@@ -1018,7 +1018,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
        abserr    <- abs(err)
        mse2      <- mean(sqerr)
        rmse2     <- sqrt(mse2)
-       post.met  <- c(MSE = mse2, MEDSE = med(sqerr), MAE = mean(abserr), MEDAE = med(abserr), RMSE = rmse2, NRMSE = rmse2/cov.range)
+       post.met  <- c(MSE = mse2, MEDSE = Median(sqerr), MAE = mean(abserr), MEDAE = Median(abserr), RMSE = rmse2, NRMSE = rmse2/cov.range)
        Err       <- c(list(Empirical.Cov = cov.emp, Estimated.Cov = cov.est, Post = post.met), Err)
      }
      if(sw["psi.sw"] && any(all(cov.met, sw.pi), frobenius)) {

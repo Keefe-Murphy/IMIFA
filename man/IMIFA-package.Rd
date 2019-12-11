@@ -13,8 +13,8 @@ A package for Bayesian nonparameteric clustering of high-dimensional datasets, p
 \itemize{
 \item{Type: }{Package}
 \item{Package: }{IMIFA}
-\item{Version: }{2.1.1}
 \item{Date: }{2019-12-11 (this version), 2017-02-02 (original release)}
+\item{Version: }{2.1.2}
 \item{Licence: }{GPL (>=2)}
 }
 }

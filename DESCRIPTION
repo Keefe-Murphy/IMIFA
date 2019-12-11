@@ -2,7 +2,7 @@ Package: IMIFA
 Type: Package
 Date: 2019-12-11
 Title: Infinite Mixtures of Infinite Factor Analysers and Related Models
-Version: 2.1.1
+Version: 2.1.2
 Authors@R: c(person("Keefe", "Murphy", email = "keefe.murphy@ucd.ie", role = c("aut", "cre")),
              person("Cinzia", "Viroli", email = "cinzia.viroli@unibo.it", role = "ctb"),
              person("Isobel Claire", "Gormley", email = "claire.gormley@ucd.ie", role = "ctb"))
@@ -17,7 +17,7 @@ Imports:
     matrixStats,
     mclust (>= 5.1),
     mvnfast,
-    Rfast (>= 1.9.4),
+    Rfast (>= 1.9.7),
     slam,
     viridis
 Suggests:
