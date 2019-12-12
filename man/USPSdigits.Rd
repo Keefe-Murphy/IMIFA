@@ -4,7 +4,8 @@
 \name{USPSdigits}
 \alias{USPSdigits}
 \title{USPS handwritten digits}
-\format{A list of length 2 with the following elements, each one a \code{data.frame}:
+\format{
+A list of length 2 with the following elements, each one a \code{data.frame}:
 \describe{
 \item{\code{train}}{The training set of 7,291 digits.}
 \item{\code{test}}{The test set of 2,007 digits.}}
@@ -12,7 +13,8 @@ Each \code{data.frame} contains the known digit labels in its first column.
 
 The remaining 256 columns give the concatenation of the 16x16 grid.
 
-Pixels are scaled such that [-1,1] corresponds to [white,black].}
+Pixels are scaled such that [-1,1] corresponds to [white,black].
+}
 \usage{
 data(USPSdigits)
 }

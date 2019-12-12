@@ -1200,8 +1200,8 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
           graphics::title(main="Posterior Confusion Matrix")
           graphics::mtext(side=1, at=Gseq, Gseq,      line=1)
           graphics::mtext(side=2, at=Gseq, rev(Gseq), line=1, las=1)
-          graphics::mtext(side=1, "Allocation",       line=2)
-          graphics::mtext(side=2, "Cluster",          line=2)
+          graphics::mtext(side=1, "Cluster",          line=2)
+          graphics::mtext(side=2, "Allocation",       line=2)
           suppressWarnings(heat_legend(plot.x, cols=i.cols, cex.lab=0.8, ...))
         }
         graphics::box(lwd=2)
@@ -1437,7 +1437,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
       if(is.element(param, c("alpha", "discount"))) {
         plot.x <- switch(EXPR=param, alpha=clust$Alpha$alpha, discount=as.vector(clust$Discount$discount))
         if(switch(EXPR=param, alpha=clust$Alpha$alpha.rate,   discount=clust$Discount$disc.rate) == 0 ||
-           (attr(x, "Discount") >= 0 && length(unique(round(plot.x, min(.ndeci(plot.x))))) == 1)) {
+          ((is.null(attr(x, "Discount")) || attr(x, "Discount") >= 0) && length(unique(round(plot.x, min(.ndeci(plot.x))))) == 1)) {
                                       warning(paste0(switch(EXPR=param, alpha="Acceptance", discount=ifelse(attr(x, "Kappa0"), "Acceptance", "Mutation")), " rate too low: can't plot ", ifelse(all.ind, ifelse(partial, "partial-", "auto-"), ""), "correlation function", ifelse(all.ind, "\n", "s\n")), call.=FALSE)
           next
         }
@@ -1704,11 +1704,13 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
 #' # Now plot them to examine tail behaviour as discount increases
 #' # (PY <- G_priorDensity(N=50, alpha=c(19.23356, 6.47006, 1), discount=c(0, 0.47002, 0.7300045)))
   G_priorDensity      <- function(N, alpha, discount = 0, show.plot = TRUE, type = "h") {
+    igmp       <- isNamespaceLoaded("Rmpfr")
     firstex    <- suppressMessages(requireNamespace("Rmpfr", quietly=TRUE))
-    if(isTRUE(firstex)) {
+    if(isFALSE(firstex))     {        stop("'Rmpfr' package not installed", call.=FALSE)
+    } else if(isFALSE(igmp)) {
       on.exit(.detach_pkg("Rmpfr"))
       on.exit(.detach_pkg("gmp"),                    add=TRUE)
-    } else                            stop("'Rmpfr' package not installed", call.=FALSE)
+    }
     oldpal    <- grDevices::palette()
     on.exit(grDevices::palette(oldpal),              add=isFALSE(firstex))
     defpar    <- suppressWarnings(graphics::par(no.readonly=TRUE))
@@ -1771,7 +1773,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
                   log(Rmpfr::pochMpfr(alphi + 1, N - 1L)) - c(seqN, mn) * log(abs(disci)), rep(-Inf, N - mn))
         }
         lnkd   <- lapply(Nseq, function(g) Rmpfr::sumBinomMpfr(g, f=function(k) Rmpfr::pochMpfr(-k * disci, N)))
-        rx[,i] <- gmp::asNumeric(exp(vnk    - lfactorial(Nsq2))  * abs(methods::new("mpfr", unlist(lnkd))))
+        rx[,i] <- gmp::asNumeric(exp(vnk    - lfactorial(Nsq2))  * abs(Rmpfr::mpfr2array(unlist(lnkd), dim=N)))
       }
     }
 
@@ -1952,13 +1954,13 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
 #' dat   <- train[,ind]
 #'
 #' \donttest{# Fit an IMIFA model (warning: quite slow!)
-#' # sim <- mcmc_IMIFA(dat, n.iters=100, prec.mu=1e-03, z.init="kmeans",
+#' # sim <- mcmc_IMIFA(dat, n.iters=1000, prec.mu=1e-03, z.init="kmeans",
 #' #                   centering=FALSE, scaling="none")
 #' # res <- get_IMIFA_results(sim, zlabels=ylab)
 #'
 #' # Examine the posterior mean image of the first two clusters
-#' show_IMIFA_digit(res, dat=train, ind=ind)
-#' show_IMIFA_digit(res, dat=train, ind=ind, G=2)}
+#' # show_IMIFA_digit(res, dat=train, ind=ind)
+#' # show_IMIFA_digit(res, dat=train, ind=ind, G=2)}
   show_IMIFA_digit <- function(res, G = 1L, what = c("mean", "last"), dat = NULL, ind = NULL, ...) {
       UseMethod("show_IMIFA_digit")
   }

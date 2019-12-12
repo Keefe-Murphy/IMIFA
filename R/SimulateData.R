@@ -103,7 +103,7 @@ sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(floor(log(P)), G),
        anyNA(nn)  ||
        any(length(nn)    != G,
            sum(nn)       != N))           stop(paste0("'nn' must be an integer vector of length G=", G, " which sums to N=", N, " without missing values"), call.=FALSE)
-    if(any(nn  <= 0))                     warning("All 'nn' values should be strictly positive; are you sure you want to simulate empty clusters?\n",       call.=FALSE, immediate.=FALSE)
+    if(any(nn  <= 0))                     warning("All 'nn' values should be strictly positive; are you sure you want to simulate empty clusters?\n",       call.=FALSE, immediate.=TRUE)
   } else {
     if(!is.numeric(pis)  ||
        anyNA(pis) ||
@@ -119,7 +119,7 @@ sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(floor(log(P)), G),
       iter     <- iter    + 1L
       nn0      <- any(nn <= 0)
     }
-    if(nn0)                               warning("Empty clusters generated; are you sure?\n Try supplying 'nn' directly instead of small 'pis\n'",         call.=FALSE, immediate.=FALSE)
+    if(nn0)                               warning("Empty clusters generated; are you sure?\nTry supplying 'nn' directly instead of small 'pis'\n",          call.=FALSE, immediate.=TRUE)
   }
 
   if(!(mumiss  <- missing(mu)))       {
@@ -194,7 +194,7 @@ sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(floor(log(P)), G),
            nztest > P)     ||
        nztest  != floor(nztest))          stop(paste0("Every entry of 'non.zero' must be a strictly positive integer, less than or equal to P=", P), call.=FALSE)
   }
-  simdata      <- base::matrix(0L, nrow=0L, ncol=P)
+  simdata      <- .empty_mat(nc=P)
   true.mu      <- true.l   <-
   true.psi     <- true.cov <- stats::setNames(vector("list", G), paste0("Cluster", Gseq))
   sq_mat       <- if(P > 50)  function(x) diag(sqrt(diag(x))) else sqrt
@@ -228,7 +228,7 @@ sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(floor(log(P)), G),
     if(!all(is.symmetric(covmat),
             is.numeric(covmat)))          stop("Invalid covariance matrix!", call.=FALSE)
     sigma      <- if(all(Q.g > 0, P > 1, method == "marginal")) .chol(is.posi_def(covmat, make=TRUE)$X.new) else sq_mat(covmat)
-    means      <- matrix(mu.true, nrow=N.g, ncol=P, byrow=TRUE) + switch(EXPR=method, conditional=tcrossprod(eta.true[true.zlab == g, seq_len(Q.g), drop=FALSE], l.true), 0L)
+    means      <- base::matrix(mu.true, nrow=N.g, ncol=P, byrow=TRUE) + switch(EXPR=method, conditional=tcrossprod(eta.true[true.zlab == g, seq_len(Q.g), drop=FALSE], l.true), 0L)
     simdata    <- rbind(simdata, means + matrnorm(N.g, P) %*% sigma)
     dimnames(l.true)   <- list(vnames, if(Q.g > 0) paste0("Factor ", seq_len(Q.g)))
     true.mu[[g]]       <- mu.true

@@ -12,7 +12,7 @@ Zsimilarity(zs)
 \value{
 A list containing three elements:
 \item{z.avg}{The 'average' clustering, with minimum squared distance to \code{z.sim}.}
-\item{z.sim}{The N x N similary matrix, in a sparse format (see \code{\link[slam]{simple_triplet_matrix}}).}
+\item{z.sim}{The N x N similarity matrix, in a sparse format (see \code{\link[slam]{simple_triplet_matrix}}).}
 \item{MSE.z}{A vector of length M recording the MSEs between each clustering and the 'average' clustering.}
 }
 \description{

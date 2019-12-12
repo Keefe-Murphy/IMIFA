@@ -22,7 +22,7 @@
 #' @param vari.rot Logical indicating whether the loadings matrix/matrices template(s) should be \code{\link[stats]{varimax}} rotated first, prior to the Procrustes rotation steps. Defaults to \code{FALSE}. Not necessary at all for clustering purposes, or inference on the covariance matrix, but useful if interpretable inferences on the loadings matrix/matrices are desired. Arguments to \code{\link[stats]{varimax}} can be passed via the \code{...} construct, but note that the argument \code{normalize} here defaults to \code{FALSE}.
 #' @param z.avgsim Logical (defaults to \code{FALSE}) indicating whether the clustering should also be summarised with a call to \code{\link{Zsimilarity}} by the clustering with minimum mean squared error to the similarity matrix obtained by averaging the stored adjacency matrices, in addition to the MAP estimate.
 #'
-#' Note that the MAP clustering is computed \emph{conditional} on the estimate of the number of clusters (whether that be the modal estimate or the estimate according to \code{criterion}) and other parameters are extracted conditional on this estimate of \code{G}: however, in constrast, the number of distinct clusters in the summarised labels obtained by specifying \code{z.avgsim=TRUE} may not necessarily coincide with the MAP estimate of \code{G}, but it may provide a useful alternative summary of the partitions explored during the chain, and the user is free to call \code{\link{get_IMIFA_results}} again with the new suggested \code{G} value.
+#' Note that the MAP clustering is computed \emph{conditional} on the estimate of the number of clusters (whether that be the modal estimate or the estimate according to \code{criterion}) and other parameters are extracted conditional on this estimate of \code{G}: however, in contrast, the number of distinct clusters in the summarised labels obtained by specifying \code{z.avgsim=TRUE} may not necessarily coincide with the MAP estimate of \code{G}, but it may provide a useful alternative summary of the partitions explored during the chain, and the user is free to call \code{\link{get_IMIFA_results}} again with the new suggested \code{G} value.
 #'
 #' Please be warned that this feature requires loading the \code{\link[mcclust]{mcclust}} package. This is liable to take considerable time to compute, and may not even be possible if the number of observations &/or number of stored iterations is large and the resulting matrix isn't sufficiently sparse. When \code{z.avgsim=TRUE}, both the summarised clustering and the similarity matrix are stored: the latter can be visualised as part of a call to \code{\link{plot.Results_IMIFA}}.
 #' @param zlabels For any method that performs clustering, the true labels can be supplied if they are known in order to compute clustering performance metrics. This also has the effect of ordering the MAP labels (and thus the ordering of cluster-specific parameters) to most closely correspond to the true labels if supplied.
@@ -54,13 +54,13 @@
 #' \item{\code{Uniquenesses}}{Posterior summaries for the uniquenesses, after conditioning on \code{G}.}
 #'
 #' The objects \code{Means}, \code{Loadings}, \code{Scores} and \code{Uniquenesses} (if stored when calling \code{\link{mcmc_IMIFA}}!) also contain, as well as the posterior summaries, the entire chain of valid samples of each, as well as, for convenience, the last valid samples of each (after conditioning on the modal \code{G} and \code{Q} values, and accounting for label switching, and rotational invariance via Procrustes rotation).
-#' @note For the "\code{IMIFA}", "\code{IMFA}", "\code{OMIFA}", and "\code{OMFA}" methods, the retained mixing proportions are renormalised after conditioning on the modal \code{G}. This is especially necessary for the compution of the \code{error.metrics}, just note that the values on which posterior inference are conducted will ever so slightly differ from the actually sampled values.
+#' @note For the "\code{IMIFA}", "\code{IMFA}", "\code{OMIFA}", and "\code{OMFA}" methods, the retained mixing proportions are renormalised after conditioning on the modal \code{G}. This is especially necessary for the computation of the \code{error.metrics}, just note that the values on which posterior inference are conducted will ever so slightly differ from the actually sampled values.
 #'
 #' Due to the way the offline label-switching correction is performed, different runs of this function may give \emph{very slightly} different results in terms of the cluster labellings (and by extension the parameters, which are permuted in the same way), but only if the chain was run for an extremely small number of iterations, well below the number required for convergence, and samples of the cluster labels match poorly across iterations (particularly if the number of clusters suggested by those sampled labels is high).
 #' @keywords IMIFA main
 #' @include MainFunction.R
 #' @export
-#' @importFrom Rfast "colMaxs" "colTabulate" "Median" "rowAll" "rowMaxs" "rowOrder" "rowSort" "rowTabulate" "Var"
+#' @importFrom Rfast "colMaxs" "colTabulate" "Median" "rowAll" "rowMaxs" "rowOrder" "rowSort" "rowTabulate" "rowVars" "Var"
 #' @importFrom mclust "classError"
 #' @importFrom matrixStats "colSums2" "rowMeans2" "rowMedians" "rowQuantiles" "rowSums2"
 #' @importFrom slam "as.simple_triplet_matrix"
@@ -258,7 +258,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       Qlen       <- length(Qtmp)
       if(length(Q) == 1)     Q <- rep(Q, Qlen)
       if(length(Q) != Qlen)       stop(paste0("'Q' must be supplied for each cluster, as a scalar or vector of length G=", G), call.=FALSE)
-      if(any(Q * (Qtmp - Q) < 0)) stop(paste0("'Q' can't be greater than the maximum number of factors stored in ", ifelse(method == "IFA", "", "any cluster of "), match.call()$sims), call.=FALSE)
+      if(any(Q * (Qtmp - Q) < 0)) stop(paste0("'Q' can't be greater than the maximum number of factors stored in ", ifelse(method == "IFA", "", "any cluster of "), deparse(match.call()$sims)), call.=FALSE)
     }
   }
 
@@ -504,7 +504,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     if(sw["pi.sw"]) {
       pi.prop    <- provideDimnames(pies[Gseq,storeG, drop=FALSE], base=list(gnames, ""), unique=FALSE)
       pi.prop    <- if(inf.G) sweep(pi.prop, 2L, colSums2(pi.prop), FUN="/", check.margin=FALSE) else pi.prop
-      var.pi     <- stats::setNames(.row_vars(pi.prop),     gnames)
+      var.pi     <- stats::setNames(rowVars(pi.prop),       gnames)
       ci.pi      <- rowQuantiles(pi.prop, probs=conf.levels)
       ci.pi      <- if(G == 1) t(ci.pi) else ci.pi
       post.pi    <- stats::setNames(rowMeans2(pi.prop),     gnames)
@@ -759,13 +759,13 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   # Compute posterior means and % variation explained
     if(sw["mu.sw"])  {
       post.mu    <- if(clust.ind) rowMeans2(mu)  else post.mu
-      var.mu     <- if(uni)       Var(mu)        else .row_vars(mu)
+      var.mu     <- if(uni)       Var(mu)        else rowVars(mu)
       ci.tmp     <- rowQuantiles(mu,  probs=conf.levels)
       ci.mu      <- if(uni)       t(ci.tmp)      else ci.tmp
     }
     if(sw["psi.sw"]) {
       post.psi   <- if(clust.ind) rowMeans2(psi) else post.psi
-      var.psi    <- if(uni)       Var(psi)       else .row_vars(psi)
+      var.psi    <- if(uni)       Var(psi)       else rowVars(psi)
       ci.tmp     <- rowQuantiles(psi, probs=conf.levels)
       ci.psi     <- if(uni)       t(ci.tmp)      else ci.tmp
     }
@@ -774,14 +774,14 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       post.load  <- rowMeans(lmat, dims=2)
       var.load   <- apply(lmat, c(1L, 2L), Var)
       ci.load    <- apply(lmat, c(1L, 2L), stats::quantile, conf.levels)
-      var.exp    <- sum(post.load * post.load)/n.var
+      var.exp    <- rowSums2(post.load * post.load)
       class(post.load)     <- "loadings"
     } else if(sw["psi.sw"]) {
       if(sizes[g] > 1) {
         dat.gg   <- dat[z.ind[[g]],, drop=FALSE]
         cov.gg   <- stats::cov(dat.gg)
       }
-      var.exp    <- ifelse(sizes[g] <= 1, 0L, max(0L, (sum(diag(cov.gg)) - sum(post.psi))/n.var))
+      var.exp    <- ifelse(sizes[g] <= 1, 0L, pmax(0L, diag(cov.gg) - post.psi))
     } else {
       var.exp    <- NULL
     }
@@ -1006,9 +1006,10 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     }
   }
   if(all(sw["psi.sw"] || !clust.ind, any(sw["l.sw"], Q0X))) {
-   var.exps      <- vapply(lapply(result, "[[", "var.exp"), function(x) ifelse(is.null(x), NA, x), numeric(1L))
-   var.exps      <- if(sum(is.na(var.exps)) == G) NULL else var.exps
-   Err           <- list(Var.Exps = var.exps, Exp.Var = ifelse(clust.ind, sum(var.exps * post.pi), unname(var.exps)))
+   var.exps      <- lapply(lapply(result, "[[", "var.exp"), function(x) if(is.null(x)) NA else x)
+   clust.exps    <- if(sum(is.na(var.exps)) == G) NULL else vapply(var.exps, sum, na.rm=TRUE, numeric(1L))/n.var
+   var.exps      <- if(sum(is.na(var.exps)) == G) NULL else if(clust.ind) stats::setNames(rowSums2(sweep(do.call(cbind, var.exps), 2L, FUN="*", post.pi, check.margin=FALSE), na.rm=TRUE), varnames) else stats::setNames(var.exps[[1L]], varnames)
+   Err           <- list(Var.Exps = var.exps, Clust.Exps = clust.exps, Exp.Var = ifelse(clust.ind, sum(clust.exps * post.pi), unname(clust.exps)))
    if(all(error.metrics, sw["mu.sw"] || !clust.ind)) {
      if(cov.met)       {
        cov.est   <- as.matrix(cov.est)
@@ -1032,7 +1033,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
        last.met  <- c(MSE = mse[e.store], MEDSE = medse[e.store], MAE = mae[e.store], MEDAE = medae[e.store], RMSE = rmse[e.store], NRMSE = nrmse[e.store])
        last.met  <- if(frobenius) c(last.met, PPRE = Fro[e.store])  else last.met
        last.met  <- last.met[!is.na(last.met)]
-       Err       <- if(cov.met) c(list(Median = med.met, Avg = mean.met, CIs = metricCI), Err[seq_len(3L)], if(all(cov.met, sw.pi)) c(list(Last.Cov = Sigma)), c(list(Final = last.met)), Err[4L:5L]) else c(list(Avg = mean.met, CIs = metricCI), Err[seq_len(2L)], list(Final = last.met))
+       Err       <- if(cov.met) c(list(Median = med.met, Avg = mean.met, CIs = metricCI), Err[seq_len(4L)], if(all(cov.met, sw.pi)) c(list(Last.Cov = Sigma)), c(list(Final = last.met)), Err[5L:6L]) else c(list(Avg = mean.met, CIs = metricCI), Err[seq_len(3L)], list(Final = last.met))
        if(frobenius)     {
          rcounts <- stats::setNames(lapply(Pseq, function(p) t(rowQuantiles(sapply(rcounts, "[[", p), probs=c(conf.levels[1L], 0.5, conf.levels[2L])))), varnames)
          class(dcounts) <- "listof"

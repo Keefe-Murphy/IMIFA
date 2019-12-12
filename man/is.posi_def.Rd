@@ -2,7 +2,7 @@
 % Please edit documentation in R/FullConditionals.R
 \name{is.posi_def}
 \alias{is.posi_def}
-\title{Check Postive-(Semi)definiteness of a matrix}
+\title{Check Positive-(Semi)definiteness of a matrix}
 \usage{
 is.posi_def(x,
             tol = NULL,
@@ -18,7 +18,7 @@ is.posi_def(x,
 
 \item{semi}{Logical switch to test for positive-semidefiniteness when \code{TRUE} or positive-definiteness when \code{FALSE} (the default).}
 
-\item{make}{Logical switch to return the nearest matrix which satisifies the test - if the test has been passed, this is of course just \code{x} itself, otherwise the nearest positive-(semi)definite matrix. Note that for reasons due to finite precision arithmetic, finding the nearest positive-definite and nearest positive-semidefinite matrices are effectively equivalent tasks.}
+\item{make}{Logical switch to return the nearest matrix which satisfies the test - if the test has been passed, this is of course just \code{x} itself, otherwise the nearest positive-(semi)definite matrix. Note that for reasons due to finite precision arithmetic, finding the nearest positive-definite and nearest positive-semidefinite matrices are effectively equivalent tasks.}
 }
 \value{
 If \code{isTRUE(make)}, a list with two components:

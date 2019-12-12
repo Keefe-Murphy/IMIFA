@@ -45,13 +45,13 @@ ind   <- apply(train, 2, sd) > 0.7
 dat   <- train[,ind]
 
 \donttest{# Fit an IMIFA model (warning: quite slow!)
-# sim <- mcmc_IMIFA(dat, n.iters=100, prec.mu=1e-03, z.init="kmeans",
+# sim <- mcmc_IMIFA(dat, n.iters=1000, prec.mu=1e-03, z.init="kmeans",
 #                   centering=FALSE, scaling="none")
 # res <- get_IMIFA_results(sim, zlabels=ylab)
 
 # Examine the posterior mean image of the first two clusters
-show_IMIFA_digit(res, dat=train, ind=ind)
-show_IMIFA_digit(res, dat=train, ind=ind, G=2)}
+# show_IMIFA_digit(res, dat=train, ind=ind)
+# show_IMIFA_digit(res, dat=train, ind=ind, G=2)}
 }
 \seealso{
 \code{\link{USPSdigits}}, \code{\link{show_digit}}, \code{\link{get_IMIFA_results}}, \code{\link{mcmc_IMIFA}}, \code{\link{mat2cols}}, \code{\link{plot_cols}}

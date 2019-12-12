@@ -8,11 +8,13 @@
 \usage{
 G_expected(N,
            alpha,
-           discount = 0)
+           discount = 0,
+           MPFR = TRUE)
 
 G_variance(N,
            alpha,
-           discount = 0)
+           discount = 0,
+           MPFR = TRUE)
 }
 \arguments{
 \item{N}{The sample size.}
@@ -20,6 +22,8 @@ G_variance(N,
 \item{alpha}{The concentration parameter. Must be specified and must be strictly greater than \code{-discount}. The case \code{alpha=0} is accommodated. When \code{discount} is negative \code{alpha} must be a positive integer multiple of \code{abs(discount)}.}
 
 \item{discount}{The discount parameter for the Pitman-Yor process. Must be less than 1, but typically lies in the interval [0, 1). Defaults to 0 (i.e. the Dirichlet process). When \code{discount} is negative \code{alpha} must be a positive integer multiple of \code{abs(discount)}.}
+
+\item{MPFR}{Logical indicating whether the high-precision libraries \code{\link[Rmpfr]{Rmpfr}} and \code{gmp} are invoked, at the expense of run-time. Defaults to \code{TRUE} and \strong{must} be \code{TRUE} for \code{\link{G_expected}} when \code{alpha=0} and \code{\link{G_variance}} when \code{discount} is non-zero. See \strong{\code{Note}}.}
 }
 \value{
 The expected number of clusters under the specified prior conditions, or the variance of the number of clusters.
@@ -31,18 +35,20 @@ Calculates the \emph{a priori} expected number of clusters or the variance of th
 All arguments are vectorised. Users can also consult \code{\link{G_priorDensity}} in order to solicit sensible priors.
 }
 \note{
-\code{G_variance} requires use of the \code{\link[Rmpfr]{Rmpfr}} and \code{gmp} libraries for non-zero \code{discount} values. \code{G_expected} requires these libraries only for the \code{alpha=0} case. Despite the high precision arithmetic used, the functions can be unstable for small values of \code{discount}.
+\code{G_variance} requires use of the \code{\link[Rmpfr]{Rmpfr}} and \code{gmp} libraries for non-zero \code{discount} values. \code{G_expected} requires these libraries only for the \code{alpha=0} case. Despite the high precision arithmetic used, the functions can still be unstable for small values of \code{discount}. See the argument \code{MPFR}.
 }
 \examples{
-G_expected(N=50, alpha=19.23356)
-G_variance(N=50, alpha=19.23356)
+G_expected(N=50, alpha=19.23356, MPFR=FALSE)
+G_variance(N=50, alpha=19.23356, MPFR=FALSE)
 
+G_expected(N=50, alpha=c(19.23356, 12.21619, 1),
+           discount=c(0, 0.25, 0.7300045), MPFR=FALSE)
 # require("Rmpfr")
-# G_expected(N=50, alpha=c(19.23356, 12.21619, 1), discount=c(0, 0.25, 0.7300045))
-# G_variance(N=50, alpha=c(19.23356, 12.21619, 1), discount=c(0, 0.25, 0.7300045))
+# G_variance(N=50, alpha=c(19.23356, 12.21619, 1),
+#            discount=c(0, 0.25, 0.7300045), MPFR=c(FALSE, TRUE, TRUE))
 
 # Examine the growth rate of the DP
-DP   <- sapply(c(1, 5, 10), function(i) G_expected(1:200, alpha=i))
+DP   <- sapply(c(1, 5, 10), function(i) G_expected(1:200, alpha=i, MPFR=FALSE))
 matplot(DP, type="l", xlab="N", ylab="G")
 
 # Examine the growth rate of the PYP

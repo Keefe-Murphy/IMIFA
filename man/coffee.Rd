@@ -4,7 +4,9 @@
 \name{coffee}
 \alias{coffee}
 \title{Chemical composition of Arabica and Robusta coffee samples}
-\format{A data frame with 43 observations and 14 columns. The first two columns contain Variety (either Arabica or Robusta) and Country, respectively, while the remaining 12 columns contain the chemical properties.}
+\format{
+A data frame with 43 observations and 14 columns. The first two columns contain Variety (either Arabica or Robusta) and Country, respectively, while the remaining 12 columns contain the chemical properties.
+}
 \usage{
 data(coffee)
 }

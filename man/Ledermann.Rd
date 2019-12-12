@@ -8,7 +8,7 @@ Ledermann(P,
           isotropic = FALSE)
 }
 \arguments{
-\item{P}{Integer number of variables in data set. This argument is vectorized.}
+\item{P}{Integer number of variables in data set. This argument is vectorised.}
 
 \item{isotropic}{Logical indicating whether uniquenesses are constrained to be isotropic, in which case the bound is simply \eqn{P-1}{P-1}. Defaults to \code{FALSE}.}
 }
@@ -20,5 +20,8 @@ Returns the maximum number of latent factors in a factor analysis model for data
 }
 \examples{
 Ledermann(c(25, 50, 100))
+
+data(olive)
+Ledermann(ncol(olive[,-c(1,2)]))
 }
 \keyword{utility}

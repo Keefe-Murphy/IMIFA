@@ -1,9 +1,9 @@
 Package: IMIFA
 Type: Package
-Date: 2019-12-11
+Date: 2020-03-30
 Title: Infinite Mixtures of Infinite Factor Analysers and Related Models
 Version: 2.1.2
-Authors@R: c(person("Keefe", "Murphy", email = "keefe.murphy@ucd.ie", role = c("aut", "cre")),
+Authors@R: c(person("Keefe", "Murphy", email = "keefe.murphy@ucd.ie", role = c("aut", "cre"), comment = c(ORCID = "0000-0002-7709-3159")),
              person("Cinzia", "Viroli", email = "cinzia.viroli@unibo.it", role = "ctb"),
              person("Isobel Claire", "Gormley", email = "claire.gormley@ucd.ie", role = "ctb"))
 Description: Provides flexible Bayesian estimation of Infinite Mixtures of Infinite Factor Analysers and related models, for nonparametrically clustering high-dimensional data, introduced by Murphy et al. (2019) <doi:10.1214/19-BA1179>. The IMIFA model conducts Bayesian nonparametric model-based clustering with factor analytic covariance structures without recourse to model selection criteria to choose the number of clusters or cluster-specific latent factors, mostly via efficient Gibbs updates. Model-specific diagnostic tools are also provided, as well as many options for plotting results, conducting posterior inference on parameters of interest, posterior predictive checking, and quantifying uncertainty.
@@ -17,17 +17,16 @@ Imports:
     matrixStats,
     mclust (>= 5.1),
     mvnfast,
-    Rfast (>= 1.9.7),
+    Rfast (>= 1.9.8),
     slam,
     viridis
 Suggests:
     gmp,
     knitr,
     mcclust,
-    methods,
     rmarkdown,
     Rmpfr
-RoxygenNote: 7.0.2
+RoxygenNote: 7.1.0
 VignetteBuilder: knitr
 Collate: 
     'MainFunction.R'

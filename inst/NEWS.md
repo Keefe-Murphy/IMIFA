@@ -1,8 +1,20 @@
 __Infinite Mixtures of Infinite Factor Analysers__
 ==================================================  
 
+## IMIFA v2.1.2 - (_9<sup>th</sup> release [patch update]: 2020-03-30_)
 ### Bug Fixes
-* Ensured compatibility with latest version of `Rfast` package.
+* Fixes and speed-ups to MGP updates and adaptive Gibbs sampler for IMIFA/OMIFA/MIFA models:  
+    * Fixes and speed-ups to MGP parameter updates when _some_ clusters have zero factors.
+    * Additional speed-ups to simulation of column-shrinkage parameters when _some_ clusters are empty.
+    * Properly accounted for the cluster-shrinkage parameters when the number of factors increases.
+    * Minor bug fixes for padding scores when the maximum number of factors increases.
+* Variable-specific communalities (`x$Error$Var.Exps`) now returned by `get_IMIFA_results` in addition to  
+proportion of explained variance per cluster (`x$Error$Clust.Exps`; previously `x$Error$Var.Exps`).
+* `G_expected` & `G_variance` gain the arg. `MPFR` to control use of suggested packages.
+* Minor speed-up to `rDirichlet` for the symmetric uniform case.
+* Ensured compatibility with latest version of `Rfast` package (w/ minor speed-ups).
+* Removed `methods` package from `Suggests:`.
+* Spell-checking of documentation and fixes to `donttest` examples.
 
 ## IMIFA v2.1.1 - (_8<sup>th</sup> release [patch update]: 2019-12-11_)
 ### Improvements
@@ -205,7 +217,7 @@ __Infinite Mixtures of Infinite Factor Analysers__
 * Optimised compression of `olive`, `coffee` and vignette data and used `LazyData: true`.
 * Added `call.=FALSE` to `stop()` messages and `immediate.=TRUE` to certain `warning()` calls.
 * Removed dependency on`adrop`, `e1071`, `graphics`, `grDevices`, `plotrix`, `stats` & `utils` libraries.
-* Reduced dependency on `Rfast` w/ own versions of `colVars`, `rowVars`, & `standardise`.
+* Reduced dependency on `Rfast` w/ own version of `standardise`.
 * Added utility function `IMIFA_news` for accessing this `NEWS` file.
 * Added `CITATION` file.
 * Extensively improved package documentation: 

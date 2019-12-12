@@ -16,7 +16,7 @@ pareto_scale(x,
 The Pareto scaled version of the matrix \code{x}.
 }
 \description{
-Pareto scaling of a numeric matrix, with or without centering. Obserations are scaled by the square-root of their column-wise standard deviations.
+Pareto scaling of a numeric matrix, with or without centering. Observations are scaled by the square-root of their column-wise standard deviations.
 }
 \examples{
 dat  <- pareto_scale(olive[,-c(1,2)])

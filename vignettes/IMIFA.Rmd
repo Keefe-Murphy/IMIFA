@@ -97,7 +97,7 @@ There are many, many options for specifying hyperparameters, specifying running 
 
 and `?mixfaControl`, `?mgpControl`, `?bnpControl` etc. as needed. Arguments to these control functions can actually be supplied, provided they are named, directly to `mcmc_IMIFA`, and this convention is adopted throughout this document.
 
-Be warned that the `mcmc_IMIFA` function calls in this section may take quite some time to run. Let's begin by fitting a Mixture of Factor Analysers model (MFA) to the unit-scaled `olive` data. For this, we must specify sequences of values for `range.G`, the number of clusters, and `range.Q`, the number of latent factors. Let's assume that uniquenesses are `isotropic` rather than `unconstrained`. This isotropic constraint provides the link between factor analysis and the probabilistic principal component analysis model (PPCA): note that we could also constrain uniqueness across clusters (but still be diagonal within each cluster) by specifiying `uni.type="constrained"` or constrain uniquenesses to a single value (i.e. equal across all clusters and all variables) by specifying `uni.type="single"`. Let's elect not to store the latent factor scores, as this can be a huge drain on memory, with the caveat that posterior inference on the scores won't be possible. Let's also allow diagonal covariance as a special case where `range.Q` is `0`, and accept all other defaults (for instance, cluster labels will be initialised by `mclust`).
+Be warned that the `mcmc_IMIFA` function calls in this section may take quite some time to run. Let's begin by fitting a Mixture of Factor Analysers model (MFA) to the unit-scaled `olive` data. For this, we must specify sequences of values for `range.G`, the number of clusters, and `range.Q`, the number of latent factors. Let's assume that uniquenesses are `isotropic` rather than `unconstrained`. This isotropic constraint provides the link between factor analysis and the probabilistic principal component analysis model (PPCA): note that we could also constrain uniqueness across clusters (but still be diagonal within each cluster) by specifying `uni.type="constrained"` or constrain uniquenesses to a single value (i.e. equal across all clusters and all variables) by specifying `uni.type="single"`. Let's elect not to store the latent factor scores, as this can be a huge drain on memory, with the caveat that posterior inference on the scores won't be possible. Let's also allow diagonal covariance as a special case where `range.Q` is `0`, and accept all other defaults (for instance, cluster labels will be initialised by `mclust`).
 
 ```{r, eval=FALSE}
 simMFA   <- mcmc_IMIFA(olive, method="MFA", n.iters=10000, range.G=3:6, range.Q=0:3, centering=FALSE, 
@@ -115,7 +115,7 @@ MIFA doesn't entirely solve the issue of model choice, as you can see; `range.G`
 
 ```{r, eval=FALSE}
 simOMIFA <- mcmc_IMIFA(olive, method="OMIFA", n.iters=10000, range.G=10, alpha=0.8,
-                       alpha.d1=3.5, nu=3, alpha.d2=7, prop=0.6, epsilon=0.12)
+                       alpha.d1=3.5, nu=3, alpha.d2=7, prop=0.8, epsilon=0.01)
 ```
 
 Finally, let's run the flagship IMIFA model, on which all subsequent demonstrations and results will be based, for a greater number of iterations, accepting the defaults for most arguments. Note that the `verbose` argument, which defaults to `TRUE` will ordinarily print a progress bar to the console window. The default implementation uses the independent rather than dependent slice-efficient sampler; we could override the default for the parameter governing the rate of geometric decay by specifying `rho`.
@@ -124,7 +124,7 @@ Finally, let's run the flagship IMIFA model, on which all subsequent demonstrati
 simIMIFA <- mcmc_IMIFA(olive, method="IMIFA", n.iters=50000, verbose=FALSE)
 ```
 
-## Postprocessing and extracing optimum results
+## Postprocessing and extracting optimum results
 In order to extract results, conduct posterior inference and compute performance metrics for MCMC samples of models from the __IMIFA__ family, we can pass the output of `mcmc_IMIFA` to the function `get_IMIFA_results()`. If, for instance, `simMFA` above was supplied, this function would find the pair of $G$ and $Q$ values which optimises a model selection criterion of our choosing and prepare results from that model only. If `simIMIFA` is supplied, this function finds the _modal_ estimates of $G$ and each $q_g$ (the cluster-specific number of latent factors), and likewise prepares results accordingly. 
 
 This function can be re-ran at little computational cost in order to extract different models explored by the sampler used by `mcmc_IMIFA`, without having to re-run the model itself. New results objects using different numbers of clusters and different numbers of factors (if visited by the model in question), or using different model selection criteria (if necessary) can be generated with ease. The function also performs post-hoc corrections for label switching, as well as post-hoc Procrustes rotation to ensure sensible posterior parameter estimates, computes error metrics, and constructs credible intervals, the average similarity matrix, and the posterior confusion matrix. Please see the function's help manual by typing `?get_IMIFA_results` for further assistance with the various function arguments.
