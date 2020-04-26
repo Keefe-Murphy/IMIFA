@@ -26,6 +26,7 @@ get_IMIFA_results(sims = NULL,
       ...)
 
 \method{summary}{Results_IMIFA}(object,
+        MAP = TRUE,
         ...)
 }
 \arguments{
@@ -69,7 +70,7 @@ Please be warned that this feature requires loading the \code{\link[mcclust]{mcc
 
 \item{nonempty}{For "\code{MFA}" and "\code{MIFA}" models ONLY: a logical indicating whether only iterations with non-empty components should be retained. Defaults to \code{TRUE}, but may lead to empty chains - conversely, \code{FALSE} may lead to empty components and related errors.}
 
-\item{x, object, ...}{Arguments required for the \code{print.Results_IMIFA} and \code{summary.Results_IMIFA} functions: \code{x} and \code{object} are objects of class \code{"Results_IMIFA"} resulting from a call to \code{\link{get_IMIFA_results}}, while \code{...} gathers additional arguments to those functions.
+\item{x, object, MAP, ...}{Arguments required for the \code{print.Results_IMIFA} and \code{summary.Results_IMIFA} functions: \code{x} and \code{object} are objects of class \code{"Results_IMIFA"} resulting from a call to \code{\link{get_IMIFA_results}}. \code{MAP} is a logical which governs whether a table of the MAP classification is printed, while \code{...} gathers additional arguments to those functions.
 
 Users can also pass the \code{type} argument to the \code{\link{norm}} function when \code{isTRUE(error.metrics)} and the posterior predictive reconstruction error (PPRE) is calculated. By default the Frobenius norm (\code{type="F"}) is employed.
 

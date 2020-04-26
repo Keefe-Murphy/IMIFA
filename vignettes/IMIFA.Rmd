@@ -111,11 +111,11 @@ simMIFA  <- mcmc_IMIFA(olive, method="MIFA", n.iters=10000, centering=TRUE,
                        range.G=1:3, z.init="kmeans")
 ```
 
-MIFA doesn't entirely solve the issue of model choice, as you can see; `range.G` still needs to be specified. We can allow the number of clusters to instead/also be estimated automatically by fitting one of the overfitted mixture models (OMFA/OMIFA) or one of the infinite mixture models (IMFA/IMIFA). Let's fit an Overfitted Mixture of Infinite Factor Analysers, and override the default value for the starting value / upper limit for the number of clusters (`range.G`) and supply a sufficiently small Dirichlet hyperparameter (`alpha`) for the cluster mixing proportions. We can enforce additional shrinkage by varying other MGP hyperparameters, using arguments from `mgpControl()`.
+MIFA doesn't entirely solve the issue of model choice; as you can see, `range.G` still needs to be specified. We can allow the number of clusters to instead/also be estimated automatically by fitting one of the overfitted mixture models (OMFA/OMIFA) or one of the infinite mixture models (IMFA/IMIFA). Let's fit an Overfitted Mixture of Infinite Factor Analysers, overriding the default value for the starting value / upper limit for the number of clusters (`range.G`), and allowing the Dirichlet hyperparameter (`alpha`) for the cluster mixing proportions to be learned via `learn.alpha=TRUE` (the default). We can enforce additional shrinkage by varying other MGP hyperparameters, using arguments from `mgpControl()`.
 
 ```{r, eval=FALSE}
-simOMIFA <- mcmc_IMIFA(olive, method="OMIFA", n.iters=10000, range.G=10, alpha=0.8,
-                       alpha.d1=3.5, nu=3, alpha.d2=7, prop=0.8, epsilon=0.01)
+simOMIFA <- mcmc_IMIFA(olive, method="OMIFA", n.iters=10000, range.G=10, learn.alpha=TRUE,
+                       nu=3, alpha.d1=3.5, alpha.d2=7, prop=0.8, epsilon=0.01)
 ```
 
 Finally, let's run the flagship IMIFA model, on which all subsequent demonstrations and results will be based, for a greater number of iterations, accepting the defaults for most arguments. Note that the `verbose` argument, which defaults to `TRUE` will ordinarily print a progress bar to the console window. The default implementation uses the independent rather than dependent slice-efficient sampler; we could override the default for the parameter governing the rate of geometric decay by specifying `rho`.
@@ -135,13 +135,13 @@ If we wanted to choose the optimum MFA model, we would simply type
 resMFA  <- get_IMIFA_results(simMFA)
 ```
 
-If we instead wanted to explore the 3-cluster solution, construct 90% credible intervals, and have the number of latent factors chosen by another criterion, we could try
+If we instead wanted to explore the 3-cluster solution and have the number of latent factors chosen by another criterion, we could try
 
 ```{r, eval=FALSE}
 resMFA2 <- get_IMIFA_results(simMFA, G=3, criterion="aic.mcmc")
 ```
 
-For now, let's just extract results from our IMIFA run above so we can proceed to visually examine them. Though the IMIFA model obviates the need for model selection criteria, the syntax for extracting results is exactly the same. However, this time, let's also summarise the clustering via the N x N similarity matrix obtained by averaging the adjacency matrices (admittedly at the expense of slightly slowing the function down!), so that we can visualise it later.
+For now, let's just extract results from our IMIFA run above so we can proceed to visually examine them. Though the IMIFA model obviates the need for model selection criteria, the syntax for extracting results is exactly the same. However, this time, let's also summarise the clustering via the $N * N$ similarity matrix obtained by averaging the adjacency matrices (admittedly at the expense of slightly slowing the function down!), so that we can visualise it later.
 
 ```{r, eval=FALSE}
 resIMIFA <- get_IMIFA_results(simIMIFA, z.avgsim=TRUE)
@@ -154,7 +154,7 @@ load(file="res_olive_IMIFA__Edited-Vignette-only-Version.rda")
 Before we examine the results in great detail, we can quickly summarise the solution as follows
 
 ```{r}
-summary(resIMIFA)
+summary(resIMIFA, MAP=TRUE)
 ```
 
 ## Visualing IMIFA results

@@ -106,17 +106,18 @@
 #' (prior     <- rDirichlet(G=5, alpha=1))
 #' (posterior <- rDirichlet(G=5, alpha=1, nn=c(20, 41, 32, 8, 12)))
     rDirichlet   <- function(G, alpha, nn = 0L) {
+      if(length(alpha)   != 1    &&
+         length(alpha)   != G)             stop("Invalid alpha", call.=FALSE)
       shape      <- alpha + nn
       tmp        <- if(all(shape == 1)) stats::rexp(G, 1L) else stats::rgamma(G, shape=shape, rate=1L)
         tmp/sum(tmp)
     }
 
-    .sim_vs_inf  <- function(alpha, nn = 0L, N = sum(nn), discount, len, lseq = NULL) {
-        if(discount == 0) stats::rbeta(len, 1L + nn, alpha + N - cumsum(nn))                                 else
-        if(discount  > 0) stats::rbeta(len, 1  - discount  + nn, alpha + lseq * discount + N   - cumsum(nn)) else {
-          bg     <- alpha   + lseq * discount  + N - cumsum(nn)
-          bgs    <- bg[bg   > 0]
-          base::c(stats::rbeta(sum(bg > 0), 1  - discount  + nn[bg > 0], bgs), rep(1L, sum(bg <= 0)))
+    .sim_vs_inf  <- function(alpha, nn = 0L, N = sum(nn), discount = 0, len, lseq = NULL) {
+        if(discount == 0) stats::rbeta(len, 1L + nn, alpha + N    - cumsum(nn))                             else
+        if(discount  > 0) stats::rbeta(len, 1  - discount  + nn, alpha + lseq * discount  + N - cumsum(nn)) else {
+          stats::rbeta(len, 1 - discount + nn, pmax(alpha  + lseq * discount  + N - cumsum(nn), 0L))
+         #stats::rbeta(len, alpha + nn, (if(len == 1) 1 else len - lseq) * alpha + N - cumsum(nn))
         }
     }
 
@@ -215,7 +216,7 @@
         stats::dgamma(x, shape=shape, rate=rate, log=TRUE)
     }
 
-    .sim_alpha_o <- function(alpha, zeta, G, N, nn, shape, rate) {
+    .sim_alpha_o <- function(alpha, zeta = 1, G, N, nn, shape, rate) {
       propa      <- exp(log(alpha) + stats::rnorm(1, 0, zeta))
       logpr      <- .log_Oalpha(propa, G, N, nn, shape, rate) - .log_Oalpha(alpha, G, N, nn, shape, rate) + log(propa) - log(alpha)
       acpt       <- logpr >= 0  || - stats::rexp(1) < logpr
@@ -944,7 +945,6 @@
 #' \item{d}{The scaling factor (is \code{isTRUE(dilate)}).}
 #' \item{ss}{The sum of squared differences (if \code{isTRUE(sumsq)}).}
 #' @keywords utility
-#' @importFrom matrixStats "colSums2"
 #' @export
 #'
 #' @references Borg, I. and Groenen, P. J. F. (1997) \emph{Modern Multidimensional Scaling}. Springer-Verlag, New York, pp. 340-342.
@@ -984,16 +984,16 @@
       }
       if(P2 == 0)                          stop("Xstar must contain at least one column",         call.=FALSE)
       if(anyNA(Xstar)   || anyNA(X))       stop("X and Xstar are not allowed to contain missing values", call.=FALSE)
-      J          <- if(translate) diag(N) - 1/N                                           else diag(N)
-      C          <- if(translate) crossprod(Xstar, J) %*% X                               else crossprod(Xstar, X)
+      J          <- if(translate) diag(N) - 1/N                                      else diag(N)
+      C          <- if(translate) crossprod(Xstar, J) %*% X                          else crossprod(Xstar, X)
       if(!all(P  == 1,
               P2 == 1))  {
         svdX     <- svd(C)
         R        <- tcrossprod(svdX$v, svdX$u)
       } else R   <- 1L
-      d          <- if(dilate)    sum(colSums2(C * R))/sum(colSums2(crossprod(J, X) * X)) else 1L
-      tt         <- if(translate) crossprod(Xstar - d * X %*% R, matrix(1L, N, 1))/N      else 0L
-      X.new      <- d * X %*% R + if(translate) matrix(tt, N, P2, byrow = TRUE)           else tt
+      d          <- if(dilate)    sum(C * R)/sum(crossprod(J, X) * X)                else 1L
+      tt         <- if(translate) crossprod(Xstar - d * X %*% R, matrix(1L, N, 1))/N else 0L
+      X.new      <- d * X %*% R + if(translate) matrix(tt, N, P2, byrow = TRUE)      else tt
         return(c(list(X.new = X.new), list(R = R), if(translate) list(t = tt),
                  if(dilate) list(d = d), if(sumsq) list(ss = sum((X[,seq_len(P2), drop=FALSE] - X.new)^2L))))
     }
@@ -1090,8 +1090,8 @@
       if(discount < 0    &&
         (alpha   %% discount) != 0)        stop("'alpha' must be a positive integer multiple of 'abs(discount)' when 'discount' is negative", call.=FALSE)
       if(alpha   == 0    && discount <= 0) stop("'discount' must be strictly positive when 'alpha=0", call.=FALSE)
-      if(alpha   == 0    && isFALSE(MPFR)) stop("'MPFR' must be TRUE when 'alpha' == 0", call.=FALSE)
-      imgp       <- isNamespaceLoaded("Rmpfr")
+      if(alpha   == 0    && !isTRUE(MPFR)) stop("'MPFR' must be TRUE when 'alpha' == 0", call.=FALSE)
+      igmp       <- isNamespaceLoaded("Rmpfr")
       if(mpfrind <- (isTRUE(MPFR)    && suppressMessages(requireNamespace("Rmpfr", quietly=TRUE)))) {
         if(isFALSE(igmp)) {
           on.exit(.detach_pkg("Rmpfr"))
@@ -1149,12 +1149,12 @@
       if(discount < 0    &&
          alpha   %% discount != 0)         stop("'alpha' must be a positive integer multiple of 'abs(discount)' when 'discount' is negative", call.=FALSE)
      #if(alpha   == 0)    {                warning("'alpha'=0 case note yet implemented", call.=FALSE, immediate.=TRUE); return(Inf) }
-      if(discount != 0   && isFALSE(MPFR)) stop("'MPFR' must be TRUE when 'discount' is non-zero", call.=FALSE)
-      imgp       <- isNamespaceLoaded("Rmpfr")
+      if(discount != 0   && !isTRUE(MPFR)) stop("'MPFR' must be TRUE when 'discount' is non-zero", call.=FALSE)
+      igmp       <- isNamespaceLoaded("Rmpfr")
       if(mpfrind <- (isTRUE(MPFR)    && suppressMessages(requireNamespace("Rmpfr", quietly=TRUE)))) {
         if(isFALSE(igmp)) {
-          on.exit(.detach_pkg(Rmpfr))
-          on.exit(.detach_pkg(gmp), add=TRUE)
+          on.exit(.detach_pkg("Rmpfr"))
+          on.exit(.detach_pkg("gmp"), add=TRUE)
         }
         alpha    <- Rmpfr::mpfr(alpha, precBits=256)
       } else if(discount != 0)             stop("'Rmpfr' package not installed", call.=FALSE)
@@ -1292,9 +1292,12 @@
 #' @rdname get_IMIFA_results
 #' @usage
 #' \method{summary}{Results_IMIFA}(object,
+#'         MAP = TRUE,
 #'         ...)
 #' @export
-    summary.Results_IMIFA <- function(object, ...) {
+    summary.Results_IMIFA <- function(object, MAP = TRUE, ...) {
+      if(any(!is.logical(MAP),
+             length(MAP) != 1))            stop("'MAP' must be a single logical indicator", call.=FALSE)
       criterion  <- unlist(strsplit(toupper(attr(object$GQ.results, "Criterion")), "[.]"))
       criterion  <- ifelse(length(criterion) > 1, ifelse(criterion[1L] != "LOG", paste0(criterion[1L], ".", tolower(criterion[2L])), "LogIntegratedLikelihood"), criterion)
       crit.mat   <- object$GQ.results[[paste0(criterion, "s")]]
@@ -1303,9 +1306,22 @@
       if(any(dim(crit.mat) > 1)) {
         msg      <- paste0(", and ", ifelse(substr(criterion, 1L, 1L) == "A", "an ", "a "),  criterion, " of ", round(max(crit.mat), 2L), "\n")
       }
-      summ       <- list(call = call, details = paste0(paste0(utils::capture.output(print(object)), msg)))
-      class(summ)        <- "summary_IMIFA"
+      summ       <- list(call = call, details = paste0(utils::capture.output(print(object)), msg),
+                         MAP=object$Clust$MAP, showMAP = MAP)
+      class(summ)        <- "summary_ResultsIMIFA"
         summ
+    }
+
+#' @method print summary_ResultsIMIFA
+#' @export
+    print.summary_ResultsIMIFA  <- function(x, ...) {
+      cat("Call:\t")
+      print(x$call)
+      cat(paste0("\n", x$details))
+      if(isTRUE(x$showMAP))      {
+        cat("\n\nClustering table :")
+        print(table(x$MAP), row.names = FALSE)
+      }
     }
 
   # Control functions
@@ -1452,7 +1468,7 @@
 #' \describe{
 #' \item{For the "\code{IMFA}" and "\code{IMIFA}" methods:}{A logical indicating whether the Pitman-Yor / Dirichlet process concentration parameter is to be learned (defaults to \code{TRUE}), or remain fixed for the duration of the chain. If being learned, a Ga(a, b) prior is assumed for \code{alpha}; updates take place via Gibbs sampling when \code{discount} is zero and via Metropolis-Hastings when \code{discount > 0}. If not being learned, \code{alpha} \emph{must} be supplied.
 #'
-#' In the special case of \code{discount < 0}, \code{alpha} must be a positive integer multiple of \code{abs(discount)}; in this instance, \code{learn.alpha} updates \code{alpha} with the changing number of components as the positive integer.}
+#' In the special case of \code{discount < 0}, \code{alpha} must be supplied as a positive integer multiple of \code{abs(discount)}; in this instance, \code{learn.alpha} is forced to \code{TRUE} and \code{alpha} is updated with the changing number of components as the positive integer.}
 #' \item{For the "\code{OMFA}" and "\code{OMIFA}" methods:}{A logical indicating whether the Dirichlet concentration parameter is to be learned (defaults to \code{TRUE}) or remain fixed for the duration of the chain. If being learned, a Ga(a, b * G) is assumed for \code{alpha}, where G is the number of mixture components \code{range.G}, and updates take place via Metropolis-Hastings. If not being learned \code{alpha} \emph{must} be supplied.}
 #' }
 #' @param alpha.hyper
@@ -1460,8 +1476,10 @@
 #' \item{For the "\code{IMFA}" and "\code{IMIFA}" methods:}{A vector of length 2 giving hyperparameters for the prior on the Pitman-Yor / Dirichlet process concentration parameter \code{alpha}. If \code{isTRUE(learn.alpha)}, these are shape and rate parameters of a Gamma distribution. Defaults to Ga(\code{2}, \code{4}). Choosing a larger rate is particularly important, as it encourages clustering. The prior is shifted to have support on (\code{-discount}, \code{Inf}) when non-zero \code{discount} is supplied and remains fixed (i.e. \code{learn.d=FALSE}) or when \code{learn.d=TRUE}.}
 #' \item{For the "\code{OMFA}" and "\code{OMIFA}" methods:}{A vector of length 2 giving hyperparameters a and b for the prior on the Dirichlet concentration parameter \code{alpha}. If \code{isTRUE(learn.alpha)}, these are shape and rate parameters of a Gamma distribution. Defaults to Ga(2, 4). Note that the supplied rate will be multiplied by \code{range.G}, to encourage clustering, such that the form of the prior is Ga(a, b * G).}
 #' }
-#' @param discount The discount parameter used when generalising the Dirichlet process to the Pitman-Yor process. Defaults to 0, but typically must lie in the interval [0, 1). If greater than zero, \code{alpha} can be supplied greater than \code{-discount}. By default, Metropolis-Hastings steps are invoked for updating this parameter via \code{learn.d}. The special case of \code{discount < 0} is allowed, in which case \code{learn.d=FALSE} is forced and \code{alpha} must be a positive integer multiple of \code{abs(discount)}.
-#' @param learn.d Logical indicating whether the \code{discount} parameter is to be updated via Metropolis-Hastings (defaults to\code{TRUE}).
+#' @param discount The discount parameter used when generalising the Dirichlet process to the Pitman-Yor process. Defaults to 0, but typically must lie in the interval [0, 1). If greater than zero, \code{alpha} can be supplied greater than \code{-discount}. By default, Metropolis-Hastings steps are invoked for updating this parameter via \code{learn.d}.
+#'
+#' The special case of \code{discount < 0} is allowed, in which case \code{learn.d=FALSE} is forced and \code{alpha} must be supplied as a positive integer multiple of \code{abs(discount)}. Fixing \code{discount > 0.5} is discouraged (see \code{learn.alpha}).
+#' @param learn.d Logical indicating whether the \code{discount} parameter is to be updated via Metropolis-Hastings (defaults to \code{TRUE}, unless \code{discount} is supplied as a negative value).
 #' @param d.hyper Hyperparameters for the Beta(a,b) prior on the \code{discount} parameter. Defaults to Beta(1,1), i.e. Uniform(0,1).
 #' @param ind.slice Logical indicating whether the independent slice-efficient sampler is to be employed (defaults to \code{TRUE}). If \code{FALSE} the dependent slice-efficient sampler is employed, whereby the slice sequence \eqn{\xi_1,\ldots,\xi_g}{xi_1,...,xi_g} is equal to the decreasingly ordered mixing proportions.
 #' @param rho Parameter controlling the rate of geometric decay for the independent slice-efficient sampler, s.t. \eqn{\xi=(1-\rho)\rho^{g-1}}{xi = (1 - rho)rho^(g-1)}. Must lie in the interval [0, 1). Higher values are associated with better mixing but longer run times. Defaults to 0.75, but 0.5 is an interesting special case which guarantees that the slice sequence \eqn{\xi_1,\ldots,\xi_g}{xi_1,...,xi_g} is equal to the \emph{expectation} of the decreasingly ordered mixing proportions. Only relevant when \code{ind.slice} is \code{TRUE}.
@@ -1493,7 +1511,7 @@
 #' @return A named list in which the names are the names of the arguments related to the BNP prior(s) and the values are the values supplied to the arguments.
 #' @note Certain supplied arguments will be subject to further checks within \code{\link{mcmc_IMIFA}}. \code{\link{G_priorDensity}} and \code{\link{G_moments}} can help with soliciting sensible DP/PYP priors.
 #'
-#' Under the "\code{IMFA}" and "\code{IMIFA}" methods, a Pitman-Yor process prior is specified by default. A Dirichlet process prior can be easily invoked when the \code{discount} is fixed at \code{0} and \code{learn.d=FALSE}. The normalized stable process can also be specified as a prior distribution, as a special case of the Pitman-Yor process, when \code{alpha} remains fixed at \code{0} and \code{learn.alpha=FALSE} (provided the \code{discount} is fixed at a non-zero value or \code{learn.d=TRUE}).
+#' Under the "\code{IMFA}" and "\code{IMIFA}" methods, a Pitman-Yor process prior is specified by default. A Dirichlet process prior can be easily invoked when the \code{discount} is fixed at \code{0} and \code{learn.d=FALSE}. The normalized stable process can also be specified as a prior distribution, as a special case of the Pitman-Yor process, when \code{alpha} remains fixed at \code{0} and \code{learn.alpha=FALSE} (provided the \code{discount} is fixed at a strictly positive value or \code{learn.d=TRUE}). The special case of the Pitman-Yor process with negative \code{discount} is also allowed as an experimental feature for which caution is advised, though \code{learn.d} and \code{learn.alpha} are forced to \code{FALSE} and \code{TRUE}, respectively, in this instance.
 #' @keywords control
 #' @references Murphy, K., Viroli, C., and Gormley, I. C. (2019) Infinite mixtures of infinite factor analysers, \emph{Bayesian Analysis}, 1-27. <\href{https://projecteuclid.org/euclid.ba/1570586978}{doi:10.1214/19-BA1179}>.
 #'
@@ -1528,7 +1546,7 @@
   bnpControl     <- function(learn.alpha = TRUE, alpha.hyper = c(2L, 4L), discount = 0, learn.d = TRUE, d.hyper = c(1L, 1L),
                              ind.slice = TRUE, rho = 0.75, trunc.G = NULL, kappa = 0.5, IM.lab.sw = TRUE, zeta = NULL, tune.zeta = list(...), ...) {
     miss.args    <- list(discount = missing(discount), IM.lab.sw = missing(IM.lab.sw), kappa = missing(kappa),
-                         trunc.G = missing(trunc.G), zeta = missing(zeta), learn.d = missing(learn.d))
+                         trunc.G = missing(trunc.G), zeta = missing(zeta), learn.d = missing(learn.d), learn.alpha = missing(learn.alpha))
     if(any(!is.logical(learn.alpha),
            length(learn.alpha)    != 1))   stop("'learn.alpha' must be a single logical indicator", call.=FALSE)
     if(all(length(alpha.hyper)    != 2,
@@ -1553,14 +1571,20 @@
     if(any(!is.numeric(kappa),
            length(kappa)          != 1))   stop("'kappa' must be a single number", call.=FALSE)
     if(kappa      <  0   || kappa  > 1)    stop("'kappa' must lie in the interval [0, 1]", call.=FALSE)
+    if(isFALSE(learn.d)  &&
+      !missing(discount) &&
+      discount    > 0.5)                   message("Fixing 'discount'>0.5 is discouraged\n")
     discount     <- ifelse(missing(discount), ifelse(learn.d, ifelse(kappa != 0 && stats::runif(1L) <= kappa, 0L, pmin(stats::rbeta(1L, d.hyper[1L], d.hyper[2L]), 1 - .Machine$double.eps)), 0L), discount)
     if(any(!is.numeric(discount),
            length(discount)       != 1))   stop("'discount' must be a single number", call.=FALSE)
     if(discount  >= 1)                     stop("'discount' must be less than 1",     call.=FALSE)
     if(discount   < 0)    {
       if(!miss.args$learn.d       &&
-         isTRUE(learn.d))                  stop("'learn.d' must be FALSE when 'discount' is negative", call.=FALSE)
-      learn.d    <- FALSE
+         isTRUE(learn.d))                  stop("'learn.d' must be FALSE when 'discount' is negative",    call.=FALSE)
+      if(!miss.args$learn.alpha   &&
+         isFALSE(learn.alpha))             stop("'learn.alpha' must be TRUE when 'discount' is negative", call.=FALSE)
+     learn.d     <- FALSE
+     learn.alpha <- TRUE
     }
     kappa        <- ifelse(all(!learn.d, discount == 0), 1L, kappa)
     if(all(kappa         == 0, !learn.d,
@@ -1988,8 +2012,8 @@
         if(std) sqrt(s) else s
     }
 
-    .detach_pkg  <- function(pkg, character.only = FALSE) {
-      searches   <- paste("package", if(!character.only) deparse(substitute(pkg)) else pkg, sep=":")
+    .detach_pkg  <- function(pkg, character.only = TRUE) {
+      searches   <- paste("package", if(isTRUE(character.only)) pkg else deparse(substitute(pkg)), sep=":")
       while(searches %in% search()) {
         detach(searches, unload=TRUE, character.only=TRUE)
       }
@@ -2191,8 +2215,8 @@
         arglist$pch       <- 1L
         ppoints           <- FALSE
       }
-      if(!add) do.call(graphics::plot, c(list(x, y, type = "n"), .clean_args(arglist, graphics::plot)))
-      if(gap == TRUE) gap <- 0.01
+      if(isFALSE(add))       do.call(base::plot, c(list(x, y, type = "n"), .clean_args(arglist, base::plot)))
+      if(isTRUE(gap)) gap <- 0.01
       ul         <- c(li, ui)
       pin        <- graphics::par("pin")
       usr        <- graphics::par("usr")

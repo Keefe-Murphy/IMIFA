@@ -22,7 +22,7 @@ bnpControl(learn.alpha = TRUE,
 \item{learn.alpha}{\describe{
 \item{For the "\code{IMFA}" and "\code{IMIFA}" methods:}{A logical indicating whether the Pitman-Yor / Dirichlet process concentration parameter is to be learned (defaults to \code{TRUE}), or remain fixed for the duration of the chain. If being learned, a Ga(a, b) prior is assumed for \code{alpha}; updates take place via Gibbs sampling when \code{discount} is zero and via Metropolis-Hastings when \code{discount > 0}. If not being learned, \code{alpha} \emph{must} be supplied.
 
-In the special case of \code{discount < 0}, \code{alpha} must be a positive integer multiple of \code{abs(discount)}; in this instance, \code{learn.alpha} updates \code{alpha} with the changing number of components as the positive integer.}
+In the special case of \code{discount < 0}, \code{alpha} must be supplied as a positive integer multiple of \code{abs(discount)}; in this instance, \code{learn.alpha} is forced to \code{TRUE} and \code{alpha} is updated with the changing number of components as the positive integer.}
 \item{For the "\code{OMFA}" and "\code{OMIFA}" methods:}{A logical indicating whether the Dirichlet concentration parameter is to be learned (defaults to \code{TRUE}) or remain fixed for the duration of the chain. If being learned, a Ga(a, b * G) is assumed for \code{alpha}, where G is the number of mixture components \code{range.G}, and updates take place via Metropolis-Hastings. If not being learned \code{alpha} \emph{must} be supplied.}
 }}
 
@@ -31,9 +31,11 @@ In the special case of \code{discount < 0}, \code{alpha} must be a positive inte
 \item{For the "\code{OMFA}" and "\code{OMIFA}" methods:}{A vector of length 2 giving hyperparameters a and b for the prior on the Dirichlet concentration parameter \code{alpha}. If \code{isTRUE(learn.alpha)}, these are shape and rate parameters of a Gamma distribution. Defaults to Ga(2, 4). Note that the supplied rate will be multiplied by \code{range.G}, to encourage clustering, such that the form of the prior is Ga(a, b * G).}
 }}
 
-\item{discount}{The discount parameter used when generalising the Dirichlet process to the Pitman-Yor process. Defaults to 0, but typically must lie in the interval [0, 1). If greater than zero, \code{alpha} can be supplied greater than \code{-discount}. By default, Metropolis-Hastings steps are invoked for updating this parameter via \code{learn.d}. The special case of \code{discount < 0} is allowed, in which case \code{learn.d=FALSE} is forced and \code{alpha} must be a positive integer multiple of \code{abs(discount)}.}
+\item{discount}{The discount parameter used when generalising the Dirichlet process to the Pitman-Yor process. Defaults to 0, but typically must lie in the interval [0, 1). If greater than zero, \code{alpha} can be supplied greater than \code{-discount}. By default, Metropolis-Hastings steps are invoked for updating this parameter via \code{learn.d}.
 
-\item{learn.d}{Logical indicating whether the \code{discount} parameter is to be updated via Metropolis-Hastings (defaults to\code{TRUE}).}
+The special case of \code{discount < 0} is allowed, in which case \code{learn.d=FALSE} is forced and \code{alpha} must be supplied as a positive integer multiple of \code{abs(discount)}. Fixing \code{discount > 0.5} is discouraged (see \code{learn.alpha}).}
+
+\item{learn.d}{Logical indicating whether the \code{discount} parameter is to be updated via Metropolis-Hastings (defaults to \code{TRUE}, unless \code{discount} is supplied as a negative value).}
 
 \item{d.hyper}{Hyperparameters for the Beta(a,b) prior on the \code{discount} parameter. Defaults to Beta(1,1), i.e. Uniform(0,1).}
 
@@ -80,7 +82,7 @@ All arguments here are relevant to the "\code{IMFA}" and "\code{IMIFA}" methods,
 \note{
 Certain supplied arguments will be subject to further checks within \code{\link{mcmc_IMIFA}}. \code{\link{G_priorDensity}} and \code{\link{G_moments}} can help with soliciting sensible DP/PYP priors.
 
-Under the "\code{IMFA}" and "\code{IMIFA}" methods, a Pitman-Yor process prior is specified by default. A Dirichlet process prior can be easily invoked when the \code{discount} is fixed at \code{0} and \code{learn.d=FALSE}. The normalized stable process can also be specified as a prior distribution, as a special case of the Pitman-Yor process, when \code{alpha} remains fixed at \code{0} and \code{learn.alpha=FALSE} (provided the \code{discount} is fixed at a non-zero value or \code{learn.d=TRUE}).
+Under the "\code{IMFA}" and "\code{IMIFA}" methods, a Pitman-Yor process prior is specified by default. A Dirichlet process prior can be easily invoked when the \code{discount} is fixed at \code{0} and \code{learn.d=FALSE}. The normalized stable process can also be specified as a prior distribution, as a special case of the Pitman-Yor process, when \code{alpha} remains fixed at \code{0} and \code{learn.alpha=FALSE} (provided the \code{discount} is fixed at a strictly positive value or \code{learn.d=TRUE}). The special case of the Pitman-Yor process with negative \code{discount} is also allowed as an experimental feature for which caution is advised, though \code{learn.d} and \code{learn.alpha} are forced to \code{FALSE} and \code{TRUE}, respectively, in this instance.
 }
 \examples{
 bnpctrl <- bnpControl(learn.d=FALSE, ind.slice=FALSE, alpha.hyper=c(3, 3))

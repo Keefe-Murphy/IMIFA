@@ -1,6 +1,17 @@
 __Infinite Mixtures of Infinite Factor Analysers__
 ==================================================  
 
+## IMIFA v2.1.3 - (_10<sup>th</sup> release [patch update]: 2020-05-12_)
+### Bug Fixes & Miscellaneous Edits
+* Maintenance release for compatibility with R 4.0.0 - minor edits.
+* Improved handling of suggested packages `Rmpfr` & `gmp` in `G_expected`, `G_variance`, & `G_priorDensity`.
+* `summary.Results_IMIFA` gains the printing-related argument `MAP=TRUE`.
+* Edited printed details when `plot.meth="zlabels"` with unsupplied `zlabels`.
+* Minor fixes for fixed negative `discount` (an experimental feature).
+* Minor speed-up to `Procrustes` when `dilate=TRUE` (never used internally).
+* Minor efficiency gain to slice sampler for IM(I)FA methods.
+* Documentation, vignette, examples, and references improvements.
+
 ## IMIFA v2.1.2 - (_9<sup>th</sup> release [patch update]: 2020-03-30_)
 ### Bug Fixes
 * Fixes and speed-ups to MGP updates and adaptive Gibbs sampler for IMIFA/OMIFA/MIFA models:  
@@ -19,7 +30,7 @@ proportion of explained variance per cluster (`x$Error$Clust.Exps`; previously `
 ## IMIFA v2.1.1 - (_8<sup>th</sup> release [patch update]: 2019-12-11_)
 ### Improvements
 * `discount` can now be fixed at a negative value when `learn.d=FALSE`,  
-  provided `alpha` is fixed at a positive integer multiple of `abs(discount)` or `learn.alpha=TRUE`.
+  provided `alpha` is supplied as a positive integer multiple of `abs(discount)` and `learn.alpha=TRUE`.
 * Other types of `norm` (beyond Frobenius) can now be specified, by passing the arg. `type`,  
   via the `...` construct, for calculating the PPRE within `get_IMIFA_results`.
 * The breaks used to construct the bins for the PPRE calculation can now also be specified,  
