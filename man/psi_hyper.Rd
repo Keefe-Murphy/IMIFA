@@ -63,7 +63,7 @@ olive_S <- scale(olive2, center=TRUE, scale=TRUE)
 (prop2   <- scale2/(2.5 - 1))
 }
 \references{
-Murphy, K., Viroli, C., and Gormley, I. C. (2019) Infinite mixtures of infinite factor analysers, \emph{Bayesian Analysis}, 1-27. <\href{https://projecteuclid.org/euclid.ba/1570586978}{doi:10.1214/19-BA1179}>.
+Murphy, K., Viroli, C., and Gormley, I. C. (2020) Infinite mixtures of infinite factor analysers, \emph{Bayesian Analysis}, 15(3): 937-963. <\href{https://projecteuclid.org/euclid.ba/1570586978}{doi:10.1214/19-BA1179}>.
 
 Fruwirth-Schnatter, S. and Lopes, H. F. (2010). Parsimonious Bayesian factor analysis when the number of factors is unknown, \emph{Technical Report}. The University of Chicago Booth School of Business.
 
@@ -75,6 +75,6 @@ Tipping, M. E. and Bishop, C. M. (1999). Probabilistic principal component analy
 \code{\link{mcmc_IMIFA}}, \code{\link{mixfaControl}}
 }
 \author{
-Keefe Murphy - <\email{keefe.murphy@ucd.ie}>
+Keefe Murphy - <\email{keefe.murphy@mu.ie}>
 }
 \keyword{utility}

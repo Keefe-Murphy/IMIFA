@@ -6,15 +6,15 @@
 \alias{IMIFA-package}
 \title{IMIFA: Infinite Mixtures of Infinite Factor Analysers and Related Models}
 \description{
-A package for Bayesian nonparameteric clustering of high-dimensional datasets, providing functions for fitting, diagnostic tools and plotting for Infinite Mixtures of Infinite Factor Analysers and the full suite of related models. Allows model based clustering with factor analytic covariance structures without recourse to model selection criteria to choose the number of clusters or cluster-specific latent factors. Model-specific diagnostic tools are also provided, as well as many options for plotting results, conducting posterior inference on parameters of interest, posterior predictive checking, and quantifying uncertainty.
+A package for Bayesian nonparameteric clustering of high-dimensional data sets, providing functions for fitting, diagnostic tools and plotting for Infinite Mixtures of Infinite Factor Analysers and the full suite of related models introduced by Murphy et al. (2020) <\href{https://doi.org/10.1214/19-BA1179}{doi:10.1214/19-BA1179}>. Allows model based clustering with factor analytic covariance structures without recourse to model selection criteria to choose the number of clusters or cluster-specific latent factors. Model-specific diagnostic tools are also provided, as well as many options for plotting results, conducting posterior inference on parameters of interest, posterior predictive checking, and quantifying uncertainty.
 }
 \section{Details}{
 
 \itemize{
 \item{Type: }{Package}
 \item{Package: }{IMIFA}
-\item{Version: }{2.1.3}
-\item{Date: }{2020-05-12 (this version), 2017-02-02 (original release)}
+\item{Version: }{2.1.4}
+\item{Date: }{2020-11-18 (this version), 2017-02-02 (original release)}
 \item{Licence: }{GPL (>=2)}
 }
 }
@@ -37,7 +37,7 @@ Results obtained from get_IMIFA_Results are passed to this function with the typ
 
 \section{References}{
 
-Murphy, K., Viroli, C., and Gormley, I. C. (2019) Infinite mixtures of infinite factor analysers, \emph{Bayesian Analysis}, 1-27. <\href{https://projecteuclid.org/euclid.ba/1570586978}{doi:10.1214/19-BA1179}>.
+Murphy, K., Viroli, C., and Gormley, I. C. (2020) Infinite mixtures of infinite factor analysers, \emph{Bayesian Analysis}, 15(3): 937-963. <\href{https://projecteuclid.org/euclid.ba/1570586978}{doi:10.1214/19-BA1179}>.
 }
 
 \section{See Also}{
@@ -57,6 +57,6 @@ Useful links:
 \author{
 Keefe Murphy [aut, cre], Cinzia Viroli [ctb], Isobel Claire Gormley [ctb]
 
-\strong{Maintainer}: Keefe Murphy - <\email{keefe.murphy@ucd.ie}>
+\strong{Maintainer}: Keefe Murphy - <\email{keefe.murphy@mu.ie}>
 }
 \keyword{package}

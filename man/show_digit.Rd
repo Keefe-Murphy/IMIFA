@@ -34,6 +34,6 @@ show_digit(colMeans(USPSdigits$train[,-1]))
 \code{\link{USPSdigits}}, \code{\link{show_IMIFA_digit}}, \code{\link{mat2cols}}, \code{\link{plot_cols}}
 }
 \author{
-Keefe Murphy - <\email{keefe.murphy@ucd.ie}>
+Keefe Murphy - <\email{keefe.murphy@mu.ie}>
 }
 \keyword{plotting}

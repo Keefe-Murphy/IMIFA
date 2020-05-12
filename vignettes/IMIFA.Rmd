@@ -23,14 +23,14 @@ Typically, one would run FA or MFA models over ranges of values for the numbers 
 
 The main features of the IMIFA model are the multiplicative gamma process shrinkage prior on the factor loadings, which allows theoretically infinitely many factors (this can also be employed in a MIFA context, for instance, where the number of clusters is fixed but cluster-specific factors are estimated), an adaptive Gibbs sampler which dynamically truncates the infinite loadings matrices, and the Dirichlet process prior, which utilises the stick-breaking construction and slice-efficient sampling, and allows theoretically infinitely many clusters. Tools are provided for soliciting sensible hyperparameters for these priors. As of IMIFA v1.2.0, a Pitman-Yor process prior on the number of mixture components is assumed by default, and its concentration and discount parameters are learned via Metropolis-Hastings updates.
 
-Model-specific diagnostic tools are also provided, as well as many extensive options for plotting results, conducting posterior inference on parameters of interest, and quantifying uncertainty. The functions are typically verbose, offering plenty of messages and warnings to the user where appropriate. Please see [Murphy et al. (2019)](https://projecteuclid.org/euclid.ba/1570586978) for more info.
+Model-specific diagnostic tools are also provided, as well as many extensive options for plotting results, conducting posterior inference on parameters of interest, and quantifying uncertainty. The functions are typically verbose, offering plenty of messages and warnings to the user where appropriate. Please see [Murphy et al. (2020)](https://projecteuclid.org/euclid.ba/1570586978) for more info.
 
 If you find bugs or want to suggest new features please visit the __IMIFA__ [GitHub issues page](https://github.com/Keefe-Murphy/IMIFA/issues). 
 
-This vignette aims to reproduce some results in the Murphy et al. (2019) paper using the `mcmc_IMIFA()` and `get_IMIFA_results()` functions and demonstrates how the plots therein were created using the dedicated S3 `plot` method, while also demonstrating how to fit other models in the IMIFA family.
+This vignette aims to reproduce some results in the Murphy et al. (2020) paper using the `mcmc_IMIFA()` and `get_IMIFA_results()` functions and demonstrates how the plots therein were created using the dedicated S3 `plot` method, while also demonstrating how to fit other models in the IMIFA family.
 
 ### Installing IMIFA
-__IMIFA__ will run in Windows, Mac OS X or Linux. To install __IMIFA__ you first need to install [R](https://cran.r-project.org/). Installing [Rstudio](https://www.rstudio.com/) as a nice desktop environment for using R is also recommended.
+__IMIFA__ will run in Windows, Mac OS X, or Linux. To install __IMIFA__ you first need to install [R](https://cran.r-project.org/). Installing [RStudio](https://rstudio.com/) as a nice desktop environment for using R is also recommended.
 
 Once in R you can type:
 
@@ -178,7 +178,7 @@ suppressWarnings(plot(resIMIFA, plot.meth="GQ", g=2))
 plot(resIMIFA, plot.meth="GQ", g=3)
 ```
 
-Let's examine clustering performance against the known cluster labels. Note that the cluster labels could have been already supplied to `get_IMIFA_results` too, but plotting allows clustering performance to be evaluated against new labels without having to extract the full results object all over again. More specifically, the code below allows us to visualise the clustering uncertainty (with or without the labels being supplied, in fact; when they are supplied, misclassified observations are highlighted, otherwise observations with uncertainty exceeding the inverse of the number of clusters are highlighted). 
+Let's examine clustering performance against the known cluster labels. Note that the cluster labels could have been already supplied to `get_IMIFA_results` too, but plotting allows clustering performance to be evaluated against new labels without having to extract the full results object all over again. More specifically, the code below allows us to visualise the clustering uncertainty (with or without the labels being supplied; in fact, when they are supplied, misclassified observations are highlighted, otherwise observations with uncertainty exceeding the inverse of the number of clusters are highlighted). 
 
 ```{r}
 plot(resIMIFA, plot.meth="zlabels", zlabels=olive$area, g=1)
@@ -265,6 +265,6 @@ plot(resIMIFA, plot.meth="all", param="discount", partial=TRUE)
 # References
 For a more detailed description of the kind of things __IMIFA__ can do and the purposes for which the model was developed, please consult the following papers:
 
-Murphy, K., Viroli, C., and Gormley, I. C. (2019). Infinite mixtures of infinite factor analysers. _Bayesian Analysis_, 1-27. URL [https://projecteuclid.org/euclid.ba/1570586978](https://projecteuclid.org/euclid.ba/1570586978)
+Murphy, K., Viroli, C., and Gormley, I. C. (2020). Infinite mixtures of infinite factor analysers. _Bayesian Analysis_, 15(3): 937-963. <[doi:10.1214/19-BA1179](https://doi.org/10.1214/19-BA1179)>.
 
 Bhattacharya, A. and Dunson, D. B. (2011). Sparse Bayesian infinite factor models. _Biometrika_, 98(2): 291-306.

@@ -38,6 +38,6 @@ Ranciati, S., Vinciotti, V. and Wit, E., (2017) Identifying overlapping terroris
 \code{get_IMIFA_results}
 }
 \author{
-Keefe Murphy - <\email{keefe.murphy@ucd.ie}>
+Keefe Murphy - <\email{keefe.murphy@mu.ie}>
 }
 \keyword{utility}

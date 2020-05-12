@@ -19,13 +19,13 @@ G_priorDensity(N,
 
 \item{show.plot}{Logical indicating whether the plot should be displayed (default = \code{TRUE}).}
 
-\item{type}{The type of plot to be drawn, as per \code{\link[graphics]{plot}}. Default to "\code{h}": histogram-like vertical lines.}
+\item{type}{The type of plot to be drawn, as per \code{\link{plot}}. Defaults to \code{"h"}: histogram-like vertical lines.}
 }
 \value{
 A plot of the prior distribution if \code{show.plot} is \code{TRUE}. Density values are returned invisibly. Note that the density values may not strictly sum to one in certain cases, as values small enough to be represented as zero may well be returned.
 }
 \description{
-Plots the prior distribution of the number of clusters under a Pitman-Yor / Dirichlet process prior, for a sample of size \code{N} at given values of the concentration parameter \code{alpha} and optionally also the \code{discount} parameter. Useful for soliciting sensible priors (or fixed values) for \code{alpha} or \code{discount} under the "\code{IMFA}" and "\code{IMIFA}" methods for \code{\link{mcmc_IMIFA}}.
+Plots the prior distribution of the number of clusters under a Pitman-Yor / Dirichlet process prior, for a sample of size \code{N} at given values of the concentration parameter \code{alpha} and optionally also the \code{discount} parameter. Useful for soliciting sensible priors (or fixed values) for \code{alpha} or \code{discount} under the \code{"IMFA"} and \code{"IMIFA"} methods for \code{\link{mcmc_IMIFA}}.
 }
 \details{
 All arguments are vectorised. Users can also consult \code{\link{G_expected}} and \code{\link{G_variance}} in order to solicit sensible priors.
@@ -46,7 +46,13 @@ Requires use of the \code{\link[Rmpfr]{Rmpfr}} and \code{gmp} libraries; may enc
 # G_expected(N=50, alpha=c(19.23356, 6.47006, 1), discount=c(0, 0.47002, 0.7300045))
 
 # Now plot them to examine tail behaviour as discount increases
-# (PY <- G_priorDensity(N=50, alpha=c(19.23356, 6.47006, 1), discount=c(0, 0.47002, 0.7300045)))
+# alpha    <- c(19.23356, 6.47006, 1)
+# discount <- c(0, 0.47002, 0.7300045)
+# (PY <- G_priorDensity(N=50, alpha=alpha, discount=discount, type="l"))
+
+#' # Other special cases of the PYP are also facilitated
+# G_priorDensity(N=50, alpha=c(alpha, 27.1401, 0),
+#                discount=c(discount, -27.1401/100, 0.8054447), type="b")
 }
 \references{
 De Blasi, P., Favaro, S., Lijoi, A., Mena, R. H., Prunster, I., and Ruggiero, M. (2015) Are Gibbs-type priors the most natural generalization of the Dirichlet process?, \emph{IEEE Transactions on Pattern Analysis and Machine Intelligence}, 37(2): 212-229.
@@ -55,6 +61,6 @@ De Blasi, P., Favaro, S., Lijoi, A., Mena, R. H., Prunster, I., and Ruggiero, M.
 \code{\link{G_expected}}, \code{\link{G_variance}}, \code{\link[Rmpfr]{Rmpfr}}
 }
 \author{
-Keefe Murphy - <\email{keefe.murphy@ucd.ie}>
+Keefe Murphy - <\email{keefe.murphy@mu.ie}>
 }
 \keyword{plotting}

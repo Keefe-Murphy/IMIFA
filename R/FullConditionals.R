@@ -103,13 +103,14 @@
 #'            alpha,
 #'            nn = 0L)
 #' @examples
-#' (prior     <- rDirichlet(G=5, alpha=1))
-#' (posterior <- rDirichlet(G=5, alpha=1, nn=c(20, 41, 32, 8, 12)))
+#' (prior      <- rDirichlet(G=5, alpha=1))
+#' (posterior  <- rDirichlet(G=5, alpha=1, nn=c(20, 41, 32, 8, 12)))
+#' (asymmetric <- rDirichlet(G=5, alpha=c(3,4,5,1,2), nn=c(20, 41, 32, 8, 12)))
     rDirichlet   <- function(G, alpha, nn = 0L) {
       if(length(alpha)   != 1    &&
          length(alpha)   != G)             stop("Invalid alpha", call.=FALSE)
       shape      <- alpha + nn
-      tmp        <- if(all(shape == 1)) stats::rexp(G, 1L) else stats::rgamma(G, shape=shape, rate=1L)
+      tmp        <- if(all(shape == 1)) stats::rexp(G, rate=1L) else stats::rgamma(G, shape=shape, rate=1L)
         tmp/sum(tmp)
     }
 
@@ -130,7 +131,7 @@
 #'
 #' Samples cluster labels for N observations from G clusters efficiently using log-probabilities and the so-called Gumbel-Max trick, without requiring that the log-probabilities be normalised; thus redundant computation can be avoided.
 #' @param probs An N x G matrix of unnormalised probabilities on the log scale, where N is he number of observations that require labels to be sampled and G is the number of active clusters s.t. sampled labels can take values in \code{1:G}. Typically \code{N > G}.
-#' @param slice A logical indicating whether or not the indicator correction for slice sampling has been applied to \code{probs}. Defaults to \code{FALSE} but is \code{TRUE} for the "\code{IMIFA}" and "\code{IMFA}" methods under \code{\link{mcmc_IMIFA}}. Details of this correction are given in Murphy et. al. (2019). When set to \code{TRUE}, this results in a speed-improvement when \code{probs} contains non-finite values (e.g. \code{-Inf}, corresponding to zero on the probability scale).
+#' @param slice A logical indicating whether or not the indicator correction for slice sampling has been applied to \code{probs}. Defaults to \code{FALSE} but is \code{TRUE} for the \code{"IMIFA"} and \code{"IMFA"} methods under \code{\link{mcmc_IMIFA}}. Details of this correction are given in Murphy et. al. (2020). When set to \code{TRUE}, this results in a speed-improvement when \code{probs} contains non-finite values (e.g. \code{-Inf}, corresponding to zero on the probability scale).
 #' @return A vector of N sampled cluster labels, with the largest label no greater than G.
 #' @importFrom Rfast "rowMaxs"
 #' @keywords utility
@@ -142,12 +143,12 @@
 #'
 #' If the normalising constant is required for another reason, e.g. to compute the log-likelihood, it can be calculated by summing the output obtained by calling \code{\link[matrixStats]{rowLogSumExps}} on \code{probs}.
 #'
-#' @references Murphy, K., Viroli, C., and Gormley, I. C. (2019) Infinite mixtures of infinite factor analysers, \emph{Bayesian Analysis}, 1-27. <\href{https://projecteuclid.org/euclid.ba/1570586978}{doi:10.1214/19-BA1179}>.
+#' @references Murphy, K., Viroli, C., and Gormley, I. C. (2020) Infinite mixtures of infinite factor analysers, \emph{Bayesian Analysis}, 15(3): 937-963. <\href{https://projecteuclid.org/euclid.ba/1570586978}{doi:10.1214/19-BA1179}>.
 #'
-#' Yellott, J. I. Jr. (1977) The relationship between Luce's choice axiom, Thurstone's theory of comparative judgment, and the double exponential distribution, \emph{Journal of Mathematical Psychology}, 15: 109-144.
+#' Yellott, J. I. Jr. (1977) The relationship between Luce's choice axiom, Thurstone's theory of comparative judgment, and the double exponential distribution, \emph{Journal of Mathematical Psychology}, 15(2): 109-144.
 #' @export
 #'
-#' @author Keefe Murphy - <\email{keefe.murphy@@ucd.ie}>
+#' @author Keefe Murphy - <\email{keefe.murphy@@mu.ie}>
 #' @usage
 #' gumbel_max(probs,
 #'            slice = FALSE)
@@ -165,7 +166,7 @@
 #'   tabulate(zs, nbins=G)/iters
 #'   (normalised <- as.numeric(weights/sum(weights)))
 #'
-#' # Simulate a matrix of dirichlet weights & the associated vector of N labels
+#' # Simulate a matrix of Dirichlet weights & the associated vector of N labels
 #'   N       <- 400
 #'   G       <- 8
 #'   sizes   <- seq(from=85, to=15, by=-10)
@@ -205,7 +206,7 @@
       pprob      <- .log_palpha(propa, discount,  alpha.shape,   alpha.rate, N, G)
       propinter  <- c(max( - discount, propa    - zeta), propa  + zeta)
       logpr      <- pprob  - cprob   - log(diff(propinter))     + log(diff(inter))
-      acpt       <- logpr >= 0  ||   - stats::rexp(1)  < logpr
+      acpt       <- logpr >= 0  ||   - stats::rexp(1L) < logpr
         return(list(alpha  = ifelse(acpt, propa, alpha), rate   = acpt, l.prob = logpr))
     }
 
@@ -219,7 +220,7 @@
     .sim_alpha_o <- function(alpha, zeta = 1, G, N, nn, shape, rate) {
       propa      <- exp(log(alpha) + stats::rnorm(1, 0, zeta))
       logpr      <- .log_Oalpha(propa, G, N, nn, shape, rate) - .log_Oalpha(alpha, G, N, nn, shape, rate) + log(propa) - log(alpha)
-      acpt       <- logpr >= 0  || - stats::rexp(1) < logpr
+      acpt       <- logpr >= 0  || - stats::rexp(1L)   < logpr
         return(list(alpha  = ifelse(acpt, propa, alpha), rate = acpt, l.prob = logpr))
     }
 
@@ -229,9 +230,9 @@
     }
 
   # Discount
-    .log_pdslab  <- function(discount, disc.shape1, disc.shape2, G, unif, nn)          {
+    .log_pdslab  <- function(discount, disc.shape1, disc.shape2, G, unif, nn)            {
       l.prior    <- ifelse(unif, 0, stats::dbeta(discount, shape1=disc.shape1, shape2=disc.shape2, log=TRUE))
-        sum(log(discount   * seq_len(G - 1L))) +  sum(lgamma(nn - discount) - lgamma(1 - discount)) + l.prior
+        sum(log(discount   * seq_len(G - 1L))) +  sum(lgamma(nn - discount)) - lgamma(1  - discount) * G     + l.prior
     }
 
     .log_pdspike <- function(discount, disc.shape1, disc.shape2, G, unif, nn, alpha, kappa)     {
@@ -245,7 +246,7 @@
       cprob      <- .log_pdslab(discount,  disc.shape1, disc.shape2, G, unif, nn)
       pprob      <- .log_pdslab(propd,     disc.shape1, disc.shape2, G, unif, nn)
       logpr      <- pprob  - cprob
-      acpt       <- logpr >= 0   ||  - stats::rexp(1)  < logpr
+      acpt       <- logpr >= 0   ||  - stats::rexp(1L) < logpr
         return(list(disc = ifelse(acpt, propd, discount), rate = acpt))
     }
 
@@ -259,7 +260,7 @@
         cprob    <- .log_pdspike(discount, disc.shape1, disc.shape2, G, unif, nn, alpha, kappa)
         pprob    <- .log_pdspike(propd,    disc.shape1, disc.shape2, G, unif, nn, alpha, kappa)
         logpr    <- pprob  - cprob
-        acpt     <- logpr >= 0  ||   - stats::rexp(1)  < logpr
+        acpt     <- logpr >= 0  ||   - stats::rexp(1L) < logpr
           return(list(disc = ifelse(acpt, propd, discount),   rate   = acpt))
       }
     }
@@ -345,7 +346,7 @@
 #' @export
 #'
 #' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{mixfaControl}}
-#' @references Murphy, K., Viroli, C., and Gormley, I. C. (2019) Infinite mixtures of infinite factor analysers, \emph{Bayesian Analysis}, 1-27. <\href{https://projecteuclid.org/euclid.ba/1570586978}{doi:10.1214/19-BA1179}>.
+#' @references Murphy, K., Viroli, C., and Gormley, I. C. (2020) Infinite mixtures of infinite factor analysers, \emph{Bayesian Analysis}, 15(3): 937-963. <\href{https://projecteuclid.org/euclid.ba/1570586978}{doi:10.1214/19-BA1179}>.
 #'
 #' Fruwirth-Schnatter, S. and Lopes, H. F. (2010). Parsimonious Bayesian factor analysis when the number of factors is unknown, \emph{Technical Report}. The University of Chicago Booth School of Business.
 #'
@@ -353,7 +354,7 @@
 #'
 #' Tipping, M. E. and Bishop, C. M. (1999). Probabilistic principal component analysis, \emph{Journal of the Royal Statistical Society: Series B (Statistical Methodology)}, 61(3): 611-622.
 #'
-#' @author Keefe Murphy - <\email{keefe.murphy@@ucd.ie}>
+#' @author Keefe Murphy - <\email{keefe.murphy@@mu.ie}>
 #' @usage
 #' psi_hyper(shape,
 #'           dat,
@@ -422,14 +423,14 @@
 #' This function takes shape and rate parameters of a Gamma distribution and modifies them to achieve the same expected value and variance when the left extent of the support of the distribution is shifted up or down.
 #' @param shape,rate Shape and rate parameters a and b, respectively, of a Gamma(a, b) distribution. Both must be strictly positive.
 #' @param shift Modifier, such that the Gamma distribution has support on (\code{shift}, \eqn{\infty}). Can be positive or negative, though typically negative and small.
-#' @param param Switch controlling whether the supplied \code{rate} parameter is indeed a rate, or actually a scale parameter. Also governs whether the output is given in terms of rate or scale. Defaults to "\code{rate}".
+#' @param param Switch controlling whether the supplied \code{rate} parameter is indeed a rate, or actually a scale parameter. Also governs whether the output is given in terms of rate or scale. Defaults to \code{"rate"}.
 #'
 #' @note This function is invoked within \code{\link{mcmc_IMIFA}} when \code{discount} is \emph{fixed} at a non-zero value and \code{learn.alpha=TRUE}.
-#' @return A list of length 2, containing the modified shape and rate parameters, respectively.
+#' @return A named vector of length 2, containing the modified shape and rate parameters, respectively.
 #' @keywords utility
 #' @export
 #'
-#' @author Keefe Murphy - <\email{keefe.murphy@@ucd.ie}>
+#' @author Keefe Murphy - <\email{keefe.murphy@@mu.ie}>
 #' @usage
 #' shift_GA(shape,
 #'          rate,
@@ -456,7 +457,7 @@
       exp        <- max(exp - shift, 0L)
       rate       <- exp/var
       shape      <- rate    * exp
-        return(list(shape   = shape, rate = switch(EXPR=param, rate=rate, 1/rate)))
+        return(c(shape = shape, rate = switch(EXPR=param, rate=rate, 1/rate)))
     }
 
   # Check Shrinkage Hyperparemeters
@@ -470,7 +471,7 @@
 #' @param bd1,bd2 Rate hyperparameters for \eqn{\delta_1}{delta_1} and \eqn{\delta_2}{delta_2}, respectively. Both default to 1.
 #' @param inverse Logical indicator for whether the cumulative shrinkage property is assessed against the induced Inverse Gamma prior, the default, or in terms of the Gamma prior (which is incorrect). This is always \code{TRUE} when used inside \code{\link{mcmc_IMIFA}}: the \code{FALSE} option exists only for demonstration purposes.
 #'
-#' @details This is called inside \code{\link{mcmc_IMIFA}} for the "\code{IFA}", "\code{MIFA}", "\code{OMIFA}" and "\code{IMIFA}" methods. This function is vectorised with respect to the arguments \code{ad1}, \code{ad2}, \code{phi.shape}, \code{phi.rate}, \code{sigma.shape}, \code{sigma.rate}, \code{bd1} and \code{bd2}.
+#' @details This is called inside \code{\link{mcmc_IMIFA}} for the \code{"IFA"}, \code{"MIFA"}, \code{"OMIFA"} and \code{"IMIFA"} methods. This function is vectorised with respect to the arguments \code{ad1}, \code{ad2}, \code{phi.shape}, \code{phi.rate}, \code{sigma.shape}, \code{sigma.rate}, \code{bd1} and \code{bd2}.
 #'
 #' @return A list of length 2 containing the following objects:
 #' \itemize{
@@ -481,13 +482,12 @@
 #' @note It is \emph{recommended} that \code{ad2} be moderately large relative to \code{ad1}, even if \code{valid} can sometimes be \code{TRUE} when this is not the case. Similarly, satisfying this condition is no guarantee that \code{valid} will be \code{TRUE}. Therefore, a warning is returned if \code{ad1 <= ad2}, regardless of the value taken by \code{valid}.
 #' @keywords control
 #' @seealso \code{\link{mcmc_IMIFA}}
-#' @references
-#' Murphy, K., Viroli, C., and Gormley, I. C. (2019) Infinite mixtures of infinite factor analysers, \emph{Bayesian Analysis}, 1-27. <\href{https://projecteuclid.org/euclid.ba/1570586978}{doi:10.1214/19-BA1179}>.
+#' @references Murphy, K., Viroli, C., and Gormley, I. C. (2020) Infinite mixtures of infinite factor analysers, \emph{Bayesian Analysis}, 15(3): 937-963. <\href{https://projecteuclid.org/euclid.ba/1570586978}{doi:10.1214/19-BA1179}>.
 #'
 #' Durante, D. (2017). A note on the multiplicative gamma process, \emph{Statistics & Probability Letters}, 122: 198-204.
 #'
 #' Bhattacharya, A. and Dunson, D. B. (2011). Sparse Bayesian infinite factor models, \emph{Biometrika}, 98(2): 291-306.
-#' @author Keefe Murphy - <\email{keefe.murphy@@ucd.ie}>
+#' @author Keefe Murphy - <\email{keefe.murphy@@mu.ie}>
 #' @usage
 #' MGP_check(ad1,
 #'           ad2,
@@ -555,9 +555,9 @@
       rho1       <- if(SX) 1L   + inverse  else sig.shape
       rho2       <- if(SX) 1L              else sig.rate
       if(isTRUE(inverse)) {
-        if(any(WX        <- WX  |
+        if(any(WX        <- (WX |
            phi.rate       >
-           phi.shape      - 1L))           warning("A priori expectation of the induced inverse-gamma local shrinkage hyperprior is not <=1\n", call.=FALSE, immediate.=TRUE)
+           phi.shape      - 1L)))          warning("A priori expectation of the induced inverse-gamma local shrinkage hyperprior is not <=1\n", call.=FALSE, immediate.=TRUE)
         ad1      <- ifelse(ad1 == 1, ad1 + .Machine$double.eps, ad1)
         ad2      <- ifelse(ad2 == 1, ad2 + .Machine$double.eps, ad2)
         exp.Q1   <- nu2/(nu1    - 1)     * bd1/(ad1  - 1) * rho2/(rho1 - 1)
@@ -602,7 +602,7 @@
 #' McNicholas, P. D. and Murphy, T. B. (2010) Model-Based clustering of microarray expression data via latent Gaussian mixture models, \emph{Bioinformatics}, 26(21): 2705-2712.
 #' @seealso \code{\link{get_IMIFA_results}}, \code{\link{mcmc_IMIFA}}
 #'
-#' @author Keefe Murphy - <\email{keefe.murphy@@ucd.ie}>
+#' @author Keefe Murphy - <\email{keefe.murphy@@mu.ie}>
 #' @usage
 #' PGMM_dfree(Q,
 #'            P,
@@ -689,7 +689,7 @@
 #' \item{MSE.z}{A vector of length M recording the MSEs between each clustering and the 'average' clustering.}
 #' @export
 #' @keywords utility
-#' @references Carmona, C., Nieto-barajas, L. and Canale, A. (2018) Model based approach for household clustering with mixed scale variables. \emph{Advances in Data Analysis and Classification}, 12: 1-25.
+#' @references Carmona, C., Nieto-barajas, L. and Canale, A. (2018) Model based approach for household clustering with mixed scale variables. \emph{Advances in Data Analysis and Classification}, 13(2): 559-583.
 #' @importFrom slam "as.simple_triplet_matrix"
 #'
 #' @note The \code{\link[mcclust]{mcclust}} package \strong{must} be loaded.
@@ -697,7 +697,7 @@
 #' This is liable to take quite some time to run, especially if the number of observations &/or number of iterations is large. Depending on how distinct the clusters are, \code{z.sim} may be stored better in a non-sparse format. This function can optionally be called inside \code{\link{get_IMIFA_results}}.
 #' @seealso \code{\link{get_IMIFA_results}}, \code{\link[slam]{simple_triplet_matrix}}, \code{\link[stats]{hclust}}, \code{\link[mclust]{hc}}, \code{\link[mcclust]{comp.psm}}, \code{\link[mcclust]{cltoSim}}
 #'
-#' @author Keefe Murphy - <\email{keefe.murphy@@ucd.ie}>
+#' @author Keefe Murphy - <\email{keefe.murphy@@mu.ie}>
 #'
 #' @examples
 #' # Run a IMIFA model and extract the sampled cluster labels
@@ -744,7 +744,7 @@
 #' @keywords utility
 #' @importFrom matrixStats "rowSums2"
 #' @importFrom Rfast "rowOrder" "rowSort"
-#' @author Keefe Murphy - <\email{keefe.murphy@@ucd.ie}>
+#' @author Keefe Murphy - <\email{keefe.murphy@@mu.ie}>
 #' @seealso \code{get_IMIFA_results}
 #' @references Ranciati, S., Vinciotti, V. and Wit, E., (2017) Identifying overlapping terrorist cells from the Noordin Top actor-event network, \emph{to appear}. <\href{https://arxiv.org/abs/1710.10319v1}{arXiv:1710.10319v1}>.
 #'
@@ -810,7 +810,7 @@
       log.pis    <- log(pi.prop[sw])
       nns        <- nn[sw]
       a.prob     <- (nns[1L] - nns[2L]) * (log.pis[1L] - log.pis[2L])
-        return(list(rate1    = a.prob  >= 0 || - stats::rexp(1) < a.prob, sw = sw))
+        return(list(rate1    = a.prob  >= 0 || - stats::rexp(1L) < a.prob, sw = sw))
     }
 
   # Move 2
@@ -825,7 +825,7 @@
         log.vs   <- log1p(  - Vs[sw])
         a.prob   <- nns[2L] * log.vs[1L]
         a.prob   <- nns[1L] * log.vs[2L]       - ifelse(is.nan(a.prob), 0L, a.prob)
-        return(list(rate2   = a.prob >= 0   || - stats::rexp(1) < a.prob, sw = sw))
+        return(list(rate2   = a.prob >= 0   || - stats::rexp(1L) < a.prob, sw = sw))
       }
     }
 
@@ -853,12 +853,12 @@
 #'             make = FALSE)
 #' @examples
 #' x    <- cov(matrix(rnorm(100), nrow=10, ncol=10))
-#' is.posi_def(x)
-#' is.posi_def(x, semi=TRUE)
+#' is.posi_def(x)                                           #FALSE
+#' is.posi_def(x, semi=TRUE)                                #TRUE
 #'
 #' Xnew <- is.posi_def(x, semi=FALSE, make=TRUE)$X.new
-#' identical(x, Xnew)
-#' identical(x, is.posi_def(x, semi=TRUE, make=TRUE)$X.new)
+#' identical(x, Xnew)                                       #FALSE
+#' identical(x, is.posi_def(x, semi=TRUE, make=TRUE)$X.new) #TRUE
     is.posi_def  <- function(x, tol = NULL, semi = FALSE, make = FALSE)  {
       if(!is.matrix(x)     &&
         nrow(x)  != ncol(x))               stop("argument 'x' is not a square matrix",    call.=FALSE)
@@ -966,7 +966,7 @@
 #' mat_t    <- proc$t
 #' mat_d    <- proc$d
 #'
-#' # Compare the sum of squared differences to a Procestean transformation with rotation only
+#' # Compare the sum of squared differences to a Procrustean transformation with rotation only
 #' mat_ss   <- proc$ss
 #' mat_ss2  <- Procrustes(X=mat1, Xstar=mat2, sumsq=TRUE)$ss
     Procrustes   <- function(X, Xstar, translate = FALSE, dilate = FALSE, sumsq = FALSE) {
@@ -1039,7 +1039,7 @@
   # Moments of Pitman-Yor / Dirichlet Processes
 #' 1st & 2nd Moments of the Pitman-Yor / Dirichlet Processes
 #'
-#' Calculates the \emph{a priori} expected number of clusters or the variance of the number of clusters under a PYP or DP prior for a sample of size \code{N} at given values of the concentration parameter \code{alpha} and optionally also the Pitman-Yor \code{discount} parameter. Useful for soliciting sensible priors (or fixed values) for \code{alpha} or \code{discount} under the "\code{IMFA}" and "\code{IMIFA}" methods for \code{\link{mcmc_IMIFA}}.
+#' Calculates the \emph{a priori} expected number of clusters or the variance of the number of clusters under a PYP or DP prior for a sample of size \code{N} at given values of the concentration parameter \code{alpha} and optionally also the Pitman-Yor \code{discount} parameter. Useful for soliciting sensible priors (or fixed values) for \code{alpha} or \code{discount} under the \code{"IMFA"} and \code{"IMIFA"} methods for \code{\link{mcmc_IMIFA}}.
 #' @param N The sample size.
 #' @param alpha The concentration parameter. Must be specified and must be strictly greater than \code{-discount}. The case \code{alpha=0} is accommodated. When \code{discount} is negative \code{alpha} must be a positive integer multiple of \code{abs(discount)}.
 #' @param discount The discount parameter for the Pitman-Yor process. Must be less than 1, but typically lies in the interval [0, 1). Defaults to 0 (i.e. the Dirichlet process). When \code{discount} is negative \code{alpha} must be a positive integer multiple of \code{abs(discount)}.
@@ -1058,7 +1058,7 @@
 #' @seealso \code{\link{G_priorDensity}}, \code{\link[Rmpfr]{Rmpfr}}
 #' @references De Blasi, P., Favaro, S., Lijoi, A., Mena, R. H., Prunster, I., and Ruggiero, M. (2015) Are Gibbs-type priors the most natural generalization of the Dirichlet process?, \emph{IEEE Transactions on Pattern Analysis and Machine Intelligence}, 37(2): 212-229.
 #'
-#' @author Keefe Murphy - <\email{keefe.murphy@@ucd.ie}>
+#' @author Keefe Murphy - <\email{keefe.murphy@@mu.ie}>
 #' @usage
 #' G_expected(N,
 #'            alpha,
@@ -1079,8 +1079,12 @@
 #' matplot(DP, type="l", xlab="N", ylab="G")
 #'
 #' # Examine the growth rate of the PYP
-#' # PY <- sapply(c(0.1, 0.25, 0.5), function(i) G_expected(1:200, alpha=1, discount=i))
+#' # PY <- sapply(c(0.25, 0.5, 0.75), function(i) G_expected(1:200, alpha=1, discount=i))
 #' # matplot(PY, type="l", xlab="N", ylab="G")
+#'
+#' # Other special cases of the PYP are also facilitated
+#' # G_expected(N=50, alpha=c(27.1401, 0), discount=c(-27.1401/100, 0.8054447))
+#' # G_variance(N=50, alpha=c(27.1401, 0), discount=c(-27.1401/100, 0.8054447))
     G_expected   <- Vectorize(function(N, alpha, discount = 0, MPFR = TRUE) {
       if(!all(is.numeric(N), is.numeric(discount),
          is.numeric(alpha)))               stop("All inputs must be numeric", call.=FALSE)
@@ -1088,11 +1092,14 @@
       if(discount > 0    &&
          alpha   <= - discount)            stop("'alpha' must be strictly greater than -discount", call.=FALSE)
       if(discount < 0    &&
-        (alpha   %% discount) != 0)        stop("'alpha' must be a positive integer multiple of 'abs(discount)' when 'discount' is negative", call.=FALSE)
+        (alpha   <= 0    ||
+        !.IntMult(alpha,    discount)))    stop("'alpha' must be a positive integer multiple of 'abs(discount)' when 'discount' is negative", call.=FALSE)
       if(alpha   == 0    && discount <= 0) stop("'discount' must be strictly positive when 'alpha=0", call.=FALSE)
       if(alpha   == 0    && !isTRUE(MPFR)) stop("'MPFR' must be TRUE when 'alpha' == 0", call.=FALSE)
       igmp       <- isNamespaceLoaded("Rmpfr")
-      if(mpfrind <- (isTRUE(MPFR)    && suppressMessages(requireNamespace("Rmpfr", quietly=TRUE)))) {
+      if(mpfrind <- (isTRUE(MPFR)    &&
+                     suppressMessages(requireNamespace("Rmpfr", quietly=TRUE))    &&
+                     .version_above("gmp", "0.5-4"))) {
         if(isFALSE(igmp)) {
           on.exit(.detach_pkg("Rmpfr"))
           on.exit(.detach_pkg("gmp"), add=TRUE)
@@ -1147,11 +1154,14 @@
       if(discount > 0    &&
          alpha   <= - discount)            stop("'alpha' must be strictly greater than -discount", call.=FALSE)
       if(discount < 0    &&
-         alpha   %% discount != 0)         stop("'alpha' must be a positive integer multiple of 'abs(discount)' when 'discount' is negative", call.=FALSE)
+        (alpha   <= 0    ||
+        !.IntMult(alpha,    discount)))    stop("'alpha' must be a positive integer multiple of 'abs(discount)' when 'discount' is negative", call.=FALSE)
      #if(alpha   == 0)    {                warning("'alpha'=0 case note yet implemented", call.=FALSE, immediate.=TRUE); return(Inf) }
       if(discount != 0   && !isTRUE(MPFR)) stop("'MPFR' must be TRUE when 'discount' is non-zero", call.=FALSE)
       igmp       <- isNamespaceLoaded("Rmpfr")
-      if(mpfrind <- (isTRUE(MPFR)    && suppressMessages(requireNamespace("Rmpfr", quietly=TRUE)))) {
+      if(mpfrind <- (isTRUE(MPFR)    &&
+                     suppressMessages(requireNamespace("Rmpfr", quietly=TRUE))    &&
+                     .version_above("gmp", "0.5-4"))) {
         if(isFALSE(igmp)) {
           on.exit(.detach_pkg("Rmpfr"))
           on.exit(.detach_pkg("gmp"), add=TRUE)
@@ -1164,7 +1174,7 @@
         var      <- alpha * (digamma(alpha  + N) - digamma(alpha))
         if(mpfrind)       {
           alpha  <- gmp::asNumeric(alpha)
-          gmp::asNumeric(var + alpha2 * (trigamma(alpha + N) - trigamma(alpha)))
+          gmp::asNumeric(var  + alpha2 * (trigamma(alpha + N) - trigamma(alpha)))
         } else {
           var  + alpha2   * (trigamma(alpha + N) - trigamma(alpha))
         }
@@ -1332,51 +1342,51 @@
 #' @param burnin The number of burn-in iterations for the sampler. Defaults to \code{n.iters/5}. Note that chains can also be burned in later, using \code{\link{get_IMIFA_results}}.
 #' @param thinning The thinning interval used in the simulation. Defaults to 2. No thinning corresponds to 1. Note that chains can also be thinned later, using \code{\link{get_IMIFA_results}}.
 #' @param centering A logical value indicating whether mean centering should be applied to the data, defaulting to \code{TRUE}.
-#' @param scaling The scaling to be applied - one of "\code{unit}", "\code{none}" or "\code{pareto}". Defaults to "\code{unit}".
-#' @param uni.type This argument specifies the type of constraint, if any, to be placed on the uniquenesses/idiosyncratic variances, i.e. whether a general diagonal matrix or isotropic diagonal matrix is to be assumed, and in turn whether these matrices are constrained to be equal across clusters. The default "\code{unconstrained}" corresponds to factor analysis (and mixtures thereof), whereas "\code{isotropic}" corresponds to probabilistic principal components analysers (and mixtures thereof).
+#' @param scaling The scaling to be applied - one of \code{"unit"}, \code{"none"} or \code{"pareto"}. Defaults to \code{"unit"}.
+#' @param uni.type This argument specifies the type of constraint, if any, to be placed on the uniquenesses/idiosyncratic variances, i.e. whether a general diagonal matrix or isotropic diagonal matrix is to be assumed, and in turn whether these matrices are constrained to be equal across clusters. The default \code{"unconstrained"} corresponds to factor analysis (and mixtures thereof), whereas \code{"isotropic"} corresponds to probabilistic principal components analysers (and mixtures thereof).
 #'
-#' Constraints \emph{may} be particularly useful when \code{N <= P}, though caution is advised when employing constraints for any of the infinite factor models, especially "\code{isotropic}" and "\code{single}", which may lead to overestimation of the number of clusters &/or factors if this specification is inappropriate. The four options correspond to the following 4 parsimonious Gaussian mixture models:
+#' Constraints \emph{may} be particularly useful when \code{N <= P}, though caution is advised when employing constraints for any of the infinite factor models, especially \code{"isotropic"} and \code{"single"}, which may lead to overestimation of the number of clusters &/or factors if this specification is inappropriate. The four options correspond to the following 4 parsimonious Gaussian mixture models:
 #' \describe{
-#' \item{"\code{unconstrained}"}{(\strong{UUU}) - variable-specific and cluster-specific: \eqn{\Psi_g = \Psi_g}{Psi_g = Psi_g}.}
-#' \item{"\code{isotropic}"}{(\strong{UUC}) - cluster-specific, equal across variables: \eqn{\Psi_g = \psi\mathcal{I}_p}{Psi_g = (sigma^2)_g I_p}.}
-#' \item{"\code{constrained}"}{(\strong{UCU}) - variable-specific, equal across clusters: \eqn{\Psi_g = \Psi}{Psi_g = Psi}.}
-#' \item{"\code{single}"}{(\strong{UCC}) - single value equal across clusters and variables: \eqn{\Psi_g = \psi\mathcal{I}_p}{Psi_g = sigma^2 I_p}.}
+#' \item{\code{"unconstrained"}}{(\strong{UUU}) - variable-specific and cluster-specific: \eqn{\Psi_g = \Psi_g}{Psi_g = Psi_g}.}
+#' \item{\code{"isotropic"}}{(\strong{UUC}) - cluster-specific, equal across variables: \eqn{\Psi_g = \psi\mathcal{I}_p}{Psi_g = (sigma^2)_g I_p}.}
+#' \item{\code{"constrained"}}{(\strong{UCU}) - variable-specific, equal across clusters: \eqn{\Psi_g = \Psi}{Psi_g = Psi}.}
+#' \item{\code{"single"}}{(\strong{UCC}) - single value equal across clusters and variables: \eqn{\Psi_g = \psi\mathcal{I}_p}{Psi_g = sigma^2 I_p}.}
 #' }
-#' The first letter \strong{U} here corresponds to constraints on loadings (not yet implemented), the second letter corresponds to uniquenesses constrained/unconstrained across clusters, and the third letter corresponds to the isotropic constraint on the uniquenesses. Of course, only the third letter is of relevance for the single-cluster "\code{FA}" and "\code{IFA}" models, such that "\code{unconstrained}" and "\code{constrained}" are equivalent for these models, and so too are "\code{isotropic}" and "\code{single}".
+#' The first letter \strong{U} here corresponds to constraints on loadings (not yet implemented), the second letter corresponds to uniquenesses constrained/unconstrained across clusters, and the third letter corresponds to the isotropic constraint on the uniquenesses. Of course, only the third letter is of relevance for the single-cluster \code{"FA"} and \code{"IFA"} models, such that \code{"unconstrained"} and \code{"constrained"} are equivalent for these models, and so too are \code{"isotropic"} and \code{"single"}.
 #' @param psi.alpha The shape of the inverse gamma prior on the uniquenesses. Defaults to 2.5. Must be greater than 1 if \code{psi.beta} is \emph{not} supplied. Otherwise be warned that values less than or equal to 1 may not bound uniquenesses sufficiently far away from 0, and the algorithm may therefore terminate. Also, excessively small values may lead to critical numerical issues and should thus be avoided.
-#' @param psi.beta The scale of the inverse gamma prior on the uniquenesses. Can be either a single parameter, a vector of variable specific scales, or (if \code{psi0g} is \code{TRUE}) a matrix of variable and cluster-specific scales. If this is not supplied, \code{\link{psi_hyper}} is invoked to choose sensible values, depending on the value of \code{uni.prior} and the data size and dimension, for the "\code{MFA}" and "\code{MIFA}" models only, the value of \code{psi0g}. Excessively small values may lead to critical numerical issues and should thus be avoided.
+#' @param psi.beta The scale of the inverse gamma prior on the uniquenesses. Can be either a single parameter, a vector of variable specific scales, or (if \code{psi0g} is \code{TRUE}) a matrix of variable and cluster-specific scales. If this is not supplied, \code{\link{psi_hyper}} is invoked to choose sensible values, depending on the value of \code{uni.prior} and the data size and dimension, for the \code{"MFA"} and \code{"MIFA"} models only, the value of \code{psi0g}. Excessively small values may lead to critical numerical issues and should thus be avoided.
 #'
 #' Note that optional arguments to \code{psi_hyper} can be supplied via the \code{...} construct here.
 #' @param mu.zero The mean of the prior distribution for the mean parameter. Either a scalar of a vector of appropriate dimension. Defaults to the sample mean of the data.
 #' @param sigma.mu The covariance of the prior distribution for the cluster mean parameters. Always assumed to be a diagonal matrix, and set to the identity matrix by default. Can also be a scalar by which the identity is multiplied, a vector of appropriate dimension; if supplied as a matrix, only the diagonal elements will be extracted. Specifying \code{sigma.mu=NULL} will use the diagonal entries of the sample covariance matrix: for unit-scaled data this is simply the identity again. See \code{prec.mu} for further control over the hypercovariance in the prior for the means.
 #' @param prec.mu A scalar controlling the degree of flatness of the prior for the cluster means by scaling \code{sigma.mu} (i.e. multiplying every element of \code{sigma.mu} by \code{1/prec.mu}). Lower values lead to a more diffuse prior. Defaults to \code{0.01}, such that the prior is relatively non-informative by default. Of course, \code{prec.mu=1} nullifies any effect of this argument. The user can supply a scaled \code{sigma.mu} directly, but this argument is especially useful when specifying \code{sigma.mu=NULL}, such that the diagonal entries of the sample covariance matrix are used.
 #' @param sigma.l A scalar controlling the diagonal covariance of the prior distribution for the loadings. Defaults to \code{1}, i.e. the identity; otherwise a diagonal matrix with non-zero entries all equal to \code{sigma.l} Only relevant for the finite factor methods.
-#' @param z.init The method used to initialise the cluster labels. Defaults to model-based agglomerative hierarchical clustering via \code{"\link[mclust]{hc}"}. Other options include \code{"\link[stats]{kmeans}"} (with 10 random starts, by default), \code{\link[mclust]{Mclust}} via \code{"mclust"}, random initialisation via \code{"priors"}, and a user-supplied \code{"list"} (\code{z.list}). Not relevant for the "\code{FA}" and "\code{"IFA"} methods. Arguments for the relevant functions can be passed via the \code{...} construct. For \code{"\link[mclust]{hc}"}, \code{VVV} is used by default, unless the data is high-dimensional, in which case the default is \code{EII}. The option \code{"priors"} may lead to empty components at initialisation, which will return an error.
+#' @param z.init The method used to initialise the cluster labels. Defaults to model-based agglomerative hierarchical clustering via \code{"\link[mclust]{hc}"}. Other options include \code{"\link[stats]{kmeans}"} (with 10 random starts, by default), \code{\link[mclust]{Mclust}} via \code{"mclust"}, random initialisation via \code{"priors"}, and a user-supplied \code{"list"} (\code{z.list}). Not relevant for the \code{"FA"} and \code{"IFA"} methods. Arguments for the relevant functions can be passed via the \code{...} construct. For \code{"\link[mclust]{hc}"}, \code{VVV} is used by default, unless the data is high-dimensional, in which case the default is \code{EII}. The option \code{"priors"} may lead to empty components at initialisation, which will return an error.
 #'
 #' In any case, unless \code{z.list} is explicitly supplied, or \code{verbose} is \code{FALSE}, the initial cluster sizes will be printed to the screen to alert users to potentially bad initialisiations (e.g. heavily imbalanced initial cluster sizes).
 #' @param z.list A user supplied list of cluster labels. Only relevant if \code{z.init == "z.list"}.
-#' @param equal.pro Logical variable indicating whether or not the mixing mixing proportions are to be equal across clusters in the model (default = \code{FALSE}). Only relevant for the "\code{MFA}" and "\code{MIFA}" methods.
-#' @param uni.prior A switch indicating whether uniquenesses scale hyperparameters are to be "\code{unconstrained}" or "\code{isotropic}", i.e. variable-specific or not. "\code{uni.prior}" must be "\code{isotropic}" if the last letter of "\code{uni.type}" is \strong{C}, but can take either value otherwise. Defaults to correspond to the last letter of \code{uni.type} if that is supplied and \code{uni.prior} is not, otherwise defaults to "\code{unconstrained}" (though"\code{isotropic}" is recommended when \code{N <= P}). Only relevant when "\code{psi.beta}" is not supplied and \code{\link{psi_hyper}} is therefore invoked (with optional arguments passable via the \code{...} construct).
-#' @param mu0g Logical indicating whether the \code{mu.zero} hyperparameter can be cluster-specific. Defaults to \code{FALSE}. Only relevant for the "\code{MFA}" and "\code{MIFA}" methods when \code{z.list} is supplied.
-#' @param psi0g Logical indicating whether the \code{psi.beta} hyperparameter(s) can be cluster-specific. Defaults to \code{FALSE}. Only relevant for the "\code{MFA}" and "\code{MIFA}" methods when \code{z.list} is supplied, and only allowable when \code{uni.type} is one of \code{unconstrained} or \code{isotropic}.
+#' @param equal.pro Logical variable indicating whether or not the mixing mixing proportions are to be equal across clusters in the model (default = \code{FALSE}). Only relevant for the \code{"MFA"} and \code{"MIFA"} methods.
+#' @param uni.prior A switch indicating whether uniquenesses scale hyperparameters are to be \code{"unconstrained"} or \code{"isotropic"}, i.e. variable-specific or not. \code{"uni.prior"} must be \code{"isotropic"} if the last letter of \code{uni.type} is \strong{C}, but can take either value otherwise. Defaults to correspond to the last letter of \code{uni.type} if that is supplied and \code{uni.prior} is not, otherwise defaults to \code{"unconstrained"} (though \code{"isotropic"} is recommended when \code{N <= P}). Only relevant when \code{psi.beta} is not supplied and \code{\link{psi_hyper}} is therefore invoked (with optional arguments passable via the \code{...} construct).
+#' @param mu0g Logical indicating whether the \code{mu.zero} hyperparameter can be cluster-specific. Defaults to \code{FALSE}. Only relevant for the \code{"MFA"} and \code{"MIFA"} methods when \code{z.list} is supplied.
+#' @param psi0g Logical indicating whether the \code{psi.beta} hyperparameter(s) can be cluster-specific. Defaults to \code{FALSE}. Only relevant for the \code{"MFA"} and \code{"MIFA"} methods when \code{z.list} is supplied, and only allowable when \code{uni.type} is one of \code{unconstrained} or \code{isotropic}.
 #' @param drop0sd Logical indicating whether to drop variables with no standard deviation (defaults to \code{TRUE}). This is \emph{strongly} recommended, especially a) when \code{psi.beta} is not supplied &/or \code{sigma.mu=NULL}, and either/both are therefore estimated using the empirical covariance matrix, &/or b) if some form of posterior predictive checking is subsequently desired when calling \code{\link{get_IMIFA_results}}.
 #' @param verbose Logical indicating whether to print output (e.g. run times) and a progress bar to the screen while the sampler runs. By default is \code{TRUE} if the session is interactive, and \code{FALSE} otherwise. If \code{FALSE}, warnings and error messages will still be printed to the screen, but everything else will be suppressed.
 #' @param ... Also catches unused arguments. A number of optional arguments can be also supplied here:
 #' \itemize{
 #' \item{The additional \code{\link{psi_hyper}} argument \code{beta0}, especially when \code{N <= P}.}
 #' \item{Additional arguments to be passed to \code{\link[mclust]{hc}} (\code{modelName} & \code{use} only), to \code{\link[mclust]{Mclust}} (\code{modelNames}, and the arguments for \code{\link[mclust]{hc}} with which \code{\link[mclust]{Mclust}} is itself initialised - \code{modelName} & \code{use}), or to \code{\link[stats]{kmeans}} (\code{iter.max} and \code{nstart} only), depending on the value of \code{z.init}.}
-#' \item{Additionally, when \code{z.init="mclust"}, \code{criterion} can be passed here (can be "\code{icl}" or "\code{bic}", the default) to control how the optimum \code{\link[mclust]{Mclust}} model to initialise with is determined.}
+#' \item{Additionally, when \code{z.init="mclust"}, \code{criterion} can be passed here (can be \code{"icl"} or \code{"bic"}, the default) to control how the optimum \code{\link[mclust]{Mclust}} model to initialise with is determined.}
 #' }
 #' @return A named list in which the names are the names of the arguments and the values are the values of the arguments.
 #' @export
 #' @note Users should be careful to note that data are mean-centered (\code{centering=TRUE}) and unit-scaled (\code{scaling="unit"}) by default when supplying other parameters among the list above, especially those related in any way to \code{psi.hyper}, or to the other control functions \code{\link{mgpControl}} and \code{\link{bnpControl}}.
 #' @keywords control
 #' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{psi_hyper}}, \code{\link[mclust]{hc}}, \code{\link[stats]{kmeans}}, \code{\link[mclust]{Mclust}}, \code{\link{mgpControl}}, \code{\link{bnpControl}}, \code{\link{storeControl}}
-#' @references Murphy, K., Viroli, C., and Gormley, I. C. (2019) Infinite mixtures of infinite factor analysers, \emph{Bayesian Analysis}, 1-27. <\href{https://projecteuclid.org/euclid.ba/1570586978}{doi:10.1214/19-BA1179}>.
+#' @references Murphy, K., Viroli, C., and Gormley, I. C. (2020) Infinite mixtures of infinite factor analysers, \emph{Bayesian Analysis}, 15(3): 937-963. <\href{https://projecteuclid.org/euclid.ba/1570586978}{doi:10.1214/19-BA1179}>.
 #'
 #' McNicholas, P. D. and Murphy, T. B. (2008) Parsimonious Gaussian mixture models, \emph{Statistics and Computing}, 18(3): 285-296.
 #'
-#' @author Keefe Murphy - <\email{keefe.murphy@@ucd.ie}>
+#' @author Keefe Murphy - <\email{keefe.murphy@@mu.ie}>
 #' @usage
 #' mixfaControl(n.iters = 25000L,
 #'              burnin = n.iters/5L,
@@ -1463,18 +1473,18 @@
 
 #' Control settings for the Bayesian Nonparametric priors for infinite mixture models (or shrinkage priors for overfitted mixtures)
 #'
-#' Supplies a list of arguments for use in \code{\link{mcmc_IMIFA}} pertaining to the use of the Bayesian Nonparametric Pitman-Yor / Dirichlet process priors with the infinite mixture models "\code{IMFA}" and "\code{IMIFA}". Certain arguments related to the Dirichlet concentration parameter for the overfitted mixtures "\code{OMFA}" and \code{"OMIFA"} can be supplied in this manner also.
+#' Supplies a list of arguments for use in \code{\link{mcmc_IMIFA}} pertaining to the use of the Bayesian Nonparametric Pitman-Yor / Dirichlet process priors with the infinite mixture models \code{"IMFA"} and \code{"IMIFA"}. Certain arguments related to the Dirichlet concentration parameter for the overfitted mixtures \code{"OMFA"} and \code{"OMIFA"} can be supplied in this manner also.
 #' @param learn.alpha
 #' \describe{
-#' \item{For the "\code{IMFA}" and "\code{IMIFA}" methods:}{A logical indicating whether the Pitman-Yor / Dirichlet process concentration parameter is to be learned (defaults to \code{TRUE}), or remain fixed for the duration of the chain. If being learned, a Ga(a, b) prior is assumed for \code{alpha}; updates take place via Gibbs sampling when \code{discount} is zero and via Metropolis-Hastings when \code{discount > 0}. If not being learned, \code{alpha} \emph{must} be supplied.
+#' \item{For the \code{"IMFA"} and \code{"IMIFA"} methods:}{A logical indicating whether the Pitman-Yor / Dirichlet process concentration parameter is to be learned (defaults to \code{TRUE}), or remain fixed for the duration of the chain. If being learned, a Ga(a, b) prior is assumed for \code{alpha}; updates take place via Gibbs sampling when \code{discount} is zero and via Metropolis-Hastings when \code{discount > 0}. If not being learned, \code{alpha} \emph{must} be supplied.
 #'
 #' In the special case of \code{discount < 0}, \code{alpha} must be supplied as a positive integer multiple of \code{abs(discount)}; in this instance, \code{learn.alpha} is forced to \code{TRUE} and \code{alpha} is updated with the changing number of components as the positive integer.}
-#' \item{For the "\code{OMFA}" and "\code{OMIFA}" methods:}{A logical indicating whether the Dirichlet concentration parameter is to be learned (defaults to \code{TRUE}) or remain fixed for the duration of the chain. If being learned, a Ga(a, b * G) is assumed for \code{alpha}, where G is the number of mixture components \code{range.G}, and updates take place via Metropolis-Hastings. If not being learned \code{alpha} \emph{must} be supplied.}
+#' \item{For the \code{"OMFA"} and \code{"OMIFA"} methods:}{A logical indicating whether the Dirichlet concentration parameter is to be learned (defaults to \code{TRUE}) or remain fixed for the duration of the chain. If being learned, a Ga(a, b * G) is assumed for \code{alpha}, where G is the number of mixture components \code{range.G}, and updates take place via Metropolis-Hastings. If not being learned \code{alpha} \emph{must} be supplied.}
 #' }
 #' @param alpha.hyper
 #' \describe{
-#' \item{For the "\code{IMFA}" and "\code{IMIFA}" methods:}{A vector of length 2 giving hyperparameters for the prior on the Pitman-Yor / Dirichlet process concentration parameter \code{alpha}. If \code{isTRUE(learn.alpha)}, these are shape and rate parameters of a Gamma distribution. Defaults to Ga(\code{2}, \code{4}). Choosing a larger rate is particularly important, as it encourages clustering. The prior is shifted to have support on (\code{-discount}, \code{Inf}) when non-zero \code{discount} is supplied and remains fixed (i.e. \code{learn.d=FALSE}) or when \code{learn.d=TRUE}.}
-#' \item{For the "\code{OMFA}" and "\code{OMIFA}" methods:}{A vector of length 2 giving hyperparameters a and b for the prior on the Dirichlet concentration parameter \code{alpha}. If \code{isTRUE(learn.alpha)}, these are shape and rate parameters of a Gamma distribution. Defaults to Ga(2, 4). Note that the supplied rate will be multiplied by \code{range.G}, to encourage clustering, such that the form of the prior is Ga(a, b * G).}
+#' \item{For the \code{"IMFA"} and \code{"IMIFA"} methods:}{A vector of length 2 giving hyperparameters for the prior on the Pitman-Yor / Dirichlet process concentration parameter \code{alpha}. If \code{isTRUE(learn.alpha)}, these are shape and rate parameters of a Gamma distribution. Defaults to Ga(\code{2}, \code{4}). Choosing a larger rate is particularly important, as it encourages clustering. The prior is shifted to have support on (\code{-discount}, \code{Inf}) when non-zero \code{discount} is supplied and remains fixed (i.e. \code{learn.d=FALSE}) or when \code{learn.d=TRUE}.}
+#' \item{For the \code{"OMFA"} and \code{"OMIFA"} methods:}{A vector of length 2 giving hyperparameters a and b for the prior on the Dirichlet concentration parameter \code{alpha}. If \code{isTRUE(learn.alpha)}, these are shape and rate parameters of a Gamma distribution. Defaults to Ga(2, 4). Note that the supplied rate will be multiplied by \code{range.G}, to encourage clustering, such that the form of the prior is Ga(a, b * G).}
 #' }
 #' @param discount The discount parameter used when generalising the Dirichlet process to the Pitman-Yor process. Defaults to 0, but typically must lie in the interval [0, 1). If greater than zero, \code{alpha} can be supplied greater than \code{-discount}. By default, Metropolis-Hastings steps are invoked for updating this parameter via \code{learn.d}.
 #'
@@ -1483,15 +1493,15 @@
 #' @param d.hyper Hyperparameters for the Beta(a,b) prior on the \code{discount} parameter. Defaults to Beta(1,1), i.e. Uniform(0,1).
 #' @param ind.slice Logical indicating whether the independent slice-efficient sampler is to be employed (defaults to \code{TRUE}). If \code{FALSE} the dependent slice-efficient sampler is employed, whereby the slice sequence \eqn{\xi_1,\ldots,\xi_g}{xi_1,...,xi_g} is equal to the decreasingly ordered mixing proportions.
 #' @param rho Parameter controlling the rate of geometric decay for the independent slice-efficient sampler, s.t. \eqn{\xi=(1-\rho)\rho^{g-1}}{xi = (1 - rho)rho^(g-1)}. Must lie in the interval [0, 1). Higher values are associated with better mixing but longer run times. Defaults to 0.75, but 0.5 is an interesting special case which guarantees that the slice sequence \eqn{\xi_1,\ldots,\xi_g}{xi_1,...,xi_g} is equal to the \emph{expectation} of the decreasingly ordered mixing proportions. Only relevant when \code{ind.slice} is \code{TRUE}.
-#' @param trunc.G The maximum number of allowable and storable clusters under the "\code{IMIFA}" and "\code{IMFA}" models. The number of active clusters to be sampled at each iteration is adaptively truncated, with \code{trunc.G} as an upper limit for storage reasons. Defaults to \code{max(min(N-1, 50), range.G))} and must satisfy \code{range.G <= trunc.G < N}. Note that large values of \code{trunc.G} may lead to memory capacity issues.
+#' @param trunc.G The maximum number of allowable and storable clusters under the \code{"IMIFA"} and \code{"IMFA"} models. The number of active clusters to be sampled at each iteration is adaptively truncated, with \code{trunc.G} as an upper limit for storage reasons. Defaults to \code{max(min(N-1, 50), range.G))} and must satisfy \code{range.G <= trunc.G < N}. Note that large values of \code{trunc.G} may lead to memory capacity issues.
 #' @param kappa The spike-and-slab prior distribution on the \code{discount} hyperparameter is assumed to be a mixture with point-mass at zero and a continuous Beta(a,b) distribution. \code{kappa} gives the weight of the point mass at zero (the 'spike'). Must lie in the interval [0,1]. Defaults to 0.5. Only relevant when \code{isTRUE(learn.d)}. A value of 0 ensures non-zero discount values (i.e. Pitman-Yor) at all times, and \emph{vice versa}. Note that \code{kappa} will default to exactly 0 if \code{alpha<=0} and \code{learn.alpha=FALSE}.
 #' @param IM.lab.sw Logical indicating whether the two forced label switching moves are to be implemented (defaults to \code{TRUE}) when running one of the infinite mixture models.
 #' @param zeta
 #' \describe{
-#' \item{For the "\code{IMFA}" and "\code{IMIFA}" methods:}{Tuning parameter controlling the acceptance rate of the random-walk proposal for the Metropolis-Hastings steps when \code{learn.alpha=TRUE}, where \code{2 * zeta} gives the full width of the uniform proposal distribution. These steps are only invoked when either \code{discount} is non-zero and fixed or \code{learn.d=TRUE}, otherwise \code{alpha} is learned by Gibbs updates. Must be strictly positive (if invoked). Defaults to \code{2}.}
-#' \item{For the "\code{OMFA}" and "\code{OMIFA}" methods:}{Tuning parameter controlling the standard deviation of the log-normal proposal for the Metropolis-Hastings steps when \code{learn.alpha=TRUE}. Must be strictly positive (if invoked). Defaults to \code{0.75}.}
+#' \item{For the \code{"IMFA"} and \code{"IMIFA"} methods:}{Tuning parameter controlling the acceptance rate of the random-walk proposal for the Metropolis-Hastings steps when \code{learn.alpha=TRUE}, where \code{2 * zeta} gives the full width of the uniform proposal distribution. These steps are only invoked when either \code{discount} is non-zero and fixed or \code{learn.d=TRUE}, otherwise \code{alpha} is learned by Gibbs updates. Must be strictly positive (if invoked). Defaults to \code{2}.}
+#' \item{For the \code{"OMFA"} and \code{"OMIFA"} methods:}{Tuning parameter controlling the standard deviation of the log-normal proposal for the Metropolis-Hastings steps when \code{learn.alpha=TRUE}. Must be strictly positive (if invoked). Defaults to \code{0.75}.}
 #' }
-#' @param tune.zeta A list with the following named arguments, used for tuning \code{zeta} (which is either the width of the uniform proposal for the "\code{IMFA}" or "\code{IMIFA}" methods or the standard deviation of the log-normal proposal for the "\code{OMFA}" or "\code{OMIFA}" methods) for \code{alpha}, via diminishing Robbins-Monro type adaptation, when the \code{alpha} parameter is learned via Metropolis-Hastings steps:
+#' @param tune.zeta A list with the following named arguments, used for tuning \code{zeta} (which is either the width of the uniform proposal for the \code{"IMFA"} or \code{"IMIFA"} methods or the standard deviation of the log-normal proposal for the \code{"OMFA"} or \code{"OMIFA"} methods) for \code{alpha}, via diminishing Robbins-Monro type adaptation, when the \code{alpha} parameter is learned via Metropolis-Hastings steps:
 #' \describe{
 #' \item{\code{heat}}{The initial adaptation intensity/step-size, such that larger values lead to larger updates. Must be strictly greater than zero. Defaults to 1 if not supplied but other elements of \code{tune.zeta} are.}
 #' \item{\code{lambda}}{Iteration rescaling parameter which controls the speed at which adaptation diminishes, such that lower values cause the contribution of later iterations to diminish more slowly. Must lie in the interval (0.5, 1]. Defaults to 1 if not supplied but other elements of \code{tune.zeta} are.}
@@ -1499,27 +1509,27 @@
 #' \item{\code{start.zeta}}{The iteration at which diminishing adaptation begins. Defaults to \code{100}.}
 #' \item{\code{stop.zeta}}{The iteration at which diminishing adaptation is to stop completely. Defaults to \code{Inf}, such that diminishing adaptation is never explicitly made to stop. Must be greater than \code{start.zeta}.}
 #' }
-#' At least one \code{tune.zeta} argument must be supplied for diminishing adaptation to be invoked. \code{tune.zeta} arguments are only relevant when \code{learn.alpha} is \code{TRUE} (and, for the "\code{IMFA}" and "\code{IMIFA}" methods, when either of the following is also true: the \code{discount} remains fixed at a non-zero value, or when \code{learn.d} is \code{TRUE} and \code{kappa < 1}). Since Gibbs steps are invoked for updating \code{alpha} when \code{discount == 0} under the "\code{IMFA}" or "\code{IMIFA}" methods, adaption occurs according to a running count of the number of iterations with non-zero sampled \code{discount} values for those methods.
+#' At least one \code{tune.zeta} argument must be supplied for diminishing adaptation to be invoked. \code{tune.zeta} arguments are only relevant when \code{learn.alpha} is \code{TRUE} (and, for the \code{"IMFA"} and \code{"IMIFA"} methods, when either of the following is also true: the \code{discount} remains fixed at a non-zero value, or when \code{learn.d} is \code{TRUE} and \code{kappa < 1}). Since Gibbs steps are invoked for updating \code{alpha} when \code{discount == 0} under the \code{"IMFA"} or \code{"IMIFA"} methods, adaption occurs according to a running count of the number of iterations with non-zero sampled \code{discount} values for those methods.
 #'
 #' If diminishing adaptation is invoked, the posterior mean \code{zeta} will be stored. Since caution is advised when employing adaptation, note that acceptance rates of between 10-50\% are generally considered adequate.
 #' @param ... Catches unused arguments.
 #'
-#' @details The crucial concentration parameter \code{alpha} is documented within the main \code{\link{mcmc_IMIFA}} function, and is relevant to all of the "\code{IMIFA}", "\code{IMFA}", "\code{OMIFA}", and "\code{OMFA}" methods.
+#' @details The crucial concentration parameter \code{alpha} is documented within the main \code{\link{mcmc_IMIFA}} function, and is relevant to all of the \code{"IMIFA"}, \code{"IMFA"}, \code{"OMIFA"}, and \code{"OMFA"} methods.
 #'
-#' All arguments here are relevant to the "\code{IMFA}" and "\code{IMIFA}" methods, but the following are also related to the "\code{OMFA}" and "\code{OMIFA}" methods, and may behave differently in those instances: \code{learn.alpha}, \code{alpha.hyper}, \code{zeta}, and \code{tune.zeta}.
+#' All arguments here are relevant to the \code{"IMFA"} and \code{"IMIFA"} methods, but the following are also related to the \code{"OMFA"} and \code{"OMIFA"} methods, and may behave differently in those instances: \code{learn.alpha}, \code{alpha.hyper}, \code{zeta}, and \code{tune.zeta}.
 #'
 #' @return A named list in which the names are the names of the arguments related to the BNP prior(s) and the values are the values supplied to the arguments.
 #' @note Certain supplied arguments will be subject to further checks within \code{\link{mcmc_IMIFA}}. \code{\link{G_priorDensity}} and \code{\link{G_moments}} can help with soliciting sensible DP/PYP priors.
 #'
-#' Under the "\code{IMFA}" and "\code{IMIFA}" methods, a Pitman-Yor process prior is specified by default. A Dirichlet process prior can be easily invoked when the \code{discount} is fixed at \code{0} and \code{learn.d=FALSE}. The normalized stable process can also be specified as a prior distribution, as a special case of the Pitman-Yor process, when \code{alpha} remains fixed at \code{0} and \code{learn.alpha=FALSE} (provided the \code{discount} is fixed at a strictly positive value or \code{learn.d=TRUE}). The special case of the Pitman-Yor process with negative \code{discount} is also allowed as an experimental feature for which caution is advised, though \code{learn.d} and \code{learn.alpha} are forced to \code{FALSE} and \code{TRUE}, respectively, in this instance.
+#' Under the \code{"IMFA"} and \code{"IMIFA"} methods, a Pitman-Yor process prior is specified by default. A Dirichlet process prior can be easily invoked when the \code{discount} is fixed at \code{0} and \code{learn.d=FALSE}. The normalized stable process can also be specified as a prior distribution, as a special case of the Pitman-Yor process, when \code{alpha} remains fixed at \code{0} and \code{learn.alpha=FALSE} (provided the \code{discount} is fixed at a strictly positive value or \code{learn.d=TRUE}). The special case of the Pitman-Yor process with negative \code{discount} is also allowed as an experimental feature for which caution is advised, though \code{learn.d} and \code{learn.alpha} are forced to \code{FALSE} and \code{TRUE}, respectively, in this instance.
 #' @keywords control
-#' @references Murphy, K., Viroli, C., and Gormley, I. C. (2019) Infinite mixtures of infinite factor analysers, \emph{Bayesian Analysis}, 1-27. <\href{https://projecteuclid.org/euclid.ba/1570586978}{doi:10.1214/19-BA1179}>.
+#' @references Murphy, K., Viroli, C., and Gormley, I. C. (2020) Infinite mixtures of infinite factor analysers, \emph{Bayesian Analysis}, 15(3): 937-963. <\href{https://projecteuclid.org/euclid.ba/1570586978}{doi:10.1214/19-BA1179}>.
 #'
 #' Kalli, M., Griffin, J. E. and Walker, S. G. (2011) Slice sampling mixture models, \emph{Statistics and Computing}, 21(1): 93-105.
 #' @export
 #'
 #' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{G_priorDensity}}, \code{\link{G_moments}}, \code{\link{mixfaControl}}, \code{\link{mgpControl}}, \code{\link{storeControl}}
-#' @author Keefe Murphy - <\email{keefe.murphy@@ucd.ie}>
+#' @author Keefe Murphy - <\email{keefe.murphy@@mu.ie}>
 #' @usage
 #' bnpControl(learn.alpha = TRUE,
 #'            alpha.hyper = c(2L, 4L),
@@ -1579,10 +1589,12 @@
            length(discount)       != 1))   stop("'discount' must be a single number", call.=FALSE)
     if(discount  >= 1)                     stop("'discount' must be less than 1",     call.=FALSE)
     if(discount   < 0)    {
-      if(!miss.args$learn.d       &&
-         isTRUE(learn.d))                  stop("'learn.d' must be FALSE when 'discount' is negative",    call.=FALSE)
+      if(isTRUE(learn.d)) {
+        if(isFALSE(miss.args$learn.d)) {   stop("'learn.d' must be FALSE when 'discount' is negative",      call.=FALSE)
+        } else                             warning("'learn.d' forced to FALSE as 'discount' is negative\n", call.=FALSE, immediate.=TRUE)
+      }
       if(!miss.args$learn.alpha   &&
-         isFALSE(learn.alpha))             stop("'learn.alpha' must be TRUE when 'discount' is negative", call.=FALSE)
+         isFALSE(learn.alpha))             stop("'learn.alpha' must be TRUE when 'discount' is negative",   call.=FALSE)
      learn.d     <- FALSE
      learn.alpha <- TRUE
     }
@@ -1649,16 +1661,16 @@
 
 #' Control settings for the MGP prior and AGS for infinite factor models
 #'
-#' Supplies a list of arguments for use in \code{\link{mcmc_IMIFA}} pertaining to the use of the multiplicative gamma process (MGP) shrinkage prior and adaptive Gibbs sampler (AGS) for use with the infinite factor models "\code{IFA}", "\code{MIFA}", "\code{OMIFA}", and "\code{IMIFA}".
+#' Supplies a list of arguments for use in \code{\link{mcmc_IMIFA}} pertaining to the use of the multiplicative gamma process (MGP) shrinkage prior and adaptive Gibbs sampler (AGS) for use with the infinite factor models \code{"IFA"}, \code{"MIFA"}, \code{"OMIFA"}, and \code{"IMIFA"}.
 #' @param alpha.d1 Shape hyperparameter of the column shrinkage on the first column of the loadings according to the MGP shrinkage prior. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to \code{2.1}.
 #' @param alpha.d2 Shape hyperparameter of the column shrinkage on the subsequent columns of the loadings according to the MGP shrinkage prior. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to \code{3.1}.
 #' @param phi.hyper A vector of length 2 giving the shape and rate hyperparameters for the gamma prior on the local shrinkage parameters. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to \code{c(3, 2)}. It is suggested that the rate be <= shape minus 1 to induce local shrinkage, though the cumulative shrinkage property is unaffected by these hyperparameters. Excessively small values may lead to critical numerical issues and should thus be avoided; indeed it is \emph{suggested} that the shape be >=1.
-#' @param sigma.hyper A vector of length 2 giving the shape and rate hyperparameters for the gamma prior on the cluster shrinkage parameters. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to \code{c(3, 2)}. Again, it is \emph{suggested} that the shape be >= 1. Only relevant for the "\code{IMIFA}", "\code{OMIFA}", and "\code{MIFA}" methods when \code{isTRUE(cluster.shrink)}.
+#' @param sigma.hyper A vector of length 2 giving the shape and rate hyperparameters for the gamma prior on the cluster shrinkage parameters. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to \code{c(3, 2)}. Again, it is \emph{suggested} that the shape be >= 1. Only relevant for the \code{"IMIFA"}, \code{"OMIFA"}, and \code{"MIFA"} methods when \code{isTRUE(cluster.shrink)}.
 #' @param prop Proportion of loadings elements within the neighbourhood \code{eps} of zero necessary to consider a loadings column redundant. Defaults to \code{floor(0.7 * P)/P}, where \code{P} is the number of variables in the data set. However, if the data set is univariate or bivariate, the default is \code{0.5} (see Note).
 #' @param eps Neighbourhood epsilon of zero within which a loadings entry is considered negligible according to \code{prop}. Defaults to \code{0.1}. Must be positive.
-#' @param adapt A logical value indicating whether adaptation of the number of cluster-specific factors is to take place when the MGP prior is employed. Defaults to \code{TRUE}. Specifying \code{FALSE} and supplying \code{range.Q} within \code{\link{mcmc_IMIFA}} provides a means to either approximate the infinite factor model with a fixed high truncation level, or to use the MGP prior in a finite factor context, however this is NOT recommended for the "\code{OMIFA}" and "\code{IMIFA}" methods.
-#' @param forceQg A logical indicating whether the upper limit on the number of cluster-specific factors \code{Q} is also cluster-specific. Defaults to \code{FALSE}: when \code{TRUE}, the number of factors in each cluster is kept below the number of observations in each cluster, in addition to the bound defined by \code{range.Q}. Only relevant for the "\code{IMIFA}", "\code{OMIFA}", and "\code{MIFA}" methods, and only invoked when \code{adapt} is \code{TRUE}. May be useful for low-dimensional data sets for which identifiable solutions are desired.
-#' @param cluster.shrink A logical value indicating whether to place the prior specified by \code{sigma.hyper} on the cluster shrinkage parameters. Defaults to \code{TRUE}. Specifying \code{FALSE} is equivalent to fixing all cluster shrinkage parameters to 1. Only relevant for the "\code{IMIFA}", "\code{OMIFA}", and "\code{MIFA}" methods. If invoked, the posterior mean cluster shrinkage factors will be reported.
+#' @param adapt A logical value indicating whether adaptation of the number of cluster-specific factors is to take place when the MGP prior is employed. Defaults to \code{TRUE}. Specifying \code{FALSE} and supplying \code{range.Q} within \code{\link{mcmc_IMIFA}} provides a means to either approximate the infinite factor model with a fixed high truncation level, or to use the MGP prior in a finite factor context, however this is NOT recommended for the \code{"OMIFA"} and \code{"IMIFA"} methods.
+#' @param forceQg A logical indicating whether the upper limit on the number of cluster-specific factors \code{Q} is also cluster-specific. Defaults to \code{FALSE}: when \code{TRUE}, the number of factors in each cluster is kept below the number of observations in each cluster, in addition to the bound defined by \code{range.Q}. Only relevant for the \code{"IMIFA"}, \code{"OMIFA"}, and \code{"MIFA"} methods, and only invoked when \code{adapt} is \code{TRUE}. May be useful for low-dimensional data sets for which identifiable solutions are desired.
+#' @param cluster.shrink A logical value indicating whether to place the prior specified by \code{sigma.hyper} on the cluster shrinkage parameters. Defaults to \code{TRUE}. Specifying \code{FALSE} is equivalent to fixing all cluster shrinkage parameters to 1. Only relevant for the \code{"IMIFA"}, \code{"OMIFA"}, and \code{"MIFA"} methods. If invoked, the posterior mean cluster shrinkage factors will be reported.
 #' @param b0,b1 Intercept & slope parameters for the exponentially decaying adaptation probability:
 #'
 #' \code{p(iter) = 1/exp(b0 + b1 * (iter - start.AGS))}.
@@ -1666,9 +1678,9 @@
 #' Defaults to \code{0.1} & \code{0.00005}, respectively. Must be non-negative and strictly positive, respectively, to ensure diminishing adaptation.
 #' @param beta.d1 Rate hyperparameter of the column shrinkage on the first column of the loadings according to the MGP shrinkage prior. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to 1.
 #' @param beta.d2 Rate hyperparameter of the column shrinkage on the subsequent columns of the loadings according to the MGP shrinkage prior. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to 1.
-#' @param start.AGS The iteration at which adaptation under the AGS is to begin. Defaults to \code{burnin} for the "\code{IFA}" and "\code{MIFA}" methods, defaults to 0 for the "\code{OMIFA}" and "\code{IMIFA}" methods, and defaults to 0 for all methods if the data set is univariate or bivariate. Cannot exceed \code{burnin}.
+#' @param start.AGS The iteration at which adaptation under the AGS is to begin. Defaults to \code{burnin} for the \code{"IFA"} and \code{"MIFA"} methods, defaults to 0 for the \code{"OMIFA"} and \code{"IMIFA"} methods, and defaults to 0 for all methods if the data set is univariate or bivariate. Cannot exceed \code{burnin}.
 #' @param stop.AGS The iteration at which adaptation under the AGS is to stop completely. Defaults to \code{Inf}, such that the AGS is never explicitly forced to stop (thereby overriding the diminishing adaptation probability after \code{stop.AGS}). Must be greater than \code{start.AGS}. The diminishing adaptation probability prior to \code{stop.AGS} is still governed by the arguments \code{b0} and \code{b1}.
-#' @param delta0g Logical indicating whether the \code{alpha.d1} and \code{alpha.d2} hyperparameters can be cluster-specific. Defaults to \code{FALSE}. Only relevant for the "\code{MIFA}" method and only allowed when \code{z.list} is supplied within \code{\link{mcmc_IMIFA}}.
+#' @param delta0g Logical indicating whether the \code{alpha.d1} and \code{alpha.d2} hyperparameters can be cluster-specific. Defaults to \code{FALSE}. Only relevant for the \code{"MIFA"} method and only allowed when \code{z.list} is supplied within \code{\link{mcmc_IMIFA}}.
 #' @param ... Catches unused arguments.
 #'
 #' @return A named list in which the names are the names of the arguments related to the MGP and AGS and the values are the values supplied to the arguments.
@@ -1679,12 +1691,12 @@
 #'
 #' The adaptive Gibbs sampler (AGS) monitors the \code{prop} of loadings elements within the neighbourhood \code{eps} of 0 and discards columns or simulates new columns on this basis. However, if at any stage the number of group-specific latent factors reaches zero, the decision to add columns is instead based on a simple binary trial with probability \code{1-prop}, as there are no loadings entries to monitor.
 #' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{MGP_check}}, \code{\link{mixfaControl}}, \code{\link{bnpControl}}, \code{\link{storeControl}}
-#' @references Murphy, K., Viroli, C., and Gormley, I. C. (2019) Infinite mixtures of infinite factor analysers, \emph{Bayesian Analysis}, 1-27. <\href{https://projecteuclid.org/euclid.ba/1570586978}{doi:10.1214/19-BA1179}>.
+#' @references Murphy, K., Viroli, C., and Gormley, I. C. (2020) Infinite mixtures of infinite factor analysers, \emph{Bayesian Analysis}, 15(3): 937-963. <\href{https://projecteuclid.org/euclid.ba/1570586978}{doi:10.1214/19-BA1179}>.
 #'
 #' Durante, D. (2017). A note on the multiplicative gamma process, \emph{Statistics & Probability Letters}, 122: 198-204.
 #'
 #' Bhattacharya, A. and Dunson, D. B. (2011) Sparse Bayesian infinite factor models, \emph{Biometrika}, 98(2): 291-306.
-#' @author Keefe Murphy - <\email{keefe.murphy@@ucd.ie}>
+#' @author Keefe Murphy - <\email{keefe.murphy@@mu.ie}>
 #' @usage
 #' mgpControl(alpha.d1 = 2.1,
 #'            alpha.d2 = 3.1,
@@ -1768,7 +1780,7 @@
 #' @param mu.switch Logical indicating whether the means are to be stored (defaults to \code{TRUE}).
 #' @param score.switch Logical indicating whether the factor scores are to be stored.
 #'
-#' As the array containing each sampled scores matrix tends to be amongst the largest objects to be stored, this defaults to \code{FALSE} inside \code{\link{mcmc_IMIFA}} when \code{length(range.G) * length(range.Q) > 10}, otherwise the default is \code{TRUE}. For the "\code{MIFA}", "\code{OMIFA}", and "\code{IMIFA}" methods, setting this switch to \code{FALSE} also offers a slight speed-up.
+#' As the array containing each sampled scores matrix tends to be amongst the largest objects to be stored, this defaults to \code{FALSE} inside \code{\link{mcmc_IMIFA}} when \code{length(range.G) * length(range.Q) > 10}, otherwise the default is \code{TRUE}. For the \code{"MIFA"}, \code{"OMIFA"}, and \code{"IMIFA"} methods, setting this switch to \code{FALSE} also offers a slight speed-up.
 #'
 #' Unlike other parameters, the scores need not be stored for posterior predictive checking (see Note below).
 #' @param load.switch Logical indicating whether the factor loadings are to be stored (defaults to \code{TRUE}).
@@ -1780,7 +1792,7 @@
 #'
 #' @note Posterior inference and plotting won't be possible for parameters not stored.
 #'
-#' Non-storage of parameters will almost surely prohibit the computation of posterior predictive checking error metrics within \code{\link{get_IMIFA_results}} also. In particular, if such error metrics are desired, \code{mu.switch} and \code{psi.switch} must be \code{TRUE} for all but the "\code{FA}" and "\code{IFA}" models, \code{load.switch} must be \code{TRUE} for all but the entirely zero-factor models, and \code{pi.switch} must be \code{TRUE} for models with clustering structure and unequal mixing proportions for all but the PPRE metric. \code{score.switch=TRUE} is not required for any posterior predictive checking.
+#' Non-storage of parameters will almost surely prohibit the computation of posterior predictive checking error metrics within \code{\link{get_IMIFA_results}} also. In particular, if such error metrics are desired, \code{mu.switch} and \code{psi.switch} must be \code{TRUE} for all but the \code{"FA"} and \code{"IFA"} models, \code{load.switch} must be \code{TRUE} for all but the entirely zero-factor models, and \code{pi.switch} must be \code{TRUE} for models with clustering structure and unequal mixing proportions for all but the PPRE metric. \code{score.switch=TRUE} is not required for any posterior predictive checking.
 #'
 #' Finally, if loadings are not stored but scores are, caution is advised when examining posterior scores as Procrustes rotation will not occur within \code{\link{get_IMIFA_results}}.
 #'
@@ -1789,7 +1801,7 @@
 #' @keywords control
 #'
 #' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{get_IMIFA_results}}, \code{\link{mixfaControl}}, \code{\link{mgpControl}}, \code{\link{bnpControl}}
-#' @author Keefe Murphy - <\email{keefe.murphy@@ucd.ie}>
+#' @author Keefe Murphy - <\email{keefe.murphy@@mu.ie}>
 #' @usage
 #' storeControl(mu.switch = TRUE,
 #'              score.switch = TRUE,
@@ -1815,21 +1827,21 @@
 #' Decompose factor scores by cluster
 #'
 #' Takes posterior summaries of the overall factor scores matrix and returns lists of sub-matrices corresponding to the \code{G}-cluster MAP partition.
-#' @param res An object of class "\code{Results_IMIFA}" generated by \code{\link{get_IMIFA_results}}.
+#' @param res An object of class \code{"Results_IMIFA"} generated by \code{\link{get_IMIFA_results}}.
 #' @param dropQ A logical indicating whether columns of the factor scores matrix should be dropped such that the number of columns in each sub-matrix corresponds to the cluster-specific number of factors (if the number of factors is indeed cluster-specific). When \code{FALSE} (the default), the number of columns instead remains common to all sub-matrices - given by the largest of the cluster-specific numbers of latent factors.
 #'
-#' Note that this argument is irrelevant (i.e. always \code{FALSE}) for the finite factor methods ("\code{FA}", "\code{MFA}", "\code{OMFA}", and "\code{IMFA}").
+#' Note that this argument is irrelevant (i.e. always \code{FALSE}) for the finite factor methods (\code{"FA"}, \code{"MFA"}, \code{"OMFA"}, and \code{"IMFA"}).
 #'
 #' @details Under the models in the IMIFA family, there exists only one factor scores matrix. For the finite factor methods, this has dimensions \code{N * Q}.
 #'
-#' For the infinite factor methods ("\code{IFA}", "\code{MIFA}", "\code{OMIFA}", and "\code{IMIFA}"), the factor scores matrix has dimensions \code{N * Qmax}, where \code{Qmax} is the largest of the cluster-specific numbers of latent factors \eqn{q_1,\ldots,q_g}{Q1,...,Qg}. Entries of this matrix thus may have been padded out with zero entries, as appropriate, prior to the Procrustes rotation-based correction applied within \code{\link{get_IMIFA_results}} (thus now these entries will be near-zero).
+#' For the infinite factor methods (\code{"IFA"}, \code{"MIFA"}, \code{"OMIFA"}, and \code{"IMIFA"}), the factor scores matrix has dimensions \code{N * Qmax}, where \code{Qmax} is the largest of the cluster-specific numbers of latent factors \eqn{q_1,\ldots,q_g}{Q1,...,Qg}. Entries of this matrix thus may have been padded out with zero entries, as appropriate, prior to the Procrustes rotation-based correction applied within \code{\link{get_IMIFA_results}} (thus now these entries will be near-zero).
 #'
 #' In partitioning rows of the factor scores matrix into the same clusters the corresponding observations themselves belong to according to the MAP clustering, the number of columns \emph{may} vary according to the cluster-specific numbers of latent factors (depending on the value of \code{dropQ} and the method employed).
 #' @return For models which achieve clustering, a list of lists (say \code{x}) decomposing the posterior mean scores (\code{x$post.eta}), the associated variance estimates (\code{x$var.eta}) and credible intervals (\code{x$ci.eta}), and the last valid sample of the scores (\code{x$last.eta}) into lists of length \code{G}, corresponding to the MAP clustering, with varying or common numbers of cluster-specific factors (depending on the value of \code{dropQ} and the method employed).
 #'
-#' For models with only one component, or the "\code{FA}" and "\code{IFA}" methods, scores cannot be decomposed, and posterior summaries of the scores will be returned unchanged.
+#' For models with only one component, or the \code{"FA"} and \code{"IFA"} methods, scores cannot be decomposed, and posterior summaries of the scores will be returned unchanged.
 #' @keywords utility
-#' @author Keefe Murphy - <\email{keefe.murphy@@ucd.ie}>
+#' @author Keefe Murphy - <\email{keefe.murphy@@mu.ie}>
 #' @export
 #' @usage
 #' scores_MAP(res,
@@ -1903,8 +1915,8 @@
 #' @importFrom matrixStats "colMeans2"
 #' @importFrom Rfast "colVars"
 #' @export
-#' @author Keefe Murphy - <\email{keefe.murphy@@ucd.ie}>
-#' @references van den Berg, R.A., Hoefsloot, H.C.J, Westerhuis, J.A. and Smilde, A.K. and van der Werf, M.J. (2006) Centering, scaling, and transformations: improving the biological information content of metabolomics data. \emph{BMC Genomics}, 7, 1, 142.
+#' @author Keefe Murphy - <\email{keefe.murphy@@mu.ie}>
+#' @references van den Berg, R.A., Hoefsloot, H.C.J, Westerhuis, J.A. and Smilde, A.K. and van der Werf, M.J. (2006) Centering, scaling, and transformations: improving the biological information content of metabolomics data. \emph{BMC Genomics}, 7(142).
 #' @keywords utility
 #' @usage
 #' pareto_scale(x,
@@ -2034,16 +2046,24 @@
         return(if(any(x == 0, na.rm=TRUE)) 0L else exp(mean(log(x), na.rm=TRUE)))
     }
 
-    .logdensity     <- function(x, left = 0) { # export and add ...
-      d          <- tryCatch(stats::density(x, bw = "SJ"), error = function(e) stats::density(x))
+    .IntMult     <- Vectorize(function(a, b) {
+      b          <- abs(b)
+      x          <- a / b
+        return(x  > 0 &
+       (isTRUE(all.equal(x, round(x))) ||
+        isTRUE(all.equal(0, a %% b))))
+    })
+
+    .logdensity     <- function(x, left = 0, ...) { # export and add ...
+      d          <- tryCatch(stats::density(x, ...), error = function(e) stats::density(x))
       h          <- d$bw
       w          <- 1/stats::pnorm(left, mean = x, sd = h, lower.tail = FALSE)
         return(suppressWarnings(stats::density(x, bw = h, kernel = "gaussian", weights = w/length(x))))
     }
 
-    .logitdensity   <- function(x) { # export and add ...
+    .logitdensity   <- function(x, ...) { # export and add ...
       y          <- stats::qlogis(x[x > 0  & x < 1])
-      g          <- tryCatch(stats::density(y, bw = "SJ"), error = function(e) stats::density(y))
+      g          <- tryCatch(stats::density(y, ...), error = function(e) stats::density(y))
       xgrid      <- stats::plogis(g$x)
       g$y        <- g$y/(xgrid * (1 - xgrid))
       g$x        <- xgrid
@@ -2109,15 +2129,15 @@
             } else     {
               newretval[!baseok]  <- rest[perm[l,]]
             }
-            if(l  > 1) {
+            if(l == 1) {
+              retval  <- newretval
+              agree   <- oldagree <- sum(diag(tab[,newretval]))/sum(tab)
+            } else {
               agree   <- sum(diag(tab[,newretval]))/sum(tab)
               if(agree > oldagree) {
                 retval            <- newretval
                 oldagree          <- agree
               }
-            } else {
-              retval  <- newretval
-              agree   <- oldagree <- sum(diag(tab[,newretval]))/sum(tab)
             }
           }
         }
@@ -2141,13 +2161,13 @@
               digits   = 7)
       on.exit(options(scipen = scipen,
                       digits = digits))
-      if(length(after.dot)  != 1  ||
+      if(length(after.dot)  != 1   ||
          !is.logical(after.dot))           stop("'after.dot' must be a single logical indicator", call.=FALSE)
       if(!all(is.numeric(x)))              stop("'x' must be numeric", call.=FALSE)
       res        <- x
       na.ind     <- !is.na(x)
       x          <- abs(x[na.ind])
-      if(all(icheck   <- floor(x) == x, na.rm=TRUE))   {
+      if(all(icheck   <- (floor(x) == x), na.rm=TRUE)) {
         res[na.ind]   <- if(isTRUE(after.dot)) vector("integer", length(x)) else sapply(as.integer(x), format.info, digits=22)
       } else      {
         ipart    <- pmax(1L, floor(x))
@@ -2319,6 +2339,12 @@
       dimnames(z)         <- dimnames(x)
       class(z)   <- "loadings"
         return(list(loadings = z, rotmat = TT))
+    }
+
+    .version_above        <- function(pkg, than) {
+      pkg        <- as.character(utils::packageVersion(pkg))
+      test       <- ifelse(test <- identical(pkg, than), test, as.logical(utils::compareVersion(pkg, than)))
+        return(test)
     }
 
     .which0      <- function(x) which(x == 0)

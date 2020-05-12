@@ -20,15 +20,15 @@ bnpControl(learn.alpha = TRUE,
 }
 \arguments{
 \item{learn.alpha}{\describe{
-\item{For the "\code{IMFA}" and "\code{IMIFA}" methods:}{A logical indicating whether the Pitman-Yor / Dirichlet process concentration parameter is to be learned (defaults to \code{TRUE}), or remain fixed for the duration of the chain. If being learned, a Ga(a, b) prior is assumed for \code{alpha}; updates take place via Gibbs sampling when \code{discount} is zero and via Metropolis-Hastings when \code{discount > 0}. If not being learned, \code{alpha} \emph{must} be supplied.
+\item{For the \code{"IMFA"} and \code{"IMIFA"} methods:}{A logical indicating whether the Pitman-Yor / Dirichlet process concentration parameter is to be learned (defaults to \code{TRUE}), or remain fixed for the duration of the chain. If being learned, a Ga(a, b) prior is assumed for \code{alpha}; updates take place via Gibbs sampling when \code{discount} is zero and via Metropolis-Hastings when \code{discount > 0}. If not being learned, \code{alpha} \emph{must} be supplied.
 
 In the special case of \code{discount < 0}, \code{alpha} must be supplied as a positive integer multiple of \code{abs(discount)}; in this instance, \code{learn.alpha} is forced to \code{TRUE} and \code{alpha} is updated with the changing number of components as the positive integer.}
-\item{For the "\code{OMFA}" and "\code{OMIFA}" methods:}{A logical indicating whether the Dirichlet concentration parameter is to be learned (defaults to \code{TRUE}) or remain fixed for the duration of the chain. If being learned, a Ga(a, b * G) is assumed for \code{alpha}, where G is the number of mixture components \code{range.G}, and updates take place via Metropolis-Hastings. If not being learned \code{alpha} \emph{must} be supplied.}
+\item{For the \code{"OMFA"} and \code{"OMIFA"} methods:}{A logical indicating whether the Dirichlet concentration parameter is to be learned (defaults to \code{TRUE}) or remain fixed for the duration of the chain. If being learned, a Ga(a, b * G) is assumed for \code{alpha}, where G is the number of mixture components \code{range.G}, and updates take place via Metropolis-Hastings. If not being learned \code{alpha} \emph{must} be supplied.}
 }}
 
 \item{alpha.hyper}{\describe{
-\item{For the "\code{IMFA}" and "\code{IMIFA}" methods:}{A vector of length 2 giving hyperparameters for the prior on the Pitman-Yor / Dirichlet process concentration parameter \code{alpha}. If \code{isTRUE(learn.alpha)}, these are shape and rate parameters of a Gamma distribution. Defaults to Ga(\code{2}, \code{4}). Choosing a larger rate is particularly important, as it encourages clustering. The prior is shifted to have support on (\code{-discount}, \code{Inf}) when non-zero \code{discount} is supplied and remains fixed (i.e. \code{learn.d=FALSE}) or when \code{learn.d=TRUE}.}
-\item{For the "\code{OMFA}" and "\code{OMIFA}" methods:}{A vector of length 2 giving hyperparameters a and b for the prior on the Dirichlet concentration parameter \code{alpha}. If \code{isTRUE(learn.alpha)}, these are shape and rate parameters of a Gamma distribution. Defaults to Ga(2, 4). Note that the supplied rate will be multiplied by \code{range.G}, to encourage clustering, such that the form of the prior is Ga(a, b * G).}
+\item{For the \code{"IMFA"} and \code{"IMIFA"} methods:}{A vector of length 2 giving hyperparameters for the prior on the Pitman-Yor / Dirichlet process concentration parameter \code{alpha}. If \code{isTRUE(learn.alpha)}, these are shape and rate parameters of a Gamma distribution. Defaults to Ga(\code{2}, \code{4}). Choosing a larger rate is particularly important, as it encourages clustering. The prior is shifted to have support on (\code{-discount}, \code{Inf}) when non-zero \code{discount} is supplied and remains fixed (i.e. \code{learn.d=FALSE}) or when \code{learn.d=TRUE}.}
+\item{For the \code{"OMFA"} and \code{"OMIFA"} methods:}{A vector of length 2 giving hyperparameters a and b for the prior on the Dirichlet concentration parameter \code{alpha}. If \code{isTRUE(learn.alpha)}, these are shape and rate parameters of a Gamma distribution. Defaults to Ga(2, 4). Note that the supplied rate will be multiplied by \code{range.G}, to encourage clustering, such that the form of the prior is Ga(a, b * G).}
 }}
 
 \item{discount}{The discount parameter used when generalising the Dirichlet process to the Pitman-Yor process. Defaults to 0, but typically must lie in the interval [0, 1). If greater than zero, \code{alpha} can be supplied greater than \code{-discount}. By default, Metropolis-Hastings steps are invoked for updating this parameter via \code{learn.d}.
@@ -43,18 +43,18 @@ The special case of \code{discount < 0} is allowed, in which case \code{learn.d=
 
 \item{rho}{Parameter controlling the rate of geometric decay for the independent slice-efficient sampler, s.t. \eqn{\xi=(1-\rho)\rho^{g-1}}{xi = (1 - rho)rho^(g-1)}. Must lie in the interval [0, 1). Higher values are associated with better mixing but longer run times. Defaults to 0.75, but 0.5 is an interesting special case which guarantees that the slice sequence \eqn{\xi_1,\ldots,\xi_g}{xi_1,...,xi_g} is equal to the \emph{expectation} of the decreasingly ordered mixing proportions. Only relevant when \code{ind.slice} is \code{TRUE}.}
 
-\item{trunc.G}{The maximum number of allowable and storable clusters under the "\code{IMIFA}" and "\code{IMFA}" models. The number of active clusters to be sampled at each iteration is adaptively truncated, with \code{trunc.G} as an upper limit for storage reasons. Defaults to \code{max(min(N-1, 50), range.G))} and must satisfy \code{range.G <= trunc.G < N}. Note that large values of \code{trunc.G} may lead to memory capacity issues.}
+\item{trunc.G}{The maximum number of allowable and storable clusters under the \code{"IMIFA"} and \code{"IMFA"} models. The number of active clusters to be sampled at each iteration is adaptively truncated, with \code{trunc.G} as an upper limit for storage reasons. Defaults to \code{max(min(N-1, 50), range.G))} and must satisfy \code{range.G <= trunc.G < N}. Note that large values of \code{trunc.G} may lead to memory capacity issues.}
 
 \item{kappa}{The spike-and-slab prior distribution on the \code{discount} hyperparameter is assumed to be a mixture with point-mass at zero and a continuous Beta(a,b) distribution. \code{kappa} gives the weight of the point mass at zero (the 'spike'). Must lie in the interval [0,1]. Defaults to 0.5. Only relevant when \code{isTRUE(learn.d)}. A value of 0 ensures non-zero discount values (i.e. Pitman-Yor) at all times, and \emph{vice versa}. Note that \code{kappa} will default to exactly 0 if \code{alpha<=0} and \code{learn.alpha=FALSE}.}
 
 \item{IM.lab.sw}{Logical indicating whether the two forced label switching moves are to be implemented (defaults to \code{TRUE}) when running one of the infinite mixture models.}
 
 \item{zeta}{\describe{
-\item{For the "\code{IMFA}" and "\code{IMIFA}" methods:}{Tuning parameter controlling the acceptance rate of the random-walk proposal for the Metropolis-Hastings steps when \code{learn.alpha=TRUE}, where \code{2 * zeta} gives the full width of the uniform proposal distribution. These steps are only invoked when either \code{discount} is non-zero and fixed or \code{learn.d=TRUE}, otherwise \code{alpha} is learned by Gibbs updates. Must be strictly positive (if invoked). Defaults to \code{2}.}
-\item{For the "\code{OMFA}" and "\code{OMIFA}" methods:}{Tuning parameter controlling the standard deviation of the log-normal proposal for the Metropolis-Hastings steps when \code{learn.alpha=TRUE}. Must be strictly positive (if invoked). Defaults to \code{0.75}.}
+\item{For the \code{"IMFA"} and \code{"IMIFA"} methods:}{Tuning parameter controlling the acceptance rate of the random-walk proposal for the Metropolis-Hastings steps when \code{learn.alpha=TRUE}, where \code{2 * zeta} gives the full width of the uniform proposal distribution. These steps are only invoked when either \code{discount} is non-zero and fixed or \code{learn.d=TRUE}, otherwise \code{alpha} is learned by Gibbs updates. Must be strictly positive (if invoked). Defaults to \code{2}.}
+\item{For the \code{"OMFA"} and \code{"OMIFA"} methods:}{Tuning parameter controlling the standard deviation of the log-normal proposal for the Metropolis-Hastings steps when \code{learn.alpha=TRUE}. Must be strictly positive (if invoked). Defaults to \code{0.75}.}
 }}
 
-\item{tune.zeta}{A list with the following named arguments, used for tuning \code{zeta} (which is either the width of the uniform proposal for the "\code{IMFA}" or "\code{IMIFA}" methods or the standard deviation of the log-normal proposal for the "\code{OMFA}" or "\code{OMIFA}" methods) for \code{alpha}, via diminishing Robbins-Monro type adaptation, when the \code{alpha} parameter is learned via Metropolis-Hastings steps:
+\item{tune.zeta}{A list with the following named arguments, used for tuning \code{zeta} (which is either the width of the uniform proposal for the \code{"IMFA"} or \code{"IMIFA"} methods or the standard deviation of the log-normal proposal for the \code{"OMFA"} or \code{"OMIFA"} methods) for \code{alpha}, via diminishing Robbins-Monro type adaptation, when the \code{alpha} parameter is learned via Metropolis-Hastings steps:
 \describe{
 \item{\code{heat}}{The initial adaptation intensity/step-size, such that larger values lead to larger updates. Must be strictly greater than zero. Defaults to 1 if not supplied but other elements of \code{tune.zeta} are.}
 \item{\code{lambda}}{Iteration rescaling parameter which controls the speed at which adaptation diminishes, such that lower values cause the contribution of later iterations to diminish more slowly. Must lie in the interval (0.5, 1]. Defaults to 1 if not supplied but other elements of \code{tune.zeta} are.}
@@ -62,7 +62,7 @@ The special case of \code{discount < 0} is allowed, in which case \code{learn.d=
 \item{\code{start.zeta}}{The iteration at which diminishing adaptation begins. Defaults to \code{100}.}
 \item{\code{stop.zeta}}{The iteration at which diminishing adaptation is to stop completely. Defaults to \code{Inf}, such that diminishing adaptation is never explicitly made to stop. Must be greater than \code{start.zeta}.}
 }
-At least one \code{tune.zeta} argument must be supplied for diminishing adaptation to be invoked. \code{tune.zeta} arguments are only relevant when \code{learn.alpha} is \code{TRUE} (and, for the "\code{IMFA}" and "\code{IMIFA}" methods, when either of the following is also true: the \code{discount} remains fixed at a non-zero value, or when \code{learn.d} is \code{TRUE} and \code{kappa < 1}). Since Gibbs steps are invoked for updating \code{alpha} when \code{discount == 0} under the "\code{IMFA}" or "\code{IMIFA}" methods, adaption occurs according to a running count of the number of iterations with non-zero sampled \code{discount} values for those methods.
+At least one \code{tune.zeta} argument must be supplied for diminishing adaptation to be invoked. \code{tune.zeta} arguments are only relevant when \code{learn.alpha} is \code{TRUE} (and, for the \code{"IMFA"} and \code{"IMIFA"} methods, when either of the following is also true: the \code{discount} remains fixed at a non-zero value, or when \code{learn.d} is \code{TRUE} and \code{kappa < 1}). Since Gibbs steps are invoked for updating \code{alpha} when \code{discount == 0} under the \code{"IMFA"} or \code{"IMIFA"} methods, adaption occurs according to a running count of the number of iterations with non-zero sampled \code{discount} values for those methods.
 
 If diminishing adaptation is invoked, the posterior mean \code{zeta} will be stored. Since caution is advised when employing adaptation, note that acceptance rates of between 10-50\% are generally considered adequate.}
 
@@ -72,17 +72,17 @@ If diminishing adaptation is invoked, the posterior mean \code{zeta} will be sto
 A named list in which the names are the names of the arguments related to the BNP prior(s) and the values are the values supplied to the arguments.
 }
 \description{
-Supplies a list of arguments for use in \code{\link{mcmc_IMIFA}} pertaining to the use of the Bayesian Nonparametric Pitman-Yor / Dirichlet process priors with the infinite mixture models "\code{IMFA}" and "\code{IMIFA}". Certain arguments related to the Dirichlet concentration parameter for the overfitted mixtures "\code{OMFA}" and \code{"OMIFA"} can be supplied in this manner also.
+Supplies a list of arguments for use in \code{\link{mcmc_IMIFA}} pertaining to the use of the Bayesian Nonparametric Pitman-Yor / Dirichlet process priors with the infinite mixture models \code{"IMFA"} and \code{"IMIFA"}. Certain arguments related to the Dirichlet concentration parameter for the overfitted mixtures \code{"OMFA"} and \code{"OMIFA"} can be supplied in this manner also.
 }
 \details{
-The crucial concentration parameter \code{alpha} is documented within the main \code{\link{mcmc_IMIFA}} function, and is relevant to all of the "\code{IMIFA}", "\code{IMFA}", "\code{OMIFA}", and "\code{OMFA}" methods.
+The crucial concentration parameter \code{alpha} is documented within the main \code{\link{mcmc_IMIFA}} function, and is relevant to all of the \code{"IMIFA"}, \code{"IMFA"}, \code{"OMIFA"}, and \code{"OMFA"} methods.
 
-All arguments here are relevant to the "\code{IMFA}" and "\code{IMIFA}" methods, but the following are also related to the "\code{OMFA}" and "\code{OMIFA}" methods, and may behave differently in those instances: \code{learn.alpha}, \code{alpha.hyper}, \code{zeta}, and \code{tune.zeta}.
+All arguments here are relevant to the \code{"IMFA"} and \code{"IMIFA"} methods, but the following are also related to the \code{"OMFA"} and \code{"OMIFA"} methods, and may behave differently in those instances: \code{learn.alpha}, \code{alpha.hyper}, \code{zeta}, and \code{tune.zeta}.
 }
 \note{
 Certain supplied arguments will be subject to further checks within \code{\link{mcmc_IMIFA}}. \code{\link{G_priorDensity}} and \code{\link{G_moments}} can help with soliciting sensible DP/PYP priors.
 
-Under the "\code{IMFA}" and "\code{IMIFA}" methods, a Pitman-Yor process prior is specified by default. A Dirichlet process prior can be easily invoked when the \code{discount} is fixed at \code{0} and \code{learn.d=FALSE}. The normalized stable process can also be specified as a prior distribution, as a special case of the Pitman-Yor process, when \code{alpha} remains fixed at \code{0} and \code{learn.alpha=FALSE} (provided the \code{discount} is fixed at a strictly positive value or \code{learn.d=TRUE}). The special case of the Pitman-Yor process with negative \code{discount} is also allowed as an experimental feature for which caution is advised, though \code{learn.d} and \code{learn.alpha} are forced to \code{FALSE} and \code{TRUE}, respectively, in this instance.
+Under the \code{"IMFA"} and \code{"IMIFA"} methods, a Pitman-Yor process prior is specified by default. A Dirichlet process prior can be easily invoked when the \code{discount} is fixed at \code{0} and \code{learn.d=FALSE}. The normalized stable process can also be specified as a prior distribution, as a special case of the Pitman-Yor process, when \code{alpha} remains fixed at \code{0} and \code{learn.alpha=FALSE} (provided the \code{discount} is fixed at a strictly positive value or \code{learn.d=TRUE}). The special case of the Pitman-Yor process with negative \code{discount} is also allowed as an experimental feature for which caution is advised, though \code{learn.d} and \code{learn.alpha} are forced to \code{FALSE} and \code{TRUE}, respectively, in this instance.
 }
 \examples{
 bnpctrl <- bnpControl(learn.d=FALSE, ind.slice=FALSE, alpha.hyper=c(3, 3))
@@ -95,7 +95,7 @@ bnpctrl <- bnpControl(learn.d=FALSE, ind.slice=FALSE, alpha.hyper=c(3, 3))
 #                     ind.slice=FALSE, alpha.hyper=c(3, 3))
 }
 \references{
-Murphy, K., Viroli, C., and Gormley, I. C. (2019) Infinite mixtures of infinite factor analysers, \emph{Bayesian Analysis}, 1-27. <\href{https://projecteuclid.org/euclid.ba/1570586978}{doi:10.1214/19-BA1179}>.
+Murphy, K., Viroli, C., and Gormley, I. C. (2020) Infinite mixtures of infinite factor analysers, \emph{Bayesian Analysis}, 15(3): 937-963. <\href{https://projecteuclid.org/euclid.ba/1570586978}{doi:10.1214/19-BA1179}>.
 
 Kalli, M., Griffin, J. E. and Walker, S. G. (2011) Slice sampling mixture models, \emph{Statistics and Computing}, 21(1): 93-105.
 }
@@ -103,6 +103,6 @@ Kalli, M., Griffin, J. E. and Walker, S. G. (2011) Slice sampling mixture models
 \code{\link{mcmc_IMIFA}}, \code{\link{G_priorDensity}}, \code{\link{G_moments}}, \code{\link{mixfaControl}}, \code{\link{mgpControl}}, \code{\link{storeControl}}
 }
 \author{
-Keefe Murphy - <\email{keefe.murphy@ucd.ie}>
+Keefe Murphy - <\email{keefe.murphy@mu.ie}>
 }
 \keyword{control}

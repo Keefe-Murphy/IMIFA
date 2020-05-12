@@ -51,12 +51,12 @@ This is liable to take quite some time to run, especially if the number of obser
 # table(cutree(Hcl, k=3), olive$area)
 }
 \references{
-Carmona, C., Nieto-barajas, L. and Canale, A. (2018) Model based approach for household clustering with mixed scale variables. \emph{Advances in Data Analysis and Classification}, 12: 1-25.
+Carmona, C., Nieto-barajas, L. and Canale, A. (2018) Model based approach for household clustering with mixed scale variables. \emph{Advances in Data Analysis and Classification}, 13(2): 559-583.
 }
 \seealso{
 \code{\link{get_IMIFA_results}}, \code{\link[slam]{simple_triplet_matrix}}, \code{\link[stats]{hclust}}, \code{\link[mclust]{hc}}, \code{\link[mcclust]{comp.psm}}, \code{\link[mcclust]{cltoSim}}
 }
 \author{
-Keefe Murphy - <\email{keefe.murphy@ucd.ie}>
+Keefe Murphy - <\email{keefe.murphy@mu.ie}>
 }
 \keyword{utility}

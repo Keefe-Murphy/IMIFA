@@ -32,45 +32,45 @@ mcmc_IMIFA(dat,
 
 \item{method}{An acronym for the type of model to fit where:
 \describe{
- \item{"\code{FA}"}{Factor Analysis}
- \item{"\code{IFA}"}{Infinite Factor Analysis}
- \item{"\code{MFA}"}{Mixtures of Factor Analysers}
- \item{"\code{MIFA}"}{Mixtures of Infinite Factor Analysers}
- \item{"\code{OMFA}"}{Overfitted Mixtures of Factor Analysers}
- \item{"\code{OMIFA}"}{Overfitted Mixtures of Infinite Factor Analysers}
- \item{"\code{IMFA}"}{Infinite Mixtures of Factor Analysers}
- \item{"\code{IMIFA}"}{Infinite Mixtures of Infinite Factor Analysers}
+ \item{\code{"FA"}}{Factor Analysis}
+ \item{\code{"IFA"}}{Infinite Factor Analysis}
+ \item{\code{"MFA"}}{Mixtures of Factor Analysers}
+ \item{\code{"MIFA"}}{Mixtures of Infinite Factor Analysers}
+ \item{\code{"OMFA"}}{Overfitted Mixtures of Factor Analysers}
+ \item{\code{"OMIFA"}}{Overfitted Mixtures of Infinite Factor Analysers}
+ \item{\code{"IMFA"}}{Infinite Mixtures of Factor Analysers}
+ \item{\code{"IMIFA"}}{Infinite Mixtures of Infinite Factor Analysers}
 }
-In principle, of course, one could overfit the "\code{MFA}" or "\code{MIFA}" models, but it is recommend to use the corresponding model options which begin with `O' instead. Note that the "\code{classify}" method is not yet implemented.}
+In principle, of course, one could overfit the \code{"MFA"} or \code{"MIFA"} models, but it is recommend to use the corresponding model options which begin with `O' instead. Note that the \code{"classify"} method is not yet implemented.}
 
-\item{range.G}{Depending on the method employed, either the range of values for the number of clusters, or the conservatively high starting value for the number of clusters. Defaults to (and must be!) \code{1} for the "\code{FA}" and "\code{IFA}" methods. For the "\code{MFA}" and "\code{MIFA}" models this is to be given as a range of candidate models to explore. For the "\code{OMFA}", "\code{OMIFA}", "\code{IMFA}", and "\code{IMIFA}" models, this is the conservatively high number of clusters with which the chain is to be initialised (default = \code{max(25, ceiling(3 * log(N)))} for large N, or \code{min(N-1, ceiling(3 * log(N)))} for small N<=50).
+\item{range.G}{Depending on the method employed, either the range of values for the number of clusters, or the conservatively high starting value for the number of clusters. Defaults to (and must be!) \code{1} for the \code{"FA"} and \code{"IFA"} methods. For the \code{"MFA"} and \code{"MIFA"} models this is to be given as a range of candidate models to explore. For the \code{"OMFA"}, \code{"OMIFA"}, \code{"IMFA"}, and \code{"IMIFA"} models, this is the conservatively high number of clusters with which the chain is to be initialised (default = \code{max(25, ceiling(3 * log(N)))} for large N, or \code{min(N-1, ceiling(3 * log(N)))} for small N<=50).
 
-For the "\code{OMFA}", and "\code{OMIFA}" models this upper limit remains fixed for the entire length of the chain; the upper limit for the for the "\code{IMFA}" and "\code{IMIFA}" models can be specified via \code{trunc.G} (see \code{\link{bnpControl}}), which must satisfy \code{range.G <= trunc.G < N}.
+For the \code{"OMFA"}, and \code{"OMIFA"} models this upper limit remains fixed for the entire length of the chain; the upper limit for the for the \code{"IMFA"} and \code{"IMIFA"} models can be specified via \code{trunc.G} (see \code{\link{bnpControl}}), which must satisfy \code{range.G <= trunc.G < N}.
 
 If \code{length(range.G) * length(range.Q)} is large, consider not storing unnecessary parameters (via \code{\link{storeControl}}), or breaking up the range of models to be explored into chunks and sending each chunk to \code{\link{get_IMIFA_results}} separately.}
 
 \item{range.Q}{Depending on the method employed, either the range of values for the number of latent factors, or, for methods ending in IFA the conservatively high starting value for the number of cluster-specific factors, in which case the default starting value is \code{round(3 * log(P))}.
 
-For methods ending in IFA, different clusters can be modelled using different numbers of latent factors (incl. zero); for methods not ending in IFA it is possible to fit zero-factor models, corresponding to simple diagonal covariance structures. For instance, fitting the "\code{IMFA}" model with \code{range.Q=0} corresponds to a vanilla Pitman-Yor / Dirichlet Process Mixture Model.
+For methods ending in IFA, different clusters can be modelled using different numbers of latent factors (incl. zero); for methods not ending in IFA it is possible to fit zero-factor models, corresponding to simple diagonal covariance structures. For instance, fitting the \code{"IMFA"} model with \code{range.Q=0} corresponds to a vanilla Pitman-Yor / Dirichlet Process Mixture Model.
 
 If \code{length(range.G) * length(range.Q)} is large, consider not storing unnecessary parameters (via \code{\link{storeControl}}), or breaking up the range of models to be explored into chunks and sending each chunk to \code{\link{get_IMIFA_results}}.
 
 See \code{\link{Ledermann}} for bounds on \code{range.Q}; this is useful in both the finite factor and infinite factor settings, as one may wish to ensure the fixed number of factors, or upper limits on the number of factors, respectively, respects this bound to yield indentifiable solutions, particularly in low-dimensional settings.}
 
-\item{MGP}{A list of arguments pertaining to the multiplicative gamma process (MGP) shrinkage prior and adaptive Gibbs sampler (AGS). For use with the infinite factor models "\code{IFA}", "\code{MIFA}", "\code{OMIFA}", and "\code{IMIFA}" only. Defaults are set by a call to \code{\link{mgpControl}}, with further checking of validity by \code{\link{MGP_check}} (though arguments can also be supplied here directly).}
+\item{MGP}{A list of arguments pertaining to the multiplicative gamma process (MGP) shrinkage prior and adaptive Gibbs sampler (AGS). For use with the infinite factor models \code{"IFA"}, \code{"MIFA"}, \code{"OMIFA"}, and \code{"IMIFA"} only. Defaults are set by a call to \code{\link{mgpControl}}, with further checking of validity by \code{\link{MGP_check}} (though arguments can also be supplied here directly).}
 
-\item{BNP}{A list of arguments pertaining to the Bayesian Nonparametric Pitman-Yor / Dirichlet process priors, for use with the infinite mixture models "\code{IMFA}" and "\code{IMIFA}", or select arguments related to the Dirichlet concentration parameter for the overfitted mixtures "\code{OMFA}" and \code{"OMIFA"}. Defaults are set by a call to \code{\link{bnpControl}} (though arguments can also be supplied here directly).}
+\item{BNP}{A list of arguments pertaining to the Bayesian Nonparametric Pitman-Yor / Dirichlet process priors, for use with the infinite mixture models \code{"IMFA"} and \code{"IMIFA"}, or select arguments related to the Dirichlet concentration parameter for the overfitted mixtures \code{"OMFA"} and \code{"OMIFA"}. Defaults are set by a call to \code{\link{bnpControl}} (though arguments can also be supplied here directly).}
 
 \item{mixFA}{A list of arguments pertaining to \emph{all other} aspects of model fitting, e.g. MCMC settings, cluster initialisation, and hyperparameters common to every \code{method} in the \code{IMIFA} family. Defaults are set by a call to \code{\link{mixfaControl}} (though arguments can also be supplied here directly).}
 
-\item{alpha}{Depending on the method employed, either the hyperparameter of the Dirichlet prior for the cluster mixing proportions, or the Pitman-Yor / Dirichlet process concentration parameter. Defaults to \code{1} for the finite mixture models "\code{MFA}" and "\code{MIFA}", and must be a strictly positive scalar. Not relevant for the "\code{FA}" and "\code{IFA}" methods.
+\item{alpha}{Depending on the method employed, either the hyperparameter of the Dirichlet prior for the cluster mixing proportions, or the Pitman-Yor / Dirichlet process concentration parameter. Defaults to \code{1} for the finite mixture models \code{"MFA"} and \code{"MIFA"}, and must be a strictly positive scalar. Not relevant for the \code{"FA"} and \code{"IFA"} methods.
 \describe{
-\item{Under the "\code{IMFA}" and "\code{IMIFA}" models:}{\code{alpha} defaults to a simulation from the prior if \code{learn.alpha} is \code{TRUE}, otherwise \code{alpha} \emph{must} be specified. Must be positive, unless non-zero \code{discount} is supplied or \code{learn.d=TRUE} (the default), in which case it must be greater than \code{-discount}. Under certain conditions, \code{alpha} can remain fixed at \code{0} (see \code{\link{bnpControl}}). Additionally, when \code{discount} is negative, \code{alpha} must be a positive integer multiple of \code{abs(discount)} (default=\code{range.G * abs(discount)}).}
-\item{Under the "\code{OMFA}" and "\code{OMIFA}" models:}{\code{alpha} defaults to a simulation from the prior if \code{learn.alpha} is \code{TRUE}, otherwise \code{alpha} defaults to \code{0.5/range.G}. If supplied, \code{alpha} must be positive, and you are supplying the numerator of \code{alpha/range.G}.
+\item{Under the \code{"IMFA"} and \code{"IMIFA"} models:}{\code{alpha} defaults to a simulation from the prior if \code{learn.alpha} is \code{TRUE}, otherwise \code{alpha} \emph{must} be specified. Must be positive, unless non-zero \code{discount} is supplied or \code{learn.d=TRUE} (the default), in which case it must be greater than \code{-discount}. Under certain conditions, \code{alpha} can remain fixed at \code{0} (see \code{\link{bnpControl}}). Additionally, when \code{discount} is negative, \code{alpha} must be a positive integer multiple of \code{abs(discount)} (default=\code{range.G * abs(discount)}).}
+\item{Under the \code{"OMFA"} and \code{"OMIFA"} models:}{\code{alpha} defaults to a simulation from the prior if \code{learn.alpha} is \code{TRUE}, otherwise \code{alpha} defaults to \code{0.5/range.G}. If supplied, \code{alpha} must be positive, and you are supplying the numerator of \code{alpha/range.G}.
 
-If \code{alpha} remains fixed (i.e. \code{learn.alpha=FALSE}), \code{alpha} should be less than half the dimension (per cluster!) of the free parameters of the smallest model considered in order to ensure superfluous clusters are emptied (for "\code{OMFA}", this corresponds to the smallest \code{range.Q}; for "\code{OMIFA}", this corresponds to a zero-factor model) [see: \code{\link{PGMM_dfree}} and Rousseau and Mengersen (2011)].}
+If \code{alpha} remains fixed (i.e. \code{learn.alpha=FALSE}), \code{alpha} should be less than half the dimension (per cluster!) of the free parameters of the smallest model considered in order to ensure superfluous clusters are emptied (for \code{"OMFA"}, this corresponds to the smallest \code{range.Q}; for \code{"OMIFA"}, this corresponds to a zero-factor model) [see: \code{\link{PGMM_dfree}} and Rousseau and Mengersen (2011)].}
 }
-See \code{\link{bnpControl}} for further details of specifying \code{alpha} or specifying a prior for \code{alpha} under the "\code{IMFA}", "\code{IMIFA}", "\code{OMFA}", or "\code{OMIFA}" methods.}
+See \code{\link{bnpControl}} for further details of specifying \code{alpha} or specifying a prior for \code{alpha} under the \code{"IMFA"}, \code{"IMIFA"}, \code{"OMFA"}, or \code{"OMIFA"} methods.}
 
 \item{storage}{A vector of named logical indicators governing storage of parameters of interest for all models in the IMIFA family. Defaults are set by a call to \code{\link{storeControl}}. It may be useful not to store certain parameters if memory is an issue.}
 
@@ -79,7 +79,7 @@ See \code{\link{bnpControl}} for further details of specifying \code{alpha} or s
 \item{x, object}{Object of class \code{"IMIFA"}, for the \code{print.IMIFA} and \code{summary.IMIFA} functions, respectively.}
 }
 \value{
-A list of lists of lists of class "\code{IMIFA}" to be passed to \code{\link{get_IMIFA_results}}. If the returned object is \code{x}, candidate models are accessible via subsetting, where \code{x} is of the following form:
+A list of lists of lists of class \code{"IMIFA"} to be passed to \code{\link{get_IMIFA_results}}. If the returned object is \code{x}, candidate models are accessible via subsetting, where \code{x} is of the following form:
 
 \code{x[[1:length(range.G)]][[1:length(range.Q)]]}.
 
@@ -89,13 +89,13 @@ However, these objects of class "IMIFA" should rarely if ever be manipulated by 
 Carries out Gibbs sampling for all models from the IMIFA family, facilitating model-based clustering with dimensionally reduced factor-analytic covariance structures, with automatic estimation of the number of clusters and cluster-specific factors as appropriate to the method employed. Factor analysis with one group (FA/IFA), finite mixtures (MFA/MIFA), overfitted mixtures (OMFA/OMIFA), infinite factor models which employ the multiplicative gamma process (MGP) shrinkage prior (IFA/MIFA/OMIFA/IMIFA), and infinite mixtures which employ Pitman-Yor / Dirichlet Process Mixture Models (IMFA/IMIFA) are all provided.
 }
 \details{
-Creates a raw object of class "\code{IMIFA}" from which the optimal/modal model can be extracted by \code{\link{get_IMIFA_results}}. Dedicated \code{print} and \code{summary} functions exist for objects of class "\code{IMIFA}".
+Creates a raw object of class \code{"IMIFA"} from which the optimal/modal model can be extracted by \code{\link{get_IMIFA_results}}. Dedicated \code{print} and \code{summary} functions exist for objects of class \code{"IMIFA"}.
 }
 \note{
 Further control over the specification of advanced function arguments can be obtained with recourse to the following functions:
 \itemize{
-\item{\strong{\code{\link{mgpControl}}} - }{Supply arguments (with defaults) pertaining to the multiplicative gamma process (MGP) shrinkage prior and adaptive Gibbs sampler (AGS). For use with the infinite factor models "\code{IFA}", "\code{MIFA}", "\code{OMIFA}", and "\code{IMIFA}" only.}
-\item{\strong{\code{\link{bnpControl}}} - }{Supply arguments (with defaults) pertaining to the Bayesian Nonparametric Pitman-Yor / Dirichlet process priors, for use with the infinite mixture models "\code{IMFA}" and "\code{IMIFA}". Certain arguments related to the Dirichlet concentration parameter for the overfitted mixtures "\code{OMFA}" and \code{"OMIFA"} can be supplied in this manner also.}
+\item{\strong{\code{\link{mgpControl}}} - }{Supply arguments (with defaults) pertaining to the multiplicative gamma process (MGP) shrinkage prior and adaptive Gibbs sampler (AGS). For use with the infinite factor models \code{"IFA"}, \code{"MIFA"}, \code{"OMIFA"}, and \code{"IMIFA"} only.}
+\item{\strong{\code{\link{bnpControl}}} - }{Supply arguments (with defaults) pertaining to the Bayesian Nonparametric Pitman-Yor / Dirichlet process priors, for use with the infinite mixture models \code{"IMFA"} and \code{"IMIFA"}. Certain arguments related to the Dirichlet concentration parameter for the overfitted mixtures \code{"OMFA"} and \code{"OMIFA"} can be supplied in this manner also.}
 \item{\strong{\code{\link{mixfaControl}}} - }{Supply arguments (with defaults) pertaining to \emph{all other} aspects of model fitting (e.g. MCMC settings, cluster initialisation, and hyperparameters common to every \code{method} in the \code{IMIFA} family.}
 \item{\strong{\code{\link{storeControl}}} - }{Supply logical indicators governing storage of parameters of interest for all models in the IMIFA family. It may be useful not to store certain parameters if memory is an issue (e.g. for large data sets or for a large number of MCMC iterations after burnin and thinning).}
 }
@@ -139,7 +139,7 @@ Note however that the named arguments of these functions can also be supplied di
 #                        phi.hyper=c(2, 1), alpha=0.8, uni.type="single")}
 }
 \references{
-Murphy, K., Viroli, C., and Gormley, I. C. (2019) Infinite mixtures of infinite factor analysers, \emph{Bayesian Analysis}, 1-27. <\href{https://projecteuclid.org/euclid.ba/1570586978}{doi:10.1214/19-BA1179}>.
+Murphy, K., Viroli, C., and Gormley, I. C. (2020) Infinite mixtures of infinite factor analysers, \emph{Bayesian Analysis}, 15(3): 937-963. <\href{https://projecteuclid.org/euclid.ba/1570586978}{doi:10.1214/19-BA1179}>.
 
 Bhattacharya, A. and Dunson, D. B. (2011) Sparse Bayesian infinite factor models, \emph{Biometrika}, 98(2): 291-306.
 
@@ -153,7 +153,7 @@ McNicholas, P. D. and Murphy, T. B. (2008) Parsimonious Gaussian mixture models,
 \code{\link{get_IMIFA_results}}, \code{\link{mixfaControl}}, \code{\link{mgpControl}}, \code{\link{bnpControl}}, \code{\link{storeControl}}, \code{\link{Ledermann}}
 }
 \author{
-Keefe Murphy - <\email{keefe.murphy@ucd.ie}>
+Keefe Murphy - <\email{keefe.murphy@mu.ie}>
 }
 \keyword{IMIFA}
 \keyword{main}

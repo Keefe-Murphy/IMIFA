@@ -31,11 +31,11 @@ Tests whether all eigenvalues of a symmetric matrix are positive (or strictly no
 }
 \examples{
 x    <- cov(matrix(rnorm(100), nrow=10, ncol=10))
-is.posi_def(x)
-is.posi_def(x, semi=TRUE)
+is.posi_def(x)                                           #FALSE
+is.posi_def(x, semi=TRUE)                                #TRUE
 
 Xnew <- is.posi_def(x, semi=FALSE, make=TRUE)$X.new
-identical(x, Xnew)
-identical(x, is.posi_def(x, semi=TRUE, make=TRUE)$X.new)
+identical(x, Xnew)                                       #FALSE
+identical(x, is.posi_def(x, semi=TRUE, make=TRUE)$X.new) #TRUE
 }
 \keyword{utility}

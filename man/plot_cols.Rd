@@ -56,7 +56,7 @@ plot_cols(matcol)
 heat_legend(mat, cols=cols); box(lwd=2)
 
 # Replace colour of exact zero entries:
-# Important to call mat2cols() first, (to include 0 in the cuts),
+# Often important to call mat2cols() first (to include 0 in the cuts),
 # then replace relevant entries with NA for plot_cols(), i.e.
 mat[2,3] <- 0
 matcol2  <- mat2cols(mat, cols=cols)

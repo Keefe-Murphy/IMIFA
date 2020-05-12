@@ -27,8 +27,9 @@ Though the function is available for standalone use, note that no checks take pl
 While small values of \code{alpha} have the effect of increasingly concentrating the mass onto fewer components, note that this function may return \code{NaN} for excessively small values of \code{alpha}, when \code{nn=0}; see the details of \code{rgamma} for small \code{shape} values.
 }
 \examples{
-(prior     <- rDirichlet(G=5, alpha=1))
-(posterior <- rDirichlet(G=5, alpha=1, nn=c(20, 41, 32, 8, 12)))
+(prior      <- rDirichlet(G=5, alpha=1))
+(posterior  <- rDirichlet(G=5, alpha=1, nn=c(20, 41, 32, 8, 12)))
+(asymmetric <- rDirichlet(G=5, alpha=c(3,4,5,1,2), nn=c(20, 41, 32, 8, 12)))
 }
 \references{
 Devroye, L. (1986) \emph{Non-Uniform Random Variate Generation}, Springer-Verlag, New York, p. 594.
