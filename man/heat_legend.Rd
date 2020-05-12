@@ -28,12 +28,12 @@ Modifies an existing plot by adding a colour-key legend.
 Using only base graphics, this function appends a colour key legend for heatmaps produced by, for instance, \code{\link{plot_cols}} or \code{\link[graphics]{image}}.
 }
 \examples{
-# Generate a matrix, flip it, and plot it with a legend
+# Generate a matrix and plot it with a legend
 data <- matrix(rnorm(50), nrow=10, ncol=5)
 cols <- heat.colors(12)[12:1]
 par(mar=c(5.1, 4.1, 4.1, 3.1))
 
-image(t(data)[,nrow(data):1], col=cols)
+plot_cols(mat2cols(data, col=cols))
 heat_legend(data, cols); box(lwd=2)
 }
 \seealso{

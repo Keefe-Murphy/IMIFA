@@ -51,9 +51,9 @@ plot_cols(matcol)
 heat_legend(mat, cols=cols); box(lwd=2)
 
 # Try comparing heat maps of multiple matrices
-mat1     <- matrix(rnorm(100), nr=50, nc=2)
-mat2     <- matrix(rnorm(150), nr=50, nc=3)
-mat3     <- matrix(rnorm(50),  nr=50, nc=1)
+mat1     <- cbind(matrix(rnorm(100, sd=c(4,2)),   nr=50, nc=2, byrow=TRUE), 0.1)
+mat2     <- cbind(matrix(rnorm(150, sd=c(7,5,3)), nr=50, nc=3, byrow=TRUE), 0.1)
+mat3     <- cbind(matrix(rnorm(50,  sd=1),        nr=50, nc=1, byrow=TRUE), 0.1)
 mats     <- list(mat1, mat2, mat3)
 colmats  <- mat2cols(mats, cols=cols, compare=TRUE)
 par(mfrow=c(2, 3), mar=c(1, 2, 1, 2))
@@ -64,9 +64,9 @@ plot_cols(colmats[[2]]); heat_legend(range(mats), cols=cols); box(lwd=2)
 plot_cols(colmats[[3]]); heat_legend(range(mats), cols=cols); box(lwd=2)
 
 # Use uncommon palettes (bottom row)
-plot_cols(mat2cols(mat1, cols=cols)); heat_legend(range(mats), cols=cols); box(lwd=2)
-plot_cols(mat2cols(mat2, cols=cols)); heat_legend(range(mats), cols=cols); box(lwd=2)
-plot_cols(mat2cols(mat3, cols=cols)); heat_legend(range(mats), cols=cols); box(lwd=2)
+plot_cols(mat2cols(mat1, cols=cols)); heat_legend(range(mat1), cols=cols); box(lwd=2)
+plot_cols(mat2cols(mat2, cols=cols)); heat_legend(range(mat2), cols=cols); box(lwd=2)
+plot_cols(mat2cols(mat3, cols=cols)); heat_legend(range(mat3), cols=cols); box(lwd=2)
 }
 \seealso{
 \code{\link{plot_cols}}, \code{\link{heat_legend}}, \code{\link{is.cols}}, \code{\link[base]{cut}}

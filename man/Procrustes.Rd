@@ -58,7 +58,7 @@ mat_rot  <- proc$R
 mat_t    <- proc$t
 mat_d    <- proc$d
 
-# Compare the sum of squared differences to a Procestean transformation with rotation only
+# Compare the sum of squared differences to a Procrustean transformation with rotation only
 mat_ss   <- proc$ss
 mat_ss2  <- Procrustes(X=mat1, Xstar=mat2, sumsq=TRUE)$ss
 }

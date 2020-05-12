@@ -1,6 +1,19 @@
 __Infinite Mixtures of Infinite Factor Analysers__
 ==================================================  
 
+## IMIFA v2.1.4 - (_11<sup>th</sup> release [patch update]: 2020-11-18_)
+### Bug Fixes & Miscellaneous Edits
+* Stricter checking of permissible `alpha` values in the special case of negative `discount`.
+* Fixes when `plot.meth="density"` and `param="alpha"` for _fixed_ positive `discount`.
+* Cosmetic changes to `G_priorDensity` plots.
+* Ensured `matrixStats (>= 0.53.1)` and `mclust (>= 5.4)` in `Imports:`.
+* Ensured `gmp (>= 0.5-4)` in `Suggests:`.
+* Package startup message now checks if newer version of package is available from CRAN.
+* Minor documentation & examples edits (esp. `mat2cols`).
+* Replaced dependency on `viridis` with `viridisLite`.
+* Updated citation info after publication in _Bayesian Analysis_.
+* Updated maintainer e-mail address.
+
 ## IMIFA v2.1.3 - (_10<sup>th</sup> release [patch update]: 2020-05-12_)
 ### Bug Fixes & Miscellaneous Edits
 * Maintenance release for compatibility with R 4.0.0 - minor edits.

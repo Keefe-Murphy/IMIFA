@@ -46,6 +46,6 @@ McNicholas, P. D. and Murphy, T. B. (2010) Model-Based clustering of microarray 
 \code{\link{get_IMIFA_results}}, \code{\link{mcmc_IMIFA}}
 }
 \author{
-Keefe Murphy - <\email{keefe.murphy@ucd.ie}>
+Keefe Murphy - <\email{keefe.murphy@mu.ie}>
 }
 \keyword{utility}

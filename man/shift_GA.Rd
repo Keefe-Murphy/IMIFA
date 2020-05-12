@@ -14,10 +14,10 @@ shift_GA(shape,
 
 \item{shift}{Modifier, such that the Gamma distribution has support on (\code{shift}, \eqn{\infty}). Can be positive or negative, though typically negative and small.}
 
-\item{param}{Switch controlling whether the supplied \code{rate} parameter is indeed a rate, or actually a scale parameter. Also governs whether the output is given in terms of rate or scale. Defaults to "\code{rate}".}
+\item{param}{Switch controlling whether the supplied \code{rate} parameter is indeed a rate, or actually a scale parameter. Also governs whether the output is given in terms of rate or scale. Defaults to \code{"rate"}.}
 }
 \value{
-A list of length 2, containing the modified shape and rate parameters, respectively.
+A named vector of length 2, containing the modified shape and rate parameters, respectively.
 }
 \description{
 This function takes shape and rate parameters of a Gamma distribution and modifies them to achieve the same expected value and variance when the left extent of the support of the distribution is shifted up or down.
@@ -31,6 +31,6 @@ This function is invoked within \code{\link{mcmc_IMIFA}} when \code{discount} is
 shift_GA(4, 2, -1)
 }
 \author{
-Keefe Murphy - <\email{keefe.murphy@ucd.ie}>
+Keefe Murphy - <\email{keefe.murphy@mu.ie}>
 }
 \keyword{utility}

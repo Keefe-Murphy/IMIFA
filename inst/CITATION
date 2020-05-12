@@ -5,19 +5,18 @@ citEntry(entry  = "Article",
                        person(given="Cinzia", family="Viroli")),
                        person(given=c("Isobel", "Claire"), family="Gormley"),
   title   = "Infinite Mixtures of Infinite Factor Analysers",
-  year    = "2019",
+  year    = "2020",
   journal = "Bayesian Analysis",
-  note    = "advance publication",
-  volume  = "",
-  number  = "",
+  volume  = "15",
+  number  = "3",
   doi     = "10.1214/19-BA1179",
-  pages   = "1--27",
+  pages   = "937--963",
   url     = "https://projecteuclid.org/euclid.ba/1570586978",
 
   textVersion   =
-    paste0("Keefe Murphy, Cinzia Viroli, and I. Claire Gormley (2019). ",
+    paste0("Keefe Murphy, Cinzia Viroli, and I. Claire Gormley (2020). ",
            "Infinite Mixtures of Infinite Factor Analysers. ",
-           "Bayesian Analysis, advance publication, pp. 1-27. ",
+           "Bayesian Analysis, 15(3): 937-963. ",
            "URL: https://projecteuclid.org/euclid.ba/1570586978")
 )
 

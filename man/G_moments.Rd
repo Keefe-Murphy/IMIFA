@@ -29,7 +29,7 @@ G_variance(N,
 The expected number of clusters under the specified prior conditions, or the variance of the number of clusters.
 }
 \description{
-Calculates the \emph{a priori} expected number of clusters or the variance of the number of clusters under a PYP or DP prior for a sample of size \code{N} at given values of the concentration parameter \code{alpha} and optionally also the Pitman-Yor \code{discount} parameter. Useful for soliciting sensible priors (or fixed values) for \code{alpha} or \code{discount} under the "\code{IMFA}" and "\code{IMIFA}" methods for \code{\link{mcmc_IMIFA}}.
+Calculates the \emph{a priori} expected number of clusters or the variance of the number of clusters under a PYP or DP prior for a sample of size \code{N} at given values of the concentration parameter \code{alpha} and optionally also the Pitman-Yor \code{discount} parameter. Useful for soliciting sensible priors (or fixed values) for \code{alpha} or \code{discount} under the \code{"IMFA"} and \code{"IMIFA"} methods for \code{\link{mcmc_IMIFA}}.
 }
 \details{
 All arguments are vectorised. Users can also consult \code{\link{G_priorDensity}} in order to solicit sensible priors.
@@ -52,8 +52,12 @@ DP   <- sapply(c(1, 5, 10), function(i) G_expected(1:200, alpha=i, MPFR=FALSE))
 matplot(DP, type="l", xlab="N", ylab="G")
 
 # Examine the growth rate of the PYP
-# PY <- sapply(c(0.1, 0.25, 0.5), function(i) G_expected(1:200, alpha=1, discount=i))
+# PY <- sapply(c(0.25, 0.5, 0.75), function(i) G_expected(1:200, alpha=1, discount=i))
 # matplot(PY, type="l", xlab="N", ylab="G")
+
+# Other special cases of the PYP are also facilitated
+# G_expected(N=50, alpha=c(27.1401, 0), discount=c(-27.1401/100, 0.8054447))
+# G_variance(N=50, alpha=c(27.1401, 0), discount=c(-27.1401/100, 0.8054447))
 }
 \references{
 De Blasi, P., Favaro, S., Lijoi, A., Mena, R. H., Prunster, I., and Ruggiero, M. (2015) Are Gibbs-type priors the most natural generalization of the Dirichlet process?, \emph{IEEE Transactions on Pattern Analysis and Machine Intelligence}, 37(2): 212-229.
@@ -62,6 +66,6 @@ De Blasi, P., Favaro, S., Lijoi, A., Mena, R. H., Prunster, I., and Ruggiero, M.
 \code{\link{G_priorDensity}}, \code{\link[Rmpfr]{Rmpfr}}
 }
 \author{
-Keefe Murphy - <\email{keefe.murphy@ucd.ie}>
+Keefe Murphy - <\email{keefe.murphy@mu.ie}>
 }
 \keyword{utility}
