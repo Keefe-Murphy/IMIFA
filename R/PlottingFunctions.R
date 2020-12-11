@@ -1131,7 +1131,9 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
         oneG <- 1/G
         minG <- 1   - oneG
         yax  <- unique(c(0, pretty(c(0, minG))))
-        yax[length(yax)]    <- minG
+        YAX  <- which.min(abs(yax - minG))
+        yax[YAX]     <- minG
+        yax  <- abs(yax[yax < 1])
         mind <- !is.null(prf) && !z.miss
       }
       if(g == 1) {
@@ -1141,7 +1143,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
         graphics::par(mar=c(5.1, 4.1, 4.1, 3.1))
         base::plot(plot.x, type=type, ylim=range(yax), col=col.x, yaxt="n", main="Clustering Uncertainty", ylab="Uncertainty", xlab="Observation", pch=ifelse(type == "n", NA, 16), lend=1)
         graphics::lines(x=c(0, n.obs), y=c(oneG, oneG), lty=2, col=1)
-        graphics::axis(2, at=yax,  labels=replace(yax, length(yax), expression(1 - frac(1, hat(G)))), las=2, cex.axis=0.9, xpd=TRUE)
+        graphics::axis(2, at=yax,  labels=replace(yax, YAX, expression(1 - frac(1, hat(G)))), las=2, cex.axis=0.9, xpd=TRUE)
         graphics::axis(2, at=oneG, labels=expression(frac(1, hat(G))), las=2, xpd=TRUE, side=4, xpd=TRUE)
         if(type == "n")  {
           znam  <- obs.names
@@ -1158,7 +1160,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
         graphics::lines(x.plot)
         graphics::points(x.plot, pch=15, cex=if(mind) replace(rep(0.5, n.obs), mcO, 0.75) else 0.5, col=if(mind) replace(rep(1, n.obs), mcO, 3) else 1)
         graphics::lines(x=c(0, n.obs), y=c(oneG, oneG), lty=2, col=3)
-        graphics::axis(2, at=yax, labels=replace(yax, length(yax), expression(1 - frac(1, hat(G)))), las=2, cex.axis=0.9, xpd=TRUE)
+        graphics::axis(2, at=yax, labels=replace(yax, YAX, expression(1 - frac(1, hat(G)))), las=2, cex.axis=0.9, xpd=TRUE)
         graphics::axis(2, at=oneG, labels=expression(frac(1, hat(G))), las=2, xpd=TRUE, side=4, xpd=TRUE)
         if(mind) {
           Nseq   <- seq_len(n.obs)

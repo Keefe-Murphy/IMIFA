@@ -22,7 +22,7 @@ A Dirichlet vector of \code{G} weights which sum to 1.
 Generates samples from the Dirichlet distribution with parameter \code{alpha} efficiently by simulating Gamma(\code{alpha}, 1) random variables and normalising them.
 }
 \note{
-Though the function is available for standalone use, note that no checks take place, in order to speed up repeated calls to the function inside \code{\link{mcmc_IMIFA}}.
+Though the function is available for standalone use, note that few checks take place, in order to speed up repeated calls to the function inside \code{\link{mcmc_IMIFA}}. In particular, \code{alpha} and \code{nn} may be invisibly recycled.
 
 While small values of \code{alpha} have the effect of increasingly concentrating the mass onto fewer components, note that this function may return \code{NaN} for excessively small values of \code{alpha}, when \code{nn=0}; see the details of \code{rgamma} for small \code{shape} values.
 }

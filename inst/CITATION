@@ -2,8 +2,8 @@ citHeader("To cite the 'IMIFA' package in publications, please use:")
 
 citEntry(entry  = "Article",
   author  = personList(person(given="Keefe", family="Murphy"),
-                       person(given="Cinzia", family="Viroli")),
-                       person(given=c("Isobel", "Claire"), family="Gormley"),
+                       person(given="Cinzia", family="Viroli"),
+                       person(given=c("Isobel", "Claire"), family="Gormley")),
   title   = "Infinite Mixtures of Infinite Factor Analysers",
   year    = "2020",
   journal = "Bayesian Analysis",
@@ -20,7 +20,7 @@ citEntry(entry  = "Article",
            "URL: https://projecteuclid.org/euclid.ba/1570586978")
 )
 
-year     <- sub(".*(2[[:digit:]]{3})-.*", "\\1", meta$Date)
+year     <- 2020
 vers     <- paste("package version", meta$Version)
 
 citEntry(entry  = "Manual",

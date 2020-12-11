@@ -91,7 +91,7 @@
 #'
 #' @return A Dirichlet vector of \code{G} weights which sum to 1.
 #'
-#' @note Though the function is available for standalone use, note that no checks take place, in order to speed up repeated calls to the function inside \code{\link{mcmc_IMIFA}}.
+#' @note Though the function is available for standalone use, note that few checks take place, in order to speed up repeated calls to the function inside \code{\link{mcmc_IMIFA}}. In particular, \code{alpha} and \code{nn} may be invisibly recycled.
 #'
 #' While small values of \code{alpha} have the effect of increasingly concentrating the mass onto fewer components, note that this function may return \code{NaN} for excessively small values of \code{alpha}, when \code{nn=0}; see the details of \code{rgamma} for small \code{shape} values.
 #'
@@ -107,8 +107,8 @@
 #' (posterior  <- rDirichlet(G=5, alpha=1, nn=c(20, 41, 32, 8, 12)))
 #' (asymmetric <- rDirichlet(G=5, alpha=c(3,4,5,1,2), nn=c(20, 41, 32, 8, 12)))
     rDirichlet   <- function(G, alpha, nn = 0L) {
-      if(length(alpha)   != 1    &&
-         length(alpha)   != G)             stop("Invalid alpha", call.=FALSE)
+      if(!all(0   < alpha))                stop("'alpha' must be strictly positive",  call.=FALSE)
+      if(!all(0  <= nn))                   stop("'nn' must be strictly non-negative", call.=FALSE)
       shape      <- alpha + nn
       tmp        <- if(all(shape == 1)) stats::rexp(G, rate=1L) else stats::rgamma(G, shape=shape, rate=1L)
         tmp/sum(tmp)
@@ -122,8 +122,8 @@
         }
     }
 
-    .sim_pi_inf  <- function(vs, len, init = 0) {
-        vs * cumprod(1 - c(init, vs[-len]))
+    .sim_pi_inf  <- function(vs, len, prev.prod = 0) {
+        vs * cumprod(1 - c(prev.prod, vs[-len]))
     }
 
   # Cluster Labels

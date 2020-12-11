@@ -1,6 +1,15 @@
 __Infinite Mixtures of Infinite Factor Analysers__
 ==================================================  
 
+## IMIFA v2.1.5 - (_12<sup>th</sup> release [patch update]: 2020-12-29_)
+### Bug Fixes & Miscellaneous Edits
+* Fixed `mcmc_IMIFA` initialisation issues for univariate data sets.
+* `error.metrics=TRUE` now works for univariate data sets in `get_IMIFA_results`.
+* Slight speed-ups to slice samplers for IM(I)FA methods.
+* Prettier axis labels for first two plots produced by `plot.meth="zlabels"`.
+* Added ORCID iDs to DESCRIPTION.
+* Minor CRAN compliance edits to the vignette.
+
 ## IMIFA v2.1.4 - (_11<sup>th</sup> release [patch update]: 2020-11-18_)
 ### Bug Fixes & Miscellaneous Edits
 * Stricter checking of permissible `alpha` values in the special case of negative `discount`.
@@ -22,7 +31,7 @@ __Infinite Mixtures of Infinite Factor Analysers__
 * Edited printed details when `plot.meth="zlabels"` with unsupplied `zlabels`.
 * Minor fixes for fixed negative `discount` (an experimental feature).
 * Minor speed-up to `Procrustes` when `dilate=TRUE` (never used internally).
-* Minor efficiency gain to slice sampler for IM(I)FA methods.
+* Minor efficiency gains in slice samplers for IM(I)FA methods.
 * Documentation, vignette, examples, and references improvements.
 
 ## IMIFA v2.1.2 - (_9<sup>th</sup> release [patch update]: 2020-03-30_)

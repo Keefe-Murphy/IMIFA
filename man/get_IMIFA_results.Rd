@@ -54,9 +54,9 @@ Note that the first three options here might exhibit bias in favour of zero-fact
 
 \item{conf.level}{The confidence level to be used throughout for credible intervals for all parameters of inferential interest, and error metrics if \code{error.metrics=TRUE}. Defaults to \code{0.95}.}
 
-\item{error.metrics}{A logical activating or deactivating posterior predictive checking: i.e. controlling whether metrics quantifying a) the posterior predictive reconstruction error (PPRE) between bin counts of the data and bin counts of replicate draws from the posterior distribution & and b) the error between the empirical and estimated covariance matrices should be computed. These are computed for every \emph{valid} retained iteration (see \code{Details}). Defaults to \code{TRUE}, but can be time-consuming for models which achieve clustering. These error metrics, and the uncertainty associated with them can be visualised via \code{\link{plot.Results_IMIFA}}. Depending on what parameters were stored when calling \code{\link{mcmc_IMIFA}}, potentially not all error metrics will be available to compute.
+\item{error.metrics}{A logical activating or deactivating posterior predictive checking: i.e. controlling whether metrics quantifying a) the posterior predictive reconstruction error (PPRE) between bin counts of the data and bin counts of replicate draws from the posterior distribution & and b) the error between the empirical and estimated covariance matrices should be computed. These are computed for every \emph{valid} retained iteration (see \code{Details}). Defaults to \code{TRUE}, but can be time-consuming for models which achieve clustering. These error metrics, and the uncertainty associated with them, can be visualised via \code{\link{plot.Results_IMIFA}}. Depending on what parameters were stored when calling \code{\link{mcmc_IMIFA}}, potentially not all error metrics will be available to compute.
 
-The Frobenius norm is used in the computation of the PPRE, by default, but the \code{type} of norm can be changed via the \code{...} construct below. So too can the breakpoints (\code{dbreaks}) used to bin the data and the posterior predictive replicate data sets. Some caution is advised in the latter case.}
+The Frobenius norm is used in the computation of the PPRE, by default, but the \code{type} of \code{\link{norm}} can be changed via the \code{...} construct below. So too can the breakpoints (\code{dbreaks}) used to bin the data and the posterior predictive replicate data sets. Some caution is advised in the latter case.}
 
 \item{vari.rot}{Logical indicating whether the loadings matrix/matrices template(s) should be \code{\link[stats]{varimax}} rotated first, prior to the Procrustes rotation steps. Defaults to \code{FALSE}. Not necessary at all for clustering purposes, or inference on the covariance matrix, but useful if interpretable inferences on the loadings matrix/matrices are desired. Arguments to \code{\link[stats]{varimax}} can be passed via the \code{...} construct, but note that the argument \code{normalize} here defaults to \code{FALSE}.}
 
@@ -139,7 +139,7 @@ Due to the way the offline label-switching correction is performed, different ru
 Murphy, K., Viroli, C., and Gormley, I. C. (2020) Infinite mixtures of infinite factor analysers, \emph{Bayesian Analysis}, 15(3): 937-963. <\href{https://projecteuclid.org/euclid.ba/1570586978}{doi:10.1214/19-BA1179}>.
 }
 \seealso{
-\code{\link{plot.Results_IMIFA}}, \code{\link{mcmc_IMIFA}}, \code{\link{Zsimilarity}}, \code{\link{scores_MAP}}, \code{\link{sim_IMIFA_model}}, \code{\link{Procrustes}}
+\code{\link{plot.Results_IMIFA}}, \code{\link{mcmc_IMIFA}}, \code{\link{Zsimilarity}}, \code{\link{scores_MAP}}, \code{\link{sim_IMIFA_model}}, \code{\link{Procrustes}}, \code{\link[stats]{varimax}}, \code{\link{norm}}
 }
 \author{
 Keefe Murphy - <\email{keefe.murphy@mu.ie}>

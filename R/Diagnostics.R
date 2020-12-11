@@ -16,9 +16,9 @@
 #' @param G.meth If the object in \code{sims} arises from the \code{"OMFA"}, \code{"OMIFA"}, \code{"IMFA"} or \code{"IMIFA"} methods, this argument determines whether the optimal number of clusters is given by the mode or median of the posterior distribution of \code{G}. Defaults to \code{"mode"}. Often the mode and median will agree in any case.
 #' @param Q.meth If the object in \code{sims} arises from the \code{"IFA"}, \code{"MIFA"}, \code{"OMIFA"} or \code{"IMIFA"} methods, this argument determines whether the optimal number of latent factors is given by the mode or median of the posterior distribution of \code{Q}. Defaults to \code{"mode"}. Often the mode and median will agree in any case.
 #' @param conf.level The confidence level to be used throughout for credible intervals for all parameters of inferential interest, and error metrics if \code{error.metrics=TRUE}. Defaults to \code{0.95}.
-#' @param error.metrics A logical activating or deactivating posterior predictive checking: i.e. controlling whether metrics quantifying a) the posterior predictive reconstruction error (PPRE) between bin counts of the data and bin counts of replicate draws from the posterior distribution & and b) the error between the empirical and estimated covariance matrices should be computed. These are computed for every \emph{valid} retained iteration (see \code{Details}). Defaults to \code{TRUE}, but can be time-consuming for models which achieve clustering. These error metrics, and the uncertainty associated with them can be visualised via \code{\link{plot.Results_IMIFA}}. Depending on what parameters were stored when calling \code{\link{mcmc_IMIFA}}, potentially not all error metrics will be available to compute.
+#' @param error.metrics A logical activating or deactivating posterior predictive checking: i.e. controlling whether metrics quantifying a) the posterior predictive reconstruction error (PPRE) between bin counts of the data and bin counts of replicate draws from the posterior distribution & and b) the error between the empirical and estimated covariance matrices should be computed. These are computed for every \emph{valid} retained iteration (see \code{Details}). Defaults to \code{TRUE}, but can be time-consuming for models which achieve clustering. These error metrics, and the uncertainty associated with them, can be visualised via \code{\link{plot.Results_IMIFA}}. Depending on what parameters were stored when calling \code{\link{mcmc_IMIFA}}, potentially not all error metrics will be available to compute.
 #'
-#' The Frobenius norm is used in the computation of the PPRE, by default, but the \code{type} of norm can be changed via the \code{...} construct below. So too can the breakpoints (\code{dbreaks}) used to bin the data and the posterior predictive replicate data sets. Some caution is advised in the latter case.
+#' The Frobenius norm is used in the computation of the PPRE, by default, but the \code{type} of \code{\link{norm}} can be changed via the \code{...} construct below. So too can the breakpoints (\code{dbreaks}) used to bin the data and the posterior predictive replicate data sets. Some caution is advised in the latter case.
 #' @param vari.rot Logical indicating whether the loadings matrix/matrices template(s) should be \code{\link[stats]{varimax}} rotated first, prior to the Procrustes rotation steps. Defaults to \code{FALSE}. Not necessary at all for clustering purposes, or inference on the covariance matrix, but useful if interpretable inferences on the loadings matrix/matrices are desired. Arguments to \code{\link[stats]{varimax}} can be passed via the \code{...} construct, but note that the argument \code{normalize} here defaults to \code{FALSE}.
 #' @param z.avgsim Logical (defaults to \code{FALSE}) indicating whether the clustering should also be summarised with a call to \code{\link{Zsimilarity}} by the clustering with minimum mean squared error to the similarity matrix obtained by averaging the stored adjacency matrices, in addition to the MAP estimate.
 #'
@@ -65,7 +65,7 @@
 #' @importFrom matrixStats "colSums2" "rowMeans2" "rowMedians" "rowQuantiles" "rowSums2"
 #' @importFrom slam "as.simple_triplet_matrix"
 #'
-#' @seealso \code{\link{plot.Results_IMIFA}}, \code{\link{mcmc_IMIFA}}, \code{\link{Zsimilarity}}, \code{\link{scores_MAP}}, \code{\link{sim_IMIFA_model}}, \code{\link{Procrustes}}
+#' @seealso \code{\link{plot.Results_IMIFA}}, \code{\link{mcmc_IMIFA}}, \code{\link{Zsimilarity}}, \code{\link{scores_MAP}}, \code{\link{sim_IMIFA_model}}, \code{\link{Procrustes}}, \code{\link[stats]{varimax}}, \code{\link{norm}}
 #' @references Murphy, K., Viroli, C., and Gormley, I. C. (2020) Infinite mixtures of infinite factor analysers, \emph{Bayesian Analysis}, 15(3): 937-963. <\href{https://projecteuclid.org/euclid.ba/1570586978}{doi:10.1214/19-BA1179}>.
 #'
 #' @author Keefe Murphy - <\email{keefe.murphy@@mu.ie}>
@@ -877,8 +877,8 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       orig.data  <- as.data.frame(dat)
       Pseq       <- seq_len(n.var)
       if(is.null(dots$dbreaks)) {
-        xbins    <- lengths(sapply(orig.data, function(x) suppressWarnings(graphics::hist(x, plot=FALSE, ...))$counts))
-        dbreaks  <- lapply(Pseq,  function(p) c(-Inf, as.numeric(sub("\\((.+),.*", "\\1", levels(cut(orig.data[[p]], xbins[[p]]))[-1L])), Inf))
+        xbins    <- if(isFALSE(uni)) lengths(sapply(orig.data, function(x) suppressWarnings(graphics::hist(x, plot=FALSE, ...))$counts)) else length(graphics::hist(orig.data[[1L]], plot=FALSE, ...)$counts)
+        dbreaks  <- lapply(Pseq,  function(p) c(-Inf, as.numeric(sub("\\((.+),.*", "\\1", levels(cut(orig.data[[p]], xbins[p]))[-1L])), Inf))
       } else        {
         dbreaks  <- dots$dbreaks
         if(!is.list(dbreaks)   ||

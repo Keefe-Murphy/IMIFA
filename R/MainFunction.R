@@ -237,9 +237,9 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
               is.null(dots[names(dots) != "modelNames"]$modelName),
               is.null(dots$modelName))) {
       dots$modelName      <- ifelse(NlP, "EII", "VVV")
-      if(is.element(dots$modelname,
-         c("E", "V"))     && uni)  stop("'Hierarchical clustering models 'E' and 'V' can only be employed for univariate data", call.=FALSE)
     }
+    if(is.element(dots$modelName,
+       c("E", "V"))       && !uni)  stop("mclust's 'E' and 'V' hierarchical clustering models can only be employed for univariate data", call.=FALSE)
     dots$use              <- ifelse(is.null(dots$use), "VARS", dots$use)
   }
   if(z.init == "kmeans"   && is.null(dots$nstart))    {

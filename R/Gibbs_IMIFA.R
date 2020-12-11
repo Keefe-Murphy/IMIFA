@@ -144,8 +144,8 @@
     # Mixing Proportions & Re-ordering
       Vs             <- .sim_vs_inf(alpha=pi.alpha, nn=nn[Gs], N=N, discount=discount, len=G, lseq=Gs)
       pi.prop        <- .sim_pi_inf(Vs, len=G)
+      prev.prod      <- 1 - sum(pi.prop)
       index          <- order(pi.prop, decreasing=TRUE)
-      prev.prod      <- pi.prop[G]  * (1/Vs[G] - 1)
       GI             <- which(Gs[index] == G)
       pi.prop        <- pi.prop[index]
       Vs             <- Vs[index]
@@ -244,10 +244,10 @@
         while(G  < G.new && (Vs[GI] != 1 || pi.prop[GI] != 0)) {
           newVs      <- .sim_vs_inf(alpha=pi.alpha, discount=discount, len=1L, lseq=G + 1L)
           Vs         <- c(Vs,      newVs)
-          pi.prop    <- c(pi.prop, newVs * prev.prod)
+          pi.prop    <- c(pi.prop, newVs  * prev.prod)
           GI    <- G <- G + 1L
           eta.tmp    <- c(eta.tmp, list(.empty_mat(nc=Qs[G])))
-          prev.prod  <- pi.prop[G]  * (1/Vs[G] - 1)
+          prev.prod  <- 1 - sum(pi.prop)
         }
         G            <- ifelse(G.trunc, G.new, G)
         Gs           <- seq_len(G)
@@ -259,17 +259,17 @@
         cum.pi       <- sum(pi.prop)
         u.max        <- 1 - min.u
         G.trunc      <- cum.pi > u.max
-        while(cum.pi <= u.max && trunc.G > G && (pi.prop[GI] != 0 || Vs[GI] != 1)) {
+        while(cum.pi  < u.max && trunc.G > G && (pi.prop[GI] != 0 || Vs[GI] != 1)) {
           newVs      <- .sim_vs_inf(alpha=pi.alpha, discount=discount, len=1L, lseq=G + 1L)
           Vs         <- c(Vs,      newVs)
           newPis     <- newVs  *   prev.prod
-          pi.prop    <- c(pi.prop, newPis)
-          cum.pi     <- cum.pi +   newPis
-          ksi        <- pi.prop
+          pi.prop    <-
+          ksi        <- c(pi.prop, newPis)
           log.ksi    <- c(log.ksi, log(newPis))
+          cum.pi     <- cum.pi +   newPis
           GI    <- G <- G + 1L
           eta.tmp    <- c(eta.tmp, list(.empty_mat(nc=Qs[G])))
-          prev.prod  <- pi.prop[G] * (1/Vs[G] - 1)
+          prev.prod  <- 1 - cum.pi
         }
         G            <- ifelse(G.trunc, which.max(cumsum(pi.prop) > u.max), G)
         Gs           <- seq_len(G)
