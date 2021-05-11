@@ -190,7 +190,7 @@
     .sim_alpha_g <- function(alpha, shape, rate, G, N) {
       shape2     <- shape  + G - 1L
       rate2      <- rate   - log(stats::rbeta(1, alpha + 1, N))
-      weight     <- shape2/(shape2 + N * rate2)
+      weight     <- shape2/(shape2   +  N  * rate2)
         weight    * stats::rgamma(1L, shape=shape2 + 1, rate=rate2) + (1 - weight) * stats::rgamma(1L, shape=shape2, rate=rate2)
     }
 
@@ -200,27 +200,27 @@
     }
 
     .sim_alpha_m <- function(alpha, discount, alpha.shape, alpha.rate, N, G, zeta) {
-      inter      <- c(max( - discount, alpha    - zeta), alpha  + zeta)
-      propa      <- stats::runif(1,    inter[1L], inter[2L])
-      cprob      <- .log_palpha(alpha, discount,  alpha.shape,   alpha.rate, N, G)
-      pprob      <- .log_palpha(propa, discount,  alpha.shape,   alpha.rate, N, G)
-      propinter  <- c(max( - discount, propa    - zeta), propa  + zeta)
-      logpr      <- pprob  - cprob   - log(diff(propinter))     + log(diff(inter))
-      acpt       <- logpr >= 0  ||   - stats::rexp(1L) < logpr
+      propinter  <- c(max( - discount, alpha    - zeta), alpha  + zeta)
+      propa      <- stats::runif(1,    propinter[1L], propinter[2L])
+      cprob      <- .log_palpha(alpha, discount,  alpha.shape,    alpha.rate, N, G)
+      pprob      <- .log_palpha(propa, discount,  alpha.shape,    alpha.rate, N, G)
+      currinter  <- c(max( - discount, propa    - zeta), propa  + zeta)
+      logpr      <- pprob  - cprob   - log(diff(currinter))     + log(diff(propinter))
+      acpt       <- logpr >= 0  ||   - stats::rexp(1L) <= logpr
         return(list(alpha  = ifelse(acpt, propa, alpha), rate   = acpt, l.prob = logpr))
     }
 
-    .log_Oalpha  <- function(x, G, N, nn, shape, rate) {
+    .log_Oalpha  <- function(x, G, N, nn, shape, rate)  {
       G          <- G * x
-        lgamma(G) - lgamma(N + G)            +
-        sum(lgamma(nn + x)   - lgamma(x))    +
+        lgamma(G) - lgamma(N + G)          +
+        sum(lgamma(nn + x)   - lgamma(x))  +
         stats::dgamma(x, shape=shape, rate=rate, log=TRUE)
     }
 
     .sim_alpha_o <- function(alpha, zeta = 1, G, N, nn, shape, rate) {
       propa      <- exp(log(alpha) + stats::rnorm(1, 0, zeta))
       logpr      <- .log_Oalpha(propa, G, N, nn, shape, rate) - .log_Oalpha(alpha, G, N, nn, shape, rate) + log(propa) - log(alpha)
-      acpt       <- logpr >= 0  || - stats::rexp(1L)   < logpr
+      acpt       <- logpr >= 0  || - stats::rexp(1L)   <= logpr
         return(list(alpha  = ifelse(acpt, propa, alpha), rate = acpt, l.prob = logpr))
     }
 
@@ -237,7 +237,7 @@
 
     .log_pdspike <- function(discount, disc.shape1, disc.shape2, G, unif, nn, alpha, kappa)     {
       l.prior    <- ifelse(discount == 0, log(kappa),     log1p(- kappa) + ifelse(unif, 0, stats::dbeta(discount, shape1=disc.shape1, shape2=disc.shape2, log=TRUE)))
-        sum(log(alpha + discount  * seq_len(G  - 1L))) +  sum(lgamma(nn  - discount) - lgamma(1 - discount)) + l.prior
+        sum(log(alpha + discount  * seq_len(G  - 1L)))  + sum(lgamma(nn  - discount) - lgamma(1 - discount)) + l.prior
     }
 
     .sim_d_slab  <- function(discount, disc.shape1, disc.shape2, G, unif, nn, ...)   {
@@ -246,12 +246,12 @@
       cprob      <- .log_pdslab(discount,  disc.shape1, disc.shape2, G, unif, nn)
       pprob      <- .log_pdslab(propd,     disc.shape1, disc.shape2, G, unif, nn)
       logpr      <- pprob  - cprob
-      acpt       <- logpr >= 0   ||  - stats::rexp(1L) < logpr
-        return(list(disc = ifelse(acpt, propd, discount), rate = acpt))
+      acpt       <- logpr >= 0   ||  - stats::rexp(1L) <= logpr
+        return(list(disc = ifelse(acpt, propd, discount),   rate = acpt))
     }
 
-    .sim_d_spike <- function(discount, disc.shape1, disc.shape2, G, unif, nn, alpha, kappa)    {
-      propd      <- ifelse(alpha  > 0,  ifelse(kappa  != 0 && stats::runif(1) <= kappa, 0L, ifelse(unif,
+    .sim_d_spike <- function(discount, disc.shape1, disc.shape2, G, unif, nn, alpha, kappa)     {
+      propd      <- ifelse(alpha  > 0,  ifelse(kappa   != 0 && stats::runif(1) <= kappa, 0L, ifelse(unif,
                            stats::runif(1), stats::rbeta(1, disc.shape1, disc.shape2))), stats::runif(1, max(0, - alpha), 1))
       propd      <- ifelse(propd == 1, propd - .Machine$double.eps, propd)
       if(identical(discount, propd)) {
@@ -260,8 +260,8 @@
         cprob    <- .log_pdspike(discount, disc.shape1, disc.shape2, G, unif, nn, alpha, kappa)
         pprob    <- .log_pdspike(propd,    disc.shape1, disc.shape2, G, unif, nn, alpha, kappa)
         logpr    <- pprob  - cprob
-        acpt     <- logpr >= 0  ||   - stats::rexp(1L) < logpr
-          return(list(disc = ifelse(acpt, propd, discount),   rate   = acpt))
+        acpt     <- logpr >= 0   ||  - stats::rexp(1L) <= logpr
+          return(list(disc = ifelse(acpt, propd, discount), rate = acpt))
       }
     }
 
@@ -321,7 +321,7 @@
 #'
 #' Takes an inverse-Gamma shape hyperparameter, and an inverse covariance matrix (or estimate thereof), and finds data-driven scale hyperparameters in such a way that Heywood problems are avoided for factor analysis or probabilistic principal components analysis (and mixtures thereof).
 #' @param shape A positive shape hyperparameter.
-#' @param dat The data matrix from which the inverse covariance matrix is estimated. If data are to be centered &/or scaled within \code{\link{mcmc_IMIFA}}, then \code{dat} must also be standardised in the same way.
+#' @param dat The data matrix for which the inverse covariance matrix is to be estimated. If data are to be centered &/or scaled within \code{\link{mcmc_IMIFA}}, then \code{dat} must also be standardised in the same way.
 #' @param type A switch indicating whether a single scale (\code{isotropic}) or variable-specific scales (\code{unconstrained}) are to be derived. Both options are allowed under models in \code{\link{mcmc_IMIFA}} with "constrained" or "unconstrained" uniquenesses, but only a single scale can be specified for models with "isotropic" or "single" uniquenesses.
 #' @param beta0 See Note below. Must be a strictly positive numeric scalar. Defaults to \code{3}, but is only invoked when explicitly supplied or when the number of observations \code{N} is not greater than the number of variables \code{P} (or when inverting the sample covariance matrix somehow otherwise fails). In some cases, \code{beta0} should not be so small as to render the estimate of the inverse unstable.
 #' @param ... Catches unused arguments. Advanced users can also supply the sample covariance matrix of \code{dat}, if available, through \code{...} via the argument \code{covar}.
@@ -364,21 +364,22 @@
 #' @examples
 #' data(olive)
 #' olive2  <- olive[,-(1:2)]
-#' (scale1 <- psi_hyper(shape=2.5, dat=olive2))
+#' shape   <- 2.5
+#' (scale1 <- psi_hyper(shape=shape, dat=olive2))
 #'
 #' # Try again with scaled data
 #' olive_S <- scale(olive2, center=TRUE, scale=TRUE)
 #'
 #' # Use the inverse of the sample covariance matrix
-#' (scale2 <- psi_hyper(shape=2.5, dat=olive_S))
+#' (scale2 <- psi_hyper(shape=shape, dat=olive_S))
 #'
 #' # Use the estimated inverse covariance matrix
-#' (scale3 <- psi_hyper(shape=2.5, dat=olive_S, beta0=3))
+#' (scale3 <- psi_hyper(shape=shape, dat=olive_S, beta0=3))
 #'
 #' # In the normalised example, the mean uniquenesses (given by scale/(shape - 1)),
 #' # can be interpreted as the prior proportion of the variance that is idiosyncratic
-#' (prop1   <- scale1/(2.5 - 1))
-#' (prop2   <- scale2/(2.5 - 1))
+#' (prop1   <- scale1/(shape - 1))
+#' (prop2   <- scale2/(shape - 1))
     psi_hyper    <- function(shape, dat, type=c("unconstrained", "isotropic"), beta0 = 3, ...) {
       if(!all(is.character(type)))         stop("'type' must be a character vector of length 1",  call.=FALSE)
       if(any(!is.numeric(shape),
@@ -393,7 +394,7 @@
         !is.posi_def(covar, semi=TRUE))    stop("Invalid covariance matrix supplied", call.=FALSE)
 
       if((noest  <- N  > P && missing(beta0)))               {
-        inv.cov  <- try(base::solve(covar), silent=TRUE)
+        inv.cov  <- try(chol2inv(chol(covar)), silent=TRUE)
         if((noest     <- !inherits(inv.cov, "try-error")))   {
           return(unname((shape - 1)/switch(EXPR=match.arg(type), unconstrained=diag(inv.cov),
                                                 isotropic=rep(max(diag(inv.cov)), P))))
@@ -409,7 +410,7 @@
         if(!all((cvar <- diag(covar)) == 1)) {
           dat    <- .scale2(dat, TRUE, TRUE)
         } else cvar   <- 1L
-        inv.cov  <- (beta0  + N/2L) * diag(tryCatch(base::solve(diag(beta0, P) + 0.5 * crossprod(dat)), error=function(e) {
+        inv.cov  <- (beta0  + N/2L) * diag(tryCatch(chol2inv(chol(diag(beta0, P) + 0.5 * crossprod(dat))), error=function(e) {
                                            stop("Cannot estimate inverse covariance matrix: try increasing 'beta0'", call.=FALSE) }))
         inv.cov  <- 1/cvar  * inv.cov
           return(unname((shape - 1)/switch(EXPR=match.arg(type), unconstrained=inv.cov,
@@ -460,12 +461,12 @@
         return(c(shape = shape, rate = switch(EXPR=param, rate=rate, 1/rate)))
     }
 
-  # Check Shrinkage Hyperparemeters
+  # Check Shrinkage Hyperparameters
 #' Check the validity of Multiplicative Gamma Process (MGP) hyperparameters
 #'
 #' Checks the hyperparameters for the multiplicative gamma process (MGP) shrinkage prior in order to ensure that the property of cumulative shrinkage (in expectation) holds, i.e. checks whether growing mass is assigned to small neighbourhoods of zero as the column index increases.
 #' @param ad1,ad2 Shape hyperparameters for \eqn{\delta_1}{delta_1} and \eqn{\delta_2}{delta_2}, respectively.
-#' @param Q Number of latent factors. Defaults to 3, which is enough to check if the cumulative shrinkage property holds. Supply \code{Q} if the actual \emph{a priori} expected shrinkage factors are of interest.
+#' @param Q Number of latent factors. Defaults to \code{3}, which is enough to check if the cumulative shrinkage property holds. Supply \code{Q} if the actual \emph{a priori} expected shrinkage factors are of interest.
 #' @param phi.shape,phi.rate The shape and rate hyperparameters for the gamma prior on the local shrinkage parameters. Not necessary for checking if the cumulative shrinkage property holds, but worth supplying \emph{both} if the actual \emph{a priori} expected shrinkage factors are of interest. The default value(s) depends on the value of \code{inverse}, but are chosen in such a way that the local shrinkage has no effect on the expectation unless both are supplied. Cannot be incorporated into the expectation if \code{phi.shape < 1} and \code{isTRUE(inverse)}.
 #' @param sigma.shape,sigma.rate The shape and rate hyperparameters for the gamma prior on the cluster shrinkage parameters. Not necessary for checking if the cumulative shrinkage property holds, but worth supplying \emph{both} if the actual \emph{a priori} expected shrinkage factors are of interest. The default value(s) depends on the value of \code{inverse}, but are chosen in such a way that the cluster shrinkage has no effect on the expectation unless both are supplied. Cannot be incorporated into the expectation if \code{sigma.shape < 1} and \code{isTRUE(inverse)}.
 #' @param bd1,bd2 Rate hyperparameters for \eqn{\delta_1}{delta_1} and \eqn{\delta_2}{delta_2}, respectively. Both default to 1.
@@ -810,7 +811,7 @@
       log.pis    <- log(pi.prop[sw])
       nns        <- nn[sw]
       a.prob     <- (nns[1L] - nns[2L]) * (log.pis[1L] - log.pis[2L])
-        return(list(rate1    = a.prob  >= 0 || - stats::rexp(1L) < a.prob, sw = sw))
+        return(list(rate1    = a.prob  >= 0 || - stats::rexp(1L) <= a.prob, sw = sw))
     }
 
   # Move 2
@@ -825,7 +826,7 @@
         log.vs   <- log1p(  - Vs[sw])
         a.prob   <- nns[2L] * log.vs[1L]
         a.prob   <- nns[1L] * log.vs[2L]       - ifelse(is.nan(a.prob), 0L, a.prob)
-        return(list(rate2   = a.prob >= 0   || - stats::rexp(1L) < a.prob, sw = sw))
+        return(list(rate2   = a.prob >= 0   || - stats::rexp(1L) <= a.prob, sw = sw))
       }
     }
 
@@ -1039,15 +1040,18 @@
   # Moments of Pitman-Yor / Dirichlet Processes
 #' 1st & 2nd Moments of the Pitman-Yor / Dirichlet Processes
 #'
-#' Calculates the \emph{a priori} expected number of clusters or the variance of the number of clusters under a PYP or DP prior for a sample of size \code{N} at given values of the concentration parameter \code{alpha} and optionally also the Pitman-Yor \code{discount} parameter. Useful for soliciting sensible priors (or fixed values) for \code{alpha} or \code{discount} under the \code{"IMFA"} and \code{"IMIFA"} methods for \code{\link{mcmc_IMIFA}}.
+#' Calculate the \emph{a priori} expected number of clusters (\code{G_expected}) or the variance of the number of clusters (\code{G_variance}) under a PYP or DP prior for a sample of size \code{N} at given values of the concentration parameter \code{alpha} and optionally also the Pitman-Yor \code{discount} parameter. Useful for soliciting sensible priors (or fixed values) for \code{alpha} or \code{discount} under the \code{"IMFA"} and \code{"IMIFA"} methods for \code{\link{mcmc_IMIFA}}. Additionally, for a given sample size \code{N} and given expected number of clusters \code{EG}, \code{G_calibrate} elicits a value for the concentration parameter \code{alpha} \strong{or} the \code{discount} parameter.
 #' @param N The sample size.
-#' @param alpha The concentration parameter. Must be specified and must be strictly greater than \code{-discount}. The case \code{alpha=0} is accommodated. When \code{discount} is negative \code{alpha} must be a positive integer multiple of \code{abs(discount)}.
-#' @param discount The discount parameter for the Pitman-Yor process. Must be less than 1, but typically lies in the interval [0, 1). Defaults to 0 (i.e. the Dirichlet process). When \code{discount} is negative \code{alpha} must be a positive integer multiple of \code{abs(discount)}.
+#' @param alpha The concentration parameter. Must be specified (though not for \code{G_calibrate}) and must be strictly greater than \code{-discount}. The case \code{alpha=0} is accommodated. When \code{discount} is negative \code{alpha} must be a positive integer multiple of \code{abs(discount)}. See \strong{Details} for behaviour for \code{G_calibrate}.
+#' @param discount The discount parameter for the Pitman-Yor process. Must be less than 1, but typically lies in the interval [0, 1). Defaults to 0 (i.e. the Dirichlet process). When \code{discount} is negative \code{alpha} must be a positive integer multiple of \code{abs(discount)}. See \strong{Details} for behaviour for \code{G_calibrate}.
 #' @param MPFR Logical indicating whether the high-precision libraries \code{\link[Rmpfr]{Rmpfr}} and \code{gmp} are invoked, at the expense of run-time. Defaults to \code{TRUE} and \strong{must} be \code{TRUE} for \code{\link{G_expected}} when \code{alpha=0} and \code{\link{G_variance}} when \code{discount} is non-zero. See \strong{\code{Note}}.
+#' @param EG The prior expected number of clusters. Must exceed \code{1}.
+#' @param ... Additional arguments passed to \code{\link[stats]{uniroot}}, e.g. \code{maxiter}.
 #'
 #' @details All arguments are vectorised. Users can also consult \code{\link{G_priorDensity}} in order to solicit sensible priors.
 #'
-#' @return The expected number of clusters under the specified prior conditions, or the variance of the number of clusters.
+#' For \code{G_calibrate}, \strong{only one} of \code{alpha} or \code{discount} can be supplied, and the function elicits a value for the opposing parameter which achieves the desired expected number of clusters \code{EG} for the given sample size \code{N}. By default, a value for \code{alpha} subject to \code{discount=0} (i.e. the Dirichlet process) is elicited. See \strong{Examples} below.
+#' @return The expected number of clusters under the specified prior conditions (\code{G_expected}), or the variance of the number of clusters (\code{G_variance}), or the concentration parameter \code{alpha} \strong{or} \code{discount} parameter achieving a particular expected number of clusters (\code{G_calibrate}).
 #' @keywords utility
 #' @export
 #' @name G_moments
@@ -1055,7 +1059,7 @@
 #'
 #' @note \code{G_variance} requires use of the \code{\link[Rmpfr]{Rmpfr}} and \code{gmp} libraries for non-zero \code{discount} values. \code{G_expected} requires these libraries only for the \code{alpha=0} case. Despite the high precision arithmetic used, the functions can still be unstable for small values of \code{discount}. See the argument \code{MPFR}.
 #'
-#' @seealso \code{\link{G_priorDensity}}, \code{\link[Rmpfr]{Rmpfr}}
+#' @seealso \code{\link{G_priorDensity}}, \code{\link[Rmpfr]{Rmpfr}}, \code{\link[stats]{uniroot}}
 #' @references De Blasi, P., Favaro, S., Lijoi, A., Mena, R. H., Prunster, I., and Ruggiero, M. (2015) Are Gibbs-type priors the most natural generalization of the Dirichlet process?, \emph{IEEE Transactions on Pattern Analysis and Machine Intelligence}, 37(2): 212-229.
 #'
 #' @author Keefe Murphy - <\email{keefe.murphy@@mu.ie}>
@@ -1085,12 +1089,19 @@
 #' # Other special cases of the PYP are also facilitated
 #' # G_expected(N=50, alpha=c(27.1401, 0), discount=c(-27.1401/100, 0.8054447))
 #' # G_variance(N=50, alpha=c(27.1401, 0), discount=c(-27.1401/100, 0.8054447))
+#'
+#' # Elicit values for alpha
+#' G_calibrate(N=50, EG=25)
+#' G_calibrate(N=50, EG=25, discount=c(0.25, 0.7300045))
+#'
+#' # Elicit values for discount
+#' G_calibrate(N=50, EG=25, alpha=c(12.21619, 1))
     G_expected   <- Vectorize(function(N, alpha, discount = 0, MPFR = TRUE) {
       if(!all(is.numeric(N), is.numeric(discount),
-         is.numeric(alpha)))               stop("All inputs must be numeric", call.=FALSE)
+         is.numeric(alpha)))               stop("All inputs must be numeric",     call.=FALSE)
       if(discount >= 1)                    stop("'discount' must be less than 1", call.=FALSE)
       if(discount > 0    &&
-         alpha   <= - discount)            stop("'alpha' must be strictly greater than -discount", call.=FALSE)
+         alpha   <= - discount)            stop("'alpha' must be strictly greater than -discount",    call.=FALSE)
       if(discount < 0    &&
         (alpha   <= 0    ||
         !.IntMult(alpha,    discount)))    stop("'alpha' must be a positive integer multiple of 'abs(discount)' when 'discount' is negative", call.=FALSE)
@@ -1109,7 +1120,7 @@
 
       if(alpha    == 0)   {
         if(mpfrind)       {
-          tmp    <- sum(log(alpha + 1L + 0L:(N - 2L)))
+          tmp    <- sum(log(alpha + seq_len(N - 1L)))
           ldisc  <- log(discount)
           res    <- 0
           for(k in seq_len(N)) {
@@ -1123,7 +1134,7 @@
       }
       if(discount == 0)   {
         exp      <- alpha * (digamma(alpha + N) - digamma(alpha))
-       #exp      <- sum(alpha/(alpha + seq_len(N) - 1L))
+       #exp      <- sum(alpha/(alpha + 0L:(N - 1L)))
         if(mpfrind)       {
           gmp::asNumeric(exp)
         } else    {
@@ -1134,7 +1145,7 @@
         if(mpfrind)       {
           gmp::asNumeric(adx  * Rmpfr::pochMpfr(alpha + discount, N)/Rmpfr::pochMpfr(alpha, N) - adx)
         } else    {
-          adx * (prod(discount/(alpha + (seq_len(N)   - 1L)) + 1L)  - 1L)
+          adx * (prod(discount/(alpha  + 0L:(N - 1L)) + 1L)   - 1L)
         }
       }
     })
@@ -1149,14 +1160,14 @@
 #' @export
     G_variance   <- Vectorize(function(N, alpha, discount = 0, MPFR = TRUE) {
       if(!all(is.numeric(N), is.numeric(discount),
-         is.numeric(alpha)))               stop("All inputs must be numeric", call.=FALSE)
+         is.numeric(alpha)))               stop("All inputs must be numeric",     call.=FALSE)
       if(discount >= 1)                    stop("'discount' must be less than 1", call.=FALSE)
       if(discount > 0    &&
          alpha   <= - discount)            stop("'alpha' must be strictly greater than -discount", call.=FALSE)
       if(discount < 0    &&
         (alpha   <= 0    ||
         !.IntMult(alpha,    discount)))    stop("'alpha' must be a positive integer multiple of 'abs(discount)' when 'discount' is negative", call.=FALSE)
-     #if(alpha   == 0)    {                warning("'alpha'=0 case note yet implemented", call.=FALSE, immediate.=TRUE); return(Inf) }
+     #if(alpha   == 0)    {                warning("'alpha'=0 case not yet implemented", call.=FALSE, immediate.=TRUE); return(Inf) }
       if(discount != 0   && !isTRUE(MPFR)) stop("'MPFR' must be TRUE when 'discount' is non-zero", call.=FALSE)
       igmp       <- isNamespaceLoaded("Rmpfr")
       if(mpfrind <- (isTRUE(MPFR)    &&
@@ -1187,6 +1198,44 @@
           gmp::asNumeric((alpha * sum.ad)/(discount * discount) * Rmpfr::pochMpfr(sum.ad + discount, N)/poch.a - subterm * (1L + subterm))
       }
     })
+
+#' @keywords utility
+#' @rdname G_moments
+#' @usage
+#' G_calibrate(N,
+#'             EG,
+#'             discount = 0,
+#'             alpha = NULL,
+#'             ...)
+#' @export
+    G_calibrate  <- Vectorize(function(N, EG, discount = 0, alpha = NULL, ...) {
+      if(!all(is.numeric(N), is.numeric(discount), is.null(alpha) || is.numeric(alpha),
+         is.numeric(EG)))                  stop("All inputs must be numeric",     call.=FALSE)
+      if(discount >= 1)                    stop("'discount' must be less than 1", call.=FALSE)
+      if(EG       <= 1)                    stop("'EG' must be greater than 1",   call.=FALSE)
+      RFA        <- function(N, alpha, discount) prod(1 + discount/(alpha + 0L:(N - 1L)))
+      if(is.null(alpha))    {
+        if(discount == 0)   {
+          X      <- try(suppressWarnings(stats::uniroot(function(x) sum(x/(x   + 0L:(N - 1L)))             - EG, interval=c(0.00001, 10000), ...)),             silent=TRUE)
+        } else    {
+          X      <- try(suppressWarnings(stats::uniroot(function(x) x/discount * (RFA(N, x, discount) - 1) - EG, interval=c(-discount + 0.00001, 10000), ...)), silent=TRUE)
+        }
+        if(inherits(X, "try-error")) {     warning("uniroot failed to elicit an alpha value\n",   call.=FALSE, immediate.=TRUE)
+          Y      <- stats::setNames(NA,      "alpha")
+        } else Y <- stats::setNames(X$root,  "alpha")
+      }   else if(missing(discount) ||
+                  discount == 0)     {
+        if(alpha == 0)                     warning("'alpha'=0 case not yet implemented\n",        call.=FALSE, immediate.=TRUE)
+        X        <- try(suppressWarnings(stats::uniroot(function(x) alpha/x    * (RFA(N, alpha, x)    - 1) - EG, interval=c(-10000, 1 - 0.00001), ...)),        silent=TRUE)
+        if(inherits(X, "try-error")) {     warning("uniroot failed to elicit a discount value\n", call.=FALSE, immediate.=TRUE)
+          Y      <- stats::setNames(NA,      "discount")
+        } else Y <- stats::setNames(X$root,  "discount")
+      }   else                             stop("'alpha' and 'discount' cannot both be supplied", call.=FALSE)
+      dots       <- list(...)
+      maxiter    <- ifelse(length(dots) > 0 && any(names(dots) %in% "maxiter"), dots$maxiter, 1000)
+      if(X$iter  == maxiter)               warning(paste0("uniroot failed to converge in ", maxiter, " iterations\n"), call.=FALSE)
+        return(Y)
+    },  vectorize.args = c("N", "EG", "discount", "alpha"))
 
   # Print functions
 #' @method print IMIFA
@@ -1289,7 +1338,7 @@
         Q.msg    <- if(!adapt) paste0(unique(Q)) else { if(length(Q) > 1) paste(c(Q.msg, paste0("and ", Q[length(Q)])), sep="", collapse="") else Q }
         msg      <- paste0("The chosen ", method, " model has ", G, " group", ifelse(G  == 1, "", "s"), choice, ifelse(G == 1, " with ", paste0(ifelse(adapt, "", " each"), " with ")), Q.msg, " factor", ifelse(all(Q == 1), "", paste0("s", ifelse(G == 1, "", " respectively"))), ifelse(adapt, "", " (no adaptation took place)"), sep="")
       })
-      cat(paste0(msg, ": this Results_IMIFA object can be passed to plot(...)\n"))
+      cat(paste0(msg, ":\nthis Results_IMIFA object can be passed to plot(...)\n"))
       if(!isTRUE(attr(x,  "Nowarn.G"))) {  cat("\n");  message(attr(x, "Nowarn.G"))
       }
       if(!isTRUE(attr(x,  "Nowarn.Q"))) {
@@ -1337,7 +1386,7 @@
   # Control functions
 #' Control settings for the IMIFA family of factor analytic mixtures
 #'
-#' Supplies a list of arguments for use in \code{\link{mcmc_IMIFA}} pertaining to \emph{ALL} methods in the \code{IMIFA} family: eg. MCMC settings, cluster initialisation, generic hyperparameters for factor-analytic mixtures, etc.
+#' Supplies a list of arguments for use in \code{\link{mcmc_IMIFA}} pertaining to \emph{ALL} methods in the \code{IMIFA} family: e.g. MCMC settings, cluster initialisation, generic hyperparameters for factor-analytic mixtures, etc.
 #' @param n.iters The number of iterations to run the sampler for. Defaults to 25000.
 #' @param burnin The number of burn-in iterations for the sampler. Defaults to \code{n.iters/5}. Note that chains can also be burned in later, using \code{\link{get_IMIFA_results}}.
 #' @param thinning The thinning interval used in the simulation. Defaults to 2. No thinning corresponds to 1. Note that chains can also be thinned later, using \code{\link{get_IMIFA_results}}.
@@ -2310,7 +2359,7 @@
       dat        <- as.matrix(dat)
       N          <- nrow(dat)
       P          <- ncol(dat)
-      inv.cov    <- (beta0 + N/2L) * base::solve(diag(beta0, P) + 0.5 * crossprod(.scale2(dat, TRUE, TRUE))) * tcrossprod(1/colVars(dat, std=TRUE))
+      inv.cov    <- (beta0 + N/2L) * chol2inv(chol(diag(beta0, P) + 0.5 * crossprod(.scale2(dat, TRUE, TRUE)))) * tcrossprod(1/colVars(dat, std=TRUE))
       error      <- diag(P) - (stats::cov(dat) %*% inv.cov)
         switch(EXPR=match.arg(type), diag=sum(diag(error)^2)/P, mean(error * error))
     }

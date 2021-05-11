@@ -13,7 +13,7 @@ psi_hyper(shape,
 \arguments{
 \item{shape}{A positive shape hyperparameter.}
 
-\item{dat}{The data matrix from which the inverse covariance matrix is estimated. If data are to be centered &/or scaled within \code{\link{mcmc_IMIFA}}, then \code{dat} must also be standardised in the same way.}
+\item{dat}{The data matrix for which the inverse covariance matrix is to be estimated. If data are to be centered &/or scaled within \code{\link{mcmc_IMIFA}}, then \code{dat} must also be standardised in the same way.}
 
 \item{type}{A switch indicating whether a single scale (\code{isotropic}) or variable-specific scales (\code{unconstrained}) are to be derived. Both options are allowed under models in \code{\link{mcmc_IMIFA}} with "constrained" or "unconstrained" uniquenesses, but only a single scale can be specified for models with "isotropic" or "single" uniquenesses.}
 
@@ -46,21 +46,22 @@ The optional argument \code{beta0} can be supplied to \code{\link{mcmc_IMIFA}} v
 \examples{
 data(olive)
 olive2  <- olive[,-(1:2)]
-(scale1 <- psi_hyper(shape=2.5, dat=olive2))
+shape   <- 2.5
+(scale1 <- psi_hyper(shape=shape, dat=olive2))
 
 # Try again with scaled data
 olive_S <- scale(olive2, center=TRUE, scale=TRUE)
 
 # Use the inverse of the sample covariance matrix
-(scale2 <- psi_hyper(shape=2.5, dat=olive_S))
+(scale2 <- psi_hyper(shape=shape, dat=olive_S))
 
 # Use the estimated inverse covariance matrix
-(scale3 <- psi_hyper(shape=2.5, dat=olive_S, beta0=3))
+(scale3 <- psi_hyper(shape=shape, dat=olive_S, beta0=3))
 
 # In the normalised example, the mean uniquenesses (given by scale/(shape - 1)),
 # can be interpreted as the prior proportion of the variance that is idiosyncratic
-(prop1   <- scale1/(2.5 - 1))
-(prop2   <- scale2/(2.5 - 1))
+(prop1   <- scale1/(shape - 1))
+(prop2   <- scale2/(shape - 1))
 }
 \references{
 Murphy, K., Viroli, C., and Gormley, I. C. (2020) Infinite mixtures of infinite factor analysers, \emph{Bayesian Analysis}, 15(3): 937-963. <\href{https://projecteuclid.org/euclid.ba/1570586978}{doi:10.1214/19-BA1179}>.

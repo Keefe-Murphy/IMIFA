@@ -146,6 +146,7 @@
       pi.prop        <- .sim_pi_inf(Vs, len=G)
       prev.prod      <- 1 - sum(pi.prop)
       index          <- order(pi.prop, decreasing=TRUE)
+      prev.prod      <- ifelse(prev.prod < 0, pi.prop[G] * (1/Vs[G] - 1), prev.prod)
       GI             <- which(Gs[index] == G)
       pi.prop        <- pi.prop[index]
       Vs             <- Vs[index]
@@ -248,6 +249,7 @@
           GI    <- G <- G + 1L
           eta.tmp    <- c(eta.tmp, list(.empty_mat(nc=Qs[G])))
           prev.prod  <- 1 - sum(pi.prop)
+          prev.prod  <- ifelse(prev.prod < 0, pi.prop[G] * (1/Vs[G] - 1), prev.prod)
         }
         G            <- ifelse(G.trunc, G.new, G)
         Gs           <- seq_len(G)
@@ -270,6 +272,7 @@
           GI    <- G <- G + 1L
           eta.tmp    <- c(eta.tmp, list(.empty_mat(nc=Qs[G])))
           prev.prod  <- 1 - cum.pi
+          prev.prod  <- ifelse(prev.prod < 0, pi.prop[G] * (1/Vs[G] - 1), prev.prod)
         }
         G            <- ifelse(G.trunc, which.max(cumsum(pi.prop) > u.max), G)
         Gs           <- seq_len(G)

@@ -28,7 +28,7 @@ A plot of the prior distribution if \code{show.plot} is \code{TRUE}. Density val
 Plots the prior distribution of the number of clusters under a Pitman-Yor / Dirichlet process prior, for a sample of size \code{N} at given values of the concentration parameter \code{alpha} and optionally also the \code{discount} parameter. Useful for soliciting sensible priors (or fixed values) for \code{alpha} or \code{discount} under the \code{"IMFA"} and \code{"IMIFA"} methods for \code{\link{mcmc_IMIFA}}.
 }
 \details{
-All arguments are vectorised. Users can also consult \code{\link{G_expected}} and \code{\link{G_variance}} in order to solicit sensible priors.
+All arguments are vectorised. Users can also consult \code{\link{G_expected}}, \code{\link{G_variance}}, and \code{\link{G_calibrate}} in order to solicit sensible priors.
 }
 \note{
 The actual density values are returned invisibly. Therefore, they can be visualised as desired by the user even if \code{show.plot} is \code{FALSE}.
@@ -58,7 +58,7 @@ Requires use of the \code{\link[Rmpfr]{Rmpfr}} and \code{gmp} libraries; may enc
 De Blasi, P., Favaro, S., Lijoi, A., Mena, R. H., Prunster, I., and Ruggiero, M. (2015) Are Gibbs-type priors the most natural generalization of the Dirichlet process?, \emph{IEEE Transactions on Pattern Analysis and Machine Intelligence}, 37(2): 212-229.
 }
 \seealso{
-\code{\link{G_expected}}, \code{\link{G_variance}}, \code{\link[Rmpfr]{Rmpfr}}
+\code{\link{G_moments}}, \code{\link[Rmpfr]{Rmpfr}}
 }
 \author{
 Keefe Murphy - <\email{keefe.murphy@mu.ie}>

@@ -1,6 +1,11 @@
 __Infinite Mixtures of Infinite Factor Analysers__
 ==================================================  
 
+### Bug Fixes & Miscellaneous Edits
+* Fixed breaking bugs associated with IM(I)FA slice samplers introduced in previous update.
+* `G_calibrate` function exported to augment existing `G_expected` & `G_variance` functions.
+* Minor speed-up to `psi_hyper`.
+
 ## IMIFA v2.1.5 - (_12<sup>th</sup> release [patch update]: 2020-12-29_)
 ### Bug Fixes & Miscellaneous Edits
 * Fixed `mcmc_IMIFA` initialisation issues for univariate data sets.

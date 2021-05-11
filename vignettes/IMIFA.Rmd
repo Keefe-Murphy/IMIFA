@@ -229,7 +229,7 @@ We could instead plot all observations simultaneously for a given factor, say th
 plot(resIMIFA, plot.meth="trace", param="scores", mat=TRUE, by.fac=TRUE, fac=2)
 ```
 
-The code below will produce only a heatmap of the loadings matrix in the first cluster: note, however, that `heat.map=TRUE` by default for loadings (whereas the opposite is true for the scores). Darker colours correspond to entries which are more negatively loaded and _vice versa_.
+The code below will produce only a heat map of the loadings matrix in the first cluster: note, however, that `heat.map=TRUE` by default for loadings (whereas the opposite is true for the scores). Darker colours correspond to entries which are more negatively loaded and _vice versa_.
 
 ```{r}
 plot(resIMIFA, plot.meth="means", param="loadings", heat.map=TRUE, g=1)
@@ -270,6 +270,6 @@ plot(resIMIFA, plot.meth="all", param="discount", partial=TRUE)
 # References
 For a more detailed description of the kind of things __IMIFA__ can do and the purposes for which the model was developed, please consult the following papers:
 
-Murphy, K., Viroli, C., and Gormley, I. C. (2020). Infinite mixtures of infinite factor analysers. _Bayesian Analysis_, 15(3): 937-963. <[doi:10.1214/19-BA1179](https://doi.org/10.1214/19-BA1179)>.
+Murphy, K., Viroli, C., and Gormley, I. C. (2020). Infinite mixtures of infinite factor analysers. _Bayesian Analysis_, 15(3): 937--963. <[doi:10.1214/19-BA1179](https://doi.org/10.1214/19-BA1179)>.
 
-Bhattacharya, A. and Dunson, D. B. (2011). Sparse Bayesian infinite factor models. _Biometrika_, 98(2): 291-306.
+Bhattacharya, A. and Dunson, D. B. (2011). Sparse Bayesian infinite factor models. _Biometrika_, 98(2): 291--306.

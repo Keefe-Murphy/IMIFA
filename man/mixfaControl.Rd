@@ -92,7 +92,7 @@ In any case, unless \code{z.list} is explicitly supplied, or \code{verbose} is \
 A named list in which the names are the names of the arguments and the values are the values of the arguments.
 }
 \description{
-Supplies a list of arguments for use in \code{\link{mcmc_IMIFA}} pertaining to \emph{ALL} methods in the \code{IMIFA} family: eg. MCMC settings, cluster initialisation, generic hyperparameters for factor-analytic mixtures, etc.
+Supplies a list of arguments for use in \code{\link{mcmc_IMIFA}} pertaining to \emph{ALL} methods in the \code{IMIFA} family: e.g. MCMC settings, cluster initialisation, generic hyperparameters for factor-analytic mixtures, etc.
 }
 \note{
 Users should be careful to note that data are mean-centered (\code{centering=TRUE}) and unit-scaled (\code{scaling="unit"}) by default when supplying other parameters among the list above, especially those related in any way to \code{psi.hyper}, or to the other control functions \code{\link{mgpControl}} and \code{\link{bnpControl}}.
