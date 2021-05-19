@@ -1,9 +1,14 @@
 __Infinite Mixtures of Infinite Factor Analysers__
 ==================================================  
 
+## IMIFA v2.1.6 - (_13<sup>th</sup> release [patch update]: 2021-05-24_)
 ### Bug Fixes & Miscellaneous Edits
 * Fixed breaking bugs associated with IM(I)FA slice samplers introduced in previous update.
 * `G_calibrate` function exported to augment existing `G_expected` & `G_variance` functions.
+* `G_variance` now computed more accurately and efficiently for the `alpha=0` case.
+* Major speed-up to `G_expected` for the `alpha=0` case.
+* Minor speed-ups to simulation of local/column/cluster shrinkage parameters + scores & loadings.
+* Minor speed-up to `G_priorDensity` for non-zero `discount`.
 * Minor speed-up to `psi_hyper`.
 
 ## IMIFA v2.1.5 - (_12<sup>th</sup> release [patch update]: 2020-12-29_)

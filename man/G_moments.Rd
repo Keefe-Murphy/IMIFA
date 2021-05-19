@@ -19,8 +19,9 @@ G_variance(N,
 
 G_calibrate(N,
             EG,
-            discount = 0,
             alpha = NULL,
+            discount = 0,
+            MPFR = TRUE,
             ...)
 }
 \arguments{
@@ -30,9 +31,9 @@ G_calibrate(N,
 
 \item{discount}{The discount parameter for the Pitman-Yor process. Must be less than 1, but typically lies in the interval [0, 1). Defaults to 0 (i.e. the Dirichlet process). When \code{discount} is negative \code{alpha} must be a positive integer multiple of \code{abs(discount)}. See \strong{Details} for behaviour for \code{G_calibrate}.}
 
-\item{MPFR}{Logical indicating whether the high-precision libraries \code{\link[Rmpfr]{Rmpfr}} and \code{gmp} are invoked, at the expense of run-time. Defaults to \code{TRUE} and \strong{must} be \code{TRUE} for \code{\link{G_expected}} when \code{alpha=0} and \code{\link{G_variance}} when \code{discount} is non-zero. See \strong{\code{Note}}.}
+\item{MPFR}{Logical indicating whether the high-precision libraries \code{\link[Rmpfr]{Rmpfr}} and \code{gmp} are invoked, at the expense of run-time. Defaults to \code{TRUE} and \strong{must} be \code{TRUE} for \code{G_expected} when \code{alpha=0} or \code{G_variance} when \code{discount} is non-zero. For \code{G_calibrate}, it is \emph{strongly recommended} to use \code{MPFR=TRUE} when \code{discount} is non-zero and strictly necessary when \code{alpha=0} is supplied. See \strong{\code{Note}}.}
 
-\item{EG}{The prior expected number of clusters. Must exceed \code{1}.}
+\item{EG}{The prior expected number of clusters. Must exceed \code{1} and be less than \code{N}.}
 
 \item{...}{Additional arguments passed to \code{\link[stats]{uniroot}}, e.g. \code{maxiter}.}
 }
@@ -45,10 +46,10 @@ Calculate the \emph{a priori} expected number of clusters (\code{G_expected}) or
 \details{
 All arguments are vectorised. Users can also consult \code{\link{G_priorDensity}} in order to solicit sensible priors.
 
-For \code{G_calibrate}, \strong{only one} of \code{alpha} or \code{discount} can be supplied, and the function elicits a value for the opposing parameter which achieves the desired expected number of clusters \code{EG} for the given sample size \code{N}. By default, a value for \code{alpha} subject to \code{discount=0} (i.e. the Dirichlet process) is elicited. See \strong{Examples} below.
+For \code{G_calibrate}, \strong{only one} of \code{alpha} or \code{discount} can be supplied, and the function elicits a value for the opposing parameter which achieves the desired expected number of clusters \code{EG} for the given sample size \code{N}. By default, a value for \code{alpha} subject to \code{discount=0} (i.e. the Dirichlet process) is elicited. Note that \code{alpha} may not be a positive integer multiple of \code{discount} as it should be if \code{discount} is negative. See \strong{Examples} below.
 }
 \note{
-\code{G_variance} requires use of the \code{\link[Rmpfr]{Rmpfr}} and \code{gmp} libraries for non-zero \code{discount} values. \code{G_expected} requires these libraries only for the \code{alpha=0} case. Despite the high precision arithmetic used, the functions can still be unstable for small values of \code{discount}. See the argument \code{MPFR}.
+\code{G_variance} requires use of the \code{\link[Rmpfr]{Rmpfr}} and \code{gmp} libraries for non-zero \code{discount} values. \code{G_expected} requires these libraries only for the \code{alpha=0} case. These libraries are \emph{strongly recommended} (but they are not required) for \code{G_calbirate} when \code{discount} is non-zero, but they are required when \code{alpha=0} is supplied. Despite the high precision arithmetic used, the functions can still be unstable for large \code{N} and/or extreme values of \code{alpha} and/or \code{discount}. See the argument \code{MPFR}.
 }
 \examples{
 G_expected(N=50, alpha=19.23356, MPFR=FALSE)
@@ -69,18 +70,23 @@ matplot(DP, type="l", xlab="N", ylab="G")
 # matplot(PY, type="l", xlab="N", ylab="G")
 
 # Other special cases of the PYP are also facilitated
-# G_expected(N=50, alpha=c(27.1401, 0), discount=c(-27.1401/100, 0.8054447))
-# G_variance(N=50, alpha=c(27.1401, 0), discount=c(-27.1401/100, 0.8054447))
+# G_expected(N=50, alpha=c(27.1401, 0), discount=c(-27.1401/100, 0.8054448))
+# G_variance(N=50, alpha=c(27.1401, 0), discount=c(-27.1401/100, 0.8054448))
 
-# Elicit values for alpha
+# Elicit values for alpha under a DP prior
 G_calibrate(N=50, EG=25)
-G_calibrate(N=50, EG=25, discount=c(0.25, 0.7300045))
 
-# Elicit values for discount
-G_calibrate(N=50, EG=25, alpha=c(12.21619, 1))
+# Elicit values for alpha under a PYP prior
+# require("Rmpfr")
+# G_calibrate(N=50, EG=25, discount=c(-27.1401/100, 0.25, 0.7300045))
+
+# Elicit values for discount under a PYP prior
+# G_calibrate(N=50, EG=25, alpha=c(12.21619, 1, 0), maxiter=2000)
 }
 \references{
 De Blasi, P., Favaro, S., Lijoi, A., Mena, R. H., Prunster, I., and Ruggiero, M. (2015) Are Gibbs-type priors the most natural generalization of the Dirichlet process?, \emph{IEEE Transactions on Pattern Analysis and Machine Intelligence}, 37(2): 212-229.
+
+Yamato, H. and Shibuya, M. (2000) Moments of some statistics of Pitman sampling formula, \emph{Bulletin of Informatics and Cybernetics}, 32(1): 1-10.
 }
 \seealso{
 \code{\link{G_priorDensity}}, \code{\link[Rmpfr]{Rmpfr}}, \code{\link[stats]{uniroot}}

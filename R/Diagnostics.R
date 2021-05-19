@@ -355,8 +355,8 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     GQ.temp2     <- list(AICMs = aicm, BICMs = bicm, DICs = dic)
     clust.ind    <- !any(is.element(method,   c("FA", "IFA")),
                      all(is.element(method, c("MFA", "MIFA")), G == 1))
-    sw.mx        <- ifelse(clust.ind, sw["mu.sw"],  TRUE)
-    sw.px        <- ifelse(clust.ind, sw["psi.sw"], TRUE)
+    sw.mx        <- !clust.ind || sw["mu.sw"]
+    sw.px        <- !clust.ind || sw["psi.sw"]
 
     if(!inf.Q)   {
       Q          <- if(length(n.fac)   > 1)  Q                   else n.fac

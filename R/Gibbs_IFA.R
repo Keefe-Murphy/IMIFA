@@ -38,6 +38,8 @@
     Q.star       <- Q
     Q.store      <- vector("integer", n.store)
     Q.large      <- Q.big  <- FALSE
+    nu1.5        <- nu1 + 0.5
+    P.5          <- P/2
 
     mu.sigma     <- 1/sigma.mu
     mu.zero      <- as.numeric(mu.zero)
@@ -89,11 +91,11 @@
     # Shrinkage
       if(Q0) {
         load.2   <- lmat * lmat
-        phi      <- .sim_phi(Q=Q, P=P, nu1=nu1, nu2=nu2, tau=tau, load.2=load.2)
+        phi      <- .sim_phi(Q=Q, P=P, nu1.5=nu1.5, nu2=nu2, tau=tau, load.2=load.2)
         sum.term <- colSums2(phi * load.2)
         for(k in seq_len(Q)) {
-          delta[k]  <- if(k > 1) .sim_deltak(alpha.d2=alpha.d2, beta.d2=beta.d2, delta.k=delta[k], Q=Q, P=P, k=k,
-                       tau.kq=tau[k:Q], sum.term.kq=sum.term[k:Q]) else .sim_delta1(Q=Q, P=P, tau=tau, sum.term=sum.term,
+          delta[k]  <- if(k > 1) .sim_deltak(alpha.d2=alpha.d2, beta.d2=beta.d2, delta.k=delta[k], Q=Q, P.5=P.5, k=k,
+                       tau.kq=tau[k:Q], sum.term.kq=sum.term[k:Q]) else .sim_delta1(Q=Q, P.5=P.5, tau=tau, sum.term=sum.term,
                        alpha.d1=ifelse(Q1, alpha.d2, alpha.d1), beta.d1=ifelse(Q1, beta.d2, beta.d1), delta.1=delta[1L])
           tau       <- cumprod(delta)
         }

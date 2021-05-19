@@ -48,6 +48,8 @@
     G.store          <- vector("integer", n.store)
     act.store        <- G.store
     pi.alpha         <- cluster$pi.alpha
+    nu1.5            <- nu1 + 0.5
+    P.5              <- P/2
     if(learn.alpha) {
       alpha.store    <- ll.store
       alpha.shape    <- a.hyper[1L]
@@ -82,7 +84,7 @@
     sig.mu.sqrt      <- sqrt(sigma.mu)
     z                <- cluster$z
     nn               <- tabulate(z, nbins=trunc.G)
-    nn0              <- nn > 0
+    nn0              <- nn  > 0
     nn.ind           <- which(nn > 0)
     G.non            <- length(nn.ind)
     Q.star           <- Q
@@ -202,7 +204,7 @@
     # Shrinkage
       if(any(Q0))     {
         load.2       <- lapply(lmat[Gs], .power2)
-        phi[Gs]      <- lapply(Gs, function(g) if(n0q0[g]) .sim_phi(Q=Qs[g], P=P, nu1=nu1, nu2=nu2, tau=tau[[g]],
+        phi[Gs]      <- lapply(Gs, function(g) if(n0q0[g]) .sim_phi(Q=Qs[g], P=P, nu1.5=nu1.5, nu2=nu2, tau=tau[[g]],
                         load.2=load.2[[g]], sigma=MGPsig[g]) else .sim_phi_p(Q=Qs[g], P=P, nu1=nu1, nu2=nu2))
         sum.terms    <- lapply(Gs, function(g) if(n0q0[g]) colSums2(phi[[g]] * load.2[[g]]))
         for(g in Gs)  {
@@ -210,8 +212,8 @@
           Q1g        <- Q1[g]
           if(n0q0[g]) {
             for(k in seq_len(Qg)) {
-              delta[[g]][k]   <- if(k > 1) .sim_deltak(alpha.d2=alpha.d2, beta.d2=beta.d2, delta.k=delta[[g]][k], tau.kq=tau[[g]][k:Qg], P=P, Q=Qg,
-                                 k=k, sum.term.kq=sum.terms[[g]][k:Qg], sigma=MGPsig[g]) else .sim_delta1(Q=Qg, P=P, tau=tau[[g]], sum.term=sum.terms[[g]],
+              delta[[g]][k]   <- if(k > 1) .sim_deltak(alpha.d2=alpha.d2, beta.d2=beta.d2, delta.k=delta[[g]][k], tau.kq=tau[[g]][k:Qg], P.5=P.5, Q=Qg,
+                                 k=k, sum.term.kq=sum.terms[[g]][k:Qg], sigma=MGPsig[g]) else .sim_delta1(Q=Qg, P.5=P.5, tau=tau[[g]], sum.term=sum.terms[[g]],
                                  alpha.d1=ifelse(Q1g, alpha.d2, alpha.d1), beta.d1=ifelse(Q1g, beta.d2, beta.d1), delta.1=delta[[g]][1L], sigma=MGPsig[g])
               tau[[g]]        <- cumprod(delta[[g]])
             }
@@ -226,7 +228,7 @@
           nnX                 <- n0q0[Gs]
           n0Gq                <- which(nnX)
           nGq0                <- length(n0Gq)
-          MGPsig[n0Gq]        <- .sim_sigma(G=nGq0, P=P, Qs=Qs[n0Gq], rho1=rho1, rho2=rho2, sum.terms=sum.terms[n0Gq], tau=tau[n0Gq])
+          MGPsig[n0Gq]        <- .sim_sigma(G=nGq0, P.5=P.5, Qs=Qs[n0Gq], rho1=rho1, rho2=rho2, sum.terms=sum.terms[n0Gq], tau=tau[n0Gq])
           MGPsig[which(!nnX)] <- .sim_sigma_p(G=G - nGq0, rho1=rho1, rho2=rho2)
         }
       }

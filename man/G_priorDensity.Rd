@@ -52,7 +52,7 @@ Requires use of the \code{\link[Rmpfr]{Rmpfr}} and \code{gmp} libraries; may enc
 
 #' # Other special cases of the PYP are also facilitated
 # G_priorDensity(N=50, alpha=c(alpha, 27.1401, 0),
-#                discount=c(discount, -27.1401/100, 0.8054447), type="b")
+#                discount=c(discount, -27.1401/100, 0.8054448), type="b")
 }
 \references{
 De Blasi, P., Favaro, S., Lijoi, A., Mena, R. H., Prunster, I., and Ruggiero, M. (2015) Are Gibbs-type priors the most natural generalization of the Dirichlet process?, \emph{IEEE Transactions on Pattern Analysis and Machine Intelligence}, 37(2): 212-229.

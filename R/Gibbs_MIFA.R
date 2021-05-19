@@ -43,6 +43,8 @@
     Q.store        <- matrix(0L, nrow=G, ncol=n.store)
     Q.large        <- Q.big <- Q.bigs <- FALSE
     err.z          <- z.err <- FALSE
+    nu1.5          <- nu1 + 0.5
+    P.5            <- P/2
 
     mu.sigma       <- 1/sigma.mu
     sig.mu.sqrt    <- sqrt(sigma.mu)
@@ -162,7 +164,7 @@
     # Shrinkage
       if(any(Q0))     {
         load.2     <- lapply(lmat, .power2)
-        phi        <- lapply(Gseq, function(g) if(n0q0[g]) .sim_phi(Q=Qs[g], P=P, nu1=nu1, nu2=nu2, tau=tau[[g]],
+        phi        <- lapply(Gseq, function(g) if(n0q0[g]) .sim_phi(Q=Qs[g], P=P, nu1.5=nu1.5, nu2=nu2, tau=tau[[g]],
                       load.2=load.2[[g]], sigma=MGPsig[g]) else .sim_phi_p(Q=Qs[g], P=P, nu1=nu1, nu2=nu2))
         sum.terms  <- lapply(Gseq, function(g) if(n0q0[g]) colSums2(phi[[g]] * load.2[[g]]))
         for(g in Gseq)  {
@@ -170,8 +172,8 @@
           Q1g      <- Q1[g]
           if(n0q0[g])   {
             for(k in seq_len(Qg)) {
-              delta[[g]][k] <- if(k > 1) .sim_deltak(alpha.d2=alpha.d2[g], beta.d2=beta.d2, delta.k=delta[[g]][k], tau.kq=tau[[g]][k:Qg], P=P, Q=Qg,
-                               k=k, sum.term.kq=sum.terms[[g]][k:Qg], sigma=MGPsig[g]) else .sim_delta1(Q=Qg, P=P, tau=tau[[g]], sum.term=sum.terms[[g]],
+              delta[[g]][k] <- if(k > 1) .sim_deltak(alpha.d2=alpha.d2[g], beta.d2=beta.d2, delta.k=delta[[g]][k], tau.kq=tau[[g]][k:Qg], P.5=P.5, Q=Qg,
+                               k=k, sum.term.kq=sum.terms[[g]][k:Qg], sigma=MGPsig[g]) else .sim_delta1(Q=Qg, P.5=P.5, tau=tau[[g]], sum.term=sum.terms[[g]],
                                alpha.d1=ifelse(Q1g, alpha.d2[g], alpha.d1[g]), beta.d1=ifelse(Q1g, beta.d2, beta.d1), delta.1=delta[[g]][1L], sigma=MGPsig[g])
               tau[[g]]      <- cumprod(delta[[g]])
             }
@@ -184,7 +186,7 @@
         }
         if(cluster.shrink)   {
           nGq0              <- sum(n0q0)
-          MGPsig[n0q0]      <- .sim_sigma(G=nGq0, P=P, Qs=Qs[n0q0], rho1=rho1, rho2=rho2, sum.terms=sum.terms[n0q0], tau=tau[n0q0])
+          MGPsig[n0q0]      <- .sim_sigma(G=nGq0, P.5=P.5, Qs=Qs[n0q0], rho1=rho1, rho2=rho2, sum.terms=sum.terms[n0q0], tau=tau[n0q0])
           MGPsig[!n0q0]     <- .sim_sigma_p(G=G - nGq0, rho1=rho1, rho2=rho2)
         }
       }

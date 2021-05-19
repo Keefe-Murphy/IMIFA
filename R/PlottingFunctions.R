@@ -209,7 +209,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
   if(param == "uniquenesses") {
     mat   <- switch(EXPR=uni.type, constrained=, unconstrained=mat, FALSE)
   }
-  mat     <- ifelse(n.var == 1, FALSE, mat)
+  mat     <- n.var != 1 && mat
   z.miss  <- missing(zlabels)
   if(!z.miss) {
     if(all(!is.factor(zlabels), !is.logical(zlabels), !is.numeric(zlabels)) ||
@@ -257,7 +257,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
          length(intervals) != 1))     stop("'intervals' must be a single logical indicator", call.=FALSE)
   if(any(!is.logical(mat),
          length(mat)       != 1))     stop("'mat' must be a single logical indicator",       call.=FALSE)
-  common       <- ifelse(missing(common) && all(grp.ind, !all.ind, m.sw["M.sw"], param == "scores", heat.map), FALSE, ifelse(grp.ind, common, TRUE))
+  common       <- !(missing(common) && all(grp.ind, !all.ind, m.sw["M.sw"], param == "scores", heat.map)) && (!grp.ind || common)
   if(any(!is.logical(common),
          length(common)    != 1))     stop("'common' must be a single logical indicator",    call.=FALSE)
   if(any(!is.logical(partial),
@@ -476,7 +476,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
           }
         } else   {
           base::plot(x=iter, y=x.plot[ind[1L],ind[2L],], type="l", ylab="", xlab="Iteration")
-          if(titles) graphics::title(main=list(paste0("Trace", ifelse(all.ind, ":\n", paste0(":\nLoadings - ", ifelse(grp.ind, paste0("Cluster ", g, " - "), ""))), var.names[ind[1L]], " Variable, Factor ", ind[2L])))
+          if(titles) graphics::title(main=list(paste0("Trace", ifelse(all.ind, ":\n", paste0(":\nLoadings - ",   ifelse(grp.ind, paste0("Cluster ", g, " - "), ""))), var.names[ind[1L]], " Variable, Factor ", ind[2L])))
         }
       }
 
@@ -576,7 +576,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
         } else   {
           plot.d  <- tryCatch(stats::density(x.plot[ind[1L],ind[2L],], bw="SJ"), error = function(e) stats::density(x.plot[ind[1L],ind[2L],]))
           base::plot(plot.d, main="", ylab="", xlab="")
-          if(titles) graphics::title(main=list(paste0("Density", ifelse(all.ind, ":\n", ":\nScores - "), "Observation ", obs.names[ind[1L]], ", Factor ", ind[2L])))
+          if(titles) graphics::title(main=list(paste0("Density",   ifelse(all.ind, ":\n", ":\nScores - "), "Observation ", obs.names[ind[1L]], ", Factor ", ind[2L])))
           graphics::polygon(plot.d, col=grey, border=NA)
         }
       }
@@ -604,7 +604,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
         } else   {
           plot.d  <- tryCatch(stats::density(x.plot[ind[1L],ind[2L],], bw="SJ"), error = function(e) stats::density(x.plot[ind[1L],ind[2L],]))
           base::plot(plot.d, main="", ylab="", xlab="")
-          if(titles) graphics::title(main=list(paste0("Density", ifelse(all.ind, ":\n", paste0(":\nLoadings - ", ifelse(grp.ind, paste0("Cluster ", g, " - "), ""))), var.names[ind[1L]], " Variable, Factor ", ind[2L])))
+          if(titles) graphics::title(main=list(paste0("Density",   ifelse(all.ind, ":\n", paste0(":\nLoadings - ", ifelse(grp.ind, paste0("Cluster ", g, " - "), ""))), var.names[ind[1L]], " Variable, Factor ", ind[2L])))
           graphics::polygon(plot.d, col=grey, border=NA)
         }
       }
@@ -1718,7 +1718,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
 #'
 #' #' # Other special cases of the PYP are also facilitated
 #' # G_priorDensity(N=50, alpha=c(alpha, 27.1401, 0),
-#' #                discount=c(discount, -27.1401/100, 0.8054447), type="b")
+#' #                discount=c(discount, -27.1401/100, 0.8054448), type="b")
   G_priorDensity      <- function(N, alpha, discount = 0, show.plot = TRUE, type = "h") {
     igmp       <- isNamespaceLoaded("Rmpfr")
     mpfrind    <- suppressMessages(requireNamespace("Rmpfr", quietly=TRUE)) && .version_above("gmp", "0.5-4")
@@ -1762,6 +1762,8 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
     if(any(discount < 0  &
           (alpha   <= 0  |
        !.IntMult(alpha, discount))))  stop("'alpha' must be a positive integer multiple of 'abs(discount)' when 'discount' is negative", call.=FALSE)
+    if(any(alpha   == 0  &
+       discount    <= 0))             stop("'discount' must be strictly positive when 'alpha'=0",   call.=FALSE)
     if(length(alpha)    != max.len) {
       alpha    <- rep(alpha,    max.len)
     }
@@ -1780,16 +1782,16 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
         rx[,i] <- gmp::asNumeric(abs(vnk    * Rmpfr::.bigz2mpfr(gmp::Stirling1.all(N))))
       } else    {
         if(disci > 0) {
-          vnk  <- c(Rmpfr::mpfr(0,         precBits=256),  cumsum(log(alphi + Nseq[-N]   * disci)))         -
+          vnk  <- c(Rmpfr::mpfr(0,         precBits=256),  cumsum(log(alphi + Nseq[-N]  * disci)))         -
                   log(Rmpfr::pochMpfr(alphi + 1, N - 1L)) - Nsq2 * log(disci)
         } else  {
           m    <- as.integer(alphi/abs(disci))
           mn   <- min(m, N)
           seqN <- seq_len(mn - 1L)
-          vnk  <- c(c(Rmpfr::mpfr(0,       precBits=256),  cumsum(log(m - seqN))  + seqN * log(abs(disci))) -
-                  log(Rmpfr::pochMpfr(alphi + 1, N - 1L)) - c(seqN, mn) * log(abs(disci)), rep(-Inf, N - mn))
+          vnk  <- c(c(Rmpfr::mpfr(0,       precBits=256),  cumsum(log(m - seqN)) + seqN * log(abs(disci))) -
+                  log(Rmpfr::pochMpfr(alphi + 1, N - 1L)) - c(seqN, mn) * log(abs(disci)),  rep(-Inf, N - mn))
         }
-        lnkd   <- lapply(Nseq, function(g) Rmpfr::sumBinomMpfr(g, f=function(k) Rmpfr::pochMpfr(-k * disci, N)))
+        lnkd   <- lapply(Nseq, function(g) Rmpfr::sumBinomMpfr(g, f=function(k) Rmpfr::pochMpfr(-k * disci, N), n0=1))
         rx[,i] <- gmp::asNumeric(exp(vnk    - lfactorial(Nsq2))  * abs(Rmpfr::mpfr2array(unlist(lnkd), dim=N)))
       }
     }

@@ -1,8 +1,8 @@
 Package: IMIFA
 Type: Package
-Date: 2020-12-29
+Date: 2021-05-24
 Title: Infinite Mixtures of Infinite Factor Analysers and Related Models
-Version: 2.1.5
+Version: 2.1.6
 Authors@R: c(person("Keefe", "Murphy", email = "keefe.murphy@mu.ie", role = c("aut", "cre"), comment = c(ORCID = "0000-0002-7709-3159")),
              person("Cinzia", "Viroli", email = "cinzia.viroli@unibo.it", role = "ctb", comment = c(ORCID = "0000-0002-3278-5266")),
              person("Isobel Claire", "Gormley", email = "claire.gormley@ucd.ie", role = "ctb", comment = c(ORCID = "0000-0001-7713-681X")))
