@@ -572,7 +572,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     }
 
     if(learn.d)     {
-      discount   <- as.vector(sims[[G.ind]][[Q.ind]]$discount[store])
+      discount   <- drop(sims[[G.ind]][[Q.ind]]$discount[store])
       post.disc  <- mean(discount)
       post.kappa <- sum(discount == 0)/n.store
       var.disc   <- Var(discount)
@@ -627,19 +627,19 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       Q.tab      <- table(Q.store, dnn=NULL)
       Q.prob     <- prop.table(Q.tab)
     }
-    Q.mode       <- if(G1) unlist(lapply(Q.tab, function(qt) as.numeric(names(qt[qt == max(qt)])[1L]))) else as.numeric(names(Q.tab[Q.tab == max(Q.tab)])[1L])
-    Q.med        <- if(G1) stats::setNames(ceiling(matrixStats::rowMedians(Q.store) * 2)/2, gnames)     else ceiling(Median(Q.store) * 2)/2
+    Q.mode       <- if(G1) unlist(lapply(Q.tab, function(qt) as.numeric(names(qt[qt == max(qt)])[1L])))  else as.numeric(names(Q.tab[Q.tab == max(Q.tab)])[1L])
+    Q.med        <- if(G1) stats::setNames(ceiling(matrixStats::rowMedians(Q.store) * 2)/2, gnames)      else ceiling(Median(Q.store) * 2)/2
     if(!Q.T)  {
       Q          <- switch(EXPR=Q.meth, mode=Q.mode, floor(Q.med))
     } else    {
-      Q          <- if(G.T) Q else stats::setNames(if(length(Q) == G) Q else rep(Q, G), gnames)
+      Q          <- if(G.T) Q else stats::setNames(if(length(Q) == G) Q    else rep(Q, G), gnames)
     }
     Q.CI         <- if(G1) round(rowQuantiles(Q.store, probs=conf.levels)) else round(stats::quantile(Q.store, conf.levels))
     GQ.temp4     <- list(Q = Q, Q.Mode = Q.mode, Q.Median = Q.med,
                          Q.CI = Q.CI, Q.Probs = Q.prob, Q.Counts = Q.tab,
-                         Stored.Q = if(clust.ind) Q.store else as.vector(Q.store),
+                         Stored.Q = if(clust.ind) Q.store else drop(Q.store),
                          Q.Last = Q.store[,TN.store])
-    GQ.res       <- if(inf.G)   c(GQ.temp1, GQ.temp4) else c(list(G = G), GQ.temp4)
+    GQ.res       <- if(inf.G)   c(GQ.temp1, GQ.temp4)     else c(list(G = G), GQ.temp4)
     GQ.res       <- if(cshrink) c(GQ.res, list(post.sigma = stats::setNames(rowMeans2(sigmas), gnames))) else GQ.res
     GQ.res       <- c(GQ.res, list(Criteria = GQ.temp2))
     attr(GQ.res, "Q.big") <- attr(sims[[G.ind]][[Q.ind]], "Q.big")

@@ -27,8 +27,8 @@ For a (\code{N * G}) matrix of posterior cluster membership probabilities, this 
 
 # par(mar=c(5.1, 4.1, 4.1, 3.1))
 # PCM  <- replace(PCM, PCM == 0, NA)
-# plot_cols(mat2cols(PCM, col=heat.colors(30)[30:1], na.col=par()$bg)); box(lwd=2)
-# heat_legend(PCM, cols=heat.colors(30)[30:1])
+# plot_cols(mat2cols(PCM, col=heat.colors(30, rev=TRUE), na.col=par()$bg)); box(lwd=2)
+# heat_legend(PCM, cols=heat.colors(30, rev=TRUE))
 # par(mar=c(5.1, 4.1, 4.1, 2.1))
 }
 \references{

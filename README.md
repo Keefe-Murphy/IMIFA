@@ -53,4 +53,4 @@ devtools::install_github('Keefe-Murphy/IMIFA', build_vignettes = TRUE)
 Alternatively, the vignette is available on the package's CRAN page.
 
 ### References
-Murphy, K., Viroli, C., and Gormley, I. C. (2020). Infinite mixtures of infinite factor analysers. _Bayesian Analysis_, 15(3): 937-863. <[doi:10.1214/19-BA1179](https://doi.org/doi:10.1214/19-BA1179)>.
+Murphy, K., Viroli, C., and Gormley, I. C. (2020). Infinite mixtures of infinite factor analysers. _Bayesian Analysis_, 15(3): 937--863. <[doi:10.1214/19-BA1179](https://doi.org/doi:10.1214/19-BA1179)>.

@@ -79,7 +79,10 @@
     startz           <- tune.zeta$start.zeta
     stopz            <- tune.zeta$stop.zeta
     mu.sigma         <- 1/sigma.mu
+    mu.prior         <- mu.sigma * mu.zero
     sig.mu.sqrt      <- sqrt(sigma.mu)
+    l.sigma          <- diag(1/sigma.l, Q)
+    sig.l.sqrt       <- sqrt(sigma.l)
     z                <- cluster$z
     nn               <- tabulate(z, nbins=trunc.G)
     nn0              <- nn > 0
@@ -98,7 +101,7 @@
     mu.tmp           <- vapply(seq_len(trunc.G - G), function(g) .sim_mu_p(P=P, sig.mu.sqrt=sig.mu.sqrt, mu.zero=mu.zero), numeric(P))
     mu               <- cbind(mu, if(uni) t(mu.tmp) else mu.tmp)
     eta              <- .sim_eta_p(N=N, Q=Q)
-    lmat             <- if(Q0) array(vapply(Ts, function(t) .sim_load_p(Q=Q, P=P, sigma.l=sigma.l), numeric(P * Q)), dim=c(P, Q, trunc.G)) else array(0, dim=c(P, 0, trunc.G))
+    lmat             <- if(Q0) array(vapply(Ts, function(t) .sim_load_p(Q=Q, P=P, sig.l.sqrt=sig.l.sqrt), numeric(P * Q)), dim=c(P, Q, trunc.G)) else array(0, dim=c(P, 0, trunc.G))
     if(isTRUE(one.uni)) {
       psi.inv        <- matrix(.sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), nrow=P, ncol=trunc.G)
     } else psi.inv   <- replicate(trunc.G, .sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), simplify="array")
@@ -115,7 +118,6 @@
     inf.ind          <- psi.inv  > max(max.p)
     psi.inv[inf.ind] <- matrix(max.p, nrow=P, ncol=trunc.G)[inf.ind]
     rm(max.p, inf.ind)
-    l.sigma          <- diag(1/sigma.l, Q)
     if(ind.slice) {
       ksi            <- (1 - rho)   * rho^(Ts  - 1L)
       log.ksi        <- log(ksi)
@@ -151,8 +153,8 @@
       if(Q0)     {
         eta.tmp      <- lapply(Gs, function(g) if(nn0[g]) .sim_score(N=nn[g], lmat=lmat[,,g], Q=Q, c.data=c.data[[g]], psi.inv=psi.inv[,g], Q1=Q1) else .empty_mat(nc=Q))
         EtE          <- lapply(Gs, function(g) if(nn0[g]) crossprod(eta.tmp[[g]]))
-        lmat[,,Gs]   <- array(unlist(lapply(Gs, function(g) matrix(if(nn0[g]) vapply(Ps, function(j) .sim_load(l.sigma=l.sigma, Q=Q, c.data=c.data[[g]][,j], eta=eta.tmp[[g]],
-                        EtE=EtE[[g]], Q1=Q1, psi.inv=psi.inv[,g][j]), numeric(Q)) else .sim_load_p(Q=Q, P=P, sigma.l=sigma.l), nrow=P, byrow=TRUE)), use.names=FALSE), dim=c(P, Q, G))
+        lmat[,,Gs]   <- array(unlist(lapply(Gs, function(g) matrix(if(nn0[g]) vapply(Ps, function(j) .sim_load(l.sigma=l.sigma, Q=Q, c.data=c.data[[g]][,j], eta=eta.tmp[[g]], Q1=Q1,
+                        EtE=EtE[[g]], psi.inv=psi.inv[,g][j]), numeric(Q)) else .sim_load_p(Q=Q, P=P, sig.l.sqrt=sig.l.sqrt), nrow=P, byrow=TRUE)), use.names=FALSE), dim=c(P, Q, G))
         eta          <- do.call(rbind, eta.tmp)[obsnames,, drop=FALSE]
       } else     {
         eta.tmp      <- lapply(Gs, function(g) eta[z == g,, drop=FALSE])
@@ -171,7 +173,7 @@
       sum.data       <- vapply(dat.g, colSums2, numeric(P))
       sum.data       <- if(uni) t(sum.data) else sum.data
       sum.eta        <- lapply(eta.tmp, colSums2)
-      mu[,Gs]        <- vapply(Gs, function(g) if(nn0[g]) .sim_mu(mu.sigma=mu.sigma, psi.inv=psi.inv[,g], mu.zero=mu.zero, sum.data=sum.data[,g], sum.eta=sum.eta[[g]],
+      mu[,Gs]        <- vapply(Gs, function(g) if(nn0[g]) .sim_mu(mu.sigma=mu.sigma, psi.inv=psi.inv[,g], mu.prior=mu.prior, sum.data=sum.data[,g], sum.eta=sum.eta[[g]],
                                lmat=if(Q1) as.matrix(lmat[,,g]) else lmat[,,g], N=nn[g], P=P) else .sim_mu_p(P=P, sig.mu.sqrt=sig.mu.sqrt, mu.zero=mu.zero), numeric(P))
 
     # Slice Sampler

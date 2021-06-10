@@ -49,7 +49,7 @@ For the \code{"OMFA"}, and \code{"OMIFA"} models this upper limit remains fixed 
 
 If \code{length(range.G) * length(range.Q)} is large, consider not storing unnecessary parameters (via \code{\link{storeControl}}), or breaking up the range of models to be explored into chunks and sending each chunk to \code{\link{get_IMIFA_results}} separately.}
 
-\item{range.Q}{Depending on the method employed, either the range of values for the number of latent factors, or, for methods ending in IFA the conservatively high starting value for the number of cluster-specific factors, in which case the default starting value is \code{round(3 * log(P))}.
+\item{range.Q}{Depending on the method employed, either the range of values for the number of latent factors or, for methods ending in IFA, the conservatively high starting value for the number of cluster-specific factors, in which case the default starting value is \code{round(3 * log(P))}.
 
 For methods ending in IFA, different clusters can be modelled using different numbers of latent factors (incl. zero); for methods not ending in IFA it is possible to fit zero-factor models, corresponding to simple diagonal covariance structures. For instance, fitting the \code{"IMFA"} model with \code{range.Q=0} corresponds to a vanilla Pitman-Yor / Dirichlet Process Mixture Model.
 

@@ -37,7 +37,7 @@ This is liable to take quite some time to run, especially if the number of obser
 # Get the similarity matrix and visualise it
 # zsimil <- Zsimilarity(zs)
 # z.sim  <- as.matrix(zsimil$z.sim)
-# z.col  <- mat2cols(z.sim, cols=heat.colors(30)[30:1])
+# z.col  <- mat2cols(z.sim, cols=heat.colors(30, rev=TRUE))
 # z.col[z.sim == 0] <- NA
 # plot_cols(z.col, na.col=par()$bg); box(lwd=2)
 

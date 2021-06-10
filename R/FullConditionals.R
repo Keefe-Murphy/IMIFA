@@ -5,31 +5,48 @@
 # Full Conditionals
 
   # Means
-    .sim_mu      <- function(N, P, mu.sigma, psi.inv, sum.data, sum.eta, lmat, mu.zero) {
-      mu.omega   <- 1/(mu.sigma + N * psi.inv)
-        mu.omega  * (psi.inv * (sum.data - lmat %*% sum.eta) + mu.sigma * mu.zero) + sqrt(mu.omega) * stats::rnorm(P)
+    .sim_mu      <- function(N, P, mu.sigma, psi.inv, sum.data, sum.eta, lmat, mu.prior) {
+      mu.omega   <- sqrt(mu.sigma + N * psi.inv)
+        (psi.inv/mu.omega * (sum.data - lmat %*% sum.eta) + mu.prior + stats::rnorm(P))/mu.omega
     }
 
   # Scores
     .sim_score   <- function(N, Q, lmat, psi.inv, c.data, Q1) {
       load.psi   <- lmat * psi.inv
-      u.eta      <- diag(Q) + crossprod(load.psi, lmat)
-      u.eta      <- if(Q1) sqrt(u.eta) else .chol(u.eta)
-      mu.eta     <- c.data %*% (load.psi %*% if(Q1) 1/(u.eta * u.eta) else chol2inv(u.eta))
-        mu.eta    + t(backsolve(u.eta, matrnorm(Q, N), k=Q))
+      if(Q1)      {
+        u.eta2   <- sum(load.psi * lmat) + 1
+        u.eta    <- sqrt(u.eta2)
+        mu.eta   <- (c.data %*% load.psi)/u.eta2
+          mu.eta  + stats::rnorm(Q)/u.eta
+      } else      {
+        u.eta    <- diag(Q) + crossprod(load.psi, lmat)
+        u.eta    <- .chol(u.eta)
+        mu.eta   <- c.data %*% (load.psi %*% chol2inv(u.eta))
+          mu.eta  + t(backsolve(u.eta, matrnorm(Q, N), k=Q))
+      }
     }
 
   # Loadings
     .sim_load    <- function(l.sigma, Q, c.data, eta, psi.inv, EtE, Q1)  {
       u.load     <- l.sigma  + psi.inv * EtE
-      u.load     <- if(Q1) sqrt(u.load) else .chol(u.load)
-        psi.inv   * (if(Q1) 1/(u.load  * u.load) else chol2inv(u.load)) %*% crossprod(eta, c.data) + backsolve(u.load, stats::rnorm(Q), k=Q)
+      if(Q1)      {
+        u.load   <- sqrt(u.load)
+          (psi.inv/u.load * crossprod(eta, c.data) + stats::rnorm(Q))/u.load
+      } else      {
+        u.load   <- .chol(u.load)
+          backsolve(u.load, backsolve(u.load, psi.inv * crossprod(eta, c.data), transpose=TRUE, k=Q) + stats::rnorm(Q), k=Q)
+      }
     }
 
     .sim_load_s  <- function(Q, c.data, eta, phi, tau, psi.inv, EtE, Q1, sigma = 1L) {
       u.load     <- diag(phi * tau * sigma, Q) + psi.inv * EtE
-      u.load     <- if(Q1) sqrt(u.load) else .chol(u.load)
-        psi.inv   * (if(Q1) 1/(u.load  * u.load) else chol2inv(u.load)) %*% crossprod(eta, c.data) + backsolve(u.load, stats::rnorm(Q), k=Q)
+      if(Q1)      {
+        u.load   <- sqrt(u.load)
+          (psi.inv/u.load * crossprod(eta, c.data) + stats::rnorm(Q))/u.load
+      } else      {
+        u.load   <- .chol(u.load)
+          backsolve(u.load, backsolve(u.load, psi.inv * crossprod(eta, c.data), transpose=TRUE, k=Q) + stats::rnorm(Q), k=Q)
+      }
     }
 
   # Uniquenesses
@@ -268,22 +285,22 @@
 # Priors
   # Means
     .sim_mu_p    <- function(P, mu.zero, sig.mu.sqrt) {
-        sig.mu.sqrt * stats::rnorm(P) + mu.zero
+        stats::rnorm(P, mu.zero, sig.mu.sqrt)
     }
 
   # Scores
     #' @importFrom Rfast "matrnorm"
-    .sim_eta_p   <- function(Q, N) {
-        matrix(matrnorm(N, Q), nrow=N, ncol=Q)
+    .sim_eta_p   <- function(N, Q) {
+        matrnorm(N, Q)
     }
 
   # Loadings
-    .sim_load_p  <- function(Q, P, sigma.l) {
-        sqrt(sigma.l) * stats::rnorm(P * Q)
+    .sim_load_p  <- function(Q, P, sig.l.sqrt) {
+        stats::rnorm(P * Q, sd=sig.l.sqrt)
     }
 
-    .sim_load_ps <- function(Q, sigma.l, phi, tau, sigma = 1L) {
-        sqrt(1/(phi * tau * sigma)) * stats::rnorm(Q)
+    .sim_load_ps <- function(Q, phi, tau, sigma = 1L) {
+        stats::rnorm(Q)/sqrt(phi * tau * sigma)
     }
 
   # Uniquenesses
@@ -556,9 +573,9 @@
       rho1       <- if(SX) 1L   + inverse  else sig.shape
       rho2       <- if(SX) 1L              else sig.rate
       if(isTRUE(inverse)) {
-        if(any(WX        <- (WX |
+        if(any(XW        <-
            phi.rate       >
-           phi.shape      - 1L)))          warning("A priori expectation of the induced inverse-gamma local shrinkage hyperprior is not <=1\n", call.=FALSE, immediate.=TRUE)
+           phi.shape      - 1L))           warning("A priori expectation of the induced inverse-gamma local shrinkage hyperprior is not <=1\n", call.=FALSE, immediate.=TRUE)
         ad1      <- ifelse(ad1 == 1, ad1 + .Machine$double.eps, ad1)
         ad2      <- ifelse(ad2 == 1, ad2 + .Machine$double.eps, ad2)
         exp.Q1   <- nu2/(nu1    - 1)     * bd1/(ad1  - 1) * rho2/(rho1 - 1)
@@ -577,7 +594,7 @@
       }
       exp.seq    <- if(length(exp.seq) == 1) exp.seq[[1L]] else exp.seq
       res        <- list(expectation = exp.seq, valid = Q < 2 || check)
-      attr(res, "Warning")    <- WX
+      attr(res, "Warning")    <- WX    || (inverse  && XW)
         return(res)
     }
 
@@ -709,7 +726,7 @@
 #' # Get the similarity matrix and visualise it
 #' # zsimil <- Zsimilarity(zs)
 #' # z.sim  <- as.matrix(zsimil$z.sim)
-#' # z.col  <- mat2cols(z.sim, cols=heat.colors(30)[30:1])
+#' # z.col  <- mat2cols(z.sim, cols=heat.colors(30, rev=TRUE))
 #' # z.col[z.sim == 0] <- NA
 #' # plot_cols(z.col, na.col=par()$bg); box(lwd=2)
 #'
@@ -757,8 +774,8 @@
 #'
 #' # par(mar=c(5.1, 4.1, 4.1, 3.1))
 #' # PCM  <- replace(PCM, PCM == 0, NA)
-#' # plot_cols(mat2cols(PCM, col=heat.colors(30)[30:1], na.col=par()$bg)); box(lwd=2)
-#' # heat_legend(PCM, cols=heat.colors(30)[30:1])
+#' # plot_cols(mat2cols(PCM, col=heat.colors(30, rev=TRUE), na.col=par()$bg)); box(lwd=2)
+#' # heat_legend(PCM, cols=heat.colors(30, rev=TRUE))
 #' # par(mar=c(5.1, 4.1, 4.1, 2.1))
    post_conf_mat <- function(z, scale = TRUE) {
       if(inherits(z, "list"))     {
@@ -1668,7 +1685,7 @@
     if(kappa      <  0   || kappa  > 1)    stop("'kappa' must lie in the interval [0, 1]", call.=FALSE)
     if(isFALSE(learn.d)  &&
       !missing(discount) &&
-      discount    > 0.5)                   message("Fixing 'discount'>0.5 is discouraged\n")
+      discount    > 0.5)                   warning("Fixing 'discount'>0.5 is discouraged\n", call.=FALSE, immediate.=TRUE)
     discount     <- ifelse(missing(discount), ifelse(learn.d, ifelse(kappa != 0 && stats::runif(1L) <= kappa, 0L, pmin(stats::rbeta(1L, d.hyper[1L], d.hyper[2L]), 1 - .Machine$double.eps)), 0L), discount)
     if(any(!is.numeric(discount),
            length(discount)       != 1))   stop("'discount' must be a single number", call.=FALSE)
@@ -2139,14 +2156,14 @@
         isTRUE(all.equal(0, a %% b))))
     })
 
-    .logdensity     <- function(x, left = 0, ...) { # export and add ...
+    .logdensity     <- function(x, left = 0, ...) { # export and add ? ...
       d          <- tryCatch(stats::density(x, ...), error = function(e) stats::density(x))
       h          <- d$bw
       w          <- 1/stats::pnorm(left, mean = x, sd = h, lower.tail = FALSE)
         return(suppressWarnings(stats::density(x, bw = h, kernel = "gaussian", weights = w/length(x))))
     }
 
-    .logitdensity   <- function(x, ...) { # export and add ...
+    .logitdensity   <- function(x, ...) { # export and add ? ...
       y          <- stats::qlogis(x[x > 0  & x < 1])
       g          <- tryCatch(stats::density(y, ...), error = function(e) stats::density(y))
       xgrid      <- stats::plogis(g$x)

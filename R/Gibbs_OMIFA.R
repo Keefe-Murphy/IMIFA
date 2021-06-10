@@ -48,6 +48,7 @@
     P.5              <- P/2
 
     mu.sigma         <- 1/sigma.mu
+    mu.prior         <- mu.sigma * mu.zero
     sig.mu.sqrt      <- sqrt(sigma.mu)
     z                <- cluster$z
     nn               <- tabulate(z, nbins=G)
@@ -168,7 +169,7 @@
       sum.data       <- if(uni) t(sum.data) else sum.data
       sum.eta        <- lapply(eta.tmp, colSums2)
       mu[,]          <- vapply(Gseq, function(g) if(nn0[g]) .sim_mu(N=nn[g], mu.sigma=mu.sigma, psi.inv=psi.inv[,g], P=P, sum.eta=sum.eta[[g]][seq_len(Qs[g])],
-                               sum.data=sum.data[,g], lmat=lmat[[g]], mu.zero=mu.zero) else .sim_mu_p(P=P, sig.mu.sqrt=sig.mu.sqrt, mu.zero=mu.zero), numeric(P))
+                               sum.data=sum.data[,g], lmat=lmat[[g]], mu.prior=mu.prior) else .sim_mu_p(P=P, sig.mu.sqrt=sig.mu.sqrt, mu.zero=mu.zero), numeric(P))
 
     # Shrinkage
       if(any(Q0))    {
@@ -242,7 +243,7 @@
           phi[nn0]   <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) cbind(phi[[g]][,seq_len(Qs.old[h])],  .rgamma0(n=P, shape=nu1, rate=nu2)) else phi[[g]][,nonred[[h]], drop=FALSE])
           delta[nn0] <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) c(delta[[g]][seq_len(Qs.old[h])],     stats::rgamma(n=1, shape=alpha.d2, rate=beta.d2)) else delta[[g]][nonred[[h]]])
           tau[nn0]   <- lapply(delta[nn.ind], cumprod)
-          lmat[nn0]  <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) cbind(lmat[[g]][,seq_len(Qs.old[h])], stats::rnorm(n=P, mean=0, sd=sqrt(1/(phi[[g]][,Qs[g]] * tau[[g]][Qs[g]] * MGPsig[g])))) else lmat[[g]][,nonred[[h]], drop=FALSE])
+          lmat[nn0]  <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) cbind(lmat[[g]][,seq_len(Qs.old[h])], stats::rnorm(n=P, mean=0, sd=1/sqrt(phi[[g]][,Qs[g]] * tau[[g]][Qs[g]] * MGPsig[g]))) else lmat[[g]][,nonred[[h]], drop=FALSE])
           Qemp       <- Qs[!nn0]
           Qpop       <- Qs[nn0]
           Qmax       <- max(Qpop)
@@ -266,7 +267,7 @@
                  eta.tmp[[g]] <- cbind(eta.tmp[[g]], base::matrix(0L, nrow=n.eta[g], ncol=1L))
                  }
                  Qg  <- Qg + 1L
-                 lmat[[g]]    <- cbind(lmat[[g]],    stats::rnorm(n=P, mean=0, sd=sqrt(1/(phi[[g]][,Qg] * tau[[g]][Qg] * MGPsig[g]))))
+                 lmat[[g]]    <- cbind(lmat[[g]],    stats::rnorm(n=P, mean=0, sd=1/sqrt(phi[[g]][,Qg] * tau[[g]][Qg] * MGPsig[g])))
                 }
               }
             }

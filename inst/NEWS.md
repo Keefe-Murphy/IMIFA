@@ -1,6 +1,14 @@
 __Infinite Mixtures of Infinite Factor Analysers__
 ==================================================  
 
+### Bug Fixes & Miscellaneous Edits
+* Minor speed-ups to simulation of component mean parameters.
+* Major speed-up to simulation of factor loadings parameters (especially when Q=1).
+* Major speed-up to simulation of factor scores when Q=1.
+* Minor speed-ups to simulation of means and loadings from priors for empty components.
+* Improved checks on `range.G` & `range.Q` in `mcmc_IMIFA`.
+* Minor vignette styling edits.
+
 ## IMIFA v2.1.6 - (_13<sup>th</sup> release [patch update]: 2021-05-24_)
 ### Bug Fixes & Miscellaneous Edits
 * Fixed breaking bugs associated with IM(I)FA slice samplers introduced in previous update.
@@ -73,13 +81,13 @@ proportion of explained variance per cluster (`x$Error$Clust.Exps`; previously `
 * `G_priorDensity` gains `type` arg. and now works again in non-vectorised form.
 * Minor speed-up to `Procrustes` function and hence the identifiability corrections within `get_IMIFA_results`.
 * Minor speed-ups to `post_conf_mat` function and `"parallel.coords"` plots.
-* Updated citation info after publication in _Bayesian Analysis_.
+* Updated citation info after online publication in _Bayesian Analysis_.
 
 ### Bug fixes
 * Fixes to `sim_IMIFA_data` to allow empty clusters and related fix for `nonempty` arg. to `get_IMIFA_results`.
 * Fixed bug when initial `alpha` value is `0` when `learn.alpha=TRUE`.
 * Minor fix for handling optional args. to `mixfaControl` and `plot.Results_IMIFA` functions.
-* Admissable `rho` values in `bnpControl` corrected to [0,1) from (0,1].
+* Admissible `rho` values in `bnpControl` corrected to [0,1) from (0,1].
 * Fixed bug related to Procrustes rotation of the factor scores for (I)/FA models in `get_IMIFA_results`.
 * Fixed handling of colour palettes in `plot.Results_IMIFA` & `G_priorDensity`.
 * Documentation and warning message fixes.

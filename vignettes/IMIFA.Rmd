@@ -12,9 +12,9 @@ vignette: >
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(fig.width=7, fig.height = 5, fig.align = 'center', 
-                      fig.show='hold', warning=FALSE, 
+                      fig.show='hold', warning=FALSE,
                       message=FALSE, progress=FALSE, 
-                      collapse=TRUE, comments="#>")
+                      collapse=TRUE, comment="#>")
 
 if(isTRUE(capabilities("cairo"))) {
   knitr::opts_chunk$set(dev.args=list(type="cairo"))
@@ -26,7 +26,7 @@ __IMIFA__ is an R package that provides flexible and efficient functions for fit
 
 Typically, one would run FA or MFA models over ranges of values for the numbers of clusters and factors, with the pair which optimises some model selection criterion typically chosen. __IMIFA__ instead enables Bayesian nonparametric model-based clustering with factor analytic covariance structures, _without_ recourse to model selection criteria, to automatically choose the number of clusters &/or cluster-specific latent factors. 
 
-The main features of the IMIFA model are the multiplicative gamma process shrinkage prior on the factor loadings, which allows theoretically infinitely many factors (this can also be employed in a MIFA context, for instance, where the number of clusters is fixed but cluster-specific factors are estimated), an adaptive Gibbs sampler which dynamically truncates the infinite loadings matrices, and the Dirichlet process prior, which utilises the stick-breaking construction and slice-efficient sampling, and allows theoretically infinitely many clusters. Tools are provided for soliciting sensible hyperparameters for these priors. As of IMIFA v1.2.0, a Pitman-Yor process prior on the number of mixture components is assumed by default, and its concentration and discount parameters are learned via Metropolis-Hastings updates.
+The main features of the IMIFA model are the multiplicative gamma process shrinkage prior on the factor loadings, which allows theoretically infinitely many factors (this can also be employed in a MIFA context, for instance, where the number of clusters is fixed but cluster-specific factors are estimated), an adaptive Gibbs sampler which dynamically truncates the infinite loadings matrices, and the Dirichlet process prior, which utilises the stick-breaking construction and slice-efficient sampling, and allows theoretically infinitely many clusters. Tools are provided for soliciting sensible hyperparameters for these priors. As of __IMIFA__ v1.2.0, a Pitman-Yor process prior on the number of mixture components is assumed by default, and its concentration and discount parameters are learned via Metropolis-Hastings updates.
 
 Model-specific diagnostic tools are also provided, as well as many extensive options for plotting results, conducting posterior inference on parameters of interest, and quantifying uncertainty. The functions are typically verbose, offering plenty of messages and warnings to the user where appropriate. Please see [Murphy et al. (2020)](https://projecteuclid.org/euclid.ba/1570586978) for more info.
 

@@ -20,7 +20,7 @@
 #' For the \code{"OMFA"}, and \code{"OMIFA"} models this upper limit remains fixed for the entire length of the chain; the upper limit for the for the \code{"IMFA"} and \code{"IMIFA"} models can be specified via \code{trunc.G} (see \code{\link{bnpControl}}), which must satisfy \code{range.G <= trunc.G < N}.
 #'
 #' If \code{length(range.G) * length(range.Q)} is large, consider not storing unnecessary parameters (via \code{\link{storeControl}}), or breaking up the range of models to be explored into chunks and sending each chunk to \code{\link{get_IMIFA_results}} separately.
-#' @param range.Q Depending on the method employed, either the range of values for the number of latent factors, or, for methods ending in IFA the conservatively high starting value for the number of cluster-specific factors, in which case the default starting value is \code{round(3 * log(P))}.
+#' @param range.Q Depending on the method employed, either the range of values for the number of latent factors or, for methods ending in IFA, the conservatively high starting value for the number of cluster-specific factors, in which case the default starting value is \code{round(3 * log(P))}.
 #'
 #' For methods ending in IFA, different clusters can be modelled using different numbers of latent factors (incl. zero); for methods not ending in IFA it is possible to fit zero-factor models, corresponding to simple diagonal covariance structures. For instance, fitting the \code{"IMFA"} model with \code{range.Q=0} corresponds to a vanilla Pitman-Yor / Dirichlet Process Mixture Model.
 #'
@@ -301,8 +301,9 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
              verbose))              message("Forced non-storage of mixing proportions as 'equal.pro' is TRUE\n")
       storage["pi.sw"]    <- FALSE
     }
-    if(G.x)                         stop("'range.G' must be specified",         call.=FALSE)
-    if(any(range.G  < 1))           stop("'range.G' must be strictly positive", call.=FALSE)
+    if(G.x)                         stop("'range.G' must be specified",                   call.=FALSE)
+    if(any(floor(range.G) != range.G)  ||
+       any(range.G  < 1))           stop("'range.G' must be a strictly positive integer", call.=FALSE)
     range.G <- G.init     <- sort(unique(range.G))
     meth    <- rep(method, length(range.G))
   }
@@ -398,7 +399,8 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
       !missing(MGP)        ||
       any(!unlist(mgpmiss)))        message(paste0("'mgpControl()' parameters not necessary for the ", method, " method\n"))
    if(Q.miss)                       stop("'range.Q' must be specified", call.=FALSE)
-   if(any(range.Q   < 0))           stop(paste0("'range.Q' must be non-negative for the ", method, " method"), call.=FALSE)
+   if(any(floor(range.Q)   != range.Q) ||
+      any(range.Q   < 0))           stop(paste0("'range.Q' must be a non-negative integer for the ", method, " method"), call.=FALSE)
    range.Q  <- sort(unique(range.Q))
    delta0g  <- FALSE
   } else {

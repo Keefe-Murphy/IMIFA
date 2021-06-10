@@ -46,6 +46,8 @@
 
     mu.sigma       <- 1/sigma.mu
     sig.mu.sqrt    <- sqrt(sigma.mu)
+    l.sigma        <- diag(1/sigma.l, Q)
+    sig.l.sqrt     <- sqrt(sigma.l)
     if(all(mu.zero  == 0))  {
       mu.zero      <- matrix(0L, nrow=1L, ncol=G)
       cluster$l.switch[1L] <- FALSE
@@ -53,6 +55,7 @@
     if(length(mu.zero)  == 1) {
       mu.zero      <- matrix(mu.zero, nrow=1L, ncol=G)
     }
+    mu.prior       <- mu.sigma * mu.zero
     z              <- cluster$z
     nn             <- tabulate(z, nbins=G)
     nn0            <- nn > 0
@@ -77,7 +80,7 @@
     psi0g          <- cluster$l.switch[2L]
     label.switch   <- any(cluster$l.switch)
     eta            <- .sim_eta_p(N=N, Q=Q)
-    lmat           <- if(Q0) array(vapply(Gseq, function(g) .sim_load_p(Q=Q, P=P, sigma.l=sigma.l), numeric(P * Q)), dim=c(P, Q, G)) else array(0, dim=c(P, 0, G))
+    lmat           <- if(Q0) array(vapply(Gseq, function(g) .sim_load_p(Q=Q, P=P, sig.l.sqrt=sig.l.sqrt), numeric(P * Q)), dim=c(P, Q, G)) else array(0, dim=c(P, 0, G))
     if(isTRUE(one.uni))     {
       psi.beta     <- psi.beta[,1L]
       psi.inv      <- matrix(.sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), nrow=P, ncol=G)
@@ -95,7 +98,6 @@
     inf.ind        <- psi.inv > max(max.p)
     psi.inv[inf.ind]       <- matrix(max.p, nrow=P, ncol=G)[inf.ind]
     rm(max.p, inf.ind)
-    l.sigma        <- diag(1/sigma.l, Q)
     init.time      <- proc.time() - start.time
 
   # Iterate
@@ -112,8 +114,8 @@
       if(Q0) {
         eta.tmp    <- lapply(Gseq, function(g) if(nn0[g]) .sim_score(N=nn[g], lmat=lmat[,,g], Q=Q, c.data=c.data[[g]], psi.inv=psi.inv[,g], Q1=Q1) else .empty_mat(nc=Q))
         EtE        <- lapply(Gseq, function(g) if(nn0[g]) crossprod(eta.tmp[[g]]))
-        lmat       <- array(unlist(lapply(Gseq, function(g) matrix(if(nn0[g]) vapply(Pseq, function(j) .sim_load(l.sigma=l.sigma, Q=Q, c.data=c.data[[g]][,j], eta=eta.tmp[[g]],
-                      Q1=Q1, EtE=EtE[[g]], psi.inv=psi.inv[,g][j]), numeric(Q)) else .sim_load_p(Q=Q, P=P, sigma.l=sigma.l), nrow=P, byrow=TRUE)), use.names=FALSE), dim=c(P, Q, G))
+        lmat       <- array(unlist(lapply(Gseq, function(g) matrix(if(nn0[g]) vapply(Pseq, function(j) .sim_load(l.sigma=l.sigma, Q=Q, c.data=c.data[[g]][,j], eta=eta.tmp[[g]], Q1=Q1,
+                      EtE=EtE[[g]], psi.inv=psi.inv[,g][j]), numeric(Q)) else .sim_load_p(Q=Q, P=P, sig.l.sqrt=sig.l.sqrt), nrow=P, byrow=TRUE)), use.names=FALSE), dim=c(P, Q, G))
         eta        <- do.call(rbind, eta.tmp)[obsnames,, drop=FALSE]
       } else {
         eta.tmp    <- lapply(Gseq, function(g) eta[z == g,, drop=FALSE])
@@ -132,7 +134,7 @@
       sum.data     <- vapply(dat.g, colSums2, numeric(P))
       sum.data     <- if(uni) t(sum.data) else sum.data
       sum.eta      <- lapply(eta.tmp, colSums2)
-      mu[,]        <- vapply(Gseq, function(g) if(nn0[g]) .sim_mu(mu.zero=mu.zero[,g], mu.sigma=mu.sigma, psi.inv=psi.inv[,g], sum.data=sum.data[,g], sum.eta=sum.eta[[g]],
+      mu[,]        <- vapply(Gseq, function(g) if(nn0[g]) .sim_mu(mu.prior=mu.prior[,g], mu.sigma=mu.sigma, psi.inv=psi.inv[,g], sum.data=sum.data[,g], sum.eta=sum.eta[[g]],
                              lmat=if(Q1) as.matrix(lmat[,,g]) else lmat[,,g], N=nn[g], P=P) else .sim_mu_p(P=P, sig.mu.sqrt=sig.mu.sqrt, mu.zero=mu.zero[,g]), numeric(P))
 
     # Cluster Labels
@@ -159,13 +161,14 @@
         right      <- as.integer(names(z.perm))
         if(!identical(left, right)) {
           z        <- sw.lab$z
-          mu[,left]        <- mu[,right, drop=FALSE]
-          lmat[,,left]     <- lmat[,,right, drop=FALSE]
-          psi.inv[,left]   <- psi.inv[,right, drop=FALSE]
+          mu[,left]        <- mu[,right,       drop=FALSE]
+          lmat[,,left]     <- lmat[,,right,    drop=FALSE]
+          psi.inv[,left]   <- psi.inv[,right,  drop=FALSE]
           pi.prop[left]    <- pi.prop[right]
           nn[left]         <- nn[right]
           if(mu0g)  {
-           mu.zero[,left]  <- mu.zero[,right, drop=FALSE]
+           mu.zero[,left]  <- mu.zero[,right,  drop=FALSE]
+           mu.prior[,left] <- mu.prior[,right, drop=FALSE]
           }
           if(psi0g) {
            psi.beta[,left] <- psi.beta[,right, drop=FALSE]

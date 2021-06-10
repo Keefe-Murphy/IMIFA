@@ -43,13 +43,14 @@
 
     mu.sigma     <- 1/sigma.mu
     mu.zero      <- as.numeric(mu.zero)
+    mu.prior     <- mu.sigma * mu.zero
     uni.type     <- switch(EXPR=uni.type,  unconstrained=,               constrained="constrained", "single")
     .sim_psi_inv <- switch(EXPR=uni.type,  constrained=.sim_psi_u1,      single=.sim_psi_c1)
     .sim_psi_ip  <- switch(EXPR=uni.prior, unconstrained=.sim_psi_ipu,   isotropic=.sim_psi_ipc)
     psi.beta     <- switch(EXPR=uni.prior, isotropic=psi.beta[which.max(.ndeci(psi.beta))], psi.beta)
     uni.shape    <- switch(EXPR=uni.type,  constrained=N/2 + psi.alpha,  single=(N * P)/2 + psi.alpha)
     V            <- switch(EXPR=uni.type,  constrained=P,                single=1L)
-    eta          <- .sim_eta_p(Q=Q, N=N)
+    eta          <- .sim_eta_p(N=N, Q=Q)
     phi          <- .sim_phi_p(Q=Q, P=P, nu1=nu1, nu2=nu2)
     delta        <- c(.sim_delta_p(alpha=alpha.d1, beta=beta.d1), .sim_delta_p(Q=Q, alpha=alpha.d2, beta=beta.d2))
     tau          <- cumprod(delta)
@@ -86,7 +87,7 @@
       psi.inv[]  <- .sim_psi_inv(uni.shape, psi.beta, S.mat, V)
 
     # Means
-      mu[]       <- .sim_mu(N=N, P=P, mu.sigma=mu.sigma, psi.inv=psi.inv, sum.data=sum.data, sum.eta=colSums2(eta), lmat=lmat, mu.zero=mu.zero)
+      mu[]       <- .sim_mu(N=N, P=P, mu.sigma=mu.sigma, psi.inv=psi.inv, sum.data=sum.data, sum.eta=colSums2(eta), lmat=lmat, mu.prior=mu.prior)
 
     # Shrinkage
       if(Q0) {
@@ -116,7 +117,7 @@
               phi   <- cbind(phi,  .rgamma0(n=P, shape=nu1, rate=nu2))
               delta <- c(delta,    stats::rgamma(n=1, shape=alpha.d2, rate=beta.d2))
               tau   <- cumprod(delta)
-              lmat  <- cbind(lmat, stats::rnorm(n=P, mean=0, sd=sqrt(1/(phi[,Q] * tau[Q]))))
+              lmat  <- cbind(lmat, stats::rnorm(n=P, mean=0, sd=1/sqrt(phi[,Q] * tau[Q])))
             }
           } else if(Q > 0)      {
             nonred  <- colvec  == 0

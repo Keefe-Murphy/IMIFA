@@ -1174,7 +1174,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
           graphics::layout(rbind(1, 2), heights=c(1, 6))
           graphics::par(mar=c(0, 4.1, 0.5, 2.1))
           graphics::plot.new()
-          graphics::legend("center", legend=bquote({NA >= 1/hat(G)} == 1/.(G)), title="", pch=15, col=3, bty="n", y.intersp=graphics::par()$fin[2L] * 7/5)
+          graphics::legend("center", legend=bquote({NA >= 1/hat(G)} == 1/.(G)), title="", pch=15, col=3,  bty="n", y.intersp=graphics::par()$fin[2L] * 7/5)
           graphics::legend("center", legend=c(" "," "), title=expression(bold("Clustering Uncertainty")), bty='n', y.intersp=graphics::par()$fin[2L] * 2/5, cex=graphics::par()$cex.main)
           graphics::par(mar=c(5.1, 4.1, 0.5, 2.1))
         }
@@ -1811,7 +1811,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
       ax       <- replace(ax, ax == 0, 1L)
       graphics::axis(1, at=ax, labels=ax)
     }
-      invisible(if(max.len == 1) as.vector(rx) else rx)
+      invisible(if(max.len == 1) drop(rx) else rx)
   }
 
 #' Plots a matrix of colours
