@@ -13,10 +13,11 @@ MGP_check(ad1,
           sigma.rate = NULL,
           bd1 = 1,
           bd2 = 1,
+          truncated = FALSE,
           inverse = TRUE)
 }
 \arguments{
-\item{ad1, ad2}{Shape hyperparameters for \eqn{\delta_1}{delta_1} and \eqn{\delta_2}{delta_2}, respectively.}
+\item{ad1, ad2}{Shape hyperparameters for \eqn{\delta_1}{delta_1} and \eqn{\delta_k \forall k\ge 2}{delta_k for all k >= 2}, respectively.}
 
 \item{Q}{Number of latent factors. Defaults to \code{3}, which is enough to check if the cumulative shrinkage property holds. Supply \code{Q} if the actual \emph{a priori} expected shrinkage factors are of interest.}
 
@@ -24,7 +25,9 @@ MGP_check(ad1,
 
 \item{sigma.shape, sigma.rate}{The shape and rate hyperparameters for the gamma prior on the cluster shrinkage parameters. Not necessary for checking if the cumulative shrinkage property holds, but worth supplying \emph{both} if the actual \emph{a priori} expected shrinkage factors are of interest. The default value(s) depends on the value of \code{inverse}, but are chosen in such a way that the cluster shrinkage has no effect on the expectation unless both are supplied. Cannot be incorporated into the expectation if \code{sigma.shape < 1} and \code{isTRUE(inverse)}.}
 
-\item{bd1, bd2}{Rate hyperparameters for \eqn{\delta_1}{delta_1} and \eqn{\delta_2}{delta_2}, respectively. Both default to 1.}
+\item{bd1, bd2}{Rate hyperparameters for \eqn{\delta_1}{delta_1} and \eqn{\delta_k \forall k\ge 2}{delta_k for all k >= 2}, respectively. Both default to \code{1}.}
+
+\item{truncated}{A logical value indicating whether the version of the MGP prior based on left-truncated gamma distributions is invoked (see \code{\link{ltrgamma}} and the Zhang et al. reference below). Defaults to \code{FALSE}. Note that, when \code{TRUE}, only the shrinkage parameters for the first loadings column are affected and the conditions needed to pass this check are much less strict. Moreover, more desirable shrinkage properties are easily obtained.}
 
 \item{inverse}{Logical indicator for whether the cumulative shrinkage property is assessed against the induced Inverse Gamma prior, the default, or in terms of the Gamma prior (which is incorrect). This is always \code{TRUE} when used inside \code{\link{mcmc_IMIFA}}: the \code{FALSE} option exists only for demonstration purposes.}
 }
@@ -42,18 +45,21 @@ Checks the hyperparameters for the multiplicative gamma process (MGP) shrinkage 
 This is called inside \code{\link{mcmc_IMIFA}} for the \code{"IFA"}, \code{"MIFA"}, \code{"OMIFA"} and \code{"IMIFA"} methods. This function is vectorised with respect to the arguments \code{ad1}, \code{ad2}, \code{phi.shape}, \code{phi.rate}, \code{sigma.shape}, \code{sigma.rate}, \code{bd1} and \code{bd2}.
 }
 \note{
-It is \emph{recommended} that \code{ad2} be moderately large relative to \code{ad1}, even if \code{valid} can sometimes be \code{TRUE} when this is not the case. Similarly, satisfying this condition is no guarantee that \code{valid} will be \code{TRUE}. Therefore, a warning is returned if \code{ad1 <= ad2}, regardless of the value taken by \code{valid}.
+It is \emph{recommended} that \code{ad2} be moderately large relative to \code{ad1}, even if \code{valid} can sometimes be \code{TRUE} when this is not the case (e.g. when \code{truncated=TRUE}). Similarly, satisfying this condition is no guarantee that \code{valid} will be \code{TRUE}, unless \code{truncated=TRUE}. Therefore, a warning is returned if \code{ad1 <= ad2}, regardless of the value taken by \code{valid}, when \code{truncated=FALSE} (the default).
 }
 \examples{
 # Check if expected shrinkage under the MGP increases with the column index (WRONG approach!).
-MGP_check(ad1=1.5, ad2=1.8, Q=10, phi.shape=3, inverse=FALSE)$valid      #TRUE
+MGP_check(ad1=1.5, ad2=1.8, Q=10, phi.shape=3, inverse=FALSE)$valid   #TRUE
 
 # Check if the induced IG prior on the MGP column shrinkage parameters
-# is stochastically increasing, thereby inducing cumulative shrinkage     (CORRECT approach!).
-MGP_check(ad1=1.5, ad2=1.8, Q=10, phi.shape=3, inverse=TRUE)$valid       #FALSE
+# is stochastically increasing, thereby inducing cumulative shrinkage (CORRECT approach!).
+MGP_check(ad1=1.5, ad2=1.8, Q=10, phi.shape=3, inverse=TRUE)$valid    #FALSE
 
-# Check again with a parameterisation that IS valid and examine the expected shrinkage values.
+# Check again with a parameterisation that IS valid and examine the expected shrinkage values
 (shrink <- MGP_check(ad1=1.5, ad2=2.8, Q=10, phi.shape=2, phi.rate=0.5, inverse=TRUE))
+
+# Check previously invalid parameterisation again using truncated version of the MGP prior
+MGP_check(ad1=1.5, ad2=1.8, Q=10, phi.shape=3, truncated=FALSE)$valid # TRUE
 }
 \references{
 Murphy, K., Viroli, C., and Gormley, I. C. (2020) Infinite mixtures of infinite factor analysers, \emph{Bayesian Analysis}, 15(3): 937-963. <\href{https://projecteuclid.org/euclid.ba/1570586978}{doi:10.1214/19-BA1179}>.
@@ -61,9 +67,11 @@ Murphy, K., Viroli, C., and Gormley, I. C. (2020) Infinite mixtures of infinite 
 Durante, D. (2017). A note on the multiplicative gamma process, \emph{Statistics & Probability Letters}, 122: 198-204.
 
 Bhattacharya, A. and Dunson, D. B. (2011). Sparse Bayesian infinite factor models, \emph{Biometrika}, 98(2): 291-306.
+
+Zhang, X., Dunson, D. B., and Carin, L. (2011) Tree-structured infinite sparse factor model. In Getoor, L. and Scheffer, T. (Eds.), \emph{Proceedings of the 28th International Conference on Machine Learning}, ICML'11, Madison, WI, USA, pp. 785-792. Omnipress.
 }
 \seealso{
-\code{\link{mcmc_IMIFA}}
+\code{\link{mcmc_IMIFA}}, \code{\link{ltrgamma}}
 }
 \author{
 Keefe Murphy - <\email{keefe.murphy@mu.ie}>

@@ -13,6 +13,7 @@ mgpControl(alpha.d1 = 2.1,
            adapt = TRUE,
            forceQg = FALSE,
            cluster.shrink = TRUE,
+           truncated = FALSE,
            b0 = 0.1,
            b1 = 5e-05,
            beta.d1 = 1,
@@ -40,6 +41,8 @@ mgpControl(alpha.d1 = 2.1,
 \item{forceQg}{A logical indicating whether the upper limit on the number of cluster-specific factors \code{Q} is also cluster-specific. Defaults to \code{FALSE}: when \code{TRUE}, the number of factors in each cluster is kept below the number of observations in each cluster, in addition to the bound defined by \code{range.Q}. Only relevant for the \code{"IMIFA"}, \code{"OMIFA"}, and \code{"MIFA"} methods, and only invoked when \code{adapt} is \code{TRUE}. May be useful for low-dimensional data sets for which identifiable solutions are desired.}
 
 \item{cluster.shrink}{A logical value indicating whether to place the prior specified by \code{sigma.hyper} on the cluster shrinkage parameters. Defaults to \code{TRUE}. Specifying \code{FALSE} is equivalent to fixing all cluster shrinkage parameters to 1. Only relevant for the \code{"IMIFA"}, \code{"OMIFA"}, and \code{"MIFA"} methods. If invoked, the posterior mean cluster shrinkage factors will be reported.}
+
+\item{truncated}{A logical value indicating whether the version of the MGP prior based on left-truncated gamma distributions is invoked (see Zhang et al. reference below and additional relevant documentation in \code{\link{ltrgamma}} and \code{\link{MGP_check}}). Defaults to \code{FALSE}. Note that, when \code{TRUE}, only the shrinkage parameters for the first loadings column are affected and the conditions needed to pass \code{\link{MGP_check}} are much less strict. Moreover, more desirable shrinkage properties are easily obtained, at the expense of slightly longer run times.}
 
 \item{b0, b1}{Intercept & slope parameters for the exponentially decaying adaptation probability:
 
@@ -71,13 +74,14 @@ Certain supplied arguments will be subject to further checks by \code{\link{MGP_
 The adaptive Gibbs sampler (AGS) monitors the \code{prop} of loadings elements within the neighbourhood \code{eps} of 0 and discards columns or simulates new columns on this basis. However, if at any stage the number of group-specific latent factors reaches zero, the decision to add columns is instead based on a simple binary trial with probability \code{1-prop}, as there are no loadings entries to monitor.
 }
 \examples{
-mgpctrl <- mgpControl(phi.hyper=c(2.5, 1), eps=1e-02)
+mgpctrl <- mgpControl(phi.hyper=c(2.5, 1), eps=1e-02, truncated=TRUE)
 
 # data(olive)
 # sim   <- mcmc_IMIFA(olive, "IMIFA", n.iters=5000, MGP=mgpctrl)
 
 # Alternatively specify these arguments directly
-# sim   <- mcmc_IMIFA(olive, "IMIFA", n.iters=5000, phi.hyper=c(2.5, 1), eps=1e-02)
+# sim   <- mcmc_IMIFA(olive, "IMIFA", n.iters=5000,
+#                     phi.hyper=c(2.5, 1), eps=1e-02, truncated=TRUE)
 }
 \references{
 Murphy, K., Viroli, C., and Gormley, I. C. (2020) Infinite mixtures of infinite factor analysers, \emph{Bayesian Analysis}, 15(3): 937-963. <\href{https://projecteuclid.org/euclid.ba/1570586978}{doi:10.1214/19-BA1179}>.
@@ -85,9 +89,11 @@ Murphy, K., Viroli, C., and Gormley, I. C. (2020) Infinite mixtures of infinite 
 Durante, D. (2017). A note on the multiplicative gamma process, \emph{Statistics & Probability Letters}, 122: 198-204.
 
 Bhattacharya, A. and Dunson, D. B. (2011) Sparse Bayesian infinite factor models, \emph{Biometrika}, 98(2): 291-306.
+
+Zhang, X., Dunson, D. B., and Carin, L. (2011) Tree-structured infinite sparse factor model. In Getoor, L. and Scheffer, T. (Eds.), \emph{Proceedings of the 28th International Conference on Machine Learning}, ICML'11, Madison, WI, USA, pp. 785-792. Omnipress.
 }
 \seealso{
-\code{\link{mcmc_IMIFA}}, \code{\link{MGP_check}}, \code{\link{mixfaControl}}, \code{\link{bnpControl}}, \code{\link{storeControl}}
+\code{\link{mcmc_IMIFA}}, \code{\link{MGP_check}}, \code{\link{ltrgamma}}, \code{\link{mixfaControl}}, \code{\link{bnpControl}}, \code{\link{storeControl}}
 }
 \author{
 Keefe Murphy - <\email{keefe.murphy@mu.ie}>

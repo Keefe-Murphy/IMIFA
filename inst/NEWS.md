@@ -1,13 +1,24 @@
 __Infinite Mixtures of Infinite Factor Analysers__
 ==================================================  
 
-### Bug Fixes & Miscellaneous Edits
+## IMIFA v2.1.7 - (_14<sup>th</sup> release [patch update]: 2021-10-07_)
+### Improvements, Bug Fixes, & Miscellaneous Edits
+* `mgpControl` gains the arg. `truncated` (defaults to `FALSE`):  
+  * Allows version of MGP prior with gamma distributions left-truncated at 1  
+  to be used for the column shrinkage parameters beyond the first column:  
+  this has some more desirable shrinkage properties, at the expense of longer run times.
+  * Related function `rltrgamma` to draw from left-truncated gamma distributions provided.
+  * `exp_ltrgamma` for computing expectations of such distributions also provided, and used  
+  internally by `MGP_check` when its own new `truncated` arg. is `TRUE` (default: `FALSE`).
+  * See `?ltrgamma` for further details on `rltrgamma` and `exp_ltrgamma`.
 * Minor speed-ups to simulation of component mean parameters.
 * Major speed-up to simulation of factor loadings parameters (especially when Q=1).
 * Major speed-up to simulation of factor scores when Q=1.
 * Minor speed-ups to simulation of means and loadings from priors for empty components.
+* Minor fixes to adaptive Gibbs sampler for MIFA models when `delta0g=TRUE`.
 * Improved checks on `range.G` & `range.Q` in `mcmc_IMIFA`.
-* Minor vignette styling edits.
+* Minor fixes to returned attributes from `MGP_check` when invoked in vectorised fashion.
+* Minor vignette styling edits and documentation clarifications.
 
 ## IMIFA v2.1.6 - (_13<sup>th</sup> release [patch update]: 2021-05-24_)
 ### Bug Fixes & Miscellaneous Edits
@@ -211,7 +222,7 @@ proportion of explained variance per cluster (`x$Error$Clust.Exps`; previously `
 
 ### Improvements
 * Retired args. `nu` & `nuplus1` to `mgpControl`, replaced by ability to specify more general gamma prior,  
-  via new `phi.hyper` arg. specifying shape _and_ rate - `mgp_check` has also been modified accordingly.
+  via new `phi.hyper` arg. specifying shape _and_ rate - `MGP_check` has also been modified accordingly.
 * `Zsimilarity` sped-up via the `comp.psm` & `cltoSim` functions s.t. when # observations < 1000.
 * Matrix of posterior cluster membership probabilities now returned by `get_IMIFA_results`.
 * Modified AGS to better account for when the number of group-specific latent factors shrinks to zero.

@@ -407,6 +407,7 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
    fQ0      <- uni || P    == 2
    MGP$prop <- ifelse(fQ0  && mgpmiss$propx, 0.5, floor(MGP$prop * P)/P)
    adapt    <- MGP$adapt
+   truncate <- MGP$truncated
    delta0g  <- MGP$delta0g && method   == "MIFA"
    MGP$nu1  <- nu1         <- MGP$phi.hyper[1L]
    MGP$nu2  <- nu2         <- MGP$phi.hyper[2L]
@@ -697,7 +698,7 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
   if(is.element(method, c("classify", "IFA", "MIFA", "IMIFA", "OMIFA"))) {
     ad1uu          <- unique(unlist(alpha.d1))
     ad2uu          <- unique(unlist(alpha.d2))
-    check.mgp      <- suppressWarnings(MGP_check(ad1=ad1uu, ad2=ad2uu, Q=unique(range.Q), phi.shape=nu1, phi.rate=nu2, sigma.shape=rho1, sigma.rate=rho2, bd1=MGP$beta.d1, bd2=MGP$beta.d2))
+    check.mgp      <- suppressWarnings(MGP_check(ad1=ad1uu, ad2=ad2uu, Q=unique(range.Q), phi.shape=nu1, phi.rate=nu2, sigma.shape=rho1, sigma.rate=rho2, truncated=truncate, bd1=MGP$beta.d1, bd2=MGP$beta.d2))
     if(!all(check.mgp$valid))       stop("Invalid shrinkage hyperparameter values WILL NOT encourage loadings column removal.\nTry using the MGP_check() function in advance to ensure the cumulative shrinkage property holds.", call.=FALSE)
     if(any(attr(check.mgp, "Warning"))) {
       if(any(ad2uu <= ad1uu))       warning("Column shrinkage hyperparameter values MAY NOT encourage loadings column removal.\n'alpha.d2' should be moderately large relative to 'alpha.d1'\n", call.=FALSE, immediate.=TRUE)
@@ -862,6 +863,7 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
   }
   class(times)            <- "listof"
   attr(imifa, "Time")     <- if(is.element(method, c("FA", "IFA", "classify"))) times[-length(times)] else times
+  attr(imifa, "Truncate") <- is.element(method, c("classify", "IFA", "MIFA", "OMIFA", "IMIFA")) && isTRUE(truncate)
   attr(imifa, "TuneZeta") <- is.element(method, c("IMFA", "IMIFA", "OMFA", "OMIFA")) && tune.zeta$do
   attr(imifa, "Uni.Meth") <- c(Uni.Prior = uni.prior, Uni.Type = uni.type)
   attr(imifa, "Varnames") <- varnames

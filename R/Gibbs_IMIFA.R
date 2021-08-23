@@ -5,7 +5,7 @@
 # Gibbs Sampler Function
   .gibbs_IMIFA       <- function(Q, data, iters, N, P, G, mu.zero, rho, sigma.l, learn.alpha, mu, sw, uni.type, uni.prior,
                                  sigma.mu, burnin, thinning, a.hyper, psi.alpha, psi.beta, verbose, trunc.G, adapt, ind.slice,
-                                 alpha.d1, discount, alpha.d2, cluster, b0, b1, IM.lab.sw, zeta, tune.zeta, rho1, rho2, nu1, nu2,
+                                 alpha.d1, discount, alpha.d2, cluster, b0, b1, IM.lab.sw, zeta, tune.zeta, rho1, rho2, nu1, nu2, truncated,
                                  cluster.shrink, prop, d.hyper, beta.d1, beta.d2, start.AGS, stop.AGS, epsilon, learn.d, kappa, forceQg, ...) {
 
   # Define & initialise variables
@@ -109,7 +109,15 @@
     Qmaxseq          <- seq_len(Qmax)
     eta              <- .sim_eta_p(N=N, Q=Qmax)
     phi              <- if(forceQg) lapply(Ts, function(t) .sim_phi_p(Q=Qs[t], P=P, nu1=nu1, nu2=nu2)) else replicate(trunc.G, .sim_phi_p(Q=Q, P=P, nu1=nu1, nu2=nu2), simplify=FALSE)
-    delta            <- if(forceQg) lapply(Ts, function(t) c(if(Qs[t] > 0) .sim_delta_p(alpha=alpha.d1, beta=beta.d1), .sim_delta_p(Q=Qs[t], alpha=alpha.d2, beta=beta.d2))) else replicate(trunc.G, list(c(.sim_delta_p(alpha=alpha.d1, beta=beta.d1), .sim_delta_p(Q=Q, alpha=alpha.d2, beta=beta.d2))))
+    if(isTRUE(truncated))   {
+      .sim_deltak    <- .sim_deltaKT
+      .rdelta        <- rltrgamma
+      delta          <- if(forceQg) lapply(Ts, function(t) c(if(Qs[t] > 0) .sim_delta_p(alpha=alpha.d1, beta=beta.d1), .sim_deltaPT(Q=Qs[t], alpha=alpha.d2, beta=beta.d2))) else replicate(trunc.G, list(c(.sim_delta_p(alpha=alpha.d1, beta=beta.d1), .sim_deltaPT(Q=Q, alpha=alpha.d2, beta=beta.d2))))
+      .sim_delta_p   <- .sim_deltaPT
+    } else              {
+      .rdelta        <- stats::rgamma
+      delta          <- if(forceQg) lapply(Ts, function(t) c(if(Qs[t] > 0) .sim_delta_p(alpha=alpha.d1, beta=beta.d1), .sim_delta_p(Q=Qs[t], alpha=alpha.d2, beta=beta.d2))) else replicate(trunc.G, list(c(.sim_delta_p(alpha=alpha.d1, beta=beta.d1), .sim_delta_p(Q=Q, alpha=alpha.d2, beta=beta.d2))))
+    }
     tau              <- lapply(delta, cumprod)
     if(cluster.shrink)  {
       sig.store      <- matrix(0L, nrow=trunc.G, ncol=n.store)
@@ -220,7 +228,8 @@
             }
           } else {
             if(Q0[g])  {
-              delta[[g]]      <-  c(.sim_delta_p(alpha=ifelse(Q1g, alpha.d2, alpha.d1), beta=ifelse(Q1g, beta.d2, beta.d1)), .sim_delta_p(Q=Qg, alpha=alpha.d2, beta=beta.d2))
+              delta[[g]]      <-  c(stats::rgamma(n=1, shape=ifelse(Q1g, alpha.d2, alpha.d1), rate=ifelse(Q1g, beta.d2, beta.d1)),
+                                    .sim_delta_p(Q=Qg, alpha=alpha.d2, beta=beta.d2))
               tau[[g]]        <- cumprod(delta[[g]])
             }
           }
@@ -336,8 +345,8 @@
               }
             }
           }
-          phi[nn0]   <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) cbind(phi[[g]][,seq_len(Qs.old[h])],  .rgamma0(n=P, shape=nu1, rate=nu2)) else phi[[g]][,nonred[[h]], drop=FALSE])
-          delta[nn0] <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) c(delta[[g]][seq_len(Qs.old[h])],     stats::rgamma(n=1, shape=alpha.d2, rate=beta.d2)) else delta[[g]][nonred[[h]]])
+          phi[nn0]   <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) cbind(phi[[g]][,seq_len(Qs.old[h])],  .rgamma0(n=P, shape=nu1,      rate=nu2))     else phi[[g]][,nonred[[h]], drop=FALSE])
+          delta[nn0] <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) c(delta[[g]][seq_len(Qs.old[h])],     .rdelta(n=1,  shape=alpha.d2, rate=beta.d2)) else delta[[g]][nonred[[h]]])
           tau[nn0]   <- lapply(delta[nn.ind], cumprod)
           lmat[nn0]  <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) cbind(lmat[[g]][,seq_len(Qs.old[h])], stats::rnorm(n=P, mean=0, sd=1/sqrt(phi[[g]][,Qs[g]] * tau[[g]][Qs[g]] * MGPsig[g]))) else lmat[[g]][,nonred[[h]], drop=FALSE])
           Qemp       <- Qs[!nn0]
@@ -356,8 +365,8 @@
                 lmat[[t]]     <- lmat[[t]][,Qmaxseq, drop=FALSE]
               } else  {
                 while(Qt  != Qmax)  {
-                 phi[[t]]     <- cbind(phi[[t]],     .rgamma0(n=P, shape=nu1, rate=nu2))
-                 delta[[t]]   <- c(delta[[t]],       stats::rgamma(n=1, shape=alpha.d2, rate=beta.d2))
+                 phi[[t]]     <- cbind(phi[[t]],     .rgamma0(n=P, shape=nu1,       rate=nu2))
+                 delta[[t]]   <- c(delta[[t]],       .rdelta(n=1,  shape=alpha.d2,  rate=beta.d2))
                  tau[[t]]     <- cumprod(delta[[t]])
                  if(store.eta && t %in% Gs)   {
                  eta.tmp[[t]] <- cbind(eta.tmp[[t]], base::matrix(0L, nrow=n.eta[t], ncol=1L))

@@ -1103,6 +1103,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   attr(result, "Sd0.drop")     <- attr(sims, "Sd0.drop")
   attr(result, "Store")        <- tmp.store
   attr(result, "Switch")       <- sw
+  attr(result, "Truncated")    <- attr(sims, "Truncate")
   attr(result, "TuneZeta")     <- attr(sims, "TuneZeta")
   attr(result, "Uni.Meth")     <- uni.meth
   attr(result, "Varnames")     <- varnames

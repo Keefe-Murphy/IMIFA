@@ -93,6 +93,10 @@
         stats::rgamma(1, shape=alpha.d2 + P.5 * (Q - k + 1L), rate=beta.d2 + (sigma * 0.5)/delta.k * tau.kq %*% sum.term.kq)
     }
 
+    .sim_deltaKT <- function(Q, P.5, k, alpha.d2, beta.d2, delta.k, tau.kq, sum.term.kq, sigma = 1L) {
+        rltrgamma(1,     shape=alpha.d2 + P.5 * (Q - k + 1L), rate=beta.d2 + (sigma * 0.5)/delta.k * tau.kq %*% sum.term.kq)
+    }
+
   # Cluster Shrinkage
     .sim_sigma   <- function(G, P.5, Qs, rho1, rho2, sum.terms, tau) {
         stats::rgamma(G, shape=rho1 + P.5 * Qs, rate=rho2 + mapply("%*%", sum.terms, tau)/2)
@@ -322,6 +326,10 @@
         stats::rgamma(n=pmax(0L, Q - 1L), shape=alpha, rate=beta)
     }
 
+    .sim_deltaPT <- function(Q = 2L, alpha, beta) {
+      rltrgamma(n=pmax(0L, Q - 1L),       shape=alpha, rate=beta)
+    }
+
   # Cluster Shrinkage
     .sim_sigma_p <- function(G = 1L, rho1, rho2)  {
         .rgamma0(n=G, shape=rho1, rate=rho2)
@@ -482,11 +490,12 @@
 #' Check the validity of Multiplicative Gamma Process (MGP) hyperparameters
 #'
 #' Checks the hyperparameters for the multiplicative gamma process (MGP) shrinkage prior in order to ensure that the property of cumulative shrinkage (in expectation) holds, i.e. checks whether growing mass is assigned to small neighbourhoods of zero as the column index increases.
-#' @param ad1,ad2 Shape hyperparameters for \eqn{\delta_1}{delta_1} and \eqn{\delta_2}{delta_2}, respectively.
+#' @param ad1,ad2 Shape hyperparameters for \eqn{\delta_1}{delta_1} and \eqn{\delta_k \forall k\ge 2}{delta_k for all k >= 2}, respectively.
 #' @param Q Number of latent factors. Defaults to \code{3}, which is enough to check if the cumulative shrinkage property holds. Supply \code{Q} if the actual \emph{a priori} expected shrinkage factors are of interest.
 #' @param phi.shape,phi.rate The shape and rate hyperparameters for the gamma prior on the local shrinkage parameters. Not necessary for checking if the cumulative shrinkage property holds, but worth supplying \emph{both} if the actual \emph{a priori} expected shrinkage factors are of interest. The default value(s) depends on the value of \code{inverse}, but are chosen in such a way that the local shrinkage has no effect on the expectation unless both are supplied. Cannot be incorporated into the expectation if \code{phi.shape < 1} and \code{isTRUE(inverse)}.
 #' @param sigma.shape,sigma.rate The shape and rate hyperparameters for the gamma prior on the cluster shrinkage parameters. Not necessary for checking if the cumulative shrinkage property holds, but worth supplying \emph{both} if the actual \emph{a priori} expected shrinkage factors are of interest. The default value(s) depends on the value of \code{inverse}, but are chosen in such a way that the cluster shrinkage has no effect on the expectation unless both are supplied. Cannot be incorporated into the expectation if \code{sigma.shape < 1} and \code{isTRUE(inverse)}.
-#' @param bd1,bd2 Rate hyperparameters for \eqn{\delta_1}{delta_1} and \eqn{\delta_2}{delta_2}, respectively. Both default to 1.
+#' @param bd1,bd2 Rate hyperparameters for \eqn{\delta_1}{delta_1} and \eqn{\delta_k \forall k\ge 2}{delta_k for all k >= 2}, respectively. Both default to \code{1}.
+#' @param truncated A logical value indicating whether the version of the MGP prior based on left-truncated gamma distributions is invoked (see \code{\link{ltrgamma}} and the Zhang et al. reference below). Defaults to \code{FALSE}. Note that, when \code{TRUE}, only the shrinkage parameters for the first loadings column are affected and the conditions needed to pass this check are much less strict. Moreover, more desirable shrinkage properties are easily obtained.
 #' @param inverse Logical indicator for whether the cumulative shrinkage property is assessed against the induced Inverse Gamma prior, the default, or in terms of the Gamma prior (which is incorrect). This is always \code{TRUE} when used inside \code{\link{mcmc_IMIFA}}: the \code{FALSE} option exists only for demonstration purposes.
 #'
 #' @details This is called inside \code{\link{mcmc_IMIFA}} for the \code{"IFA"}, \code{"MIFA"}, \code{"OMIFA"} and \code{"IMIFA"} methods. This function is vectorised with respect to the arguments \code{ad1}, \code{ad2}, \code{phi.shape}, \code{phi.rate}, \code{sigma.shape}, \code{sigma.rate}, \code{bd1} and \code{bd2}.
@@ -497,14 +506,16 @@
 #'   \item{\strong{valid} - }{A logical (or vector of logicals) indicating whether the cumulative shrinkage property holds (in expectation).}
 #' }
 #' @export
-#' @note It is \emph{recommended} that \code{ad2} be moderately large relative to \code{ad1}, even if \code{valid} can sometimes be \code{TRUE} when this is not the case. Similarly, satisfying this condition is no guarantee that \code{valid} will be \code{TRUE}. Therefore, a warning is returned if \code{ad1 <= ad2}, regardless of the value taken by \code{valid}.
+#' @note It is \emph{recommended} that \code{ad2} be moderately large relative to \code{ad1}, even if \code{valid} can sometimes be \code{TRUE} when this is not the case (e.g. when \code{truncated=TRUE}). Similarly, satisfying this condition is no guarantee that \code{valid} will be \code{TRUE}, unless \code{truncated=TRUE}. Therefore, a warning is returned if \code{ad1 <= ad2}, regardless of the value taken by \code{valid}, when \code{truncated=FALSE} (the default).
 #' @keywords control
-#' @seealso \code{\link{mcmc_IMIFA}}
+#' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{ltrgamma}}
 #' @references Murphy, K., Viroli, C., and Gormley, I. C. (2020) Infinite mixtures of infinite factor analysers, \emph{Bayesian Analysis}, 15(3): 937-963. <\href{https://projecteuclid.org/euclid.ba/1570586978}{doi:10.1214/19-BA1179}>.
 #'
 #' Durante, D. (2017). A note on the multiplicative gamma process, \emph{Statistics & Probability Letters}, 122: 198-204.
 #'
 #' Bhattacharya, A. and Dunson, D. B. (2011). Sparse Bayesian infinite factor models, \emph{Biometrika}, 98(2): 291-306.
+#'
+#' Zhang, X., Dunson, D. B., and Carin, L. (2011) Tree-structured infinite sparse factor model. In Getoor, L. and Scheffer, T. (Eds.), \emph{Proceedings of the 28th International Conference on Machine Learning}, ICML'11, Madison, WI, USA, pp. 785-792. Omnipress.
 #' @author Keefe Murphy - <\email{keefe.murphy@@mu.ie}>
 #' @usage
 #' MGP_check(ad1,
@@ -516,20 +527,26 @@
 #'           sigma.rate = NULL,
 #'           bd1 = 1,
 #'           bd2 = 1,
+#'           truncated = FALSE,
 #'           inverse = TRUE)
 #' @examples
 #' # Check if expected shrinkage under the MGP increases with the column index (WRONG approach!).
-#' MGP_check(ad1=1.5, ad2=1.8, Q=10, phi.shape=3, inverse=FALSE)$valid      #TRUE
+#' MGP_check(ad1=1.5, ad2=1.8, Q=10, phi.shape=3, inverse=FALSE)$valid   #TRUE
 #'
 #' # Check if the induced IG prior on the MGP column shrinkage parameters
-#' # is stochastically increasing, thereby inducing cumulative shrinkage     (CORRECT approach!).
-#' MGP_check(ad1=1.5, ad2=1.8, Q=10, phi.shape=3, inverse=TRUE)$valid       #FALSE
+#' # is stochastically increasing, thereby inducing cumulative shrinkage (CORRECT approach!).
+#' MGP_check(ad1=1.5, ad2=1.8, Q=10, phi.shape=3, inverse=TRUE)$valid    #FALSE
 #'
-#' # Check again with a parameterisation that IS valid and examine the expected shrinkage values.
+#' # Check again with a parameterisation that IS valid and examine the expected shrinkage values
 #' (shrink <- MGP_check(ad1=1.5, ad2=2.8, Q=10, phi.shape=2, phi.rate=0.5, inverse=TRUE))
-    MGP_check    <- function(ad1, ad2, Q = 3L, phi.shape = NULL, phi.rate = NULL, sigma.shape = NULL, sigma.rate = NULL, bd1 = 1, bd2 = 1, inverse = TRUE) {
+#'
+#' # Check previously invalid parameterisation again using truncated version of the MGP prior
+#' MGP_check(ad1=1.5, ad2=1.8, Q=10, phi.shape=3, truncated=FALSE)$valid # TRUE
+    MGP_check    <- function(ad1, ad2, Q = 3L, phi.shape = NULL, phi.rate = NULL, sigma.shape = NULL, sigma.rate = NULL, bd1 = 1, bd2 = 1, truncated = FALSE, inverse = TRUE) {
+      if(length(truncated)     != 1  ||
+         !is.logical(truncated))           stop("'truncated' must be a single logical indicator", call.=FALSE)
       if(length(inverse) != 1  ||
-         !is.logical(inverse))             stop("'inverse' must be a single logical indicator", call.=FALSE)
+         !is.logical(inverse))             stop("'inverse' must be a single logical indicator",   call.=FALSE)
       phi.shape  <- if(is.null(phi.shape))   1L + inverse        else phi.shape
       phi.rate   <- if(is.null(phi.rate))    phi.shape - inverse else phi.rate
       sig.shape  <- if(is.null(sigma.shape)) 1L + inverse        else sigma.shape
@@ -564,7 +581,8 @@
       if(any(sig.rate    <= 0))            stop("All cluster shrinkage rate hyperparameter values must be strictly positive",      call.=FALSE)
       if(any(c(ad1, ad2)  < 1))            stop("All column shrinkage shape hyperparameter values must be at least 1",             call.=FALSE)
       if(any(c(bd1, bd2) <= 0))            stop("All column shrinkage rate hyperparameter values must be strictly positive",       call.=FALSE)
-      if(any(WX  <- ad1  >= ad2))          warning("'ad2' should be moderately large relative to 'ad1' to encourage loadings column removal\n", call.=FALSE, immediate.=TRUE)
+      if(any(WX  <- ad1  >= ad2 &
+             !truncated))                  warning("'ad2' should be moderately large relative to 'ad1' to encourage loadings column removal\n", call.=FALSE, immediate.=TRUE)
 
       Qseq       <- seq_len(Q)  - 1L
       ML         <- seq_len(max.len)
@@ -579,22 +597,22 @@
         ad1      <- ifelse(ad1 == 1, ad1 + .Machine$double.eps, ad1)
         ad2      <- ifelse(ad2 == 1, ad2 + .Machine$double.eps, ad2)
         exp.Q1   <- nu2/(nu1    - 1)     * bd1/(ad1  - 1) * rho2/(rho1 - 1)
-        exp.Qk   <- bd2/(ad2    - 1)
+        exp.Qk   <- ifelse(truncated, exp_ltrgamma(ad2, bd2, inverse=TRUE),  bd2/(ad2 - 1))
         exp.Q1   <- if(length(exp.Q1)    < length(exp.Qk)) rep(exp.Q1, max.len) else exp.Q1
         exp.Qk   <- if(length(exp.Qk)    < length(exp.Q1)) rep(exp.Qk, max.len) else exp.Qk
         exp.seq  <- lapply(ML, function(i) exp.Q1[i] * exp.Qk[i]^Qseq)
         check    <- vapply(exp.seq,  is.unsorted, logical(1L))
       } else {
         exp.Q1   <- nu1/nu2     * ad1/bd1            * rho1/rho2
-        exp.Qk   <- ad2/bd2
+        exp.Qk   <- ifelse(truncated, exp_ltrgamma(ad2, bd2, inverse=FALSE), ad2/bd2)
         exp.Q1   <- if(length(exp.Q1)    < length(exp.Qk)) rep(exp.Q1, max.len) else exp.Q1
         exp.Qk   <- if(length(exp.Qk)    < length(exp.Q1)) rep(exp.Qk, max.len) else exp.Qk
         exp.seq  <- lapply(ML, function(i) exp.Q1[i] * exp.Qk[i]^Qseq)
         check    <- !vapply(exp.seq, is.unsorted, logical(1L))
       }
       exp.seq    <- if(length(exp.seq) == 1) exp.seq[[1L]] else exp.seq
-      res        <- list(expectation = exp.seq, valid = Q < 2 || check)
-      attr(res, "Warning")    <- WX    || (inverse  && XW)
+      res        <- list(expectation = exp.seq, valid = Q < 2 | check)
+      attr(res, "Warning")    <- WX     | (inverse  && XW)
         return(res)
     }
 
@@ -1773,6 +1791,7 @@
 #' @param adapt A logical value indicating whether adaptation of the number of cluster-specific factors is to take place when the MGP prior is employed. Defaults to \code{TRUE}. Specifying \code{FALSE} and supplying \code{range.Q} within \code{\link{mcmc_IMIFA}} provides a means to either approximate the infinite factor model with a fixed high truncation level, or to use the MGP prior in a finite factor context, however this is NOT recommended for the \code{"OMIFA"} and \code{"IMIFA"} methods.
 #' @param forceQg A logical indicating whether the upper limit on the number of cluster-specific factors \code{Q} is also cluster-specific. Defaults to \code{FALSE}: when \code{TRUE}, the number of factors in each cluster is kept below the number of observations in each cluster, in addition to the bound defined by \code{range.Q}. Only relevant for the \code{"IMIFA"}, \code{"OMIFA"}, and \code{"MIFA"} methods, and only invoked when \code{adapt} is \code{TRUE}. May be useful for low-dimensional data sets for which identifiable solutions are desired.
 #' @param cluster.shrink A logical value indicating whether to place the prior specified by \code{sigma.hyper} on the cluster shrinkage parameters. Defaults to \code{TRUE}. Specifying \code{FALSE} is equivalent to fixing all cluster shrinkage parameters to 1. Only relevant for the \code{"IMIFA"}, \code{"OMIFA"}, and \code{"MIFA"} methods. If invoked, the posterior mean cluster shrinkage factors will be reported.
+#' @param truncated A logical value indicating whether the version of the MGP prior based on left-truncated gamma distributions is invoked (see Zhang et al. reference below and additional relevant documentation in \code{\link{ltrgamma}} and \code{\link{MGP_check}}). Defaults to \code{FALSE}. Note that, when \code{TRUE}, only the shrinkage parameters for the first loadings column are affected and the conditions needed to pass \code{\link{MGP_check}} are much less strict. Moreover, more desirable shrinkage properties are easily obtained, at the expense of slightly longer run times.
 #' @param b0,b1 Intercept & slope parameters for the exponentially decaying adaptation probability:
 #'
 #' \code{p(iter) = 1/exp(b0 + b1 * (iter - start.AGS))}.
@@ -1792,12 +1811,14 @@
 #' @note Certain supplied arguments will be subject to further checks by \code{\link{MGP_check}} to ensure the cumulative shrinkage property of the MGP prior holds according to the given parameterisation.
 #'
 #' The adaptive Gibbs sampler (AGS) monitors the \code{prop} of loadings elements within the neighbourhood \code{eps} of 0 and discards columns or simulates new columns on this basis. However, if at any stage the number of group-specific latent factors reaches zero, the decision to add columns is instead based on a simple binary trial with probability \code{1-prop}, as there are no loadings entries to monitor.
-#' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{MGP_check}}, \code{\link{mixfaControl}}, \code{\link{bnpControl}}, \code{\link{storeControl}}
+#' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{MGP_check}}, \code{\link{ltrgamma}}, \code{\link{mixfaControl}}, \code{\link{bnpControl}}, \code{\link{storeControl}}
 #' @references Murphy, K., Viroli, C., and Gormley, I. C. (2020) Infinite mixtures of infinite factor analysers, \emph{Bayesian Analysis}, 15(3): 937-963. <\href{https://projecteuclid.org/euclid.ba/1570586978}{doi:10.1214/19-BA1179}>.
 #'
 #' Durante, D. (2017). A note on the multiplicative gamma process, \emph{Statistics & Probability Letters}, 122: 198-204.
 #'
 #' Bhattacharya, A. and Dunson, D. B. (2011) Sparse Bayesian infinite factor models, \emph{Biometrika}, 98(2): 291-306.
+#'
+#' Zhang, X., Dunson, D. B., and Carin, L. (2011) Tree-structured infinite sparse factor model. In Getoor, L. and Scheffer, T. (Eds.), \emph{Proceedings of the 28th International Conference on Machine Learning}, ICML'11, Madison, WI, USA, pp. 785-792. Omnipress.
 #' @author Keefe Murphy - <\email{keefe.murphy@@mu.ie}>
 #' @usage
 #' mgpControl(alpha.d1 = 2.1,
@@ -1809,6 +1830,7 @@
 #'            adapt = TRUE,
 #'            forceQg = FALSE,
 #'            cluster.shrink = TRUE,
+#'            truncated = FALSE,
 #'            b0 = 0.1,
 #'            b1 = 5e-05,
 #'            beta.d1 = 1,
@@ -1818,15 +1840,16 @@
 #'            delta0g = FALSE,
 #'            ...)
 #' @examples
-#' mgpctrl <- mgpControl(phi.hyper=c(2.5, 1), eps=1e-02)
+#' mgpctrl <- mgpControl(phi.hyper=c(2.5, 1), eps=1e-02, truncated=TRUE)
 #'
 #' # data(olive)
 #' # sim   <- mcmc_IMIFA(olive, "IMIFA", n.iters=5000, MGP=mgpctrl)
 #'
 #' # Alternatively specify these arguments directly
-#' # sim   <- mcmc_IMIFA(olive, "IMIFA", n.iters=5000, phi.hyper=c(2.5, 1), eps=1e-02)
+#' # sim   <- mcmc_IMIFA(olive, "IMIFA", n.iters=5000,
+#' #                     phi.hyper=c(2.5, 1), eps=1e-02, truncated=TRUE)
     mgpControl   <- function(alpha.d1 = 2.1, alpha.d2 = 3.1, phi.hyper = c(3, 2), sigma.hyper = c(3, 2), prop = 0.7, eps = 1e-01, adapt = TRUE, forceQg = FALSE,
-                             cluster.shrink = TRUE, b0 = 0.1, b1 = 5e-05, beta.d1 = 1, beta.d2 = 1, start.AGS = 0L, stop.AGS = Inf, delta0g = FALSE, ...) {
+                             cluster.shrink = TRUE, truncated = FALSE, b0 = 0.1, b1 = 5e-05, beta.d1 = 1, beta.d2 = 1, start.AGS = 0L, stop.AGS = Inf, delta0g = FALSE, ...) {
       miss.args  <- list(propx = missing(prop), startAGSx = missing(start.AGS), stopAGSx = missing(stop.AGS))
       if(any(!is.numeric(alpha.d1),
              !is.numeric(alpha.d2),
@@ -1842,6 +1865,8 @@
       forceQg   <- forceQg     && adapt
       if(any(length(cluster.shrink) != 1,
              !is.logical(cluster.shrink))) stop("'cluster.shrink' must be a single logical indicator", call.=FALSE)
+      if(any(length(truncated) != 1,
+             !is.logical(truncated)))      stop("'truncated' must be a single logical indicator",      call.=FALSE)
       if(any(length(b0)        != 1,
              !is.numeric(b0), b0     < 0)) stop("'b0' must be a non-negative scalar to ensure valid adaptation probability", call.=FALSE)
       if(any(length(b1)        != 1,
@@ -1870,8 +1895,8 @@
       if(any(length(delta0g)   != 1,
              !is.logical(delta0g)))        stop("'delta0g' must be a single logical indicator", call.=FALSE)
       MGPAGS     <- list(alpha.d1 = alpha.d1, alpha.d2 = alpha.d2, delta0g = delta0g, phi.hyper = phi.hyper, sigma.hyper = sigma.hyper,
-                         prop = prop, epsilon = eps, adapt = adapt, forceQg = forceQg, cluster.shrink = cluster.shrink, b0 = b0,
-                         b1 = b1, beta.d1 = beta.d1, beta.d2 = beta.d2, start.AGS = start.AGS, stop.AGS = stop.AGS)
+                         prop = prop, epsilon = eps, adapt = adapt, forceQg = forceQg, cluster.shrink = cluster.shrink, truncated = truncated,
+                         b0 = b0, b1 = b1, beta.d1 = beta.d1, beta.d2 = beta.d2, start.AGS = start.AGS, stop.AGS = stop.AGS)
       attr(MGPAGS, "Missing")  <- miss.args
         MGPAGS
     }
@@ -2023,7 +2048,6 @@
 #' @usage
 #' pareto_scale(x,
 #'              centering = TRUE)
-#'
 #' @examples
 #' dat  <- pareto_scale(olive[,-c(1,2)])
   pareto_scale <- function(x, centering=TRUE) {
@@ -2031,6 +2055,84 @@
        !is.logical(centering))           stop("'centering' must be a single logical indicator", call.=FALSE)
     x          <- as.matrix(x)
       .scale2(x, centering, sqrt(colVars(x, std=TRUE)))
+  }
+
+#' Left Truncated Gamma Distributions
+#'
+#' Functions to draw pseudo-random numbers from, or calculate the expectation of, left-truncated gamma distributions (see Details below).
+#' @param n Number of observations to generate.
+#' @param shape Shape parameter for the desired gamma distribution. Must be strictly positive
+#' @param rate Rate parameter for the desired gamma distribution. Must be strictly positive.
+#' @param trunc The point of left truncation (corresponding to \eqn{\tau}{tau} below). Defaults to \code{1}. Must be non-negative. When \code{inverse} is \code{TRUE}, this becomes the point of \emph{right} truncation.
+#'
+#' @details The left-truncated gamma distribution has PDF:
+#' \deqn{f(x|\alpha, \beta) = \frac{\beta^\alpha}{(\Gamma(\alpha)-\Gamma(\alpha, \tau\beta))}x^{\alpha-1}e^{-x\beta}}
+#' for \eqn{0\le\tau\le x}, and \eqn{\min(\tau,\beta) > 0}{min(tau, beta) > 0}, where \eqn{\alpha}{alpha} and \eqn{\beta}{beta} are the \code{shape} and \code{rate} parameters, respectively, \eqn{\tau}{tau} is the cutoff point at which \code{trunc}ation occurs, and \eqn{\Gamma(\alpha, \tau\beta)} is the upper incomplete gamma function.
+#'
+#' @note \code{rltrgamma} is invoked internally for the \code{"IFA"}, \code{"MIFA"}, \code{"OMIFA"}, and \code{"IMIFA"} models to draw column shrinkage parameters for all but the first loadings column under the MGP prior when \code{truncated=TRUE} (which is \strong{not} the default) is supplied to \code{mgpControl}, at the expense of slightly longer run times. \code{exp_ltrgamma} is used within \code{MGP_check} to check the validity of the MGP hyperparameters when \code{truncated=TRUE} (which is again, \strong{not} the default). Both functions always assume \code{trunc=1} for these internal usages.
+#'
+#' Note also that no arguments are recycled, i.e. all arguments must be of length \code{1}.
+#' @return For \code{rltrgamma}, a vector of length \code{n} giving draws from the left-truncated gamma distribution with the specified \code{shape} and \code{rate} parameters, and truncation point \code{trunc}.
+#'
+#' For \code{exp_ltrgamma}, the expected value of a left-truncated (inverse) gamma distribution.
+#' @export
+#' @seealso \code{\link{mgpControl}}, \code{\link{MGP_check}}
+#' @name ltrgamma
+#' @rdname ltrgamma
+#' @references Dagpunar, J. S. (1978) Sampling of variates from a truncated gamma distribution, \emph{Statistical Computation and Simulation}, 8(1): 59-64.
+#' @author Keefe Murphy - <\email{keefe.murphy@@mu.ie}>
+#' @keywords utility
+#' @usage
+#' rltrgamma(n,
+#'           shape,
+#'           rate = 1,
+#'           trunc = 1)
+#'
+#' @examples
+#' # Generate left-truncated Ga(3.1, 2.1, 1) variates
+#' rltrgamma(n=10, shape=3.1, rate=2.1)
+#'
+#' # Calculate the expectation of a Ga(3.1, 2.1, 1) distribution
+#' exp_ltrgamma(shape=3.1, rate=2.1)
+#'
+#' # Calculate the expectation of an inverse gamma distribution right-truncated at 2
+#' exp_ltrgamma(shape=3.1, rate=2.1, trunc=2, inverse=TRUE)
+  rltrgamma    <- function(n, shape, rate = 1, trunc = 1) {
+    EV         <- as.list(environment())
+    if(!all(vapply(EV, is.numeric,
+                   logical(1L))))        stop("All arguments must be numeric",              call.=FALSE)
+    if(!all(lengths(EV) == 1))           stop("All arguments must be of length 1",          call.=FALSE)
+    if(any(n   != floor(n)))             stop("'n' must be coercible to an integer",        call.=FALSE)
+    if(shape   <= 1)                     stop("'shape' parameter must be greater than 1",   call.=FALSE)
+    if(rate    <= 0)                     stop("'rate' parameter must be strictly positive", call.=FALSE)
+    if(trunc    < 0)                     stop("'trunc' cannot be negative",                 call.=FALSE)
+    U          <- stats::runif(n)
+    G          <- stats::pgamma(trunc, shape, rate)
+      stats::qgamma(G + U * (1 - G),   shape, rate)
+  }
+
+#' @keywords utility
+#' @param inverse A logical indicating whether to calculate the expectation for a right-truncated \emph{inverse} gamma distribution instead of a left-truncated gamma distribution. Defaults to \code{FALSE}.
+#' @rdname ltrgamma
+#' @usage
+#' exp_ltrgamma(shape,
+#'              rate = 1,
+#'              trunc = 1,
+#'              inverse = FALSE)
+#' @export
+  exp_ltrgamma <- function(shape, rate = 1, trunc = 1, inverse = FALSE) {
+    if(any(!is.numeric(shape),
+           shape        <= 0))           stop("'shape' must be strictly positive and numeric",         call.=FALSE)
+    if(any(!is.numeric(rate),
+           rate         <= 0))           stop("'rate' must be strictly positive and numeric",          call.=FALSE)
+    if(any(!is.numeric(trunc),
+           trunc         < 0))           stop("'trunc' must be strictly non-negative and numeric",     call.=FALSE)
+    if(isTRUE(inverse))  {
+      if(any(shape      <= 1))           stop("'shape' must be > 1 when inverse=TRUE",                 call.=FALSE)
+      stats::pgamma(rate / trunc, shape - 1, lower.tail=FALSE)/stats::pgamma(rate / trunc, shape, lower.tail=FALSE) * rate/(shape - 1)
+    } else      {
+      stats::pgamma(rate * trunc, shape + 1, lower.tail=FALSE)/stats::pgamma(rate * trunc, shape, lower.tail=FALSE) * shape/rate
+    }
   }
 
   # Other Hidden Functions
@@ -2142,6 +2244,10 @@
       options(show.error.messages=FALSE)
       on.exit(suppressWarnings(options(opts)), add=TRUE)
         if(ent  %in% c("exit", "EXIT"))    stop(call.=FALSE)
+    }
+
+    .gamma_inc   <- function(shape, trunc = 1, upper = TRUE) { # unused
+        gamma(shape) * stats::pgamma(trunc, shape, rate=1, lower.tail=isFALSE(upper))
     }
 
     .geom_mean   <- function(x) { # unused

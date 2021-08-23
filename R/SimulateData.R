@@ -131,7 +131,7 @@ sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(floor(log(P)), G),
     if(anyNA(musup))                      stop("Missing values are not allowed in 'mu'",  call.=FALSE)
   } else {
     if(!is.numeric(loc.diff))             stop("'loc.diff' must be numeric", call.=FALSE)
-    musup      <- as.integer(scale(Gseq, center=TRUE, scale=FALSE)) * loc.diff
+    musup      <- (Gseq  - (G + 1)/2) * loc.diff
   }
   if(!(psimiss <- missing(psi)))      {
     psisup     <- matrix(.len_check(as.matrix(psi), switch0g = TRUE, method = ifelse(G > 1, "MFA", "FA"), P, G)[[1L]], nrow=P, ncol=G, byrow=length(psi) == G)
@@ -139,7 +139,7 @@ sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(floor(log(P)), G),
   }
   if(!(smiss   <- missing(scores))   &&
      method    == "conditional")      {
-    if(!is.matrix(scores)  ||
+    if(!is.matrix(scores)    ||
        !is.numeric(scores))               stop("Invalid 'scores' supplied: must be a numeric matrix", call.=FALSE)
     if(anyNA(scores))                     stop("Missing values are not allowed in 'scores'", call.=FALSE)
   }
@@ -313,5 +313,5 @@ sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(floor(log(P)), G),
                      loadings = res$Loadings$post.load,
                      scores   = res$Scores$post.eta,
                      method   = meth,
-                     forceQg   = FALSE)))
+                     forceQg  = FALSE)))
   }

@@ -3,7 +3,7 @@
 ###########################################################
 
 # Gibbs Sampler Function
-  .gibbs_IFA     <- function(Q, data, iters, N, P, sigma.mu, mu, prop, uni.type,
+  .gibbs_IFA     <- function(Q, data, iters, N, P, sigma.mu, mu, prop, truncated, uni.type,
                              uni.prior, psi.alpha, psi.beta, burnin, thinning, verbose,
                              sw, epsilon, mu.zero, nu1, nu2, adapt, start.AGS, stop.AGS,
                              b0, b1, alpha.d1, alpha.d2, beta.d1, beta.d2, scaling, ...) {
@@ -52,7 +52,14 @@
     V            <- switch(EXPR=uni.type,  constrained=P,                single=1L)
     eta          <- .sim_eta_p(N=N, Q=Q)
     phi          <- .sim_phi_p(Q=Q, P=P, nu1=nu1, nu2=nu2)
-    delta        <- c(.sim_delta_p(alpha=alpha.d1, beta=beta.d1), .sim_delta_p(Q=Q, alpha=alpha.d2, beta=beta.d2))
+    if(isTRUE(truncated)) {
+     .sim_deltak <- .sim_deltaKT
+     .rdelta     <- rltrgamma
+     delta       <- c(.sim_delta_p(alpha=alpha.d1, beta=beta.d1), .sim_deltaPT(Q=Q, alpha=alpha.d2, beta=beta.d2))
+    } else        {
+      .rdelta    <- stats::rgamma
+      delta      <- c(.sim_delta_p(alpha=alpha.d1, beta=beta.d1), .sim_delta_p(Q=Q, alpha=alpha.d2, beta=beta.d2))
+    }
     tau          <- cumprod(delta)
     lmat         <- matrix(vapply(Pseq, function(j) .sim_load_ps(Q=Q, phi=phi[j,], tau=tau), numeric(Q)), nrow=P, byrow=TRUE)
     psi.inv      <- .sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
@@ -114,8 +121,8 @@
               Q     <- Q.star
             } else {
               eta   <- if(storage) cbind(eta, stats::rnorm(N))   else eta
-              phi   <- cbind(phi,  .rgamma0(n=P, shape=nu1, rate=nu2))
-              delta <- c(delta,    stats::rgamma(n=1, shape=alpha.d2, rate=beta.d2))
+              phi   <- cbind(phi,  .rgamma0(n=P, shape=nu1,      rate=nu2))
+              delta <- c(delta,    .rdelta(n=1,  shape=alpha.d2, rate=beta.d2))
               tau   <- cumprod(delta)
               lmat  <- cbind(lmat, stats::rnorm(n=P, mean=0, sd=1/sqrt(phi[,Q] * tau[Q])))
             }
