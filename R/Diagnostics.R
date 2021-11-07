@@ -920,7 +920,8 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
         Q0Er     <- Q0E[,r]
         if(frobenius)   {
           if(inf.Q) QsEr       <- QsE[,r]
-          rdat   <- suppressWarnings(sim_IMIFA_data(N=n.obs, G=G, P=n.var, Q=QsEr, nn=tab.z[r,], mu=mu2[,,r], psi=psi2[,,r], method="marginal", forceQg=FALSE, loadings=if(!all(Q0Er)) lapply(Gseq, function(g) as.matrix(lmat2[,if(inf.Q) seq_len(QsEr[g]) else Qseq,g,r]))))
+          rdat   <- suppressWarnings(sim_IMIFA_data(N=n.obs, G=G, P=n.var, Q=QsEr, nn=tab.z[r,], mu=mu2[,,r], psi=psi2[,,r], method="marginal", forceQg=FALSE,
+                                                    loadings=if(!all(Q0Er)) lapply(Gseq, function(g) matrix(lmat2[,if(inf.Q) seq_len(QsEr[g]) else Qseq,g,r], nrow=n.var, ncol=QsEr[g]))))
           rbinsx <- mapply(tabulate, mapply(cut, rdat, dbreaks, SIMPLIFY=FALSE), xbins, SIMPLIFY=FALSE)
           rbins  <- sapply(rbinsx, .padding, nbins)
           Frob   <- norm(dat.bins - rbins, dots$type)
@@ -975,7 +976,8 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
             QsEr <- QsE[r]
             QsMs <- seq_len(QsEr)
           }
-          rdat   <- suppressWarnings(sim_IMIFA_data(N=n.obs, G=G, P=n.var, Q=QsEr, mu=mu2[,r], psi=psi2[,r], method="marginal", forceQg=FALSE, loadings=if(!Q0E[r]) as.matrix(lmat2[,QsMs,r])))
+          rdat   <- suppressWarnings(sim_IMIFA_data(N=n.obs, G=G, P=n.var, Q=QsEr, mu=mu2[,r], psi=psi2[,r], method="marginal", forceQg=FALSE,
+                                                    loadings=if(!Q0E[r]) matrix(lmat2[,QsMs,r], nrow=n.var, ncol=QsEr)))
           rbinsx <- mapply(tabulate, mapply(cut, rdat, dbreaks, SIMPLIFY=FALSE), xbins, SIMPLIFY=FALSE)
           rbins  <- sapply(rbinsx, .padding, nbins)
           Frob   <- norm(dat.bins - rbins, dots$type)
@@ -1084,7 +1086,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   attr(result, "Ind.Slice")    <- if(is.element(method, c("IMFA", "IMIFA"))) attr(sims, "Ind.Slice")
   attr(result, "Kappa0")       <- attr(sims, "Kappa0")
   attr(result, "Method")       <- method
-  attr(result, "N.Loadstore")  <- if(inf.Q) vapply(Lstore, length, numeric(1L)) else rep(TN.store, G)
+  attr(result, "N.Loadstore")  <- if(inf.Q) lengths(Lstore) else rep(TN.store, G)
   attr(result, "Name")         <- data.name
   attr(result, "N.Store")      <- TN.store
   attr(result, "Nowarn.G")     <- ifelse(inf.G || length(n.grp) == 1, TRUE,

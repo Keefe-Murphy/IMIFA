@@ -209,39 +209,39 @@
 
   # Alpha
     .sim_alpha_g <- function(alpha, shape, rate, G, N) {
-      shape2     <- shape  + G - 1L
+      shape2     <- shape  + G  - 1L
       rate2      <- rate   - log(stats::rbeta(1, alpha + 1, N))
-      weight     <- shape2/(shape2   +  N  * rate2)
-        weight    * stats::rgamma(1L, shape=shape2 + 1, rate=rate2) + (1 - weight) * stats::rgamma(1L, shape=shape2, rate=rate2)
+      weights    <- shape2 / (shape2  + N * rate2)
+        sum(c(weights,   1 - weights) * c(stats::rgamma(2L, shape=c(shape2 + 1, shape2), rate=rate2)))
     }
 
     .log_palpha  <- function(alpha, discount, alpha.shape, alpha.rate, N, G) {
-      l.prior    <- stats::dgamma(alpha    + discount, shape=alpha.shape, rate=alpha.rate, log=TRUE)
-        lgamma(alpha  + 1) - lgamma(alpha  + N) + sum(log(alpha + discount   * seq_len(G - 1L))) + l.prior
+      l.prior    <- stats::dgamma(alpha   + discount, shape=alpha.shape, rate=alpha.rate, log=TRUE)
+        lgamma(alpha  + 1) - lgamma(alpha + N) + sum(log(alpha + discount    * seq_len(G - 1L))) + l.prior
     }
 
     .sim_alpha_m <- function(alpha, discount, alpha.shape, alpha.rate, N, G, zeta) {
-      propinter  <- c(max( - discount, alpha    - zeta), alpha  + zeta)
+      propinter  <- c(max( - discount, alpha   - zeta), alpha  + zeta)
       propa      <- stats::runif(1,    propinter[1L], propinter[2L])
-      cprob      <- .log_palpha(alpha, discount,  alpha.shape,    alpha.rate, N, G)
-      pprob      <- .log_palpha(propa, discount,  alpha.shape,    alpha.rate, N, G)
-      currinter  <- c(max( - discount, propa    - zeta), propa  + zeta)
-      logpr      <- pprob  - cprob   - log(diff(currinter))     + log(diff(propinter))
-      acpt       <- logpr >= 0  ||   - stats::rexp(1L) <= logpr
-        return(list(alpha  = ifelse(acpt, propa, alpha), rate   = acpt, l.prob = logpr))
+      cprob      <- .log_palpha(alpha, discount,  alpha.shape,   alpha.rate, N, G)
+      pprob      <- .log_palpha(propa, discount,  alpha.shape,   alpha.rate, N, G)
+      currinter  <- c(max( - discount, propa   - zeta), propa  + zeta)
+      logpr      <- pprob  - cprob    - log(diff(currinter))   + log(diff(propinter))
+      acpt       <- logpr >= 0 ||     - stats::rexp(1L) <= logpr
+        return(list(alpha  = ifelse(acpt, propa, alpha), rate  = acpt, l.prob = logpr))
     }
 
     .log_Oalpha  <- function(x, G, N, nn, shape, rate)  {
       G          <- G * x
-        lgamma(G) - lgamma(N + G)          +
-        sum(lgamma(nn + x)   - lgamma(x))  +
+        lgamma(G) - lgamma(N + G)         +
+        sum(lgamma(nn + x)   - lgamma(x)) +
         stats::dgamma(x, shape=shape, rate=rate, log=TRUE)
     }
 
     .sim_alpha_o <- function(alpha, zeta = 1, G, N, nn, shape, rate) {
-      propa      <- exp(log(alpha) + stats::rnorm(1, 0, zeta))
+      propa      <- exp(log(alpha)    + stats::rnorm(1, 0, zeta))
       logpr      <- .log_Oalpha(propa, G, N, nn, shape, rate) - .log_Oalpha(alpha, G, N, nn, shape, rate) + log(propa) - log(alpha)
-      acpt       <- logpr >= 0  || - stats::rexp(1L)   <= logpr
+      acpt       <- logpr >= 0 ||     - stats::rexp(1L) <= logpr
         return(list(alpha  = ifelse(acpt, propa, alpha), rate = acpt, l.prob = logpr))
     }
 
@@ -771,7 +771,7 @@
 #' Posterior Confusion Matrix
 #'
 #' For a (\code{N * G}) matrix of posterior cluster membership probabilities, this function creates a (\code{G * G}) posterior confusion matrix, whose hk-th entry gives the average probability that observations with maximum posterior allocation h will be assigned to cluster k.
-#' @param z A (\code{N * G}) matrix of posterior cluster membership probabilities whose ig-th entry gives the posterior probability that observation i belongs to cluster g. Entries must be valid probabilities in the interval [0,1]; missing values are not allowed.
+#' @param z A (\code{N * G}) matrix of posterior cluster membership probabilities whose (ig)-th entry gives the posterior probability that observation i belongs to cluster g. Entries must be valid probabilities in the interval [0,1]; missing values are not allowed.
 #'
 #' Otherwise, a list of such matrices can be supplied, where each matrix in the list has the same dimensions.
 #' @param scale A logical indicator whether the PCM should be rescaled by its row sums. When \code{TRUE} (the default), the benchmark matrix for comparison is the identity matrix of order \code{G}, corresponding to a situation with no uncertainty in the clustering. When \code{FALSE}, the row sums give the number of observations in each cluster.

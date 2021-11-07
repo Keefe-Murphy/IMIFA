@@ -1,6 +1,11 @@
 __Infinite Mixtures of Infinite Factor Analysers__
 ==================================================  
 
+### Improvements, Bug Fixes, & Miscellaneous Edits
+* Fixed posterior predictive checking bug in `get_IMIFA_results` for  
+  models for univariate data where _some_ components have zero factors.
+* Minor speed-up to updates of DP concentration parameter alpha.
+
 ## IMIFA v2.1.7 - (_14<sup>th</sup> release [patch update]: 2021-10-07_)
 ### Improvements, Bug Fixes, & Miscellaneous Edits
 * `mgpControl` gains the arg. `truncated` (defaults to `FALSE`):  

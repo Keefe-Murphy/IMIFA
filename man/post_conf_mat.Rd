@@ -7,7 +7,7 @@
 post_conf_mat(z, scale = TRUE)
 }
 \arguments{
-\item{z}{A (\code{N * G}) matrix of posterior cluster membership probabilities whose ig-th entry gives the posterior probability that observation i belongs to cluster g. Entries must be valid probabilities in the interval [0,1]; missing values are not allowed.
+\item{z}{A (\code{N * G}) matrix of posterior cluster membership probabilities whose (ig)-th entry gives the posterior probability that observation i belongs to cluster g. Entries must be valid probabilities in the interval [0,1]; missing values are not allowed.
 
 Otherwise, a list of such matrices can be supplied, where each matrix in the list has the same dimensions.}
 
