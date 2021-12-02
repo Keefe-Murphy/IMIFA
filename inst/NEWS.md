@@ -2,9 +2,14 @@ __Infinite Mixtures of Infinite Factor Analysers__
 ==================================================  
 
 ### Improvements, Bug Fixes, & Miscellaneous Edits
+* Slight modifications to adaptive Gibbs sampling for all infinite factor methods:  
+  * Adaptation now occurs before related parameter updates: cleaner, slightly faster code.
+  * Fixes __rare__ bug re: storing factor scores when there are empty components.
+  * Associated new default behaviour(s) for `mgpControl` arg. `start.AGS`.
 * Fixed posterior predictive checking bug in `get_IMIFA_results` for  
   models for univariate data where _some_ components have zero factors.
-* Minor speed-up to updates of DP concentration parameter alpha.
+* Minor IM(I)FA speed-ups to updates of DP concentration parameter alpha.
+* `sapply` replaced with `vapply`, with other negligible speed-ups.
 
 ## IMIFA v2.1.7 - (_14<sup>th</sup> release [patch update]: 2021-10-07_)
 ### Improvements, Bug Fixes, & Miscellaneous Edits

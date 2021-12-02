@@ -134,6 +134,59 @@
       if(verbose   && iter   < burnin) utils::setTxtProgressBar(pb, iter)
       storage      <- is.element(iter, iters)
 
+      # Adaptation
+      if(adapt     && all(iter >= start.AGS, iter < stop.AGS))    {
+        if(stats::runif(1) < ifelse(iter < AGS.burn, 0.5, exp(-b0 - b1 * (iter - start.AGS))))  {
+          colvec   <- lapply(nn.ind, function(g) (if(Q0[g]) colSums(abs(lmat[[g]])    < epsilon)/P else stats::runif(1)) >= prop)
+          nonred   <- lapply(colvec, .which0)
+          numred   <- lengths(colvec) - lengths(nonred)
+          notred   <- numred == 0
+          ng.ind   <- seq_along(nn.ind)
+          Qs.old   <- Qs[nn0]
+          Qs[nn0]  <- pmax.int(0L, vapply(ng.ind, function(h) if(notred[h]) Qs.old[h] + 1L         else Qs.old[h] - numred[h], numeric(1L)))
+          star.Q   <- if(forceQg) pmin(Q.star, nn[nn0] - 1L) else Q.star
+          Q.big    <- Qs[nn0] > star.Q
+          if((Q.bigs        <-  any(Q.big))) {
+            notred <- notred & !Q.big
+            Qs[nn0][Q.big]  <- if(forceQg) star.Q[Q.big]     else Q.star
+            if(forceQg)      {
+              for(qb in which(Q.big))   {
+               nonred[[qb]] <- seq_len(star.Q[qb])
+              }
+            }
+          }
+          phi[nn0]          <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) cbind(phi[[g]][,seq_len(Qs.old[h])],  .rgamma0(n=P, shape=nu1,         rate=nu2))     else phi[[g]][,nonred[[h]], drop=FALSE])
+          delta[nn0]        <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) c(delta[[g]][seq_len(Qs.old[h])],     .rdelta(n=1,  shape=alpha.d2[g], rate=beta.d2)) else delta[[g]][nonred[[h]]])
+          tau[nn0]          <- lapply(delta[nn.ind], cumprod)
+          lmat[nn0]         <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) cbind(lmat[[g]][,seq_len(Qs.old[h])], stats::rnorm(n=P, mean=0, sd=1/sqrt(phi[[g]][,Qs[g]] * tau[[g]][Qs[g]] * MGPsig[g]))) else lmat[[g]][,nonred[[h]], drop=FALSE])
+          Qemp     <- Qs[!nn0]
+          Qmax     <- max(Qs[nn0])
+          Qmaxseq  <- seq_len(Qmax)
+          if(any(!nn0)    && max(Qemp) != Qmax)  {
+            for(g  in Gseq[!nn0][Qemp  != Qmax]) {
+              Qg   <- Qs[g]
+              if(Qg > Qmax)  {
+                phi[[g]]    <- phi[[g]][,Qmaxseq,  drop=FALSE]
+                delta[[g]]  <- delta[[g]][Qmaxseq]
+                tau[[g]]    <- tau[[g]][Qmaxseq]
+                lmat[[g]]   <- lmat[[g]][,Qmaxseq, drop=FALSE]
+              } else {
+                while(Qg    != Qmax)   {
+                 phi[[g]]   <- cbind(phi[[g]],  .rgamma0(n=P, shape=nu1,         rate=nu2))
+                 delta[[g]] <- c(delta[[g]],    .rdelta(n=1,  shape=alpha.d2[g], rate=beta.d2))
+                 tau[[g]]   <- cumprod(delta[[g]])
+                 Qg         <- Qg + 1L
+                 lmat[[g]]  <- cbind(lmat[[g]], stats::rnorm(n=P, mean=0, sd=1/sqrt(phi[[g]][,Qg] * tau[[g]][Qg] * MGPsig[g])))
+                }
+              }
+            }
+            Qs[Qmax != Qs    & !nn0] <- Qmax
+          }
+          Q0        <- Qs  > 0
+          Q1        <- Qs == 1
+        }
+      }
+
     # Mixing Proportions
       pi.prop      <- if(equal.pro) pi.prop else rDirichlet(G=G, alpha=pi.alpha, nn=nn)
 
@@ -141,7 +194,8 @@
       dat.g        <- lapply(Gseq, function(g) data[z == g,, drop=FALSE])
       c.data       <- lapply(Gseq, function(g) sweep(dat.g[[g]], 2L, mu[,g], FUN="-", check.margin=FALSE))
       n.eta        <- nn
-      n0q0         <- nn0 & Q0
+      n0q0         <- nn0  & Q0
+      q0ng         <- (!Q0 | Q1) & n.eta > 0
       if(!any(Q0))    {
         eta        <- .empty_mat(nr=N)
         eta.tmp    <- lapply(Gseq, function(g) eta[z == g,,  drop=FALSE])
@@ -156,7 +210,7 @@
 
     # Uniquenesses
       if(isTRUE(one.uni)) {
-        S.mat      <- lapply(Gseq, function(g) { S <- c.data[[g]] - if(Q0[g]) tcrossprod(eta.tmp[[g]], lmat[[g]]) else 0L; S * S } )
+        S.mat      <- lapply(Gseq, function(g) { S <- c.data[[g]] - if(Q0[g]) tcrossprod(eta.tmp[[g]], lmat[[g]]) else 0L; S^2 } )
         psi.inv[,] <- .sim_psi_inv(uni.shape, psi.beta, S.mat, V)
       } else {
         psi.inv[,] <- vapply(Gseq, function(g) if(nn0[g]) .sim_psi_inv(N=nn[g], psi.alpha=psi.alpha, c.data=c.data[[g]], psi.beta=psi.beta[,g], lmat=lmat[[g]],
@@ -172,7 +226,7 @@
 
     # Shrinkage
       if(any(Q0))     {
-        load.2     <- lapply(lmat, .power2)
+        load.2     <- lapply(lmat, "^", 2)
         phi        <- lapply(Gseq, function(g) if(n0q0[g]) .sim_phi(Q=Qs[g], P=P, nu1.5=nu1.5, nu2=nu2, tau=tau[[g]],
                       load.2=load.2[[g]], sigma=MGPsig[g]) else .sim_phi_p(Q=Qs[g], P=P, nu1=nu1, nu2=nu2))
         sum.terms  <- lapply(Gseq, function(g) if(n0q0[g]) colSums2(phi[[g]] * load.2[[g]]))
@@ -218,68 +272,6 @@
       nn0          <- nn  > 0
       nn.ind       <- which(nn0)
 
-    # Adaptation
-      if(adapt     && all(iter >= start.AGS, iter < stop.AGS))    {
-        if(stats::runif(1) < ifelse(iter < AGS.burn, 0.5, exp(-b0 - b1 * (iter - start.AGS))))  {
-          colvec   <- lapply(nn.ind, function(g) (if(Q0[g]) colSums(abs(lmat[[g]])    < epsilon)/P else stats::runif(1)) >= prop)
-          nonred   <- lapply(colvec, .which0)
-          numred   <- lengths(colvec)  - lengths(nonred)
-          notred   <- numred == 0
-          ng.ind   <- seq_along(nn.ind)
-          Qs.old   <- Qs[nn0]
-          Qs[nn0]  <- pmax.int(0L, vapply(ng.ind, function(h) if(notred[h]) Qs.old[h] + 1L         else Qs.old[h] - numred[h], numeric(1L)))
-          star.Q   <- if(forceQg) pmin(Q.star, nn[nn0] - 1L) else Q.star
-          Q.big    <- Qs[nn0] > star.Q
-          if((Q.bigs        <-  any(Q.big))) {
-            notred <- notred & !Q.big
-            Qs[nn0][Q.big]  <- if(forceQg) star.Q[Q.big]     else Q.star
-            if(forceQg)      {
-              for(qb in which(Q.big)) {
-               nonred[[qb]] <- seq_len(star.Q[qb])
-              }
-            }
-          }
-          phi[nn0]          <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) cbind(phi[[g]][,seq_len(Qs.old[h])],  .rgamma0(n=P, shape=nu1,         rate=nu2))     else phi[[g]][,nonred[[h]], drop=FALSE])
-          delta[nn0]        <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) c(delta[[g]][seq_len(Qs.old[h])],     .rdelta(n=1,  shape=alpha.d2[g], rate=beta.d2)) else delta[[g]][nonred[[h]]])
-          tau[nn0]          <- lapply(delta[nn.ind], cumprod)
-          lmat[nn0]         <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) cbind(lmat[[g]][,seq_len(Qs.old[h])], stats::rnorm(n=P, mean=0, sd=1/sqrt(phi[[g]][,Qs[g]] * tau[[g]][Qs[g]] * MGPsig[g]))) else lmat[[g]][,nonred[[h]], drop=FALSE])
-          Qemp     <- Qs[!nn0]
-          Qpop     <- Qs[nn0]
-          Qmax     <- max(Qpop)
-          Qmaxold  <- max(Qs.old)
-          store.eta         <- all(sw["s.sw"], storage)
-          if(any(!nn0)  && Qmax  != max(Qemp))  {
-           Qmaxseq <- seq_len(Qmax)
-            for(g  in Gseq[!nn0][Qemp != Qmax]) {
-              Qg   <- Qs[g]
-              if(Qg > Qmax)  {
-                phi[[g]]    <- phi[[g]][,Qmaxseq,  drop=FALSE]
-                delta[[g]]  <- delta[[g]][Qmaxseq]
-                tau[[g]]    <- tau[[g]][Qmaxseq]
-                lmat[[g]]   <- lmat[[g]][,Qmaxseq, drop=FALSE]
-              } else {
-                while(Qg    != Qmax)   {
-                 phi[[g]]   <- cbind(phi[[g]],  .rgamma0(n=P, shape=nu1,         rate=nu2))
-                 delta[[g]] <- c(delta[[g]],    .rdelta(n=1,  shape=alpha.d2[g], rate=beta.d2))
-                 tau[[g]]   <- cumprod(delta[[g]])
-                 if(store.eta)         {
-                  eta.tmp[[g]]   <- cbind(eta.tmp[[g]], base::matrix(0L, nrow=n.eta[g], ncol=1L))
-                 }
-                 Qg         <- Qg + 1L
-                 lmat[[g]]  <- cbind(lmat[[g]], stats::rnorm(n=P, mean=0, sd=1/sqrt(phi[[g]][,Qg] * tau[[g]][Qg] * MGPsig[g])))
-                }
-              }
-            }
-            Qs[Qmax != Qs    & !nn0] <- Qmax
-          }
-          Q0        <- Qs  > 0
-          Q1        <- Qs == 1
-          if(store.eta)  {
-            eta.tmp <- lapply(Gseq,  function(g) if(nn0[g] && Qs[g] > Qs.old[nn.ind == g]) cbind(eta.tmp[[g]], stats::rnorm(n.eta[g])) else eta.tmp[[g]][,seq_len(Qs[g]), drop=FALSE])
-          }
-        }
-      }
-
     # Label Switching
       if(label.switch)   {
         sw.lab     <- .lab_switch(z.new=z, z.old=z.temp)
@@ -302,11 +294,6 @@
           Q0[left]          <- Q0[right]
           Q1[left]          <- Q1[right]
           nn0[left]         <- nn0[right]
-          if(all(sw["s.sw"], storage)) {
-            eta.tmp[left]   <- eta.tmp[right]
-            dat.g[left]     <- dat.g[right]
-            n.eta[left]     <- n.eta[right]
-          }
           if(mu0g)           {
             mu.zero[,left]  <- mu.zero[,right,  drop=FALSE]
             mu.prior[,left] <- mu.prior[,right, drop=FALSE]
@@ -340,13 +327,11 @@
         if(sw["mu.sw"])        mu.store[,,new.it]   <-   mu
         if(all(sw["s.sw"],
            any(Q0)))     {
-          max.Q    <- max(Qs)
-          eta.tmp  <- if(length(unique(Qs))  != 1)       lapply(Gseq,       function(g) cbind(eta.tmp[[g]], base::matrix(0L, nrow=n.eta[g], ncol=max.Q - Qs[g]))) else eta.tmp
-          q0ng     <- (!Q0   | Q1) &    n.eta > 0
+          eta.tmp  <- if(length(unique(Qs)) != 1)        lapply(Gseq,       function(g) cbind(eta.tmp[[g]], base::matrix(0L, nrow=n.eta[g], ncol=Qmax - ncol(eta.tmp[[g]])))) else eta.tmp
           if(any(q0ng))  {
             eta.tmp[q0ng]   <-                           lapply(Gseq[q0ng], function(g, x=eta.tmp[[g]]) { row.names(x) <- row.names(dat.g[[g]]); x })
           }
-                eta.store[,seq_len(max.Q),new.it]   <-   do.call(rbind, eta.tmp)[obsnames,, drop=FALSE]
+                       eta.store[,Qmaxseq,new.it]   <-   do.call(rbind, eta.tmp)[obsnames,, drop=FALSE]
         }
         if(sw["l.sw"])   {
           for(g in Gseq) {

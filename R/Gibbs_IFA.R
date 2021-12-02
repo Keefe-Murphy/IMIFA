@@ -36,6 +36,7 @@
     post.psi     <- post.mu
     ll.store     <- vector("integer", n.store)
     Q.star       <- Q
+    Q0           <- Q   > 0
     Q.store      <- vector("integer", n.store)
     Q.large      <- Q.big  <- FALSE
     nu1.5        <- nu1 + 0.5
@@ -75,6 +76,33 @@
     for(iter in seq_len(total)) {
       if(verbose && iter    < burnin) utils::setTxtProgressBar(pb, iter)
       storage    <- is.element(iter,  iters)
+
+    # Adaptation
+      if(adapt   && all(iter >= start.AGS, iter < stop.AGS))      {
+        if(stats::runif(1) < ifelse(iter < AGS.burn, 0.5, exp(-b0 - b1 * (iter - start.AGS)))) {
+          colvec <- (if(Q0)  colSums(abs(lmat)  < epsilon) / P   else stats::runif(1)) >= prop
+          numred <- sum(colvec)
+          if(numred == 0)  {
+            Q    <- Q + 1L
+            Q.big   <- Q   > Q.star
+            if(Q.big) {
+              Q     <- Q.star
+            } else {
+              phi   <- cbind(phi,  .rgamma0(n=P, shape=nu1,      rate=nu2))
+              delta <- c(delta,    .rdelta(n=1,  shape=alpha.d2, rate=beta.d2))
+              tau   <- cumprod(delta)
+              lmat  <- cbind(lmat, stats::rnorm(n=P, mean=0, sd=1/sqrt(phi[,Q] * tau[Q])))
+            }
+          } else if(Q > 0)      {
+            nonred  <- colvec  == 0
+            Q       <- max(0L, Q - numred)
+            phi     <- phi[,nonred, drop=FALSE]
+            delta   <- delta[nonred]
+            tau     <- cumprod(delta)
+            lmat    <- lmat[,nonred, drop=FALSE]
+          }
+        }
+      }
       Q0         <- Q  > 0
       Q1         <- Q == 1
 
@@ -98,7 +126,7 @@
 
     # Shrinkage
       if(Q0) {
-        load.2   <- lmat * lmat
+        load.2   <- lmat^2
         phi      <- .sim_phi(Q=Q, P=P, nu1.5=nu1.5, nu2=nu2, tau=tau, load.2=load.2)
         sum.term <- colSums2(phi * load.2)
         for(k in seq_len(Q)) {
@@ -109,35 +137,6 @@
         }
       }
 
-    # Adaptation
-      if(adapt   && all(iter >= start.AGS, iter < stop.AGS))      {
-        if(stats::runif(1) < ifelse(iter < AGS.burn, 0.5, exp(-b0 - b1 * (iter - start.AGS)))) {
-          colvec <- (if(Q0)  colSums(abs(lmat)  < epsilon) / P   else stats::runif(1)) >= prop
-          numred <- sum(colvec)
-          if(numred == 0)  {
-            Q    <- Q + 1
-            Q.big   <- Q   > Q.star
-            if(Q.big) {
-              Q     <- Q.star
-            } else {
-              eta   <- if(storage) cbind(eta, stats::rnorm(N))   else eta
-              phi   <- cbind(phi,  .rgamma0(n=P, shape=nu1,      rate=nu2))
-              delta <- c(delta,    .rdelta(n=1,  shape=alpha.d2, rate=beta.d2))
-              tau   <- cumprod(delta)
-              lmat  <- cbind(lmat, stats::rnorm(n=P, mean=0, sd=1/sqrt(phi[,Q] * tau[Q])))
-            }
-          } else if(Q > 0)      {
-            nonred  <- colvec  == 0
-            Q       <- max(0L, Q - numred)
-            eta     <- if(storage) eta[,nonred, drop=FALSE] else eta
-            phi     <- phi[,nonred, drop=FALSE]
-            delta   <- delta[nonred]
-            tau     <- cumprod(delta)
-            lmat    <- lmat[,nonred, drop=FALSE]
-          }
-        }
-      }
-
       if(Q.big && !Q.large && iter > burnin) {       cat("\n"); warning(paste0("\nQ has exceeded initial number of loadings columns since burnin: consider increasing range.Q from ", Q.star, "\n"), call.=FALSE)
         Q.large  <- TRUE
       }
@@ -145,7 +144,7 @@
         if(verbose) utils::setTxtProgressBar(pb, iter)
         new.it   <- which(iters == iter)
         psi      <- 1/psi.inv
-        post.mu  <- post.mu + mu/n.store
+        post.mu  <- post.mu  + mu/n.store
         post.psi <- post.psi + psi/n.store
         if(sw["mu.sw"])                          mu.store[,new.it] <- mu
         if(all(sw["s.sw"], Q0))      eta.store[,seq_len(Q),new.it] <- eta

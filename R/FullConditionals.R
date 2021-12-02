@@ -51,14 +51,14 @@
 
   # Uniquenesses
   #' @importFrom matrixStats "colSums2"
-    .sim_psi_uu  <- function(N, P, psi.alpha, psi.beta, c.data, eta, lmat, Q0)  {
+    .sim_psi_uu  <- function(N, P, psi.alpha, psi.beta, c.data, eta, lmat, Q0) {
       S.mat      <- c.data  - if(Q0) tcrossprod(eta, lmat) else 0L
-        stats::rgamma(P, shape=N/2L + psi.alpha, rate=colSums2(S.mat * S.mat)/2 + psi.beta)
+        stats::rgamma(P, shape=N/2L + psi.alpha, rate=colSums2(S.mat^2)/2 + psi.beta)
     }
 
-    .sim_psi_uc  <- function(N, P, psi.alpha, psi.beta, c.data, eta, lmat, Q0)  {
+    .sim_psi_uc  <- function(N, P, psi.alpha, psi.beta, c.data, eta, lmat, Q0) {
       S.mat      <- c.data  - if(Q0) tcrossprod(eta, lmat) else 0L
-        rep(stats::rgamma(1, shape=(N * P)/2L + psi.alpha, rate=sum(S.mat * S.mat)/2 + psi.beta), P)
+        rep(stats::rgamma(1, shape=(N * P)/2L + psi.alpha, rate=sum(S.mat^2)/2 + psi.beta), P)
     }
 
   #' @importFrom matrixStats "colSums2"
@@ -72,11 +72,11 @@
 
   #' @importFrom matrixStats "colSums2"
     .sim_psi_u1  <- function(u.shape, psi.beta, S.mat, V) {
-        stats::rgamma(V, shape=u.shape, rate=colSums2(S.mat * S.mat)/2 + psi.beta)
+        stats::rgamma(V, shape=u.shape, rate=colSums2(S.mat^2)/2  + psi.beta)
     }
 
     .sim_psi_c1  <- function(u.shape, psi.beta, S.mat, V = 1L) {
-        stats::rgamma(V, shape=u.shape, rate=sum(S.mat * S.mat)/2 + psi.beta)
+        stats::rgamma(V, shape=u.shape, rate=sum(S.mat^2)/2 + psi.beta)
     }
 
   # Local Shrinkage
@@ -851,7 +851,7 @@
 
   # Move 2
     .lab_move2   <- function(G, Vs, nn)    {
-      sw         <- sample(G, 1L, prob=c(rep(1, G - 2L), 0.5, 0.5))
+      sw         <- sample.int(G, 1L, prob=c(rep(1, G - 2L), 0.5, 0.5))
       sw         <- if(is.element(sw, c(G, G - 1L))) c(G - 1L, G) else c(sw, sw + 1L)
       nns        <- nn[sw]
       if(nns[1L] == 0)      {
@@ -1039,7 +1039,7 @@
       V          <- ifelse(P.dim, P, 1L)
       rGseq      <- seq_along(range.G)
       obj.name   <- deparse(substitute(obj0g))
-      obj.name   <- ifelse(grepl("$", obj.name, fixed=TRUE), sapply(strsplit(obj.name, "$", fixed=TRUE), "[[", 2), obj.name)
+      obj.name   <- ifelse(grepl("$", obj.name, fixed=TRUE), vapply(strsplit(obj.name, "$", fixed=TRUE), "[[", character(1L), 2L), obj.name)
       sw.name    <- deparse(substitute(switch0g))
       if(!inherits(obj0g,
                    "list"))       obj0g <- list(obj0g)
@@ -1338,7 +1338,7 @@
       } else {
         msg      <- switch(EXPR=meth, MFA=paste0(Gmsg, " and", Qmsg), MIFA=Gmsg)
       }
-      cat(paste0(meth, " simulations for '", name, "' dataset", msg, " to be passed to get_IMIFA_results(...)\n"))
+      cat(paste0(meth, " simulations for '", name, "' data set", msg, " to be passed to get_IMIFA_results(...)\n"))
         invisible()
     }
 
@@ -1372,7 +1372,7 @@
       } else {
         msg      <- switch(EXPR=meth, MFA=paste0(Gmsg, " and", Qmsg), MIFA=Gmsg)
       }
-      summ       <- list(call = call, details = paste0(meth, " simulations for '", name, "' dataset", msg, " to be passed to get_IMIFA_results(...)\n"))
+      summ       <- list(call = call, details = paste0(meth, " simulations for '", name, "' data set", msg, " to be passed to get_IMIFA_results(...)\n"))
       class(summ)        <- "summary_IMIFA"
         summ
     }
@@ -1799,7 +1799,7 @@
 #' Defaults to \code{0.1} & \code{0.00005}, respectively. Must be non-negative and strictly positive, respectively, to ensure diminishing adaptation.
 #' @param beta.d1 Rate hyperparameter of the column shrinkage on the first column of the loadings according to the MGP shrinkage prior. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to 1.
 #' @param beta.d2 Rate hyperparameter of the column shrinkage on the subsequent columns of the loadings according to the MGP shrinkage prior. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to 1.
-#' @param start.AGS The iteration at which adaptation under the AGS is to begin. Defaults to \code{burnin} for the \code{"IFA"} and \code{"MIFA"} methods, defaults to 0 for the \code{"OMIFA"} and \code{"IMIFA"} methods, and defaults to 0 for all methods if the data set is univariate or bivariate. Cannot exceed \code{burnin}.
+#' @param start.AGS The iteration at which adaptation under the AGS is to begin. Defaults to \code{burnin} for the \code{"IFA"} and \code{"MIFA"} methods, defaults to \code{2} for the \code{"OMIFA"} and \code{"IMIFA"} methods, and defaults to \code{2} for all methods if the data set is univariate or bivariate. Cannot exceed \code{burnin}; thus defaults to the same value as \code{burnin} if necessary.
 #' @param stop.AGS The iteration at which adaptation under the AGS is to stop completely. Defaults to \code{Inf}, such that the AGS is never explicitly forced to stop (thereby overriding the diminishing adaptation probability after \code{stop.AGS}). Must be greater than \code{start.AGS}. The diminishing adaptation probability prior to \code{stop.AGS} is still governed by the arguments \code{b0} and \code{b1}.
 #' @param delta0g Logical indicating whether the \code{alpha.d1} and \code{alpha.d2} hyperparameters can be cluster-specific. Defaults to \code{FALSE}. Only relevant for the \code{"MIFA"} method and only allowed when \code{z.list} is supplied within \code{\link{mcmc_IMIFA}}.
 #' @param ... Catches unused arguments.
@@ -1835,7 +1835,7 @@
 #'            b1 = 5e-05,
 #'            beta.d1 = 1,
 #'            beta.d2 = 1,
-#'            start.AGS = 0L,
+#'            start.AGS = 2L,
 #'            stop.AGS = Inf,
 #'            delta0g = FALSE,
 #'            ...)
@@ -1849,7 +1849,7 @@
 #' # sim   <- mcmc_IMIFA(olive, "IMIFA", n.iters=5000,
 #' #                     phi.hyper=c(2.5, 1), eps=1e-02, truncated=TRUE)
     mgpControl   <- function(alpha.d1 = 2.1, alpha.d2 = 3.1, phi.hyper = c(3, 2), sigma.hyper = c(3, 2), prop = 0.7, eps = 1e-01, adapt = TRUE, forceQg = FALSE,
-                             cluster.shrink = TRUE, truncated = FALSE, b0 = 0.1, b1 = 5e-05, beta.d1 = 1, beta.d2 = 1, start.AGS = 0L, stop.AGS = Inf, delta0g = FALSE, ...) {
+                             cluster.shrink = TRUE, truncated = FALSE, b0 = 0.1, b1 = 5e-05, beta.d1 = 1, beta.d2 = 1, start.AGS = 2L, stop.AGS = Inf, delta0g = FALSE, ...) {
       miss.args  <- list(propx = missing(prop), startAGSx = missing(start.AGS), stopAGSx = missing(stop.AGS))
       if(any(!is.numeric(alpha.d1),
              !is.numeric(alpha.d2),
@@ -2198,14 +2198,15 @@
       rand       <- 1 + (sum(tab^2)  - (sum(ni^2) + sum(nj^2))/2)/n2
       nis2       <- sum(choose(ni[ni > 1], 2))
       njs2       <- sum(choose(nj[nj > 1], 2))
-      crand      <- (sum(choose(tab[tab > 1], 2)) - (nis2 * njs2)/n2)/((nis2 + njs2)/2 - (nis2 * njs2)/n2)
+      nijn2      <- (nis2 * njs2)/n2
+      crand      <- (sum(choose(tab[tab > 1], 2)) - nijn2)/((nis2 + njs2)/2 - nijn2)
         list(diag = p0, kappa = (p0 - pc)/(1 - pc), rand = rand, crand = crand)
     }
 
     .clean_args  <- function(argstr, fn, exclude.repeats = FALSE, exclude.other = NULL, dots.ok = TRUE) {
       fnargs     <- names(formals(fn))
       if(length(argstr) > 0 && !("..." %in% fnargs && dots.ok)) {
-        badargs  <- names(argstr)[!sapply(names(argstr), "%in%", c(fnargs, ""))]
+        badargs  <- names(argstr)[!vapply(names(argstr), "%in%", logical(1L), c(fnargs, ""))]
         for(i in badargs) argstr[[i]]     <- NULL
       }
       if(exclude.repeats) {
@@ -2224,7 +2225,7 @@
       if(!is.matrix(x))                    stop("'x' must be a matrix")
       m          <- if(missing(avg)) colMeans2(x) else as.vector(avg)
       n          <- nrow(x)
-      s          <- pmax((colMeans2(x * x) - (m * m)) * (n/(n - 1)), 0L)
+      s          <- pmax((colMeans2(x^2) - m^2) * n/(n - 1), 0L)
         if(std) sqrt(s) else s
     }
 
@@ -2376,13 +2377,13 @@
       na.ind     <- !is.na(x)
       x          <- abs(x[na.ind])
       if(all(icheck   <- (floor(x) == x), na.rm=TRUE)) {
-        res[na.ind]   <- if(isTRUE(after.dot)) vector("integer", length(x)) else sapply(as.integer(x), format.info, digits=22)
+        res[na.ind]   <- if(isTRUE(after.dot)) vector("integer", length(x)) else vapply(as.integer(x), format.info, integer(1L), digits=22)
       } else      {
         ipart    <- pmax(1L, floor(x))
         ichar    <- nchar(ipart)
         remain   <- x %% ipart
-        res[na.ind]   <- (sapply(gsub("0+$", "", as.character(remain)), format.info, digits=22L)         - !icheck)   -
-                      (if(isTRUE(after.dot)) pmin(1L, replace(ichar, remain == 0, 0L)) else ifelse(ichar > 1, - ichar + !icheck, 0L))
+        res[na.ind]   <- (vapply(gsub("0+$", "", as.character(remain)), format.info, integer(1L), digits=22L) - !icheck) -
+                      (if(isTRUE(after.dot)) pmin(1L, replace(ichar, remain == 0, 0L)) else ifelse(ichar > 1, -  ichar   + !icheck, 0L))
       }
         return(res)
     }
@@ -2479,8 +2480,6 @@
         invisible(list(x = x, y = y))
     }
 
-    .power2      <- function(x) x * x
-
     .rgamma0     <- function(...) {
       tmp        <- stats::rgamma(...)
       tmp[tmp    == 0]     <- .Machine$double.eps
@@ -2494,7 +2493,7 @@
       if(!is.matrix(x))                    stop("'x' must be a matrix")
       m          <- if(missing(suma)) rowSums2(x) else suma
       n          <- ncol(x)
-      s          <- (rowSums2(x * x) - (m * m)/n)/(n - 1L)
+      s          <- (rowSums2(x^2) - m^2/n)/(n - 1L)
         if(std) sqrt(s) else s
     }
 
@@ -2505,22 +2504,22 @@
       scaling    <- if(is.logical(scale))     scale     else is.numeric(scale)
       if(center  && scaling) {
         y        <- t(x) - cmeans
-          if(isTRUE(scale)) t(y/sqrt(rowSums2(y * y)) * sqrt(nrow(x) - 1L)) else t(y/scale)
-      } else if(center)     {
+          if(isTRUE(scale)) t(y/sqrt(rowSums2(y^2)) * sqrt(nrow(x) - 1L)) else t(y/scale)
+      } else if(center)      {
           t(t(x)  - cmeans)
-      } else if(scaling)    {
+      } else if(scaling)     {
           t(t(x)/if(isTRUE(scale)) colVars(x, std=TRUE) else scale)
       } else  x
     }
 
     #' @importFrom Rfast "colVars"
-    .tune_beta0  <- function(beta0, dat, type=c("diag", "mse")) { # unused
+    .tune_beta0  <- function(dat, beta0 = 3, type = c("diag", "mse")) { # unused
       dat        <- as.matrix(dat)
       N          <- nrow(dat)
       P          <- ncol(dat)
-      inv.cov    <- (beta0 + N/2L) * chol2inv(chol(diag(beta0, P) + 0.5 * crossprod(.scale2(dat, TRUE, TRUE)))) * tcrossprod(1/colVars(dat, std=TRUE))
+      inv.cov    <- (beta0 + N/2L) * chol2inv(chol(diag(beta0, P) + 0.5 * crossprod(.scale2(dat)))) * tcrossprod(1/colVars(dat, std=TRUE))
       error      <- diag(P) - (stats::cov(dat) %*% inv.cov)
-        switch(EXPR=match.arg(type), diag=sum(diag(error)^2)/P, mean(error * error))
+        switch(EXPR=match.arg(type), diag=sum(diag(error)^2)/P, mean(error^2))
     }
 
     #' @importFrom matrixStats "colSums2" "rowSums2"
@@ -2528,7 +2527,7 @@
       p          <- ncol(x)
       if(p        < 2)                     return(x)
       if(normalize)         {
-        sc       <- sqrt(rowSums2(x * x))
+        sc       <- sqrt(rowSums2(x^2))
         x        <- x/sc
       }
       n          <- nrow(x)
@@ -2537,7 +2536,7 @@
       ns         <- rep(1L, n)
       for(i in seq_len(1000L)) {
         z        <- x    %*% TT
-        sB       <- La.svd(crossprod(x, z^3  - z %*% diag(colSums2(z * z)/n)))
+        sB       <- La.svd(crossprod(x, z^3  - z %*% diag(colSums2(z^2)/n)))
         TT       <- sB$u %*% sB$vt
         dp       <- d
         d        <- sum(sB$d)

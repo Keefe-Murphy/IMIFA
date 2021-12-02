@@ -18,7 +18,7 @@ mgpControl(alpha.d1 = 2.1,
            b1 = 5e-05,
            beta.d1 = 1,
            beta.d2 = 1,
-           start.AGS = 0L,
+           start.AGS = 2L,
            stop.AGS = Inf,
            delta0g = FALSE,
            ...)
@@ -54,7 +54,7 @@ Defaults to \code{0.1} & \code{0.00005}, respectively. Must be non-negative and 
 
 \item{beta.d2}{Rate hyperparameter of the column shrinkage on the subsequent columns of the loadings according to the MGP shrinkage prior. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to 1.}
 
-\item{start.AGS}{The iteration at which adaptation under the AGS is to begin. Defaults to \code{burnin} for the \code{"IFA"} and \code{"MIFA"} methods, defaults to 0 for the \code{"OMIFA"} and \code{"IMIFA"} methods, and defaults to 0 for all methods if the data set is univariate or bivariate. Cannot exceed \code{burnin}.}
+\item{start.AGS}{The iteration at which adaptation under the AGS is to begin. Defaults to \code{burnin} for the \code{"IFA"} and \code{"MIFA"} methods, defaults to \code{2} for the \code{"OMIFA"} and \code{"IMIFA"} methods, and defaults to \code{2} for all methods if the data set is univariate or bivariate. Cannot exceed \code{burnin}; thus defaults to the same value as \code{burnin} if necessary.}
 
 \item{stop.AGS}{The iteration at which adaptation under the AGS is to stop completely. Defaults to \code{Inf}, such that the AGS is never explicitly forced to stop (thereby overriding the diminishing adaptation probability after \code{stop.AGS}). Must be greater than \code{start.AGS}. The diminishing adaptation probability prior to \code{stop.AGS} is still governed by the arguments \code{b0} and \code{b1}.}
 

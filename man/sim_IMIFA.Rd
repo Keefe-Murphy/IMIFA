@@ -29,7 +29,7 @@ sim_IMIFA_model(res,
 
 \item{Q}{Desired number of cluster-specific latent factors in the simulated data set. Can be specified either as a single integer if all clusters are to have the same number of factors, or a vector of length \code{G}. Defaults to \code{floor(log(P))} in each cluster. Should be less than the associated \code{\link{Ledermann}} bound and the number of observations in the corresponding cluster. The argument \code{forceQg} can be used to enforce this upper limit.}
 
-\item{pis}{Mixing proportions of the clusters in the dataset if \code{G} > 1. Must sum to 1. Defaults to \code{rep(1/G, G)}.}
+\item{pis}{Mixing proportions of the clusters in the data set if \code{G} > 1. Must sum to 1. Defaults to \code{rep(1/G, G)}.}
 
 \item{mu}{True values of the mean parameters, either as a single value, a vector of length \code{G}, a vector of length \code{P}, or a \code{G * P} matrix. If \code{mu} is missing, \code{loc.diff} is invoked to simulate distinct means for each cluster by default.}
 

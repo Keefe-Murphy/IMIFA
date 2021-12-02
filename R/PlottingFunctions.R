@@ -347,7 +347,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
         prf    <- c(list(confusion.matrix = tab), prf, if(!is.null(uncer)) list(uncertain = uncer))
       }
       prf$confusion.matrix       <- if(!is.null(prf$confusion.matrix))     stats::addmargins(prf$confusion.matrix, quiet=TRUE)
-      prf$error.rate             <- if(!is.null(prf$error.rate))           paste0(round(100 * prf$error.rate, 2), "%")
+      prf$error.rate             <- if(!is.null(prf$error.rate))           paste0(round(100L * prf$error.rate, 2L), "%")
     } else      {
       prf      <- if(!is.null(uncer))     list(uncertain = uncer)
       prf      <- if(!is.null(prf[[1L]])) prf
@@ -939,11 +939,11 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
           graphics::text(x=0.5, y=y8,        cex=a.cex, col="black", adj=a.adj, bquote(paste(.(round(100 * switch(EXPR=param, alpha=plot.x$alpha.rate, discount=plot.x$disc.rate), 2L)), "%")))
         }
         if(param == "discount") {
-          graphics::text(x=0.5, y=0.1275,    cex=a.cex, col="black", adj=a.adj, bquote(bold(hat(kappa)) * bold(" - Posterior Proportion of Zeros:")))
+          graphics::text(x=0.5, y=0.1275,    cex=a.cex, col="black", adj=a.adj, bquote(bold(hat(kappa))  * bold(" - Posterior Proportion of Zeros:")))
           graphics::text(x=0.5, y=0.0575,    cex=a.cex, col="black", adj=a.adj, bquote(.(round(plot.x$post.kappa, digits))))
         }
         if(param == "alpha" && tz) {
-          graphics::text(x=0.5, y=0.1275,    cex=a.cex, col="black", adj=a.adj, bquote(bold(hat(zeta)) * bold(" - Posterior Mean Zeta:")))
+          graphics::text(x=0.5, y=0.1275,    cex=a.cex, col="black", adj=a.adj, bquote(bold(hat(zeta))   * bold(" - Posterior Mean Zeta:")))
           graphics::text(x=0.5, y=0.0575,    cex=a.cex, col="black", adj=a.adj, bquote(.(round(plot.x$avg.zeta, digits))))
         }
       }

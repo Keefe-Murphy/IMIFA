@@ -162,7 +162,7 @@
 
     # Uniquenesses
       if(isTRUE(one.uni)) {
-        S.mat        <- lapply(Gs, function(g) { S   <- c.data[[g]] - if(Q0) tcrossprod(eta.tmp[[g]], if(Q1) as.matrix(lmat[,,g]) else lmat[,,g]) else 0L; S * S } )
+        S.mat        <- lapply(Gs, function(g) { S   <- c.data[[g]] - if(Q0) tcrossprod(eta.tmp[[g]], if(Q1) as.matrix(lmat[,,g]) else lmat[,,g]) else 0L; S^2 } )
         psi.inv[,]   <- .sim_psi_inv(uni.shape, psi.beta, S.mat, V)
       } else {
         psi.inv[,Gs] <- vapply(Gs, function(g) if(nn0[g]) .sim_psi_inv(N=nn[g], psi.alpha=psi.alpha, c.data=c.data[[g]], P=P, eta=eta.tmp[[g]], psi.beta=psi.beta,
@@ -185,12 +185,12 @@
       min.u          <- min(u.slice)
       G.old          <- G
       if(ind.slice)   {
-        G.new        <- sum(min.u    < ksi)
+        G.new        <- sum(min.u < ksi)
         G.trunc      <- G.new < G.old
         while(G  < G.new && (Vs[GI] != 1 || pi.prop[GI] != 0)) {
           newVs      <- .sim_vs_inf(alpha=pi.alpha, discount=discount, len=1L, lseq=G + 1L)
           Vs         <- c(Vs,      newVs)
-          pi.prop    <- c(pi.prop, newVs  * prev.prod)
+          pi.prop    <- c(pi.prop, newVs * prev.prod)
           GI    <- G <- G + 1L
           prev.prod  <- 1 - sum(pi.prop)
           prev.prod  <- ifelse(prev.prod < 0, pi.prop[G] * (1/Vs[G] - 1), prev.prod)
