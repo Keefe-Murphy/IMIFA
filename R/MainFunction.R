@@ -1,4 +1,4 @@
-#' Adaptive Gibbs Sampler for Nonparameteric Model-based Clustering using models from the IMIFA family
+#' Adaptive Gibbs Sampler for Nonparametric Model-based Clustering using models from the IMIFA family
 #'
 #' Carries out Gibbs sampling for all models from the IMIFA family, facilitating model-based clustering with dimensionally reduced factor-analytic covariance structures, with automatic estimation of the number of clusters and cluster-specific factors as appropriate to the method employed. Factor analysis with one group (FA/IFA), finite mixtures (MFA/MIFA), overfitted mixtures (OMFA/OMIFA), infinite factor models which employ the multiplicative gamma process (MGP) shrinkage prior (IFA/MIFA/OMIFA/IMIFA), and infinite mixtures which employ Pitman-Yor / Dirichlet Process Mixture Models (IMFA/IMIFA) are all provided.
 #'
@@ -349,6 +349,17 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
       }
       if(all(!bnpmiss$IM.lab.sw, IM.lab.sw, !learn.a,
              verbose, !learn.d))    message("May not be necessary to set 'IM.lab.sw' to TRUE when neither 'alpha' nor 'discount' are being learned\n")
+      if(all(BNP$exchange,
+             IM.lab.sw))         {
+        if(verbose)                 message("'IM.lab.sw' forced to FALSE as 'exchange' is TRUE\n")
+        IM.lab.sw  <-
+        BNP$IM.lab.sw        <- FALSE
+      }
+      if(all(any(BNP$exchange, BNP$thresh),
+             BNP$ind.slice))     {
+        if(verbose)                 message("'ind.slice' forced to FALSE as 'exchange' &/or 'thresh' is TRUE\n")
+        BNP$ind.slice        <- FALSE
+      }
     } else BNP$a.hyper[2L]   <- BNP$a.hyper[2L] * G.init
   }
 
@@ -832,6 +843,7 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
        "Disc.step")       <- is.element(method, c("IMFA", "IMIFA"))    && learn.d
   attr(imifa, "Discount") <- if(is.element(method, c("IMFA", "IMIFA")) && !learn.d) discount
   attr(imifa, "Equal.Pi") <- equal.pro
+  attr(imifa, "Exchange") <- BNP$exchange
   attr(imifa, "Factors")  <- range.Q
   attr(imifa, "ForceQg")  <- MGP$forceQg && is.element(method, c("MIFA", "OMIFA", "IMIFA"))
   attr(imifa, "G.init")   <- G.init
@@ -862,6 +874,7 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
     times                 <- times[-2L]
   }
   class(times)            <- "listof"
+  attr(imifa, "Thresh")   <- BNP$thresh
   attr(imifa, "Time")     <- if(is.element(method, c("FA", "IFA", "classify"))) times[-length(times)] else times
   attr(imifa, "Truncate") <- is.element(method, c("classify", "IFA", "MIFA", "OMIFA", "IMIFA")) && isTRUE(truncate)
   attr(imifa, "TuneZeta") <- is.element(method, c("IMFA", "IMIFA", "OMFA", "OMIFA")) && tune.zeta$do

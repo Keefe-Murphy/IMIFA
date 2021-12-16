@@ -4,9 +4,9 @@
 
 # Gibbs Sampler Function
   .gibbs_IMIFA       <- function(Q, data, iters, N, P, G, mu.zero, rho, sigma.l, learn.alpha, mu, sw, uni.type, uni.prior,
-                                 cluster.shrink, prop, d.hyper, beta.d1, beta.d2, start.AGS, stop.AGS, epsilon, learn.d, kappa, forceQg, ...) {
                                  sigma.mu, burnin, thinning, a.hyper, psi.alpha, psi.beta, verbose, trunc.G, adapt, ind.slice, discount,
                                  alpha.d1, alpha.d2, cluster, b0, b1, IM.lab.sw, zeta, tune.zeta, rho1, rho2, nu1, nu2, truncated, cluster.shrink,
+                                 prop, d.hyper, beta.d1, beta.d2, start.AGS, stop.AGS, epsilon, learn.d, kappa, forceQg, thresh, exchange, ...) {
 
   # Define & initialise variables
     start.time       <- proc.time()
@@ -145,6 +145,12 @@
       log.ksi        <- log(ksi)
       slinf          <- rep(-Inf, N)
     } else slinf     <- c(-Inf,  0L)
+    if((noLearn      <-
+      (isFALSE(learn.alpha)     &&
+       isFALSE(learn.d)))       &&
+       isTRUE(thresh))           {
+      TRX            <- .slice_threshold(N, pi.alpha, discount, MPFR=pi.alpha == 0)
+    }
     init.time        <- proc.time() - start.time
 
   # Iterate
@@ -206,14 +212,20 @@
       }
 
     # Mixing Proportions & Re-ordering
-      Vs             <- .sim_vs_inf(alpha=pi.alpha, nn=nn[Gs], N=N, discount=discount, len=G, lseq=Gs)
-      pi.prop        <- .sim_pi_inf(Vs, len=G)
-      prev.prod      <- 1 - sum(pi.prop)
-      index          <- order(pi.prop, decreasing=TRUE)
-      prev.prod      <- ifelse(prev.prod < 0, pi.prop[G] * (1/Vs[G] - 1), prev.prod)
+      if(!exchange)   {
+        Vs           <- .sim_vs_inf(alpha=pi.alpha, nn=nn[Gs], N=N, discount=discount, len=G, lseq=Gs)
+        pi.prop      <- .sim_pi_inf(Vs, len=G)
+        prev.prod    <- 1 - sum(pi.prop)
+        prev.prod    <- ifelse(prev.prod < 0, pi.prop[G] * (1/Vs[G] - 1), prev.prod)
+      } else          {
+        piX          <- .sim_pi_infX(nn=nn[nn0], Kn=G.non, G=G, alpha=pi.alpha, discount=discount)
+        pi.prop      <- piX$pi.prop
+        prev.prod    <- piX$prev.prod
+      }
+      index          <- if(exchange) c(seq_len(G.non), if(G.non < G) G.non + order(pi.prop[seq(G.non + 1L, G)], decreasing=TRUE)) else order(pi.prop, decreasing=TRUE)
       GI             <- which(Gs[index] == G)
       pi.prop        <- pi.prop[index]
-      Vs             <- Vs[index]
+      Vs             <- if(!exchange) Vs[index] else rep(0L, G)
       mu[,Gs]        <- mu[,index, drop=FALSE]
       phi[Gs]        <- phi[index]
       delta[Gs]      <- delta[index]
@@ -297,8 +309,12 @@
       }
 
     # Slice Sampler
+      if(thresh      &&
+         !noLearn)    {
+        TRX          <- .slice_threshold(N, pi.alpha, discount, MPFR=pi.alpha == 0)
+      }
       if(!ind.slice)  {
-        ksi          <- pi.prop
+        ksi          <- if(thresh) pmin(pi.prop, TRX) else pi.prop
         log.ksi      <- log(ksi)
       }
       u.slice        <- stats::runif(N, 0L, ksi[z])
@@ -307,13 +323,13 @@
       if(ind.slice)   {
         G.new        <- sum(min.u < ksi)
         G.trunc      <- G.new < G.old
-        while(G  < G.new && (Vs[GI] != 1 || pi.prop[GI] != 0)) {
+        while(G  < G.new && (Vs[GI] != 1 || pi.prop[GI]  != 0)) {
           newVs      <- .sim_vs_inf(alpha=pi.alpha, discount=discount, len=1L, lseq=G + 1L)
           Vs         <- c(Vs,      newVs)
-          pi.prop    <- c(pi.prop, newVs * prev.prod)
+          pi.prop    <- c(pi.prop, newVs  * prev.prod)
           GI    <- G <- G + 1L
-          prev.prod  <- 1 - sum(pi.prop)
-          prev.prod  <- ifelse(prev.prod < 0, pi.prop[G] * (1/Vs[G] - 1), prev.prod)
+          prev.prod  <- prev.prod * (1    - newVs)
+          prev.prod  <- ifelse(prev.prod  < 0, pi.prop[G] * (1/Vs[G] - 1), prev.prod)
         }
         G            <- ifelse(G.trunc, G.new, G)
         Gs           <- seq_len(G)
@@ -325,7 +341,7 @@
         cum.pi       <- sum(pi.prop)
         u.max        <- 1 - min.u
         G.trunc      <- cum.pi > u.max
-        while(cum.pi  < u.max && trunc.G > G && (pi.prop[GI] != 0 || Vs[GI] != 1)) {
+        while(cum.pi  < u.max && trunc.G > G && (pi.prop[GI] != 0 || ifelse(exchange, prev.prod > min.u, Vs[GI] != 1))) {
           newVs      <- .sim_vs_inf(alpha=pi.alpha, discount=discount, len=1L, lseq=G + 1L)
           Vs         <- c(Vs,      newVs)
           newPis     <- newVs  *   prev.prod
@@ -343,6 +359,10 @@
           pi.prop    <- ksi   <-   pi.prop[Gs]
           Vs         <- Vs[Gs]
         }
+      }
+      if(thresh)      {
+        ksi          <- pmax(pi.prop, TRX)
+        log.ksi      <- log(ksi)
       }
 
     # Cluster Labels

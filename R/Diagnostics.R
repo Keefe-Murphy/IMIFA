@@ -1079,6 +1079,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   attr(result, "Discount")     <- if(is.element(method, c("IMFA", "IMIFA")) && !learn.d) attr(sims, "Discount")
   attr(result, "Errors")       <- errs
   attr(result, "Equal.Pi")     <- equal.pro
+  attr(result, "Exchange")     <- attr(sims, "Exchange")
   attr(result, "ForceQg")      <- attr(sims, "ForceQg")
   attr(result, "G.init")       <- if(inf.G) attr(sims, "G.init")
   attr(result, "G.Mean")       <- attr(sims, "G.Mean")
@@ -1105,6 +1106,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   attr(result, "Sd0.drop")     <- attr(sims, "Sd0.drop")
   attr(result, "Store")        <- tmp.store
   attr(result, "Switch")       <- sw
+  attr(result, "Thresh")       <- attr(sims, "Thresh")
   attr(result, "Truncated")    <- attr(sims, "Truncate")
   attr(result, "TuneZeta")     <- attr(sims, "TuneZeta")
   attr(result, "Uni.Meth")     <- uni.meth

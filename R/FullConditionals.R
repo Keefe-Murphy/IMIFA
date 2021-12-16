@@ -147,6 +147,26 @@
         vs * cumprod(1 - c(prev.prod, vs[-len]))
     }
 
+    .sim_pi_infX <- function(nn, Kn, G, alpha, discount = 0) {
+      Kn1        <- Kn + 1L
+      pirG       <- rDirichlet(Kn1, c(nn - discount, alpha + Kn * discount))
+      rG         <- pirG[Kn1]
+      pis        <- pirG[-Kn1]
+      if(G > Kn)  {
+        GKn      <- G - Kn
+        Vs       <- .sim_vs_inf(alpha=alpha, discount=discount, len=GKn, lseq=Kn1)
+        for(g in seq_len(GKn)) {
+          pis    <- c(pis, rG  * Vs[g])
+          rG     <- rG   *  (1 - Vs[g])
+        }
+      }
+        return(list(pi.prop = pis, prev.prod = ifelse(rG < 0, pis[G] * (1/Vs[GKn] - 1), rG)))
+     }
+
+    .slice_threshold  <- function(N, alpha, discount = 0, ...)  {
+      ((alpha + discount * G_expected(N, alpha, discount, ...)) * (1 - discount))/((alpha + N) * (alpha + 1))
+     }
+
   # Cluster Labels
 #' Simulate Cluster Labels from Unnormalised Log-Probabilities using the Gumbel-Max Trick
 #'
@@ -1611,11 +1631,13 @@
 #' The special case of \code{discount < 0} is allowed, in which case \code{learn.d=FALSE} is forced and \code{alpha} must be supplied as a positive integer multiple of \code{abs(discount)}. Fixing \code{discount > 0.5} is discouraged (see \code{learn.alpha}).
 #' @param learn.d Logical indicating whether the \code{discount} parameter is to be updated via Metropolis-Hastings (defaults to \code{TRUE}, unless \code{discount} is supplied as a negative value).
 #' @param d.hyper Hyperparameters for the Beta(a,b) prior on the \code{discount} parameter. Defaults to Beta(1,1), i.e. Uniform(0,1).
-#' @param ind.slice Logical indicating whether the independent slice-efficient sampler is to be employed (defaults to \code{TRUE}). If \code{FALSE} the dependent slice-efficient sampler is employed, whereby the slice sequence \eqn{\xi_1,\ldots,\xi_g}{xi_1,...,xi_g} is equal to the decreasingly ordered mixing proportions.
+#' @param ind.slice Logical indicating whether the independent slice-efficient sampler is to be employed (defaults, typically, to \code{TRUE}). If \code{FALSE} the dependent slice-efficient sampler is employed, whereby the slice sequence \eqn{\xi_1,\ldots,\xi_g}{xi_1,...,xi_g} is equal to the decreasingly ordered mixing proportions. When \code{thresh} &/or \code{exchange} are set to \code{TRUE} (see below), this argument is forced to \code{FALSE}.
 #' @param rho Parameter controlling the rate of geometric decay for the independent slice-efficient sampler, s.t. \eqn{\xi=(1-\rho)\rho^{g-1}}{xi = (1 - rho)rho^(g-1)}. Must lie in the interval [0, 1). Higher values are associated with better mixing but longer run times. Defaults to 0.75, but 0.5 is an interesting special case which guarantees that the slice sequence \eqn{\xi_1,\ldots,\xi_g}{xi_1,...,xi_g} is equal to the \emph{expectation} of the decreasingly ordered mixing proportions. Only relevant when \code{ind.slice} is \code{TRUE}.
 #' @param trunc.G The maximum number of allowable and storable clusters under the \code{"IMIFA"} and \code{"IMFA"} models. The number of active clusters to be sampled at each iteration is adaptively truncated, with \code{trunc.G} as an upper limit for storage reasons. Defaults to \code{max(min(N-1, 50), range.G))} and must satisfy \code{range.G <= trunc.G < N}. Note that large values of \code{trunc.G} may lead to memory capacity issues.
 #' @param kappa The spike-and-slab prior distribution on the \code{discount} hyperparameter is assumed to be a mixture with point-mass at zero and a continuous Beta(a,b) distribution. \code{kappa} gives the weight of the point mass at zero (the 'spike'). Must lie in the interval [0,1]. Defaults to 0.5. Only relevant when \code{isTRUE(learn.d)}. A value of 0 ensures non-zero discount values (i.e. Pitman-Yor) at all times, and \emph{vice versa}. Note that \code{kappa} will default to exactly 0 if \code{alpha<=0} and \code{learn.alpha=FALSE}.
-#' @param IM.lab.sw Logical indicating whether the two forced label switching moves are to be implemented (defaults to \code{TRUE}) when running one of the infinite mixture models.
+#' @param IM.lab.sw Logical indicating whether the two forced label switching moves are to be implemented (defaults to \code{TRUE}) when running one of the infinite mixture models. Note: when \code{exchange=TRUE} (see below), this argument is instead forced to \code{FALSE}.
+#' @param thresh Logical indicating whether the threshold of Fall and Barat (2014) should be incorporated into the slice sampler. See the reference for details. This is an experimental feature (defaults to \code{FALSE}) and can work with or without \code{exchange} below. Setting \code{thresh=TRUE} is \strong{not} recommended unless both \code{learn.alpha} and \code{learn.d} are \code{FALSE}. Setting \code{thresh} to \code{TRUE} also forces \code{ind.slice} to \code{FALSE} (see above).
+#' @param exchange Logical indicating whether the exchangeable slice sampler of Fall and Barat (2014) should be used instead. See the reference for details. This argument can work with or without \code{thresh=TRUE} above, though it is also an experimental argument and thus defaults to \code{FALSE}. When \code{TRUE}, the arguments \code{ind.slice} and \code{IM.lab.sw} (see above) are both forced to \code{FALSE}.
 #' @param zeta
 #' \describe{
 #' \item{For the \code{"IMFA"} and \code{"IMIFA"} methods:}{Tuning parameter controlling the acceptance rate of the random-walk proposal for the Metropolis-Hastings steps when \code{learn.alpha=TRUE}, where \code{2 * zeta} gives the full width of the uniform proposal distribution. These steps are only invoked when either \code{discount} is non-zero and fixed or \code{learn.d=TRUE}, otherwise \code{alpha} is learned by Gibbs updates. Must be strictly positive (if invoked). Defaults to \code{2}.}
@@ -1646,6 +1668,8 @@
 #' @references Murphy, K., Viroli, C., and Gormley, I. C. (2020) Infinite mixtures of infinite factor analysers, \emph{Bayesian Analysis}, 15(3): 937-963. <\href{https://projecteuclid.org/euclid.ba/1570586978}{doi:10.1214/19-BA1179}>.
 #'
 #' Kalli, M., Griffin, J. E. and Walker, S. G. (2011) Slice sampling mixture models, \emph{Statistics and Computing}, 21(1): 93-105.
+#'
+#' Fall, M. D. and Barat, E. (2014) Gibbs sampling methods for Pitman-Yor mixture models, \emph{hal-00740770v2}.
 #' @export
 #'
 #' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{G_priorDensity}}, \code{\link{G_moments}}, \code{\link{mixfaControl}}, \code{\link{mgpControl}}, \code{\link{storeControl}}
@@ -1661,6 +1685,8 @@
 #'            trunc.G = NULL,
 #'            kappa = 0.5,
 #'            IM.lab.sw = TRUE,
+#'            thresh = FALSE,
+#'            exchange = FALSE,
 #'            zeta = NULL,
 #'            tune.zeta = list(...),
 #'            ...)
@@ -1673,8 +1699,8 @@
 #' # Alternatively specify these arguments directly
 #' # sim   <- mcmc_IMIFA(olive, "IMIFA", n.iters=5000, learn.d=FALSE,
 #' #                     ind.slice=FALSE, alpha.hyper=c(3, 3))
-  bnpControl     <- function(learn.alpha = TRUE, alpha.hyper = c(2L, 4L), discount = 0, learn.d = TRUE, d.hyper = c(1L, 1L),
-                             ind.slice = TRUE, rho = 0.75, trunc.G = NULL, kappa = 0.5, IM.lab.sw = TRUE, zeta = NULL, tune.zeta = list(...), ...) {
+  bnpControl     <- function(learn.alpha = TRUE, alpha.hyper = c(2L, 4L), discount = 0, learn.d = TRUE, d.hyper = c(1L, 1L), ind.slice = TRUE,
+                             rho = 0.75, trunc.G = NULL, kappa = 0.5, IM.lab.sw = TRUE, thresh = FALSE, exchange = FALSE, zeta = NULL, tune.zeta = list(...), ...) {
     miss.args    <- list(discount = missing(discount), IM.lab.sw = missing(IM.lab.sw), kappa = missing(kappa),
                          trunc.G = missing(trunc.G), zeta = missing(zeta), learn.d = missing(learn.d), learn.alpha = missing(learn.alpha))
     if(any(!is.logical(learn.alpha),
@@ -1694,6 +1720,10 @@
     if(length(rho)        > 1     ||
       (rho >= 1  || rho   < 0))            stop("'rho' must be a single number in the interval [0, 1)", call.=FALSE)
     if(rho  < 0.5)                         warning("Are you sure 'rho' should be less than 0.5? This could adversely affect mixing\n", call.=FALSE, immediate.=TRUE)
+    if(any(!is.logical(thresh),
+           length(thresh)         != 1))   stop("'thresh' must be a single logical indicator",   call.=FALSE)
+    if(any(!is.logical(exchange),
+           length(exchange)       != 1))   stop("'exchange' must be a single logical indicator", call.=FALSE)
     if(!missing(trunc.G) &&
        (length(trunc.G)   > 1     ||
         !is.numeric(trunc.G)      ||
@@ -1725,6 +1755,8 @@
            discount      != 0))            stop(paste0("'kappa' is exactly 1 and yet", ifelse(learn.d, " 'discount' is being learned ", if(discount != 0) " the discount is fixed at a non-zero value"), ":\nthe discount should remain fixed at zero"), call.=FALSE)
     if(any(!is.logical(IM.lab.sw),
        length(IM.lab.sw) != 1))            stop("'IM.lab.sw' must be a single logical indicator", call.=FALSE)
+    if(isTRUE(thresh)    &&
+       any(learn.alpha, learn.d))          warning("'thresh=TRUE' is NOT recommended when either 'learn.alpha' OR 'learn.d' are TRUE\n", call.=FALSE, immediate.=TRUE)
     if(!missing(zeta)    &&
        any(!is.numeric(zeta),
        length(zeta)      != 1,
@@ -1773,8 +1805,8 @@
       }
     }
     attr(tz,  "IM.Need") <- any(gibbs.def, def.py)
-    BNP          <- list(learn.alpha = learn.alpha, a.hyper = alpha.hyper, discount = discount, learn.d = learn.d, d.hyper = d.hyper,
-                         rho = rho, ind.slice = ind.slice, trunc.G = trunc.G, kappa = kappa, IM.lab.sw = IM.lab.sw, zeta = zeta, tune.zeta = tz)
+    BNP          <- list(learn.alpha = learn.alpha, a.hyper = alpha.hyper, discount = discount, learn.d = learn.d, d.hyper = d.hyper, thresh = thresh,
+                         exchange = exchange, rho = rho, ind.slice = ind.slice, trunc.G = trunc.G, kappa = kappa, IM.lab.sw = IM.lab.sw, zeta = zeta, tune.zeta = tz)
     attr(BNP, "Missing") <- miss.args
       BNP
   }

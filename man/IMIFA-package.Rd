@@ -6,15 +6,15 @@
 \alias{IMIFA-package}
 \title{IMIFA: Infinite Mixtures of Infinite Factor Analysers and Related Models}
 \description{
-A package for Bayesian nonparameteric clustering of high-dimensional data sets, providing functions for fitting, diagnostic tools and plotting for Infinite Mixtures of Infinite Factor Analysers and the full suite of related models introduced by Murphy et al. (2020) <\doi{10.1214/19-BA1179}>. Allows model based clustering with factor analytic covariance structures without recourse to model selection criteria to choose the number of clusters or cluster-specific latent factors. Model-specific diagnostic tools are also provided, as well as many options for plotting results, conducting posterior inference on parameters of interest, posterior predictive checking, and quantifying uncertainty.
+A package for Bayesian nonparametric clustering of high-dimensional data sets, providing functions for fitting, diagnostic tools and plotting for Infinite Mixtures of Infinite Factor Analysers and the full suite of related models introduced by Murphy et al. (2020) <\doi{10.1214/19-BA1179}>. Allows model based clustering with factor analytic covariance structures without recourse to model selection criteria to choose the number of clusters or cluster-specific latent factors. Model-specific diagnostic tools are also provided, as well as many options for plotting results, conducting posterior inference on parameters of interest, posterior predictive checking, and quantifying uncertainty.
 }
 \section{Details}{
 
 \itemize{
 \item{Type: }{Package}
 \item{Package: }{IMIFA}
-\item{Version: }{2.1.7}
-\item{Date: }{2021-10-07 (this version), 2017-02-02 (original release)}
+\item{Version: }{2.1.8}
+\item{Date: }{2021-12-19 (this version), 2017-02-02 (original release)}
 \item{Licence: }{GPL (>=2)}
 }
 }

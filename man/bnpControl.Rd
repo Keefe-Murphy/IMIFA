@@ -14,6 +14,8 @@ bnpControl(learn.alpha = TRUE,
            trunc.G = NULL,
            kappa = 0.5,
            IM.lab.sw = TRUE,
+           thresh = FALSE,
+           exchange = FALSE,
            zeta = NULL,
            tune.zeta = list(...),
            ...)
@@ -39,7 +41,7 @@ The special case of \code{discount < 0} is allowed, in which case \code{learn.d=
 
 \item{d.hyper}{Hyperparameters for the Beta(a,b) prior on the \code{discount} parameter. Defaults to Beta(1,1), i.e. Uniform(0,1).}
 
-\item{ind.slice}{Logical indicating whether the independent slice-efficient sampler is to be employed (defaults to \code{TRUE}). If \code{FALSE} the dependent slice-efficient sampler is employed, whereby the slice sequence \eqn{\xi_1,\ldots,\xi_g}{xi_1,...,xi_g} is equal to the decreasingly ordered mixing proportions.}
+\item{ind.slice}{Logical indicating whether the independent slice-efficient sampler is to be employed (defaults, typically, to \code{TRUE}). If \code{FALSE} the dependent slice-efficient sampler is employed, whereby the slice sequence \eqn{\xi_1,\ldots,\xi_g}{xi_1,...,xi_g} is equal to the decreasingly ordered mixing proportions. When \code{thresh} &/or \code{exchange} are set to \code{TRUE} (see below), this argument is forced to \code{FALSE}.}
 
 \item{rho}{Parameter controlling the rate of geometric decay for the independent slice-efficient sampler, s.t. \eqn{\xi=(1-\rho)\rho^{g-1}}{xi = (1 - rho)rho^(g-1)}. Must lie in the interval [0, 1). Higher values are associated with better mixing but longer run times. Defaults to 0.75, but 0.5 is an interesting special case which guarantees that the slice sequence \eqn{\xi_1,\ldots,\xi_g}{xi_1,...,xi_g} is equal to the \emph{expectation} of the decreasingly ordered mixing proportions. Only relevant when \code{ind.slice} is \code{TRUE}.}
 
@@ -47,7 +49,11 @@ The special case of \code{discount < 0} is allowed, in which case \code{learn.d=
 
 \item{kappa}{The spike-and-slab prior distribution on the \code{discount} hyperparameter is assumed to be a mixture with point-mass at zero and a continuous Beta(a,b) distribution. \code{kappa} gives the weight of the point mass at zero (the 'spike'). Must lie in the interval [0,1]. Defaults to 0.5. Only relevant when \code{isTRUE(learn.d)}. A value of 0 ensures non-zero discount values (i.e. Pitman-Yor) at all times, and \emph{vice versa}. Note that \code{kappa} will default to exactly 0 if \code{alpha<=0} and \code{learn.alpha=FALSE}.}
 
-\item{IM.lab.sw}{Logical indicating whether the two forced label switching moves are to be implemented (defaults to \code{TRUE}) when running one of the infinite mixture models.}
+\item{IM.lab.sw}{Logical indicating whether the two forced label switching moves are to be implemented (defaults to \code{TRUE}) when running one of the infinite mixture models. Note: when \code{exchange=TRUE} (see below), this argument is instead forced to \code{FALSE}.}
+
+\item{thresh}{Logical indicating whether the threshold of Fall and Barat (2014) should be incorporated into the slice sampler. See the reference for details. This is an experimental feature (defaults to \code{FALSE}) and can work with or without \code{exchange} below. Setting \code{thresh=TRUE} is \strong{not} recommended unless both \code{learn.alpha} and \code{learn.d} are \code{FALSE}. Setting \code{thresh} to \code{TRUE} also forces \code{ind.slice} to \code{FALSE} (see above).}
+
+\item{exchange}{Logical indicating whether the exchangeable slice sampler of Fall and Barat (2014) should be used instead. See the reference for details. This argument can work with or without \code{thresh=TRUE} above, though it is also an experimental argument and thus defaults to \code{FALSE}. When \code{TRUE}, the arguments \code{ind.slice} and \code{IM.lab.sw} (see above) are both forced to \code{FALSE}.}
 
 \item{zeta}{\describe{
 \item{For the \code{"IMFA"} and \code{"IMIFA"} methods:}{Tuning parameter controlling the acceptance rate of the random-walk proposal for the Metropolis-Hastings steps when \code{learn.alpha=TRUE}, where \code{2 * zeta} gives the full width of the uniform proposal distribution. These steps are only invoked when either \code{discount} is non-zero and fixed or \code{learn.d=TRUE}, otherwise \code{alpha} is learned by Gibbs updates. Must be strictly positive (if invoked). Defaults to \code{2}.}
@@ -98,6 +104,8 @@ bnpctrl <- bnpControl(learn.d=FALSE, ind.slice=FALSE, alpha.hyper=c(3, 3))
 Murphy, K., Viroli, C., and Gormley, I. C. (2020) Infinite mixtures of infinite factor analysers, \emph{Bayesian Analysis}, 15(3): 937-963. <\href{https://projecteuclid.org/euclid.ba/1570586978}{doi:10.1214/19-BA1179}>.
 
 Kalli, M., Griffin, J. E. and Walker, S. G. (2011) Slice sampling mixture models, \emph{Statistics and Computing}, 21(1): 93-105.
+
+Fall, M. D. and Barat, E. (2014) Gibbs sampling methods for Pitman-Yor mixture models, \emph{hal-00740770v2}.
 }
 \seealso{
 \code{\link{mcmc_IMIFA}}, \code{\link{G_priorDensity}}, \code{\link{G_moments}}, \code{\link{mixfaControl}}, \code{\link{mgpControl}}, \code{\link{storeControl}}

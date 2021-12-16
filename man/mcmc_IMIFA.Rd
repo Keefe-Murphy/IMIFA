@@ -4,7 +4,7 @@
 \alias{mcmc_IMIFA}
 \alias{print.IMIFA}
 \alias{summary.IMIFA}
-\title{Adaptive Gibbs Sampler for Nonparameteric Model-based Clustering using models from the IMIFA family}
+\title{Adaptive Gibbs Sampler for Nonparametric Model-based Clustering using models from the IMIFA family}
 \usage{
 mcmc_IMIFA(dat,
            method = c("IMIFA", "IMFA",

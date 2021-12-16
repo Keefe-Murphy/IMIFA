@@ -1,11 +1,14 @@
 __Infinite Mixtures of Infinite Factor Analysers__
 ==================================================  
 
+## IMIFA v2.1.8 - (_15<sup>th</sup> release [patch update]: 2021-12-19_)
 ### Improvements, Bug Fixes, & Miscellaneous Edits
 * Slight modifications to adaptive Gibbs sampling for all infinite factor methods:  
   * Adaptation now occurs before related parameter updates: cleaner, slightly faster code.
   * Fixes __rare__ bug re: storing factor scores when there are empty components.
   * Associated new default behaviour(s) for `mgpControl` arg. `start.AGS`.
+* `bnpControl` gains the args. `thresh` & `exchange`, implementing the exchangeable/thresholded  
+  slice sampler of Fall & Barat (2014): these are experimental features (both args. default to `FALSE`).
 * Fixed posterior predictive checking bug in `get_IMIFA_results` for  
   models for univariate data where _some_ components have zero factors.
 * Minor IM(I)FA speed-ups to updates of DP concentration parameter alpha.
@@ -80,8 +83,8 @@ __Infinite Mixtures of Infinite Factor Analysers__
     * Additional speed-ups to simulation of column-shrinkage parameters when _some_ clusters are empty.
     * Properly accounted for the cluster-shrinkage parameters when the number of factors increases.
     * Minor bug fixes for padding scores when the maximum number of factors increases.
-* Variable-specific communalities (`x$Error$Var.Exps`) now returned by `get_IMIFA_results` in addition to  
-proportion of explained variance per cluster (`x$Error$Clust.Exps`; previously `x$Error$Var.Exps`).
+* Variable-specific communalities (`x$Error$Var.Exps`) now returned by `get_IMIFA_results` in addition  
+  to proportion of explained variance per cluster (`x$Error$Clust.Exps`; previously `x$Error$Var.Exps`).
 * `G_expected` & `G_variance` gain the arg. `MPFR` to control use of suggested packages.
 * Minor speed-up to `rDirichlet` for the symmetric uniform case.
 * Ensured compatibility with latest version of `Rfast` package (w/ minor speed-ups).
