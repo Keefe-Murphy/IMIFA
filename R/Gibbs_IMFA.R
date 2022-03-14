@@ -142,12 +142,13 @@
         pi.prop      <- .sim_pi_inf(Vs, len=G)
         prev.prod    <- 1 - sum(pi.prop)
         prev.prod    <- ifelse(prev.prod < 0, pi.prop[G] * (1/Vs[G] - 1), prev.prod)
+        index        <- order(pi.prop, decreasing=TRUE)
       } else          {
         piX          <- .sim_pi_infX(nn=nn[nn0], Kn=G.non, G=G, alpha=pi.alpha, discount=discount)
         pi.prop      <- piX$pi.prop
         prev.prod    <- piX$prev.prod
+        index        <- piX$index
       }
-      index          <- if(exchange) c(seq_len(G.non), if(G.non < G) G.non + order(pi.prop[seq(G.non + 1L, G)], decreasing=TRUE)) else order(pi.prop, decreasing=TRUE)
       GI             <- which(Gs[index] == G)
       pi.prop        <- pi.prop[index]
       Vs             <- if(!exchange) Vs[index] else rep(0L, G)

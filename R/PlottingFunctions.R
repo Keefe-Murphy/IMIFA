@@ -157,7 +157,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
   method  <- attr(x, "Method")
   store   <- attr(x, "Store")
   n.var   <- attr(x, "Vars")
-  var.pal <- max(min(n.var, 1024), 2)
+  var.pal <- max(min(n.var, 1024L), 2L)
   n.obs   <- attr(x, "Obs")
   z.sim   <- attr(x, "Z.sim")
   plot.mx <- missing(plot.meth)
@@ -1613,11 +1613,11 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
 #' Using only base graphics, this function appends a colour key legend for heatmaps produced by, for instance, \code{\link{plot_cols}} or \code{\link[graphics]{image}}.
 #' @param data Either the data with which the heatmap was created or a vector containing its minimum and maximum values. Missing values are ignored.
 #' @param cols The colour palette used when the heatmap was created. By default, the same \code{\link[viridisLite]{viridis}} default as in \code{\link{mat2cols}} is used. Will be checked for validity by \code{\link{is.cols}}.
-#' @param breaks Optional argument giving the break-points for the axis labels
+#' @param breaks Optional argument giving the break-points for the axis labels.
 #' @param cex.lab Magnification of axis annotation, indicating the amount by which plotting text and symbols should be scaled relative to the default of 1.
 #' @param ... Catches unused arguments.
 #'
-#' @return Modifies an existing plot by adding a colour-key legend.
+#' @return Modifies an existing plot by adding a colour key legend.
 #' @export
 #' @keywords plotting
 #'

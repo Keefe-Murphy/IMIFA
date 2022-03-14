@@ -83,7 +83,7 @@
         if(verbose) utils::setTxtProgressBar(pb, iter)
         new.it   <- which(iters == iter)
         psi      <- 1/psi.inv
-        post.mu  <- post.mu + mu/n.store
+        post.mu  <- post.mu  + mu/n.store
         post.psi <- post.psi + psi/n.store
         if(sw["mu.sw"])             mu.store[,new.it]   <- mu
         if(all(sw["s.sw"], Q0))   eta.store[,,new.it]   <- eta

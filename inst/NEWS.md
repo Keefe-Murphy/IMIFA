@@ -1,6 +1,10 @@
 __Infinite Mixtures of Infinite Factor Analysers__
 ==================================================  
 
+### Improvements, Bug Fixes, & Miscellaneous Edits
+* Minor fix to rare cases where Cholesky decompositions fail.
+* Minor tidy-ups related to `exchange=TRUE` from previous update.
+
 ## IMIFA v2.1.8 - (_15<sup>th</sup> release [patch update]: 2021-12-19_)
 ### Improvements, Bug Fixes, & Miscellaneous Edits
 * Slight modifications to adaptive Gibbs sampling for all infinite factor methods:  

@@ -320,10 +320,10 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       }
     }
     crit         <- get(criterion)
-    crit.max     <- which(crit == max(crit), arr.ind=TRUE)
+    crit.max     <- which(crit == max(crit,         na.rm=TRUE), arr.ind=TRUE)
     if(!inf.Q    &&
        nrow(crit.max) > 1)      { warning(paste0("Ties for the optimal model exist according to the '", criterion, "' criterion: choosing the most parsimonious model\n"), call.=FALSE, immediate.=TRUE)
-      crit.max   <- which(Ks   == min(Ks[crit.max]), arr.ind=TRUE)
+      crit.max   <- which(Ks   == min(Ks[crit.max], na.rm=TRUE), arr.ind=TRUE)
       crit.max   <- crit.max[which.min(crit.max[,1L]),]
     }
 

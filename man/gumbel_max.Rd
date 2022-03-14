@@ -33,8 +33,7 @@ If the normalising constant is required for another reason, e.g. to compute the 
 
 # Call gumbel_max() repeatedly to obtain samples of the labels, zs
   iters     <- 10000
-  zs        <- vapply(seq_len(iters), function(i)
-               gumbel_max(probs=log(weights)), numeric(1L))
+  zs        <- replicate(iters, gumbel_max(probs=log(weights)))
 
 # Compare answer to the normalised weights
   tabulate(zs, nbins=G)/iters

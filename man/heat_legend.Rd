@@ -15,14 +15,14 @@ heat_legend(data,
 
 \item{cols}{The colour palette used when the heatmap was created. By default, the same \code{\link[viridisLite]{viridis}} default as in \code{\link{mat2cols}} is used. Will be checked for validity by \code{\link{is.cols}}.}
 
-\item{breaks}{Optional argument giving the break-points for the axis labels}
+\item{breaks}{Optional argument giving the break-points for the axis labels.}
 
 \item{cex.lab}{Magnification of axis annotation, indicating the amount by which plotting text and symbols should be scaled relative to the default of 1.}
 
 \item{...}{Catches unused arguments.}
 }
 \value{
-Modifies an existing plot by adding a colour-key legend.
+Modifies an existing plot by adding a colour key legend.
 }
 \description{
 Using only base graphics, this function appends a colour key legend for heatmaps produced by, for instance, \code{\link{plot_cols}} or \code{\link[graphics]{image}}.

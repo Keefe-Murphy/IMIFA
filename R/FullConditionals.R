@@ -153,14 +153,18 @@
       rG         <- pirG[Kn1]
       pis        <- pirG[-Kn1]
       if(G > Kn)  {
-        GKn      <- G - Kn
+        GKn      <- G  - Kn
         Vs       <- .sim_vs_inf(alpha=alpha, discount=discount, len=GKn, lseq=Kn1)
         for(g in seq_len(GKn)) {
           pis    <- c(pis, rG  * Vs[g])
-          rG     <- rG   *  (1 - Vs[g])
+          rG     <- rG *    (1 - Vs[g])
         }
-      }
-        return(list(pi.prop = pis, prev.prod = ifelse(rG < 0, pis[G] * (1/Vs[GKn] - 1), rG)))
+        ind      <- order(pis[seq(Kn  + 1L, G)], decreasing=TRUE)
+        Vs       <- Vs[ind]
+        ind      <- c(seq_len(Kn), Kn + ind)
+        pis      <- pis[ind]
+      } else ind <- seq_len(Kn)
+        return(list(pi.prop = pis, prev.prod = ifelse(rG < 0, 1 - sum(pis), rG), index = ind))
      }
 
     .slice_threshold  <- function(N, alpha, discount = 0, ...)  {
@@ -200,8 +204,7 @@
 #'
 #' # Call gumbel_max() repeatedly to obtain samples of the labels, zs
 #'   iters     <- 10000
-#'   zs        <- vapply(seq_len(iters), function(i)
-#'                gumbel_max(probs=log(weights)), numeric(1L))
+#'   zs        <- replicate(iters, gumbel_max(probs=log(weights)))
 #'
 #' # Compare answer to the normalised weights
 #'   tabulate(zs, nbins=G)/iters
@@ -2208,7 +2211,7 @@
       eigs       <- eigen(x, symmetric = TRUE)
       eval       <- eigs$values
       evec       <- eigs$vectors
-        return(chol(x + evec %*% tcrossprod(diag(pmax.int(0L, 2 * max(abs(eval)) * d * .Machine$double.eps - eval), d), evec), ...))
+        return(chol(x + evec %*% tcrossprod(diag(pmax.int(.Machine$double.eps, 2 * max(abs(eval)) * d * .Machine$double.eps - eval), d), evec), ...))
       }
     )
 
