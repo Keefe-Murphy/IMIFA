@@ -18,6 +18,6 @@ data(coffee, package="IMIFA")
 pairs(coffee[,-(1:2)], col=coffee$Variety)
 }
 \references{
-Streuli, H. (1973). Der heutige Stand der Kaffee-Chemie, \emph{Association Scientifique International du Cafe, 6th International Colloquium on Coffee Chemistry}, Bogata, Columbia, pp. 61-72.
+Streuli, H. (1973). Der heutige Stand der Kaffee-Chemie, \emph{Association Scientifique International du Cafe, 6th International Colloquium on Coffee Chemistry}, Bogata, Colombia, pp. 61-72.
 }
 \keyword{datasets}

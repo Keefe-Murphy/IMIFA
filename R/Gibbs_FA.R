@@ -38,9 +38,11 @@
     post.psi     <- post.mu
     ll.store     <- vector("integer", n.store)
 
-    mu.sigma     <- 1/sigma.mu
-    mu.zero      <- as.numeric(mu.zero)
-    mu.prior     <- mu.sigma * as.numeric(mu.zero)
+    if(update.mu <- sw["u.sw"]) {
+      mu.sigma   <- 1/sigma.mu
+      mu.zero    <- as.numeric(mu.zero)
+      mu.prior   <- mu.sigma * as.numeric(mu.zero)
+    } else mu[]  <- 0L
     uni.type     <- switch(EXPR=uni.type,  unconstrained=,               constrained="constrained", "single")
     .sim_psi_inv <- switch(EXPR=uni.type,  constrained=.sim_psi_u1,      single=.sim_psi_c1)
     .sim_psi_ip  <- switch(EXPR=uni.prior, unconstrained=.sim_psi_ipu,   isotropic=.sim_psi_ipc)
@@ -77,7 +79,9 @@
       psi.inv[]  <- .sim_psi_inv(uni.shape, psi.beta, S.mat, V)
 
     # Means
-      mu[]       <- .sim_mu(N=N, P=P, mu.sigma=mu.sigma, psi.inv=psi.inv, sum.data=sum.data, sum.eta=colSums2(eta), lmat=lmat, mu.prior=mu.prior)
+      if(update.mu) {
+        mu[]     <- .sim_mu(N=N, P=P, mu.sigma=mu.sigma, psi.inv=psi.inv, sum.data=sum.data, sum.eta=colSums2(eta), lmat=lmat, mu.prior=mu.prior)
+      }
 
       if(storage) {
         if(verbose) utils::setTxtProgressBar(pb, iter)

@@ -116,7 +116,7 @@
 #'
 #' While small values of \code{alpha} have the effect of increasingly concentrating the mass onto fewer components, note that this function may return \code{NaN} for excessively small values of \code{alpha}, when \code{nn=0}; see the details of \code{rgamma} for small \code{shape} values.
 #'
-#' @references Devroye, L. (1986) \emph{Non-Uniform Random Variate Generation}, Springer-Verlag, New York, p. 594.
+#' @references Devroye, L. (1986) \emph{Non-Uniform Random Variate Generation}, Springer-Verlag, New York, NY, USA, p. 594.
 #' @keywords utility
 #' @export
 #' @usage
@@ -805,7 +805,7 @@
 #' @importFrom Rfast "rowOrder" "rowSort"
 #' @author Keefe Murphy - <\email{keefe.murphy@@mu.ie}>
 #' @seealso \code{get_IMIFA_results}
-#' @references Ranciati, S., Vinciotti, V. and Wit, E., (2017) Identifying overlapping terrorist cells from the Noordin Top actor-event network, \emph{to appear}. <\href{https://arxiv.org/abs/1710.10319v1}{arXiv:1710.10319v1}>.
+#' @references Ranciati, S., Vinciotti, V. and Wit, E., (2017) Identifying overlapping terrorist cells from the Noordin Top actor-event network, \emph{Annals of Applied Statistics}, 14(3): 1516-1534.
 #'
 #' @examples
 #' # data(olive)
@@ -1006,7 +1006,7 @@
 #' @keywords utility
 #' @export
 #'
-#' @references Borg, I. and Groenen, P. J. F. (1997) \emph{Modern Multidimensional Scaling}. Springer-Verlag, New York, pp. 340-342.
+#' @references Borg, I. and Groenen, P. J. F. (1997) \emph{Modern Multidimensional Scaling}. Springer-Verlag, New York, NY, USA, pp. 340-342.
 #' @usage
 #' Procrustes(X,
 #'            Xstar,
@@ -1948,13 +1948,14 @@
 #' @param load.switch Logical indicating whether the factor loadings are to be stored (defaults to \code{TRUE}).
 #' @param psi.switch Logical indicating whether the uniquenesses are to be stored (defaults to \code{TRUE}).
 #' @param pi.switch Logical indicating whether the mixing proportions are to be stored (defaults to \code{TRUE}).
+#' @param update.mu Logical indicating whether the means should be updated. Only relevant for the \code{"FA"} and \code{"IFA"} methods when \code{centering=TRUE} in \code{\link{mixfaControl}}, otherwise means are always updated. Setting \code{update.mu=FALSE} forces \code{mu.switch} to \code{FALSE}, but \code{mu.switch=FALSE} can still be used in conjunction with \code{update.mu=TRUE}.
 #' @param ... Catches unused arguments.
 #'
 #' @details \code{\link{storeControl}} is provided for assigning values for IMIFA models within \code{\link{mcmc_IMIFA}}. It may be useful not to store certain parameters if memory is an issue (e.g. for large data sets or for a large number of MCMC iterations after burnin and thinning).
 #'
 #' @note Posterior inference and plotting won't be possible for parameters not stored.
 #'
-#' Non-storage of parameters will almost surely prohibit the computation of posterior predictive checking error metrics within \code{\link{get_IMIFA_results}} also. In particular, if such error metrics are desired, \code{mu.switch} and \code{psi.switch} must be \code{TRUE} for all but the \code{"FA"} and \code{"IFA"} models, \code{load.switch} must be \code{TRUE} for all but the entirely zero-factor models, and \code{pi.switch} must be \code{TRUE} for models with clustering structure and unequal mixing proportions for all but the PPRE metric. \code{score.switch=TRUE} is not required for any posterior predictive checking.
+#' Non-storage of parameters will almost surely prohibit the computation of posterior predictive checking error metrics within \code{\link{get_IMIFA_results}} also. In particular, if such error metrics are desired, \code{psi.switch} must be \code{TRUE} for all but the \code{"FA"} and \code{"IFA"} models, \code{mu.switch} must be \code{TRUE} except in situations where \code{update.mu=FALSE} is allowed, \code{load.switch} must be \code{TRUE} for all but the entirely zero-factor models, and \code{pi.switch} must be \code{TRUE} for models with clustering structure and unequal mixing proportions for all but the PPRE metric. \code{score.switch=TRUE} is not required for any posterior predictive checking.
 #'
 #' Finally, if loadings are not stored but scores are, caution is advised when examining posterior scores as Procrustes rotation will not occur within \code{\link{get_IMIFA_results}}.
 #'
@@ -1970,6 +1971,7 @@
 #'              load.switch = TRUE,
 #'              psi.switch = TRUE,
 #'              pi.switch = TRUE,
+#'              update.mu = mu.switch,
 #'              ...)
 #' @examples
 #' stctrl <- storeControl(score.switch=FALSE)
@@ -1979,9 +1981,11 @@
 #'
 #' # Alternatively specify these arguments directly
 #' # sim  <- mcmc_IMIFA(olive, "IMIFA", n.iters=5000, score.switch=FALSE)
-   storeControl  <- function(mu.switch = TRUE, score.switch = TRUE, load.switch = TRUE, psi.switch = TRUE, pi.switch = TRUE, ...) {
-      switches   <- c(mu.sw=mu.switch, s.sw=score.switch, l.sw=load.switch, psi.sw=psi.switch,pi.sw=pi.switch)
-      attr(switches, "Missing") <- c(mu.sw=missing(mu.switch), s.sw=missing(score.switch), l.sw=missing(load.switch), psi.sw=missing(psi.switch), pi.sw=missing(pi.switch))
+   storeControl  <- function(mu.switch = TRUE, score.switch = TRUE, load.switch = TRUE, psi.switch = TRUE, pi.switch = TRUE,
+                             update.mu = mu.switch, ...) {
+      switches   <- c(mu.sw=mu.switch, s.sw=score.switch, l.sw=load.switch, psi.sw=psi.switch,pi.sw=pi.switch, u.sw=update.mu)
+      attr(switches, "Missing") <- c(mu.sw=missing(mu.switch), s.sw=missing(score.switch), l.sw=missing(load.switch),
+                                     psi.sw=missing(psi.switch), pi.sw=missing(pi.switch), u.sw=missing(update.mu))
       if(any(!is.logical(switches)))       stop("All logical parameter storage switches must be single logical indicators", call.=FALSE)
         switches
    }
@@ -2078,7 +2082,7 @@
 #' @importFrom Rfast "colVars"
 #' @export
 #' @author Keefe Murphy - <\email{keefe.murphy@@mu.ie}>
-#' @references van den Berg, R.A., Hoefsloot, H.C.J, Westerhuis, J.A. and Smilde, A.K. and van der Werf, M.J. (2006) Centering, scaling, and transformations: improving the biological information content of metabolomics data. \emph{BMC Genomics}, 7(142).
+#' @references van den Berg, R. A., Hoefsloot, H. C. J, Westerhuis, J. A., Smilde, A. K., and van der Werf, M.J. (2006) Centering, scaling, and transformations: improving the biological information content of metabolomics data. \emph{BMC Genomics}, 7(142).
 #' @keywords utility
 #' @usage
 #' pareto_scale(x,

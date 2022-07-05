@@ -63,6 +63,6 @@ mat_ss   <- proc$ss
 mat_ss2  <- Procrustes(X=mat1, Xstar=mat2, sumsq=TRUE)$ss
 }
 \references{
-Borg, I. and Groenen, P. J. F. (1997) \emph{Modern Multidimensional Scaling}. Springer-Verlag, New York, pp. 340-342.
+Borg, I. and Groenen, P. J. F. (1997) \emph{Modern Multidimensional Scaling}. Springer-Verlag, New York, NY, USA, pp. 340-342.
 }
 \keyword{utility}

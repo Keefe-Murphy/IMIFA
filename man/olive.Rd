@@ -21,7 +21,7 @@ pairs(olive[,-(1:2)],
       col=ifelse(region < 5, 1, ifelse(region < 7, 2, ifelse(region == 9, 4, 3))))
 }
 \references{
-Forina, M., Armanino, C., Lanteri, S. and Tiscornia, E. (1983). Classification of olive oils from their fatty acid composition, In Martens, H. and Russrum Jr., H. (Eds.), \emph{Food Research and Data Analysis}, Applied Science Publishers, London, pp. 189-214.
+Forina, M., Armanino, C., Lanteri, S. and Tiscornia, E. (1983). Classification of olive oils from their fatty acid composition, In Martens, H. and Russrum Jr., H. (Eds.), \emph{Food Research and Data Analysis}, Applied Science Publishers, London, UK, pp. 189-214.
 
 Forina, M. and Tiscornia, E. (1982). Pattern recognition methods in the prediction of Italian olive oil origin by their fatty acid content, \emph{Annali di Chimica}, 72:143-155.
 }

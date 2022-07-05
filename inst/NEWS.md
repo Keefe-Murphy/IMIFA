@@ -1,9 +1,15 @@
 __Infinite Mixtures of Infinite Factor Analysers__
 ==================================================  
 
+## IMIFA v2.1.9 - (_16<sup>th</sup> release [patch update]: 2022-08-12_)
 ### Improvements, Bug Fixes, & Miscellaneous Edits
+* `storeControl` gains the `update.mu` arg. to optionally circumvent updates of the  
+  mean parameters to speed-up special case of (I)FA models with centered data.
+* Minor fix to `param="means"` plots for uncentered (I)FA results.
+* Minor fixes to account for (rare) uncentered data problems in means updates also.
 * Minor fix to rare cases where Cholesky decompositions fail.
 * Minor tidy-ups related to `exchange=TRUE` from previous update.
+* Minor documentation edits for CRAN compliance.
 
 ## IMIFA v2.1.8 - (_15<sup>th</sup> release [patch update]: 2021-12-19_)
 ### Improvements, Bug Fixes, & Miscellaneous Edits

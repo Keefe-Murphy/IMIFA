@@ -183,12 +183,12 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
   } else     {
     dat     <- as.matrix(raw.dat)
   }
-  centered  <- switch(EXPR=method, classify=all(round(colSums2(dat)) == 0), (centering || all(round(colSums2(dat)) == 0)))
+  N         <- as.integer(nrow(dat))
+  P         <- as.integer(ncol(dat))
+  centered  <- switch(EXPR=method, classify=isTRUE(all.equal(colSums2(dat), rep(0, P))), (centering || isTRUE(all.equal(colSums2(dat), rep(0, P)))))
   if(!any(centered, centering) && all(verbose,
     scaling != "none"))             message("Are you sure you want to apply scaling without centering?\n")
 
-  N         <- as.integer(nrow(dat))
-  P         <- as.integer(ncol(dat))
   uni       <- P == 1
   lnN       <- log(N)
   NlP       <- N <= P
@@ -210,6 +210,14 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
          NlP, verbose))             message(paste0("Consider setting 'uni.type' to 'isotropic' or 'single'", ifelse(miss.pri && uni.prior == "unconstrained", ", or at least 'uni.prior' to 'isotropic', ", " "), "in N <= P cases\n"))
 
 # Manage storage switches & warnings for other function inputs
+  if(!storage["u.sw"]  &&
+    (!is.element(method, c("FA", "IFA")) ||
+     !all(centering, centered)))    stop("'update.mu' can only be FALSE for the \"FA\" or \"IFA\" methods when centering is applied", call.=FALSE)
+  if(!storage["u.sw"]  &&
+     storage["mu.sw"])  {
+    if(verbose)                     message("Forcing 'mu.switch' to FALSE as 'update.mu' is FALSE\n")
+    storage["mu.sw"]   <- FALSE
+  }
   store.x   <- attr(storage, "Missing")
   if(!store.x["mu.sw"] && all(!storage["mu.sw"], ifelse(method == "classify",
      !centering, !centered)))       warning("Centering hasn't been applied - are you sure you want mu.switch=FALSE?\n", call.=FALSE, immediate.=TRUE)
@@ -464,8 +472,12 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
     if(any(!storage))             {
       if(all(storage["s.sw"], !storage["l.sw"],
          any(range.Q   != 0)))      message("Loadings not stored but scores are: Procrustes rotation of scores will not occur when passing results to get_IMIFA_results()\n")
-      sX       <- c(1L, 3L, 4L)
-      if(any(!storage[sX]))       { message(paste0("Non-storage of parameters means posterior predictive checking error metrics almost surely will not be available", ifelse(is.element(max(which(!storage[sX])), c(1L, 4L)), paste0(":\nposterior mean parameter estimates of the ", ifelse(!storage["mu.sw"], ifelse(storage["psi.sw"], "means", "means and uniquenesses"), "uniquenesses"), " will still be available\n"), "\n")))
+      sX       <- c("mu.sw", "l.sw", "psi.sw")
+      if(any(!storage[sX]))       {
+        if(!is.element(method,
+           c("FA", "IFA"))      ||
+          (storage[6L] &&
+           any(!storage[sX[-1L]]))) message(paste0("Non-storage of parameters means posterior predictive checking error metrics almost surely will not be available", ifelse(is.element(max(which(!storage[sX])), c(1L, 4L)), paste0(":\nposterior mean parameter estimates of the ", ifelse(!storage["mu.sw"], ifelse(storage["psi.sw"], "means", "means and uniquenesses"), "uniquenesses"), " will still be available\n"), "\n")))
       } else if(any(all(method  == "MFA",  any(range.G > 1)) && any(range.Q > 0),
                     all(method  == "MIFA", any(range.G > 1)), is.element(method, c("IMIFA", "IMFA", "OMIFA", "OMFA"))) &&
           (!equal.pro  &&
@@ -678,8 +690,9 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
       alpha.d2     <- list(alpha.d2[[1L]][1L])
     }
   }
-  if(all(round(vapply(mu.zero, sum, numeric(1L))) == 0))      {
-    mu.zero        <- switch(EXPR=method, classify=base::matrix(0L, nr=1L, nc=range.G), lapply(mu.zero, function(x) 0L))
+  if(isTRUE(all.equal(vapply(mu.zero, sum, numeric(1L)),
+                      rep(0, length(G.init))))) {
+    mu.zero        <- switch(EXPR=method, classify=base::matrix(0L, nrow=1L, ncol=range.G), lapply(mu.zero, function(x) 0L))
   }
   if(mu0g && unlist(lapply(mu.zero,   function(x)  {
     if(is.matrix(x)) any(apply(x, 1L, function(y)  {

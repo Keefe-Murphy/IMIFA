@@ -32,7 +32,7 @@ For a (\code{N * G}) matrix of posterior cluster membership probabilities, this 
 # par(mar=c(5.1, 4.1, 4.1, 2.1))
 }
 \references{
-Ranciati, S., Vinciotti, V. and Wit, E., (2017) Identifying overlapping terrorist cells from the Noordin Top actor-event network, \emph{to appear}. <\href{https://arxiv.org/abs/1710.10319v1}{arXiv:1710.10319v1}>.
+Ranciati, S., Vinciotti, V. and Wit, E., (2017) Identifying overlapping terrorist cells from the Noordin Top actor-event network, \emph{Annals of Applied Statistics}, 14(3): 1516-1534.
 }
 \seealso{
 \code{get_IMIFA_results}

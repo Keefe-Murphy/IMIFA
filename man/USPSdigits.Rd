@@ -38,7 +38,7 @@ rect(0.7, 0, 1, 12, col=2, density=25)
 show_digit(ind) # retained pixels are shown in black
 }
 \references{
-Hastie, T., Tibshirani, R., and Friedman, J. (2001). \emph{The Elements of Statistical Learning}. Springer Series in Statistics. New York, NY, USA: Spring New York Inc., \ifelse{html}{\out{2<sup>nd</sup>}}{\eqn{2\textsuperscript{nd}}} edition.
+Hastie, T., Tibshirani, R., and Friedman, J. (2001). \emph{The Elements of Statistical Learning} (\ifelse{html}{\out{2<sup>nd</sup>}}{Second} edition). Springer Series in Statistics. New York, NY, USA: Springer.
 }
 \seealso{
 \code{\link{show_digit}}, \code{\link{show_IMIFA_digit}}

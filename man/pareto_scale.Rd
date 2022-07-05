@@ -22,7 +22,7 @@ Pareto scaling of a numeric matrix, with or without centering. Observations are 
 dat  <- pareto_scale(olive[,-c(1,2)])
 }
 \references{
-van den Berg, R.A., Hoefsloot, H.C.J, Westerhuis, J.A. and Smilde, A.K. and van der Werf, M.J. (2006) Centering, scaling, and transformations: improving the biological information content of metabolomics data. \emph{BMC Genomics}, 7(142).
+van den Berg, R. A., Hoefsloot, H. C. J, Westerhuis, J. A., Smilde, A. K., and van der Werf, M.J. (2006) Centering, scaling, and transformations: improving the biological information content of metabolomics data. \emph{BMC Genomics}, 7(142).
 }
 \author{
 Keefe Murphy - <\email{keefe.murphy@mu.ie}>

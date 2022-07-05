@@ -9,6 +9,7 @@ storeControl(mu.switch = TRUE,
              load.switch = TRUE,
              psi.switch = TRUE,
              pi.switch = TRUE,
+             update.mu = mu.switch,
              ...)
 }
 \arguments{
@@ -26,6 +27,8 @@ Unlike other parameters, the scores need not be stored for posterior predictive 
 
 \item{pi.switch}{Logical indicating whether the mixing proportions are to be stored (defaults to \code{TRUE}).}
 
+\item{update.mu}{Logical indicating whether the means should be updated. Only relevant for the \code{"FA"} and \code{"IFA"} methods when \code{centering=TRUE} in \code{\link{mixfaControl}}, otherwise means are always updated. Setting \code{update.mu=FALSE} forces \code{mu.switch} to \code{FALSE}, but \code{mu.switch=FALSE} can still be used in conjunction with \code{update.mu=TRUE}.}
+
 \item{...}{Catches unused arguments.}
 }
 \value{
@@ -40,7 +43,7 @@ Supplies a list of values for logical switches indicating whether parameters of 
 \note{
 Posterior inference and plotting won't be possible for parameters not stored.
 
-Non-storage of parameters will almost surely prohibit the computation of posterior predictive checking error metrics within \code{\link{get_IMIFA_results}} also. In particular, if such error metrics are desired, \code{mu.switch} and \code{psi.switch} must be \code{TRUE} for all but the \code{"FA"} and \code{"IFA"} models, \code{load.switch} must be \code{TRUE} for all but the entirely zero-factor models, and \code{pi.switch} must be \code{TRUE} for models with clustering structure and unequal mixing proportions for all but the PPRE metric. \code{score.switch=TRUE} is not required for any posterior predictive checking.
+Non-storage of parameters will almost surely prohibit the computation of posterior predictive checking error metrics within \code{\link{get_IMIFA_results}} also. In particular, if such error metrics are desired, \code{psi.switch} must be \code{TRUE} for all but the \code{"FA"} and \code{"IFA"} models, \code{mu.switch} must be \code{TRUE} except in situations where \code{update.mu=FALSE} is allowed, \code{load.switch} must be \code{TRUE} for all but the entirely zero-factor models, and \code{pi.switch} must be \code{TRUE} for models with clustering structure and unequal mixing proportions for all but the PPRE metric. \code{score.switch=TRUE} is not required for any posterior predictive checking.
 
 Finally, if loadings are not stored but scores are, caution is advised when examining posterior scores as Procrustes rotation will not occur within \code{\link{get_IMIFA_results}}.
 }

@@ -32,6 +32,6 @@ While small values of \code{alpha} have the effect of increasingly concentrating
 (asymmetric <- rDirichlet(G=5, alpha=c(3,4,5,1,2), nn=c(20, 41, 32, 8, 12)))
 }
 \references{
-Devroye, L. (1986) \emph{Non-Uniform Random Variate Generation}, Springer-Verlag, New York, p. 594.
+Devroye, L. (1986) \emph{Non-Uniform Random Variate Generation}, Springer-Verlag, New York, NY, USA, p. 594.
 }
 \keyword{utility}

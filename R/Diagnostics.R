@@ -125,7 +125,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   options(warn=1)
   on.exit(suppressWarnings(options(defopt)), add=TRUE)
   if(missing(sims))               stop("Simulations must be supplied", call.=FALSE)
-  if(class(sims) != "IMIFA")      stop("Object of class 'IMIFA' must be supplied", call.=FALSE)
+  if(!inherits(sims, "IMIFA"))    stop("Object of class 'IMIFA' must be supplied", call.=FALSE)
   burnin         <- as.integer(burnin)
   thinning       <- as.integer(thinning)
   store          <- attr(sims, "Store")
@@ -351,16 +351,16 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     G            <- ifelse(inf.G, ifelse(G.T, G, G[Q.ind]), ifelse(length(n.grp)  == 1, n.grp, G))
     Gseq         <- seq_len(G)
     gnames       <- paste0("Cluster", Gseq)
-    G.ind        <- if(!all(inf.G, length(n.grp) > 1)) G.ind     else which(n.grp == G)
+    G.ind        <- if(!all(inf.G, length(n.grp)  > 1)) G.ind    else which(n.grp == G)
     GQ.temp2     <- list(AICMs = aicm, BICMs = bicm, DICs = dic)
     clust.ind    <- !any(is.element(method,   c("FA", "IFA")),
                      all(is.element(method, c("MFA", "MIFA")), G == 1))
-    sw.mx        <- !clust.ind || sw["mu.sw"]
-    sw.px        <- !clust.ind || sw["psi.sw"]
+    sw.mx        <- (!clust.ind || sw["mu.sw"])  && sw["u.sw"]
+    sw.px        <- !clust.ind  || sw["psi.sw"]
 
     if(!inf.Q)   {
       Q          <- if(length(n.fac)   > 1)  Q                   else n.fac
-      Q.ind      <- if(all(!Q.T, length(n.fac) > 1)) Q.ind       else which(n.fac == Q)
+      Q.ind      <- if(all(!Q.T, length(n.fac)    > 1)) Q.ind    else which(n.fac == Q)
       Q          <- stats::setNames(if(length(Q) != G) rep(Q, G) else Q, gnames)
       if(all(inf.G, Q.T))  GQ.temp1$G <- rep(G, GQs)
       if(GQ1x)   {
@@ -677,7 +677,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   Q0E            <- if(inf.Q) QsE == 0 else if(clust.ind) matrix(Q == 0, nrow=G, ncol=e.store) else rep(Q == 0, e.store)
   Q0X            <- all(Q0E)
   QX0            <- any(!Q0E)
-  frobenius      <- error.metrics && all(sw["psi.sw"], sw["mu.sw"], any(Q0X, sw["l.sw"]))
+  frobenius      <- error.metrics && all(sw["psi.sw"], sw["mu.sw"] || !sw["u.sw"], any(Q0X, sw["l.sw"]))
   if(sw["s.sw"]) {
     eta          <- if(inf.Q) as.array(sims[[G.ind]][[Q.ind]]$eta)[,,eta.store, drop=FALSE]    else sims[[G.ind]][[Q.ind]]$eta[,,eta.store, drop=FALSE]
     if(!sw["l.sw"])               warning("Caution advised when examining posterior factor scores: Procrustes rotation has not taken place because loadings weren't stored\n", call.=FALSE)
@@ -823,7 +823,9 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   if(sw["mu.sw"]  || sw.mx) {
     post.mu      <- provideDimnames(do.call(cbind, lapply(result, "[[", "post.mu")),  base=list(if(uni) "" else varnames, gnames))
     means        <- c(means, list(post.mu = post.mu))
-    means        <- means[c(1L, 4L, 2L, 3L)]
+    if(sw["mu.sw"])         {
+      means      <- means[c(1L, 4L, 2L, 3L)]
+    }
     class(means) <- "listof"
   }
   if(sw["mu.sw"]) {
@@ -854,7 +856,9 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   if(sw["psi.sw"] || sw.px) {
     post.psi     <- provideDimnames(do.call(cbind, lapply(result, "[[", "post.psi")), base=list(if(uni) "" else varnames, gnames))
     uniquenesses <- c(uniquenesses, list(post.psi = post.psi))
-    uniquenesses <- uniquenesses[c(1L, 4L, 2L, 3L)]
+    if(sw["psi.sw"])        {
+      uniquenesses         <- uniquenesses[c(1L, 4L, 2L, 3L)]
+    }
     class(uniquenesses)    <- "listof"
   }
   if(sw["psi.sw"]) {
@@ -956,11 +960,11 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   } else    {
     if(any(sw["l.sw"], Q0X))    {
       if(cov.met)   {
-        cov.est  <- diag(post.psi[,1L, drop=!uni]) + (if(Q0X)    0L else           tcrossprod(post.load[[1L]]))
+        cov.est  <- diag(post.psi[,1L, drop=!uni]) + (if(Q0X)    0L      else         tcrossprod(post.load[[1L]]))
       }
       if(error.metrics && sw["psi.sw"])            {
        if(frobenius)    {
-         mu2     <- mu[,store.e,       drop=FALSE]
+         mu2     <- if(!sw["u.sw"]) matrix(0L, nrow=n.var, ncol=e.store) else         mu[,store.e, drop=FALSE]
        }
        if(QX0)          {
          lmat2   <- lmats[,,store.e,   drop=FALSE]
@@ -987,7 +991,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
           rcounts[[r]] <- rbinsx
         }
         if(cov.met) {
-          Sigma  <- diag(psi2[,r,      drop=!uni]) + (if(Q0E[r]) 0L else  if(uni)         crossprod(lmat2[,,r])    else tcrossprod(lmat2[,,r]))
+          Sigma  <- diag(psi2[,r,      drop=!uni]) + (if(Q0E[r]) 0L      else if(uni) crossprod(lmat2[,,r])      else tcrossprod(lmat2[,,r]))
           error  <- cov.emp - Sigma
           sqerr  <- error^2
           abserr <- abs(error)
@@ -1026,14 +1030,14 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
      }
      if(sw["psi.sw"] && any(all(cov.met, sw.pi), frobenius)) {
        metrics   <- rbind(MSE = mse, MEDSE = medse, MAE = mae, MEDAE = medae, RMSE = rmse, NRMSE = nrmse)
-       metrics   <- if(frobenius) rbind(metrics, PPRE = Fro)        else metrics
+       metrics   <- if(frobenius) rbind(metrics, PPRE = Fro)             else metrics
        metrics   <- metrics[!rowAll(is.na(metrics)),, drop=FALSE]
        metricCI  <- rowQuantiles(metrics, probs=conf.levels)
-       metricCI  <- if(cov.met && sw.pi) metricCI                   else provideDimnames(t(metricCI), base=list("PPRE", names(metricCI)))
+       metricCI  <- if(cov.met && sw.pi) metricCI                        else provideDimnames(t(metricCI), base=list("PPRE", names(metricCI)))
        med.met   <- stats::setNames(matrixStats::rowMedians(metrics), rownames(metrics))
        mean.met  <- stats::setNames(rowMeans2(metrics),               rownames(metrics))
        last.met  <- c(MSE = mse[e.store], MEDSE = medse[e.store], MAE = mae[e.store], MEDAE = medae[e.store], RMSE = rmse[e.store], NRMSE = nrmse[e.store])
-       last.met  <- if(frobenius) c(last.met, PPRE = Fro[e.store])  else last.met
+       last.met  <- if(frobenius) c(last.met, PPRE = Fro[e.store])       else last.met
        last.met  <- last.met[!is.na(last.met)]
        Err       <- if(cov.met) c(list(Median = med.met, Avg = mean.met, CIs = metricCI), Err[seq_len(4L)], if(all(cov.met, sw.pi)) c(list(Last.Cov = Sigma)), c(list(Final = last.met)), Err[5L:6L]) else c(list(Avg = mean.met, CIs = metricCI), Err[seq_len(3L)], list(Final = last.met))
        if(frobenius)     {
