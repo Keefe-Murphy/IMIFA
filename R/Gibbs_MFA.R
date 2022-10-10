@@ -42,7 +42,7 @@
     }
     z.store        <- matrix(0L, nrow=n.store, ncol=N)
     err.z          <- zerr <- FALSE
-    ll.store       <- vector("integer", n.store)
+    ll.store       <- integer(n.store)
 
     mu.sigma       <- 1/sigma.mu
     sig.mu.sqrt    <- sqrt(sigma.mu)

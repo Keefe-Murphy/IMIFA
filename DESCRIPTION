@@ -26,7 +26,7 @@ Suggests:
     mcclust,
     rmarkdown,
     Rmpfr
-RoxygenNote: 7.2.1
+RoxygenNote: 7.2.2
 VignetteBuilder: knitr
 Collate: 
     'MainFunction.R'

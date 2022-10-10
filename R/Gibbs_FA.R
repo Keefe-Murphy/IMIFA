@@ -34,9 +34,9 @@
     if(sw["psi.sw"]) {
       psi.store  <- matrix(0L, nrow=P, ncol=n.store)
     }
-    post.mu      <- vector("integer", P)
+    post.mu      <- integer(P)
     post.psi     <- post.mu
-    ll.store     <- vector("integer", n.store)
+    ll.store     <- integer(n.store)
 
     if(update.mu <- sw["u.sw"]) {
       mu.sigma   <- 1/sigma.mu

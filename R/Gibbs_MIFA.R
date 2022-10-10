@@ -39,7 +39,7 @@
       pi.store     <- matrix(0L, nrow=G, ncol=n.store)
     }
     z.store        <- matrix(0L, nrow=n.store, ncol=N)
-    ll.store       <- vector("integer", n.store)
+    ll.store       <- integer(n.store)
     Q.store        <- matrix(0L, nrow=G, ncol=n.store)
     Q.large        <- Q.big <- Q.bigs <- FALSE
     err.z          <- z.err <- FALSE

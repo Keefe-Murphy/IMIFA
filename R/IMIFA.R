@@ -44,7 +44,7 @@
   version <- read.dcf(path, "Version")
   name    <- read.dcf(path, "Package")
   if(interactive()) {
-    packageStartupMessage(paste("\n   ________  __________________\n  /_  __/  |/   /_  __/ ___/ _ \\\t   Infinite Mixtures of\n   / / / /|_// / / / / /__/ /_\\ \\     Infinite Factor Analysers\n _/ /_/ /   / /_/ /_/ ___/ /___\\ \\\t     and Related Models\n/____/_/   /_/_____/_/  /_/     \\_\\\t\t  version", version, "\n"))
+    packageStartupMessage(paste("\n   ________  __________________\n  /_  __/  |/   /_  __/ ___/ _ \\\t   Infinite Mixtures of\n   / / / /|_// / / / / /__/ /_\\ \\     Infinite Factor Analysers\n _/ /_/ /   / /_/ /_/ ___/ /___\\ \\\t     and Related Models\n/____/_/   /_/_____/_/  /_/     \\_\\\t\t version", version, "\n"))
   } else   {
     packageStartupMessage("\nPackage ", sQuote(name), " version ", version, ".\n")
   }

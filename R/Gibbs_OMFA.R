@@ -41,9 +41,9 @@
       pi.store     <- matrix(0L, nrow=G, ncol=n.store)
     }
     z.store        <- matrix(0L, nrow=n.store, ncol=N)
-    ll.store       <- vector("integer", n.store)
+    ll.store       <-
+    G.store        <- integer(n.store)
     err.z          <- zerr <- FALSE
-    G.store        <- vector("integer", n.store)
 
     mu.sigma       <- 1/sigma.mu
     mu.prior       <- mu.sigma * mu.zero
@@ -59,7 +59,7 @@
       alpha.store  <- ll.store
       alpha.shape  <- a.hyper[1L]
       alpha.rate   <- a.hyper[2L]
-      a.rates      <- vector("integer", total)
+      a.rates      <- integer(total)
     } else a.rates <- 1L
     avgzeta        <- zeta
     heat           <- tune.zeta$heat
@@ -77,7 +77,7 @@
       V            <- switch(EXPR=uni.type,  constrained=P, single=1L)
     }
     psi.beta       <- switch(EXPR=uni.prior, isotropic=psi.beta[which.max(.ndeci(psi.beta))], psi.beta)
-    pi.prop        <- c(cluster$pi.prop, vector("integer", G - length(cluster$pi.prop)))
+    pi.prop        <- c(cluster$pi.prop, numeric(G - length(cluster$pi.prop)))
     mu             <- cbind(mu, vapply(seq_len(G - length(cluster$pi.prop)), function(g) .sim_mu_p(P=P, sig.mu.sqrt=sig.mu.sqrt, mu.zero=mu.zero), numeric(P)))
     eta            <- .sim_eta_p(N=N, Q=Q)
     lmat           <- if(Q0) array(vapply(Gseq, function(g) .sim_load_p(Q=Q, P=P, sig.l.sqrt=sig.l.sqrt), numeric(P * Q)), dim=c(P, Q, G)) else array(0, dim=c(P, 0, G))

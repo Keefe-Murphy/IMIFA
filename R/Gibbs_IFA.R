@@ -32,12 +32,12 @@
     if(sw["psi.sw"]) {
       psi.store  <- matrix(0L, nrow=P, ncol=n.store)
     }
-    post.mu      <- vector("integer", P)
+    post.mu      <- integer(P)
     post.psi     <- post.mu
-    ll.store     <- vector("integer", n.store)
+    ll.store     <-
+    Q.store      <- integer(n.store)
     Q.star       <- Q
     Q0           <- Q   > 0
-    Q.store      <- vector("integer", n.store)
     Q.large      <- Q.big  <- FALSE
     nu1.5        <- nu1 + 0.5
     P.5          <- P/2

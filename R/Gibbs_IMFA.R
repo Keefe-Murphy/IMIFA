@@ -42,10 +42,10 @@
       pi.store       <- matrix(0L, nrow=trunc.G, ncol=n.store)
     }
     z.store          <- matrix(0L, nrow=n.store, ncol=N)
-    ll.store         <- vector("integer", n.store)
+    ll.store         <-
+    G.store          <- integer(n.store)
     acc1             <- acc2 <- FALSE
     err.z            <- zerr <- FALSE
-    G.store          <- vector("integer", n.store)
     act.store        <- G.store
     pi.alpha         <- cluster$pi.alpha
     if(learn.alpha) {
@@ -57,14 +57,14 @@
       d.store        <- ll.store
       d.shape1       <- d.hyper[1L]
       d.shape2       <- d.hyper[2L]
-      d.rates        <- vector("integer", total)
+      d.rates        <- integer(total)
       d.unif         <- d.shape1 == 1   && d.shape2 == 1
       .sim_disc_mh   <- if(!learn.alpha && pi.alpha == 0) .sim_d_slab else .sim_d_spike
     } else d.rates   <- 1L
     Dneg             <- !learn.d        && discount  < 0
     MH.step          <- any(discount  > 0, learn.d) && learn.alpha
     if(MH.step)     {
-      a.rates        <- vector("integer", total)
+      a.rates        <- integer(total)
     } else a.rates   <- 1L
     if(IM.lab.sw)   {
       lab.rate       <- matrix(0L, nrow=2L, ncol=total)
@@ -151,7 +151,7 @@
       }
       GI             <- which(Gs[index] == G)
       pi.prop        <- pi.prop[index]
-      Vs             <- if(!exchange) Vs[index] else rep(0L, G)
+      Vs             <- if(!exchange) Vs[index] else integer(G)
       mu[,Gs]        <- mu[,index, drop=FALSE]
       lmat[,,Gs]     <- lmat[,,index, drop=FALSE]
       psi.inv[,Gs]   <- psi.inv[,index, drop=FALSE]

@@ -62,7 +62,7 @@
 #' @export
 #' @importFrom Rfast "colMaxs" "colTabulate" "Median" "rowAll" "rowMaxs" "rowOrder" "rowSort" "rowTabulate" "rowVars" "Var"
 #' @importFrom mclust "classError"
-#' @importFrom matrixStats "colSums2" "rowMeans2" "rowMedians" "rowQuantiles" "rowSums2"
+#' @importFrom matrixStats "colSums2" "colMeans2" "rowMeans2" "rowMedians" "rowQuantiles" "rowSums2"
 #' @importFrom slam "as.simple_triplet_matrix"
 #'
 #' @seealso \code{\link{plot.Results_IMIFA}}, \code{\link{mcmc_IMIFA}}, \code{\link{Zsimilarity}}, \code{\link{scores_MAP}}, \code{\link{sim_IMIFA_model}}, \code{\link{Procrustes}}, \code{\link[stats]{varimax}}, \code{\link{norm}}
@@ -498,7 +498,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       }
     }
 
-    uncertain    <- if(G > 1) 1 - Rfast::rowMaxs(post.prob, value=TRUE) else vector("integer", n.obs)
+    uncertain    <- if(G > 1) 1 - Rfast::rowMaxs(post.prob, value=TRUE) else integer(n.obs)
     sizes        <- stats::setNames(tabulate(MAP, nbins=G), gnames)
     if(any(sizes == 0))           warning(paste0("Empty cluster exists in MAP partition:\nexamine trace plots", ifelse(any(is.element(method, c("OMFA", "IMFA", "OMIFA", "IMIFA")), is.element(method, c("MFA", "MIFA")) && any(n.grp < G)), ", try to supply a lower G value to get_IMIFA_results(),", ""), " or re-run the model\n"), call.=FALSE)
     if(sw["pi.sw"]) {
@@ -781,7 +781,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
         dat.gg   <- dat[z.ind[[g]],, drop=FALSE]
         cov.gg   <- stats::cov(dat.gg)
       }
-      var.exp    <- ifelse(sizes[g] <= 1, 0L, pmax(0L, diag(cov.gg) - post.psi))
+      var.exp    <- ifelse(sizes[g] <= 1, 0L, pmax.int(0L, diag(cov.gg) - post.psi))
     } else {
       var.exp    <- NULL
     }

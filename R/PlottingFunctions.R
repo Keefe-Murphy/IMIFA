@@ -930,7 +930,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
         graphics::text(x=0.5, y=y1,          cex=a.cex, col="black", adj=a.adj, bquote(.(round(switch(EXPR=param, alpha=plot.x$post.alpha, discount=plot.x$post.disc), digits))))
         graphics::text(x=0.5, y=y2 - pen,    cex=a.cex, col="black", adj=a.adj, expression(bold("\nVariance:\n")))
         graphics::text(x=0.5, y=y2 - pen,    cex=a.cex, col="black", adj=a.adj, bquote(.(round(switch(EXPR=param, alpha=plot.x$var.alpha,  discount=plot.x$var.disc),  digits))))
-        graphics::text(x=0.5, y=y3 - pen,    cex=a.cex, col="black", adj=a.adj, bquote(bold(.(100 * conf)) * bold("% Confidence Interval:")))
+        graphics::text(x=0.5, y=y3 - pen,    cex=a.cex, col="black", adj=a.adj, bquote(bold(.(100 * conf)) * bold("% Credible Interval:")))
         graphics::text(x=0.5, y=y4 - pen,    cex=a.cex, col="black", adj=a.adj, bquote(paste("[", .(round(switch(EXPR=param, alpha=plot.x$ci.alpha[1L], discount=plot.x$ci.disc[1L]), digits)), ", ", .(round(switch(EXPR=param, alpha=plot.x$ci.alpha[2L], discount=plot.x$ci.disc[2L]), digits)), "]")))
         graphics::text(x=0.5, y=y5,          cex=a.cex, col="black", adj=a.adj, expression(bold("Last Valid Sample:\n")))
         graphics::text(x=0.5, y=y6,          cex=a.cex, col="black", adj=a.adj, bquote(.(round(switch(EXPR=param, alpha=plot.x$last.alpha, discount=plot.x$last.disc), digits))))
@@ -1280,7 +1280,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
                         plot.x, type=type.u, pch=15, col=switch(EXPR=param, loadings=rev(seq_len(Q)), seq_len(G)), xlab=switch(EXPR=uni.type, constrained=, unconstrained="Variable", ""),
                         lty=1, ylab=paste0(switch(EXPR=param, uniquenesses=switch(EXPR=uni.type, constrained=, unconstrained="Standardised ", ""), "Standardised "), varnam),
                         xaxt="n", bty="n", main=paste0("Parallel Coordinates - ", post.last, ": ", varnam, ifelse(all(grp.ind, param == "loadings"), paste0("\nCluster ", g), "")))
-      graphics::axis(1, at=seq_len(n.var), labels=if(titles && n.var < 100) rownames(plot.x) else rep("", n.var), cex.axis=0.5, tick=FALSE, line=-0.5)
+      graphics::axis(1, at=seq_len(n.var), labels=if(titles && n.var < 100) rownames(plot.x) else character(n.var), cex.axis=0.5, tick=FALSE, line=-0.5)
       for(i in seq_len(n.var))    {
         graphics::lines(c(i, i), c(0, 1), col=grey)
         if(titles && n.var < 100) {
@@ -1332,7 +1332,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
         graphics::par(mar=c(0, 0, 0, 0))
         graphics::plot.new()
         ltxt <- c("Data Bin Counts", "Median Replicate Bin Counts")
-        temp <- graphics::legend("center", legend=rep("", 2), text.width=max(graphics::strwidth(ltxt)), ncol=1, bty="n", cex=0.75, pt.cex=1.25, fill=c(grey, "black"), xjust=0.5)
+        temp <- graphics::legend("center", legend=character(2L), text.width=max(graphics::strwidth(ltxt)), ncol=1, bty="n", cex=0.75, pt.cex=1.25, fill=c(grey, "black"), xjust=0.5)
         graphics::text(temp$rect$left + temp$rect$w * 0.55, temp$text$y, ltxt)
        }
      }
@@ -1359,7 +1359,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
         graphics::par(mar=c(0, 0, 0, 0))
         graphics::plot.new()
         ltxt <- c("Median Error Metrics", "Error Metrics Evaluated at Posterior Mean", "Error Metrics Evaluated at Last Valid Sample")
-        temp <- graphics::legend("center", legend=rep("", 3), text.width=max(graphics::strwidth(ltxt)), ncol=1, bty="n", cex=0.75, pt.cex=1.25, pch=c(19, 15, 18), col=c("black", e.col), xjust=0.5)
+        temp <- graphics::legend("center", legend=character(3L), text.width=max(graphics::strwidth(ltxt)), ncol=1, bty="n", cex=0.75, pt.cex=1.25, pch=c(19, 15, 18), col=c("black", e.col), xjust=0.5)
         graphics::text(temp$rect$left + temp$rect$w * 0.55, temp$text$y, ltxt)
       }
       metric <- rbind(plot.x, post.x, last.x)

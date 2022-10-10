@@ -1,6 +1,11 @@
 __Infinite Mixtures of Infinite Factor Analysers__
 ==================================================  
 
+### Improvements, Bug Fixes, & Miscellaneous Edits
+* Minor speed-ups to `Procrustes` when `translate` &/or `dilate` are `TRUE`.
+* Minor speed-ups to internal Cholesky decompositions in rare failure cases.
+* Cosmetic changes to `param="alpha"` or `"discount"` plots.
+
 ## IMIFA v2.1.9 - (_16<sup>th</sup> release [patch update]: 2022-08-12_)
 ### Improvements, Bug Fixes, & Miscellaneous Edits
 * `storeControl` gains the `update.mu` arg. to optionally circumvent updates of the  

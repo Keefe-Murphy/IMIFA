@@ -940,7 +940,7 @@
       check      <- all(if(isTRUE(semi)) test >= 0 else test > 0)
       if(isTRUE(make))  {
         evec     <- eigs$vectors
-        return(list(check = check, X.new = if(check) x else x + evec %*% tcrossprod(diag(pmax.int(2L * tol - eval, ifelse(isTRUE(semi), 0L, .Machine$double.eps)), d), evec)))
+        return(list(check = check, X.new = if(check) x else x + tcrossprod(evec * rep(pmax.int(2L * tol - eval, ifelse(isTRUE(semi), 0L, .Machine$double.eps)), each=NROW(evec)), evec)))
       } else check
     }
 
@@ -1004,6 +1004,7 @@
 #' \item{d}{The scaling factor (is \code{isTRUE(dilate)}).}
 #' \item{ss}{The sum of squared differences (if \code{isTRUE(sumsq)}).}
 #' @keywords utility
+#' @importFrom matrixStats "colMeans2"
 #' @export
 #'
 #' @references Borg, I. and Groenen, P. J. F. (1997) \emph{Modern Multidimensional Scaling}. Springer-Verlag, New York, NY, USA, pp. 340-342.
@@ -1043,16 +1044,17 @@
       }
       if(P2 == 0)                          stop("Xstar must contain at least one column",         call.=FALSE)
       if(anyNA(Xstar)   || anyNA(X))       stop("X and Xstar are not allowed to contain missing values", call.=FALSE)
-      J          <- if(translate) diag(N) - 1/N                                      else diag(N)
-      C          <- if(translate) crossprod(Xstar, J) %*% X                          else crossprod(Xstar, X)
+      J          <- if(translate) diag(N) - 1/N                          else diag(N)
+      C          <- if(translate) crossprod(Xstar, J) %*% X              else crossprod(Xstar, X)
       if(!all(P  == 1,
               P2 == 1))  {
         svdX     <- svd(C)
         R        <- tcrossprod(svdX$v, svdX$u)
       } else R   <- 1L
-      d          <- if(dilate)    sum(C * R)/sum(crossprod(J, X) * X)                else 1L
-      tt         <- if(translate) crossprod(Xstar - d * X %*% R, matrix(1L, N, 1))/N else 0L
-      X.new      <- d * X %*% R + if(translate) matrix(tt, N, P2, byrow = TRUE)      else tt
+      d          <- if(dilate)    sum(C * R)/sum(J * tcrossprod(X))      else 1L
+      dXR        <- d * X %*% R
+      tt         <- if(translate) colMeans2(Xstar  - dXR)                else 0L
+      X.new      <- dXR  + if(translate) matrix(tt, N, P2, byrow = TRUE) else tt
         return(c(list(X.new = X.new), list(R = R), if(translate) list(t = tt),
                  if(dilate) list(d = d), if(sumsq) list(ss = sum((X[,seq_len(P2), drop=FALSE] - X.new)^2L))))
     }
@@ -1648,13 +1650,13 @@
 #' }
 #' @param tune.zeta A list with the following named arguments, used for tuning \code{zeta} (which is either the width of the uniform proposal for the \code{"IMFA"} or \code{"IMIFA"} methods or the standard deviation of the log-normal proposal for the \code{"OMFA"} or \code{"OMIFA"} methods) for \code{alpha}, via diminishing Robbins-Monro type adaptation, when the \code{alpha} parameter is learned via Metropolis-Hastings steps:
 #' \describe{
-#' \item{\code{heat}}{The initial adaptation intensity/step-size, such that larger values lead to larger updates. Must be strictly greater than zero. Defaults to 1 if not supplied but other elements of \code{tune.zeta} are.}
+#' \item{\code{heat}}{The initial adaptation intensity/step-size, such that larger values lead to larger updates. Must be strictly greater than zero. Defaults to \code{1} if not supplied but other elements of \code{tune.zeta} are.}
 #' \item{\code{lambda}}{Iteration rescaling parameter which controls the speed at which adaptation diminishes, such that lower values cause the contribution of later iterations to diminish more slowly. Must lie in the interval (0.5, 1]. Defaults to 1 if not supplied but other elements of \code{tune.zeta} are.}
-#' \item{\code{target}}{The target acceptance rate. Must lie in the interval [0, 1]. Defaults to 0.441, which is optimum for univariate targets, if not supplied but other elements of \code{tune.zeta} are.}
+#' \item{\code{target}}{The target acceptance rate. Must lie in the interval [0, 1]. Defaults to \code{0.441}, which is optimal for univariate targets, if not supplied but other elements of \code{tune.zeta} are.}
 #' \item{\code{start.zeta}}{The iteration at which diminishing adaptation begins. Defaults to \code{100}.}
 #' \item{\code{stop.zeta}}{The iteration at which diminishing adaptation is to stop completely. Defaults to \code{Inf}, such that diminishing adaptation is never explicitly made to stop. Must be greater than \code{start.zeta}.}
 #' }
-#' At least one \code{tune.zeta} argument must be supplied for diminishing adaptation to be invoked. \code{tune.zeta} arguments are only relevant when \code{learn.alpha} is \code{TRUE} (and, for the \code{"IMFA"} and \code{"IMIFA"} methods, when either of the following is also true: the \code{discount} remains fixed at a non-zero value, or when \code{learn.d} is \code{TRUE} and \code{kappa < 1}). Since Gibbs steps are invoked for updating \code{alpha} when \code{discount == 0} under the \code{"IMFA"} or \code{"IMIFA"} methods, adaption occurs according to a running count of the number of iterations with non-zero sampled \code{discount} values for those methods.
+#' At least one \code{tune.zeta} argument must be supplied for diminishing adaptation to be invoked. \code{tune.zeta} arguments are only relevant when \code{learn.alpha} is \code{TRUE} (and, for the \code{"IMFA"} and \code{"IMIFA"} methods, when either of the following is also true: the \code{discount} remains fixed at a non-zero value, or when \code{learn.d} is \code{TRUE} and \code{kappa < 1}). Since Gibbs steps are invoked for updating \code{alpha} when \code{discount == 0} under the \code{"IMFA"} or \code{"IMIFA"} methods, adaption occurs according to a running count of the number of iterations with non-zero sampled \code{discount} values for those methods. As such, when a mix of Gibbs and MH updates are used, this tuning only targets the \code{target} acceptance rates for the MH steps; i.e. acceptances under the Gibbs framework will inflate the acceptance rate further.
 #'
 #' If diminishing adaptation is invoked, the posterior mean \code{zeta} will be stored. Since caution is advised when employing adaptation, note that acceptance rates of between 10-50\% are generally considered adequate.
 #' @param ... Catches unused arguments.
@@ -2215,7 +2217,7 @@
       eigs       <- eigen(x, symmetric = TRUE)
       eval       <- eigs$values
       evec       <- eigs$vectors
-        return(chol(x + evec %*% tcrossprod(diag(pmax.int(.Machine$double.eps, 2 * max(abs(eval)) * d * .Machine$double.eps - eval), d), evec), ...))
+        return(chol(x + tcrossprod(evec * rep(pmax.int(.Machine$double.eps, 2 * eval[1L] * d * .Machine$double.eps - eval), each=NROW(evec)), evec), ...))
       }
     )
 
@@ -2416,7 +2418,7 @@
       na.ind     <- !is.na(x)
       x          <- abs(x[na.ind])
       if(all(icheck   <- (floor(x) == x), na.rm=TRUE)) {
-        res[na.ind]   <- if(isTRUE(after.dot)) vector("integer", length(x)) else vapply(as.integer(x), format.info, integer(1L), digits=22)
+        res[na.ind]   <- if(isTRUE(after.dot)) integer(length(x)) else vapply(as.integer(x), format.info, integer(1L), digits=22)
       } else      {
         ipart    <- pmax(1L, floor(x))
         ichar    <- nchar(ipart)
@@ -2537,10 +2539,11 @@
     }
 
     #' @importFrom matrixStats "colMeans2" "rowSums2"
+    #' @importFrom Rfast "colVars"
     .scale2      <- function(x, center = TRUE, scale = TRUE) { # replaces Rfast::standardise
-      cmeans     <- if(isTRUE(center)) colMeans2(x)     else center
-      center     <- if(is.logical(center))   center     else is.numeric(center)
-      scaling    <- if(is.logical(scale))     scale     else is.numeric(scale)
+      cmeans     <- if(isTRUE(center))     colMeans2(x) else center
+      center     <- if(is.logical(center))       center else is.numeric(center)
+      scaling    <- if(is.logical(scale))         scale else is.numeric(scale)
       if(center  && scaling) {
         y        <- t(x) - cmeans
           if(isTRUE(scale)) t(y/sqrt(rowSums2(y^2)) * sqrt(nrow(x) - 1L)) else t(y/scale)

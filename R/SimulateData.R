@@ -114,7 +114,7 @@ sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(floor(log(P)), G),
        any(length(pis)   != G,
            !all.equal(sum(pis), 1)))      stop(paste0("'pis' must be a numeric vector of length G=", G, " which sums to ", 1, " without missing values"),   call.=FALSE)
     if(any(pis <= 0))                     stop("All 'pis' values must be strictly positive", call.=FALSE)
-    nn         <- vector("integer", G)
+    nn         <- integer(G)
     iter       <- 0L
     nn0        <- TRUE
     while(nn0  && iter    < 100)      {

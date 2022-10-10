@@ -185,7 +185,7 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
   }
   N         <- as.integer(nrow(dat))
   P         <- as.integer(ncol(dat))
-  centered  <- switch(EXPR=method, classify=isTRUE(all.equal(colSums2(dat), rep(0, P))), (centering || isTRUE(all.equal(colSums2(dat), rep(0, P)))))
+  centered  <- switch(EXPR=method, classify=isTRUE(all.equal(colSums2(dat), numeric(P))), (centering || isTRUE(all.equal(colSums2(dat), numeric(P)))))
   if(!any(centered, centering) && all(verbose,
     scaling != "none"))             message("Are you sure you want to apply scaling without centering?\n")
 
@@ -653,7 +653,7 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
       nngs         <- tabulate(zi[[g]], nbins=switch(EXPR=method, IMFA=, IMIFA=trunc.G, G))
       if(verbose   && zli.miss)     message(paste0("G=", G, " - initial cluster sizes: ", paste(nngs[Gseq], collapse=", "), "\n"))
       pi.prop[[g]] <- if(equal.pro) rep(1/G, G) else prop.table(nngs)
-      mu[[g]]      <- vapply(Gseq, function(gg) if(nngs[gg] > 0) colMeans2(dat[zi[[g]] == gg,, drop=FALSE]) else vector("integer", P), numeric(P))
+      mu[[g]]      <- vapply(Gseq, function(gg) if(nngs[gg] > 0) colMeans2(dat[zi[[g]] == gg,, drop=FALSE]) else integer(P), numeric(P))
       mu[[g]]      <- if(uni)       t(mu[[g]])  else mu[[g]]
       if(mu0.x)   {
         mu.zero[[g]]    <- if(mu0g) mu[[g]]     else replicate(G, cmeans, simplify="array")
@@ -691,7 +691,7 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
     }
   }
   if(isTRUE(all.equal(vapply(mu.zero, sum, numeric(1L)),
-                      rep(0, length(G.init))))) {
+                      numeric(length(G.init)))))   {
     mu.zero        <- switch(EXPR=method, classify=base::matrix(0L, nrow=1L, ncol=range.G), lapply(mu.zero, function(x) 0L))
   }
   if(mu0g && unlist(lapply(mu.zero,   function(x)  {
