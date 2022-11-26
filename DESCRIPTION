@@ -1,8 +1,8 @@
 Package: IMIFA
 Type: Package
-Date: 2022-08-12
+Date: 2022-12-19
 Title: Infinite Mixtures of Infinite Factor Analysers and Related Models
-Version: 2.1.9
+Version: 2.1.10
 Authors@R: c(person("Keefe", "Murphy", email = "keefe.murphy@mu.ie", role = c("aut", "cre"), comment = c(ORCID = "0000-0002-7709-3159")),
              person("Cinzia", "Viroli", email = "cinzia.viroli@unibo.it", role = "ctb", comment = c(ORCID = "0000-0002-3278-5266")),
              person("Isobel Claire", "Gormley", email = "claire.gormley@ucd.ie", role = "ctb", comment = c(ORCID = "0000-0001-7713-681X")))
@@ -26,7 +26,7 @@ Suggests:
     mcclust,
     rmarkdown,
     Rmpfr
-RoxygenNote: 7.2.2
+RoxygenNote: 7.2.3
 VignetteBuilder: knitr
 Collate: 
     'MainFunction.R'

@@ -6,8 +6,8 @@
 #' \itemize{
 #' \item{Type: }{Package}
 #' \item{Package: }{IMIFA}
-#' \item{Version: }{2.1.9}
-#' \item{Date: }{2022-08-12 (this version), 2017-02-02 (original release)}
+#' \item{Version: }{2.1.10}
+#' \item{Date: }{2022-12-19 (this version), 2017-02-02 (original release)}
 #' \item{Licence: }{GPL (>=2)}
 #' }
 #'

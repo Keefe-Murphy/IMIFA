@@ -27,7 +27,7 @@ MGP_check(ad1,
 
 \item{bd1, bd2}{Rate hyperparameters for \eqn{\delta_1}{delta_1} and \eqn{\delta_k \forall k\ge 2}{delta_k for all k >= 2}, respectively. Both default to \code{1}.}
 
-\item{truncated}{A logical value indicating whether the version of the MGP prior based on left-truncated gamma distributions is invoked (see \code{\link{ltrgamma}} and the Zhang et al. reference below). Defaults to \code{FALSE}. Note that, when \code{TRUE}, only the shrinkage parameters for the first loadings column are affected and the conditions needed to pass this check are much less strict. Moreover, more desirable shrinkage properties are easily obtained.}
+\item{truncated}{A logical value indicating whether the version of the MGP prior based on left-truncated gamma distributions is invoked (see \code{\link{ltrgamma}} and the Zhang et al. reference below). Defaults to \code{FALSE}. Note that, when \code{TRUE}, the expected shrinkage factors for the first loadings column are not affected and the conditions needed to pass this check for the parameters associated with subsequent columns are much less strict. Moreover, more desirable shrinkage properties are easily obtained.}
 
 \item{inverse}{Logical indicator for whether the cumulative shrinkage property is assessed against the induced Inverse Gamma prior, the default, or in terms of the Gamma prior (which is incorrect). This is always \code{TRUE} when used inside \code{\link{mcmc_IMIFA}}: the \code{FALSE} option exists only for demonstration purposes.}
 }
@@ -59,7 +59,7 @@ MGP_check(ad1=1.5, ad2=1.8, Q=10, phi.shape=3, inverse=TRUE)$valid    #FALSE
 (shrink <- MGP_check(ad1=1.5, ad2=2.8, Q=10, phi.shape=2, phi.rate=0.5, inverse=TRUE))
 
 # Check previously invalid parameterisation again using truncated version of the MGP prior
-MGP_check(ad1=1.5, ad2=1.8, Q=10, phi.shape=3, truncated=FALSE)$valid # TRUE
+MGP_check(ad1=1.5, ad2=1.8, Q=10, phi.shape=3, truncated=TRUE)$valid  #TRUE
 }
 \references{
 Murphy, K., Viroli, C., and Gormley, I. C. (2020) Infinite mixtures of infinite factor analysers, \emph{Bayesian Analysis}, 15(3): 937-963. <\href{https://projecteuclid.org/euclid.ba/1570586978}{doi:10.1214/19-BA1179}>.

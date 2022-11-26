@@ -82,7 +82,7 @@
     # Adaptation
       if(adapt   && all(iter >= start.AGS, iter < stop.AGS))      {
         if(stats::runif(1) < ifelse(iter < AGS.burn, 0.5, exp(-b0 - b1 * (iter - start.AGS)))) {
-          colvec <- (if(Q0)  colSums(abs(lmat)  < epsilon) / P   else stats::runif(1)) >= prop
+          colvec <- if(Q0)  (colSums2(abs(lmat) < epsilon) / P)  >= prop else stats::runif(1) <= prop
           numred <- sum(colvec)
           if(numred == 0)  {
             Q    <- Q + 1L
@@ -95,7 +95,7 @@
               tau   <- cumprod(delta)
               lmat  <- cbind(lmat, stats::rnorm(n=P, mean=0, sd=1/sqrt(phi[,Q] * tau[Q])))
             }
-          } else if(Q > 0)      {
+          } else if(Q0)         {
             nonred  <- colvec  == 0
             Q       <- max(0L, Q - numred)
             phi     <- phi[,nonred, drop=FALSE]

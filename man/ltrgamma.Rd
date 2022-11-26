@@ -41,7 +41,7 @@ The left-truncated gamma distribution has PDF:
 for \eqn{0\le\tau\le x}, and \eqn{\min(\tau,\beta) > 0}{min(tau, beta) > 0}, where \eqn{\alpha}{alpha} and \eqn{\beta}{beta} are the \code{shape} and \code{rate} parameters, respectively, \eqn{\tau}{tau} is the cutoff point at which \code{trunc}ation occurs, and \eqn{\Gamma(\alpha, \tau\beta)} is the upper incomplete gamma function.
 }
 \note{
-\code{rltrgamma} is invoked internally for the \code{"IFA"}, \code{"MIFA"}, \code{"OMIFA"}, and \code{"IMIFA"} models to draw column shrinkage parameters for all but the first loadings column under the MGP prior when \code{truncated=TRUE} (which is \strong{not} the default) is supplied to \code{mgpControl}, at the expense of slightly longer run times. \code{exp_ltrgamma} is used within \code{MGP_check} to check the validity of the MGP hyperparameters when \code{truncated=TRUE} (which is again, \strong{not} the default). Both functions always assume \code{trunc=1} for these internal usages.
+\code{rltrgamma} is invoked internally for the \code{"IFA"}, \code{"MIFA"}, \code{"OMIFA"}, and \code{"IMIFA"} models to draw column shrinkage parameters for all but the first loadings column under the MGP prior when \code{truncated=TRUE} (which is \strong{not} the default) is supplied to \code{\link{mgpControl}}, at the expense of slightly longer run times. \code{exp_ltrgamma} is used within \code{\link{MGP_check}} to check the validity of the MGP hyperparameters when \code{truncated=TRUE} (which is again, \strong{not} the default). Both functions always assume \code{trunc=1} for these internal usages.
 
 Note also that no arguments are recycled, i.e. all arguments must be of length \code{1}.
 }

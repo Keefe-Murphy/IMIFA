@@ -1,10 +1,13 @@
 __Infinite Mixtures of Infinite Factor Analysers__
 ==================================================  
 
+## IMIFA v2.1.10 - (_17<sup>th</sup> release [patch update]: 2022-12-19_)
 ### Improvements, Bug Fixes, & Miscellaneous Edits
+* Minor fix to adaptive Gibbs sampler for clusters with zero factors.
 * Minor speed-ups to `Procrustes` when `translate` &/or `dilate` are `TRUE`.
 * Minor speed-ups to internal Cholesky decompositions in rare failure cases.
-* Cosmetic changes to `param="alpha"` or `"discount"` plots.
+* Cosmetic changes to `param="alpha"` & `param="discount"` plots.
+* Minor speed-ups, documentation clarifications, & examples edits.
 
 ## IMIFA v2.1.9 - (_16<sup>th</sup> release [patch update]: 2022-08-12_)
 ### Improvements, Bug Fixes, & Miscellaneous Edits

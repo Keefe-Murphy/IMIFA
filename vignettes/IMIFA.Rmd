@@ -35,7 +35,7 @@ If you find bugs or want to suggest new features please visit the __IMIFA__ [Git
 This vignette aims to reproduce some results in the Murphy et al. (2020) paper using the `mcmc_IMIFA()` and `get_IMIFA_results()` functions and demonstrates how the plots therein were created using the dedicated S3 `plot` method, while also demonstrating how to fit other models in the IMIFA family.
 
 ### Installing IMIFA
-__IMIFA__ will run in Windows, Mac OS X, or Linux. To install __IMIFA__ you first need to install [R](https://cran.r-project.org/). Installing [RStudio](https://www.rstudio.com/) as a nice desktop environment for using R is also recommended.
+__IMIFA__ will run in Windows, Mac OS X, or Linux. To install __IMIFA__ you first need to install [R](https://cran.r-project.org/). Installing [RStudio](https://posit.co/) as a nice desktop environment for using R is also recommended.
 
 Once in R you can type:
 

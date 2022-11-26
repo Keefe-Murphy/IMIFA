@@ -518,7 +518,7 @@
 #' @param phi.shape,phi.rate The shape and rate hyperparameters for the gamma prior on the local shrinkage parameters. Not necessary for checking if the cumulative shrinkage property holds, but worth supplying \emph{both} if the actual \emph{a priori} expected shrinkage factors are of interest. The default value(s) depends on the value of \code{inverse}, but are chosen in such a way that the local shrinkage has no effect on the expectation unless both are supplied. Cannot be incorporated into the expectation if \code{phi.shape < 1} and \code{isTRUE(inverse)}.
 #' @param sigma.shape,sigma.rate The shape and rate hyperparameters for the gamma prior on the cluster shrinkage parameters. Not necessary for checking if the cumulative shrinkage property holds, but worth supplying \emph{both} if the actual \emph{a priori} expected shrinkage factors are of interest. The default value(s) depends on the value of \code{inverse}, but are chosen in such a way that the cluster shrinkage has no effect on the expectation unless both are supplied. Cannot be incorporated into the expectation if \code{sigma.shape < 1} and \code{isTRUE(inverse)}.
 #' @param bd1,bd2 Rate hyperparameters for \eqn{\delta_1}{delta_1} and \eqn{\delta_k \forall k\ge 2}{delta_k for all k >= 2}, respectively. Both default to \code{1}.
-#' @param truncated A logical value indicating whether the version of the MGP prior based on left-truncated gamma distributions is invoked (see \code{\link{ltrgamma}} and the Zhang et al. reference below). Defaults to \code{FALSE}. Note that, when \code{TRUE}, only the shrinkage parameters for the first loadings column are affected and the conditions needed to pass this check are much less strict. Moreover, more desirable shrinkage properties are easily obtained.
+#' @param truncated A logical value indicating whether the version of the MGP prior based on left-truncated gamma distributions is invoked (see \code{\link{ltrgamma}} and the Zhang et al. reference below). Defaults to \code{FALSE}. Note that, when \code{TRUE}, the expected shrinkage factors for the first loadings column are not affected and the conditions needed to pass this check for the parameters associated with subsequent columns are much less strict. Moreover, more desirable shrinkage properties are easily obtained.
 #' @param inverse Logical indicator for whether the cumulative shrinkage property is assessed against the induced Inverse Gamma prior, the default, or in terms of the Gamma prior (which is incorrect). This is always \code{TRUE} when used inside \code{\link{mcmc_IMIFA}}: the \code{FALSE} option exists only for demonstration purposes.
 #'
 #' @details This is called inside \code{\link{mcmc_IMIFA}} for the \code{"IFA"}, \code{"MIFA"}, \code{"OMIFA"} and \code{"IMIFA"} methods. This function is vectorised with respect to the arguments \code{ad1}, \code{ad2}, \code{phi.shape}, \code{phi.rate}, \code{sigma.shape}, \code{sigma.rate}, \code{bd1} and \code{bd2}.
@@ -564,7 +564,7 @@
 #' (shrink <- MGP_check(ad1=1.5, ad2=2.8, Q=10, phi.shape=2, phi.rate=0.5, inverse=TRUE))
 #'
 #' # Check previously invalid parameterisation again using truncated version of the MGP prior
-#' MGP_check(ad1=1.5, ad2=1.8, Q=10, phi.shape=3, truncated=FALSE)$valid # TRUE
+#' MGP_check(ad1=1.5, ad2=1.8, Q=10, phi.shape=3, truncated=TRUE)$valid  #TRUE
     MGP_check    <- function(ad1, ad2, Q = 3L, phi.shape = NULL, phi.rate = NULL, sigma.shape = NULL, sigma.rate = NULL, bd1 = 1, bd2 = 1, truncated = FALSE, inverse = TRUE) {
       if(length(truncated)     != 1  ||
          !is.logical(truncated))           stop("'truncated' must be a single logical indicator", call.=FALSE)
@@ -605,7 +605,7 @@
       if(any(c(ad1, ad2)  < 1))            stop("All column shrinkage shape hyperparameter values must be at least 1",             call.=FALSE)
       if(any(c(bd1, bd2) <= 0))            stop("All column shrinkage rate hyperparameter values must be strictly positive",       call.=FALSE)
       if(any(WX  <- ad1  >= ad2 &
-             !truncated))                  warning("'ad2' should be moderately large relative to 'ad1' to encourage loadings column removal\n", call.=FALSE, immediate.=TRUE)
+             isFALSE(truncated)))          warning("'ad2' should be moderately large relative to 'ad1' to encourage loadings column removal\n", call.=FALSE, immediate.=TRUE)
 
       Qseq       <- seq_len(Q)  - 1L
       ML         <- seq_len(max.len)
@@ -1828,7 +1828,7 @@
 #' @param adapt A logical value indicating whether adaptation of the number of cluster-specific factors is to take place when the MGP prior is employed. Defaults to \code{TRUE}. Specifying \code{FALSE} and supplying \code{range.Q} within \code{\link{mcmc_IMIFA}} provides a means to either approximate the infinite factor model with a fixed high truncation level, or to use the MGP prior in a finite factor context, however this is NOT recommended for the \code{"OMIFA"} and \code{"IMIFA"} methods.
 #' @param forceQg A logical indicating whether the upper limit on the number of cluster-specific factors \code{Q} is also cluster-specific. Defaults to \code{FALSE}: when \code{TRUE}, the number of factors in each cluster is kept below the number of observations in each cluster, in addition to the bound defined by \code{range.Q}. Only relevant for the \code{"IMIFA"}, \code{"OMIFA"}, and \code{"MIFA"} methods, and only invoked when \code{adapt} is \code{TRUE}. May be useful for low-dimensional data sets for which identifiable solutions are desired.
 #' @param cluster.shrink A logical value indicating whether to place the prior specified by \code{sigma.hyper} on the cluster shrinkage parameters. Defaults to \code{TRUE}. Specifying \code{FALSE} is equivalent to fixing all cluster shrinkage parameters to 1. Only relevant for the \code{"IMIFA"}, \code{"OMIFA"}, and \code{"MIFA"} methods. If invoked, the posterior mean cluster shrinkage factors will be reported.
-#' @param truncated A logical value indicating whether the version of the MGP prior based on left-truncated gamma distributions is invoked (see Zhang et al. reference below and additional relevant documentation in \code{\link{ltrgamma}} and \code{\link{MGP_check}}). Defaults to \code{FALSE}. Note that, when \code{TRUE}, only the shrinkage parameters for the first loadings column are affected and the conditions needed to pass \code{\link{MGP_check}} are much less strict. Moreover, more desirable shrinkage properties are easily obtained, at the expense of slightly longer run times.
+#' @param truncated A logical value indicating whether the version of the MGP prior based on left-truncated gamma distributions is invoked (see Zhang et al. reference below and additional relevant documentation in \code{\link{ltrgamma}} and \code{\link{MGP_check}}). Defaults to \code{FALSE}. Note that, when \code{TRUE}, the expected shrinkage factors for the first loadings column are not affected and the conditions needed to pass \code{\link{MGP_check}} for the parameters associated with subsequent columns are much less strict. Moreover, more desirable shrinkage properties are easily obtained, at the expense of slightly longer run times.
 #' @param b0,b1 Intercept & slope parameters for the exponentially decaying adaptation probability:
 #'
 #' \code{p(iter) = 1/exp(b0 + b1 * (iter - start.AGS))}.
@@ -2110,7 +2110,7 @@
 #' \deqn{f(x|\alpha, \beta) = \frac{\beta^\alpha}{(\Gamma(\alpha)-\Gamma(\alpha, \tau\beta))}x^{\alpha-1}e^{-x\beta}}
 #' for \eqn{0\le\tau\le x}, and \eqn{\min(\tau,\beta) > 0}{min(tau, beta) > 0}, where \eqn{\alpha}{alpha} and \eqn{\beta}{beta} are the \code{shape} and \code{rate} parameters, respectively, \eqn{\tau}{tau} is the cutoff point at which \code{trunc}ation occurs, and \eqn{\Gamma(\alpha, \tau\beta)} is the upper incomplete gamma function.
 #'
-#' @note \code{rltrgamma} is invoked internally for the \code{"IFA"}, \code{"MIFA"}, \code{"OMIFA"}, and \code{"IMIFA"} models to draw column shrinkage parameters for all but the first loadings column under the MGP prior when \code{truncated=TRUE} (which is \strong{not} the default) is supplied to \code{mgpControl}, at the expense of slightly longer run times. \code{exp_ltrgamma} is used within \code{MGP_check} to check the validity of the MGP hyperparameters when \code{truncated=TRUE} (which is again, \strong{not} the default). Both functions always assume \code{trunc=1} for these internal usages.
+#' @note \code{rltrgamma} is invoked internally for the \code{"IFA"}, \code{"MIFA"}, \code{"OMIFA"}, and \code{"IMIFA"} models to draw column shrinkage parameters for all but the first loadings column under the MGP prior when \code{truncated=TRUE} (which is \strong{not} the default) is supplied to \code{\link{mgpControl}}, at the expense of slightly longer run times. \code{exp_ltrgamma} is used within \code{\link{MGP_check}} to check the validity of the MGP hyperparameters when \code{truncated=TRUE} (which is again, \strong{not} the default). Both functions always assume \code{trunc=1} for these internal usages.
 #'
 #' Note also that no arguments are recycled, i.e. all arguments must be of length \code{1}.
 #' @return For \code{rltrgamma}, a vector of length \code{n} giving draws from the left-truncated gamma distribution with the specified \code{shape} and \code{rate} parameters, and truncation point \code{trunc}.
@@ -2559,7 +2559,7 @@
       dat        <- as.matrix(dat)
       N          <- nrow(dat)
       P          <- ncol(dat)
-      inv.cov    <- (beta0 + N/2L) * chol2inv(chol(diag(beta0, P) + 0.5 * crossprod(.scale2(dat)))) * tcrossprod(1/colVars(dat, std=TRUE))
+      inv.cov    <- (beta0 + N/2L) * chol2inv(chol(diag(beta0, P) + 0.5 * crossprod(.scale2(dat))))/tcrossprod(colVars(dat, std=TRUE))
       error      <- diag(P) - (stats::cov(dat) %*% inv.cov)
         switch(EXPR=match.arg(type), diag=sum(diag(error)^2)/P, mean(error^2))
     }
