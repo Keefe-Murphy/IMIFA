@@ -1,6 +1,10 @@
 __Infinite Mixtures of Infinite Factor Analysers__
 ==================================================  
 
+### Improvements, Bug Fixes, & Miscellaneous Edits
+* Minor speed-up to `G_priorDensity` when `discount` is non-zero.
+* Now using newer `CITATION` commands.
+
 ## IMIFA v2.1.10 - (_17<sup>th</sup> release [patch update]: 2022-12-19_)
 ### Improvements, Bug Fixes, & Miscellaneous Edits
 * Minor fix to adaptive Gibbs sampler for clusters with zero factors.

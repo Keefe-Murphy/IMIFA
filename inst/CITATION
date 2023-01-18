@@ -1,9 +1,10 @@
 citHeader("To cite the 'IMIFA' package in publications, please use:")
 
-citEntry(entry = "Article",
-  author  = personList(person(given="Keefe", family="Murphy"),
-                       person(given="Cinzia", family="Viroli"),
-                       person(given=c("Isobel", "Claire"), family="Gormley")),
+bibentry(
+  bibtype = "Article",
+  author  = c(person(given="Keefe", family="Murphy"),
+              person(given="Cinzia", family="Viroli"),
+              person(given=c("Isobel", "Claire"), family="Gormley")),
   title   = "Infinite Mixtures of Infinite Factor Analysers",
   year    = "2020",
   journal = "Bayesian Analysis",
@@ -23,10 +24,11 @@ citEntry(entry = "Article",
 year     <- sub(".*(2[[:digit:]]{3})-.*", "\\1", meta$Date)
 vers     <- paste("package version", meta$Version)
 
-citEntry(entry = "Manual",
-  author  = personList(person(given="Keefe", family="Murphy"),
-                       person(given="Cinzia", family="Viroli"),
-                       person(given=c("Isobel", "Claire"), family="Gormley")),
+bibentry(
+  bibtype = "Manual",
+  author  = c(person(given="Keefe", family="Murphy"),
+              person(given="Cinzia", family="Viroli"),
+              person(given=c("Isobel", "Claire"), family="Gormley")),
   title   = "\\texttt{\\textup{IMIFA}}: {I}nfinite Mixtures of Infinite Factor Analysers and Related Models",
   year    = year,
   note    = paste0("\\textsf{R} ", vers),

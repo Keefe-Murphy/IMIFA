@@ -1794,10 +1794,8 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
           vnk  <- c(c(Rmpfr::mpfr(0,       precBits=256),  cumsum(log(m - seqN)) + seqN * log(abs(disci))) -
                   log(Rmpfr::pochMpfr(alphi + 1, N - 1L)) - c(seqN, mn) * log(abs(disci)),  rep(-Inf, N - mn))
         }
-        lnkd   <- lapply(Nseq, function(g) Rmpfr::sumBinomMpfr(g, f=function(k) Rmpfr::pochMpfr(-k * disci, N), n0=1))
-        rx[,i] <- gmp::asNumeric(exp(vnk    - lfactorial(Nsq2))  * abs(Rmpfr::mpfr2array(unlist(lnkd), dim=N)))
-       #lnkd   <- Rmpfr::sapplyMpfr(Nseq, function(g) Rmpfr::sumBinomMpfr(g, f=function(k) Rmpfr::pochMpfr(-k * disci, N), n0=1))
-       #rx[,i] <- gmp::asNumeric(exp(vnk    - lfactorial(Nsq2))  * abs(lnkd))
+        lnkd   <- Rmpfr::sapplyMpfr(Nseq, function(g) Rmpfr::sumBinomMpfr(g, f=function(k) Rmpfr::pochMpfr(-k * disci, N), n0=1))
+        rx[,i] <- gmp::asNumeric(exp(vnk    - lfactorial(Nsq2))  * abs(lnkd))
       }
     }
 
