@@ -1120,9 +1120,9 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
         c("OMFA", "IMFA")) || plotT.ind)   message(attr(x, "Nowarn.Q"))
       }
       if(plotQ.ind) {
-        if(!adapt)                    message("No adaptation took place\n")
+        if(!adapt)                    message("No adaptation took place: consider setting adapt=TRUE in mcmc_IMIFA or get_IMIFA_results\n")
         forceQg      <- attr(x, "ForceQg")
-        if(attr(GQ.res, "Q.big"))     warning(paste0("Q had to be prevented from exceeding its initial value", ifelse(forceQg, " (or exceeding the number of observations in one or more clusters)", ""), ".\nConsider re-running the model with a higher value for 'range.Q'", ifelse(forceQg, " or setting 'forceQg' to FALSE\n", "\n")), call.=FALSE)
+        if(attr(GQ.res, "Q.big"))     warning(paste0("Q had to be prevented from exceeding its initial value", ifelse(forceQg, " (or exceeding the number of observations in one or more clusters)", ""), ".\nConsider re-running the model with a higher value for 'range.Q'", ifelse(forceQg, " or setting 'forceQg' to FALSE\n", "\n")), call.=FALSE, immediate.=TRUE)
       }
     }
 

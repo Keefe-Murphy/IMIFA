@@ -2,7 +2,7 @@
 #'
 #' Data on the chemical composition of coffee samples collected from around the world, comprising 43 samples from 29 countries. Each sample is either of the Arabica or Robusta variety. Twelve of the thirteen chemical constituents reported in the study are given. The omitted variable is total chlorogenic acid; it is generally the sum of the chlorogenic, neochlorogenic and isochlorogenic acid values.
 #' @format A data frame with 43 observations and 14 columns. The first two columns contain Variety (either Arabica or Robusta) and Country, respectively, while the remaining 12 columns contain the chemical properties.
-#' @references Streuli, H. (1973). Der heutige Stand der Kaffee-Chemie, \emph{Association Scientifique International du Cafe, 6th International Colloquium on Coffee Chemistry}, Bogata, Colombia, pp. 61-72.
+#' @references Streuli, H. (1973). Der heutige Stand der Kaffee-Chemie, In \emph{Proceedings of the 6th International Colloquium on Coffee Chemistry}, June 4-June 9, 1973, Bogata, Colombia, pp. 61-72. Paris, France: Association Scientifique International du Café (ASIC).
 #' @examples
 #' data(coffee, package="IMIFA")
 #' pairs(coffee[,-(1:2)], col=coffee$Variety)
@@ -15,9 +15,9 @@
 #'
 #' Data on the percentage composition of eight fatty acids found by lipid fraction of 572 Italian olive oils. The data come from three areas; within each area there are a number of constituent regions, of which there are 9 in total.
 #' @format A data frame with 572 observations and 10 columns. The first columns gives the area (one of Southern Italy, Sardinia, and Northern Italy), the second gives the region, and the remaining 8 columns give the variables. Southern Italy comprises the North Apulia, Calabria, South Apulia, and Sicily regions, Sardinia is divided into Inland Sardinia and Coastal Sardinia and Northern Italy comprises the Umbria, East Liguria, and West Liguria regions.
-#' @references Forina, M., Armanino, C., Lanteri, S. and Tiscornia, E. (1983). Classification of olive oils from their fatty acid composition, In Martens, H. and Russrum Jr., H. (Eds.), \emph{Food Research and Data Analysis}, Applied Science Publishers, London, UK, pp. 189-214.
+#' @references Forina, M., Armanino, C., Lanteri, S. and Tiscornia, E. (1983). Classification of olive oils from their fatty acid composition, In Martens, H. and H. Russrum Jr. (Eds.), \emph{Food Research and Data Analysis: Proceedings from the IUFoST Symposium}, September 20-23, 1982, Oslo, Norway, pp. 189-214. London, UK: Applied Science Publishers.
 #'
-#' Forina, M. and Tiscornia, E. (1982). Pattern recognition methods in the prediction of Italian olive oil origin by their fatty acid content, \emph{Annali di Chimica}, 72:143-155.
+#' Forina, M. and Tiscornia, E. (1982). Pattern recognition methods in the prediction of Italian olive oil origin by their fatty acid content, \emph{Annali di Chimica}, 72: 143-155.
 #' @examples
 #' data(olive, package="IMIFA")
 #' pairs(olive[,-(1:2)], col=olive$area)

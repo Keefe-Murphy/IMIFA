@@ -116,7 +116,7 @@
 #'
 #' While small values of \code{alpha} have the effect of increasingly concentrating the mass onto fewer components, note that this function may return \code{NaN} for excessively small values of \code{alpha}, when \code{nn=0}; see the details of \code{rgamma} for small \code{shape} values.
 #'
-#' @references Devroye, L. (1986) \emph{Non-Uniform Random Variate Generation}, Springer-Verlag, New York, NY, USA, p. 594.
+#' @references Devroye, L. (1986) \emph{Non-Uniform Random Variate Generation}, New York, NY, USA: Springer-Verlag, p. 594.
 #' @keywords utility
 #' @export
 #' @usage
@@ -538,7 +538,7 @@
 #'
 #' Bhattacharya, A. and Dunson, D. B. (2011). Sparse Bayesian infinite factor models, \emph{Biometrika}, 98(2): 291-306.
 #'
-#' Zhang, X., Dunson, D. B., and Carin, L. (2011) Tree-structured infinite sparse factor model. In Getoor, L. and Scheffer, T. (Eds.), \emph{Proceedings of the 28th International Conference on Machine Learning}, ICML'11, Madison, WI, USA, pp. 785-792. Omnipress.
+#' Zhang, X., Dunson, D. B., and Carin, L. (2011) Tree-structured infinite sparse factor model. In Getoor, L. and Scheffer, T. (Eds.), \emph{Proceedings of the 28th International Conference on Machine Learning (ICML 2011)}, June 28-July 2, 2011, Bellevue, WA, USA, pp. 785-792. Madison, WI, USA: Omnipress.
 #' @author Keefe Murphy - <\email{keefe.murphy@@mu.ie}>
 #' @usage
 #' MGP_check(ad1,
@@ -1007,7 +1007,7 @@
 #' @importFrom matrixStats "colMeans2"
 #' @export
 #'
-#' @references Borg, I. and Groenen, P. J. F. (1997) \emph{Modern Multidimensional Scaling}. Springer-Verlag, New York, NY, USA, pp. 340-342.
+#' @references Borg, I. and Groenen, P. J. F. (1997) \emph{Modern Multidimensional Scaling: Theory and Applications}. Springer Series in Statistics. New York, NY, USA: Springer-Verlag, pp. 340-342.
 #' @usage
 #' Procrustes(X,
 #'            Xstar,
@@ -1637,9 +1637,9 @@
 #' @param learn.d Logical indicating whether the \code{discount} parameter is to be updated via Metropolis-Hastings (defaults to \code{TRUE}, unless \code{discount} is supplied as a negative value).
 #' @param d.hyper Hyperparameters for the Beta(a,b) prior on the \code{discount} parameter. Defaults to Beta(1,1), i.e. Uniform(0,1).
 #' @param ind.slice Logical indicating whether the independent slice-efficient sampler is to be employed (defaults, typically, to \code{TRUE}). If \code{FALSE} the dependent slice-efficient sampler is employed, whereby the slice sequence \eqn{\xi_1,\ldots,\xi_g}{xi_1,...,xi_g} is equal to the decreasingly ordered mixing proportions. When \code{thresh} &/or \code{exchange} are set to \code{TRUE} (see below), this argument is forced to \code{FALSE}.
-#' @param rho Parameter controlling the rate of geometric decay for the independent slice-efficient sampler, s.t. \eqn{\xi=(1-\rho)\rho^{g-1}}{xi = (1 - rho)rho^(g-1)}. Must lie in the interval [0, 1). Higher values are associated with better mixing but longer run times. Defaults to 0.75, but 0.5 is an interesting special case which guarantees that the slice sequence \eqn{\xi_1,\ldots,\xi_g}{xi_1,...,xi_g} is equal to the \emph{expectation} of the decreasingly ordered mixing proportions. Only relevant when \code{ind.slice} is \code{TRUE}.
+#' @param rho Parameter controlling the rate of geometric decay for the independent slice-efficient sampler, s.t. \eqn{\xi=(1-\rho)\rho^{g-1}}{xi = (1 - rho)rho^(g-1)}. Must lie in the interval [0, 1). Higher values are associated with better mixing but longer run times. Defaults to \code{0.75}, but \code{0.5} is an interesting special case which guarantees that the slice sequence \eqn{\xi_1,\ldots,\xi_g}{xi_1,...,xi_g} is equal to the \emph{expectation} of the decreasingly ordered mixing proportions. Only relevant when \code{ind.slice} is \code{TRUE}.
 #' @param trunc.G The maximum number of allowable and storable clusters under the \code{"IMIFA"} and \code{"IMFA"} models. The number of active clusters to be sampled at each iteration is adaptively truncated, with \code{trunc.G} as an upper limit for storage reasons. Defaults to \code{max(min(N-1, 50), range.G))} and must satisfy \code{range.G <= trunc.G < N}. Note that large values of \code{trunc.G} may lead to memory capacity issues.
-#' @param kappa The spike-and-slab prior distribution on the \code{discount} hyperparameter is assumed to be a mixture with point-mass at zero and a continuous Beta(a,b) distribution. \code{kappa} gives the weight of the point mass at zero (the 'spike'). Must lie in the interval [0,1]. Defaults to 0.5. Only relevant when \code{isTRUE(learn.d)}. A value of 0 ensures non-zero discount values (i.e. Pitman-Yor) at all times, and \emph{vice versa}. Note that \code{kappa} will default to exactly 0 if \code{alpha<=0} and \code{learn.alpha=FALSE}.
+#' @param kappa The spike-and-slab prior distribution on the \code{discount} hyperparameter is assumed to be a mixture with point-mass at zero and a continuous Beta(a,b) distribution. \code{kappa} gives the weight of the point mass at zero (the 'spike'). Must lie in the interval [0,1]. Defaults to \code{0.5}. Only relevant when \code{isTRUE(learn.d)}. A value of 0 ensures non-zero discount values (i.e. Pitman-Yor) at all times, and \emph{vice versa}. Note that \code{kappa} will default to exactly 0 if \code{alpha<=0} and \code{learn.alpha=FALSE}.
 #' @param IM.lab.sw Logical indicating whether the two forced label switching moves are to be implemented (defaults to \code{TRUE}) when running one of the infinite mixture models. Note: when \code{exchange=TRUE} (see below), this argument is instead forced to \code{FALSE}.
 #' @param thresh Logical indicating whether the threshold of Fall and Barat (2014) should be incorporated into the slice sampler. See the reference for details. This is an experimental feature (defaults to \code{FALSE}) and can work with or without \code{exchange} below. Setting \code{thresh=TRUE} is \strong{not} recommended unless both \code{learn.alpha} and \code{learn.d} are \code{FALSE}. Setting \code{thresh} to \code{TRUE} also forces \code{ind.slice} to \code{FALSE} (see above).
 #' @param exchange Logical indicating whether the exchangeable slice sampler of Fall and Barat (2014) should be used instead. See the reference for details. This argument can work with or without \code{thresh=TRUE} above, though it is also an experimental argument and thus defaults to \code{FALSE}. When \code{TRUE}, the arguments \code{ind.slice} and \code{IM.lab.sw} (see above) are both forced to \code{FALSE}.
@@ -1825,7 +1825,7 @@
 #' @param sigma.hyper A vector of length 2 giving the shape and rate hyperparameters for the gamma prior on the cluster shrinkage parameters. Passed to \code{\link{MGP_check}} to ensure validity. Defaults to \code{c(3, 2)}. Again, it is \emph{suggested} that the shape be >= 1. Only relevant for the \code{"IMIFA"}, \code{"OMIFA"}, and \code{"MIFA"} methods when \code{isTRUE(cluster.shrink)}.
 #' @param prop Proportion of loadings elements within the neighbourhood \code{eps} of zero necessary to consider a loadings column redundant. Defaults to \code{floor(0.7 * P)/P}, where \code{P} is the number of variables in the data set. However, if the data set is univariate or bivariate, the default is \code{0.5} (see Note).
 #' @param eps Neighbourhood epsilon of zero within which a loadings entry is considered negligible according to \code{prop}. Defaults to \code{0.1}. Must be positive.
-#' @param adapt A logical value indicating whether adaptation of the number of cluster-specific factors is to take place when the MGP prior is employed. Defaults to \code{TRUE}. Specifying \code{FALSE} and supplying \code{range.Q} within \code{\link{mcmc_IMIFA}} provides a means to either approximate the infinite factor model with a fixed high truncation level, or to use the MGP prior in a finite factor context, however this is NOT recommended for the \code{"OMIFA"} and \code{"IMIFA"} methods.
+#' @param adapt A logical value indicating whether adaptation of the number of cluster-specific factors is to take place when the MGP prior is employed. Defaults to \code{TRUE}. Specifying \code{FALSE} and supplying \code{range.Q} within \code{\link{mcmc_IMIFA}} provides a means to either approximate the infinite factor model with a fixed, high truncation level, or to use the MGP prior in a finite-factor context, however this is NOT recommended for the \code{"OMIFA"} and \code{"IMIFA"} methods. Note that users who specify \code{adapt=FALSE} here can later recover the (cluster-specific) numbers of non-redundant factors by supplying \code{adapt=TRUE} to \code{\link{get_IMIFA_results}}, though this is not required. Generally, invoking \code{adapt} \emph{during sampling} will reduce the computational burden significantly.
 #' @param forceQg A logical indicating whether the upper limit on the number of cluster-specific factors \code{Q} is also cluster-specific. Defaults to \code{FALSE}: when \code{TRUE}, the number of factors in each cluster is kept below the number of observations in each cluster, in addition to the bound defined by \code{range.Q}. Only relevant for the \code{"IMIFA"}, \code{"OMIFA"}, and \code{"MIFA"} methods, and only invoked when \code{adapt} is \code{TRUE}. May be useful for low-dimensional data sets for which identifiable solutions are desired.
 #' @param cluster.shrink A logical value indicating whether to place the prior specified by \code{sigma.hyper} on the cluster shrinkage parameters. Defaults to \code{TRUE}. Specifying \code{FALSE} is equivalent to fixing all cluster shrinkage parameters to 1. Only relevant for the \code{"IMIFA"}, \code{"OMIFA"}, and \code{"MIFA"} methods. If invoked, the posterior mean cluster shrinkage factors will be reported.
 #' @param truncated A logical value indicating whether the version of the MGP prior based on left-truncated gamma distributions is invoked (see Zhang et al. reference below and additional relevant documentation in \code{\link{ltrgamma}} and \code{\link{MGP_check}}). Defaults to \code{FALSE}. Note that, when \code{TRUE}, the expected shrinkage factors for the first loadings column are not affected and the conditions needed to pass \code{\link{MGP_check}} for the parameters associated with subsequent columns are much less strict. Moreover, more desirable shrinkage properties are easily obtained, at the expense of slightly longer run times.
@@ -1848,14 +1848,14 @@
 #' @note Certain supplied arguments will be subject to further checks by \code{\link{MGP_check}} to ensure the cumulative shrinkage property of the MGP prior holds according to the given parameterisation.
 #'
 #' The adaptive Gibbs sampler (AGS) monitors the \code{prop} of loadings elements within the neighbourhood \code{eps} of 0 and discards columns or simulates new columns on this basis. However, if at any stage the number of group-specific latent factors reaches zero, the decision to add columns is instead based on a simple binary trial with probability \code{1-prop}, as there are no loadings entries to monitor.
-#' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{MGP_check}}, \code{\link{ltrgamma}}, \code{\link{mixfaControl}}, \code{\link{bnpControl}}, \code{\link{storeControl}}
+#' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{MGP_check}}, \code{\link{ltrgamma}}, \code{\link{mixfaControl}}, \code{\link{bnpControl}}, \code{\link{storeControl}}, \code{\link{get_IMIFA_results}}
 #' @references Murphy, K., Viroli, C., and Gormley, I. C. (2020) Infinite mixtures of infinite factor analysers, \emph{Bayesian Analysis}, 15(3): 937-963. <\href{https://projecteuclid.org/euclid.ba/1570586978}{doi:10.1214/19-BA1179}>.
 #'
 #' Durante, D. (2017). A note on the multiplicative gamma process, \emph{Statistics & Probability Letters}, 122: 198-204.
 #'
 #' Bhattacharya, A. and Dunson, D. B. (2011) Sparse Bayesian infinite factor models, \emph{Biometrika}, 98(2): 291-306.
 #'
-#' Zhang, X., Dunson, D. B., and Carin, L. (2011) Tree-structured infinite sparse factor model. In Getoor, L. and Scheffer, T. (Eds.), \emph{Proceedings of the 28th International Conference on Machine Learning}, ICML'11, Madison, WI, USA, pp. 785-792. Omnipress.
+#' Zhang, X., Dunson, D. B., and Carin, L. (2011) Tree-structured infinite sparse factor model. In Getoor, L. and Scheffer, T. (Eds.), \emph{Proceedings of the 28th International Conference on Machine Learning (ICML 2011)}, June 28-July 2, 2011, Bellevue, WA, USA, pp. 785-792. Madison, WI, USA: Omnipress.
 #' @author Keefe Murphy - <\email{keefe.murphy@@mu.ie}>
 #' @usage
 #' mgpControl(alpha.d1 = 2.1,

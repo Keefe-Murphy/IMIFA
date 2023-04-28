@@ -9,10 +9,13 @@
 #' Similarly, this allows retrieval of samples corresponding to a solution, if visited, with \code{G} clusters for the \code{"OMFA"}, \code{"OMIFA"}, \code{"IMFA"} and \code{"IMIFA"} methods.
 #' @param Q If this argument is not specified, results will be returned with the optimal number of factors. If different numbers of factors were explored in \code{sims} for the \code{"FA"}, \code{"MFA"}, \code{"OMFA"} or \code{"IMFA"} methods, this allows pulling out a specific solution with \code{Q} factors, even if the solution is sub-optimal.
 #'
-#' Similarly, this allows retrieval of samples corresponding to a solution, if visited, with \code{Q} factors for the \code{"IFA"}, \code{"MIFA"}, \code{"OMIFA"} and \code{"IMIFA"} methods. Can be supplied as a scalar or a vector of values for each cluster.
+#' Similarly, this allows retrieval of samples corresponding to a solution, if visited, with \code{Q} factors for the \code{"IFA"}, \code{"MIFA"}, \code{"OMIFA"} and \code{"IMIFA"} methods if adaptation has already taken place. Can be supplied as a scalar or a vector of values for each cluster.
+#'
+#' If adaptation didn't take place during model-fitting, \code{adapt=TRUE} can be supplied here to determine the optimal cluster-specific numbers of non-redundant factors (see below).
 #' @param criterion The criterion to use for model selection, where model selection is only required if more than one model was run under the \code{"FA"}, \code{"MFA"}, \code{"MIFA"}, \code{"OMFA"} or \code{"IMFA"} methods when \code{sims} was created via \code{\link{mcmc_IMIFA}}. Defaults to \code{bicm}, but note that these are \emph{all} calculated; this argument merely indicates which one will form the basis of the construction of the output.
 #'
 #' Note that the first three options here might exhibit bias in favour of zero-factor models for the finite factor \code{"FA"}, \code{"MFA"}, \code{"OMFA"} and \code{"IMFA"} methods and might exhibit bias in favour of one-cluster models for the \code{"MFA"} and \code{"MIFA"} methods. The \code{aic.mcmc} and \code{bic.mcmc} criteria will only be returned for finite factor models.
+#' @param adapt A logical indicating if adaptation should be applied to the stored loadings matrices to truncate to cluster-specific number of non-redundant factors. This argument is only relevant if \code{adapt=FALSE} was used when initially fitting the model (otherwise, adaptation has already taken place during sampling), and defaults to \code{FALSE} here too. Relevant parameters from \code{\link{mgpControl}} (namely \code{eps}, \code{prop}, and \code{forceQg}) can be passed via the \code{...} construct, but will default to their values under \code{\link{mgpControl}} if not specified.
 #' @param G.meth If the object in \code{sims} arises from the \code{"OMFA"}, \code{"OMIFA"}, \code{"IMFA"} or \code{"IMIFA"} methods, this argument determines whether the optimal number of clusters is given by the mode or median of the posterior distribution of \code{G}. Defaults to \code{"mode"}. Often the mode and median will agree in any case.
 #' @param Q.meth If the object in \code{sims} arises from the \code{"IFA"}, \code{"MIFA"}, \code{"OMIFA"} or \code{"IMIFA"} methods, this argument determines whether the optimal number of latent factors is given by the mode or median of the posterior distribution of \code{Q}. Defaults to \code{"mode"}. Often the mode and median will agree in any case.
 #' @param conf.level The confidence level to be used throughout for credible intervals for all parameters of inferential interest, and error metrics if \code{error.metrics=TRUE}. Defaults to \code{0.95}.
@@ -30,6 +33,8 @@
 #' @param x,object,MAP,... Arguments required for the \code{print.Results_IMIFA} and \code{summary.Results_IMIFA} functions: \code{x} and \code{object} are objects of class \code{"Results_IMIFA"} resulting from a call to \code{\link{get_IMIFA_results}}. \code{MAP} is a logical which governs whether a table of the MAP classification is printed, while \code{...} gathers additional arguments to those functions.
 #'
 #' Users can also pass the \code{type} argument to the \code{\link{norm}} function when \code{isTRUE(error.metrics)} and the posterior predictive reconstruction error (PPRE) is calculated. By default the Frobenius norm (\code{type="F"}) is employed.
+#'
+#' When \code{adapt=TRUE} here, relevant arguments from \code{\link{mgpControl}} (namely \code{eps}, \code{prop}, and \code{forceQg}) can be supplied here too, though they retain their default values from \code{\link{mgpControl}} otherwise.
 #'
 #' Finally, the \code{...} construct also allows arguments to \code{\link[stats]{varimax}} to be passed to \code{\link{get_IMIFA_results}} itself, when \code{isTRUE(vari.rot)}, or arguments to \code{\link[graphics]{hist}} when \code{isTRUE(error.metrics)}, in order to guide construction of the bins. Additionally, by passing the argument \code{dbreaks} via the \code{...} construct, the bins can be specified directly. However, caution is advised in doing so; in particular, the bins must be constructed on data which has been standardised in the same way as the data modelled within \code{\link{mcmc_IMIFA}}.
 #'
@@ -65,7 +70,7 @@
 #' @importFrom matrixStats "colSums2" "colMeans2" "rowMeans2" "rowMedians" "rowQuantiles" "rowSums2"
 #' @importFrom slam "as.simple_triplet_matrix"
 #'
-#' @seealso \code{\link{plot.Results_IMIFA}}, \code{\link{mcmc_IMIFA}}, \code{\link{Zsimilarity}}, \code{\link{scores_MAP}}, \code{\link{sim_IMIFA_model}}, \code{\link{Procrustes}}, \code{\link[stats]{varimax}}, \code{\link{norm}}
+#' @seealso \code{\link{plot.Results_IMIFA}}, \code{\link{mcmc_IMIFA}}, \code{\link{Zsimilarity}}, \code{\link{scores_MAP}}, \code{\link{sim_IMIFA_model}}, \code{\link{Procrustes}}, \code{\link[stats]{varimax}}, \code{\link{norm}}, \code{\link{mgpControl}}
 #' @references Murphy, K., Viroli, C., and Gormley, I. C. (2020) Infinite mixtures of infinite factor analysers, \emph{Bayesian Analysis}, 15(3): 937-963. <\href{https://projecteuclid.org/euclid.ba/1570586978}{doi:10.1214/19-BA1179}>.
 #'
 #' @author Keefe Murphy - <\email{keefe.murphy@@mu.ie}>
@@ -76,6 +81,7 @@
 #'                   G = NULL,
 #'                   Q = NULL,
 #'                   criterion = c("bicm", "aicm", "dic", "bic.mcmc", "aic.mcmc"),
+#'                   adapt = FALSE,
 #'                   G.meth = c("mode", "median"),
 #'                   Q.meth = c("mode", "median"),
 #'                   conf.level = 0.95,
@@ -109,16 +115,30 @@
 #' # summary(resIMIFAolive)
 #'
 #' # Simulate new data from the above model
-#' # newdata       <- sim_IMIFA_model(resIMIFAolive)}
-get_IMIFA_results              <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, Q = NULL, criterion = c("bicm", "aicm", "dic", "bic.mcmc", "aic.mcmc"), G.meth = c("mode", "median"),
-                                           Q.meth = c("mode", "median"), conf.level = 0.95, error.metrics = TRUE, vari.rot = FALSE, z.avgsim = FALSE, zlabels = NULL, nonempty = TRUE, ...) {
+#' # newdata       <- sim_IMIFA_model(resIMIFAolive)
+#'
+#' # Fit an IFA model without adaptation and examine results with and without post-hoc adaptation
+#' # simIFAcoffee  <- mcmc_IMIFA(coffee, method="IFA", n.iters=10000, adapt=FALSE)
+#' # resIFAnoadapt <- get_IMIFA_results(simIFAcoffee)
+#' # resIFAadapt   <- get_IMIFA_results(simIFAcoffee, adapt=TRUE)
+#'
+#' # Compare to an IFA model with adaptive Gibbs sampling
+#' # simIFAadapt   <- mcmc_IMIFA(coffee, method="IFA", n.iters=10000)
+#' # resIFAcoffee  <- get_IMIFA_results(simIFAadapt)
+#' # plot(resIFAnoadapt, "GQ")
+#' # plot(resIFAadapt, "GQ")
+#' # plot(resIFAcoffee, "GQ")}
+get_IMIFA_results              <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, Q = NULL, criterion = c("bicm", "aicm", "dic", "bic.mcmc", "aic.mcmc"),
+                                           adapt = FALSE, G.meth = c("mode", "median"), Q.meth = c("mode", "median"), conf.level = 0.95, error.metrics = TRUE,
+                                           vari.rot = FALSE, z.avgsim = FALSE, zlabels = NULL, nonempty = TRUE, ...) {
     UseMethod("get_IMIFA_results")
 }
 
 #' @method get_IMIFA_results IMIFA
 #' @export
-get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, Q = NULL, criterion = c("bicm", "aicm", "dic", "bic.mcmc", "aic.mcmc"), G.meth = c("mode", "median"),
-                                           Q.meth = c("mode", "median"), conf.level = 0.95, error.metrics = TRUE, vari.rot = FALSE, z.avgsim = FALSE, zlabels = NULL, nonempty = TRUE, ...) {
+get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, Q = NULL, criterion = c("bicm", "aicm", "dic", "bic.mcmc", "aic.mcmc"),
+                                           adapt = FALSE,  G.meth = c("mode", "median"), Q.meth = c("mode", "median"), conf.level = 0.95, error.metrics = TRUE,
+                                           vari.rot = FALSE, z.avgsim = FALSE, zlabels = NULL, nonempty = TRUE, ...) {
 
   call           <- match.call()
   defopt         <- options()
@@ -158,6 +178,8 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   conf.level     <- as.numeric(conf.level)
   obsnames       <- attr(sims, "Obsnames")
   varnames       <- attr(sims, "Varnames")
+  adapted        <- attr(sims, "Adapt")
+  adapt          <- adapt && isFALSE(adapted)
   cov.emp        <- attr(sims, "Cov.Emp")
   cov.range      <- ifelse(uni, 1L, max(cov.emp) - min(cov.emp))
   cshrink        <- attr(sims, "C.Shrink")
@@ -184,9 +206,17 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
      !is.logical(z.avgsim))       stop("'z.avgsim' must be a single logical indicator", call.=FALSE)
   if((z.avgsim   <- (isTRUE(z.avgsim)      &&
      !is.element(method, c("FA", "IFA"))))) {
-    if(!(has.pkg <- suppressMessages(requireNamespace("mcclust", quietly=TRUE)))) {
+    if(!(has_pkg <- suppressMessages(requireNamespace("mcclust", quietly=TRUE)))) {
       z.avgsim   <- FALSE;        warning("Forcing 'z.avgsim' to FALSE: 'mcclust' package not installed\n", call.=FALSE, immediate.=TRUE)
     } else if(n.obs >= 10000)     message("Consider setting 'z.avgsim' to FALSE as the number of observations is quite large\n")
+  }
+
+  dots           <- list(...)
+  dots           <- dots[unique(names(dots))]
+  if(isTRUE(adapt)) {
+    epsilon      <- ifelse(is.null(dots$eps),     1e-01,                        dots$eps)
+    prop         <- ifelse(is.null(dots$prop),    ifelse(n.var <= 2, 0.5, 0.7), dots$prop)
+    forceQg      <- ifelse(is.null(dots$forceQg), FALSE,                        dots$forceQg)
   }
 
   G.T            <- !missing(G)
@@ -454,6 +484,9 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
         }
       }
     }
+    if(inf.Q)     {
+      Q.store    <- provideDimnames(Q.store[Gseq,,         drop=FALSE], base=list(gnames, ""), unique=FALSE)
+    }
     if(sw["mu.sw"])        mus <- tryCatch(mus[,Gseq,,     drop=FALSE], error=function(e) mus)
     if(sw["l.sw"])       lmats <- tryCatch(lmats[,,Gseq,,  drop=FALSE], error=function(e) lmats)
     if(sw["psi.sw"])      psis <- tryCatch(psis[,Gseq,,    drop=FALSE], error=function(e) psis)
@@ -512,9 +545,6 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       post.pi    <- stats::setNames(rep(1/G, G),            gnames)
     } else          {             message("Mixing proportions not stored: estimating posterior mean by the proportions of the MAP clustering\n")
       post.pi    <- stats::setNames(sizes/n.obs,            gnames)
-    }
-    if(inf.Q)       {
-      Q.store    <- provideDimnames(Q.store[Gseq,,    drop=FALSE], base=list(gnames, ""), unique=FALSE)
     }
 
     tab.z        <- if((!label.miss && G > 1) || (clust.ind && all(error.metrics, sw["mu.sw"], sw["psi.sw"]))) rowTabulate(z, max_number=G)
@@ -620,10 +650,21 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
      !attr(sims, "ForceQg"))      warning("Estimate of Q is greater than the number of observations in one or more clusters:\nConsider setting 'forceQg' to TRUE\n", call.=FALSE)
   if(inf.Q)   {
     if(G1        <- G > 1)    {
+      if(isTRUE(adapt))       {
+       Q.store[] <- sapply(seq_len(TN.store), function(i) sapply(Gseq, function(g) sum(colSums2(abs(.a_drop(lmats[,,g,i, drop=FALSE], drop=3L:4L)) < epsilon)/n.var < prop)))
+       if(isTRUE(forceQg))    {
+         Q.force <- t(vapply(Gseq, function(g) pmin(Q.store[g,], sizes[g] - 1), numeric(TN.store)))
+         Q.big   <- any(Q.force < Q.store)
+         Q.store[]        <- Q.force
+       }
+      }
       Q.tab      <- lapply(apply(Q.store, 1L, function(x) list(table(x, dnn=NULL))), "[[", 1L)
       Q.prob     <- lapply(Q.tab, prop.table)
       class(Q.tab)        <- class(Q.prob)  <- "listof"
     } else    {
+      if(isTRUE(adapt))       {
+       Q.store[] <- sapply(seq_len(TN.store), function(i) sum(colSums2(abs(.a_drop(lmats[,,i, drop=FALSE], 3L)) < epsilon)/n.var < prop))
+      }
       Q.tab      <- table(Q.store, dnn=NULL)
       Q.prob     <- prop.table(Q.tab)
     }
@@ -642,7 +683,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     GQ.res       <- if(inf.G)   c(GQ.temp1, GQ.temp4)     else c(list(G = G), GQ.temp4)
     GQ.res       <- if(cshrink) c(GQ.res, list(post.sigma = stats::setNames(rowMeans2(sigmas), gnames))) else GQ.res
     GQ.res       <- c(GQ.res, list(Criteria = GQ.temp2))
-    attr(GQ.res, "Q.big") <- attr(sims[[G.ind]][[Q.ind]], "Q.big")
+    attr(GQ.res, "Q.big") <- ifelse(adapt && G1 && forceQg, Q.big, attr(sims[[G.ind]][[Q.ind]], "Q.big"))
   }
   Q0             <- Q == 0
   Qmax           <- max(Q)
@@ -867,8 +908,6 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     uniquenesses <- c(uniquenesses, list(last.psi = last.psi))
     class(uniquenesses)    <- "listof"
   }
-  dots           <- list(...)
-  dots           <- dots[unique(names(dots))]
   dots$type      <- ifelse(is.null(dots$type), "F", dots$type[1L])
 
 # Calculate estimated covariance matrices & compute error metrics
@@ -1070,7 +1109,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
                       if(sw["s.sw"])            list(Scores       =       scores),
                       if(sw["psi.sw"] || sw.px) list(Uniquenesses = uniquenesses))
 
-  attr(result, "Adapt")        <- attr(sims, "Adapt")
+  attr(result, "Adapt")        <- any(adapt, adapted)
   attr(result, "Alph.step")    <- if(is.element(method, c("IMFA", "IMIFA", "OMFA", "OMIFA"))) learn.alpha
   attr(result, "Alpha")        <- if(!learn.alpha) attr(sims, "Alpha")
   attr(result, "C.Shrink")     <- cshrink
@@ -1084,7 +1123,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   attr(result, "Errors")       <- errs
   attr(result, "Equal.Pi")     <- equal.pro
   attr(result, "Exchange")     <- attr(sims, "Exchange")
-  attr(result, "ForceQg")      <- attr(sims, "ForceQg")
+  attr(result, "ForceQg")      <- attr(sims, "ForceQg") || (adapt && G1 && forceQg)
   attr(result, "G.init")       <- if(inf.G) attr(sims, "G.init")
   attr(result, "G.Mean")       <- attr(sims, "G.Mean")
   attr(result, "G.Scale")      <- attr(sims, "G.Scale")

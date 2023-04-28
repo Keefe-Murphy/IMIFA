@@ -2,6 +2,8 @@ __Infinite Mixtures of Infinite Factor Analysers__
 ==================================================  
 
 ### Improvements, Bug Fixes, & Miscellaneous Edits
+* `get_IMIFA_results` gains the arg. `adapt`, allowing automatic, post-hoc truncation of redundant  
+loadings matrix columns in cases where `mcmc_IMIFA` was called with `adapt=FALSE` only.
 * Minor speed-up to `G_priorDensity` when `discount` is non-zero.
 * Now using newer `CITATION` commands.
 

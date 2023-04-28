@@ -12,6 +12,7 @@ get_IMIFA_results(sims = NULL,
                   G = NULL,
                   Q = NULL,
                   criterion = c("bicm", "aicm", "dic", "bic.mcmc", "aic.mcmc"),
+                  adapt = FALSE,
                   G.meth = c("mode", "median"),
                   Q.meth = c("mode", "median"),
                   conf.level = 0.95,
@@ -42,11 +43,15 @@ Similarly, this allows retrieval of samples corresponding to a solution, if visi
 
 \item{Q}{If this argument is not specified, results will be returned with the optimal number of factors. If different numbers of factors were explored in \code{sims} for the \code{"FA"}, \code{"MFA"}, \code{"OMFA"} or \code{"IMFA"} methods, this allows pulling out a specific solution with \code{Q} factors, even if the solution is sub-optimal.
 
-Similarly, this allows retrieval of samples corresponding to a solution, if visited, with \code{Q} factors for the \code{"IFA"}, \code{"MIFA"}, \code{"OMIFA"} and \code{"IMIFA"} methods. Can be supplied as a scalar or a vector of values for each cluster.}
+Similarly, this allows retrieval of samples corresponding to a solution, if visited, with \code{Q} factors for the \code{"IFA"}, \code{"MIFA"}, \code{"OMIFA"} and \code{"IMIFA"} methods if adaptation has already taken place. Can be supplied as a scalar or a vector of values for each cluster.
+
+If adaptation didn't take place during model-fitting, \code{adapt=TRUE} can be supplied here to determine the optimal cluster-specific numbers of non-redundant factors (see below).}
 
 \item{criterion}{The criterion to use for model selection, where model selection is only required if more than one model was run under the \code{"FA"}, \code{"MFA"}, \code{"MIFA"}, \code{"OMFA"} or \code{"IMFA"} methods when \code{sims} was created via \code{\link{mcmc_IMIFA}}. Defaults to \code{bicm}, but note that these are \emph{all} calculated; this argument merely indicates which one will form the basis of the construction of the output.
 
 Note that the first three options here might exhibit bias in favour of zero-factor models for the finite factor \code{"FA"}, \code{"MFA"}, \code{"OMFA"} and \code{"IMFA"} methods and might exhibit bias in favour of one-cluster models for the \code{"MFA"} and \code{"MIFA"} methods. The \code{aic.mcmc} and \code{bic.mcmc} criteria will only be returned for finite factor models.}
+
+\item{adapt}{A logical indicating if adaptation should be applied to the stored loadings matrices to truncate to cluster-specific number of non-redundant factors. This argument is only relevant if \code{adapt=FALSE} was used when initially fitting the model (otherwise, adaptation has already taken place during sampling), and defaults to \code{FALSE} here too. Relevant parameters from \code{\link{mgpControl}} (namely \code{eps}, \code{prop}, and \code{forceQg}) can be passed via the \code{...} construct, but will default to their values under \code{\link{mgpControl}} if not specified.}
 
 \item{G.meth}{If the object in \code{sims} arises from the \code{"OMFA"}, \code{"OMIFA"}, \code{"IMFA"} or \code{"IMIFA"} methods, this argument determines whether the optimal number of clusters is given by the mode or median of the posterior distribution of \code{G}. Defaults to \code{"mode"}. Often the mode and median will agree in any case.}
 
@@ -73,6 +78,8 @@ Please be warned that this feature requires loading the \code{\link[mcclust]{mcc
 \item{x, object, MAP, ...}{Arguments required for the \code{print.Results_IMIFA} and \code{summary.Results_IMIFA} functions: \code{x} and \code{object} are objects of class \code{"Results_IMIFA"} resulting from a call to \code{\link{get_IMIFA_results}}. \code{MAP} is a logical which governs whether a table of the MAP classification is printed, while \code{...} gathers additional arguments to those functions.
 
 Users can also pass the \code{type} argument to the \code{\link{norm}} function when \code{isTRUE(error.metrics)} and the posterior predictive reconstruction error (PPRE) is calculated. By default the Frobenius norm (\code{type="F"}) is employed.
+
+When \code{adapt=TRUE} here, relevant arguments from \code{\link{mgpControl}} (namely \code{eps}, \code{prop}, and \code{forceQg}) can be supplied here too, though they retain their default values from \code{\link{mgpControl}} otherwise.
 
 Finally, the \code{...} construct also allows arguments to \code{\link[stats]{varimax}} to be passed to \code{\link{get_IMIFA_results}} itself, when \code{isTRUE(vari.rot)}, or arguments to \code{\link[graphics]{hist}} when \code{isTRUE(error.metrics)}, in order to guide construction of the bins. Additionally, by passing the argument \code{dbreaks} via the \code{...} construct, the bins can be specified directly. However, caution is advised in doing so; in particular, the bins must be constructed on data which has been standardised in the same way as the data modelled within \code{\link{mcmc_IMIFA}}.}
 }
@@ -133,13 +140,25 @@ Due to the way the offline label-switching correction is performed, different ru
 # summary(resIMIFAolive)
 
 # Simulate new data from the above model
-# newdata       <- sim_IMIFA_model(resIMIFAolive)}
+# newdata       <- sim_IMIFA_model(resIMIFAolive)
+
+# Fit an IFA model without adaptation and examine results with and without post-hoc adaptation
+# simIFAcoffee  <- mcmc_IMIFA(coffee, method="IFA", n.iters=10000, adapt=FALSE)
+# resIFAnoadapt <- get_IMIFA_results(simIFAcoffee)
+# resIFAadapt   <- get_IMIFA_results(simIFAcoffee, adapt=TRUE)
+
+# Compare to an IFA model with adaptive Gibbs sampling
+# simIFAadapt   <- mcmc_IMIFA(coffee, method="IFA", n.iters=10000)
+# resIFAcoffee  <- get_IMIFA_results(simIFAadapt)
+# plot(resIFAnoadapt, "GQ")
+# plot(resIFAadapt, "GQ")
+# plot(resIFAcoffee, "GQ")}
 }
 \references{
 Murphy, K., Viroli, C., and Gormley, I. C. (2020) Infinite mixtures of infinite factor analysers, \emph{Bayesian Analysis}, 15(3): 937-963. <\href{https://projecteuclid.org/euclid.ba/1570586978}{doi:10.1214/19-BA1179}>.
 }
 \seealso{
-\code{\link{plot.Results_IMIFA}}, \code{\link{mcmc_IMIFA}}, \code{\link{Zsimilarity}}, \code{\link{scores_MAP}}, \code{\link{sim_IMIFA_model}}, \code{\link{Procrustes}}, \code{\link[stats]{varimax}}, \code{\link{norm}}
+\code{\link{plot.Results_IMIFA}}, \code{\link{mcmc_IMIFA}}, \code{\link{Zsimilarity}}, \code{\link{scores_MAP}}, \code{\link{sim_IMIFA_model}}, \code{\link{Procrustes}}, \code{\link[stats]{varimax}}, \code{\link{norm}}, \code{\link{mgpControl}}
 }
 \author{
 Keefe Murphy - <\email{keefe.murphy@mu.ie}>
