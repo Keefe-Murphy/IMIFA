@@ -3,7 +3,7 @@
 #########################################################################
 
 # Gibbs Sampler Function
-  .gibbs_MIFA      <- function(Q, data, iters, N, P, G, sw, mu, mu.zero, uni.type, uni.prior,
+  .gibbs_MIFA      <- function(Q, data, iters, N, P, G, sw, mu, mu.zero, uni.type, uni.prior, col.mean,
                                sigma.mu, burnin, thinning, verbose, nu1, nu2, rho1, rho2, cluster,
                                psi.alpha, psi.beta, adapt, truncated, start.AGS, stop.AGS, prop, b0, b1,
                                cluster.shrink, beta.d1, beta.d2, epsilon, equal.pro, forceQg, ...) {
@@ -116,7 +116,7 @@
     } else psi.inv <- vapply(Gseq, function(g) .sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta[,g]), numeric(P))
     psi.inv        <- if(uni)     t(psi.inv)    else psi.inv
     if(isTRUE(one.uni)) {
-      psi.inv[]    <- 1/switch(EXPR=uni.type, constrained=colVars(data), max(colVars(data)))
+      psi.inv[]    <- 1/switch(EXPR=uni.type, constrained=colVars(data, center=col.mean, refine=FALSE, useNames=FALSE), max(colVars(data, center=col.mean, refine=FALSE, useNames=FALSE)))
     } else   {
       tmp.psi      <- (nn[nn0] - 1L)/pmax(rowsum(data^2, z) - rowsum(data, z)^2/nn[nn0], 0L)
       tmp.psi      <- switch(EXPR=uni.type, unconstrained=t(tmp.psi), matrix(Rfast::rowMaxs(tmp.psi, value=TRUE), nrow=P, ncol=G, byrow=TRUE))
@@ -137,13 +137,14 @@
       # Adaptation
       if(adapt     && all(iter >= start.AGS, iter < stop.AGS))    {
         if(stats::runif(1) < ifelse(iter < AGS.burn, 0.5, exp(-b0 - b1 * (iter - start.AGS))))  {
-          colvec   <- lapply(nn.ind, function(g) if(Q0[g]) (colSums2(abs(lmat[[g]])   < epsilon)/P) >= prop else stats::runif(1) <= prop)
+          colvec   <- lapply(nn.ind, function(g) if(Q0[g]) (colSums2(abs(lmat[[g]])   < epsilon,
+                                                                     useNames=FALSE)/P) >= prop else stats::runif(1) <= prop)
           nonred   <- lapply(colvec, .which0)
           numred   <- lengths(colvec) - lengths(nonred)
           notred   <- numred == 0
           ng.ind   <- seq_along(nn.ind)
           Qs.old   <- Qs[nn0]
-          Qs[nn0]  <- pmax.int(0L, vapply(ng.ind, function(h) if(notred[h]) Qs.old[h] + 1L         else Qs.old[h] - numred[h], numeric(1L)))
+          Qs[nn0]  <- pmax.int(0L, vapply(ng.ind, function(h) if(notred[h]) Qs.old[h] + 1L      else Qs.old[h] - numred[h], numeric(1L)))
           star.Q   <- if(forceQg) pmin(Q.star, nn[nn0] - 1L) else Q.star
           Q.big    <- Qs[nn0] > star.Q
           if((Q.bigs        <-  any(Q.big))) {
@@ -218,9 +219,9 @@
       }
 
     # Means
-      sum.data     <- vapply(dat.g, colSums2, numeric(P))
+      sum.data     <- vapply(dat.g, colSums2, useNames=FALSE, numeric(P))
       sum.data     <- if(uni) t(sum.data) else sum.data
-      sum.eta      <- lapply(eta.tmp, colSums2)
+      sum.eta      <- lapply(eta.tmp, colSums2, useNames=FALSE)
       mu[,]        <- vapply(Gseq, function(g) if(nn0[g]) .sim_mu(mu.sigma=mu.sigma, psi.inv=psi.inv[,g], mu.prior=mu.prior[,g], sum.eta=sum.eta[[g]][seq_len(Qs[g])],
                              sum.data=sum.data[,g], lmat=lmat[[g]], N=nn[g], P=P) else .sim_mu_p(P=P, sig.mu.sqrt=sig.mu.sqrt, mu.zero=mu.zero[,g]), numeric(P))
 
@@ -229,7 +230,7 @@
         load.2     <- lapply(lmat, "^", 2)
         phi        <- lapply(Gseq, function(g) if(n0q0[g]) .sim_phi(Q=Qs[g], P=P, nu1.5=nu1.5, nu2=nu2, tau=tau[[g]],
                       load.2=load.2[[g]], sigma=MGPsig[g]) else .sim_phi_p(Q=Qs[g], P=P, nu1=nu1, nu2=nu2))
-        sum.terms  <- lapply(Gseq, function(g) if(n0q0[g]) colSums2(phi[[g]] * load.2[[g]]))
+        sum.terms  <- lapply(Gseq, function(g) if(n0q0[g]) colSums2(phi[[g]] * load.2[[g]], useNames=FALSE))
         for(g in Gseq)  {
           Qg       <- Qs[g]
           Q1g      <- Q1[g]
@@ -343,7 +344,7 @@
         if(sw["pi.sw"])         pi.store[,new.it]   <-   pi.prop
         if(cluster.shrink)     sig.store[,new.it]   <-   MGPsig
                                  z.store[new.it,]   <-   as.integer(z)
-                                 ll.store[new.it]   <-   sum(rowLogSumExps(log.probs))
+                                 ll.store[new.it]   <-   sum(rowLogSumExps(log.probs, useNames=FALSE))
                                  Q.store[,new.it]   <-   as.integer(Qs)
       }
     }

@@ -1262,7 +1262,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
                        uniquenesses= if(show.last) x$Uniquenesses$last.psi   else x$Uniquenesses$post.psi,
                        loadings    = if(show.last) x$Loadings$last.load[[g]] else x$Loadings$post.load[[g]])
       plot.x <- switch(EXPR=param, loadings=plot.x[,rev(seq_len(Q)), drop=FALSE], plot.x)
-      x.plot <- rowRanges(plot.x, na.rm=TRUE)
+      x.plot <- rowRanges(plot.x, na.rm=TRUE, useNames=FALSE)
       plot.x <- if(param == "uniquenesses" && is.element(uni.type, c("isotropic", "single"))) plot.x else apply(plot.x, 2L, function(x) (x - min(x, na.rm=TRUE))/(max(x, na.rm=TRUE) - min(x, na.rm=TRUE)))
       varnam <- paste0(toupper(substr(param, 1L, 1L)), substr(param, 2L, nchar(param)))
       if(any(grp.ind, param == "loadings")) {
@@ -2005,7 +2005,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
     if(!is.null(sd0)) {
       if(missing(dat))                stop("'dat' must be supplied when pixels were discarded &/or 'ind' is supplied",  call.=FALSE)
       x        <- rep(NA, attr(res, "Vars"))
-      x[sd0]   <- colMeans2(.scale2(data.matrix(dat), center=center, scale=attr(res, "Scale"))[res$Clust$MAP == G,sd0, drop=FALSE])
+      x[sd0]   <- colMeans2(.scale2(data.matrix(dat), center=center, scale=attr(res, "Scale"))[res$Clust$MAP == G,sd0, drop=FALSE], refine=FALSE, useNames=FALSE)
       x[!sd0]  <- mu
     } else x   <- mu
     x          <- if(scale)  x * attr(res, "G.Scale") else x

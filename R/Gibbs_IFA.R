@@ -6,7 +6,7 @@
   .gibbs_IFA     <- function(Q, data, iters, N, P, sigma.mu, mu, prop, truncated, uni.type,
                              uni.prior, psi.alpha, psi.beta, burnin, thinning, verbose,
                              sw, epsilon, mu.zero, nu1, nu2, adapt, start.AGS, stop.AGS,
-                             b0, b1, alpha.d1, alpha.d2, beta.d1, beta.d2, scaling, ...) {
+                             b0, b1, alpha.d1, alpha.d2, beta.d1, beta.d2, scaling, col.mean, ...) {
 
   # Define & initialise variables
     start.time   <- proc.time()
@@ -66,7 +66,7 @@
     tau          <- cumprod(delta)
     lmat         <- matrix(vapply(Pseq, function(j) .sim_load_ps(Q=Q, phi=phi[j,], tau=tau), numeric(Q)), nrow=P, byrow=TRUE)
     psi.inv      <- .sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
-    psi.inv[]    <- 1/switch(EXPR=uni.type, constrained=colVars(data), max(colVars(data)))
+    psi.inv[]    <- 1/switch(EXPR=uni.type, constrained=colVars(data, center=col.mean, refine=FALSE, useNames=FALSE), max(colVars(data, center=col.mean, refine=FALSE, useNames=FALSE)))
     max.p        <- (psi.alpha  - 1)/psi.beta
     inf.ind      <- psi.inv > max(max.p)
     psi.inv[inf.ind]       <- switch(EXPR=uni.type, constrained=max.p, rep(max.p, P))[inf.ind]
@@ -82,7 +82,7 @@
     # Adaptation
       if(adapt   && all(iter >= start.AGS, iter < stop.AGS))      {
         if(stats::runif(1) < ifelse(iter < AGS.burn, 0.5, exp(-b0 - b1 * (iter - start.AGS)))) {
-          colvec <- if(Q0)  (colSums2(abs(lmat) < epsilon) / P)  >= prop else stats::runif(1) <= prop
+          colvec <- if(Q0)  (colSums2(abs(lmat) < epsilon, useNames=FALSE) / P)  >= prop else stats::runif(1) <= prop
           numred <- sum(colvec)
           if(numred == 0)  {
             Q    <- Q + 1L
@@ -125,14 +125,14 @@
 
     # Means
       if(update.mu) {
-        mu[]     <- .sim_mu(N=N, P=P, mu.sigma=mu.sigma, psi.inv=psi.inv, sum.data=sum.data, sum.eta=colSums2(eta), lmat=lmat, mu.prior=mu.prior)
+        mu[]     <- .sim_mu(N=N, P=P, mu.sigma=mu.sigma, psi.inv=psi.inv, sum.data=sum.data, sum.eta=colSums2(eta, useNames=FALSE), lmat=lmat, mu.prior=mu.prior)
       }
 
     # Shrinkage
       if(Q0) {
         load.2   <- lmat^2
         phi      <- .sim_phi(Q=Q, P=P, nu1.5=nu1.5, nu2=nu2, tau=tau, load.2=load.2)
-        sum.term <- colSums2(phi * load.2)
+        sum.term <- colSums2(phi * load.2, useNames=FALSE)
         for(k in seq_len(Q)) {
           delta[k]  <- if(k > 1) .sim_deltak(alpha.d2=alpha.d2, beta.d2=beta.d2, delta.k=delta[k], Q=Q, P.5=P.5, k=k,
                        tau.kq=tau[k:Q], sum.term.kq=sum.term[k:Q]) else .sim_delta1(Q=Q, P.5=P.5, tau=tau, sum.term=sum.term,

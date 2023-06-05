@@ -14,7 +14,7 @@ URL: https://cran.r-project.org/package=IMIFA
 BugReports: https://github.com/Keefe-Murphy/IMIFA
 LazyData: true
 Imports:
-    matrixStats (>= 0.53.1),
+    matrixStats (>= 1.0.0),
     mclust (>= 5.4),
     mvnfast,
     Rfast (>= 1.9.8),

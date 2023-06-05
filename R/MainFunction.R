@@ -59,8 +59,8 @@
 #' However, these objects of class "IMIFA" should rarely if ever be manipulated by hand - use of the \code{\link{get_IMIFA_results}} function is \emph{strongly} advised.
 #' @keywords IMIFA main
 #' @export
-#' @importFrom matrixStats "colMeans2" "colSums2" "rowLogSumExps" "rowMeans2" "rowSums2"
-#' @importFrom Rfast "colVars" "matrnorm"
+#' @importFrom matrixStats "colMeans2" "colSds" "colSums2" "colVars" "rowLogSumExps" "rowMeans2" "rowSums2"
+#' @importFrom Rfast "matrnorm"
 #' @importFrom mvnfast "dmvn"
 #' @importFrom slam "as.simple_sparse_array" "as.simple_triplet_matrix"
 #' @importFrom mclust "emControl" "Mclust" "mclustBIC" "mclustICL" "hc" "hclass" "hcE" "hcEEE" "hcEII" "hcV" "hcVII" "hcVVV"
@@ -165,8 +165,9 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
     if(isTRUE(verbose))             message("Non-numeric columns removed from data set\n")
     raw.dat <- raw.dat[,num.check,    drop=FALSE]
   }
-  glo.mean  <- colMeans2(data.matrix(raw.dat))
-  glo.scal  <- colVars(data.matrix(raw.dat), std=TRUE)
+  raw.dat   <- data.matrix(raw.dat)
+  glo.mean  <- colMeans2(raw.dat, refine=FALSE, useNames=FALSE)
+  glo.scal  <- colSds(raw.dat,    refine=FALSE, useNames=FALSE, center=glo.mean)
   if(isTRUE(mixFA$drop0sd)) {
     sdx     <- glo.scal
     sd0ind  <- sdx  <= 0
@@ -179,13 +180,11 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
   if(method != "classify")  {
     scal    <- switch(EXPR=scaling, none=FALSE, if(isTRUE(mixFA$drop0sd)) sdx else glo.scal)
     scal    <- switch(EXPR=scaling, pareto=sqrt(scal), scal)
-    dat     <- .scale2(as.matrix(raw.dat), center=centering, scale=scal)
-  } else     {
-    dat     <- as.matrix(raw.dat)
+    dat     <- if(centering) .scale2(raw.dat, center=glo.mean, scale=scal)    else .scale2(raw.dat, center=FALSE, scale=scal)
   }
   N         <- as.integer(nrow(dat))
   P         <- as.integer(ncol(dat))
-  centered  <- switch(EXPR=method, classify=isTRUE(all.equal(colSums2(dat), numeric(P))), (centering || isTRUE(all.equal(colSums2(dat), numeric(P)))))
+  centered  <- switch(EXPR=method, classify=isTRUE(all.equal(colSums2(dat, useNames=FALSE), numeric(P))), (centering || isTRUE(all.equal(colSums2(dat, useNames=FALSE), numeric(P)))))
   if(!any(centered, centering) && all(verbose,
     scaling != "none"))             message("Are you sure you want to apply scaling without centering?\n")
 
@@ -375,7 +374,7 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
   datname          <- rownames(dat)
   if(any(length(unique(datname)) != N,
      is.null(datname)))  rownames(dat) <- seq_len(N)
-  cmeans           <- colMeans2(dat)
+  cmeans           <- colMeans2(dat, refine=FALSE, useNames=FALSE)
   mu               <- list(as.matrix(cmeans))
   mu0.x            <- mixfamiss$mu.zero
   mu0g             <- mixFA$mu0g
@@ -562,7 +561,7 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
 
   imifa     <- list(list())
   Gi        <- Qi  <- 1L
-  gibbs.arg <- list(P = P, sigma.mu = sigma.mu, psi.alpha = psi.alpha, burnin = burnin, sw = storage,
+  gibbs.arg <- list(P = P, sigma.mu = sigma.mu, psi.alpha = psi.alpha, burnin = burnin, sw = storage, col.mean = cmeans,
                     thinning = thinning, iters = iters, verbose = verbose, uni.type = uni.type, uni.prior = uni.prior)
   if(is.element(method, c("IMIFA", "IMFA", "OMIFA", "OMFA"))) {
     gibbs.arg      <- append(gibbs.arg, BNP)
@@ -653,7 +652,7 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
       nngs         <- tabulate(zi[[g]], nbins=switch(EXPR=method, IMFA=, IMIFA=trunc.G, G))
       if(verbose   && zli.miss)     message(paste0("G=", G, " - initial cluster sizes: ", paste(nngs[Gseq], collapse=", "), "\n"))
       pi.prop[[g]] <- if(equal.pro) rep(1/G, G) else prop.table(nngs)
-      mu[[g]]      <- vapply(Gseq, function(gg) if(nngs[gg] > 0) colMeans2(dat[zi[[g]] == gg,, drop=FALSE]) else integer(P), numeric(P))
+      mu[[g]]      <- vapply(Gseq, function(gg) if(nngs[gg] > 0) colMeans2(dat[zi[[g]] == gg,, drop=FALSE], refine=FALSE, useNames=FALSE) else integer(P), numeric(P))
       mu[[g]]      <- if(uni)       t(mu[[g]])  else mu[[g]]
       if(mu0.x)   {
         mu.zero[[g]]    <- if(mu0g) mu[[g]]     else replicate(G, cmeans, simplify="array")
@@ -809,7 +808,7 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
     if(centered)                    warning("Data supplied is globally centered, are you sure?\n", call.=FALSE)
     for(g in seq_len(range.G))  {
       tmp.dat      <- raw.dat[zlabels == levels(zlabels)[g],]
-      scal         <- switch(EXPR=scaling, none=FALSE, colVars(as.matrix(tmp.dat), std=TRUE))
+      scal         <- switch(EXPR=scaling, none=FALSE, colSds(tmp.dat, refine=FALSE, useNames=FALSE))
       scal         <- switch(EXPR=scaling, pareto=sqrt(scal), scal)
       tmp.dat      <- .scale2(as.matrix(tmp.dat), center=centering, scale=scal)
       if(sigmu.miss) {

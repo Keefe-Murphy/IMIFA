@@ -3,7 +3,7 @@
 ############################################################################
 
 # Gibbs Sampler Function
-  .gibbs_IMIFA       <- function(Q, data, iters, N, P, G, mu.zero, rho, sigma.l, learn.alpha, mu, sw, uni.type, uni.prior,
+  .gibbs_IMIFA       <- function(Q, data, iters, N, P, G, mu.zero, rho, sigma.l, learn.alpha, mu, sw, uni.type, uni.prior, col.mean,
                                  sigma.mu, burnin, thinning, a.hyper, psi.alpha, psi.beta, verbose, trunc.G, adapt, ind.slice, discount,
                                  alpha.d1, alpha.d2, cluster, b0, b1, IM.lab.sw, zeta, tune.zeta, rho1, rho2, nu1, nu2, truncated, cluster.shrink,
                                  prop, d.hyper, beta.d1, beta.d2, start.AGS, stop.AGS, epsilon, learn.d, kappa, forceQg, thresh, exchange, ...) {
@@ -129,7 +129,7 @@
     } else psi.inv   <- replicate(trunc.G, .sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), simplify="array")
     psi.inv          <- if(uni) t(psi.inv) else psi.inv
     if(isTRUE(one.uni)) {
-      psi.inv[]      <- 1/switch(EXPR=uni.type, constrained=colVars(data), max(colVars(data)))
+      psi.inv[]      <- 1/switch(EXPR=uni.type, constrained=colVars(data, center=col.mean, refine=FALSE, useNames=FALSE), max(colVars(data, center=col.mean, refine=FALSE, useNames=FALSE)))
     } else   {
       tmp.psi        <- (nn[nn0] - 1L)/pmax(rowsum(data^2, z) - rowsum(data, z)^2/nn[nn0], 0L)
       tmp.psi        <- switch(EXPR=uni.type, unconstrained=t(tmp.psi), matrix(Rfast::rowMaxs(tmp.psi, value=TRUE), nrow=P, ncol=G, byrow=TRUE))
@@ -161,13 +161,14 @@
       # Adaptation
       if(adapt       && all(iter >= start.AGS, iter < stop.AGS))  {
         if(stats::runif(1) < ifelse(iter < AGS.burn, 0.5, exp(-b0 - b1 * (iter - start.AGS))))    {
-          colvec     <- lapply(nn.ind, function(g) if(Q0[g]) (colSums2(abs(lmat[[g]])   < epsilon)/P) >= prop else stats::runif(1) <= prop)
+          colvec     <- lapply(nn.ind, function(g) if(Q0[g]) (colSums2(abs(lmat[[g]])   < epsilon,
+                                                                       useNames=FALSE)/P) >= prop else stats::runif(1) <= prop)
           nonred     <- lapply(colvec, .which0)
           numred     <- lengths(colvec)  - lengths(nonred)
           notred     <- numred == 0
           ng.ind     <- seq_along(nn.ind)
           Qs.old     <- Qs[nn0]
-          Qs[nn0]    <- pmax.int(0L, vapply(ng.ind, function(h) if(notred[h]) Qs.old[h] + 1L         else Qs.old[h] - numred[h], numeric(1L)))
+          Qs[nn0]    <- pmax.int(0L, vapply(ng.ind, function(h) if(notred[h]) Qs.old[h] + 1L      else Qs.old[h] - numred[h], numeric(1L)))
           star.Q     <- if(forceQg) pmin(Q.star, nn[nn0] - 1L) else Q.star
           Q.big      <- Qs[nn0] > star.Q
           if((Q.bigs <- any(Q.big)))  {
@@ -270,9 +271,9 @@
       }
 
     # Means
-      sum.data       <- vapply(dat.g, colSums2, numeric(P))
+      sum.data       <- vapply(dat.g, colSums2, useNames=FALSE, numeric(P))
       sum.data       <- if(uni) t(sum.data) else sum.data
-      sum.eta        <- lapply(eta.tmp, colSums2)
+      sum.eta        <- lapply(eta.tmp, colSums2, useNames=FALSE)
       mu[,Gs]        <- vapply(Gs, function(g) if(nn0[g]) .sim_mu(N=nn[g], mu.sigma=mu.sigma, psi.inv=psi.inv[,g], P=P, sum.eta=sum.eta[[g]][seq_len(Qs[g])],
                                sum.data=sum.data[,g], lmat=lmat[[g]], mu.prior=mu.prior) else .sim_mu_p(P=P, sig.mu.sqrt=sig.mu.sqrt, mu.zero=mu.zero), numeric(P))
 
@@ -281,7 +282,7 @@
         load.2       <- lapply(lmat[Gs], "^", 2)
         phi[Gs]      <- lapply(Gs, function(g) if(n0q0[g]) .sim_phi(Q=Qs[g], P=P, nu1.5=nu1.5, nu2=nu2, tau=tau[[g]],
                         load.2=load.2[[g]], sigma=MGPsig[g]) else .sim_phi_p(Q=Qs[g], P=P, nu1=nu1, nu2=nu2))
-        sum.terms    <- lapply(Gs, function(g) if(n0q0[g]) colSums2(phi[[g]] * load.2[[g]]))
+        sum.terms    <- lapply(Gs, function(g) if(n0q0[g]) colSums2(phi[[g]] * load.2[[g]], useNames=FALSE))
         for(g in Gs)  {
           Qg         <- Qs[g]
           Q1g        <- Q1[g]
@@ -511,7 +512,7 @@
         if(learn.d)                 d.store[new.it]    <-   discount
         if(cluster.shrink)       sig.store[,new.it]    <-   MGPsig
                                    z.store[new.it,]    <-   as.integer(z)
-                                   ll.store[new.it]    <-   if(G > 1) sum(rowLogSumExps(log.probs)) else sum(dmvn(X=data, mu=mu[,nn.ind], sigma=tcrossprod(lmat[[nn.ind]]) + diag(psi.store[,nn.ind,new.it]), log=TRUE))
+                                   ll.store[new.it]    <-   if(G > 1) sum(rowLogSumExps(log.probs, useNames=FALSE)) else sum(dmvn(X=data, mu=mu[,nn.ind], sigma=tcrossprod(lmat[[nn.ind]]) + diag(psi.store[,nn.ind,new.it]), log=TRUE))
                                    Q.store[,new.it]    <-   as.integer(Qs)
                                     G.store[new.it]    <-   as.integer(G.non)
                                   act.store[new.it]    <-   as.integer(G)
@@ -535,7 +536,7 @@
                              discount  = if(learn.d) {      if(sum(d.store == 0)/n.store > 0.5) as.simple_triplet_matrix(d.store) else d.store },
                              a.rate    = ifelse(MH.step,    mean(a.rates), a.rates),
                              d.rate    = ifelse(learn.d,    mean(d.rates), d.rates),
-                             lab.rate  = if(IM.lab.sw)      stats::setNames(rowMeans2(lab.rate), c("Move1", "Move2")),
+                             lab.rate  = if(IM.lab.sw)      stats::setNames(rowMeans2(lab.rate, useNames=FALSE), c("Move1", "Move2")),
                              z.store   = z.store,
                              ll.store  = ll.store,
                              Q.store   = tryCatch(Q.store[Gmax,, drop=FALSE],          error=function(e) Q.store),

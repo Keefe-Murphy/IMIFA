@@ -65,9 +65,9 @@
 #' @keywords IMIFA main
 #' @include MainFunction.R
 #' @export
-#' @importFrom Rfast "colMaxs" "colTabulate" "Median" "rowAll" "rowMaxs" "rowOrder" "rowSort" "rowTabulate" "rowVars" "Var"
+#' @importFrom Rfast "colMaxs" "colTabulate" "Median" "rowMaxs" "rowOrder" "rowSort" "rowTabulate" "rowVars" "Var"
 #' @importFrom mclust "classError"
-#' @importFrom matrixStats "colSums2" "colMeans2" "rowMeans2" "rowMedians" "rowQuantiles" "rowSums2"
+#' @importFrom matrixStats "colSums2" "colMeans2" "rowAlls" "rowMeans2" "rowMedians" "rowQuantiles" "rowSums2"
 #' @importFrom slam "as.simple_triplet_matrix"
 #'
 #' @seealso \code{\link{plot.Results_IMIFA}}, \code{\link{mcmc_IMIFA}}, \code{\link{Zsimilarity}}, \code{\link{scores_MAP}}, \code{\link{sim_IMIFA_model}}, \code{\link{Procrustes}}, \code{\link[stats]{varimax}}, \code{\link{norm}}, \code{\link{mgpControl}}
@@ -236,11 +236,12 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     G.tab        <- if(GQ1x) lapply(apply(G.store, 1L, function(x) list(table(x, dnn=NULL))), "[[", 1L)   else table(G.store, dnn=NULL)
     G.prob       <- if(GQ1x) lapply(G.tab, prop.table) else prop.table(G.tab)
     G.mode       <- if(GQ1x) unlist(lapply(G.tab, function(gt) as.numeric(names(gt[gt == max(gt)])[1L]))) else as.numeric(names(G.tab[G.tab == max(G.tab)])[1L])
-    G.med        <- if(GQ1x) ceiling(matrixStats::rowMedians(G.store) * 2)/2 else ceiling(Median(G.store) * 2)/2
+    G.med        <- if(GQ1x) ceiling(matrixStats::rowMedians(G.store,
+                                                             useNames=FALSE) * 2)/2 else ceiling(Median(G.store) * 2)/2
     if(!G.T) {
       G          <- switch(EXPR=G.meth, mode=G.mode, floor(G.med))
     }
-    G.CI         <- if(GQ1x) round(rowQuantiles(G.store, probs=conf.levels)) else round(stats::quantile(G.store, conf.levels))
+    G.CI         <- if(GQ1x) round(rowQuantiles(G.store, probs=conf.levels))        else round(stats::quantile(G.store, conf.levels))
   }
 
   if(G.T)    {
@@ -412,7 +413,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       z          <- as.matrix(zadj[tmp.store,])
     }
     if(condition <- all(isTRUE(nonempty), is.element(method, c("MFA", "MIFA")), G > 1)) {
-      emptystore <- which(rowAll(rowTabulate(sims[[G.ind]][[Q.ind]]$z.store[tmp.store,], max_number=n.grp[G.ind]) > 0))
+      emptystore <- which(rowAlls(rowTabulate(sims[[G.ind]][[Q.ind]]$z.store[tmp.store,], max_number=n.grp[G.ind]) > 0, useNames=FALSE))
       if(!identical(tmp.store,
                     emptystore))  warning(paste0("Discarding iterations with fewer than G=", G, " non-empty components\n"), call.=FALSE, immediate.=TRUE)
       tmp.store  <- emptystore
@@ -536,15 +537,16 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     if(any(sizes == 0))           warning(paste0("Empty cluster exists in MAP partition:\nexamine trace plots", ifelse(any(is.element(method, c("OMFA", "IMFA", "OMIFA", "IMIFA")), is.element(method, c("MFA", "MIFA")) && any(n.grp < G)), ", try to supply a lower G value to get_IMIFA_results(),", ""), " or re-run the model\n"), call.=FALSE)
     if(sw["pi.sw"]) {
       pi.prop    <- provideDimnames(pies[Gseq,storeG, drop=FALSE], base=list(gnames, ""), unique=FALSE)
-      pi.prop    <- if(inf.G) sweep(pi.prop, 2L, colSums2(pi.prop), FUN="/", check.margin=FALSE) else pi.prop
-      var.pi     <- stats::setNames(rowVars(pi.prop),       gnames)
+      pi.prop    <- if(inf.G) sweep(pi.prop, 2L, colSums2(pi.prop, useNames=FALSE), FUN="/", check.margin=FALSE) else pi.prop
+      var.pi     <- stats::setNames(rowVars(pi.prop),          gnames)
       ci.pi      <- rowQuantiles(pi.prop, probs=conf.levels)
       ci.pi      <- if(G == 1) t(ci.pi) else ci.pi
-      post.pi    <- stats::setNames(rowMeans2(pi.prop),     gnames)
+      post.pi    <- stats::setNames(rowMeans2(pi.prop,
+                                              useNames=FALSE), gnames)
     } else if(equal.pro)  {
-      post.pi    <- stats::setNames(rep(1/G, G),            gnames)
+      post.pi    <- stats::setNames(rep(1/G, G),               gnames)
     } else          {             message("Mixing proportions not stored: estimating posterior mean by the proportions of the MAP clustering\n")
-      post.pi    <- stats::setNames(sizes/n.obs,            gnames)
+      post.pi    <- stats::setNames(sizes/n.obs,               gnames)
     }
 
     tab.z        <- if((!label.miss && G > 1) || (clust.ind && all(error.metrics, sw["mu.sw"], sw["psi.sw"]))) rowTabulate(z, max_number=G)
@@ -651,7 +653,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   if(inf.Q)   {
     if(G1        <- G > 1)    {
       if(isTRUE(adapt))       {
-       Q.store[] <- sapply(seq_len(TN.store), function(i) sapply(Gseq, function(g) sum(colSums2(abs(.a_drop(lmats[,,g,i, drop=FALSE], drop=3L:4L)) < epsilon)/n.var < prop)))
+       Q.store[] <- sapply(seq_len(TN.store), function(i) sapply(Gseq, function(g) sum(colSums2(abs(.a_drop(lmats[,,g,i, drop=FALSE], drop=3L:4L)) < epsilon, useNames=FALSE)/n.var < prop)))
        if(isTRUE(forceQg))    {
          Q.force <- t(vapply(Gseq, function(g) pmin(Q.store[g,], sizes[g] - 1), numeric(TN.store)))
          Q.big   <- any(Q.force < Q.store)
@@ -663,25 +665,27 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       class(Q.tab)        <- class(Q.prob)  <- "listof"
     } else    {
       if(isTRUE(adapt))       {
-       Q.store[] <- sapply(seq_len(TN.store), function(i) sum(colSums2(abs(.a_drop(lmats[,,i, drop=FALSE], 3L)) < epsilon)/n.var < prop))
+       Q.store[] <- sapply(seq_len(TN.store), function(i) sum(colSums2(abs(.a_drop(lmats[,,i, drop=FALSE], 3L)) < epsilon, useNames=FALSE)/n.var < prop))
       }
       Q.tab      <- table(Q.store, dnn=NULL)
       Q.prob     <- prop.table(Q.tab)
     }
-    Q.mode       <- if(G1) unlist(lapply(Q.tab, function(qt) as.numeric(names(qt[qt == max(qt)])[1L])))  else as.numeric(names(Q.tab[Q.tab == max(Q.tab)])[1L])
-    Q.med        <- if(G1) stats::setNames(ceiling(matrixStats::rowMedians(Q.store) * 2)/2, gnames)      else ceiling(Median(Q.store) * 2)/2
+    Q.mode       <- if(G1) unlist(lapply(Q.tab, function(qt) as.numeric(names(qt[qt == max(qt)])[1L])))    else as.numeric(names(Q.tab[Q.tab == max(Q.tab)])[1L])
+    Q.med        <- if(G1) stats::setNames(ceiling(matrixStats::rowMedians(Q.store,
+                                                                           useNames=FALSE) * 2)/2, gnames) else ceiling(Median(Q.store) * 2)/2
     if(!Q.T)  {
       Q          <- switch(EXPR=Q.meth, mode=Q.mode, floor(Q.med))
     } else    {
-      Q          <- if(G.T) Q else stats::setNames(if(length(Q) == G) Q    else rep(Q, G), gnames)
+      Q          <- if(G.T) Q else stats::setNames(if(length(Q) == G) Q else rep(Q, G), gnames)
     }
-    Q.CI         <- if(G1) round(rowQuantiles(Q.store, probs=conf.levels)) else round(stats::quantile(Q.store, conf.levels))
+    Q.CI         <- if(G1) round(rowQuantiles(Q.store,
+                                              probs=conf.levels))       else round(stats::quantile(Q.store, conf.levels))
     GQ.temp4     <- list(Q = Q, Q.Mode = Q.mode, Q.Median = Q.med,
                          Q.CI = Q.CI, Q.Probs = Q.prob, Q.Counts = Q.tab,
-                         Stored.Q = if(clust.ind) Q.store else drop(Q.store),
+                         Stored.Q = if(clust.ind) Q.store               else drop(Q.store),
                          Q.Last = Q.store[,TN.store])
-    GQ.res       <- if(inf.G)   c(GQ.temp1, GQ.temp4)     else c(list(G = G), GQ.temp4)
-    GQ.res       <- if(cshrink) c(GQ.res, list(post.sigma = stats::setNames(rowMeans2(sigmas), gnames))) else GQ.res
+    GQ.res       <- if(inf.G)   c(GQ.temp1, GQ.temp4)                   else c(list(G = G), GQ.temp4)
+    GQ.res       <- if(cshrink) c(GQ.res, list(post.sigma = stats::setNames(rowMeans2(sigmas, useNames=FALSE), gnames))) else GQ.res
     GQ.res       <- c(GQ.res, list(Criteria = GQ.temp2))
     attr(GQ.res, "Q.big") <- ifelse(adapt && G1 && forceQg, Q.big, attr(sims[[G.ind]][[Q.ind]], "Q.big"))
   }
@@ -799,23 +803,25 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
 
   # Compute posterior means and % variation explained
     if(sw["mu.sw"])  {
-      post.mu    <- if(clust.ind) rowMeans2(mu)  else post.mu
-      var.mu     <- if(uni)       Var(mu)        else rowVars(mu)
+      post.mu    <- if(clust.ind) rowMeans2(mu,
+                                            useNames=FALSE) else post.mu
+      var.mu     <- if(uni)       Var(mu)                   else rowVars(mu)
       ci.tmp     <- rowQuantiles(mu,  probs=conf.levels)
-      ci.mu      <- if(uni)       t(ci.tmp)      else ci.tmp
+      ci.mu      <- if(uni)       t(ci.tmp)                 else ci.tmp
     }
     if(sw["psi.sw"]) {
-      post.psi   <- if(clust.ind) rowMeans2(psi) else post.psi
-      var.psi    <- if(uni)       Var(psi)       else rowVars(psi)
+      post.psi   <- if(clust.ind) rowMeans2(psi,
+                                            useNames=FALSE) else post.psi
+      var.psi    <- if(uni)       Var(psi)                  else rowVars(psi)
       ci.tmp     <- rowQuantiles(psi, probs=conf.levels)
-      ci.psi     <- if(uni)       t(ci.tmp)      else ci.tmp
+      ci.psi     <- if(uni)       t(ci.tmp)                 else ci.tmp
     }
     if(sw["l.sw"])   {
       lmat       <- lmat[,Qgs,if(inf.Q) Lstore[[g]] else storeG, drop=FALSE]
       post.load  <- rowMeans(lmat, dims=2)
       var.load   <- apply(lmat, c(1L, 2L), Var)
       ci.load    <- apply(lmat, c(1L, 2L), stats::quantile, conf.levels)
-      var.exp    <- rowSums2(post.load^2)
+      var.exp    <- rowSums2(post.load^2, useNames=FALSE)
       class(post.load)     <- "loadings"
     } else if(sw["psi.sw"]) {
       if(sizes[g] > 1) {
@@ -1053,7 +1059,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   if(all(sw["psi.sw"] || !clust.ind, any(sw["l.sw"], Q0X))) {
    var.exps      <- lapply(lapply(result, "[[", "var.exp"), function(x) if(is.null(x)) NA else x)
    clust.exps    <- if(sum(is.na(var.exps)) == G) NULL else vapply(var.exps, sum, na.rm=TRUE, numeric(1L))/n.var
-   var.exps      <- if(sum(is.na(var.exps)) == G) NULL else if(clust.ind) stats::setNames(rowSums2(sweep(do.call(cbind, var.exps), 2L, FUN="*", post.pi, check.margin=FALSE), na.rm=TRUE), varnames) else stats::setNames(var.exps[[1L]], varnames)
+   var.exps      <- if(sum(is.na(var.exps)) == G) NULL else if(clust.ind) stats::setNames(rowSums2(sweep(do.call(cbind, var.exps), 2L, FUN="*", post.pi, check.margin=FALSE), na.rm=TRUE, useNames=FALSE), varnames) else stats::setNames(var.exps[[1L]], varnames)
    Err           <- list(Var.Exps = var.exps, Clust.Exps = clust.exps, Exp.Var = ifelse(clust.ind, sum(clust.exps * post.pi), unname(clust.exps)))
    if(all(error.metrics, sw["mu.sw"] || !clust.ind)) {
      if(cov.met)       {
@@ -1070,11 +1076,12 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
      if(sw["psi.sw"] && any(all(cov.met, sw.pi), frobenius)) {
        metrics   <- rbind(MSE = mse, MEDSE = medse, MAE = mae, MEDAE = medae, RMSE = rmse, NRMSE = nrmse)
        metrics   <- if(frobenius) rbind(metrics, PPRE = Fro)             else metrics
-       metrics   <- metrics[!rowAll(is.na(metrics)),, drop=FALSE]
+       metrics   <- metrics[!rowAlls(is.na(metrics), useNames=FALSE),, drop=FALSE]
        metricCI  <- rowQuantiles(metrics, probs=conf.levels)
        metricCI  <- if(cov.met && sw.pi) metricCI                        else provideDimnames(t(metricCI), base=list("PPRE", names(metricCI)))
-       med.met   <- stats::setNames(matrixStats::rowMedians(metrics), rownames(metrics))
-       mean.met  <- stats::setNames(rowMeans2(metrics),               rownames(metrics))
+       med.met   <- stats::setNames(matrixStats::rowMedians(metrics,
+                                                            useNames=FALSE), rownames(metrics))
+       mean.met  <- stats::setNames(rowMeans2(metrics, useNames=FALSE),      rownames(metrics))
        last.met  <- c(MSE = mse[e.store], MEDSE = medse[e.store], MAE = mae[e.store], MEDAE = medae[e.store], RMSE = rmse[e.store], NRMSE = nrmse[e.store])
        last.met  <- if(frobenius) c(last.met, PPRE = Fro[e.store])       else last.met
        last.met  <- last.met[!is.na(last.met)]

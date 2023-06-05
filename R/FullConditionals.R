@@ -53,7 +53,7 @@
   #' @importFrom matrixStats "colSums2"
     .sim_psi_uu  <- function(N, P, psi.alpha, psi.beta, c.data, eta, lmat, Q0) {
       S.mat      <- c.data  - if(Q0) tcrossprod(eta, lmat) else 0L
-        stats::rgamma(P, shape=N/2L + psi.alpha, rate=colSums2(S.mat^2)/2 + psi.beta)
+        stats::rgamma(P, shape=N/2L + psi.alpha, rate=colSums2(S.mat^2, useNames=FALSE)/2 + psi.beta)
     }
 
     .sim_psi_uc  <- function(N, P, psi.alpha, psi.beta, c.data, eta, lmat, Q0) {
@@ -63,7 +63,7 @@
 
   #' @importFrom matrixStats "colSums2"
     .sim_psi_cu  <- function(u.shape, psi.beta, S.mat, V) {
-        stats::rgamma(V, shape=u.shape, rate=colSums2(do.call(rbind, S.mat))/2 + psi.beta)
+        stats::rgamma(V, shape=u.shape, rate=colSums2(do.call(rbind, S.mat), useNames=FALSE)/2 + psi.beta)
     }
 
     .sim_psi_cc  <- function(u.shape, psi.beta, S.mat, V = 1L) {
@@ -72,7 +72,7 @@
 
   #' @importFrom matrixStats "colSums2"
     .sim_psi_u1  <- function(u.shape, psi.beta, S.mat, V) {
-        stats::rgamma(V, shape=u.shape, rate=colSums2(S.mat^2)/2  + psi.beta)
+        stats::rgamma(V, shape=u.shape, rate=colSums2(S.mat^2, useNames=FALSE)/2  + psi.beta)
     }
 
     .sim_psi_c1  <- function(u.shape, psi.beta, S.mat, V = 1L) {
@@ -698,7 +698,7 @@
   #' @importFrom matrixStats "colSums2" "rowSums2"
     .lab_switch  <- function(z.new, z.old) {
       tab        <- table(z.new, z.old, dnn=NULL)
-      tab.tmp    <- tab[rowSums2(tab) != 0, colSums2(tab) != 0, drop=FALSE]
+      tab.tmp    <- tab[rowSums2(tab, useNames=FALSE) != 0, colSums2(tab, useNames=FALSE) != 0, drop=FALSE]
       nc         <- ncol(tab.tmp)
       nr         <- nrow(tab.tmp)
       ng         <- table(z.new)
@@ -860,7 +860,7 @@
         }
       }
       PCM        <- PCM/nit
-        if(scale)   PCM/rowSums2(PCM) else PCM
+        if(scale)   PCM/rowSums2(PCM, useNames=FALSE) else PCM
     }
 
   # Move 1
@@ -1053,9 +1053,11 @@
       } else R   <- 1L
       d          <- if(dilate)    sum(C * R)/sum(J * tcrossprod(X))      else 1L
       dXR        <- d * X %*% R
-      tt         <- if(translate) colMeans2(Xstar  - dXR)                else 0L
+      tt         <- if(translate) colMeans2(Xstar  - dXR,
+                                            refine = FALSE,
+                                            useNames = FALSE)            else 0L
       X.new      <- dXR  + if(translate) matrix(tt, N, P2, byrow = TRUE) else tt
-        return(c(list(X.new = X.new), list(R = R), if(translate) list(t = tt),
+        return(c(list(X.new = unname(X.new)), list(R = R), if(translate) list(t = tt),
                  if(dilate) list(d = d), if(sumsq) list(ss = sum((X[,seq_len(P2), drop=FALSE] - X.new)^2L))))
     }
 
@@ -2080,8 +2082,7 @@
 #' @param centering A logical vector indicating whether centering is to be applied (default=\code{TRUE}).
 #'
 #' @return The Pareto scaled version of the matrix \code{x}.
-#' @importFrom matrixStats "colMeans2"
-#' @importFrom Rfast "colVars"
+#' @importFrom matrixStats "colMeans2" "colSds"
 #' @export
 #' @author Keefe Murphy - <\email{keefe.murphy@@mu.ie}>
 #' @references van den Berg, R. A., Hoefsloot, H. C. J, Westerhuis, J. A., Smilde, A. K., and van der Werf, M.J. (2006) Centering, scaling, and transformations: improving the biological information content of metabolomics data. \emph{BMC Genomics}, 7(142).
@@ -2095,7 +2096,7 @@
     if(length(centering) != 1 ||
        !is.logical(centering))           stop("'centering' must be a single logical indicator", call.=FALSE)
     x          <- as.matrix(x)
-      .scale2(x, centering, sqrt(colVars(x, std=TRUE)))
+      .scale2(x, centering, sqrt(colSds(x, refine=FALSE, useNames=FALSE)))
   }
 
 #' Left Truncated Gamma Distributions
@@ -2224,8 +2225,8 @@
     #' @importFrom matrixStats "colSums2" "rowSums2"
     .class_agreement    <- function(tab, match.names = FALSE) {
       n          <- sum(tab)
-      ni         <- rowSums2(tab)
-      nj         <- colSums2(tab)
+      ni         <- rowSums2(tab, useNames=FALSE)
+      nj         <- colSums2(tab, useNames=FALSE)
       if(match.names && !is.null(dimnames(tab))) {
         lev      <- intersect(colnames(tab), rownames(tab))
         p0       <- sum(diag(tab[lev, lev]))/n
@@ -2260,13 +2261,13 @@
     }
 
     #' @importFrom matrixStats "colMeans2"
-    .col_vars    <- function(x, std = FALSE, avg = NULL) { # formerly replaced Rfast::colVars
+    .col_vars    <- function(x, std = FALSE, avg = NULL) { # formerly replaced Rfast::colVars/matrixStats::colVars
       if(length(std) > 1 ||
          !is.logical(std))                 stop("'std' must be a single logical indicator")
       if(!is.matrix(x))                    stop("'x' must be a matrix")
-      m          <- if(missing(avg)) colMeans2(x) else as.vector(avg)
+      m          <- if(missing(avg)) colMeans2(x, refine=FALSE, useNames=FALSE) else as.vector(avg)
       n          <- nrow(x)
-      s          <- pmax((colMeans2(x^2) - m^2) * n/(n - 1), 0L)
+      s          <- pmax((colMeans2(x^2, refine=FALSE, useNames=FALSE) - m^2) * n/(n - 1), 0L)
         if(std) sqrt(s) else s
     }
 
@@ -2320,10 +2321,11 @@
         return(g)
     }
 
+    #' @importFrom Rfast "colMaxs" "rowMaxs"
     .match_classes  <- function(tab, method = "rowmax", iter = 1L, maxexact = 9L, verbose = TRUE) {
       methods    <- c("rowmax", "greedy", "exact")
       method     <- pmatch(method, methods)
-      rmax       <- apply(tab, 1L, which.max)
+      rmax       <- rowMaxs(tab, value=FALSE)
       myseq      <- seq_len(ncol(tab))
       cn         <- colnames(tab)
       rn         <- rownames(tab)
@@ -2339,7 +2341,7 @@
       if(method  == 2 || method   == 3)  {
         if(ncol(tab)  != nrow(tab))        stop("Unique matching only for square tables.", call.=FALSE)
         dimnames(tab) <- list(myseq, myseq)
-        cmax     <- apply(tab, 2L, which.max)
+        cmax     <- colMaxs(tab, value=FALSE)
         retval   <- rep(NA, ncol(tab))
         names(retval) <- colnames(tab)
         baseok   <- cmax[rmax]     == myseq
@@ -2532,34 +2534,39 @@
       if(length(std) > 1 ||
          !is.logical(std))                 stop("'std' must be a single logical indicator")
       if(!is.matrix(x))                    stop("'x' must be a matrix")
-      m          <- if(missing(suma)) rowSums2(x) else suma
+      m          <- if(missing(suma)) rowSums2(x, useNames=FALSE) else suma
       n          <- ncol(x)
-      s          <- (rowSums2(x^2) - m^2/n)/(n - 1L)
+      s          <- (rowSums2(x^2, useNames=FALSE) - m^2/n)/(n - 1L)
         if(std) sqrt(s) else s
     }
 
-    #' @importFrom matrixStats "colMeans2" "rowSums2"
-    #' @importFrom Rfast "colVars"
+    #' @importFrom matrixStats "colMeans2" "colSds" "rowSums2"
     .scale2      <- function(x, center = TRUE, scale = TRUE) { # replaces Rfast::standardise
-      cmeans     <- if(isTRUE(center))     colMeans2(x) else center
-      center     <- if(is.logical(center))       center else is.numeric(center)
-      scaling    <- if(is.logical(scale))         scale else is.numeric(scale)
+      cmeans     <- if(isTRUE(center))     colMeans2(x,
+                                                     refine=FALSE,
+                                                     useNames=FALSE) else center
+      center     <- if(is.logical(center))                    center else is.numeric(center)
+      scaling    <- if(is.logical(scale))                      scale else is.numeric(scale)
       if(center  && scaling) {
         y        <- t(x) - cmeans
-          if(isTRUE(scale)) t(y/sqrt(rowSums2(y^2)) * sqrt(nrow(x) - 1L)) else t(y/scale)
+          if(isTRUE(scale)) t(y/sqrt(rowSums2(y^2,
+                                              useNames=FALSE)) *
+                                sqrt(nrow(x) - 1L))       else t(y/scale)
       } else if(center)      {
           t(t(x)  - cmeans)
       } else if(scaling)     {
-          t(t(x)/if(isTRUE(scale)) colVars(x, std=TRUE) else scale)
+          t(t(x)/if(isTRUE(scale)) colSds(x,
+                                          refine=FALSE,
+                                          useNames=FALSE) else scale)
       } else  x
     }
 
-    #' @importFrom Rfast "colVars"
+    #' @importFrom matrixStats "colSds"
     .tune_beta0  <- function(dat, beta0 = 3, type = c("diag", "mse")) { # unused
       dat        <- as.matrix(dat)
       N          <- nrow(dat)
       P          <- ncol(dat)
-      inv.cov    <- (beta0 + N/2L) * chol2inv(chol(diag(beta0, P) + 0.5 * crossprod(.scale2(dat))))/tcrossprod(colVars(dat, std=TRUE))
+      inv.cov    <- (beta0 + N/2L) * chol2inv(chol(diag(beta0, P) + 0.5 * crossprod(.scale2(dat))))/tcrossprod(colSds(dat, refine=FALSE, useNames=FALSE))
       error      <- diag(P) - (stats::cov(dat) %*% inv.cov)
         switch(EXPR=match.arg(type), diag=sum(diag(error)^2)/P, mean(error^2))
     }
@@ -2569,7 +2576,7 @@
       p          <- ncol(x)
       if(p        < 2)                     return(x)
       if(normalize)         {
-        sc       <- sqrt(rowSums2(x^2))
+        sc       <- sqrt(rowSums2(x^2, useNames=FALSE))
         x        <- x/sc
       }
       n          <- nrow(x)
@@ -2578,7 +2585,7 @@
       ns         <- rep(1L, n)
       for(i in seq_len(1000L)) {
         z        <- x    %*% TT
-        sB       <- La.svd(crossprod(x, z^3  - z %*% diag(colSums2(z^2)/n)))
+        sB       <- La.svd(crossprod(x, z^3  - z %*% diag(colSums2(z^2, useNames=FALSE)/n)))
         TT       <- sB$u %*% sB$vt
         dp       <- d
         d        <- sum(sB$d)
