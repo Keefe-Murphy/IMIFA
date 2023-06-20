@@ -49,8 +49,13 @@
     psi.beta     <- switch(EXPR=uni.prior, isotropic=psi.beta[which.max(.ndeci(psi.beta))], psi.beta)
     uni.shape    <- switch(EXPR=uni.type,  constrained=N/2 + psi.alpha,  single=(N * P)/2 + psi.alpha)
     V            <- switch(EXPR=uni.type,  constrained=P,                single=1L)
-    eta          <- .sim_eta_p(N=N, Q=Q)
-    lmat         <- matrix(.sim_load_p(Q=Q, P=P, sig.l.sqrt=sqrt(sigma.l)), nrow=P, ncol=Q)
+    if(Q0)           {
+      eta        <- .sim_eta_p(N=N, Q=Q)
+      lmat       <- matrix(.sim_load_p(Q=Q, P=P, sig.l.sqrt=sqrt(sigma.l)), nrow=P, ncol=Q)
+    } else           {
+      eta        <- .empty_mat(nr=N)
+      lmat       <- .empty_mat(nr=P)
+    }
     psi.inv      <- .sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta)
     psi.inv[]    <- 1/switch(EXPR=uni.type, constrained=colVars(data, center=col.mean, refine=FALSE, useNames=FALSE), max(colVars(data, center=col.mean, refine=FALSE, useNames=FALSE)))
     max.p        <- (psi.alpha  - 1)/psi.beta

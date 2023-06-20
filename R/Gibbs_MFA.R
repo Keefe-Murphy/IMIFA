@@ -79,8 +79,13 @@
     mu0g           <- cluster$l.switch[1L]
     psi0g          <- cluster$l.switch[2L]
     label.switch   <- any(cluster$l.switch)
-    eta            <- .sim_eta_p(N=N, Q=Q)
-    lmat           <- if(Q0) array(vapply(Gseq, function(g) .sim_load_p(Q=Q, P=P, sig.l.sqrt=sig.l.sqrt), numeric(P * Q)), dim=c(P, Q, G)) else array(0, dim=c(P, 0, G))
+    if(Q0)                  {
+      eta          <- .sim_eta_p(N=N, Q=Q)
+      lmat         <- array(vapply(Gseq, function(g) .sim_load_p(Q=Q, P=P, sig.l.sqrt=sig.l.sqrt), numeric(P * Q)), dim=c(P, Q, G))
+    } else                  {
+      eta          <- .empty_mat(nr=N)
+      lmat         <- array(0L, dim=c(P, 0, G))
+    }
     if(isTRUE(one.uni))     {
       psi.beta     <- psi.beta[,1L]
       psi.inv      <- matrix(.sim_psi_ip(P=P, psi.alpha=psi.alpha, psi.beta=psi.beta), nrow=P, ncol=G)
