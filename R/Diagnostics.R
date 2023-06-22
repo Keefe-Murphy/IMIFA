@@ -15,7 +15,7 @@
 #' @param criterion The criterion to use for model selection, where model selection is only required if more than one model was run under the \code{"FA"}, \code{"MFA"}, \code{"MIFA"}, \code{"OMFA"} or \code{"IMFA"} methods when \code{sims} was created via \code{\link{mcmc_IMIFA}}. Defaults to \code{bicm}, but note that these are \emph{all} calculated; this argument merely indicates which one will form the basis of the construction of the output.
 #'
 #' Note that the first three options here might exhibit bias in favour of zero-factor models for the finite factor \code{"FA"}, \code{"MFA"}, \code{"OMFA"} and \code{"IMFA"} methods and might exhibit bias in favour of one-cluster models for the \code{"MFA"} and \code{"MIFA"} methods. The \code{aic.mcmc} and \code{bic.mcmc} criteria will only be returned for finite factor models.
-#' @param adapt A logical indicating if adaptation should be applied to the stored loadings matrices to truncate to cluster-specific number of non-redundant factors. This argument is only relevant if \code{adapt=FALSE} was used when initially fitting the model (otherwise, adaptation has already taken place during sampling), and defaults to \code{FALSE} here too. Relevant parameters from \code{\link{mgpControl}} (namely \code{eps}, \code{prop}, and \code{forceQg}) can be passed via the \code{...} construct, but will default to their values under \code{\link{mgpControl}} if not specified.
+#' @param adapt A logical indicating if adaptation should be applied to the stored loadings and scores matrices to truncate the cluster-specific number(s) of non-redundant factors. This argument is only relevant if \code{adapt=FALSE} was used when initially fitting the model (otherwise, adaptation has already taken place during sampling, by default), and hence defaults to \code{FALSE} here. Relevant parameters from \code{\link{mgpControl}} (namely \code{eps}, \code{prop}, and \code{forceQg}) can be passed via the \code{...} construct, but will default to their values under \code{\link{mgpControl}} if not specified. Note that \code{adapt=TRUE} is only invoked if the loadings were stored via \code{\link{storeControl}} when running the model.
 #' @param G.meth If the object in \code{sims} arises from the \code{"OMFA"}, \code{"OMIFA"}, \code{"IMFA"} or \code{"IMIFA"} methods, this argument determines whether the optimal number of clusters is given by the mode or median of the posterior distribution of \code{G}. Defaults to \code{"mode"}. Often the mode and median will agree in any case.
 #' @param Q.meth If the object in \code{sims} arises from the \code{"IFA"}, \code{"MIFA"}, \code{"OMIFA"} or \code{"IMIFA"} methods, this argument determines whether the optimal number of latent factors is given by the mode or median of the posterior distribution of \code{Q}. Defaults to \code{"mode"}. Often the mode and median will agree in any case.
 #' @param conf.level The confidence level to be used throughout for credible intervals for all parameters of inferential interest, and error metrics if \code{error.metrics=TRUE}. Defaults to \code{0.95}.
@@ -70,7 +70,7 @@
 #' @importFrom matrixStats "colSums2" "colMeans2" "rowAlls" "rowMeans2" "rowMedians" "rowQuantiles" "rowSums2"
 #' @importFrom slam "as.simple_triplet_matrix"
 #'
-#' @seealso \code{\link{plot.Results_IMIFA}}, \code{\link{mcmc_IMIFA}}, \code{\link{Zsimilarity}}, \code{\link{scores_MAP}}, \code{\link{sim_IMIFA_model}}, \code{\link{Procrustes}}, \code{\link[stats]{varimax}}, \code{\link{norm}}, \code{\link{mgpControl}}
+#' @seealso \code{\link{plot.Results_IMIFA}}, \code{\link{mcmc_IMIFA}}, \code{\link{Zsimilarity}}, \code{\link{scores_MAP}}, \code{\link{sim_IMIFA_model}}, \code{\link{Procrustes}}, \code{\link[stats]{varimax}}, \code{\link{norm}}, \code{\link{mgpControl}}, \code{\link{storeControl}}
 #' @references Murphy, K., Viroli, C., and Gormley, I. C. (2020) Infinite mixtures of infinite factor analysers, \emph{Bayesian Analysis}, 15(3): 937-963. <\href{https://projecteuclid.org/euclid.ba/1570586978}{doi:10.1214/19-BA1179}>.
 #'
 #' @author Keefe Murphy - <\email{keefe.murphy@@mu.ie}>
@@ -216,7 +216,9 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   if(isTRUE(adapt)) {
     epsilon      <- ifelse(is.null(dots$eps),     1e-01,                        dots$eps)
     prop         <- ifelse(is.null(dots$prop),    ifelse(n.var <= 2, 0.5, 0.7), dots$prop)
+    prop         <- floor(prop * n.var)/n.var
     forceQg      <- ifelse(is.null(dots$forceQg), FALSE,                        dots$forceQg)
+    if(!sw["l.sw"])               stop("Loadings must be stored for adaptation to take place", call.=FALSE)
   }
 
   G.T            <- !missing(G)
@@ -653,11 +655,13 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   if(inf.Q)   {
     if(G1        <- G > 1)    {
       if(isTRUE(adapt))       {
-       Q.store[] <- sapply(seq_len(TN.store), function(i) sapply(Gseq, function(g) sum(colSums2(abs(.a_drop(lmats[,,g,i, drop=FALSE], drop=3L:4L)) < epsilon, useNames=FALSE)/n.var < prop)))
+       colvec    <- lapply(Gseq, function(g) vapply(seq_len(TN.store), function(i) colSums2(abs(.a_drop(lmats[,,g,i, drop=FALSE], drop=3L:4L)) < epsilon, useNames=FALSE)/n.var < prop, logical(ncol(lmats))))
+       Q.store[] <- t(vapply(colvec, colSums2, numeric(TN.store), useNames=FALSE))
        if(isTRUE(forceQg))    {
          Q.force <- t(vapply(Gseq, function(g) pmin(Q.store[g,], sizes[g] - 1), numeric(TN.store)))
          Q.big   <- any(Q.force < Q.store)
          Q.store[]        <- Q.force
+         colvec  <- lapply(Gseq, function(g) vapply(seq_len(TN.store), function(i) { colvec[[g]][colvec[[g]][,i],i][-seq_len(Q.store[g,i])] <- FALSE; colvec[[g]][,i] }, logical(ncol(lmats))))
        }
       }
       Q.tab      <- lapply(apply(Q.store, 1L, function(x) list(table(x, dnn=NULL))), "[[", 1L)
@@ -665,7 +669,9 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       class(Q.tab)        <- class(Q.prob)  <- "listof"
     } else    {
       if(isTRUE(adapt))       {
-       Q.store[] <- sapply(seq_len(TN.store), function(i) sum(colSums2(abs(.a_drop(lmats[,,i, drop=FALSE], 3L)) < epsilon, useNames=FALSE)/n.var < prop))
+       colvec    <- vapply(seq_len(TN.store), function(i) colSums2(abs(.a_drop(lmats[,,i, drop=FALSE], 3L)) < epsilon, useNames=FALSE)/n.var < prop, logical(ncol(lmats)))
+       Q.store[] <- colSums2(colvec, useNames=FALSE)
+       colvec    <- list(colvec)
       }
       Q.tab      <- table(Q.store, dnn=NULL)
       Q.prob     <- prop.table(Q.tab)
@@ -767,6 +773,10 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
             eta[,,p2]      <- .a_drop(eta[,,p2,   drop=FALSE], 3L) %*% proc$R
           }
         }
+      }
+      if(adapt)   {
+        lmat     <- sapply(lapply(storeG, function(i) .a_drop(lmat[,colvec[[g]][,i],i, drop=FALSE], drop=3L)),
+                           function(x) cbind(x, matrix(0L, nrow=n.var, ncol=ncol(lmat) - ncol(x))), simplify="array")
       }
     }
 
@@ -1102,6 +1112,15 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   error.metrics  <- errs       != "None"
 
   if(sw["s.sw"])  {
+   if(adapt)      {
+     eta         <- if(method == "IFA") {
+       sapply(lapply(seq_len(e.store), function(i) .a_drop(eta[,colvec[[g]][,store.e][,i],i, drop=FALSE], drop=3L)),
+              function(x) cbind(x, matrix(0L, nrow=n.obs, ncol=ncol(eta) - ncol(x))), simplify="array")
+     } else       {
+       sapply(seq_len(e.store), function(i) do.call(rbind, lapply(Gseq,
+              function(g) .a_drop(eta[z[i,] == g, c(which(colvec[[g]][,store.e][,i]), setdiff(seq_len(ncol(eta)), which(colvec[[g]][,store.e][,i]))),i, drop=FALSE], drop=3L)))[obsnames,, drop=FALSE], simplify="array")
+     }
+   }
    eta           <- eta[,Qseq,, drop=FALSE]
    colnames(eta) <- paste0("Factor", Qseq)
    scores        <- list(eta = eta, post.eta = rowMeans(eta, dims=2), var.eta = apply(eta, c(1L, 2L), Var),

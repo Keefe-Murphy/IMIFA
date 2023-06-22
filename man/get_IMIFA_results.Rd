@@ -51,7 +51,7 @@ If adaptation didn't take place during model-fitting, \code{adapt=TRUE} can be s
 
 Note that the first three options here might exhibit bias in favour of zero-factor models for the finite factor \code{"FA"}, \code{"MFA"}, \code{"OMFA"} and \code{"IMFA"} methods and might exhibit bias in favour of one-cluster models for the \code{"MFA"} and \code{"MIFA"} methods. The \code{aic.mcmc} and \code{bic.mcmc} criteria will only be returned for finite factor models.}
 
-\item{adapt}{A logical indicating if adaptation should be applied to the stored loadings matrices to truncate to cluster-specific number of non-redundant factors. This argument is only relevant if \code{adapt=FALSE} was used when initially fitting the model (otherwise, adaptation has already taken place during sampling), and defaults to \code{FALSE} here too. Relevant parameters from \code{\link{mgpControl}} (namely \code{eps}, \code{prop}, and \code{forceQg}) can be passed via the \code{...} construct, but will default to their values under \code{\link{mgpControl}} if not specified.}
+\item{adapt}{A logical indicating if adaptation should be applied to the stored loadings and scores matrices to truncate the cluster-specific number(s) of non-redundant factors. This argument is only relevant if \code{adapt=FALSE} was used when initially fitting the model (otherwise, adaptation has already taken place during sampling, by default), and hence defaults to \code{FALSE} here. Relevant parameters from \code{\link{mgpControl}} (namely \code{eps}, \code{prop}, and \code{forceQg}) can be passed via the \code{...} construct, but will default to their values under \code{\link{mgpControl}} if not specified. Note that \code{adapt=TRUE} is only invoked if the loadings were stored via \code{\link{storeControl}} when running the model.}
 
 \item{G.meth}{If the object in \code{sims} arises from the \code{"OMFA"}, \code{"OMIFA"}, \code{"IMFA"} or \code{"IMIFA"} methods, this argument determines whether the optimal number of clusters is given by the mode or median of the posterior distribution of \code{G}. Defaults to \code{"mode"}. Often the mode and median will agree in any case.}
 
@@ -158,7 +158,7 @@ Due to the way the offline label-switching correction is performed, different ru
 Murphy, K., Viroli, C., and Gormley, I. C. (2020) Infinite mixtures of infinite factor analysers, \emph{Bayesian Analysis}, 15(3): 937-963. <\href{https://projecteuclid.org/euclid.ba/1570586978}{doi:10.1214/19-BA1179}>.
 }
 \seealso{
-\code{\link{plot.Results_IMIFA}}, \code{\link{mcmc_IMIFA}}, \code{\link{Zsimilarity}}, \code{\link{scores_MAP}}, \code{\link{sim_IMIFA_model}}, \code{\link{Procrustes}}, \code{\link[stats]{varimax}}, \code{\link{norm}}, \code{\link{mgpControl}}
+\code{\link{plot.Results_IMIFA}}, \code{\link{mcmc_IMIFA}}, \code{\link{Zsimilarity}}, \code{\link{scores_MAP}}, \code{\link{sim_IMIFA_model}}, \code{\link{Procrustes}}, \code{\link[stats]{varimax}}, \code{\link{norm}}, \code{\link{mgpControl}}, \code{\link{storeControl}}
 }
 \author{
 Keefe Murphy - <\email{keefe.murphy@mu.ie}>

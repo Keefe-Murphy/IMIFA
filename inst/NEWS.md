@@ -2,8 +2,9 @@ __Infinite Mixtures of Infinite Factor Analysers__
 ==================================================  
 
 ### Improvements, Bug Fixes, & Miscellaneous Edits
-* `get_IMIFA_results` gains the arg. `adapt`, allowing automatic, post-hoc truncation of redundant  
-loadings matrix columns in cases where `mcmc_IMIFA` was called with `adapt=FALSE` only.
+* `get_IMIFA_results` gains the arg. `adapt`, allowing automatic, post-hoc truncation of  
+redundant factors in cases where `mcmc_IMIFA` was called with `adapt=FALSE` only  
+(provided loadings were stored!) for the `"IFA"`, `"MIFA"`, `"OMIFA"`, and `"IMIFA"` methods.
 * Models with `range.Q=0` now work again for the `"FA"`, `"MFA"`, `"OMFA"`, and `"IMFA"` methods.  
 _(with thanks to @abcoxyzide for flagging the issue)_
 * Minor speed-up to `G_priorDensity` when `discount` is non-zero.

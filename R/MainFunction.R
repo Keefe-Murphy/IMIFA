@@ -481,6 +481,8 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
                     all(method  == "MIFA", any(range.G > 1)), is.element(method, c("IMIFA", "IMFA", "OMIFA", "OMFA"))) &&
           (!equal.pro  &&
            !storage["pi.sw"]))      message("Non-storage of mixing proportions parameters means posterior predictive checking error metrics will almost surely not all be available\n")
+      if(is.element(method, c("IFA", "MIFA", "OMIFA", "IMIFA")) && isFALSE(adapt) &&
+         !storage["l.sw"])          message("Non-storage of loadings means post-hoc adaptation of the number of active factors will not be possible\n")
     }
   } else if(verbose && is.element(method, c("FA", "MFA", "OMFA", "IMFA")) && any(range.Q == 0)) {
     if(all(storage[c("s.sw", "l.sw")]))   {

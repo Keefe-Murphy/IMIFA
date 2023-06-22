@@ -45,6 +45,8 @@ Posterior inference and plotting won't be possible for parameters not stored.
 
 Non-storage of parameters will almost surely prohibit the computation of posterior predictive checking error metrics within \code{\link{get_IMIFA_results}} also. In particular, if such error metrics are desired, \code{psi.switch} must be \code{TRUE} for all but the \code{"FA"} and \code{"IFA"} models, \code{mu.switch} must be \code{TRUE} except in situations where \code{update.mu=FALSE} is allowed, \code{load.switch} must be \code{TRUE} for all but the entirely zero-factor models, and \code{pi.switch} must be \code{TRUE} for models with clustering structure and unequal mixing proportions for all but the PPRE metric. \code{score.switch=TRUE} is not required for any posterior predictive checking.
 
+\code{load.switch=TRUE} is required for post-hoc adaptation in \code{\link{get_IMIFA_results}} if adaptation is invoked at that stage on a model fitted without adaptation.
+
 Finally, if loadings are not stored but scores are, caution is advised when examining posterior scores as Procrustes rotation will not occur within \code{\link{get_IMIFA_results}}.
 }
 \examples{

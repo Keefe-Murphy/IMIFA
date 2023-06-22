@@ -130,7 +130,7 @@
       # Adaptation
       if(adapt       && all(iter >= start.AGS, iter < stop.AGS))  {
         if(stats::runif(1) < ifelse(iter < AGS.burn, 0.5, exp(-b0 - b1 * (iter - start.AGS))))    {
-          colvec     <- lapply(nn.ind, function(g) if(Q0[g]) (colSums2(abs(lmat[[g]])   < epsilon,
+          colvec     <- lapply(nn.ind, function(g) if(Q0[g]) (colSums2(abs(lmat[[g]])      < epsilon,
                                                                        useNames=FALSE)/P) >= prop else stats::runif(1) <= prop)
           nonred     <- lapply(colvec, .which0)
           numred     <- lengths(colvec)  - lengths(nonred)
