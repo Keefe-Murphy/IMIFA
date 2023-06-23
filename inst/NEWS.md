@@ -1,10 +1,17 @@
 __Infinite Mixtures of Infinite Factor Analysers__
 ==================================================  
 
-### Improvements, Bug Fixes, & Miscellaneous Edits
+### New Features
 * `get_IMIFA_results` gains the arg. `adapt`, allowing automatic, post-hoc truncation of  
 redundant factors in cases where `mcmc_IMIFA` was called with `adapt=FALSE` only  
-(provided loadings were stored!) for the `"IFA"`, `"MIFA"`, `"OMIFA"`, and `"IMIFA"` methods.
+(provided relevant parameters were stored) for the `"IFA"`, `"MIFA"`, `"OMIFA"`, & `"IMIFA"` methods.
+* `mgpControl` gains the `active.crit` arg. to allow the criterion for determining the number of  
+active factors of Schiavon & Canale (2020) to be used (for `"IFA"` models only); this is available  
+for both `mcmc_IMIFA` with `adapt=TRUE` directly and the aforementioned post-hoc adaptation using  
+`get_IMIFA_results`, though the old criterion of Bhattacharya & Dunson (2011), `active.crit="BD"`,  
+remains the default for all infinite factor models. See documentation for details. 
+
+### Improvements, Bug Fixes, & Miscellaneous Edits
 * Models with `range.Q=0` now work again for the `"FA"`, `"MFA"`, `"OMFA"`, and `"IMFA"` methods.  
 _(with thanks to @abcoxyzide for flagging the issue)_
 * Minor speed-up to `G_priorDensity` when `discount` is non-zero.

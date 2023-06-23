@@ -51,7 +51,7 @@ If adaptation didn't take place during model-fitting, \code{adapt=TRUE} can be s
 
 Note that the first three options here might exhibit bias in favour of zero-factor models for the finite factor \code{"FA"}, \code{"MFA"}, \code{"OMFA"} and \code{"IMFA"} methods and might exhibit bias in favour of one-cluster models for the \code{"MFA"} and \code{"MIFA"} methods. The \code{aic.mcmc} and \code{bic.mcmc} criteria will only be returned for finite factor models.}
 
-\item{adapt}{A logical indicating if adaptation should be applied to the stored loadings and scores matrices to truncate the cluster-specific number(s) of non-redundant factors. This argument is only relevant if \code{adapt=FALSE} was used when initially fitting the model (otherwise, adaptation has already taken place during sampling, by default), and hence defaults to \code{FALSE} here. Relevant parameters from \code{\link{mgpControl}} (namely \code{eps}, \code{prop}, and \code{forceQg}) can be passed via the \code{...} construct, but will default to their values under \code{\link{mgpControl}} if not specified. Note that \code{adapt=TRUE} is only invoked if the loadings were stored via \code{\link{storeControl}} when running the model.}
+\item{adapt}{A logical indicating if adaptation should be applied to the stored loadings and scores matrices to truncate the cluster-specific number(s) of non-redundant factors. This argument is only relevant if \code{adapt=FALSE} was used when initially fitting the model (otherwise, adaptation has already taken place during sampling, by default), and hence defaults to \code{FALSE} here. Relevant parameters from \code{\link{mgpControl}} (namely \code{active.crit}, \code{eps}, \code{prop}, and \code{forceQg}) can be passed via the \code{...} construct, but will default to their values under \code{\link{mgpControl}} if not specified. Note that \code{adapt=TRUE} is only invoked if the relevant parameters were stored via \code{\link{storeControl}} when running the model: loadings only for \code{active.crit="BD"}, loadings and scores for \code{active.crit="SC"} for \code{"IFA"} models.}
 
 \item{G.meth}{If the object in \code{sims} arises from the \code{"OMFA"}, \code{"OMIFA"}, \code{"IMFA"} or \code{"IMIFA"} methods, this argument determines whether the optimal number of clusters is given by the mode or median of the posterior distribution of \code{G}. Defaults to \code{"mode"}. Often the mode and median will agree in any case.}
 
@@ -79,7 +79,7 @@ Please be warned that this feature requires loading the \code{\link[mcclust]{mcc
 
 Users can also pass the \code{type} argument to the \code{\link{norm}} function when \code{isTRUE(error.metrics)} and the posterior predictive reconstruction error (PPRE) is calculated. By default the Frobenius norm (\code{type="F"}) is employed.
 
-When \code{adapt=TRUE} here, relevant arguments from \code{\link{mgpControl}} (namely \code{eps}, \code{prop}, and \code{forceQg}) can be supplied here too, though they retain their default values from \code{\link{mgpControl}} otherwise.
+When \code{adapt=TRUE} here, relevant arguments from \code{\link{mgpControl}} (namely \code{active.crit}, \code{eps}, \code{prop}, and \code{forceQg}) can be supplied here too, though they retain their default values from \code{\link{mgpControl}} otherwise.
 
 Finally, the \code{...} construct also allows arguments to \code{\link[stats]{varimax}} to be passed to \code{\link{get_IMIFA_results}} itself, when \code{isTRUE(vari.rot)}, or arguments to \code{\link[graphics]{hist}} when \code{isTRUE(error.metrics)}, in order to guide construction of the bins. Additionally, by passing the argument \code{dbreaks} via the \code{...} construct, the bins can be specified directly. However, caution is advised in doing so; in particular, the bins must be constructed on data which has been standardised in the same way as the data modelled within \code{\link{mcmc_IMIFA}}.}
 }
@@ -143,16 +143,17 @@ Due to the way the offline label-switching correction is performed, different ru
 # newdata       <- sim_IMIFA_model(resIMIFAolive)
 
 # Fit an IFA model without adaptation and examine results with and without post-hoc adaptation
-# simIFAcoffee  <- mcmc_IMIFA(coffee, method="IFA", n.iters=10000, adapt=FALSE)
-# resIFAnoadapt <- get_IMIFA_results(simIFAcoffee)
-# resIFAadapt   <- get_IMIFA_results(simIFAcoffee, adapt=TRUE)
+# Use the "SC" criterion for determining the number of active factors
+# simIFAnoadapt   <- mcmc_IMIFA(olive, method="IFA", n.iters=10000, adapt=FALSE)
+# resIFAnoadapt   <- get_IMIFA_results(simIFAnoadapt)
+# resIFApostadapt <- get_IMIFA_results(simIFAnoadapt, adapt=TRUE, active.crit="SC")
 
 # Compare to an IFA model with adaptive Gibbs sampling
-# simIFAadapt   <- mcmc_IMIFA(coffee, method="IFA", n.iters=10000)
-# resIFAcoffee  <- get_IMIFA_results(simIFAadapt)
+# simIFAadapt     <- mcmc_IMIFA(coffee, method="IFA", n.iters=10000, active.crit="BD")
+# resIFAadapt     <- get_IMIFA_results(simIFAadapt)
 # plot(resIFAnoadapt, "GQ")
-# plot(resIFAadapt, "GQ")
-# plot(resIFAcoffee, "GQ")}
+# plot(resIFApostadapt, "GQ")
+# plot(resIFAadapt, "GQ")}
 }
 \references{
 Murphy, K., Viroli, C., and Gormley, I. C. (2020) Infinite mixtures of infinite factor analysers, \emph{Bayesian Analysis}, 15(3): 937-963. <\href{https://projecteuclid.org/euclid.ba/1570586978}{doi:10.1214/19-BA1179}>.

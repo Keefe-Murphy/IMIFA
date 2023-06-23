@@ -5,7 +5,7 @@
 # Gibbs Sampler Function
   .gibbs_IFA     <- function(Q, data, iters, N, P, sigma.mu, mu, prop, truncated, uni.type,
                              uni.prior, psi.alpha, psi.beta, burnin, thinning, verbose,
-                             sw, epsilon, mu.zero, nu1, nu2, adapt, start.AGS, stop.AGS,
+                             sw, epsilon, mu.zero, nu1, nu2, adapt, active.crit, start.AGS, stop.AGS,
                              b0, b1, alpha.d1, alpha.d2, beta.d1, beta.d2, scaling, col.mean, ...) {
 
   # Define & initialise variables
@@ -82,8 +82,19 @@
     # Adaptation
       if(adapt   && all(iter >= start.AGS, iter < stop.AGS))      {
         if(stats::runif(1) < ifelse(iter < AGS.burn, 0.5, exp(-b0 - b1 * (iter - start.AGS)))) {
-          colvec <- if(Q0)  (colSums2(abs(lmat) < epsilon, useNames=FALSE) / P)  >= prop else stats::runif(1) <= prop
-          numred <- sum(colvec)
+          switch(EXPR=active.crit, SC={
+            if(Q0)   {
+              SC <- .SC_crit(data, eta, lmat, prop)
+              nonred      <- SC$nonred
+              numred      <- SC$numred
+            } else  {
+              colvec      <- stats::runif(1)    <= prop
+              numred      <- sum(colvec)
+            }
+          },        {
+            colvec        <- if(Q0) (colSums2(abs(lmat) < epsilon, useNames=FALSE) / P) >= prop else stats::runif(1) <= prop
+            numred        <- sum(colvec)
+          })
           if(numred == 0)  {
             Q    <- Q + 1L
             Q.big   <- Q   > Q.star
@@ -95,8 +106,8 @@
               tau   <- cumprod(delta)
               lmat  <- cbind(lmat, stats::rnorm(n=P, mean=0, sd=1/sqrt(phi[,Q] * tau[Q])))
             }
-          } else if(Q0)         {
-            nonred  <- colvec  == 0
+          } else if(Q0)    {
+            nonred  <- switch(EXPR=active.crit, BD=colvec == 0, nonred)
             Q       <- max(0L, Q - numred)
             phi     <- phi[,nonred, drop=FALSE]
             delta   <- delta[nonred]

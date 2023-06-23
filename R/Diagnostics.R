@@ -15,7 +15,7 @@
 #' @param criterion The criterion to use for model selection, where model selection is only required if more than one model was run under the \code{"FA"}, \code{"MFA"}, \code{"MIFA"}, \code{"OMFA"} or \code{"IMFA"} methods when \code{sims} was created via \code{\link{mcmc_IMIFA}}. Defaults to \code{bicm}, but note that these are \emph{all} calculated; this argument merely indicates which one will form the basis of the construction of the output.
 #'
 #' Note that the first three options here might exhibit bias in favour of zero-factor models for the finite factor \code{"FA"}, \code{"MFA"}, \code{"OMFA"} and \code{"IMFA"} methods and might exhibit bias in favour of one-cluster models for the \code{"MFA"} and \code{"MIFA"} methods. The \code{aic.mcmc} and \code{bic.mcmc} criteria will only be returned for finite factor models.
-#' @param adapt A logical indicating if adaptation should be applied to the stored loadings and scores matrices to truncate the cluster-specific number(s) of non-redundant factors. This argument is only relevant if \code{adapt=FALSE} was used when initially fitting the model (otherwise, adaptation has already taken place during sampling, by default), and hence defaults to \code{FALSE} here. Relevant parameters from \code{\link{mgpControl}} (namely \code{eps}, \code{prop}, and \code{forceQg}) can be passed via the \code{...} construct, but will default to their values under \code{\link{mgpControl}} if not specified. Note that \code{adapt=TRUE} is only invoked if the loadings were stored via \code{\link{storeControl}} when running the model.
+#' @param adapt A logical indicating if adaptation should be applied to the stored loadings and scores matrices to truncate the cluster-specific number(s) of non-redundant factors. This argument is only relevant if \code{adapt=FALSE} was used when initially fitting the model (otherwise, adaptation has already taken place during sampling, by default), and hence defaults to \code{FALSE} here. Relevant parameters from \code{\link{mgpControl}} (namely \code{active.crit}, \code{eps}, \code{prop}, and \code{forceQg}) can be passed via the \code{...} construct, but will default to their values under \code{\link{mgpControl}} if not specified. Note that \code{adapt=TRUE} is only invoked if the relevant parameters were stored via \code{\link{storeControl}} when running the model: loadings only for \code{active.crit="BD"}, loadings and scores for \code{active.crit="SC"} for \code{"IFA"} models.
 #' @param G.meth If the object in \code{sims} arises from the \code{"OMFA"}, \code{"OMIFA"}, \code{"IMFA"} or \code{"IMIFA"} methods, this argument determines whether the optimal number of clusters is given by the mode or median of the posterior distribution of \code{G}. Defaults to \code{"mode"}. Often the mode and median will agree in any case.
 #' @param Q.meth If the object in \code{sims} arises from the \code{"IFA"}, \code{"MIFA"}, \code{"OMIFA"} or \code{"IMIFA"} methods, this argument determines whether the optimal number of latent factors is given by the mode or median of the posterior distribution of \code{Q}. Defaults to \code{"mode"}. Often the mode and median will agree in any case.
 #' @param conf.level The confidence level to be used throughout for credible intervals for all parameters of inferential interest, and error metrics if \code{error.metrics=TRUE}. Defaults to \code{0.95}.
@@ -34,7 +34,7 @@
 #'
 #' Users can also pass the \code{type} argument to the \code{\link{norm}} function when \code{isTRUE(error.metrics)} and the posterior predictive reconstruction error (PPRE) is calculated. By default the Frobenius norm (\code{type="F"}) is employed.
 #'
-#' When \code{adapt=TRUE} here, relevant arguments from \code{\link{mgpControl}} (namely \code{eps}, \code{prop}, and \code{forceQg}) can be supplied here too, though they retain their default values from \code{\link{mgpControl}} otherwise.
+#' When \code{adapt=TRUE} here, relevant arguments from \code{\link{mgpControl}} (namely \code{active.crit}, \code{eps}, \code{prop}, and \code{forceQg}) can be supplied here too, though they retain their default values from \code{\link{mgpControl}} otherwise.
 #'
 #' Finally, the \code{...} construct also allows arguments to \code{\link[stats]{varimax}} to be passed to \code{\link{get_IMIFA_results}} itself, when \code{isTRUE(vari.rot)}, or arguments to \code{\link[graphics]{hist}} when \code{isTRUE(error.metrics)}, in order to guide construction of the bins. Additionally, by passing the argument \code{dbreaks} via the \code{...} construct, the bins can be specified directly. However, caution is advised in doing so; in particular, the bins must be constructed on data which has been standardised in the same way as the data modelled within \code{\link{mcmc_IMIFA}}.
 #'
@@ -118,16 +118,17 @@
 #' # newdata       <- sim_IMIFA_model(resIMIFAolive)
 #'
 #' # Fit an IFA model without adaptation and examine results with and without post-hoc adaptation
-#' # simIFAcoffee  <- mcmc_IMIFA(coffee, method="IFA", n.iters=10000, adapt=FALSE)
-#' # resIFAnoadapt <- get_IMIFA_results(simIFAcoffee)
-#' # resIFAadapt   <- get_IMIFA_results(simIFAcoffee, adapt=TRUE)
+#' # Use the "SC" criterion for determining the number of active factors
+#' # simIFAnoadapt   <- mcmc_IMIFA(olive, method="IFA", n.iters=10000, adapt=FALSE)
+#' # resIFAnoadapt   <- get_IMIFA_results(simIFAnoadapt)
+#' # resIFApostadapt <- get_IMIFA_results(simIFAnoadapt, adapt=TRUE, active.crit="SC")
 #'
 #' # Compare to an IFA model with adaptive Gibbs sampling
-#' # simIFAadapt   <- mcmc_IMIFA(coffee, method="IFA", n.iters=10000)
-#' # resIFAcoffee  <- get_IMIFA_results(simIFAadapt)
+#' # simIFAadapt     <- mcmc_IMIFA(coffee, method="IFA", n.iters=10000, active.crit="BD")
+#' # resIFAadapt     <- get_IMIFA_results(simIFAadapt)
 #' # plot(resIFAnoadapt, "GQ")
-#' # plot(resIFAadapt, "GQ")
-#' # plot(resIFAcoffee, "GQ")}
+#' # plot(resIFApostadapt, "GQ")
+#' # plot(resIFAadapt, "GQ")}
 get_IMIFA_results              <- function(sims = NULL, burnin = 0L, thinning = 1L, G = NULL, Q = NULL, criterion = c("bicm", "aicm", "dic", "bic.mcmc", "aic.mcmc"),
                                            adapt = FALSE, G.meth = c("mode", "median"), Q.meth = c("mode", "median"), conf.level = 0.95, error.metrics = TRUE,
                                            vari.rot = FALSE, z.avgsim = FALSE, zlabels = NULL, nonempty = TRUE, ...) {
@@ -214,11 +215,20 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   dots           <- list(...)
   dots           <- dots[unique(names(dots))]
   if(isTRUE(adapt)) {
-    epsilon      <- ifelse(is.null(dots$eps),     1e-01,                        dots$eps)
-    prop         <- ifelse(is.null(dots$prop),    ifelse(n.var <= 2, 0.5, 0.7), dots$prop)
-    prop         <- floor(prop * n.var)/n.var
-    forceQg      <- ifelse(is.null(dots$forceQg), FALSE,                        dots$forceQg)
-    if(!sw["l.sw"])               stop("Loadings must be stored for adaptation to take place", call.=FALSE)
+    active.crit  <- ifelse(is.null(dots$active.crit), "BD",                            dots$active.crit)
+    epsilon      <- ifelse(is.null(dots$eps),         1e-01,                           dots$eps)
+    prop         <- ifelse(is.null(dots$prop),        ifelse(n.var <= 2, 0.5,
+                                                             switch(EXPR=active.crit,
+                                                                    BD=0.7, SC=0.99)), dots$prop)
+    prop         <- switch(EXPR=active.crit, BD=floor(prop * n.var)/n.var, SC=prop)
+    forceQg      <- ifelse(is.null(dots$forceQg),     FALSE,                           dots$forceQg)
+    if(method    != "IFA"      &&
+       "SC"      == active.crit)  stop("'active.crit'=\"SC\" is only available for the \"IFA\" method", call.=FALSE)
+    if(!sw["l.sw"]             &&
+       "BD"      == active.crit)  stop("Loadings must be stored for adaptation to take place", call.=FALSE)
+    if(any(!sw[c("l.sw",
+                "s.sw")])      &&
+       "SC"      == active.crit)  stop("Scores and loadings must be stored for adaption using the \"SC\" critertion to take place", call.=FALSE)
   }
 
   G.T            <- !missing(G)
@@ -669,8 +679,15 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       class(Q.tab)        <- class(Q.prob)  <- "listof"
     } else    {
       if(isTRUE(adapt))       {
+       if(active.crit == "SC")  {
+         eta.tmp <- as.array(sims[[G.ind]][[Q.ind]]$eta)
+         SC      <- lapply(seq_len(TN.store), function(i) .SC_crit(dat, .a_drop(eta.tmp[,,i,drop=FALSE], 3L), .a_drop(lmats[,,i, drop=FALSE], 3L), prop))
+         colvec  <- vapply(lapply(SC, "[[", "nonred"), function(x) match(seq_len(ncol(lmats)), x, nomatch=0) > 0, logical(ncol(lmats)))
+         Q.store[]        <- Q.store[] - vapply(SC, "[[", numeric(1L), "numred")
+       } else {
        colvec    <- vapply(seq_len(TN.store), function(i) colSums2(abs(.a_drop(lmats[,,i, drop=FALSE], 3L)) < epsilon, useNames=FALSE)/n.var < prop, logical(ncol(lmats)))
        Q.store[] <- colSums2(colvec, useNames=FALSE)
+       }
        colvec    <- list(colvec)
       }
       Q.tab      <- table(Q.store, dnn=NULL)

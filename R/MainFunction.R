@@ -423,7 +423,9 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
    delta0g  <- FALSE
   } else {
    fQ0      <- uni || P    == 2
-   MGP$prop <- ifelse(fQ0  && mgpmiss$propx, 0.5, floor(MGP$prop * P)/P)
+   if("IFA" != method      &&
+      MGP$active.crit      != "BD") stop("'active.crit'=\"SC\" is only available for the \"IFA\" method", call.=FALSE)
+   MGP$prop <- ifelse(fQ0  && mgpmiss$propx, 0.5, switch(EXPR=MGP$active.crit, BD=floor(MGP$prop * P)/P, SC=0.99))
    adapt    <- MGP$adapt
    truncate <- MGP$truncated
    delta0g  <- MGP$delta0g && method   == "MIFA"
@@ -482,7 +484,9 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
           (!equal.pro  &&
            !storage["pi.sw"]))      message("Non-storage of mixing proportions parameters means posterior predictive checking error metrics will almost surely not all be available\n")
       if(is.element(method, c("IFA", "MIFA", "OMIFA", "IMIFA")) && isFALSE(adapt) &&
-         !storage["l.sw"])          message("Non-storage of loadings means post-hoc adaptation of the number of active factors will not be possible\n")
+        (!storage["l.sw"]       ||
+        (method == "IFA"        &&
+         !storage["s.sw"])))        message(paste0("Non-storage of ", ifelse(!storage["l.sw"], "loadings", ""), ifelse(method == "IFA" && !storage["s.sw"], ifelse(!storage["l.sw"], " and factor scores", "factor scores"), ""), " means post-hoc adaptation of the number of active factors ",  ifelse(!storage["l.sw"], "will", "may") ," not be possible"), "\n")
     }
   } else if(verbose && is.element(method, c("FA", "MFA", "OMFA", "IMFA")) && any(range.Q == 0)) {
     if(all(storage[c("s.sw", "l.sw")]))   {
@@ -841,6 +845,8 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
   gnames    <- switch(EXPR=method, classify=paste0("Cluster ", seq_len(range.G)), paste0(G.init, ifelse(G.init == 1, "Cluster", "Clusters")))
   names(imifa)            <- gnames
   attr(imifa, "Adapt")    <- is.element(method, c("classify", "IFA", "MIFA", "OMIFA", "IMIFA")) && isTRUE(adapt)
+  attr(attr(imifa, "Adapt"),
+       "Criterion")       <- MGP$active.crit
   attr(imifa,
        "Alph.step")       <- is.element(method, c("IMFA", "IMIFA", "OMFA", "OMIFA")) && learn.a
   attr(imifa, "Alpha")    <- if(!attr(imifa, "Alph.step")) alpha
