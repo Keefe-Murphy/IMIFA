@@ -51,11 +51,11 @@ The first letter \strong{U} here corresponds to constraints on loadings (not yet
 
 \item{psi.alpha}{The shape of the inverse gamma prior on the uniquenesses. Defaults to 2.5. Must be greater than 1 if \code{psi.beta} is \emph{not} supplied. Otherwise be warned that values less than or equal to 1 may not bound uniquenesses sufficiently far away from 0, and the algorithm may therefore terminate. Also, excessively small values may lead to critical numerical issues and should thus be avoided.}
 
-\item{psi.beta}{The scale of the inverse gamma prior on the uniquenesses. Can be either a single parameter, a vector of variable specific scales, or (if \code{psi0g} is \code{TRUE}) a matrix of variable and cluster-specific scales. If this is not supplied, \code{\link{psi_hyper}} is invoked to choose sensible values, depending on the value of \code{uni.prior} and the data size and dimension, for the \code{"MFA"} and \code{"MIFA"} models only, the value of \code{psi0g}. Excessively small values may lead to critical numerical issues and should thus be avoided.
+\item{psi.beta}{The scale of the inverse gamma prior on the uniquenesses. Can be either a single scalar parameter, a vector of variable specific scales, or (if \code{psi0g} is \code{TRUE}) a matrix of variable and cluster-specific scales (or a vector coercible to such a matrix) or a list of length \code{length(range.G)} of such items of appropriate dimensions. If this is not supplied, \code{\link{psi_hyper}} is invoked to choose sensible values, depending on the value of \code{uni.prior} and the data size and dimension and, for the \code{"MFA"} and \code{"MIFA"} models only, the value of \code{psi0g} (i.e., \code{\link{psi_hyper}} is applied per cluster if \code{psi0g} is \code{TRUE} and \code{psi.beta} is not supplied). Excessively small values may lead to critical numerical issues and should thus be avoided.
 
 Note that optional arguments to \code{psi_hyper} can be supplied via the \code{...} construct here.}
 
-\item{mu.zero}{The mean of the prior distribution for the mean parameter. Either a scalar of a vector of appropriate dimension. Defaults to the sample mean of the data.}
+\item{mu.zero}{The mean of the prior distribution for the mean parameter. Either a scalar, a vector of appropriate dimension, or (if \code{mu0g} is \code{TRUE}) a matrix of variable-specific and cluster-specific hypermeans (or a vector coercible to such a matrix) or a list of length \code{length(range.G)} of such items of appropriate dimensions. Defaults to the sample mean of the data.}
 
 \item{sigma.mu}{The covariance of the prior distribution for the cluster mean parameters. Always assumed to be a diagonal matrix, and set to the identity matrix by default. Can also be a scalar by which the identity is multiplied, a vector of appropriate dimension; if supplied as a matrix, only the diagonal elements will be extracted. Specifying \code{sigma.mu=NULL} will use the diagonal entries of the sample covariance matrix: for unit-scaled data this is simply the identity again. See \code{prec.mu} for further control over the hypercovariance in the prior for the means.}
 
@@ -73,9 +73,9 @@ In any case, unless \code{z.list} is explicitly supplied, or \code{verbose} is \
 
 \item{uni.prior}{A switch indicating whether uniquenesses scale hyperparameters are to be \code{"unconstrained"} or \code{"isotropic"}, i.e. variable-specific or not. \code{"uni.prior"} must be \code{"isotropic"} if the last letter of \code{uni.type} is \strong{C}, but can take either value otherwise. Defaults to correspond to the last letter of \code{uni.type} if that is supplied and \code{uni.prior} is not, otherwise defaults to \code{"unconstrained"} (though \code{"isotropic"} is recommended when \code{N <= P}). Only relevant when \code{psi.beta} is not supplied and \code{\link{psi_hyper}} is therefore invoked (with optional arguments passable via the \code{...} construct).}
 
-\item{mu0g}{Logical indicating whether the \code{mu.zero} hyperparameter can be cluster-specific. Defaults to \code{FALSE}. Only relevant for the \code{"MFA"} and \code{"MIFA"} methods when \code{z.list} is supplied.}
+\item{mu0g}{Logical indicating whether the \code{mu.zero} hyperparameter can be cluster-specific. Defaults to \code{FALSE}. Only relevant for the \code{"MFA"} and \code{"MIFA"} methods when \code{z.list} is supplied. See \strong{Examples} below.}
 
-\item{psi0g}{Logical indicating whether the \code{psi.beta} hyperparameter(s) can be cluster-specific. Defaults to \code{FALSE}. Only relevant for the \code{"MFA"} and \code{"MIFA"} methods when \code{z.list} is supplied, and only allowable when \code{uni.type} is one of \code{unconstrained} or \code{isotropic}.}
+\item{psi0g}{Logical indicating whether the \code{psi.beta} hyperparameter(s) can be cluster-specific. Defaults to \code{FALSE}. Only relevant for the \code{"MFA"} and \code{"MIFA"} methods when \code{z.list} is supplied and only allowable when \code{uni.type} is one of \code{unconstrained} or \code{isotropic}. See \strong{Examples} below.}
 
 \item{drop0sd}{Logical indicating whether to drop variables with no standard deviation (defaults to \code{TRUE}). This is \emph{strongly} recommended, especially a) when \code{psi.beta} is not supplied &/or \code{sigma.mu=NULL}, and either/both are therefore estimated using the empirical covariance matrix, &/or b) if some form of posterior predictive checking is subsequently desired when calling \code{\link{get_IMIFA_results}}.}
 
@@ -107,9 +107,16 @@ mfctrl <- mixfaControl(n.iters=200, prec.mu=1E-03, sigma.mu=NULL,
 # Alternatively specify these arguments directly
 # sim  <- mcmc_IMIFA(olive, "IMIFA", n.iters=200, prec.mu=1E-03,
 #                    sigma.mu=NULL, beta0=1, uni.type="constrained")
+
+# Use mu0g and psi0g for MIFA models with supplied cluster labels
+# oliveScaled <- as.data.frame(scale(olive[,3:10]))
+# sim2 <- mcmc_IMIFA(olive, "MIFA", n.iters=200, range.G=c(3, 9),
+#                    z.list=list(olive$area, olive$region), mu0g=TRUE, psi0g=TRUE,
+#                    mu.zero=list(do.call(cbind, tapply(oliveScaled, olive$area,   colMeans)),
+#                                 do.call(cbind, tapply(oliveScaled, olive$region, colMeans))))
 }
 \references{
-Murphy, K., Viroli, C., and Gormley, I. C. (2020) Infinite mixtures of infinite factor analysers, \emph{Bayesian Analysis}, 15(3): 937-963. <\href{https://projecteuclid.org/euclid.ba/1570586978}{doi:10.1214/19-BA1179}>.
+Murphy, K., Viroli, C., and Gormley, I. C. (2020) Infinite mixtures of infinite factor analysers, \emph{Bayesian Analysis}, 15(3): 937-963. <\doi{10.1214/19-BA1179}>.
 
 McNicholas, P. D. and Murphy, T. B. (2008) Parsimonious Gaussian mixture models, \emph{Statistics and Computing}, 18(3): 285-296.
 }

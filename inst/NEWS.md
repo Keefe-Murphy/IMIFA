@@ -9,11 +9,15 @@ redundant factors in cases where `mcmc_IMIFA` was called with `adapt=FALSE` only
 active factors of Schiavon & Canale (2020) to be used (for `"IFA"` models only); this is available  
 for both `mcmc_IMIFA` with `adapt=TRUE` directly and the aforementioned post-hoc adaptation using  
 `get_IMIFA_results`, though the old criterion of Bhattacharya & Dunson (2011), `active.crit="BD"`,  
-remains the default for all infinite factor models. See documentation for details. 
+remains the default for all infinite factor models in each case. See documentation for details. 
 
 ### Improvements, Bug Fixes, & Miscellaneous Edits
-* Models with `range.Q=0` now work again for the `"FA"`, `"MFA"`, `"OMFA"`, and `"IMFA"` methods.  
+* Models with `range.Q=0` now work again for the `"FA"`, `"MFA"`, `"OMFA"`, & `"IMFA"` methods.  
 _(with thanks to @abcoxyzide for flagging the issue)_
+* The `mgpControl` arg. `delta0g` now also governs `beta.d1`, `beta.d2`,  
+  & `sigma.hyper`, in addition to `alpha.d1` & `alpha.d2`.
+* Minor fixes for `"MFA"`/`"MIFA"` models when `mu0g`, `psi0g`, &/or `delta0g`  
+  is `TRUE`, particularly when `length(range.G) > 1`.
 * Minor speed-up to `G_priorDensity` when `discount` is non-zero.
 * Extensive edits to avoid overheads introduced in `matrixStats` v1.0.0 + related minor speed-ups.
 * Now using newer `CITATION` commands.
@@ -319,7 +323,7 @@ _(with thanks to @abcoxyzide for flagging the issue)_
 * Transparency default in `plot.Results_IMIFA` now depends on device's support of semi-transparency.
 * Replaced certain instances of `is.list(x)` with `inherits(x, "list")` for stricter checking.
 * Added `check.margin=FALSE` to calls to `sweep`.
-* `Ledermann`, `MGP_check`, and `PGMM_dfree` are now properly vectorised.
+* `Ledermann`, `MGP_check`, & `PGMM_dfree` are now properly vectorised.
 
 ### Miscellaneous Edits
 * Added `USPSdigits` data set (training and test),  

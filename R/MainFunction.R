@@ -66,7 +66,7 @@
 #' @importFrom mclust "emControl" "Mclust" "mclustBIC" "mclustICL" "hc" "hclass" "hcE" "hcEEE" "hcEII" "hcV" "hcVII" "hcVVV"
 #'
 #' @seealso \code{\link{get_IMIFA_results}}, \code{\link{mixfaControl}}, \code{\link{mgpControl}}, \code{\link{bnpControl}}, \code{\link{storeControl}}, \code{\link{Ledermann}}
-#' @references Murphy, K., Viroli, C., and Gormley, I. C. (2020) Infinite mixtures of infinite factor analysers, \emph{Bayesian Analysis}, 15(3): 937-963. <\href{https://projecteuclid.org/euclid.ba/1570586978}{doi:10.1214/19-BA1179}>.
+#' @references Murphy, K., Viroli, C., and Gormley, I. C. (2020) Infinite mixtures of infinite factor analysers, \emph{Bayesian Analysis}, 15(3): 937-963. <\doi{10.1214/19-BA1179}>.
 #'
 #' Bhattacharya, A. and Dunson, D. B. (2011) Sparse Bayesian infinite factor models, \emph{Biometrika}, 98(2): 291-306.
 #'
@@ -374,6 +374,7 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
   datname          <- rownames(dat)
   if(any(length(unique(datname)) != N,
      is.null(datname)))  rownames(dat) <- seq_len(N)
+  len.G            <- switch(EXPR=method, classify=range.G, length(range.G))
   cmeans           <- colMeans2(dat, refine=FALSE, useNames=FALSE)
   mu               <- list(as.matrix(cmeans))
   mu0.x            <- mixfamiss$mu.zero
@@ -404,7 +405,8 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
     if(is.null(psi.beta))           stop("Not possible to derive default 'psi.beta': try supplying this argument directly", call.=FALSE)
   } else {
     psi.beta       <- mixFA$psi.beta
-    psi.beta       <- lapply(.len_check(psi.beta, psi0g, method, P, G.init), matrix, nrow=P, ncol=G.init, byrow=length(psi.beta) == G.init)
+    psi.check      <- .len_check(psi.beta, psi0g, method, P, G.init)
+    psi.beta       <- lapply(seq_along(G.init), function(g) matrix(psi.check[[g]], nrow=P, ncol=G.init[g], byrow=length(psi.check[[g]]) == G.init[g]))
   }
   if(any(unlist(psi.beta) < 1E-03,
          psi.alpha  < 1E-03))       warning("Excessively small values for the uniquenesses hyperparameters may lead to critical numerical issues & should thus be avoided\n", call.=FALSE, immediate.=TRUE)
@@ -431,12 +433,27 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
    delta0g  <- MGP$delta0g && method   == "MIFA"
    MGP$nu1  <- nu1         <- MGP$phi.hyper[1L]
    MGP$nu2  <- nu2         <- MGP$phi.hyper[2L]
-   MGP$rho1 <- rho1        <- if(MGP$cluster.shrink && method != "IFA") MGP$sigma.hyper[1L]
-   MGP$rho2 <- rho2        <- if(MGP$cluster.shrink && method != "IFA") MGP$sigma.hyper[2L]
+   if(MGP$cluster.shrink   && method != "IFA")  {
+     if(method == "MIFA")   {
+       rho  <- .len_check(MGP$sigma.hyper, delta0g, method, P, G.init, P.dim=FALSE, v=2L)
+       rho1 <- lapply(rho, "[", 1L,)
+       rho2 <- lapply(rho, "[", 2L,)
+       if(!identical(lengths(rho1),
+          lengths(rho2)))           stop("'sigma.hyper' is incorrectly specified", call.=FALSE)
+     } else  {
+       rho1 <- MGP$rho1    <- MGP$sigma.hyper[1L]
+       rho2 <- MGP$rho2    <- MGP$sigma.hyper[2L]
+     }
+   } else    {
+     rho1   <- MGP$rho1    <-
+     rho2   <- MGP$rho2    <- NULL
+   }
    alpha.d1 <- .len_check(MGP$alpha.d1, delta0g, method, P, G.init, P.dim=FALSE)
    alpha.d2 <- .len_check(MGP$alpha.d2, delta0g, method, P, G.init, P.dim=FALSE)
-   MGP      <- MGP[-seq_len(5L)]
+   beta.d1  <- .len_check(MGP$beta.d1,  delta0g, method, P, G.init, P.dim=FALSE)
+   beta.d2  <- .len_check(MGP$beta.d2,  delta0g, method, P, G.init, P.dim=FALSE)
    start.AGS       <-  MGP$start.AGS   <- ifelse(mgpmiss$startAGSx, pmin(burnin, ifelse(fQ0, 2L, switch(EXPR=method, IFA=, MIFA=burnin, 2L))), MGP$start.AGS)
+   MGP      <- MGP[-seq_len(7L)]
    if(Q.miss)                range.Q   <- as.integer(ifelse(fQ0, 1L, min(ifelse(P > 500, 12L + round(log(P)), round(3 * log(P))), N - 1L, P - 1L)))
    if(length(range.Q)       > 1)    stop(paste0("Only one starting value for 'range.Q' can be supplied for the ", method, " method"), call.=FALSE)
    if(range.Q      <= 0)            stop(paste0("'range.Q' must be strictly positive for the ", method, " method"), call.=FALSE)
@@ -450,7 +467,6 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
               c("OMIFA", "IMIFA"))) warning("'adapt=FALSE' is NOT recommended for the 'OMIFA' or 'IMIFA' methods\n", call.=FALSE, immediate.=TRUE)
   }
 
-  len.G     <- switch(EXPR=method, classify=range.G, length(range.G))
   len.Q     <- length(range.Q)
   len.X     <- len.G * len.Q
   if(all(len.X > 10,
@@ -674,7 +690,7 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
           psi.beta[[g]] <- replicate(G, temp.psi[[1L]])
         }
         if(any(psi.beta[[g]]  <
-               1E-03))              stop("Excessively small values for the uniquenesses hyperparameters will lead to critical numerical issues & should thus be avoided", call.=FALSE)
+               1E-03))              warning("Excessively small values for the uniquenesses hyperparameters will lead to critical numerical issues & should thus be avoided\n", call.=FALSE, immediate.=TRUE)
         psi.beta[[g]]   <- if(uni)  t(psi.beta[[g]])   else psi.beta[[g]]
       }
       clust[[g]]   <- list(z = zi[[g]], pi.alpha = alpha, pi.prop = pi.prop[[g]])
@@ -682,7 +698,9 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
         clust[[g]] <- append(clust[[g]], list(l.switch = sw0gs))
       }
       if(is.element(method, c("classify", "MIFA"))) {
-        clust[[g]] <- append(clust[[g]], list(alpha.d1 = alpha.d1[[g]], alpha.d2 = alpha.d2[[g]]))
+        clust[[g]] <- append(clust[[g]], list(alpha.d1 = alpha.d1[[g]], alpha.d2 = alpha.d2[[g]],
+                                              beta.d1  = beta.d1[[g]],  beta.d2  = beta.d2[[g]],
+                                              rho1 = rho1[[g]], rho2 = rho2[[g]]))
       }
     }
   }
@@ -693,24 +711,31 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
     if(!is.element(method, c("OMFA", "IMFA")))  {
       alpha.d1     <- list(alpha.d1[[1L]][1L])
       alpha.d2     <- list(alpha.d2[[1L]][1L])
+      beta.d1      <- list(beta.d1[[1L]][1L])
+      beta.d2      <- list(beta.d2[[1L]][1L])
+      rho1         <- list(rho1[[1L]][1L])
+      rho2         <- list(rho1[[1L]][1L])
     }
   }
   if(isTRUE(all.equal(vapply(mu.zero, sum, numeric(1L)),
                       numeric(length(G.init)))))   {
     mu.zero        <- switch(EXPR=method, classify=base::matrix(0L, nrow=1L, ncol=range.G), lapply(mu.zero, function(x) 0L))
   }
-  if(mu0g && unlist(lapply(mu.zero,   function(x)  {
-    if(is.matrix(x)) any(apply(x, 1L, function(y)  {
-     length(unique(round(y, min(.ndeci(y))))) })  == 1) else  {
+  if(mu0g &&
+    (length(mu.zero) == len.G &&
+      length(unique(sapply(mu.zero, unique))) == 1) &&
+     any(unlist(lapply(mu.zero,         function(x)  {
+    if(is.matrix(x)) any(apply(x, 1L,   function(y)  {
+     length(unique(round(y, min(.ndeci(y))))) })    == 1) else  {
      length(unique(round(x,
-     min(.ndeci(x))))) == 1 }})))   stop("'mu0g' must be FALSE if 'mu.zero' is not group-specific", call.=FALSE)
+     min(.ndeci(x))))) == 1 }}))))  stop("'mu0g' must be FALSE if 'mu.zero' is not group-specific", call.=FALSE)
   if(anyNA(unlist(psi.beta))) {
-    psi.beta       <- lapply(psi.beta, function(x) replace(x, is.na(x), 0L))
+    psi.beta       <- lapply(psi.beta,  function(x) replace(x, is.na(x), 0L))
   }
-  if(all(is.element(uni.type, c("isotropic",   "single")),
-         unlist(lapply(psi.beta,      function(x)  {
-    if(is.matrix(x)) any(apply(x, 2L, function(y)  {
-     length(unique(round(y, min(.ndeci(y))))) })  != 1) else  {
+  if(is.element(uni.type, c("isotropic", "single")) &&
+     any(unlist(lapply(psi.beta,        function(x)  {
+    if(is.matrix(x)) any(apply(x, 2L,   function(y)  {
+     length(unique(round(y, min(.ndeci(y))))) })    != 1) else  {
      length(unique(round(x,
      min(.ndeci(x))))) != 1 }}))))  stop("'psi.beta' cannot be variable-specific if 'uni.type' is 'isotropic' or 'single'", call.=FALSE)
   if(is.element(uni.type, c("constrained", "single")))        {
@@ -725,15 +750,25 @@ mcmc_IMIFA  <- function(dat, method = c("IMIFA", "IMFA", "OMIFA", "OMFA", "MIFA"
   }
   if(any(unlist(psi.beta)   <= 0))  stop("'psi.beta' must be strictly positive", call.=FALSE)
   if(is.element(method, c("classify", "IFA", "MIFA", "IMIFA", "OMIFA"))) {
-    ad1uu          <- unique(unlist(alpha.d1))
-    ad2uu          <- unique(unlist(alpha.d2))
-    check.mgp      <- suppressWarnings(MGP_check(ad1=ad1uu, ad2=ad2uu, Q=unique(range.Q), phi.shape=nu1, phi.rate=nu2, sigma.shape=rho1, sigma.rate=rho2, truncated=truncate, bd1=MGP$beta.d1, bd2=MGP$beta.d2))
-    if(!all(check.mgp$valid))       stop("Invalid shrinkage hyperparameter values WILL NOT encourage loadings column removal.\nTry using the MGP_check() function in advance to ensure the cumulative shrinkage property holds.", call.=FALSE)
-    if(any(attr(check.mgp, "Warning"))) {
+    mgpWarn        <- TRUE
+    for(g in seq_along(G.init)) {
+     ad1uu         <- as.vector(alpha.d1[[g]])
+     ad2uu         <- as.vector(alpha.d2[[g]])
+     bd1uu         <- as.vector(beta.d1[[g]])
+     bd2uu         <- as.vector(beta.d2[[g]])
+     r1uu          <- as.vector(rho1[[g]])
+     r2uu          <- as.vector(rho2[[g]])
+     check.mgp     <- suppressWarnings(MGP_check(ad1=ad1uu, ad2=ad2uu, Q=range.Q, phi.shape=nu1, phi.rate=nu2, sigma.shape=r1uu, sigma.rate=r2uu, truncated=truncate, bd1=bd1uu, bd2=bd2uu))
+     if(!all(check.mgp$valid))      stop("Invalid shrinkage hyperparameter values WILL NOT encourage loadings column removal.\nTry using the MGP_check() function in advance to ensure the cumulative shrinkage property holds.", call.=FALSE)
+     if(any(attr(check.mgp, "Warning")) &&
+        isTRUE(mgpWarn))  {
       if(any(ad2uu <= ad1uu))       warning("Column shrinkage hyperparameter values MAY NOT encourage loadings column removal.\n'alpha.d2' should be moderately large relative to 'alpha.d1'\n", call.=FALSE, immediate.=TRUE)
       if(any(nu2    > nu1 - 1))     warning("Expectation of local shrinkage hyperprior is not less than 1\n", call.=FALSE, immediate.=TRUE)
+       mgpWarn     <- FALSE
+     }
     }
-    deltas         <- lapply(seq_along(G.init), function(g) list(alpha.d1 = alpha.d1[[g]], alpha.d2 = alpha.d2[[g]]))
+    deltas         <- lapply(seq_along(G.init), function(g) list(alpha.d1 = alpha.d1[[g]], alpha.d2 = alpha.d2[[g]],
+                                                                 beta.d1  = beta.d1[[g]],  beta.d2  = beta.d2[[g]]))
   }
   init.time        <- proc.time() - init.start
   fac.time         <- 0

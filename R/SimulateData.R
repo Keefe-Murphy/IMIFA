@@ -27,8 +27,8 @@
 #'
 #' Missing values are not allowed in any of \code{pis}, \code{mu}, \code{psi}, \code{loadings}, \code{scores} & \code{nn}.
 #' @export
-#' @references Murphy, K., Viroli, C., and Gormley, I. C. (2020) Infinite mixtures of infinite factor analysers, \emph{Bayesian Analysis}, 15(3): 937-963. <\href{https://projecteuclid.org/euclid.ba/1570586978}{doi:10.1214/19-BA1179}>.
-#' @keywords utility
+#' @references Murphy, K., Viroli, C., and Gormley, I. C. (2020) Infinite mixtures of infinite factor analysers, \emph{Bayesian Analysis}, 15(3): 937-963. <\doi{10.1214/19-BA1179}>.
+#' @keywords IMIFA
 #' @importFrom Rfast "is.symmetric" "matrnorm"
 #' @name sim_IMIFA
 #' @rdname sim_IMIFA
@@ -279,7 +279,7 @@ sim_IMIFA_data <- function(N = 300L, G = 3L, P = 50L, Q = rep(floor(log(P)), G),
     invisible(simdata)
 }
 
-#' @keywords utility
+#' @keywords IMIFA
 #' @rdname sim_IMIFA
 #' @export
 #' @usage

@@ -94,7 +94,7 @@ pairs(sim_data[,sample(1:20, 5)], col=labels)
 # sim_mod <- sim_IMIFA_model(res)}
 }
 \references{
-Murphy, K., Viroli, C., and Gormley, I. C. (2020) Infinite mixtures of infinite factor analysers, \emph{Bayesian Analysis}, 15(3): 937-963. <\href{https://projecteuclid.org/euclid.ba/1570586978}{doi:10.1214/19-BA1179}>.
+Murphy, K., Viroli, C., and Gormley, I. C. (2020) Infinite mixtures of infinite factor analysers, \emph{Bayesian Analysis}, 15(3): 937-963. <\doi{10.1214/19-BA1179}>.
 }
 \seealso{
 \code{\link{mcmc_IMIFA}} for fitting an IMIFA related model to the simulated data set.
@@ -106,4 +106,4 @@ Murphy, K., Viroli, C., and Gormley, I. C. (2020) Infinite mixtures of infinite 
 \author{
 Keefe Murphy - <\email{keefe.murphy@mu.ie}>
 }
-\keyword{utility}
+\keyword{IMIFA}

@@ -3,10 +3,10 @@
 #########################################################################
 
 # Gibbs Sampler Function
-  .gibbs_MIFA      <- function(Q, data, iters, N, P, G, sw, mu, mu.zero, uni.type, uni.prior, col.mean,
-                               sigma.mu, burnin, thinning, verbose, nu1, nu2, rho1, rho2, cluster,
-                               psi.alpha, psi.beta, adapt, truncated, start.AGS, stop.AGS, prop, b0, b1,
-                               cluster.shrink, beta.d1, beta.d2, epsilon, equal.pro, forceQg, ...) {
+  .gibbs_MIFA      <- function(Q, data, iters, N, P, G, sw, mu, mu.zero, uni.type, uni.prior,
+                               col.mean, sigma.mu, burnin, thinning, verbose, nu1, nu2, cluster,
+                               psi.alpha, psi.beta, adapt, truncated, start.AGS, stop.AGS, prop,
+                               b0, b1, cluster.shrink, epsilon, equal.pro, forceQg, ...) {
 
   # Define & initialise variables
     start.time     <- proc.time()
@@ -86,10 +86,17 @@
     alpha.d2       <- cluster$alpha.d2
     ad1.x          <- length(unique(alpha.d1)) == 1L
     ad2.x          <- length(unique(alpha.d2)) == 1L
+    beta.d1        <- cluster$beta.d1
+    beta.d2        <- cluster$beta.d2
+    bd1.x          <- length(unique(beta.d1))  == 1L
+    bd2.x          <- length(unique(beta.d2))  == 1L
+    rho1           <- cluster$rho1
+    rho2           <- cluster$rho2
+    r1.x           <- length(unique(rho1))     == 1L
+    r2.x           <- length(unique(rho2))     == 1L
     mu0g           <- cluster$l.switch[1L]
     psi0g          <- cluster$l.switch[2L]
     delta0g        <- cluster$l.switch[3L]
-    qstar0g        <- cluster$l.switch[4L]
     label.switch   <- any(cluster$l.switch)
     Qmax           <- ifelse(forceQg, max(Qs), Q)
     Qmaxseq        <- seq_len(Qmax)
@@ -98,11 +105,11 @@
     if(isTRUE(truncated))       {
       .sim_deltak  <- .sim_deltaKT
       .rdelta      <- rltrgamma
-      delta        <- lapply(Gseq, function(g) c(if(!forceQg | Qs[g] > 0) .sim_delta_p(alpha=alpha.d1[g], beta=beta.d1), .sim_deltaPT(Q=Qs[g], alpha=alpha.d2[g], beta=beta.d2)))
+      delta        <- lapply(Gseq, function(g) c(if(!forceQg | Qs[g] > 0) .sim_delta_p(alpha=alpha.d1[g], beta=beta.d1[g]), .sim_deltaPT(Q=Qs[g], alpha=alpha.d2[g], beta=beta.d2[g])))
       .sim_delta_p <- .sim_deltaPT
     } else          {
       .rdelta      <- stats::rgamma
-      delta        <- lapply(Gseq, function(g) c(if(!forceQg | Qs[g] > 0) .sim_delta_p(alpha=alpha.d1[g], beta=beta.d1), .sim_delta_p(Q=Qs[g], alpha=alpha.d2[g], beta=beta.d2)))
+      delta        <- lapply(Gseq, function(g) c(if(!forceQg | Qs[g] > 0) .sim_delta_p(alpha=alpha.d1[g], beta=beta.d1[g]), .sim_delta_p(Q=Qs[g], alpha=alpha.d2[g], beta=beta.d2[g])))
     }
     tau            <- lapply(delta, cumprod)
     if(cluster.shrink)  {
@@ -156,8 +163,8 @@
               }
             }
           }
-          phi[nn0]          <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) cbind(phi[[g]][,seq_len(Qs.old[h])],  .rgamma0(n=P, shape=nu1,         rate=nu2))     else phi[[g]][,nonred[[h]], drop=FALSE])
-          delta[nn0]        <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) c(delta[[g]][seq_len(Qs.old[h])],     .rdelta(n=1,  shape=alpha.d2[g], rate=beta.d2)) else delta[[g]][nonred[[h]]])
+          phi[nn0]          <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) cbind(phi[[g]][,seq_len(Qs.old[h])],  .rgamma0(n=P, shape=nu1,         rate=nu2))        else phi[[g]][,nonred[[h]], drop=FALSE])
+          delta[nn0]        <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) c(delta[[g]][seq_len(Qs.old[h])],     .rdelta(n=1,  shape=alpha.d2[g], rate=beta.d2[g])) else delta[[g]][nonred[[h]]])
           tau[nn0]          <- lapply(delta[nn.ind], cumprod)
           lmat[nn0]         <- lapply(nn.ind, function(g, h=which(nn.ind == g)) if(notred[h]) cbind(lmat[[g]][,seq_len(Qs.old[h])], stats::rnorm(n=P, mean=0, sd=1/sqrt(phi[[g]][,Qs[g]] * tau[[g]][Qs[g]] * MGPsig[g]))) else lmat[[g]][,nonred[[h]], drop=FALSE])
           Qemp     <- Qs[!nn0]
@@ -174,7 +181,7 @@
               } else {
                 while(Qg    != Qmax)   {
                  phi[[g]]   <- cbind(phi[[g]],  .rgamma0(n=P, shape=nu1,         rate=nu2))
-                 delta[[g]] <- c(delta[[g]],    .rdelta(n=1,  shape=alpha.d2[g], rate=beta.d2))
+                 delta[[g]] <- c(delta[[g]],    .rdelta(n=1,  shape=alpha.d2[g], rate=beta.d2[g]))
                  tau[[g]]   <- cumprod(delta[[g]])
                  Qg         <- Qg + 1L
                  lmat[[g]]  <- cbind(lmat[[g]], stats::rnorm(n=P, mean=0, sd=1/sqrt(phi[[g]][,Qg] * tau[[g]][Qg] * MGPsig[g])))
@@ -236,23 +243,23 @@
           Q1g      <- Q1[g]
           if(n0q0[g])   {
             for(k in seq_len(Qg)) {
-              delta[[g]][k] <- if(k > 1) .sim_deltak(alpha.d2=alpha.d2[g], beta.d2=beta.d2, delta.k=delta[[g]][k], tau.kq=tau[[g]][k:Qg], P.5=P.5, Q=Qg,
+              delta[[g]][k] <- if(k > 1) .sim_deltak(alpha.d2=alpha.d2[g], beta.d2=beta.d2[g], delta.k=delta[[g]][k], tau.kq=tau[[g]][k:Qg], P.5=P.5, Q=Qg,
                                k=k, sum.term.kq=sum.terms[[g]][k:Qg], sigma=MGPsig[g]) else .sim_delta1(Q=Qg, P.5=P.5, tau=tau[[g]], sum.term=sum.terms[[g]],
-                               alpha.d1=ifelse(Q1g, alpha.d2[g], alpha.d1[g]), beta.d1=ifelse(Q1g, beta.d2, beta.d1), delta.1=delta[[g]][1L], sigma=MGPsig[g])
+                               alpha.d1=ifelse(Q1g, alpha.d2[g], alpha.d1[g]), beta.d1=ifelse(Q1g, beta.d2[g], beta.d1[g]), delta.1=delta[[g]][1L], sigma=MGPsig[g])
               tau[[g]]      <- cumprod(delta[[g]])
             }
           } else {
             if(Q0[g])   {
-              delta[[g]]    <- c(stats::rgamma(n=1, shape=ifelse(Q1g, alpha.d2[g], alpha.d1[g]), rate=ifelse(Q1g, beta.d2, beta.d1)),
-                                 .sim_delta_p(Q=Qg, alpha=alpha.d2[g], beta=beta.d2))
+              delta[[g]]    <- c(stats::rgamma(n=1, shape=ifelse(Q1g, alpha.d2[g], alpha.d1[g]), rate=ifelse(Q1g, beta.d2[g], beta.d1[g])),
+                                 .sim_delta_p(Q=Qg, alpha=alpha.d2[g], beta=beta.d2[g]))
               tau[[g]]      <- cumprod(delta[[g]])
             }
           }
         }
         if(cluster.shrink)   {
           nGq0              <- sum(n0q0)
-          MGPsig[n0q0]      <- .sim_sigma(G=nGq0, P.5=P.5, Qs=Qs[n0q0], rho1=rho1, rho2=rho2, sum.terms=sum.terms[n0q0], tau=tau[n0q0])
-          MGPsig[!n0q0]     <- .sim_sigma_p(G=G - nGq0, rho1=rho1, rho2=rho2)
+          MGPsig[n0q0]      <- .sim_sigma(G=nGq0, P.5=P.5, Qs=Qs[n0q0], rho1=rho1[n0q0], rho2=rho2[n0q0], sum.terms=sum.terms[n0q0], tau=tau[n0q0])
+          MGPsig[!n0q0]     <- .sim_sigma_p(G=G - nGq0, rho1=rho1[n0q0], rho2=rho2[n0q0])
         }
       }
 
@@ -269,9 +276,6 @@
         }
       }
       z            <- gumbel_max(probs=log.probs)
-      nn           <- tabulate(z, nbins=G)
-      nn0          <- nn  > 0
-      nn.ind       <- which(nn0)
 
     # Label Switching
       if(label.switch)   {
@@ -294,7 +298,6 @@
           nn[left]          <- nn[right]
           Q0[left]          <- Q0[right]
           Q1[left]          <- Q1[right]
-          nn0[left]         <- nn0[right]
           if(mu0g)           {
             mu.zero[,left]  <- mu.zero[,right,  drop=FALSE]
             mu.prior[,left] <- mu.prior[,right, drop=FALSE]
@@ -310,11 +313,30 @@
                  !ad2.x))    {
             alpha.d2[left]  <- alpha.d2[right]
           }
+          if(all(delta0g,
+                 !bd1.x))    {
+            beta.d1[left]   <- beta.d1[right]
+          }
+          if(all(delta0g,
+                 !bd2.x))    {
+            beta.d2[left]   <- beta.d2[right]
+          }
           if(cluster.shrink) {
              MGPsig[left]   <- MGPsig[right]
+             if(delta0g)     {
+               if(!r1.x)     {
+                 rho1[left] <- rho1[right]
+               }
+               if(!r2.x)     {
+                 rho2[left] <- rho2[right]
+               }
+             }
           }
         }
       }
+      nn           <- tabulate(z, nbins=G)
+      nn0          <- nn  > 0
+      nn.ind       <- which(nn0)
 
       if(Q.bigs && !Q.large && iter > burnin) {        cat("\n"); warning(paste0("\nQ has exceeded initial number of loadings columns", ifelse(forceQg, " (or exceeded the number of observations in one or more clusters)", ""), " since burnin:\nconsider increasing 'range.Q' from ", Q.star, ifelse(forceQg, " or setting 'forceQg' to FALSE\n", "\n")), call.=FALSE)
         Q.large    <- TRUE

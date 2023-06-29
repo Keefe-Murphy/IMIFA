@@ -155,8 +155,6 @@
         }
       }
       z            <- gumbel_max(probs=log.probs)
-      nn           <- tabulate(z, nbins=G)
-      nn0          <- nn > 0
 
     # Label Switching
       if(label.switch) {
@@ -170,7 +168,6 @@
           lmat[,,left]     <- lmat[,,right,    drop=FALSE]
           psi.inv[,left]   <- psi.inv[,right,  drop=FALSE]
           pi.prop[left]    <- pi.prop[right]
-          nn[left]         <- nn[right]
           if(mu0g)  {
            mu.zero[,left]  <- mu.zero[,right,  drop=FALSE]
            mu.prior[,left] <- mu.prior[,right, drop=FALSE]
@@ -180,6 +177,8 @@
           }
         }
       }
+      nn           <- tabulate(z, nbins=G)
+      nn0          <- nn > 0
 
       if(zerr && !err.z) {                                    cat("\n"); warning("\nAlgorithm may slow due to corrections for Choleski decompositions of non-positive-definite covariance matrices\n", call.=FALSE)
         err.z      <- TRUE
