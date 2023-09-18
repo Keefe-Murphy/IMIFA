@@ -200,7 +200,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   if(length(vari.rot)      != 1  ||
      !is.logical(vari.rot))       stop("'vari.rot' must be a single logical indicator",      call.=FALSE)
   if(isTRUE(error.metrics) &&
-     anyNA(cov.emp))        {     warning("Certain error metrics cannot be computed as there are missing values in the empirical covariance matrix\n", call.=FALSE)
+     anyNA(cov.emp))        {     warning("Certain error metrics cannot be computed as there are missing values in the empirical covariance matrix\n", call.=FALSE, immediate.=TRUE)
    cov.met       <- FALSE
   } else cov.met <- error.metrics
   if(length(z.avgsim)      != 1  ||
@@ -512,7 +512,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       condit     <- all(!is.element(method, c("MIFA", "MFA")), inherits(znew, "try-error"))
       if(isTRUE(condit)) {
         znew     <- try(Zsimilarity(zs=z),    silent=TRUE)
-                                  warning("Constructing the similarity matrix failed:\ntrying again using iterations corresponding to the modal number of clusters\n", call.=FALSE)
+                                  warning("Constructing the similarity matrix failed:\ntrying again using iterations corresponding to the modal number of clusters\n", call.=FALSE, immediate.=TRUE)
       }
       if(!inherits(znew, "try-error")) {
         zadj     <- znew$z.avg
@@ -539,14 +539,14 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
         z_simavg <- c(z_simavg, if(!label.miss) list(avgsim.perf = tabstat))
         attr(z_simavg, "Conditional")   <- condit
         class(z_simavg)        <- "listof"
-      } else {                    warning("Can't compute similarity matrix or 'average' clustering: forcing 'z.avgsim' to FALSE\n", call.=FALSE)
+      } else {                    warning("Can't compute similarity matrix or 'average' clustering: forcing 'z.avgsim' to FALSE\n", call.=FALSE, immediate.=TRUE)
         z.avgsim <- FALSE
       }
     }
 
     uncertain    <- if(G > 1) 1 - Rfast::rowMaxs(post.prob, value=TRUE) else integer(n.obs)
     sizes        <- stats::setNames(tabulate(MAP, nbins=G), gnames)
-    if(any(sizes == 0))           warning(paste0("Empty cluster exists in MAP partition:\nexamine trace plots", ifelse(any(is.element(method, c("OMFA", "IMFA", "OMIFA", "IMIFA")), is.element(method, c("MFA", "MIFA")) && any(n.grp < G)), ", try to supply a lower G value to get_IMIFA_results(),", ""), " or re-run the model\n"), call.=FALSE)
+    if(any(sizes == 0))           warning(paste0("Empty cluster exists in MAP partition:\nexamine trace plots", ifelse(any(is.element(method, c("OMFA", "IMFA", "OMIFA", "IMIFA")), is.element(method, c("MFA", "MIFA")) && any(n.grp < G)), ", try to supply a lower G value to get_IMIFA_results(),", ""), " or re-run the model\n"), call.=FALSE, immediate.=TRUE)
     if(sw["pi.sw"]) {
       pi.prop    <- provideDimnames(pies[Gseq,storeG, drop=FALSE], base=list(gnames, ""), unique=FALSE)
       pi.prop    <- if(inf.G) sweep(pi.prop, 2L, colSums2(pi.prop, useNames=FALSE), FUN="/", check.margin=FALSE) else pi.prop
@@ -657,11 +657,6 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     sizes        <- n.obs
   }
 
-  leder.b        <- min(n.obs - 1L, Ledermann(n.var, isotropic=is.element(uni.type, c("isotropic", "single"))))
-  if(any(unlist(Q)  >  leder.b))  warning(paste0("Estimate of Q", ifelse(G > 1, " in one or more clusters ", " "), "is greater than ", ifelse(any(unlist(Q) > n.var), paste0("the number of variables (", n.var, ")"), paste0("the suggested Ledermann upper bound (", leder.b, ")\n"))), call.=FALSE)
-  if(any(unlist(Q) >= sizes) &&
-     G > 1   &&
-     !attr(sims, "ForceQg"))      warning("Estimate of Q is greater than the number of observations in one or more clusters:\nConsider setting 'forceQg' to TRUE\n", call.=FALSE)
   if(inf.Q)   {
     if(G1        <- G > 1)    {
       if(isTRUE(adapt))       {
@@ -716,11 +711,18 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   Qmax           <- max(Q)
   if(all(isTRUE(choice), is.element(criterion, c("aicm", "bicm", "dic")))) {
     if(all(!G.T, !is.element(method,
-       c("FA", "IFA")), G == 1))  warning(paste0("Chosen model has only one group:\nNote that the ", criterion, " criterion may exhibit bias toward one-group models\n"),   call.=FALSE)
+       c("FA", "IFA")), G == 1))  warning(paste0("Chosen model has only one group:\nNote that the ", criterion, " criterion may exhibit bias toward one-group models\n"),   call.=FALSE, immediate.=TRUE)
     if(all(!Q.T, method   == "MIFA")) {
-      if(any(Q0))                 warning(paste0("Chosen model has ", ifelse(sum(Q0) == G, "zero factors", "a cluster with zero factors"), ":\nNote that the ", criterion, " criterion may exhibit bias toward models ", ifelse(sum(Q0) == G, "with zero factors\n", "where some clusters have zero factors\n")), call.=FALSE)
-    } else if(all(Q0))            warning(paste0("Chosen model has zero factors:\nNote that the ",   criterion, " criterion may exhibit bias toward zero-factor models\n"), call.=FALSE)
+      if(any(Q0))                 warning(paste0("Chosen model has ", ifelse(sum(Q0) == G, "zero factors", "a cluster with zero factors"), ":\nNote that the ", criterion, " criterion may exhibit bias toward models ", ifelse(sum(Q0) == G, "with zero factors\n", "where some clusters have zero factors\n")), call.=FALSE, immediate.=TRUE)
+    } else if(all(Q0))            warning(paste0("Chosen model has zero factors:\nNote that the ",   criterion, " criterion may exhibit bias toward zero-factor models\n"), call.=FALSE, immediate.=TRUE)
   }
+  leder.b        <- min(n.obs - 1L, Ledermann(n.var, isotropic=is.element(uni.type, c("isotropic", "single"))))
+  if(any(Q  > leder.b))    {      warning(paste0("Estimate of Q", ifelse(G > 1, " in one or more clusters ", " "), "is greater than ", ifelse(any(unlist(Q) > n.var), paste0("the number of variables (", n.var, ")"), paste0("the suggested Ledermann upper bound (", leder.b, ")")), "\n"), call.=FALSE, immediate.=TRUE)
+  } else if(any(floor((n.var  - 1)/2) <
+                Q))               warning("It is advisable that the restriction Q <= floor((P - 1)/2) be respected\n", call.=FALSE, immediate.=TRUE)
+  if(any(Q >= sizes)      &&
+     G > 1 &&
+     !attr(sims, "ForceQg"))      warning("Estimate of Q is greater than the number of observations in one or more clusters:\nConsider setting 'forceQg' to TRUE\n", call.=FALSE, immediate.=TRUE)
 
 # Retrieve (unrotated) scores
   if(no.score    <- all(Q0)) {
@@ -728,10 +730,10 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
     sw["s.sw"]   <- FALSE
   }
   if(inf.Q) {
-    Lstore       <- lapply(Gseq, function(g) storeG[Q.store[g,] >= Q[g]])
+    Lstore       <- lapply(Gseq,  function(g) storeG[Q.store[g,] >= Q[g]])
     if(any(lengths(Lstore) < 2))   {
      sw["s.sw"]  <- tmpsw["l.sw"] <-
-     sw["l.sw"]  <- FALSE;        warning("Forcing non-storage of scores and loadings due to shortage of retained samples\n", call.=FALSE)
+     sw["l.sw"]  <- FALSE;        warning("Forcing non-storage of scores and loadings due to shortage of retained samples\n", call.=FALSE, immediate.=TRUE)
     }
     eta.store    <- storeG[colMaxs(Q.store, value=TRUE) >= Qmax]
   } else    {
@@ -748,7 +750,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
   frobenius      <- error.metrics && all(sw["psi.sw"], sw["mu.sw"] || !sw["u.sw"], any(Q0X, sw["l.sw"]))
   if(sw["s.sw"]) {
     eta          <- if(inf.Q) as.array(sims[[G.ind]][[Q.ind]]$eta)[,,eta.store, drop=FALSE]    else sims[[G.ind]][[Q.ind]]$eta[,,eta.store, drop=FALSE]
-    if(!sw["l.sw"])               warning("Caution advised when examining posterior factor scores: Procrustes rotation has not taken place because loadings weren't stored\n", call.=FALSE)
+    if(!sw["l.sw"])               warning("Caution advised when examining posterior factor scores: Procrustes rotation has not taken place because loadings weren't stored\n", call.=FALSE, immediate.=TRUE)
   }
 
 # Loop over g in G to extract other results
@@ -969,8 +971,8 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
       dat.bins   <- vapply(dcounts, .padding, integer(nbins), nbins)
       datnorm    <- norm(dat.bins, dots$type)
       rcounts    <- vector("list", e.store)
-    } else if(Q0X)  {             warning("Need the means and uniquenesses to have been stored for zero-factor models in order to compute the posterior predictive reconstruction error\n", call.=FALSE)
-    } else                        warning("Need the means, uniquenesses, and loadings to have been stored in order to compute the posterior predictive reconstruction error\n",             call.=FALSE)
+    } else if(Q0X)  {             warning("Need the means and uniquenesses to have been stored for zero-factor models in order to compute the posterior predictive reconstruction error\n", call.=FALSE, immediate.=TRUE)
+    } else                        warning("Need the means, uniquenesses, and loadings to have been stored in order to compute the posterior predictive reconstruction error\n",             call.=FALSE, immediate.=TRUE)
   }
   if(clust.ind)     {
     if(frobenius)   {
@@ -985,7 +987,7 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
           } else        {
             pi2  <- pi.prop[,store.e,       drop=FALSE]
           }
-        }   else                  warning("Mixing proportions not stored: can't compute all error metrics\n",                                               call.=FALSE)
+        }   else                  warning("Mixing proportions not stored: can't compute all error metrics\n",                                               call.=FALSE, immediate.=TRUE)
       }
       mu2        <- mus[,,store.e,          drop=FALSE]
       psi2       <- psis[,,store.e,         drop=FALSE]
@@ -1022,12 +1024,12 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
         }
       }
     } else if(cov.met)  {
-        if(!sw["mu.sw"])        { warning("Means not stored: can't compute error metrics or estimate posterior mean covariance matrix\n",                   call.=FALSE)
+        if(!sw["mu.sw"])        { warning("Means not stored: can't compute error metrics or estimate posterior mean covariance matrix\n",                   call.=FALSE, immediate.=TRUE)
       } else if(all(QX0, !sw["l.sw"],
-                !sw["psi.sw"])) { warning("Loadings & Uniquenesses not stored: can't compute error metrics or estimate posterior mean covariance matrix\n", call.=FALSE)
+                !sw["psi.sw"])) { warning("Loadings & Uniquenesses not stored: can't compute error metrics or estimate posterior mean covariance matrix\n", call.=FALSE, immediate.=TRUE)
       } else if(all(QX0,
-                !sw["l.sw"]))   { warning("Loadings not stored: can't compute error metrics or estimate posterior mean covariance matrix\n",                call.=FALSE)
-      } else                      warning("Uniquenesses not stored: can't compute error metrics or estimate posterior mean covariance matrix\n",            call.=FALSE)
+                !sw["l.sw"]))   { warning("Loadings not stored: can't compute error metrics or estimate posterior mean covariance matrix\n",                call.=FALSE, immediate.=TRUE)
+      } else                      warning("Uniquenesses not stored: can't compute error metrics or estimate posterior mean covariance matrix\n",            call.=FALSE, immediate.=TRUE)
     }
   } else    {
     if(any(sw["l.sw"], Q0X))    {
@@ -1075,12 +1077,12 @@ get_IMIFA_results.IMIFA        <- function(sims = NULL, burnin = 0L, thinning = 
           nrmse[r]    <- rmse[r]/cov.range
         }
        }
-      } else if(error.metrics)    warning("Uniquenesses not stored: can't compute error metrics\n", call.=FALSE)
+      } else if(error.metrics)    warning("Uniquenesses not stored: can't compute error metrics\n", call.=FALSE, immediate.=TRUE)
     }   else if(error.metrics)  {
         if(all(QX0, !sw["l.sw"],
-           !sw["psi.sw"]))      { warning("Loadings & Uniquenesses not stored: can't compute error metrics or estimate posterior mean covariance matrix\n", call.=FALSE)
+           !sw["psi.sw"]))      { warning("Loadings & Uniquenesses not stored: can't compute error metrics or estimate posterior mean covariance matrix\n", call.=FALSE, immediate.=TRUE)
       } else if(all(QX0,
-                !sw["l.sw"]))     warning("Loadings not stored: can't compute error metrics or estimate posterior mean covariance matrix\n",                call.=FALSE)
+                !sw["l.sw"]))     warning("Loadings not stored: can't compute error metrics or estimate posterior mean covariance matrix\n",                call.=FALSE, immediate.=TRUE)
     }
   }
   if(all(sw["psi.sw"] || !clust.ind, any(sw["l.sw"], Q0X))) {

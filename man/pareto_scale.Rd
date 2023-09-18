@@ -19,7 +19,7 @@ The Pareto scaled version of the matrix \code{x}.
 Pareto scaling of a numeric matrix, with or without centering. Observations are scaled by the square-root of their column-wise standard deviations.
 }
 \examples{
-dat  <- pareto_scale(olive[,-c(1,2)])
+dat  <- pareto_scale(olive[,-(1:2)])
 }
 \references{
 van den Berg, R. A., Hoefsloot, H. C. J, Westerhuis, J. A., Smilde, A. K., and van der Werf, M.J. (2006) Centering, scaling, and transformations: improving the biological information content of metabolomics data. \emph{BMC Genomics}, 7(142).

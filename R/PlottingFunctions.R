@@ -122,7 +122,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
   oldpal            <- grDevices::palette()
   if(mispal)             palette <- viridis(min(10L, max(G, Q.max, 5L)), option="D")
   if(!all(is.cols(cols=palette)))     stop("Supplied colour palette contains invalid colours", call.=FALSE)
-  if(length(palette) < 5)             warning("Palette should contain 5 or more colours\n",    call.=FALSE)
+  if(length(palette) < 5)             warning("Palette should contain 5 or more colours\n",    call.=FALSE, immediate.=TRUE)
   trx     <- grDevices::dev.capabilities()$semiTransparency
   xtr     <- missing(transparency)
   if(length(transparency) != 1   &&
@@ -229,9 +229,9 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
     errX  <- attr(x, "Errors")
     if(is.element(errX,
                 c("None", "Vars"))) { stop("Can't plot error metrics as they were not calculated within get_IMIFA_results()", call.=FALSE)
-    } else if(errX == "PPRE")       { warning("Can only plot the posterior predictive reconstruction error, and not error metrics between covariance matrices\n", call.=FALSE)
-    } else if(errX == "Covs")       { warning("Can only plot error metrics between covariance matrices, and not the posterior predictive reconstruction error\n", call.=FALSE)
-    } else if(errX == "Post")         warning("Can only plot error metrics between covariance matrices evaluated at the posterior mean, as they were not calculated for every iteration within get_IMIFA_results\n", call.=FALSE)
+    } else if(errX == "PPRE")       { warning("Can only plot the posterior predictive reconstruction error, and not error metrics between covariance matrices\n", call.=FALSE, immediate.=TRUE)
+    } else if(errX == "Covs")       { warning("Can only plot error metrics between covariance matrices, and not the posterior predictive reconstruction error\n", call.=FALSE, immediate.=TRUE)
+    } else if(errX == "Post")         warning("Can only plot error metrics between covariance matrices evaluated at the posterior mean, as they were not calculated for every iteration within get_IMIFA_results\n", call.=FALSE, immediate.=TRUE)
   }
   if(all(any(m.sw["M.sw"], m.sw["P.sw"], all.ind),
      is.element(param,  c("means", "uniquenesses")),
@@ -240,7 +240,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
     if(show.last)  {                  stop(paste0("Can't plot last valid sample, as ",    param, switch(EXPR=param, alpha=, discount=" wasn't", " weren't"), " stored"),   call.=FALSE)
     } else if(param == "means" &&
               !v.sw["u.sw"])    {     stop("Nothing to plot as means were not updated",   call.=FALSE)
-    } else if(all.ind)  {             warning(paste0("Can only plot posterior mean, as ", param, switch(EXPR=param, alpha=, discount=" wasn't", " weren't"), " stored\n"), call.=FALSE)
+    } else if(all.ind)  {             warning(paste0("Can only plot posterior mean, as ", param, switch(EXPR=param, alpha=, discount=" wasn't", " weren't"), " stored\n"), call.=FALSE, immediate.=TRUE)
       all.ind      <- FALSE
       m.sw["M.sw"] <- TRUE
     }
@@ -365,7 +365,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
     if(any(all(Qs == 0, param == "scores"),
            all(Q  == 0, param == "loadings"),
            all(ng == 0, param == "scores", m.sw["M.sw"] && !all.ind))) {
-                                      warning(paste0("Can't plot ", param, paste0(ifelse(any(all(param == "scores", ng == 0), all(param == "loadings", grp.ind)), paste0(" for cluster ", g), "")), " as they contain no ", ifelse(all(param == "scores", ng == 0), "rows/observations\n", "columns/factors\n")), call.=FALSE)
+                                      warning(paste0("Can't plot ", param, paste0(ifelse(any(all(param == "scores", ng == 0), all(param == "loadings", grp.ind)), paste0(" for cluster ", g), "")), " as they contain no ", ifelse(all(param == "scores", ng == 0), "rows/observations", "columns/factors"), "\n"), call.=FALSE, immediate.=TRUE)
       if(g == max(Gs)) {
         break
       } else {
@@ -402,13 +402,13 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
       if(length(ind) != 2)            stop(paste0("Length of plotting indices must be 2 for the ", param, " parameter when 'mat' is FALSE"), call.=FALSE)
       if(param == "scores")  {
         if(ind[1L] >  n.obs)          stop(paste0("First index can't be greater than the number of observations: ",  n.obs), call.=FALSE)
-        if(ind[2L] >  Q.max) {        warning(paste0("Second index can't be greater than ", Q.max, ", the total number of factors", ifelse(grp.ind, " in the widest loadings matrix\n", "\n")), call.=FALSE)
+        if(ind[2L] >  Q.max) {        warning(paste0("Second index can't be greater than ", Q.max, ", the total number of factors", ifelse(grp.ind, " in the widest loadings matrix\n", "\n")), call.=FALSE, immediate.=TRUE)
         if(isTRUE(msgx)) .ent_exit(opts = defopt)
         next
         }
       } else {
         if(ind[1L] > n.var)           stop(paste0("First index can't be greater than the number of variables: ",  n.var), call.=FALSE)
-        if(ind[2L] > Q)      {        warning(paste0("Second index can't be greater than ", Q, ", the number of factors", if(grp.ind) paste0(" in cluster ", g), ".\nTry specifying a vector of fac values with maximum entries ", paste0(Qs, collapse=", "), "\n"), call.=FALSE)
+        if(ind[2L] > Q)      {        warning(paste0("Second index can't be greater than ", Q, ", the number of factors", if(grp.ind) paste0(" in cluster ", g), ".\nTry specifying a vector of fac values with maximum entries ", paste0(Qs, collapse=", "), "\n"), call.=FALSE, immediate.=TRUE)
         if(isTRUE(msgx)) .ent_exit(opts = defopt)
         next
         }
@@ -690,7 +690,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
               graphics::clip(usr[1L], usr[2L], usr[3L], usr[4L])
             }
           }
-        } else {                      warning(paste0(ifelse(attr(x, "Kappa0"), "Acceptance", "Mutation"), " rate too low: can't plot density\n"), call.=FALSE)
+        } else {                      warning(paste0(ifelse(attr(x, "Kappa0"), "Acceptance", "Mutation"), " rate too low: can't plot density\n"), call.=FALSE, immediate.=TRUE)
           if(all.ind) graphics::plot.new()
         }
       }
@@ -1122,7 +1122,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
       if(plotQ.ind) {
         if(!adapt)                    message("No adaptation took place: consider setting adapt=TRUE in mcmc_IMIFA or get_IMIFA_results\n")
         forceQg      <- attr(x, "ForceQg")
-        if(attr(GQ.res, "Q.big"))     warning(paste0("Q had to be prevented from exceeding its initial value", ifelse(forceQg, " (or exceeding the number of observations in one or more clusters)", ""), ".\nConsider re-running the model with a higher value for 'range.Q'", ifelse(forceQg, " or setting 'forceQg' to FALSE\n", "\n")), call.=FALSE, immediate.=TRUE)
+        if(attr(GQ.res, "Q.big"))     warning(paste0("Q had to be prevented from exceeding its initial value", ifelse(forceQg, " (or exceeding the number of observations in one or more clusters)", ""), ".\nConsider re-running the model with a higher value for 'range.Q'", ifelse(forceQg, " or setting 'forceQg' to FALSE", ""), "\n"), call.=FALSE, immediate.=TRUE)
       }
     }
 
@@ -1451,7 +1451,7 @@ plot.Results_IMIFA  <- function(x, plot.meth = c("all", "correlation", "density"
         plot.x <- switch(EXPR=param, alpha=clust$Alpha$alpha, discount=as.vector(clust$Discount$discount))
         if(switch(EXPR=param, alpha=clust$Alpha$alpha.rate,   discount=clust$Discount$disc.rate) == 0 ||
           ((is.null(attr(x, "Discount")) || attr(x, "Discount") >= 0) && length(unique(round(plot.x, min(.ndeci(plot.x))))) == 1)) {
-                                      warning(paste0(switch(EXPR=param, alpha="Acceptance", discount=ifelse(attr(x, "Kappa0"), "Acceptance", "Mutation")), " rate too low: can't plot ", ifelse(all.ind, ifelse(partial, "partial-", "auto-"), ""), "correlation function", ifelse(all.ind, "\n", "s\n")), call.=FALSE)
+                                      warning(paste0(switch(EXPR=param, alpha="Acceptance", discount=ifelse(attr(x, "Kappa0"), "Acceptance", "Mutation")), " rate too low: can't plot ", ifelse(all.ind, ifelse(partial, "partial-", "auto-"), ""), "correlation function", ifelse(all.ind, "\n", "s\n")), call.=FALSE, immediate.=TRUE)
           next
         }
         if(!partial) {

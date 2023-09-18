@@ -16,6 +16,8 @@ remains the default for all infinite factor models in each case. See documentati
 _(with thanks to @abcoxyzide for flagging the issue)_
 * The `mgpControl` arg. `delta0g` now also governs `beta.d1`, `beta.d2`,  
   & `sigma.hyper`, in addition to `alpha.d1` & `alpha.d2`.
+* Improved documentation & checks related to the `Ledermann` bound + added various references to,  
+  & warnings for, the stricter `Q <= floor((P - 1)/2)` restriction throughout the package.
 * Minor fixes for `"MFA"`/`"MIFA"` models when `mu0g`, `psi0g`, &/or `delta0g`  
   is `TRUE`, particularly when `length(range.G) > 1`.
 * Minor speed-up to `G_priorDensity` when `discount` is non-zero.

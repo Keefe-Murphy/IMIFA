@@ -951,29 +951,40 @@
 #' Returns the maximum number of latent factors in a factor analysis model for data of dimension \code{P} which actually achieves dimension reduction in terms of the number of covariance parameters. This Ledermann bound is given by the largest integer smaller than or equal to the solution \eqn{k}{k} of \eqn{(M - k)^2 \geq M + k}{(M - k)^2 >= M + k}.
 #' @param P Integer number of variables in data set. This argument is vectorised.
 #' @param isotropic Logical indicating whether uniquenesses are constrained to be isotropic, in which case the bound is simply \eqn{P-1}{P-1}. Defaults to \code{FALSE}.
-#'
-#' @return The Ledermann bound, a non-negative integer, or a vector of \code{length(P)} such bounds.
+#' @param int Logical indicating if the result should be returned as an integer by applying the \code{\link{floor}} function. Defaults to \code{TRUE}.
+#' @details The Ledermann bound when \code{istropic} is \code{FALSE} is given by \eqn{P + 0.5\left(1 - \sqrt{8P  + 1}\right)}{P + 0.5 * (1 - sqrt(8 * P  + 1))}.
+#' @note It has also been argued that the number of factors should not exceed \code{floor((P - 1)/2)}, which is a necessarily stricter condition.
+#' @references Anderson, T. W. and Rubin, H. (1956) Statistical inference in factor analysis. In Neyman, J. (Ed.), \emph{Proceedings of the Third Berkeley Symposium on Mathematical Statistics and Probability}, Volume 3.5: Contributions to Econometrics, Industrial Research, and Psychometry, University of California Press, Berkeley, CA, U.S.A., pp. 111-150.
+#' @return The Ledermann bound, a non-negative integer obtained using \code{floor}, or a vector of \code{length(P)} such bounds.
 #' @keywords utility
 #' @usage
 #' Ledermann(P,
-#'           isotropic = FALSE)
+#'           isotropic = FALSE,
+#'           int = TRUE)
 #' @export
 #'
 #' @examples
 #' Ledermann(c(25, 50, 100))
+#' floor((c(25, 50, 100) - 1) / 2) # stricter bounds
 #'
 #' data(olive)
-#' Ledermann(ncol(olive[,-c(1,2)]))
-    Ledermann    <- function(P, isotropic = FALSE) { # heteroscedastic factors
+#' P <- ncol(olive[,-(1:2)])
+#' Ledermann(P)
+#' Ledermann(P, int=FALSE)
+#' floor((P - 1)/2) # stricter bound
+    Ledermann    <- function(P, isotropic = FALSE, int = TRUE) { # heteroscedastic factors
       if(!is.numeric(P)   ||
-         any(P   <= 0, floor(P) != P))      stop("'P' must be a strictly positive integer", call.=FALSE)
+         any(P   <= 0, floor(P) != P))      stop("'P' must be a strictly positive integer",  call.=FALSE)
       if(length(isotropic) > 1  ||
          !is.logical(isotropic))            stop("'isotropic' must be a single logical indicator", call.=FALSE)
       if(isTRUE(isotropic))      {
           as.integer(P - 1L)
       } else      {
+        if(length(int) > 1      ||
+           !is.logical(int))                stop("'int' must be a single logical indicator", call.=FALSE)
         R        <- P + 0.5 * (1 - sqrt(8L * P  + 1L))
-          as.integer(floor(ifelse(1e-10 > abs(R - round(R)), round(R), R)))
+        R        <- ifelse(1e-10 > abs(R - round(R)), round(R), R)
+          if(isTRUE(int)) as.integer(floor(R)) else R
       }
     }
 
@@ -1314,7 +1325,7 @@
           inter  <- if(isTRUE(mpfrind)) c(-discount + .Machine$double.eps, .Machine$double.xmax) else c(-discount + 0.000001,  100000)
           X      <- try(suppressWarnings(stats::uniroot(function(x) RFA(N, x, discount)      - EG, interval=inter, ...)), silent=TRUE)
         }
-        if(inherits(X, "try-error")) {     warning(paste0("uniroot failed to elicit a discount value", ifelse(isFALSE(MPFR), ": consider setting MPFR=TRUE\n","\n")), call.=FALSE, immediate.=TRUE)
+        if(inherits(X, "try-error")) {     warning(paste0("uniroot failed to elicit a discount value", ifelse(isFALSE(MPFR), ": consider setting MPFR=TRUE",""), "\n"), call.=FALSE, immediate.=TRUE)
           Y      <- stats::setNames(NA,         "alpha")
         } else Y <- stats::setNames(X$root,     "alpha")
       }   else if(missing(discount) ||
@@ -1327,14 +1338,14 @@
           inter  <- c(-.Machine$double.xmax, 1 - .Machine$double.eps)
           X      <- try(suppressWarnings(stats::uniroot(function(x) RFA(N, alpha, x)         - EG, interval=inter, ...)), silent=TRUE)
         }
-        if(inherits(X, "try-error")) {     warning(paste0("uniroot failed to elicit a discount value", ifelse(isFALSE(MPFR), ": consider setting MPFR=TRUE\n","\n")), call.=FALSE, immediate.=TRUE)
+        if(inherits(X, "try-error")) {     warning(paste0("uniroot failed to elicit a discount value", ifelse(isFALSE(MPFR), ": consider setting MPFR=TRUE",""), "\n"), call.=FALSE, immediate.=TRUE)
           Y      <- stats::setNames(NA,      "discount")
         } else Y <- stats::setNames(X$root,  "discount")
       }   else                             stop("'alpha' and 'discount' cannot both be supplied", call.=FALSE)
       dots       <- list(...)
       maxiter    <- ifelse(length(dots) > 0 && any(names(dots) %in% "maxiter"), dots$maxiter, 1000)
       if(!inherits(X, "try-error")  &&
-         X$iter  == maxiter)               warning(paste0("uniroot failed to converge in ", maxiter, " iterations\n"), call.=FALSE)
+         X$iter  == maxiter)               warning(paste0("uniroot failed to converge in ", maxiter, " iterations\n"), call.=FALSE, immediate.=TRUE)
         return(Y)
     },  vectorize.args = c("N", "EG", "alpha", "discount", "MPFR"))
 
@@ -1572,7 +1583,7 @@
 #' #                    sigma.mu=NULL, beta0=1, uni.type="constrained")
 #'
 #' # Use mu0g and psi0g for MIFA models with supplied cluster labels
-#' # oliveScaled <- as.data.frame(scale(olive[,3:10]))
+#' # oliveScaled <- as.data.frame(scale(olive[,-(1:2)]))
 #' # sim2 <- mcmc_IMIFA(olive, "MIFA", n.iters=200, range.G=c(3, 9),
 #' #                    z.list=list(olive$area, olive$region), mu0g=TRUE, psi0g=TRUE,
 #' #                    mu.zero=list(do.call(cbind, tapply(oliveScaled, olive$area,   colMeans)),
@@ -1843,7 +1854,7 @@
 #' }
 #' @param eps Only relevant when \code{adapt=TRUE} and \code{active.crit="BD"}. Neighbourhood epsilon of zero within which a loadings entry is considered negligible according to \code{prop}. Defaults to \code{0.1}. Must be positive.
 #' @param adapt A logical value indicating whether adaptation of the number of cluster-specific factors is to take place when the MGP prior is employed. Defaults to \code{TRUE}. Specifying \code{FALSE} and supplying \code{range.Q} within \code{\link{mcmc_IMIFA}} provides a means to either approximate the infinite factor model with a fixed, high truncation level, or to use the MGP prior in a finite-factor context, however this is NOT recommended for the \code{"OMIFA"} and \code{"IMIFA"} methods. Note that users who specify \code{adapt=FALSE} here can later recover the (cluster-specific) numbers of non-redundant factors by supplying \code{adapt=TRUE} to \code{\link{get_IMIFA_results}} provided the relevant parameters are stored via \code{\link{storeControl}} (\code{load.switch} for \code{active.crit="BD"}; \code{load.switch} and \code{score.switch} for \code{active.crit="SC"}), though this is not required. Generally, invoking \code{adapt} \emph{during sampling} will reduce the computational burden significantly.
-#' @param forceQg A logical indicating whether the upper limit on the number of cluster-specific factors \code{Q} is also cluster-specific. Defaults to \code{FALSE}: when \code{TRUE}, the number of factors in each cluster is kept below the number of observations in each cluster, in addition to the bound defined by \code{range.Q}. Only relevant for the \code{"IMIFA"}, \code{"OMIFA"}, and \code{"MIFA"} methods, and only invoked when \code{adapt} is \code{TRUE}. May be useful for low-dimensional data sets for which identifiable solutions are desired.
+#' @param forceQg A logical indicating whether the upper limit on the number of cluster-specific factors \code{Q} is also cluster-specific. This upper limit is determined the number of observations in the given cluster. Defaults to \code{FALSE}: when \code{TRUE}, the number of factors in each cluster is kept below the number of observations in each cluster, in addition to the bound defined by \code{range.Q}. Only relevant for the \code{"IMIFA"}, \code{"OMIFA"}, and \code{"MIFA"} methods, and only invoked when \code{adapt} is \code{TRUE}. May be useful for low-dimensional data sets for which identifiable solutions are desired. It is also advisable that the number of latent factors not exceed the associated \code{\link{Ledermann}} bound, or the stricter bound \code{floor((P - 1)/2)}, but these restrictions are not enforced by \code{forceQg}.
 #' @param cluster.shrink A logical value indicating whether to place the prior specified by \code{sigma.hyper} on the cluster shrinkage parameters. Defaults to \code{TRUE}. Specifying \code{FALSE} is equivalent to fixing all cluster shrinkage parameters to \code{1}. Only relevant for the \code{"IMIFA"}, \code{"OMIFA"}, and \code{"MIFA"} methods. If invoked, the posterior mean cluster shrinkage factors will be reported.
 #' @param truncated A logical value indicating whether the version of the MGP prior based on left-truncated gamma distributions is invoked (see Zhang et al. reference below and additional relevant documentation in \code{\link{ltrgamma}} and \code{\link{MGP_check}}). Defaults to \code{FALSE}. Note that, when \code{TRUE}, the expected shrinkage factors for the first loadings column are not affected and the conditions needed to pass \code{\link{MGP_check}} for the parameters associated with subsequent columns are much less strict. Moreover, more desirable shrinkage properties are easily obtained, at the expense of slightly longer run times.
 #' @param b0,b1 Intercept & slope parameters for the exponentially decaying adaptation probability:
@@ -1865,7 +1876,7 @@
 #' @note Certain supplied arguments will be subject to further checks by \code{\link{MGP_check}} to ensure the cumulative shrinkage property of the MGP prior holds according to the given parameterisation.
 #'
 #' The adaptive Gibbs sampler (AGS) monitors the \code{prop} of loadings elements within the neighbourhood \code{eps} of 0 and discards columns or simulates new columns on this basis. However, if at any stage the number of group-specific latent factors reaches zero, the decision to add columns is instead based on a simple binary trial with probability \code{1-prop}, as there are no loadings entries to monitor.
-#' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{MGP_check}}, \code{\link{ltrgamma}}, \code{\link{mixfaControl}}, \code{\link{bnpControl}}, \code{\link{storeControl}}, \code{\link{get_IMIFA_results}}
+#' @seealso \code{\link{mcmc_IMIFA}}, \code{\link{Ledermann}}, \code{\link{MGP_check}}, \code{\link{ltrgamma}}, \code{\link{mixfaControl}}, \code{\link{bnpControl}}, \code{\link{storeControl}}, \code{\link{get_IMIFA_results}}
 #' @references Murphy, K., Viroli, C., and Gormley, I. C. (2020) Infinite mixtures of infinite factor analysers, \emph{Bayesian Analysis}, 15(3): 937-963. <\doi{10.1214/19-BA1179}>.
 #'
 #' Durante, D. (2017). A note on the multiplicative gamma process, \emph{Statistics & Probability Letters}, 122: 198-204.
@@ -2129,7 +2140,7 @@
 #' pareto_scale(x,
 #'              centering = TRUE)
 #' @examples
-#' dat  <- pareto_scale(olive[,-c(1,2)])
+#' dat  <- pareto_scale(olive[,-(1:2)])
   pareto_scale <- function(x, centering=TRUE) {
     if(length(centering) != 1 ||
        !is.logical(centering))           stop("'centering' must be a single logical indicator", call.=FALSE)

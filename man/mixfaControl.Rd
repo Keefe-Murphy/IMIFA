@@ -109,7 +109,7 @@ mfctrl <- mixfaControl(n.iters=200, prec.mu=1E-03, sigma.mu=NULL,
 #                    sigma.mu=NULL, beta0=1, uni.type="constrained")
 
 # Use mu0g and psi0g for MIFA models with supplied cluster labels
-# oliveScaled <- as.data.frame(scale(olive[,3:10]))
+# oliveScaled <- as.data.frame(scale(olive[,-(1:2)]))
 # sim2 <- mcmc_IMIFA(olive, "MIFA", n.iters=200, range.G=c(3, 9),
 #                    z.list=list(olive$area, olive$region), mu0g=TRUE, psi0g=TRUE,
 #                    mu.zero=list(do.call(cbind, tapply(oliveScaled, olive$area,   colMeans)),

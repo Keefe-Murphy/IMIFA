@@ -338,10 +338,10 @@
       nn0          <- nn  > 0
       nn.ind       <- which(nn0)
 
-      if(Q.bigs && !Q.large && iter > burnin) {        cat("\n"); warning(paste0("\nQ has exceeded initial number of loadings columns", ifelse(forceQg, " (or exceeded the number of observations in one or more clusters)", ""), " since burnin:\nconsider increasing 'range.Q' from ", Q.star, ifelse(forceQg, " or setting 'forceQg' to FALSE\n", "\n")), call.=FALSE)
+      if(Q.bigs && !Q.large && iter > burnin) {        cat("\n"); warning(paste0("\nQ has exceeded initial number of loadings columns", ifelse(forceQg, " (or exceeded the number of observations in one or more clusters)", ""), " since burnin:\nconsider increasing 'range.Q' from ", Q.star, ifelse(forceQg, " or setting 'forceQg' to FALSE\n", "\n")), call.=FALSE, immediate.=TRUE)
         Q.large    <- TRUE
       }
-      if(z.err  && !err.z) {                           cat("\n"); warning("\nAlgorithm may slow due to corrections for Choleski decompositions of non-positive-definite covariance matrices\n", call.=FALSE)
+      if(z.err  && !err.z) {                           cat("\n"); warning("\nAlgorithm may slow due to corrections for Choleski decompositions of non-positive-definite covariance matrices\n", call.=FALSE, immediate.=TRUE)
         err.z      <- TRUE
       }
       if(storage)   {

@@ -180,7 +180,7 @@
       nn           <- tabulate(z, nbins=G)
       nn0          <- nn > 0
 
-      if(zerr && !err.z) {                                    cat("\n"); warning("\nAlgorithm may slow due to corrections for Choleski decompositions of non-positive-definite covariance matrices\n", call.=FALSE)
+      if(zerr && !err.z) {                                    cat("\n"); warning("\nAlgorithm may slow due to corrections for Choleski decompositions of non-positive-definite covariance matrices\n", call.=FALSE, immediate.=TRUE)
         err.z      <- TRUE
       }
       if(storage)  {

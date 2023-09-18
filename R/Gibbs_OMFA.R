@@ -182,7 +182,7 @@
       nn.ind       <- which(nn0)
       G.non        <- length(nn.ind)
 
-      if(zerr && !err.z) {                                     cat("\n"); warning("\nAlgorithm may slow due to corrections for Choleski decompositions of non-positive-definite covariance matrices\n", call.=FALSE)
+      if(zerr && !err.z) {                                     cat("\n"); warning("\nAlgorithm may slow due to corrections for Choleski decompositions of non-positive-definite covariance matrices\n", call.=FALSE, immediate.=TRUE)
         err.z      <- TRUE
       }
       if(storage)  {

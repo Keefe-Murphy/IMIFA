@@ -5,23 +5,39 @@
 \title{Ledermann Bound}
 \usage{
 Ledermann(P,
-          isotropic = FALSE)
+          isotropic = FALSE,
+          int = TRUE)
 }
 \arguments{
 \item{P}{Integer number of variables in data set. This argument is vectorised.}
 
 \item{isotropic}{Logical indicating whether uniquenesses are constrained to be isotropic, in which case the bound is simply \eqn{P-1}{P-1}. Defaults to \code{FALSE}.}
+
+\item{int}{Logical indicating if the result should be returned as an integer by applying the \code{\link{floor}} function. Defaults to \code{TRUE}.}
 }
 \value{
-The Ledermann bound, a non-negative integer, or a vector of \code{length(P)} such bounds.
+The Ledermann bound, a non-negative integer obtained using \code{floor}, or a vector of \code{length(P)} such bounds.
 }
 \description{
 Returns the maximum number of latent factors in a factor analysis model for data of dimension \code{P} which actually achieves dimension reduction in terms of the number of covariance parameters. This Ledermann bound is given by the largest integer smaller than or equal to the solution \eqn{k}{k} of \eqn{(M - k)^2 \geq M + k}{(M - k)^2 >= M + k}.
 }
+\details{
+The Ledermann bound when \code{istropic} is \code{FALSE} is given by \eqn{P + 0.5\left(1 - \sqrt{8P  + 1}\right)}{P + 0.5 * (1 - sqrt(8 * P  + 1))}.
+}
+\note{
+It has also been argued that the number of factors should not exceed \code{floor((P - 1)/2)}, which is a necessarily stricter condition.
+}
 \examples{
 Ledermann(c(25, 50, 100))
+floor((c(25, 50, 100) - 1) / 2) # stricter bounds
 
 data(olive)
-Ledermann(ncol(olive[,-c(1,2)]))
+P <- ncol(olive[,-(1:2)])
+Ledermann(P)
+Ledermann(P, int=FALSE)
+floor((P - 1)/2) # stricter bound
+}
+\references{
+Anderson, T. W. and Rubin, H. (1956) Statistical inference in factor analysis. In Neyman, J. (Ed.), \emph{Proceedings of the Third Berkeley Symposium on Mathematical Statistics and Probability}, Volume 3.5: Contributions to Econometrics, Industrial Research, and Psychometry, University of California Press, Berkeley, CA, U.S.A., pp. 111-150.
 }
 \keyword{utility}
