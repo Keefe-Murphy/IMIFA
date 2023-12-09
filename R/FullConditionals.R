@@ -524,10 +524,8 @@
 #' @details This is called inside \code{\link{mcmc_IMIFA}} for the \code{"IFA"}, \code{"MIFA"}, \code{"OMIFA"} and \code{"IMIFA"} methods. This function is vectorised with respect to the arguments \code{ad1}, \code{ad2}, \code{phi.shape}, \code{phi.rate}, \code{sigma.shape}, \code{sigma.rate}, \code{bd1} and \code{bd2}.
 #'
 #' @return A list of length 2 containing the following objects:
-#' \itemize{
-#'   \item{\strong{expectation} - }{The vector (or list of vectors) of actual expected \emph{a priori} shrinkage factors.}
-#'   \item{\strong{valid} - }{A logical (or vector of logicals) indicating whether the cumulative shrinkage property holds (in expectation).}
-#' }
+#' \item{\code{expectation}}{The vector (or list of vectors) of actual expected \emph{a priori} shrinkage factors.}
+#' \item{\code{valid}}{A logical (or vector of logicals) indicating whether the cumulative shrinkage property holds (in expectation).}
 #' @export
 #' @note It is \emph{recommended} that \code{ad2} be moderately large relative to \code{ad1}, even if \code{valid} can sometimes be \code{TRUE} when this is not the case (e.g. when \code{truncated=TRUE}). Similarly, satisfying this condition is no guarantee that \code{valid} will be \code{TRUE}, unless \code{truncated=TRUE}. Therefore, a warning is returned if \code{ad1 <= ad2}, regardless of the value taken by \code{valid}, when \code{truncated=FALSE} (the default).
 #' @keywords control
@@ -1147,34 +1145,34 @@
 #'            discount = 0,
 #'            MPFR = TRUE)
 #' @examples
+#' # Certain examples require the use of the Rmpfr library
+#' suppressMessages(require("Rmpfr"))
+#'
 #' G_expected(N=50, alpha=19.23356, MPFR=FALSE)
 #' G_variance(N=50, alpha=19.23356, MPFR=FALSE)
 #'
 #' G_expected(N=50, alpha=c(19.23356, 12.21619, 1),
 #'            discount=c(0, 0.25, 0.7300045), MPFR=FALSE)
-#' # require("Rmpfr")
-#' # G_variance(N=50, alpha=c(19.23356, 12.21619, 1),
-#' #            discount=c(0, 0.25, 0.7300045), MPFR=c(FALSE, TRUE, TRUE))
+#' G_variance(N=50, alpha=c(19.23356, 12.21619, 1),
+#'            discount=c(0, 0.25, 0.7300045), MPFR=c(FALSE, TRUE, TRUE))
 #'
 #' # Examine the growth rate of the DP
 #' DP   <- sapply(c(1, 5, 10), function(i) G_expected(1:200, alpha=i, MPFR=FALSE))
 #' matplot(DP, type="l", xlab="N", ylab="G")
 #'
 #' # Examine the growth rate of the PYP
-#' # PY <- sapply(c(0.25, 0.5, 0.75), function(i) G_expected(1:200, alpha=1, discount=i))
-#' # matplot(PY, type="l", xlab="N", ylab="G")
+#' PY <- sapply(c(0.25, 0.5, 0.75), function(i) G_expected(1:200, alpha=1, discount=i))
+#' matplot(PY, type="l", xlab="N", ylab="G")
 #'
 #' # Other special cases of the PYP are also facilitated
-#' # G_expected(N=50, alpha=c(27.1401, 0), discount=c(-27.1401/100, 0.8054448))
-#' # G_variance(N=50, alpha=c(27.1401, 0), discount=c(-27.1401/100, 0.8054448))
+#' G_expected(N=50, alpha=c(27.1401, 0), discount=c(-27.1401/100, 0.8054448))
+#' G_variance(N=50, alpha=c(27.1401, 0), discount=c(-27.1401/100, 0.8054448))
 #'
 #' # Elicit values for alpha under a DP prior
 #' G_calibrate(N=50, EG=25)
 #'
 #' # Elicit values for alpha under a PYP prior
-#' # require("Rmpfr")
 #' # G_calibrate(N=50, EG=25, discount=c(-27.1401/100, 0.25, 0.7300045))
-#'
 #' # Elicit values for discount under a PYP prior
 #' # G_calibrate(N=50, EG=25, alpha=c(12.21619, 1, 0), maxiter=2000)
     G_expected   <- Vectorize(function(N, alpha, discount = 0, MPFR = TRUE) {

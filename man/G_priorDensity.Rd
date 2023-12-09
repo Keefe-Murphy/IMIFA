@@ -37,22 +37,21 @@ Requires use of the \code{\link[Rmpfr]{Rmpfr}} and \code{gmp} libraries; may enc
 }
 \examples{
 # Plot Dirichlet process priors for different values of alpha
-(DP   <- G_priorDensity(N=50, alpha=c(3, 10, 25)))
-
-# Non-zero discount requires loading the "Rmpfr" library
-# require("Rmpfr")
+(DP      <- G_priorDensity(N=50, alpha=c(3, 10, 25)))
 
 # Verify that these alpha/discount values produce Pitman-Yor process priors with the same mean
-# G_expected(N=50, alpha=c(19.23356, 6.47006, 1), discount=c(0, 0.47002, 0.7300045))
+alpha    <- c(19.23356, 6.47006, 1)
+discount <- c(0, 0.47002, 0.7300045)
+G_expected(N=50, alpha=alpha, discount=discount)
 
 # Now plot them to examine tail behaviour as discount increases
-# alpha    <- c(19.23356, 6.47006, 1)
-# discount <- c(0, 0.47002, 0.7300045)
-# (PY <- G_priorDensity(N=50, alpha=alpha, discount=discount, type="l"))
+# Non-zero discount requires loading the "Rmpfr" library
+suppressMessages(require("Rmpfr"))
+(PY      <- G_priorDensity(N=50, alpha=alpha, discount=discount, type="l"))
 
-#' # Other special cases of the PYP are also facilitated
-# G_priorDensity(N=50, alpha=c(alpha, 27.1401, 0),
-#                discount=c(discount, -27.1401/100, 0.8054448), type="b")
+# Other special cases of the PYP are also facilitated
+G_priorDensity(N=50, alpha=c(alpha, 27.1401, 0),
+               discount=c(discount, -27.1401/100, 0.8054448), type="b")
 }
 \references{
 De Blasi, P., Favaro, S., Lijoi, A., Mena, R. H., Prunster, I., and Ruggiero, M. (2015) Are Gibbs-type priors the most natural generalization of the Dirichlet process?, \emph{IEEE Transactions on Pattern Analysis and Machine Intelligence}, 37(2): 212-229.

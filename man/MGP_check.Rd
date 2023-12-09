@@ -33,10 +33,8 @@ MGP_check(ad1,
 }
 \value{
 A list of length 2 containing the following objects:
-\itemize{
-  \item{\strong{expectation} - }{The vector (or list of vectors) of actual expected \emph{a priori} shrinkage factors.}
-  \item{\strong{valid} - }{A logical (or vector of logicals) indicating whether the cumulative shrinkage property holds (in expectation).}
-}
+\item{\code{expectation}}{The vector (or list of vectors) of actual expected \emph{a priori} shrinkage factors.}
+\item{\code{valid}}{A logical (or vector of logicals) indicating whether the cumulative shrinkage property holds (in expectation).}
 }
 \description{
 Checks the hyperparameters for the multiplicative gamma process (MGP) shrinkage prior in order to ensure that the property of cumulative shrinkage (in expectation) holds, i.e. checks whether growing mass is assigned to small neighbourhoods of zero as the column index increases.

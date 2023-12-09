@@ -1,6 +1,7 @@
 __Infinite Mixtures of Infinite Factor Analysers__
 ==================================================  
 
+## IMIFA v2.2.0 - (_18<sup>th</sup> release [minor update]: 2023-12-12_)
 ### New Features
 * `get_IMIFA_results` gains the arg. `adapt`, allowing automatic, post-hoc truncation of  
 redundant factors in cases where `mcmc_IMIFA` was called with `adapt=FALSE` only  
@@ -21,8 +22,8 @@ _(with thanks to @abcoxyzide for flagging the issue)_
 * Minor fixes for `"MFA"`/`"MIFA"` models when `mu0g`, `psi0g`, &/or `delta0g`  
   is `TRUE`, particularly when `length(range.G) > 1`.
 * Minor speed-up to `G_priorDensity` when `discount` is non-zero.
-* Extensive edits to avoid overheads introduced in `matrixStats` v1.0.0 + related minor speed-ups.
-* Now using newer `CITATION` commands.
+* Extensive edits to avoid overheads introduced in `matrixStats (>= 1.0.0)` + related minor speed-ups.
+* Now using newer `CITATION` commands & updated `License: GPL (>= 3)`. 
 
 ## IMIFA v2.1.10 - (_17<sup>th</sup> release [patch update]: 2022-12-19_)
 ### Improvements, Bug Fixes, & Miscellaneous Edits

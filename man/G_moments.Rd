@@ -52,34 +52,34 @@ For \code{G_calibrate}, \strong{only one} of \code{alpha} or \code{discount} can
 \code{G_variance} requires use of the \code{\link[Rmpfr]{Rmpfr}} and \code{gmp} libraries for non-zero \code{discount} values. \code{G_expected} requires these libraries only for the \code{alpha=0} case. These libraries are \emph{strongly recommended} (but they are not required) for \code{G_calbirate} when \code{discount} is non-zero, but they are required when \code{alpha=0} is supplied. Despite the high precision arithmetic used, the functions can still be unstable for large \code{N} and/or extreme values of \code{alpha} and/or \code{discount}. See the argument \code{MPFR}.
 }
 \examples{
+# Certain examples require the use of the Rmpfr library
+suppressMessages(require("Rmpfr"))
+
 G_expected(N=50, alpha=19.23356, MPFR=FALSE)
 G_variance(N=50, alpha=19.23356, MPFR=FALSE)
 
 G_expected(N=50, alpha=c(19.23356, 12.21619, 1),
            discount=c(0, 0.25, 0.7300045), MPFR=FALSE)
-# require("Rmpfr")
-# G_variance(N=50, alpha=c(19.23356, 12.21619, 1),
-#            discount=c(0, 0.25, 0.7300045), MPFR=c(FALSE, TRUE, TRUE))
+G_variance(N=50, alpha=c(19.23356, 12.21619, 1),
+           discount=c(0, 0.25, 0.7300045), MPFR=c(FALSE, TRUE, TRUE))
 
 # Examine the growth rate of the DP
 DP   <- sapply(c(1, 5, 10), function(i) G_expected(1:200, alpha=i, MPFR=FALSE))
 matplot(DP, type="l", xlab="N", ylab="G")
 
 # Examine the growth rate of the PYP
-# PY <- sapply(c(0.25, 0.5, 0.75), function(i) G_expected(1:200, alpha=1, discount=i))
-# matplot(PY, type="l", xlab="N", ylab="G")
+PY <- sapply(c(0.25, 0.5, 0.75), function(i) G_expected(1:200, alpha=1, discount=i))
+matplot(PY, type="l", xlab="N", ylab="G")
 
 # Other special cases of the PYP are also facilitated
-# G_expected(N=50, alpha=c(27.1401, 0), discount=c(-27.1401/100, 0.8054448))
-# G_variance(N=50, alpha=c(27.1401, 0), discount=c(-27.1401/100, 0.8054448))
+G_expected(N=50, alpha=c(27.1401, 0), discount=c(-27.1401/100, 0.8054448))
+G_variance(N=50, alpha=c(27.1401, 0), discount=c(-27.1401/100, 0.8054448))
 
 # Elicit values for alpha under a DP prior
 G_calibrate(N=50, EG=25)
 
 # Elicit values for alpha under a PYP prior
-# require("Rmpfr")
 # G_calibrate(N=50, EG=25, discount=c(-27.1401/100, 0.25, 0.7300045))
-
 # Elicit values for discount under a PYP prior
 # G_calibrate(N=50, EG=25, alpha=c(12.21619, 1, 0), maxiter=2000)
 }

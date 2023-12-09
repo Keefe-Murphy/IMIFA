@@ -30,11 +30,11 @@ Typically, one would run FA or MFA models over ranges of values for the numbers 
 
 The main features of the IMIFA model are the multiplicative gamma process shrinkage prior on the factor loadings, which allows theoretically infinitely many factors (this can also be employed in a MIFA context, for instance, where the number of clusters is fixed but cluster-specific factors are estimated), an adaptive Gibbs sampler which dynamically truncates the infinite loadings matrices, and the Dirichlet process prior, which utilises the stick-breaking construction and slice-efficient sampling, and allows theoretically infinitely many clusters. Tools are provided for soliciting sensible hyperparameters for these priors. As of __IMIFA__ v1.2.0, a Pitman-Yor process prior on the number of mixture components is assumed by default, and its concentration and discount parameters are learned via Metropolis-Hastings updates.
 
-Model-specific diagnostic tools are also provided, as well as many extensive options for plotting results, conducting posterior inference on parameters of interest, and quantifying uncertainty. The functions are typically verbose, offering plenty of messages and warnings to the user where appropriate. Please see [Murphy et al. (2020)](https://projecteuclid.org/euclid.ba/1570586978) for more info.
+Model-specific diagnostic tools are also provided, as well as many extensive options for plotting results, conducting posterior inference on parameters of interest, posterior predictive checking, and quantifying uncertainty. 
 
-If you find bugs or want to suggest new features please visit the __IMIFA__ [GitHub issues page](https://github.com/Keefe-Murphy/IMIFA/issues). 
+The functions are typically verbose, offering plenty of messages and warnings to the user where appropriate. The package also contains three data sets: `olive`, `USPSdigits`, and `coffee`.
 
-This vignette aims to reproduce some results in the Murphy et al. (2020) paper using the `mcmc_IMIFA()` and `get_IMIFA_results()` functions and demonstrates how the plots therein were created using the dedicated S3 `plot` method, while also demonstrating how to fit other models in the IMIFA family.
+This vignette aims to reproduce some results in the Murphy et al. (2020) paper using the `mcmc_IMIFA()` and `get_IMIFA_results()` functions and demonstrates how the plots therein were created using the dedicated S3 `plot` method, while also demonstrating how to fit other models in the IMIFA family. Please see [Murphy et al. (2020)](https://projecteuclid.org/euclid.ba/1570586978) for more info.
 
 ### Installing IMIFA
 __IMIFA__ will run in Windows, Mac OS X, or Linux. To install __IMIFA__ you first need to install [R](https://cran.r-project.org/). Installing [RStudio](https://posit.co/) as a nice desktop environment for using R is also recommended.
@@ -62,7 +62,7 @@ library(IMIFA)
 
 it will load in all the __IMIFA__ functions.
 
-The GitHub version contains a few more features but some of these may not yet be fully tested, and occasionally this version might be liable to break when it is in the process of being updated.
+The GitHub version contains a few more features but some of these may not yet be fully tested, and occasionally this version might be liable to break when it is in the process of being updated. If you find bugs or want to suggest new features please visit the __IMIFA__ [GitHub issues page](https://github.com/Keefe-Murphy/IMIFA/issues). 
 
 ### The three main functions
 There exist several utility functions in the package to solicit good prior hyperparameters (e.g. `G_priorDensity()`, `psi_hyper()`, `MGP_check()`) and to prepare results for producing nice plots (e.g. `mat2cols()`), this vignette focuses only on the three most important functions:
